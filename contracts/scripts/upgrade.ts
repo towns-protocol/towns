@@ -5,7 +5,7 @@
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
 
-const GREETER_ADDRESS = "";
+const TESTER_ADDRESS = "";
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
   // line interface.
@@ -15,12 +15,12 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const GreeterV2 = await ethers.getContractFactory("GreeterV2");
-  const greeter = await upgrades.upgradeProxy(GREETER_ADDRESS, GreeterV2, {
+  const TesterV2 = await ethers.getContractFactory("TestcontractV2");
+  const tester = await upgrades.upgradeProxy(TESTER_ADDRESS, TesterV2, {
     kind: "uups",
   });
 
-  console.log("Greeter upgraded to:", greeter.address);
+  console.log("Tester upgraded to:", tester.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
