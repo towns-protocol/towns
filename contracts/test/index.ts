@@ -63,11 +63,10 @@ describe("Test", function () {
   });
 
   /*
-   * This test should fail because we chenck the version number, but it also failed
-   * when rounds was added to v2 instead because the V1 contract would be seen by
-   * the deploy tools as not having rounds and fail with an exception.
+   * This test fails because we V2 introduces a storage slot for rounds that V1
+   * doesn't have.
    */
-  it("V2 reverts on downgrade to V1", async function () {
+  it("V2 throws on downgrade to V1", async function () {
     const TestContractV2 = await ethers.getContractFactory("TestContractV2");
     const tester = await upgrades.deployProxy(
       TestContractV2,
@@ -82,8 +81,16 @@ describe("Test", function () {
     expect(await tester.test()).to.equal("Greetings from TestContractV2");
 
     const TestContract = await ethers.getContractFactory("TestContract");
-    const newProxy = upgrades.upgradeProxy(tester.address, TestContract);
-    await expect(newProxy).to.be.revertedWith("Contract may not downgrade");
+    let error;
+    try {
+      const newProxy = await upgrades.upgradeProxy(
+        tester.address,
+        TestContract
+      );
+    } catch (err: any) {
+      error = err;
+    }
+    expect(error.message === "New storage layout is incompatible");
     expect(await tester.test()).to.equal("Greetings from TestContractV2");
   });
 
@@ -122,9 +129,7 @@ describe("Test", function () {
 
     const gameNonce2 = utils.hexlify(utils.randomBytes(32));
     const failedStart = tester.newGame(gameNonce2);
-    await expect(failedStart).to.be.revertedWith(
-      "newGame called during running game"
-    );
+    await expect(failedStart).to.be.revertedWith("newGameR1");
   });
 
   it("V2 currentGame called without running game", async function () {
@@ -137,9 +142,7 @@ describe("Test", function () {
       }
     );
     await tester.deployed();
-    await expect(tester.currentGame()).to.be.revertedWith(
-      "currentGame called without running game"
-    );
+    await expect(tester.currentGame()).to.be.revertedWith("currentGameR1");
   });
 
   it("V2 commitGuess called without running game", async function () {
@@ -155,7 +158,7 @@ describe("Test", function () {
     const gameNonce = utils.hexlify(utils.randomBytes(32));
 
     await expect(tester.commitGuess(gameNonce)).to.be.revertedWith(
-      "commitGuess called without running game"
+      "commitGuessR1"
     );
   });
 

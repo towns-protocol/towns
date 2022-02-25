@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -16,17 +15,6 @@ contract TestContract is
     uint16 private constant CONTRACT_VERSION = 1;
     uint16 internal deployedContractVersion;
 
-    struct Round {
-        bytes32 nonce;
-        mapping(address => Guess[]) committedGuesses;
-    }
-    Round[] internal rounds;
-
-    struct Guess {
-        bytes32 guessHash;
-        bool revealed;
-    }
-
     function initialize(string memory uri_) public virtual initializer {
         __UUPSUpgradeable_init();
         __AccessControl_init();
@@ -35,8 +23,6 @@ contract TestContract is
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         deployedContractVersion = CONTRACT_VERSION;
-        console.log("TestContract initialized");
-
     }
 
     function getContractVersion() public pure virtual returns (uint16) {
@@ -64,7 +50,7 @@ contract TestContract is
         uint16 newVersion = newContract.getContractVersion();
         require(
             deployedContractVersion < newVersion,
-            "Contract may not downgrade"
+            "NO_DOWNGRADE"
         );
     }
 
