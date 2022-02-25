@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { utils } from "ethers";
 import { ethers, upgrades } from "hardhat";
 
 describe("Test", function () {
@@ -61,7 +62,12 @@ describe("Test", function () {
     expect(await tester.test()).to.equal("Greetings from TestContractV2");
   });
 
-  it("V2 reverts downgrade to V1", async function () {
+  /*
+   * This test should fail because we chenck the version number, but it also failed
+   * when rounds was added to v2 instead because the V1 contract would be seen by
+   * the deploy tools as not having rounds and fail with an exception.
+   */
+  it("V2 reverts on downgrade to V1", async function () {
     const TestContractV2 = await ethers.getContractFactory("TestContractV2");
     const tester = await upgrades.deployProxy(
       TestContractV2,
@@ -76,9 +82,102 @@ describe("Test", function () {
     expect(await tester.test()).to.equal("Greetings from TestContractV2");
 
     const TestContract = await ethers.getContractFactory("TestContract");
-    await expect(
-      upgrades.upgradeProxy(tester.address, TestContract)
-    ).to.be.revertedWith("Contract may not downgrade");
+    const newProxy = upgrades.upgradeProxy(tester.address, TestContract);
+    await expect(newProxy).to.be.revertedWith("Contract may not downgrade");
     expect(await tester.test()).to.equal("Greetings from TestContractV2");
+  });
+
+  it("V2 starts a new round", async function () {
+    const TestContractV2 = await ethers.getContractFactory("TestContractV2");
+    const tester = await upgrades.deployProxy(
+      TestContractV2,
+      ["https://localhost/uri_from_init"],
+      {
+        kind: "uups",
+      }
+    );
+    await tester.deployed();
+    const gameNonce = utils.hexlify(utils.randomBytes(32));
+
+    await tester.newGame(gameNonce);
+    expect(await tester.currentGame()).to.equal(gameNonce);
+    expect(await tester.hasRunningGame()).to.equal(true);
+  });
+
+  it("V2 double starts a new round", async function () {
+    const TestContractV2 = await ethers.getContractFactory("TestContractV2");
+    const tester = await upgrades.deployProxy(
+      TestContractV2,
+      ["https://localhost/uri_from_init"],
+      {
+        kind: "uups",
+      }
+    );
+    await tester.deployed();
+    const gameNonce = utils.hexlify(utils.randomBytes(32));
+
+    await tester.newGame(gameNonce);
+    expect(await tester.currentGame()).to.equal(gameNonce);
+    expect(await tester.hasRunningGame()).to.equal(true);
+
+    const gameNonce2 = utils.hexlify(utils.randomBytes(32));
+    const failedStart = tester.newGame(gameNonce2);
+    await expect(failedStart).to.be.revertedWith(
+      "newGame called during running game"
+    );
+  });
+
+  it("V2 currentGame called without running game", async function () {
+    const TestContractV2 = await ethers.getContractFactory("TestContractV2");
+    const tester = await upgrades.deployProxy(
+      TestContractV2,
+      ["https://localhost/uri_from_init"],
+      {
+        kind: "uups",
+      }
+    );
+    await tester.deployed();
+    await expect(tester.currentGame()).to.be.revertedWith(
+      "currentGame called without running game"
+    );
+  });
+
+  it("V2 commitGuess called without running game", async function () {
+    const TestContractV2 = await ethers.getContractFactory("TestContractV2");
+    const tester = await upgrades.deployProxy(
+      TestContractV2,
+      ["https://localhost/uri_from_init"],
+      {
+        kind: "uups",
+      }
+    );
+    await tester.deployed();
+    const gameNonce = utils.hexlify(utils.randomBytes(32));
+
+    await expect(tester.commitGuess(gameNonce)).to.be.revertedWith(
+      "commitGuess called without running game"
+    );
+  });
+
+  it("V2 commits 5 guesses", async function () {
+    const TestContractV2 = await ethers.getContractFactory("TestContractV2");
+    const tester = await upgrades.deployProxy(
+      TestContractV2,
+      ["https://localhost/uri_from_init"],
+      {
+        kind: "uups",
+      }
+    );
+    await tester.deployed();
+    const gameNonce = utils.hexlify(utils.randomBytes(32));
+
+    await tester.newGame(gameNonce);
+    expect(await tester.currentGame()).to.equal(gameNonce);
+
+    for (let i = 0; i < 5; i++) {
+      const guess = utils.hexlify(utils.randomBytes(32));
+      await tester.commitGuess(guess);
+    }
+    expect((await tester.getCommittedGuesses()).length).to.equal(5);
   });
 });

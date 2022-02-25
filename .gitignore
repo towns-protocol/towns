@@ -13,3 +13,7 @@
 /typechain-types
 /cache
 /artifacts
+.DS_Store
+coverage.json
+
+contracts/.openzeppelin/unknown-*.json
