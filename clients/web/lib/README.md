@@ -2,7 +2,7 @@
 
 Common lib for Harmony clients.
 
-## Set up
+## Build the library
 
 ```bash
 cd clients/web/lib
