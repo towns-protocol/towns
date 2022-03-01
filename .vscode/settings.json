@@ -1,0 +1,7 @@
+{
+  "eslint.workingDirectories": [
+    "./clients/web/lib",
+    "./clients/web/sample-app",
+    "./contracts",
+  ]
+}

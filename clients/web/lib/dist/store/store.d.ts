@@ -1,0 +1,25 @@
+import { Membership, Rooms, RoomsMessages } from "../types/matrix_types";
+import { Room as MatrixRoom } from "matrix-js-sdk";
+export declare type StoreStates = {
+    isAuthenticated: boolean;
+    setIsAuthenticated: (isAuthenticated: boolean) => void;
+    accessToken: string | null;
+    setAccessToken: (accessToken: string | undefined) => void;
+    deviceId: string | null;
+    setDeviceId: (deviceId: string | undefined) => void;
+    homeServer: string | null;
+    setHomeServer: (homeServer: string | undefined) => void;
+    allMessages: RoomsMessages | null;
+    setNewMessage: (roomId: string, message: string) => void;
+    rooms: Rooms | null;
+    leaveRoom: (roomId: string, userId: string) => void;
+    setRoom: (room: MatrixRoom) => void;
+    setRooms: (rooms: MatrixRoom[]) => void;
+    setRoomName: (roomId: string, roomName: string) => void;
+    userId: string | null;
+    setUserId: (userId: string | undefined) => void;
+    username: string | null;
+    setUsername: (username: string | undefined) => void;
+    updateMembership: (roomId: string, userId: string, membership: Membership) => void;
+};
+export declare const useStore: import("zustand").UseBoundStore<StoreStates, import("zustand").StoreApi<StoreStates>>;

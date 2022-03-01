@@ -1,0 +1,24 @@
+import { useMatrixClient, useStore } from "use-matrix-client";
+
+import { Button } from "@mui/material"
+import { useCallback } from "react";
+
+export function Logout(): JSX.Element | null {
+  const { isAuthenticated } = useStore();
+  const { logout } = useMatrixClient();
+
+  const onLogout = useCallback(async function () {
+    await logout();
+  }, [logout]);
+
+  return (
+      isAuthenticated ? (
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={onLogout}>
+          Logout
+        </Button>
+      ) : null
+  );
+}
