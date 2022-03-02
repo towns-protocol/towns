@@ -29,7 +29,7 @@ interface Props {
 
 interface CurrentChatRoom {
   roomId: string;
-  membership: Membership;
+  membership: string;
 }
 
 export default function AppDrawer(props: Props): JSX.Element {

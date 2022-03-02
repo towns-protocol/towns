@@ -6,7 +6,7 @@ import {
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef } from "react";
 
-import { CreateRoomInfo } from "../types/matrix_types";
+import { CreateRoomInfo } from "../types/matrix-types";
 import { useStore } from "../store/store";
 
 const MATRIX_HOMESERVER_URL =

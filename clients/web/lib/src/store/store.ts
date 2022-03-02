@@ -1,4 +1,4 @@
-import { Membership, Rooms, RoomsMessages } from "../types/matrix_types";
+import { Membership, Rooms, RoomsMessages } from "../types/matrix-types";
 import {
   leaveRoom,
   setAllRooms,
@@ -6,7 +6,7 @@ import {
   setRoom,
   setRoomName,
   updateMembership,
-} from "./room_states";
+} from "./room-states";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
 import createStore, { SetState } from "zustand";

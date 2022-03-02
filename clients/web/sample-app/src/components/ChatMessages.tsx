@@ -6,7 +6,7 @@ import { AcceptInvitation } from "./AcceptInvitation";
 
 interface Props {
   roomId: string;
-  membership: Membership;
+  membership: string;
   sendMessage: (roomId: string, message: string) => Promise<void>;
   joinRoom: (roomId: string) => Promise<void>;
 }

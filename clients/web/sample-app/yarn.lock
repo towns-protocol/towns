@@ -11090,7 +11090,7 @@ __metadata:
     react-scripts: 5.0.0
     typescript: ^4.6.2
     url: ^0.11.0
-    zustand: ^3.7.0
+    zustand: ^3.7.1
   languageName: unknown
   linkType: soft
 
@@ -13139,7 +13139,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zustand@npm:^3.7.0":
+"zustand@npm:^3.7.1":
   version: 3.7.1
   resolution: "zustand@npm:3.7.1"
   peerDependencies:

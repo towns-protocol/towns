@@ -1,4 +1,4 @@
-import { Membership, Room, Rooms } from "../types/matrix_types";
+import { Membership, Room, Rooms } from "../types/matrix-types";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
 import { StoreStates } from "./store";

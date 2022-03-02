@@ -1,4 +1,8 @@
-import { Visibility } from "matrix-js-sdk/lib/@types/partials";
+import { MembershipType } from "matrix-js-sdk";
+export declare enum Visibility {
+    Private = "private",
+    Public = "public"
+}
 export declare enum Membership {
     Join = "join",
     Invite = "invite",
@@ -7,7 +11,7 @@ export declare enum Membership {
 export interface Room {
     roomId: string;
     name: string;
-    membership: string;
+    membership: MembershipType | null;
     members: Members;
     inviter?: string;
 }

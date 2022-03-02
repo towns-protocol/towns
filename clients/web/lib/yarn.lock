@@ -19,12 +19,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^17.0.11":
-  version: 17.0.11
-  resolution: "@types/react-dom@npm:17.0.11"
+"@types/react-dom@npm:^17.0.12":
+  version: 17.0.12
+  resolution: "@types/react-dom@npm:17.0.12"
   dependencies:
     "@types/react": "*"
-  checksum: 4d5730dffbef86c887cecad7e3cecda424ce6a64d0b5441c63b5b015d48219868660a2bb1aa15e897e565ad8867fa6b885d4358b04e1c4e589ba4c07c3fda55c
+  checksum: 9754e1d0c0107310eab35a2eb1dad45f6ef0a41e562c23a29d6bf723a29c8a2036c4acd6a1a1422bf7cf956d431e41b154608dd917f6e69c7ab0d87720c5e27e
   languageName: node
   linkType: hard
 
@@ -46,6 +46,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/typescript@npm:^0.4.29":
+  version: 0.4.29
+  resolution: "@types/typescript@npm:0.4.29"
+  checksum: f1c484c2cdc7da677a5e5e7c8af08ab5a5d0491d79be1c652f9b991d8c333c22bbe987ae66024bb69187e35f54905cf5f730ab08edaba65272bb2bb5415461cd
+  languageName: node
+  linkType: hard
+
 "csstype@npm:^3.0.2":
   version: 3.0.10
   resolution: "csstype@npm:3.0.10"
@@ -59,14 +66,15 @@ __metadata:
   dependencies:
     "@types/matrix-js-sdk": ^11.0.1
     "@types/react": ^17.0.39
-    "@types/react-dom": ^17.0.11
+    "@types/react-dom": ^17.0.12
+    "@types/typescript": ^0.4.29
     zustand: ^3.7.1
   peerDependencies:
-    matrix-js-sdk: ^15.5.2
+    matrix-js-sdk: ^15.5.1
     react: ^17.0.2
     react-dom: ^17.0.2
-    typescript: ^4.5.5
-    zustand: ^3.7.0
+    typescript: ^4.6.2
+    zustand: "*"
   languageName: unknown
   linkType: soft
 

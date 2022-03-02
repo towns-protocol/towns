@@ -7,8 +7,8 @@ export {
   Room,
   Rooms,
   RoomsMessages,
-} from "./types/matrix_types";
+} from "./types/matrix-types";
 
 export { useStore } from "./store/store";
 export { useMatrixClient } from "./hooks/use-matrix-client";
-export { useMatrixClientListener } from "./hooks/use_matrix-client-listener";
+export { useMatrixClientListener } from "./hooks/use-matrix-client-listener";

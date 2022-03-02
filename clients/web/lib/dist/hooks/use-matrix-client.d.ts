@@ -1,4 +1,4 @@
-import { CreateRoomInfo } from "../types/matrix_types";
+import { CreateRoomInfo } from "../types/matrix-types";
 interface LoginResult {
     accessToken: string | undefined;
     userId: string | undefined;

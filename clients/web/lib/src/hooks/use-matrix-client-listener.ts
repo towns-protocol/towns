@@ -1,7 +1,7 @@
 import { CreateClientOption, MatrixClient, createClient } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Membership, Rooms } from "../types/matrix_types";
+import { Membership, Rooms } from "../types/matrix-types";
 import { useStore } from "../store/store";
 
 export function useMatrixClientListener() {

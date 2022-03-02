@@ -1,4 +1,4 @@
-import { Membership, Rooms, RoomsMessages } from "../types/matrix_types";
+import { Membership, Rooms, RoomsMessages } from "../types/matrix-types";
 import { Room as MatrixRoom } from "matrix-js-sdk";
 export declare type StoreStates = {
     isAuthenticated: boolean;

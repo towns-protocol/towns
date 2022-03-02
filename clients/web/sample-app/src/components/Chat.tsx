@@ -1,5 +1,5 @@
 import { Box, Grid, Theme, Typography } from "@mui/material";
-import { Membership, useMatrixClient, useStore } from "use-matrix-client";
+import { useMatrixClient, useStore } from "use-matrix-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ChatMessages } from "./ChatMessages";
@@ -9,7 +9,7 @@ import { LeaveRoom } from "./LeaveRoom";
 
 interface Props {
   roomId: string;
-  membership: Membership;
+  membership: string;
   onClickLeaveRoom: () => void;
   goToRoom: (roomId: string) => void;
 }
