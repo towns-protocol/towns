@@ -1,6 +1,7 @@
 import { Membership, Rooms, RoomsMessages } from "../types/matrix-types";
 import { Room as MatrixRoom } from "matrix-js-sdk";
 export declare type StoreStates = {
+    createRoom: (roomId: string) => void;
     isAuthenticated: boolean;
     setIsAuthenticated: (isAuthenticated: boolean) => void;
     accessToken: string | null;
@@ -12,14 +13,15 @@ export declare type StoreStates = {
     allMessages: RoomsMessages | null;
     setNewMessage: (roomId: string, message: string) => void;
     rooms: Rooms | null;
-    leaveRoom: (roomId: string, userId: string) => void;
+    joinRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) => void;
+    leaveRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) => void;
     setRoom: (room: MatrixRoom) => void;
-    setRooms: (rooms: MatrixRoom[]) => void;
+    setAllRooms: (rooms: MatrixRoom[]) => void;
     setRoomName: (roomId: string, roomName: string) => void;
     userId: string | null;
     setUserId: (userId: string | undefined) => void;
     username: string | null;
     setUsername: (username: string | undefined) => void;
-    updateMembership: (roomId: string, userId: string, membership: Membership) => void;
+    updateMembership: (roomId: string, userId: string, membership: Membership, isMyRoomMembership: boolean) => void;
 };
-export declare const useStore: import("zustand").UseBoundStore<StoreStates, import("zustand").StoreApi<StoreStates>>;
+export declare const useMatrixStore: import("zustand").UseBoundStore<StoreStates, import("zustand").StoreApi<StoreStates>>;

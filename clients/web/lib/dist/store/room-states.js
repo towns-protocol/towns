@@ -1,7 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.joinRoom = exports.leaveRoom = exports.updateMembership = exports.setRoomName = exports.setAllRooms = exports.setRoom = exports.setNewMessage = void 0;
+exports.joinRoom = exports.leaveRoom = exports.updateMembership = exports.setRoomName = exports.setAllRooms = exports.setRoom = exports.setNewMessage = exports.createRoom = void 0;
 const matrix_types_1 = require("../types/matrix-types");
+function createRoom(state, roomId) {
+    const changedRooms = Object.assign({}, state.rooms);
+    const newdRoom = {
+        roomId,
+        name: "",
+        membership: null,
+        members: {},
+    };
+    changedRooms[roomId] = newdRoom;
+    return { rooms: changedRooms };
+}
+exports.createRoom = createRoom;
 function setNewMessage(state, roomId, message) {
     const changedAllMessages = state.allMessages ? Object.assign({}, state.allMessages) : {};
     const changedRoomMessages = changedAllMessages[roomId]
@@ -31,20 +43,19 @@ function setRoom(state, room) {
             membership: matrix_types_1.Membership.Join,
         };
     }
-    console.log(`setRoom ${JSON.stringify(changedRoom)}`);
     changedRooms[room.roomId] = changedRoom;
-    for (const r of Object.values(changedRooms)) {
-        console.log(`setRoom changedRooms`, {
-            roomId: r.roomId,
-            membership: r.membership,
-        });
-    }
+    console.log(`setRoom changedRooms`, {
+        roomId: changedRoom.roomId,
+        name: changedRoom.name,
+        membership: changedRoom.membership,
+    });
     return { rooms: changedRooms };
 }
 exports.setRoom = setRoom;
 function setAllRooms(state, matrixRooms) {
     const changedRooms = {};
     for (const r of matrixRooms) {
+        console.log(`matrixRoom[${r.roomId}]`, { name: r.name });
         changedRooms[r.roomId] = {
             roomId: r.roomId,
             name: r.name,
@@ -62,12 +73,10 @@ function setAllRooms(state, matrixRooms) {
                 membership: matrix_types_1.Membership.Join,
             };
         }
-    }
-    console.log(`setAllRooms`);
-    for (const r of Object.values(changedRooms)) {
         console.log(`setAllRooms changedRooms`, {
-            roomId: r.roomId,
-            membership: r.membership,
+            roomId: changedRooms[r.roomId].roomId,
+            name: changedRooms[r.roomId].name,
+            membership: changedRooms[r.roomId].membership,
         });
     }
     return { rooms: changedRooms };
@@ -84,29 +93,34 @@ function setRoomName(state, roomId, newName) {
         console.log(`setRoomName ${JSON.stringify(changedRoom)}`);
         return { rooms: changedRooms };
     }
+    console.log(`setRoomName no op`);
     return state;
 }
 exports.setRoomName = setRoomName;
-function updateMembership(state, roomId, userId, membership) {
-    var _a;
+function updateMembership(state, roomId, userId, membership, isMyRoomMembership) {
+    var _a, _b;
     const room = (_a = state.rooms) === null || _a === void 0 ? void 0 : _a[roomId];
     if (room) {
-        const member = room.members[userId];
-        if (member && member.membership !== membership) {
+        const member = (_b = room.members[userId]) !== null && _b !== void 0 ? _b : { membership: null };
+        if (member.membership !== membership) {
             const changedRooms = Object.assign({}, state.rooms);
             const changedRoom = Object.assign({}, room);
+            if (isMyRoomMembership) {
+                changedRoom.membership = membership;
+            }
             const changedMember = Object.assign({}, changedRoom.members[userId]);
             changedMember.membership = membership;
             changedRoom.members[userId] = changedMember;
             changedRooms[roomId] = changedRoom;
-            console.log(`updateMember ${JSON.stringify(changedRoom)}`);
+            console.log(`updateMembership ${JSON.stringify(changedRoom)}`);
             return { rooms: changedRooms };
         }
     }
+    console.log(`updateMembership no op`);
     return state;
 }
 exports.updateMembership = updateMembership;
-function leaveRoom(state, roomId, userId) {
+function leaveRoom(state, roomId, userId, isMyRoomMembership) {
     var _a;
     const room = (_a = state.rooms) === null || _a === void 0 ? void 0 : _a[roomId];
     if (room) {
@@ -116,31 +130,37 @@ function leaveRoom(state, roomId, userId) {
             const changedRoom = Object.assign({}, room);
             const changedMember = Object.assign({}, changedRoom.members[userId]);
             changedMember.membership = matrix_types_1.Membership.Leave;
-            changedRoom.membership = matrix_types_1.Membership.Leave;
+            if (isMyRoomMembership) {
+                changedRoom.membership = matrix_types_1.Membership.Leave;
+            }
             changedRoom.members[userId] = changedMember;
             changedRooms[roomId] = changedRoom;
             return { rooms: changedRooms };
         }
     }
+    console.log(`leaveRoom no op`);
     return state;
 }
 exports.leaveRoom = leaveRoom;
-function joinRoom(state, roomId, userId) {
+function joinRoom(state, roomId, userId, isMyRoomMembership) {
     var _a;
     const room = (_a = state.rooms) === null || _a === void 0 ? void 0 : _a[roomId];
     if (room) {
         const member = room.members[userId];
-        if (member && member.membership !== matrix_types_1.Membership.Leave) {
+        if (member && member.membership !== matrix_types_1.Membership.Join) {
             const changedRooms = Object.assign({}, state.rooms);
             const changedRoom = Object.assign({}, room);
             const changedMember = Object.assign({}, changedRoom.members[userId]);
-            changedMember.membership = matrix_types_1.Membership.Leave;
-            changedRoom.membership = matrix_types_1.Membership.Leave;
+            changedMember.membership = matrix_types_1.Membership.Join;
+            if (isMyRoomMembership) {
+                changedRoom.membership = matrix_types_1.Membership.Join;
+            }
             changedRoom.members[userId] = changedMember;
             changedRooms[roomId] = changedRoom;
             return { rooms: changedRooms };
         }
     }
+    console.log(`joinRoom no op`);
     return state;
 }
 exports.joinRoom = joinRoom;

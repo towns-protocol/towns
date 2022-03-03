@@ -1,9 +1,9 @@
 import { Login } from "./Login";
 import AppDrawer from "./AppDrawer";
-import { useStore } from "use-matrix-client";
+import { useMatrixStore } from "use-matrix-client";
 
 export function Main(): JSX.Element {
-  const { isAuthenticated } = useStore();
+  const { isAuthenticated } = useMatrixStore();
   return (
     <div>
       {isAuthenticated ? (

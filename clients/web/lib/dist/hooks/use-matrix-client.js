@@ -16,7 +16,7 @@ const react_1 = require("react");
 const store_1 = require("../store/store");
 const MATRIX_HOMESERVER_URL = (_a = process.env.MATRIX_HOME_SERVER) !== null && _a !== void 0 ? _a : "http://localhost:8008";
 function useMatrixClient() {
-    const { accessToken, homeServer, isAuthenticated, userId, username, setAccessToken, setDeviceId, setHomeServer, setIsAuthenticated, setUserId, setUsername, } = (0, store_1.useStore)();
+    const { accessToken, homeServer, isAuthenticated, userId, username, setAccessToken, setDeviceId, setHomeServer, setIsAuthenticated, setUserId, setUsername, } = (0, store_1.useMatrixStore)();
     const matrixClientRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(function () {
         if (isAuthenticated) {
@@ -71,7 +71,6 @@ function useMatrixClient() {
             yield logout();
             const response = yield matrixLoginWithPassword(MATRIX_HOMESERVER_URL, username, password);
             if (response.accessToken) {
-                console.log({ homeServer: response.homeServer });
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setHomeServer(getHomeServerUrl(response.homeServer));

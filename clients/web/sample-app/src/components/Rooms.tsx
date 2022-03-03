@@ -1,5 +1,5 @@
 import { List, ListItem, ListItemText } from '@mui/material';
-import { Membership, Room, isRoom, useStore } from "use-matrix-client";
+import { Membership, Room, isRoom, useMatrixStore } from "use-matrix-client";
 
 import { useMemo } from "react";
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function Rooms(props: Props): JSX.Element {
-  const { rooms } = useStore();
+  const { rooms } = useMatrixStore();
 
   const foundRooms = useMemo(() => {
     if (rooms) {

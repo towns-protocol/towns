@@ -1,5 +1,5 @@
 import { Box, Divider, TextField, Theme, Typography } from "@mui/material";
-import { Membership, useStore } from "use-matrix-client";
+import { Membership, useMatrixStore } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { AcceptInvitation } from "./AcceptInvitation";
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function ChatMessages(props: Props): JSX.Element {
-  const { allMessages } = useStore();
+  const { allMessages } = useMatrixStore();
   const [newMessage, setNewMessage] = useState<string>("");
 
   const onTextChanged = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {

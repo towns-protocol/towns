@@ -3,6 +3,18 @@ import { Membership, Room, Rooms } from "../types/matrix-types";
 import { Room as MatrixRoom } from "matrix-js-sdk";
 import { StoreStates } from "./store";
 
+export function createRoom(state: StoreStates, roomId: string) {
+  const changedRooms = { ...state.rooms };
+  const newdRoom: Room = {
+    roomId,
+    name: "",
+    membership: null,
+    members: {},
+  };
+  changedRooms[roomId] = newdRoom;
+  return { rooms: changedRooms };
+}
+
 export function setNewMessage(
   state: StoreStates,
   roomId: string,
@@ -37,20 +49,19 @@ export function setRoom(state: StoreStates, room: MatrixRoom) {
       membership: Membership.Join,
     };
   }
-  console.log(`setRoom ${JSON.stringify(changedRoom)}`);
   changedRooms[room.roomId] = changedRoom;
-  for (const r of Object.values(changedRooms)) {
-    console.log(`setRoom changedRooms`, {
-      roomId: r.roomId,
-      membership: r.membership,
-    });
-  }
+  console.log(`setRoom changedRooms`, {
+    roomId: changedRoom.roomId,
+    name: changedRoom.name,
+    membership: changedRoom.membership,
+  });
   return { rooms: changedRooms };
 }
 
 export function setAllRooms(state: StoreStates, matrixRooms: MatrixRoom[]) {
   const changedRooms: Rooms = {};
   for (const r of matrixRooms) {
+    console.log(`matrixRoom[${r.roomId}]`, { name: r.name });
     changedRooms[r.roomId] = {
       roomId: r.roomId,
       name: r.name,
@@ -69,12 +80,11 @@ export function setAllRooms(state: StoreStates, matrixRooms: MatrixRoom[]) {
         membership: Membership.Join,
       };
     }
-  }
-  console.log(`setAllRooms`);
-  for (const r of Object.values(changedRooms)) {
+
     console.log(`setAllRooms changedRooms`, {
-      roomId: r.roomId,
-      membership: r.membership,
+      roomId: changedRooms[r.roomId].roomId,
+      name: changedRooms[r.roomId].name,
+      membership: changedRooms[r.roomId].membership,
     });
   }
   return { rooms: changedRooms };
@@ -94,6 +104,7 @@ export function setRoomName(
     console.log(`setRoomName ${JSON.stringify(changedRoom)}`);
     return { rooms: changedRooms };
   }
+  console.log(`setRoomName no op`);
   return state;
 }
 
@@ -101,26 +112,36 @@ export function updateMembership(
   state: StoreStates,
   roomId: string,
   userId: string,
-  membership: Membership
+  membership: Membership,
+  isMyRoomMembership: boolean
 ) {
   const room = state.rooms?.[roomId];
   if (room) {
-    const member = room.members[userId];
-    if (member && member.membership !== membership) {
+    const member = room.members[userId] ?? { membership: null };
+    if (member.membership !== membership) {
       const changedRooms = { ...state.rooms };
       const changedRoom = { ...room };
+      if (isMyRoomMembership) {
+        changedRoom.membership = membership;
+      }
       const changedMember = { ...changedRoom.members[userId] };
       changedMember.membership = membership;
       changedRoom.members[userId] = changedMember;
       changedRooms[roomId] = changedRoom;
-      console.log(`updateMember ${JSON.stringify(changedRoom)}`);
+      console.log(`updateMembership ${JSON.stringify(changedRoom)}`);
       return { rooms: changedRooms };
     }
   }
+  console.log(`updateMembership no op`);
   return state;
 }
 
-export function leaveRoom(state: StoreStates, roomId: string, userId: string) {
+export function leaveRoom(
+  state: StoreStates,
+  roomId: string,
+  userId: string,
+  isMyRoomMembership: boolean
+) {
   const room = state.rooms?.[roomId];
   if (room) {
     const member = room.members[userId];
@@ -129,29 +150,40 @@ export function leaveRoom(state: StoreStates, roomId: string, userId: string) {
       const changedRoom = { ...room };
       const changedMember = { ...changedRoom.members[userId] };
       changedMember.membership = Membership.Leave;
-      changedRoom.membership = Membership.Leave;
+      if (isMyRoomMembership) {
+        changedRoom.membership = Membership.Leave;
+      }
       changedRoom.members[userId] = changedMember;
       changedRooms[roomId] = changedRoom;
       return { rooms: changedRooms };
     }
   }
+  console.log(`leaveRoom no op`);
   return state;
 }
 
-export function joinRoom(state: StoreStates, roomId: string, userId: string) {
+export function joinRoom(
+  state: StoreStates,
+  roomId: string,
+  userId: string,
+  isMyRoomMembership: boolean
+) {
   const room = state.rooms?.[roomId];
   if (room) {
     const member = room.members[userId];
-    if (member && member.membership !== Membership.Leave) {
+    if (member && member.membership !== Membership.Join) {
       const changedRooms = { ...state.rooms };
       const changedRoom = { ...room };
       const changedMember = { ...changedRoom.members[userId] };
-      changedMember.membership = Membership.Leave;
-      changedRoom.membership = Membership.Leave;
+      changedMember.membership = Membership.Join;
+      if (isMyRoomMembership) {
+        changedRoom.membership = Membership.Join;
+      }
       changedRoom.members[userId] = changedMember;
       changedRooms[roomId] = changedRoom;
       return { rooms: changedRooms };
     }
   }
+  console.log(`joinRoom no op`);
   return state;
 }

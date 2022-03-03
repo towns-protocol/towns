@@ -14,27 +14,52 @@ const matrix_js_sdk_1 = require("matrix-js-sdk");
 const react_1 = require("react");
 const matrix_types_1 = require("../types/matrix-types");
 const store_1 = require("../store/store");
+var SyncAction;
+(function (SyncAction) {
+    SyncAction["SyncAll"] = "SyncAll";
+    SyncAction["SyncRoom"] = "SyncRoom";
+    SyncAction["SyncMyRoomMembership"] = "SyncMyRoomMembership";
+})(SyncAction || (SyncAction = {}));
 function useMatrixClientListener() {
-    const { accessToken, homeServer, isAuthenticated, userId, leaveRoom, setNewMessage, setRoom, setRoomName, setRooms, updateMembership, } = (0, store_1.useStore)();
+    const { accessToken, homeServer, isAuthenticated, userId, createRoom, joinRoom, leaveRoom, setAllRooms, setNewMessage, setRoom, setRoomName, updateMembership, } = (0, store_1.useMatrixStore)();
     const matrixClientRef = (0, react_1.useRef)();
-    const [syncRoomId, setSyncRoomId] = (0, react_1.useState)("");
-    const [membershipChanged, setMembershipChanged] = (0, react_1.useState)("");
+    const [syncInfo, setSyncInfo] = (0, react_1.useState)();
     (0, react_1.useEffect)(function () {
         if (matrixClientRef.current) {
-            const room = matrixClientRef.current.getRoom(syncRoomId);
-            if (room) {
-                console.log(`Listener: sync room`, {
-                    roomId: room.roomId,
-                    name: room.name,
-                    membership: room.getMyMembership(),
-                });
-                setRoom(room);
-            }
-            else {
-                console.log(`Listener: cannot sync room ${syncRoomId}`);
+            switch (syncInfo.action) {
+                case SyncAction.SyncAll: {
+                    console.log(`Sync all rooms`);
+                    const rooms = matrixClientRef.current.getRooms();
+                    printRooms(rooms);
+                    setAllRooms(rooms);
+                    break;
+                }
+                case SyncAction.SyncRoom: {
+                    const prop = syncInfo.props;
+                    console.log(`Sync room ${prop.roomId}`);
+                    const room = matrixClientRef.current.getRoom(prop.roomId);
+                    if (room) {
+                        setRoom(room);
+                    }
+                    printRoom(room);
+                    break;
+                }
+                case SyncAction.SyncMyRoomMembership: {
+                    const prop = syncInfo.props;
+                    const room = matrixClientRef.current.getRoom(prop.roomId);
+                    if (room) {
+                        setRoom(room);
+                    }
+                    updateMembership(prop.roomId, prop.userId, prop.membership, prop.userId === matrixClientRef.current.getUserId());
+                    break;
+                }
+                default: {
+                    console.error(`Unsupported ${syncInfo.action}`);
+                    break;
+                }
             }
         }
-    }, [syncRoomId, membershipChanged, setRoom]);
+    }, [syncInfo]);
     const startClient = (0, react_1.useCallback)(function () {
         return __awaiter(this, void 0, void 0, function* () {
             if (accessToken && homeServer && userId) {
@@ -45,14 +70,13 @@ function useMatrixClientListener() {
                 };
                 const client = (0, matrix_js_sdk_1.createClient)(options);
                 yield client.startClient({ initialSyncLimit: 10 });
+                matrixClientRef.current = client;
                 client.once("sync", 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
                 function (state, prevState, res) {
                     return __awaiter(this, void 0, void 0, function* () {
                         if (state === "PREPARED") {
-                            const matrixRooms = client.getRooms();
-                            setRooms(matrixRooms);
-                            //printRooms(newRooms);
+                            setSyncInfo({ action: SyncAction.SyncAll }); // Create a new object to force sync.
                         }
                         else {
                             console.log(state);
@@ -65,32 +89,38 @@ function useMatrixClientListener() {
                     return __awaiter(this, void 0, void 0, function* () {
                         switch (event.getType()) {
                             case "m.room.message": {
-                                setNewMessage(room.roomId, event.event.content.body);
                                 console.log(`Room[${room.roomId}]: ${event.event.content.body}`);
+                                setNewMessage(room.roomId, event.event.content.body);
                                 break;
                             }
                             case "m.room.create": {
                                 console.log(`m.room.create`, { roomId: room.roomId });
-                                setSyncRoomId(room.roomId);
+                                createRoom(room.roomId);
                                 break;
                             }
                             case "m.room.name": {
+                                const roomId = event.getRoomId();
+                                const name = event.getContent().name;
                                 console.log(`m.room.name`, {
-                                    roomId: event.getRoomId(),
-                                    name: event.getContent().name,
+                                    roomId,
+                                    name,
                                 });
-                                setRoomName(event.getRoomId(), event.getContent().name);
+                                setRoomName(roomId, name);
                                 break;
                             }
                             case "m.room.member": {
-                                console.log(`m.room.member`, {
-                                    roomId: event.getRoomId(),
-                                    content: event.getContent(),
-                                });
-                                setSyncRoomId(event.getRoomId());
+                                const roomId = event.getRoomId();
+                                const userId = event.getStateKey();
                                 const membership = event.getContent().membership;
-                                if (membership) {
-                                    setMembershipChanged(membership);
+                                console.log(`m.room.member`, {
+                                    roomId,
+                                    userId,
+                                    membership,
+                                    content: event.getContent(),
+                                    event: JSON.stringify(event),
+                                });
+                                if (roomId && userId && membership) {
+                                    updateMembership(roomId, userId, membership, client.getUserId() === userId);
                                 }
                                 break;
                             }
@@ -102,35 +132,36 @@ function useMatrixClientListener() {
                 });
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
                 client.on("RoomMember.membership", function (event, member) {
+                    console.log(`RoomMember.membership event`, {
+                        eventType: event.getType(),
+                        userId: member.userId,
+                        roomId: member.roomId,
+                        membership: member.membership,
+                    });
                     switch (member.membership) {
                         case matrix_types_1.Membership.Invite: {
-                            if (member.userId === client.getUserId()) {
-                                updateMembership(member.roomId, member.userId, matrix_types_1.Membership.Invite);
-                            }
-                            break;
-                        }
-                        case matrix_types_1.Membership.Join: {
-                            setSyncRoomId(member.roomId);
-                            break;
-                        }
-                        case matrix_types_1.Membership.Leave: {
-                            if (member.userId === client.getUserId()) {
-                                leaveRoom(member.roomId, member.userId);
-                            }
-                            break;
-                        }
-                        default: {
-                            console.log(`RoomMember.membership event`, {
-                                eventType: event.getType(),
-                                userId: member.userId,
-                                roomId: member.roomId,
-                                membership: member.membership,
+                            setSyncInfo({
+                                action: SyncAction.SyncMyRoomMembership,
+                                props: {
+                                    roomId: member.roomId,
+                                    userId: member.userId,
+                                    membership: member.membership,
+                                },
                             });
                             break;
                         }
+                        case matrix_types_1.Membership.Join: {
+                            joinRoom(member.roomId, member.userId, member.userId === client.getUserId());
+                            break;
+                        }
+                        case matrix_types_1.Membership.Leave: {
+                            leaveRoom(member.roomId, member.userId, member.userId === client.getUserId());
+                            break;
+                        }
+                        default:
+                            break;
                     }
                 });
-                matrixClientRef.current = client;
             }
         });
     }, [
@@ -139,7 +170,7 @@ function useMatrixClientListener() {
         leaveRoom,
         setNewMessage,
         setRoomName,
-        setRooms,
+        setAllRooms,
         updateMembership,
         userId,
     ]);
@@ -160,8 +191,16 @@ function useMatrixClientListener() {
 exports.useMatrixClientListener = useMatrixClientListener;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function printRooms(rooms) {
-    let i = 0;
-    for (const r of Object.values(rooms)) {
-        console.log(`Room[${i++}] = { roomId: ${r.roomId}, name: "${r.name}", membership: ${r.membership} }`);
+    for (const r of rooms) {
+        printRoom(r);
+    }
+}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function printRoom(room) {
+    if (room) {
+        console.log(`Room[${room.roomId}] = { name: "${room.name}", membership: ${room.getMyMembership()} }`);
+    }
+    else {
+        console.log(`"room" is undefined. Cannot print.`);
     }
 }

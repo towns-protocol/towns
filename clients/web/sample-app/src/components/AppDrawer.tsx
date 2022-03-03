@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { Button, IconButton, Theme } from "@mui/material";
-import { Membership, isRoom, useStore } from "use-matrix-client";
+import { Membership, isRoom, useMatrixStore } from "use-matrix-client";
 import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -36,7 +36,7 @@ export default function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [currentChatRoom, setCurrentChatRoom] = useState<CurrentChatRoom>();
-  const { rooms, username } = useStore();
+  const { rooms, username } = useMatrixStore();
   const [showCreateRoomForm, setShowCreateRoomForm] = useState<boolean>(false);
 
   const handleDrawerToggle = useCallback(() => {

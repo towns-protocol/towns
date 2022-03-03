@@ -7,7 +7,7 @@ import {
 import { useCallback, useEffect, useRef } from "react";
 
 import { CreateRoomInfo } from "../types/matrix-types";
-import { useStore } from "../store/store";
+import { useMatrixStore } from "../store/store";
 
 const MATRIX_HOMESERVER_URL =
   process.env.MATRIX_HOME_SERVER ?? "http://localhost:8008";
@@ -33,7 +33,7 @@ export function useMatrixClient() {
     setIsAuthenticated,
     setUserId,
     setUsername,
-  } = useStore();
+  } = useMatrixStore();
 
   const matrixClientRef = useRef<MatrixClient | null>();
 

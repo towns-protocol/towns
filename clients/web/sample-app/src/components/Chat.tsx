@@ -1,5 +1,5 @@
 import { Box, Grid, Theme, Typography } from "@mui/material";
-import { useMatrixClient, useStore } from "use-matrix-client";
+import { useMatrixClient, useMatrixStore } from "use-matrix-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ChatMessages } from "./ChatMessages";
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export function Chat(props: Props): JSX.Element {
-  const { rooms } = useStore();
+  const { rooms } = useMatrixStore();
   const { inviteUser, leaveRoom, joinRoom, sendMessage } = useMatrixClient();
   const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
 
