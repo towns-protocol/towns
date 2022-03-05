@@ -15,5 +15,6 @@ export declare function useMatrixClient(): {
     logout: () => Promise<void>;
     registerNewUser: (username: string, password: string) => Promise<LoginResult>;
     sendMessage: (roomId: string, message: string) => Promise<void>;
+    syncRoom: (roomId: string) => Promise<void>;
 };
 export {};

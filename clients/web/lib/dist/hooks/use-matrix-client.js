@@ -16,7 +16,7 @@ const react_1 = require("react");
 const store_1 = require("../store/store");
 const MATRIX_HOMESERVER_URL = (_a = process.env.MATRIX_HOME_SERVER) !== null && _a !== void 0 ? _a : "http://localhost:8008";
 function useMatrixClient() {
-    const { accessToken, homeServer, isAuthenticated, userId, username, setAccessToken, setDeviceId, setHomeServer, setIsAuthenticated, setUserId, setUsername, } = (0, store_1.useMatrixStore)();
+    const { accessToken, homeServer, isAuthenticated, rooms, userId, username, setAccessToken, setDeviceId, setHomeServer, setIsAuthenticated, setRoomName, setUserId, setUsername, } = (0, store_1.useMatrixStore)();
     const matrixClientRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(function () {
         if (isAuthenticated) {
@@ -168,6 +168,26 @@ function useMatrixClient() {
             }
         });
     }, []);
+    const syncRoom = (0, react_1.useCallback)(function (roomId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (matrixClientRef.current) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const roomNameEvent = yield matrixClientRef.current.getStateEvent(roomId, "m.room.name");
+                    if (roomNameEvent === null || roomNameEvent === void 0 ? void 0 : roomNameEvent.name) {
+                        setRoomName(roomId, roomNameEvent.name);
+                    }
+                    else {
+                        console.log(`Querying "m.room.name" got nothing`);
+                    }
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            }
+            catch (ex) {
+                console.error(`Error syncing room ${roomId}`, ex.stack);
+            }
+        });
+    }, []);
     return {
         createRoom,
         inviteUser,
@@ -177,6 +197,7 @@ function useMatrixClient() {
         logout,
         registerNewUser,
         sendMessage,
+        syncRoom,
     };
 }
 exports.useMatrixClient = useMatrixClient;

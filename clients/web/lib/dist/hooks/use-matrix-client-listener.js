@@ -17,7 +17,6 @@ const store_1 = require("../store/store");
 var SyncAction;
 (function (SyncAction) {
     SyncAction["SyncAll"] = "SyncAll";
-    SyncAction["SyncRoom"] = "SyncRoom";
     SyncAction["SyncMyRoomMembership"] = "SyncMyRoomMembership";
 })(SyncAction || (SyncAction = {}));
 function useMatrixClientListener() {
@@ -32,16 +31,6 @@ function useMatrixClientListener() {
                     const rooms = matrixClientRef.current.getRooms();
                     printRooms(rooms);
                     setAllRooms(rooms);
-                    break;
-                }
-                case SyncAction.SyncRoom: {
-                    const prop = syncInfo.props;
-                    console.log(`Sync room ${prop.roomId}`);
-                    const room = matrixClientRef.current.getRoom(prop.roomId);
-                    if (room) {
-                        setRoom(room);
-                    }
-                    printRoom(room);
                     break;
                 }
                 case SyncAction.SyncMyRoomMembership: {

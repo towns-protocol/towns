@@ -25,3 +25,8 @@ export declare type StoreStates = {
     updateMembership: (roomId: string, userId: string, membership: Membership, isMyRoomMembership: boolean) => void;
 };
 export declare const useMatrixStore: import("zustand").UseBoundStore<StoreStates, import("zustand").StoreApi<StoreStates>>;
+export declare function setNewMessage(state: StoreStates, roomId: string, message: string): {
+    allMessages: {
+        [x: string]: string[];
+    };
+};

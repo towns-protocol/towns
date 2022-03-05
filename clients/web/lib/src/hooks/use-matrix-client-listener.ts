@@ -11,21 +11,15 @@ import { useMatrixStore } from "../store/store";
 
 enum SyncAction {
   SyncAll = "SyncAll",
-  SyncRoom = "SyncRoom",
   SyncMyRoomMembership = "SyncMyRoomMembership",
 }
 
-type SyncProps = SyncRoomProps | SyncMyRoomMembershipProps;
-
-interface SyncRoomProps {
-  roomId: string;
-}
-
-interface SyncMyRoomMembershipProps {
+interface SyncProps {
   roomId: string;
   userId: string;
   membership: Membership;
 }
+
 interface SyncRoomInfo {
   action: SyncAction;
   props?: SyncProps;
@@ -60,18 +54,8 @@ export function useMatrixClientListener() {
             setAllRooms(rooms);
             break;
           }
-          case SyncAction.SyncRoom: {
-            const prop = syncInfo.props as SyncRoomProps;
-            console.log(`Sync room ${prop.roomId}`);
-            const room = matrixClientRef.current.getRoom(prop.roomId);
-            if (room) {
-              setRoom(room);
-            }
-            printRoom(room);
-            break;
-          }
           case SyncAction.SyncMyRoomMembership: {
-            const prop = syncInfo.props as SyncMyRoomMembershipProps;
+            const prop = syncInfo.props as SyncProps;
             const room = matrixClientRef.current.getRoom(prop.roomId);
             if (room) {
               setRoom(room);
@@ -190,7 +174,7 @@ export function useMatrixClientListener() {
                   roomId: member.roomId,
                   userId: member.userId,
                   membership: member.membership,
-                } as SyncMyRoomMembershipProps,
+                } as SyncProps,
               });
               break;
             }

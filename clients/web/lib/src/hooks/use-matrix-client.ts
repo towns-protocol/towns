@@ -6,7 +6,7 @@ import {
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef } from "react";
 
-import { CreateRoomInfo } from "../types/matrix-types";
+import { CreateRoomInfo, Room } from "../types/matrix-types";
 import { useMatrixStore } from "../store/store";
 
 const MATRIX_HOMESERVER_URL =
@@ -25,12 +25,14 @@ export function useMatrixClient() {
     accessToken,
     homeServer,
     isAuthenticated,
+    rooms,
     userId,
     username,
     setAccessToken,
     setDeviceId,
     setHomeServer,
     setIsAuthenticated,
+    setRoomName,
     setUserId,
     setUsername,
   } = useMatrixStore();
@@ -218,6 +220,27 @@ export function useMatrixClient() {
     }
   }, []);
 
+  const syncRoom = useCallback(async function (roomId: string) {
+    try {
+      if (matrixClientRef.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const roomNameEvent: any = await matrixClientRef.current.getStateEvent(
+          roomId,
+          "m.room.name"
+        );
+
+        if (roomNameEvent?.name) {
+          setRoomName(roomId, roomNameEvent.name);
+        } else {
+          console.log(`Querying "m.room.name" got nothing`);
+        }
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (ex: any) {
+      console.error(`Error syncing room ${roomId}`, ex.stack);
+    }
+  }, []);
+
   return {
     createRoom,
     inviteUser,
@@ -227,6 +250,7 @@ export function useMatrixClient() {
     logout,
     registerNewUser,
     sendMessage,
+    syncRoom,
   };
 }
 

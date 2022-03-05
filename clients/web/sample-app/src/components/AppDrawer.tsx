@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Button, IconButton, Theme } from "@mui/material";
 import { Membership, isRoom, useMatrixStore } from "use-matrix-client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import AppBar from "@mui/material/AppBar";
@@ -35,7 +35,7 @@ interface CurrentChatRoom {
 export default function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [currentChatRoom, setCurrentChatRoom] = useState<CurrentChatRoom>();
+  const [currentChatRoom, setCurrentChatRoom] = useState<CurrentChatRoom | undefined>(undefined);
   const { rooms, username } = useMatrixStore();
   const [showCreateRoomForm, setShowCreateRoomForm] = useState<boolean>(false);
 
@@ -59,7 +59,7 @@ export default function AppDrawer(props: Props): JSX.Element {
     if (rooms) {
       for (const r of Object.values(rooms)) {
         if (isRoom(r) && r.membership === Membership.Join && r.roomId !== currentChatRoom?.roomId) {
-          setCurrentChatRoom({
+          return setCurrentChatRoom({
             roomId: r.roomId,
             membership: r.membership,
           });
