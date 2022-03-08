@@ -2,17 +2,19 @@ import { MatrixClient } from "matrix-js-sdk";
 import { createContext } from "react";
 import { useMatrixClientListener } from "../hooks/use-matrix-client-listener";
 
-const MATRIX_HOMESERVER_URL =
-  process.env.MATRIX_HOME_SERVER ?? "http://localhost:8008";
-
 export const MatrixContext = createContext<MatrixClient | undefined>(undefined);
 
-export function MatrixContextProvider({ children }): JSX.Element {
-  const { matrixClient } = useMatrixClientListener(MATRIX_HOMESERVER_URL);
+interface Props {
+  homeServerUrl: string;
+  children: JSX.Element;
+}
+
+export function MatrixContextProvider(props: Props): JSX.Element {
+  const { matrixClient } = useMatrixClientListener(props.homeServerUrl);
 
   return (
     <MatrixContext.Provider value={matrixClient}>
-      {children}
+      {props.children}
     </MatrixContext.Provider>
   );
 }

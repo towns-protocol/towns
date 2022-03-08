@@ -4,11 +4,14 @@ import { MatrixContextProvider } from "use-matrix-client";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 
+const MATRIX_HOMESERVER_URL =
+  process.env.MATRIX_HOME_SERVER ?? "http://localhost:8008";
+
 export function App(): JSX.Element {
   return (
     <ThemeProvider theme={theme}>
       <Container maxWidth="md">
-        <MatrixContextProvider>
+        <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
           <Main />
         </MatrixContextProvider>
       </Container>

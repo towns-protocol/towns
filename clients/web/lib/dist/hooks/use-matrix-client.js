@@ -58,6 +58,7 @@ function useMatrixClient() {
                 }
             }
             setLogInStatus(login_1.LogInStatus.LoggedOut);
+            setAccessToken("");
         });
     }, []);
     const loginWithPassword = (0, react_1.useCallback)(function (username, password) {
