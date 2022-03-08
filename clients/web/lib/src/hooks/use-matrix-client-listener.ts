@@ -101,7 +101,7 @@ export function useMatrixClientListener(homeServerUrl: string) {
         client.once(
           "sync",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-          async function (state: any, prevState: any, res: any) {
+          function (state: any, prevState: any, res: any) {
             if (state === "PREPARED") {
               setSyncInfo({ action: SyncAction.SyncAll }); // Create a new object to force sync.
             } else {
@@ -113,7 +113,7 @@ export function useMatrixClientListener(homeServerUrl: string) {
         client.on(
           "Room.timeline",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-          async function (event: any, room: any, toStartOfTimeline: any) {
+          function (event: any, room: any, toStartOfTimeline: any) {
             switch (event.getType()) {
               case "m.room.message": {
                 console.log(

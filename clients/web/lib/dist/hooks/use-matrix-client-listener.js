@@ -68,61 +68,57 @@ function useMatrixClientListener(homeServerUrl) {
                 client.once("sync", 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
                 function (state, prevState, res) {
-                    return __awaiter(this, void 0, void 0, function* () {
-                        if (state === "PREPARED") {
-                            setSyncInfo({ action: SyncAction.SyncAll }); // Create a new object to force sync.
-                        }
-                        else {
-                            console.log(state);
-                        }
-                    });
+                    if (state === "PREPARED") {
+                        setSyncInfo({ action: SyncAction.SyncAll }); // Create a new object to force sync.
+                    }
+                    else {
+                        console.log(state);
+                    }
                 });
                 client.on("Room.timeline", 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
                 function (event, room, toStartOfTimeline) {
-                    return __awaiter(this, void 0, void 0, function* () {
-                        switch (event.getType()) {
-                            case "m.room.message": {
-                                console.log(`Room[${room.roomId}]: ${event.event.content.body}`);
-                                setNewMessage(room.roomId, event.event.content.body);
-                                break;
-                            }
-                            case "m.room.create": {
-                                console.log(`m.room.create`, { roomId: room.roomId });
-                                createRoom(room.roomId);
-                                break;
-                            }
-                            case "m.room.name": {
-                                const roomId = event.getRoomId();
-                                const name = event.getContent().name;
-                                console.log(`m.room.name`, {
-                                    roomId,
-                                    name,
-                                });
-                                setRoomName(roomId, name);
-                                break;
-                            }
-                            case "m.room.member": {
-                                const roomId = event.getRoomId();
-                                const userId = event.getStateKey();
-                                const membership = event.getContent().membership;
-                                console.log(`m.room.member`, {
-                                    roomId,
-                                    userId,
-                                    membership,
-                                    content: event.getContent(),
-                                    event: JSON.stringify(event),
-                                });
-                                if (roomId && userId && membership) {
-                                    updateMembership(roomId, userId, membership, client.getUserId() === userId);
-                                }
-                                break;
-                            }
-                            default:
-                                console.log(`Room.timeline event`, event.getType());
-                                break;
+                    switch (event.getType()) {
+                        case "m.room.message": {
+                            console.log(`Room[${room.roomId}]: ${event.event.content.body}`);
+                            setNewMessage(room.roomId, event.event.content.body);
+                            break;
                         }
-                    });
+                        case "m.room.create": {
+                            console.log(`m.room.create`, { roomId: room.roomId });
+                            createRoom(room.roomId);
+                            break;
+                        }
+                        case "m.room.name": {
+                            const roomId = event.getRoomId();
+                            const name = event.getContent().name;
+                            console.log(`m.room.name`, {
+                                roomId,
+                                name,
+                            });
+                            setRoomName(roomId, name);
+                            break;
+                        }
+                        case "m.room.member": {
+                            const roomId = event.getRoomId();
+                            const userId = event.getStateKey();
+                            const membership = event.getContent().membership;
+                            console.log(`m.room.member`, {
+                                roomId,
+                                userId,
+                                membership,
+                                content: event.getContent(),
+                                event: JSON.stringify(event),
+                            });
+                            if (roomId && userId && membership) {
+                                updateMembership(roomId, userId, membership, client.getUserId() === userId);
+                            }
+                            break;
+                        }
+                        default:
+                            console.log(`Room.timeline event`, event.getType());
+                            break;
+                    }
                 });
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
                 client.on("RoomMember.membership", function (event, member) {
