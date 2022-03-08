@@ -1,13 +1,14 @@
 import {
   CreateClientOption,
   MatrixClient,
-  createClient,
   Room,
+  createClient,
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Membership } from "../types/matrix-types";
-import { useMatrixStore } from "../store/store";
+import { useCredentialStore } from "../store/use-credential-store";
+import { useMatrixStore } from "../store/use-matrix-store";
 
 enum SyncAction {
   SyncAll = "SyncAll",
@@ -25,9 +26,8 @@ interface SyncRoomInfo {
   props?: SyncProps;
 }
 
-export function useMatrixClientListener() {
+export function useMatrixClientListener(homeServerUrl: string) {
   const {
-    accessToken,
     homeServer,
     isAuthenticated,
     userId,
@@ -35,13 +35,21 @@ export function useMatrixClientListener() {
     joinRoom,
     leaveRoom,
     setAllRooms,
+    setHomeServer,
     setNewMessage,
     setRoom,
     setRoomName,
     updateMembership,
   } = useMatrixStore();
+
+  const { accessToken } = useCredentialStore();
+
   const matrixClientRef = useRef<MatrixClient>();
   const [syncInfo, setSyncInfo] = useState<SyncRoomInfo>();
+
+  useEffect(function () {
+    setHomeServer(homeServerUrl);
+  }, []);
 
   useEffect(
     function () {
@@ -224,6 +232,10 @@ export function useMatrixClientListener() {
       }
     }
   }, [isAuthenticated, startClient]);
+
+  return {
+    matrixClient: matrixClientRef.current,
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

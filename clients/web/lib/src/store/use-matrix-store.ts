@@ -2,17 +2,17 @@ import { Membership, Room, Rooms, RoomsMessages } from "../types/matrix-types";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
 import createStore, { SetState } from "zustand";
+import { LogInStatus } from "../hooks/login";
 
-export type StoreStates = {
+export type MatrixStoreStates = {
   createRoom: (roomId: string) => void;
   isAuthenticated: boolean;
-  setIsAuthenticated: (isAuthenticated: boolean) => void;
-  accessToken: string | null;
-  setAccessToken: (accessToken: string | undefined) => void;
   deviceId: string | null;
   setDeviceId: (deviceId: string | undefined) => void;
   homeServer: string | null;
   setHomeServer: (homeServer: string | undefined) => void;
+  loginStatus: LogInStatus;
+  setLogInStatus: (loginStatus: LogInStatus) => void;
   allMessages: RoomsMessages | null;
   setNewMessage: (roomId: string, message: string) => void;
   rooms: Rooms | null;
@@ -41,25 +41,25 @@ export type StoreStates = {
   ) => void;
 };
 
-export const useMatrixStore = createStore<StoreStates>(
-  (set: SetState<StoreStates>) => ({
+export const useMatrixStore = createStore<MatrixStoreStates>(
+  (set: SetState<MatrixStoreStates>) => ({
     isAuthenticated: false,
-    setIsAuthenticated: (isAuthenticated: boolean) =>
-      isAuthenticated
-        ? set({ isAuthenticated: true })
-        : set({
-            isAuthenticated: false,
-            accessToken: null,
-            deviceId: null,
-            homeServer: null,
+    loginStatus: LogInStatus.LoggedOut,
+    setLogInStatus: (loginStatus: LogInStatus) =>
+      loginStatus === LogInStatus.LoggedOut
+        ? set({
             allMessages: null,
+            isAuthenticated: false,
+            deviceId: null,
+            loginStatus,
             rooms: null,
             userId: null,
             username: null,
+          })
+        : set({
+            isAuthenticated: loginStatus === LogInStatus.LoggedIn,
+            loginStatus,
           }),
-    accessToken: null,
-    setAccessToken: (accessToken: string | undefined) =>
-      set({ accessToken: accessToken ?? null }),
     deviceId: null,
     setDeviceId: (deviceId: string | undefined) =>
       set({ deviceId: deviceId ?? null }),
@@ -69,21 +69,21 @@ export const useMatrixStore = createStore<StoreStates>(
     rooms: null,
     allMessages: null,
     createRoom: (roomId: string) =>
-      set((state: StoreStates) => createRoom(state, roomId)),
+      set((state: MatrixStoreStates) => createRoom(state, roomId)),
     setNewMessage: (roomId: string, message: string) =>
-      set((state: StoreStates) => setNewMessage(state, roomId, message)),
+      set((state: MatrixStoreStates) => setNewMessage(state, roomId, message)),
     setRoom: (room: MatrixRoom) =>
-      set((state: StoreStates) => setRoom(state, room)),
+      set((state: MatrixStoreStates) => setRoom(state, room)),
     setAllRooms: (rooms: MatrixRoom[]) =>
-      set((state: StoreStates) => setAllRooms(state, rooms)),
+      set((state: MatrixStoreStates) => setAllRooms(state, rooms)),
     setRoomName: (roomId: string, roomName: string) =>
-      set((state: StoreStates) => setRoomName(state, roomId, roomName)),
+      set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
     joinRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
-      set((state: StoreStates) =>
+      set((state: MatrixStoreStates) =>
         joinRoom(state, roomId, userId, isMyRoomMembership)
       ),
     leaveRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
-      set((state: StoreStates) =>
+      set((state: MatrixStoreStates) =>
         leaveRoom(state, roomId, userId, isMyRoomMembership)
       ),
     userId: null,
@@ -97,13 +97,13 @@ export const useMatrixStore = createStore<StoreStates>(
       membership: Membership,
       isMyRoomMembership: boolean
     ) =>
-      set((state: StoreStates) =>
+      set((state: MatrixStoreStates) =>
         updateMembership(state, roomId, userId, membership, isMyRoomMembership)
       ),
   })
 );
 
-function createRoom(state: StoreStates, roomId: string) {
+function createRoom(state: MatrixStoreStates, roomId: string) {
   const changedRooms = { ...state.rooms };
   const newdRoom: Room = {
     roomId,
@@ -116,7 +116,7 @@ function createRoom(state: StoreStates, roomId: string) {
 }
 
 export function setNewMessage(
-  state: StoreStates,
+  state: MatrixStoreStates,
   roomId: string,
   message: string
 ) {
@@ -129,7 +129,7 @@ export function setNewMessage(
   return { allMessages: changedAllMessages };
 }
 
-function setRoom(state: StoreStates, room: MatrixRoom) {
+function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
   const changedRooms = { ...state.rooms };
   const changedRoom: Room = {
     roomId: room.roomId,
@@ -158,7 +158,7 @@ function setRoom(state: StoreStates, room: MatrixRoom) {
   return { rooms: changedRooms };
 }
 
-function setAllRooms(state: StoreStates, matrixRooms: MatrixRoom[]) {
+function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
   const changedRooms: Rooms = {};
   for (const r of matrixRooms) {
     console.log(`matrixRoom[${r.roomId}]`, { name: r.name });
@@ -190,7 +190,11 @@ function setAllRooms(state: StoreStates, matrixRooms: MatrixRoom[]) {
   return { rooms: changedRooms };
 }
 
-function setRoomName(state: StoreStates, roomId: string, newName: string) {
+function setRoomName(
+  state: MatrixStoreStates,
+  roomId: string,
+  newName: string
+) {
   const room = state.rooms?.[roomId];
   if (room && room.name !== newName) {
     const changedRoom = { ...room };
@@ -205,7 +209,7 @@ function setRoomName(state: StoreStates, roomId: string, newName: string) {
 }
 
 function updateMembership(
-  state: StoreStates,
+  state: MatrixStoreStates,
   roomId: string,
   userId: string,
   membership: Membership,
@@ -233,7 +237,7 @@ function updateMembership(
 }
 
 function leaveRoom(
-  state: StoreStates,
+  state: MatrixStoreStates,
   roomId: string,
   userId: string,
   isMyRoomMembership: boolean
@@ -259,7 +263,7 @@ function leaveRoom(
 }
 
 function joinRoom(
-  state: StoreStates,
+  state: MatrixStoreStates,
   roomId: string,
   userId: string,
   isMyRoomMembership: boolean

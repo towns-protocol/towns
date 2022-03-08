@@ -1,16 +1,16 @@
+import { CreateRoomOptions, MatrixClient } from "matrix-js-sdk";
 import {
-  CreateClientOption,
-  CreateRoomOptions,
-  MatrixClient,
-  createClient,
-} from "matrix-js-sdk";
-import { useCallback, useEffect, useRef } from "react";
+  LogInStatus,
+  getUserNamePart,
+  matrixLoginWithPassword,
+  matrixRegisterUser,
+} from "./login";
+import { useCallback, useContext } from "react";
 
-import { CreateRoomInfo, Room } from "../types/matrix-types";
-import { useMatrixStore } from "../store/store";
-
-const MATRIX_HOMESERVER_URL =
-  process.env.MATRIX_HOME_SERVER ?? "http://localhost:8008";
+import { CreateRoomInfo } from "../types/matrix-types";
+import { MatrixContext } from "../components/MatrixContextProvider";
+import { useCredentialStore } from "../store/use-credential-store";
+import { useMatrixStore } from "../store/use-matrix-store";
 
 interface LoginResult {
   accessToken: string | undefined;
@@ -22,53 +22,31 @@ interface LoginResult {
 
 export function useMatrixClient() {
   const {
-    accessToken,
     homeServer,
-    isAuthenticated,
-    rooms,
-    userId,
     username,
-    setAccessToken,
     setDeviceId,
-    setHomeServer,
-    setIsAuthenticated,
+    setLogInStatus,
     setRoomName,
     setUserId,
     setUsername,
   } = useMatrixStore();
 
-  const matrixClientRef = useRef<MatrixClient | null>();
+  const { setAccessToken } = useCredentialStore();
 
-  useEffect(
-    function () {
-      if (isAuthenticated) {
-        if (accessToken && homeServer && userId) {
-          const options: CreateClientOption = {
-            baseUrl: homeServer,
-            accessToken: accessToken,
-            userId: userId,
-          };
-          matrixClientRef.current = createClient(options);
-        }
-      } else {
-        matrixClientRef.current = null;
-      }
-    },
-    [accessToken, homeServer, isAuthenticated, userId]
-  );
+  const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
 
   const createRoom = useCallback(async function (
     createInfo: CreateRoomInfo
   ): Promise<string | undefined> {
     try {
-      if (matrixClientRef.current) {
+      if (matrixClient) {
         const options: CreateRoomOptions = {
           //room_alias_name: "my_room_alias3",
           visibility: createInfo.visibility,
           name: createInfo.roomName,
           is_direct: createInfo.isDirectMessage,
         };
-        const response = await matrixClientRef.current.createRoom(options);
+        const response = await matrixClient.createRoom(options);
         console.log(`Created room`, JSON.stringify(response));
         return response.room_id;
       } else {
@@ -82,85 +60,71 @@ export function useMatrixClient() {
   },
   []);
 
-  const logout = useCallback(
-    async function (): Promise<void> {
-      if (accessToken) {
-        await matrixLogout(MATRIX_HOMESERVER_URL, accessToken);
+  const logout = useCallback(async function (): Promise<void> {
+    setLogInStatus(LogInStatus.LoggingOut);
+    if (matrixClient) {
+      try {
+        await matrixClient.logout();
+        console.log(`Logged out`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (ex: any) {
+        console.error(`Error logging out:`, ex.stack);
       }
-      setIsAuthenticated(false);
-    },
-    [accessToken, setIsAuthenticated]
-  );
+    }
+    setLogInStatus(LogInStatus.LoggedOut);
+  }, []);
 
   const loginWithPassword = useCallback(
     async function (username: string, password: string): Promise<LoginResult> {
       await logout();
+      setLogInStatus(LogInStatus.LoggingIn);
       const response = await matrixLoginWithPassword(
-        MATRIX_HOMESERVER_URL,
+        homeServer,
         username,
         password
       );
       if (response.accessToken) {
         setAccessToken(response.accessToken);
         setDeviceId(response.deviceId);
-        setHomeServer(getHomeServerUrl(response.homeServer));
         setUserId(response.userId);
         setUsername(getUserNamePart(response.userId));
-        setIsAuthenticated(true);
+        setLogInStatus(LogInStatus.LoggedIn);
+      } else {
+        setLogInStatus(LogInStatus.LoggedOut);
       }
 
       return response;
     },
-    [
-      logout,
-      setAccessToken,
-      setDeviceId,
-      setHomeServer,
-      setIsAuthenticated,
-      setUserId,
-      setUsername,
-    ]
+    [homeServer]
   );
 
   const registerNewUser = useCallback(
     async function (username: string, password: string): Promise<LoginResult> {
       await logout();
-      const response = await matrixRegisterUser(
-        MATRIX_HOMESERVER_URL,
-        username,
-        password
-      );
+      setLogInStatus(LogInStatus.LoggingIn);
+      const response = await matrixRegisterUser(homeServer, username, password);
       if (response.accessToken) {
         setAccessToken(response.accessToken);
         setDeviceId(response.deviceId);
-        setHomeServer(getHomeServerUrl(response.homeServer));
         setUserId(response.userId);
         setUsername(getUserNamePart(response.userId));
-        setIsAuthenticated(true);
+        setLogInStatus(LogInStatus.LoggedIn);
       }
 
       return response;
     },
-    [
-      logout,
-      setAccessToken,
-      setDeviceId,
-      setHomeServer,
-      setIsAuthenticated,
-      setUserId,
-      setUsername,
-    ]
+    [homeServer]
   );
 
   const sendMessage = useCallback(
     async function (roomId: string, message: string) {
-      if (matrixClientRef.current) {
+      if (matrixClient) {
         const content = {
           body: `${username}: ${message}`,
           msgtype: "m.text",
         };
 
-        await matrixClientRef.current.sendEvent(
+        await matrixClient.sendEvent(
           roomId,
           "m.room.message",
           content,
@@ -178,8 +142,8 @@ export function useMatrixClient() {
   );
 
   const leaveRoom = useCallback(async function (roomId: string) {
-    if (matrixClientRef.current) {
-      await matrixClientRef.current.leave(roomId);
+    if (matrixClient) {
+      await matrixClient.leave(roomId);
       console.log(`Left room ${roomId}`);
     }
   }, []);
@@ -188,8 +152,8 @@ export function useMatrixClient() {
     roomId: string,
     userId: string
   ) {
-    if (matrixClientRef.current) {
-      await matrixClientRef.current.invite(
+    if (matrixClient) {
+      await matrixClient.invite(
         roomId,
         userId,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
@@ -210,8 +174,8 @@ export function useMatrixClient() {
     };
 
     try {
-      if (matrixClientRef.current) {
-        await matrixClientRef.current.joinRoom(roomId, opts);
+      if (matrixClient) {
+        await matrixClient.joinRoom(roomId, opts);
         console.log(`Joined room[${roomId}]`);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -222,9 +186,9 @@ export function useMatrixClient() {
 
   const syncRoom = useCallback(async function (roomId: string) {
     try {
-      if (matrixClientRef.current) {
+      if (matrixClient) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const roomNameEvent: any = await matrixClientRef.current.getStateEvent(
+        const roomNameEvent: any = await matrixClient.getStateEvent(
           roomId,
           "m.room.name"
         );
@@ -252,110 +216,4 @@ export function useMatrixClient() {
     sendMessage,
     syncRoom,
   };
-}
-
-function getUserNamePart(userId: string | undefined): string | undefined {
-  if (userId) {
-    const regexName = /^@(?<name>\w+):/;
-    const match = regexName.exec(userId);
-    const username = match?.groups?.name ?? undefined;
-    return username;
-  }
-
-  return undefined;
-}
-
-function getHomeServerUrl(homeServer: string | undefined): string | undefined {
-  if (homeServer) {
-    if (homeServer.startsWith("http://") || homeServer.startsWith("https://")) {
-      return homeServer;
-    } else {
-      return `http://${homeServer}`;
-    }
-  }
-
-  return undefined;
-}
-
-async function matrixRegisterUser(
-  homeServerUrl: string,
-  username: string,
-  password: string
-): Promise<LoginResult> {
-  let error: string | undefined;
-  try {
-    const newClient = createClient(homeServerUrl);
-    const response = await newClient.register(username, password, undefined, {
-      type: "m.login.dummy",
-      //type: "m.login.password",
-    });
-    //console.log(`response:`, JSON.stringify(response));
-    return {
-      accessToken: response.access_token,
-      deviceId: response.device_id,
-      homeServer: response.home_server,
-      userId: response.user_id,
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (ex: any) {
-    error = ex.message;
-    console.error(`Error creating new user:`, ex.stack);
-  }
-
-  return {
-    accessToken: undefined,
-    deviceId: undefined,
-    homeServer: undefined,
-    userId: undefined,
-    error,
-  };
-}
-
-async function matrixLoginWithPassword(
-  homeServerUrl: string,
-  username: string,
-  password: string
-): Promise<LoginResult> {
-  let error: string | undefined;
-  try {
-    const newClient = createClient(homeServerUrl);
-    const response = await newClient.loginWithPassword(username, password);
-    //console.log(`response:`, JSON.stringify(response));
-    return {
-      accessToken: response.access_token,
-      deviceId: response.device_id,
-      homeServer: response.home_server,
-      userId: response.user_id,
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (ex: any) {
-    error = ex.message;
-    console.error(`Error logging in:`, ex.stack);
-  }
-
-  return {
-    accessToken: undefined,
-    deviceId: undefined,
-    homeServer: undefined,
-    userId: undefined,
-    error,
-  };
-}
-
-async function matrixLogout(
-  homeServerUrl: string,
-  accessToken: string
-): Promise<void> {
-  const options: CreateClientOption = {
-    baseUrl: homeServerUrl,
-    accessToken,
-  };
-  try {
-    const newClient = createClient(options);
-    await newClient.logout();
-    console.log(`Logged out`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (ex: any) {
-    console.error(`Error logging out:`, ex.stack);
-  }
 }

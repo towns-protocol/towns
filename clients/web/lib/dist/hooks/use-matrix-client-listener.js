@@ -13,16 +13,21 @@ exports.useMatrixClientListener = void 0;
 const matrix_js_sdk_1 = require("matrix-js-sdk");
 const react_1 = require("react");
 const matrix_types_1 = require("../types/matrix-types");
-const store_1 = require("../store/store");
+const use_credential_store_1 = require("../store/use-credential-store");
+const use_matrix_store_1 = require("../store/use-matrix-store");
 var SyncAction;
 (function (SyncAction) {
     SyncAction["SyncAll"] = "SyncAll";
     SyncAction["SyncMyRoomMembership"] = "SyncMyRoomMembership";
 })(SyncAction || (SyncAction = {}));
-function useMatrixClientListener() {
-    const { accessToken, homeServer, isAuthenticated, userId, createRoom, joinRoom, leaveRoom, setAllRooms, setNewMessage, setRoom, setRoomName, updateMembership, } = (0, store_1.useMatrixStore)();
+function useMatrixClientListener(homeServerUrl) {
+    const { homeServer, isAuthenticated, userId, createRoom, joinRoom, leaveRoom, setAllRooms, setHomeServer, setNewMessage, setRoom, setRoomName, updateMembership, } = (0, use_matrix_store_1.useMatrixStore)();
+    const { accessToken } = (0, use_credential_store_1.useCredentialStore)();
     const matrixClientRef = (0, react_1.useRef)();
     const [syncInfo, setSyncInfo] = (0, react_1.useState)();
+    (0, react_1.useEffect)(function () {
+        setHomeServer(homeServerUrl);
+    }, []);
     (0, react_1.useEffect)(function () {
         if (matrixClientRef.current) {
             switch (syncInfo.action) {
@@ -176,6 +181,9 @@ function useMatrixClientListener() {
             }
         }
     }, [isAuthenticated, startClient]);
+    return {
+        matrixClient: matrixClientRef.current,
+    };
 }
 exports.useMatrixClientListener = useMatrixClientListener;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
