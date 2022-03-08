@@ -72,6 +72,7 @@ export function useMatrixClient() {
       }
     }
     setLogInStatus(LogInStatus.LoggedOut);
+    setAccessToken("");
   }, []);
 
   const loginWithPassword = useCallback(
