@@ -12,3 +12,6 @@
 **/node_modules
 **/cache
 **/.DS_Store
+
+# Debug
+**/__debug_bin
