@@ -1,93 +1,49 @@
 import {
   CreateClientOption,
   MatrixClient,
+  MatrixEvent,
   Room,
+  RoomMember,
   createClient,
 } from "matrix-js-sdk";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Membership } from "../types/matrix-types";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 
-enum SyncAction {
-  SyncAll = "SyncAll",
-  SyncMyRoomMembership = "SyncMyRoomMembership",
-}
-
-interface SyncProps {
+interface SyncMembership {
   roomId: string;
   userId: string;
   membership: Membership;
 }
 
-interface SyncRoomInfo {
-  action: SyncAction;
-  props?: SyncProps;
-}
-
 export function useMatrixClientListener(
   homeServerUrl: string,
-  initialSyncLimit = 10
+  initialSyncLimit = 20
 ) {
-  const {
-    homeServer,
-    isAuthenticated,
-    userId,
-    createRoom,
-    joinRoom,
-    leaveRoom,
-    setAllRooms,
-    setHomeServer,
-    setNewMessage,
-    setRoom,
-    setRoomName,
-    updateMembership,
-  } = useMatrixStore();
+  const { homeServer, isAuthenticated, userId, setHomeServer } =
+    useMatrixStore();
 
   const { accessToken } = useCredentialStore();
 
   const matrixClientRef = useRef<MatrixClient>();
-  const [syncInfo, setSyncInfo] = useState<SyncRoomInfo>();
+
+  const handleRoomEvent = useRoomEventHandler();
+  const handleRoomMembershipEvent =
+    useRoomMembershipEventHandler(matrixClientRef);
+  const handleRoomTimelineEvent = useRoomTimelineEventHandler(matrixClientRef);
+  const handleSync = useSync(matrixClientRef);
 
   useEffect(function () {
     setHomeServer(homeServerUrl);
   }, []);
-
-  useEffect(
-    function () {
-      if (matrixClientRef.current) {
-        switch (syncInfo.action) {
-          case SyncAction.SyncAll: {
-            console.log(`Sync all rooms`);
-            const rooms = matrixClientRef.current.getRooms();
-            printRooms(rooms);
-            setAllRooms(rooms);
-            break;
-          }
-          case SyncAction.SyncMyRoomMembership: {
-            const prop = syncInfo.props as SyncProps;
-            const room = matrixClientRef.current.getRoom(prop.roomId);
-            if (room) {
-              setRoom(room);
-            }
-            updateMembership(
-              prop.roomId,
-              prop.userId,
-              prop.membership,
-              prop.userId === matrixClientRef.current.getUserId()
-            );
-            break;
-          }
-          default: {
-            console.error(`Unsupported ${syncInfo.action}`);
-            break;
-          }
-        }
-      }
-    },
-    [syncInfo]
-  );
 
   const startClient = useCallback(
     async function () {
@@ -106,7 +62,7 @@ export function useMatrixClientListener(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
           function (state: any, prevState: any, res: any) {
             if (state === "PREPARED") {
-              setSyncInfo({ action: SyncAction.SyncAll }); // Create a new object to force sync.
+              handleSync();
             } else {
               console.log(state);
             }
@@ -115,113 +71,26 @@ export function useMatrixClientListener(
 
         client.on(
           "Room.timeline",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           function (event: any, room: any, toStartOfTimeline: any) {
-            switch (event.getType()) {
-              case "m.room.message": {
-                console.log(
-                  `Room[${room.roomId}]: ${event.event.content.body}`
-                );
-                setNewMessage(room.roomId, event.event.content.body);
-                break;
-              }
-              case "m.room.create": {
-                console.log(`m.room.create`, { roomId: room.roomId });
-                createRoom(room.roomId);
-                break;
-              }
-              case "m.room.name": {
-                const roomId = event.getRoomId();
-                const name = event.getContent().name;
-                console.log(`m.room.name`, {
-                  roomId,
-                  name,
-                });
-                setRoomName(roomId, name);
-                break;
-              }
-              case "m.room.member": {
-                const roomId = event.getRoomId();
-                const userId = event.getStateKey();
-                const membership = event.getContent().membership;
-                console.log(`m.room.member`, {
-                  roomId,
-                  userId,
-                  membership,
-                  content: event.getContent(),
-                  event: JSON.stringify(event),
-                });
-
-                if (roomId && userId && membership) {
-                  updateMembership(
-                    roomId,
-                    userId,
-                    membership,
-                    client.getUserId() === userId
-                  );
-                }
-                break;
-              }
-              default:
-                console.log(`Room.timeline event`, event.getType());
-                break;
-            }
+            handleRoomTimelineEvent(event, room, toStartOfTimeline);
           }
         );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-        client.on("RoomMember.membership", function (event: any, member: any) {
-          console.log(`RoomMember.membership event`, {
-            eventType: event.getType(),
-            userId: member.userId,
-            roomId: member.roomId,
-            membership: member.membership,
-          });
-          switch (member.membership) {
-            case Membership.Invite: {
-              setSyncInfo({
-                action: SyncAction.SyncMyRoomMembership,
-                props: {
-                  roomId: member.roomId,
-                  userId: member.userId,
-                  membership: member.membership,
-                } as SyncProps,
-              });
-              break;
-            }
-            case Membership.Join: {
-              joinRoom(
-                member.roomId,
-                member.userId,
-                member.userId === client.getUserId()
-              );
-              break;
-            }
-            case Membership.Leave: {
-              leaveRoom(
-                member.roomId,
-                member.userId,
-                member.userId === client.getUserId()
-              );
-              break;
-            }
-            default:
-              break;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        client.on(
+          "RoomMember.membership",
+          function (event: MatrixEvent, member: RoomMember) {
+            handleRoomMembershipEvent(event, member);
           }
+        );
+
+        client.on("Room", function (room: Room) {
+          handleRoomEvent(room);
         });
       }
     },
-    [
-      accessToken,
-      homeServer,
-      initialSyncLimit,
-      leaveRoom,
-      setNewMessage,
-      setRoomName,
-      setAllRooms,
-      updateMembership,
-      userId,
-    ]
+    [accessToken, homeServer, initialSyncLimit, userId]
   );
 
   useEffect(() => {
@@ -242,14 +111,12 @@ export function useMatrixClientListener(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function printRooms(rooms: Room[]): void {
   for (const r of rooms) {
     printRoom(r);
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function printRoom(room: Room): void {
   if (room) {
     console.log(
@@ -260,4 +127,174 @@ function printRoom(room: Room): void {
   } else {
     console.log(`"room" is undefined. Cannot print.`);
   }
+}
+
+function useSync(matrixClientRef: MutableRefObject<MatrixClient>) {
+  const [syncInfo, setSyncInfo] = useState<unknown>();
+  const { setAllRooms } = useMatrixStore();
+
+  useEffect(
+    function () {
+      if (matrixClientRef.current) {
+        console.log(`Sync all rooms`);
+        const rooms = matrixClientRef.current.getRooms();
+        printRooms(rooms);
+        setAllRooms(rooms);
+      }
+    },
+    [syncInfo]
+  );
+
+  const handleSyncAll = useCallback(function () {
+    // Force a sync by mutating the state.
+    setSyncInfo({});
+  }, []);
+
+  return handleSyncAll;
+}
+
+function useRoomMembershipEventHandler(
+  matrixClientRef: MutableRefObject<MatrixClient>
+) {
+  const { joinRoom, leaveRoom, setRoom, updateMembership } = useMatrixStore();
+  const [syncInfo, setSyncInfo] = useState<SyncMembership>();
+
+  useEffect(
+    function () {
+      if (matrixClientRef.current) {
+        const room = matrixClientRef.current.getRoom(syncInfo.roomId);
+        if (room) {
+          setRoom(room);
+        }
+        updateMembership(
+          syncInfo.roomId,
+          syncInfo.userId,
+          syncInfo.membership,
+          syncInfo.userId === matrixClientRef.current.getUserId()
+        );
+      }
+    },
+    [syncInfo]
+  );
+
+  const handleRoomMembershipEvent = useCallback(function (
+    event: MatrixEvent,
+    member: RoomMember
+  ) {
+    console.log(`RoomMember.membership event`, {
+      eventType: event.getType(),
+      userId: member.userId,
+      roomId: member.roomId,
+      membership: member.membership,
+    });
+
+    switch (member.membership) {
+      case Membership.Invite: {
+        setSyncInfo({
+          roomId: member.roomId,
+          userId: member.userId,
+          membership: member.membership as Membership,
+        });
+        break;
+      }
+      case Membership.Join: {
+        joinRoom(
+          member.roomId,
+          member.userId,
+          member.userId === matrixClientRef.current.getUserId()
+        );
+        break;
+      }
+      case Membership.Leave: {
+        leaveRoom(
+          member.roomId,
+          member.userId,
+          member.userId === matrixClientRef.current.getUserId()
+        );
+        break;
+      }
+      default:
+        break;
+    }
+  },
+  []);
+
+  return handleRoomMembershipEvent;
+}
+
+function useRoomTimelineEventHandler(
+  matrixClientRef: MutableRefObject<MatrixClient>
+) {
+  const { createRoom, setNewMessage, setRoomName, updateMembership } =
+    useMatrixStore();
+
+  const handleRoomeTimelineEvent = useCallback(function (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    room: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+    toStartOfTimeline: any
+  ) {
+    switch (event.getType()) {
+      case "m.room.message": {
+        console.log(`Room[${room.roomId}]: ${event.event.content.body}`);
+        setNewMessage(room.roomId, event.event.content.body);
+        break;
+      }
+      case "m.room.create": {
+        console.log(`m.room.create`, { roomId: room.roomId });
+        createRoom(room.roomId);
+        break;
+      }
+      case "m.room.name": {
+        const roomId = event.getRoomId();
+        const name = event.getContent().name;
+        console.log(`m.room.name`, {
+          roomId,
+          name,
+        });
+        setRoomName(roomId, name);
+        break;
+      }
+      case "m.room.member": {
+        const roomId = event.getRoomId();
+        const userId = event.getStateKey();
+        const membership = event.getContent().membership;
+        console.log(`m.room.member`, {
+          roomId,
+          userId,
+          membership,
+          content: event.getContent(),
+          event: JSON.stringify(event),
+        });
+
+        if (roomId && userId && membership) {
+          updateMembership(
+            roomId,
+            userId,
+            membership,
+            matrixClientRef.current.getUserId() === userId
+          );
+        }
+        break;
+      }
+      default:
+        console.log(`Room.timeline event`, event.getType());
+        break;
+    }
+  }, []);
+
+  return handleRoomeTimelineEvent;
+}
+
+function useRoomEventHandler() {
+  const handleRoomEvent = useCallback(function (room: Room) {
+    console.log("Room.event", {
+      roomId: room.roomId,
+      name: room.name,
+    });
+  }, []);
+
+  return handleRoomEvent;
 }
