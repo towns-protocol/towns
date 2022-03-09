@@ -20,7 +20,7 @@ var SyncAction;
     SyncAction["SyncAll"] = "SyncAll";
     SyncAction["SyncMyRoomMembership"] = "SyncMyRoomMembership";
 })(SyncAction || (SyncAction = {}));
-function useMatrixClientListener(homeServerUrl) {
+function useMatrixClientListener(homeServerUrl, initialSyncLimit = 10) {
     const { homeServer, isAuthenticated, userId, createRoom, joinRoom, leaveRoom, setAllRooms, setHomeServer, setNewMessage, setRoom, setRoomName, updateMembership, } = (0, use_matrix_store_1.useMatrixStore)();
     const { accessToken } = (0, use_credential_store_1.useCredentialStore)();
     const matrixClientRef = (0, react_1.useRef)();
@@ -63,7 +63,7 @@ function useMatrixClientListener(homeServerUrl) {
                     userId: userId,
                 };
                 const client = (0, matrix_js_sdk_1.createClient)(options);
-                yield client.startClient({ initialSyncLimit: 10 });
+                yield client.startClient({ initialSyncLimit });
                 matrixClientRef.current = client;
                 client.once("sync", 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
@@ -157,6 +157,7 @@ function useMatrixClientListener(homeServerUrl) {
     }, [
         accessToken,
         homeServer,
+        initialSyncLimit,
         leaveRoom,
         setNewMessage,
         setRoomName,

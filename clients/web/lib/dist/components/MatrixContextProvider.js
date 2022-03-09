@@ -6,7 +6,7 @@ const react_1 = require("react");
 const use_matrix_client_listener_1 = require("../hooks/use-matrix-client-listener");
 exports.MatrixContext = (0, react_1.createContext)(undefined);
 function MatrixContextProvider(props) {
-    const { matrixClient } = (0, use_matrix_client_listener_1.useMatrixClientListener)(props.homeServerUrl);
+    const { matrixClient } = (0, use_matrix_client_listener_1.useMatrixClientListener)(props.homeServerUrl, props.initialSyncLimit);
     return ((0, jsx_runtime_1.jsx)(exports.MatrixContext.Provider, Object.assign({ value: matrixClient }, { children: props.children }), void 0));
 }
 exports.MatrixContextProvider = MatrixContextProvider;

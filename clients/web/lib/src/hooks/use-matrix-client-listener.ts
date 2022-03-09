@@ -26,7 +26,10 @@ interface SyncRoomInfo {
   props?: SyncProps;
 }
 
-export function useMatrixClientListener(homeServerUrl: string) {
+export function useMatrixClientListener(
+  homeServerUrl: string,
+  initialSyncLimit = 10
+) {
   const {
     homeServer,
     isAuthenticated,
@@ -95,7 +98,7 @@ export function useMatrixClientListener(homeServerUrl: string) {
           userId: userId,
         };
         const client = createClient(options);
-        await client.startClient({ initialSyncLimit: 10 });
+        await client.startClient({ initialSyncLimit });
         matrixClientRef.current = client;
 
         client.once(
@@ -211,6 +214,7 @@ export function useMatrixClientListener(homeServerUrl: string) {
     [
       accessToken,
       homeServer,
+      initialSyncLimit,
       leaveRoom,
       setNewMessage,
       setRoomName,
