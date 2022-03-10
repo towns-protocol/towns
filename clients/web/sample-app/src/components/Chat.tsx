@@ -16,7 +16,7 @@ interface Props {
 
 export function Chat(props: Props): JSX.Element {
   const { rooms } = useMatrixStore();
-  const { inviteUser, leaveRoom, joinRoom, sendMessage, syncRoom } = useMatrixClient();
+  const { inviteUser, leaveRoom, joinRoom, sendMessage } = useMatrixClient();
   const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
 
   const onClickLeaveRoom = useCallback(async () => {
@@ -58,8 +58,7 @@ export function Chat(props: Props): JSX.Element {
 
   useEffect(() => {
     setShowInviteForm(false);
-    syncRoom(props.roomId)
-  }, [props.roomId, syncRoom]);
+  }, [props.roomId]);
 
   return (
     <Box
