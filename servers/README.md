@@ -9,7 +9,7 @@ It was intially populated with:
 Pulling changes from upstream
 
     git fetch dendrite
-    git subtree pull --prefix=servers/dendrite dendrite main
+    git subtree pull --prefix=servers/dendrite dendrite main --squash
 
     This command will pull the changes since the last time it ran and create a merge commit on top. Keep in mind that the pulled commits might be older than the latest commit of your code though, so they might not appear directly when you call git log.
 
