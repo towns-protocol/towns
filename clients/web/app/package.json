@@ -33,6 +33,8 @@
     "@vitejs/plugin-react": "^1.0.7",
     "babel-loader": "^8.2.3",
     "clsx": "^1.1.1",
+    "eslint": "^8.0.0",
+    "eslint-config-react-app": "^7.0.0",
     "storybook": "^6.5.0-alpha.48",
     "storybook-builder-vite": "^0.1.21",
     "typescript": "^4.5.4",
