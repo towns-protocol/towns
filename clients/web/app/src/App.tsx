@@ -1,20 +1,21 @@
+import { ChatWindow } from "components/ChatWindow";
 import { DirectMessages } from "components/DirectMessages";
 import { MainActions } from "components/MainActions";
 import { SpaceList } from "components/SpaceList";
 import React from "react";
 import { Box } from "ui/components";
 
-export default () => (
+export const App = () => (
   <Box direction="row" grow absoluteFill>
-    <Box basis={150} grow={"1"} background="shade2">
+    <Box basis={150} grow="x1" background="shade2">
       <MainActions />
       <SpaceList />
     </Box>
-    <Box basis={150} grow={"1"} background="shade1">
+    <Box basis={150} grow="x1" background="shade1">
       <DirectMessages />
     </Box>
-    <Box grow="9">
-      <Box padding="sm">General</Box>
+    <Box grow="x9" borderLeft="regular">
+      <ChatWindow />
     </Box>
   </Box>
 );

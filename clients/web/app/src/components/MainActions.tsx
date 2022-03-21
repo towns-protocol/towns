@@ -9,10 +9,10 @@ import {
 import { ListRow } from "./ListRow";
 
 export const MainActions = () => (
-  <>
+  <Box borderBottom="thin" color="muted2">
     <ListRow>
       <IconContainer icon={SearchIcon} />
-      <Box>Search</Box>
+      <Text>Search</Text>
     </ListRow>
     <ListRow background="accent" color="inverted">
       <IconContainer icon={MessageIcon} />
@@ -22,5 +22,5 @@ export const MainActions = () => (
       <IconContainer icon={PlusIcon} />
       <Text>New message</Text>
     </ListRow>
-  </>
+  </Box>
 );
