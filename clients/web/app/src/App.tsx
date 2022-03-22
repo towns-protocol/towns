@@ -1,9 +1,9 @@
-import { ChatWindow } from "components/ChatWindow";
-import { DirectMessages } from "components/DirectMessages";
-import { MainActions } from "components/MainActions";
-import { SpaceList } from "components/SpaceList";
+import { ChatWindow } from "@components/ChatWindow";
+import { DirectMessages } from "@components/DirectMessages";
+import { MainActions } from "@components/MainActions";
+import { SpaceList } from "@components/SpaceList";
+import { Box } from "@ui";
 import React from "react";
-import { Box } from "ui/components";
 
 export const App = () => (
   <Box direction="row" grow absoluteFill>

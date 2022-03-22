@@ -12,8 +12,8 @@
     "module": "esnext",
     "moduleResolution": "node",
     "noEmit": true,
-    "outDir": "./dist/types",
     "paths": {
+      "@components/*": ["components/*"],
       "@ui": ["ui/components"]
     },
     "resolveJsonModule": true,
@@ -22,7 +22,7 @@
     "strict": true,
     "strictNullChecks": true,
     "target": "esnext",
-    "types": ["node"]
+    "types": ["vite/client"]
   },
   "include": ["src"],
   "exclude": ["node_modules"]
