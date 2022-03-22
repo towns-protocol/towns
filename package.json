@@ -4,7 +4,11 @@
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "buildweb": "cd './clients/web/app/' && yarn run build"
+  },
   "workspaces": [
-    "contracts"
+    "contracts",
+    "clients/web/app"
   ]
 }
