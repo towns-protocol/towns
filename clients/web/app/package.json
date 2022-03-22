@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "storybook": "start-storybook  --docs -p 6006",
+    "build-storybook": "build-storybook --docs"
   },
   "dependencies": {
     "clsx": "^1.1.1",

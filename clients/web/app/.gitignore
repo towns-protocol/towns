@@ -14,6 +14,8 @@ dist-ssr
 
 .yarn
 
+__ignore*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

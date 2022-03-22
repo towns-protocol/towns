@@ -55,11 +55,24 @@ export const vars = createGlobalTheme(":root", {
     lg: `36px`,
     xl: `57px`,
   } as const,
+
   border: {
     thin: "0.5px",
     regular: "1px",
     thick: "2px",
   } as const,
+
+  borderRadius: {
+    none: "0",
+    xxs: `${baseline * 0.25}px`,
+    xs: `${baseline * 0.5}px`,
+    sm: `${baseline * 1}px`,
+    md: `${baseline * 2}px`,
+    lg: `${baseline * 4}px`,
+    xl: `${baseline * 8}px`,
+    full: "999999px",
+  } as const,
+
   fontWeight: {
     normal: "400",
     strong: "900",

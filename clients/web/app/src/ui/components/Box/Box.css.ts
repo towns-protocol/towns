@@ -13,11 +13,6 @@ const border = {
   thick: `2px solid  rgba(0, 40, 80, 0.1)`,
 } as const;
 
-const borderRadius = {
-  ...vars.space,
-  full: "999999px",
-};
-
 const aspectRatio = {
   square: "1",
 };
@@ -53,7 +48,7 @@ const nonResponsiveProperties = defineProperties({
     alignSelf: [...flexAlignment, "baseline"],
     justifyContent: [...flexAlignment, "space-around", "space-between"],
     justifySelf: flexAlignment,
-    borderRadius: borderRadius,
+    borderRadius: vars.borderRadius,
   },
   shorthands: {
     direction: ["flexDirection"],
