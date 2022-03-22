@@ -1,5 +1,5 @@
-# ui
+# @ui package
 
-UI ATOMS
+## UI ATOMS
 
-set of generic base elements enforcing our style-guide
+Set of generic base elements enforcing our style-guide
