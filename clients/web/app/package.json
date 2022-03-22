@@ -2,7 +2,7 @@
   "name": "harmonyweb",
   "private": true,
   "version": "0.0.0",
-  "packageManager": "yarn@3.1.1",
+  "packageManager": "yarn@3.2.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

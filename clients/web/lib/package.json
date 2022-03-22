@@ -1,6 +1,6 @@
 {
   "name": "use-matrix-client",
-  "packageManager": "yarn@3.1.1",
+  "packageManager": "yarn@3.2.0",
   "description": "Matrix client common wrapper / helper functions!",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
