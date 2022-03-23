@@ -1,70 +1,96 @@
-import { Alert, Box, Button, Snackbar, TextField, Theme, Typography } from "@mui/material";
-import { useCallback, useState } from "react";
+import { Alert, Box, Button, Snackbar, Theme, Typography } from "@mui/material";
+import { LogInStatus, WalletStatus, useMatrixClient, useMatrixStore, useWeb3Context } from "use-matrix-client";
+import { useCallback, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
-import { useMatrixClient } from "use-matrix-client";
+
+const StatementToSign = `Click to sign in and accept the Harmony Terms of Service: https://harmony.xyz/tos. This request will not trigger a blockchain transaction or cost any gas fees. Your authentication status will reset after 24 hours.`;
 
 export function Login(): JSX.Element {
   const styles = useStyles();
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [showError, setShowError] = useState<string | undefined>(undefined);
-  const { loginWithPassword, registerNewUser } = useMatrixClient();
+  const { loginWithWallet } = useMatrixClient();
+  const { logInStatus } = useMatrixStore();
+  const { accounts, chainId, requestAccounts, walletStatus } = useWeb3Context();
 
-  const onChangedUsername = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(event.target.value);
-  }, []);
+  const myWalletAddress = useMemo(() => {
+    if (accounts && accounts.length > 0) {
+      const last4 = accounts[0].length - 4;
+      return `${accounts[0].slice(0, 5)}....${accounts[0].slice(last4)}`;
+    }
+    return undefined;
+  }, [accounts]);
 
-  const onChangedPassword = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
-  }, []);
+  const onConnectClick = useCallback(() => requestAccounts(), [requestAccounts]);
 
-  const onLogin = useCallback(async function () {
-    const result = await loginWithPassword(username, password);
-    if (result.accessToken) {
-      console.log(`User ${username} logged in`);
+  const onLoginWithWallet = useCallback(async function () {
+    const result = await loginWithWallet(StatementToSign);
+    if (result.isAuthenticated) {
+      console.log(`Account ${myWalletAddress} logged in`);
     } else {
-      console.error(`Cannot login user ${username}. ${result.error}`);
       setShowError(result.error);
     }
-  }, [loginWithPassword, password, username]);
-
-  const onRegister = useCallback(async function () {
-    const result = await registerNewUser(username, password);
-    if (result.accessToken) {
-      console.log(`registered new user ${username}`);
-    } else {
-      console.error(`Cannot register user ${username}. ${result.error}`);
-      setShowError(result.error);
-    }
-  }, [password, registerNewUser, username]);
+  }, [loginWithWallet, myWalletAddress]);
 
   const onCloseAlert = useCallback(function () {
     setShowError(undefined);
   }, []);
 
+  const signInButton = useMemo(() => {
+    switch (walletStatus) {
+      case WalletStatus.Error:
+      case WalletStatus.Unknown:
+        return (
+          <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onConnectClick}>
+            Connect Wallet
+          </Button>
+        );
+      case WalletStatus.Unlocked:
+        if (logInStatus === LogInStatus.LoggingIn) {
+          return (
+            <Button variant="contained" color="primary" sx={{ margin: "10px"}}>
+              Signining in with wallet
+            </Button>
+          );  
+        } else {
+          return (
+            <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onLoginWithWallet}>
+              Sign in with wallet
+            </Button>
+          );  
+        }
+      case WalletStatus.RequestUnlock:
+        return (
+          <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onLoginWithWallet}>
+            Connecting wallet
+          </Button>
+        );
+      case WalletStatus.StillRequestingUnlock:
+          return (
+            <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onLoginWithWallet}>
+              Connecting wallet - please unlock your wallet provider
+            </Button>
+          );
+      default:
+        break;
+    }
+  }, [logInStatus, onConnectClick, onLoginWithWallet, walletStatus]);
+
   return (
     <div className={styles.container}>
       <Box sx={{ display: "grid", gridTemplateRows: "repeat(3, 1fr)" }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", marginTop: "5px", alignItems: "Center" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", marginTop: "5px", alignItems: "Center" }}>
           <Typography variant="h6" component="span">
-            Username:
+            Wallet status: {walletStatus}, Chain Id: {chainId}
           </Typography>
-          <TextField variant="filled" onChange={onChangedUsername}/>
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", marginTop: "10px", alignItems: "Center" }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", marginTop: "10px", alignItems: "Center" }}>
           <Typography variant="h6" component="span">
-            Password:
+            Wallet: {myWalletAddress}
           </Typography>
-          <TextField variant="filled" type="password" onChange={onChangedPassword} />
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", margin: "10px", alignItems: "Center" }}>
-          <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onRegister}>
-            Register
-          </Button>
-          <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onLogin}>
-            Login
-          </Button>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", margin: "10px", alignItems: "Center" }}>
+          {signInButton}
         </Box>
       </Box>
       <Snackbar

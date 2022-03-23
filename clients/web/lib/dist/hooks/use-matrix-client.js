@@ -10,15 +10,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.useMatrixClient = void 0;
+const matrix_js_sdk_1 = require("matrix-js-sdk");
 const login_1 = require("./login");
 const react_1 = require("react");
 const MatrixContextProvider_1 = require("../components/MatrixContextProvider");
 const use_credential_store_1 = require("../store/use-credential-store");
 const use_matrix_store_1 = require("../store/use-matrix-store");
+const use_matrix_wallet_sign_in_1 = require("./use-matrix-wallet-sign-in");
+/**
+ * Matrix client API to interact with the Matrix server.
+ */
 function useMatrixClient() {
     const { homeServer, username, setDeviceId, setLogInStatus, setRoomName, setUserId, setUsername, } = (0, use_matrix_store_1.useMatrixStore)();
     const { setAccessToken } = (0, use_credential_store_1.useCredentialStore)();
     const matrixClient = (0, react_1.useContext)(MatrixContextProvider_1.MatrixContext);
+    const { loginWithWallet } = (0, use_matrix_wallet_sign_in_1.useMatrixWalletSignIn)();
     const createRoom = (0, react_1.useCallback)(function (createInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -65,33 +71,41 @@ function useMatrixClient() {
         return __awaiter(this, void 0, void 0, function* () {
             yield logout();
             setLogInStatus(login_1.LogInStatus.LoggingIn);
-            const response = yield (0, login_1.matrixLoginWithPassword)(homeServer, username, password);
+            const response = yield matrixLoginWithPassword(homeServer, username, password);
             if (response.accessToken) {
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setUserId(response.userId);
-                setUsername((0, login_1.getUserNamePart)(response.userId));
+                setUsername((0, login_1.getUsernamePart)(response.userId));
                 setLogInStatus(login_1.LogInStatus.LoggedIn);
             }
             else {
                 setLogInStatus(login_1.LogInStatus.LoggedOut);
             }
-            return response;
+            const isAuthenticated = response.accessToken ? true : false;
+            return {
+                isAuthenticated,
+                error: response.error,
+            };
         });
     }, [homeServer]);
     const registerNewUser = (0, react_1.useCallback)(function (username, password) {
         return __awaiter(this, void 0, void 0, function* () {
             yield logout();
             setLogInStatus(login_1.LogInStatus.LoggingIn);
-            const response = yield (0, login_1.matrixRegisterUser)(homeServer, username, password);
+            const response = yield matrixRegisterUser(homeServer, username, password);
             if (response.accessToken) {
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setUserId(response.userId);
-                setUsername((0, login_1.getUserNamePart)(response.userId));
+                setUsername((0, login_1.getUsernamePart)(response.userId));
                 setLogInStatus(login_1.LogInStatus.LoggedIn);
             }
-            return response;
+            const isAuthenticated = response.accessToken ? true : false;
+            return {
+                isAuthenticated,
+                error: response.error,
+            };
         });
     }, [homeServer]);
     const sendMessage = (0, react_1.useCallback)(function (roomId, message) {
@@ -176,6 +190,7 @@ function useMatrixClient() {
         joinRoom,
         leaveRoom,
         loginWithPassword,
+        loginWithWallet,
         logout,
         registerNewUser,
         sendMessage,
@@ -183,3 +198,62 @@ function useMatrixClient() {
     };
 }
 exports.useMatrixClient = useMatrixClient;
+function matrixRegisterUser(homeServerUrl, username, password) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let error;
+        try {
+            const newClient = (0, matrix_js_sdk_1.createClient)(homeServerUrl);
+            const response = yield newClient.register(username, password, undefined, {
+                type: "m.login.dummy",
+                //type: "m.login.password",
+            });
+            console.log(`response:`, JSON.stringify(response));
+            return {
+                accessToken: response.access_token,
+                deviceId: response.device_id,
+                homeServer: response.home_server,
+                userId: response.user_id,
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }
+        catch (ex) {
+            error = ex.message;
+            console.error(`Error creating new user:`, ex.stack);
+        }
+        return {
+            accessToken: undefined,
+            deviceId: undefined,
+            homeServer: undefined,
+            userId: undefined,
+            error,
+        };
+    });
+}
+function matrixLoginWithPassword(homeServerUrl, username, password) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let error;
+        try {
+            const newClient = (0, matrix_js_sdk_1.createClient)(homeServerUrl);
+            const response = yield newClient.loginWithPassword(username, password);
+            //console.log(`response:`, JSON.stringify(response));
+            return {
+                accessToken: response.access_token,
+                deviceId: response.device_id,
+                homeServer: response.home_server,
+                userId: response.user_id,
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }
+        catch (ex) {
+            error = ex.message;
+            console.error(`Error logging in:`, ex.stack);
+        }
+        return {
+            accessToken: undefined,
+            deviceId: undefined,
+            homeServer: undefined,
+            userId: undefined,
+            error,
+        };
+    });
+}

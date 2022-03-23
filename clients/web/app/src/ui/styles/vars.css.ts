@@ -55,7 +55,6 @@ export const vars = createGlobalTheme(":root", {
     lg: `36px`,
     xl: `57px`,
   } as const,
-
   border: {
     thin: "0.5px",
     regular: "1px",

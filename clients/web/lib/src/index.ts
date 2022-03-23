@@ -1,4 +1,10 @@
 export {
+  LogInStatus,
+  LogInCompletedResponse,
+  getUsernamePart,
+} from "./hooks/login";
+
+export {
   CreateRoomInfo,
   isRoom,
   Member,
@@ -12,4 +18,6 @@ export {
 export { MatrixContextProvider } from "./components/MatrixContextProvider";
 
 export { useMatrixStore } from "./store/use-matrix-store";
+
 export { useMatrixClient } from "./hooks/use-matrix-client";
+export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
