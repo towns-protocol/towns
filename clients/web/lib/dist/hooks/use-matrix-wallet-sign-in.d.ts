@@ -1,4 +1,4 @@
-import { LogInCompletedResponse } from "./login";
+import { LoginCompletedResponse as LoginCompletedResponse } from "./login";
 export declare function useMatrixWalletSignIn(): {
-    loginWithWallet: (statementToSign: string) => Promise<LogInCompletedResponse>;
+    loginWithWallet: (statementToSign: string) => Promise<LoginCompletedResponse>;
 };

@@ -9,20 +9,20 @@ const zustand_1 = __importDefault(require("zustand"));
 const login_1 = require("../hooks/login");
 exports.useMatrixStore = (0, zustand_1.default)((set) => ({
     isAuthenticated: false,
-    logInStatus: login_1.LogInStatus.LoggedOut,
-    setLogInStatus: (logInStatus) => logInStatus === login_1.LogInStatus.LoggedOut
+    loginStatus: login_1.LoginStatus.LoggedOut,
+    setLoginStatus: (loginStatus) => loginStatus === login_1.LoginStatus.LoggedOut
         ? set({
             allMessages: null,
             isAuthenticated: false,
             deviceId: null,
-            logInStatus,
+            loginStatus: loginStatus,
             rooms: null,
             userId: null,
             username: null,
         })
         : set({
-            isAuthenticated: logInStatus === login_1.LogInStatus.LoggedIn,
-            logInStatus,
+            isAuthenticated: loginStatus === login_1.LoginStatus.LoggedIn,
+            loginStatus: loginStatus,
         }),
     deviceId: null,
     setDeviceId: (deviceId) => set({ deviceId: deviceId !== null && deviceId !== void 0 ? deviceId : null }),

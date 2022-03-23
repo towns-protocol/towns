@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Web3Provider = exports.WalletStatus = exports.useWeb3Context = exports.useMatrixClient = exports.useMatrixStore = exports.MatrixContextProvider = exports.Membership = exports.isRoom = exports.getUsernamePart = exports.LogInStatus = void 0;
+exports.Web3Provider = exports.WalletStatus = exports.useWeb3Context = exports.useMatrixClient = exports.useMatrixStore = exports.MatrixContextProvider = exports.Membership = exports.isRoom = exports.getUsernamePart = exports.LoginStatus = void 0;
 var login_1 = require("./hooks/login");
-Object.defineProperty(exports, "LogInStatus", { enumerable: true, get: function () { return login_1.LogInStatus; } });
+Object.defineProperty(exports, "LoginStatus", { enumerable: true, get: function () { return login_1.LoginStatus; } });
 Object.defineProperty(exports, "getUsernamePart", { enumerable: true, get: function () { return login_1.getUsernamePart; } });
 var matrix_types_1 = require("./types/matrix-types");
 Object.defineProperty(exports, "isRoom", { enumerable: true, get: function () { return matrix_types_1.isRoom; } });

@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUsernamePart = exports.LogInStatus = void 0;
-var LogInStatus;
-(function (LogInStatus) {
-    LogInStatus["LoggedIn"] = "LoggedIn";
-    LogInStatus["LoggingIn"] = "LoggingIn";
-    LogInStatus["LoggingOut"] = "LoggingOut";
-    LogInStatus["LoggedOut"] = "LoggedOut";
-})(LogInStatus = exports.LogInStatus || (exports.LogInStatus = {}));
+exports.getUsernamePart = exports.LoginStatus = void 0;
+var LoginStatus;
+(function (LoginStatus) {
+    LoginStatus["LoggedIn"] = "LoggedIn";
+    LoginStatus["LoggingIn"] = "LoggingIn";
+    LoginStatus["LoggingOut"] = "LoggingOut";
+    LoginStatus["LoggedOut"] = "LoggedOut";
+})(LoginStatus = exports.LoginStatus || (exports.LoginStatus = {}));
 function getUsernamePart(userId) {
     var _a, _b;
     if (userId) {

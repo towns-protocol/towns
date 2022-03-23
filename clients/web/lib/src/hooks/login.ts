@@ -1,11 +1,11 @@
-export enum LogInStatus {
+export enum LoginStatus {
   LoggedIn = "LoggedIn",
   LoggingIn = "LoggingIn",
   LoggingOut = "LoggingOut",
   LoggedOut = "LoggedOut",
 }
 
-export interface LogInCompletedResponse {
+export interface LoginCompletedResponse {
   isAuthenticated: boolean;
   error?: string;
 }

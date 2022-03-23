@@ -1,6 +1,6 @@
 export {
-  LogInStatus,
-  LogInCompletedResponse,
+  LoginStatus,
+  LoginCompletedResponse,
   getUsernamePart,
 } from "./hooks/login";
 

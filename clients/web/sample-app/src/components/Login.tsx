@@ -1,5 +1,5 @@
 import { Alert, Box, Button, Snackbar, Theme, Typography } from "@mui/material";
-import { LogInStatus, WalletStatus, useMatrixClient, useMatrixStore, useWeb3Context } from "use-matrix-client";
+import { LoginStatus, WalletStatus, useMatrixClient, useMatrixStore, useWeb3Context } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
@@ -10,7 +10,7 @@ export function Login(): JSX.Element {
   const styles = useStyles();
   const [showError, setShowError] = useState<string | undefined>(undefined);
   const { loginWithWallet } = useMatrixClient();
-  const { logInStatus } = useMatrixStore();
+  const { loginStatus } = useMatrixStore();
   const { accounts, chainId, requestAccounts, walletStatus } = useWeb3Context();
 
   const myWalletAddress = useMemo(() => {
@@ -46,7 +46,7 @@ export function Login(): JSX.Element {
           </Button>
         );
       case WalletStatus.Unlocked:
-        if (logInStatus === LogInStatus.LoggingIn) {
+        if (loginStatus === LoginStatus.LoggingIn) {
           return (
             <Button variant="contained" color="primary" sx={{ margin: "10px"}}>
               Signining in with wallet
@@ -74,7 +74,7 @@ export function Login(): JSX.Element {
       default:
         break;
     }
-  }, [logInStatus, onConnectClick, onLoginWithWallet, walletStatus]);
+  }, [loginStatus, onConnectClick, onLoginWithWallet, walletStatus]);
 
   return (
     <div className={styles.container}>

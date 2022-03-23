@@ -21,7 +21,7 @@ const use_matrix_wallet_sign_in_1 = require("./use-matrix-wallet-sign-in");
  * Matrix client API to interact with the Matrix server.
  */
 function useMatrixClient() {
-    const { homeServer, username, setDeviceId, setLogInStatus, setRoomName, setUserId, setUsername, } = (0, use_matrix_store_1.useMatrixStore)();
+    const { homeServer, username, setDeviceId, setLoginStatus, setRoomName, setUserId, setUsername, } = (0, use_matrix_store_1.useMatrixStore)();
     const { setAccessToken } = (0, use_credential_store_1.useCredentialStore)();
     const matrixClient = (0, react_1.useContext)(MatrixContextProvider_1.MatrixContext);
     const { loginWithWallet } = (0, use_matrix_wallet_sign_in_1.useMatrixWalletSignIn)();
@@ -52,7 +52,7 @@ function useMatrixClient() {
     }, []);
     const logout = (0, react_1.useCallback)(function () {
         return __awaiter(this, void 0, void 0, function* () {
-            setLogInStatus(login_1.LogInStatus.LoggingOut);
+            setLoginStatus(login_1.LoginStatus.LoggingOut);
             if (matrixClient) {
                 try {
                     yield matrixClient.logout();
@@ -63,24 +63,24 @@ function useMatrixClient() {
                     console.error(`Error logging out:`, ex.stack);
                 }
             }
-            setLogInStatus(login_1.LogInStatus.LoggedOut);
+            setLoginStatus(login_1.LoginStatus.LoggedOut);
             setAccessToken("");
         });
     }, []);
     const loginWithPassword = (0, react_1.useCallback)(function (username, password) {
         return __awaiter(this, void 0, void 0, function* () {
             yield logout();
-            setLogInStatus(login_1.LogInStatus.LoggingIn);
+            setLoginStatus(login_1.LoginStatus.LoggingIn);
             const response = yield matrixLoginWithPassword(homeServer, username, password);
             if (response.accessToken) {
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setUserId(response.userId);
                 setUsername((0, login_1.getUsernamePart)(response.userId));
-                setLogInStatus(login_1.LogInStatus.LoggedIn);
+                setLoginStatus(login_1.LoginStatus.LoggedIn);
             }
             else {
-                setLogInStatus(login_1.LogInStatus.LoggedOut);
+                setLoginStatus(login_1.LoginStatus.LoggedOut);
             }
             const isAuthenticated = response.accessToken ? true : false;
             return {
@@ -92,14 +92,14 @@ function useMatrixClient() {
     const registerNewUser = (0, react_1.useCallback)(function (username, password) {
         return __awaiter(this, void 0, void 0, function* () {
             yield logout();
-            setLogInStatus(login_1.LogInStatus.LoggingIn);
+            setLoginStatus(login_1.LoginStatus.LoggingIn);
             const response = yield matrixRegisterUser(homeServer, username, password);
             if (response.accessToken) {
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setUserId(response.userId);
                 setUsername((0, login_1.getUsernamePart)(response.userId));
-                setLogInStatus(login_1.LogInStatus.LoggedIn);
+                setLoginStatus(login_1.LoginStatus.LoggedIn);
             }
             const isAuthenticated = response.accessToken ? true : false;
             return {

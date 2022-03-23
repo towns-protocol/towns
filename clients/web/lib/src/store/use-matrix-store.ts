@@ -2,7 +2,7 @@ import { Membership, Room, Rooms, RoomsMessages } from "../types/matrix-types";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
 import createStore, { SetState } from "zustand";
-import { LogInStatus } from "../hooks/login";
+import { LoginStatus } from "../hooks/login";
 
 export type MatrixStoreStates = {
   createRoom: (roomId: string) => void;
@@ -11,8 +11,8 @@ export type MatrixStoreStates = {
   setDeviceId: (deviceId: string | undefined) => void;
   homeServer: string | null;
   setHomeServer: (homeServer: string | undefined) => void;
-  logInStatus: LogInStatus;
-  setLogInStatus: (loginStatus: LogInStatus) => void;
+  loginStatus: LoginStatus;
+  setLoginStatus: (loginStatus: LoginStatus) => void;
   allMessages: RoomsMessages | null;
   setNewMessage: (roomId: string, message: string) => void;
   rooms: Rooms | null;
@@ -44,21 +44,21 @@ export type MatrixStoreStates = {
 export const useMatrixStore = createStore<MatrixStoreStates>(
   (set: SetState<MatrixStoreStates>) => ({
     isAuthenticated: false,
-    logInStatus: LogInStatus.LoggedOut,
-    setLogInStatus: (logInStatus: LogInStatus) =>
-      logInStatus === LogInStatus.LoggedOut
+    loginStatus: LoginStatus.LoggedOut,
+    setLoginStatus: (loginStatus: LoginStatus) =>
+      loginStatus === LoginStatus.LoggedOut
         ? set({
             allMessages: null,
             isAuthenticated: false,
             deviceId: null,
-            logInStatus,
+            loginStatus: loginStatus,
             rooms: null,
             userId: null,
             username: null,
           })
         : set({
-            isAuthenticated: logInStatus === LogInStatus.LoggedIn,
-            logInStatus,
+            isAuthenticated: loginStatus === LoginStatus.LoggedIn,
+            loginStatus: loginStatus,
           }),
     deviceId: null,
     setDeviceId: (deviceId: string | undefined) =>
