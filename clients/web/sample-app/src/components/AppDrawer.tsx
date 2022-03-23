@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Button, IconButton, Theme } from "@mui/material";
 import { Membership, isRoom, useMatrixStore } from "use-matrix-client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import AppBar from "@mui/material/AppBar";

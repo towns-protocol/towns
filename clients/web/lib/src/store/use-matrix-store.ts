@@ -11,7 +11,7 @@ export type MatrixStoreStates = {
   setDeviceId: (deviceId: string | undefined) => void;
   homeServer: string | null;
   setHomeServer: (homeServer: string | undefined) => void;
-  loginStatus: LogInStatus;
+  logInStatus: LogInStatus;
   setLogInStatus: (loginStatus: LogInStatus) => void;
   allMessages: RoomsMessages | null;
   setNewMessage: (roomId: string, message: string) => void;
@@ -44,21 +44,21 @@ export type MatrixStoreStates = {
 export const useMatrixStore = createStore<MatrixStoreStates>(
   (set: SetState<MatrixStoreStates>) => ({
     isAuthenticated: false,
-    loginStatus: LogInStatus.LoggedOut,
-    setLogInStatus: (loginStatus: LogInStatus) =>
-      loginStatus === LogInStatus.LoggedOut
+    logInStatus: LogInStatus.LoggedOut,
+    setLogInStatus: (logInStatus: LogInStatus) =>
+      logInStatus === LogInStatus.LoggedOut
         ? set({
             allMessages: null,
             isAuthenticated: false,
             deviceId: null,
-            loginStatus,
+            logInStatus,
             rooms: null,
             userId: null,
             username: null,
           })
         : set({
-            isAuthenticated: loginStatus === LogInStatus.LoggedIn,
-            loginStatus,
+            isAuthenticated: logInStatus === LogInStatus.LoggedIn,
+            logInStatus,
           }),
     deviceId: null,
     setDeviceId: (deviceId: string | undefined) =>

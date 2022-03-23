@@ -8,7 +8,7 @@ export declare type MatrixStoreStates = {
     setDeviceId: (deviceId: string | undefined) => void;
     homeServer: string | null;
     setHomeServer: (homeServer: string | undefined) => void;
-    loginStatus: LogInStatus;
+    logInStatus: LogInStatus;
     setLogInStatus: (loginStatus: LogInStatus) => void;
     allMessages: RoomsMessages | null;
     setNewMessage: (roomId: string, message: string) => void;

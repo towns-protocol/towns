@@ -4,14 +4,8 @@ export declare enum LogInStatus {
     LoggingOut = "LoggingOut",
     LoggedOut = "LoggedOut"
 }
-interface LoginResult {
-    accessToken: string | undefined;
-    userId: string | undefined;
-    homeServer: string | undefined;
-    deviceId: string | undefined;
+export interface LogInCompletedResponse {
+    isAuthenticated: boolean;
     error?: string;
 }
-export declare function getUserNamePart(userId: string | undefined): string | undefined;
-export declare function matrixRegisterUser(homeServerUrl: string, username: string, password: string): Promise<LoginResult>;
-export declare function matrixLoginWithPassword(homeServerUrl: string, username: string, password: string): Promise<LoginResult>;
-export {};
+export declare function getUsernamePart(userId: string | undefined): string | undefined;

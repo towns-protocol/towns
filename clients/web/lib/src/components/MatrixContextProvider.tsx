@@ -1,4 +1,5 @@
 import { MatrixClient } from "matrix-js-sdk";
+import { Web3Provider } from "../hooks/use-web3";
 import { createContext } from "react";
 import { useMatrixClientListener } from "../hooks/use-matrix-client-listener";
 
@@ -17,8 +18,10 @@ export function MatrixContextProvider(props: Props): JSX.Element {
   );
 
   return (
-    <MatrixContext.Provider value={matrixClient}>
-      {props.children}
-    </MatrixContext.Provider>
+    <Web3Provider>
+      <MatrixContext.Provider value={matrixClient}>
+        {props.children}
+      </MatrixContext.Provider>
+    </Web3Provider>
   );
 }

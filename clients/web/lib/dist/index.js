@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.useMatrixClient = exports.useMatrixStore = exports.MatrixContextProvider = exports.Membership = exports.isRoom = void 0;
+exports.Web3Provider = exports.WalletStatus = exports.useWeb3Context = exports.useMatrixClient = exports.useMatrixStore = exports.MatrixContextProvider = exports.Membership = exports.isRoom = exports.getUsernamePart = exports.LogInStatus = void 0;
+var login_1 = require("./hooks/login");
+Object.defineProperty(exports, "LogInStatus", { enumerable: true, get: function () { return login_1.LogInStatus; } });
+Object.defineProperty(exports, "getUsernamePart", { enumerable: true, get: function () { return login_1.getUsernamePart; } });
 var matrix_types_1 = require("./types/matrix-types");
 Object.defineProperty(exports, "isRoom", { enumerable: true, get: function () { return matrix_types_1.isRoom; } });
 Object.defineProperty(exports, "Membership", { enumerable: true, get: function () { return matrix_types_1.Membership; } });
@@ -10,3 +13,7 @@ var use_matrix_store_1 = require("./store/use-matrix-store");
 Object.defineProperty(exports, "useMatrixStore", { enumerable: true, get: function () { return use_matrix_store_1.useMatrixStore; } });
 var use_matrix_client_1 = require("./hooks/use-matrix-client");
 Object.defineProperty(exports, "useMatrixClient", { enumerable: true, get: function () { return use_matrix_client_1.useMatrixClient; } });
+var use_web3_1 = require("./hooks/use-web3");
+Object.defineProperty(exports, "useWeb3Context", { enumerable: true, get: function () { return use_web3_1.useWeb3Context; } });
+Object.defineProperty(exports, "WalletStatus", { enumerable: true, get: function () { return use_web3_1.WalletStatus; } });
+Object.defineProperty(exports, "Web3Provider", { enumerable: true, get: function () { return use_web3_1.Web3Provider; } });

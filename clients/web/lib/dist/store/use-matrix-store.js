@@ -1,25 +1,28 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setNewMessage = exports.useMatrixStore = void 0;
 const matrix_types_1 = require("../types/matrix-types");
-const zustand_1 = require("zustand");
+const zustand_1 = __importDefault(require("zustand"));
 const login_1 = require("../hooks/login");
 exports.useMatrixStore = (0, zustand_1.default)((set) => ({
     isAuthenticated: false,
-    loginStatus: login_1.LogInStatus.LoggedOut,
-    setLogInStatus: (loginStatus) => loginStatus === login_1.LogInStatus.LoggedOut
+    logInStatus: login_1.LogInStatus.LoggedOut,
+    setLogInStatus: (logInStatus) => logInStatus === login_1.LogInStatus.LoggedOut
         ? set({
             allMessages: null,
             isAuthenticated: false,
             deviceId: null,
-            loginStatus,
+            logInStatus,
             rooms: null,
             userId: null,
             username: null,
         })
         : set({
-            isAuthenticated: loginStatus === login_1.LogInStatus.LoggedIn,
-            loginStatus,
+            isAuthenticated: logInStatus === login_1.LogInStatus.LoggedIn,
+            logInStatus,
         }),
     deviceId: null,
     setDeviceId: (deviceId) => set({ deviceId: deviceId !== null && deviceId !== void 0 ? deviceId : null }),

@@ -2,12 +2,19 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2020,
-    "project": ["tsconfig.json"],
+    "project": [
+      "lib/tsconfig.json"
+    ],
     "sourceType": "module"
   },
-
-  "extends": ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
-  "plugins": ["@typescript-eslint", "prettier"],
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "@typescript-eslint",
+    "prettier"
+  ],
   "rules": {
     "@typescript-eslint/no-floating-promises": "error"
   },

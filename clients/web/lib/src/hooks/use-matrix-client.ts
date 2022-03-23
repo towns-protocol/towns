@@ -1,18 +1,19 @@
-import { CreateRoomOptions, MatrixClient } from "matrix-js-sdk";
 import {
-  LogInStatus,
-  getUserNamePart,
-  matrixLoginWithPassword,
-  matrixRegisterUser,
-} from "./login";
+  CreateRoomOptions,
+  MatrixClient,
+  createClient,
+  request,
+} from "matrix-js-sdk";
+import { LogInStatus, LogInCompletedResponse, getUsernamePart } from "./login";
 import { useCallback, useContext } from "react";
 
 import { CreateRoomInfo } from "../types/matrix-types";
 import { MatrixContext } from "../components/MatrixContextProvider";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
+import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
 
-interface LoginResult {
+interface LogInServerResponse {
   accessToken: string | undefined;
   userId: string | undefined;
   homeServer: string | undefined;
@@ -20,6 +21,9 @@ interface LoginResult {
   error?: string;
 }
 
+/**
+ * Matrix client API to interact with the Matrix server.
+ */
 export function useMatrixClient() {
   const {
     homeServer,
@@ -34,6 +38,8 @@ export function useMatrixClient() {
   const { setAccessToken } = useCredentialStore();
 
   const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
+
+  const { loginWithWallet } = useMatrixWalletSignIn();
 
   const createRoom = useCallback(async function (
     createInfo: CreateRoomInfo
@@ -76,7 +82,10 @@ export function useMatrixClient() {
   }, []);
 
   const loginWithPassword = useCallback(
-    async function (username: string, password: string): Promise<LoginResult> {
+    async function (
+      username: string,
+      password: string
+    ): Promise<LogInCompletedResponse> {
       await logout();
       setLogInStatus(LogInStatus.LoggingIn);
       const response = await matrixLoginWithPassword(
@@ -88,19 +97,26 @@ export function useMatrixClient() {
         setAccessToken(response.accessToken);
         setDeviceId(response.deviceId);
         setUserId(response.userId);
-        setUsername(getUserNamePart(response.userId));
+        setUsername(getUsernamePart(response.userId));
         setLogInStatus(LogInStatus.LoggedIn);
       } else {
         setLogInStatus(LogInStatus.LoggedOut);
       }
 
-      return response;
+      const isAuthenticated = response.accessToken ? true : false;
+      return {
+        isAuthenticated,
+        error: response.error,
+      };
     },
     [homeServer]
   );
 
   const registerNewUser = useCallback(
-    async function (username: string, password: string): Promise<LoginResult> {
+    async function (
+      username: string,
+      password: string
+    ): Promise<LogInCompletedResponse> {
       await logout();
       setLogInStatus(LogInStatus.LoggingIn);
       const response = await matrixRegisterUser(homeServer, username, password);
@@ -108,11 +124,15 @@ export function useMatrixClient() {
         setAccessToken(response.accessToken);
         setDeviceId(response.deviceId);
         setUserId(response.userId);
-        setUsername(getUserNamePart(response.userId));
+        setUsername(getUsernamePart(response.userId));
         setLogInStatus(LogInStatus.LoggedIn);
       }
 
-      return response;
+      const isAuthenticated = response.accessToken ? true : false;
+      return {
+        isAuthenticated,
+        error: response.error,
+      };
     },
     [homeServer]
   );
@@ -212,9 +232,75 @@ export function useMatrixClient() {
     joinRoom,
     leaveRoom,
     loginWithPassword,
+    loginWithWallet,
     logout,
     registerNewUser,
     sendMessage,
     syncRoom,
+  };
+}
+
+async function matrixRegisterUser(
+  homeServerUrl: string,
+  username: string,
+  password: string
+): Promise<LogInServerResponse> {
+  let error: string | undefined;
+  try {
+    const newClient = createClient(homeServerUrl);
+    const response = await newClient.register(username, password, undefined, {
+      type: "m.login.dummy",
+      //type: "m.login.password",
+    });
+    console.log(`response:`, JSON.stringify(response));
+    return {
+      accessToken: response.access_token,
+      deviceId: response.device_id,
+      homeServer: response.home_server,
+      userId: response.user_id,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (ex: any) {
+    error = ex.message;
+    console.error(`Error creating new user:`, ex.stack);
+  }
+
+  return {
+    accessToken: undefined,
+    deviceId: undefined,
+    homeServer: undefined,
+    userId: undefined,
+    error,
+  };
+}
+
+async function matrixLoginWithPassword(
+  homeServerUrl: string,
+  username: string,
+  password: string
+): Promise<LogInServerResponse> {
+  let error: string | undefined;
+  try {
+    const newClient = createClient(homeServerUrl);
+    const response = await newClient.loginWithPassword(username, password);
+    //console.log(`response:`, JSON.stringify(response));
+    return {
+      accessToken: response.access_token,
+      deviceId: response.device_id,
+      homeServer: response.home_server,
+      userId: response.user_id,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (ex: any) {
+    error = ex.message;
+    console.error(`Error logging in:`, ex.stack);
+  }
+
+  return {
+    accessToken: undefined,
+    deviceId: undefined,
+    homeServer: undefined,
+    userId: undefined,
+    error,
   };
 }
