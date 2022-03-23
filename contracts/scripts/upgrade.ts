@@ -15,12 +15,18 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const TesterV2 = await ethers.getContractFactory("TestcontractV2");
-  const tester = await upgrades.upgradeProxy(TESTER_ADDRESS, TesterV2, {
-    kind: "uups",
-  });
+  const NodeManagerUpgradeTest = await ethers.getContractFactory(
+    "NodeManagerUpgradeTest"
+  );
+  const nodeManager = await upgrades.upgradeProxy(
+    TESTER_ADDRESS,
+    NodeManagerUpgradeTest,
+    {
+      kind: "uups",
+    }
+  );
 
-  console.log("Tester upgraded to:", tester.address);
+  console.log("NodeManager upgraded to:", nodeManager.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

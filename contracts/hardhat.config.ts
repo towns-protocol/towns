@@ -26,12 +26,14 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   paths: {
+    // Root is up one director to access monorepo node_modules
     root: "..",
     sources: "contracts/src",
     tests: "contracts/test",
+    artifacts: "contracts/artifacts",
   },
   solidity: {
-    version: "0.8.4",
+    version: "0.8.13",
     settings: {
       optimizer: {
         enabled: true,
