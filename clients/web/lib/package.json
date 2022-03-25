@@ -12,14 +12,14 @@
   },
   "devDependencies": {
     "@types/matrix-js-sdk": "^11.0.1",
-    "@types/react": "^17.0.41",
+    "@types/react": "^17.0.43",
     "@types/react-dom": "^17.0.14",
-    "@types/typescript": "^0.4.29",
+    "@types/typescript": "^2.0.0",
     "fast-json-stable-stringify": "^2.1.0",
     "http-status-codes": "^2.2.0",
     "js-base64": "^3.7.2",
     "keccak256": "^1.0.6",
-    "pino": "^7.9.1",
+    "pino": "^7.9.2",
     "zustand": "^3.7.1"
   },
   "peerDependencies": {
