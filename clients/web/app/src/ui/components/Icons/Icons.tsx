@@ -88,7 +88,7 @@ export const IconContainer = (props: IconContainerProps) => {
   return (
     <Box
       borderRadius="xs"
-      background="shade2"
+      background="level2"
       square="sm"
       shrink
       aspectRatio="square"

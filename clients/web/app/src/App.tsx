@@ -7,11 +7,11 @@ import React from "react";
 
 export const App = () => (
   <Box direction="row" grow absoluteFill>
-    <Box basis={150} grow="x1" background="shade2">
+    <Box basis={150} grow="x1" background="level2">
       <MainActions />
       <SpaceList />
     </Box>
-    <Box basis={150} grow="x1" background="shade1">
+    <Box basis={150} grow="x1" background="level1">
       <DirectMessages />
     </Box>
     <Box grow="x9" borderLeft="regular">

@@ -7,6 +7,8 @@ const nonResponsiveProperties = defineProperties({
     color: vars.color.text,
     fontWeight: vars.fontWeight,
     fontSize: vars.fontSize,
+    textAlign: vars.textAlign,
+    textTransform: vars.textTransform,
   },
   shorthands: {
     size: ["fontSize"],

@@ -1,0 +1,124 @@
+import { Meta, Canvas, Story } from "@storybook/addon-docs";
+import { Avatar, Box, Grid, Text, Paragraph, Heading } from "../ui/components";
+import { vars } from "../ui/styles/vars.css";
+
+export const Square = (props) => (
+  <Box background="brand" square="lg" {...props} />
+);
+
+export const GridItem = (props) => (
+  <Box borderBottom="regular" paddingY="sm" justifyContent="center">
+    {props.children}
+  </Box>
+);
+
+export const Row = (props) => (
+  <Grid direction="row" paddingY="sm" borderBottom="regular" columns={2}>
+    <Box justifyContent="center">
+      <Text>{props.label}</Text>
+    </Box>
+    <Box justifyContent="center">{props.children}</Box>
+  </Grid>
+);
+
+<Meta title="Style Guide/All" />
+
+# Styleguide
+
+## Typography
+
+### Paragraph
+
+<Grid>
+  <Row label="Default">
+    <Paragraph>Default</Paragraph>
+  </Row>
+  {Object.keys(vars.fontSize)
+    .reverse()
+    .map((c) => (
+      <>
+        <Row key={c} label={c}>
+          <Paragraph size={c}>Paragraph {c}</Paragraph>
+        </Row>
+      </>
+    ))}
+</Grid>
+
+### Headings
+
+<Grid columns={2}>
+  <GridItem>
+    <Paragraph>level 1</Paragraph>
+  </GridItem>
+  <GridItem>
+    <Heading>The quick brown fox</Heading>
+  </GridItem>
+  <GridItem>
+    <Paragraph>level 2</Paragraph>
+  </GridItem>
+  <GridItem>
+    <Heading level="2">The quick brown fox</Heading>
+  </GridItem>
+  <GridItem>
+    <Paragraph>level 3</Paragraph>
+  </GridItem>
+  <GridItem>
+    <Heading level="3">The quick brown fox</Heading>
+  </GridItem>
+  <GridItem>
+    <Paragraph>level 4</Paragraph>
+  </GridItem>
+  <GridItem>
+    <Heading level="4">The quick brown fox</Heading>
+  </GridItem>
+</Grid>
+
+## Color Tokens
+
+### Text
+
+<Box gap="sm">
+  <Grid columns={2}>
+    {Object.keys(vars.color.text).map((c, i) => (
+      <>
+        <GridItem key={`l${i}`}>
+          <Paragraph>{c}</Paragraph>
+        </GridItem>
+        <GridItem key={`r${i}`}>
+          <Paragraph color={c}>{c}</Paragraph>
+        </GridItem>
+      </>
+    ))}
+  </Grid>
+</Box>
+
+### Background
+
+<Box gap="sm" border="regular" padding="md">
+  {Object.keys(vars.color.background).map((c) => (
+    <Box direction="row" alignItems="center" gap="sm" key={c}>
+      <Square background={c} border="regular" />
+      {c}
+    </Box>
+  ))}
+</Box>
+
+## Size Tokens
+
+### Padding
+
+<Box gap="sm" border="regular" padding="md">
+  {Object.keys(vars.space).map((c) => (
+    <Box
+      direction="row"
+      alignItems="center"
+      gap="sm"
+      background="level1"
+      padding={c}
+      key={c}
+    >
+      <Square />
+      {c}
+    </Box>
+  ))}
+</Box>

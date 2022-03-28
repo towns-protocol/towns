@@ -46,6 +46,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
 
   const fromShorthand = useMemo(() => {
     const shorthands: Sprinkles = {};
+
     if (notUndefined(grow)) {
       shorthands.flexGrow =
         typeof grow === "boolean" ? (grow ? "x1" : "x0") : grow;

@@ -1,0 +1,50 @@
+import { Meta, Canvas, Story } from "@storybook/addon-docs";
+import { Avatar, Box, Grid, Text, Paragraph, Heading } from "../ui/components";
+import { vars } from "../ui/styles/vars.css";
+import { Row, Square } from "./StoryUtils";
+
+<Meta title="Style Guide/Measurements" />
+
+# Measurements
+
+## Container Dimensions
+
+<Box>
+  {Object.keys(vars.dims).map((c, i) => (
+    <Row key={c} label={c}>
+      <Box height={c} background="inverted" />
+    </Row>
+  ))}
+</Box>
+
+## Space / Gap
+
+<Box>
+  {Object.keys(vars.space).map((c, i) => (
+    <Row key={c} label={c}>
+      <Box direction="row" alignItems="center" gap={c}>
+        <Square background="inverted" />
+        <Square background="inverted" />
+        <Square background="inverted" />
+      </Box>
+    </Row>
+  ))}
+</Box>
+
+## Space / Padding
+
+<Box>
+  {Object.keys(vars.space).map((c, i) => (
+    <Row key={c} label={c}>
+      <Box
+        direction="row"
+        alignItems="center"
+        padding={c}
+        color="default"
+        border="regular"
+      >
+        <Square background="inverted" />
+      </Box>
+    </Row>
+  ))}
+</Box>

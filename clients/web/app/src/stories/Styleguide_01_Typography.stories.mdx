@@ -1,0 +1,91 @@
+import { Meta, Canvas, Story, ArgsTable } from "@storybook/addon-docs";
+import { Avatar, Box, Grid, Text, Paragraph, Heading } from "../ui/components";
+import { vars } from "../ui/styles/vars.css";
+import { Row } from "./StoryUtils";
+
+<Meta title="Style Guide/Typography" />
+
+# Typography
+
+## Paragraphs
+
+<Box>
+  <Row label="Default">
+    <Paragraph>Default</Paragraph>
+  </Row>
+  {Object.keys(vars.fontSize)
+    .reverse()
+    .map((c) => (
+      <>
+        <Row key={c} label={c}>
+          <Paragraph size={c}>Paragraph {c}</Paragraph>
+        </Row>
+      </>
+    ))}
+</Box>
+
+## Headings
+
+<Box>
+  <Row label="Default">
+    <Heading>Heading Default</Heading>
+  </Row>
+  <Row label="level 1">
+    <Heading level="1">Heading level 1</Heading>
+  </Row>
+  <Row label="level 2">
+    <Heading level="2">Heading level 2</Heading>
+  </Row>
+  <Row label="level 3">
+    <Heading level="3">Heading level 3</Heading>
+  </Row>
+  <Row label="level 4">
+    <Heading level="4">Heading level 4</Heading>
+  </Row>
+</Box>
+
+## Colors
+
+<Box>
+  {Object.keys(vars.color.text).map((c, i) => (
+    <Row key={c} label={c}>
+      <Paragraph color={c}>{c}</Paragraph>
+    </Row>
+  ))}
+</Box>
+
+## Font weights
+
+<Box>
+  {Object.keys(vars.fontWeight).map((c) => (
+    <Row key={c} label={c}>
+      <Paragraph fontWeight={c}>Text font weight {c}</Paragraph>
+    </Row>
+  ))}
+</Box>
+
+## Examples
+
+### Paragraph
+
+<Canvas withSource="open" isColumn>
+  <Paragraph size="lg" color="accent" textAlign="center">
+    Paragraph content
+  </Paragraph>
+</Canvas>
+
+### Heading
+
+<Canvas withSource="open" isColumn>
+  <Heading level="1" color="brand">
+    Heading content
+  </Heading>
+</Canvas>
+
+### Text Primitive
+
+<Canvas withSource="open" isColumn>
+  <Text size="lg" color="muted2" as="span" textTransform="uppercase">
+    Custom Text
+  </Text>
+</Canvas>

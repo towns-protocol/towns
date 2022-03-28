@@ -8,9 +8,9 @@ const flexDirection = {
 } as const;
 
 const border = {
-  regular: `1px solid rgba(0 ,40, 80, 0.1)`,
-  thin: `0.5px solid  rgba(0, 40, 80, 0.1)`,
-  thick: `2px solid  rgba(0, 40, 80, 0.1)`,
+  regular: `1px solid`,
+  thin: `0.5px solid`,
+  thick: `2px solid`,
 } as const;
 
 const aspectRatio = {
@@ -38,6 +38,7 @@ const nonResponsiveProperties = defineProperties({
     width: vars.dims,
     minWidth: vars.dims,
     maxWidth: vars.dims,
+    borderColor: vars.color.text,
     borderLeft: border,
     borderRight: border,
     borderTop: border,
@@ -56,7 +57,7 @@ const nonResponsiveProperties = defineProperties({
     paddingY: ["paddingTop", "paddingBottom"],
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
     square: ["width", "height"],
-    border: ["borderBottom"],
+    border: ["borderLeft", "borderRight", "borderTop", "borderBottom"],
   },
 });
 
