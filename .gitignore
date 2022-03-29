@@ -18,3 +18,7 @@ coverage.json
 
 contracts/.openzeppelin/unknown-*.json
 /docs
+servers/identity/localhost-key.pem
+servers/identity/localhost.pem
+servers/identity/.env
+servers/identity/identity
