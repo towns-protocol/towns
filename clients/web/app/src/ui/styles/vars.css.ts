@@ -34,19 +34,6 @@ export const vars = createGlobalTheme(":root", {
     xl: `${baseline * 16}px`,
   } as const,
 
-  flexGrow: {
-    x0: "0",
-    x1: "1",
-    x2: "2",
-    x3: "3",
-    x4: "4",
-    x5: "5",
-    x6: "6",
-    x7: "7",
-    x8: "8",
-    x9: "9",
-  } as const,
-
   dims: {
     // TBD
     xs: `16px`,
@@ -54,12 +41,6 @@ export const vars = createGlobalTheme(":root", {
     md: `28px`,
     lg: `36px`,
     xl: `57px`,
-  } as const,
-  border: {
-    thin: "0.5px",
-    regular: "1px",
-    true: "1px",
-    thick: "2px",
   } as const,
 
   borderRadius: {

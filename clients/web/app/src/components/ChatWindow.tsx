@@ -1,4 +1,4 @@
-import { Box, Text } from "@ui";
+import { Box, Heading, Paragraph, Text } from "@ui";
 import React from "react";
 import { Avatar } from "ui/components/Avatar/Avatar";
 
@@ -17,15 +17,13 @@ export const ChatWindow = () => (
         iamblue
       </Text>
     </Box>
-    <Box grow justifyContent="flex-end" padding="sm" gap="sm">
-      <Box borderBottom="regular" gap="xs" paddingBottom="sm">
+    <Box grow justifyContent="end" padding="sm" gap="sm">
+      <Box borderBottom="regular" gap="sm" paddingBottom="sm">
         <Avatar nft src="doodles.jpeg" size="lg" />
-        <Text fontSize="xl24" fontWeight="strong">
-          iamblue
-        </Text>
-        <Text size="xs" color="muted3">
+        <Heading level={1}>iamblue</Heading>
+        <Paragraph size="xs" color="muted3">
           This is the beginning of your direct messa with iamblue
-        </Text>
+        </Paragraph>
       </Box>
       <Box gap="xs">
         <ChatRow avatar={<Avatar src="doodles.jpeg" nft />}>gm</ChatRow>

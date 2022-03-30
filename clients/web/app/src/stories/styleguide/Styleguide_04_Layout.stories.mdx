@@ -1,0 +1,141 @@
+import { Meta, Canvas, Story } from "@storybook/addon-docs";
+import {
+  Avatar,
+  Box,
+  Grid,
+  Text,
+  Paragraph,
+  Heading,
+} from "../../ui/components";
+import { vars } from "../../ui/styles/vars.css";
+import {
+  flexAlignment,
+  flexJustifyAlignment,
+} from "../../ui/components/Box/Box.css";
+import { Row, Square } from "../StoryUtils";
+
+<Meta title="Style Guide/Layout" />
+
+# Box Layout
+
+## Direction
+
+<Row label="Column (default)">
+  <Box border="regular" padding="md" gap="md" direction="column">
+    <Square />
+    <Square />
+    <Square />
+  </Box>
+</Row>
+
+<Row label="Row">
+  <Box border padding="md" gap="md" direction="row">
+    <Square />
+    <Square />
+    <Square />
+  </Box>
+</Row>
+
+## Gap
+
+<Box>
+  {Object.keys(vars.space).map((c) => (
+    <>
+      <Row key={c} label={c}>
+        <Box direction="row" border="regular" padding="md" gap={c}>
+          <Square />
+          <Square />
+          <Square />
+        </Box>
+      </Row>
+    </>
+  ))}
+</Box>
+
+## Grow
+
+<Row
+  label={
+    <>
+      <p>Grow shorthand</p>
+      <code>{`<Box grow /><Box grow />`}</code>
+    </>
+  }
+>
+  <Box gap="md">
+    <Box direction="row" border="regular">
+      <Box padding="md" borderRight="regular" grow></Box>
+      <Box padding="md" centerContent={true}></Box>
+    </Box>
+  </Box>
+</Row>
+<Row
+  label={
+    <>
+      <p>Grow equally</p>
+      <code>{`<Box grow /><Box grow />`}</code>
+    </>
+  }
+>
+  <Box gap="md">
+    <Box direction="row" border="regular">
+      <Box grow padding="md" borderRight="regular"></Box>
+      <Box grow padding="md" centerContent={true}></Box>
+    </Box>
+  </Box>
+</Row>
+<Row
+  label={
+    <>
+      <p>Fractionally 5/2 </p>
+      <code>{`<Box grow="x5" /><Box grow="x2" />`}</code>
+    </>
+  }
+>
+  <Box gap="md">
+    <Box direction="row" border="regular">
+      <Box grow={"x4"} padding="md" borderRight="regular"></Box>
+      <Box grow={"x2"} padding="md" centerContent={true}></Box>
+    </Box>
+  </Box>
+</Row>
+
+## justifyContent (direction row)
+
+<Box>
+  {Object.keys(flexJustifyAlignment).map((c, i) => (
+    <Row key={c} label={c}>
+      <Box
+        padding="sm"
+        gap="sm"
+        aspectRatio="3/1"
+        direction="row"
+        border="regular"
+        justifyContent={c}
+      >
+        <Square />
+        <Square />
+      </Box>
+    </Row>
+  ))}
+</Box>
+
+## alignItems (direction row)
+
+<Box>
+  {Object.keys(flexAlignment).map((c, i) => (
+    <Row key={c} label={c}>
+      <Box
+        padding="sm"
+        gap="sm"
+        direction="row"
+        aspectRatio="3/1"
+        border="regular"
+        alignItems={c}
+      >
+        <Square />
+        <Square />
+      </Box>
+    </Row>
+  ))}
+</Box>

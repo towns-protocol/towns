@@ -20,6 +20,7 @@ export const Text = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     as = "p",
     size = "md",
     fontWeight = "normal",
+    textTransform = "none",
     children,
     className,
     ...textProps
@@ -29,11 +30,12 @@ export const Text = forwardRef<HTMLElement, Props>((props: Props, ref) => {
       textSprinkles({
         size,
         fontWeight,
+        textTransform,
         ...textProps,
       }),
       className
     );
-  }, [className, fontWeight, size, textProps]);
+  }, [className, fontWeight, size, textProps, textTransform]);
   return React.createElement(
     as,
     {

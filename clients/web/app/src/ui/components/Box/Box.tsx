@@ -3,18 +3,21 @@ import React, { forwardRef, useMemo } from "react";
 import { absoluteFillClass } from "../../styles/utils.css";
 import { Sprinkles, sprinkles } from "./Box.css";
 
+type OmitShorthandSprinkles = Omit<Sprinkles, "border" | "padding">;
+
 type Props = {
   as?: React.ElementType;
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   border?: boolean | Sprinkles["border"];
+  padding?: boolean | Sprinkles["padding"];
   basis?: number | string;
   grow?: boolean | Sprinkles["flexGrow"];
   shrink?: boolean | Sprinkles["flexShrink"];
   absoluteFill?: boolean;
   centerContent?: boolean;
-} & Sprinkles;
+} & OmitShorthandSprinkles;
 
 const toPx = (value?: string | number) =>
   typeof value === "number" ? `${value}px` : value;
@@ -37,16 +40,24 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     shrink,
     basis,
     absoluteFill,
+    border,
+    padding,
     style,
     ...sprinkleProps
   } = props;
 
-  // TODO: filter const sprinkleProps via `sprinkles.properties.has` to avoid
-  // runtime errors
-
   const fromShorthand = useMemo(() => {
     const shorthands: Sprinkles = {};
 
+    if (notUndefined(border)) {
+      shorthands.border =
+        typeof border === "boolean" ? (border ? "regular" : undefined) : border;
+    }
+
+    if (notUndefined(padding)) {
+      shorthands.padding =
+        typeof padding === "boolean" ? (padding ? "md" : undefined) : padding;
+    }
     if (notUndefined(grow)) {
       shorthands.flexGrow =
         typeof grow === "boolean" ? (grow ? "x1" : "x0") : grow;
@@ -60,21 +71,32 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
       shorthands.alignItems = "center";
     }
     return shorthands;
-  }, [centerContent, grow, shrink]);
+  }, [border, centerContent, grow, padding, shrink]);
 
-  const generatedClassName = useMemo(
-    () =>
-      clsx(
-        absoluteFill && absoluteFillClass,
-        sprinkles({
-          ...boxDefaults,
-          ...fromShorthand,
-          ...sprinkleProps,
-        }),
-        className
-      ),
-    [absoluteFill, className, fromShorthand, sprinkleProps]
-  );
+  const generatedClassName = useMemo(() => {
+    const filteredSprinkleProps = (
+      Object.keys(sprinkleProps) as Array<keyof OmitShorthandSprinkles>
+    ).reduce((keep: Record<string, unknown>, k) => {
+      if (sprinkles.properties.has(k) && typeof k !== "undefined") {
+        keep[k] = sprinkleProps[k];
+      } else {
+        if (process.env.NODE_ENV === "development") {
+          throw new Error(`[Box] Warning - unknown prop "${k}"`);
+        }
+      }
+      return keep;
+    }, {} as Sprinkles);
+
+    return clsx(
+      absoluteFill && absoluteFillClass,
+      sprinkles({
+        ...boxDefaults,
+        ...fromShorthand,
+        ...filteredSprinkleProps,
+      }),
+      className
+    );
+  }, [absoluteFill, className, fromShorthand, sprinkleProps]);
 
   const dynamicStyle = useMemo(() => {
     const style: React.CSSProperties = props.style ?? {};

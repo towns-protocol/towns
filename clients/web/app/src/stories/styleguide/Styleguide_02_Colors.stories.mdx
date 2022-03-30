@@ -1,7 +1,14 @@
 import { Meta, Canvas, Story } from "@storybook/addon-docs";
-import { Avatar, Box, Grid, Text, Paragraph, Heading } from "../ui/components";
-import { vars } from "../ui/styles/vars.css";
-import { Row, Square } from "./StoryUtils";
+import {
+  Avatar,
+  Box,
+  Grid,
+  Text,
+  Paragraph,
+  Heading,
+} from "../../ui/components";
+import { vars } from "../../ui/styles/vars.css";
+import { Row, Square } from "../StoryUtils";
 
 <Meta title="Style Guide/Colors" />
 
@@ -23,7 +30,7 @@ import { Row, Square } from "./StoryUtils";
   {Object.keys(vars.color.text).map((c, i) => (
     <Row key={c} label={c}>
       <Box direction="row" alignItems="center" gap="sm">
-        <Square color={c} border="regular" />
+        <Square color={c} background="transparent" border="regular" />
         <Paragraph color={c}>0123456789</Paragraph>
       </Box>
     </Row>

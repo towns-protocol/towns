@@ -15,9 +15,37 @@ const border = {
 
 const aspectRatio = {
   square: "1",
+  "4/3": "4 / 3",
+  "16/9": "16 / 9",
+  "2/1": "2 / 1",
+  "3/1": "3 / 1",
 };
 
-const flexAlignment = ["flex-start", "center", "flex-end", "stretch"] as const;
+export const flexAlignment = {
+  start: "flex-start",
+  center: "center",
+  end: "flex-end",
+  stretch: "stretch",
+} as const;
+
+export const flexJustifyAlignment = {
+  ...flexAlignment,
+  spaceAround: "space-around",
+  spaceBetween: "space-between",
+} as const;
+
+const flexGrow = {
+  x0: 0,
+  x1: 1,
+  x2: 2,
+  x3: 3,
+  x4: 4,
+  x5: 5,
+  x6: 6,
+  x7: 7,
+  x8: 8,
+  x9: 9,
+} as const;
 
 const nonResponsiveProperties = defineProperties({
   properties: {
@@ -25,8 +53,8 @@ const nonResponsiveProperties = defineProperties({
     aspectRatio: aspectRatio,
     flexDirection: flexDirection,
     flexWrap: ["wrap", "nowrap"],
-    flexGrow: vars.flexGrow,
-    flexShrink: vars.flexGrow,
+    flexGrow: flexGrow,
+    flexShrink: flexGrow,
     gap: vars.space,
     paddingLeft: vars.space,
     paddingRight: vars.space,
@@ -45,9 +73,9 @@ const nonResponsiveProperties = defineProperties({
     borderBottom: border,
     background: vars.color.background,
     color: vars.color.text,
-    alignItems: [...flexAlignment, "baseline"],
-    alignSelf: [...flexAlignment, "baseline"],
-    justifyContent: [...flexAlignment, "space-around", "space-between"],
+    alignItems: { ...flexAlignment, baseline: "baseline" },
+    alignSelf: { ...flexAlignment, baseline: "baseline" },
+    justifyContent: flexJustifyAlignment,
     justifySelf: flexAlignment,
     borderRadius: vars.borderRadius,
   },
@@ -62,4 +90,5 @@ const nonResponsiveProperties = defineProperties({
 });
 
 export const sprinkles = createSprinkles(nonResponsiveProperties);
+
 export type Sprinkles = Parameters<typeof sprinkles>[0];
