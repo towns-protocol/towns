@@ -2,7 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/pem"
+	"harmony/server/identity/generated"
 	"io"
+	"io/ioutil"
+	"math/big"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,9 +17,13 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
+
+//go:generate ./generate.sh
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -39,13 +49,62 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, `{"alive": true}`)
 }
 
+func getNodeManager(client *ethclient.Client) (nodeManager *generated.NodeManager, err error) {
+
+	// Get the contract address from hex string
+	addr := common.HexToAddress(os.Getenv("NODE_MANAGER_ADDRESS"))
+	// Bind to an already deployed contract
+	nodeManager, err = generated.NewNodeManager(addr, client)
+	if err != nil {
+		logrus.Fatalf("Error calling contract: %v", err)
+	}
+	return
+}
+
 func main() {
 	// load .env file
 	err := godotenv.Load(".env")
-
 	if err != nil {
-		logrus.Fatalf("Error loading .env file")
+		logrus.Fatal("Error loading .env file %v", err)
 	}
+
+	rpcServer, err := ethclient.Dial(os.Getenv("JSON-RPC"))
+	if err != nil {
+		logrus.Fatalf("Error connecting to RPC server: %v", err)
+	}
+	defer rpcServer.Close()
+
+	nodeManager, err := getNodeManager(rpcServer)
+	if err != nil {
+		logrus.Fatalf("Error connecting to NodeManager contract: %v", err)
+	}
+
+	// read file content
+	pemContent, err := ioutil.ReadFile(os.Getenv("certFile"))
+	if err != nil {
+		logrus.Fatalf("Error reading certFile: %v", err)
+	}
+
+	block, _ := pem.Decode(pemContent)
+	if block == nil {
+		logrus.Fatalf("Error Decoding certFile")
+	}
+	// pass cert bytes
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		logrus.Fatalf("Error parsing certFile: %v", err)
+	}
+
+	nodeHashBytes := sha256.Sum256(cert.Raw)
+
+	nodeHash := new(big.Int).SetBytes(nodeHashBytes[:])
+
+	self, err := nodeManager.NodeHashToNode(nil, nodeHash)
+	if err != nil {
+		logrus.Fatalf("Error fetching self from NodeManager contract: %v", err)
+	}
+
+	logrus.Info("Self:", nodeHashBytes, self)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

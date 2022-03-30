@@ -6,7 +6,11 @@
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
-import { NodeManager, NodeManager__factory } from "../../typechain-types/index";
+import {
+  FQDNRegex__factory,
+  NodeManager,
+  NodeManager__factory,
+} from "../../typechain-types/index";
 
 async function main() {
   // Hardhat always runs the compile task when running scripts with its command
@@ -16,12 +20,21 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
+  const FQDNRegexFactory = (await ethers.getContractFactory(
+    "FQDNRegex"
+  )) as FQDNRegex__factory;
+  const fqdnRegex = await FQDNRegexFactory.deploy();
+  await fqdnRegex.deployed();
+
   // We get the contract to deploy
-  const NodeManagerFactory = (await ethers.getContractFactory(
-    "NodeManager"
-  )) as NodeManager__factory;
+  const NodeManagerFactory = (await ethers.getContractFactory("NodeManager", {
+    libraries: {
+      FQDNRegex: fqdnRegex.address,
+    },
+  })) as NodeManager__factory;
   const nodeManager = (await upgrades.deployProxy(NodeManagerFactory, [], {
     kind: "uups",
+    unsafeAllow: ["external-library-linking"],
   })) as NodeManager;
   await nodeManager.deployed();
   console.log("NodeManager deployed to:", nodeManager.address);
