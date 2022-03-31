@@ -1,27 +1,36 @@
-import { Box, Heading, Paragraph, Text } from "@ui";
+import { Box, Heading, Icon, Paragraph, Text } from "@ui";
 import React from "react";
 import { Avatar } from "ui/components/Avatar/Avatar";
 
 export const ChatWindow = () => (
   <Box grow>
     <Box
-      height="md"
       direction="row"
-      alignItems="center"
-      borderBottom
       paddingX="sm"
+      height="lg"
       gap="xs"
+      borderBottom
+      alignItems="center"
     >
       <Avatar nft src="doodles.jpeg" />
-      <Text size="md" color="muted1">
+      <Paragraph size="lg" color="muted">
         iamblue
-      </Text>
+      </Paragraph>
     </Box>
     <Box grow justifyContent="end" padding="sm" gap="sm">
       <Box borderBottom gap="sm" paddingBottom="sm">
-        <Avatar nft src="doodles.jpeg" size="lg" />
+        <Avatar nft src="doodles.jpeg" size="xl" />
         <Heading level={1}>iamblue</Heading>
-        <Paragraph size="xs" color="muted3">
+        <Box direction="row" alignItems="center" gap="xxs">
+          <Paragraph size="xl" fontWeight="strong">
+            50
+          </Paragraph>
+          <Icon type="token" />
+          <Paragraph size="xl" color="muted2">
+            &#8226; 3 Servers in common
+          </Paragraph>
+        </Box>
+        <Paragraph size="sm" color="muted2">
           This is the beginning of your direct messa with iamblue
         </Paragraph>
       </Box>
@@ -42,15 +51,15 @@ const ChatRow = (props: {
     {props.avatar}
     <Box>
       <Box direction="row" gap="xs" alignItems="baseline">
-        <Text fontSize="sm" color="muted2">
+        <Text fontSize="md" color="muted">
           iamblue
         </Text>
-        <Text size="xxs" color="muted3">
+        <Text size="sm" color="muted2">
           Today at 11:01 AM
         </Text>
       </Box>
       <Box>
-        <Text fontSize="sm" color="muted1">
+        <Text fontSize="md" color="muted1">
           {props.children}
         </Text>
       </Box>

@@ -86,14 +86,18 @@ import { Row, Square } from "../StoryUtils";
   label={
     <>
       <p>Fraction 5/2 </p>
-      <code>{`<Box grow="x5" /><Box grow="x2" />`}</code>
+      <code>{`<Box grow="x5"><Box grow="x2" />`}</code>
     </>
   }
 >
   <Box gap="md">
     <Box direction="row" border="strong">
-      <Box grow={"x4"} padding="sm" borderRight="strong"></Box>
-      <Box grow={"x2"} padding="sm" centerContent={true}></Box>
+      <Box grow={"x4"} padding="sm" borderRight="strong">
+        b1
+      </Box>
+      <Box grow={"x2"} padding="sm" centerContent={true}>
+        b2
+      </Box>
     </Box>
   </Box>
 </Row>

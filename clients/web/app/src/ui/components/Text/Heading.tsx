@@ -10,12 +10,13 @@ enum HeadingNames {
 }
 
 const HeadingLevel = {
-  1: { el: HeadingNames.h1, size: "xxl" as const },
-  2: { el: HeadingNames.h2, size: "xl" as const },
-  3: { el: HeadingNames.h3, size: "lg" as const },
-  4: { el: HeadingNames.h4, size: "md" as const },
-  5: { el: HeadingNames.h5, size: "sm" as const },
-  6: { el: HeadingNames.h5, size: "xs" as const },
+  1: { el: HeadingNames.h1, size: "xl32" as const },
+  2: { el: HeadingNames.h2, size: "xl24" as const },
+  3: { el: HeadingNames.h3, size: "xl" as const },
+  // not sure if heading is appropriate below xl rather <P strong />
+  4: { el: HeadingNames.h4, size: "lg" as const },
+  5: { el: HeadingNames.h5, size: "md" as const },
+  6: { el: HeadingNames.h5, size: "sm" as const },
 } as const;
 
 type HeadingProps = {

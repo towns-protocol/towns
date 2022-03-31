@@ -13,6 +13,11 @@ export const avatarSizes = {
     borderRadius: vars.borderRadius.sm,
   },
   lg: {
+    width: vars.dims.icons.lg,
+    height: vars.dims.icons.lg,
+    borderRadius: vars.borderRadius.md,
+  },
+  xl: {
     width: vars.dims.icons.xl,
     height: vars.dims.icons.xl,
     borderRadius: vars.borderRadius.md,

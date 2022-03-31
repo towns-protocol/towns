@@ -6,7 +6,7 @@ type ParagraphProps = {
   as?: "p" | "span" | "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5";
   className?: string;
   children?: React.ReactNode;
-  size?: "xxs" | "xs" | "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 } & Omit<TextSprinkles, "size" | "fontSize">;
 
 export const Paragraph = forwardRef<HTMLElement, ParagraphProps>(

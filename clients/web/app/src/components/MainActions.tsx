@@ -1,21 +1,21 @@
-import { Box, Text } from "@ui";
+import { Paragraph } from "@ui";
 import React from "react";
 import { Icon } from "ui/components/Icons";
 import { ListRow } from "./ListRow";
 
 export const MainActions = () => (
-  <Box borderBottom color="muted2">
+  <>
     <ListRow>
       <Icon type="home" size="sm" />
-      <Text>Home</Text>
+      <Paragraph>Home</Paragraph>
     </ListRow>
     <ListRow background="accent" color="inverted">
       <Icon type="message" size="sm" background="overlay" />
-      <Text>Messages</Text>
+      <Paragraph>Messages</Paragraph>
     </ListRow>
     <ListRow>
       <Icon type="plus" size="sm" background="level3" />
-      <Text>New Space</Text>
+      <Paragraph>New Space</Paragraph>
     </ListRow>
-  </Box>
+  </>
 );

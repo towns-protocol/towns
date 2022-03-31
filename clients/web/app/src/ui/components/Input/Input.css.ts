@@ -5,7 +5,7 @@ export const inputStyle = recipe({
   base: {
     background: vars.color.background.level2,
     "::placeholder": {
-      color: vars.color.text.muted,
+      color: vars.color.text.muted2,
     },
   },
   defaultVariants: {

@@ -5,7 +5,7 @@ import { ListRow } from "./ListRow";
 
 export const SpaceList = () => (
   <>
-    <Space selected />
+    <Space />
     <Space />
     <Space active />
     <Space />

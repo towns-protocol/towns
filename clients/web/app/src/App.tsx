@@ -1,5 +1,6 @@
 import { ChatWindow } from "@components/ChatWindow";
 import { MainActions } from "@components/MainActions";
+import { MessageList } from "@components/MessageList/MessageList";
 import { SpaceList } from "@components/SpaceList";
 import { TopBar } from "@components/TopBar";
 import { Box } from "@ui";
@@ -9,11 +10,14 @@ export const App = () => (
   <Box grow absoluteFill>
     <TopBar />
     <Box direction="row" grow>
-      <Box grow="x1" background="level2">
+      <Box grow background="level1" borderRight>
         <MainActions />
         <SpaceList />
       </Box>
-      <Box grow="x9" borderLeft>
+      <Box grow borderRight>
+        <MessageList />
+      </Box>
+      <Box grow="x9">
         <ChatWindow />
       </Box>
     </Box>

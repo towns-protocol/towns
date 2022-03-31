@@ -93,7 +93,7 @@ const nonResponsiveProperties = defineProperties({
       },
       level2: {
         background: vars.color.background.level2,
-        color: "muted1",
+        color: vars.color.text.muted2,
       },
       level3: {
         background: vars.color.background.level3,

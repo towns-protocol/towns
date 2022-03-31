@@ -113,16 +113,13 @@ export const vars = createGlobalTheme(":root", {
     strong: "900",
   } as const,
   fontSize: {
-    xxs: "9px",
-    xs: "11px",
-    sm: "13px",
-    md: "15px",
-    lg: "18px",
-    xl: "24px",
+    sm: "11px",
+    md: "13px",
+    lg: "15px",
+    xl: "18px",
     // note: before setting the naming, figure the sizes we actually use
-    xxl: "36px",
-    // xl48: "48px",
-    // xl72: "72px",
+    xl24: "24px",
+    xl32: "32px",
   } as const,
   textAlign: {
     left: "left",

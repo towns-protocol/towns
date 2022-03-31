@@ -48,23 +48,25 @@ export const iconSize = recipe({
       level1: {
         background: vars.color.background.level1,
         padding: vars.space.xxs,
+        color: vars.color.text.muted,
       },
       level2: {
         background: vars.color.background.level2,
         padding: vars.space.xxs,
-        color: vars.color.text.muted,
+        color: vars.color.text.muted2,
       },
       level3: {
         background: vars.color.background.level3,
         padding: vars.space.xxs,
+        color: vars.color.text.muted,
       },
       accent: {
         background: vars.color.background.accent,
         padding: vars.space.xxs,
         color: vars.color.text.inverted,
       },
-      brand: {
-        background: vars.color.background.brand,
+      secondary: {
+        background: vars.color.background.secondary,
         padding: vars.space.xxs,
         color: vars.color.text.inverted,
       },
