@@ -4,35 +4,48 @@ import { crossClass } from "./Storybook.css";
 
 export const Square = (props: BoxProps) => (
   <Box
-    background="transparent"
-    square="md"
+    background="none"
+    square="xs"
     className={!props.background ? crossClass : ""}
     {...props}
   />
 );
 
 export const GridItem = (props: { children?: React.ReactNode }) => (
-  <Box borderBottom="regular" paddingY="sm" justifyContent="center">
+  <Box borderBottom="strong" paddingY="sm" justifyContent="center">
     {props.children}
   </Box>
 );
 
-export const Row = (props: {
+export const Row = ({
+  label,
+  columns = 2,
+  children,
+  invert,
+  ...boxProps
+}: {
   label: string;
   columns?: number;
+  invert?: boolean;
   children?: React.ReactNode;
-}) => (
+} & BoxProps) => (
   <Grid
     direction="row"
     paddingY="sm"
-    borderBottom="regular"
-    columns={props.columns ?? 2}
+    borderBottom="strong"
+    columns={columns ?? 2}
   >
     <Box grow justifyContent="center" key="first">
-      <Text>{props.label}</Text>
+      <Text>{label}</Text>
     </Box>
-    <Box grow justifyContent="center" key="last">
-      {props.children}
+    <Box
+      grow
+      justifyContent="center"
+      key="last"
+      background={invert ? "accent" : undefined}
+      padding={invert && "xs"}
+    >
+      {children}
     </Box>
   </Grid>
 );

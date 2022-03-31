@@ -5,10 +5,10 @@ import { Avatar } from "ui/components/Avatar/Avatar";
 export const ChatWindow = () => (
   <Box grow>
     <Box
-      height="lg"
+      height="md"
       direction="row"
       alignItems="center"
-      borderBottom="regular"
+      borderBottom
       paddingX="sm"
       gap="xs"
     >
@@ -18,14 +18,14 @@ export const ChatWindow = () => (
       </Text>
     </Box>
     <Box grow justifyContent="end" padding="sm" gap="sm">
-      <Box borderBottom="regular" gap="sm" paddingBottom="sm">
+      <Box borderBottom gap="sm" paddingBottom="sm">
         <Avatar nft src="doodles.jpeg" size="lg" />
         <Heading level={1}>iamblue</Heading>
         <Paragraph size="xs" color="muted3">
           This is the beginning of your direct messa with iamblue
         </Paragraph>
       </Box>
-      <Box gap="xs">
+      <Box gap="sm">
         <ChatRow avatar={<Avatar src="doodles.jpeg" nft />}>gm</ChatRow>
         <ChatRow avatar={<Avatar src="ape.webp" nft />}>gm you</ChatRow>
         <ChatRow avatar={<Avatar src="doodles.jpeg" nft />}>gm gm</ChatRow>

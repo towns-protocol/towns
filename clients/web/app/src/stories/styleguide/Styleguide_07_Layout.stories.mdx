@@ -18,10 +18,10 @@ import { Row, Square } from "../StoryUtils";
 
 # Box Layout
 
-## Direction
+## Box / Direction
 
 <Row label="Column (default)">
-  <Box border="regular" padding="md" gap="md" direction="column">
+  <Box border="strong" padding="sm" gap="md" direction="column">
     <Square />
     <Square />
     <Square />
@@ -29,30 +29,28 @@ import { Row, Square } from "../StoryUtils";
 </Row>
 
 <Row label="Row">
-  <Box border padding="md" gap="md" direction="row">
+  <Box border="strong" padding="sm" gap="md" direction="row">
     <Square />
     <Square />
     <Square />
   </Box>
 </Row>
 
-## Gap
+## Box / Gap
 
 <Box>
   {Object.keys(vars.space).map((c) => (
-    <>
-      <Row key={c} label={c}>
-        <Box direction="row" border="regular" padding="md" gap={c}>
-          <Square />
-          <Square />
-          <Square />
-        </Box>
-      </Row>
-    </>
+    <Row key={c} label={c}>
+      <Box direction="row" border="strong" padding="sm" gap={c}>
+        <Square />
+        <Square />
+        <Square />
+      </Box>
+    </Row>
   ))}
 </Box>
 
-## Grow
+## Box / Grow
 
 <Row
   label={
@@ -63,9 +61,9 @@ import { Row, Square } from "../StoryUtils";
   }
 >
   <Box gap="md">
-    <Box direction="row" border="regular">
-      <Box padding="md" borderRight="regular" grow></Box>
-      <Box padding="md" centerContent={true}></Box>
+    <Box direction="row" border="strong">
+      <Box padding="sm" borderRight="strong" grow></Box>
+      <Box padding="sm" centerContent={true}></Box>
     </Box>
   </Box>
 </Row>
@@ -78,29 +76,31 @@ import { Row, Square } from "../StoryUtils";
   }
 >
   <Box gap="md">
-    <Box direction="row" border="regular">
-      <Box grow padding="md" borderRight="regular"></Box>
-      <Box grow padding="md" centerContent={true}></Box>
+    <Box direction="row" border="strong">
+      <Box grow padding="sm" borderRight="strong"></Box>
+      <Box grow padding="sm" centerContent={true}></Box>
     </Box>
   </Box>
 </Row>
 <Row
   label={
     <>
-      <p>Fractionally 5/2 </p>
+      <p>Fraction 5/2 </p>
       <code>{`<Box grow="x5" /><Box grow="x2" />`}</code>
     </>
   }
 >
   <Box gap="md">
-    <Box direction="row" border="regular">
-      <Box grow={"x4"} padding="md" borderRight="regular"></Box>
-      <Box grow={"x2"} padding="md" centerContent={true}></Box>
+    <Box direction="row" border="strong">
+      <Box grow={"x4"} padding="sm" borderRight="strong"></Box>
+      <Box grow={"x2"} padding="sm" centerContent={true}></Box>
     </Box>
   </Box>
 </Row>
 
-## justifyContent (direction row)
+## Box / justifyContent
+
+### (Row axis)
 
 <Box>
   {Object.keys(flexJustifyAlignment).map((c, i) => (
@@ -110,7 +110,7 @@ import { Row, Square } from "../StoryUtils";
         gap="sm"
         aspectRatio="3/1"
         direction="row"
-        border="regular"
+        border="strong"
         justifyContent={c}
       >
         <Square />
@@ -120,7 +120,9 @@ import { Row, Square } from "../StoryUtils";
   ))}
 </Box>
 
-## alignItems (direction row)
+## Box / alignItems
+
+### (Row axis)
 
 <Box>
   {Object.keys(flexAlignment).map((c, i) => (
@@ -130,7 +132,7 @@ import { Row, Square } from "../StoryUtils";
         gap="sm"
         direction="row"
         aspectRatio="3/1"
-        border="regular"
+        border="strong"
         alignItems={c}
       >
         <Square />

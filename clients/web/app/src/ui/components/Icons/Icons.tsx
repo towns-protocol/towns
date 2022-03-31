@@ -1,10 +1,62 @@
 import React, { forwardRef } from "react";
+import { vars } from "ui/styles/vars.css";
 import { Box } from "..";
+import { BoxProps } from "../Box/Box";
 import { iconSize, IconSizeVariants } from "./Icons.css";
 
-type IconProps = React.SVGProps<SVGSVGElement>;
+type SVGIconProps = React.SVGProps<SVGSVGElement>;
 
-export const MessageIcon = forwardRef<SVGSVGElement, IconProps>(
+export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.00002 8.33366C5.00002 5.57224 7.2386 3.33366 10 3.33366C12.7614 3.33366 15 5.57224 15 8.33366V11.0648V11.6101L15.4997 11.8284C16.1882 12.1292 16.6667 12.8154 16.6667 13.6114C16.6667 13.9183 16.418 14.167 16.1111 14.167H12.5H7.50002H3.88891C3.58208 14.167 3.33335 13.9183 3.33335 13.6114C3.33335 12.8154 3.81185 12.1292 4.50033 11.8284L5.00002 11.6101V11.0648V8.33366ZM6.66669 15.8337H3.88891C2.66161 15.8337 1.66669 14.8387 1.66669 13.6114C1.66669 12.332 2.33201 11.2093 3.33335 10.5682V8.33366C3.33335 4.65176 6.31812 1.66699 10 1.66699C13.6819 1.66699 16.6667 4.65176 16.6667 8.33366V10.5682C17.668 11.2093 18.3334 12.332 18.3334 13.6114C18.3334 14.8387 17.3384 15.8337 16.1111 15.8337H13.3334C13.3334 17.6746 11.841 19.167 10 19.167C8.15907 19.167 6.66669 17.6746 6.66669 15.8337ZM8.33335 15.8337C8.33335 16.7541 9.07955 17.5003 10 17.5003C10.9205 17.5003 11.6667 16.7541 11.6667 15.8337H8.33335Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+
+export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M19.7071 6.29289C20.0976 6.68342 20.0976 7.31658 19.7071 7.70711L9 18.4142L4.29289 13.7071C3.90237 13.3166 3.90237 12.6834 4.29289 12.2929C4.68342 11.9024 5.31658 11.9024 5.70711 12.2929L9 15.5858L18.2929 6.29289C18.6834 5.90237 19.3166 5.90237 19.7071 6.29289Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+
+export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>((props) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12.5736 5.18077C12.2293 4.93974 11.771 4.93974 11.4267 5.18077L6.00015 8.97934V17.5587C6.00015 18.6633 6.89558 19.5587 8.00015 19.5587H8.4031V16.0587C8.4031 14.1257 9.9701 12.5587 11.9031 12.5587C13.8361 12.5587 15.4031 14.1257 15.4031 16.0587V19.5587H16.0001C17.1047 19.5587 18.0001 18.6633 18.0001 17.5587V8.97934L12.5736 5.18077ZM15.4031 21.5587H14.4031H9.4031H8.4031H8.00015C5.79101 21.5587 4.00015 19.7678 4.00015 17.5587V10.3793L2.57361 11.3779C2.12116 11.6946 1.49763 11.5846 1.18091 11.1322C0.864201 10.6797 0.974235 10.0562 1.42668 9.73946L10.2798 3.5423C11.3127 2.81923 12.6876 2.81923 13.7205 3.5423L22.5736 9.73946C23.0261 10.0562 23.1361 10.6797 22.8194 11.1322C22.5027 11.5846 21.8791 11.6946 21.4267 11.3779L20.0001 10.3793V17.5587C20.0001 19.7678 18.2093 21.5587 16.0001 21.5587H15.4031ZM13.4031 19.5587V16.0587C13.4031 15.2303 12.7315 14.5587 11.9031 14.5587C11.0747 14.5587 10.4031 15.2303 10.4031 16.0587V19.5587H13.4031Z"
+      fill="#191B21"
+    />
+  </svg>
+));
+
+export const MessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
       <path
@@ -17,29 +69,20 @@ export const MessageIcon = forwardRef<SVGSVGElement, IconProps>(
   )
 );
 
-export const PlusIcon = forwardRef<SVGSVGElement, IconProps>((props, ref) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M13 4.125C13 3.50368 12.5523 3 12 3C11.4477 3 11 3.50368 11 4.125V11H4.125C3.50368 11 3 11.4477 3 12C3 12.5523 3.50368 13 4.125 13H11V19.875C11 20.4963 11.4477 21 12 21C12.5523 21 13 20.4963 13 19.875V13H19.875C20.4963 13 21 12.5523 21 12C21 11.4477 20.4963 11 19.875 11H13V4.125Z"
-      fill="currentColor"
-    />
-  </svg>
-));
+export const PlusIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M13 4.125C13 3.50368 12.5523 3 12 3C11.4477 3 11 3.50368 11 4.125V11H4.125C3.50368 11 3 11.4477 3 12C3 12.5523 3.50368 13 4.125 13H11V19.875C11 20.4963 11.4477 21 12 21C12.5523 21 13 20.4963 13 19.875V13H19.875C20.4963 13 21 12.5523 21 12C21 11.4477 20.4963 11 19.875 11H13V4.125Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
 
-export const CheckIcon = forwardRef<SVGSVGElement, IconProps>((props, ref) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M19.7071 6.29289C20.0976 6.68342 20.0976 7.31658 19.7071 7.70711L9 18.4142L4.29289 13.7071C3.90237 13.3166 3.90237 12.6834 4.29289 12.2929C4.68342 11.9024 5.31658 11.9024 5.70711 12.2929L9 15.5858L18.2929 6.29289C18.6834 5.90237 19.3166 5.90237 19.7071 6.29289Z"
-      fill="currentColor"
-    />
-  </svg>
-));
-
-export const SettingsIcon = forwardRef<SVGSVGElement, IconProps>(
+export const SettingsIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
       <path
@@ -52,50 +95,56 @@ export const SettingsIcon = forwardRef<SVGSVGElement, IconProps>(
   )
 );
 
-export const SearchIcon = forwardRef<SVGSVGElement, IconProps>((props, ref) => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    {...props}
-    ref={ref}
-  >
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10ZM10 1C5.02944 1 1 5.02944 1 10C1 14.9706 5.02944 19 10 19C12.1278 19 14.0832 18.2616 15.6238 17.027C15.6492 17.0597 15.677 17.0912 15.7071 17.1213L20.6568 22.0711C21.0473 22.4616 21.6805 22.4616 22.071 22.0711C22.4616 21.6805 22.4616 21.0474 22.071 20.6569L17.1213 15.7071C17.0912 15.677 17.0597 15.6493 17.027 15.6238C18.2616 14.0832 19 12.1278 19 10C19 5.02944 14.9706 1 10 1Z"
-      fill="#161617"
-    />
-  </svg>
-));
+export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10ZM10 1C5.02944 1 1 5.02944 1 10C1 14.9706 5.02944 19 10 19C12.1278 19 14.0832 18.2616 15.6238 17.027C15.6492 17.0597 15.677 17.0912 15.7071 17.1213L20.6568 22.0711C21.0473 22.4616 21.6805 22.4616 22.071 22.0711C22.4616 21.6805 22.4616 21.0474 22.071 20.6569L17.1213 15.7071C17.0912 15.677 17.0597 15.6493 17.027 15.6238C18.2616 14.0832 19 12.1278 19 10C19 5.02944 14.9706 1 10 1Z"
+        fill="#161617"
+      />
+    </svg>
+  )
+);
 
-const Icons = {
-  MessageIcon,
-  PlusIcon,
-  CheckIcon,
-  SettingsIcon,
-  SearchIcon,
-};
+const iconMap = {
+  bell: BellIcon,
+  check: CheckIcon,
+  home: HomeIcon,
+  message: MessageIcon,
+  plus: PlusIcon,
+  search: SearchIcon,
+  settings: SettingsIcon,
+} as const;
 
-type IconContainerProps = {
-  icon: typeof Icons[keyof typeof Icons];
-  size?: IconSizeVariants;
-};
+export const iconTypes = Object.keys(iconMap);
 
-export const IconContainer = (props: IconContainerProps) => {
-  const { size = "md", icon: Icon } = props;
+type IconProps = {
+  type: keyof typeof iconMap;
+  size?: keyof typeof vars.dims.icons;
+  background?: keyof typeof vars.color.background;
+} & BoxProps;
+
+export const Icon = (props: IconProps) => {
+  const { size = "md", background, type, ...boxProps } = props;
+  const Icon = iconMap[type ?? "bell"];
   return (
     <Box
-      borderRadius="xs"
-      background="level2"
-      square="sm"
       shrink
       aspectRatio="square"
       centerContent
-      className={iconSize[size]}
+      className={iconSize({ size, background })}
+      {...boxProps}
     >
-      <Icon width={12} height={12} />
+      <Icon width="100%" height="100%" />
     </Box>
   );
 };

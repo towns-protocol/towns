@@ -4,6 +4,7 @@ import {
   Box,
   Grid,
   Text,
+  Icon,
   Paragraph,
   Heading,
 } from "../../ui/components";
@@ -18,8 +19,10 @@ import { Row, Square } from "../StoryUtils";
 
 <Box>
   {Object.keys(vars.color.background).map((c, i) => (
-    <Row key={c} label={c}>
-      <Square background={c} border="regular" />
+    <Row key={c} label={c} invert={c.match(/overlay/)}>
+      <Box padding background={c}>
+        Default text color
+      </Box>
     </Row>
   ))}
 </Box>
@@ -28,9 +31,9 @@ import { Row, Square } from "../StoryUtils";
 
 <Box>
   {Object.keys(vars.color.text).map((c, i) => (
-    <Row key={c} label={c}>
+    <Row key={c} label={c} invert={c.match(/inverted/)}>
       <Box direction="row" alignItems="center" gap="sm">
-        <Square color={c} background="transparent" border="regular" />
+        <Icon color={c} />
         <Paragraph color={c}>0123456789</Paragraph>
       </Box>
     </Row>

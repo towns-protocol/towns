@@ -1,18 +1,21 @@
 import React from "react";
+import { Box, BoxProps } from "../Box/Box";
 import { AvatarStyle, avatarStyle } from "./Avatar.css";
 
 type Props = {
   src?: string;
-} & AvatarStyle;
+} & AvatarStyle &
+  BoxProps;
 
 export const Avatar = (props: Props) => {
-  const { size = "sm", nft = false } = props;
+  const { size = "md", nft = false, src = "ape.webp", ...boxProps } = props;
   return (
-    <div
+    <Box
       className={avatarStyle({ size, nft })}
       style={{
-        backgroundImage: `url(${props.src})`,
+        backgroundImage: `url(${src})`,
       }}
+      {...boxProps}
     />
   );
 };

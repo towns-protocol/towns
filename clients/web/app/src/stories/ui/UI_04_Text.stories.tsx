@@ -1,4 +1,5 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
+import { Box } from "@ui";
 import React from "react";
 import { Text } from "ui/components/Text/Text";
 
@@ -14,7 +15,11 @@ export default {
 } as ComponentMeta<typeof Text>;
 
 const Template: ComponentStory<typeof Text> = (args) => {
-  return <Text {...args}>{args.children}</Text>;
+  return (
+    <Box absoluteFill centerContent>
+      <Text {...args}>{args.children}</Text>
+    </Box>
+  );
 };
 
 export const TextStory = Template.bind({});

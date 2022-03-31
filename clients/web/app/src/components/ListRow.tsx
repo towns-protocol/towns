@@ -8,7 +8,7 @@ export const ListRow = forwardRef<HTMLElement, BoxProps>((props, ref) => (
     paddingY="xxs"
     paddingX="sm"
     gap="xs"
-    minHeight="lg"
+    minHeight="md"
     {...props}
     ref={ref}
   />

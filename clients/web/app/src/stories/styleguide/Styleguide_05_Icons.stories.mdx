@@ -1,0 +1,52 @@
+import { Meta, Canvas, Story } from "@storybook/addon-docs";
+import {
+  Avatar,
+  Box,
+  Icon,
+  Grid,
+  Text,
+  Paragraph,
+  Heading,
+} from "../../ui/components";
+import { iconTypes } from "../../ui/components/Icons/Icons";
+import { iconSize } from "../../ui/components/Icons/Icons.css";
+import { vars } from "../../ui/styles/vars.css";
+import {
+  flexAlignment,
+  flexJustifyAlignment,
+} from "../../ui/components/Box/Box.css";
+import { Row, Square } from "../StoryUtils";
+
+<Meta title="Style Guide/Icons" />
+
+# Icons
+
+## Types
+
+<Box>
+  {iconTypes.map((c) => (
+    <Row key={c} label={c}>
+      <Icon type={c} />
+    </Row>
+  ))}
+</Box>
+
+## Sizes
+
+<Box>
+  {Object.keys(vars.dims.icons).map((c) => (
+    <Row key={c} label={c}>
+      <Icon size={c} />
+    </Row>
+  ))}
+</Box>
+
+## Background
+
+<Box>
+  {Object.keys(vars.color.background).map((c) => (
+    <Row key={c} label={c}>
+      <Icon background={c} />
+    </Row>
+  ))}
+</Box>

@@ -14,31 +14,31 @@ import { Row, Square } from "../StoryUtils";
 
 # Measurements
 
-## Container Dimensions
+## Box / Height
 
 <Box>
-  {Object.keys(vars.dims).map((c, i) => (
+  {Object.keys(vars.dims.rows).map((c, i) => (
     <Row key={c} label={c}>
-      <Box height={c} background="inverted" />
+      <Box height={c} border="strong" />
     </Row>
   ))}
 </Box>
 
-## Space / Gap
+## Box / Gap
 
 <Box>
   {Object.keys(vars.space).map((c, i) => (
     <Row key={c} label={c}>
       <Box direction="row" alignItems="center" gap={c}>
-        <Square background="inverted" />
-        <Square background="inverted" />
-        <Square background="inverted" />
+        <Square />
+        <Square />
+        <Square />
       </Box>
     </Row>
   ))}
 </Box>
 
-## Space / Padding
+## Box / Padding
 
 <Box>
   {Object.keys(vars.space).map((c, i) => (
@@ -48,9 +48,9 @@ import { Row, Square } from "../StoryUtils";
         alignItems="center"
         padding={c}
         color="default"
-        border="regular"
+        border="strong"
       >
-        <Square background="inverted" />
+        <Square />
       </Box>
     </Row>
   ))}

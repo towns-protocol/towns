@@ -8,9 +8,9 @@ const flexDirection = {
 } as const;
 
 const border = {
-  regular: `1px solid`,
-  thin: `0.5px solid`,
-  thick: `2px solid`,
+  default: `1px solid ${vars.color.text.muted3}`,
+  strong: `1px solid ${vars.color.text.default}`,
+  inverted: `1px solid ${vars.color.text.inverted}`,
 } as const;
 
 const aspectRatio = {
@@ -49,35 +49,73 @@ const flexGrow = {
 
 const nonResponsiveProperties = defineProperties({
   properties: {
+    // display
     display: ["block", "flex", "grid", "inline-block", "none", "contents"],
+    // size
     aspectRatio: aspectRatio,
-    flexDirection: flexDirection,
-    flexWrap: ["wrap", "nowrap"],
-    flexGrow: flexGrow,
-    flexShrink: flexGrow,
-    gap: vars.space,
+    height: vars.dims.rows,
+    minHeight: vars.dims.rows,
+    maxHeight: vars.dims.rows,
+    width: vars.dims.rows,
+    minWidth: vars.dims.rows,
+    maxWidth: vars.dims.rows,
+    // padding
     paddingLeft: vars.space,
     paddingRight: vars.space,
     paddingTop: vars.space,
     paddingBottom: vars.space,
-    height: vars.dims,
-    minHeight: vars.dims,
-    maxHeight: vars.dims,
-    width: vars.dims,
-    minWidth: vars.dims,
-    maxWidth: vars.dims,
-    borderColor: vars.color.text,
+    // border
     borderLeft: border,
     borderRight: border,
     borderTop: border,
     borderBottom: border,
-    background: vars.color.background,
-    color: vars.color.text,
+    borderRadius: vars.borderRadius,
+    // flex
+    flexDirection: flexDirection,
+    gap: vars.space,
+    flexWrap: ["wrap", "nowrap"],
+    flexGrow: flexGrow,
+    flexShrink: flexGrow,
     alignItems: { ...flexAlignment, baseline: "baseline" },
     alignSelf: { ...flexAlignment, baseline: "baseline" },
     justifyContent: flexJustifyAlignment,
     justifySelf: flexAlignment,
-    borderRadius: vars.borderRadius,
+    // colors
+    background: {
+      default: {
+        background: vars.color.background.default,
+      },
+      none: {
+        background: vars.color.background.none,
+      },
+      level1: {
+        background: vars.color.background.level1,
+      },
+      level2: {
+        background: vars.color.background.level2,
+        color: "muted1",
+      },
+      level3: {
+        background: vars.color.background.level3,
+      },
+      secondary: {
+        background: vars.color.background.secondary,
+        color: vars.color.text.inverted,
+      },
+      overlay: {
+        background: vars.color.background.overlay,
+        color: vars.color.text.inverted,
+      },
+      accent: {
+        background: vars.color.background.accent,
+        color: vars.color.text.inverted,
+      },
+      inverted: {
+        background: vars.color.background.inverted,
+        color: vars.color.text.inverted,
+      },
+    },
+    color: vars.color.text,
   },
   shorthands: {
     direction: ["flexDirection"],

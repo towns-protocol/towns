@@ -3,21 +3,40 @@ import React, { forwardRef, useMemo } from "react";
 import { absoluteFillClass } from "../../styles/utils.css";
 import { Sprinkles, sprinkles } from "./Box.css";
 
-type OmitShorthandSprinkles = Omit<Sprinkles, "border" | "padding">;
+// shorthands allow `true` or `false` for assigning default values in addition
+// to the normal presets. Since bools aren't allowed as sprinkles we need to
+// filter them out from the type.
+type OmitShorthandSprinkles = Omit<
+  Sprinkles,
+  | "border"
+  | "borderTop"
+  | "borderBottom"
+  | "borderLeft"
+  | "borderRight"
+  | "padding"
+>;
+
+type ShorthandProps = {
+  borderTop?: boolean | Sprinkles["borderTop"];
+  borderBottom?: boolean | Sprinkles["borderBottom"];
+  borderLeft?: boolean | Sprinkles["borderLeft"];
+  borderRight?: boolean | Sprinkles["borderRight"];
+  border?: boolean | Sprinkles["border"];
+  padding?: boolean | Sprinkles["padding"];
+  grow?: boolean | Sprinkles["flexGrow"];
+  shrink?: boolean | Sprinkles["flexShrink"];
+};
 
 type Props = {
   as?: React.ElementType;
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  border?: boolean | Sprinkles["border"];
-  padding?: boolean | Sprinkles["padding"];
   basis?: number | string;
-  grow?: boolean | Sprinkles["flexGrow"];
-  shrink?: boolean | Sprinkles["flexShrink"];
   absoluteFill?: boolean;
   centerContent?: boolean;
-} & OmitShorthandSprinkles;
+} & ShorthandProps &
+  OmitShorthandSprinkles;
 
 const toPx = (value?: string | number) =>
   typeof value === "number" ? `${value}px` : value;
@@ -40,6 +59,10 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     shrink,
     basis,
     absoluteFill,
+    borderTop,
+    borderBottom,
+    borderLeft,
+    borderRight,
     border,
     padding,
     style,
@@ -49,29 +72,33 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
   const fromShorthand = useMemo(() => {
     const shorthands: Sprinkles = {};
 
-    if (notUndefined(border)) {
-      shorthands.border =
-        typeof border === "boolean" ? (border ? "regular" : undefined) : border;
-    }
+    shorthands.border = assignBoolToDefaultValue(border, "default");
+    shorthands.borderTop = assignBoolToDefaultValue(borderTop, "default");
+    shorthands.borderBottom = assignBoolToDefaultValue(borderBottom, "default");
+    shorthands.borderLeft = assignBoolToDefaultValue(borderLeft, "default");
+    shorthands.borderRight = assignBoolToDefaultValue(borderRight, "default");
 
-    if (notUndefined(padding)) {
-      shorthands.padding =
-        typeof padding === "boolean" ? (padding ? "md" : undefined) : padding;
-    }
-    if (notUndefined(grow)) {
-      shorthands.flexGrow =
-        typeof grow === "boolean" ? (grow ? "x1" : "x0") : grow;
-    }
-    if (notUndefined(shrink)) {
-      shorthands.flexShrink =
-        typeof shrink === "boolean" ? (shrink ? "x1" : "x0") : shrink;
-    }
+    shorthands.padding = assignBoolToDefaultValue(padding, "sm");
+    shorthands.flexGrow = assignBoolToDefaultValue(grow, "x1", "x0");
+    shorthands.flexShrink = assignBoolToDefaultValue(shrink, "x1", "x0");
+
     if (centerContent === true) {
       shorthands.justifyContent = "center";
       shorthands.alignItems = "center";
     }
+
     return shorthands;
-  }, [border, centerContent, grow, padding, shrink]);
+  }, [
+    border,
+    borderBottom,
+    borderLeft,
+    borderRight,
+    borderTop,
+    centerContent,
+    grow,
+    padding,
+    shrink,
+  ]);
 
   const generatedClassName = useMemo(() => {
     const filteredSprinkleProps = (
@@ -81,7 +108,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
         keep[k] = sprinkleProps[k];
       } else {
         if (process.env.NODE_ENV === "development") {
-          throw new Error(`[Box] Warning - unknown prop "${k}"`);
+          // throw new Error(`[Box] Warning - unknown prop "${k}"`);
         }
       }
       return keep;
@@ -116,5 +143,20 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     children
   );
 });
+
+/**
+ * Utility to assign default string values if the incoming value is a bool.
+ */
+function assignBoolToDefaultValue<T>(
+  value: boolean | T,
+  trueValue: T,
+  falseValue?: T
+) {
+  return typeof value !== "boolean"
+    ? value
+    : value === true
+    ? trueValue
+    : falseValue;
+}
 
 export type BoxProps = Parameters<typeof Box>[0];

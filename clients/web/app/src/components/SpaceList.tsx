@@ -5,7 +5,7 @@ import { ListRow } from "./ListRow";
 
 export const SpaceList = () => (
   <>
-    <Space />
+    <Space selected />
     <Space />
     <Space active />
     <Space />
@@ -15,12 +15,22 @@ export const SpaceList = () => (
   </>
 );
 
-const Space = (props: { active?: boolean }) => (
-  <ListRow height="lg">
-    <Avatar src={"punk.webp"} />
+const Space = ({
+  active,
+  selected,
+}: {
+  active?: boolean;
+  selected?: boolean;
+}) => (
+  <ListRow
+    paddingX="sm"
+    height="md"
+    background={selected ? "accent" : undefined}
+  >
+    <Avatar src={"punk.webp"} size="md" />
     <Text
-      color={props.active ? "default" : "muted2"}
-      fontWeight={props.active ? "strong" : "normal"}
+      color={selected ? "inverted" : active ? "default" : "muted2"}
+      fontWeight={active ? "strong" : "normal"}
     >
       Outer Space
     </Text>

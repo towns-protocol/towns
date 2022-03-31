@@ -21,6 +21,7 @@ export const Text = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     size = "md",
     fontWeight = "normal",
     textTransform = "none",
+    textAlign = "left",
     children,
     className,
     ...textProps
@@ -30,6 +31,7 @@ export const Text = forwardRef<HTMLElement, Props>((props: Props, ref) => {
       textSprinkles({
         size,
         fontWeight,
+        textAlign,
         textTransform,
         ...textProps,
       }),

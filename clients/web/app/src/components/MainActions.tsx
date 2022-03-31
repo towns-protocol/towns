@@ -1,26 +1,21 @@
 import { Box, Text } from "@ui";
 import React from "react";
-import {
-  IconContainer,
-  MessageIcon,
-  PlusIcon,
-  SearchIcon,
-} from "ui/components/Icons";
+import { Icon } from "ui/components/Icons";
 import { ListRow } from "./ListRow";
 
 export const MainActions = () => (
-  <Box borderBottom="thin" color="muted2">
+  <Box borderBottom color="muted2">
     <ListRow>
-      <IconContainer icon={SearchIcon} />
-      <Text>Search</Text>
+      <Icon type="home" size="sm" />
+      <Text>Home</Text>
     </ListRow>
     <ListRow background="accent" color="inverted">
-      <IconContainer icon={MessageIcon} />
-      <Text>Direct Messages</Text>
+      <Icon type="message" size="sm" background="overlay" />
+      <Text>Messages</Text>
     </ListRow>
     <ListRow>
-      <IconContainer icon={PlusIcon} />
-      <Text>New message</Text>
+      <Icon type="plus" size="sm" background="level3" />
+      <Text>New Space</Text>
     </ListRow>
   </Box>
 );

@@ -1,29 +1,31 @@
 import { recipe, RecipeVariants } from "@vanilla-extract/recipes";
 import { vars } from "ui/styles/vars.css";
 
+export const avatarSizes = {
+  sm: {
+    width: vars.dims.icons.sm,
+    height: vars.dims.icons.sm,
+    borderRadius: vars.borderRadius.xs,
+  },
+  md: {
+    width: vars.dims.icons.md,
+    height: vars.dims.icons.md,
+    borderRadius: vars.borderRadius.sm,
+  },
+  lg: {
+    width: vars.dims.icons.xl,
+    height: vars.dims.icons.xl,
+    borderRadius: vars.borderRadius.md,
+  },
+};
+
 export const avatarStyle = recipe({
   base: {
     backgroundSize: "cover",
     backgroundPosition: "center center",
   },
   variants: {
-    size: {
-      sm: {
-        width: vars.dims.sm,
-        height: vars.dims.sm,
-        borderRadius: vars.borderRadius.xs,
-      },
-      md: {
-        width: vars.dims.md,
-        height: vars.dims.md,
-        borderRadius: vars.borderRadius.sm,
-      },
-      lg: {
-        width: vars.dims.xl,
-        height: vars.dims.xl,
-        borderRadius: vars.borderRadius.md,
-      },
-    },
+    size: avatarSizes,
     nft: {
       true: {
         WebkitMaskImage: `url(/nftmask.svg)`,

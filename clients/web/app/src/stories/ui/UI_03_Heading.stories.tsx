@@ -1,4 +1,5 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
+import { Box } from "@ui";
 import React from "react";
 import { Heading } from "ui/components/Text/Heading";
 
@@ -18,7 +19,11 @@ export default {
 } as ComponentMeta<typeof Heading>;
 
 const HeadingTemplate: ComponentStory<typeof Heading> = (args) => {
-  return <Heading {...args}>{args.children}</Heading>;
+  return (
+    <Box absoluteFill centerContent>
+      <Heading {...args}>{args.children}</Heading>
+    </Box>
+  );
 };
 
 export const HeadingStory = HeadingTemplate.bind({});

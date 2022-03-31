@@ -1,13 +1,83 @@
-import { styleVariants } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
+import { vars } from "ui/styles/vars.css";
 
-export const iconSize = styleVariants({
-  sm: {
-    width: 16,
-    height: 16,
+export const iconSize = recipe({
+  base: {
+    borderRadius: vars.borderRadius.sm,
   },
-  md: {
-    width: 20,
-    height: 20,
+  variants: {
+    size: {
+      xs: {
+        width: vars.dims.icons.xs,
+        height: vars.dims.icons.xs,
+      },
+      sm: {
+        width: vars.dims.icons.sm,
+        height: vars.dims.icons.sm,
+      },
+      md: {
+        width: vars.dims.icons.md,
+        height: vars.dims.icons.md,
+      },
+      lg: {
+        width: vars.dims.icons.lg,
+        height: vars.dims.icons.lg,
+      },
+      xl: {
+        width: vars.dims.icons.xl,
+        height: vars.dims.icons.xl,
+      },
+      xxl: {
+        width: vars.dims.icons.xxl,
+        height: vars.dims.icons.xxl,
+      },
+    },
+    background: {
+      default: {
+        background: vars.color.background.default,
+        padding: vars.space.none,
+      },
+      none: {
+        background: vars.color.background.none,
+        padding: vars.space.none,
+      },
+      transparent: {
+        background: vars.color.background.none,
+        padding: vars.space.none,
+      },
+      level1: {
+        background: vars.color.background.level1,
+        padding: vars.space.xxs,
+      },
+      level2: {
+        background: vars.color.background.level2,
+        padding: vars.space.xxs,
+        color: vars.color.text.muted,
+      },
+      level3: {
+        background: vars.color.background.level3,
+        padding: vars.space.xxs,
+      },
+      accent: {
+        background: vars.color.background.accent,
+        padding: vars.space.xxs,
+        color: vars.color.text.inverted,
+      },
+      brand: {
+        background: vars.color.background.brand,
+        padding: vars.space.xxs,
+        color: vars.color.text.inverted,
+      },
+      overlay: {
+        background: vars.color.background.overlay,
+        padding: vars.space.xxs,
+      },
+      inverted: {
+        background: vars.color.background.inverted,
+        color: vars.color.text.inverted,
+        padding: vars.space.xxs,
+      },
+    },
   },
 });
 
