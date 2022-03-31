@@ -3,7 +3,6 @@ import { expect } from "chai";
 import { BigNumber, utils } from "ethers";
 import { upgrades, ethers } from "hardhat";
 
-// eslint-disable-next-line camelcase
 import {
   NodeManager,
   NodeManager__factory,

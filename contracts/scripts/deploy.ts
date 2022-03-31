@@ -5,11 +5,11 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { ethers, upgrades } from "hardhat";
-// eslint-disable-next-line node/no-missing-import
 import {
   FQDNRegex__factory,
   NodeManager,
   NodeManager__factory,
+  // eslint-disable-next-line node/no-missing-import
 } from "../../typechain-types/index";
 
 async function main() {
