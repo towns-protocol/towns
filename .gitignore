@@ -9,6 +9,8 @@
 #/.yarn/cache
 #/.pnp.*
 
+/**/yarn.lock
+
 /node_modules
 /typechain-types
 /cache
