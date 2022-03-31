@@ -8,6 +8,10 @@ globalStyle("html, body", {
   margin: 0,
   minHeight: "100vh",
   fontFamily: "Nunito, sans-serif",
+  textRendering: "optimizeLegibility",
+  WebkitFontSmoothing: "antialiased",
+  MozOsxFontSmoothing: "grayscale",
+  WebkitTextSizeAdjust: "100%",
 });
 
 globalStyle("*", {
