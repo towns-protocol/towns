@@ -14193,7 +14193,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
+"fast-deep-equal@npm:^3.0.0, fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
   checksum: e21a9d8d84f53493b6aa15efc9cfd53dd5b714a1f23f67fb5dc8f574af80df889b3bce25dc081887c6d25457cce704e636395333abad896ccdec03abaf1f3f9d
@@ -15713,8 +15713,10 @@ __metadata:
     "@storybook/addon-essentials": ^6.5.0-alpha.51
     "@storybook/addon-interactions": ^6.5.0-alpha.51
     "@storybook/addon-links": ^6.5.0-alpha.51
+    "@storybook/addons": 6.5.0-alpha.51
     "@storybook/react": ^6.5.0-alpha.51
     "@storybook/testing-library": ^0.0.9
+    "@storybook/theming": 6.5.0-alpha.51
     "@types/react": ^17.0.43
     "@types/react-dom": ^17.0.14
     "@vanilla-extract/css": ^1.6.8
@@ -15731,6 +15733,7 @@ __metadata:
     react-error-overlay: ^6.0.10
     storybook: ^6.5.0-alpha.51
     storybook-builder-vite: ^0.1.22
+    storybook-dark-mode: ^1.0.9
     typescript: ^4.6.3
     vite: ^2.9.0
     vite-plugin-checker: ^0.4.4
@@ -25854,6 +25857,22 @@ __metadata:
     "@storybook/core-common": ^6.4.3
     vite: ">=2.6.7"
   checksum: b0dbcc944026736b9a1c03cea09717d0a0e98d9c94407c2086321896ec334c009dd9920a557c63ebf7b2c200e8427b9b9b14c024318f13667452740b179199af
+  languageName: node
+  linkType: hard
+
+"storybook-dark-mode@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "storybook-dark-mode@npm:1.0.9"
+  dependencies:
+    fast-deep-equal: ^3.0.0
+    memoizerific: ^1.11.3
+  peerDependencies:
+    "@storybook/addons": ^6.0.0
+    "@storybook/api": ^6.0.0
+    "@storybook/components": ^6.0.0
+    "@storybook/core-events": ^6.0.0
+    "@storybook/theming": ^6.0.0
+  checksum: e73d2cff9bbdd83f574142ad44446938d543efe5dbecac17e2d90e8b3a3a7c3841ac72d382bbe73d2e2c6059d85b488570d21db3a2356bae235aa95f74b65e91
   languageName: node
   linkType: hard
 
