@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"harmony/server/identity/generated"
 	"io"
 	"io/ioutil"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gorilla/mux"
@@ -61,6 +63,10 @@ func getNodeManager(client *ethclient.Client) (nodeManager *generated.NodeManage
 	return
 }
 
+func toHexInt(n *big.Int) string {
+	return fmt.Sprintf("%x", n) // or %x or upper case
+}
+
 func main() {
 	// load .env file
 	err := godotenv.Load(".env")
@@ -103,6 +109,9 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Error fetching self from NodeManager contract: %v", err)
 	}
+	if self.State == 0 {
+		logrus.Warnln("nodeHash not found for this node", toHexInt(nodeHash), nodeHashBytes)
+	}
 
 	logrus.Info("Self:", nodeHashBytes, self)
 
@@ -127,10 +136,44 @@ func main() {
 		Handler:      r, // Pass our instance of gorilla/mux in.
 	}
 
+	filterNewNode, err := nodeManager.FilterNewNode(&bind.FilterOpts{Start: 0, Context: context.TODO()})
+	if err != nil {
+		logrus.Warnln("FilterNewNode err", err)
+	}
+	if filterNewNode != nil {
+		logrus.Infoln("FilterNewNode", filterNewNode)
+		for {
+			if filterNewNode.Next() {
+				logrus.Infoln("FilterNewNode", filterNewNode.Event)
+			} else {
+				logrus.Warnln("filter error", filterNewNode.Error())
+				break
+			}
+		}
+	}
+
+	watchNewNodeSink := make(chan *generated.NodeManagerNewNode)
+	watchNewNodeSub, err := nodeManager.WatchNewNode(&bind.WatchOpts{Start: new(uint64), Context: context.TODO()}, watchNewNodeSink)
+	if err != nil {
+		logrus.Warnln("WatchNewNode err", err)
+	}
+
 	go func() {
 		sig := <-sigs
 		logrus.Infoln("Signal received", sig)
+		if watchNewNodeSub != nil {
+			watchNewNodeSub.Unsubscribe()
+			logrus.Infoln("Shutdown WatchNewNode")
+		}
 		srv.Shutdown(context.TODO())
+		logrus.Infoln("Shutdown srv")
+	}()
+
+	go func() {
+		for {
+			newNode := <-watchNewNodeSink
+			logrus.Infoln("WatchNewNode", newNode)
+		}
 	}()
 
 	// Run our server in a goroutine so that it doesn't block.
