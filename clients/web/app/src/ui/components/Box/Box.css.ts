@@ -15,10 +15,15 @@ const border = {
 
 const aspectRatio = {
   square: "1",
+  "1/1": "1",
   "4/3": "4 / 3",
+  "3/4": "3 / 4",
   "16/9": "16 / 9",
+  "9/16": "9 / 16",
   "2/1": "2 / 1",
+  "1/2": "1 / 2",
   "3/1": "3 / 1",
+  "1/3": "1 / 3",
 };
 
 export const flexAlignment = {
@@ -80,6 +85,11 @@ const nonResponsiveProperties = defineProperties({
     alignSelf: { ...flexAlignment, baseline: "baseline" },
     justifyContent: flexJustifyAlignment,
     justifySelf: flexAlignment,
+    boxShadow: {
+      card: {
+        boxShadow: `0 0 40px #191B2112`,
+      },
+    },
     // colors
     background: {
       default: {
@@ -115,6 +125,7 @@ const nonResponsiveProperties = defineProperties({
         color: vars.color.text.inverted,
       },
     },
+    overflow: ["hidden", "visible", "auto"],
     color: vars.color.text,
   },
   shorthands: {
@@ -124,6 +135,7 @@ const nonResponsiveProperties = defineProperties({
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
     square: ["width", "height"],
     border: ["borderLeft", "borderRight", "borderTop", "borderBottom"],
+    shadow: ["boxShadow"],
   },
 });
 

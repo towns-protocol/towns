@@ -1,6 +1,7 @@
 import { Box, Heading, Icon, Paragraph, Text } from "@ui";
 import React from "react";
 import { Avatar } from "ui/components/Avatar/Avatar";
+import { AvatarStack } from "./AvatarStack";
 
 export const ChatWindow = () => (
   <Box grow>
@@ -21,7 +22,8 @@ export const ChatWindow = () => (
       <Box borderBottom gap="sm" paddingBottom="sm">
         <Avatar nft src="doodles.jpeg" size="xl" />
         <Heading level={1}>iamblue</Heading>
-        <Box direction="row" alignItems="center" gap="xxs">
+
+        <Box direction="row" alignItems="center" gap="xs">
           <Paragraph size="xl" fontWeight="strong">
             50
           </Paragraph>
@@ -29,7 +31,10 @@ export const ChatWindow = () => (
           <Paragraph size="xl" color="muted2">
             &#8226; 3 Servers in common
           </Paragraph>
+
+          <AvatarStack />
         </Box>
+
         <Paragraph size="sm" color="muted2">
           This is the beginning of your direct messa with iamblue
         </Paragraph>

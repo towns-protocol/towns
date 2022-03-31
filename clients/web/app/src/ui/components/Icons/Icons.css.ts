@@ -1,7 +1,7 @@
 import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "ui/styles/vars.css";
 
-export const iconSize = recipe({
+export const iconStyle = recipe({
   base: {
     borderRadius: vars.borderRadius.sm,
   },
@@ -83,4 +83,4 @@ export const iconSize = recipe({
   },
 });
 
-export type IconSizeVariants = keyof typeof iconSize;
+export type IconSizeVariants = keyof typeof iconStyle;

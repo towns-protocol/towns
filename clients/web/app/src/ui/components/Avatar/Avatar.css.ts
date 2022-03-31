@@ -10,7 +10,7 @@ export const avatarSizes = {
   md: {
     width: vars.dims.icons.md,
     height: vars.dims.icons.md,
-    borderRadius: vars.borderRadius.sm,
+    borderRadius: vars.borderRadius.lg,
   },
   lg: {
     width: vars.dims.icons.lg,
@@ -31,6 +31,16 @@ export const avatarStyle = recipe({
   },
   variants: {
     size: avatarSizes,
+    stacked: {
+      true: {
+        selectors: {
+          "&:not(:first-child)": {
+            marginLeft: `calc(-1 * ${vars.space.xs})`,
+          },
+        },
+        border: `2px solid ${vars.color.background.default}`,
+      },
+    },
     nft: {
       true: {
         WebkitMaskImage: `url(/nftmask.svg)`,
@@ -44,6 +54,7 @@ export const avatarStyle = recipe({
   defaultVariants: {
     size: "md",
     nft: false,
+    stacked: false,
   },
 });
 

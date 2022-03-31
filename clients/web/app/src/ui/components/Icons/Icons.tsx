@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 import { vars } from "ui/styles/vars.css";
 import { Box } from "..";
 import { BoxProps } from "../Box/Box";
-import { iconSize, IconSizeVariants } from "./Icons.css";
+import { iconStyle } from "./Icons.css";
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>;
 
@@ -169,7 +169,7 @@ export const Icon = (props: IconProps) => {
       shrink
       aspectRatio="square"
       centerContent
-      className={iconSize({ size, background })}
+      className={iconStyle({ size, background })}
       {...boxProps}
     >
       <Icon width="100%" height="100%" />

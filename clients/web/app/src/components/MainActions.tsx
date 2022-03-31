@@ -6,7 +6,7 @@ import { ListRow } from "./ListRow";
 export const MainActions = () => (
   <>
     <ListRow>
-      <Icon type="home" size="sm" />
+      <Icon type="home" background="level3" size="sm" />
       <Paragraph>Home</Paragraph>
     </ListRow>
     <ListRow background="accent" color="inverted">
@@ -14,7 +14,7 @@ export const MainActions = () => (
       <Paragraph>Messages</Paragraph>
     </ListRow>
     <ListRow>
-      <Icon type="plus" size="sm" background="level3" />
+      <Icon type="plus" background="level3" size="sm" />
       <Paragraph>New Space</Paragraph>
     </ListRow>
   </>
