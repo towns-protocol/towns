@@ -1,5 +1,6 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
+
 import { App } from "./App";
 const isDev = import.meta.env.DEV;
 
@@ -24,9 +25,12 @@ if (isDev) {
   );
 }
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById("root")
-);
+const node = document.getElementById("root");
+
+if (node) {
+  createRoot(node).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
