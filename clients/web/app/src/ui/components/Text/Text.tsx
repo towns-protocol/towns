@@ -37,7 +37,7 @@ export const Text = forwardRef<HTMLElement, Props>((props: Props, ref) => {
       }),
       className
     );
-  }, [className, fontWeight, size, textProps, textTransform]);
+  }, [className, fontWeight, size, textAlign, textProps, textTransform]);
   return React.createElement(
     as,
     {
