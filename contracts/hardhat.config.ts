@@ -12,8 +12,6 @@ import "hardhat-docgen";
 
 dotenv.config();
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
@@ -43,10 +41,41 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/fb413fbb148a4a63b37698824d8d617a`,
+      accounts:
+        process.env.RINKEBY_PRIVATE_KEY !== undefined
+          ? [process.env.RINKEBY_PRIVATE_KEY]
+          : [],
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    arbitrumrinkeby: {
+      url: "https://rinkeby.arbitrum.io/rpc",
+      accounts:
+        process.env.ARB_RINKEBY_PRIVATE_KEY !== undefined
+          ? [process.env.ARB_RINKEBY_PRIVATE_KEY]
+          : [],
+    },
+    arbitrum: {
+      url: "https://arb1.arbitrum.io/rpc",
+      accounts:
+        process.env.ARB_PRIVATE_KEY !== undefined
+          ? [process.env.ARB_PRIVATE_KEY]
+          : [],
+    },
+    hardhat: {
+      loggingEnabled: true,
+      mining: {
+        mempool: {
+          order: "fifo",
+        },
+        auto: true,
+        interval: [3000, 6000],
+      },
     },
   },
   gasReporter: {
@@ -57,10 +86,8 @@ const config: HardhatUserConfig = {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
   contractSizer: {
-    alphaSort: true,
     disambiguatePaths: false,
     runOnCompile: true,
-    strict: true,
   },
   docgen: {
     path: "./docs",
