@@ -10,7 +10,7 @@ type Props = {
   // React child nodes
   children?: React.ReactNode;
   // Size token
-  size?: "xxs" | "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "xl24" | "xl32";
 } & TextSprinkles;
 
 export type TextProps = Props;
