@@ -5,7 +5,12 @@
     "node": "16"
   },
   "scripts": {
-    "hardhat": "hardhat"
+    "hardhat": "hardhat",
+    "compile": "hardhat compile",
+    "coverage": "hardhat coverage --solcoverjs .solcover.js",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "integration": "hardhat test",
+    "verify": "hardhat verify"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
@@ -40,6 +45,7 @@
     "prettier-plugin-solidity": "^1.0.0-dev.21",
     "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.20",
+    "toml": "^3.0.0",
     "ts-node": "^10.7.0",
     "typechain": "^8.0.0",
     "typescript": "^4.6.3"

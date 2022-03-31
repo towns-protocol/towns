@@ -8,7 +8,13 @@ typechain-types
 #Hardhat files
 cache
 artifacts
+cache-hardhat
+out
 
 # OpenZeppelin
 .openzeppelin/dev-*.json
 .openzeppelin/.session
+
+
+   
+

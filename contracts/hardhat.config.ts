@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 
-import { HardhatUserConfig, task } from "hardhat/config";
+import { HardhatUserConfig, task, subtask } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
@@ -9,8 +9,36 @@ import "solidity-coverage";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-contract-sizer";
 import "hardhat-docgen";
+import * as toml from "toml";
+import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from "hardhat/builtin-tasks/task-names";
+import { readFileSync } from "fs";
 
 dotenv.config();
+
+const SOLC_DEFAULT = "0.8.13";
+
+// try use forge config
+let foundry: any;
+try {
+  foundry = toml.parse(readFileSync("./foundry.toml").toString());
+  foundry.default.solc = foundry.default["solc-version"]
+    ? foundry.default["solc-version"]
+    : SOLC_DEFAULT;
+} catch (error) {
+  foundry = {
+    default: {
+      solc: SOLC_DEFAULT,
+    },
+  };
+}
+
+// prune forge style tests from hardhat paths
+subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
+  async (_, __, runSuper) => {
+    const paths = await runSuper();
+    return paths.filter((p: string) => !p.endsWith(".t.sol"));
+  }
+);
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -27,16 +55,17 @@ const config: HardhatUserConfig = {
   paths: {
     // Root is up one director to access monorepo node_modules
     root: "..",
+    cache: "contracts/cache-hardhat",
     sources: "contracts/src",
-    tests: "contracts/test",
     artifacts: "contracts/artifacts",
+    tests: "contracts/integration",
   },
   solidity: {
-    version: "0.8.13",
+    version: foundry.default?.solc || SOLC_DEFAULT,
     settings: {
       optimizer: {
-        enabled: true,
-        runs: 10,
+        enabled: foundry.default?.optimizer || true,
+        runs: foundry.default?.optimizer_runs || 200,
       },
     },
   },
@@ -68,7 +97,6 @@ const config: HardhatUserConfig = {
           : [],
     },
     hardhat: {
-      loggingEnabled: true,
       mining: {
         mempool: {
           order: "fifo",

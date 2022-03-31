@@ -9,9 +9,9 @@ import { ethers } from "hardhat";
 import { NodeManager__factory } from "../../typechain-types/index";
 
 async function main() {
-  const contractAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed";
+  const contractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
   const nodeHash =
-    "0xaa1acf32ea907a8945923aff29aa89cd352aa6c381c77e918457111479b15a8c";
+    "0xaa1acf32ea907a8945923aff29aa89cd352aa6c381c77e918457111479b15a8d";
 
   console.log(`params ${contractAddress} ${nodeHash}`);
   const overrides = {
