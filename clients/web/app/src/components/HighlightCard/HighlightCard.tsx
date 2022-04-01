@@ -1,5 +1,5 @@
+import { BackgroundImage } from "@components/BackgroundImage";
 import { Card } from "@components/Card/Card";
-import { BackgroundImage } from "@components/Images/BackgroundImage";
 import { Avatar, Box, BoxProps, Paragraph } from "@ui";
 import React from "react";
 
@@ -8,7 +8,7 @@ type Props = {
 } & BoxProps;
 
 export const HighlightCard = ({ colSpan: span = 1, ...boxProps }: Props) => (
-  <Card colSpan={span} aspectRatio={"16/9"} {...boxProps}>
+  <Card colSpan={span} aspectRatio="16/9" {...boxProps}>
     <BackgroundImage src="placeholders/frame_1.png" gradient="dark" />
     <Box absoluteFill padding>
       <Box grow>

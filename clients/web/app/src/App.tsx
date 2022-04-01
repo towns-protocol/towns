@@ -7,7 +7,7 @@ import { Home } from "views/Home";
 import { Messages } from "views/Messages";
 
 export const App = () => {
-  const [route] = useState<"home" | "messages">("home");
+  const [route] = useState<"home" | "messages">("messages");
 
   return (
     <Box grow absoluteFill>
