@@ -1,52 +1,24 @@
-import { ChatWindow } from "@components/ChatWindow";
-import { Highlight } from "@components/Highlight";
 import { MainActions } from "@components/MainActions";
-import { MessageList } from "@components/MessageList/MessageList";
-import { SpaceList } from "@components/SpaceList";
-import { TopBar } from "@components/TopBar";
-import { Box, Grid, Heading } from "@ui";
+import { SpaceNavMock } from "@components/SpaceNavItem/SpaceNavItem";
+import { TopBar } from "@components/TopNav";
+import { Box } from "@ui";
 import React, { useState } from "react";
+import { Home } from "views/Home";
+import { Messages } from "views/Messages";
 
 export const App = () => {
-  const [route] = useState("messages");
+  const [route] = useState<"home" | "messages">("home");
+
   return (
     <Box grow absoluteFill>
       <TopBar />
       <Box direction="row" grow>
-        <Box grow background="level1" borderRight>
+        <Box background="level1" borderRight shrink={false}>
           <MainActions />
-          <SpaceList />
+          <SpaceNavMock />
         </Box>
-        {route === "home" ? <HomeView /> : <MessageView />}
+        {route === "home" ? <Home /> : <Messages />}
       </Box>
     </Box>
   );
 };
-
-const MessageView = () => (
-  <>
-    <Box grow borderRight>
-      <MessageList />
-    </Box>
-    <Box grow="x9">
-      <ChatWindow />
-    </Box>
-  </>
-);
-
-const HomeView = () => (
-  <Box grow="x9" justifyContent="center" direction="row" padding="lg">
-    <Box grow gap="md">
-      <Heading level={1}>Highlights</Heading>
-      <Grid columns={4} gap="lg">
-        <Highlight span={2} cover />
-        <Highlight span={2} cover />
-        <Highlight />
-        <Highlight />
-        <Highlight />
-        <Highlight />
-      </Grid>
-      <Heading level={2}>Shared with you</Heading>
-    </Box>
-  </Box>
-);

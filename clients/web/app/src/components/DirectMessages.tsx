@@ -1,7 +1,7 @@
 import { Box, Text } from "@ui";
 import React from "react";
 import { Avatar } from "ui/components/Avatar/Avatar";
-import { ListRow } from "./ListRow";
+import { NavItem } from "./NavItem/NavItem";
 
 export const DirectMessages = () => (
   <Box paddingTop="xs">
@@ -27,7 +27,7 @@ const User = (props: {
   selected?: boolean;
   src?: string;
 }) => (
-  <ListRow
+  <NavItem
     paddingY="none"
     background={props.selected ? "accent" : undefined}
     minHeight="md"
@@ -39,5 +39,5 @@ const User = (props: {
     >
       {props.children}
     </Text>
-  </ListRow>
+  </NavItem>
 );

@@ -19,19 +19,19 @@ globalStyle("*", {
 });
 
 globalStyle("body, p, button", {
-  fontSize: "11px",
-  lineHeight: "13px",
+  fontSize: "13px",
+  lineHeight: "100%",
 });
 
 globalStyle("p", {
-  fontSize: "11px",
+  fontSize: "13px",
   lineHeight: "100%",
   margin: "0 0",
 });
 
 globalStyle("h1, h2, h3, h4 ,h5 ,h6, h7", {
-  fontSize: "11px",
-  lineHeight: "13px",
+  fontSize: "13px",
+  lineHeight: "100%",
   margin: 0,
   // marginBottom: "0.2em",
 });

@@ -1,12 +1,13 @@
 import { SearchInput } from "@components/SearchInput";
 import { Avatar, Box, Heading } from "@ui";
 import React from "react";
-import { Icon } from "ui/components/Icons";
+import { Icon } from "ui/components/Icon";
 
 export const TopBar = () => {
   return (
     <Box
       direction="row"
+      shrink={false}
       height="lg"
       paddingX="sm"
       background="level1"

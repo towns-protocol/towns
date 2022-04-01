@@ -7,6 +7,10 @@ export const iconStyle = recipe({
   },
   variants: {
     size: {
+      xxs: {
+        width: vars.dims.icons.xxs,
+        height: vars.dims.icons.xxs,
+      },
       xs: {
         width: vars.dims.icons.xs,
         height: vars.dims.icons.xs,

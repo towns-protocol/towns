@@ -11,13 +11,15 @@ export const Avatar = (props: Props) => {
   const {
     size = "md",
     nft = false,
+    shape,
     stacked = false,
+    border,
     src = "ape.webp",
     ...boxProps
   } = props;
   return (
     <Box
-      className={avatarStyle({ size, nft, stacked })}
+      className={avatarStyle({ size, nft, stacked, border, shape })}
       style={{
         backgroundImage: `url(${src})`,
       }}

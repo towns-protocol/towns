@@ -1,6 +1,6 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
-import { TopBar } from "./TopBar";
+import { TopBar } from "./TopNav";
 
 export default {
   title: "components/TopBar",

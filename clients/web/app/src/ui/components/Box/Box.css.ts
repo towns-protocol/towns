@@ -39,6 +39,10 @@ export const flexJustifyAlignment = {
   spaceBetween: "space-between",
 } as const;
 
+export const boxShadow = {
+  card: `0 0 40px #191B222`,
+};
+
 const flexGrow = {
   x0: 0,
   x1: 1,
@@ -52,44 +56,29 @@ const flexGrow = {
   x9: 9,
 } as const;
 
-const nonResponsiveProperties = defineProperties({
+const gridItemProperties = defineProperties({
+  conditions: {
+    mobile: {},
+    tablet: { "@media": "screen and (min-width: 768px)" },
+    desktop: { "@media": "screen and (min-width: 1100px)" },
+    large: { "@media": "screen and (min-width: 1440)" },
+  },
+  defaultCondition: "desktop",
   properties: {
-    // display
-    display: ["block", "flex", "grid", "inline-block", "none", "contents"],
-    // size
-    aspectRatio: aspectRatio,
-    height: vars.dims.rows,
-    minHeight: vars.dims.rows,
-    maxHeight: vars.dims.rows,
-    width: vars.dims.rows,
-    minWidth: vars.dims.rows,
-    maxWidth: vars.dims.rows,
-    // padding
-    paddingLeft: vars.space,
-    paddingRight: vars.space,
-    paddingTop: vars.space,
-    paddingBottom: vars.space,
-    // border
-    borderLeft: border,
-    borderRight: border,
-    borderTop: border,
-    borderBottom: border,
-    borderRadius: vars.borderRadius,
-    // flex
-    flexDirection: flexDirection,
-    gap: vars.space,
-    flexWrap: ["wrap", "nowrap"],
-    flexGrow: flexGrow,
-    flexShrink: flexGrow,
-    alignItems: { ...flexAlignment, baseline: "baseline" },
-    alignSelf: { ...flexAlignment, baseline: "baseline" },
-    justifyContent: flexJustifyAlignment,
-    justifySelf: flexAlignment,
-    boxShadow: {
-      card: {
-        boxShadow: `0 0 40px #191B2112`,
-      },
-    },
+    gridColumn: vars.colSpan,
+  },
+  shorthands: {
+    colSpan: ["gridColumn"],
+  },
+});
+
+const colorProperties = defineProperties({
+  conditions: {
+    lightMode: {},
+    darkMode: { "@media": "(prefers-color-scheme: dark)" },
+  },
+  defaultCondition: "lightMode",
+  properties: {
     // colors
     background: {
       default: {
@@ -125,8 +114,52 @@ const nonResponsiveProperties = defineProperties({
         color: vars.color.text.inverted,
       },
     },
-    overflow: ["hidden", "visible", "auto"],
     color: vars.color.text,
+  },
+});
+
+const responsiveProperties = defineProperties({
+  conditions: {
+    mobile: {},
+    tablet: { "@media": "screen and (min-width: 768px)" },
+    desktop: { "@media": "screen and (min-width: 1100px)" },
+    large: { "@media": "screen and (min-width: 1600px)" },
+  },
+  defaultCondition: "desktop",
+  properties: {
+    // display
+    position: ["relative", "absolute", "fixed", "static", "sticky"],
+    display: ["block", "flex", "grid", "inline-block", "none", "contents"],
+    // size
+    aspectRatio: aspectRatio,
+    height: vars.dims.rows,
+    minHeight: vars.dims.rows,
+    maxHeight: vars.dims.rows,
+    width: { ...vars.dims.rows, ...vars.dims.screens },
+    minWidth: { ...vars.dims.rows, ...vars.dims.screens },
+    maxWidth: { ...vars.dims.rows, ...vars.dims.screens },
+    // padding
+    paddingLeft: vars.space,
+    paddingRight: vars.space,
+    paddingTop: vars.space,
+    paddingBottom: vars.space,
+    // border
+    borderLeft: border,
+    borderRight: border,
+    borderTop: border,
+    borderBottom: border,
+    borderRadius: vars.borderRadius,
+    // flex
+    flexDirection: flexDirection,
+    gap: vars.space,
+    flexWrap: ["wrap", "nowrap"],
+    flexGrow: flexGrow,
+    flexShrink: flexGrow,
+    alignItems: { ...flexAlignment, baseline: "baseline" },
+    alignSelf: { ...flexAlignment, baseline: "baseline" },
+    justifyContent: flexJustifyAlignment,
+    justifySelf: flexAlignment,
+    overflow: ["hidden", "visible", "auto"],
   },
   shorthands: {
     direction: ["flexDirection"],
@@ -135,10 +168,13 @@ const nonResponsiveProperties = defineProperties({
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
     square: ["width", "height"],
     border: ["borderLeft", "borderRight", "borderTop", "borderBottom"],
-    shadow: ["boxShadow"],
   },
 });
 
-export const sprinkles = createSprinkles(nonResponsiveProperties);
+export const sprinkles = createSprinkles(
+  colorProperties,
+  responsiveProperties,
+  gridItemProperties
+);
 
 export type Sprinkles = Parameters<typeof sprinkles>[0];

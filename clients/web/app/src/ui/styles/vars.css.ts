@@ -1,6 +1,8 @@
 import { createGlobalTheme } from "@vanilla-extract/css";
 
-export const baseline = 8;
+export const zoom = 1.1;
+export const baseline = 8 * zoom;
+export const fontBase = 13 * zoom;
 
 const FigmaPalette = {
   Black: "#191B21",
@@ -18,7 +20,7 @@ const FigmaPalette = {
 } as const;
 
 export const vars = createGlobalTheme(":root", {
-  bl: "8px",
+  bl: `${baseline}px`,
   size: {
     none: "0",
     sm: `${baseline * 4}px`,
@@ -65,6 +67,7 @@ export const vars = createGlobalTheme(":root", {
     // },
 
     icons: {
+      xxs: `${baseline * 1.5}px`,
       // xsmall icons / avatars
       xs: `${baseline * 2}px`,
       // small icons / avatars
@@ -87,6 +90,19 @@ export const vars = createGlobalTheme(":root", {
       md: `${baseline * 4.5}px`,
       /** input fields / topbar */
       lg: `${baseline * 5}px`,
+    },
+
+    screens: {
+      // for testing !
+      "25vw": `25vw`,
+      // for testing !
+      "50vw": `50vw`,
+      // for testing !
+      "75vw": `75vw`,
+      // for testing !
+      "1200": `1200px`,
+      // for testing !
+      "1440": `1440px`,
     },
     inputs: {
       sm: `${baseline * 3}px`,
@@ -113,13 +129,13 @@ export const vars = createGlobalTheme(":root", {
     strong: "900",
   } as const,
   fontSize: {
-    sm: "11px",
-    md: "13px",
-    lg: "15px",
-    xl: "18px",
+    sm: `${(fontBase * 11) / 13}px`,
+    md: `${(fontBase * 13) / 13}px`,
+    lg: `${(fontBase * 15) / 13}px`,
+    xl: `${(fontBase * 18) / 13}px`,
     // note: before setting the naming, figure the sizes we actually use
-    xl24: "24px",
-    xl32: "32px",
+    xl24: `${(fontBase * 24) / 13}px`,
+    xl32: `${(fontBase * 32) / 13}px`,
   } as const,
   textAlign: {
     left: "left",
@@ -155,5 +171,19 @@ export const vars = createGlobalTheme(":root", {
       secondary: FigmaPalette.Green,
       inverted: FigmaPalette.White,
     },
+  } as const,
+  colSpan: {
+    1: `span 1`,
+    2: `span 2`,
+    3: `span 3`,
+    4: `span 4`,
+    5: `span 5`,
+    6: `span 6`,
+    7: `span 7`,
+    8: `span 8`,
+    9: `span 9`,
+    10: `span 10`,
+    11: `span 11`,
+    12: `span 12`,
   } as const,
 });

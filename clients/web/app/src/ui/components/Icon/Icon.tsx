@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 import { vars } from "ui/styles/vars.css";
 import { Box } from "..";
 import { BoxProps } from "../Box/Box";
-import { iconStyle } from "./Icons.css";
+import { iconStyle } from "./Icon.css";
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>;
 
@@ -39,22 +39,26 @@ export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
-export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>((props) => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M12.5736 5.18077C12.2293 4.93974 11.771 4.93974 11.4267 5.18077L6.00015 8.97934V17.5587C6.00015 18.6633 6.89558 19.5587 8.00015 19.5587H8.4031V16.0587C8.4031 14.1257 9.9701 12.5587 11.9031 12.5587C13.8361 12.5587 15.4031 14.1257 15.4031 16.0587V19.5587H16.0001C17.1047 19.5587 18.0001 18.6633 18.0001 17.5587V8.97934L12.5736 5.18077ZM15.4031 21.5587H14.4031H9.4031H8.4031H8.00015C5.79101 21.5587 4.00015 19.7678 4.00015 17.5587V10.3793L2.57361 11.3779C2.12116 11.6946 1.49763 11.5846 1.18091 11.1322C0.864201 10.6797 0.974235 10.0562 1.42668 9.73946L10.2798 3.5423C11.3127 2.81923 12.6876 2.81923 13.7205 3.5423L22.5736 9.73946C23.0261 10.0562 23.1361 10.6797 22.8194 11.1322C22.5027 11.5846 21.8791 11.6946 21.4267 11.3779L20.0001 10.3793V17.5587C20.0001 19.7678 18.2093 21.5587 16.0001 21.5587H15.4031ZM13.4031 19.5587V16.0587C13.4031 15.2303 12.7315 14.5587 11.9031 14.5587C11.0747 14.5587 10.4031 15.2303 10.4031 16.0587V19.5587H13.4031Z"
-      fill="currentColor"
-    />
-  </svg>
-));
+export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12.5736 5.18077C12.2293 4.93974 11.771 4.93974 11.4267 5.18077L6.00015 8.97934V17.5587C6.00015 18.6633 6.89558 19.5587 8.00015 19.5587H8.4031V16.0587C8.4031 14.1257 9.9701 12.5587 11.9031 12.5587C13.8361 12.5587 15.4031 14.1257 15.4031 16.0587V19.5587H16.0001C17.1047 19.5587 18.0001 18.6633 18.0001 17.5587V8.97934L12.5736 5.18077ZM15.4031 21.5587H14.4031H9.4031H8.4031H8.00015C5.79101 21.5587 4.00015 19.7678 4.00015 17.5587V10.3793L2.57361 11.3779C2.12116 11.6946 1.49763 11.5846 1.18091 11.1322C0.864201 10.6797 0.974235 10.0562 1.42668 9.73946L10.2798 3.5423C11.3127 2.81923 12.6876 2.81923 13.7205 3.5423L22.5736 9.73946C23.0261 10.0562 23.1361 10.6797 22.8194 11.1322C22.5027 11.5846 21.8791 11.6946 21.4267 11.3779L20.0001 10.3793V17.5587C20.0001 19.7678 18.2093 21.5587 16.0001 21.5587H15.4031ZM13.4031 19.5587V16.0587C13.4031 15.2303 12.7315 14.5587 11.9031 14.5587C11.0747 14.5587 10.4031 15.2303 10.4031 16.0587V19.5587H13.4031Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
 
 export const MessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
@@ -71,7 +75,14 @@ export const MessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
 
 export const NewMessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -81,6 +92,24 @@ export const NewMessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
     </svg>
   )
 );
+
+export const PinIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+  <svg
+    width="21"
+    height="21"
+    viewBox="0 0 21 21"
+    fill="none"
+    {...props}
+    ref={ref}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M14.4615 0.999849C13.6805 0.218801 12.4141 0.2188 11.6331 0.999849L7.04729 5.58563C7.04729 5.58563 7.04344 5.58776 7.03832 5.58941C7.02706 5.59305 7.00759 5.59631 6.98219 5.59336C5.20181 5.38646 3.37749 5.6926 1.7517 6.52043C0.495861 7.15988 0.488098 8.73054 1.32423 9.56667L5.60664 13.8491L0.656907 18.7988C0.266382 19.1893 0.266383 19.8225 0.656907 20.213C1.04743 20.6036 1.6806 20.6036 2.07112 20.213L7.02086 15.2633L11.3132 19.5557C12.1494 20.3918 13.72 20.3841 14.3595 19.1282C15.1824 17.512 15.4898 15.6995 15.2901 13.9291C15.2873 13.9038 15.2906 13.8844 15.2942 13.8732C15.2959 13.8682 15.298 13.8643 15.298 13.8643L19.8978 9.26454C20.6788 8.48349 20.6788 7.21717 19.8978 6.43612L14.4615 0.999849Z"
+      fill="currentColor"
+    />
+  </svg>
+));
 
 export const PlusIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
@@ -147,6 +176,7 @@ const iconMap = {
   home: HomeIcon,
   message: MessageIcon,
   newmessage: NewMessageIcon,
+  pin: PinIcon,
   plus: PlusIcon,
   search: SearchIcon,
   settings: SettingsIcon,

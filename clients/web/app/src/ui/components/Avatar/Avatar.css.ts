@@ -10,7 +10,7 @@ export const avatarSizes = {
   md: {
     width: vars.dims.icons.md,
     height: vars.dims.icons.md,
-    borderRadius: vars.borderRadius.lg,
+    borderRadius: vars.borderRadius.sm,
   },
   lg: {
     width: vars.dims.icons.lg,
@@ -38,6 +38,16 @@ export const avatarStyle = recipe({
             marginLeft: `calc(-1 * ${vars.space.xs})`,
           },
         },
+        border: `2px solid ${vars.color.background.default}`,
+      },
+    },
+    shape: {
+      circle: {
+        borderRadius: vars.borderRadius.full,
+      },
+    },
+    border: {
+      true: {
         border: `2px solid ${vars.color.background.default}`,
       },
     },
