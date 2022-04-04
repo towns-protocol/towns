@@ -7,3 +7,4 @@ export { Input } from "./Input/Input";
 export { Heading } from "./Text/Heading";
 export { Paragraph } from "./Text/Paragraph";
 export { Text } from "./Text/Text";
+export * from "./Button/Button";

@@ -6482,6 +6482,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vanilla-extract/dynamic@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "@vanilla-extract/dynamic@npm:2.0.2"
+  dependencies:
+    "@vanilla-extract/private": ^1.0.3
+  checksum: c6f22606bce094a5682c6d842be6d6965b9448f8973eaabdaa7a7438146458c22490c1c63345f08d2226f1c95ac20731835a5140c2c18646b2c1287b65607b84
+  languageName: node
+  linkType: hard
+
 "@vanilla-extract/integration@npm:^3.0.0":
   version: 3.0.1
   resolution: "@vanilla-extract/integration@npm:3.0.1"
@@ -15842,6 +15851,7 @@ __metadata:
     "@types/react": ^17.0.43
     "@types/react-dom": ^17.0.14
     "@vanilla-extract/css": ^1.6.8
+    "@vanilla-extract/dynamic": ^2.0.2
     "@vanilla-extract/recipes": ^0.2.4
     "@vanilla-extract/sprinkles": ^1.4.0
     "@vanilla-extract/vite-plugin": ^3.1.4

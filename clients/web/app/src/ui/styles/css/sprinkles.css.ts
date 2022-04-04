@@ -57,13 +57,13 @@ const flexGrow = {
 } as const;
 
 const gridItemProperties = defineProperties({
-  // conditions: {
-  //   mobile: {},
-  //   tablet: { "@media": "screen and (min-width: 768px)" },
-  //   desktop: { "@media": "screen and (min-width: 1100px)" },
-  //   large: { "@media": "screen and (min-width: 1440)" },
-  // },
-  // defaultCondition: "desktop",
+  conditions: {
+    mobile: {},
+    tablet: { "@media": "screen and (min-width: 768px)" },
+    desktop: { "@media": "screen and (min-width: 1100px)" },
+    large: { "@media": "screen and (min-width: 1600px)" },
+  },
+  defaultCondition: "mobile",
   properties: {
     gridColumn: vars.colSpan,
   },
@@ -72,7 +72,7 @@ const gridItemProperties = defineProperties({
   },
 });
 
-const colorProperties = defineProperties({
+const colorAtomicProperties = defineProperties({
   conditions: {
     lightMode: {},
     darkMode: { "@media": "(prefers-color-scheme: dark)" },
@@ -127,7 +127,48 @@ const typeProperties = defineProperties({
   },
 });
 
-const responsiveProperties = defineProperties({
+const unresponsiveAtomicProperties = defineProperties({
+  properties: {
+    position: ["relative", "absolute", "fixed", "static", "sticky"],
+    overflow: ["hidden", "visible", "auto"],
+    cursor: [
+      "auto",
+      "default",
+      "none",
+      "context-menu",
+      "help",
+      "pointer",
+      "progress",
+      "wait",
+      "cell",
+      "crosshair",
+      "text",
+      "vertical-text",
+      "alias",
+      "copy",
+      "move",
+      "no-drop",
+      "not-allowed",
+      "all-scroll",
+      "col-resize",
+      "row-resize",
+      "n-resize",
+      "e-resize",
+      "s-resize",
+      "w-resize",
+      "ns-resize",
+      "ew-resize",
+      "ne-resize",
+      "nw-resize",
+      "se-resize",
+      "sw-resize",
+      "nesw-resize",
+      "nwse-resize",
+    ],
+  },
+});
+
+const responsiveAtomicProperties = defineProperties({
   conditions: {
     mobile: {},
     tablet: { "@media": "screen and (min-width: 768px)" },
@@ -137,7 +178,6 @@ const responsiveProperties = defineProperties({
   defaultCondition: "mobile",
   properties: {
     // display
-    position: ["relative", "absolute", "fixed", "static", "sticky"],
     display: ["block", "flex", "grid", "inline-block", "none", "contents"],
     // size
     aspectRatio: aspectRatio,
@@ -168,7 +208,6 @@ const responsiveProperties = defineProperties({
     alignSelf: { ...flexAlignment, baseline: "baseline" },
     justifyContent: flexJustifyAlignment,
     justifySelf: flexAlignment,
-    overflow: ["hidden", "visible", "auto"],
   },
 
   shorthands: {
@@ -181,11 +220,39 @@ const responsiveProperties = defineProperties({
   },
 });
 
-export const sprinkles = createSprinkles(
-  colorProperties,
+export const atoms = createSprinkles(
+  colorAtomicProperties,
   typeProperties,
-  responsiveProperties,
+  unresponsiveAtomicProperties,
+  responsiveAtomicProperties,
   gridItemProperties
 );
 
-export type Sprinkles = Parameters<typeof sprinkles>[0];
+export type Atoms = Parameters<typeof atoms>[0];
+
+/* 
+
+// NOTE: might become handy implementing responsive values
+// -------------------------------------------------------
+
+export type OptionalResponsiveValue<Value extends string | number> =
+  ConditionalValue<typeof responsiveAtomicProperties, Value>;
+export type RequiredResponsiveValue<Value extends string | number> =
+  RequiredConditionalValue<typeof responsiveAtomicProperties, Value>;
+
+export type RequiredResponsiveObject<Value> = Partial<
+  Record<Breakpoint, Value>
+> &
+  Record<typeof breakpointNames[0], Value>;
+
+export const normalizeResponsiveValue = createNormalizeValueFn(
+  responsiveAtomicProperties
+);
+export const mapResponsiveValue = createMapValueFn(responsiveAtomicProperties);
+
+export type ColorModeValue<Value extends string | number> = ConditionalValue<
+  typeof colorAtomicProperties,
+  Value
+>;
+export const mapColorModeValue = createMapValueFn(colorAtomicProperties);
+*/

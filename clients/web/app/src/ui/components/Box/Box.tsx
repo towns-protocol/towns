@@ -1,13 +1,14 @@
 import clsx from "clsx";
-import React, { forwardRef, useMemo } from "react";
-import { Sprinkles, sprinkles } from "../../styles/sprinkles.css";
-import { absoluteFillClass } from "../../styles/utils.css";
+import React, { forwardRef, HTMLAttributes, useMemo } from "react";
+import { atoms, Atoms } from "ui/styles/css/sprinkles.css";
+import { absoluteFillClass } from "ui/styles/css/utils.css";
+import { assignBoolToDefaultValue, notUndefined, toPx } from "ui/utils/utils";
 
 // shorthands allow `true` or `false` for assigning default values in addition
-// to the normal presets. Since bools aren't allowed as sprinkles we need to
+// to the normal presets. Since bools aren't allowed as Atoms we need to
 // filter them out from the type.
 type OmitShorthandSprinkles = Omit<
-  Sprinkles,
+  Atoms,
   | "border"
   | "borderTop"
   | "borderBottom"
@@ -17,18 +18,18 @@ type OmitShorthandSprinkles = Omit<
 >;
 
 type ShorthandProps = {
-  borderTop?: boolean | Sprinkles["borderTop"];
-  borderBottom?: boolean | Sprinkles["borderBottom"];
-  borderLeft?: boolean | Sprinkles["borderLeft"];
-  borderRight?: boolean | Sprinkles["borderRight"];
-  border?: boolean | Sprinkles["border"];
-  padding?: boolean | Sprinkles["padding"];
-  grow?: boolean | Sprinkles["flexGrow"];
-  shrink?: boolean | Sprinkles["flexShrink"];
+  borderTop?: boolean | Atoms["borderTop"];
+  borderBottom?: boolean | Atoms["borderBottom"];
+  borderLeft?: boolean | Atoms["borderLeft"];
+  borderRight?: boolean | Atoms["borderRight"];
+  border?: boolean | Atoms["border"];
+  padding?: boolean | Atoms["padding"];
+  grow?: boolean | Atoms["flexGrow"];
+  shrink?: boolean | Atoms["flexShrink"];
 };
 
 type Props = {
-  as?: React.ElementType;
+  as?: keyof JSX.IntrinsicElements;
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -36,15 +37,11 @@ type Props = {
   absoluteFill?: boolean;
   centerContent?: boolean;
 } & ShorthandProps &
-  OmitShorthandSprinkles;
+  OmitShorthandSprinkles &
+  /* TODO: possible to match with typeof `as` ? */
+  HTMLAttributes<HTMLDivElement>;
 
-const toPx = (value?: string | number) =>
-  typeof value === "number" ? `${value}px` : value;
-function notUndefined<T>(x: T | undefined): x is T {
-  return typeof x !== "undefined";
-}
-
-const boxDefaults: Sprinkles = {
+const boxDefaults: Atoms = {
   display: "flex",
   direction: "column",
 } as const;
@@ -66,11 +63,11 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     border,
     padding,
     style,
-    ...sprinkleProps
+    ...restProps
   } = props;
 
   const fromShorthand = useMemo(() => {
-    const shorthands: Sprinkles = {};
+    const shorthands: Atoms = {};
 
     shorthands.border = assignBoolToDefaultValue(border, "default");
     shorthands.borderTop = assignBoolToDefaultValue(borderTop, "default");
@@ -99,30 +96,32 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     shrink,
   ]);
 
-  const generatedClassName = useMemo(() => {
-    const filteredSprinkleProps = (
-      Object.keys(sprinkleProps) as Array<keyof OmitShorthandSprinkles>
+  const { atomicClasses, nativeProps } = useMemo(() => {
+    const nativeProps: Record<string, unknown> = {};
+    const atomicProps = (
+      Object.keys(restProps) as Array<keyof OmitShorthandSprinkles>
     ).reduce((keep: Record<string, unknown>, k) => {
-      if (sprinkles.properties.has(k) && typeof k !== "undefined") {
-        keep[k] = sprinkleProps[k];
+      if (atoms.properties.has(k) && typeof k !== "undefined") {
+        keep[k] = restProps[k];
       } else {
-        if (process.env.NODE_ENV === "development") {
-          // throw new Error(`[Box] Warning - unknown prop "${k}"`);
-        }
+        nativeProps[k] = restProps[k];
       }
       return keep;
-    }, {} as Sprinkles);
+    }, {} as Atoms);
 
-    return clsx(
-      absoluteFill && absoluteFillClass,
-      sprinkles({
-        ...boxDefaults,
-        ...fromShorthand,
-        ...filteredSprinkleProps,
-      }),
-      className
-    );
-  }, [absoluteFill, className, fromShorthand, sprinkleProps]);
+    return {
+      nativeProps,
+      atomicClasses: clsx(
+        atoms({
+          ...boxDefaults,
+          ...fromShorthand,
+          ...atomicProps,
+        }),
+        absoluteFill && absoluteFillClass,
+        className
+      ),
+    };
+  }, [absoluteFill, className, fromShorthand, restProps]);
 
   const dynamicStyle = useMemo(() => {
     const style: React.CSSProperties = props.style ?? {};
@@ -135,27 +134,13 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
   return React.createElement(
     as,
     {
-      className: generatedClassName,
+      className: atomicClasses,
       style: dynamicStyle,
+      ...nativeProps,
       ref,
     },
     children
   );
 });
-
-/**
- * Utility to assign default string values if the incoming value is a bool.
- */
-function assignBoolToDefaultValue<T>(
-  value: boolean | T,
-  trueValue: T,
-  falseValue?: T
-) {
-  return typeof value !== "boolean"
-    ? value
-    : value === true
-    ? trueValue
-    : falseValue;
-}
 
 export type BoxProps = Parameters<typeof Box>[0];

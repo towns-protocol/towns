@@ -1,10 +1,11 @@
 import { SearchInput } from "@components/SearchInput";
-import { Avatar, Icon, Box, Button, Heading } from "@ui";
+import { Avatar, Box, Heading, Icon } from "@ui";
 import React from "react";
 
-export const TopBar = () => {
+export const TopBar = (props: { onClick?: () => void }) => {
   return (
     <Box
+      onClick={props.onClick}
       direction="row"
       shrink={false}
       height="lg"
@@ -20,7 +21,6 @@ export const TopBar = () => {
       <Box grow />
       <SearchInput />
       <Icon size="md" type="bell" background="level2" />
-      <Button color="accent">☽</Button>
       <Avatar size="md" nft src="ape.webp" />
     </Box>
   );
