@@ -1,5 +1,5 @@
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
-import { vars } from "ui/styles/vars.css";
+import { vars } from "../vars.css";
 import "./globals.css";
 
 const flexDirection = {
