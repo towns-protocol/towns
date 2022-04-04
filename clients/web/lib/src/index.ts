@@ -1,7 +1,7 @@
 export {
   LoginStatus,
-  LoginCompletedResponse,
-  getUsernamePart,
+  getUsernameFromId,
+  getShortUsername,
 } from "./hooks/login";
 
 export {

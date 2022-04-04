@@ -1,8 +1,6 @@
-import * as React from "react";
-
 import { Button, IconButton, Theme } from "@mui/material";
-import { Membership, isRoom, useMatrixStore } from "use-matrix-client";
-import { useCallback, useState } from "react";
+import { Membership, getShortUsername, isRoom, useMatrixStore } from "use-matrix-client";
+import { useCallback, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import AppBar from "@mui/material/AppBar";
@@ -34,10 +32,16 @@ interface CurrentChatRoom {
 
 export default function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [currentChatRoom, setCurrentChatRoom] = useState<CurrentChatRoom | undefined>(undefined);
   const { rooms, username } = useMatrixStore();
   const [showCreateRoomForm, setShowCreateRoomForm] = useState<boolean>(false);
+
+  const myWalletAddress = useMemo(() => {
+    if (username) {
+      return getShortUsername(username);
+    }
+  }, [username]);
 
   const handleDrawerToggle = useCallback(() => {
     setMobileOpen(!mobileOpen);
@@ -156,8 +160,8 @@ export default function AppDrawer(props: Props): JSX.Element {
             Matrix Client
           </Typography>
           <Box display="flex" flexDirection="row" flexGrow={1} />
-          <Box sx={spacingStyle}>
-            {username}
+          <Box sx={spacingStyle} alignItems="right">
+            {myWalletAddress}
           </Box>
           <Box sx={spacingStyle}>
             <Logout />

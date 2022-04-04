@@ -15,15 +15,23 @@ exports.useMatrixStore = (0, zustand_1.default)((set) => ({
             allMessages: null,
             isAuthenticated: false,
             deviceId: null,
-            loginStatus: loginStatus,
+            loginStatus,
             rooms: null,
             userId: null,
             username: null,
         })
-        : set({
-            isAuthenticated: loginStatus === login_1.LoginStatus.LoggedIn,
-            loginStatus: loginStatus,
-        }),
+        : loginStatus === login_1.LoginStatus.LoggingIn
+            ? set({
+                isAuthenticated: false,
+                loginError: null,
+                loginStatus,
+            })
+            : set({
+                isAuthenticated: loginStatus === login_1.LoginStatus.LoggedIn,
+                loginStatus,
+            }),
+    loginError: null,
+    setLoginError: (error) => set({ loginError: error !== null && error !== void 0 ? error : null }),
     deviceId: null,
     setDeviceId: (deviceId) => set({ deviceId: deviceId !== null && deviceId !== void 0 ? deviceId : null }),
     homeServer: null,

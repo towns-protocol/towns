@@ -1,6 +1,6 @@
 import { Membership, Rooms, RoomsMessages } from "../types/matrix-types";
 import { Room as MatrixRoom } from "matrix-js-sdk";
-import { LoginStatus } from "../hooks/login";
+import { AuthenticationError, LoginStatus } from "../hooks/login";
 export declare type MatrixStoreStates = {
     createRoom: (roomId: string) => void;
     isAuthenticated: boolean;
@@ -10,6 +10,8 @@ export declare type MatrixStoreStates = {
     setHomeServer: (homeServer: string | undefined) => void;
     loginStatus: LoginStatus;
     setLoginStatus: (loginStatus: LoginStatus) => void;
+    loginError: AuthenticationError;
+    setLoginError: (error: AuthenticationError | undefined) => void;
     allMessages: RoomsMessages | null;
     setNewMessage: (roomId: string, message: string) => void;
     rooms: Rooms | null;

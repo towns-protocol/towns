@@ -14,6 +14,7 @@ const matrix_js_sdk_1 = require("matrix-js-sdk");
 const login_1 = require("./login");
 const react_1 = require("react");
 const MatrixContextProvider_1 = require("../components/MatrixContextProvider");
+const http_status_codes_1 = require("http-status-codes");
 const use_credential_store_1 = require("../store/use-credential-store");
 const use_matrix_store_1 = require("../store/use-matrix-store");
 const use_matrix_wallet_sign_in_1 = require("./use-matrix-wallet-sign-in");
@@ -21,10 +22,13 @@ const use_matrix_wallet_sign_in_1 = require("./use-matrix-wallet-sign-in");
  * Matrix client API to interact with the Matrix server.
  */
 function useMatrixClient() {
-    const { homeServer, username, setDeviceId, setLoginStatus, setRoomName, setUserId, setUsername, } = (0, use_matrix_store_1.useMatrixStore)();
+    const { homeServer, username, setDeviceId, setLoginError, setLoginStatus, setRoomName, setUserId, setUsername, } = (0, use_matrix_store_1.useMatrixStore)();
+    const shortUsername = (0, react_1.useMemo)(function () {
+        return (0, login_1.getShortUsername)(username);
+    }, [username]);
     const { setAccessToken } = (0, use_credential_store_1.useCredentialStore)();
     const matrixClient = (0, react_1.useContext)(MatrixContextProvider_1.MatrixContext);
-    const { loginWithWallet } = (0, use_matrix_wallet_sign_in_1.useMatrixWalletSignIn)();
+    const { getIsWalletIdRegistered, loginWithWallet, registerWallet } = (0, use_matrix_wallet_sign_in_1.useMatrixWalletSignIn)();
     const createRoom = (0, react_1.useCallback)(function (createInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -76,17 +80,18 @@ function useMatrixClient() {
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setUserId(response.userId);
-                setUsername((0, login_1.getUsernamePart)(response.userId));
+                setUsername((0, login_1.getUsernameFromId)(response.userId));
                 setLoginStatus(login_1.LoginStatus.LoggedIn);
             }
             else {
                 setLoginStatus(login_1.LoginStatus.LoggedOut);
             }
-            const isAuthenticated = response.accessToken ? true : false;
-            return {
-                isAuthenticated,
-                error: response.error,
-            };
+            if (response.error) {
+                setLoginError({
+                    code: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                    message: response.error,
+                });
+            }
         });
     }, [homeServer]);
     const registerNewUser = (0, react_1.useCallback)(function (username, password) {
@@ -98,21 +103,22 @@ function useMatrixClient() {
                 setAccessToken(response.accessToken);
                 setDeviceId(response.deviceId);
                 setUserId(response.userId);
-                setUsername((0, login_1.getUsernamePart)(response.userId));
+                setUsername((0, login_1.getUsernameFromId)(response.userId));
                 setLoginStatus(login_1.LoginStatus.LoggedIn);
             }
-            const isAuthenticated = response.accessToken ? true : false;
-            return {
-                isAuthenticated,
-                error: response.error,
-            };
+            if (response.error) {
+                setLoginError({
+                    code: http_status_codes_1.StatusCodes.UNAUTHORIZED,
+                    message: response.error,
+                });
+            }
         });
     }, [homeServer]);
     const sendMessage = (0, react_1.useCallback)(function (roomId, message) {
         return __awaiter(this, void 0, void 0, function* () {
             if (matrixClient) {
                 const content = {
-                    body: `${username}: ${message}`,
+                    body: `${shortUsername}: ${message}`,
                     msgtype: "m.text",
                 };
                 yield matrixClient.sendEvent(roomId, "m.room.message", content, "", 
@@ -124,7 +130,7 @@ function useMatrixClient() {
                 });
             }
         });
-    }, [username]);
+    }, [shortUsername]);
     const leaveRoom = (0, react_1.useCallback)(function (roomId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (matrixClient) {
@@ -136,7 +142,7 @@ function useMatrixClient() {
     const inviteUser = (0, react_1.useCallback)(function (roomId, userId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (matrixClient) {
-                yield matrixClient.invite(roomId, userId, 
+                yield matrixClient.invite(roomId, (0, login_1.toLowerCaseUsername)(userId), 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
                 function (err, data) {
                     if (err) {
@@ -186,6 +192,7 @@ function useMatrixClient() {
     }, []);
     return {
         createRoom,
+        getIsWalletIdRegistered,
         inviteUser,
         joinRoom,
         leaveRoom,
@@ -193,6 +200,7 @@ function useMatrixClient() {
         loginWithWallet,
         logout,
         registerNewUser,
+        registerWallet,
         sendMessage,
         syncRoom,
     };
@@ -203,7 +211,7 @@ function matrixRegisterUser(homeServerUrl, username, password) {
         let error;
         try {
             const newClient = (0, matrix_js_sdk_1.createClient)(homeServerUrl);
-            const response = yield newClient.register(username, password, undefined, {
+            const response = yield newClient.register(username.toLowerCase(), password, undefined, {
                 type: "m.login.dummy",
                 //type: "m.login.password",
             });
