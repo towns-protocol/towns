@@ -1,4 +1,4 @@
-import { Box, BoxProps, Grid, Text } from "@ui";
+import { Box, BoxProps, Grid, Text } from "../ui/components";
 import React from "react";
 import { crossClass } from "./Storybook.css";
 

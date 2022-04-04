@@ -21,11 +21,9 @@ import { Row } from "../StoryUtils";
     <Paragraph>Default</Paragraph>
   </Row>
   {["sm", "md", "lg", "xl"].reverse().map((c) => (
-    <>
-      <Row key={c} label={c}>
-        <Paragraph size={c}>Paragraph {c}</Paragraph>
-      </Row>
-    </>
+    <Row key={c} label={c}>
+      <Paragraph size={c}>Paragraph {c}</Paragraph>
+    </Row>
   ))}
 </Box>
 
@@ -90,7 +88,7 @@ import { Row } from "../StoryUtils";
 ### Text Primitive
 
 <Canvas withSource="open" isColumn>
-  <Text size="lg" color="muted2" as="span" textTransform="uppercase">
+  <Text size="lg" color="muted1" as="span" textTransform="uppercase">
     Custom Text
   </Text>
 </Canvas>

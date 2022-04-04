@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React, { forwardRef, HTMLAttributes, useMemo } from "react";
-import { atoms, Atoms } from "ui/styles/css/sprinkles.css";
-import { absoluteFillClass } from "ui/styles/css/utils.css";
+import { atoms, Atoms } from "ui/styles/atoms/sprinkles.css";
+import { absoluteFillClass } from "ui/styles/atoms/utils.css";
 import { assignBoolToDefaultValue, notUndefined, toPx } from "ui/utils/utils";
 
 // shorthands allow `true` or `false` for assigning default values in addition
