@@ -27,3 +27,4 @@ servers/identity/localhost.pem
 servers/identity/.env
 servers/identity/identity
 servers/identity/generated
+clients/web/app/storybook-static
