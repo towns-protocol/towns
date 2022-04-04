@@ -57,7 +57,7 @@ export const iconStyle = recipe({
       level2: {
         background: vars.color.background.level2,
         padding: vars.space.xxs,
-        color: vars.color.text.muted2,
+        color: vars.color.text.muted1,
       },
       level3: {
         background: vars.color.background.level3,

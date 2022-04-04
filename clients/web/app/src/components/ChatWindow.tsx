@@ -28,14 +28,14 @@ export const ChatWindow = () => (
             50
           </Paragraph>
           <Icon type="token" />
-          <Paragraph size="xl" color="muted2">
+          <Paragraph size="xl" color="muted1">
             &#8226; 3 Servers in common
           </Paragraph>
 
           <AvatarStack />
         </Box>
 
-        <Paragraph size="sm" color="muted2">
+        <Paragraph size="sm" color="muted1">
           This is the beginning of your direct messa with iamblue
         </Paragraph>
       </Box>
@@ -59,12 +59,12 @@ const ChatRow = (props: {
         <Text fontSize="md" color="muted">
           iamblue
         </Text>
-        <Text size="sm" color="muted2">
+        <Text size="sm" color="muted1">
           Today at 11:01 AM
         </Text>
       </Box>
       <Box>
-        <Text fontSize="md" color="muted1">
+        <Text fontSize="md" color="muted">
           {props.children}
         </Text>
       </Box>

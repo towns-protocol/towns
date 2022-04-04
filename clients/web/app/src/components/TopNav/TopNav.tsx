@@ -1,7 +1,6 @@
 import { SearchInput } from "@components/SearchInput";
-import { Avatar, Box, Heading } from "@ui";
+import { Avatar, Icon, Box, Button, Heading } from "@ui";
 import React from "react";
-import { Icon } from "ui/components/Icon";
 
 export const TopBar = () => {
   return (
@@ -21,6 +20,7 @@ export const TopBar = () => {
       <Box grow />
       <SearchInput />
       <Icon size="md" type="bell" background="level2" />
+      <Button color="accent">☽</Button>
       <Avatar size="md" nft src="ape.webp" />
     </Box>
   );

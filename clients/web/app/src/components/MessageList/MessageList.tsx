@@ -13,7 +13,7 @@ export const MessageList = () => {
         alignItems="center"
       >
         <Box grow>
-          <Paragraph size="lg" color="muted2">
+          <Paragraph size="lg" color="muted1">
             Messages
           </Paragraph>
         </Box>
@@ -48,12 +48,12 @@ const Message = ({
       >
         Outer Space
       </Paragraph>
-      <Paragraph size="md" color="muted2">
+      <Paragraph size="md" color="muted1">
         Lomo
       </Paragraph>
     </Box>
     <Box centerContent shrink>
-      <Paragraph color="muted2">1m</Paragraph>
+      <Paragraph color="muted1">1m</Paragraph>
     </Box>
   </Box>
 );

@@ -1,5 +1,5 @@
 import { Card } from "@components/Card/Card";
-import { BackgroundImage } from "@components/Images/BackgroundImage";
+import { BackgroundImage } from "@components/BackgroundImage";
 import { Avatar, Box, BoxProps, Paragraph } from "@ui";
 import React from "react";
 
@@ -13,7 +13,7 @@ export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
       <BackgroundImage src="placeholders/frame_2.png" gradient="dark" />
     </Box>
     <Box grow gap="sm" background="default" padding="xs">
-      <Paragraph color="muted2" fontWeight="strong">
+      <Paragraph color="muted1" fontWeight="strong">
         Azuki #announcement
       </Paragraph>
       <Paragraph color="muted">

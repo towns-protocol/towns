@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React, { forwardRef, useMemo } from "react";
+import { Sprinkles, sprinkles } from "../../styles/sprinkles.css";
 import { absoluteFillClass } from "../../styles/utils.css";
-import { Sprinkles, sprinkles } from "./Box.css";
 
 // shorthands allow `true` or `false` for assigning default values in addition
 // to the normal presets. Since bools aren't allowed as sprinkles we need to
@@ -77,7 +77,6 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     shorthands.borderBottom = assignBoolToDefaultValue(borderBottom, "default");
     shorthands.borderLeft = assignBoolToDefaultValue(borderLeft, "default");
     shorthands.borderRight = assignBoolToDefaultValue(borderRight, "default");
-
     shorthands.padding = assignBoolToDefaultValue(padding, "sm");
     shorthands.flexGrow = assignBoolToDefaultValue(grow, "x1", "x0");
     shorthands.flexShrink = assignBoolToDefaultValue(shrink, "x1", "x0");

@@ -1,6 +1,6 @@
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
 import { vars } from "ui/styles/vars.css";
-import "../../styles/globals.css";
+import "./globals.css";
 
 const flexDirection = {
   row: "row",
@@ -8,7 +8,7 @@ const flexDirection = {
 } as const;
 
 const border = {
-  default: `1px solid ${vars.color.text.muted3}`,
+  default: `1px solid ${vars.color.background.level3}`,
   strong: `1px solid ${vars.color.text.default}`,
   inverted: `1px solid ${vars.color.text.inverted}`,
 } as const;
@@ -57,13 +57,13 @@ const flexGrow = {
 } as const;
 
 const gridItemProperties = defineProperties({
-  conditions: {
-    mobile: {},
-    tablet: { "@media": "screen and (min-width: 768px)" },
-    desktop: { "@media": "screen and (min-width: 1100px)" },
-    large: { "@media": "screen and (min-width: 1440)" },
-  },
-  defaultCondition: "desktop",
+  // conditions: {
+  //   mobile: {},
+  //   tablet: { "@media": "screen and (min-width: 768px)" },
+  //   desktop: { "@media": "screen and (min-width: 1100px)" },
+  //   large: { "@media": "screen and (min-width: 1440)" },
+  // },
+  // defaultCondition: "desktop",
   properties: {
     gridColumn: vars.colSpan,
   },
@@ -92,7 +92,7 @@ const colorProperties = defineProperties({
       },
       level2: {
         background: vars.color.background.level2,
-        color: vars.color.text.muted2,
+        color: vars.color.text.muted,
       },
       level3: {
         background: vars.color.background.level3,
@@ -118,6 +118,15 @@ const colorProperties = defineProperties({
   },
 });
 
+const typeProperties = defineProperties({
+  properties: {
+    fontWeight: vars.fontWeight,
+    fontSize: vars.fontSize,
+    textAlign: vars.textAlign,
+    textTransform: vars.textTransform,
+  },
+});
+
 const responsiveProperties = defineProperties({
   conditions: {
     mobile: {},
@@ -125,7 +134,7 @@ const responsiveProperties = defineProperties({
     desktop: { "@media": "screen and (min-width: 1100px)" },
     large: { "@media": "screen and (min-width: 1600px)" },
   },
-  defaultCondition: "desktop",
+  defaultCondition: "mobile",
   properties: {
     // display
     position: ["relative", "absolute", "fixed", "static", "sticky"],
@@ -161,6 +170,7 @@ const responsiveProperties = defineProperties({
     justifySelf: flexAlignment,
     overflow: ["hidden", "visible", "auto"],
   },
+
   shorthands: {
     direction: ["flexDirection"],
     paddingX: ["paddingLeft", "paddingRight"],
@@ -173,6 +183,7 @@ const responsiveProperties = defineProperties({
 
 export const sprinkles = createSprinkles(
   colorProperties,
+  typeProperties,
   responsiveProperties,
   gridItemProperties
 );

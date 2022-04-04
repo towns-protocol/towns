@@ -1,6 +1,6 @@
-import clsx from "clsx";
-import React, { forwardRef, useMemo } from "react";
-import { textSprinkles, TextSprinkles } from "./Text.css";
+import { Box } from "@ui";
+import React, { forwardRef } from "react";
+import { TextSprinkles } from "./Text.css";
 
 type Props = {
   // HTML representation
@@ -24,27 +24,14 @@ export const Text = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     textAlign = "left",
     children,
     className,
-    ...textProps
+    ...boxProps
   } = props;
-  const generatedClassName = useMemo(() => {
-    return clsx(
-      textSprinkles({
-        size,
-        fontWeight,
-        textAlign,
-        textTransform,
-        ...textProps,
-      }),
-      className
-    );
-  }, [className, fontWeight, size, textAlign, textProps, textTransform]);
-  return React.createElement(
-    as,
-    {
-      ...textProps,
-      className: generatedClassName,
-      ref,
-    },
-    children
+
+  const textProps = { fontSize: size, fontWeight, textTransform, textAlign };
+
+  return (
+    <Box as={as} {...textProps} {...boxProps} ref={ref}>
+      {children}
+    </Box>
   );
 });

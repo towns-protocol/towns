@@ -1,4 +1,8 @@
-import { createGlobalTheme } from "@vanilla-extract/css";
+import {
+  createGlobalTheme,
+  createTheme,
+  createThemeContract,
+} from "@vanilla-extract/css";
 
 export const zoom = 1.1;
 export const baseline = 8 * zoom;
@@ -6,8 +10,9 @@ export const fontBase = 13 * zoom;
 
 const FigmaPalette = {
   Black: "#191B21",
-  XDarkGrey: "#252934",
-  DarkGrey: "#383B49",
+  XXDarkGrey: "#252934",
+  XDarkGrey: "#383B49",
+  DarkGrey: "#525769",
   MedGrey: "#636A78",
   Grey: "#9BA5B8",
   LightGrey: "#D3DCE3",
@@ -19,7 +24,82 @@ const FigmaPalette = {
   Eth: "#18A0FB",
 } as const;
 
-export const vars = createGlobalTheme(":root", {
+const color = createThemeContract({
+  background: {
+    none: null,
+    default: null,
+    level1: null,
+    level2: null,
+    level3: null,
+    accent: null,
+    secondary: null,
+    /** opacity overlay, highlighting content undependently of parent layer background */
+    overlay: null,
+    inverted: null,
+  } as const,
+  text: {
+    default: null,
+    muted: null,
+    muted1: null,
+    // muted2: null,
+    // muted3: null,
+    accent: null,
+    secondary: null,
+    inverted: null,
+  },
+});
+
+export const lightTheme = createTheme(color, {
+  background: {
+    none: "none",
+    default: FigmaPalette.White,
+    level1: FigmaPalette.XXLightGrey,
+    level2: FigmaPalette.XLightGrey,
+    level3: FigmaPalette.LightGrey,
+    accent: FigmaPalette.Blue,
+    secondary: FigmaPalette.Green,
+    /** opacity overlay, highlighting content undependently of parent layer background */
+    overlay: `rgba(255,255,255,0.5)`,
+    inverted: FigmaPalette.Black,
+  } as const,
+  text: {
+    default: FigmaPalette.XDarkGrey,
+    muted: FigmaPalette.MedGrey,
+    muted1: FigmaPalette.MedGrey,
+    // muted2: FigmaPalette.Grey,
+    // muted3: FigmaPalette.LightGrey,
+    accent: FigmaPalette.Blue,
+    secondary: FigmaPalette.Green,
+    inverted: FigmaPalette.White,
+  },
+});
+
+export const darkTheme = createTheme(color, {
+  background: {
+    none: "none",
+    default: FigmaPalette.Black,
+    level1: FigmaPalette.XXDarkGrey,
+    level2: FigmaPalette.XDarkGrey,
+    level3: FigmaPalette.DarkGrey,
+    accent: FigmaPalette.Blue,
+    secondary: FigmaPalette.Green,
+    /** opacity overlay, highlighting content undependently of parent layer background */
+    overlay: `rgba(255,255,255,0.5)`,
+    inverted: FigmaPalette.White,
+  } as const,
+  text: {
+    default: FigmaPalette.White,
+    muted: FigmaPalette.XLightGrey,
+    muted1: "#BAC4D7",
+    // muted2: FigmaPalette.DarkGrey,
+    // muted3: FigmaPalette.XXDarkGrey,
+    accent: FigmaPalette.Blue,
+    secondary: FigmaPalette.Green,
+    inverted: FigmaPalette.White,
+  },
+});
+
+const root = createGlobalTheme(":root", {
   bl: `${baseline}px`,
   size: {
     none: "0",
@@ -38,34 +118,6 @@ export const vars = createGlobalTheme(":root", {
   } as const,
 
   dims: {
-    // bl: {
-    //   "0": `${baseline * 0}px`,
-    //   "1": `${baseline * 0.5}px`,
-    //   "2": `${baseline * 1}px`,
-    //   "3": `${baseline * 1.5}px`,
-    //   "4": `${baseline * 2}px`,
-    //   "5": `${baseline * 2.5}px`,
-    //   "6": `${baseline * 3}px`,
-    //   "7": `${baseline * 3.5}px`,
-    //   "8": `${baseline * 4}px`,
-    //   "9": `${baseline * 4.5}px`,
-    //   "10": `${baseline * 5}px`,
-    //   "11": `${baseline * 5.5}px`,
-    //   "12": `${baseline * 6}px`,
-    //   "13": `${baseline * 6.5}px`,
-    //   "14": `${baseline * 7}px`,
-    //   "15": `${baseline * 7.5}px`,
-    //   "16": `${baseline * 8}px`,
-    //   "17": `${baseline * 8.5}px`,
-    //   "18": `${baseline * 9}px`,
-    //   "19": `${baseline * 9.5}px`,
-    //   "20": `${baseline * 10}px`,
-    //   "21": `${baseline * 10.5}px`,
-    //   "22": `${baseline * 11}px`,
-    //   "23": `${baseline * 11.5}px`,
-    //   "24": `${baseline * 12}px`,
-    // },
-
     icons: {
       xxs: `${baseline * 1.5}px`,
       // xsmall icons / avatars
@@ -128,6 +180,7 @@ export const vars = createGlobalTheme(":root", {
     normal: "400",
     strong: "900",
   } as const,
+
   fontSize: {
     sm: `${(fontBase * 11) / 13}px`,
     md: `${(fontBase * 13) / 13}px`,
@@ -137,41 +190,20 @@ export const vars = createGlobalTheme(":root", {
     xl24: `${(fontBase * 24) / 13}px`,
     xl32: `${(fontBase * 32) / 13}px`,
   } as const,
+
   textAlign: {
     left: "left",
     right: "right",
     center: "center",
     justify: "justify",
   } as const,
+
   textTransform: {
     uppercase: "uppercase",
     capitalize: "capitalize",
     none: "normal",
   } as const,
-  color: {
-    background: {
-      none: "none",
-      default: FigmaPalette.White,
-      level1: FigmaPalette.XXLightGrey,
-      level2: FigmaPalette.XLightGrey,
-      level3: FigmaPalette.LightGrey,
-      accent: FigmaPalette.Blue,
-      secondary: FigmaPalette.Green,
-      /** opacity overlay, highlighting content undependently of parent layer background */
-      overlay: `rgba(255,255,255,0.5)`,
-      inverted: FigmaPalette.Black,
-    } as const,
-    text: {
-      default: FigmaPalette.DarkGrey,
-      muted: FigmaPalette.MedGrey,
-      muted1: FigmaPalette.MedGrey,
-      muted2: FigmaPalette.Grey,
-      muted3: FigmaPalette.LightGrey,
-      accent: FigmaPalette.Blue,
-      secondary: FigmaPalette.Green,
-      inverted: FigmaPalette.White,
-    },
-  } as const,
+
   colSpan: {
     1: `span 1`,
     2: `span 2`,
@@ -187,3 +219,8 @@ export const vars = createGlobalTheme(":root", {
     12: `span 12`,
   } as const,
 });
+
+export const vars = {
+  ...root,
+  color,
+};
