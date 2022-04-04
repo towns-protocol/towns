@@ -25,16 +25,13 @@ interface LoginFlow {
 export interface LoginFlows {
     flows: LoginFlow[];
 }
-export interface SignedWalletData {
-    signature: string;
-    messageFields: WalletMessageFields;
-    message: string;
-}
 export interface AuthenticationData {
     type: string;
     session: string;
     walletAddress: string;
-    signedWalletData: SignedWalletData;
+    signature: string;
+    message: string;
+    messageFields: WalletMessageFields;
 }
 export interface RegistrationAuthentication {
     type: string;

@@ -95,15 +95,12 @@ function useMatrixWalletSignIn() {
                 const { signature, messageFields, message } = yield signMessage(sessionId, statementToSign);
                 if (signature) {
                     // Send the signed message and auth data to the server.
-                    const signedWalletData = {
-                        message,
-                        signature,
-                        messageFields,
-                    };
                     const auth = {
                         type: login_1.LoginTypeWallet,
                         session: sessionId,
-                        signedWalletData,
+                        message,
+                        messageFields,
+                        signature,
                         walletAddress,
                     };
                     return auth;

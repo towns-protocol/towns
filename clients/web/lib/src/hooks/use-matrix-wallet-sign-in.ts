@@ -5,11 +5,10 @@ import {
   LoginStatus,
   LoginTypeWallet,
   RegisterRequest,
-  SignedWalletData,
+  RegistrationAuthentication,
   WalletMessageFields,
   getUsernameFromId,
   isLoginFlow,
-  RegistrationAuthentication,
 } from "./login";
 import {
   LoginPayload,
@@ -28,6 +27,12 @@ import { useWeb3Context } from "./use-web3";
 interface NewSession {
   sessionId: string;
   error?: string;
+}
+
+interface SignedWalletData {
+  signature: string;
+  messageFields: WalletMessageFields;
+  message: string;
 }
 
 export function useMatrixWalletSignIn() {
@@ -141,15 +146,12 @@ export function useMatrixWalletSignIn() {
         );
         if (signature) {
           // Send the signed message and auth data to the server.
-          const signedWalletData: SignedWalletData = {
-            message,
-            signature,
-            messageFields,
-          };
           const auth: AuthenticationData = {
             type: LoginTypeWallet,
             session: sessionId,
-            signedWalletData,
+            message,
+            messageFields,
+            signature,
             walletAddress,
           };
           return auth;
