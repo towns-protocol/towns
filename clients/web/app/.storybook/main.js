@@ -1,5 +1,6 @@
 const { vanillaExtractPlugin } = require("@vanilla-extract/vite-plugin");
 const tsconfigPaths = require("vite-tsconfig-paths").default;
+const path = require("path");
 
 module.exports = {
   stories: ["../src/**/*.stories.mdx", "../src/**/*.stories.@(js|jsx|ts|tsx)"],
@@ -14,11 +15,13 @@ module.exports = {
   },
   // https://github.com/eirslett/storybook-builder-vite
   async viteFinal(config, { configType }) {
-    config.plugins = [
-      ...config.plugins,
-      tsconfigPaths(),
-      vanillaExtractPlugin(),
-    ];
+    config.plugins.push(
+      tsconfigPaths({
+        // `loose` fixes path issues within .mdx files
+        loose: true,
+      }),
+      vanillaExtractPlugin()
+    );
     return config;
   },
 };
