@@ -1,8 +1,8 @@
+import React, { useCallback, useState } from "react";
 import { MainActions } from "@components/MainActions";
 import { SpaceNavMock } from "@components/SpaceNavItem/SpaceNavItem";
 import { TopBar } from "@components/TopNav";
 import { Box } from "@ui";
-import React, { useCallback, useState } from "react";
 import { darkTheme, lightTheme } from "ui/styles/vars.css";
 import { Home } from "views/Home";
 import { Messages } from "views/Messages";
@@ -23,15 +23,15 @@ export const App = () => {
 
   return (
     <Box
+      grow
+      absoluteFill
       className={theme === "light" ? lightTheme : darkTheme}
       background="default"
       color="default"
-      grow
-      absoluteFill
     >
       <TopBar onClick={onToggleTheme} />
-      <Box direction="row" grow>
-        <Box background="level1" borderRight shrink={false}>
+      <Box grow direction="row">
+        <Box borderRight background="level1" shrink={false}>
           <MainActions selectedId={route} onSelect={onSelectView} />
           <SpaceNavMock />
         </Box>

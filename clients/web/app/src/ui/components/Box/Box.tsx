@@ -1,6 +1,11 @@
 import clsx from "clsx";
-import React, { forwardRef, HTMLAttributes, useMemo } from "react";
-import { atoms, Atoms } from "ui/styles/atoms/sprinkles.css";
+import React, {
+  HTMLAttributes,
+  createElement,
+  forwardRef,
+  useMemo,
+} from "react";
+import { Atoms, atoms } from "ui/styles/atoms/sprinkles.css";
 import { absoluteFillClass } from "ui/styles/atoms/utils.css";
 import { assignBoolToDefaultValue, notUndefined, toPx } from "ui/utils/utils";
 
@@ -131,7 +136,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     return style;
   }, [basis, props.style]);
 
-  return React.createElement(
+  return createElement(
     as,
     {
       className: atomicClasses,

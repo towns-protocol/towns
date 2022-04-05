@@ -1,12 +1,5 @@
-import { Meta, Canvas, Story } from "@storybook/addon-docs";
-import {
-  Avatar,
-  Box,
-  Grid,
-  Text,
-  Paragraph,
-  Heading,
-} from "../../ui/components";
+import { Meta } from "@storybook/addon-docs";
+import { Box } from "../../ui/components";
 import { vars } from "../../ui/styles/vars.css";
 import { Row, Square } from "../StoryUtils";
 
@@ -17,7 +10,7 @@ import { Row, Square } from "../StoryUtils";
 ## Box / Height
 
 <Box>
-  {Object.keys(vars.dims.rows).map((c, i) => (
+  {Object.keys(vars.dims.rows).map((c) => (
     <Row key={c} label={c}>
       <Box height={c} border="strong" />
     </Row>
@@ -27,7 +20,7 @@ import { Row, Square } from "../StoryUtils";
 ## Box / Gap
 
 <Box>
-  {Object.keys(vars.space).map((c, i) => (
+  {Object.keys(vars.space).map((c) => (
     <Row key={c} label={c}>
       <Box direction="row" alignItems="center" gap={c}>
         <Square />
@@ -41,7 +34,7 @@ import { Row, Square } from "../StoryUtils";
 ## Box / Padding
 
 <Box>
-  {Object.keys(vars.space).map((c, i) => (
+  {Object.keys(vars.space).map((c) => (
     <Row key={c} label={c}>
       <Box
         direction="row"

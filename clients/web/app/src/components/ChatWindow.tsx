@@ -1,16 +1,16 @@
-import { Box, Heading, Icon, Paragraph, Text } from "@ui";
 import React from "react";
+import { Box, Heading, Icon, Paragraph, Text } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { AvatarStack } from "./AvatarStack";
 
 export const ChatWindow = () => (
   <Box grow>
     <Box
+      borderBottom
       direction="row"
       paddingX="sm"
       height="lg"
       gap="xs"
-      borderBottom
       alignItems="center"
     >
       <Avatar nft src="doodles.jpeg" />
@@ -40,9 +40,9 @@ export const ChatWindow = () => (
         </Paragraph>
       </Box>
       <Box gap="sm">
-        <ChatRow avatar={<Avatar src="doodles.jpeg" nft />}>gm</ChatRow>
-        <ChatRow avatar={<Avatar src="ape.webp" nft />}>gm you</ChatRow>
-        <ChatRow avatar={<Avatar src="doodles.jpeg" nft />}>gm gm</ChatRow>
+        <ChatRow avatar={<Avatar nft src="doodles.jpeg" />}>gm</ChatRow>
+        <ChatRow avatar={<Avatar nft src="ape.webp" />}>gm you</ChatRow>
+        <ChatRow avatar={<Avatar nft src="doodles.jpeg" />}>gm gm</ChatRow>
       </Box>
     </Box>
   </Box>

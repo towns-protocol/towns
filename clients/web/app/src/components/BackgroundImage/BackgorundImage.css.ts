@@ -1,4 +1,4 @@
-import { recipe, RecipeVariants } from "@vanilla-extract/recipes";
+import { RecipeVariants, recipe } from "@vanilla-extract/recipes";
 
 export const backgroundImageContainerClassName = recipe({
   base: {},

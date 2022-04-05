@@ -1,5 +1,5 @@
-import { Box, Icon, Text } from "@ui";
 import React from "react";
+import { Box, Icon, Text } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { NavItem } from "../NavItem/NavItem";
 
@@ -42,7 +42,7 @@ export const SpaceNavItem = ({
 }) => (
   <NavItem color="muted">
     <Avatar src={avatar} size="md" />
-    <Box direction="row" grow>
+    <Box grow direction="row">
       <Text fontWeight={active ? "strong" : "normal"}>{name}</Text>
     </Box>
     <Box shrink>{pinned && <Icon type="pin" size="xxs" />}</Box>

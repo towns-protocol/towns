@@ -1,5 +1,5 @@
-import { Box, BoxProps, Grid, Text } from "../ui/components";
 import React from "react";
+import { Box, BoxProps, Grid, Text } from "../ui/components";
 import { crossClass } from "./Storybook.css";
 
 export const Square = (props: BoxProps) => (

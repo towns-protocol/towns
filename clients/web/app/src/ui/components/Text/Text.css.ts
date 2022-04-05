@@ -1,6 +1,5 @@
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
 import { vars } from "ui/styles/vars.css";
-import "../../styles/globals.css";
 
 const nonResponsiveProperties = defineProperties({
   properties: {

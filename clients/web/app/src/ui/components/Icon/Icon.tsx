@@ -197,8 +197,8 @@ export const Icon = (props: IconProps) => {
   return (
     <Box
       shrink
-      aspectRatio="square"
       centerContent
+      aspectRatio="square"
       className={iconStyle({ size, background })}
       {...boxProps}
     >

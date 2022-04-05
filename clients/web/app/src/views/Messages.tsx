@@ -1,7 +1,7 @@
+import React from "react";
 import { ChatWindow } from "@components/ChatWindow";
 import { MessageList } from "@components/MessageList";
 import { Box } from "@ui";
-import React from "react";
 
 export const Messages = () => (
   <>

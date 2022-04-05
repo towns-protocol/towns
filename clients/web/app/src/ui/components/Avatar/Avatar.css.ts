@@ -1,4 +1,4 @@
-import { recipe, RecipeVariants } from "@vanilla-extract/recipes";
+import { RecipeVariants, recipe } from "@vanilla-extract/recipes";
 import { vars } from "ui/styles/vars.css";
 
 export const avatarSizes = {

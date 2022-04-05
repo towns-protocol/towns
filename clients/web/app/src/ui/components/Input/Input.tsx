@@ -1,5 +1,5 @@
 import React from "react";
-import { inputStyle, InputStyleVariants } from "./Input.css";
+import { InputStyleVariants, inputStyle } from "./Input.css";
 
 type NativeInputProps = React.AllHTMLAttributes<HTMLInputElement>;
 

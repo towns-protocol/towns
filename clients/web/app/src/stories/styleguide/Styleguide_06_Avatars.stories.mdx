@@ -1,20 +1,7 @@
-import { Meta, Canvas, Story } from "@storybook/addon-docs";
-import {
-  Avatar,
-  Box,
-  Icon,
-  Grid,
-  Text,
-  Paragraph,
-  Heading,
-} from "../../ui/components";
+import { Meta } from "@storybook/addon-docs";
+import { Avatar, Box } from "../../ui/components";
 import { avatarSizes } from "../../ui/components/Avatar/Avatar.css";
-import { vars } from "../../ui/styles/vars.css";
-import {
-  flexAlignment,
-  flexJustifyAlignment,
-} from "../../ui/styles/atoms/sprinkles.css";
-import { Row, Square } from "../StoryUtils";
+import { Row } from "../StoryUtils";
 
 <Meta title="Style Guide/Avatars" />
 
@@ -33,10 +20,10 @@ import { Row, Square } from "../StoryUtils";
 ## Shape
 
 <Box>
-  <Row label={`Regular`}>
+  <Row label="Regular">
     <Avatar size="lg" />
   </Row>
-  <Row label={`NFT`}>
-    <Avatar size="lg" nft />
+  <Row label="NFT">
+    <Avatar nft size="lg" />
   </Row>
 </Box>

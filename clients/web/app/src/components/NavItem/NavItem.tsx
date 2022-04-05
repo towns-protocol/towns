@@ -1,5 +1,5 @@
+import React, { HTMLAttributes, forwardRef } from "react";
 import { Box, BoxProps } from "@ui";
-import React, { forwardRef, HTMLAttributes } from "react";
 
 export const NavItem = forwardRef<
   HTMLElement,

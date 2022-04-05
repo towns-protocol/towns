@@ -1,10 +1,10 @@
-import { Box, BoxProps } from "@ui";
 import React from "react";
+import { Box, BoxProps } from "@ui";
 import {
-  backgroundImageClassName,
-  backgroundImageContainerClassName,
   BackgroundImageContainerVariantProps,
   BackgroundImageVariantProps,
+  backgroundImageClassName,
+  backgroundImageContainerClassName,
 } from "./BackgorundImage.css";
 
 type Props = {
@@ -23,8 +23,8 @@ export const BackgroundImage = ({
 }: Props) => {
   return (
     <Box
-      position="relative"
       grow
+      position="relative"
       className={backgroundImageContainerClassName({ gradient })}
       {...props}
     >

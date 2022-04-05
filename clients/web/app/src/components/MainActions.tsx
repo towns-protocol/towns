@@ -1,6 +1,6 @@
+import React from "react";
 import { Paragraph } from "@ui";
 import { RouteId } from "App";
-import React from "react";
 import { Icon } from "ui/components/Icon";
 import { NavItem } from "./NavItem/NavItem";
 

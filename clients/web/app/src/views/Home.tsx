@@ -1,7 +1,7 @@
+import React from "react";
 import { AnnouncementCard } from "@components/AnnouncementCard";
 import { HighlightCard } from "@components/HighlightCard";
 import { Box, Grid, Heading } from "@ui";
-import React from "react";
 
 export const Home = () => (
   <Box grow="x9" justifyContent="center" direction="row" padding="lg">

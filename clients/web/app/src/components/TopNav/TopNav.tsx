@@ -1,19 +1,19 @@
+import React from "react";
 import { SearchInput } from "@components/SearchInput";
 import { Avatar, Box, Heading, Icon } from "@ui";
-import React from "react";
 
 export const TopBar = (props: { onClick?: () => void }) => {
   return (
     <Box
-      onClick={props.onClick}
+      borderBottom
       direction="row"
       shrink={false}
       height="lg"
       paddingX="sm"
       background="level1"
-      borderBottom
       alignItems="center"
       gap="sm"
+      onClick={props.onClick}
     >
       <Heading level={3} color="accent">
         Harmony
@@ -21,7 +21,7 @@ export const TopBar = (props: { onClick?: () => void }) => {
       <Box grow />
       <SearchInput />
       <Icon size="md" type="bell" background="level2" />
-      <Avatar size="md" nft src="ape.webp" />
+      <Avatar nft size="md" src="ape.webp" />
     </Box>
   );
 };

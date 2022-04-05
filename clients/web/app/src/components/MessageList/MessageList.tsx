@@ -1,15 +1,15 @@
-import { Avatar, Box, Icon, Paragraph } from "@ui";
 import React from "react";
+import { Avatar, Box, Icon, Paragraph } from "@ui";
 
 export const MessageList = () => {
   return (
     <>
       <Box
+        borderBottom
         direction="row"
         paddingX="sm"
         height="lg"
         gap="xs"
-        borderBottom
         alignItems="center"
       >
         <Box grow>
@@ -40,8 +40,8 @@ const Message = ({
   selected?: boolean;
 }) => (
   <Box direction="row" paddingX="sm" paddingY="xs" gap="xs">
-    <Avatar src={"doodles.jpeg"} nft size="lg" />
-    <Box gap="xxs" grow>
+    <Avatar nft src="doodles.jpeg" size="lg" />
+    <Box grow gap="xxs">
       <Paragraph
         color={active ? "default" : "muted"}
         fontWeight={active ? "strong" : "normal"}

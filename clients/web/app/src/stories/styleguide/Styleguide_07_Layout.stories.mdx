@@ -1,12 +1,5 @@
-import { Meta, Canvas, Story } from "@storybook/addon-docs";
-import {
-  Avatar,
-  Box,
-  Grid,
-  Text,
-  Paragraph,
-  Heading,
-} from "../../ui/components";
+import { Meta } from "@storybook/addon-docs";
+import { Box } from "../../ui/components";
 import { vars } from "../../ui/styles/vars.css";
 import {
   flexAlignment,
@@ -62,8 +55,8 @@ import { Row, Square } from "../StoryUtils";
 >
   <Box gap="md">
     <Box direction="row" border="strong">
-      <Box padding="sm" borderRight="strong" grow></Box>
-      <Box padding="sm" centerContent={true}></Box>
+      <Box grow padding="sm" borderRight="strong" />
+      <Box centerContent padding="sm" />
     </Box>
   </Box>
 </Row>
@@ -77,8 +70,8 @@ import { Row, Square } from "../StoryUtils";
 >
   <Box gap="md">
     <Box direction="row" border="strong">
-      <Box grow padding="sm" borderRight="strong"></Box>
-      <Box grow padding="sm" centerContent={true}></Box>
+      <Box grow padding="sm" borderRight="strong" />
+      <Box grow centerContent padding="sm" />
     </Box>
   </Box>
 </Row>
@@ -92,10 +85,10 @@ import { Row, Square } from "../StoryUtils";
 >
   <Box gap="md">
     <Box direction="row" border="strong">
-      <Box grow={"x4"} padding="sm" borderRight="strong">
+      <Box grow="x4" padding="sm" borderRight="strong">
         b1
       </Box>
-      <Box grow={"x2"} padding="sm" centerContent={true}>
+      <Box centerContent grow="x2" padding="sm">
         b2
       </Box>
     </Box>
@@ -107,7 +100,7 @@ import { Row, Square } from "../StoryUtils";
 ### (Row axis)
 
 <Box>
-  {Object.keys(flexJustifyAlignment).map((c, i) => (
+  {Object.keys(flexJustifyAlignment).map((c) => (
     <Row key={c} label={c}>
       <Box
         padding="sm"
@@ -129,7 +122,7 @@ import { Row, Square } from "../StoryUtils";
 ### (Row axis)
 
 <Box>
-  {Object.keys(flexAlignment).map((c, i) => (
+  {Object.keys(flexAlignment).map((c) => (
     <Row key={c} label={c}>
       <Box
         padding="sm"

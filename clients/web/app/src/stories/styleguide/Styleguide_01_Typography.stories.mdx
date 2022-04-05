@@ -1,12 +1,5 @@
-import { Meta, Canvas, Story, ArgsTable } from "@storybook/addon-docs";
-import {
-  Avatar,
-  Box,
-  Grid,
-  Text,
-  Paragraph,
-  Heading,
-} from "../../ui/components";
+import { Canvas, Meta } from "@storybook/addon-docs";
+import { Box, Heading, Paragraph, Text } from "@ui";
 import { vars } from "../../ui/styles/vars.css";
 import { Row } from "../StoryUtils";
 
@@ -22,7 +15,7 @@ import { Row } from "../StoryUtils";
   </Row>
   {["sm", "md", "lg", "xl"].reverse().map((c) => (
     <Row key={c} label={c}>
-      <Paragraph size={c}>Paragraph {c}</Paragraph>
+      <Paragraph size={c}>Paragraph{c}</Paragraph>
     </Row>
   ))}
 </Box>
@@ -50,7 +43,7 @@ import { Row } from "../StoryUtils";
 ## Colors
 
 <Box>
-  {Object.keys(vars.color.text).map((c, i) => (
+  {Object.keys(vars.color.text).map((c) => (
     <Row key={c} label={c}>
       <Paragraph color={c}>{c}</Paragraph>
     </Row>
@@ -71,24 +64,24 @@ import { Row } from "../StoryUtils";
 
 ### Paragraph
 
-<Canvas withSource="open" isColumn>
-  <Paragraph size="lg" color="accent" textAlign="center">
+<Canvas isColumn withSource="open">
+  <Paragraph color="accent" size="lg" textAlign="center">
     Paragraph content
   </Paragraph>
 </Canvas>
 
 ### Heading
 
-<Canvas withSource="open" isColumn>
-  <Heading level="1" color="accent">
+<Canvas isColumn withSource="open">
+  <Heading color="accent" level="1">
     Heading content
   </Heading>
 </Canvas>
 
 ### Text Primitive
 
-<Canvas withSource="open" isColumn>
-  <Text size="lg" color="muted1" as="span" textTransform="uppercase">
+<Canvas isColumn withSource="open">
+  <Text as="span" color="muted1" size="lg" textTransform="uppercase">
     Custom Text
   </Text>
 </Canvas>

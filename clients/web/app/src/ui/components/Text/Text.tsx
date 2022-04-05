@@ -1,5 +1,5 @@
-import { Box } from "@ui";
 import React, { forwardRef } from "react";
+import { Box } from "@ui";
 import { TextSprinkles } from "./Text.css";
 
 type Props = {

@@ -1,7 +1,7 @@
+import React from "react";
 import { BackgroundImage } from "@components/BackgroundImage";
 import { Card } from "@components/Card/Card";
 import { Avatar, Box, BoxProps, Paragraph } from "@ui";
-import React from "react";
 
 type Props = {
   colSpan?: 1 | 2 | 3 | 4;
@@ -12,7 +12,7 @@ export const HighlightCard = ({ colSpan: span = 1, ...boxProps }: Props) => (
     <BackgroundImage src="placeholders/frame_1.png" gradient="dark" />
     <Box absoluteFill padding>
       <Box grow>
-        <Avatar size="md" borderRadius="full" shape="circle" border />
+        <Avatar border size="md" borderRadius="full" shape="circle" />
       </Box>
       <Box gap="xxs">
         <Paragraph color="inverted" size="sm">
