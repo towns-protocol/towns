@@ -1,0 +1,7 @@
+storybook-static/
+dist/
+public/
+node_modules
+*.json
+.yarn/*
+yarn.lock
