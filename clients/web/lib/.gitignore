@@ -16,6 +16,9 @@
 # production
 **/build
 
+# generated directory
+dist/
+
 # misc
 **/.DS_Store
 **/.env.local
