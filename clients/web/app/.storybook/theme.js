@@ -4,8 +4,6 @@ import { create } from "@storybook/theming";
 import { themes } from "@storybook/theming";
 
 const base = {
-  colorPrimary: "#00F",
-  colorSecondary: "#00F",
   appBorderRadius: 0,
   fontBase:
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
@@ -19,51 +17,15 @@ const base = {
 export const themeDark = create({
   ...themes.dark,
   ...base,
-  base: "dark",
-  colorPrimary: "#00F",
-  colorSecondary: "#00F",
-
-  // UI
-  appBg: "#111",
-  appContentBg: "#000",
-  appBorderColor: "rgba(127, 127, 127, 0.33)",
-  appBorderRadius: 0,
-
-  // Text colors
-  textColor: "#FFF",
-  textInverseColor: "#000",
-
-  // Toolbar default and active colors
-  barBg: "#090909",
-  barTextColor: "#FFF",
-  barSelectedColor: "#00F",
-
-  // Form colors
-  inputBg: "#090909",
-  inputBorder: "#FFF",
-  inputTextColor: "#FFF",
+  appBg: "#202025",
+  appContentBg: "#202025",
+  barBg: "#191919",
 });
+
 export const themeLight = create({
   ...themes.light,
   ...base,
-  base: "light",
-
-  // UI
-  appBg: "#F9F9F9",
-  appContentBg: "#FFF",
-  appBorderColor: "rgba(127, 127, 127, 0.33)",
-
-  // Text colors
-  textColor: "#000",
-  textInverseColor: "#000",
-
-  // Toolbar default and active colors
+  appBg: "#F0F0F0",
+  appContentBg: "#F0F0F0",
   barBg: "#FFF",
-  barTextColor: "#000",
-  // barSelectedColor: "#0F9",
-
-  // Form colors
-  inputBg: "#F9F9F9",
-  inputBorder: "#000",
-  inputTextColor: "#000",
 });

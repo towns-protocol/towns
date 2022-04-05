@@ -29,12 +29,7 @@ export const Row = ({
   invert?: boolean;
   children?: React.ReactNode;
 } & BoxProps) => (
-  <Grid
-    direction="row"
-    paddingY="sm"
-    borderBottom="strong"
-    columns={columns ?? 2}
-  >
+  <Grid borderBottom direction="row" paddingY="sm" columns={columns ?? 2}>
     <Box grow justifyContent="center" key="first">
       <Text>{label}</Text>
     </Box>
