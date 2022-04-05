@@ -1,4 +1,4 @@
-import { CreateRoomOptions, MatrixClient, createClient } from "matrix-js-sdk";
+import { ICreateRoomOpts, MatrixClient, createClient } from "matrix-js-sdk";
 import {
   LoginStatus,
   getShortUsername,
@@ -56,7 +56,7 @@ export function useMatrixClient() {
   ): Promise<string | undefined> {
     try {
       if (matrixClient) {
-        const options: CreateRoomOptions = {
+        const options: ICreateRoomOpts = {
           //room_alias_name: "my_room_alias3",
           visibility: createInfo.visibility,
           name: createInfo.roomName,
@@ -211,27 +211,6 @@ export function useMatrixClient() {
     }
   }, []);
 
-  const syncRoom = useCallback(async function (roomId: string) {
-    try {
-      if (matrixClient) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const roomNameEvent: any = await matrixClient.getStateEvent(
-          roomId,
-          "m.room.name"
-        );
-
-        if (roomNameEvent?.name) {
-          setRoomName(roomId, roomNameEvent.name);
-        } else {
-          console.log(`Querying "m.room.name" got nothing`);
-        }
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (ex: any) {
-      console.error(`Error syncing room ${roomId}`, ex.stack);
-    }
-  }, []);
-
   return {
     createRoom,
     getIsWalletIdRegistered,
@@ -244,7 +223,6 @@ export function useMatrixClient() {
     registerNewUser,
     registerWallet,
     sendMessage,
-    syncRoom,
   };
 }
 

@@ -1,10 +1,13 @@
 import {
-  CreateClientOption,
+  ClientEvent,
+  ICreateClientOpts,
   MatrixClient,
   MatrixEvent,
   Room,
+  RoomEvent,
   RoomMember,
   createClient,
+  RoomMemberEvent,
 } from "matrix-js-sdk";
 import {
   MutableRefObject,
@@ -35,7 +38,6 @@ export function useMatrixClientListener(
 
   const matrixClientRef = useRef<MatrixClient>();
 
-  const handleRoomEvent = useRoomEventHandler();
   const handleRoomMembershipEvent =
     useRoomMembershipEventHandler(matrixClientRef);
   const handleRoomTimelineEvent = useRoomTimelineEventHandler(matrixClientRef);
@@ -48,7 +50,7 @@ export function useMatrixClientListener(
   const startClient = useCallback(
     async function () {
       if (accessToken && homeServer && userId) {
-        const options: CreateClientOption = {
+        const options: ICreateClientOpts = {
           baseUrl: homeServer,
           accessToken: accessToken,
           userId: userId,
@@ -58,7 +60,7 @@ export function useMatrixClientListener(
         matrixClientRef.current = client;
 
         client.once(
-          "sync",
+          ClientEvent.Sync,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
           function (state: any, prevState: any, res: any) {
             if (state === "PREPARED") {
@@ -70,7 +72,7 @@ export function useMatrixClientListener(
         );
 
         client.on(
-          "Room.timeline",
+          RoomEvent.Timeline,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           function (event: any, room: any, toStartOfTimeline: any) {
             handleRoomTimelineEvent(event, room, toStartOfTimeline);
@@ -79,15 +81,11 @@ export function useMatrixClientListener(
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         client.on(
-          "RoomMember.membership",
+          RoomMemberEvent.Membership,
           function (event: MatrixEvent, member: RoomMember) {
             handleRoomMembershipEvent(event, member);
           }
         );
-
-        client.on("Room", function (room: Room) {
-          handleRoomEvent(room);
-        });
       }
     },
     [accessToken, homeServer, initialSyncLimit, userId]
@@ -228,7 +226,7 @@ function useRoomTimelineEventHandler(
   const { createRoom, setNewMessage, setRoomName, updateMembership } =
     useMatrixStore();
 
-  const handleRoomeTimelineEvent = useCallback(function (
+  const handleRoomTimelineEvent = useCallback(function (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -285,16 +283,5 @@ function useRoomTimelineEventHandler(
     }
   }, []);
 
-  return handleRoomeTimelineEvent;
-}
-
-function useRoomEventHandler() {
-  const handleRoomEvent = useCallback(function (room: Room) {
-    console.log("Room.event", {
-      roomId: room.roomId,
-      name: room.name,
-    });
-  }, []);
-
-  return handleRoomEvent;
+  return handleRoomTimelineEvent;
 }

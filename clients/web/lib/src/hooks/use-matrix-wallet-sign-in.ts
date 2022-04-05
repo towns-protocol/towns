@@ -10,12 +10,7 @@ import {
   getUsernameFromId,
   isLoginFlow,
 } from "./login";
-import {
-  LoginPayload,
-  MatrixClient,
-  MatrixError,
-  createClient,
-} from "matrix-js-sdk";
+import { MatrixClient, MatrixError, createClient } from "matrix-js-sdk";
 import { useCallback, useMemo } from "react";
 
 import { StatusCodes } from "http-status-codes";
@@ -63,12 +58,22 @@ export function useMatrixWalletSignIn() {
   },
   []);
 
-  const authenticationSuccess = useCallback(function (response: LoginPayload) {
-    setAccessToken(response.access_token);
-    setDeviceId(response.device_id);
-    setUserId(response.user_id);
-    setUsername(getUsernameFromId(response.user_id));
-    setLoginStatus(LoginStatus.LoggedIn);
+  const authenticationSuccess = useCallback(function (response: any) {
+    const { access_token, device_id, user_id } = response;
+    if (access_token && device_id && user_id) {
+      setAccessToken(access_token);
+      setDeviceId(device_id);
+      setUserId(user_id);
+      setUsername(getUsernameFromId(user_id));
+      setLoginStatus(LoginStatus.LoggedIn);
+    } else {
+      setLoginError({
+        code: StatusCodes.UNAUTHORIZED,
+        message:
+          "Server did not return access_token, user_id, and / or device_id",
+      });
+      setLoginStatus(LoginStatus.LoggedOut);
+    }
   }, []);
 
   const signMessage = useCallback(

@@ -1,5 +1,3 @@
-import { MembershipType } from "matrix-js-sdk";
-
 export enum Visibility {
   Private = "private",
   Public = "public",
@@ -14,7 +12,7 @@ export enum Membership {
 export interface Room {
   roomId: string;
   name: string;
-  membership: MembershipType | null;
+  membership: string;
   members: Members;
   inviter?: string;
 }
