@@ -14,50 +14,92 @@ const FigmaPalette = {
   Eth: "#18A0FB",
 } as const;
 
-export const palettes = {
-  light: {
-    background: {
-      none: "none",
-      default: FigmaPalette.White,
-      level1: FigmaPalette.XXLightGrey,
-      level2: FigmaPalette.XLightGrey,
-      level3: FigmaPalette.LightGrey,
-      accent: FigmaPalette.Blue,
-      secondary: FigmaPalette.Green,
-      /** opacity overlay, highlighting content undependently of parent layer background */
-      overlay: `rgba(255,255,255,0.5)`,
-      inverted: FigmaPalette.Black,
-    } as const,
-    text: {
-      default: FigmaPalette.XDarkGrey,
-      muted: FigmaPalette.MedGrey,
-      muted1: FigmaPalette.MedGrey,
-      accent: FigmaPalette.Blue,
-      secondary: FigmaPalette.Green,
-      inverted: FigmaPalette.White,
-    },
-  },
+const light = (() => {
+  const semantic = {
+    neutral: FigmaPalette.MedGrey,
+    accent: FigmaPalette.Blue,
+    positive: "green",
+    critical: "red",
+    warning: "orange",
+  } as const;
+  const layer = {
+    none: "none",
+    default: FigmaPalette.White,
+    level1: FigmaPalette.XXLightGrey,
+    level2: FigmaPalette.XLightGrey,
+    level3: FigmaPalette.LightGrey,
+    /** opacity overlay, highlighting content undependently of parent layer layers */
+    overlay: `rgba(255,255,255,0.5)`,
+    inverted: FigmaPalette.Black,
+  } as const;
+  const text = {
+    default: FigmaPalette.XDarkGrey,
+    muted: FigmaPalette.MedGrey,
+    muted1: FigmaPalette.MedGrey,
+    accent: FigmaPalette.Blue,
+    secondary: FigmaPalette.Green,
+    inverted: FigmaPalette.White,
+    onSemantic: FigmaPalette.White,
+  };
 
-  dark: {
-    background: {
-      none: "none",
-      default: FigmaPalette.Black,
-      level1: FigmaPalette.XXDarkGrey,
-      level2: FigmaPalette.XDarkGrey,
-      level3: FigmaPalette.DarkGrey,
-      accent: FigmaPalette.Blue,
-      secondary: FigmaPalette.Green,
-      /** opacity overlay, highlighting content undependently of parent layer background */
-      overlay: `rgba(255,255,255,0.5)`,
-      inverted: FigmaPalette.White,
+  return {
+    semantic,
+    layer,
+    text,
+    foreground: {
+      ...text,
+      ...semantic,
     } as const,
-    text: {
-      default: FigmaPalette.White,
-      muted: FigmaPalette.XLightGrey,
-      muted1: "#BAC4D7",
-      accent: FigmaPalette.Blue,
-      secondary: FigmaPalette.Green,
-      inverted: FigmaPalette.White,
-    },
-  },
+    background: {
+      ...layer,
+      ...semantic,
+    } as const,
+  } as const;
+})();
+
+const dark = (() => {
+  const semantic = {
+    critical: "red",
+    warning: "orange",
+    positive: "green",
+    neutral: FigmaPalette.MedGrey,
+    accent: FigmaPalette.Blue,
+  } as const;
+  const layer = {
+    none: "none",
+    default: FigmaPalette.Black,
+    level1: FigmaPalette.XXDarkGrey,
+    level2: FigmaPalette.XDarkGrey,
+    level3: FigmaPalette.DarkGrey,
+    /** opacity overlay, highlighting content undependently of parent layer background */
+    overlay: `rgba(255,255,255,0.5)`,
+    inverted: FigmaPalette.White,
+  } as const;
+  const text = {
+    default: FigmaPalette.White,
+    muted: FigmaPalette.XLightGrey,
+    muted1: "#BAC4D7",
+    accent: FigmaPalette.Blue,
+    secondary: FigmaPalette.Green,
+    inverted: FigmaPalette.Black,
+    onSemantic: FigmaPalette.White,
+  } as const;
+  return {
+    semantic,
+    layer,
+    text,
+    foreground: {
+      ...text,
+      ...semantic,
+    } as const,
+    background: {
+      ...layer,
+      ...semantic,
+    } as const,
+  } as const;
+})();
+
+export const palettes = {
+  light,
+  dark,
 } as const;

@@ -10,10 +10,10 @@ import { Row } from "../StoryUtils";
 ## Background Fills
 
 <Box>
-  {Object.keys(vars.color.background).map((c) => (
+  {Object.keys(vars.color.layer).map((c) => (
     <Row key={c} label={c} invert={c.match(/overlay/)}>
       <Box padding background={c}>
-        Default text color
+        <Paragraph>Default text color</Paragraph>
       </Box>
     </Row>
   ))}
@@ -23,10 +23,32 @@ import { Row } from "../StoryUtils";
 
 <Box>
   {Object.keys(vars.color.text).map((c) => (
-    <Row key={c} label={c} invert={c.match(/inverted/)}>
+    <Row
+      key={c}
+      label={c}
+      backgroundVariant={
+        c.match(/inverted/)
+          ? "inverted"
+          : c.match(/onSemantic/)
+          ? "accent"
+          : undefined
+      }
+    >
       <Box direction="row" alignItems="center" gap="sm">
         <Icon color={c} />
-        <Paragraph color={c}>0123456789</Paragraph>
+        <Paragraph color={c}>Text color</Paragraph>
+      </Box>
+    </Row>
+  ))}
+</Box>
+
+## Semantics (placeholders ⚠️)
+
+<Box>
+  {Object.keys(vars.color.semantic).map((c) => (
+    <Row key={c} label={c} invert={c.match(/overlay/)}>
+      <Box padding background={c}>
+        <Paragraph>Default text color</Paragraph>
       </Box>
     </Row>
   ))}

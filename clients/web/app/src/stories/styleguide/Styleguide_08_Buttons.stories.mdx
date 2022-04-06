@@ -1,0 +1,58 @@
+import { Meta } from "@storybook/addon-docs";
+import { vars } from "../../ui/styles/vars.css";
+import { Box, Button } from "../../ui/components";
+import { Row } from "../StoryUtils";
+
+<Meta title="Style Guide/Buttons" />
+
+# Buttons
+
+## Sizes
+
+<Box>
+  {Object.keys(vars.dims.inputs).map((c) => (
+    <Row key={c} label={c}>
+      <Box direction="row">
+        <Button icon="settings" size={c}>
+          Action
+        </Button>
+      </Box>
+    </Row>
+  ))}
+</Box>
+
+## Content
+
+<Box>
+  <Row label="text only">
+    <Box direction="row">
+      <Button>Action</Button>
+    </Box>
+  </Row>
+  <Row label="icon only">
+    <Box direction="row">
+      <Button icon="bell" variant="warning" />
+    </Box>
+  </Row>
+  <Row label="text + icon">
+    <Box direction="row">
+      <Button icon="check" variant="positive">
+        Done
+      </Button>
+    </Box>
+  </Row>
+</Box>
+
+## Variants
+
+<Box>
+  {Object.keys(vars.color.semantic).map((c) => (
+    <Row key={c} label={c}>
+      <Box direction="row">
+        <Button icon="settings" variant={c}>
+          Action
+        </Button>
+      </Box>
+    </Row>
+  ))}
+</Box>

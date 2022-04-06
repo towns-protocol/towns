@@ -38,7 +38,7 @@ export const avatarStyle = recipe({
             marginLeft: `calc(-1 * ${vars.space.xs})`,
           },
         },
-        border: `2px solid ${vars.color.background.default}`,
+        border: `2px solid ${vars.color.layer.default}`,
       },
     },
     shape: {
@@ -48,7 +48,7 @@ export const avatarStyle = recipe({
     },
     border: {
       true: {
-        border: `2px solid ${vars.color.background.default}`,
+        border: `2px solid ${vars.color.layer.default}`,
       },
     },
     nft: {

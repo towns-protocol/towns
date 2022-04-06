@@ -1,12 +1,27 @@
 import React from "react";
-import { Box, BoxProps } from "../Box/Box";
+import { vars } from "ui/styles/vars.css";
+import { Box } from "../Box/Box";
+import { Icon, IconName } from "../Icon";
 import { ButtonStyleVariants, buttonStyle } from "./Button.css";
 
 type StyleProps = Omit<NonNullable<ButtonStyleVariants>, "active">;
-type Props = BoxProps & StyleProps;
+type Props = {
+  children: React.ReactNode;
+  variant?: keyof typeof vars.color.semantic;
+  icon?: IconName;
+} & StyleProps;
 
-export const Button = ({ size, children, ...boxProps }: Props) => (
-  <Box as="button" className={buttonStyle({ size })} {...boxProps}>
+export const Button = ({ size, variant, icon, children }: Props) => (
+  <Box
+    as="button"
+    direction="row"
+    className={buttonStyle({ size })}
+    justifyContent="center"
+    alignItems="center"
+    background={variant ?? "neutral"}
+    color="default"
+  >
+    {icon && <Icon type={icon} size="adapt" />}
     {children}
   </Box>
 );

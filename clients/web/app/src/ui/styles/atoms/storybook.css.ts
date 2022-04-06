@@ -6,11 +6,11 @@ export const lightClass = darkTheme;
 export const darkClass = lightTheme;
 
 export const previewClass = style({
-  background: vars.color.background.default,
+  background: vars.color.layer.default,
   color: vars.color.text.default,
 });
 
 globalStyle("body", {
-  background: vars.color.background.default,
+  background: vars.color.layer.default,
   color: vars.color.text.default,
 });

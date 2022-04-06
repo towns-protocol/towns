@@ -1,7 +1,6 @@
 import React, { forwardRef } from "react";
 import { vars } from "ui/styles/vars.css";
 import { Box } from "..";
-import { BoxProps } from "../Box/Box";
 import { iconStyle } from "./Icon.css";
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>;
@@ -184,23 +183,30 @@ const iconMap = {
 } as const;
 
 export const iconTypes = Object.keys(iconMap);
+export type IconName = keyof typeof iconMap;
 
 type IconProps = {
-  type: keyof typeof iconMap;
+  type: IconName;
   size?: keyof typeof vars.dims.icons;
   background?: keyof typeof vars.color.background;
-} & BoxProps;
+};
 
 export const Icon = (props: IconProps) => {
-  const { size = "md", background, type, ...boxProps } = props;
+  const { size = "md", background, type } = props;
   const Icon = iconMap[type ?? "bell"];
+
   return (
     <Box
       shrink
       centerContent
       aspectRatio="square"
-      className={iconStyle({ size, background })}
-      {...boxProps}
+      className={iconStyle({ size })}
+      background={background}
+      padding={
+        !background || background?.match(/^(none|transparent|default)$/)
+          ? "none"
+          : "xxs"
+      }
     >
       <Icon width="100%" height="100%" />
     </Box>

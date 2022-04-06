@@ -21,12 +21,13 @@ export const Row = ({
   label,
   columns = 2,
   children,
-  invert,
+  backgroundVariant,
   ...boxProps
 }: {
   label: string;
   columns?: number;
-  invert?: boolean;
+  backgroundVariant?: "inverted" | "accent";
+  semantic?: boolean;
   children?: React.ReactNode;
 } & BoxProps) => (
   <Grid borderBottom direction="row" paddingY="sm" columns={columns ?? 2}>
@@ -37,8 +38,8 @@ export const Row = ({
       grow
       justifyContent="center"
       key="last"
-      background={invert ? "accent" : undefined}
-      padding={invert && "xs"}
+      background={backgroundVariant}
+      padding={backgroundVariant && "xs"}
     >
       {children}
     </Box>

@@ -46,6 +46,8 @@ const root = createGlobalTheme(":root", {
       xl: `${baseline * 7}px`,
       // hero avatar
       xxl: `${baseline * 12.5}px`,
+
+      adapt: `1.2em`,
     },
     rows: {
       /** pills */
@@ -75,7 +77,7 @@ const root = createGlobalTheme(":root", {
       // drop downs
       md: `${baseline * 4}px`,
       // chat input
-      lg: `${baseline * 5}px`,
+      lg: `${baseline * 6}px`,
     },
   } as const,
 

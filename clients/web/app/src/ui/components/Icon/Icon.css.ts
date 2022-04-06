@@ -35,53 +35,9 @@ export const iconStyle = recipe({
         width: vars.dims.icons.xxl,
         height: vars.dims.icons.xxl,
       },
-    },
-    background: {
-      default: {
-        background: vars.color.background.default,
-        padding: vars.space.none,
-      },
-      none: {
-        background: vars.color.background.none,
-        padding: vars.space.none,
-      },
-      transparent: {
-        background: vars.color.background.none,
-        padding: vars.space.none,
-      },
-      level1: {
-        background: vars.color.background.level1,
-        padding: vars.space.xxs,
-        color: vars.color.text.muted,
-      },
-      level2: {
-        background: vars.color.background.level2,
-        padding: vars.space.xxs,
-        color: vars.color.text.muted1,
-      },
-      level3: {
-        background: vars.color.background.level3,
-        padding: vars.space.xxs,
-        color: vars.color.text.muted,
-      },
-      accent: {
-        background: vars.color.background.accent,
-        padding: vars.space.xxs,
-        color: vars.color.text.inverted,
-      },
-      secondary: {
-        background: vars.color.background.secondary,
-        padding: vars.space.xxs,
-        color: vars.color.text.inverted,
-      },
-      overlay: {
-        background: vars.color.background.overlay,
-        padding: vars.space.xxs,
-      },
-      inverted: {
-        background: vars.color.background.inverted,
-        color: vars.color.text.inverted,
-        padding: vars.space.xxs,
+      adapt: {
+        width: vars.dims.icons.adapt,
+        height: vars.dims.icons.adapt,
       },
     },
   },
