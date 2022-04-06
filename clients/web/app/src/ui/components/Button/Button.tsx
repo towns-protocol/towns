@@ -19,7 +19,7 @@ export const Button = ({ size, variant, icon, children }: Props) => (
     justifyContent="center"
     alignItems="center"
     background={variant ?? "neutral"}
-    color="default"
+    color="onSemantic"
   >
     {icon && <Icon type={icon} size="adapt" />}
     {children}
