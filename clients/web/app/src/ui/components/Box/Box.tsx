@@ -5,8 +5,8 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
+import { absoluteFillClass } from "ui/styles/css/utils.css";
 import { Atoms, atoms } from "ui/styles/atoms/atoms.css";
-import { absoluteFillClass } from "ui/styles/atoms/utils.css";
 import { assignBoolToDefaultValue, notUndefined, toPx } from "ui/utils/utils";
 
 // shorthands allow `true` or `false` for assigning default values in addition

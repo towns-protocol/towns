@@ -1,7 +1,11 @@
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
-import { responsiveConditions } from "../breakpoints";
+import { responsivePropertiesMixin } from "../breakpoints";
+import "../css/globals.css";
 import { vars } from "../vars.css";
-import "./globals.css";
+import { blockProperties } from "./properties/blockProperties.css";
+import { colorAtomicProperties } from "./properties/colorProperties.css";
+import { gridItemProperties } from "./properties/gridItemProperties.css";
+import { typeProperties } from "./properties/textProperties.css";
 
 const flexDirection = {
   row: "row",
@@ -57,131 +61,12 @@ const flexGrow = {
   x9: 9,
 } as const;
 
-const gridItemProperties = defineProperties({
-  conditions: responsiveConditions,
-  defaultCondition: "desktop",
-  properties: {
-    gridColumn: vars.colSpan,
-  },
-  shorthands: {
-    colSpan: ["gridColumn"],
-  },
-});
-
-const colorAtomicProperties = defineProperties({
-  conditions: {
-    lightMode: {},
-    darkMode: { "@media": "(prefers-color-scheme: dark)" },
-  },
-  defaultCondition: "lightMode",
-  properties: {
-    background: {
-      default: {
-        background: vars.color.background.default,
-      },
-      none: {
-        background: vars.color.background.none,
-      },
-      level1: {
-        background: vars.color.background.level1,
-        color: vars.color.text.muted,
-      },
-      level2: {
-        background: vars.color.background.level2,
-        color: vars.color.text.muted,
-      },
-      level3: {
-        background: vars.color.background.level3,
-      },
-      overlay: {
-        background: vars.color.background.overlay,
-        color: vars.color.text.inverted,
-      },
-      inverted: {
-        background: vars.color.background.inverted,
-        color: vars.color.text.inverted,
-      },
-      critical: {
-        background: vars.color.background.critical,
-        color: vars.color.text.onSemantic,
-      },
-      warning: {
-        background: vars.color.background.warning,
-        color: vars.color.text.onSemantic,
-      },
-      positive: {
-        background: vars.color.background.positive,
-        color: vars.color.text.onSemantic,
-      },
-      neutral: {
-        background: vars.color.background.neutral,
-        color: vars.color.text.onSemantic,
-      },
-      accent: {
-        background: vars.color.background.accent,
-        color: vars.color.text.onSemantic,
-      },
-    },
-    color: vars.color.text,
-  },
-});
-
-const typeProperties = defineProperties({
-  properties: {
-    fontWeight: vars.fontWeight,
-    fontSize: vars.fontSize,
-    textAlign: vars.textAlign,
-    textTransform: vars.textTransform,
-  },
-});
-
-const unresponsiveAtomicProperties = defineProperties({
-  properties: {
-    position: ["relative", "absolute", "fixed", "static", "sticky"],
-    overflow: ["hidden", "visible", "auto"],
-    cursor: [
-      "auto",
-      "default",
-      "none",
-      "context-menu",
-      "help",
-      "pointer",
-      "progress",
-      "wait",
-      "cell",
-      "crosshair",
-      "text",
-      "vertical-text",
-      "alias",
-      "copy",
-      "move",
-      "no-drop",
-      "not-allowed",
-      "all-scroll",
-      "col-resize",
-      "row-resize",
-      "n-resize",
-      "e-resize",
-      "s-resize",
-      "w-resize",
-      "ns-resize",
-      "ew-resize",
-      "ne-resize",
-      "nw-resize",
-      "se-resize",
-      "sw-resize",
-      "nesw-resize",
-      "nwse-resize",
-    ],
-  },
-});
-
 const responsiveAtomicProperties = defineProperties({
-  conditions: responsiveConditions,
-  defaultCondition: "desktop",
+  ...responsivePropertiesMixin,
   properties: {
     // display
     display: ["block", "flex", "grid", "inline-block", "none", "contents"],
+
     // size
     aspectRatio: aspectRatio,
     height: vars.dims.rows,
@@ -190,17 +75,20 @@ const responsiveAtomicProperties = defineProperties({
     width: { ...vars.dims.rows, ...vars.dims.screens },
     minWidth: { ...vars.dims.rows, ...vars.dims.screens },
     maxWidth: { ...vars.dims.rows, ...vars.dims.screens },
+
     // padding
     paddingLeft: vars.space,
     paddingRight: vars.space,
     paddingTop: vars.space,
     paddingBottom: vars.space,
+
     // border
     borderLeft: border,
     borderRight: border,
     borderTop: border,
     borderBottom: border,
     borderRadius: vars.borderRadius,
+
     // flex
     flexDirection: flexDirection,
     gap: vars.space,
@@ -226,7 +114,7 @@ const responsiveAtomicProperties = defineProperties({
 export const atoms = createSprinkles(
   colorAtomicProperties,
   typeProperties,
-  unresponsiveAtomicProperties,
+  blockProperties,
   responsiveAtomicProperties,
   gridItemProperties
 );

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Icon, Paragraph, Text } from "@ui";
+import { Box, Icon, Paragraph } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { NavItem } from "../NavItem/NavItem";
 

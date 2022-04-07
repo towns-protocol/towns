@@ -7,7 +7,7 @@ export const breakpoints = {
   wide: 1200,
 } as const;
 
-export const responsiveConditions = {
+const responsiveConditions = {
   /** default */
   desktop: {},
   /** mobile only */
@@ -17,5 +17,11 @@ export const responsiveConditions = {
   /** wider than desktop */
   wide: { "@media": `screen and (min-width: ${breakpoints.wide}px)` },
 };
+
+export const responsivePropertiesMixin = {
+  conditions: responsiveConditions,
+  defaultCondition: "desktop",
+  responsiveArray: ["tablet", "desktop"],
+} as const;
 
 export type Breakpoint = keyof typeof breakpoints;

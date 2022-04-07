@@ -15,8 +15,9 @@ type Props = {
 export const Avatar = (props: Props) => {
   const {
     size = "md",
+    height = "md",
     nft = false,
-    shape,
+    circle = false,
     stacked = false,
     border,
     src = "ape.webp",
@@ -25,12 +26,10 @@ export const Avatar = (props: Props) => {
   return (
     <Box
       className={clsx(
-        avatarToggleClasses({ nft, stacked }),
+        avatarToggleClasses({ nft, stacked, border, circle }),
         avatarAtoms({
-          size: size,
-
-          border,
-          shape,
+          size,
+          height,
         }),
         avatarBaseStyle
       )}

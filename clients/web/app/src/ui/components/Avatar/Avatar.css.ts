@@ -1,55 +1,13 @@
 import { style } from "@vanilla-extract/css";
-import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
+import { createSprinkles } from "@vanilla-extract/sprinkles";
 import { vcn } from "vanilla-classnames";
-import { responsiveConditions } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
+import { avatarProperties } from "ui/styles/atoms/properties/avatarProperties.css";
 
 /**
  * why not use recipes API ?
  * https://github.com/seek-oss/vanilla-extract/discussions/497
  */
-
-export const avatarSizes = {
-  sm: {
-    width: vars.dims.icons.sm,
-    height: vars.dims.icons.sm,
-    borderRadius: vars.borderRadius.xs,
-  },
-  md: {
-    width: vars.dims.icons.md,
-    height: vars.dims.icons.md,
-    borderRadius: vars.borderRadius.sm,
-  },
-  lg: {
-    width: vars.dims.icons.lg,
-    height: vars.dims.icons.lg,
-    borderRadius: vars.borderRadius.md,
-  },
-  xl: {
-    width: vars.dims.icons.xl,
-    height: vars.dims.icons.xl,
-    borderRadius: vars.borderRadius.md,
-  },
-} as const;
-
-const avatarProperties = defineProperties({
-  conditions: responsiveConditions,
-  defaultCondition: "desktop",
-  properties: {
-    size: avatarSizes,
-
-    shape: {
-      circle: {
-        borderRadius: vars.borderRadius.full,
-      },
-    },
-    border: {
-      true: {
-        border: `2px solid ${vars.color.layer.default}`,
-      },
-    },
-  },
-});
 
 export const avatarBaseStyle = style({
   backgroundSize: "cover",
@@ -62,6 +20,12 @@ export const avatarToggleClasses = vcn({
     WebkitMaskOrigin: `center`,
     WebkitMaskRepeat: `no-repeat`,
     WebkitMaskSize: `cover`,
+  }),
+  border: style({
+    border: `2px solid ${vars.color.layer.default}`,
+  }),
+  circle: style({
+    borderRadius: vars.borderRadius.full,
   }),
   stacked: style({
     selectors: {
