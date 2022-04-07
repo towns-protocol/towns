@@ -1,4 +1,4 @@
-import { darkClass, lightClass } from '../src/ui/styles/atoms/storybook.css';
+import { darkClass, lightClass } from '../src/ui/styles/css/storybook.css';
 import { themeDark, themeLight } from './theme';
 
 export const parameters = {
