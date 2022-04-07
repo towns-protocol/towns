@@ -1,12 +1,13 @@
-import { recipe } from "@vanilla-extract/recipes";
+import { style } from "@vanilla-extract/css";
+import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
+import { responsiveConditions } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
 
-export const iconStyle = recipe({
-  base: {
-    borderRadius: vars.borderRadius.sm,
-  },
-  variants: {
-    size: {
+export const iconProperties = defineProperties({
+  conditions: responsiveConditions,
+  defaultCondition: "desktop",
+  properties: {
+    height: {
       xxs: {
         width: vars.dims.icons.xxs,
         height: vars.dims.icons.xxs,
@@ -41,6 +42,15 @@ export const iconStyle = recipe({
       },
     },
   },
+  shorthands: {
+    size: ["height"],
+  },
 });
 
-export type IconSizeVariants = keyof typeof iconStyle;
+export const iconAtoms = createSprinkles(iconProperties);
+
+export const iconBaseStyle = style({
+  borderRadius: vars.borderRadius.sm,
+});
+
+export type IconAtoms = Parameters<typeof iconAtoms>[0];

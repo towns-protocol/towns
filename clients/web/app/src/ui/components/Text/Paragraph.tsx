@@ -1,4 +1,5 @@
 import React, { forwardRef } from "react";
+import { BoxProps } from "@ui";
 import { Text } from "./Text";
 import { TextSprinkles } from "./Text.css";
 
@@ -7,6 +8,7 @@ type ParagraphProps = {
   className?: string;
   children?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  display?: BoxProps["display"];
 } & Omit<TextSprinkles, "size" | "fontSize">;
 
 export const Paragraph = forwardRef<HTMLElement, ParagraphProps>(

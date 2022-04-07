@@ -23,8 +23,12 @@ export const MainActions = (props: {
           ? { background: "accent", color: "inverted" }
           : {})}
       >
-        <Icon type={n.icon} background="level3" size="sm" />
-        <Paragraph>{n.label}</Paragraph>
+        <Icon
+          type={n.icon}
+          background={n.id === props.selectedId ? "overlay" : "level2"}
+          size={{ desktop: "md", tablet: "lg" }}
+        />
+        <Paragraph display={{ tablet: "none" }}>{n.label}</Paragraph>
       </NavItem>
     ))}
   </>

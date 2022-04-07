@@ -1,7 +1,8 @@
+import clsx from "clsx";
 import React, { forwardRef } from "react";
 import { vars } from "ui/styles/vars.css";
 import { Box } from "..";
-import { iconStyle } from "./Icon.css";
+import { IconAtoms, iconAtoms, iconBaseStyle } from "./Icon.css";
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>;
 
@@ -187,9 +188,8 @@ export type IconName = keyof typeof iconMap;
 
 type IconProps = {
   type: IconName;
-  size?: keyof typeof vars.dims.icons;
   background?: keyof typeof vars.color.background;
-};
+} & IconAtoms;
 
 export const Icon = (props: IconProps) => {
   const { size = "md", background, type } = props;
@@ -200,7 +200,7 @@ export const Icon = (props: IconProps) => {
       shrink
       centerContent
       aspectRatio="square"
-      className={iconStyle({ size })}
+      className={clsx(iconBaseStyle, iconAtoms({ size }))}
       background={background}
       padding={
         !background || background?.match(/^(none|transparent|default)$/)

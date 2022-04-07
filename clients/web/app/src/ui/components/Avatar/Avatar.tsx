@@ -1,11 +1,16 @@
+import clsx from "clsx";
 import React from "react";
-import { Box, BoxProps } from "../Box/Box";
-import { AvatarStyle, avatarStyle } from "./Avatar.css";
+import { Box } from "../Box/Box";
+import {
+  AvatarAtoms,
+  avatarAtoms,
+  avatarBaseStyle,
+  avatarToggleClasses,
+} from "./Avatar.css";
 
 type Props = {
   src?: string;
-} & AvatarStyle &
-  BoxProps;
+} & AvatarAtoms;
 
 export const Avatar = (props: Props) => {
   const {
@@ -19,7 +24,16 @@ export const Avatar = (props: Props) => {
   } = props;
   return (
     <Box
-      className={avatarStyle({ size, nft, stacked, border, shape })}
+      className={clsx(
+        avatarToggleClasses({ nft, stacked }),
+        avatarAtoms({
+          size: size,
+
+          border,
+          shape,
+        }),
+        avatarBaseStyle
+      )}
       style={{
         backgroundImage: `url(${src})`,
       }}

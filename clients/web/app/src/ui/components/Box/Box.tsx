@@ -5,7 +5,7 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { Atoms, atoms } from "ui/styles/atoms/sprinkles.css";
+import { Atoms, atoms } from "ui/styles/atoms/atoms.css";
 import { absoluteFillClass } from "ui/styles/atoms/utils.css";
 import { assignBoolToDefaultValue, notUndefined, toPx } from "ui/utils/utils";
 

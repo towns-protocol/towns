@@ -1,5 +1,13 @@
-import { RecipeVariants, recipe } from "@vanilla-extract/recipes";
+import { style } from "@vanilla-extract/css";
+import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
+import { vcn } from "vanilla-classnames";
+import { responsiveConditions } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
+
+/**
+ * why not use recipes API ?
+ * https://github.com/seek-oss/vanilla-extract/discussions/497
+ */
 
 export const avatarSizes = {
   sm: {
@@ -22,25 +30,14 @@ export const avatarSizes = {
     height: vars.dims.icons.xl,
     borderRadius: vars.borderRadius.md,
   },
-};
+} as const;
 
-export const avatarStyle = recipe({
-  base: {
-    backgroundSize: "cover",
-    backgroundPosition: "center center",
-  },
-  variants: {
+const avatarProperties = defineProperties({
+  conditions: responsiveConditions,
+  defaultCondition: "desktop",
+  properties: {
     size: avatarSizes,
-    stacked: {
-      true: {
-        selectors: {
-          "&:not(:first-child)": {
-            marginLeft: `calc(-1 * ${vars.space.xs})`,
-          },
-        },
-        border: `2px solid ${vars.color.layer.default}`,
-      },
-    },
+
     shape: {
       circle: {
         borderRadius: vars.borderRadius.full,
@@ -51,21 +48,33 @@ export const avatarStyle = recipe({
         border: `2px solid ${vars.color.layer.default}`,
       },
     },
-    nft: {
-      true: {
-        WebkitMaskImage: `url(/nftmask.svg)`,
-        WebkitMaskOrigin: `center`,
-        WebkitMaskRepeat: `no-repeat`,
-        WebkitMaskSize: `cover`,
-      },
-    },
-  },
-
-  defaultVariants: {
-    size: "md",
-    nft: false,
-    stacked: false,
   },
 });
 
-export type AvatarStyle = RecipeVariants<typeof avatarStyle>;
+export const avatarBaseStyle = style({
+  backgroundSize: "cover",
+  backgroundPosition: "center center",
+});
+
+export const avatarToggleClasses = vcn({
+  nft: style({
+    WebkitMaskImage: `url(/nftmask.svg)`,
+    WebkitMaskOrigin: `center`,
+    WebkitMaskRepeat: `no-repeat`,
+    WebkitMaskSize: `cover`,
+  }),
+  stacked: style({
+    selectors: {
+      "&:not(:first-child)": {
+        marginLeft: `calc(-1 * ${vars.space.xs})`,
+      },
+    },
+    border: `2px solid ${vars.color.layer.default}`,
+  }),
+});
+
+export type ToggleProps = Parameters<typeof avatarToggleClasses>[0];
+
+export const avatarAtoms = createSprinkles(avatarProperties);
+
+export type AvatarAtoms = Parameters<typeof avatarAtoms>[0] & ToggleProps;

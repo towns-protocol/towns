@@ -1,4 +1,5 @@
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
+import { responsiveConditions } from "../breakpoints";
 import { vars } from "../vars.css";
 import "./globals.css";
 
@@ -57,13 +58,8 @@ const flexGrow = {
 } as const;
 
 const gridItemProperties = defineProperties({
-  conditions: {
-    mobile: {},
-    tablet: { "@media": "screen and (min-width: 768px)" },
-    desktop: { "@media": "screen and (min-width: 1100px)" },
-    large: { "@media": "screen and (min-width: 1600px)" },
-  },
-  defaultCondition: "mobile",
+  conditions: responsiveConditions,
+  defaultCondition: "desktop",
   properties: {
     gridColumn: vars.colSpan,
   },
@@ -79,7 +75,6 @@ const colorAtomicProperties = defineProperties({
   },
   defaultCondition: "lightMode",
   properties: {
-    // colors
     background: {
       default: {
         background: vars.color.background.default,
@@ -89,6 +84,7 @@ const colorAtomicProperties = defineProperties({
       },
       level1: {
         background: vars.color.background.level1,
+        color: vars.color.text.muted,
       },
       level2: {
         background: vars.color.background.level2,
@@ -181,13 +177,8 @@ const unresponsiveAtomicProperties = defineProperties({
 });
 
 const responsiveAtomicProperties = defineProperties({
-  conditions: {
-    mobile: {},
-    tablet: { "@media": "screen and (min-width: 768px)" },
-    desktop: { "@media": "screen and (min-width: 1100px)" },
-    large: { "@media": "screen and (min-width: 1600px)" },
-  },
-  defaultCondition: "mobile",
+  conditions: responsiveConditions,
+  defaultCondition: "desktop",
   properties: {
     // display
     display: ["block", "flex", "grid", "inline-block", "none", "contents"],

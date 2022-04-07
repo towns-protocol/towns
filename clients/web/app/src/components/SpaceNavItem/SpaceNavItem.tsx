@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Icon, Text } from "@ui";
+import { Box, Icon, Paragraph, Text } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { NavItem } from "../NavItem/NavItem";
 
@@ -20,6 +20,7 @@ export const SpaceNavMock = () => (
     {mock.map((m) => (
       <SpaceNavItem
         id={m.avatar}
+        key={m.name}
         name={m.name}
         avatar={`/placeholders/${m.avatar}.png`}
         pinned={m.pinned}
@@ -40,11 +41,13 @@ export const SpaceNavItem = ({
   active?: boolean;
   pinned?: boolean;
 }) => (
-  <NavItem color="muted">
-    <Avatar src={avatar} size="md" />
-    <Box grow direction="row">
-      <Text fontWeight={active ? "strong" : "normal"}>{name}</Text>
+  <NavItem>
+    <Avatar nft src={avatar} size={{ tablet: "lg", desktop: "md" }} />
+    <Box grow direction="row" display={{ tablet: "none" }}>
+      <Paragraph fontWeight={active ? "strong" : "normal"}>{name}</Paragraph>
     </Box>
-    <Box shrink>{pinned && <Icon type="pin" size="xxs" />}</Box>
+    <Box shrink display={{ tablet: "none" }}>
+      {pinned && <Icon type="pin" size="xxs" />}
+    </Box>
   </NavItem>
 );
