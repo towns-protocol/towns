@@ -1,28 +1,61 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 import { Box, Icon, Paragraph } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
+import { atoms } from "ui/styles/atoms/atoms.css";
 import { NavItem } from "../NavItem/NavItem";
 
-const mock = [
-  { name: "Bored Ape Yacht Club", avatar: "nft_10", pinned: true },
-  { name: "Crypto Punks", avatar: "nft_14", pinned: true },
-  { name: "Doodles", avatar: "nft_41", pinned: true },
-  { name: "FWB", avatar: "nft_18" },
-  { name: "World of Women", avatar: "nft_26" },
-  { name: "Mutant Ape Yacht Club", avatar: "nft_37" },
-  { name: "The Sandbox", avatar: "nft_33" },
-  { name: "Azuki", avatar: "nft_40" },
-  { name: "Clone X - X Takashi Murakami", avatar: "nft_19" },
+export const mockSpaces = [
+  {
+    id: "bored-ape-yacht-club",
+    name: "Bored Ape Yacht Club",
+    avatar: "/placeholders/nft_10.png",
+    pinned: true,
+  },
+  {
+    id: "crypto-punks",
+    name: "Crypto Punks",
+    avatar: "/placeholders/nft_14.png",
+    pinned: true,
+  },
+  {
+    id: "doodles",
+    name: "Doodles",
+    avatar: "/placeholders/nft_41.png",
+    pinned: true,
+  },
+  { id: "fwb", name: "FWB", avatar: "/placeholders/nft_18.png" },
+  {
+    id: "world-of-women",
+    name: "World of Women",
+    avatar: "/placeholders/nft_26.png",
+  },
+  {
+    id: "mutant-ape-yacht-club",
+    name: "Mutant Ape Yacht Club",
+    avatar: "/placeholders/nft_37.png",
+  },
+  {
+    id: "the-sandbox",
+    name: "The Sandbox",
+    avatar: "/placeholders/nft_33.png",
+  },
+  { id: "azuki", name: "Azuki", avatar: "/placeholders/nft_40.png" },
+  {
+    id: "clone-x",
+    name: "Clone X - X Takashi Murakami",
+    avatar: "/placeholders/nft_19.png",
+  },
 ];
 
 export const SpaceNavMock = () => (
   <>
-    {mock.map((m) => (
+    {mockSpaces.map((m) => (
       <SpaceNavItem
-        id={m.avatar}
+        id={m.id}
         key={m.name}
         name={m.name}
-        avatar={`/placeholders/${m.avatar}.png`}
+        avatar={`${m.avatar}`}
         pinned={m.pinned}
       />
     ))}
@@ -30,6 +63,7 @@ export const SpaceNavMock = () => (
 );
 
 export const SpaceNavItem = ({
+  id,
   active,
   avatar,
   name,
@@ -41,13 +75,27 @@ export const SpaceNavItem = ({
   active?: boolean;
   pinned?: boolean;
 }) => (
-  <NavItem>
-    <Avatar nft src={avatar} size={{ tablet: "lg", desktop: "md" }} />
-    <Box grow direction="row" display={{ tablet: "none" }}>
-      <Paragraph fontWeight={active ? "strong" : "normal"}>{name}</Paragraph>
-    </Box>
-    <Box shrink display={{ tablet: "none" }}>
-      {pinned && <Icon type="pin" size="xxs" />}
-    </Box>
-  </NavItem>
+  <NavLink
+    to={`/spaces/${id}`}
+    className={({ isActive }) =>
+      isActive
+        ? atoms({ background: "accent", color: "onSemantic" })
+        : atoms({})
+    }
+  >
+    <NavItem>
+      <Avatar src={avatar} size={{ tablet: "lg", desktop: "md" }} />
+      <Paragraph
+        singleLine
+        grow
+        fontWeight={active ? "strong" : "normal"}
+        display={{ tablet: "none" }}
+      >
+        {name}
+      </Paragraph>
+      <Box shrink display={{ tablet: "none" }}>
+        {pinned && <Icon type="pin" size="xxs" />}
+      </Box>
+    </NavItem>
+  </NavLink>
 );

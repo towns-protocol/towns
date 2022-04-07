@@ -8,12 +8,12 @@ export const MessageList = () => {
         borderBottom
         direction="row"
         paddingX="sm"
-        height="lg"
+        height="md"
         gap="xs"
         alignItems="center"
       >
         <Box grow>
-          <Paragraph size="lg" color="muted1">
+          <Paragraph size="md" color="muted1">
             Messages
           </Paragraph>
         </Box>

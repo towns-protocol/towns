@@ -1,4 +1,5 @@
 import React from "react";
+import { BrowserRouter } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
@@ -30,7 +31,9 @@ const node = document.getElementById("root");
 if (node) {
   createRoot(node).render(
     <React.StrictMode>
-      <App />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </React.StrictMode>
   );
 }

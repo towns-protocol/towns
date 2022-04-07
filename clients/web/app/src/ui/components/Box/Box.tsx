@@ -5,9 +5,9 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { absoluteFillClass } from "ui/styles/css/utils.css";
 import { Atoms, atoms } from "ui/styles/atoms/atoms.css";
-import { assignBoolToDefaultValue, notUndefined, toPx } from "ui/utils/utils";
+import { absoluteFillClass } from "ui/styles/css/utils.css";
+import { assignBoolToDefaultValue } from "ui/utils/utils";
 
 // shorthands allow `true` or `false` for assigning default values in addition
 // to the normal presets. Since bools aren't allowed as Atoms we need to
@@ -38,7 +38,6 @@ type Props = {
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  basis?: number | string;
   absoluteFill?: boolean;
   centerContent?: boolean;
 } & ShorthandProps &
@@ -59,7 +58,6 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     centerContent,
     grow,
     shrink,
-    basis,
     absoluteFill,
     borderTop,
     borderBottom,
@@ -128,19 +126,19 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     };
   }, [absoluteFill, className, fromShorthand, restProps]);
 
-  const dynamicStyle = useMemo(() => {
-    const style: React.CSSProperties = props.style ?? {};
-    if (notUndefined(basis)) {
-      style.flexBasis = toPx(basis);
-    }
-    return style;
-  }, [basis, props.style]);
+  // const dynamicStyle = useMemo(() => {
+  //   const style: React.CSSProperties = props.style ?? {};
+  //   if (notUndefined(basis)) {
+  //     style.flexBasis = toPx(basis);
+  //   }
+  //   return style;
+  // }, [basis, props.style]);
 
   return createElement(
     as,
     {
       className: atomicClasses,
-      style: dynamicStyle,
+      style: props.style,
       ...nativeProps,
       ref,
     },

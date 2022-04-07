@@ -6,6 +6,44 @@ import { IconAtoms, iconAtoms, iconBaseStyle } from "./Icon.css";
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>;
 
+export const AtIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    {...props}
+    ref={ref}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C13.4585 21 14.8333 20.6538 16.0494 20.04C16.5424 19.7911 17.1439 19.9891 17.3927 20.4821C17.6416 20.9751 17.4436 21.5766 16.9506 21.8254C15.4615 22.5771 13.7787 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12L23 12.0387C23.0001 12.7245 23.0001 13.5494 22.8593 14.3348C22.7134 15.1485 22.4023 16.0119 21.7071 16.7071L21.7019 16.7122C21.1181 17.2949 20.5615 17.6459 19.9754 17.8293C19.4285 18.0005 18.9211 18.0002 18.5401 18L18.5 18C17.0486 18 15.685 17.1499 15.1932 15.8477C14.3271 16.5673 13.2141 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C14.7603 7 16.9982 9.23681 17 11.9967C17 11.9978 17 11.9989 17 12V12V14.7777C17 15.3453 17.5576 16 18.5 16C18.9195 16 19.1456 15.9934 19.3781 15.9206C19.5891 15.8546 19.8786 15.7071 20.2929 15.2929L20.2967 15.2891C20.5993 14.9845 20.787 14.5602 20.8907 13.9819C20.9972 13.3876 21 12.7289 21 12C21 7.02944 16.9706 3 12 3ZM15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12Z"
+      fill="currentColor"
+    />
+  </svg>
+));
+
+export const BackIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M7.76777 2.64645C7.57251 2.45118 7.25592 2.45118 7.06066 2.64645L4.14645 5.56066C3.95119 5.75592 3.95119 6.0725 4.14645 6.26777L7.06066 9.18198C7.25592 9.37724 7.57251 9.37724 7.76777 9.18198C7.96303 8.98672 7.96303 8.67014 7.76777 8.47487L5.20711 5.91421L7.76777 3.35355C7.96303 3.15829 7.96303 2.84171 7.76777 2.64645Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+
 export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg
@@ -157,9 +195,37 @@ export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
+export const ThreadsIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M21 6C21 4.34314 19.6569 3 18 3H6C4.34315 3 3 4.34315 3 6V18.7308C3 20.4697 5.06612 21.3802 6.34953 20.2068L9.06007 17.7286C9.24439 17.5601 9.4851 17.4667 9.73484 17.4667H18C19.6569 17.4667 21 16.1235 21 14.4667V6ZM18 5C18.5523 5 19 5.44771 19 6V14.4667C19 15.019 18.5523 15.4667 18 15.4667H9.73484C8.98561 15.4667 8.26349 15.747 7.71054 16.2526L5 18.7308V6C5 5.44772 5.44772 5 6 5H18ZM8 8C8 7.44772 8.44772 7 9 7H15C15.5523 7 16 7.44772 16 8C16 8.55228 15.5523 9 15 9H9C8.44772 9 8 8.55228 8 8ZM9 11C8.44772 11 8 11.4477 8 12C8 12.5523 8.44772 13 9 13H15C15.5523 13 16 12.5523 16 12C16 11.4477 15.5523 11 15 11H9Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+
 export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
-    <svg width="20" height="21" viewBox="0 0 20 21" fill="none">
+    <svg
+      width="20"
+      height="21"
+      viewBox="0 0 20 21"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
       <circle cx="10.5883" cy="11.0876" r="9.41179" fill="#F5BD2D" />
       <circle cx="9.41179" cy="9.91179" r="9.41179" fill="#FFCF55" />
       <path
@@ -171,6 +237,8 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
 );
 
 const iconMap = {
+  at: AtIcon,
+  back: BackIcon,
   bell: BellIcon,
   check: CheckIcon,
   home: HomeIcon,
@@ -181,6 +249,7 @@ const iconMap = {
   search: SearchIcon,
   settings: SettingsIcon,
   token: TokenIcon,
+  threads: ThreadsIcon,
 } as const;
 
 export const iconTypes = Object.keys(iconMap);

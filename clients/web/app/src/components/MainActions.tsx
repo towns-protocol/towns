@@ -1,35 +1,51 @@
 import React from "react";
+import { NavLink, useMatch, useResolvedPath } from "react-router-dom";
 import { Paragraph } from "@ui";
-import { RouteId } from "App";
-import { Icon } from "ui/components/Icon";
+import { Icon, IconName } from "ui/components/Icon";
+import { atoms } from "ui/styles/atoms/atoms.css";
 import { NavItem } from "./NavItem/NavItem";
 
 const navItems = [
-  { id: "home", icon: "home", label: "Home" },
+  { id: "", icon: "home", label: "Home" },
   { id: "messages", icon: "message", label: "Messages" },
   { id: "new", icon: "plus", label: "New Space" },
 ] as const;
 
-export const MainActions = (props: {
-  selectedId: string;
-  onSelect: (id: RouteId) => void;
-}) => (
-  <>
-    {navItems.map((n) => (
-      <NavItem
-        key={n.id}
-        onClick={() => props.onSelect(n.id)}
-        {...(n.id === props.selectedId
-          ? { background: "accent", color: "inverted" }
-          : {})}
-      >
+export const MainActions = () => {
+  return (
+    <>
+      {navItems.map((n) => {
+        return <MainAction {...n} />;
+      })}
+    </>
+  );
+};
+
+export const MainAction = (props: {
+  id: string;
+  label: string;
+  icon: IconName;
+}) => {
+  const resolved = useResolvedPath(`/${props.id}`);
+  const match = useMatch({ path: resolved.pathname, end: true });
+  return (
+    <NavLink
+      key={props.id}
+      to={`/${props.id}`}
+      className={({ isActive }) =>
+        isActive
+          ? atoms({ background: "accent", color: "onSemantic" })
+          : atoms({})
+      }
+    >
+      <NavItem>
         <Icon
-          type={n.icon}
-          background={n.id === props.selectedId ? "overlay" : "level2"}
+          type={props.icon}
+          background={match ? "overlay" : "level2"}
           size={{ desktop: "md", tablet: "lg" }}
         />
-        <Paragraph display={{ tablet: "none" }}>{n.label}</Paragraph>
+        <Paragraph display={{ tablet: "none" }}>{props.label}</Paragraph>
       </NavItem>
-    ))}
-  </>
-);
+    </NavLink>
+  );
+};

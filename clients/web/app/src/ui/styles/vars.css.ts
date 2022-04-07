@@ -61,17 +61,22 @@ const root = createGlobalTheme(":root", {
     },
 
     screens: {
+      none: "0",
+      auto: "auto",
       // for testing !
+      "5vw": `5vw`,
+      "10vw": `10vw`,
       "25vw": `25vw`,
-      // for testing !
       "50vw": `50vw`,
-      // for testing !
       "75vw": `75vw`,
-      // for testing !
+      "100": `100px`,
+      "200": `200px`,
+      "300": `300px`,
+      "400": `400px`,
       "1200": `1200px`,
-      // for testing !
       "1440": `1440px`,
     },
+
     inputs: {
       sm: `${baseline * 3}px`,
       // drop downs
@@ -86,7 +91,7 @@ const root = createGlobalTheme(":root", {
     xxs: `${baseline * 0.5}px`,
     xs: `${baseline * 0.75}px`,
     sm: `${baseline * 1}px`,
-    md: `${baseline * 2}px`,
+    md: `${baseline * 1.5}px`,
     lg: `${baseline * 4}px`,
     xl: `${baseline * 8}px`,
     full: "999999px",

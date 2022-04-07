@@ -1,3 +1,4 @@
+import { style } from "@vanilla-extract/css";
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
 import { vars } from "ui/styles/vars.css";
 
@@ -16,3 +17,9 @@ const nonResponsiveProperties = defineProperties({
 
 export const textSprinkles = createSprinkles(nonResponsiveProperties);
 export type TextSprinkles = Parameters<typeof textSprinkles>[0];
+
+export const singleLineStyle = style({
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+});

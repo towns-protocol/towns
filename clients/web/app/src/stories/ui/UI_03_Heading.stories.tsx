@@ -1,6 +1,5 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
-import { Box } from "@ui";
 import { Heading } from "ui/components/Text/Heading";
 
 export default {

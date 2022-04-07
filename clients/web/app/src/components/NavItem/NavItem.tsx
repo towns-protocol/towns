@@ -10,7 +10,7 @@ export const NavItem = forwardRef<
     direction="row"
     alignItems="center"
     paddingX="sm"
-    paddingY={{ tablet: "xs", desktop: "xxs" }}
+    paddingY={{ tablet: "xs", desktop: "xs" }}
     gap="xs"
     minHeight="md"
     {...props}

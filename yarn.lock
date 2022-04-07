@@ -15935,6 +15935,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-error-overlay: ^6.0.10
+    react-router: ^6.3.0
     storybook: ^6.5.0-alpha.57
     storybook-dark-mode: ^1.0.9
     typescript: ^4.6.3
@@ -23799,7 +23800,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:6.3.0, react-router@npm:^6.0.0":
+"react-router@npm:6.3.0, react-router@npm:^6.0.0, react-router@npm:^6.3.0":
   version: 6.3.0
   resolution: "react-router@npm:6.3.0"
   dependencies:

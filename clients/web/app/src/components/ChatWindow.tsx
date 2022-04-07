@@ -9,7 +9,7 @@ export const ChatWindow = () => (
       borderBottom
       direction="row"
       paddingX="sm"
-      height="lg"
+      height="md"
       gap="xs"
       alignItems="center"
     >
@@ -24,11 +24,11 @@ export const ChatWindow = () => (
         <Heading level={1}>iamblue</Heading>
 
         <Box direction="row" alignItems="center" gap="xs">
-          <Paragraph size="xl" fontWeight="strong">
+          <Paragraph size="lg" fontWeight="strong">
             50
           </Paragraph>
           <Icon type="token" />
-          <Paragraph size="xl" color="muted1">
+          <Paragraph size="lg" color="muted1">
             &#8226; 3 Servers in common
           </Paragraph>
 

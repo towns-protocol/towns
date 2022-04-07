@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import React from "react";
-import { Box } from "../Box/Box";
+import { Box, BoxProps } from "../Box/Box";
 import {
   AvatarAtoms,
   avatarAtoms,
@@ -10,6 +10,7 @@ import {
 
 type Props = {
   src?: string;
+  onClick?: BoxProps["onClick"];
 } & AvatarAtoms;
 
 export const Avatar = (props: Props) => {
@@ -20,11 +21,12 @@ export const Avatar = (props: Props) => {
     circle = false,
     stacked = false,
     border,
-    src = "ape.webp",
+    src = "/ape.webp",
     ...boxProps
   } = props;
   return (
     <Box
+      shrink={false}
       className={clsx(
         avatarToggleClasses({ nft, stacked, border, circle }),
         avatarAtoms({

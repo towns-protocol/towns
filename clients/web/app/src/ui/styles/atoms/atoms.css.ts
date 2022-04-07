@@ -95,6 +95,7 @@ const responsiveAtomicProperties = defineProperties({
     flexWrap: ["wrap", "nowrap"],
     flexGrow: flexGrow,
     flexShrink: flexGrow,
+    flexBasis: { ...vars.dims.rows, ...vars.dims.screens },
     alignItems: { ...flexAlignment, baseline: "baseline" },
     alignSelf: { ...flexAlignment, baseline: "baseline" },
     justifyContent: flexJustifyAlignment,
@@ -102,6 +103,7 @@ const responsiveAtomicProperties = defineProperties({
   },
 
   shorthands: {
+    basis: ["flexBasis"],
     direction: ["flexDirection"],
     paddingX: ["paddingLeft", "paddingRight"],
     paddingY: ["paddingTop", "paddingBottom"],
