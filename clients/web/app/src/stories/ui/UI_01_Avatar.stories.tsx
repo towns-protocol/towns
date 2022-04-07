@@ -1,6 +1,5 @@
-import React from "react";
 import { ComponentMeta, ComponentStory } from "@storybook/react";
-
+import React from "react";
 import { Box } from "@ui";
 import { Avatar } from "../../ui/components/Avatar/Avatar";
 
@@ -24,9 +23,7 @@ export default {
 } as ComponentMeta<typeof Avatar>;
 
 const AvatarTemplate: ComponentStory<typeof Avatar> = (args) => (
-  <Box absoluteFill centerContent>
-    <Avatar {...args} />
-  </Box>
+  <Avatar {...args} />
 );
 
 export const AvatarStory = AvatarTemplate.bind({});

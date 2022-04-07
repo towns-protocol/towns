@@ -15,11 +15,7 @@ export default {
 } as ComponentMeta<typeof Paragraph>;
 
 const ParagraphTemplate: ComponentStory<typeof Paragraph> = (args) => {
-  return (
-    <Box absoluteFill centerContent>
-      <Paragraph {...args}>{args.children}</Paragraph>
-    </Box>
-  );
+  return <Paragraph {...args}>{args.children}</Paragraph>;
 };
 
 export const ParagraphStory = ParagraphTemplate.bind({});

@@ -9,11 +9,7 @@ export default {
 } as ComponentMeta<typeof Icon>;
 
 const Template: ComponentStory<typeof Icon> = (args) => {
-  return (
-    <Box absoluteFill centerContent>
-      <Icon {...args} />
-    </Box>
-  );
+  return <Icon {...args} />;
 };
 
 export const IconStory = Template.bind({});

@@ -15,11 +15,7 @@ export default {
 } as ComponentMeta<typeof Text>;
 
 const Template: ComponentStory<typeof Text> = (args) => {
-  return (
-    <Box absoluteFill centerContent>
-      <Text {...args}>{args.children}</Text>
-    </Box>
-  );
+  return <Text {...args}>{args.children}</Text>;
 };
 
 export const TextStory = Template.bind({});

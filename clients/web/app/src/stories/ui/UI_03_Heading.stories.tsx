@@ -19,11 +19,7 @@ export default {
 } as ComponentMeta<typeof Heading>;
 
 const HeadingTemplate: ComponentStory<typeof Heading> = (args) => {
-  return (
-    <Box absoluteFill centerContent>
-      <Heading {...args}>{args.children}</Heading>
-    </Box>
-  );
+  return <Heading {...args}>{args.children}</Heading>;
 };
 
 export const HeadingStory = HeadingTemplate.bind({});

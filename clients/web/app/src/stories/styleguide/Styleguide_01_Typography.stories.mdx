@@ -1,4 +1,4 @@
-import { Canvas, Meta } from "@storybook/addon-docs";
+import { Meta } from "@storybook/addon-docs";
 import { Box, Heading, Paragraph, Text } from "@ui";
 import { vars } from "../../ui/styles/vars.css";
 import { Row } from "../StoryUtils";
@@ -44,7 +44,17 @@ import { Row } from "../StoryUtils";
 
 <Box>
   {Object.keys(vars.color.text).map((c) => (
-    <Row key={c} label={c}>
+    <Row
+      key={c}
+      label={c}
+      backgroundVariant={
+        c.match(/inverted/i)
+          ? "inverted"
+          : c.match(/onSemantic/)
+          ? "accent"
+          : undefined
+      }
+    >
       <Paragraph color={c}>{c}</Paragraph>
     </Row>
   ))}
@@ -64,24 +74,42 @@ import { Row } from "../StoryUtils";
 
 ### Paragraph
 
-<Canvas isColumn withSource="open">
+<Box border padding>
   <Paragraph color="accent" size="lg" textAlign="center">
     Paragraph content
   </Paragraph>
-</Canvas>
+</Box>
+
+```tsx dark
+<Paragraph color="accent" size="lg" textAlign="center">
+  Paragraph content
+</Paragraph>
+```
 
 ### Heading
 
-<Canvas isColumn withSource="open">
+<Box border padding>
   <Heading color="accent" level="1">
     Heading content
   </Heading>
-</Canvas>
+</Box>
+
+```tsx dark
+<Heading color="accent" level="1">
+  Heading content
+</Heading>
+```
 
 ### Text Primitive
 
-<Canvas isColumn withSource="open">
+<Box border padding>
   <Text as="span" color="muted1" size="lg" textTransform="uppercase">
     Custom Text
   </Text>
-</Canvas>
+</Box>
+
+```tsx dark
+<Text as="span" color="muted1" size="lg" textTransform="uppercase">
+  Custom Text
+</Text>
+```

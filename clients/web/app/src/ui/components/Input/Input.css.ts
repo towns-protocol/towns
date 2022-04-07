@@ -3,7 +3,7 @@ import { vars } from "ui/styles/vars.css";
 
 export const inputStyle = recipe({
   base: {
-    background: vars.color.semantic.neutral,
+    background: vars.color.layer.level2,
     "::placeholder": {
       color: vars.color.text.muted1,
     },

@@ -57,7 +57,7 @@ const root = createGlobalTheme(":root", {
       /** message rows */
       md: `${baseline * 4.5}px`,
       /** input fields / topbar */
-      lg: `${baseline * 5}px`,
+      lg: `${baseline * 6.5}px`,
     },
 
     screens: {
