@@ -89,9 +89,6 @@ If you are running the tests from Harmony repo:
 
 ```bash
 docker run --rm -v <your-harmony-git>/servers/dendrite:/src -v <your-harmony-git>/servers/dendrite/logs/test:/logs matrixdotorg/sytest-dendrite
-
-cd <your-harmony-git>/servers/dendrite/logs/test
-../../show-expected-fail-tests.sh results.tap ../../sytest-whitelist ../../sytest-blacklist
 ```
 
 If you are running the tests from dendrite main:
