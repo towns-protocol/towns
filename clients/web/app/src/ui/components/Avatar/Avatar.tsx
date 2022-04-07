@@ -28,8 +28,7 @@ export const Avatar = (props: Props) => {
       className={clsx(
         avatarToggleClasses({ nft, stacked, border, circle }),
         avatarAtoms({
-          size,
-          height,
+          size: size ?? height,
         }),
         avatarBaseStyle
       )}
