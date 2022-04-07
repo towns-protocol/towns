@@ -12,7 +12,7 @@ export const HighlightCard = ({ colSpan: span = 1, ...boxProps }: Props) => (
     <BackgroundImage src="placeholders/frame_1.png" gradient="dark" />
     <Box absoluteFill padding>
       <Box grow>
-        <Avatar border size="md" borderRadius="full" shape="circle" />
+        <Avatar border circle size="md" />
       </Box>
       <Box gap="xxs">
         <Paragraph color="inverted" size="sm">

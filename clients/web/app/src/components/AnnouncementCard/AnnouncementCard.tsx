@@ -21,7 +21,7 @@ export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
         https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds...
       </Paragraph>
       <Box direction="row" gap="xs" alignItems="center">
-        <Avatar size="sm" shape="circle" />
+        <Avatar circle size="sm" />
         <Paragraph color="muted">meocat</Paragraph>
       </Box>
     </Box>
