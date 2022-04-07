@@ -69,17 +69,21 @@ Then point your favourite Matrix client at <http://localhost:8008> or <https://l
 docker pull matrixdotorg/sytest-dendrite
 ```
 
-### Build tests
+### Run Go tests
 
 ```bash
-# To execute the Buildkite tests, first run
 cd <your-harmony-git>/servers/dendrite
-./build/scripts/build-test-lint.sh
+# Check that building the dendrite server is successful
+./build.sh
 
-# this script will build the code, lint it, and run go test
+go test -v ./...
 ```
 
-### Run tests
+### Run specific Go test in VSCode
+
+See servers/dendrite/.vscode/launch.json
+
+### Run sytests
 
 If you are running the tests from Harmony repo:
 

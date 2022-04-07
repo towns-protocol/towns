@@ -94,7 +94,7 @@ export function useMatrixWalletSignIn() {
       const signature = await sign(messageToSign, walletAddress);
 
       if (signature) {
-        console.log(`[signMessage] signing succeeded`, {
+        console.log(`[signMessage] succeeded`, {
           signature,
           walletAddress,
           messageToSign,
@@ -124,7 +124,7 @@ export function useMatrixWalletSignIn() {
             walletAddress
           );
           // Not available means the id is registered
-          const isRegistered = isAvailable == false;
+          const isRegistered = isAvailable === false;
           console.log(`[getWalletIdRegistered] ${isRegistered}`);
           return isRegistered;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
