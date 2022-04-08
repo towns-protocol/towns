@@ -14,12 +14,12 @@ export const Spaces = () => {
   return (
     <Box grow direction="row">
       <NavContainer>
-        <MainAction icon="back" id="" label="Back" />
+        <MainAction icon="back" link="/" id="" label="Back" />
         {space && (
           <SpaceNavItem id={space.id} avatar={space.avatar} name={space.name} />
         )}
-        <MainAction icon="threads" id="" label="Threads" />
-        <MainAction icon="at" id="" label="Mentions" />
+        <MainAction icon="threads" link="" id="" label="Threads" />
+        <MainAction icon="at" id="" link="" label="Mentions" />
       </NavContainer>
       <Box grow="x9" />
     </Box>

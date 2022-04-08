@@ -6,9 +6,9 @@ import { atoms } from "ui/styles/atoms/atoms.css";
 import { NavItem } from "./NavItem/NavItem";
 
 const navItems = [
-  { id: "", icon: "home", label: "Home" },
-  { id: "messages", icon: "message", label: "Messages" },
-  { id: "new", icon: "plus", label: "New Space" },
+  { id: "home", link: "/", icon: "home", label: "Home" },
+  { id: "messages", link: "/messages", icon: "message", label: "Messages" },
+  { id: "spaces/new", link: "", icon: "plus", label: "New Space" },
 ] as const;
 
 export const MainActions = () => {
@@ -24,20 +24,13 @@ export const MainActions = () => {
 export const MainAction = (props: {
   id: string;
   label: string;
+  link: string | undefined;
   icon: IconName;
 }) => {
   const resolved = useResolvedPath(`/${props.id}`);
   const match = useMatch({ path: resolved.pathname, end: true });
   return (
-    <NavLink
-      key={props.id}
-      to={`/${props.id}`}
-      className={({ isActive }) =>
-        isActive
-          ? atoms({ background: "accent", color: "onSemantic" })
-          : atoms({})
-      }
-    >
+    <ConditionalLink link={props.link} key={props.id}>
       <NavItem>
         <Icon
           type={props.icon}
@@ -46,6 +39,27 @@ export const MainAction = (props: {
         />
         <Paragraph display={{ tablet: "none" }}>{props.label}</Paragraph>
       </NavItem>
-    </NavLink>
+    </ConditionalLink>
   );
 };
+
+type ConditionalLinkProps = {
+  children: JSX.Element;
+  link?: string;
+};
+
+const ConditionalLink = ({ children, link }: ConditionalLinkProps) =>
+  !link ? (
+    children
+  ) : (
+    <NavLink
+      to={link ? link : ""}
+      className={({ isActive }) =>
+        isActive
+          ? atoms({ background: "accent", color: "onSemantic" })
+          : atoms({})
+      }
+    >
+      {children}
+    </NavLink>
+  );
