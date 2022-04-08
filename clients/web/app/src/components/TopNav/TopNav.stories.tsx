@@ -1,5 +1,6 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
+import { MemoryRouter, Route } from "react-router";
 import { TopBar } from "./TopNav";
 
 export default {
@@ -13,7 +14,11 @@ export default {
   },
 } as ComponentMeta<typeof TopBar>;
 
-const Template: ComponentStory<typeof TopBar> = () => <TopBar />;
+const Template: ComponentStory<typeof TopBar> = () => (
+  <MemoryRouter>
+    <TopBar />
+  </MemoryRouter>
+);
 
 export const TopBarStory = Template.bind({});
 TopBarStory.storyName = "TopBar";
