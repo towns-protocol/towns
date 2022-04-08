@@ -1,11 +1,11 @@
 import React from "react";
-import { MainActions } from "@components/MainActions";
+import { MainNavActions } from "@components/MainNavActions/MainNavActions";
 import { SpaceNavMock } from "@components/SpaceNavItem/SpaceNavItem";
 import { Box } from "@ui";
 
 export const MainNav = () => (
   <NavContainer>
-    <MainActions />
+    <MainNavActions />
     <SpaceNavMock />
   </NavContainer>
 );

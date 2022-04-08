@@ -25,6 +25,7 @@ export const iconProperties = defineProperties({
       lg: {
         width: vars.dims.icons.lg,
         height: vars.dims.icons.lg,
+        padding: vars.space.xs,
       },
       xl: {
         width: vars.dims.icons.xl,

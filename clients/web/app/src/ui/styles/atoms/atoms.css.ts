@@ -69,9 +69,9 @@ const responsiveAtomicProperties = defineProperties({
 
     // size
     aspectRatio: aspectRatio,
-    height: vars.dims.rows,
-    minHeight: vars.dims.rows,
-    maxHeight: vars.dims.rows,
+    height: { ...vars.dims.rows, ...vars.dims.screens },
+    minHeight: { ...vars.dims.rows, ...vars.dims.screens },
+    maxHeight: { ...vars.dims.rows, ...vars.dims.screens },
     width: { ...vars.dims.rows, ...vars.dims.screens },
     minWidth: { ...vars.dims.rows, ...vars.dims.screens },
     maxWidth: { ...vars.dims.rows, ...vars.dims.screens },
@@ -82,12 +82,19 @@ const responsiveAtomicProperties = defineProperties({
     paddingTop: vars.space,
     paddingBottom: vars.space,
 
+    // padding
+    negativeMargin: vars.negativeSpace,
+
     // border
     borderLeft: border,
     borderRight: border,
     borderTop: border,
     borderBottom: border,
     borderRadius: vars.borderRadius,
+    borderTopLeftRadius: vars.borderRadius,
+    borderTopRightRadius: vars.borderRadius,
+    borderBottomLeftRadius: vars.borderRadius,
+    borderBottomRightRadius: vars.borderRadius,
 
     // flex
     flexDirection: flexDirection,
@@ -96,6 +103,7 @@ const responsiveAtomicProperties = defineProperties({
     flexGrow: flexGrow,
     flexShrink: flexGrow,
     flexBasis: { ...vars.dims.rows, ...vars.dims.screens },
+    alignContent: { ...flexAlignment, baseline: "baseline" },
     alignItems: { ...flexAlignment, baseline: "baseline" },
     alignSelf: { ...flexAlignment, baseline: "baseline" },
     justifyContent: flexJustifyAlignment,
@@ -110,6 +118,16 @@ const responsiveAtomicProperties = defineProperties({
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
     square: ["width", "height"],
     border: ["borderLeft", "borderRight", "borderTop", "borderBottom"],
+    rounded: [
+      "borderTopLeftRadius",
+      "borderTopRightRadius",
+      "borderBottomLeftRadius",
+      "borderBottomRightRadius",
+    ],
+    roundedTop: ["borderTopLeftRadius", "borderTopRightRadius"],
+    roundedBottom: ["borderBottomLeftRadius", "borderBottomRightRadius"],
+    roundedRight: ["borderTopRightRadius", "borderBottomRightRadius"],
+    roundedLeft: ["borderTopLeftRadius", "borderBottomLeftRadius"],
   },
 });
 

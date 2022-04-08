@@ -1,4 +1,5 @@
 import { globalStyle } from "@vanilla-extract/css";
+import { vars } from "../vars.css";
 
 globalStyle("html, body", {
   minHeight: "100vh",
@@ -6,6 +7,7 @@ globalStyle("html, body", {
   textRendering: "optimizeLegibility",
   WebkitFontSmoothing: "antialiased",
   MozOsxFontSmoothing: "gray1scale",
+  fontSize: vars.fontSize.lg,
 });
 
 globalStyle("*", {
@@ -28,15 +30,19 @@ globalStyle("table", {
   borderSpacing: 0,
 });
 
-globalStyle("body, p, button", {
-  fontSize: "13px",
+globalStyle("body, button", {
+  fontSize: vars.fontSize.lg,
   lineHeight: "100%",
 });
 
 globalStyle("p", {
-  fontSize: "13px",
+  fontSize: vars.fontSize.lg,
   lineHeight: "100%",
   margin: "0 0",
+});
+
+globalStyle("p + p", {
+  margin: "1em 0 0 0",
 });
 
 globalStyle("a", {

@@ -23,6 +23,11 @@ export const avatarSizes = {
     height: vars.dims.icons.xl,
     borderRadius: vars.borderRadius.md,
   },
+  xxl: {
+    width: vars.dims.icons.xxl,
+    height: vars.dims.icons.xxl,
+    borderRadius: vars.borderRadius.md,
+  },
 } as const;
 
 export const avatarProperties = defineProperties({

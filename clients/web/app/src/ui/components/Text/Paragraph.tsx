@@ -8,11 +8,9 @@ type ParagraphProps = {
   className?: string;
   children?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
-  display?: BoxProps["display"];
   singleLine?: boolean;
-  grow?: BoxProps["grow"];
-  shrink?: BoxProps["shrink"];
-} & Omit<TextSprinkles, "size" | "fontSize">;
+} & Omit<TextSprinkles, "size" | "fontSize"> &
+  Pick<BoxProps, "grow" | "shrink" | "display">;
 
 export const Paragraph = forwardRef<HTMLElement, ParagraphProps>(
   (props, ref) => {

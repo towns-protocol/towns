@@ -31,6 +31,30 @@ const root = createGlobalTheme(":root", {
     xl: `${baseline * 16}px`,
   } as const,
 
+  negativeSpace: {
+    none: {
+      margin: "0",
+    },
+    xxs: {
+      margin: `${baseline * -0.5}px`,
+    },
+    xs: {
+      margin: `${baseline * -1}px`,
+    },
+    sm: {
+      margin: `${baseline * -2}px`,
+    },
+    md: {
+      margin: `${baseline * -4}px`,
+    },
+    lg: {
+      margin: `${baseline * -8}px`,
+    },
+    xl: {
+      margin: `${baseline * -16}px`,
+    },
+  } as const,
+
   dims: {
     icons: {
       xxs: `${baseline * 1.5}px`,
@@ -41,9 +65,9 @@ const root = createGlobalTheme(":root", {
       // default icon
       md: `${baseline * 3}px`,
       // default icon
-      lg: `${baseline * 4}px`,
+      lg: `${baseline * 4.5}px`,
       // big icons
-      xl: `${baseline * 7}px`,
+      xl: `${baseline * 6.5}px`,
       // hero avatar
       xxl: `${baseline * 12.5}px`,
 
@@ -69,6 +93,11 @@ const root = createGlobalTheme(":root", {
       "25vw": `25vw`,
       "50vw": `50vw`,
       "75vw": `75vw`,
+      "10vh": `10vh`,
+      "25vh": `25vh`,
+      "50vh": `50vh`,
+      "75vh": `75vh`,
+      "100%": `100%`,
       "100": `100px`,
       "200": `200px`,
       "300": `300px`,

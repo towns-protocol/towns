@@ -77,6 +77,19 @@ export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
+export const DownIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M18.4498 8.20708C18.8403 8.5976 18.8403 9.23077 18.4498 9.62129L12.6214 15.4497C12.2308 15.8402 11.5977 15.8402 11.2071 15.4497L5.37872 9.62129C4.98819 9.23077 4.98819 8.5976 5.37872 8.20708C5.76924 7.81655 6.40241 7.81655 6.79293 8.20708L11.9142 13.3284L17.0356 8.20708C17.4261 7.81655 18.0593 7.81655 18.4498 8.20708Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+
 export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg
@@ -241,6 +254,7 @@ const iconMap = {
   back: BackIcon,
   bell: BellIcon,
   check: CheckIcon,
+  down: DownIcon,
   home: HomeIcon,
   message: MessageIcon,
   newmessage: NewMessageIcon,

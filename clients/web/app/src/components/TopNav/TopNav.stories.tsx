@@ -1,6 +1,6 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
-import { MemoryRouter, Route } from "react-router";
+import { MemoryRouter } from "react-router";
 import { TopBar } from "./TopNav";
 
 export default {

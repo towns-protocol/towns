@@ -3,6 +3,7 @@ import { AvatarStack } from "@components/AvatarStack";
 import { MainNav, NavContainer } from "@components/MainNav/MainNav";
 import { MessageList } from "@components/MessageList";
 import { Avatar, Box, Heading, Icon, Paragraph } from "@ui";
+import { ChatMessage } from "@components/ChatMessage/ChatMessage";
 
 export const Messages = () => (
   <>
@@ -74,28 +75,4 @@ export const Messages = () => (
       </Box>
     </Box>
   </>
-);
-
-const ChatMessage = (props: {
-  avatar: React.ReactNode;
-  name: string;
-  date: string;
-  children: React.ReactText;
-}) => (
-  <Box direction="row" gap="xs">
-    {props.avatar}
-    <Box gap="xxs">
-      <Box direction="row" gap="xxs" alignItems="baseline">
-        <Paragraph size="lg" color="gray1">
-          {props.name}
-        </Paragraph>
-        <Paragraph size="sm" color="gray2">
-          {props.date}
-        </Paragraph>
-      </Box>
-      <Box>
-        <Paragraph size="md">{props.children}</Paragraph>
-      </Box>
-    </Box>
-  </Box>
 );

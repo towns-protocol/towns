@@ -1,9 +1,9 @@
-import React from "react";
+import React, { ComponentProps } from "react";
 import { NavLink, useMatch, useResolvedPath } from "react-router-dom";
 import { Paragraph } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
 import { atoms } from "ui/styles/atoms/atoms.css";
-import { NavItem } from "./NavItem/NavItem";
+import { NavItem } from "../NavItem/NavItem";
 
 const navItems = [
   { id: "home", link: "/", icon: "home", label: "Home" },
@@ -11,7 +11,7 @@ const navItems = [
   { id: "spaces/new", link: "", icon: "plus", label: "New Space" },
 ] as const;
 
-export const MainActions = () => {
+export const MainNavActions = () => {
   return (
     <>
       {navItems.map((n) => {
@@ -30,7 +30,13 @@ export const MainAction = (props: {
   const resolved = useResolvedPath(`/${props.id}`);
   const match = useMatch({ path: resolved.pathname, end: true });
   return (
-    <ConditionalLink link={props.link} key={props.id}>
+    <ConditionalNavLink
+      to={props.link}
+      key={props.id}
+      className={({ isActive }) =>
+        isActive ? atoms({ background: "accent", color: "onTone" }) : atoms({})
+      }
+    >
       <NavItem>
         <Icon
           type={props.icon}
@@ -39,25 +45,23 @@ export const MainAction = (props: {
         />
         <Paragraph display={{ tablet: "none" }}>{props.label}</Paragraph>
       </NavItem>
-    </ConditionalLink>
+    </ConditionalNavLink>
   );
 };
 
-type ConditionalLinkProps = {
+/** allows `to` prop to be undefined returning children */
+const ConditionalNavLink = ({
+  children,
+  to,
+  ...props
+}: Omit<ComponentProps<typeof NavLink>, "to" | "children"> & {
+  to?: string;
   children: JSX.Element;
-  link?: string;
-};
-
-const ConditionalLink = ({ children, link }: ConditionalLinkProps) =>
-  !link ? (
+}) =>
+  !to ? (
     children
   ) : (
-    <NavLink
-      to={link ? link : ""}
-      className={({ isActive }) =>
-        isActive ? atoms({ background: "accent", color: "onTone" }) : atoms({})
-      }
-    >
+    <NavLink to={to ? to : ""} {...props}>
       {children}
     </NavLink>
   );
