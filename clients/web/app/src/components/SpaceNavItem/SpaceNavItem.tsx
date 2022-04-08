@@ -78,9 +78,7 @@ export const SpaceNavItem = ({
   <NavLink
     to={`/spaces/${id}`}
     className={({ isActive }) =>
-      isActive
-        ? atoms({ background: "accent", color: "onSemantic" })
-        : atoms({})
+      isActive ? atoms({ background: "accent", color: "onTone" }) : atoms({})
     }
   >
     <NavItem>

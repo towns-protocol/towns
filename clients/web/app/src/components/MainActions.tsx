@@ -55,9 +55,7 @@ const ConditionalLink = ({ children, link }: ConditionalLinkProps) =>
     <NavLink
       to={link ? link : ""}
       className={({ isActive }) =>
-        isActive
-          ? atoms({ background: "accent", color: "onSemantic" })
-          : atoms({})
+        isActive ? atoms({ background: "accent", color: "onTone" }) : atoms({})
       }
     >
       {children}

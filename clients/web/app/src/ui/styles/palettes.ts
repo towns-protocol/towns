@@ -14,14 +14,15 @@ const FigmaPalette = {
   Eth: "#18A0FB",
 } as const;
 
+const tone = {
+  critical: "#e71a16",
+  warning: "#e78216",
+  positive: FigmaPalette.Green,
+  neutral: FigmaPalette.MedGrey,
+  accent: FigmaPalette.Blue,
+} as const;
+
 const light = (() => {
-  const semantic = {
-    neutral: FigmaPalette.MedGrey,
-    accent: FigmaPalette.Blue,
-    positive: "green",
-    critical: "red",
-    warning: "orange",
-  } as const;
   const layer = {
     none: "none",
     default: FigmaPalette.White,
@@ -39,32 +40,25 @@ const light = (() => {
     accent: FigmaPalette.Blue,
     secondary: FigmaPalette.Green,
     inverted: FigmaPalette.White,
-    onSemantic: FigmaPalette.White,
+    onTone: FigmaPalette.White,
   };
 
   return {
-    semantic,
+    tone,
     layer,
     text,
     foreground: {
       ...text,
-      ...semantic,
+      ...tone,
     } as const,
     background: {
       ...layer,
-      ...semantic,
+      ...tone,
     } as const,
   } as const;
 })();
 
 const dark = (() => {
-  const semantic = {
-    critical: "red",
-    warning: "orange",
-    positive: "green",
-    neutral: FigmaPalette.MedGrey,
-    accent: FigmaPalette.Blue,
-  } as const;
   const layer = {
     none: "none",
     default: FigmaPalette.Black,
@@ -82,19 +76,19 @@ const dark = (() => {
     accent: FigmaPalette.Blue,
     secondary: FigmaPalette.Green,
     inverted: FigmaPalette.Black,
-    onSemantic: FigmaPalette.White,
+    onTone: FigmaPalette.White,
   } as const;
   return {
-    semantic,
+    tone,
     layer,
     text,
     foreground: {
       ...text,
-      ...semantic,
+      ...tone,
     } as const,
     background: {
       ...layer,
-      ...semantic,
+      ...tone,
     } as const,
   } as const;
 })();

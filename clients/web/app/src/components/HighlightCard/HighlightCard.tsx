@@ -15,10 +15,10 @@ export const HighlightCard = ({ colSpan: span = 1, ...boxProps }: Props) => (
         <Avatar border circle size="md" />
       </Box>
       <Box gap="xxs">
-        <Paragraph color="onSemantic" size="sm">
+        <Paragraph color="onTone" size="sm">
           RTFKT #announcements
         </Paragraph>
-        <Paragraph color="onSemantic" fontWeight="strong">
+        <Paragraph color="onTone" fontWeight="strong">
           Hey @everyone, Quest #3 Completed :⚔️ MNLTH has EVOLVED AND WHATTTTTT
           ? 1 Quest left ❌❌❌🗿Final ...
         </Paragraph>

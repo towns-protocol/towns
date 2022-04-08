@@ -7,7 +7,7 @@ import { ButtonStyleVariants, buttonStyle } from "./Button.css";
 type StyleProps = Omit<NonNullable<ButtonStyleVariants>, "active">;
 type Props = {
   children: React.ReactNode;
-  variant?: keyof typeof vars.color.semantic;
+  variant?: keyof typeof vars.color.tone;
   icon?: IconName;
 } & StyleProps;
 
@@ -19,7 +19,7 @@ export const Button = ({ size, variant, icon, children }: Props) => (
     justifyContent="center"
     alignItems="center"
     background={variant ?? "neutral"}
-    color="onSemantic"
+    color="onTone"
   >
     {icon && <Icon type={icon} size="adapt" />}
     {children}

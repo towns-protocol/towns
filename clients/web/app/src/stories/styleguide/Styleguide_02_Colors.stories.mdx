@@ -29,7 +29,7 @@ import { Row } from "../StoryUtils";
       backgroundVariant={
         c.match(/inverted/i)
           ? "inverted"
-          : c.match(/onSemantic/)
+          : c.match(/onTone/)
           ? "accent"
           : undefined
       }
@@ -42,10 +42,10 @@ import { Row } from "../StoryUtils";
   ))}
 </Box>
 
-## Semantics (placeholders ⚠️)
+## Tones (placeholders ⚠️)
 
 <Box>
-  {Object.keys(vars.color.semantic).map((c) => (
+  {Object.keys(vars.color.tone).map((c) => (
     <Row key={c} label={c} invert={c.match(/overlay/)}>
       <Box padding background={c}>
         <Paragraph>Default text color</Paragraph>

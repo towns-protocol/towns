@@ -27,7 +27,7 @@ export const Row = ({
   label: string;
   columns?: number;
   backgroundVariant?: "inverted" | "accent";
-  semantic?: boolean;
+  tone?: boolean;
   children?: React.ReactNode;
 } & BoxProps) => (
   <Grid borderBottom direction="row" paddingY="sm" columns={columns ?? 2}>

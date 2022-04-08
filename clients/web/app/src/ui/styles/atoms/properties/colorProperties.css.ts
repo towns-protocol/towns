@@ -36,23 +36,23 @@ export const colorAtomicProperties = defineProperties({
       },
       critical: {
         background: vars.color.background.critical,
-        color: vars.color.text.onSemantic,
+        color: vars.color.text.onTone,
       },
       warning: {
         background: vars.color.background.warning,
-        color: vars.color.text.onSemantic,
+        color: vars.color.text.onTone,
       },
       positive: {
         background: vars.color.background.positive,
-        color: vars.color.text.onSemantic,
+        color: vars.color.text.onTone,
       },
       neutral: {
         background: vars.color.background.neutral,
-        color: vars.color.text.onSemantic,
+        color: vars.color.text.onTone,
       },
       accent: {
         background: vars.color.background.accent,
-        color: vars.color.text.onSemantic,
+        color: vars.color.text.onTone,
       },
     },
     color: vars.color.text,
