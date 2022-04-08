@@ -5,7 +5,7 @@ globalStyle("html, body", {
   fontFamily: "Nunito, sans-serif",
   textRendering: "optimizeLegibility",
   WebkitFontSmoothing: "antialiased",
-  MozOsxFontSmoothing: "grayscale",
+  MozOsxFontSmoothing: "gray1scale",
 });
 
 globalStyle("*", {

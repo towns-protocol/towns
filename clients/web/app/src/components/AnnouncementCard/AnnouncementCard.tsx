@@ -13,16 +13,16 @@ export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
       <BackgroundImage src="placeholders/frame_2.png" gradient="dark" />
     </Box>
     <Box grow gap="sm" background="default" padding="xs">
-      <Paragraph color="muted1" fontWeight="strong">
+      <Paragraph color="gray2" fontWeight="strong">
         Azuki #announcement
       </Paragraph>
-      <Paragraph color="muted">
+      <Paragraph color="gray1">
         Oh shit we’re in Forbes!!
         https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds...
       </Paragraph>
       <Box direction="row" gap="xs" alignItems="center">
         <Avatar circle size="sm" />
-        <Paragraph color="muted">meocat</Paragraph>
+        <Paragraph color="gray1">meocat</Paragraph>
       </Box>
     </Box>
   </Card>

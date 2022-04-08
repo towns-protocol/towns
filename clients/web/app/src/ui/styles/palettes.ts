@@ -34,8 +34,8 @@ const light = (() => {
   } as const;
   const text = {
     default: FigmaPalette.XDarkGrey,
-    muted: FigmaPalette.MedGrey,
-    muted1: FigmaPalette.MedGrey,
+    gray1: FigmaPalette.MedGrey,
+    gray2: FigmaPalette.Grey,
     accent: FigmaPalette.Blue,
     secondary: FigmaPalette.Green,
     inverted: FigmaPalette.White,
@@ -77,8 +77,8 @@ const dark = (() => {
   } as const;
   const text = {
     default: FigmaPalette.White,
-    muted: FigmaPalette.XLightGrey,
-    muted1: "#BAC4D7",
+    gray1: FigmaPalette.XLightGrey,
+    gray2: "#BAC4D7",
     accent: FigmaPalette.Blue,
     secondary: FigmaPalette.Green,
     inverted: FigmaPalette.Black,

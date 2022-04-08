@@ -17,11 +17,11 @@ export const colorAtomicProperties = defineProperties({
       },
       level1: {
         background: vars.color.background.level1,
-        color: vars.color.text.muted,
+        color: vars.color.text.gray1,
       },
       level2: {
         background: vars.color.background.level2,
-        color: vars.color.text.muted,
+        color: vars.color.text.gray1,
       },
       level3: {
         background: vars.color.background.level3,

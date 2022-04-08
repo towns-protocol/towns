@@ -13,7 +13,7 @@ export const MessageList = () => {
         alignItems="center"
       >
         <Box grow>
-          <Paragraph size="md" color="muted1">
+          <Paragraph size="md" color="gray2">
             Messages
           </Paragraph>
         </Box>
@@ -43,17 +43,17 @@ const Message = ({
     <Avatar nft src="doodles.jpeg" size="lg" />
     <Box grow gap="xxs">
       <Paragraph
-        color={active ? "default" : "muted"}
+        color={active ? "default" : "gray1"}
         fontWeight={active ? "strong" : "normal"}
       >
         Outer Space
       </Paragraph>
-      <Paragraph size="md" color="muted1">
+      <Paragraph size="md" color="gray2">
         Lomo
       </Paragraph>
     </Box>
     <Box centerContent shrink>
-      <Paragraph color="muted1">1m</Paragraph>
+      <Paragraph color="gray2">1m</Paragraph>
     </Box>
   </Box>
 );

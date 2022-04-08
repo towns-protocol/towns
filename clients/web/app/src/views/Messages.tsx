@@ -21,7 +21,7 @@ export const Messages = () => (
           alignItems="center"
         >
           <Avatar nft src="/placeholders/nft_4.png" />
-          <Paragraph size="lg" color="muted">
+          <Paragraph size="lg" color="gray1">
             iamblue
           </Paragraph>
         </Box>
@@ -35,14 +35,14 @@ export const Messages = () => (
                 50
               </Paragraph>
               <Icon type="token" />
-              <Paragraph size="lg" color="muted1">
+              <Paragraph size="lg" color="gray2">
                 &#8226; 3 Servers in common
               </Paragraph>
 
               <AvatarStack />
             </Box>
 
-            <Paragraph size="sm" color="muted1">
+            <Paragraph size="sm" color="gray2">
               This is the beginning of your direct messa with iamblue
             </Paragraph>
           </Box>
@@ -86,10 +86,10 @@ const ChatMessage = (props: {
     {props.avatar}
     <Box gap="xxs">
       <Box direction="row" gap="xxs" alignItems="baseline">
-        <Paragraph size="lg" color="muted">
+        <Paragraph size="lg" color="gray1">
           {props.name}
         </Paragraph>
-        <Paragraph size="sm" color="muted1">
+        <Paragraph size="sm" color="gray2">
           {props.date}
         </Paragraph>
       </Box>
