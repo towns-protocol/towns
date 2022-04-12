@@ -2,6 +2,24 @@
 
 This project project contains the contracts and associate test cases for the Harmony service.
 
+This project uses both hardhat and foundry.
+
+Hardhat is installed via yarn install.
+
+Foundry is installed using
+
+```shell
+brew install libusb
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+Foundry is updated using
+
+```shell
+foundryup
+```
+
 Try running some of the following tasks:
 
 ```shell

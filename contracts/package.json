@@ -10,7 +10,10 @@
     "coverage": "hardhat coverage --solcoverjs .solcover.js",
     "deploy": "hardhat run scripts/deploy.ts",
     "integration": "hardhat test",
-    "verify": "hardhat verify"
+    "verify": "hardhat verify",
+    "forge": "forge",
+    "test":"forge test"
+
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
