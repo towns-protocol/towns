@@ -1,4 +1,5 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 import { Avatar, Box, Icon, Paragraph } from "@ui";
 
 export const MessageList = () => {
@@ -13,12 +14,12 @@ export const MessageList = () => {
         alignItems="center"
       >
         <Box grow>
-          <Paragraph size="md" color="gray2">
-            Messages
-          </Paragraph>
+          <Paragraph>Messages</Paragraph>
         </Box>
         <Box>
-          <Icon type="newmessage" background="accent" />
+          <NavLink to="/messages/new">
+            <Icon type="newmessage" background="accent" />
+          </NavLink>
         </Box>
       </Box>
       <Box paddingY="xs">
@@ -39,21 +40,23 @@ const Message = ({
   active?: boolean;
   selected?: boolean;
 }) => (
-  <Box direction="row" paddingX="sm" paddingY="xs" gap="xs">
-    <Avatar nft src="doodles.jpeg" size="lg" />
-    <Box grow gap="xxs">
-      <Paragraph
-        color={active ? "default" : "gray1"}
-        fontWeight={active ? "strong" : "normal"}
-      >
-        Outer Space
-      </Paragraph>
-      <Paragraph size="md" color="gray2">
-        Lomo
-      </Paragraph>
+  <NavLink to="iamblue">
+    <Box direction="row" paddingX="sm" paddingY="xs" gap="xs">
+      <Avatar nft src="/placeholders/nft_2.png" size="lg" insetY="xxs" />
+      <Box grow gap="xxs">
+        <Paragraph
+          color={active ? "default" : "gray1"}
+          fontWeight={active ? "strong" : "normal"}
+        >
+          Outer Space
+        </Paragraph>
+        <Paragraph size="md" color="gray2">
+          Lomo
+        </Paragraph>
+      </Box>
+      <Box centerContent shrink>
+        <Paragraph color="gray2">1m</Paragraph>
+      </Box>
     </Box>
-    <Box centerContent shrink>
-      <Paragraph color="gray2">1m</Paragraph>
-    </Box>
-  </Box>
+  </NavLink>
 );

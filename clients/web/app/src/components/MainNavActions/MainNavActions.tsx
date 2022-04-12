@@ -7,7 +7,12 @@ import { NavItem } from "../NavItem/NavItem";
 
 const navItems = [
   { id: "home", link: "/", icon: "home", label: "Home" },
-  { id: "messages", link: "/messages", icon: "message", label: "Messages" },
+  {
+    id: "messages",
+    link: "/messages/latest",
+    icon: "message",
+    label: "Messages",
+  },
   { id: "spaces/new", link: "", icon: "plus", label: "New Space" },
 ] as const;
 
@@ -15,7 +20,7 @@ export const MainNavActions = () => {
   return (
     <>
       {navItems.map((n) => {
-        return <MainAction {...n} />;
+        return <MainAction key={n.id} {...n} />;
       })}
     </>
   );
@@ -27,15 +32,16 @@ export const MainAction = (props: {
   link: string | undefined;
   icon: IconName;
 }) => {
-  const resolved = useResolvedPath(`/${props.id}`);
-  const match = useMatch({ path: resolved.pathname, end: true });
+  const resolved = useResolvedPath(`/${props.link === "/" ? "" : props.id}`);
+  const match = useMatch({
+    path: resolved.pathname || "/",
+    end: props.link === "/",
+  });
   return (
     <ConditionalNavLink
       to={props.link}
       key={props.id}
-      className={({ isActive }) =>
-        isActive ? atoms({ background: "accent", color: "onTone" }) : atoms({})
-      }
+      className={match ? atoms({ background: "accent", color: "onTone" }) : ""}
     >
       <NavItem>
         <Icon

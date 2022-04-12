@@ -7,4 +7,5 @@ export { Input } from "./Input/Input";
 export { Heading } from "./Text/Heading";
 export { Paragraph } from "./Text/Paragraph";
 export { Text } from "./Text/Text";
+export { Separator } from "./Separator/Separator";
 export * from "./Button/Button";

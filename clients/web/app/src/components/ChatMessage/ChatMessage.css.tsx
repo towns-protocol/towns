@@ -1,9 +1,7 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 import { vars } from "ui/styles/vars.css";
 
-export const MessageBody = style({
-  lineHeight: "1.4em",
-});
+export const MessageBody = style({});
 
 globalStyle(`${MessageBody} p`, {
   lineHeight: "1.2em",
@@ -11,6 +9,10 @@ globalStyle(`${MessageBody} p`, {
 
 globalStyle(`${MessageBody} p + p`, {
   marginTop: "1em",
+});
+
+globalStyle(`${MessageBody} a`, {
+  color: vars.color.foreground.accent,
 });
 
 globalStyle(`${MessageBody} strong`, {

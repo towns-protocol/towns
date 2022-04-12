@@ -22,8 +22,13 @@ export const TopBar = (props: { onClick?: () => void }) => {
       </Link>
       <Box grow />
       <SearchInput />
-      <Icon size="md" type="bell" background="level2" />
-      <Avatar nft size="md" src="/ape.webp" onClick={props.onClick} />
+      <Icon size="lg" type="bell" />
+      <Avatar
+        nft
+        size="lg"
+        src="/placeholders/nft_1.png"
+        onClick={props.onClick}
+      />
     </Box>
   );
 };

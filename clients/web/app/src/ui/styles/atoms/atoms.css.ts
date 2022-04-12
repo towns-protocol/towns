@@ -1,65 +1,21 @@
+import { globalStyle, style } from "@vanilla-extract/css";
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
 import { responsivePropertiesMixin } from "../breakpoints";
+import { debugClass } from "../css/debug.css";
 import "../css/globals.css";
 import { vars } from "../vars.css";
 import { blockProperties } from "./properties/blockProperties.css";
+import {
+  aspectRatio,
+  border,
+  flexAlignment,
+  flexDirection,
+  flexGrow,
+  flexJustifyAlignment,
+} from "./properties/boxProperties.css";
 import { colorAtomicProperties } from "./properties/colorProperties.css";
 import { gridItemProperties } from "./properties/gridItemProperties.css";
 import { typeProperties } from "./properties/textProperties.css";
-
-const flexDirection = {
-  row: "row",
-  column: "column",
-} as const;
-
-const border = {
-  default: `1px solid ${vars.color.background.level3}`,
-  strong: `1px solid ${vars.color.text.default}`,
-  inverted: `1px solid ${vars.color.text.inverted}`,
-} as const;
-
-const aspectRatio = {
-  square: "1",
-  "1/1": "1",
-  "4/3": "4 / 3",
-  "3/4": "3 / 4",
-  "16/9": "16 / 9",
-  "9/16": "9 / 16",
-  "2/1": "2 / 1",
-  "1/2": "1 / 2",
-  "3/1": "3 / 1",
-  "1/3": "1 / 3",
-};
-
-export const flexAlignment = {
-  start: "flex-start",
-  center: "center",
-  end: "flex-end",
-  stretch: "stretch",
-} as const;
-
-export const flexJustifyAlignment = {
-  ...flexAlignment,
-  spaceAround: "space-around",
-  spaceBetween: "space-between",
-} as const;
-
-export const boxShadow = {
-  card: `0 0 40px #191B222`,
-};
-
-const flexGrow = {
-  x0: 0,
-  x1: 1,
-  x2: 2,
-  x3: 3,
-  x4: 4,
-  x5: 5,
-  x6: 6,
-  x7: 7,
-  x8: 8,
-  x9: 9,
-} as const;
 
 const responsiveAtomicProperties = defineProperties({
   ...responsivePropertiesMixin,
@@ -83,7 +39,8 @@ const responsiveAtomicProperties = defineProperties({
     paddingBottom: vars.space,
 
     // padding
-    negativeMargin: vars.negativeSpace,
+    insetX: vars.insetX,
+    insetY: vars.insetY,
 
     // border
     borderLeft: border,
@@ -113,6 +70,7 @@ const responsiveAtomicProperties = defineProperties({
   shorthands: {
     basis: ["flexBasis"],
     direction: ["flexDirection"],
+    inset: ["insetX", "insetY"],
     paddingX: ["paddingLeft", "paddingRight"],
     paddingY: ["paddingTop", "paddingBottom"],
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
@@ -140,6 +98,12 @@ export const atoms = createSprinkles(
 );
 
 export type Atoms = Parameters<typeof atoms>[0];
+
+export const boxStyleBase = style({}, "boxStyle");
+
+globalStyle(`${debugClass}, ${debugClass} ${boxStyleBase}`, {
+  boxShadow: "0 0 0 1px #09f7",
+});
 
 /* 
 

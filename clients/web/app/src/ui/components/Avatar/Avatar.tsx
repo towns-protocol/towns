@@ -11,6 +11,9 @@ import {
 type Props = {
   src?: string;
   onClick?: BoxProps["onClick"];
+  insetX?: BoxProps["insetX"];
+  insetY?: BoxProps["insetY"];
+  inset?: BoxProps["inset"];
 } & AvatarAtoms;
 
 export const Avatar = (props: Props) => {
@@ -20,8 +23,9 @@ export const Avatar = (props: Props) => {
     nft = false,
     circle = false,
     stacked = false,
+
     border,
-    src = "/ape.webp",
+    src = "/placeholders/nft_5.png",
     ...boxProps
   } = props;
   return (

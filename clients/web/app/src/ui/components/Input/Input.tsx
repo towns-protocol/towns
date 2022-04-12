@@ -1,11 +1,18 @@
 import React from "react";
-import { InputStyleVariants, inputStyle } from "./Input.css";
+import { Box, BoxProps } from "../Box/Box";
+import { inputContainerStyle, inputFieldStyle } from "./Input.css";
 
 type NativeInputProps = React.AllHTMLAttributes<HTMLInputElement>;
 
-type StyleProps = Omit<NonNullable<InputStyleVariants>, "active">;
+type StyleProps = { active?: boolean; size?: "sm" | "md" };
 
 type Props = {
+  before?: React.ReactNode;
+  after?: React.ReactNode;
+  grow?: BoxProps["grow"];
+  shrink?: BoxProps["shrink"];
+  padding?: BoxProps["padding"];
+  rounded?: BoxProps["rounded"];
   autoFocus?: NativeInputProps["autoFocus"];
   autoComplete?: NativeInputProps["autoComplete"];
   autoCorrect?: NativeInputProps["autoCorrect"];
@@ -27,6 +34,33 @@ type Props = {
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 } & StyleProps;
 
-export const Input = ({ size, ...inputProps }: Props) => {
-  return <input {...inputProps} className={inputStyle({ size })} />;
+export const Input = ({
+  before,
+  after,
+  size,
+  grow,
+  shrink,
+  padding,
+  rounded,
+  ...inputProps
+}: Props) => {
+  const boxProps = { grow, shrink, padding, rounded };
+  return (
+    <Box
+      className={inputContainerStyle}
+      {...boxProps}
+      direction="row"
+      justifyContent="spaceBetween"
+      alignItems="center"
+    >
+      {before}
+      <Box
+        as="input"
+        {...inputProps}
+        fontSize="md"
+        className={inputFieldStyle}
+      />
+      {after}
+    </Box>
+  );
 };

@@ -3,6 +3,11 @@ import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
 
 export const avatarSizes = {
+  xs: {
+    width: vars.dims.icons.xs,
+    height: vars.dims.icons.xs,
+    borderRadius: vars.borderRadius.xs,
+  },
   sm: {
     width: vars.dims.icons.sm,
     height: vars.dims.icons.sm,

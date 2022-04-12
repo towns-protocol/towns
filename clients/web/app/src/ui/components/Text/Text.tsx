@@ -1,7 +1,11 @@
 import React, { forwardRef } from "react";
-import clsx from "clsx";
 import { Box, BoxProps } from "@ui";
-import { TextSprinkles, singleLineStyle } from "./Text.css";
+import {
+  TextSprinkles,
+  singleLineStyle,
+  textBaseStyle,
+  truncateParentStyle,
+} from "./Text.css";
 
 type Props = {
   // HTML representation
@@ -13,8 +17,8 @@ type Props = {
 
   // Size token
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "xl24" | "xl32";
-  //
-  singleLine?: boolean;
+
+  truncate?: boolean;
 
   display?: BoxProps["display"];
 } & TextSprinkles;
@@ -25,10 +29,11 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
   const {
     as = "p",
     size = "md",
+    display = "block",
     fontWeight = "normal",
     textTransform = "none",
     textAlign = "left",
-    singleLine,
+    truncate,
     children,
     className,
     ...boxProps
@@ -39,12 +44,23 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
   return (
     <Box
       as={as}
-      className={clsx(className, singleLine && singleLineStyle)}
+      display={display}
+      className={[
+        truncate && truncateParentStyle,
+        textBaseStyle,
+        className,
+      ].join(" ")}
       {...textProps}
       {...boxProps}
       ref={ref}
     >
-      {children}
+      {truncate ? <Truncate>{children}</Truncate> : children}
     </Box>
   );
 });
+
+const Truncate = (props: { children?: React.ReactNode }) => (
+  <Box as="span" className={singleLineStyle}>
+    {props.children}
+  </Box>
+);

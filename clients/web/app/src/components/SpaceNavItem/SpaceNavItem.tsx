@@ -17,6 +17,7 @@ export const mockSpaces = [
     name: "Crypto Punks",
     avatar: "/placeholders/nft_14.png",
     pinned: true,
+    active: true,
   },
   {
     id: "doodles",
@@ -29,18 +30,25 @@ export const mockSpaces = [
     id: "world-of-women",
     name: "World of Women",
     avatar: "/placeholders/nft_26.png",
+    active: true,
   },
   {
     id: "mutant-ape-yacht-club",
     name: "Mutant Ape Yacht Club",
     avatar: "/placeholders/nft_37.png",
+    active: true,
   },
   {
     id: "the-sandbox",
     name: "The Sandbox",
     avatar: "/placeholders/nft_33.png",
   },
-  { id: "azuki", name: "Azuki", avatar: "/placeholders/nft_40.png" },
+  {
+    id: "azuki",
+    name: "Azuki",
+    avatar: "/placeholders/nft_40.png",
+    active: true,
+  },
   {
     id: "clone-x",
     name: "Clone X - X Takashi Murakami",
@@ -52,8 +60,9 @@ export const SpaceNavMock = () => (
   <>
     {mockSpaces.map((m) => (
       <SpaceNavItem
-        id={m.id}
         key={m.name}
+        active={m.active}
+        id={m.id}
         name={m.name}
         avatar={`${m.avatar}`}
         pinned={m.pinned}
@@ -84,8 +93,8 @@ export const SpaceNavItem = ({
     <NavItem>
       <Avatar src={avatar} size={{ tablet: "lg", desktop: "md" }} />
       <Paragraph
-        singleLine
         grow
+        truncate
         fontWeight={active ? "strong" : "normal"}
         display={{ tablet: "none" }}
       >

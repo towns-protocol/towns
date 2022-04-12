@@ -8,7 +8,7 @@ type ParagraphProps = {
   className?: string;
   children?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
-  singleLine?: boolean;
+  truncate?: boolean;
 } & Omit<TextSprinkles, "size" | "fontSize"> &
   Pick<BoxProps, "grow" | "shrink" | "display">;
 

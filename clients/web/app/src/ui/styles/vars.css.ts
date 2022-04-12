@@ -21,6 +21,36 @@ const root = createGlobalTheme(":root", {
     md: `${baseline * 8}px`,
     lg: `${baseline * 12}px`,
   } as const,
+  insetX: {
+    none: { marginLeft: "0", marginRight: "0" },
+    xxs: {
+      marginLeft: `${baseline * -0.5}px`,
+      marginRight: `${baseline * -0.5}px`,
+    },
+    xs: { marginLeft: `${baseline * -1}px`, marginRight: `${baseline * -1}px` },
+    sm: { marginLeft: `${baseline * -2}px`, marginRight: `${baseline * -2}px` },
+    md: { marginLeft: `${baseline * -4}px`, marginRight: `${baseline * -4}px` },
+    lg: { marginLeft: `${baseline * -8}px`, marginRight: `${baseline * -8}px` },
+    xl: {
+      marginLeft: `${baseline * -16}px`,
+      marginRight: `${baseline * -16}px`,
+    },
+  } as const,
+  insetY: {
+    none: { marginTop: "0", marginBottom: "0" },
+    xxs: {
+      marginTop: `${baseline * -0.5}px`,
+      marginBottom: `${baseline * -0.5}px`,
+    },
+    xs: { marginTop: `${baseline * -1}px`, marginBottom: `${baseline * -1}px` },
+    sm: { marginTop: `${baseline * -2}px`, marginBottom: `${baseline * -2}px` },
+    md: { marginTop: `${baseline * -4}px`, marginBottom: `${baseline * -4}px` },
+    lg: { marginTop: `${baseline * -8}px`, marginBottom: `${baseline * -8}px` },
+    xl: {
+      marginTop: `${baseline * -16}px`,
+      marginBottom: `${baseline * -16}px`,
+    },
+  } as const,
   space: {
     none: "0",
     xxs: `${baseline * 0.5}px`,
@@ -29,30 +59,6 @@ const root = createGlobalTheme(":root", {
     md: `${baseline * 4}px`,
     lg: `${baseline * 8}px`,
     xl: `${baseline * 16}px`,
-  } as const,
-
-  negativeSpace: {
-    none: {
-      margin: "0",
-    },
-    xxs: {
-      margin: `${baseline * -0.5}px`,
-    },
-    xs: {
-      margin: `${baseline * -1}px`,
-    },
-    sm: {
-      margin: `${baseline * -2}px`,
-    },
-    md: {
-      margin: `${baseline * -4}px`,
-    },
-    lg: {
-      margin: `${baseline * -8}px`,
-    },
-    xl: {
-      margin: `${baseline * -16}px`,
-    },
   } as const,
 
   dims: {
@@ -65,7 +71,7 @@ const root = createGlobalTheme(":root", {
       // default icon
       md: `${baseline * 3}px`,
       // default icon
-      lg: `${baseline * 4.5}px`,
+      lg: `${baseline * 4}px`,
       // big icons
       xl: `${baseline * 6.5}px`,
       // hero avatar
@@ -74,6 +80,7 @@ const root = createGlobalTheme(":root", {
       adapt: `1.2em`,
     },
     rows: {
+      xxs: `${baseline * 1.5}px`,
       /** pills */
       xs: `${baseline * 2.5}px`,
       /** text rows */
@@ -132,13 +139,13 @@ const root = createGlobalTheme(":root", {
   } as const,
 
   fontSize: {
-    sm: `${(fontBase * 11) / 13}px`,
-    md: `${(fontBase * 13) / 13}px`,
-    lg: `${(fontBase * 15) / 13}px`,
-    xl: `${(fontBase * 18) / 13}px`,
+    sm: `${13}px`,
+    md: `${15}px`,
+    lg: `${17}px`,
+    xl: `${24}px`,
     // note: before setting the naming, figure the sizes we actually use
-    xl24: `${(fontBase * 24) / 13}px`,
-    xl32: `${(fontBase * 32) / 13}px`,
+    xl24: `${32}px`,
+    xl32: `${37}px`,
   } as const,
 
   textAlign: {

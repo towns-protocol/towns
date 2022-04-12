@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@components/Card/Card";
 import { BackgroundImage } from "@components/BackgroundImage";
-import { Avatar, Box, BoxProps, Paragraph } from "@ui";
+import { Avatar, Box, BoxProps, Paragraph, Text } from "@ui";
 
 type Props = {
   colSpan?: 1 | 2 | 3 | 4;
@@ -9,19 +9,23 @@ type Props = {
 
 export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
   <Card colSpan={colSpan} {...boxProps}>
-    <Box grow border aspectRatio="4/3">
+    <Box grow border aspectRatio="16/9">
       <BackgroundImage src="placeholders/frame_2.png" gradient="dark" />
     </Box>
-    <Box grow gap="sm" background="default" padding="xs">
+    <Box grow gap="xs" background="default" padding="xs">
       <Paragraph color="gray2" fontWeight="strong">
         Azuki #announcement
       </Paragraph>
       <Paragraph color="gray1">
         Oh shit we’re in Forbes!!
-        https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds...
+        <Text truncate>
+          https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds...
+        </Text>
+        read more. read more.read more.read more.read more.read more.read
+        more.read more.read more.
       </Paragraph>
       <Box direction="row" gap="xs" alignItems="center">
-        <Avatar circle size="sm" />
+        <Avatar circle size="xs" />
         <Paragraph color="gray1">meocat</Paragraph>
       </Box>
     </Box>

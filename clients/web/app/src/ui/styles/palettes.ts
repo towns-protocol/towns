@@ -9,9 +9,11 @@ const FigmaPalette = {
   XLightGrey: "#E6ECF1",
   XXLightGrey: "#F4F7F9",
   White: "#FFFFFF",
-  Blue: "#0000FF",
+  Blue: "#6B71F7",
   Green: "#16E782",
   Eth: "#18A0FB",
+  Red: "#FB635C",
+  ENSBlue: "#18A0FB",
 } as const;
 
 const tone = {
@@ -19,7 +21,8 @@ const tone = {
   warning: "#e78216",
   positive: FigmaPalette.Green,
   neutral: FigmaPalette.MedGrey,
-  accent: FigmaPalette.Blue,
+  accent: FigmaPalette.Red,
+  etherum: FigmaPalette.ENSBlue,
 } as const;
 
 const light = (() => {
@@ -37,7 +40,7 @@ const light = (() => {
     default: FigmaPalette.XDarkGrey,
     gray1: FigmaPalette.MedGrey,
     gray2: FigmaPalette.Grey,
-    accent: FigmaPalette.Blue,
+    accent: FigmaPalette.Red,
     secondary: FigmaPalette.Green,
     inverted: FigmaPalette.White,
     onTone: FigmaPalette.White,
@@ -73,7 +76,7 @@ const dark = (() => {
     default: FigmaPalette.White,
     gray1: FigmaPalette.XLightGrey,
     gray2: "#BAC4D7",
-    accent: FigmaPalette.Blue,
+    accent: FigmaPalette.Red,
     secondary: FigmaPalette.Green,
     inverted: FigmaPalette.Black,
     onTone: FigmaPalette.White,

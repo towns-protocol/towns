@@ -13,7 +13,6 @@ export const MainNav = () => (
 export const NavContainer = (props: { children?: React.ReactNode }) => (
   <Box
     borderRight
-    grow="x0"
     shrink={{ tablet: "x0", desktop: "x1" }}
     basis={{ tablet: "auto", desktop: "300" }}
     background="level1"

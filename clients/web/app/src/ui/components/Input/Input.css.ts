@@ -1,26 +1,21 @@
-import { RecipeVariants, recipe } from "@vanilla-extract/recipes";
+import { style } from "@vanilla-extract/css";
 import { vars } from "ui/styles/vars.css";
 
-export const inputStyle = recipe({
-  base: {
-    background: vars.color.layer.level2,
-    "::placeholder": {
-      color: vars.color.text.gray2,
-    },
-  },
-  defaultVariants: {
-    size: "md",
-  },
-  variants: {
-    size: {
-      md: {
-        height: vars.dims.inputs.sm,
-        padding: vars.space.xs,
-        borderRadius: vars.borderRadius.xs,
-        border: "none",
-      },
-    },
+export const inputContainerStyle = style({
+  height: vars.dims.inputs.md,
+  padding: vars.space.xs,
+  borderRadius: vars.borderRadius.xs,
+  border: "none",
+  background: vars.color.layer.level1,
+  "::placeholder": {
+    color: vars.color.text.gray2,
   },
 });
 
-export type InputStyleVariants = RecipeVariants<typeof inputStyle>;
+export const inputFieldStyle = style({
+  border: "none",
+  background: vars.color.layer.level1,
+  "::placeholder": {
+    color: vars.color.text.gray2,
+  },
+});

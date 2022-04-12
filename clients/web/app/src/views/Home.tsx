@@ -19,7 +19,6 @@ export const Home = () => (
             <AnnouncementCard />
             <AnnouncementCard />
           </Grid>
-          <Heading level={2}>Shared with you</Heading>
         </Box>
       </Box>
     </Box>

@@ -5,7 +5,8 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { Atoms, atoms } from "ui/styles/atoms/atoms.css";
+import { Atoms, atoms, boxStyleBase } from "ui/styles/atoms/atoms.css";
+import { debugClass } from "ui/styles/css/debug.css";
 import { absoluteFillClass } from "ui/styles/css/utils.css";
 import { assignBoolToDefaultValue } from "ui/utils/utils";
 
@@ -40,6 +41,7 @@ type Props = {
   style?: React.CSSProperties;
   absoluteFill?: boolean;
   centerContent?: boolean;
+  debug?: boolean;
 } & ShorthandProps &
   OmitShorthandSprinkles &
   /* TODO: possible to match with typeof `as` ? */
@@ -56,6 +58,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     className,
     children,
     centerContent,
+    debug,
     grow,
     shrink,
     absoluteFill,
@@ -115,16 +118,19 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     return {
       nativeProps,
       atomicClasses: clsx(
+        boxStyleBase,
         atoms({
           ...boxDefaults,
           ...fromShorthand,
           ...atomicProps,
         }),
+
         absoluteFill && absoluteFillClass,
-        className
+        className,
+        debug && debugClass
       ),
     };
-  }, [absoluteFill, className, fromShorthand, restProps]);
+  }, [absoluteFill, className, debug, fromShorthand, restProps]);
 
   // const dynamicStyle = useMemo(() => {
   //   const style: React.CSSProperties = props.style ?? {};

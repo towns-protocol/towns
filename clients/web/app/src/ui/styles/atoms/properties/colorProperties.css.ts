@@ -54,7 +54,11 @@ export const colorAtomicProperties = defineProperties({
         background: vars.color.background.accent,
         color: vars.color.text.onTone,
       },
+      etherum: {
+        background: vars.color.background.etherum,
+        color: vars.color.text.onTone,
+      },
     },
-    color: vars.color.text,
+    color: vars.color.foreground,
   },
 });

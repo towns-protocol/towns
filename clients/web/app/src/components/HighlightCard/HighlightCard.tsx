@@ -14,7 +14,7 @@ export const HighlightCard = ({ colSpan: span = 1, ...boxProps }: Props) => (
       <Box grow>
         <Avatar border circle size="md" />
       </Box>
-      <Box gap="xxs">
+      <Box gap="xs">
         <Paragraph color="onTone" size="sm">
           RTFKT #announcements
         </Paragraph>

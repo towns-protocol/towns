@@ -11,7 +11,7 @@ export default {
       control: "select",
     },
     src: {
-      defaultValue: "ape.webp",
+      defaultValue: "/placeholders/nft_1.png",
     },
   },
   parameters: {
