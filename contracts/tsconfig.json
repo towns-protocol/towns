@@ -10,10 +10,12 @@
   },
   "include": [
     "./scripts",
+    "./deploy",
     "integration",
     "./typechain",
     "../typechain-types",
-    "../node_modules"
+    "../node_modules",
+    "./hardhat.config.ts"
   ],
   "files": ["./hardhat.config.ts"]
 }
