@@ -19818,19 +19818,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< Updated upstream
 "markdown-table@npm:^2.0.0":
   version: 2.0.0
   resolution: "markdown-table@npm:2.0.0"
   dependencies:
     repeat-string: ^1.0.0
   checksum: 9bb634a9300016cbb41216c1eab44c74b6b7083ac07872e296f900a29449cf0e260ece03fa10c3e9784ab94c61664d1d147da0315f95e1336e2bdcc025615c90
-=======
+  languageName: node
+  linkType: hard
+
 "match-all@npm:^1.2.6":
   version: 1.2.6
   resolution: "match-all@npm:1.2.6"
   checksum: 3d4f16b8fd082f2fd10e362f4a8b71c62f8a767591b3db831ca2bdcf726337e9a64e4abc30e2ef053dc2bcfb875a9ed80bd78e006ad5ef11380a7158d0cb00e1
->>>>>>> Stashed changes
   languageName: node
   linkType: hard
 
@@ -23552,18 +23552,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< Updated upstream
-"qs@npm:6.10.3, qs@npm:^6.10.0, qs@npm:^6.4.0, qs@npm:^6.7.0, qs@npm:^6.9.6":
-=======
-"qs@npm:6.9.7":
-  version: 6.9.7
-  resolution: "qs@npm:6.9.7"
-  checksum: 5bbd263332ccf320a1f36d04a2019a5834dc20bcb736431eaccde2a39dcba03fb26d2fd00174f5d7bc26aaad1cad86124b18440883ac042ea2a0fca6170c1bf1
-  languageName: node
-  linkType: hard
-
-"qs@npm:^6.10.0, qs@npm:^6.4.0, qs@npm:^6.7.0, qs@npm:^6.9.4, qs@npm:^6.9.6":
->>>>>>> Stashed changes
+"qs@npm:6.10.3, qs@npm:^6.10.0, qs@npm:^6.4.0, qs@npm:^6.7.0, qs@npm:^6.9.4, qs@npm:^6.9.6":
   version: 6.10.3
   resolution: "qs@npm:6.10.3"
   dependencies:
