@@ -10,7 +10,7 @@ export const MainNav = () => (
   </NavContainer>
 );
 
-export const NavContainer: React.FC = (props) => (
+export const NavContainer = (props: { children?: React.ReactNode }) => (
   <Box
     borderRight
     grow="x0"
