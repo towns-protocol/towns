@@ -6081,12 +6081,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^17.0.14":
-  version: 17.0.14
-  resolution: "@types/react-dom@npm:17.0.14"
+"@types/react-dom@npm:^18.0.0":
+  version: 18.0.0
+  resolution: "@types/react-dom@npm:18.0.0"
   dependencies:
     "@types/react": "*"
-  checksum: b54cd0ef573236b3d87fe7493e6d1c36d8b4ca37a3b46364272a5c91ac178e3296b68ea1aeb299ce68f12ad663c5720ee890d0539b14881c6754bdcbdb0befa0
+  checksum: 0d8c9cb3e72aefe0dd2b58a49845a200369f01ae92f3f11f642e04efc95dfd1c9380b6592d4273dd6113fb8707947d15b66d56c75c41f39f28bd897f0c08dfa9
   languageName: node
   linkType: hard
 
@@ -6108,7 +6108,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:^17.0.43":
+"@types/react@npm:*":
   version: 17.0.43
   resolution: "@types/react@npm:17.0.43"
   dependencies:
@@ -6116,6 +6116,17 @@ __metadata:
     "@types/scheduler": "*"
     csstype: ^3.0.2
   checksum: 981b0993f5b3ea9d3488b8cc883201e8ae47ba7732929f788f450a79fd72829e658080d5084e67caa008e58d989b0abc1d5f36ff0a1cda09315ea3a3c0c9dc11
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^18.0.5":
+  version: 18.0.5
+  resolution: "@types/react@npm:18.0.5"
+  dependencies:
+    "@types/prop-types": "*"
+    "@types/scheduler": "*"
+    csstype: ^3.0.2
+  checksum: 70d3336d43ef25509fa89ef3278f57fdf1945fc921e69b7890a78ab9a52a55ee38e2f13aa71eb4f6032b7311e7557860ce8836c1acf3028304989571c9736a96
   languageName: node
   linkType: hard
 
@@ -15987,8 +15998,8 @@ __metadata:
     "@storybook/react": ^6.5.0-alpha.57
     "@storybook/testing-library": ^0.0.9
     "@storybook/theming": ^6.5.0-alpha.57
-    "@types/react": ^17.0.43
-    "@types/react-dom": ^17.0.14
+    "@types/react": ^18.0.5
+    "@types/react-dom": ^18.0.0
     "@vanilla-extract/css": ^1.6.8
     "@vanilla-extract/dynamic": ^2.0.2
     "@vanilla-extract/recipes": ^0.2.4
@@ -25044,8 +25055,8 @@ __metadata:
     "@mui/material": ^5.5.3
     "@mui/styles": ^5.5.3
     "@types/node": ^17.0.23
-    "@types/react": ^17.0.43
-    "@types/react-dom": ^17.0.14
+    "@types/react": ^18.0.5
+    "@types/react-dom": ^18.0.0
     buffer: ^6.0.3
     http-status-codes: ^2.2.0
     keccak256: ^1.0.6
