@@ -554,7 +554,7 @@ Client sends a HTTP POST message to the endpoint ```/register``` with a ```usern
   auth: {
     type: "m.login.crypto",
     session: sessionId,
-    cryptoResponse: { ... }
+    response: { ... }
 }
 ```
 
@@ -566,7 +566,7 @@ For Ethereum, the JSON should look like this:
   auth: {
     type: "m.login.crypto",
     session: sessionId, // from server's response message
-    cryptoResponse: {
+    response: {
       type: "m.login.crypto.ethereum",
       username: "0x...", // Ethereum public address
       session: sessionId, // from server's response message
@@ -590,7 +590,7 @@ Refer to the [JSON body](#client-sends-registration-request-with-authentication-
 
 The validation steps are:
 
-* Get the ```cryptoResponse``` from the JSON body.
+* Get the ```response``` from the JSON body.
 
 * [Validate the response](#server-validates-authentication-data). This is the same validation as the login flow.
 
@@ -606,7 +606,7 @@ This concludes the registration flow.
 
 Keeping private keys safe is out-of-scope for Matrix. Besides software wallet protections, there are hardware wallet solutions which offer offline key storage.
 
-There is an open issue with compromised private keys. This proposal does not address the problem. There is no "password reset" solution.
+There is an open issue with compromised private keys. This proposal does not address the problem. There is no "password reset" solution. Needs a separate proposal to address compromised keys.
 
 ### Address as localpart
 
