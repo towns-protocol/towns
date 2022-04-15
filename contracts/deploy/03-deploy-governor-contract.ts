@@ -6,7 +6,6 @@ import {
   VOTING_PERIOD,
   QUORUM_PERCENTAGE,
 } from '../helper-hardhat-config'
-// import { networkConfig, developmentChains } from '../helper-hardhat-config'
 
 const deployGovernorContract: DeployFunction = async function (
   hre: HardhatRuntimeEnvironment,

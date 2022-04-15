@@ -60,7 +60,7 @@ const config: HardhatUserConfig = {
     cache: 'contracts/cache-hardhat',
     sources: './src',
     artifacts: './artifacts',
-    // tests: 'contracts/integration',
+    tests: 'contracts/integration',
   },
   namedAccounts: {
     deployer: {
