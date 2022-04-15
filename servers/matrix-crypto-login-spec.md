@@ -1,7 +1,7 @@
 
 # MSC0000: Add public/private key login as a new authentication type
 
-Cryptographic signatures have played a pivotal role in blockchain. They are used to prove ownership of a public address without exposing its private key. This property can be (and has been) used for authentication. A server can use signature verification as prove that the user has possession of the private key to allow the user with that public address to log in.
+Cryptographic signatures have played a pivotal role in blockchain. They are used to prove ownership of a public address without exposing its private key. This property can be (and has been) used for authentication. A server can use signature verification to prove that the user has possession of the private key to allow the user with that public address to log in.
 
 The proposal is to add a new login type for public key cryptography. Under this new login type, a specific implementation can be supported, such as Ethereum and its signature algorithm - the Elliptic Curve Digital Signature Algorithm (ECDSA).
 
@@ -15,17 +15,17 @@ New authentication type:
 m.login.crypto
 ```
 
-The following section describes the general flow for this new authentication type. Subsequent sections decribe how a specific crypto authentication type (Ethereum) would work.
+The following section describes the general flow for this new authentication type. Subsequent sections describe how a specific crypto authentication type (Ethereum) would work.
 
 ## Summary of the end-to-end login flow
 
 These are the steps at a high-level:
 
-1. Client ask the server what login flow it supports.
+1. Client asks the server what login flow it supports.
 
-2. Server respond with its supported login flow and a session ID.
+2. Server responds with its supported login flow and a session ID.
 
-3. Client prepares the authencation data, and a text-friendly message for the user to sign.
+3. Client prepares the authentication data, and a text-friendly message for the user to sign.
 
 4. The user signs the message with the private key.
 
@@ -73,9 +73,9 @@ These are the steps at a high-level:
 
 1. User initiates a login. [More ...](#user-initiates-the-login-flow)
 
-2. Matrix client reqeusts a new user-interactive login session. [More ...](#client-requests-new-user-interactive-session)
+2. Matrix client requests a new user-interactive login session. [More ...](#client-requests-new-user-interactive-session)
 
-3. Matrix server respond with a list of supported login flows, including a new sessionID. [More ...](#server-responds-with-supported-login-flow)
+3. Matrix server responds with a list of supported login flows, including a new sessionID. [More ...](#server-responds-with-supported-login-flow)
 
 4. Matrix client creates a new message for the user to sign. [More ...](#client-creates-message-to-sign)
 
@@ -85,13 +85,13 @@ These are the steps at a high-level:
 
 7. Matrix client has the signature of the message.
 
-8. Matrix client sends a login requests with the authentication data (message, signature, etc) to the server. [More ...](#client-sends-login-request-with-authenciation-data)
+8. Matrix client sends a login request with the authentication data (message, signature, etc) to the server. [More ...](#client-sends-login-request-with-authenciation-data)
 
 9. Matrix server performs validation checks such as signature verification, any message tempering, existence of the account, etc. [More ...](#server-validates-authentication-data)
 
 10. Matrix client receives an access_token, and other login information. User is logged in.
 
-The following sections describe each step in more details.
+The following sections describe each step in more detail.
 
 ## User initiates the login flow
 
@@ -109,7 +109,7 @@ Refer to [User-interactive API](https://spec.matrix.org/v1.2/client-server-api/#
 
 Client sends a HTTP POST request to the server endpoint ```/login``` with no ```auth``` parameter. It should get back a HTTP/1.1 401 Unauthorized response with a JSON body detailing the supported login flows, params, and a session ID. The semantics of the JSON response body is explained in the next section.
 
-## Server respond with supported login flow
+## Server responds with supported login flow
 
 Refer to [User-interactive API](https://spec.matrix.org/v1.2/client-server-api/#user-interactive-api-in-the-rest-api).
 
@@ -164,7 +164,7 @@ where
 
 * params."m.login.crypto".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
 
-* params."m.login.crypto".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For exmaple, the server can have a production config that specifies chain ID 1 for the Ethereum mainnet; a development server can have a test config that specifies chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that is not listed in the params.
+* params."m.login.crypto".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the server can have a production config that specifies chain ID 1 for the Ethereum mainnet; a development server can have a test config that specifies chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that is not listed in the params.
 
 ## Client creates message to sign
 
@@ -223,7 +223,7 @@ where
 * "..." -- any other properties for the app. Ignored by the server.
 
 Implementer's notes:
-From the server's response, the client app should check the chainIDs list to make sure that the user has selected the correct blockchain network. This gives the client a chance to show some UI to the user to switch network if needed.
+From the server's response, the client app should check the chainIDs list to make sure that the user has selected the correct blockchain network. This gives the client a chance to show some UI to the user to switch to the right network if needed.
 
 ```json
 // Server's login flow response
@@ -248,7 +248,7 @@ From the server's response, the client app should check the chainIDs list to mak
 
 The text message that the user signs is intended to be readable. It will have long sentences, paragraphs, line-breaks, and so on. Not an optimal format for the server to process.
 
-A JSON representation of the authentication data is much easier for the server to process. To make sure that the JSON data is not tempered with, it needs to be covered by the message signature. i.e. when the user sees the message, some representation of this JSON must be in the message that is signed. The server can then cryptographically check that it has not been tempered with.
+A JSON representation of the authentication data is much easier for the server to process. To make sure that the JSON data is not tampered with, it needs to be covered by the message signature. i.e. when the user sees the message, some representation of this JSON must be in the message that is signed. The server can then cryptographically check that it has not been tampered with.
 
 To do this, the JSON authentication data is converted into a hash value, and is then included in the message. The conversion algorithm is as follows:
 
@@ -306,7 +306,7 @@ It should pop up the tools' UI. The user interacts with it to sign the message. 
 
 The signature, the message, the wallet address, and other authentication data are sent to the server in the next step as the login data.
 
-## Client sends login request with authenciation data
+## Client sends login request with authentication data
 
 Refer to [User-interactive API](https://spec.matrix.org/v1.2/client-server-api/#user-interactive-api-in-the-rest-api).
 
@@ -346,7 +346,7 @@ Refer to [login auth request from the client](#client-sends-login-request-with-a
 
 * Checks ```auth.username``` account exists. For Ethereum, this is the [public address](#address-as-localpart).
 
-* Verifies the signature ```auth.signature``` is from ```auth.username```, and the message ```auth.message``` has not been tempered with. This step is different for each cryptographic signature type. See [Ethereum-specific validation](#ethereum-specific-validation).
+* Verifies the signature ```auth.signature``` is from ```auth.username```, and the message ```auth.message``` has not been tampered with. This step is different for each cryptographic signature type. See [Ethereum-specific validation](#ethereum-specific-validation).
 
 * Extract required information from the [message signed by the user](#message-for-the-user-to-sign):
 
@@ -361,7 +361,7 @@ Refer to [login auth request from the client](#client-sends-login-request-with-a
   * Base64-encode the hash value.
   * Compare the computed value with the Hash value extracted from the message. They should be the same.
 
-* If the hash is verified, it means that the ```auth.hashField``` has not been tempered with. ```auth.hashFields``` string can now be converted to JSON. The rest of the validation can use the JSON directly. This JSON object will be refered to as ```authData```.
+* If the hash is verified, it means that the ```auth.hashField``` has not been tampered with. ```auth.hashFields``` string can now be converted to JSON. The rest of the validation can use the JSON directly. This JSON object will be referred to as ```authData```.
 
 * Verify that the message (signed by the user) is consistent with both the JSON ```authData```, and the server's expectation:
 
@@ -398,7 +398,7 @@ v = "recover id" is offset by -27 per the [Ethereum](http://gavwood.com/paper.pd
 
 **public address** -- after recovering the public key from the signature, derive its public address from the recovered key. You can use one of the Open Source libraries to do that. Compare the message signer's public address with the login username (who is attempting to login). It should match.
 
-**chain ID** -- Server is configured (via its configuration file) to allow login from a list of blockchain networks. For exmaple, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network.
+**chain ID** -- Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network.
 
 Server should reject login attempts for a chain ID that is not listed in its configurations. This avoids downstream problems for supporting servers (like Application services) that need to resolve contracts on specific blockchain networks.
 
@@ -446,9 +446,9 @@ Registers a new user account. It is similar to the login flow.
 
 1. User initiates a new registration.
 
-2. Matrix client reqeusts a new registration session. [More ...](#client-requests-new-registration-session)
+2. Matrix client requests a new registration session. [More ...](#client-requests-new-registration-session)
 
-3. Matrix server respond with a list of supported registration flows, including a new sessionID. [More ...](#server-respond-with-supported-registration-flow)
+3. Matrix server responds with a list of supported registration flows, including a new sessionID. [More ...](#server-responds-with-supported-registration-flow)
 
 4. Matrix client creates a new message for the user to sign. [More ...](#client-creates-message-to-sign)
 
@@ -458,13 +458,13 @@ Registers a new user account. It is similar to the login flow.
 
 7. Matrix client has the signature of the message.
 
-8. Matrix client sends a registration requests with the authentication data (message, signature, etc) to the server. [More ...](#client-sends-registration-request-with-authentication-data)
+8. Matrix client sends a registration request with the authentication data (message, signature, etc) to the server. [More ...](#client-sends-registration-request-with-authentication-data)
 
 9. Matrix server performs validation checks such as signature verification, any message tempering, existence of the account, etc. [More ...](#server-validates-authentication-data-and-registers-user). It creates the account if validation checks are successful.
 
 10. Matrix client receives an access_token, and other login information. User is registered and logged in.
 
-The following sections describe each step in more details.
+The following sections describe each step in more detail.
 
 ## Client requests new registration session
 
@@ -485,7 +485,7 @@ where
 
 * username -- is the user ID to register. For Ethereum, this is the public address that starts with "0x".
 
-## Server respond with supported registration flow
+## Server responds with supported registration flow
 
 Refer to [Client-server API](https://spec.matrix.org/v1.2/client-server-api/#post_matrixclientv3register) in the section 401 response.
 
@@ -509,7 +509,7 @@ Refer to [Client-server API](https://spec.matrix.org/v1.2/client-server-api/#pos
 
 where
 
-* params."m.login.crypto".type -- speficies the cryptographic choice. E.g. ```m.login.crypto.ethereum```
+* params."m.login.crypto".type -- specifies the cryptographic choice. E.g. ```m.login.crypto.ethereum```
 
 * "session" -- the session ID which acts as a nonce to prevent replay attacks. It is generated and tracked by the server. It should be at least 8 alphanumeric characters. Client is expected to present the session ID in its following registration request for the same session. Session ID is deleted once the registration flow is completed.
 
@@ -540,7 +540,7 @@ where
 
 * params."m.login.crypto".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
 
-* params."m.login.crypto".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For exmaple, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that is not listed in the params.
+* params."m.login.crypto".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that are not listed in the params.
 
 ## Client sends registration request with authentication data
 
@@ -584,7 +584,7 @@ where
 
 * hashFields -- are the [JSON fields that were hashed](#json-authentication-data-ethereum).
 
-# Server validates authentication data and registers user
+## Server validates authentication data and registers user
 
 Refer to the [JSON body](#client-sends-registration-request-with-authentication-data) that the client sent.
 
@@ -596,7 +596,7 @@ The validation steps are:
 
 * If validation is successful, complete the registration stage. Create the account, and send  a HTTP OK response to the client with the access_token, username, device_id, etc.
 
-* If any of the validation step fails, delete the session ID and send a HTTP error response to the client.
+* If any of the validation steps fails, delete the session ID and send a HTTP error response to the client.
 
 This concludes the registration flow.
 
@@ -604,9 +604,9 @@ This concludes the registration flow.
 
 ### Private key security
 
-Keeping private key safe is out-of-scope for Matrix. Besides software wallet protections, there are hardware wallet solutions which offer offline key storage.
+Keeping private keys safe is out-of-scope for Matrix. Besides software wallet protections, there are hardware wallet solutions which offer offline key storage.
 
-There is an open issue with compromised private key. This proposal does not address the problem. There is no "password reset" solution.
+There is an open issue with compromised private keys. This proposal does not address the problem. There is no "password reset" solution.
 
 ### Address as localpart
 
@@ -621,11 +621,11 @@ LoginIdentifier{
  }
 ```
 
-Future proposals can map the crypto public address to other identies such as [MSC2787: Portable Identities](https://github.com/matrix-org/matrix-spec-proposals/pull/2787)
+Future proposals can map the crypto public address to other identities such as [MSC2787: Portable Identities](https://github.com/matrix-org/matrix-spec-proposals/pull/2787)
 
 ### Version number
 
-Versioning gives the server a means to inform the client which version of this spec it must comply with. This is done as part of the initial login flow. See [Client requests new user interactive session](#client-requests-new-user-interactive-session) and [Server respond with supported login flow](#server-respond-with-supported-login-flow). Within the server's responds, it has a params ```version``` number.
+Versioning gives the server a means to inform the client which version of this spec it must comply with. This is done as part of the initial login flow. See [Client requests new user interactive session](#client-requests-new-user-interactive-session) and [Server responds with supported login flow](#server-responds-with-supported-login-flow). Within the server's response, it has a params ```version``` number.
 
 The semantics of the ```version``` is as follows:
 
@@ -635,14 +635,18 @@ For a supported version n, the server should be able to handle all minor revisio
 
 A server that supports version n+1 should still handle version n. But it does not have to handle version n-1. It is the server's sole discretion to handle versions lower than n. The client has no power to lower the supported version.
 
-This gives the server the ability to raise the bar when it needs to eleveate its security requirements.
+This gives the server the ability to raise the bar when it needs to elevate its security requirements.
 
 This spec is version 1.
 
 ## References
 
 * [Ethereum address](https://ethereum.org/en/developers/docs/accounts/)
+
 * [JSON-RPC API](https://ethereum.org/en/developers/docs/apis/json-rpc/)
+
 * [Ethereum personal_sign and personal_ecRecover](https://geth.ethereum.org/docs/rpc/ns-personal#personal_sign)
+
 * [ETHEREUM: A SECURE DECENTRALISED GENERALISED TRANSACTION LEDGER](http://gavwood.com/paper.pdf)
+
 * [github ethereum/go-ethereum](https://github.com/ethereum/go-ethereum)
