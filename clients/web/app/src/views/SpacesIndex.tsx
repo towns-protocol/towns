@@ -30,65 +30,59 @@ export const LiquidContainer = forwardRef<HTMLElement, BoxProps>(
 
 const SpaceMessages = () => (
   <LiquidContainer gap="sm">
-    <NavLink to="announcements">
-      <RoundedMessage
-        channel="#announcements"
-        name="sunsoutapesout"
-        avatar={<Avatar nft src="/placeholders/nft_2.png" />}
-        date="Today at 11:01 AM"
-        reactions={{ "👋": 20 }}
-      >
-        <Paragraph>
-          Hey <strong>@everyone</strong>,
-        </Paragraph>
-        <Paragraph>
-          We're thrilled to announce that <strong>@steamboy</strong> has joined
-          the core team full-time as our Art Director!
-        </Paragraph>
-        <Paragraph>
-          Let's give our newest team members a warm welcome! They're no
-          strangers to the community and we would not be where we're at today if
-          it weren't for them.
-        </Paragraph>
-      </RoundedMessage>
-    </NavLink>
-    <NavLink to="general">
-      <RoundedMessage
-        channel="#general"
-        name="hana.eth"
-        avatar={<Avatar nft src="/placeholders/nft_20.png" />}
-        date="Today at 11:01 AM"
-        replies={{ ids: [1, 2, 3], fakeLength: 150 }}
-      >
-        <Paragraph>Sry guys. Im a noob what the KYC about?</Paragraph>
-      </RoundedMessage>
-    </NavLink>
-    <NavLink to="crypto-talk">
-      <RoundedMessage
-        channel="#crypto-talk"
-        name="shimmyshimmy"
-        avatar={<Avatar nft src="/placeholders/nft_40.png" />}
-        date="Today at 11:01 AM"
-        reactions={{ "😍": 3, "😂": 13, "💀": 5 }}
-      >
-        <Paragraph>
-          <a href="https://twitter.com/BoredApeYC/status/1501333629804244993">
-            https://twitter.com/BoredApeYC/status/1501333629804244993
-          </a>
-        </Paragraph>
+    <RoundedMessage
+      channel="announcements"
+      name="sunsoutapesout"
+      avatar={<Avatar nft src="/placeholders/nft_2.png" />}
+      date="Today at 11:01 AM"
+      reactions={{ "👋": 20 }}
+    >
+      <Paragraph>
+        Hey <strong>@everyone</strong>,
+      </Paragraph>
+      <Paragraph>
+        We're thrilled to announce that <strong>@steamboy</strong> has joined
+        the core team full-time as our Art Director!
+      </Paragraph>
+      <Paragraph>
+        Let's give our newest team members a warm welcome! They're no strangers
+        to the community and we would not be where we're at today if it weren't
+        for them.
+      </Paragraph>
+    </RoundedMessage>
 
-        <QuotedMessage
-          avatar={<Avatar circle src="/placeholders/nft_25.png" />}
-        >
-          <Paragraph>
-            It's been inspiring seeing our community come together in support of
-            Ukraine - almost $1m in ETH has been donated to @Ukraine by wallets
-            containing a BAYC ecosystem NFT. Today we're matching that with a
-            $1m ETH donation of our own. 🦍♥️🇺🇦
-          </Paragraph>
-        </QuotedMessage>
-      </RoundedMessage>
-    </NavLink>
+    <RoundedMessage
+      channel="general"
+      name="hana.eth"
+      avatar={<Avatar nft src="/placeholders/nft_20.png" />}
+      date="Today at 11:01 AM"
+      replies={{ ids: [1, 2, 3], fakeLength: 150 }}
+    >
+      <Paragraph>Sry guys. Im a noob what the KYC about?</Paragraph>
+    </RoundedMessage>
+
+    <RoundedMessage
+      channel="crypto-talk"
+      name="shimmyshimmy"
+      avatar={<Avatar nft src="/placeholders/nft_40.png" />}
+      date="Today at 11:01 AM"
+      reactions={{ "😍": 3, "😂": 13, "💀": 5 }}
+    >
+      <Paragraph>
+        <a href="https://twitter.com/BoredApeYC/status/1501333629804244993">
+          https://twitter.com/BoredApeYC/status/1501333629804244993
+        </a>
+      </Paragraph>
+
+      <QuotedMessage avatar={<Avatar circle src="/placeholders/nft_25.png" />}>
+        <Paragraph>
+          It's been inspiring seeing our community come together in support of
+          Ukraine - almost $1m in ETH has been donated to @Ukraine by wallets
+          containing a BAYC ecosystem NFT. Today we're matching that with a $1m
+          ETH donation of our own. 🦍♥️🇺🇦
+        </Paragraph>
+      </QuotedMessage>
+    </RoundedMessage>
   </LiquidContainer>
 );
 

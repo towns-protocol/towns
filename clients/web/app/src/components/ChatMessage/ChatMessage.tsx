@@ -48,9 +48,11 @@ export const ChatMessage = ({
         </Text>
         {/* channel */}
         {channel && (
-          <Text fontSize="md" color="accent" as="span">
-            {channel}
-          </Text>
+          <NavLink to={channel}>
+            <Text fontSize="md" color="accent" as="span">
+              #{channel}
+            </Text>
+          </NavLink>
         )}
         {/* date, alignment tbc depending on context */}
         <Text grow fontSize="sm" color="gray2" as="span" textAlign="right">
