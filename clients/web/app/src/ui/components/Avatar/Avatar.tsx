@@ -23,7 +23,6 @@ export const Avatar = (props: Props) => {
     nft = false,
     circle = false,
     stacked = false,
-
     border,
     src = "/placeholders/nft_5.png",
     ...boxProps

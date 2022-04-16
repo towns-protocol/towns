@@ -11,7 +11,8 @@ import { avatarProperties } from "ui/styles/atoms/properties/avatarProperties.cs
 
 export const avatarBaseStyle = style({
   backgroundSize: "cover",
-  backgroundPosition: "center center",
+  WebkitMaskImage: `url(/squircle.svg)`,
+  WebkitMaskSize: `cover`,
 });
 
 export const avatarToggleClasses = vcn({
