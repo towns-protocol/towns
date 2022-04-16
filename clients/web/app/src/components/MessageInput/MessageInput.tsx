@@ -5,7 +5,9 @@ export const MessageInput = () => (
   <Box grow direction="row">
     <Input
       grow
-      before={<Icon type="plus" size="xs" background="level3" />}
+      placeholder="Type here..."
+      icon="plus"
+      height="lg"
       after={<Avatar size="xs" />}
     />
   </Box>

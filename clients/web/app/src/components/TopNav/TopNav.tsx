@@ -14,6 +14,7 @@ export const TopBar = (props: { onClick?: () => void }) => {
       background="level1"
       alignItems="center"
       gap="sm"
+      color="gray2"
     >
       <Link to="/">
         <Heading level={3} color="accent">
@@ -24,7 +25,7 @@ export const TopBar = (props: { onClick?: () => void }) => {
       <SearchInput />
       <Icon size="lg" type="bell" />
       <Avatar
-        nft
+        circle
         size="lg"
         src="/placeholders/nft_1.png"
         onClick={props.onClick}

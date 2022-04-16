@@ -118,7 +118,7 @@ const root = createGlobalTheme(":root", {
       // drop downs
       md: `${baseline * 4}px`,
       // chat input
-      lg: `${baseline * 6}px`,
+      lg: `${baseline * 5}px`,
     },
   } as const,
 

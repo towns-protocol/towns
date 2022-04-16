@@ -1,14 +1,24 @@
 import React from "react";
+import clsx from "clsx";
+import { Icon } from "@ui";
 import { Box, BoxProps } from "../Box/Box";
-import { inputContainerStyle, inputFieldStyle } from "./Input.css";
+import {
+  InputAtoms,
+  inputAtoms,
+  inputContainerStyle,
+  inputFieldStyle,
+  inputIconStyle,
+} from "./Input.css";
+import { IconName } from "../Icon";
 
 type NativeInputProps = React.AllHTMLAttributes<HTMLInputElement>;
 
 type StyleProps = { active?: boolean; size?: "sm" | "md" };
 
 type Props = {
-  before?: React.ReactNode;
+  icon?: IconName;
   after?: React.ReactNode;
+  height?: InputAtoms["height"];
   grow?: BoxProps["grow"];
   shrink?: BoxProps["shrink"];
   padding?: BoxProps["padding"];
@@ -35,28 +45,41 @@ type Props = {
 } & StyleProps;
 
 export const Input = ({
-  before,
+  icon,
   after,
   size,
   grow,
   shrink,
   padding,
   rounded,
+  height = "md",
   ...inputProps
 }: Props) => {
-  const boxProps = { grow, shrink, padding, rounded };
+  const boxProps = { grow, shrink, padding, rounded, height };
   return (
     <Box
-      className={inputContainerStyle}
-      {...boxProps}
+      className={clsx(inputContainerStyle, inputAtoms({ height }))}
       direction="row"
       justifyContent="spaceBetween"
       alignItems="center"
+      background="level2"
+      color="default"
+      gap="xs"
+      {...boxProps}
     >
-      {before}
+      {icon && (
+        <Icon
+          type={icon}
+          size="xs"
+          background="level3"
+          className={inputIconStyle}
+        />
+      )}
       <Box
         as="input"
         {...inputProps}
+        grow
+        border
         fontSize="md"
         className={inputFieldStyle}
       />
