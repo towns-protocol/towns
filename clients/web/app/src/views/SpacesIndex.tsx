@@ -1,5 +1,4 @@
 import React, { ComponentProps, forwardRef } from "react";
-import { NavLink } from "react-router-dom";
 import { ChatMessage } from "@components/ChatMessage";
 import { Avatar, Box, BoxProps, Heading, Icon, Paragraph } from "@ui";
 

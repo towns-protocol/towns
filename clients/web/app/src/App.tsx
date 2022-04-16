@@ -10,6 +10,7 @@ import { SpacesChannel } from "views/SpacesChannel";
 import { SpacesIndex } from "views/SpacesIndex";
 import { MessagesRead } from "views/MessagesRead";
 import { MessagesNew } from "views/MessagesNew";
+import { SpacesChannelThread } from "views/SpacesChannelThread";
 
 export const App = () => {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -35,7 +36,12 @@ export const App = () => {
           </Route>
           <Route path="/spaces/:space" element={<Spaces />}>
             <Route index element={<SpacesIndex />} />
-            <Route path=":channel" element={<SpacesChannel />} />
+            <Route path=":channel" element={<SpacesChannel />}>
+              <Route
+                path="threads/:threadId"
+                element={<SpacesChannelThread />}
+              />
+            </Route>
           </Route>
         </Routes>
       </Box>

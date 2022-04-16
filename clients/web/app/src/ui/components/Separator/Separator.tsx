@@ -1,19 +1,28 @@
 import React from "react";
 import { Box, Paragraph } from "../";
+import { ParagraphProps } from "../Text/Paragraph";
 
-export const Separator = (props: { label?: string }) =>
-  !props.label ? (
+export const Separator = ({
+  label,
+  fontSize = "sm",
+  align = "center",
+}: {
+  label?: string;
+  fontSize?: ParagraphProps["size"];
+  align?: "left" | "center" | "right";
+}) =>
+  !label ? (
     <Box gap="sm" direction="row" alignItems="center" width="100%">
       <Box borderBottom grow />
     </Box>
   ) : (
     <Box gap="sm" direction="row" alignItems="center">
-      <Box borderBottom grow />
+      {align !== "left" && <Box borderBottom grow />}
       <Box>
-        <Paragraph color="gray2" size="sm">
-          {props.label}
+        <Paragraph color="gray2" size={fontSize}>
+          {label}
         </Paragraph>
       </Box>
-      <Box borderBottom grow />
+      {align !== "right" && <Box borderBottom grow />}
     </Box>
   );

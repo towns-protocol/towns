@@ -1,7 +1,7 @@
 import React from "react";
-import { Card } from "@components/Card/Card";
 import { BackgroundImage } from "@components/BackgroundImage";
-import { Avatar, Box, BoxProps, Paragraph, Text } from "@ui";
+import { Card } from "@components/Card/Card";
+import { Avatar, Box, BoxProps, Paragraph } from "@ui";
 
 type Props = {
   colSpan?: 1 | 2 | 3 | 4;

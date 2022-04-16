@@ -112,20 +112,22 @@ const ReactionMock = (props: { reactions: { [key: string]: number } }) => (
 const RepliesMock = (props: {
   replies: { ids: number[]; fakeLength: number };
 }) => (
-  <Box
-    centerContent
-    rounded="xs"
-    height="sm"
-    background="level2"
-    paddingX="xs"
-    direction="row"
-    gap="xxs"
-  >
-    {props.replies.ids.map((id) => (
-      <Avatar circle key={id} src={`/placeholders/nft_${id}.png`} size="xs" />
-    ))}
-    <Text as="span" size="sm" color="gray1">
-      {props.replies.fakeLength} replies
-    </Text>
-  </Box>
+  <NavLink to="/spaces/crypto-punks/announcements/threads/123123123">
+    <Box
+      centerContent
+      rounded="xs"
+      height="sm"
+      background="level2"
+      paddingX="xs"
+      direction="row"
+      gap="xxs"
+    >
+      {props.replies.ids.map((id) => (
+        <Avatar circle key={id} src={`/placeholders/nft_${id}.png`} size="xs" />
+      ))}
+      <Text as="span" size="sm" color="gray1">
+        {props.replies.fakeLength} replies
+      </Text>
+    </Box>
+  </NavLink>
 );
