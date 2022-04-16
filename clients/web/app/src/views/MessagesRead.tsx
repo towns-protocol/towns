@@ -2,6 +2,7 @@ import React from "react";
 import { AvatarStack } from "@components/AvatarStack";
 import { ChatMessage } from "@components/ChatMessage";
 import { Avatar, Box, Heading, Icon, Paragraph, Separator } from "@ui";
+import { MessageInput } from "@components/MessageInput/MessageInput";
 
 export const MessagesRead = () => (
   <Box grow>
@@ -40,6 +41,7 @@ export const MessagesRead = () => (
       <Separator />
       <Box gap="sm">
         <ChatMessage
+          condensed
           name="You"
           date="Today at 11:01 AM"
           avatar={<Avatar nft src="/placeholders/nft_1.png" />}
@@ -48,12 +50,14 @@ export const MessagesRead = () => (
         </ChatMessage>
 
         <ChatMessage
+          condensed
           name="iamblue"
           date="Today at 11:01 AM"
           avatar={<Avatar nft src="/placeholders/nft_4.png" />}
         >
           <Paragraph>GM My man!!</Paragraph>
         </ChatMessage>
+        <MessageInput />
       </Box>
     </Box>
   </Box>

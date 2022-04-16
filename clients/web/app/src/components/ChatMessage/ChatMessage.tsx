@@ -1,12 +1,13 @@
 import clsx from "clsx";
 import React from "react";
+import { NavLink } from "react-router-dom";
 import { Avatar, Box, BoxProps, Text } from "@ui";
 import * as styles from "./ChatMessage.css";
 
 type Props = {
   avatar: React.ReactNode;
   name: string;
-
+  condensed?: boolean;
   channel?: string;
   reactions?: { [key: string]: number };
   replies?: { ids: number[]; fakeLength: number };
@@ -19,6 +20,7 @@ type Props = {
 
 export const ChatMessage = ({
   avatar,
+  condensed,
   name,
   channel,
   reactions,
@@ -34,7 +36,7 @@ export const ChatMessage = ({
       <Box inset="xxs">{avatar}</Box>
     </Box>
     {/* right / main content */}
-    <Box grow gap="sm">
+    <Box grow gap={condensed ? "xs" : "sm"}>
       {/* name & date top row */}
       <Box direction="row" gap="xs" alignItems="center" height="xxs">
         {/* display name */}
@@ -55,7 +57,13 @@ export const ChatMessage = ({
           </NavLink>
         )}
         {/* date, alignment tbc depending on context */}
-        <Text grow fontSize="sm" color="gray2" as="span" textAlign="right">
+        <Text
+          grow={!condensed}
+          fontSize="sm"
+          color="gray2"
+          as="span"
+          textAlign="right"
+        >
           {date}
         </Text>
       </Box>
@@ -114,7 +122,7 @@ const RepliesMock = (props: {
     gap="xxs"
   >
     {props.replies.ids.map((id) => (
-      <Avatar circle src={`/placeholders/nft_${id}.png`} size="xs" />
+      <Avatar circle key={id} src={`/placeholders/nft_${id}.png`} size="xs" />
     ))}
     <Text as="span" size="sm" color="gray1">
       {props.replies.fakeLength} replies
