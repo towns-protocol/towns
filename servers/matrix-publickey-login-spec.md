@@ -12,10 +12,10 @@ This new login type would allow any matrix server to authenticate a user without
 New authentication type:
 
 ```text
-m.login.crypto
+m.login.publickey
 ```
 
-The following section describes the general flow for this new authentication type. Subsequent sections describe how a specific crypto authentication type (Ethereum) would work.
+The following section describes the general flow for this new authentication type. Subsequent sections describe how a specific public key authentication type (Ethereum) would work.
 
 ## Summary of the end-to-end login flow
 
@@ -31,51 +31,51 @@ These are the steps at a high-level:
 
 5. Client sends a login request with the signed message, and other authentication data.
 
-6. Server checks the signed message for authenticity, any data tempering, public address matches with the signed message, etc.
+6. Server checks the signed message for authenticity, any data tampering, public address matches with the signed message, etc.
 
 7. If the validation passes, the server issues a new access_token (along with other information). The user is now logged in.
 
 ## Login flow details
 
 ```text
-           { User }                   { Matrix client }                                { Matrix server }
-     +------------------+           +------------------+                             +------------------+
-              |                              |                                                 |
-              |-----1. (clicks login)------->|                                                 |
-              |                              |      User-Interactive Authentication API        |
-              |                              |----------------2. (/login {})------------------>|
-              |                              |                                                 |
-              |                              |<--3. ({seesionID, m.login.crypto, { params }})--|
-              |                              |                                                 |
-              |                              |---+                                             |
-              |                              |   |  4. createMessageToSign(sessionID, ...)     |
-              |                              |<--+                                             |
-              |                              |                                                 |
-              |<----5. (message to sign)-----|                                                 |
-              |                              |                                                 |
-          +---|                              |                                                 |
-6. (sign) |   |                              |                                                 |
-          +-->|                              |                                                 |
-              |                              |                                                 |
-              |-----7. (signed message)----->|                                                 |
-              |                              |                                                 |
-              |                              |-----------8. (/login { auth })----------------->|
-              |                              |                                                 |
-              |                              |                                                 |---+
-              |                              |                                                 |   | 9. (server
-              |                              |                                                 |<--+     validation)
-              |                              |                                                 |
-              |                              |<----------10. ({ access_token, ...})------------|
-              |                              |                  user logged in                 |
-              |                              |                                                 |
-     +------------------+           +------------------+                             +------------------+
+           { User }                   { Matrix client }                                   { Matrix server }
+     +------------------+           +------------------+                                +------------------+
+              |                              |                                                    |
+              |-----1. (clicks login)------->|                                                    |
+              |                              |          User-Interactive Authentication API       |
+              |                              |--------------------2. (/login {})----------------->|
+              |                              |                                                    |
+              |                              |<--3. ({session, m.login.publickey.someAlgo, ...})--|
+              |                              |                                                    |
+              |                              |---+                                                |
+              |                              |   |  4. createMessageToSign(session, ...)          |
+              |                              |<--+                                                |
+              |                              |                                                    |
+              |<----5. (message to sign)-----|                                                    |
+              |                              |                                                    |
+          +---|                              |                                                    |
+6. (sign) |   |                              |                                                    |
+          +-->|                              |                                                    |
+              |                              |                                                    |
+              |-----7. (signed message)----->|                                                    |
+              |                              |                                                    |
+              |                              |--------------8. (/login { auth })----------------->|
+              |                              |                                                    |
+              |                              |                                                    |---+
+              |                              |                                                    |   | 9. (server
+              |                              |                                                    |<--+    validation)
+              |                              |                                                    |
+              |                              |<------------10. ({ access_token, ...})-------------|
+              |                              |                    user logged in                  |
+              |                              |                                                    |
+     +------------------+           +------------------+                                +------------------+
 ```
 
 1. User initiates a login. [More ...](#user-initiates-the-login-flow)
 
 2. Matrix client requests a new user-interactive login session. [More ...](#client-requests-new-user-interactive-session)
 
-3. Matrix server responds with a list of supported login flows, including a new sessionID. [More ...](#server-responds-with-supported-login-flow)
+3. Matrix server responds with a list of supported login flows, including a new session ID. [More ...](#server-responds-with-supported-login-flow)
 
 4. Matrix client creates a new message for the user to sign. [More ...](#client-creates-message-to-sign)
 
@@ -87,7 +87,7 @@ These are the steps at a high-level:
 
 8. Matrix client sends a login request with the authentication data (message, signature, etc) to the server. [More ...](#client-sends-login-request-with-authenciation-data)
 
-9. Matrix server performs validation checks such as signature verification, any message tempering, existence of the account, etc. [More ...](#server-validates-authentication-data)
+9. Matrix server performs validation checks such as signature verification, any message tampering, existence of the account, etc. [More ...](#server-validates-authentication-data)
 
 10. Matrix client receives an access_token, and other login information. User is logged in.
 
@@ -119,12 +119,11 @@ When the server receives a request at the endpoint ```/login``` with no ```auth`
 {
   flows: [
     {
-      stages: [ "m.login.crypto" ]
+      stages: [ "m.login.publickey.someAlgo" ]
     },
   ],
   params: {
-      "m.login.crypto": {
-        type: "...",
+      "m.login.publickey.someAlgo": {
         "...": "...", // Any additional params
       }
   },
@@ -134,22 +133,21 @@ When the server receives a request at the endpoint ```/login``` with no ```auth`
 
 where
 
-* params."m.login.crypto".type -- speficies the cryptographic choice. E.g. ```m.login.crypto.ethereum```
+* params."m.login.publickey.someAlgo" -- speficies the public key choice. E.g. ```m.login.publickey.ethereum```
 
 * "session" -- the session ID which acts as a nonce to prevent replay attacks. It is generated and tracked by the server. It should be at least 8 alphanumeric characters. Client is expected to present the session ID in its following authentication request for the same session. Session ID is deleted once the login flow is completed.
 
-This is the response for the ```m.login.crypto.ethereum``` type:
+This is the response for the ```m.login.publickey.ethereum``` type:
 
 ```json
 {
   flows: [
     {
-      stages: [ "m.login.crypto" ]
+      stages: [ "m.login.publickey.ethereum" ]
     },
   ],
   params: {
-      "m.login.crypto": {
-        type: "m.login.crypto.ethereum",
+      "m.login.publickey.ethereum": {
         version: "1",
         chainIDs: ["1"], // https://chainlist.org/
       }
@@ -160,11 +158,11 @@ This is the response for the ```m.login.crypto.ethereum``` type:
 
 where
 
-* params."m.login.crypto".type -- ```m.login.crypto.ethereum```. This means that the client should use the [personal_sign](https://geth.ethereum.org/docs/rpc/ns-personal#personal_sign) method to sign the message and its public address.
+* params."m.login.publickey.ethereum" -- This means that the client should use the [personal_sign](https://geth.ethereum.org/docs/rpc/ns-personal#personal_sign) method to sign the message and its public address.
 
-* params."m.login.crypto".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
+* params."m.login.publickey.ethereum".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
 
-* params."m.login.crypto".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the server can have a production config that specifies chain ID 1 for the Ethereum mainnet; a development server can have a test config that specifies chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that is not listed in the params.
+* params."m.login.publickey.ethereum".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the server can have a production config that specifies chain ID 1 for the Ethereum mainnet; a development server can have a test config that specifies chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that is not listed in the params.
 
 ## Client creates message to sign
 
@@ -230,12 +228,11 @@ From the server's response, the client app should check the chainIDs list to mak
 {
   flows: [
     {
-      stages: [ "m.login.crypto" ]
+      stages: [ "m.login.publickey.ethereum" ]
     },
   ],
   params: {
-      "m.login.crypto": {
-        type: "m.login.crypto.ethereum",
+      "m.login.publickey.ethereum": {
         version: 1,
         chainIDs: ["1"], // https://chainlist.org/
       }
@@ -316,9 +313,9 @@ For Ethereum, the ```auth``` JSON should look like this:
 
 ```json
 {
-  type: "m.login.crypto",
+  type: "m.login.publickey",
   auth: {
-    type: "m.login.crypto.ethereum",
+    type: "m.login.publickey.ethereum",
     username: "string", // Ethereum public address. 0x...
     session: sessionId, // from server's response message
     message, // shown to the user for signing
@@ -369,6 +366,7 @@ Refer to [login auth request from the client](#client-sends-login-request-with-a
 | -------------- | -- | ---------------- | -- | -------------------- |
 | ${domain}      | == | authData.domain  | == | home server name     |
 | ${address}     | == | authData.address | == | ```auth.username```  |
+|                |    | authData.nonce   | == | ```auth.session```   |
 
 * If all validation passes, the server completes the login flow, cleans up the session (by deleting the session ID), and sends back a HTTP OK response to the client like other authentication types:
   * access_token,
@@ -411,33 +409,33 @@ This concludes the login flow.
 Registers a new user account. It is similar to the login flow.
 
 ```text
-           { User }                   { Matrix client }                                { Matrix server }
-     +------------------+           +------------------+                             +------------------+
-              |                              |                                                 |
-              |-----1. (clicks register)---->|                                                 |
-              |                              |                 Client-server API               |
-              |                              |----------------2. (/register {...})------------>|
-              |                              |                                                 |
-              |                              |<--3. ({seesionID, m.login.crypto, { params }})--|
-              |                              |                                                 |
-              |                              |---+                                             |
-              |                              |   |  4. createMessageToSign(sessionID, ...)     |
-              |                              |<--+                                             |
-              |                              |                                                 |
-              |<----5. (message to sign)-----|                                                 |
-              |                              |                                                 |
-          +---|                              |                                                 |
-6. (sign) |   |                              |                                                 |
-          +-->|                              |                                                 |
-              |                              |                                                 |
-              |-----7. (signed message)----->|                                                 |
-              |                              |                                                 |
-              |                              |-----------8. (/register { auth })-------------->|
-              |                              |                                                 |
-              |                              |                                                 |---+
-              |                              |                                                 |   | 9. (server
-              |                              |                                                 |<--+     validation &
-              |                              |                                                 |         registration)
+           { User }                   { Matrix client }                                  { Matrix server }
+     +------------------+           +------------------+                                +------------------+
+              |                              |                                                    |
+              |-----1. (clicks register)---->|                                                    |
+              |                              |                   Client-server API                |
+              |                              |------------------2. (/register {...})------------->|
+              |                              |                                                    |
+              |                              |<--3. ({session, m.login.publickey.someAlgo, ...})--|
+              |                              |                                                    |
+              |                              |---+                                                |
+              |                              |   |  4. createMessageToSign(session, ...)          |
+              |                              |<--+                                                |
+              |                              |                                                    |
+              |<----5. (message to sign)-----|                                                    |
+              |                              |                                                    |
+          +---|                              |                                                    |
+6. (sign) |   |                              |                                                    |
+          +-->|                              |                                                    |
+              |                              |                                                    |
+              |-----7. (signed message)----->|                                                    |
+              |                              |                                                    |
+              |                              |--------------8. (/register { auth })-------------->|
+              |                              |                                                    |
+              |                              |                                                    |---+
+              |                              |                                                    |   | 9. (server
+              |                              |                                                    |<--+    validation &
+              |                              |                                                    |        registration)
               |                              |<----------10. ({ access_token, ...})------------|
               |                              |           user registered & logged in           |
               |                              |                                                 |
@@ -448,7 +446,7 @@ Registers a new user account. It is similar to the login flow.
 
 2. Matrix client requests a new registration session. [More ...](#client-requests-new-registration-session)
 
-3. Matrix server responds with a list of supported registration flows, including a new sessionID. [More ...](#server-responds-with-supported-registration-flow)
+3. Matrix server responds with a list of supported registration flows, including a new session ID. [More ...](#server-responds-with-supported-registration-flow)
 
 4. Matrix client creates a new message for the user to sign. [More ...](#client-creates-message-to-sign)
 
@@ -460,7 +458,7 @@ Registers a new user account. It is similar to the login flow.
 
 8. Matrix client sends a registration request with the authentication data (message, signature, etc) to the server. [More ...](#client-sends-registration-request-with-authentication-data)
 
-9. Matrix server performs validation checks such as signature verification, any message tempering, existence of the account, etc. [More ...](#server-validates-authentication-data-and-registers-user). It creates the account if validation checks are successful.
+9. Matrix server performs validation checks such as signature verification, any message tampering, existence of the account, etc. [More ...](#server-validates-authentication-data-and-registers-user). It creates the account if validation checks are successful.
 
 10. Matrix client receives an access_token, and other login information. User is registered and logged in.
 
@@ -474,14 +472,14 @@ Refer to [Client-server API](https://spec.matrix.org/v1.2/client-server-api/#pos
 {
   username: "string",
   auth: {
-    type: "m.login.crypto" 
+    type: "m.login.publickey" 
   },
 }
 ```
 
 where
 
-* auth.type -- is the type of authentication. ```m.login.crypto``` indicates that the user wants to register a crypto account.
+* auth.type -- is the type of authentication. ```m.login.publickey``` indicates that the user wants to register a public key account.
 
 * username -- is the user ID to register. For Ethereum, this is the public address that starts with "0x".
 
@@ -494,12 +492,11 @@ Refer to [Client-server API](https://spec.matrix.org/v1.2/client-server-api/#pos
   completed: [],
   flows: [
     {
-      stages: [ "m.login.crypto" ]
+      stages: [ "m.login.publickey.someAlgo" ]
     },
   ],
   params: {
-      "m.login.crypto": {
-        type: "...",
+      "m.login.someAlgo": {
         "...": "...", // Any additional params
       }
   },
@@ -509,23 +506,22 @@ Refer to [Client-server API](https://spec.matrix.org/v1.2/client-server-api/#pos
 
 where
 
-* params."m.login.crypto".type -- specifies the cryptographic choice. E.g. ```m.login.crypto.ethereum```
+* params."m.login.publickey.someAlgo" -- specifies the public key choice. E.g. ```m.login.public.ethereum```
 
 * "session" -- the session ID which acts as a nonce to prevent replay attacks. It is generated and tracked by the server. It should be at least 8 alphanumeric characters. Client is expected to present the session ID in its following registration request for the same session. Session ID is deleted once the registration flow is completed.
 
-This is the response for the ```m.login.crypto.ethereum``` type:
+This is the response for the ```m.login.publickey.ethereum``` type:
 
 ```json
 {
   completed: [],
   flows: [
     {
-      stages: [ "m.login.crypto" ]
+      stages: [ "m.login.publickey.ethereum" ]
     },
   ],
   params: {
-      "m.login.crypto": {
-        type: "m.login.crypto.ethereum",
+      "m.login.publickey.ethereum": {
         version: "1",
         chainIDs: ["1"], // https://chainlist.org/
       }
@@ -536,11 +532,11 @@ This is the response for the ```m.login.crypto.ethereum``` type:
 
 where
 
-* params."m.login.crypto".type -- ```m.login.crypto.ethereum```. This means that the client should use the [personal_sign](https://geth.ethereum.org/docs/rpc/ns-personal#personal_sign) method to sign the message and its account address.
+* params."m.login.publickey.ethereum" -- This means that the client should use the [personal_sign](https://geth.ethereum.org/docs/rpc/ns-personal#personal_sign) method to sign the message and its account address.
 
-* params."m.login.crypto".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
+* params."m.login.publickey.ethereum".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
 
-* params."m.login.crypto".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that are not listed in the params.
+* params."m.login.publickey.ethereum".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that are not listed in the params.
 
 ## Client sends registration request with authentication data
 
@@ -552,7 +548,7 @@ Client sends a HTTP POST message to the endpoint ```/register``` with a ```usern
 {
   username: "string", // username to register
   auth: {
-    type: "m.login.crypto",
+    type: "m.login.publickey",
     session: sessionId,
     response: { ... }
 }
@@ -564,10 +560,10 @@ For Ethereum, the JSON should look like this:
 {
   username: "0x...", // Ethereum public address.
   auth: {
-    type: "m.login.crypto",
+    type: "m.login.publickey",
     session: sessionId, // from server's response message
     response: {
-      type: "m.login.crypto.ethereum",
+      type: "m.login.publickey.ethereum",
       username: "0x...", // Ethereum public address
       session: sessionId, // from server's response message
       message, // shown to the user for signing
