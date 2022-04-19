@@ -113,4 +113,8 @@ contract GovernorContract is Governor, GovernorSettings, GovernorCountingSimple,
     {
         return super.supportsInterface(interfaceId);
     }
+
+    function blockNumber() public view returns (uint256) {
+        return block.number;
+    }
 }
