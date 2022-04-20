@@ -8,11 +8,15 @@ type Props = {
 } & BoxProps;
 
 export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
-  <Card colSpan={colSpan} {...boxProps}>
+  <Card
+    colSpan={colSpan}
+    {...boxProps}
+    background={{ lightMode: "default", darkMode: "level2" }}
+  >
     <Box grow border aspectRatio="16/9">
       <BackgroundImage src="placeholders/frame_1.png" gradient="dark" />
     </Box>
-    <Stack grow gap="xs" background="default" padding="xs">
+    <Stack grow gap="xs" padding="xs">
       <Paragraph color="gray2" fontWeight="strong">
         Azuki #announcement
       </Paragraph>

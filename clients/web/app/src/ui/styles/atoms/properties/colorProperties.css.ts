@@ -1,10 +1,12 @@
 import { defineProperties } from "@vanilla-extract/sprinkles";
-import { vars } from "ui/styles/vars.css";
+import { darkTheme, vars } from "ui/styles/vars.css";
 
 export const colorAtomicProperties = defineProperties({
   conditions: {
     lightMode: {},
-    darkMode: { "@media": "(prefers-color-scheme: dark)" },
+    /** instead of using a media-query, we refer to the class set from JS on the
+     * root element from within App.tsx */
+    darkMode: { selector: `${darkTheme} &` },
   },
   defaultCondition: "lightMode",
   properties: {
