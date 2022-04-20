@@ -1,6 +1,7 @@
 import { globalStyle } from "@vanilla-extract/css";
 import { vars } from "../vars.css";
 import "./debug.css";
+import "./fonts.css";
 
 globalStyle("html, body", {
   minHeight: "100vh",
