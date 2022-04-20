@@ -11,6 +11,7 @@
     "contracts",
     "clients/web/app",
     "clients/web/lib",
-    "clients/web/sample-app"
+    "clients/web/sample-app",
+    "clients/governance-ui/"
   ]
 }
