@@ -1,8 +1,8 @@
 import React from "react";
-import { Box, Paragraph } from "../";
+import { Box, Paragraph } from "..";
 import { ParagraphProps } from "../Text/Paragraph";
 
-export const Separator = ({
+export const Divider = ({
   label,
   fontSize = "sm",
   align = "center",

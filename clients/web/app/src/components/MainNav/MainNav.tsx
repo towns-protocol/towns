@@ -1,7 +1,7 @@
 import React from "react";
 import { MainNavActions } from "@components/MainNavActions/MainNavActions";
 import { SpaceNavMock } from "@components/SpaceNavItem/SpaceNavItem";
-import { Box } from "@ui";
+import { Stack } from "@ui";
 
 export const MainNav = () => (
   <NavContainer>
@@ -11,7 +11,7 @@ export const MainNav = () => (
 );
 
 export const NavContainer = (props: { children?: React.ReactNode }) => (
-  <Box
+  <Stack
     borderRight
     shrink={{ tablet: "x0", desktop: "x1" }}
     basis={{ tablet: "auto", desktop: "300" }}
@@ -20,5 +20,5 @@ export const NavContainer = (props: { children?: React.ReactNode }) => (
     minWidth={{ tablet: "none", desktop: "auto" }}
   >
     {props.children}
-  </Box>
+  </Stack>
 );

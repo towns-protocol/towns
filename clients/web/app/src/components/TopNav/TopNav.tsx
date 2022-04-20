@@ -1,11 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Logo } from "@components/Logo/Logo";
 import { SearchInput } from "@components/SearchInput";
-import { Avatar, Box, Heading, Icon } from "@ui";
+import { Avatar, Box, Icon, Stack } from "@ui";
 
 export const TopBar = (props: { onClick?: () => void }) => {
   return (
-    <Box
+    <Stack
       borderBottom
       direction="row"
       shrink={false}
@@ -17,19 +18,17 @@ export const TopBar = (props: { onClick?: () => void }) => {
       color="gray2"
     >
       <Link to="/">
-        <Heading level={3} color="accent">
-          Harmony
-        </Heading>
+        <Logo />
       </Link>
       <Box grow />
       <SearchInput />
-      <Icon size="lg" type="bell" />
+      <Icon size="lg" type="bell" background="level1" />
       <Avatar
         circle
         size="lg"
         src="/placeholders/nft_1.png"
         onClick={props.onClick}
       />
-    </Box>
+    </Stack>
   );
 };

@@ -1,18 +1,26 @@
 import React from "react";
-import { Outlet, useParams } from "react-router";
+import { Outlet } from "react-router";
 import { ChatMessage } from "@components/ChatMessage";
-import { Avatar, Box, Paragraph, Separator } from "@ui";
 import { MessageInput } from "@components/MessageInput/MessageInput";
+import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
 
-export const SpacesChannel = () => {
-  const { channel } = useParams();
+export const SpaceThreads = () => {
   return (
-    <Box grow direction="row">
-      <Box grow>
-        <Box borderBottom height="md" justifyContent="center" paddingX="sm">
-          <Paragraph># {channel}</Paragraph>
-        </Box>
-        <Box padding gap="sm">
+    <Stack grow horizontal>
+      <Stack grow>
+        <Stack
+          horizontal
+          borderBottom
+          height="md"
+          alignItems="center"
+          paddingX="sm"
+          gap="xs"
+        >
+          <Icon type="message" size="sm" />
+          <Paragraph size="lg">Threads</Paragraph>
+        </Stack>
+        <Stack padding gap="sm">
+          <Divider label="# general" align="left" />
           <ChatMessage
             condensed
             avatar={<Avatar nft size="sm" />}
@@ -33,16 +41,29 @@ export const SpacesChannel = () => {
               about marketing and nft's.
             </Paragraph>
           </ChatMessage>
-          <Separator label="Today" />
+          <Paragraph color="accent">Show 150 more replies</Paragraph>
+          <ChatMessage
+            condensed
+            avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
+            name="deiguy"
+            date="Today at 12:01AM"
+          >
+            <Paragraph>
+              Channel about our farm and I'm about to start another about
+              marketing and nft's.
+            </Paragraph>
+          </ChatMessage>
+          <MessageInput />
+          <Divider label="# general" align="left" />
           <ChatMessage
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
-            replies={{ ids: [2, 3, 4], fakeLength: 150 }}
           >
             <Paragraph>How are you all doing today?</Paragraph>
           </ChatMessage>
+          <Paragraph color="accent">Show 150 more replies</Paragraph>
           <ChatMessage
             condensed
             avatar={<Avatar nft size="sm" />}
@@ -57,6 +78,7 @@ export const SpacesChannel = () => {
               about marketing and nft's.
             </Paragraph>
           </ChatMessage>
+
           <ChatMessage
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
@@ -68,44 +90,11 @@ export const SpacesChannel = () => {
               marketing and nft's.
             </Paragraph>
           </ChatMessage>
-          <ChatMessage
-            condensed
-            avatar={<Avatar nft size="sm" src="/placeholders/nft_28.png" />}
-            name="deiguy"
-            date="Today at 12:01AM"
-          >
-            <Paragraph>Nope!</Paragraph>
-          </ChatMessage>
-          <ChatMessage
-            condensed
-            avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
-            name="deiguy"
-            date="Today at 12:01AM"
-          >
-            <Paragraph>Nope!</Paragraph>
-          </ChatMessage>
-          <ChatMessage
-            condensed
-            avatar={<Avatar nft size="sm" src="/placeholders/nft_39.png" />}
-            name="deiguy"
-            date="Today at 12:01AM"
-          >
-            <Paragraph>Nope!</Paragraph>
-          </ChatMessage>
-          <ChatMessage
-            condensed
-            avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
-            name="deiguy"
-            date="Today at 12:01AM"
-          >
-            <Paragraph>
-              Yes arm and I'm about to start another about marketing
-            </Paragraph>
-          </ChatMessage>
+
           <MessageInput />
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
       <Outlet />
-    </Box>
+    </Stack>
   );
 };

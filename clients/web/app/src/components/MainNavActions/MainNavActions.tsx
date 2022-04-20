@@ -13,7 +13,7 @@ const navItems = [
     icon: "message",
     label: "Messages",
   },
-  { id: "spaces/new", link: "", icon: "plus", label: "New Space" },
+  { id: "spaces/new", icon: "plus", label: "New Space" },
 ] as const;
 
 export const MainNavActions = () => {
@@ -26,30 +26,50 @@ export const MainNavActions = () => {
   );
 };
 
-export const MainAction = (props: {
+export const MainAction = ({
+  compact: isCompact,
+  icon,
+  link,
+  id,
+  highlight: isHighlight,
+  label,
+}: {
   id: string;
   label: string;
-  link: string | undefined;
-  icon: IconName;
+  link?: string;
+  icon?: IconName;
+  highlight?: boolean;
+  compact?: boolean;
 }) => {
-  const resolved = useResolvedPath(`/${props.link === "/" ? "" : props.id}`);
+  const resolved = useResolvedPath(`/${link === "/" ? "" : link}`);
   const match = useMatch({
     path: resolved.pathname || "/",
-    end: props.link === "/",
+    end: link === "/",
   });
   return (
     <ConditionalNavLink
-      to={props.link}
-      key={props.id}
+      to={link}
+      key={id}
       className={match ? atoms({ background: "accent", color: "onTone" }) : ""}
     >
-      <NavItem>
-        <Icon
-          type={props.icon}
-          background={match ? "overlay" : "level2"}
-          size={{ desktop: "md", tablet: "lg" }}
-        />
-        <Paragraph display={{ tablet: "none" }}>{props.label}</Paragraph>
+      <NavItem compact={isCompact}>
+        {icon && (
+          <Icon
+            type={icon}
+            background={isCompact ? "none" : match ? "overlay" : "level2"}
+            size={
+              isCompact
+                ? { desktop: "xs", tablet: "lg" }
+                : { desktop: "md", tablet: "lg" }
+            }
+          />
+        )}
+        <Paragraph
+          display={{ tablet: "none" }}
+          fontWeight={isHighlight ? "strong" : "normal"}
+        >
+          {label}
+        </Paragraph>
       </NavItem>
     </ConditionalNavLink>
   );

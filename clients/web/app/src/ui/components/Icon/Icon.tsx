@@ -2,6 +2,7 @@ import clsx from "clsx";
 import React, { forwardRef } from "react";
 import { vars } from "ui/styles/vars.css";
 import { Box } from "..";
+import { BoxProps } from "../Box/Box";
 import { IconAtoms, iconAtoms, iconBaseStyle } from "./Icon.css";
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>;
@@ -111,6 +112,26 @@ export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
+export const LockIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M7 6C7 3.23858 9.23858 1 12 1C14.7614 1 17 3.23858 17 6V7C17 7.03335 16.9997 7.06663 16.999 7.09982C19.2817 7.56271 21 9.5807 21 12V17C21 19.7614 18.7614 22 16 22H8C5.23858 22 3 19.7614 3 17V12C3 9.5807 4.71825 7.56271 7.00098 7.09982C7.00033 7.06663 7 7.03335 7 7V6ZM9 7H15V6C15 4.34315 13.6569 3 12 3C10.3431 3 9 4.34315 9 6V7ZM5 12C5 10.3431 6.34315 9 8 9H16C17.6569 9 19 10.3431 19 12V17C19 18.6569 17.6569 20 16 20H8C6.34315 20 5 18.6569 5 17V12Z"
+        fill="black"
+      />
+    </svg>
+  )
+);
+
 export const MessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" {...props} ref={ref}>
@@ -208,6 +229,40 @@ export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
+export const TagIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    {...props}
+    ref={ref}
+  >
+    <g fill="currentColor">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.87615 20.5302C5.33992 20.398 5.0124 19.8561 5.14461 19.3199L8.97168 3.79729C9.10389 3.26106 9.64576 2.93354 10.182 3.06575C10.7182 3.19795 11.0457 3.73983 10.9135 4.27605L7.08646 19.7986C6.95425 20.3348 6.41238 20.6624 5.87615 20.5302Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M13.0291 20.4938C12.4928 20.3616 12.1653 19.8197 12.2975 19.2835L16.1246 3.76091C16.2568 3.22469 16.7987 2.89716 17.3349 3.02937C17.8711 3.16158 18.1987 3.70345 18.0665 4.23968L14.2394 19.7622C14.1072 20.2985 13.5653 20.626 13.0291 20.4938Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4 8.26881C4 7.71652 4.44772 7.26881 5 7.26881H20.3347C20.887 7.26881 21.3347 7.71652 21.3347 8.26881C21.3347 8.82109 20.887 9.26881 20.3347 9.26881H5C4.44772 9.26881 4 8.82109 4 8.26881Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 15.2688C2 14.7165 2.44772 14.2688 3 14.2688H18.3347C18.887 14.2688 19.3347 14.7165 19.3347 15.2688C19.3347 15.8211 18.887 16.2688 18.3347 16.2688H3C2.44772 16.2688 2 15.8211 2 15.2688Z"
+      />
+    </g>
+  </svg>
+));
+
 export const ThreadsIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg
@@ -233,16 +288,16 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg
       width="20"
-      height="21"
+      height="20"
       viewBox="0 0 20 21"
       fill="none"
       {...props}
       ref={ref}
     >
-      <circle cx="10.5883" cy="11.0876" r="9.41179" fill="#F5BD2D" />
-      <circle cx="9.41179" cy="9.91179" r="9.41179" fill="#FFCF55" />
+      <circle cx="11" cy="11" r="9" fill="#9F2A25" />
+      <circle cx="9" cy="9" r="9" fill="#FB635C" />
       <path
-        d="M6.72477 14.7335C6.34516 14.7335 6.05183 14.6299 5.84477 14.4229C5.63771 14.2072 5.53418 13.9052 5.53418 13.517V6.59343C5.53418 6.19656 5.63771 5.8946 5.84477 5.68754C6.05183 5.48048 6.34516 5.37695 6.72477 5.37695C7.11301 5.37695 7.40634 5.48048 7.60477 5.68754C7.81183 5.8946 7.91536 6.19656 7.91536 6.59343V9.01344H11.6813V6.59343C11.6813 6.19656 11.7805 5.8946 11.9789 5.68754C12.186 5.48048 12.4836 5.37695 12.8718 5.37695C13.2515 5.37695 13.5405 5.48048 13.7389 5.68754C13.946 5.8946 14.0495 6.19656 14.0495 6.59343V13.517C14.0495 13.9052 13.946 14.2072 13.7389 14.4229C13.5405 14.6299 13.2515 14.7335 12.8718 14.7335C12.4836 14.7335 12.186 14.6299 11.9789 14.4229C11.7805 14.2072 11.6813 13.9052 11.6813 13.517V10.9676H7.91536V13.517C7.91536 13.9052 7.81615 14.2072 7.61772 14.4229C7.41928 14.6299 7.12164 14.7335 6.72477 14.7335Z"
+        d="M13.1404 4.35751C13.0784 4.32031 12.9792 4.33271 12.8924 4.32031C12.7436 4.32031 12.5948 4.34511 12.4336 4.34511C12.136 4.34511 11.826 4.34511 11.5284 4.34511H9.73044C8.21764 4.35751 6.70484 4.35751 5.19204 4.36991C4.84484 4.36991 4.90684 4.64271 4.88204 4.91551L4.84484 5.58511C4.84484 5.75871 4.83244 5.93231 4.83244 6.10591C4.83244 6.21751 4.82004 6.52751 4.94404 6.58951C5.04324 6.65151 5.24164 6.46551 5.32844 6.40351C5.46484 6.30431 5.61364 6.21751 5.76244 6.13071C6.06004 5.95711 6.35764 5.79591 6.66764 5.65951C7.27524 5.36191 7.89524 5.11391 8.51524 4.87831C8.98644 4.69231 9.48244 4.60551 10.0032 4.63031C10.0404 4.63031 10.1024 4.63031 10.1396 4.65511C10.3008 4.76671 10.0032 5.00231 9.94124 5.08911C9.78004 5.27511 9.63124 5.46111 9.49484 5.65951C9.19724 6.04391 8.92444 6.44071 8.66404 6.84991C7.38684 8.77191 6.10964 10.6815 4.84484 12.6035C4.70844 12.8143 4.75804 12.9755 5.01844 12.9755C5.77484 12.9879 6.53124 13.0127 7.28764 13.0003C9.02364 12.9631 10.7596 12.8391 12.4956 12.8887C12.5452 12.8887 12.6072 12.8887 12.6568 12.8763C12.7808 12.8639 12.9668 12.8639 12.9916 12.7151C13.0164 12.5167 13.004 12.3059 13.0164 12.0951C13.0412 11.6735 13.0536 11.2519 13.066 10.8303C13.0784 10.7807 13.0288 10.6691 12.9792 10.6567C12.9172 10.6319 12.8428 10.7063 12.7932 10.7435L12.5824 10.8799C12.3468 11.0411 12.1236 11.2271 11.8756 11.3635C11.3548 11.6363 10.834 11.8719 10.3132 12.1447C9.56924 12.5291 8.76324 12.6035 7.94484 12.5663C7.85804 12.5663 7.72164 12.5291 7.73404 12.4175C7.73404 12.3431 7.82084 12.2687 7.85804 12.2067L8.04404 11.9463C9.65604 9.61511 11.2804 7.29631 12.8924 4.97751C12.9544 4.87831 13.0288 4.79151 13.1032 4.70471C13.128 4.66751 13.1776 4.60551 13.2024 4.55591C13.2396 4.46911 13.2396 4.39471 13.1404 4.35751Z"
         fill="white"
       />
     </svg>
@@ -256,12 +311,14 @@ const iconMap = {
   check: CheckIcon,
   down: DownIcon,
   home: HomeIcon,
+  lock: LockIcon,
   message: MessageIcon,
   newmessage: NewMessageIcon,
   pin: PinIcon,
   plus: PlusIcon,
   search: SearchIcon,
   settings: SettingsIcon,
+  tag: TagIcon,
   token: TokenIcon,
   threads: ThreadsIcon,
 } as const;
@@ -272,6 +329,7 @@ export type IconName = keyof typeof iconMap;
 type IconProps = {
   type: IconName;
   background?: keyof typeof vars.color.background;
+  padding?: BoxProps["padding"];
   className?: string;
 } & IconAtoms;
 
@@ -287,9 +345,10 @@ export const Icon = (props: IconProps) => {
       className={clsx(iconBaseStyle, iconAtoms({ size }), className)}
       background={background}
       padding={
-        !background || background?.match(/^(none|transparent|default)$/)
+        props.padding ??
+        (!background || background?.match(/^(none|transparent|default)$/)
           ? "none"
-          : "xxs"
+          : "xxs")
       }
     >
       <Icon width="100%" height="100%" />

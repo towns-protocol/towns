@@ -1,16 +1,20 @@
 import React from "react";
 import { AnnouncementCard } from "@components/AnnouncementCard";
 import { HighlightCard } from "@components/HighlightCard";
-import { Box, Grid, Heading } from "@ui";
 import { MainNav } from "@components/MainNav/MainNav";
+import { Grid, Heading } from "@ui";
+import { Stack } from "ui/components/Stack/Stack";
+import { LiquidContainer } from "./SpacesIndex";
 
 export const Home = () => (
   <>
     <MainNav />
-    <Box grow="x9" justifyContent="center" direction="row" padding="lg">
-      <Box maxWidth={{ desktop: "1200" }}>
-        <Box grow gap="md">
-          <Heading level={1}>Highlights</Heading>
+    <Stack horizontal grow justifyContent="center" paddingY="md" basis="1200">
+      <LiquidContainer fullbleed>
+        <Stack grow gap="sm">
+          <Heading level={1} color="gray1">
+            Highlights
+          </Heading>
           <Grid columns={4} gap="sm">
             <HighlightCard colSpan={2} />
             <HighlightCard colSpan={2} />
@@ -19,8 +23,8 @@ export const Home = () => (
             <AnnouncementCard />
             <AnnouncementCard />
           </Grid>
-        </Box>
-      </Box>
-    </Box>
+        </Stack>
+      </LiquidContainer>
+    </Stack>
   </>
 );

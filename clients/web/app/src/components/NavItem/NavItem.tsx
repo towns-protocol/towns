@@ -3,16 +3,15 @@ import { Box, BoxProps } from "@ui";
 
 export const NavItem = forwardRef<
   HTMLElement,
-  BoxProps & HTMLAttributes<HTMLDivElement>
+  { compact?: boolean } & BoxProps & HTMLAttributes<HTMLDivElement>
 >((props, ref) => (
   <Box
-    cursor="pointer"
     direction="row"
     alignItems="center"
     paddingX="sm"
-    paddingY={{ tablet: "xs", desktop: "xs" }}
-    gap="xs"
-    minHeight="md"
+    paddingY={props.compact ? "xxs" : "xs"}
+    gap={props.compact ? "xxs" : "xs"}
+    minHeight={props.compact ? "sm" : "md"}
     {...props}
     ref={ref}
   />

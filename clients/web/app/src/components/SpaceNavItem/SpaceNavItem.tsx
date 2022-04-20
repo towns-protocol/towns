@@ -75,29 +75,36 @@ export const SpaceNavItem = ({
   id,
   active,
   avatar,
+  exact,
   name,
   pinned,
+  compact: isCompact,
 }: {
   id: string;
   name: string;
   avatar: string;
   active?: boolean;
   pinned?: boolean;
+  exact?: boolean;
+  compact?: boolean;
 }) => (
   <NavLink
+    end={exact}
     to={`/spaces/${id}`}
     className={({ isActive }) =>
       isActive ? atoms({ background: "accent", color: "onTone" }) : atoms({})
     }
   >
-    <NavItem>
-      <Avatar src={avatar} size={{ tablet: "lg", desktop: "md" }} />
-      <Paragraph
-        grow
-        truncate
-        fontWeight={active ? "strong" : "normal"}
-        display={{ tablet: "none" }}
-      >
+    <NavItem compact={isCompact}>
+      <Avatar
+        src={avatar}
+        size={
+          isCompact
+            ? { tablet: "lg", desktop: "xs" }
+            : { tablet: "lg", desktop: "md" }
+        }
+      />
+      <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
         {name}
       </Paragraph>
       <Box shrink display={{ tablet: "none" }}>

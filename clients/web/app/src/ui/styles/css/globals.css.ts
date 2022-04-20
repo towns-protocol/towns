@@ -4,7 +4,7 @@ import "./debug.css";
 
 globalStyle("html, body", {
   minHeight: "100vh",
-  fontFamily: "Nunito, sans-serif",
+  // fontFamily: "Nunito, sans-serif",
   textRendering: "optimizeLegibility",
   WebkitFontSmoothing: "antialiased",
   MozOsxFontSmoothing: "gray1scale",

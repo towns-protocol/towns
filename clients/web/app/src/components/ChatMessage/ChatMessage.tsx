@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Avatar, Box, BoxProps, Text } from "@ui";
+import { Avatar, Box, BoxProps, Stack, Text } from "@ui";
 import * as styles from "./ChatMessage.css";
 
 type Props = {
@@ -91,28 +91,34 @@ export const ChatMessage = ({
 );
 
 const ReactionMock = (props: { reactions: { [key: string]: number } }) => (
-  <Box direction="row" gap="xxs">
+  <Stack direction="row" gap="xxs">
     {Object.keys(props.reactions).map((k) => (
-      <Box
+      <Stack
+        horizontal
         centerContent
+        gap="xxs"
         key={k}
         rounded="lg"
         height="sm"
         background="level2"
+        color="gray1"
         paddingX="xs"
       >
-        <Text as="span" size="sm" color="gray1">
-          {k} {props.reactions[k]}
+        <Text as="p" size="sm">
+          {k}
         </Text>
-      </Box>
+        <Text as="p" size="sm">
+          {props.reactions[k]}
+        </Text>
+      </Stack>
     ))}
-  </Box>
+  </Stack>
 );
 
 const RepliesMock = (props: {
   replies: { ids: number[]; fakeLength: number };
 }) => (
-  <NavLink to="/spaces/crypto-punks/announcements/threads/123123123">
+  <NavLink to="/spaces/crypto-punks/announcements/replies/123123123">
     <Box
       centerContent
       rounded="xs"

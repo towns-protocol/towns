@@ -20,6 +20,8 @@ type Props = {
 
   truncate?: boolean;
 
+  strong?: boolean;
+
   display?: BoxProps["display"];
 } & TextSprinkles;
 
@@ -30,7 +32,8 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
     as = "p",
     size = "md",
     display = "block",
-    fontWeight = "normal",
+    strong = false,
+    fontWeight,
     textTransform = "none",
     textAlign = "left",
     truncate,
@@ -39,7 +42,12 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
     ...boxProps
   } = props;
 
-  const textProps = { fontSize: size, fontWeight, textTransform, textAlign };
+  const textProps = {
+    fontSize: size,
+    fontWeight: fontWeight ?? (strong ? "strong" : "normal"),
+    textTransform,
+    textAlign,
+  };
 
   return (
     <Box

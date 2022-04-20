@@ -1,7 +1,7 @@
 import React from "react";
 import { AvatarStack } from "@components/AvatarStack";
-import { Avatar, Box, Heading, Icon, Paragraph, Separator } from "@ui";
 import { MessageInput } from "@components/MessageInput/MessageInput";
+import { Avatar, Box, Divider, Heading, Icon, Paragraph } from "@ui";
 
 export const MessagesNew = () => (
   <Box grow>
@@ -55,12 +55,11 @@ export const MessagesNew = () => (
           </Paragraph>
           <AvatarStack />
         </Box>
-
         <Paragraph size="md" color="gray2">
           This is the beginning of your direct messa with iamblue
         </Paragraph>
       </Box>
-      <Separator />
+      <Divider />
       <Box gap="sm">
         <MessageInput />
       </Box>

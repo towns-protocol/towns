@@ -26,13 +26,13 @@ export const textBaseStyle = style({
       display: "table",
       textAlign: "left",
       content: "",
-      marginTop: "-0.18em",
+      marginTop: "-0.24em",
     },
     "&:after": {
       content: "",
       display: "table",
       textAlign: "left",
-      marginTop: "-.26em",
+      marginTop: "-0.22em",
     },
   },
 });

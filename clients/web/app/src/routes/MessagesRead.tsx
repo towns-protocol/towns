@@ -1,14 +1,15 @@
 import React from "react";
 import { AvatarStack } from "@components/AvatarStack";
 import { ChatMessage } from "@components/ChatMessage";
-import { Avatar, Box, Heading, Icon, Paragraph, Separator } from "@ui";
 import { MessageInput } from "@components/MessageInput/MessageInput";
+import { Avatar, Divider, Heading, Icon, Paragraph } from "@ui";
+import { Stack } from "ui/components/Stack/Stack";
 
 export const MessagesRead = () => (
-  <Box grow>
-    <Box
+  <Stack grow>
+    <Stack
       borderBottom
-      direction="row"
+      horizontal
       paddingX="sm"
       height="md"
       gap="xs"
@@ -18,12 +19,12 @@ export const MessagesRead = () => (
       <Paragraph size="lg" color="gray1">
         iamblue
       </Paragraph>
-    </Box>
-    <Box grow gap="sm" justifyContent="end" padding="sm">
-      <Box gap="xs">
+    </Stack>
+    <Stack grow gap="sm" justifyContent="end" padding="sm">
+      <Stack gap="xs">
         <Avatar nft src="/placeholders/nft_4.png" size="xl" />
         <Heading level={1}>iamblue</Heading>
-        <Box direction="row" alignItems="center" gap="xs">
+        <Stack horizontal alignItems="center" gap="xs">
           <Paragraph size="lg" fontWeight="strong">
             50
           </Paragraph>
@@ -32,14 +33,14 @@ export const MessagesRead = () => (
             &#8226; 3 Servers in common
           </Paragraph>
           <AvatarStack />
-        </Box>
+        </Stack>
 
         <Paragraph size="md" color="gray2">
           This is the beginning of your direct messa with iamblue
         </Paragraph>
-      </Box>
-      <Separator />
-      <Box gap="sm">
+      </Stack>
+      <Divider />
+      <Stack gap="sm">
         <ChatMessage
           condensed
           name="You"
@@ -48,7 +49,6 @@ export const MessagesRead = () => (
         >
           <Paragraph>gm</Paragraph>
         </ChatMessage>
-
         <ChatMessage
           condensed
           name="iamblue"
@@ -58,7 +58,7 @@ export const MessagesRead = () => (
           <Paragraph>GM My man!!</Paragraph>
         </ChatMessage>
         <MessageInput />
-      </Box>
-    </Box>
-  </Box>
+      </Stack>
+    </Stack>
+  </Stack>
 );

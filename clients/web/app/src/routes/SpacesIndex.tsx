@@ -1,31 +1,40 @@
 import React, { ComponentProps, forwardRef } from "react";
 import { ChatMessage } from "@components/ChatMessage";
-import { Avatar, Box, BoxProps, Heading, Icon, Paragraph } from "@ui";
+import { Avatar, Box, BoxProps, Heading, Icon, Paragraph, Stack } from "@ui";
 
 export const SpacesIndex = () => (
   <>
     <Box
       borderBottom
+      grow
       alignItems="center"
-      background="default"
-      padding="md"
       paddingBottom="none"
       position="relative"
+      maxHeight="400"
     >
-      <LiquidContainer width="100%" height="25vh" maxHeight="400">
+      <LiquidContainer grow width="100%">
         <SpaceBanner image="/placeholders/frame_1.png" />
         <SpaceMenu />
       </LiquidContainer>
     </Box>
-    <Box padding grow="x2" alignItems="center" background="level1">
+    <Box grow paddingY="sm" alignItems="center" background="level1">
       <SpaceMessages />
     </Box>
   </>
 );
 
-export const LiquidContainer = forwardRef<HTMLElement, BoxProps>(
-  (props, ref) => <Box maxWidth="1200" width="100%" {...props} ref={ref} />
-);
+export const LiquidContainer = forwardRef<
+  HTMLElement,
+  { fullbleed?: boolean } & BoxProps
+>((props, ref) => (
+  <Box
+    maxWidth={(!props.fullbleed && "1200") || "100%"}
+    width="100%"
+    {...props}
+    ref={ref}
+    paddingX="md"
+  />
+));
 
 const SpaceMessages = () => (
   <LiquidContainer gap="sm">
@@ -126,12 +135,14 @@ const SpaceMenu = () => (
 const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
   <Box
     shrink
-    padding="sm"
+    height="x4"
+    paddingX="sm"
     background={props.selected ? "level2" : undefined}
     roundedTop="sm"
+    justifyContent="center"
   >
     <Paragraph
-      fontWeight={props.selected ? "strong" : undefined}
+      strong={props.selected}
       color={props.selected ? "default" : "gray2"}
     >
       {props.label}
@@ -140,31 +151,41 @@ const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
 );
 
 const SpaceBanner = (props: SpaceBannerProps) => (
-  <Box grow width="100%" justifyContent="center">
-    <Box gap="md" direction="row">
+  <Stack grow width="100%" justifyContent="center">
+    <Stack horizontal gap="sm" padding="sm">
       {/* avatar container */}
       <Box border padding="xs" borderRadius="lg" background="level1">
         <Avatar circle src="/placeholders/nft_9.png" size="xxl" />
       </Box>
       {/* title and stats container */}
-      <Box grow justifyContent="center">
-        <Heading>Title</Heading>
-      </Box>
+      <Stack grow justifyContent="center" gap="sm">
+        <Heading level={3}>Border Ape Yacht Club</Heading>
+        <Stack horizontal gap="sm" color="gray1">
+          <Stack horizontal gap="xs" alignItems="center">
+            <Box background="accent" square="xxs" rounded="full" />
+            <Paragraph size="lg">2.3K</Paragraph>
+          </Stack>
+          <Stack horizontal gap="xs" alignItems="center">
+            <Icon type="token" size="xs" />
+            <Paragraph size="lg">12.4M</Paragraph>
+          </Stack>
+        </Stack>
+      </Stack>
       {/* actions container */}
-      <Box alignItems="center" direction="row" gap="xs">
+      <Stack alignItems="center" direction="row" gap="xs">
         <MockDropDown />
-        <Icon type="settings" background="level2" size="lg" />
-      </Box>
-    </Box>
-  </Box>
+        <Icon type="settings" background="level2" size="lg" padding="xs" />
+      </Stack>
+    </Stack>
+  </Stack>
 );
 
 const MockDropDown = () => (
-  <Box
-    direction="row"
+  <Stack
+    horizontal
     background="level2"
     alignItems="center"
-    height="md"
+    height="x4"
     paddingX="sm"
     rounded="sm"
     fontSize="md"
@@ -173,5 +194,5 @@ const MockDropDown = () => (
     boredpesir
     <Avatar circle nft src="/placeholders/nft_32.png" size="xs" />
     <Icon type="down" size="adapt" />
-  </Box>
+  </Stack>
 );

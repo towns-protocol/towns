@@ -1,8 +1,8 @@
 import { style } from "@vanilla-extract/css";
 import { createSprinkles } from "@vanilla-extract/sprinkles";
 import { vcn } from "vanilla-classnames";
-import { vars } from "ui/styles/vars.css";
 import { avatarProperties } from "ui/styles/atoms/properties/avatarProperties.css";
+import { vars } from "ui/styles/vars.css";
 
 /**
  * why not use recipes API ?

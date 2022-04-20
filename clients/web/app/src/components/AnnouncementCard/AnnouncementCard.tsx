@@ -1,7 +1,7 @@
 import React from "react";
 import { BackgroundImage } from "@components/BackgroundImage";
 import { Card } from "@components/Card/Card";
-import { Avatar, Box, BoxProps, Paragraph } from "@ui";
+import { Avatar, Box, BoxProps, Paragraph, Stack } from "@ui";
 
 type Props = {
   colSpan?: 1 | 2 | 3 | 4;
@@ -10,13 +10,13 @@ type Props = {
 export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
   <Card colSpan={colSpan} {...boxProps}>
     <Box grow border aspectRatio="16/9">
-      <BackgroundImage src="placeholders/frame_2.png" gradient="dark" />
+      <BackgroundImage src="placeholders/frame_1.png" gradient="dark" />
     </Box>
-    <Box grow gap="xs" background="default" padding="xs">
+    <Stack grow gap="xs" background="default" padding="xs">
       <Paragraph color="gray2" fontWeight="strong">
         Azuki #announcement
       </Paragraph>
-      <Box gap="xs" color="gray1">
+      <Stack gap="xs" color="gray1">
         <Paragraph>Oh shit we’re in Forbes!!</Paragraph>
         <Paragraph truncate>
           https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds...
@@ -24,11 +24,11 @@ export const AnnouncementCard = ({ colSpan = 1, ...boxProps }: Props) => (
         <Paragraph>
           More content in the article above. Text on several lines...
         </Paragraph>
-      </Box>
-      <Box direction="row" gap="xs" alignItems="center">
+      </Stack>
+      <Stack direction="row" gap="xs" alignItems="center">
         <Avatar circle size="xs" />
         <Paragraph color="gray1">meocat</Paragraph>
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   </Card>
 );

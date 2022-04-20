@@ -7,5 +7,6 @@ export { Input } from "./Input/Input";
 export { Heading } from "./Text/Heading";
 export { Paragraph } from "./Text/Paragraph";
 export { Text } from "./Text/Text";
-export { Separator } from "./Separator/Separator";
+export { Stack } from "./Stack/Stack";
+export { Divider } from "./Divider/Divider";
 export * from "./Button/Button";

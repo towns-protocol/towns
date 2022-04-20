@@ -1,28 +1,27 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Avatar, Box, Icon, Paragraph } from "@ui";
+import { Avatar, Box, Icon, Paragraph, Stack } from "@ui";
 
 export const MessageList = () => {
   return (
     <>
-      <Box
+      <Stack
+        horizontal
         borderBottom
-        direction="row"
         paddingX="sm"
         height="md"
         gap="xs"
+        justifyContent="spaceBetween"
         alignItems="center"
       >
-        <Box grow>
-          <Paragraph>Messages</Paragraph>
-        </Box>
+        <Paragraph>Messages</Paragraph>
         <Box>
           <NavLink to="/messages/new">
             <Icon type="newmessage" background="accent" />
           </NavLink>
         </Box>
-      </Box>
-      <Box paddingY="xs">
+      </Stack>
+      <Box>
         <Message />
         <Message />
         <Message />
@@ -41,7 +40,7 @@ const Message = ({
   selected?: boolean;
 }) => (
   <NavLink to="iamblue">
-    <Box direction="row" paddingX="sm" paddingY="xs" gap="xs">
+    <Stack horizontal paddingX="sm" paddingY="xs" gap="xs">
       <Avatar nft src="/placeholders/nft_2.png" size="lg" insetY="xxs" />
       <Box grow gap="xxs">
         <Paragraph
@@ -57,6 +56,6 @@ const Message = ({
       <Box centerContent shrink>
         <Paragraph color="gray2">1m</Paragraph>
       </Box>
-    </Box>
+    </Stack>
   </NavLink>
 );

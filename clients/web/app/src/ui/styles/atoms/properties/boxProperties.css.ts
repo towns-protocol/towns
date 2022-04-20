@@ -38,6 +38,15 @@ export const flexJustifyAlignment = {
 } as const;
 
 export const flexGrow = {
+  h1: 0.1,
+  h2: 0.2,
+  h3: 0.3,
+  h4: 0.4,
+  h5: 0.5,
+  h6: 0.6,
+  h7: 0.7,
+  h8: 0.8,
+  h9: 0.9,
   x0: 0,
   x1: 1,
   x2: 2,

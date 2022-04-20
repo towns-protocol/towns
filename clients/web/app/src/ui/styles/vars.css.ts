@@ -75,7 +75,7 @@ const root = createGlobalTheme(":root", {
       // big icons
       xl: `${baseline * 6.5}px`,
       // hero avatar
-      xxl: `${baseline * 12.5}px`,
+      xxl: `${baseline * 10}px`,
 
       adapt: `1.2em`,
     },
@@ -86,9 +86,30 @@ const root = createGlobalTheme(":root", {
       /** text rows */
       sm: `${baseline * 3.5}px`,
       /** message rows */
-      md: `${baseline * 4.5}px`,
+      md: `${baseline * 5}px`,
       /** input fields / topbar */
       lg: `${baseline * 6.5}px`,
+
+      /**
+       * ideally we would only use semantical but small inconsistencies makes it
+       * hard to to make one-version-fits-all-needs
+       **/
+      x1: `${baseline * 1}px`,
+      x2: `${baseline * 2}px`,
+      x3: `${baseline * 3}px`,
+      x4: `${baseline * 4}px`,
+      x5: `${baseline * 5}px`,
+      x6: `${baseline * 6}px`,
+      x7: `${baseline * 7}px`,
+      x8: `${baseline * 8}px`,
+      x9: `${baseline * 9}px`,
+
+      /** 80px */
+      x10: `${baseline * 10}px`,
+      /** 160px */
+      x20: `${baseline * 20}px`,
+      /** 320px */
+      x40: `${baseline * 40}px`,
     },
 
     screens: {

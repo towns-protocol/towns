@@ -1,9 +1,9 @@
 import React from "react";
-import { Avatar, Box, Paragraph, Separator } from "@ui";
 import { ChatMessage } from "@components/ChatMessage";
 import { MessageInput } from "@components/MessageInput/MessageInput";
+import { Avatar, Box, Divider, Paragraph } from "@ui";
 
-export const SpacesChannelThread = (props: { children?: React.ReactNode }) => (
+export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
   <Box
     borderRight
     borderLeft
@@ -13,10 +13,10 @@ export const SpacesChannelThread = (props: { children?: React.ReactNode }) => (
     minWidth={{ tablet: "none", desktop: "auto" }}
   >
     <Box borderBottom height="md" justifyContent="center" paddingX="sm">
-      <Paragraph>Thread</Paragraph>
+      <Paragraph size="lg">Replies</Paragraph>
     </Box>
     <Box padding="sm" gap="sm">
-      <Separator align="left" fontSize="md" label="# general" />
+      <Divider align="left" fontSize="md" label="# general" />
       <ChatMessage
         condensed
         name="threadpeep3k"

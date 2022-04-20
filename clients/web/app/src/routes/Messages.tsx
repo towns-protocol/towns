@@ -2,16 +2,16 @@ import React from "react";
 import { Outlet } from "react-router";
 import { MainNav, NavContainer } from "@components/MainNav/MainNav";
 import { MessageList } from "@components/MessageList";
-import { Box } from "@ui";
+import { Stack } from "@ui";
 
 export const Messages = (props: { children?: React.ReactNode }) => (
   <>
     <MainNav />
-    <NavContainer>
-      <MessageList />
-    </NavContainer>
-    <Box grow="x9">
+    <Stack horizontal basis="1200">
+      <NavContainer>
+        <MessageList />
+      </NavContainer>
       <Outlet />
-    </Box>
+    </Stack>
   </>
 );

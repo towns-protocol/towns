@@ -9,6 +9,7 @@ export type ParagraphProps = {
   children?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
   truncate?: boolean;
+  strong?: boolean;
 } & Omit<TextSprinkles, "size" | "fontSize"> &
   Pick<BoxProps, "grow" | "shrink" | "display">;
 
