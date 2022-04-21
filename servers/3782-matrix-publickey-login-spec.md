@@ -260,7 +260,6 @@ selected the correct blockchain network. This gives the client a chance to show 
 right network if needed.
 
 ```json
-// Server's login flow response
 {
   "flows": [
     {
