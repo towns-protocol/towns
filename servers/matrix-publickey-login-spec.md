@@ -148,8 +148,8 @@ This is the response for the ```m.login.publickey.ethereum``` type:
   ],
   params: {
       "m.login.publickey.ethereum": {
-        version: "1",
-        chainIDs: ["1"], // https://chainlist.org/
+        version: 1,
+        chain_ids: ["1"], // https://chainlist.org/
       }
   },
   session: "xxxxxx"
@@ -162,7 +162,7 @@ where
 
 * params."m.login.publickey.ethereum".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
 
-* params."m.login.publickey.ethereum".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the server can have a production config that specifies chain ID 1 for the Ethereum mainnet; a development server can have a test config that specifies chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that is not listed in the params.
+* params."m.login.publickey.ethereum".chain_ids -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the server can have a production config that specifies chain ID 1 for the Ethereum mainnet; a development server can have a test config that specifies chain ID 4 for the rinkeby test network. Server should reject login attempts for any chain IDs that is not listed in the params.
 
 ## Client creates message to sign
 
@@ -200,7 +200,7 @@ Client prepares the following JSON data (aka ```hashFields```):
   domain: "string", // home server domain
   address: "string", // Ethereum address. 0x...
   nonce: "string", // session ID
-  version: 1, // version of this spec
+  version: 1, // version of the Matrix public key spec that the client is complying with
   chainId: "string", // blockchain network ID.
   "...", "...", // any other properties.
 }
@@ -221,7 +221,7 @@ where
 * "..." -- any other properties for the app. Ignored by the server.
 
 Implementer's notes:
-From the server's response, the client app should check the chainIDs list to make sure that the user has selected the correct blockchain network. This gives the client a chance to show some UI to the user to switch to the right network if needed.
+From the server's response, the client app should check the ```chain_ids``` list to make sure that the user has selected the correct blockchain network. This gives the client a chance to show some UI to the user to switch to the right network if needed.
 
 ```json
 // Server's login flow response
@@ -234,7 +234,7 @@ From the server's response, the client app should check the chainIDs list to mak
   params: {
       "m.login.publickey.ethereum": {
         version: 1,
-        chainIDs: ["1"], // https://chainlist.org/
+        chain_ids: ["1"], // https://chainlist.org/
       }
   },
   session: "xxxxxx"
@@ -316,7 +316,7 @@ For Ethereum, the ```auth``` JSON should look like this:
   type: "m.login.publickey",
   auth: {
     type: "m.login.publickey.ethereum",
-    username: "string", // Ethereum public address. 0x...
+    address: "string", // Ethereum public address. 0x...
     session: sessionId, // from server's response message
     message, // shown to the user for signing
     signature, // signature from the signing tool
@@ -341,9 +341,9 @@ Refer to [login auth request from the client](#client-sends-login-request-with-a
 
 * Checks ```auth.session``` (session ID) exists.
 
-* Checks ```auth.username``` account exists. For Ethereum, this is the [public address](#address-as-localpart).
+* Checks ```auth.address``` account exists. For Ethereum, this is the [public address](#address-as-localpart).
 
-* Verifies the signature ```auth.signature``` is from ```auth.username```, and the message ```auth.message``` has not been tampered with. This step is different for each cryptographic signature type. See [Ethereum-specific validation](#ethereum-specific-validation).
+* Verifies the signature ```auth.signature``` is from ```auth.address```, and the message ```auth.message``` has not been tampered with. This step is different for each cryptographic signature type. See [Ethereum-specific validation](#ethereum-specific-validation).
 
 * Extract required information from the [message signed by the user](#message-for-the-user-to-sign):
 
@@ -365,8 +365,8 @@ Refer to [login auth request from the client](#client-sends-login-request-with-a
 | Signed message |    | ```authData```   |    | Server's expectation |
 | -------------- | -- | ---------------- | -- | -------------------- |
 | ${domain}      | == | authData.domain  | == | home server name     |
-| ${address}     | == | authData.address | == | ```auth.username```  |
-|                |    | authData.nonce   | == | ```auth.session```   |
+| ${address}     | == | authData.address | == | ```auth.address```   |
+|                |    | authData.nonce   | == | session ID           |
 
 * If all validation passes, the server completes the login flow, cleans up the session (by deleting the session ID), and sends back a HTTP OK response to the client like other authentication types:
   * access_token,
@@ -394,11 +394,11 @@ There is no need to implement the verification and recovery function from scratc
 
 v = "recover id" is offset by -27 per the [Ethereum](http://gavwood.com/paper.pdf) spec.
 
-**public address** -- after recovering the public key from the signature, derive its public address from the recovered key. You can use one of the Open Source libraries to do that. Compare the message signer's public address with the login username (who is attempting to login). It should match.
+**public address** -- after recovering the public key from the signature, derive its public address from the recovered key. You can use one of the Open Source libraries to do that. Compare the message signer's public address with the login address (who is attempting to login). It should match.
 
 **chain ID** -- Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network.
 
-Server should reject login attempts for a chain ID that is not listed in its configurations. This avoids downstream problems for supporting servers (like Application services) that need to resolve contracts on specific blockchain networks.
+Server should reject login attempts for a chain ID that are not listed in its configurations. This avoids downstream problems for supporting servers (like Application services) that need to resolve contracts on specific blockchain networks.
 
 **version** -- see [version number](#version-number) for the expected behavior.
 
@@ -522,8 +522,8 @@ This is the response for the ```m.login.publickey.ethereum``` type:
   ],
   params: {
       "m.login.publickey.ethereum": {
-        version: "1",
-        chainIDs: ["1"], // https://chainlist.org/
+        version: 1,
+        chain_ids: ["1"], // https://chainlist.org/
       }
   },
   session: "xxxxxx"
@@ -536,7 +536,7 @@ where
 
 * params."m.login.publickey.ethereum".version -- the version of this spec that the server is willing to support. See [version number](#version-number).
 
-* params."m.login.publickey.ethereum".chainIDs -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network. Server should reject login attempts for any chainIDs that are not listed in the params.
+* params."m.login.publickey.ethereum".chain_ids -- [blockchain network IDs](https://chainlist.org/) that the server will allow. Server is configured (via its configuration file) to allow login from a list of blockchain networks. For example, the production config allows chain ID 1 for the Ethereum mainnet; the test config allows chain ID 4 for the rinkeby test network. Server should reject login attempts for any chain IDs that are not listed in the params.
 
 ## Client sends registration request with authentication data
 
@@ -550,7 +550,7 @@ Client sends a HTTP POST message to the endpoint ```/register``` with a ```usern
   auth: {
     type: "m.login.publickey",
     session: sessionId,
-    response: { ... }
+    public_key_response: { ... }
 }
 ```
 
@@ -562,9 +562,9 @@ For Ethereum, the JSON should look like this:
   auth: {
     type: "m.login.publickey",
     session: sessionId, // from server's response message
-    response: {
+    public_key_response: {
       type: "m.login.publickey.ethereum",
-      username: "0x...", // Ethereum public address
+      address: "0x...", // Ethereum public address
       session: sessionId, // from server's response message
       message, // shown to the user for signing
       signature, // signature from the signing tool
@@ -608,7 +608,7 @@ There is an open issue with compromised private keys. This proposal does not add
 
 At the end of the login flow, the server will send back a response with the access_token, username, and other logged in data.
 
-With respect to the username, this proposal treats the crypto public address like the localpart of ```m.id.user```. This allows immediate access to all existing Matrix features.
+With respect to the username, this proposal treats the public address like the localpart of ```m.id.user```. This allows immediate access to all existing Matrix features.
 
 ```go
 LoginIdentifier{

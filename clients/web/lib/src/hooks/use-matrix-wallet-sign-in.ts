@@ -3,12 +3,17 @@ import {
   AuthenticationError,
   LoginFlows,
   LoginStatus,
-  LoginTypeWallet,
+  LoginTypePublicKey,
+  PublicKeyEtheremParams,
   RegisterRequest,
   RegistrationAuthentication,
-  WalletMessageFields,
+  PublicKeyEthereumHashFields,
+  getChainIdEip155,
+  getChainName,
+  getParamsPublicKeyEthereum,
   getUsernameFromId,
-  isLoginFlow,
+  isLoginFlowPublicKeyEthereum,
+  LoginTypePublicKeyEthereum,
 } from "./login";
 import { MatrixClient, MatrixError, createClient } from "matrix-js-sdk";
 import { useCallback, useMemo } from "react";
@@ -21,12 +26,14 @@ import { useWeb3Context } from "./use-web3";
 
 interface NewSession {
   sessionId: string;
+  version: number;
+  chainIds: string[];
   error?: string;
 }
 
-interface SignedWalletData {
+interface SignedAuthenticationData {
   signature: string;
-  messageFields: WalletMessageFields;
+  hashFields: PublicKeyEthereumHashFields;
   message: string;
 }
 
@@ -42,6 +49,15 @@ export function useMatrixWalletSignIn() {
   } = useMatrixStore();
   const { setAccessToken } = useCredentialStore();
   const { accounts, chainId, sign } = useWeb3Context();
+
+  const chainIdEip155 = useMemo(
+    function () {
+      if (chainId) {
+        return getChainIdEip155(chainId);
+      }
+    },
+    [chainId]
+  );
 
   const walletAddress = useMemo(
     () =>
@@ -80,11 +96,11 @@ export function useMatrixWalletSignIn() {
     async function (
       sessionId: string,
       statementToSign: string
-    ): Promise<SignedWalletData | undefined> {
+    ): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
-      const { messageToSign, messageFields } = createMessageToSign({
+      const { messageToSign, hashFields } = createMessageToSign({
         walletAddress,
-        chainId,
+        chainId: chainIdEip155,
         homeServer,
         nonce: sessionId,
         statementToSign,
@@ -98,19 +114,19 @@ export function useMatrixWalletSignIn() {
           signature,
           walletAddress,
           messageToSign,
-          messageFields,
+          hashFields,
         });
 
         return {
           signature,
-          messageFields,
+          hashFields,
           message: messageToSign,
         };
       }
 
       console.log(`[signMessage] end`);
     },
-    [chainId, homeServer, sign, walletAddress]
+    [chainIdEip155, homeServer, sign, walletAddress]
   );
 
   const getIsWalletIdRegistered = useCallback(
@@ -145,19 +161,19 @@ export function useMatrixWalletSignIn() {
       statementToSign: string
     ): Promise<AuthenticationData | undefined> {
       try {
-        const { signature, messageFields, message } = await signMessage(
+        const { signature, hashFields, message } = await signMessage(
           sessionId,
           statementToSign
         );
         if (signature) {
           // Send the signed message and auth data to the server.
           const auth: AuthenticationData = {
-            type: LoginTypeWallet,
+            type: LoginTypePublicKeyEthereum,
             session: sessionId,
             message,
-            messageFields,
+            hashFields,
             signature,
-            walletAddress,
+            address: walletAddress,
           };
           return auth;
         }
@@ -175,26 +191,26 @@ export function useMatrixWalletSignIn() {
       console.log(`[registerWallet] start`);
       // Registration of a new wallet is allowed if the user is currently logged out.
       if (loginStatus === LoginStatus.LoggedOut) {
-        if (walletAddress && chainId && homeServer) {
+        if (walletAddress && chainIdEip155 && homeServer) {
           // Signal to the UI that registration is in progress.
           setLoginStatus(LoginStatus.Registering);
 
           const matrixClient = createClient(homeServer);
           try {
-            const { sessionId, error } = await newRegisterSession(
+            const { sessionId, chainIds, error } = await newRegisterSession(
               matrixClient,
               walletAddress
             );
-            if (!error && sessionId) {
+            if (!error && sessionId && chainIds.includes(chainIdEip155)) {
               // Prompt the user to sign the message.
               const authData: AuthenticationData = await createAndSignAuthData(
                 sessionId,
                 statementToSign
               );
               const auth: RegistrationAuthentication = {
-                type: LoginTypeWallet,
+                type: LoginTypePublicKey,
                 session: sessionId,
-                walletResponse: authData,
+                public_key_response: authData,
               };
 
               if (auth) {
@@ -208,9 +224,10 @@ export function useMatrixWalletSignIn() {
                     `[registerWallet] sending registerRequest`,
                     request
                   );
+
                   const response = await matrixClient.registerRequest(
                     request,
-                    LoginTypeWallet
+                    LoginTypePublicKey
                   );
                   console.log(
                     `[registerWallet] received response from registerRequest`,
@@ -246,6 +263,13 @@ export function useMatrixWalletSignIn() {
                   message: `Attempt to sign the registration message failed!`,
                 });
               }
+            } else if (!chainIds.includes(chainIdEip155)) {
+              authenticationError({
+                code: StatusCodes.UNAUTHORIZED,
+                message: `Server does not allow registration for blockchain network ${getChainName(
+                  chainIdEip155
+                )}`,
+              });
             } else {
               authenticationError({
                 code: StatusCodes.UNAUTHORIZED,
@@ -264,7 +288,7 @@ export function useMatrixWalletSignIn() {
             code: StatusCodes.UNAUTHORIZED,
             message: `Missing information for wallet registration {
                 walletAddress: ${walletAddress ?? "undefined"},
-                chainId: ${chainId ?? "undefined"},
+                chainId: ${chainIdEip155 ?? "undefined"},
                 homeServer: ${homeServer ?? "undefined"},
               }`,
           });
@@ -275,7 +299,7 @@ export function useMatrixWalletSignIn() {
     [
       authenticationError,
       authenticationSuccess,
-      chainId,
+      chainIdEip155,
       createAndSignAuthData,
       homeServer,
       loginStatus,
@@ -286,20 +310,21 @@ export function useMatrixWalletSignIn() {
   const loginWithWallet = useCallback(
     async function (statementToSign: string): Promise<void> {
       // Login is allowed if the user is currently logged out.
-      console.log(`[loginWithWallet] start`);
       if (loginStatus === LoginStatus.LoggedOut) {
-        if (walletAddress && chainId && homeServer) {
+        if (walletAddress && chainIdEip155 && homeServer) {
           // Signal to the UI that login is in progress.
           setLoginStatus(LoginStatus.LoggingIn);
 
           const matrixClient = createClient(homeServer);
           try {
-            const isWalletSignInSupported = await getWalletSignInSupported(
-              matrixClient
-            );
-            if (isWalletSignInSupported) {
-              const { sessionId, error } = await newLoginSession(matrixClient);
-              if (!error && sessionId) {
+            const isPublicKeySignInSupported =
+              await getPublicKeySignInSupported(matrixClient);
+            if (isPublicKeySignInSupported) {
+              const { sessionId, chainIds, error } = await newLoginSession(
+                matrixClient
+              );
+
+              if (!error && sessionId && chainIds.includes(chainIdEip155)) {
                 // Prompt the user to sign the message.
                 const auth = await createAndSignAuthData(
                   sessionId,
@@ -309,9 +334,12 @@ export function useMatrixWalletSignIn() {
                 if (auth) {
                   // Send the signed message and auth data to the server.
                   try {
-                    const response = await matrixClient.login(LoginTypeWallet, {
-                      auth,
-                    });
+                    const response = await matrixClient.login(
+                      LoginTypePublicKey,
+                      {
+                        auth,
+                      }
+                    );
 
                     if (response.access_token) {
                       authenticationSuccess(response);
@@ -342,6 +370,13 @@ export function useMatrixWalletSignIn() {
                     message: `Attempt to sign the login message failed!`,
                   });
                 }
+              } else if (!chainIds.includes(chainIdEip155)) {
+                authenticationError({
+                  code: StatusCodes.UNAUTHORIZED,
+                  message: `Server does not allow login for blockchain network ${getChainName(
+                    chainIdEip155
+                  )}`,
+                });
               } else {
                 authenticationError({
                   code: StatusCodes.UNAUTHORIZED,
@@ -366,18 +401,17 @@ export function useMatrixWalletSignIn() {
             code: StatusCodes.UNAUTHORIZED,
             message: `Missing information for login {
                 walletAddress: ${walletAddress ?? "undefined"},
-                chainId: ${chainId ?? "undefined"},
+                chainId: ${chainIdEip155 ?? "undefined"},
                 homeServer: ${homeServer ?? "undefined"},
               }`,
           });
         }
       }
-      console.log(`[loginWithWallet] end`);
     },
     [
       authenticationError,
       authenticationSuccess,
-      chainId,
+      chainIdEip155,
       createAndSignAuthData,
       homeServer,
       loginStatus,
@@ -417,51 +451,29 @@ Resources:
  * 
  */
 function createMessageFromTemplate(
-  messageInfo: WalletMessageFields,
+  statement: string,
+  messageInfo: PublicKeyEthereumHashFields,
   hash: string
 ) {
-  // See https://eips.ethereum.org/EIPS/eip-4361 for message template.
+  // See https://github.com/HereNotThere/harmony/blob/main/servers/matrix-publickey-login-spec.md for message template.
 
-  // Change resources into the format:
-  // - ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/
-  // - https://example.com/my-web2-claim.json
-
-  return `${
-    messageInfo.authority
-  } wants you to sign in with your wallet account:
+  return `${messageInfo.domain} wants you to sign in with your account:
 ${messageInfo.address}
 
-${messageInfo.statement ? `${messageInfo.statement}\n` : ""}\nURI: ${
-    messageInfo.uri
-  }
-Version: ${messageInfo.version}
-Chain ID: ${messageInfo.chainId}
+${statement}
+
 Hash: ${hash}
-Issued At: ${messageInfo.issuedAt.toISOString()}${
-    messageInfo.expirationTime
-      ? `\nExpiration Time: ${messageInfo.expirationTime.toISOString()}`
-      : ""
-  }${
-    messageInfo.notBefore
-      ? `\nNot Before: ${messageInfo.notBefore.toISOString()}`
-      : ""
-  }${messageInfo.requestId ? `\nRequest ID: ${messageInfo.requestId}` : ""}${
-    messageInfo.resources && messageInfo.resources.length > 0
-      ? `\nResources:${messageInfo.resources
-          .map((resource: string) => `\n- ${resource}`)
-          .join("")}`
-      : ""
-  }`;
+`;
 }
 
-async function getWalletSignInSupported(
+async function getPublicKeySignInSupported(
   client: MatrixClient
 ): Promise<boolean> {
   // Get supported flows from the server.
   // loginFlows return type is wrong. Cast it to the expected type.
   const supportedFlows = (await client.loginFlows()) as unknown as LoginFlows;
   console.log(`Supported wallet login flows`, supportedFlows);
-  return supportedFlows.flows.some((f) => f.type === LoginTypeWallet);
+  return supportedFlows.flows.some((f) => f.type === LoginTypePublicKey);
 }
 
 function getAuthority(uri: string): string {
@@ -471,30 +483,18 @@ function getAuthority(uri: string): string {
 }
 
 function ensureSpecCompliantAuthenticationData(
-  authInput: WalletMessageFields
-): WalletMessageFields {
+  authInput: PublicKeyEthereumHashFields
+): PublicKeyEthereumHashFields {
   // Parse and extract the RFC 3986 authority.
-  const authority = getAuthority(authInput.authority);
-
-  // statement must not contain any \n per EIPS spec.
-  //const statement = authInput.statement;
-  const statement = authInput.statement
-    ? authInput.statement.replace(/\n/g, "")
-    : undefined;
-
-  // ChainId should not have 0x prefix.
-  // https://eips.ethereum.org/EIPS/eip-155
-  const chainId = authInput.chainId.replace(/0x/g, "");
+  const authority = getAuthority(authInput.domain);
 
   return {
     ...authInput,
-    authority,
-    statement,
-    chainId,
+    domain: authority,
   };
 }
 
-function createHash(messageFields: WalletMessageFields): string {
+function createHash(messageFields: PublicKeyEthereumHashFields): string {
   const fieldStr = JSON.stringify(messageFields);
   const hash = keccak256(fieldStr).toString("base64");
   console.log(`createHash`, { hash, fieldStr });
@@ -508,26 +508,27 @@ function createMessageToSign(args: {
   nonce: string;
   statementToSign: string;
 }): {
-  messageFields: WalletMessageFields;
+  hashFields: PublicKeyEthereumHashFields;
   messageToSign: string;
 } {
   // Create the auth metadata for signing.
-  const messageFields = ensureSpecCompliantAuthenticationData({
-    authority: args.homeServer,
+  const hashFields = ensureSpecCompliantAuthenticationData({
+    domain: args.homeServer,
     address: args.walletAddress,
-    statement: args.statementToSign,
-    uri: `${args.homeServer}/login`,
     version: "1",
     chainId: args.chainId,
     nonce: args.nonce,
-    issuedAt: new Date(),
   });
 
-  const hash = createHash(messageFields);
+  const hash = createHash(hashFields);
 
   return {
-    messageFields,
-    messageToSign: createMessageFromTemplate(messageFields, hash),
+    hashFields,
+    messageToSign: createMessageFromTemplate(
+      args.statementToSign,
+      hashFields,
+      hash
+    ),
   };
 }
 
@@ -536,44 +537,37 @@ async function newLoginSession(client: MatrixClient): Promise<NewSession> {
   try {
     // According to the Client-Server API specm send a GET
     // request without arguments to start a new login session.
-    await client.login(LoginTypeWallet, {});
+    await client.login(LoginTypePublicKey, {});
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (ex: any) {
     // https://spec.matrix.org/v1.2/client-server-api/#user-interactive-api-in-the-rest-api
     // Per spec, expect an exception with the session ID
     const error = ex as MatrixError;
-    console.log(`[newLoginSession]`, {
-      errcode: error.errcode,
-      httpStatus: error.httpStatus,
-      message: error.message,
-      name: error.name,
-      data: error.data,
-    });
+    printMatrixError(error, `[newLoginSession]`);
 
     if (
       // Expected 401
       error.httpStatus === StatusCodes.UNAUTHORIZED &&
-      isLoginFlow(error.data)
+      isLoginFlowPublicKeyEthereum(error.data)
     ) {
       const loginFlows = error.data;
-      console.log(`[newLoginSession] Login session info`, loginFlows);
-      return {
-        sessionId: loginFlows.session,
-      };
+      const params = getParamsPublicKeyEthereum(loginFlows.params);
+      console.log(`[newLoginSession] Login session info`, loginFlows, params);
+      if (params) {
+        return newSessionSuccess(loginFlows.session, params);
+      } else {
+        return newSessionError(
+          `Server did not return information about the chain IDs or version`
+        );
+      }
     } else {
-      return {
-        sessionId: "",
-        error: `${error.httpStatus} ${error.message}`,
-      };
+      return newSessionError(`${error.httpStatus} ${error.message}`);
     }
   }
 
   console.log(`[newLoginSession] end`);
   // Always fail auth if it reaches here.
-  return {
-    sessionId: "",
-    error: "Unauthorized",
-  };
+  return newSessionError("Unauthorized");
 }
 
 async function newRegisterSession(
@@ -584,45 +578,67 @@ async function newRegisterSession(
   try {
     // https://spec.matrix.org/v1.2/client-server-api/#post_matrixclientv3register
     const requestData = {
-      auth: { type: LoginTypeWallet },
+      auth: { type: LoginTypePublicKey },
       username: walletAddress,
     };
-    await client.registerRequest(requestData, LoginTypeWallet);
+    await client.registerRequest(requestData, LoginTypePublicKey);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (ex: any) {
     // https://spec.matrix.org/v1.2/client-server-api/#user-interactive-api-in-the-rest-api
     // Per spec, expect an exception with the session ID
     const error = ex as MatrixError;
-    console.log(`[newRegisterSession]`, {
-      errcode: error.errcode,
-      httpStatus: error.httpStatus,
-      message: error.message,
-      name: error.name,
-      data: error.data,
-    });
+    printMatrixError(error, `[newRegisterSession]`);
 
     if (
       // Expected 401
       error.httpStatus === StatusCodes.UNAUTHORIZED &&
-      isLoginFlow(error.data)
+      isLoginFlowPublicKeyEthereum(error.data)
     ) {
       const loginFlows = error.data;
-      console.log(`[newRegisterSession] Register session info`, loginFlows);
-      return {
-        sessionId: loginFlows.session,
-      };
+      const params = getParamsPublicKeyEthereum(error.data.params);
+      console.log(
+        `[newRegisterSession] Register session info`,
+        loginFlows,
+        params
+      );
+      return newSessionSuccess(loginFlows.session, params);
     } else {
-      return {
-        sessionId: "",
-        error: `${error.httpStatus} ${error.message}`,
-      };
+      return newSessionError(`${error.httpStatus} ${error.message}`);
     }
   }
 
   console.log(`[newRegisterSession] end`);
   // Always fail auth if it reaches here.
+  return newSessionError("Unauthorized");
+}
+
+function newSessionSuccess(
+  sessionId: string,
+  params: PublicKeyEtheremParams
+): NewSession {
+  return {
+    sessionId,
+    chainIds: params.chain_ids,
+    version: params.version,
+  };
+}
+
+function newSessionError(error: string): NewSession {
   return {
     sessionId: "",
-    error: "Unauthorized",
+    chainIds: [],
+    version: 0,
+    error,
   };
+}
+
+function printMatrixError(error: MatrixError, label?: string): void {
+  label = label ?? "";
+  console.log(label, {
+    errcode: error.errcode,
+    httpStatus: error.httpStatus,
+    message: error.message,
+    name: error.name,
+    data: error.data,
+  });
 }
