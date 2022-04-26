@@ -15,6 +15,10 @@ yarn install
 yarn dev
 ```
 
+> Note: Experimental project wide error diagnostics (defined in
+> `.vscode/settings.json`) will only be available if project is openened from
+> `clients/web/app` as root.
+
 3. Recommended VSCode Plugins
 
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)

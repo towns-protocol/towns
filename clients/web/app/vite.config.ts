@@ -11,7 +11,7 @@ export default defineConfig({
     react(),
     tsconfigPaths(),
     // checker({ typescript: true }),
-    eslintPlugin(),
+    eslintPlugin({ fix: true }),
     vanillaExtractPlugin(),
   ],
 });
