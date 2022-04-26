@@ -1,7 +1,7 @@
 import React from "react";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
-import { Box, Paragraph } from "@ui";
+import { Box, Paragraph, Stack } from "@ui";
 import { SpaceData } from "data/SpaceData";
 import { NavContainer } from "./_SideBar";
 
@@ -14,7 +14,7 @@ export const SpaceSideBar = (props: Props) => {
 
   return (
     <NavContainer>
-      <ActionNavItem icon="back" link="/" id="" label="Back" />
+      <ActionNavItem compact icon="back" link="/" id="" label="Back" />
       {space && (
         <SpaceNavItem
           exact
@@ -39,7 +39,7 @@ export const SpaceSideBar = (props: Props) => {
         link={`/spaces/${space.id}/mentions`}
       />
       {space.channels.map((group) => (
-        <>
+        <Stack key={group.label}>
           <Box
             paddingX="sm"
             height="md"
@@ -54,7 +54,7 @@ export const SpaceSideBar = (props: Props) => {
           {group.tags.map((tag) => (
             <ActionNavItem
               compact
-              key={tag.id}
+              key={group.label + tag.id}
               icon="tag"
               highlight={tag.highlight}
               link={`/spaces/${space.id}/${tag.id}`}
@@ -62,7 +62,7 @@ export const SpaceSideBar = (props: Props) => {
               label={tag.id}
             />
           ))}
-        </>
+        </Stack>
       ))}
     </NavContainer>
   );

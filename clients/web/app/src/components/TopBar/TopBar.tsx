@@ -10,16 +10,18 @@ export const TopBar = (props: { onClick?: () => void }) => {
       borderBottom
       direction="row"
       shrink={false}
-      height="lg"
+      height="x7"
       paddingX="sm"
       background="level1"
       alignItems="center"
       gap="sm"
       color="gray2"
     >
-      <Link to="/">
-        <Logo />
-      </Link>
+      <Box color="default">
+        <Link to="/">
+          <Logo />
+        </Link>
+      </Box>
       <Box grow />
       <Search />
       <Icon size="lg" type="bell" background="level1" />

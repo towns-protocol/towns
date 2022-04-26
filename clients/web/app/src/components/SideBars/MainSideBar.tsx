@@ -5,7 +5,7 @@ import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { fakeSpaces } from "data/SpaceData";
 
 export const MainSideBar = () => (
-  <NavContainer>
+  <NavContainer paddingY="xs">
     {navItems.map((n) => (
       <ActionNavItem key={n.id} {...n} />
     ))}

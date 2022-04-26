@@ -15,6 +15,7 @@ export const AvatarStack = (props: Props) => {
         <Avatar
           stacked
           circle
+          key={id}
           src={`/placeholders/nft_${id}.png`}
           size={size}
         />

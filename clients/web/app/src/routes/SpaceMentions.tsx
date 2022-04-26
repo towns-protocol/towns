@@ -3,22 +3,16 @@ import { Outlet } from "react-router";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
+import { ContextBar } from "@components/ContextBar";
 
 export const SpaceMentions = () => {
   return (
     <Stack grow horizontal>
       <Stack grow>
-        <Stack
-          horizontal
-          borderBottom
-          height="md"
-          alignItems="center"
-          paddingX="sm"
-          gap="xs"
-        >
+        <ContextBar>
           <Icon type="at" size="sm" />
           <Paragraph size="lg">Mentions</Paragraph>
-        </Stack>
+        </ContextBar>
         <Stack padding gap="sm">
           <Divider label="# random" align="left" />
 

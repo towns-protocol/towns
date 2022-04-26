@@ -52,9 +52,9 @@ export const SpacesIndex = () => {
 export const LiquidContainer = forwardRef<
   HTMLElement,
   { fullbleed?: boolean } & BoxProps
->((props, ref) => (
+>(({ fullbleed, ...props }, ref) => (
   <Box
-    maxWidth={(!props.fullbleed && "1200") || "100%"}
+    maxWidth={(!fullbleed && "1200") || "100%"}
     width="100%"
     {...props}
     ref={ref}

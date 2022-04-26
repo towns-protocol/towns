@@ -16,42 +16,7 @@ export const darkTheme = createTheme(color, palettes.dark);
 
 const root = createGlobalTheme(":root", {
   bl: `${baseline}px`,
-  size: {
-    none: "0",
-    sm: `${baseline * 4}px`,
-    md: `${baseline * 8}px`,
-    lg: `${baseline * 12}px`,
-  } as const,
-  insetX: {
-    none: { marginLeft: "0", marginRight: "0" },
-    xxs: {
-      marginLeft: `${baseline * -0.5}px`,
-      marginRight: `${baseline * -0.5}px`,
-    },
-    xs: { marginLeft: `${baseline * -1}px`, marginRight: `${baseline * -1}px` },
-    sm: { marginLeft: `${baseline * -2}px`, marginRight: `${baseline * -2}px` },
-    md: { marginLeft: `${baseline * -4}px`, marginRight: `${baseline * -4}px` },
-    lg: { marginLeft: `${baseline * -8}px`, marginRight: `${baseline * -8}px` },
-    xl: {
-      marginLeft: `${baseline * -16}px`,
-      marginRight: `${baseline * -16}px`,
-    },
-  } as const,
-  insetY: {
-    none: { marginTop: "0", marginBottom: "0" },
-    xxs: {
-      marginTop: `${baseline * -0.5}px`,
-      marginBottom: `${baseline * -0.5}px`,
-    },
-    xs: { marginTop: `${baseline * -1}px`, marginBottom: `${baseline * -1}px` },
-    sm: { marginTop: `${baseline * -2}px`, marginBottom: `${baseline * -2}px` },
-    md: { marginTop: `${baseline * -4}px`, marginBottom: `${baseline * -4}px` },
-    lg: { marginTop: `${baseline * -8}px`, marginBottom: `${baseline * -8}px` },
-    xl: {
-      marginTop: `${baseline * -16}px`,
-      marginBottom: `${baseline * -16}px`,
-    },
-  } as const,
+
   space: {
     none: "0",
     xxs: `${baseline * 0.5}px`,
@@ -144,6 +109,37 @@ const root = createGlobalTheme(":root", {
       md: `${baseline * 4}px`,
       // chat input
       lg: `${baseline * 5}px`,
+    },
+  } as const,
+
+  insetX: {
+    none: { marginLeft: "0", marginRight: "0" },
+    xxs: {
+      marginLeft: `${baseline * -0.5}px`,
+      marginRight: `${baseline * -0.5}px`,
+    },
+    xs: { marginLeft: `${baseline * -1}px`, marginRight: `${baseline * -1}px` },
+    sm: { marginLeft: `${baseline * -2}px`, marginRight: `${baseline * -2}px` },
+    md: { marginLeft: `${baseline * -4}px`, marginRight: `${baseline * -4}px` },
+    lg: { marginLeft: `${baseline * -8}px`, marginRight: `${baseline * -8}px` },
+    xl: {
+      marginLeft: `${baseline * -16}px`,
+      marginRight: `${baseline * -16}px`,
+    },
+  } as const,
+  insetY: {
+    none: { marginTop: "0", marginBottom: "0" },
+    xxs: {
+      marginTop: `${baseline * -0.5}px`,
+      marginBottom: `${baseline * -0.5}px`,
+    },
+    xs: { marginTop: `${baseline * -1}px`, marginBottom: `${baseline * -1}px` },
+    sm: { marginTop: `${baseline * -2}px`, marginBottom: `${baseline * -2}px` },
+    md: { marginTop: `${baseline * -4}px`, marginBottom: `${baseline * -4}px` },
+    lg: { marginTop: `${baseline * -8}px`, marginBottom: `${baseline * -8}px` },
+    xl: {
+      marginTop: `${baseline * -16}px`,
+      marginBottom: `${baseline * -16}px`,
     },
   } as const,
 

@@ -1,7 +1,8 @@
 import React from "react";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
-import { Avatar, Box, Divider, Paragraph } from "@ui";
+import { Avatar, Box, Divider, Icon, Paragraph } from "@ui";
+import { ContextBar } from "@components/ContextBar";
 
 export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
   <Box
@@ -12,9 +13,9 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
     overflow="hidden"
     minWidth={{ tablet: "none", desktop: "auto" }}
   >
-    <Box borderBottom height="md" justifyContent="center" paddingX="sm">
+    <ContextBar compact after={<Icon type="close" size="sm" />}>
       <Paragraph size="lg">Replies</Paragraph>
-    </Box>
+    </ContextBar>
     <Box padding="sm" gap="sm">
       <Divider align="left" fontSize="md" label="# general" />
       <Message

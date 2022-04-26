@@ -4,26 +4,19 @@ import { MessageInput } from "@components/MessageInput/MessageInput";
 import { UserInfo } from "@components/UserInfo/UserInfo";
 import { Avatar, Divider, Paragraph } from "@ui";
 import { Stack } from "ui/components/Stack/Stack";
+import { ContextBar } from "@components/ContextBar";
 
 export const MessagesRead = () => (
   <Stack grow>
-    <Stack
-      borderBottom
-      horizontal
-      paddingX="sm"
-      height="md"
-      gap="xs"
-      alignItems="center"
-    >
-      <Avatar nft src="/placeholders/nft_4.png" />
-      <Paragraph size="lg" color="gray1">
+    <ContextBar>
+      <Avatar nft src="/placeholders/nft_4.png" size="lg" />
+      <Paragraph size="lg" color="default">
         iamblue
       </Paragraph>
-    </Stack>
+    </ContextBar>
     <Stack grow gap="sm" justifyContent="end" padding="sm">
       <Stack gap="xs">
         <UserInfo userId="3" />
-
         <Paragraph size="md" color="gray2">
           This is the beginning of your direct messa with iamblue
         </Paragraph>

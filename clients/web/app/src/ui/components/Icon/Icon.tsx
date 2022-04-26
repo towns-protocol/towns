@@ -78,6 +78,25 @@ export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
+export const CloseIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.63603 16.9497C5.24551 17.3403 5.24551 17.9734 5.63603 18.364C6.02656 18.7545 6.65972 18.7545 7.05025 18.364L12 13.4142L17.0208 18.435C17.4113 18.8256 18.0445 18.8256 18.435 18.435C18.8255 18.0445 18.8255 17.4113 18.435 17.0208L13.4142 12L18.364 7.05025C18.7545 6.65972 18.7545 6.02656 18.364 5.63603C17.9734 5.24551 17.3403 5.24551 16.9497 5.63603L12 10.5858L7.12131 5.70711C6.73079 5.31658 6.09762 5.31658 5.7071 5.70711C5.31657 6.09763 5.31658 6.7308 5.7071 7.12132L10.5858 12L5.63603 16.9497Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+
 export const DownIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -309,6 +328,7 @@ const iconMap = {
   back: BackIcon,
   bell: BellIcon,
   check: CheckIcon,
+  close: CloseIcon,
   down: DownIcon,
   home: HomeIcon,
   lock: LockIcon,
@@ -329,12 +349,13 @@ export type IconName = keyof typeof iconMap;
 type IconProps = {
   type: IconName;
   background?: keyof typeof vars.color.background;
+  color?: keyof typeof vars.color.text;
   padding?: BoxProps["padding"];
   className?: string;
 } & IconAtoms;
 
 export const Icon = (props: IconProps) => {
-  const { size = "md", background, type, className } = props;
+  const { size = "md", color, background, type, className } = props;
   const Icon = iconMap[type ?? "bell"];
 
   return (
@@ -344,6 +365,7 @@ export const Icon = (props: IconProps) => {
       aspectRatio="square"
       className={clsx(iconBaseStyle, iconAtoms({ size }), className)}
       background={background}
+      color={color}
       padding={
         props.padding ??
         (!background || background?.match(/^(none|transparent|default)$/)

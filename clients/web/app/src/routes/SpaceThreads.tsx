@@ -3,22 +3,16 @@ import { Outlet } from "react-router";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
+import { ContextBar } from "@components/ContextBar";
 
 export const SpaceThreads = () => {
   return (
     <Stack grow horizontal>
       <Stack grow>
-        <Stack
-          horizontal
-          borderBottom
-          height="md"
-          alignItems="center"
-          paddingX="sm"
-          gap="xs"
-        >
+        <ContextBar>
           <Icon type="message" size="sm" />
           <Paragraph size="lg">Threads</Paragraph>
-        </Stack>
+        </ContextBar>
         <Stack padding gap="sm">
           <Divider label="# general" align="left" />
           <Message

@@ -3,15 +3,16 @@ import { Outlet, useParams } from "react-router";
 import { Message } from "@components/Message";
 import { Avatar, Box, Divider, Paragraph } from "@ui";
 import { MessageInput } from "@components/MessageInput/MessageInput";
+import { ContextBar } from "@components/ContextBar";
 
 export const SpacesChannel = () => {
   const { channel } = useParams();
   return (
     <Box grow direction="row">
       <Box grow>
-        <Box borderBottom height="md" justifyContent="center" paddingX="sm">
+        <ContextBar>
           <Paragraph size="lg"># {channel}</Paragraph>
-        </Box>
+        </ContextBar>
         <Box padding gap="sm">
           <Message
             condensed

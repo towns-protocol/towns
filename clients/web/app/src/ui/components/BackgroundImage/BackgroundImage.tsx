@@ -3,7 +3,7 @@ import { Box, BoxProps } from "@ui";
 import {
   BackgroundContainerStyle,
   BackgroundVariantProps,
-} from "./BackgorundImage.css";
+} from "./BackgroundImage.css";
 
 type Props = {
   src?: string;

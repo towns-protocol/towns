@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Avatar, Box, Icon, Paragraph, Stack } from "@ui";
+import { Avatar, Box, Icon, Paragraph, Stack, Text } from "@ui";
 import { NavContainer } from "@components/SideBars/_SideBar";
 
 export const MessagesSideBar = () => {
@@ -10,15 +10,20 @@ export const MessagesSideBar = () => {
         horizontal
         borderBottom
         paddingX="sm"
-        height="md"
+        height="x7"
         gap="xs"
         justifyContent="spaceBetween"
         alignItems="center"
       >
-        <Paragraph>Messages</Paragraph>
+        <Paragraph color="default">Messages</Paragraph>
         <Box>
           <NavLink to="/messages/new">
-            <Icon type="newmessage" background="accent" />
+            <Icon
+              type="newmessage"
+              background="inverted"
+              size="lg"
+              padding="xs"
+            />
           </NavLink>
         </Box>
       </Stack>
@@ -41,22 +46,31 @@ const MessageItem = ({
   selected?: boolean;
 }) => (
   <NavLink to="iamblue">
-    <Stack horizontal paddingX="sm" paddingY="xs" gap="xs">
-      <Avatar nft src="/placeholders/nft_2.png" size="lg" insetY="xxs" />
-      <Box grow gap="xxs">
-        <Paragraph
-          color={active ? "default" : "gray1"}
-          fontWeight={active ? "strong" : "normal"}
-        >
-          Outer Space
-        </Paragraph>
-        <Paragraph size="md" color="gray2">
-          Lomo
-        </Paragraph>
-      </Box>
-      <Box centerContent shrink>
-        <Paragraph color="gray2">1m</Paragraph>
-      </Box>
-    </Stack>
+    <Box paddingX="xs" paddingY="xxs">
+      <Stack
+        horizontal
+        rounded="xs"
+        gap="xs"
+        paddingX="xs"
+        paddingY="sm"
+        background={selected ? "level2" : undefined}
+      >
+        <Avatar nft src="/placeholders/nft_2.png" size="lg" />
+        <Stack grow gap="xs">
+          <Text
+            color={active ? "default" : "default"}
+            fontWeight={active ? "strong" : "normal"}
+          >
+            Outer Space
+          </Text>
+          <Text size="md" color="gray2">
+            Lomo
+          </Text>
+        </Stack>
+        <Box centerContent shrink>
+          <Paragraph color="gray2">1m</Paragraph>
+        </Box>
+      </Stack>
+    </Box>
   </NavLink>
 );

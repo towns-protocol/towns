@@ -1,7 +1,9 @@
 import React from "react";
-import { Stack } from "@ui";
+import { BoxProps, Stack } from "@ui";
 
-export const NavContainer = (props: { children?: React.ReactNode }) => (
+type Props = BoxProps;
+
+export const NavContainer = (props: Props) => (
   <Stack
     borderRight
     shrink={{ tablet: "x0", desktop: "x1" }}
@@ -9,7 +11,6 @@ export const NavContainer = (props: { children?: React.ReactNode }) => (
     background="level1"
     overflow="hidden"
     minWidth={{ tablet: "none", desktop: "auto" }}
-  >
-    {props.children}
-  </Stack>
+    {...props}
+  />
 );

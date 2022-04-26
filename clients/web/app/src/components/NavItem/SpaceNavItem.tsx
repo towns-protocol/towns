@@ -21,8 +21,8 @@ export const SpaceNavItem = (props: Props) => {
         src={avatar}
         size={
           isCompact
-            ? { tablet: "lg", desktop: "xs" }
-            : { tablet: "lg", desktop: "md" }
+            ? { desktop: "sm", tablet: "lg" }
+            : { desktop: "lg", tablet: "lg" }
         }
       />
       <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
