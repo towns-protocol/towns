@@ -1,5 +1,7 @@
 import React from "react";
-import { Box, BoxProps, Grid, Text } from "../ui/components";
+import { MemoryRouter } from "react-router";
+import { darkTheme, lightTheme } from "ui/styles/vars.css";
+import { Box, BoxProps, Grid, Stack, Text } from "../ui/components";
 import { crossClass } from "./Storybook.css";
 
 export const Square = (props: BoxProps) => (
@@ -44,4 +46,23 @@ export const Row = ({
       {children}
     </Box>
   </Grid>
+);
+
+export const StoryContainer = ({
+  stacked,
+  children,
+}: {
+  stacked?: boolean;
+  children?: React.ReactNode;
+}) => (
+  <MemoryRouter>
+    <Stack grow direction={stacked ? "column" : "row"} maxWidth="desktop">
+      <Stack grow background="level1" padding="md" className={lightTheme}>
+        {children}
+      </Stack>
+      <Stack grow background="level1" padding="md" className={darkTheme}>
+        {children}
+      </Stack>
+    </Stack>
+  </MemoryRouter>
 );

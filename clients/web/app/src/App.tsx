@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { TopBar } from "@components/TopNav";
+import { TopBar } from "@components/TopBar";
 import { Stack } from "@ui";
 import { Home } from "routes/Home";
 import { Messages } from "routes/Messages";

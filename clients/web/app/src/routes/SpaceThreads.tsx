@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router";
-import { ChatMessage } from "@components/ChatMessage";
+import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
 
@@ -21,7 +21,7 @@ export const SpaceThreads = () => {
         </Stack>
         <Stack padding gap="sm">
           <Divider label="# general" align="left" />
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" />}
             name="sunsoutapersout"
@@ -40,9 +40,9 @@ export const SpaceThreads = () => {
               YouTube channel about our farm and I'm about to start another
               about marketing and nft's.
             </Paragraph>
-          </ChatMessage>
+          </Message>
           <Paragraph color="accent">Show 150 more replies</Paragraph>
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
@@ -52,19 +52,19 @@ export const SpaceThreads = () => {
               Channel about our farm and I'm about to start another about
               marketing and nft's.
             </Paragraph>
-          </ChatMessage>
+          </Message>
           <MessageInput />
           <Divider label="# general" align="left" />
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
           >
             <Paragraph>How are you all doing today?</Paragraph>
-          </ChatMessage>
+          </Message>
           <Paragraph color="accent">Show 150 more replies</Paragraph>
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" />}
             name="sunsoutapersout"
@@ -77,9 +77,9 @@ export const SpaceThreads = () => {
               YouTube channel about our farm and I'm about to start another
               about marketing and nft's.
             </Paragraph>
-          </ChatMessage>
+          </Message>
 
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
@@ -89,7 +89,7 @@ export const SpaceThreads = () => {
               Channel about our farm and I'm about to start another about
               marketing and nft's.
             </Paragraph>
-          </ChatMessage>
+          </Message>
 
           <MessageInput />
         </Stack>

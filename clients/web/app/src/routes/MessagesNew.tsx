@@ -1,5 +1,5 @@
 import React from "react";
-import { AvatarStack } from "@components/AvatarStack";
+import { AvatarStack } from "ui/components/AvatarStack";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Box, Divider, Heading, Icon, Paragraph } from "@ui";
 
@@ -53,7 +53,7 @@ export const MessagesNew = () => (
           <Paragraph size="lg" color="gray2">
             &#8226; 3 Servers in common
           </Paragraph>
-          <AvatarStack />
+          <AvatarStack userIds={["1", "2", "3", "4"]} />
         </Box>
         <Paragraph size="md" color="gray2">
           This is the beginning of your direct messa with iamblue

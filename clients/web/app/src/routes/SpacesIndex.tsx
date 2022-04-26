@@ -1,27 +1,53 @@
 import React, { ComponentProps, forwardRef } from "react";
-import { ChatMessage } from "@components/ChatMessage";
-import { Avatar, Box, BoxProps, Heading, Icon, Paragraph, Stack } from "@ui";
+import { useParams } from "react-router";
+import { Message } from "@components/Message";
+import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
+import {
+  Avatar,
+  BackgroundImage,
+  Box,
+  BoxProps,
+  Heading,
+  Paragraph,
+  Stack,
+} from "@ui";
+import { fakeSpaces } from "data/SpaceData";
 
-export const SpacesIndex = () => (
-  <>
-    <Box
-      borderBottom
-      grow
-      alignItems="center"
-      paddingBottom="none"
-      position="relative"
-      maxHeight="400"
-    >
-      <LiquidContainer grow width="100%">
-        <SpaceBanner image="/placeholders/frame_1.png" />
-        <SpaceMenu />
-      </LiquidContainer>
-    </Box>
-    <Box grow paddingY="sm" alignItems="center" background="level1">
-      <SpaceMessages />
-    </Box>
-  </>
-);
+export const SpacesIndex = () => {
+  const { spaceId } = useParams();
+  const space = fakeSpaces.find((s) => s.id === spaceId) ?? fakeSpaces[0];
+  return (
+    <>
+      <Stack
+        borderBottom
+        grow
+        alignItems="center"
+        paddingBottom="none"
+        position="relative"
+        maxHeight="400"
+      >
+        <Box position="absolute" width="100%" height="100%">
+          {space.bannerSrc && (
+            <BackgroundImage
+              size="cover"
+              overlay="dark"
+              src={space.bannerSrc}
+            />
+          )}
+        </Box>
+        <Box position="relative" width="100%" height="100%" alignItems="center">
+          <LiquidContainer grow width="100%">
+            <SpaceBanner avatarSrc={space.avatarSrc} name={space.name} />
+            <SpaceMenu />
+          </LiquidContainer>
+        </Box>
+      </Stack>
+      <Box grow paddingY="sm" alignItems="center" background="level1">
+        <SpaceMessages />
+      </Box>
+    </>
+  );
+};
 
 export const LiquidContainer = forwardRef<
   HTMLElement,
@@ -64,7 +90,7 @@ const SpaceMessages = () => (
       name="hana.eth"
       avatar={<Avatar nft src="/placeholders/nft_20.png" />}
       date="Today at 11:01 AM"
-      replies={{ ids: [1, 2, 3], fakeLength: 150 }}
+      replies={{ userIds: [1, 2, 3], fakeLength: 150 }}
     >
       <Paragraph>Sry guys. Im a noob what the KYC about?</Paragraph>
     </RoundedMessage>
@@ -94,12 +120,8 @@ const SpaceMessages = () => (
   </LiquidContainer>
 );
 
-type SpaceBannerProps = {
-  image?: string;
-};
-
-const RoundedMessage = (props: ComponentProps<typeof ChatMessage>) => (
-  <ChatMessage rounded="sm" padding="sm" background="default" {...props} />
+const RoundedMessage = (props: ComponentProps<typeof Message>) => (
+  <Message rounded="sm" padding="sm" background="default" {...props} />
 );
 
 const QuotedMessage = (props: {
@@ -148,51 +170,4 @@ const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
       {props.label}
     </Paragraph>
   </Box>
-);
-
-const SpaceBanner = (props: SpaceBannerProps) => (
-  <Stack grow width="100%" justifyContent="center">
-    <Stack horizontal gap="sm" padding="sm">
-      {/* avatar container */}
-      <Box border padding="xs" borderRadius="lg" background="level1">
-        <Avatar circle src="/placeholders/nft_9.png" size="xxl" />
-      </Box>
-      {/* title and stats container */}
-      <Stack grow justifyContent="center" gap="sm">
-        <Heading level={3}>Border Ape Yacht Club</Heading>
-        <Stack horizontal gap="sm" color="gray1">
-          <Stack horizontal gap="xs" alignItems="center">
-            <Box background="accent" square="xxs" rounded="full" />
-            <Paragraph size="lg">2.3K</Paragraph>
-          </Stack>
-          <Stack horizontal gap="xs" alignItems="center">
-            <Icon type="token" size="xs" />
-            <Paragraph size="lg">12.4M</Paragraph>
-          </Stack>
-        </Stack>
-      </Stack>
-      {/* actions container */}
-      <Stack alignItems="center" direction="row" gap="xs">
-        <MockDropDown />
-        <Icon type="settings" background="level2" size="lg" padding="xs" />
-      </Stack>
-    </Stack>
-  </Stack>
-);
-
-const MockDropDown = () => (
-  <Stack
-    horizontal
-    background="level2"
-    alignItems="center"
-    height="x4"
-    paddingX="sm"
-    rounded="sm"
-    fontSize="md"
-    gap="xs"
-  >
-    boredpesir
-    <Avatar circle nft src="/placeholders/nft_32.png" size="xs" />
-    <Icon type="down" size="adapt" />
-  </Stack>
 );

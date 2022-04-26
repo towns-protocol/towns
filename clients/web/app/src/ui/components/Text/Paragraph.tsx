@@ -18,3 +18,5 @@ export const Paragraph = forwardRef<HTMLElement, ParagraphProps>(
     return <Text as="p" size="md" {...props} ref={ref} />;
   }
 );
+
+export const P = Paragraph;

@@ -3,6 +3,7 @@ import {
   createTheme,
   createThemeContract,
 } from "@vanilla-extract/css";
+import { breakpoints } from "./breakpoints";
 import { palettes } from "./palettes";
 
 // export const zoom = 1.1;
@@ -132,6 +133,9 @@ const root = createGlobalTheme(":root", {
       "400": `400px`,
       "1200": `1200px`,
       "1440": `1440px`,
+      tablet: `${breakpoints.tablet}px`,
+      desktop: `${breakpoints.desktop}px`,
+      wide: `${breakpoints.wide}px`,
     },
 
     inputs: {

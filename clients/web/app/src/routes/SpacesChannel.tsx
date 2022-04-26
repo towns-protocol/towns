@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, useParams } from "react-router";
-import { ChatMessage } from "@components/ChatMessage";
+import { Message } from "@components/Message";
 import { Avatar, Box, Divider, Paragraph } from "@ui";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 
@@ -13,7 +13,7 @@ export const SpacesChannel = () => {
           <Paragraph size="lg"># {channel}</Paragraph>
         </Box>
         <Box padding gap="sm">
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" />}
             name="sunsoutapersout"
@@ -32,18 +32,18 @@ export const SpacesChannel = () => {
               YouTube channel about our farm and I'm about to start another
               about marketing and nft's.
             </Paragraph>
-          </ChatMessage>
+          </Message>
           <Divider label="Today" />
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
-            replies={{ ids: [2, 3, 4], fakeLength: 150 }}
+            replies={{ userIds: [2, 3, 4], fakeLength: 150 }}
           >
             <Paragraph>How are you all doing today?</Paragraph>
-          </ChatMessage>
-          <ChatMessage
+          </Message>
+          <Message
             condensed
             avatar={<Avatar nft size="sm" />}
             name="sunsoutapersout"
@@ -56,8 +56,8 @@ export const SpacesChannel = () => {
               YouTube channel about our farm and I'm about to start another
               about marketing and nft's.
             </Paragraph>
-          </ChatMessage>
-          <ChatMessage
+          </Message>
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
@@ -67,32 +67,32 @@ export const SpacesChannel = () => {
               Channel about our farm and I'm about to start another about
               marketing and nft's.
             </Paragraph>
-          </ChatMessage>
-          <ChatMessage
+          </Message>
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_28.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
             <Paragraph>Nope!</Paragraph>
-          </ChatMessage>
-          <ChatMessage
+          </Message>
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
             <Paragraph>Nope!</Paragraph>
-          </ChatMessage>
-          <ChatMessage
+          </Message>
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_39.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
             <Paragraph>Nope!</Paragraph>
-          </ChatMessage>
-          <ChatMessage
+          </Message>
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
@@ -101,7 +101,7 @@ export const SpacesChannel = () => {
             <Paragraph>
               Yes arm and I'm about to start another about marketing
             </Paragraph>
-          </ChatMessage>
+          </Message>
           <MessageInput />
         </Box>
       </Box>

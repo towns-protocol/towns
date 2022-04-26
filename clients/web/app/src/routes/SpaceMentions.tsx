@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router";
-import { ChatMessage } from "@components/ChatMessage";
+import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
 
@@ -23,7 +23,7 @@ export const SpaceMentions = () => {
           <Divider label="# random" align="left" />
 
           <Paragraph color="accent">Show 2 more replies</Paragraph>
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
@@ -34,10 +34,10 @@ export const SpaceMentions = () => {
               marketing and nft's. Something <strong>@msyou209</strong> could
               help out with ?
             </Paragraph>
-          </ChatMessage>
+          </Message>
           <MessageInput />
           <Divider label="# general" align="left" />
-          <ChatMessage
+          <Message
             condensed
             avatar={<Avatar nft size="sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
@@ -46,7 +46,7 @@ export const SpaceMentions = () => {
             <Paragraph>
               Can you sign this today <strong>@msyou209</strong>?
             </Paragraph>
-          </ChatMessage>
+          </Message>
 
           <MessageInput />
         </Stack>

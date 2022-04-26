@@ -33,23 +33,11 @@ globalStyle("table", {
 });
 
 globalStyle("body, button", {
-  fontSize: vars.fontSize.lg,
+  fontSize: vars.fontSize.md,
   lineHeight: "100%",
-});
-
-globalStyle("p", {
-  fontSize: vars.fontSize.lg,
-  lineHeight: "100%",
-  margin: "0 0",
 });
 
 globalStyle("a", {
   textDecoration: "none",
   color: "inherit",
-});
-
-globalStyle("h1, h2, h3, h4 ,h5 ,h6, h7", {
-  fontSize: "13px",
-  lineHeight: "100%",
-  margin: 0,
 });
