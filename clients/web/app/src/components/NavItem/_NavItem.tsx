@@ -1,4 +1,10 @@
-import React, { ComponentProps, HTMLAttributes, forwardRef } from "react";
+import { motion } from "framer-motion";
+import React, {
+  ComponentProps,
+  HTMLAttributes,
+  forwardRef,
+  useState,
+} from "react";
 import { NavLink, useMatch, useResolvedPath } from "react-router-dom";
 import { BoxProps, Stack } from "@ui";
 
@@ -18,6 +24,13 @@ export const NavItem = forwardRef<
     path: resolved.pathname || "/",
     end: to === "/" || exact,
   });
+  const [hover, setHover] = useState(false);
+  const onMouseEnter = () => {
+    setHover(true);
+  };
+  const onMouseLeave = () => {
+    setHover(false);
+  };
   return (
     <ConditionalNavLink end={exact} to={to}>
       <Stack
@@ -26,22 +39,29 @@ export const NavItem = forwardRef<
         {...props}
         ref={ref}
       >
-        <Stack
+        <MotionStack
           horizontal
           grow
-          background={match ? "level2" : undefined}
+          position="relative"
+          background={match || hover ? "level2" : undefined}
           rounded="xs"
           alignItems="center"
           gap={compact ? "xs" : "sm"}
           minHeight={compact ? "x5" : "x6"}
           paddingX="xs"
+          initial="initial"
+          whileHover="hover"
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           {children}
-        </Stack>
+        </MotionStack>
       </Stack>
     </ConditionalNavLink>
   );
 });
+
+const MotionStack = motion(Stack);
 
 /** allows `to` prop to be undefined returning children */
 export const ConditionalNavLink = ({

@@ -1,6 +1,9 @@
 import React from "react";
-import { Box, Icon, Paragraph } from "@ui";
+import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
+import { Box, Heading, Icon, Paragraph, Stack } from "@ui";
+import { fakeSpaceCache } from "data/SpaceData";
 import { Avatar } from "ui/components/Avatar/Avatar";
+import { Tooltip, TooltipRenderer } from "ui/components/Tooltip/Tooltip";
 import { NavItem } from "./_NavItem";
 
 type Props = {
@@ -13,24 +16,63 @@ type Props = {
   compact?: boolean;
 };
 
+const SpaceTooltip = (props: { id: string }) => {
+  const { id } = props;
+  const { avatarSrc, name } = fakeSpaceCache[id];
+  return (
+    <Tooltip
+      horizontal
+      id={id}
+      key={id}
+      gap="sm"
+      padding="sm"
+      background="default"
+      display={{ desktop: "none", tablet: "flex" }}
+    >
+      {/* avatar container */}
+      <Avatar src={avatarSrc} size="xl" />
+      {/* title and stats container */}
+      <Stack grow justifyContent="center" gap="xs">
+        <Heading level={4}>{name}</Heading>
+        <SpaceSummary compact />
+      </Stack>
+    </Tooltip>
+  );
+};
+
 export const SpaceNavItem = (props: Props) => {
   const { id, active, avatar, exact, name, pinned, compact: isCompact } = props;
   return (
-    <NavItem compact={isCompact} to={`/spaces/${id}`} exact={exact}>
-      <Avatar
-        src={avatar}
-        size={
-          isCompact
-            ? { desktop: "sm", tablet: "lg" }
-            : { desktop: "lg", tablet: "lg" }
-        }
-      />
-      <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
-        {name}
-      </Paragraph>
-      <Box shrink display={{ tablet: "none" }}>
-        {pinned && <Icon type="pin" size="xxs" />}
-      </Box>
-    </NavItem>
+    <TooltipRenderer
+      id={props.id}
+      placement="horizontal"
+      render={<SpaceTooltip id={props.id} />}
+    >
+      {({ triggerProps }) => (
+        <NavItem
+          compact={isCompact}
+          to={`/spaces/${id}`}
+          exact={exact}
+          {...triggerProps}
+        >
+          <Avatar
+            animate
+            src={avatar}
+            size={
+              isCompact
+                ? { desktop: "sm", tablet: "lg" }
+                : { desktop: "lg", tablet: "lg" }
+            }
+            // whileHover={{ scale: 1.1 }}
+          />
+          <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
+            {name}
+          </Paragraph>
+          <Box shrink display={{ tablet: "none" }}>
+            {pinned && <Icon type="pin" size="xxs" />}
+          </Box>
+        </NavItem>
+      )}
+    </TooltipRenderer>
   );
 };

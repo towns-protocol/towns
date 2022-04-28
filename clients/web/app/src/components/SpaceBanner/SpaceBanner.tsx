@@ -22,16 +22,7 @@ export const SpaceBanner = (props: Props) => {
         {/* title and stats container */}
         <Stack grow justifyContent="center" gap="sm">
           <Heading level={3}>{name}</Heading>
-          <Stack horizontal gap="sm" color="gray1">
-            <Stack horizontal gap="xs" alignItems="center">
-              <Box background="accent" square="xxs" rounded="full" />
-              <Paragraph size="lg">2.3K</Paragraph>
-            </Stack>
-            <Stack horizontal gap="xs" alignItems="center">
-              <Icon type="token" size="xs" />
-              <Paragraph size="lg">12.4M</Paragraph>
-            </Stack>
-          </Stack>
+          <SpaceSummary />
         </Stack>
         {/* actions container */}
         <Stack alignItems="center" direction="row" gap="xs">
@@ -42,6 +33,19 @@ export const SpaceBanner = (props: Props) => {
     </Stack>
   );
 };
+
+export const SpaceSummary = ({ compact }: { compact?: boolean }) => (
+  <Stack horizontal gap={compact ? "xs" : "sm"} color="gray1">
+    <Stack horizontal gap={compact ? "xxs" : "xs"} alignItems="center">
+      <Box background="accent" square="xxs" rounded="full" />
+      <Paragraph size={compact ? "sm" : "lg"}>2.3K</Paragraph>
+    </Stack>
+    <Stack horizontal gap={compact ? "xxs" : "xs"} alignItems="center">
+      <Icon type="token" size="xs" />
+      <Paragraph size={compact ? "sm" : "lg"}>12.4M</Paragraph>
+    </Stack>
+  </Stack>
+);
 
 const UserDropDown = () => {
   const renderSelected = useCallback((selected?: string) => {

@@ -1,10 +1,11 @@
 import React from "react";
-import { Box, BoxProps } from "@ui";
+import { Stack } from "@ui";
+import { StackProps } from "../Stack/Stack";
 import * as styles from "./Card.css";
 
-export const Card = ({ children, ...boxProps }: BoxProps) => {
+export const Card = ({ children, ...boxProps }: StackProps) => {
   return (
-    <Box
+    <Stack
       background="level3"
       borderRadius="md"
       className={styles.base}
@@ -13,6 +14,6 @@ export const Card = ({ children, ...boxProps }: BoxProps) => {
       {...boxProps}
     >
       {children}
-    </Box>
+    </Stack>
   );
 };

@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import React from "react";
+import { motion } from "framer-motion";
+import React, { forwardRef } from "react";
 import { Box, BoxProps } from "../Box/Box";
 import {
   AvatarAtoms,
@@ -10,14 +11,16 @@ import {
 
 type Props = {
   src?: string;
+  animate?: boolean;
   onClick?: BoxProps["onClick"];
   insetX?: BoxProps["insetX"];
   insetY?: BoxProps["insetY"];
   inset?: BoxProps["inset"];
 } & AvatarAtoms;
 
-export const Avatar = (props: Props) => {
+export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
   const {
+    animate = false,
     size = "md",
     height = "md",
     nft = false,
@@ -27,8 +30,13 @@ export const Avatar = (props: Props) => {
     src = "/placeholders/nft_5.png",
     ...boxProps
   } = props;
+
+  const Container = animate ? MotionBox : Box;
+
   return (
-    <Box
+    <Container
+      variants={{ initial: { scale: 1 }, hover: { scale: 1.1 } }}
+      ref={ref}
       shrink={false}
       className={clsx(
         avatarToggleClasses({ nft, stacked, border, circle }),
@@ -43,4 +51,6 @@ export const Avatar = (props: Props) => {
       {...boxProps}
     />
   );
-};
+});
+
+const MotionBox = motion(Box);

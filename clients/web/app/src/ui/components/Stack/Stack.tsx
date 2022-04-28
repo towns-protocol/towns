@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 import { Box } from "@ui";
 import { BoxProps } from "../Box/Box";
 
-type StackProps = {
+export type StackProps = {
   horizontal?: boolean;
   direction?: BoxProps["direction"];
   gap?: BoxProps["gap"];
