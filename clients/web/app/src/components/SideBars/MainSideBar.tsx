@@ -1,7 +1,7 @@
 import React from "react";
-import { NavContainer } from "@components/SideBars/_SideBar";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
+import { NavContainer } from "@components/SideBars/_SideBar";
 import { fakeSpaces } from "data/SpaceData";
 
 export const MainSideBar = () => (
@@ -15,7 +15,7 @@ export const MainSideBar = () => (
         active={m.active}
         id={m.id}
         name={m.name}
-        avatar={`${m.avatarSrc}`}
+        avatar={m.avatarSrc}
         pinned={m.pinned}
       />
     ))}

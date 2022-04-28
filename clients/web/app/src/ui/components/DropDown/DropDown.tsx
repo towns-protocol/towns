@@ -8,7 +8,7 @@ type Props<T> = {
   renderSelected?: (selected?: string) => JSX.Element;
 };
 
-export const DropDown = <T,>({ selected, renderSelected }: Props<T>) => {
+export const Dropdown = <T,>({ selected, renderSelected }: Props<T>) => {
   const Selected = useCallback(() => {
     return typeof renderSelected === "function" ? (
       renderSelected(selected)

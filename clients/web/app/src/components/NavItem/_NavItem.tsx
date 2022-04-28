@@ -1,6 +1,6 @@
 import React, { ComponentProps, HTMLAttributes, forwardRef } from "react";
 import { NavLink, useMatch, useResolvedPath } from "react-router-dom";
-import { Box, BoxProps, Stack } from "@ui";
+import { BoxProps, Stack } from "@ui";
 
 type NavLinkProps = {
   to?: string;
@@ -20,8 +20,7 @@ export const NavItem = forwardRef<
   });
   return (
     <ConditionalNavLink end={exact} to={to}>
-      <Box
-        direction="row"
+      <Stack
         paddingX="xs"
         paddingY={compact ? "none" : "none"}
         {...props}
@@ -39,7 +38,7 @@ export const NavItem = forwardRef<
         >
           {children}
         </Stack>
-      </Box>
+      </Stack>
     </ConditionalNavLink>
   );
 });

@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Avatar, Box, DropDown, Heading, Icon, Paragraph, Stack } from "@ui";
+import { Avatar, Box, Dropdown, Heading, Icon, Paragraph, Stack } from "@ui";
 import { fakeUsers } from "data/UserData";
 
 type Props = {
@@ -58,7 +58,7 @@ const UserDropDown = () => {
   }, []);
 
   return (
-    <DropDown
+    <Dropdown
       items={pseudos}
       renderSelected={renderSelected}
       selected={pseudos[0].id}
