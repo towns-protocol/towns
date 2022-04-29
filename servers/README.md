@@ -1,20 +1,20 @@
 # Overview
 
-The Dendrite server is a subtree from the upstream of <https://github.com/matrix-org/dendrite.git>
+The Dendrite server is a subtree ofr our dendrite fork <https://github.com/HereNotThere/dendrite> from the upstream of <https://github.com/matrix-org/dendrite.git>
 
 It was intially populated with:
 
 ```bash
-git remote add dendrite https://github.com/matrix-org/dendrite.git
-git fetch dendrite
-git subtree add --prefix=servers/dendrite dendrite main
+git remote add dendrite-fork https://github.com/HereNotThere/dendrite.git
+git fetch dendrite-fork
+git subtree add --prefix=servers/dendrite dendrite-fork main
 ```
 
 ## Pulling changes from upstream
 
 ```bash
-git fetch dendrite
-git subtree pull --prefix=servers/dendrite dendrite main --squash
+git fetch dendrite-fork
+git subtree pull --prefix=servers/dendrite dendrite-fork main --squash
 ```
 
 This command will pull the changes since the last time it ran and create a merge commit on top. Keep in mind that the pulled commits might be older than the latest commit of your code though, so they might not appear directly when you call git log.
