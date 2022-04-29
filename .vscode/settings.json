@@ -4,5 +4,9 @@
     "./clients/web/app",
     "./clients/web/sample-app",
     "./contracts"
-  ]
+  ],
+  "gopls": {
+    "build.experimentalWorkspaceModule": true
+  }
 }
+
