@@ -104,7 +104,7 @@ const config: HardhatUserConfig = {
           : [],
     },
     hardhat: {
-      chainId: 31337,
+      chainId: 1337,
       mining: {
         mempool: {
           order: 'fifo',
@@ -114,7 +114,7 @@ const config: HardhatUserConfig = {
       },
     },
     localhost: {
-      chainId: 31337,
+      chainId: 1337,
     },
   },
   gasReporter: {
