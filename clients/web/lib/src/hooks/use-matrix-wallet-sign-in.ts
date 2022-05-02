@@ -48,7 +48,11 @@ export function useMatrixWalletSignIn() {
     setUsername,
   } = useMatrixStore();
   const { setAccessToken } = useCredentialStore();
-  const { accounts, chainId, sign } = useWeb3Context();
+  let { accounts, chainId, sign } = useWeb3Context();
+  // ChainId can be a hex number in str, unhex it here.
+  if (chainId && chainId.startsWith("0x")) {
+    chainId = "" + +chainId;
+  }
 
   const chainIdEip155 = useMemo(
     function () {
@@ -200,6 +204,20 @@ export function useMatrixWalletSignIn() {
             const { sessionId, chainIds, error } = await newRegisterSession(
               matrixClient,
               walletAddress
+            );
+            console.log(
+              '[registerWallet] newRegisterSession result, sessionId =', 
+              sessionId, 
+              'original chainId =',
+              chainId,
+              typeof chainId,
+              'error =',
+              error,
+              'and looking for chainIdEip155 =',
+              chainIdEip155,
+              typeof chainIdEip155,
+              ' in chainIds =',
+              chainIds
             );
             if (!error && sessionId && chainIds.includes(chainIdEip155)) {
               // Prompt the user to sign the message.
@@ -597,7 +615,7 @@ async function newRegisterSession(
       const loginFlows = error.data;
       const params = getParamsPublicKeyEthereum(error.data.params);
       console.log(
-        `[newRegisterSession] Register session info`,
+        ` [newRegisterSession] Register session info`,
         loginFlows,
         params
       );
