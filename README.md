@@ -11,11 +11,11 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 # Prerequisites 
 
-- Node v16.x.x, I recommend using nvm to install node: https://github.com/nvm-sh/nvm, then you can run `nvm use` to switch to the node version specified in .nvmrc
+- Node v16.x.x, I recommend using nvm to install node: https://github.com/nvm-sh/nvm, then you can run `nvm use` to switch to the node version specified in .nvmrc, or `nvm alias default 16.3` to set the default version across all of your terminals
 
 - golang https://go.dev/
 
-- We're using yarn 2, which means that there should only be one node_modules folder and one yarn.lock file at the root of the repository. yarn 2 installation instructions are here https://yarnpkg.com/getting-started/install, if you're already using yarn it will automatically upgrade you behind the scenes.
+- `npm install --global yarn` We're using yarn 2, which means that there should only be one node_modules folder and one yarn.lock file at the root of the repository. yarn 2 installation instructions are here https://yarnpkg.com/getting-started/install, if you're already using yarn it will automatically upgrade you behind the scenes.
 
 
 # Setup
