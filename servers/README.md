@@ -42,6 +42,7 @@ Further reading about maintaininf the subtree may be found here:
 ## Build and run Dendrite
 
 ```bash
+cd dendrite
 
 ./build.sh
 
@@ -53,6 +54,16 @@ Further reading about maintaininf the subtree may be found here:
 
 # Copy and modify the config file - you'll need to set a server name and paths to the keys# at the very least, along with setting up the database connection strings.
 cp dendrite-config.yaml dendrite.yaml
+
+# update the public key authentication section of the yaml file:
+
+#  # public key authentication
+#  public_key_authentication:
+#    ethereum:
+#      enabled: true
+#      version: 1
+#      chain_ids: ["4"] # https://chainlist.org/
+
 
 # Build and run the server:
 ./bin/dendrite-monolith-server --tls-cert server.crt --tls-key server.key --config dendrite.yaml
