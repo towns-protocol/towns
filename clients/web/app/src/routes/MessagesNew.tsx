@@ -43,7 +43,7 @@ export const MessagesNew = () => (
     </Box>
     <Box grow gap="sm" justifyContent="end" padding="sm">
       <Box gap="xs">
-        <Avatar nft size="xl" />
+        <Avatar size="xl" />
         <Heading level={1}>godguy23</Heading>
         <Box direction="row" alignItems="center" gap="xs">
           <Paragraph size="lg" fontWeight="strong">

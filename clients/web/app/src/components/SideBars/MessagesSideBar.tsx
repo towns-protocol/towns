@@ -55,7 +55,7 @@ const MessageItem = ({
         paddingY="sm"
         background={selected ? "level2" : undefined}
       >
-        <Avatar nft src="/placeholders/nft_2.png" size="lg" />
+        <Avatar src="/placeholders/nft_2.png" size="lg" />
         <Stack grow gap="xs">
           <Text
             color={active ? "default" : "default"}

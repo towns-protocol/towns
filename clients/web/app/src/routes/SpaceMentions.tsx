@@ -19,7 +19,7 @@ export const SpaceMentions = () => {
           <Paragraph color="accent">Show 2 more replies</Paragraph>
           <Message
             condensed
-            avatar={<Avatar nft size="sm" src="/placeholders/nft_2.png" />}
+            avatar={<Avatar size="sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -33,7 +33,7 @@ export const SpaceMentions = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={<Avatar nft size="sm" src="/placeholders/nft_30.png" />}
+            avatar={<Avatar size="sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
           >

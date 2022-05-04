@@ -55,7 +55,7 @@ const UserDropDown = () => {
     ) : (
       <>
         {user.displayName}
-        <Avatar circle nft src={user.avatarSrc} size="xs" />
+        <Avatar circle src={user.avatarSrc} size="xs" />
         <Icon type="down" size="adapt" />
       </>
     );

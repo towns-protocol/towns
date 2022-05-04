@@ -9,7 +9,7 @@ import { ContextBar } from "@components/ContextBar";
 export const MessagesRead = () => (
   <Stack grow>
     <ContextBar>
-      <Avatar nft src="/placeholders/nft_4.png" size="lg" />
+      <Avatar src="/placeholders/nft_4.png" size="lg" />
       <Paragraph size="lg" color="default">
         iamblue
       </Paragraph>
@@ -27,7 +27,7 @@ export const MessagesRead = () => (
           condensed
           name="You"
           date="Today at 11:01 AM"
-          avatar={<Avatar nft src="/placeholders/nft_1.png" />}
+          avatar={<Avatar src="/placeholders/nft_1.png" />}
         >
           <Paragraph>gm</Paragraph>
         </Message>
@@ -35,7 +35,7 @@ export const MessagesRead = () => (
           condensed
           name="iamblue"
           date="Today at 11:01 AM"
-          avatar={<Avatar nft src="/placeholders/nft_4.png" />}
+          avatar={<Avatar src="/placeholders/nft_4.png" />}
         >
           <Paragraph>GM My man!!</Paragraph>
         </Message>

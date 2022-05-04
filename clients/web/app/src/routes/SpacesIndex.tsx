@@ -67,7 +67,7 @@ const SpaceMessages = () => (
     <RoundedMessage
       channel="announcements"
       name="sunsoutapesout"
-      avatar={<Avatar nft src="/placeholders/nft_2.png" />}
+      avatar={<Avatar src="/placeholders/nft_2.png" />}
       date="Today at 11:01 AM"
       reactions={{ "👋": 20 }}
     >
@@ -88,7 +88,7 @@ const SpaceMessages = () => (
     <RoundedMessage
       channel="general"
       name="hana.eth"
-      avatar={<Avatar nft src="/placeholders/nft_20.png" />}
+      avatar={<Avatar src="/placeholders/nft_20.png" />}
       date="Today at 11:01 AM"
       replies={{ userIds: [1, 2, 3], fakeLength: 150 }}
     >
@@ -98,7 +98,7 @@ const SpaceMessages = () => (
     <RoundedMessage
       channel="crypto-talk"
       name="shimmyshimmy"
-      avatar={<Avatar nft src="/placeholders/nft_40.png" />}
+      avatar={<Avatar src="/placeholders/nft_40.png" />}
       date="Today at 11:01 AM"
       reactions={{ "😍": 3, "😂": 13, "💀": 5 }}
     >

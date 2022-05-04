@@ -14,7 +14,7 @@ export const UserInfo = ({ userId }: Props) => {
 
   return (
     <Stack gap="sm">
-      <Avatar nft src={avatarSrc} size="xl" />
+      <Avatar src={avatarSrc} size="xl" />
       <Heading level={1}>{displayName}</Heading>
       <Stack horizontal alignItems="center" gap="xs">
         <Paragraph size="lg" fontWeight="strong">
