@@ -1,5 +1,5 @@
 import React from "react";
-import { Paragraph } from "@ui";
+import { Heading } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
 import { NavItem } from "./_NavItem";
 
@@ -33,12 +33,13 @@ export const ActionNavItem = ({
           }
         />
       )}
-      <Paragraph
+      <Heading
+        level={4}
         display={{ tablet: "none" }}
-        fontWeight={isHighlight ? "strong" : "normal"}
+        color={isHighlight ? "default" : "gray2"}
       >
         {label}
-      </Paragraph>
+      </Heading>
     </NavItem>
   );
 };

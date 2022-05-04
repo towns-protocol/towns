@@ -1,8 +1,8 @@
+import { AnimatePresence } from "framer-motion";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import { TopBar } from "@components/TopBar";
 import { Box, Stack } from "@ui";
+import { TopBar } from "@components/TopBar";
 import { Home } from "routes/Home";
 import { Messages } from "routes/Messages";
 import { MessagesNew } from "routes/MessagesNew";
@@ -13,8 +13,11 @@ import { SpacesChannel } from "routes/SpacesChannel";
 import { SpacesChannelReplies } from "routes/SpacesChannelThread";
 import { SpacesIndex } from "routes/SpacesIndex";
 import { SpaceThreads } from "routes/SpaceThreads";
-import { darkTheme, lightTheme } from "ui/styles/vars.css";
 import { TopLayerPortalContext } from "ui/components/Overlay/OverlayPortal";
+import { darkTheme, lightTheme } from "ui/styles/vars.css";
+import { FontLoader } from "ui/utils/FontLoader";
+
+FontLoader.init();
 
 export const App = () => {
   const defaultDark = useMemo(

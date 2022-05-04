@@ -11,7 +11,7 @@ export const Home = () => (
     <Stack horizontal grow justifyContent="center" paddingY="md" basis="1200">
       <LiquidContainer fullbleed>
         <Stack grow gap="sm">
-          <Heading color="gray1" level={1}>
+          <Heading color="gray1" level={2}>
             Highlights
           </Heading>
           <Grid columns={4} gap="sm">

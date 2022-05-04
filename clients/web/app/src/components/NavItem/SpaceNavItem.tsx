@@ -63,9 +63,15 @@ export const SpaceNavItem = (props: Props) => {
                 : { desktop: "lg", tablet: "lg" }
             }
           />
-          <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
+          <Heading
+            grow
+            truncate
+            level={5}
+            color={active ? "default" : undefined}
+            display={{ tablet: "none" }}
+          >
             {name}
-          </Paragraph>
+          </Heading>
           <Box shrink display={{ tablet: "none" }}>
             {pinned && <Icon type="pin" size="xxs" />}
           </Box>

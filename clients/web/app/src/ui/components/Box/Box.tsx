@@ -8,6 +8,7 @@ import React, {
 import { Atoms, atoms, boxStyleBase } from "ui/styles/atoms/atoms.css";
 import { debugClass } from "ui/styles/css/debug.css";
 import { absoluteFillClass } from "ui/styles/css/utils.css";
+import { vars } from "ui/styles/vars.css";
 import { assignBoolToDefaultValue } from "ui/utils/utils";
 
 // shorthands allow `true` or `false` for assigning default values in addition
@@ -51,6 +52,8 @@ const boxDefaults: Atoms = {
   display: "flex",
   direction: "column",
 } as const;
+
+export const withGapClass = "with-gap";
 
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
   const {
@@ -117,20 +120,24 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
 
     return {
       nativeProps,
-      atomicClasses: clsx(
+      atomicClasses: clsx([
         boxStyleBase,
         atoms({
           ...boxDefaults,
           ...fromShorthand,
           ...atomicProps,
         }),
-
-        absoluteFill && absoluteFillClass,
         className,
-        debug && debugClass
-      ),
+        {
+          [withGapClass]: props.gap && props.gap !== vars.space.none,
+        },
+        {
+          [absoluteFillClass]: absoluteFill,
+          [debugClass]: debug,
+        },
+      ]),
     };
-  }, [absoluteFill, className, debug, fromShorthand, restProps]);
+  }, [absoluteFill, className, debug, fromShorthand, props.gap, restProps]);
 
   // const dynamicStyle = useMemo(() => {
   //   const style: React.CSSProperties = props.style ?? {};

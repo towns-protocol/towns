@@ -68,6 +68,7 @@ export const NavItem = forwardRef<
           gap={compact ? "xs" : "sm"}
           minHeight={compact ? "x5" : "x6"}
           paddingX="xs"
+          color={match ? "default" : "gray2"}
         >
           {children}
         </Stack>
