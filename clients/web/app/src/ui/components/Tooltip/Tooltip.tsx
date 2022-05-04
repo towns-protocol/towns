@@ -44,6 +44,7 @@ export const TooltipRenderer = ({
 
   const onMouseEnter = useCallback(() => {
     if (!triggerRef) return;
+
     const domRect = triggerRef.getBoundingClientRect();
     setTriggerRect(domRect);
     setActive(true);
@@ -89,8 +90,6 @@ export const TooltipRenderer = ({
         root &&
         createPortal(
           <OffsetContainer
-            id={id}
-            key={id}
             render={render}
             triggerRect={triggerRect}
             placement={placement}
@@ -102,10 +101,10 @@ export const TooltipRenderer = ({
 };
 
 type OffsetContainerProps = {
-  id: string;
   placement: Placement;
   render: JSX.Element;
   triggerRect: DOMRect;
+  animatePresence?: boolean;
   containerBounds?: {
     top: number;
     right: number;
@@ -115,7 +114,7 @@ type OffsetContainerProps = {
 };
 
 const OffsetContainer = (props: OffsetContainerProps) => {
-  const { id, triggerRect, render, placement } = props;
+  const { triggerRect, render, placement } = props;
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   const containerBounds = useMemo(() => {
@@ -186,8 +185,8 @@ const OffsetContainer = (props: OffsetContainerProps) => {
   return size.width === 0 ? (
     <div style={style}>{content}</div>
   ) : (
-    <motion.div {...layoutAnimation} key={id} style={style}>
-      {content}
+    <motion.div {...layoutAnimation} style={style}>
+      <motion.div>{content}</motion.div>
     </motion.div>
   );
 };
@@ -199,12 +198,10 @@ const layoutAnimation = {
 } as const;
 
 export const Tooltip = ({
-  id,
   children,
   ...boxProps
-}: { id: string; children: React.ReactNode } & StackProps) => (
+}: { children: React.ReactNode } & StackProps) => (
   <Stack
-    key={id}
     paddingX="sm"
     paddingY="xs"
     background="default"
@@ -217,16 +214,3 @@ export const Tooltip = ({
     {children}
   </Stack>
 );
-
-// const presence = {
-//   initial: {
-//     opacity: 0,
-//   },
-//   animate: {
-//     opacity: 1,
-//     transition: { delay: 0.3 },
-//   },
-//   exit: {
-//     transition: { duration: 0.1 },
-//   },
-// };

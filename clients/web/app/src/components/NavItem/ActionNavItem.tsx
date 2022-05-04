@@ -6,12 +6,12 @@ import { NavItem } from "./_NavItem";
 export const ActionNavItem = ({
   compact: isCompact,
   icon,
-  link,
   id,
+  link,
   highlight: isHighlight,
   label,
 }: {
-  id: string;
+  id?: string;
   label: string;
   link?: string;
   icon?: IconName;
@@ -19,7 +19,7 @@ export const ActionNavItem = ({
   compact?: boolean;
 }) => {
   return (
-    <NavItem compact={isCompact} to={link}>
+    <NavItem compact={isCompact} to={link} id={id}>
       {icon && (
         <Icon
           type={icon}

@@ -18,7 +18,7 @@ type Props = {
 
 const SpaceTooltip = (props: { id: string }) => {
   const { id } = props;
-  const { avatarSrc, name } = fakeSpaceCache[id];
+  const { name } = fakeSpaceCache[id];
   return (
     <Tooltip
       horizontal
@@ -29,9 +29,6 @@ const SpaceTooltip = (props: { id: string }) => {
       background="default"
       display={{ desktop: "none", tablet: "flex" }}
     >
-      {/* avatar container */}
-      <Avatar src={avatarSrc} size="xl" />
-      {/* title and stats container */}
       <Stack grow justifyContent="center" gap="xs">
         <Heading level={4}>{name}</Heading>
         <SpaceSummary compact />
@@ -42,6 +39,7 @@ const SpaceTooltip = (props: { id: string }) => {
 
 export const SpaceNavItem = (props: Props) => {
   const { id, active, avatar, exact, name, pinned, compact: isCompact } = props;
+
   return (
     <TooltipRenderer
       id={props.id}
@@ -50,6 +48,7 @@ export const SpaceNavItem = (props: Props) => {
     >
       {({ triggerProps }) => (
         <NavItem
+          id={id}
           compact={isCompact}
           to={`/spaces/${id}`}
           exact={exact}
@@ -63,7 +62,6 @@ export const SpaceNavItem = (props: Props) => {
                 ? { desktop: "sm", tablet: "lg" }
                 : { desktop: "lg", tablet: "lg" }
             }
-            // whileHover={{ scale: 1.1 }}
           />
           <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
             {name}

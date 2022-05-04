@@ -1,11 +1,11 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Avatar, Box, Icon, Paragraph, Stack, Text } from "@ui";
-import { NavContainer } from "@components/SideBars/_SideBar";
+import { SideBar } from "@components/SideBars/_SideBar";
 
 export const MessagesSideBar = () => {
   return (
-    <NavContainer>
+    <SideBar>
       <Stack
         horizontal
         borderBottom
@@ -34,7 +34,7 @@ export const MessagesSideBar = () => {
         <MessageItem />
         <MessageItem />
       </Box>
-    </NavContainer>
+    </SideBar>
   );
 };
 
