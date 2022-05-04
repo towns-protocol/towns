@@ -25121,6 +25121,7 @@ __metadata:
     react-scripts: ^5.0.0
     typescript: ^4.6.3
     url: ^0.11.0
+    use-matrix-client: "workspace:*"
     zustand: ^3.7.1
   languageName: unknown
   linkType: soft
@@ -28325,7 +28326,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-matrix-client@workspace:clients/web/lib":
+"use-matrix-client@workspace:*, use-matrix-client@workspace:clients/web/lib":
   version: 0.0.0-use.local
   resolution: "use-matrix-client@workspace:clients/web/lib"
   dependencies:

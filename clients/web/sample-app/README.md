@@ -2,28 +2,20 @@
 
 Test app that uses our own use-matrix-client library module. Follow the README.md in the /lib directory to build the module first before running yarn in this directory.
 
+## About this setup
+
+We're using `workspace:*` as the source of the `use-matrix-client` dependency in the package json. This requires the files in `clients/web/lib` to be built using `yarn build`, but then changes should get picked up imediately. Use `yarn watch` to continuously build changes.
+
 ## First time set up
 
-Link to the local library and install dependencies for the sample app.
-
 ```bash
-cd clients/web/sample-app
-yarn install
-npm link ../lib
-# Some dependencies are broken after linking.
-# Have to re-run yarn install. Investigate.
+# from repository root
 yarn install
 ```
 
 ## Build and run the matrix server
 
-Temporary. The synapse server will be replaced by the dendrite server.
-
-```bash
-# Docker should be installed and running.
-cd servers/sample-synapse
-yarn start
-```
+Follow instructions in the root of the repository to run dendrite
 
 ## Build and run the matrix sample app
 
