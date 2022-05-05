@@ -83,7 +83,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     shorthands.borderBottom = assignBoolToDefaultValue(borderBottom, "default");
     shorthands.borderLeft = assignBoolToDefaultValue(borderLeft, "default");
     shorthands.borderRight = assignBoolToDefaultValue(borderRight, "default");
-    shorthands.padding = assignBoolToDefaultValue(padding, "sm");
+    shorthands.padding = assignBoolToDefaultValue(padding, "md");
     shorthands.flexGrow = assignBoolToDefaultValue(grow, "x1", "x0");
     shorthands.flexShrink = assignBoolToDefaultValue(shrink, "x1", "x0");
 

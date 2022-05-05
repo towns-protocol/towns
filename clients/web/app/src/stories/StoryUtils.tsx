@@ -7,14 +7,14 @@ import { crossClass } from "./Storybook.css";
 export const Square = (props: BoxProps) => (
   <Box
     background="none"
-    square="xs"
+    square="square_xs"
     className={!props.background ? crossClass : ""}
     {...props}
   />
 );
 
 export const GridItem = (props: { children?: React.ReactNode }) => (
-  <Box borderBottom="strong" paddingY="sm" justifyContent="center">
+  <Box borderBottom="strong" paddingY="md" justifyContent="center">
     {props.children}
   </Box>
 );
@@ -32,7 +32,7 @@ export const Row = ({
   tone?: boolean;
   children?: React.ReactNode;
 } & BoxProps) => (
-  <Grid borderBottom direction="row" paddingY="sm" columns={columns ?? 2}>
+  <Grid borderBottom direction="row" paddingY="md" columns={columns ?? 2}>
     <Box grow justifyContent="center" key="first">
       <Text>{label}</Text>
     </Box>
@@ -41,7 +41,7 @@ export const Row = ({
       justifyContent="center"
       key="last"
       background={backgroundVariant}
-      padding={backgroundVariant && "xs"}
+      padding={backgroundVariant && "sm"}
     >
       {children}
     </Box>
@@ -57,10 +57,10 @@ export const StoryContainer = ({
 }) => (
   <MemoryRouter>
     <Stack grow direction={stacked ? "column" : "row"} maxWidth="desktop">
-      <Stack grow background="level1" padding="md" className={lightTheme}>
+      <Stack grow background="level1" padding="lg" className={lightTheme}>
         {children}
       </Stack>
-      <Stack grow background="level1" padding="md" className={darkTheme}>
+      <Stack grow background="level1" padding="lg" className={darkTheme}>
         {children}
       </Stack>
     </Stack>

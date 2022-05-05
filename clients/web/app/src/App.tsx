@@ -1,6 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
+import clsx from "clsx";
 import { Box, Stack } from "@ui";
 import { TopBar } from "@components/TopBar";
 import { Home } from "routes/Home";
@@ -21,7 +22,7 @@ FontLoader.init();
 
 export const App = () => {
   const defaultDark = useMemo(
-    () => !!window.matchMedia("(prefers-color-scheme: dark)").matches,
+    () => false && !!window.matchMedia("(prefers-color-scheme: dark)").matches,
     []
   );
   const [theme, setTheme] = useState<"light" | "dark">(
@@ -38,7 +39,10 @@ export const App = () => {
       <Stack
         grow
         absoluteFill
-        className={theme === "light" ? lightTheme : darkTheme}
+        className={clsx([
+          theme === "light" ? lightTheme : darkTheme,
+          { [`debug-grid`]: false },
+        ])}
         background="default"
         color="default"
       >

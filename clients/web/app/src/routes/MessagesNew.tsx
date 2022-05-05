@@ -8,9 +8,9 @@ export const MessagesNew = () => (
     <Box
       borderBottom
       direction="row"
-      paddingX="sm"
-      height="md"
-      gap="xs"
+      paddingX="md"
+      height="height_lg"
+      gap="sm"
       alignItems="center"
     >
       <Icon type="message" background="level1" />
@@ -19,9 +19,9 @@ export const MessagesNew = () => (
     <Box
       borderBottom
       direction="row"
-      paddingX="sm"
-      height="md"
-      gap="xs"
+      paddingX="md"
+      height="height_lg"
+      gap="sm"
       alignItems="center"
     >
       <Box>
@@ -30,22 +30,22 @@ export const MessagesNew = () => (
       <Box direction="row">
         <Box
           background="level2"
-          gap="xxs"
+          gap="xs"
           direction="row"
-          padding="xxs"
+          padding="xs"
           rounded="xs"
           alignItems="center"
         >
-          <Avatar circle size="xs" />
+          <Avatar circle size="avatar_xs" />
           <Paragraph size="sm">godguy23</Paragraph>
         </Box>
       </Box>
     </Box>
-    <Box grow gap="sm" justifyContent="end" padding="sm">
-      <Box gap="xs">
-        <Avatar size="xl" />
+    <Box grow gap="md" justifyContent="end" padding="md">
+      <Box gap="sm">
+        <Avatar size="avatar_xl" />
         <Heading level={1}>godguy23</Heading>
-        <Box direction="row" alignItems="center" gap="xs">
+        <Box direction="row" alignItems="center" gap="sm">
           <Paragraph size="lg" fontWeight="strong">
             50
           </Paragraph>
@@ -60,7 +60,7 @@ export const MessagesNew = () => (
         </Paragraph>
       </Box>
       <Divider />
-      <Box gap="sm">
+      <Box gap="md">
         <MessageInput />
       </Box>
     </Box>

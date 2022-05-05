@@ -10,16 +10,16 @@ export const SpaceMentions = () => {
     <Stack grow horizontal>
       <Stack grow>
         <ContextBar>
-          <Icon type="at" size="sm" />
+          <Icon type="at" size="square_sm" />
           <Paragraph size="lg">Mentions</Paragraph>
         </ContextBar>
-        <Stack padding gap="sm">
+        <Stack padding gap="md">
           <Divider label="# random" align="left" />
 
           <Paragraph color="accent">Show 2 more replies</Paragraph>
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_2.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -33,7 +33,7 @@ export const SpaceMentions = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_30.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
           >

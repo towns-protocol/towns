@@ -19,43 +19,50 @@ const root = createGlobalTheme(":root", {
 
   space: {
     none: "0",
-    xxs: `${baseline * 0.5}px`,
-    xs: `${baseline * 1}px`,
-    sm: `${baseline * 2}px`,
-    md: `${baseline * 4}px`,
-    lg: `${baseline * 8}px`,
-    xl: `${baseline * 16}px`,
+    // 11 occurences
+    xs: `${baseline * 0.5}px`,
+    // 45 occurences
+    sm: `${baseline * 1}px`, // sm
+    // 67 occurences
+    md: `${baseline * 2}px`, // md
+    // 15 occurences
+    lg: `${baseline * 4}px`, // lg
+
+    // suited for text spacing
+    paragraph: `${baseline * 1.5}px`, // m
+    line: `${baseline * 0.75}px`,
   } as const,
 
   dims: {
-    icons: {
-      xxs: `${baseline * 1.5}px`,
+    square: {
+      square_xxs: `${baseline * 1.5}px`,
       // xsmall icons / avatars
-      xs: `${baseline * 2}px`,
+      square_xs: `${baseline * 2}px`,
       // small icons / avatars
-      sm: `${baseline * 2.5}px`,
+      square_sm: `${baseline * 2.5}px`,
       // default icon
-      md: `${baseline * 3}px`,
+      square_md: `${baseline * 3}px`,
       // default icon
-      lg: `${baseline * 4}px`,
+      square_lg: `${baseline * 4}px`,
       // big icons
-      xl: `${baseline * 6.5}px`,
+      square_xl: `${baseline * 6.5}px`,
       // hero avatar
-      xxl: `${baseline * 10}px`,
+      square_xxl: `${baseline * 10}px`,
 
-      adapt: `1.2em`,
+      square_inline: `1.2em`,
     },
-    rows: {
-      xxs: `${baseline * 1.5}px`,
+    height: {
+      /** text */
+      height_sm: `${baseline * 1.5}px`,
       /** pills */
-      xs: `${baseline * 2.5}px`,
-      /** text rows */
-      sm: `${baseline * 3.5}px`,
+      height_md: `${baseline * 3.5}px`,
       /** message rows */
-      md: `${baseline * 5}px`,
-      /** input fields / topbar */
-      lg: `${baseline * 6.5}px`,
+      height_lg: `${baseline * 5}px`,
+      /** top bar */
+      height_xl: `${baseline * 6.5}px`,
+    },
 
+    baseline: {
       /**
        * ideally we would only use semantical but small inconsistencies makes it
        * hard to to make one-version-fits-all-needs
@@ -78,7 +85,7 @@ const root = createGlobalTheme(":root", {
       x40: `${baseline * 40}px`,
     },
 
-    screens: {
+    screen: {
       none: "0",
       auto: "auto",
       // for testing !
@@ -103,12 +110,12 @@ const root = createGlobalTheme(":root", {
       wide: `${breakpoints.wide}px`,
     },
 
-    inputs: {
-      sm: `${baseline * 3}px`,
+    input: {
+      input_sm: `${baseline * 3}px`,
       // drop downs
-      md: `${baseline * 4}px`,
+      input_md: `${baseline * 4}px`,
       // chat input
-      lg: `${baseline * 5}px`,
+      input_lg: `${baseline * 5}px`,
     },
   } as const,
 

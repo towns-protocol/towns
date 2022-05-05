@@ -21,8 +21,8 @@ type Props = {
 export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
   const {
     animate = false,
-    size = "md",
-    height = "md",
+    size = "avatar_md",
+    height = "avatar_md",
     circle = false,
     stacked = false,
     border,

@@ -5,7 +5,7 @@ import { SideBar } from "@components/SideBars/_SideBar";
 import { fakeSpaces } from "data/SpaceData";
 
 export const MainSideBar = () => (
-  <SideBar paddingY="xs">
+  <SideBar paddingY="sm">
     {navItems.map((n, index) => (
       <ActionNavItem key={n.id} {...n} />
     ))}

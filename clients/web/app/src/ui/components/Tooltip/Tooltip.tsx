@@ -202,8 +202,8 @@ export const Tooltip = ({
   ...boxProps
 }: { children: React.ReactNode } & StackProps) => (
   <Stack
-    paddingX="sm"
-    paddingY="xs"
+    paddingX="md"
+    paddingY="sm"
     background="default"
     color="gray2"
     rounded="sm"

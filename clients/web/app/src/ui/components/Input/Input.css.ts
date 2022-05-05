@@ -4,7 +4,7 @@ import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
 
 export const inputContainerStyle = style({
-  padding: vars.space.xs,
+  padding: vars.space.sm,
   borderRadius: vars.borderRadius.xs,
 });
 
@@ -28,7 +28,7 @@ export const inputIconStyle = style({
 const inputProperties = defineProperties({
   ...responsivePropertiesMixin,
   properties: {
-    height: vars.dims.inputs,
+    height: vars.dims.input,
   },
 });
 

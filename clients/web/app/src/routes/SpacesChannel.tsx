@@ -13,31 +13,31 @@ export const SpacesChannel = () => {
         <ContextBar>
           <Paragraph size="lg"># {channel}</Paragraph>
         </ContextBar>
-        <Box padding gap="sm">
+        <Box padding gap="lg">
           <Message
             condensed
-            avatar={<Avatar size="sm" />}
+            avatar={<Avatar size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             reactions={{ "👋": 20 }}
           >
-            <Paragraph>
+            <p>
               gm! name is francine groves and I'm a big nft fan. I currently
               moderate for Veefriends, Boss Beauties, Fame Ladies, BFF, Flyfish
               Club, Legacy Leaders and All Around Artsy. Soon to add my own
               project to that list.
-            </Paragraph>
-            <Paragraph>
+            </p>
+            <p>
               I'm a farmer and herbalist (also pagan and ordained), own a
               digital marketing agency and am a musician. Husband and I run a
               YouTube channel about our farm and I'm about to start another
               about marketing and nft's.
-            </Paragraph>
+            </p>
           </Message>
           <Divider label="Today" />
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_30.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             replies={{ userIds: [2, 3, 4], fakeLength: 150 }}
@@ -46,7 +46,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="sm" />}
+            avatar={<Avatar size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             reactions={{ "👀": 20, "🤑": 2 }}
@@ -60,7 +60,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_2.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -71,7 +71,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_28.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_28.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -79,7 +79,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_2.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -87,7 +87,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_39.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_39.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -95,7 +95,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="sm" src="/placeholders/nft_2.png" />}
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >

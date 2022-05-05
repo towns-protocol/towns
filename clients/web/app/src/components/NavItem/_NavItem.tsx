@@ -50,7 +50,7 @@ export const NavItem = forwardRef<
     <ConditionalNavLink end={exact} to={to}>
       <Stack
         position="relative"
-        paddingX="xs"
+        paddingX="sm"
         paddingY="none"
         {...props}
         ref={ref}
@@ -65,9 +65,9 @@ export const NavItem = forwardRef<
           position="relative"
           rounded="xs"
           alignItems="center"
-          gap={compact ? "xs" : "sm"}
+          gap={compact ? "sm" : "md"}
           minHeight={compact ? "x5" : "x6"}
-          paddingX="xs"
+          paddingX="sm"
           color={match ? "default" : "gray2"}
         >
           {children}
@@ -109,7 +109,7 @@ const NavItemHighlight = (props: HighlightProps) => {
     : styles.highlightTransitionOut;
 
   return (
-    <Box absoluteFill paddingX="xs">
+    <Box absoluteFill paddingX="sm">
       <Box
         grow
         className={clsx([

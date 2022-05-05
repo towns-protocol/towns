@@ -42,7 +42,7 @@ export const SpacesIndex = () => {
           </LiquidContainer>
         </Box>
       </Stack>
-      <Box grow paddingY="sm" alignItems="center" background="level1">
+      <Box grow paddingY="md" alignItems="center" background="level1">
         <SpaceMessages />
       </Box>
     </>
@@ -58,12 +58,12 @@ export const LiquidContainer = forwardRef<
     width="100%"
     {...props}
     ref={ref}
-    paddingX="md"
+    paddingX="lg"
   />
 ));
 
 const SpaceMessages = () => (
-  <LiquidContainer gap="sm">
+  <LiquidContainer gap="md">
     <RoundedMessage
       channel="announcements"
       name="sunsoutapesout"
@@ -120,19 +120,19 @@ const SpaceMessages = () => (
   </LiquidContainer>
 );
 
-const RoundedMessage = (props: ComponentProps<typeof Message>) => (
-  <Message rounded="sm" padding="sm" background="default" {...props} />
+export const RoundedMessage = (props: ComponentProps<typeof Message>) => (
+  <Message rounded="sm" padding="md" background="default" {...props} />
 );
 
 const QuotedMessage = (props: {
   avatar: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <Box paddingTop="sm" maxWidth="400">
-    <Box rounded="sm" padding="sm" background="level2" gap="sm" color="default">
-      <Box direction="row" gap="xs" height="sm" alignItems="center">
+  <Box paddingTop="md" maxWidth="400">
+    <Box rounded="sm" padding="md" background="level2" gap="md" color="default">
+      <Box direction="row" gap="sm" height="height_md" alignItems="center">
         {props.avatar}
-        <Box gap="xxs">
+        <Box gap="xs">
           <Heading level={5}>Bored Ape Yacht Club</Heading>
           <Paragraph size="sm">@boredapeYC</Paragraph>
         </Box>
@@ -143,7 +143,7 @@ const QuotedMessage = (props: {
 );
 
 const SpaceMenu = () => (
-  <Box direction="row" gap="xs">
+  <Box direction="row" gap="sm">
     <SpaceMenuItem selected label="Home" />
     <SpaceMenuItem label="Trade" />
     <SpaceMenuItem label="Vote" />
@@ -158,7 +158,7 @@ const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
   <Box
     shrink
     height="x4"
-    paddingX="sm"
+    paddingX="md"
     background={props.selected ? "level2" : undefined}
     roundedTop="sm"
     justifyContent="center"

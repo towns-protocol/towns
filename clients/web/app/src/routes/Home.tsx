@@ -1,22 +1,24 @@
 import React from "react";
+import { SaleCard } from "@components/Cards/SaleCard";
+import { ShareCard } from "@components/Cards/ShareCard";
 import { Highlight } from "@components/Highlight";
+import { Message } from "@components/Message";
 import { MainSideBar } from "@components/SideBars/MainSideBar";
-import { Grid, Heading } from "@ui";
+import { Avatar, Box, Grid, Heading } from "@ui";
+import { Card } from "ui/components/Card/Card";
 import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const Home = () => (
   <>
     <MainSideBar />
-    <Stack horizontal grow justifyContent="center" paddingY="md" basis="1200">
-      <LiquidContainer fullbleed>
-        <Stack grow gap="sm">
-          <Heading color="gray1" level={2}>
-            Highlights
-          </Heading>
-          <Grid columns={4} gap="sm">
+    <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">
+      <LiquidContainer fullbleed position="relative">
+        <Stack grow gap="md">
+          <Heading level={2}>Highlights</Heading>
+          <Grid columns={12} gap="md">
             <Highlight
-              colSpan={2}
+              colSpan={6}
               userId="2"
               space="RTFKT"
               type="background"
@@ -29,7 +31,7 @@ export const Home = () => (
               </p>
             </Highlight>
             <Highlight
-              colSpan={2}
+              colSpan={6}
               userId="3"
               type="background"
               space="RTFKT"
@@ -75,7 +77,7 @@ export const Home = () => (
                 Oh shit we’re in Forbes!!
                 <br />
                 <a href="https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds">
-                  https://www.forbes.com/sites/jeffkauflin/2022/02/14/how-azukis-suddenly-became-the-worlds...
+                  https://www.forbes.com/sites/...
                 </a>
               </p>
               <p>More content in the article above. Text on several lines...</p>
@@ -88,6 +90,107 @@ export const Home = () => (
             >
               <p>More content in the article above. Text on several lines...</p>
             </Highlight>
+            <Box paddingTop="lg" colSpan={12}>
+              <Heading level={4} color="gray1">
+                Shared with you
+              </Heading>
+            </Box>
+            <ShareCard
+              colSpan={4}
+              space="Azuki"
+              channel="announcements"
+              userId="40"
+              imageSrc="placeholders/frame_7.png"
+            >
+              <p>
+                hey guys, just a suggestion here, I love the whole idea of space
+                doodle which allows the nft to have multipl...
+              </p>
+            </ShareCard>
+            <ShareCard
+              colSpan={4}
+              space="Azuki"
+              channel="announcements"
+              userId="20"
+              imageSrc="placeholders/frame_3.png"
+            >
+              <p>
+                hey guys, just a suggestion here, I love the whole idea of space
+                doodle which allows the nft to have multipl...
+              </p>
+            </ShareCard>
+            <ShareCard
+              colSpan={4}
+              space="Azuki"
+              channel="announcements"
+              userId="30"
+              imageSrc="placeholders/frame_2.png"
+            >
+              <p>
+                hey guys, just a suggestion here, I love the whole idea of space
+                doodle which allows the nft to have multipl...
+              </p>
+            </ShareCard>
+            <Box paddingTop="lg" colSpan={12}>
+              <Heading level={4} color="gray1">
+                Trending for sale
+              </Heading>
+            </Box>
+            <SaleCard
+              colSpan={3}
+              space="Mutant Ape Yacht Club"
+              supply={22343}
+              floorPrice={45}
+              imageSrc="placeholders/frame_6.png"
+            />
+            <SaleCard
+              colSpan={3}
+              space="World of Women"
+              supply={92231}
+              floorPrice={45}
+              imageSrc="placeholders/frame_2.png"
+            />
+            <SaleCard
+              colSpan={3}
+              space="Doodles"
+              supply={223}
+              floorPrice={45}
+              imageSrc="placeholders/frame_3.png"
+            />
+            <SaleCard
+              colSpan={3}
+              space="Crypto Punks"
+              supply={343}
+              floorPrice={45}
+              imageSrc="placeholders/frame_4.png"
+            />
+            <Box paddingTop="lg" colSpan={12}>
+              <Heading level={4} color="gray1">
+                Top discussions
+              </Heading>
+            </Box>
+            <Card colSpan={12} padding="md" background="default">
+              <Message
+                channel="announcements"
+                name="sunsoutapesout"
+                avatar={<Avatar src="/placeholders/nft_2.png" />}
+                date="Today at 11:01 AM"
+                reactions={{ "👋": 20 }}
+              >
+                <p>
+                  Hey <strong>@everyone</strong>,
+                </p>
+                <p>
+                  We're thrilled to announce that <strong>@steamboy</strong> has
+                  joined the core team full-time as our Art Director!
+                </p>
+                <p>
+                  Let's give our newest team members a warm welcome! They're no
+                  strangers to the community and we would not be where we're at
+                  today if it weren't for them.
+                </p>
+              </Message>
+            </Card>
           </Grid>
         </Stack>
       </LiquidContainer>

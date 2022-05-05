@@ -25,12 +25,67 @@ const responsiveAtomicProperties = defineProperties({
 
     // size
     aspectRatio: aspectRatio,
-    height: { ...vars.dims.rows, ...vars.dims.screens },
-    minHeight: { ...vars.dims.rows, ...vars.dims.screens },
-    maxHeight: { ...vars.dims.rows, ...vars.dims.screens },
-    width: { ...vars.dims.rows, ...vars.dims.screens },
-    minWidth: { ...vars.dims.rows, ...vars.dims.screens },
-    maxWidth: { ...vars.dims.rows, ...vars.dims.screens },
+    height: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+    minHeight: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+    maxHeight: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+    width: { ...vars.dims.baseline, ...vars.dims.height, ...vars.dims.screen },
+    minWidth: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+    maxWidth: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+
+    square: {
+      square_xxs: {
+        height: vars.dims.square.square_xxs,
+        width: vars.dims.square.square_xxs,
+      },
+      square_xs: {
+        height: vars.dims.square.square_xs,
+        width: vars.dims.square.square_xs,
+      },
+      square_sm: {
+        height: vars.dims.square.square_sm,
+        width: vars.dims.square.square_sm,
+      },
+      square_md: {
+        height: vars.dims.square.square_md,
+        width: vars.dims.square.square_md,
+      },
+      square_lg: {
+        height: vars.dims.square.square_lg,
+        width: vars.dims.square.square_lg,
+      },
+      square_xl: {
+        height: vars.dims.square.square_xl,
+        width: vars.dims.square.square_xl,
+      },
+      square_xxl: {
+        height: vars.dims.square.square_xxl,
+        width: vars.dims.square.square_xxl,
+      },
+      square_inline: {
+        height: vars.dims.square.square_inline,
+        width: vars.dims.square.square_inline,
+      },
+    },
 
     // padding
     paddingLeft: vars.space,
@@ -59,7 +114,7 @@ const responsiveAtomicProperties = defineProperties({
     flexWrap: ["wrap", "nowrap"],
     flexGrow: flexGrow,
     flexShrink: flexGrow,
-    flexBasis: { ...vars.dims.rows, ...vars.dims.screens },
+    flexBasis: { ...vars.dims.height, ...vars.dims.screen },
     alignContent: { ...flexAlignment, baseline: "baseline" },
     alignItems: { ...flexAlignment, baseline: "baseline" },
     alignSelf: { ...flexAlignment, baseline: "baseline" },
@@ -74,7 +129,7 @@ const responsiveAtomicProperties = defineProperties({
     paddingX: ["paddingLeft", "paddingRight"],
     paddingY: ["paddingTop", "paddingBottom"],
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
-    square: ["width", "height"],
+
     border: ["borderLeft", "borderRight", "borderTop", "borderBottom"],
     rounded: [
       "borderTopLeftRadius",

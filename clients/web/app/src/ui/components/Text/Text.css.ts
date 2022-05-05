@@ -40,7 +40,7 @@ export const fontStyles = fontSettings.reduce((fontStyles, font) => {
   /* space between lines  */
   const baseProperties = {
     lineHeight: capSize.lineHeight,
-  };
+  } as const;
 
   const styleBefore = {
     content: "",
@@ -80,7 +80,7 @@ export const fontStyles = fontSettings.reduce((fontStyles, font) => {
 type FontStyle = {
   fontFamilly: string;
   className: string;
-  baseProperties: any;
+  baseProperties: { [key: string]: string };
   styleBefore: { content: "" };
   styleAfter: { content: "" };
 };
@@ -106,7 +106,7 @@ const siblings = ["p", "h1", "h2", "h3", "h4", "h5"] as const;
 siblings.forEach((s) => {
   siblings.forEach((m) =>
     globalStyle(`${boxStyleBase}:not(.${withGapClass}) >  ${s} + ${m}`, {
-      marginTop: vars.space.sm,
+      marginTop: vars.space.md,
     })
   );
 });

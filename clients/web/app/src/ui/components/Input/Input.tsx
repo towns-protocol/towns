@@ -52,10 +52,10 @@ export const Input = ({
   shrink,
   padding,
   rounded,
-  height = "md",
+  height = "input_md",
   ...inputProps
 }: Props) => {
-  const boxProps = { grow, shrink, padding, rounded, height };
+  const boxProps = { grow, shrink, padding, rounded };
   return (
     <Box
       className={clsx(inputContainerStyle, inputAtoms({ height }))}
@@ -64,13 +64,13 @@ export const Input = ({
       alignItems="center"
       background="level2"
       color="default"
-      gap="xs"
+      gap="sm"
       {...boxProps}
     >
       {icon && (
         <Icon
           type={icon}
-          size="xs"
+          size="square_xs"
           background="level3"
           className={inputIconStyle}
         />
