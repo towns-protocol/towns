@@ -1,25 +1,25 @@
 import React from "react";
-import { NavContainer } from "@components/SideBars/_SideBar";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
+import { SideBar } from "@components/SideBars/_SideBar";
 import { fakeSpaces } from "data/SpaceData";
 
 export const MainSideBar = () => (
-  <NavContainer paddingY="xs">
-    {navItems.map((n) => (
+  <SideBar paddingY="xs">
+    {navItems.map((n, index) => (
       <ActionNavItem key={n.id} {...n} />
     ))}
-    {fakeSpaces.map((m) => (
+    {fakeSpaces.map((m, index) => (
       <SpaceNavItem
         key={m.name}
         active={m.active}
         id={m.id}
         name={m.name}
-        avatar={`${m.avatarSrc}`}
+        avatar={m.avatarSrc}
         pinned={m.pinned}
       />
     ))}
-  </NavContainer>
+  </SideBar>
 );
 
 const navItems = [
