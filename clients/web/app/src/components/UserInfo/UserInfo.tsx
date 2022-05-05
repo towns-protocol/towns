@@ -13,10 +13,10 @@ export const UserInfo = ({ userId }: Props) => {
   const numSpaces = spaceIds?.length ?? 0;
 
   return (
-    <Stack gap="sm">
-      <Avatar nft src={avatarSrc} size="xl" />
+    <Stack gap="md">
+      <Avatar src={avatarSrc} size="avatar_xl" />
       <Heading level={1}>{displayName}</Heading>
-      <Stack horizontal alignItems="center" gap="xs">
+      <Stack horizontal alignItems="center" gap="sm">
         <Paragraph size="lg" fontWeight="strong">
           {userData.tokens}
         </Paragraph>

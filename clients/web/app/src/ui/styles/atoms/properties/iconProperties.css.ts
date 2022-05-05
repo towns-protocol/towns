@@ -6,37 +6,37 @@ export const iconProperties = defineProperties({
   ...responsivePropertiesMixin,
   properties: {
     height: {
-      xxs: {
-        width: vars.dims.icons.xxs,
-        height: vars.dims.icons.xxs,
+      square_xxs: {
+        width: vars.dims.square.square_xxs,
+        height: vars.dims.square.square_xxs,
       },
-      xs: {
-        width: vars.dims.icons.xs,
-        height: vars.dims.icons.xs,
+      square_xs: {
+        width: vars.dims.square.square_xs,
+        height: vars.dims.square.square_xs,
       },
-      sm: {
-        width: vars.dims.icons.sm,
-        height: vars.dims.icons.sm,
+      square_sm: {
+        width: vars.dims.square.square_sm,
+        height: vars.dims.square.square_sm,
       },
-      md: {
-        width: vars.dims.icons.md,
-        height: vars.dims.icons.md,
+      square_md: {
+        width: vars.dims.square.square_md,
+        height: vars.dims.square.square_md,
       },
-      lg: {
-        width: vars.dims.icons.lg,
-        height: vars.dims.icons.lg,
+      square_lg: {
+        width: vars.dims.square.square_lg,
+        height: vars.dims.square.square_lg,
       },
-      xl: {
-        width: vars.dims.icons.xl,
-        height: vars.dims.icons.xl,
+      square_xl: {
+        width: vars.dims.square.square_xl,
+        height: vars.dims.square.square_xl,
       },
-      xxl: {
-        width: vars.dims.icons.xxl,
-        height: vars.dims.icons.xxl,
+      square_xxl: {
+        width: vars.dims.square.square_xxl,
+        height: vars.dims.square.square_xxl,
       },
-      adapt: {
-        width: vars.dims.icons.adapt,
-        height: vars.dims.icons.adapt,
+      square_inline: {
+        width: vars.dims.square.square_inline,
+        height: vars.dims.square.square_inline,
       },
     },
   },

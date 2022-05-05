@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Replies } from "@components/Replies/Replies";
-import { Avatar, Box, BoxProps, Text } from "@ui";
+import { Avatar, Box, BoxProps, Stack, Text } from "@ui";
 
 type Props = {
   avatar: string | React.ReactNode;
@@ -29,18 +29,18 @@ export const Message = ({
   children,
   ...boxProps
 }: Props) => (
-  <Box direction="row" gap="sm" {...boxProps}>
+  <Stack horizontal gap="paragraph" {...boxProps}>
     {/* left / avatar gutter */}
     {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-    <Box centerContent height="xxs">
+    <Box centerContent height="height_sm">
       <Box inset="xxs">
         {typeof avatar === "string" ? <Avatar src={avatar} /> : avatar}
       </Box>
     </Box>
     {/* right / main content */}
-    <Box grow gap={condensed ? "xs" : "sm"}>
+    <Box grow gap={condensed ? "paragraph" : "md"}>
       {/* name & date top row */}
-      <Box direction="row" gap="xs" alignItems="center" height="xxs">
+      <Box direction="row" gap="sm" alignItems="center" height="height_sm">
         {/* display name */}
         <Text
           truncate
@@ -70,7 +70,7 @@ export const Message = ({
         </Text>
       </Box>
 
-      <Box fontSize="lg" color="default" maxWidth="1200">
+      <Box fontSize="md" color="default" maxWidth="1200">
         {children}
       </Box>
       {reactions && (
@@ -84,5 +84,5 @@ export const Message = ({
         </Box>
       )}
     </Box>
-  </Box>
+  </Stack>
 );

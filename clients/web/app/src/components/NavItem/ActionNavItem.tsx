@@ -1,17 +1,17 @@
 import React from "react";
-import { Paragraph } from "@ui";
+import { Heading } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
 import { NavItem } from "./_NavItem";
 
 export const ActionNavItem = ({
   compact: isCompact,
   icon,
-  link,
   id,
+  link,
   highlight: isHighlight,
   label,
 }: {
-  id: string;
+  id?: string;
   label: string;
   link?: string;
   icon?: IconName;
@@ -19,26 +19,27 @@ export const ActionNavItem = ({
   compact?: boolean;
 }) => {
   return (
-    <NavItem compact={isCompact} to={link}>
+    <NavItem compact={isCompact} to={link} id={id}>
       {icon && (
         <Icon
           type={icon}
-          padding={isCompact ? "none" : "xs"}
+          padding={isCompact ? "none" : "sm"}
           background={isCompact ? "none" : "level2"}
           color="gray2"
           size={
             isCompact
-              ? { desktop: "xs", tablet: "lg" }
-              : { desktop: "lg", tablet: "lg" }
+              ? { desktop: "square_xs", tablet: "square_lg" }
+              : { desktop: "square_lg", tablet: "square_lg" }
           }
         />
       )}
-      <Paragraph
+      <Heading
+        level={5}
         display={{ tablet: "none" }}
-        fontWeight={isHighlight ? "strong" : "normal"}
+        color={isHighlight ? "default" : "gray2"}
       >
         {label}
-      </Paragraph>
+      </Heading>
     </NavItem>
   );
 };

@@ -15,7 +15,7 @@ import { Row, Square } from "../StoryUtils";
 ## Box / Direction
 
 <Row label="Column (default)">
-  <Box border="strong" padding="sm" gap="md" direction="column">
+  <Box border="strong" padding="md" gap="lg" direction="column">
     <Square />
     <Square />
     <Square />
@@ -23,7 +23,7 @@ import { Row, Square } from "../StoryUtils";
 </Row>
 
 <Row label="Row">
-  <Box border="strong" padding="sm" gap="md" direction="row">
+  <Box border="strong" padding="md" gap="lg" direction="row">
     <Square />
     <Square />
     <Square />
@@ -35,7 +35,7 @@ import { Row, Square } from "../StoryUtils";
 <Box>
   {Object.keys(vars.space).map((c) => (
     <Row key={c} label={c}>
-      <Box direction="row" border="strong" padding="sm" gap={c}>
+      <Box direction="row" border="strong" padding="md" gap={c}>
         <Square />
         <Square />
         <Square />
@@ -54,10 +54,10 @@ import { Row, Square } from "../StoryUtils";
     </>
   }
 >
-  <Box gap="md">
+  <Box gap="lg">
     <Box direction="row" border="strong">
-      <Box grow padding="sm" borderRight="strong" />
-      <Box centerContent padding="sm" />
+      <Box grow padding="md" borderRight="strong" />
+      <Box centerContent padding="md" />
     </Box>
   </Box>
 </Row>
@@ -69,10 +69,10 @@ import { Row, Square } from "../StoryUtils";
     </>
   }
 >
-  <Box gap="md">
+  <Box gap="lg">
     <Box direction="row" border="strong">
-      <Box grow padding="sm" borderRight="strong" />
-      <Box grow centerContent padding="sm" />
+      <Box grow padding="md" borderRight="strong" />
+      <Box grow centerContent padding="md" />
     </Box>
   </Box>
 </Row>
@@ -84,12 +84,12 @@ import { Row, Square } from "../StoryUtils";
     </>
   }
 >
-  <Box gap="md">
+  <Box gap="lg">
     <Box direction="row" border="strong">
-      <Box grow="x4" padding="sm" borderRight="strong">
+      <Box grow="x4" padding="md" borderRight="strong">
         b1
       </Box>
-      <Box centerContent grow="x2" padding="sm">
+      <Box centerContent grow="x2" padding="md">
         b2
       </Box>
     </Box>
@@ -104,8 +104,8 @@ import { Row, Square } from "../StoryUtils";
   {Object.keys(flexJustifyAlignment).map((c) => (
     <Row key={c} label={c}>
       <Box
-        padding="sm"
-        gap="sm"
+        padding="md"
+        gap="md"
         aspectRatio="3/1"
         direction="row"
         border="strong"
@@ -126,8 +126,8 @@ import { Row, Square } from "../StoryUtils";
   {Object.keys(flexAlignment).map((c) => (
     <Row key={c} label={c}>
       <Box
-        padding="sm"
-        gap="sm"
+        padding="md"
+        gap="md"
         direction="row"
         aspectRatio="3/1"
         border="strong"

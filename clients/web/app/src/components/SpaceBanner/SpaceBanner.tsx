@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Avatar, Box, DropDown, Heading, Icon, Paragraph, Stack } from "@ui";
+import { Avatar, Box, Dropdown, Heading, Icon, Paragraph, Stack } from "@ui";
 import { fakeUsers } from "data/UserData";
 
 type Props = {
@@ -14,34 +14,43 @@ export const SpaceBanner = (props: Props) => {
   const { avatarSrc, name } = props;
   return (
     <Stack grow width="100%" justifyContent="center">
-      <Stack horizontal gap="sm" padding="sm">
+      <Stack horizontal gap="md" padding="md">
         {/* avatar container */}
-        <Box border padding="xs" borderRadius="lg" background="level1">
-          <Avatar circle src={avatarSrc} size="xxl" />
+        <Box border padding="sm" borderRadius="lg" background="level1">
+          <Avatar circle src={avatarSrc} size="avatar_xxl" />
         </Box>
         {/* title and stats container */}
-        <Stack grow justifyContent="center" gap="sm">
+        <Stack grow justifyContent="center" gap="md">
           <Heading level={3}>{name}</Heading>
-          <Stack horizontal gap="sm" color="gray1">
-            <Stack horizontal gap="xs" alignItems="center">
-              <Box background="accent" square="xxs" rounded="full" />
-              <Paragraph size="lg">2.3K</Paragraph>
-            </Stack>
-            <Stack horizontal gap="xs" alignItems="center">
-              <Icon type="token" size="xs" />
-              <Paragraph size="lg">12.4M</Paragraph>
-            </Stack>
-          </Stack>
+          <SpaceSummary />
         </Stack>
         {/* actions container */}
-        <Stack alignItems="center" direction="row" gap="xs">
+        <Stack alignItems="center" direction="row" gap="sm">
           <UserDropDown />
-          <Icon type="settings" background="level2" size="lg" padding="xs" />
+          <Icon
+            type="settings"
+            background="level2"
+            size="square_lg"
+            padding="sm"
+          />
         </Stack>
       </Stack>
     </Stack>
   );
 };
+
+export const SpaceSummary = ({ compact }: { compact?: boolean }) => (
+  <Stack horizontal gap={compact ? "sm" : "md"} color="gray1">
+    <Stack horizontal gap={compact ? "xs" : "sm"} alignItems="center">
+      <Box background="accent" square="square_sm" rounded="full" />
+      <Paragraph size={compact ? "sm" : "lg"}>2.3K</Paragraph>
+    </Stack>
+    <Stack horizontal gap={compact ? "xs" : "sm"} alignItems="center">
+      <Icon type="token" size="square_xs" />
+      <Paragraph size={compact ? "sm" : "lg"}>12.4M</Paragraph>
+    </Stack>
+  </Stack>
+);
 
 const UserDropDown = () => {
   const renderSelected = useCallback((selected?: string) => {
@@ -51,14 +60,14 @@ const UserDropDown = () => {
     ) : (
       <>
         {user.displayName}
-        <Avatar circle nft src={user.avatarSrc} size="xs" />
-        <Icon type="down" size="adapt" />
+        <Avatar circle src={user.avatarSrc} size="avatar_xs" />
+        <Icon type="down" size="square_inline" />
       </>
     );
   }, []);
 
   return (
-    <DropDown
+    <Dropdown
       items={pseudos}
       renderSelected={renderSelected}
       selected={pseudos[0].id}

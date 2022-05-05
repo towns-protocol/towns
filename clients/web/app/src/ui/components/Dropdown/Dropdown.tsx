@@ -8,7 +8,7 @@ type Props<T> = {
   renderSelected?: (selected?: string) => JSX.Element;
 };
 
-export const DropDown = <T,>({ selected, renderSelected }: Props<T>) => {
+export const Dropdown = <T,>({ selected, renderSelected }: Props<T>) => {
   const Selected = useCallback(() => {
     return typeof renderSelected === "function" ? (
       renderSelected(selected)
@@ -25,10 +25,10 @@ export const DropDown = <T,>({ selected, renderSelected }: Props<T>) => {
       background="level2"
       alignItems="center"
       height="x4"
-      paddingX="sm"
+      paddingX="md"
       rounded="sm"
       fontSize="md"
-      gap="xs"
+      gap="sm"
     >
       <Selected />
     </Stack>

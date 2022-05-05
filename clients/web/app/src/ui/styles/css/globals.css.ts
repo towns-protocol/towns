@@ -5,7 +5,6 @@ import "./fonts.css";
 
 globalStyle("html, body", {
   minHeight: "100vh",
-  // fontFamily: "Nunito, sans-serif",
   textRendering: "optimizeLegibility",
   WebkitFontSmoothing: "antialiased",
   MozOsxFontSmoothing: "gray1scale",
@@ -33,7 +32,6 @@ globalStyle("table", {
 });
 
 globalStyle("body, button", {
-  fontSize: vars.fontSize.md,
   lineHeight: "100%",
 });
 

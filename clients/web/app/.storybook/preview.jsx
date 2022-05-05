@@ -1,5 +1,7 @@
 import { darkClass, lightClass } from '../src/ui/styles/css/storybook.css';
+import { FontLoader } from '../src/ui/utils/FontLoader';
 import { themeDark, themeLight } from './theme';
+
 
 export const parameters = {
   darkMode: {
@@ -11,3 +13,5 @@ export const parameters = {
     lightClass: darkClass
   }
 }
+
+FontLoader.init()

@@ -12,9 +12,9 @@ export const ContextBar = (props: Props) => (
   <Stack
     borderBottom
     horizontal
-    paddingX="sm"
+    paddingX="md"
     height={props.compact ? "x5" : "x7"}
-    gap="sm"
+    gap="md"
     alignItems="center"
     justifyContent="spaceBetween"
   >

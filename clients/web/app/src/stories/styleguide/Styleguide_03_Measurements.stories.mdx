@@ -10,9 +10,19 @@ import { Row, Square } from "../StoryUtils";
 ## Box / Height
 
 <Box>
-  {Object.keys(vars.dims.rows).map((c) => (
+  {Object.keys(vars.dims.height).map((c) => (
     <Row key={c} label={c}>
       <Box height={c} border="strong" />
+    </Row>
+  ))}
+</Box>
+
+## Square / Width x Height
+
+<Box>
+  {Object.keys(vars.dims.square).map((c) => (
+    <Row key={c} label={c}>
+      <Box square={c} border="strong" />
     </Row>
   ))}
 </Box>
@@ -23,9 +33,11 @@ import { Row, Square } from "../StoryUtils";
   {Object.keys(vars.space).map((c) => (
     <Row key={c} label={c}>
       <Box direction="row" alignItems="center" gap={c}>
-        <Square />
-        <Square />
-        <Square />
+        <Box
+          background="inverted"
+          height="height_md"
+          style={{ width: vars.space[c] }}
+        />
       </Box>
     </Row>
   ))}

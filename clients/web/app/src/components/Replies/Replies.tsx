@@ -17,18 +17,18 @@ export const Replies = ({
       <Box
         centerContent
         rounded="xs"
-        height="sm"
+        height="height_md"
         background="level2"
-        paddingX="xs"
+        paddingX="sm"
         direction="row"
-        gap="xxs"
+        gap="line"
       >
         {replies.userIds.map((id) => (
           <Avatar
             circle
             key={id}
             src={`/placeholders/nft_${id}.png`}
-            size="xs"
+            size="avatar_xs"
           />
         ))}
         <Text as="span" size="sm" color="gray1">

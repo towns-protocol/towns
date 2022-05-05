@@ -1,6 +1,6 @@
 import React from "react";
+import { Stack } from "@ui";
 import { vars } from "ui/styles/vars.css";
-import { Box } from "../Box/Box";
 import { Icon, IconName } from "../Icon";
 import { ButtonStyleVariants, buttonStyle } from "./Button.css";
 
@@ -12,16 +12,16 @@ type Props = {
 } & StyleProps;
 
 export const Button = ({ size, variant, icon, children }: Props) => (
-  <Box
+  <Stack
+    horizontal
     as="button"
-    direction="row"
     className={buttonStyle({ size })}
     justifyContent="center"
     alignItems="center"
     background={variant ?? "neutral"}
     color="onTone"
   >
-    {icon && <Icon type={icon} size="adapt" />}
+    {icon && <Icon type={icon} size="square_inline" />}
     {children}
-  </Box>
+  </Stack>
 );

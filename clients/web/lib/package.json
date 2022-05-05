@@ -8,7 +8,9 @@
     "/dist"
   ],
   "scripts": {
-    "build": "tsc"
+    "preinstall": "tsc",
+    "build": "tsc",
+    "watch": "tsc --watch"
   },
   "devDependencies": {
     "@matrix-org/olm": "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz",

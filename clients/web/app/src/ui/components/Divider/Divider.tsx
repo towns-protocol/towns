@@ -12,11 +12,11 @@ export const Divider = ({
   align?: "left" | "center" | "right";
 }) =>
   !label ? (
-    <Box gap="sm" direction="row" alignItems="center" width="100%">
+    <Box gap="md" direction="row" alignItems="center" width="100%">
       <Box borderBottom grow />
     </Box>
   ) : (
-    <Box gap="sm" direction="row" alignItems="center">
+    <Box gap="md" direction="row" alignItems="center">
       {align !== "left" && <Box borderBottom grow />}
       <Box>
         <Paragraph color="gray2" size={fontSize}>

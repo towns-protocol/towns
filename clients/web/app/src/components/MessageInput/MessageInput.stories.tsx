@@ -26,11 +26,11 @@ Default.args = {};
 export const Medium = Template.bind({});
 Medium.args = {
   ...Default.args,
-  size: "md",
+  size: "input_md",
 };
 
 export const Large = Template.bind({});
 Large.args = {
   ...Default.args,
-  size: "lg",
+  size: "input_lg",
 };

@@ -1,6 +1,14 @@
-import React, { ComponentProps, HTMLAttributes, forwardRef } from "react";
+import clsx from "clsx";
+import React, {
+  ComponentProps,
+  HTMLAttributes,
+  forwardRef,
+  useContext,
+} from "react";
 import { NavLink, useMatch, useResolvedPath } from "react-router-dom";
 import { Box, BoxProps, Stack } from "@ui";
+import { SidebarContext } from "@components/SideBars/_SideBar";
+import * as styles from "./_NavItem.css";
 
 type NavLinkProps = {
   to?: string;
@@ -9,42 +17,115 @@ type NavLinkProps = {
 
 export const NavItem = forwardRef<
   HTMLElement,
-  { compact?: boolean } & NavLinkProps &
+  { id?: string; compact?: boolean } & NavLinkProps &
     BoxProps &
     HTMLAttributes<HTMLDivElement>
->(({ to, compact, exact, children, ...props }, ref) => {
+>(({ id, to, compact, exact, children, ...props }, ref) => {
   const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
+
   const match = useMatch({
     path: resolved.pathname || "/",
     end: to === "/" || exact,
   });
+
+  const { activeItem, setActiveItem } = useContext(SidebarContext);
+
+  const onMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    // relays event to custom NavItem implementation (e.g. used by tooltips)
+    props.onMouseEnter && props.onMouseEnter(e);
+    if (setActiveItem && id) {
+      setActiveItem(id);
+    }
+  };
+  const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    props.onMouseLeave && props.onMouseLeave(e);
+    if (setActiveItem && id && activeItem === id) {
+      setActiveItem(null);
+    }
+  };
+
+  const isHovered = activeItem === id;
+
   return (
     <ConditionalNavLink end={exact} to={to}>
-      <Box
-        direction="row"
-        paddingX="xs"
-        paddingY={compact ? "none" : "none"}
+      <Stack
+        position="relative"
+        paddingX="sm"
+        paddingY="none"
         {...props}
         ref={ref}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
       >
+        {/* background fill to highlight element */}
+        <NavItemHighlight selected={!!match} hovered={isHovered} />
         <Stack
           horizontal
           grow
-          background={match ? "level2" : undefined}
+          position="relative"
           rounded="xs"
           alignItems="center"
-          gap={compact ? "xs" : "sm"}
+          gap={compact ? "sm" : "md"}
           minHeight={compact ? "x5" : "x6"}
-          paddingX="xs"
+          paddingX="sm"
+          color={match ? "default" : "gray2"}
         >
           {children}
         </Stack>
-      </Box>
+      </Stack>
     </ConditionalNavLink>
   );
 });
 
-/** allows `to` prop to be undefined returning children */
+/**
+ * Highlights selected or hovered item
+ */
+
+type HighlightProps = {
+  selected: boolean;
+  hovered: boolean;
+};
+
+const NavItemHighlight = (props: HighlightProps) => {
+  const { selected: isSelected, hovered: isHovered } = props;
+
+  // if one item is hovered (current or sibling)
+  const { isInteracting } = useContext(SidebarContext);
+
+  // if the element is highlighted
+  const isHighlight = isInteracting ? isHovered : isSelected;
+
+  // enables some emphasis for the following conditions:
+  // 1/ if the first or last item touched when hovering the menu
+  // 2/ if the pre-selected item transitioning back to its initial state
+  const isProminentInteraction = isInteracting === isSelected && !isHovered;
+
+  const transition = isInteracting
+    ? // minimal effects whilst interacting
+      styles.highlightTransitionSwift
+    : isSelected
+    ? // x-fade between last hovered item and pre-selected
+      styles.highlightTransitionSelected
+    : styles.highlightTransitionOut;
+
+  return (
+    <Box absoluteFill paddingX="sm">
+      <Box
+        grow
+        className={clsx([
+          transition,
+          isHighlight ? styles.highlightActive : styles.highlightInactive,
+          // add scale effect for first hover + selected item
+          isProminentInteraction && styles.highlightSelectedInactive,
+        ])}
+      />
+    </Box>
+  );
+};
+
+/**
+ * allows `to` prop to be undefined returning children
+ **/
 export const ConditionalNavLink = ({
   children,
   to,
