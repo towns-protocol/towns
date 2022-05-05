@@ -71,14 +71,14 @@ export const Default = Template.bind({});
 Default.args = {
   background: "default",
   rounded: "md",
-  padding: "md",
+  padding: "lg",
 };
 
 export const Minimal = Template.bind({});
 Minimal.args = {
   ...Default.args,
   background: "default",
-  padding: "md",
+  padding: "lg",
   reactions: undefined,
   replies: undefined,
 };

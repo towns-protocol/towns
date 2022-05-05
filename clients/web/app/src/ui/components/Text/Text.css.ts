@@ -3,6 +3,8 @@ import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
 import { boxStyleBase } from "ui/styles/atoms/atoms.css";
 import { debugClass } from "ui/styles/css/debug.css";
 import { vars } from "ui/styles/vars.css";
+import { fontSettings } from "ui/utils/FontLoader";
+import { withGapClass } from "../Box/Box";
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - dynamic properties
 
@@ -28,60 +30,92 @@ export const textSprinkles = createSprinkles(nonResponsiveProperties);
  * trim space before and after blocks in order to make spacing consistent.
  * inspiration: https://github.com/seek-oss/capsize
  */
-const fontSettings = {
-  trimTop: "-0.26em",
-  trimBottom: "-0.24em",
-  lineHeight: "1.24em",
-} as const;
 
-/* space between lines  */
-const baseProperties = {
-  lineHeight: fontSettings.lineHeight,
+// type FontNames = Array<keyof typeof fontSettings>;
+
+export const fontStyles = fontSettings.reduce((fontStyles, font) => {
+  //
+  const { capSize } = font;
+
+  /* space between lines  */
+  const baseProperties = {
+    lineHeight: capSize.lineHeight,
+  } as const;
+
+  const styleBefore = {
+    content: "",
+    display: "table",
+    textAlign: "left",
+    marginTop: capSize.trimTop,
+  } as const;
+
+  const styleAfter = {
+    content: "",
+    display: "table",
+    textAlign: "left",
+    marginTop: capSize.trimBottom,
+  } as const;
+
+  /**
+   * Apply cap-sized style via vanilla extract
+   */
+  return [
+    ...fontStyles,
+    {
+      fontFamilly: font.fontFamilly,
+      styleBefore,
+      styleAfter,
+      baseProperties,
+      className: style({
+        ...baseProperties,
+        selectors: {
+          "&:before": styleBefore,
+          "&:after": styleAfter,
+        },
+      }),
+    },
+  ];
+}, [] as FontStyle[]);
+
+type FontStyle = {
+  fontFamilly: string;
+  className: string;
+  baseProperties: { [key: string]: string };
+  styleBefore: { content: "" };
+  styleAfter: { content: "" };
 };
-
-const styleBefore = {
-  content: "",
-  display: "table",
-  textAlign: "left",
-  marginTop: fontSettings.trimTop,
-} as const;
-
-const styleAfter = {
-  content: "",
-  display: "table",
-  textAlign: "left",
-  marginTop: fontSettings.trimBottom,
-} as const;
-
-/**
- * Apply cap-sized style via vanilla extract
- */
-export const textBaseStyle = style({
-  ...baseProperties,
-  selectors: {
-    "&:before": styleBefore,
-    "&:after": styleAfter,
-  },
-});
-
 /**
  * Inherit consistent line-spacing for raw HTML inside scoped elements
  */
-globalStyle(`${boxStyleBase} p`, baseProperties);
-globalStyle(`${boxStyleBase} p:before `, styleBefore);
-globalStyle(`${boxStyleBase} p:after `, styleAfter);
+
+fontSettings.forEach((font) => {
+  const fontStyle = fontStyles.find((f) => f.fontFamilly === font.fontFamilly);
+  if (fontStyle) {
+    font.targets.forEach((e) => {
+      globalStyle(`${boxStyleBase} ${e}`, fontStyle.baseProperties);
+      globalStyle(`${boxStyleBase} ${e}:before `, fontStyle.styleBefore);
+      globalStyle(`${boxStyleBase} ${e}:after `, fontStyle.styleAfter);
+    });
+  }
+});
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - paragraph margin
 
-globalStyle(`${boxStyleBase} p + p`, {
-  marginTop: vars.space.sm,
+const siblings = ["p", "h1", "h2", "h3", "h4", "h5"] as const;
+
+siblings.forEach((s) => {
+  siblings.forEach((m) =>
+    globalStyle(`${boxStyleBase}:not(.${withGapClass}) >  ${s} + ${m}`, {
+      marginTop: vars.space.md,
+    })
+  );
 });
 
 /**
  * Reset top margin for nested blocks
  */
 globalStyle(
-  `${textBaseStyle} ${textBaseStyle}:before, ${textBaseStyle} ${textBaseStyle}:after`,
+  `${fontStyles[0].className} ${fontStyles[0].className}:before, ${fontStyles[0].className} ${fontStyles[0].className}:after`,
   {
     marginTop: 0,
   }
@@ -92,14 +126,14 @@ globalStyle(
 /**
  * Links
  */
-globalStyle(`${textBaseStyle} a`, {
+globalStyle(`${fontStyles[0].className} a`, {
   color: vars.color.foreground.accent,
 });
 
 /**
  * Strong text
  */
-globalStyle(`${textBaseStyle} strong`, {
+globalStyle(`${fontStyles[0].className} strong`, {
   fontWeight: vars.fontWeight.strong,
   color: vars.color.text.default,
 });
@@ -132,10 +166,13 @@ export const truncateParentStyle = style({
  * Adds  outlines on text element when debug class is present. Explicitely
  * hide debugging for trunccated elements as the "virtual" padding is misleading.
  */
-globalStyle(`${debugClass} ${textBaseStyle}:not(${truncateParentStyle})`, {
-  boxShadow: "0 0 0 1px #FF09",
-});
-globalStyle(`${debugClass} p:not(${textBaseStyle})`, {
+globalStyle(
+  `${debugClass} ${fontStyles[0].className}:not(${truncateParentStyle})`,
+  {
+    boxShadow: "0 0 0 1px #FF09",
+  }
+);
+globalStyle(`${debugClass} p:not(${fontStyles[0].className})`, {
   // implicit paragraphs declared by inner HTML
   boxShadow: "0 0 0 1px #9F09",
 });

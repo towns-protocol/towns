@@ -3,35 +3,35 @@ import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
 
 export const avatarSizes = {
-  xs: {
-    width: vars.dims.icons.xs,
-    height: vars.dims.icons.xs,
-    "--size": vars.dims.icons.xs,
+  avatar_xs: {
+    width: vars.dims.square.square_xs,
+    height: vars.dims.square.square_xs,
+    "--size": vars.dims.square.square_xs,
   },
-  sm: {
-    width: vars.dims.icons.sm,
-    height: vars.dims.icons.sm,
-    "--size": vars.dims.icons.sm,
+  avatar_sm: {
+    width: vars.dims.square.square_sm,
+    height: vars.dims.square.square_sm,
+    "--size": vars.dims.square.square_sm,
   },
-  md: {
-    width: vars.dims.icons.md,
-    height: vars.dims.icons.md,
-    "--size": vars.dims.icons.md,
+  avatar_md: {
+    width: vars.dims.square.square_md,
+    height: vars.dims.square.square_md,
+    "--size": vars.dims.square.square_md,
   },
-  lg: {
-    width: vars.dims.icons.lg,
-    height: vars.dims.icons.lg,
-    "--size": vars.dims.icons.lg,
+  avatar_lg: {
+    width: vars.dims.square.square_lg,
+    height: vars.dims.square.square_lg,
+    "--size": vars.dims.square.square_lg,
   },
-  xl: {
-    width: vars.dims.icons.xl,
-    height: vars.dims.icons.xl,
-    "--size": vars.dims.icons.xl,
+  avatar_xl: {
+    width: vars.dims.square.square_xl,
+    height: vars.dims.square.square_xl,
+    "--size": vars.dims.square.square_xl,
   },
-  xxl: {
-    width: vars.dims.icons.xxl,
-    height: vars.dims.icons.xxl,
-    "--size": vars.dims.icons.xxl,
+  avatar_xxl: {
+    width: vars.dims.square.square_xxl,
+    height: vars.dims.square.square_xxl,
+    "--size": vars.dims.square.square_xxl,
   },
 } as const;
 

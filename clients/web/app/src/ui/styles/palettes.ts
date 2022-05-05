@@ -37,7 +37,7 @@ const light = (() => {
     inverted: FigmaPalette.Black,
   } as const;
   const text = {
-    default: FigmaPalette.XDarkGrey,
+    default: "#252934",
     gray1: FigmaPalette.MedGrey,
     gray2: FigmaPalette.Grey,
     accent: FigmaPalette.Red,

@@ -1,14 +1,22 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Card } from "ui/components/Card/Card";
-import { Avatar, BackgroundImage, Box, BoxProps, Paragraph, Stack } from "@ui";
+import {
+  Avatar,
+  BackgroundImage,
+  Box,
+  BoxProps,
+  Heading,
+  Paragraph,
+  Stack,
+} from "@ui";
 import { fakeUserCache } from "data/UserData";
 
 type Props = {
   userId: string;
   children?: React.ReactNode;
   type?: "background";
-  colSpan?: 1 | 2 | 3 | 4;
+  colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   imageSrc: string;
   space: string;
   channel: string;
@@ -20,12 +28,12 @@ export const Highlight = ({
   imageSrc,
   space,
   channel,
-  colSpan = 1,
+  colSpan = 3,
   userId,
   ...boxProps
 }: Props) => (
   <Card
-    colSpan={{ mobile: 4, desktop: colSpan }}
+    colSpan={{ mobile: 12, desktop: colSpan }}
     background={{ lightMode: "default", darkMode: "level2" }}
     aspectRatio={type === "background" ? "2/1" : undefined}
     {...boxProps}
@@ -38,15 +46,15 @@ export const Highlight = ({
             <Avatar
               border
               circle
-              size="md"
+              size="avatar_md"
               src={fakeUserCache[userId].avatarSrc}
             />
           </Box>
-          <Box gap="xs" color="onTone">
+          <Box gap="paragraph" color="onTone">
             <NavLink to="/spaces/bored-ape-yacht-club/announcements">
-              <Paragraph strong size="sm">
+              <Heading level={5}>
                 {space} {channel && `#${channel}`}
-              </Paragraph>
+              </Heading>
             </NavLink>
             <>{children}</>
           </Box>
@@ -54,20 +62,24 @@ export const Highlight = ({
       </Stack>
     ) : (
       <>
-        <Box border aspectRatio="2/1">
+        <Box aspectRatio="2/1">
           {imageSrc && <BackgroundImage src={imageSrc} />}
         </Box>
-        <Stack grow gap="sm" paddingY="sm" paddingX="xs">
+        <Stack grow gap="md" paddingY="sm" paddingX="sm">
           {space && (
-            <Paragraph color="gray2" fontWeight="strong">
+            <Heading level={6} color="gray2">
               {space} {channel && `#${channel}`}
-            </Paragraph>
+            </Heading>
           )}
-          <Stack grow color="gray1">
+          <Stack grow gap="line">
             {children}
           </Stack>
-          <Stack direction="row" gap="xs" alignItems="center">
-            <Avatar circle size="xs" src={fakeUserCache[userId].avatarSrc} />
+          <Stack direction="row" gap="sm" alignItems="center">
+            <Avatar
+              circle
+              size="avatar_xs"
+              src={fakeUserCache[userId].avatarSrc}
+            />
             <Paragraph color="gray1">
               {fakeUserCache[userId].displayName}
             </Paragraph>

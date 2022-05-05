@@ -13,7 +13,7 @@ export const SpaceSideBar = (props: Props) => {
   const { space } = props;
 
   return (
-    <SideBar paddingY="xs">
+    <SideBar paddingY="sm">
       <ActionNavItem icon="back" link="/" id="" label="Back" />
       {space && (
         <SpaceNavItem
@@ -38,9 +38,9 @@ export const SpaceSideBar = (props: Props) => {
       {space.channels.map((group) => (
         <Stack key={group.label}>
           <Box
-            paddingX="sm"
-            height="md"
-            paddingY="xs"
+            paddingX="md"
+            height="height_lg"
+            paddingY="sm"
             justifyContent="end"
             display={{ tablet: "none", desktop: "flex" }}
           >

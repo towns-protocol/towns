@@ -9,9 +9,9 @@ export const MessagesSideBar = () => {
       <Stack
         horizontal
         borderBottom
-        paddingX="sm"
+        paddingX="md"
         height="x7"
-        gap="xs"
+        gap="sm"
         justifyContent="spaceBetween"
         alignItems="center"
       >
@@ -21,8 +21,8 @@ export const MessagesSideBar = () => {
             <Icon
               type="newmessage"
               background="inverted"
-              size="lg"
-              padding="xs"
+              size="square_lg"
+              padding="sm"
             />
           </NavLink>
         </Box>
@@ -46,17 +46,17 @@ const MessageItem = ({
   selected?: boolean;
 }) => (
   <NavLink to="iamblue">
-    <Box paddingX="xs" paddingY="xxs">
+    <Box paddingX="sm" paddingY="xs">
       <Stack
         horizontal
         rounded="xs"
-        gap="xs"
-        paddingX="xs"
-        paddingY="sm"
+        gap="sm"
+        paddingX="sm"
+        paddingY="md"
         background={selected ? "level2" : undefined}
       >
-        <Avatar nft src="/placeholders/nft_2.png" size="lg" />
-        <Stack grow gap="xs">
+        <Avatar src="/placeholders/nft_2.png" size="avatar_lg" />
+        <Stack grow gap="sm">
           <Text
             color={active ? "default" : "default"}
             fontWeight={active ? "strong" : "normal"}

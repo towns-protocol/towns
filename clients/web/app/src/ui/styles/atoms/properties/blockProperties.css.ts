@@ -3,7 +3,8 @@ import { defineProperties } from "@vanilla-extract/sprinkles";
 export const blockProperties = defineProperties({
   properties: {
     position: ["relative", "absolute", "fixed", "static", "sticky"],
-    overflow: ["hidden", "visible", "auto"],
+    overflowX: ["hidden", "visible", "auto", "scroll"],
+    overflowY: ["hidden", "visible", "auto", "scroll"],
     cursor: [
       "auto",
       "default",
@@ -38,5 +39,8 @@ export const blockProperties = defineProperties({
       "nesw-resize",
       "nwse-resize",
     ],
+  },
+  shorthands: {
+    overflow: ["overflowX", "overflowY"],
   },
 });

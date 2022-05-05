@@ -323,6 +323,43 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   )
 );
 
+export const EthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+    ref={ref}
+  >
+    <path
+      d="M7.99848 0.672852L3.50098 8.13619L7.99848 6.09202V0.672852Z"
+      fill="#8A92B2"
+    />
+    <path
+      d="M7.99848 6.0918L3.50098 8.13596L7.99848 10.7951V6.0918Z"
+      fill="#62688F"
+    />
+    <path
+      d="M12.4969 8.13619L7.99854 0.672852V6.09202L12.4969 8.13619Z"
+      fill="#62688F"
+    />
+    <path
+      d="M7.99854 10.7951L12.4969 8.13596L7.99854 6.0918V10.7951Z"
+      fill="#454A75"
+    />
+    <path
+      d="M3.50098 8.98926L7.99848 15.3276V11.6468L3.50098 8.98926Z"
+      fill="#8A92B2"
+    />
+    <path
+      d="M7.99854 11.6468V15.3276L12.4994 8.98926L7.99854 11.6468Z"
+      fill="#62688F"
+    />
+  </svg>
+));
+
 const iconMap = {
   at: AtIcon,
   back: BackIcon,
@@ -330,6 +367,7 @@ const iconMap = {
   check: CheckIcon,
   close: CloseIcon,
   down: DownIcon,
+  eth: EthIcon,
   home: HomeIcon,
   lock: LockIcon,
   message: MessageIcon,
@@ -355,7 +393,7 @@ type IconProps = {
 } & IconAtoms;
 
 export const Icon = (props: IconProps) => {
-  const { size = "md", color, background, type, className } = props;
+  const { size = "square_md", color, background, type, className } = props;
   const Icon = iconMap[type ?? "bell"];
 
   return (
@@ -370,7 +408,7 @@ export const Icon = (props: IconProps) => {
         props.padding ??
         (!background || background?.match(/^(none|transparent|default)$/)
           ? "none"
-          : "xxs")
+          : "xs")
       }
     >
       <Icon width="100%" height="100%" />

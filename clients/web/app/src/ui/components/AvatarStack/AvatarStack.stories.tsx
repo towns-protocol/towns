@@ -30,12 +30,12 @@ export const Default = Template.bind({});
 
 Default.args = {
   userIds: ["1", "2", "3", "4", "5"],
-  size: "md",
+  size: "avatar_md",
 };
 
 export const XLarge = Template.bind({});
 
 XLarge.args = {
   ...Default.args,
-  size: "xl",
+  size: "avatar_xl",
 };

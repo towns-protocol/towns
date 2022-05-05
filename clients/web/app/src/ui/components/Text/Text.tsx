@@ -3,7 +3,7 @@ import React, { forwardRef } from "react";
 import { Box, BoxProps } from "@ui";
 import {
   TextSprinkles,
-  textBaseStyle,
+  fontStyles,
   truncateParentStyle,
   truncateTextStyle,
 } from "./Text.css";
@@ -56,7 +56,7 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
       display={display}
       className={clsx(
         truncate && truncateParentStyle,
-        textBaseStyle,
+        fontStyles[0].className,
         className
       )}
       {...textProps}

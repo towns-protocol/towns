@@ -1,6 +1,6 @@
 import { Meta } from "@storybook/addon-docs";
 import { vars } from "../../ui/styles/vars.css";
-import { Box, Button } from "../../ui/components";
+import { Box, Button, Stack } from "../../ui/components";
 import { Row } from "../StoryUtils";
 
 <Meta title="Style Guide/Buttons" />
@@ -12,11 +12,11 @@ import { Row } from "../StoryUtils";
 <Box>
   {Object.keys(vars.dims.inputs).map((c) => (
     <Row key={c} label={c}>
-      <Box direction="row">
+      <Stack horizontal>
         <Button icon="settings" size={c}>
           Action
         </Button>
-      </Box>
+      </Stack>
     </Row>
   ))}
 </Box>
@@ -25,21 +25,21 @@ import { Row } from "../StoryUtils";
 
 <Box>
   <Row label="text only">
-    <Box direction="row">
+    <Stack horizontal>
       <Button>Action</Button>
-    </Box>
+    </Stack>
   </Row>
   <Row label="icon only">
-    <Box direction="row">
+    <Stack horizontal>
       <Button icon="bell" variant="warning" />
-    </Box>
+    </Stack>
   </Row>
   <Row label="text + icon">
-    <Box direction="row">
+    <Stack horizontal>
       <Button icon="check" variant="positive">
         Done
       </Button>
-    </Box>
+    </Stack>
   </Row>
 </Box>
 
@@ -48,11 +48,11 @@ import { Row } from "../StoryUtils";
 <Box>
   {Object.keys(vars.color.tone).map((c) => (
     <Row key={c} label={c}>
-      <Box direction="row">
+      <Stack horizontal>
         <Button icon="settings" variant={c}>
           Action
         </Button>
-      </Box>
+      </Stack>
     </Row>
   ))}
 </Box>

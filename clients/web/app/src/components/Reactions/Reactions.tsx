@@ -6,18 +6,18 @@ export const Reactions = (props: { reactions: { [key: string]: number } }) => {
   const emojis = reactions && Object.keys(reactions);
   if (!emojis?.length) return <></>;
   return (
-    <Stack direction="row" gap="xxs">
+    <Stack direction="row" gap="xs">
       {emojis.map((k) => (
         <Stack
           horizontal
           centerContent
           key={k}
-          gap="xs"
+          gap="sm"
           rounded="lg"
-          height="sm"
+          height="height_md"
           background="level2"
           color="gray1"
-          paddingX="xs"
+          paddingX="sm"
         >
           <Text size="sm">{k}</Text>
           <Text size="sm">{reactions[k]}</Text>

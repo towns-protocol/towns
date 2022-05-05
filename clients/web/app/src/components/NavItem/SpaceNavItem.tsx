@@ -1,6 +1,6 @@
 import React from "react";
 import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
-import { Box, Heading, Icon, Paragraph, Stack } from "@ui";
+import { Box, Heading, Icon, Stack } from "@ui";
 import { fakeSpaceCache } from "data/SpaceData";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { Tooltip, TooltipRenderer } from "ui/components/Tooltip/Tooltip";
@@ -24,12 +24,12 @@ const SpaceTooltip = (props: { id: string }) => {
       horizontal
       id={id}
       key={id}
-      gap="sm"
-      padding="sm"
+      gap="md"
+      padding="md"
       background="default"
       display={{ desktop: "none", tablet: "flex" }}
     >
-      <Stack grow justifyContent="center" gap="xs">
+      <Stack grow justifyContent="center" gap="sm">
         <Heading level={4}>{name}</Heading>
         <SpaceSummary compact />
       </Stack>
@@ -59,15 +59,21 @@ export const SpaceNavItem = (props: Props) => {
             src={avatar}
             size={
               isCompact
-                ? { desktop: "sm", tablet: "lg" }
-                : { desktop: "lg", tablet: "lg" }
+                ? { desktop: "avatar_sm", tablet: "avatar_lg" }
+                : { desktop: "avatar_lg", tablet: "avatar_lg" }
             }
           />
-          <Paragraph grow truncate strong={active} display={{ tablet: "none" }}>
+          <Heading
+            grow
+            truncate
+            level={5}
+            color={active ? "default" : undefined}
+            display={{ tablet: "none" }}
+          >
             {name}
-          </Paragraph>
+          </Heading>
           <Box shrink display={{ tablet: "none" }}>
-            {pinned && <Icon type="pin" size="xxs" />}
+            {pinned && <Icon type="pin" size="square_xxs" />}
           </Box>
         </NavItem>
       )}

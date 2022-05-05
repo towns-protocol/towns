@@ -8,7 +8,7 @@ type Props = {
 };
 
 export const AvatarStack = (props: Props) => {
-  const { size = "md", userIds } = props;
+  const { size = "avatar_md", userIds } = props;
   return (
     <Box direction="row">
       {userIds.map((id) => (

@@ -16,12 +16,6 @@ export const avatarBaseStyle = style({
 });
 
 export const avatarToggleClasses = vcn({
-  nft: style({
-    WebkitMaskImage: `url(/nftmask.svg)`,
-    WebkitMaskOrigin: `center`,
-    WebkitMaskRepeat: `no-repeat`,
-    WebkitMaskSize: `cover`,
-  }),
   border: style({
     border: `2px solid ${vars.color.layer.default}`,
   }),

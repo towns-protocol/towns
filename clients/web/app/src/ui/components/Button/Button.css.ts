@@ -7,34 +7,34 @@ export const buttonStyle = recipe({
     borderRadius: vars.borderRadius.xs,
   },
   defaultVariants: {
-    size: "md",
+    size: "input_md",
   },
   variants: {
     size: {
-      sm: {
+      input_sm: {
         fontSize: vars.fontSize.sm,
-        height: vars.dims.inputs.sm,
-        fontWeight: vars.fontWeight.strong,
-        paddingLeft: vars.space.xs,
-        paddingRight: vars.space.xs,
-        gap: vars.space.xxs,
-      },
-      md: {
-        fontSize: vars.fontSize.md,
-        height: vars.dims.inputs.md,
+        height: vars.dims.input.input_sm,
         fontWeight: vars.fontWeight.strong,
         paddingLeft: vars.space.sm,
         paddingRight: vars.space.sm,
         gap: vars.space.xs,
       },
-      lg: {
-        fontSize: vars.fontSize.lg,
+      input_md: {
+        fontSize: vars.fontSize.md,
+        height: vars.dims.input.input_md,
         fontWeight: vars.fontWeight.strong,
-        height: vars.dims.inputs.lg,
-        padding: vars.space.sm,
         paddingLeft: vars.space.md,
         paddingRight: vars.space.md,
         gap: vars.space.sm,
+      },
+      input_lg: {
+        fontSize: vars.fontSize.lg,
+        fontWeight: vars.fontWeight.strong,
+        height: vars.dims.input.input_lg,
+        padding: vars.space.md,
+        paddingLeft: vars.space.lg,
+        paddingRight: vars.space.lg,
+        gap: vars.space.md,
       },
     },
   },

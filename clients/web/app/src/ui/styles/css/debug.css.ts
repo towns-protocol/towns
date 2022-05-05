@@ -4,7 +4,7 @@ export const debugClass = style({});
 
 globalStyle(".debug-grid:after", {
   pointerEvents: "none",
-  opacity: 0.5,
+  opacity: 1,
   content: "",
   position: "absolute",
   top: 0,

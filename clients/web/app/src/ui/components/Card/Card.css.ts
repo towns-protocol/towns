@@ -1,5 +1,6 @@
 import { style } from "@vanilla-extract/css";
 
 export const base = style({
-  filter: `drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25))`,
+  // filter: `drop-shadow(0px 0px 40px rgba(25, 27, 33, 1.2))`,
+  boxShadow: `0px 0px 40px rgba(25, 27, 33, 0.2)`,
 });

@@ -8,6 +8,7 @@ import React, {
 import { Atoms, atoms, boxStyleBase } from "ui/styles/atoms/atoms.css";
 import { debugClass } from "ui/styles/css/debug.css";
 import { absoluteFillClass } from "ui/styles/css/utils.css";
+import { vars } from "ui/styles/vars.css";
 import { assignBoolToDefaultValue } from "ui/utils/utils";
 
 // shorthands allow `true` or `false` for assigning default values in addition
@@ -52,6 +53,8 @@ const boxDefaults: Atoms = {
   direction: "column",
 } as const;
 
+export const withGapClass = "with-gap";
+
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
   const {
     as = "div",
@@ -80,7 +83,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     shorthands.borderBottom = assignBoolToDefaultValue(borderBottom, "default");
     shorthands.borderLeft = assignBoolToDefaultValue(borderLeft, "default");
     shorthands.borderRight = assignBoolToDefaultValue(borderRight, "default");
-    shorthands.padding = assignBoolToDefaultValue(padding, "sm");
+    shorthands.padding = assignBoolToDefaultValue(padding, "md");
     shorthands.flexGrow = assignBoolToDefaultValue(grow, "x1", "x0");
     shorthands.flexShrink = assignBoolToDefaultValue(shrink, "x1", "x0");
 
@@ -117,20 +120,24 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
 
     return {
       nativeProps,
-      atomicClasses: clsx(
+      atomicClasses: clsx([
         boxStyleBase,
         atoms({
           ...boxDefaults,
           ...fromShorthand,
           ...atomicProps,
         }),
-
-        absoluteFill && absoluteFillClass,
         className,
-        debug && debugClass
-      ),
+        {
+          [withGapClass]: props.gap && props.gap !== vars.space.none,
+        },
+        {
+          [absoluteFillClass]: absoluteFill,
+          [debugClass]: debug,
+        },
+      ]),
     };
-  }, [absoluteFill, className, debug, fromShorthand, restProps]);
+  }, [absoluteFill, className, debug, fromShorthand, props.gap, restProps]);
 
   // const dynamicStyle = useMemo(() => {
   //   const style: React.CSSProperties = props.style ?? {};

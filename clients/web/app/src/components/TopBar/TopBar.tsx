@@ -10,12 +10,14 @@ export const TopBar = (props: { onClick?: () => void }) => {
       borderBottom
       direction="row"
       shrink={false}
-      height="x7"
-      paddingX="sm"
+      height="height_xl"
+      paddingX="md"
       background="level1"
       alignItems="center"
-      gap="sm"
+      gap="md"
       color="gray2"
+      position="sticky"
+      style={{ top: 0, zIndex: 10 }}
     >
       <Box color="default">
         <Link to="/">
@@ -24,10 +26,10 @@ export const TopBar = (props: { onClick?: () => void }) => {
       </Box>
       <Box grow />
       <Search />
-      <Icon size="lg" type="bell" background="level1" />
+      <Icon size="square_lg" type="bell" background="level1" />
       <Avatar
         circle
-        size="lg"
+        size="avatar_lg"
         src="/placeholders/nft_1.png"
         onClick={props.onClick}
       />

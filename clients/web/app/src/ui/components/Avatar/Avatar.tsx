@@ -21,9 +21,8 @@ type Props = {
 export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
   const {
     animate = false,
-    size = "md",
-    height = "md",
-    nft = false,
+    size = "avatar_md",
+    height = "avatar_md",
     circle = false,
     stacked = false,
     border,
@@ -39,7 +38,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
       ref={ref}
       shrink={false}
       className={clsx(
-        avatarToggleClasses({ nft, stacked, border, circle }),
+        avatarToggleClasses({ stacked, border, circle }),
         avatarAtoms({
           size: size ?? height,
         }),

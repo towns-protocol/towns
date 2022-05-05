@@ -1,5 +1,5 @@
 import React from "react";
-import { Paragraph } from "@ui";
+import { Heading } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
 import { NavItem } from "./_NavItem";
 
@@ -23,22 +23,23 @@ export const ActionNavItem = ({
       {icon && (
         <Icon
           type={icon}
-          padding={isCompact ? "none" : "xs"}
+          padding={isCompact ? "none" : "sm"}
           background={isCompact ? "none" : "level2"}
           color="gray2"
           size={
             isCompact
-              ? { desktop: "xs", tablet: "lg" }
-              : { desktop: "lg", tablet: "lg" }
+              ? { desktop: "square_xs", tablet: "square_lg" }
+              : { desktop: "square_lg", tablet: "square_lg" }
           }
         />
       )}
-      <Paragraph
+      <Heading
+        level={5}
         display={{ tablet: "none" }}
-        fontWeight={isHighlight ? "strong" : "normal"}
+        color={isHighlight ? "default" : "gray2"}
       >
         {label}
-      </Paragraph>
+      </Heading>
     </NavItem>
   );
 };
