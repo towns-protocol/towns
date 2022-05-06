@@ -9,9 +9,10 @@ type Props = {
   children: React.ReactNode;
   variant?: keyof typeof vars.color.tone;
   icon?: IconName;
+  onClick: () => void;
 } & StyleProps;
 
-export const Button = ({ size, variant, icon, children }: Props) => (
+export const Button = ({ size, variant, icon, children, onClick }: Props) => (
   <Stack
     horizontal
     as="button"
@@ -20,6 +21,7 @@ export const Button = ({ size, variant, icon, children }: Props) => (
     alignItems="center"
     background={variant ?? "neutral"}
     color="onTone"
+    onClick={onClick}
   >
     {icon && <Icon type={icon} size="square_inline" />}
     {children}
