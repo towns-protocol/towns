@@ -1,5 +1,5 @@
 import { Box, Divider, TextField, Theme, Typography } from "@mui/material";
-import { getShortUsername, Membership, RoomMessage, useMatrixStore } from "use-matrix-client";
+import { Membership, RoomMessage, getShortUsername, useMatrixStore } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { AcceptInvitation } from "./AcceptInvitation";
