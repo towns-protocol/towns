@@ -1,6 +1,6 @@
 import { MatrixClient } from "matrix-js-sdk";
 import { Web3Provider } from "../hooks/use-web3";
-import { createContext } from "react";
+import React, { createContext } from "react";
 import { useMatrixClientListener } from "../hooks/use-matrix-client-listener";
 
 export const MatrixContext = createContext<MatrixClient | undefined>(undefined);

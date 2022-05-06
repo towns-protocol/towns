@@ -3,7 +3,7 @@
   "parserOptions": {
     "ecmaVersion": 2020,
     "project": [
-      "lib/tsconfig.json"
+      "./tsconfig.json"
     ],
     "sourceType": "module"
   },

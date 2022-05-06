@@ -4,12 +4,12 @@ export {
   getShortUsername,
 } from "./hooks/login";
 
-export {
+export { isRoom, Membership } from "./types/matrix-types";
+
+export type {
   CreateRoomInfo,
-  isRoom,
   Member,
   Members,
-  Membership,
   Room,
   Rooms,
   RoomMessage,

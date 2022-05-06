@@ -234,7 +234,7 @@ function updateMembership(
 ) {
   const room = state.rooms?.[roomId];
   if (room) {
-    const member = room.members[userId] ?? { membership: null };
+    const member = room.members[userId] ?? { membership: null as Membership };
     if (member.membership !== membership) {
       const changedRooms = { ...state.rooms };
       const changedRoom = { ...room };

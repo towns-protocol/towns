@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import { createGenericContext } from "../utils/create-generic-context";
 import { logger } from "../utils/logger";
 
