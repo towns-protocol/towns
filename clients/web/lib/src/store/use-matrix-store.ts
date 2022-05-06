@@ -1,8 +1,8 @@
+import { AuthenticationError, LoginStatus } from "../hooks/login";
 import { Membership, Room, Rooms, RoomsMessages } from "../types/matrix-types";
+import createStore, { SetState } from "zustand";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
-import createStore, { SetState } from "zustand";
-import { AuthenticationError, LoginStatus } from "../hooks/login";
 
 export type MatrixStoreStates = {
   createRoom: (roomId: string) => void;
@@ -16,7 +16,7 @@ export type MatrixStoreStates = {
   loginError: AuthenticationError;
   setLoginError: (error: AuthenticationError | undefined) => void;
   allMessages: RoomsMessages | null;
-  setNewMessage: (roomId: string, message: string) => void;
+  setNewMessage: (roomId: string, sender: string, message: string) => void;
   rooms: Rooms | null;
   joinRoom: (
     roomId: string,
@@ -81,8 +81,10 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     allMessages: null,
     createRoom: (roomId: string) =>
       set((state: MatrixStoreStates) => createRoom(state, roomId)),
-    setNewMessage: (roomId: string, message: string) =>
-      set((state: MatrixStoreStates) => setNewMessage(state, roomId, message)),
+    setNewMessage: (roomId: string, sender: string, message: string) =>
+      set((state: MatrixStoreStates) =>
+        setNewMessage(state, roomId, sender, message)
+      ),
     setRoom: (room: MatrixRoom) =>
       set((state: MatrixStoreStates) => setRoom(state, room)),
     setAllRooms: (rooms: MatrixRoom[]) =>
@@ -126,16 +128,20 @@ function createRoom(state: MatrixStoreStates, roomId: string) {
   return { rooms: changedRooms };
 }
 
-export function setNewMessage(
+function setNewMessage(
   state: MatrixStoreStates,
   roomId: string,
+  sender: string,
   message: string
 ) {
   const changedAllMessages = state.allMessages ? { ...state.allMessages } : {};
   const changedRoomMessages = changedAllMessages[roomId]
     ? [...changedAllMessages[roomId]]
     : [];
-  changedRoomMessages.push(message);
+  changedRoomMessages.push({
+    sender,
+    message,
+  });
   changedAllMessages[roomId] = changedRoomMessages;
   return { allMessages: changedAllMessages };
 }

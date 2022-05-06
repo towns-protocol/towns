@@ -6,8 +6,8 @@ import {
   Room,
   RoomEvent,
   RoomMember,
-  createClient,
   RoomMemberEvent,
+  createClient,
 } from "matrix-js-sdk";
 import {
   MutableRefObject,
@@ -18,6 +18,7 @@ import {
 } from "react";
 
 import { Membership } from "../types/matrix-types";
+import { getShortUsername } from "./login";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 
@@ -236,8 +237,14 @@ function useRoomTimelineEventHandler(
   ) {
     switch (event.getType()) {
       case "m.room.message": {
-        console.log(`Room[${room.roomId}]: ${event.event.content.body}`);
-        setNewMessage(room.roomId, event.event.content.body);
+        console.log(
+          `Room[${room.roomId}]: ${event}, ${event.event.content.body}`
+        );
+        setNewMessage(
+          room.roomId,
+          getShortUsername(event.sender.name),
+          event.event.content.body
+        );
         break;
       }
       case "m.room.create": {
