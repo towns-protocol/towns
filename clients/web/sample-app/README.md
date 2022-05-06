@@ -23,3 +23,7 @@ Follow instructions in the root of the repository to run dendrite
 cd clients/web/sample-app
 yarn start
 ```
+
+## Logging in
+
+We currently support the Rinkeby Test Network. Enable test networks in MetaMask and select the Rinkeby Test Network.
