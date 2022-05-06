@@ -3,10 +3,6 @@ import { Main } from "./components/Main";
 import { MatrixContextProvider } from "use-matrix-client";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
-import { Buffer } from 'buffer'
-
-// Workaround unhandled exception "Buffer is not defined" exception in keccak
-window.Buffer = Buffer
 
 const MATRIX_HOMESERVER_URL =
   process.env.MATRIX_HOME_SERVER ?? "http://localhost:8008";
