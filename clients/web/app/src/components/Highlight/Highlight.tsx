@@ -34,7 +34,11 @@ export const Highlight = ({
   ...boxProps
 }: Props) => (
   <Card
-    colSpan={{ mobile: 12, desktop: colSpan }}
+    colSpan={{
+      mobile: 12,
+      tablet: type === "background" ? 12 : 6,
+      desktop: colSpan,
+    }}
     background={{ lightMode: "default", darkMode: "level2" }}
     aspectRatio={type === "background" ? "2/1" : undefined}
     {...boxProps}

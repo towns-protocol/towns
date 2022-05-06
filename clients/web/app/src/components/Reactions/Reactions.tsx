@@ -1,12 +1,15 @@
 import React from "react";
 import { Stack, Text } from "@ui";
 
-export const Reactions = (props: { reactions: { [key: string]: number } }) => {
+export const Reactions = (props: {
+  reactions: { [key: string]: number };
+  userReaction?: string;
+}) => {
   const { reactions } = props;
   const emojis = reactions && Object.keys(reactions);
   if (!emojis?.length) return <></>;
   return (
-    <Stack direction="row" gap="xs">
+    <Stack direction="row" gap="sm" height="x3">
       {emojis.map((k) => (
         <Stack
           horizontal
@@ -14,10 +17,10 @@ export const Reactions = (props: { reactions: { [key: string]: number } }) => {
           key={k}
           gap="sm"
           rounded="lg"
-          height="height_md"
           background="level2"
           color="gray1"
           paddingX="sm"
+          border={props.userReaction === k}
         >
           <Text size="sm">{k}</Text>
           <Text size="sm">{reactions[k]}</Text>

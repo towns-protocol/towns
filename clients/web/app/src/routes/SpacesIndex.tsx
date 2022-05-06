@@ -43,7 +43,7 @@ export const SpacesIndex = () => {
           </LiquidContainer>
         </Box>
       </Stack>
-      <Box grow paddingY="md" alignItems="center" background="level1">
+      <Box grow alignItems="center" background="level1">
         <SpaceMessages />
       </Box>
     </>
@@ -64,7 +64,7 @@ export const LiquidContainer = forwardRef<
 ));
 
 const SpaceMessages = () => (
-  <LiquidContainer gap="md">
+  <LiquidContainer gap="sm" paddingY="sm">
     <RoundedMessage
       channel="announcements"
       name="sunsoutapesout"
@@ -102,6 +102,7 @@ const SpaceMessages = () => (
       avatar={<Avatar circle src="/placeholders/nft_40.png" />}
       date="Today at 11:01 AM"
       reactions={{ "😍": 3, "😂": 13, "💀": 5 }}
+      userReaction="😍"
     >
       <Paragraph>
         <a href="https://twitter.com/BoredApeYC/status/1501333629804244993">
@@ -126,7 +127,7 @@ const SpaceMessages = () => (
 );
 
 export const RoundedMessage = (props: ComponentProps<typeof Message>) => (
-  <Message rounded="sm" padding="md" background="default" {...props} />
+  <Message rounded="sm" padding="paragraph" background="default" {...props} />
 );
 
 const QuotedMessage = (props: {

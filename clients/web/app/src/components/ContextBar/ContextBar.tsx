@@ -13,7 +13,7 @@ export const ContextBar = (props: Props) => (
     horizontal
     paddingX="md"
     height="height_xl"
-    gap="md"
+    gap="sm"
     alignItems="center"
     justifyContent="spaceBetween"
   >

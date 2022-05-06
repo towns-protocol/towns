@@ -66,8 +66,8 @@ export const SpaceNavItem = (props: Props) => {
           >
             {name}
           </ButtonText>
-          <Box shrink display={{ tablet: "none" }}>
-            {pinned && <Icon type="pin" size="square_xxs" />}
+          <Box shrink display={{ tablet: "none" }} color="gray2">
+            {pinned && <Icon type="pin" size="square_sm" padding="xs" />}
           </Box>
         </NavItem>
       )}

@@ -10,6 +10,7 @@ type Props = {
   condensed?: boolean;
   channel?: string;
   reactions?: { [key: string]: number };
+  userReaction?: string;
   replies?: { userIds: number[]; fakeLength?: number };
   date: string;
   children?: React.ReactNode;
@@ -25,6 +26,7 @@ export const Message = ({
   channel,
   reactions,
   replies,
+  userReaction,
   date,
   children,
   ...boxProps
@@ -53,7 +55,7 @@ export const Message = ({
         {/* channel */}
         {channel && (
           <NavLink to={channel}>
-            <ButtonText color="accent" as="span">
+            <ButtonText color="default" as="span">
               #{channel}
             </ButtonText>
           </NavLink>
@@ -75,7 +77,7 @@ export const Message = ({
       </Box>
       {reactions && (
         <Box direction="row">
-          <Reactions reactions={reactions} />
+          <Reactions reactions={reactions} userReaction={userReaction} />
         </Box>
       )}
       {replies && (

@@ -17,7 +17,7 @@ export const Replies = ({
       <Box
         centerContent
         rounded="xs"
-        height="height_md"
+        height="x4"
         background="level2"
         paddingX="sm"
         direction="row"

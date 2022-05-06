@@ -46,6 +46,7 @@ export const SideBar = (props: Props) => {
         overflow="hidden"
         minWidth={{ tablet: "none", desktop: "auto" }}
         {...props}
+        gap="xs"
       />
     </SidebarContext.Provider>
   );

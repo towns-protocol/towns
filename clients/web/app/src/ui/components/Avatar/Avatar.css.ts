@@ -28,7 +28,6 @@ export const avatarToggleClasses = vcn({
         marginLeft: `calc(-0.33 * var(--size))`,
       },
     },
-    border: `2px solid ${vars.color.layer.default}`,
   }),
 });
 

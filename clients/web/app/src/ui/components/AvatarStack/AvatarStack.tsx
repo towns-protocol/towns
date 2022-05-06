@@ -1,5 +1,5 @@
 import React from "react";
-import { Avatar, Box } from "@ui";
+import { Avatar, Stack } from "@ui";
 import { avatarSizes } from "ui/styles/atoms/properties/avatarProperties.css";
 
 type Props = {
@@ -10,16 +10,15 @@ type Props = {
 export const AvatarStack = (props: Props) => {
   const { size = "avatar_md", userIds } = props;
   return (
-    <Box direction="row">
+    <Stack horizontal>
       {userIds.map((id) => (
         <Avatar
           stacked
-          circle
           key={id}
           src={`/placeholders/nft_${id}.png`}
           size={size}
         />
       ))}
-    </Box>
+    </Stack>
   );
 };

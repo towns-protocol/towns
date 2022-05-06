@@ -1,11 +1,20 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Avatar, Box, ButtonText, Icon, Paragraph, Stack, Text } from "@ui";
+import {
+  Avatar,
+  Box,
+  Button,
+  ButtonText,
+  Icon,
+  Paragraph,
+  Stack,
+  Text,
+} from "@ui";
 import { SideBar } from "@components/SideBars/_SideBar";
 
 export const MessagesSideBar = () => {
   return (
-    <SideBar>
+    <SideBar background="default">
       <Stack
         horizontal
         borderBottom
@@ -15,9 +24,7 @@ export const MessagesSideBar = () => {
         justifyContent="spaceBetween"
         alignItems="center"
       >
-        <ButtonText size="lg" color="default">
-          Messages
-        </ButtonText>
+        <ButtonText color="default">Messages</ButtonText>
         <Box>
           <NavLink to="/messages/new">
             <Icon
@@ -29,7 +36,7 @@ export const MessagesSideBar = () => {
           </NavLink>
         </Box>
       </Stack>
-      <Stack>
+      <Stack paddingY="sm">
         <MessageItem />
         <MessageItem />
         <MessageItem />
@@ -60,12 +67,12 @@ const MessageItem = ({
       >
         <Avatar circle src="/placeholders/nft_2.png" size="avatar_lg" />
         <Stack grow gap="sm">
-          <Text
+          <ButtonText
             color={active ? "default" : "default"}
             fontWeight={active ? "strong" : "normal"}
           >
             Outer Space
-          </Text>
+          </ButtonText>
           <Text size="md" color="gray2">
             Lomo
           </Text>

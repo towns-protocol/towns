@@ -32,7 +32,7 @@ export const ShareCard = ({
   ...boxProps
 }: Props) => (
   <Card
-    colSpan={{ mobile: 6, desktop: colSpan }}
+    colSpan={{ tablet: 6, desktop: colSpan }}
     background={{ lightMode: "default", darkMode: "level2" }}
     padding="sm"
     {...boxProps}

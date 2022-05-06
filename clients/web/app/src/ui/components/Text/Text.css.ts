@@ -135,7 +135,7 @@ globalStyle(`h1,h2,h3,h4,h5`, {
  * Links
  */
 globalStyle(`${fontStyles[0].className} a`, {
-  color: vars.color.foreground.accent,
+  // color: vars.color.foreground.accent,
 });
 
 /**
