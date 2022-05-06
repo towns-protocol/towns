@@ -15,7 +15,7 @@ export const Home = () => (
     <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">
       <LiquidContainer fullbleed position="relative">
         <Stack grow gap="md">
-          <Heading level={2}>Highlights</Heading>
+          <Heading level={2}>Highlights </Heading>
           <Grid columns={12} gap="md">
             <Highlight
               colSpan={6}
@@ -26,8 +26,8 @@ export const Home = () => (
               imageSrc="placeholders/frame_0.png"
             >
               <p>
-                Hey @everyone, Quest #3 Completed :⚔️ MNLTH has EVOLVED AND
-                WHATTTTTT ? 1 Quest left ❌❌❌🗿Final ...
+                Hey @everyone, <strong>Quest</strong> #3 Completed :⚔️ MNLTH has
+                EVOLVED AND WHATTTTTT ? 1 Quest left ❌❌❌🗿Final ...
               </p>
             </Highlight>
             <Highlight

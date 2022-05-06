@@ -9,10 +9,10 @@ export const SpaceMentions = () => {
   return (
     <Stack grow horizontal>
       <Stack grow>
-        <ContextBar>
-          <Icon type="at" size="square_sm" />
-          <Paragraph size="lg">Mentions</Paragraph>
-        </ContextBar>
+        <ContextBar
+          title="Mentions"
+          before={<Icon type="at" size="square_sm" />}
+        />
         <Stack padding gap="md">
           <Divider label="# random" align="left" />
 

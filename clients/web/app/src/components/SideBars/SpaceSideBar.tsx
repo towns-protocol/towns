@@ -50,7 +50,6 @@ export const SpaceSideBar = (props: Props) => {
           </Box>
           {group.tags.map((tag) => (
             <ActionNavItem
-              compact
               id={group.label + tag.id}
               key={group.label + tag.id}
               icon="tag"

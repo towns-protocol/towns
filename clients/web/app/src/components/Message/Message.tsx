@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Replies } from "@components/Replies/Replies";
-import { Avatar, Box, BoxProps, Stack, Text } from "@ui";
+import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
 
 type Props = {
   avatar: string | React.ReactNode;
@@ -38,7 +38,7 @@ export const Message = ({
       </Box>
     </Box>
     {/* right / main content */}
-    <Box grow gap={condensed ? "paragraph" : "md"}>
+    <Stack grow gap={condensed ? "paragraph" : "md"}>
       {/* name & date top row */}
       <Box direction="row" gap="sm" alignItems="center" height="height_sm">
         {/* display name */}
@@ -53,9 +53,9 @@ export const Message = ({
         {/* channel */}
         {channel && (
           <NavLink to={channel}>
-            <Text fontSize="md" color="accent" as="span">
+            <ButtonText color="accent" as="span">
               #{channel}
-            </Text>
+            </ButtonText>
           </NavLink>
         )}
         {/* date, alignment tbc depending on context */}
@@ -83,6 +83,6 @@ export const Message = ({
           <Replies replies={replies} />
         </Box>
       )}
-    </Box>
+    </Stack>
   </Stack>
 );

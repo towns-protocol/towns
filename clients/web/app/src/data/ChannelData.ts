@@ -12,9 +12,6 @@ export const fakeChannelGroups: ChannelGroup[] = [
       { id: "general" },
       { id: "gm-gn", highlight: true },
       { id: "trade-sell", highlight: true },
-      { id: "show-room", highlight: true },
-      { id: "floor-talk" },
-      { id: "introduce-yourself" },
     ],
   },
   {
@@ -30,15 +27,6 @@ export const fakeChannelGroups: ChannelGroup[] = [
       { id: "all-holders", private: true, highlight: false },
       { id: "hodlers-meetup", private: true },
       { id: "rare-apes-only", private: true },
-    ],
-  },
-  {
-    label: "international",
-    tags: [
-      { id: "中文" },
-      { id: "español", highlight: true },
-      { id: "français" },
-      { id: "한국어" },
     ],
   },
 ];

@@ -7,7 +7,7 @@ globalStyle("html, body", {
   minHeight: "100vh",
   textRendering: "optimizeLegibility",
   WebkitFontSmoothing: "antialiased",
-  MozOsxFontSmoothing: "gray1scale",
+  MozOsxFontSmoothing: "grayscale",
   fontSize: vars.fontSize.lg,
 });
 
@@ -16,8 +16,6 @@ globalStyle("*", {
   padding: 0,
   border: 0,
   boxSizing: "border-box",
-  fontSize: "100%",
-  font: "inherit",
   verticalAlign: "baseline",
   WebkitTapHighlightColor: "transparent",
 });
@@ -29,10 +27,6 @@ globalStyle("ul,ol", {
 globalStyle("table", {
   borderCollapse: "collapse",
   borderSpacing: 0,
-});
-
-globalStyle("body, button", {
-  lineHeight: "100%",
 });
 
 globalStyle("a", {

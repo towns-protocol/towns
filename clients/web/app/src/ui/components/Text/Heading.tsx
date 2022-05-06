@@ -29,12 +29,10 @@ type HeadingProps = {
    * Heading level, ordered from most important and down, equivalent to H1, H2, etc.
    */
   level?: keyof typeof HeadingLevel;
-} & Omit<TextProps, "size" | "fontSize" | "fontWeight">;
+} & Omit<TextProps, "size" | "fontSize">;
 
 export const Heading = forwardRef<HTMLElement, HeadingProps>((props, ref) => {
-  const { level = 1, ...textProps } = props;
+  const { level = 1, strong = true, ...textProps } = props;
   const { el, size } = HeadingLevel[level];
-  return (
-    <Text as={el} size={size} fontWeight="strong" ref={ref} {...textProps} />
-  );
+  return <Text as={el} strong={strong} size={size} ref={ref} {...textProps} />;
 });

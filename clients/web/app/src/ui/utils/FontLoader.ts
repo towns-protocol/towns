@@ -1,7 +1,12 @@
+export const FontFamily = {
+  TitleFont: "TitleFont",
+  BodyFont: "BodyFont",
+} as const;
+
 export const fontSettings = [
   {
-    fontFamilly: "BodyFont",
-    src: "url('/fonts/Inter-Regular.ttf')",
+    fontFamily: FontFamily.BodyFont,
+    src: "url('/fonts/Inter.var.woff2')",
     fontDescription: {
       weight: "normal",
       style: "normal",
@@ -14,7 +19,7 @@ export const fontSettings = [
     },
   },
   {
-    fontFamilly: "TitleFont",
+    fontFamily: FontFamily.TitleFont,
     src: "url('/fonts/GT Flexa Var Trial.woff2')",
     fontDescription: {
       weight: "normal",
@@ -36,7 +41,7 @@ export const FontLoader = {
     if (isInit) return;
     isInit = true;
     fontSettings.forEach((f) => {
-      const font = new FontFace(f.fontFamilly, f.src, f.fontDescription);
+      const font = new FontFace(f.fontFamily, f.src, f.fontDescription);
       document.fonts.add(font);
     });
   },

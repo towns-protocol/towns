@@ -7,6 +7,7 @@ import {
   BackgroundImage,
   Box,
   BoxProps,
+  ButtonText,
   Heading,
   Paragraph,
   Stack,
@@ -67,7 +68,7 @@ const SpaceMessages = () => (
     <RoundedMessage
       channel="announcements"
       name="sunsoutapesout"
-      avatar={<Avatar src="/placeholders/nft_2.png" />}
+      avatar={<Avatar circle src="/placeholders/nft_2.png" />}
       date="Today at 11:01 AM"
       reactions={{ "👋": 20 }}
     >
@@ -88,7 +89,7 @@ const SpaceMessages = () => (
     <RoundedMessage
       channel="general"
       name="hana.eth"
-      avatar={<Avatar src="/placeholders/nft_20.png" />}
+      avatar={<Avatar circle src="/placeholders/nft_20.png" />}
       date="Today at 11:01 AM"
       replies={{ userIds: [1, 2, 3], fakeLength: 150 }}
     >
@@ -98,7 +99,7 @@ const SpaceMessages = () => (
     <RoundedMessage
       channel="crypto-talk"
       name="shimmyshimmy"
-      avatar={<Avatar src="/placeholders/nft_40.png" />}
+      avatar={<Avatar circle src="/placeholders/nft_40.png" />}
       date="Today at 11:01 AM"
       reactions={{ "😍": 3, "😂": 13, "💀": 5 }}
     >
@@ -108,7 +109,11 @@ const SpaceMessages = () => (
         </a>
       </Paragraph>
 
-      <QuotedMessage avatar={<Avatar circle src="/placeholders/nft_25.png" />}>
+      <QuotedMessage
+        avatar={
+          <Avatar circle size="avatar_lg" src="/placeholders/nft_25.png" />
+        }
+      >
         <Paragraph>
           It's been inspiring seeing our community come together in support of
           Ukraine - almost $1m in ETH has been donated to @Ukraine by wallets
@@ -128,18 +133,24 @@ const QuotedMessage = (props: {
   avatar: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <Box paddingTop="md" maxWidth="400">
-    <Box rounded="sm" padding="md" background="level2" gap="md" color="default">
-      <Box direction="row" gap="sm" height="height_md" alignItems="center">
+  <Stack paddingTop="md" maxWidth="400">
+    <Stack
+      rounded="sm"
+      padding="md"
+      background="level2"
+      gap="md"
+      color="default"
+    >
+      <Stack horizontal gap="sm" height="height_md" alignItems="center">
         {props.avatar}
-        <Box gap="xs">
-          <Heading level={5}>Bored Ape Yacht Club</Heading>
+        <Box gap="sm" color="gray1">
+          <Heading level={6}>Bored Ape Yacht Club</Heading>
           <Paragraph size="sm">@boredapeYC</Paragraph>
         </Box>
-      </Box>
+      </Stack>
       <Box>{props.children}</Box>
-    </Box>
-  </Box>
+    </Stack>
+  </Stack>
 );
 
 const SpaceMenu = () => (
@@ -163,11 +174,11 @@ const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
     roundedTop="sm"
     justifyContent="center"
   >
-    <Paragraph
+    <ButtonText
       strong={props.selected}
       color={props.selected ? "default" : "gray2"}
     >
       {props.label}
-    </Paragraph>
+    </ButtonText>
   </Box>
 );

@@ -12,3 +12,16 @@ globalStyle("h1, h2, h3, h4, h5", {
 globalStyle("p", {
   fontSize: vars.fontSize.md,
 });
+
+globalStyle("strong", {
+  fontVariationSettings: vars.fontVariationSettings.strong,
+});
+
+globalStyle("*", {
+  fontSize: "100%",
+  font: "inherit",
+});
+
+globalStyle("body, button", {
+  lineHeight: "100%",
+});

@@ -10,13 +10,11 @@ export const SpacesChannel = () => {
   return (
     <Box grow direction="row">
       <Box grow>
-        <ContextBar>
-          <Paragraph size="lg"># {channel}</Paragraph>
-        </ContextBar>
+        <ContextBar title={`# ${channel}`} />
         <Box padding gap="lg">
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" />}
+            avatar={<Avatar circle size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             reactions={{ "👋": 20 }}
@@ -37,7 +35,9 @@ export const SpacesChannel = () => {
           <Divider label="Today" />
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_30.png" />}
+            avatar={
+              <Avatar circle size="avatar_sm" src="/placeholders/nft_30.png" />
+            }
             name="sunsoutapersout"
             date="Today at 11:01AM"
             replies={{ userIds: [2, 3, 4], fakeLength: 150 }}
@@ -46,7 +46,7 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" />}
+            avatar={<Avatar circle size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             reactions={{ "👀": 20, "🤑": 2 }}
@@ -60,7 +60,9 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
+            avatar={
+              <Avatar circle size="avatar_sm" src="/placeholders/nft_2.png" />
+            }
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -71,7 +73,9 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_28.png" />}
+            avatar={
+              <Avatar circle size="avatar_sm" src="/placeholders/nft_28.png" />
+            }
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -79,7 +83,9 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
+            avatar={
+              <Avatar circle size="avatar_sm" src="/placeholders/nft_2.png" />
+            }
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -87,7 +93,9 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_39.png" />}
+            avatar={
+              <Avatar circle size="avatar_sm" src="/placeholders/nft_39.png" />
+            }
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -95,7 +103,9 @@ export const SpacesChannel = () => {
           </Message>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
+            avatar={
+              <Avatar circle size="avatar_sm" src="/placeholders/nft_2.png" />
+            }
             name="deiguy"
             date="Today at 12:01AM"
           >

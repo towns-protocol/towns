@@ -1,9 +1,8 @@
 import React from "react";
-import { Box, Paragraph, Stack } from "@ui";
+import { Box, ButtonText, Stack } from "@ui";
 
 type Props = {
   children?: React.ReactNode;
-  compact?: boolean;
   title?: string;
   before?: JSX.Element;
   after?: JSX.Element;
@@ -13,13 +12,13 @@ export const ContextBar = (props: Props) => (
     borderBottom
     horizontal
     paddingX="md"
-    height={props.compact ? "x5" : "x7"}
+    height="height_xl"
     gap="md"
     alignItems="center"
     justifyContent="spaceBetween"
   >
     {props.before}
-    {props.title ? <Paragraph>{props.title}</Paragraph> : props.children}
+    {props.title ? <ButtonText>{props.title}</ButtonText> : props.children}
     {props.after ? props.after : <Box grow />}
   </Stack>
 );

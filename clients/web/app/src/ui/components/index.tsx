@@ -12,6 +12,7 @@ export { Input } from "./Input/Input";
 export { Stack } from "./Stack/Stack";
 export { Heading } from "./Text/Heading";
 export { Paragraph } from "./Text/Paragraph";
+export { ButtonText } from "./Text/ButtonText";
 export { Text } from "./Text/Text";
 export { TopLayerPortalContext } from "./Overlay/OverlayPortal";
 export { Tooltip, TooltipRenderer } from "./Tooltip/Tooltip";

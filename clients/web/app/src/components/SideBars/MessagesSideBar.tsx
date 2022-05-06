@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Avatar, Box, Icon, Paragraph, Stack, Text } from "@ui";
+import { Avatar, Box, ButtonText, Icon, Paragraph, Stack, Text } from "@ui";
 import { SideBar } from "@components/SideBars/_SideBar";
 
 export const MessagesSideBar = () => {
@@ -10,12 +10,14 @@ export const MessagesSideBar = () => {
         horizontal
         borderBottom
         paddingX="md"
-        height="x7"
+        height="height_xl"
         gap="sm"
         justifyContent="spaceBetween"
         alignItems="center"
       >
-        <Paragraph color="default">Messages</Paragraph>
+        <ButtonText size="lg" color="default">
+          Messages
+        </ButtonText>
         <Box>
           <NavLink to="/messages/new">
             <Icon
@@ -27,13 +29,13 @@ export const MessagesSideBar = () => {
           </NavLink>
         </Box>
       </Stack>
-      <Box>
+      <Stack>
         <MessageItem />
         <MessageItem />
         <MessageItem />
         <MessageItem />
         <MessageItem />
-      </Box>
+      </Stack>
     </SideBar>
   );
 };
@@ -52,10 +54,11 @@ const MessageItem = ({
         rounded="xs"
         gap="sm"
         paddingX="sm"
-        paddingY="md"
+        height="x6"
+        alignItems="center"
         background={selected ? "level2" : undefined}
       >
-        <Avatar src="/placeholders/nft_2.png" size="avatar_lg" />
+        <Avatar circle src="/placeholders/nft_2.png" size="avatar_lg" />
         <Stack grow gap="sm">
           <Text
             color={active ? "default" : "default"}

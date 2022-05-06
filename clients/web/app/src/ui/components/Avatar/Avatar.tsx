@@ -18,6 +18,8 @@ type Props = {
   inset?: BoxProps["inset"];
 } & AvatarAtoms;
 
+export type AvatarProps = Props;
+
 export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
   const {
     animate = false,

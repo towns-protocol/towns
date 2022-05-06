@@ -11,6 +11,7 @@ import {
   Stack,
 } from "@ui";
 import { fakeUserCache } from "data/UserData";
+import { AvatarProps } from "ui/components/Avatar/Avatar";
 
 type Props = {
   userId: string;
@@ -39,20 +40,15 @@ export const Highlight = ({
     {...boxProps}
   >
     {type === "background" ? (
-      <Stack grow>
+      <Stack grow color="onTone">
         {imageSrc && <BackgroundImage src={imageSrc} gradient="dark" />}
         <Box absoluteFill padding>
           <Box grow>
-            <Avatar
-              border
-              circle
-              size="avatar_md"
-              src={fakeUserCache[userId].avatarSrc}
-            />
+            <NamedAvatar userId={userId} />
           </Box>
-          <Box gap="paragraph" color="onTone">
+          <Box gap="paragraph">
             <NavLink to="/spaces/bored-ape-yacht-club/announcements">
-              <Heading level={5}>
+              <Heading level={6}>
                 {space} {channel && `#${channel}`}
               </Heading>
             </NavLink>
@@ -74,18 +70,31 @@ export const Highlight = ({
           <Stack grow gap="line">
             {children}
           </Stack>
-          <Stack direction="row" gap="sm" alignItems="center">
-            <Avatar
-              circle
-              size="avatar_xs"
-              src={fakeUserCache[userId].avatarSrc}
-            />
-            <Paragraph color="gray1">
-              {fakeUserCache[userId].displayName}
-            </Paragraph>
-          </Stack>
+
+          <NamedAvatar
+            userId={userId}
+            size="avatar_sm"
+            color="gray1"
+            gap="xs"
+          />
         </Stack>
       </>
     )}
   </Card>
+);
+
+const NamedAvatar = ({
+  userId,
+  size = "avatar_md",
+  ...boxProps
+}: {
+  userId: string;
+  size?: AvatarProps["size"];
+} & BoxProps) => (
+  <Stack horizontal alignItems="center" gap="sm" {...boxProps}>
+    <Avatar border circle size={size} src={fakeUserCache[userId].avatarSrc} />
+    <Paragraph size={size === "avatar_md" ? "md" : "sm"}>
+      {fakeUserCache[userId].displayName}
+    </Paragraph>
+  </Stack>
 );

@@ -17,7 +17,7 @@ type Props = {
   children?: React.ReactNode;
 
   // Size token
-  size?: "xs" | "sm" | "md" | "lg" | "xl" | "xl24" | "xl32";
+  size?: "sm" | "md" | "lg" | "xl" | "xl24" | "xl32";
 
   truncate?: boolean;
 

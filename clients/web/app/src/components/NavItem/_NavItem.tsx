@@ -17,10 +17,8 @@ type NavLinkProps = {
 
 export const NavItem = forwardRef<
   HTMLElement,
-  { id?: string; compact?: boolean } & NavLinkProps &
-    BoxProps &
-    HTMLAttributes<HTMLDivElement>
->(({ id, to, compact, exact, children, ...props }, ref) => {
+  { id?: string } & NavLinkProps & BoxProps & HTMLAttributes<HTMLDivElement>
+>(({ id, to, exact, children, ...props }, ref) => {
   const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
 
   const match = useMatch({
@@ -65,10 +63,10 @@ export const NavItem = forwardRef<
           position="relative"
           rounded="xs"
           alignItems="center"
-          gap={compact ? "sm" : "md"}
-          minHeight={compact ? "x5" : "x6"}
+          gap="md"
+          minHeight="x6"
           paddingX="sm"
-          color={match ? "default" : "gray2"}
+          fontWeight={match ? "normal" : "strong"}
         >
           {children}
         </Stack>

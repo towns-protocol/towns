@@ -35,17 +35,18 @@ const root = createGlobalTheme(":root", {
 
   dims: {
     square: {
+      // 12px - pins
       square_xxs: `${baseline * 1.5}px`,
       // xsmall icons / avatars
-      square_xs: `${baseline * 2}px`,
+      square_xs: `${baseline * 2}px`, // 16
       // small icons / avatars
-      square_sm: `${baseline * 2.5}px`,
+      square_sm: `${baseline * 2.5}px`, // 20
       // default icon
-      square_md: `${baseline * 3}px`,
+      square_md: `${baseline * 3}px`, // 24
       // default icon
       square_lg: `${baseline * 4}px`,
       // big icons
-      square_xl: `${baseline * 6.5}px`,
+      square_xl: `${baseline * 8}px`, // 64
       // hero avatar
       square_xxl: `${baseline * 10}px`,
 
@@ -161,9 +162,9 @@ const root = createGlobalTheme(":root", {
     full: "999999px",
   } as const,
 
-  fontWeight: {
-    normal: "400",
-    strong: "900",
+  fontVariationSettings: {
+    normal: '"wdth" 100, "wght" 400, "ital" 0',
+    strong: '"wdth" 100, "wght" 600, "ital" 0',
   } as const,
 
   fontSize: {

@@ -13,16 +13,17 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
     overflow="hidden"
     minWidth={{ tablet: "none", desktop: "auto" }}
   >
-    <ContextBar compact after={<Icon type="close" size="square_sm" />}>
-      <Paragraph size="lg">Replies</Paragraph>
-    </ContextBar>
-    <Box padding="md" gap="md">
+    <ContextBar
+      after={<Icon type="close" size="square_sm" />}
+      title="Replies"
+    />
+    <Box padding="md" gap="lg">
       <Divider align="left" fontSize="md" label="# general" />
       <Message
         condensed
         name="threadpeep3k"
         date="Today, 11pm"
-        avatar={<Avatar size="avatar_sm" />}
+        avatar={<Avatar circle size="avatar_sm" />}
       >
         <Paragraph>This is so nice wher did you find out?</Paragraph>
       </Message>
@@ -30,7 +31,9 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="m00nfLee"
         date="Today, 11:03pm"
-        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_3.png" />}
+        avatar={
+          <Avatar circle size="avatar_sm" src="/placeholders/nft_3.png" />
+        }
       >
         <Paragraph>:eyes:</Paragraph>
       </Message>
@@ -38,7 +41,9 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="threadpeep3k"
         date="Today, 11:04pm"
-        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_9.png" />}
+        avatar={
+          <Avatar circle size="avatar_sm" src="/placeholders/nft_9.png" />
+        }
       >
         <Paragraph>It's a thread...</Paragraph>
       </Message>
@@ -46,7 +51,9 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="m00nfLee"
         date="Today, 11:03pm"
-        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_3.png" />}
+        avatar={
+          <Avatar circle size="avatar_sm" src="/placeholders/nft_3.png" />
+        }
       >
         <Paragraph>what doyou mean?</Paragraph>
       </Message>
@@ -54,7 +61,9 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="m00nfLee"
         date="Today, 11:03pm"
-        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_34.png" />}
+        avatar={
+          <Avatar circle size="avatar_sm" src="/placeholders/nft_34.png" />
+        }
       >
         <Paragraph>pls stop</Paragraph>
       </Message>

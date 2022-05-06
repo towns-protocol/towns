@@ -1,6 +1,6 @@
 import React from "react";
 import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
-import { Box, Heading, Icon, Stack } from "@ui";
+import { Box, ButtonText, Heading, Icon, Stack } from "@ui";
 import { fakeSpaceCache } from "data/SpaceData";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { Tooltip, TooltipRenderer } from "ui/components/Tooltip/Tooltip";
@@ -47,13 +47,7 @@ export const SpaceNavItem = (props: Props) => {
       render={<SpaceTooltip id={props.id} />}
     >
       {({ triggerProps }) => (
-        <NavItem
-          id={id}
-          compact={isCompact}
-          to={`/spaces/${id}`}
-          exact={exact}
-          {...triggerProps}
-        >
+        <NavItem id={id} to={`/spaces/${id}`} exact={exact} {...triggerProps}>
           <Avatar
             animate
             src={avatar}
@@ -63,15 +57,15 @@ export const SpaceNavItem = (props: Props) => {
                 : { desktop: "avatar_lg", tablet: "avatar_lg" }
             }
           />
-          <Heading
+          <ButtonText
             grow
             truncate
-            level={5}
             color={active ? "default" : undefined}
+            strong={active}
             display={{ tablet: "none" }}
           >
             {name}
-          </Heading>
+          </ButtonText>
           <Box shrink display={{ tablet: "none" }}>
             {pinned && <Icon type="pin" size="square_xxs" />}
           </Box>
