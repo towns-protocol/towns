@@ -31,8 +31,13 @@ export interface Members {
   [userId: string]: Member;
 }
 
+export interface RoomMessage {
+  sender: string;
+  message: string;
+}
+
 export interface RoomsMessages {
-  [roomId: string]: string[];
+  [roomId: string]: RoomMessage[];
 }
 
 export interface CreateRoomInfo {

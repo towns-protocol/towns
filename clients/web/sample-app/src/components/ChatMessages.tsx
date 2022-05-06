@@ -1,5 +1,5 @@
 import { Box, Divider, TextField, Theme, Typography } from "@mui/material";
-import { Membership, useMatrixStore } from "use-matrix-client";
+import { Membership, RoomMessage, getShortUsername, useMatrixStore } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { AcceptInvitation } from "./AcceptInvitation";
@@ -46,9 +46,9 @@ export function ChatMessages(props: Props): JSX.Element {
       ); 
     } else if (roomMessages && messagesLength && props.roomId) {
       if (roomMessages.length > 0) {
-        return roomMessages.map((m: string, index: number) => (
+        return roomMessages.map((m: RoomMessage, index: number) => (
           <Typography key={index} display="block" variant="body1" component="span" sx={messageStyle}>
-            {m}
+            {`${getShortUsername(m.sender)}: ${m.message}`}
           </Typography>
         ));
       } else {

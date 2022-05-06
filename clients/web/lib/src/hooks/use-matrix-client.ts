@@ -1,10 +1,5 @@
 import { ICreateRoomOpts, MatrixClient, createClient } from "matrix-js-sdk";
-import {
-  LoginStatus,
-  getShortUsername,
-  getUsernameFromId,
-  toLowerCaseUsername,
-} from "./login";
+import { LoginStatus, getUsernameFromId, toLowerCaseUsername } from "./login";
 import { useCallback, useContext, useMemo } from "react";
 
 import { CreateRoomInfo } from "../types/matrix-types";
@@ -32,17 +27,9 @@ export function useMatrixClient() {
     setDeviceId,
     setLoginError,
     setLoginStatus,
-    setRoomName,
     setUserId,
     setUsername,
   } = useMatrixStore();
-
-  const shortUsername = useMemo(
-    function () {
-      return getShortUsername(username);
-    },
-    [username]
-  );
 
   const { setAccessToken } = useCredentialStore();
 
@@ -143,30 +130,31 @@ export function useMatrixClient() {
     [homeServer]
   );
 
-  const sendMessage = useCallback(
-    async function (roomId: string, message: string) {
-      if (matrixClient) {
-        const content = {
-          body: `${shortUsername}: ${message}`,
-          msgtype: "m.text",
-        };
+  const sendMessage = useCallback(async function (
+    roomId: string,
+    message: string
+  ) {
+    if (matrixClient) {
+      const content = {
+        body: `${message}`,
+        msgtype: "m.text",
+      };
 
-        await matrixClient.sendEvent(
-          roomId,
-          "m.room.message",
-          content,
-          "",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-          function (err: any, res: any) {
-            if (err) {
-              console.error(err);
-            }
+      await matrixClient.sendEvent(
+        roomId,
+        "m.room.message",
+        content,
+        "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+        function (err: any, res: any) {
+          if (err) {
+            console.error(err);
           }
-        );
-      }
-    },
-    [shortUsername]
-  );
+        }
+      );
+    }
+  },
+  []);
 
   const leaveRoom = useCallback(async function (roomId: string) {
     if (matrixClient) {

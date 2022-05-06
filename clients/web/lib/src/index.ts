@@ -12,6 +12,7 @@ export {
   Membership,
   Room,
   Rooms,
+  RoomMessage,
   RoomsMessages,
 } from "./types/matrix-types";
 
