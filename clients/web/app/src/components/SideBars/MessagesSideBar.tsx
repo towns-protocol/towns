@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import {
   Avatar,
   Box,
-  Button,
   ButtonText,
   Icon,
   Paragraph,
