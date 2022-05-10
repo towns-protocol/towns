@@ -48,7 +48,8 @@ export function useMatrixWalletSignIn() {
     setUsername,
   } = useMatrixStore();
   const { setAccessToken } = useCredentialStore();
-  let { accounts, chainId, sign } = useWeb3Context();
+  const { accounts, sign } = useWeb3Context();
+  let { chainId } = useWeb3Context();
   // ChainId can be a hex number in str, unhex it here.
   if (chainId && chainId.startsWith("0x")) {
     chainId = "" + +chainId;
@@ -78,6 +79,7 @@ export function useMatrixWalletSignIn() {
   },
   []);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authenticationSuccess = useCallback(function (response: any) {
     const { access_token, device_id, user_id } = response;
     if (access_token && device_id && user_id) {
@@ -206,17 +208,17 @@ export function useMatrixWalletSignIn() {
               walletAddress
             );
             console.log(
-              '[registerWallet] newRegisterSession result, sessionId =', 
-              sessionId, 
-              'original chainId =',
+              "[registerWallet] newRegisterSession result, sessionId =",
+              sessionId,
+              "original chainId =",
               chainId,
               typeof chainId,
-              'error =',
+              "error =",
               error,
-              'and looking for chainIdEip155 =',
+              "and looking for chainIdEip155 =",
               chainIdEip155,
               typeof chainIdEip155,
-              ' in chainIds =',
+              " in chainIds =",
               chainIds
             );
             if (!error && sessionId && chainIds.includes(chainIdEip155)) {
