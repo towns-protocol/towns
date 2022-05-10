@@ -1,0 +1,1 @@
+export { Web3Bar } from "./Web3Bar";
