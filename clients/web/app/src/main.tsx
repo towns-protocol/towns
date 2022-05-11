@@ -1,8 +1,9 @@
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { createRoot } from "react-dom/client";
-
 import { App } from "./App";
+import "allotment/dist/style.css";
+
 const isDev = import.meta.env.DEV;
 
 if (isDev) {

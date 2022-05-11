@@ -1,20 +1,21 @@
 import { Allotment } from "allotment";
-import React, { useCallback } from "react";
+import React from "react";
 import { useOutlet, useParams } from "react-router";
 import { ContextBar } from "@components/ContextBar";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Box, Divider, Paragraph, Stack } from "@ui";
+import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
   const { channel } = useParams();
-  const onResizePanes = useCallback((s: number[]) => {
-    console.log(s);
-  }, []);
+  const { sizes, onSizesChange: onAllotmentChange } =
+    usePersistPanes("channel");
   const outlet = useOutlet();
+
   return (
     <Stack horizontal minHeight="100%">
-      <Allotment onChange={onResizePanes}>
+      <Allotment sizes={sizes} onChange={onAllotmentChange}>
         <Allotment.Pane>
           <Box grow>
             <ContextBar title={`# ${channel}`} />
