@@ -12,7 +12,7 @@ export const SpacesNew = () => {
   const onCreateRoom = useCallback(
     (roomId: string, membership: Membership) => {
       console.log("room created", roomId, membership);
-      navigate("spaces/" + roomId);
+      navigate("/spaces/" + roomId);
     },
     [navigate]
   );
