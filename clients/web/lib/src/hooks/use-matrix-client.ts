@@ -38,45 +38,48 @@ export function useMatrixClient() {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
 
-  const createRoom = useCallback(async function (
-    createInfo: CreateRoomInfo
-  ): Promise<string | undefined> {
-    try {
-      if (matrixClient) {
-        const options: ICreateRoomOpts = {
-          //room_alias_name: "my_room_alias3",
-          visibility: createInfo.visibility,
-          name: createInfo.roomName,
-          is_direct: createInfo.isDirectMessage,
-        };
-        const response = await matrixClient.createRoom(options);
-        console.log(`Created room`, JSON.stringify(response));
-        return response.room_id;
-      } else {
-        console.error(`Not logged in. Cannot create room`);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (ex: any) {
-      console.error(`Error creating room`, ex.stack);
-    }
-    return undefined;
-  },
-  []);
-
-  const logout = useCallback(async function (): Promise<void> {
-    setLoginStatus(LoginStatus.LoggingOut);
-    if (matrixClient) {
+  const createRoom = useCallback(
+    async function (createInfo: CreateRoomInfo): Promise<string | undefined> {
       try {
-        await matrixClient.logout();
-        console.log(`Logged out`);
+        if (matrixClient) {
+          const options: ICreateRoomOpts = {
+            //room_alias_name: "my_room_alias3",
+            visibility: createInfo.visibility,
+            name: createInfo.roomName,
+            is_direct: createInfo.isDirectMessage,
+          };
+          const response = await matrixClient.createRoom(options);
+          console.log(`Created room`, JSON.stringify(response));
+          return response.room_id;
+        } else {
+          console.error(`Not logged in. Cannot create room`);
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (ex: any) {
-        console.error(`Error logging out:`, ex.stack);
+        console.error(`Error creating room`, ex.stack);
       }
-    }
-    setLoginStatus(LoginStatus.LoggedOut);
-    setAccessToken("");
-  }, []);
+      return undefined;
+    },
+    [matrixClient]
+  );
+
+  const logout = useCallback(
+    async function (): Promise<void> {
+      setLoginStatus(LoginStatus.LoggingOut);
+      if (matrixClient) {
+        try {
+          await matrixClient.logout();
+          console.log(`Logged out`);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (ex: any) {
+          console.error(`Error logging out:`, ex.stack);
+        }
+      }
+      setLoginStatus(LoginStatus.LoggedOut);
+      setAccessToken("");
+    },
+    [matrixClient]
+  );
 
   const loginWithPassword = useCallback(
     async function (username: string, password: string): Promise<void> {

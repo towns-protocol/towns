@@ -30,5 +30,5 @@ const navItems = [
     icon: "message",
     label: "Messages",
   },
-  { id: "spaces/new", icon: "plus", label: "New Space" },
+  { id: "spaces/new", link: "/spaces/new", icon: "plus", label: "New Space" },
 ] as const;

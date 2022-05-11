@@ -12,6 +12,7 @@ import { MessagesNew } from "routes/MessagesNew";
 import { MessagesRead } from "routes/MessagesRead";
 import { SpaceMentions } from "routes/SpaceMentions";
 import { Spaces } from "routes/Spaces";
+import { SpacesNew } from "routes/SpacesNew";
 import { SpacesChannel } from "routes/SpacesChannel";
 import { SpacesChannelReplies } from "routes/SpacesChannelThread";
 import { SpacesIndex } from "routes/SpacesIndex";
@@ -60,6 +61,7 @@ export const App = () => {
                 <Route path="new" element={<MessagesNew />} />
                 <Route path=":conversationId" element={<MessagesRead />} />
               </Route>
+              <Route path="/spaces/new" element={<SpacesNew />} />
               <Route path="/spaces/:spaceId" element={<Spaces />}>
                 <Route index element={<SpacesIndex />} />
                 <Route path="threads" element={<SpaceThreads />} />
