@@ -5,14 +5,7 @@ import { Avatar, Box, Divider, Icon, Paragraph } from "@ui";
 import { ContextBar } from "@components/ContextBar";
 
 export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
-  <Box
-    borderRight
-    borderLeft
-    shrink="x1"
-    basis={{ tablet: "auto", desktop: "300" }}
-    overflow="hidden"
-    minWidth={{ tablet: "none", desktop: "auto" }}
-  >
+  <Box overflow="hidden" background="default">
     <ContextBar
       after={<Icon type="close" size="square_sm" />}
       title="Replies"

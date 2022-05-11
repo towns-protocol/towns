@@ -39,13 +39,12 @@ export const SideBar = (props: Props) => {
       }}
     >
       <Stack
-        borderRight
-        shrink={{ tablet: "x0", desktop: "x1" }}
-        basis={{ tablet: "auto", desktop: "300" }}
+        grow
         background="level1"
-        overflow="hidden"
-        minWidth={{ tablet: "none", desktop: "auto" }}
+        overflowX="hidden"
+        overflowY="scroll"
         {...props}
+        absoluteFill
         gap="xs"
       />
     </SidebarContext.Provider>

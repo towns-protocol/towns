@@ -1,46 +1,30 @@
 import React from "react";
 import { AvatarStack } from "ui/components/AvatarStack";
 import { MessageInput } from "@components/MessageInput/MessageInput";
-import { Avatar, Box, Divider, Heading, Icon, Paragraph } from "@ui";
+import { Avatar, Box, Divider, Heading, Icon, Paragraph, Stack } from "@ui";
+import { ContextBar } from "@components/ContextBar";
 
 export const MessagesNew = () => (
-  <Box grow>
-    <Box
-      borderBottom
-      direction="row"
-      paddingX="md"
-      height="height_lg"
-      gap="sm"
-      alignItems="center"
-    >
-      <Icon type="message" background="level1" />
-      <Paragraph size="md">New Message</Paragraph>
-    </Box>
-    <Box
-      borderBottom
-      direction="row"
-      paddingX="md"
-      height="height_lg"
-      gap="sm"
-      alignItems="center"
-    >
-      <Box>
-        <Paragraph size="md">To:</Paragraph>
+  <Stack grow>
+    <ContextBar
+      title="New Message"
+      before={<Icon type="message" background="level1" />}
+    />
+    <ContextBar>
+      <Paragraph size="md">To:</Paragraph>
+      <Box
+        background="level2"
+        gap="xs"
+        direction="row"
+        padding="xs"
+        rounded="xs"
+        alignItems="center"
+      >
+        <Avatar circle size="avatar_xs" />
+        <Paragraph size="sm">godguy23</Paragraph>
       </Box>
-      <Box direction="row">
-        <Box
-          background="level2"
-          gap="xs"
-          direction="row"
-          padding="xs"
-          rounded="xs"
-          alignItems="center"
-        >
-          <Avatar circle size="avatar_xs" />
-          <Paragraph size="sm">godguy23</Paragraph>
-        </Box>
-      </Box>
-    </Box>
+    </ContextBar>
+
     <Box grow gap="md" justifyContent="end" padding="md">
       <Box gap="sm">
         <Avatar size="avatar_xl" />
@@ -64,5 +48,5 @@ export const MessagesNew = () => (
         <MessageInput />
       </Box>
     </Box>
-  </Box>
+  </Stack>
 );

@@ -1,15 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import {
-  Avatar,
-  Box,
-  ButtonText,
-  Icon,
-  Paragraph,
-  Stack,
-  Text,
-} from "@ui";
 import { SideBar } from "@components/SideBars/_SideBar";
+import { Avatar, Box, ButtonText, Icon, Paragraph, Stack, Text } from "@ui";
 
 export const MessagesSideBar = () => {
   return (
@@ -53,7 +45,7 @@ const MessageItem = ({
   active?: boolean;
   selected?: boolean;
 }) => (
-  <NavLink to="iamblue">
+  <NavLink to="/messages/iamblue">
     <Box paddingX="sm" paddingY="xs">
       <Stack
         horizontal

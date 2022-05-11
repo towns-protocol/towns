@@ -1,87 +1,43 @@
-import { AnimatePresence } from "framer-motion";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React from "react";
 import { Route, Routes } from "react-router-dom";
-import clsx from "clsx";
-import { MatrixContextProvider } from "use-matrix-client";
-import { Box, Stack } from "@ui";
-import { TopBar } from "@components/TopBar";
-import { Web3Bar } from "@components/Web3";
-import { Home } from "routes/Home";
+import { AppLayout } from "AppLayout";
+import { HomeIndex } from "routes/Home";
 import { Messages } from "routes/Messages";
 import { MessagesNew } from "routes/MessagesNew";
 import { MessagesRead } from "routes/MessagesRead";
 import { SpaceMentions } from "routes/SpaceMentions";
 import { Spaces } from "routes/Spaces";
-import { SpacesNew } from "routes/SpacesNew";
 import { SpacesChannel } from "routes/SpacesChannel";
 import { SpacesChannelReplies } from "routes/SpacesChannelThread";
 import { SpacesIndex } from "routes/SpacesIndex";
+import { SpacesNew } from "routes/SpacesNew";
 import { SpaceThreads } from "routes/SpaceThreads";
-import { TopLayerPortalContext } from "ui/components/Overlay/OverlayPortal";
-import { darkTheme, lightTheme } from "ui/styles/vars.css";
 import { FontLoader } from "ui/utils/FontLoader";
 
 FontLoader.init();
 
-const MATRIX_HOMESERVER_URL = "http://localhost:8008";
-
 export const App = () => {
-  const defaultDark = useMemo(
-    () => false && !!window.matchMedia("(prefers-color-scheme: dark)").matches,
-    []
-  );
-  const [theme, setTheme] = useState<"light" | "dark">(
-    defaultDark ? "dark" : "light"
-  );
-  const onToggleTheme = useCallback(() => {
-    setTheme((t) => (t === "light" ? "dark" : "light"));
-  }, []);
-
-  const ref = useRef<HTMLElement>(null);
-
   return (
-    <TopLayerPortalContext.Provider value={{ rootRef: ref }}>
-      <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
-        <Stack
-          grow
-          absoluteFill
-          className={clsx([
-            theme === "light" ? lightTheme : darkTheme,
-            { [`debug-grid`]: false },
-          ])}
-          background="default"
-          color="default"
-        >
-          <Web3Bar />
-          <TopBar onClick={onToggleTheme} />
-          <Stack grow horizontal>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/messages" element={<Messages />}>
-                <Route path="new" element={<MessagesNew />} />
-                <Route path=":conversationId" element={<MessagesRead />} />
-              </Route>
-              <Route path="/spaces/new" element={<SpacesNew />} />
-              <Route path="/spaces/:spaceId" element={<Spaces />}>
-                <Route index element={<SpacesIndex />} />
-                <Route path="threads" element={<SpaceThreads />} />
-                <Route path="mentions" element={<SpaceMentions />} />
-                <Route path=":channel" element={<SpacesChannel />}>
-                  <Route
-                    path="replies/:messageId"
-                    element={<SpacesChannelReplies />}
-                  />
-                </Route>
-              </Route>
-            </Routes>
-          </Stack>
-          <Box>
-            <AnimatePresence>
-              <Box ref={ref} />
-            </AnimatePresence>
-          </Box>
-        </Stack>
-      </MatrixContextProvider>
-    </TopLayerPortalContext.Provider>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route index element={<HomeIndex />} />
+        <Route path="/messages" element={<Messages />}>
+          <Route path="new" element={<MessagesNew />} />
+          <Route path=":conversationId" element={<MessagesRead />} />
+        </Route>
+        <Route path="/spaces/new" element={<SpacesNew />} />
+        <Route path="/spaces/:spaceId" element={<Spaces />}>
+          <Route index element={<SpacesIndex />} />
+          <Route path="threads" element={<SpaceThreads />} />
+          <Route path="mentions" element={<SpaceMentions />} />
+          <Route path=":channel" element={<SpacesChannel />}>
+            <Route
+              path="replies/:messageId"
+              element={<SpacesChannelReplies />}
+            />
+          </Route>
+        </Route>
+      </Route>
+    </Routes>
   );
 };

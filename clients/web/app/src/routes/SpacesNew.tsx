@@ -1,10 +1,9 @@
 import React, { useCallback } from "react";
-import { Membership, useMatrixStore } from "use-matrix-client";
 import { useNavigate } from "react-router";
-import { Box } from "@ui";
+import { Membership, useMatrixStore } from "use-matrix-client";
 import { CreateRoomForm } from "@components/Web3";
 import { Login } from "@components/Web3/Login";
-import { MainSideBar } from "@components/SideBars";
+import { Box } from "@ui";
 
 export const SpacesNew = () => {
   const { isAuthenticated } = useMatrixStore();
@@ -20,7 +19,6 @@ export const SpacesNew = () => {
 
   return (
     <>
-      <MainSideBar />
       <Box border grow="h2" padding="lg" gap="md">
         {isAuthenticated ? (
           <CreateRoomForm onClick={onCreateRoom} />

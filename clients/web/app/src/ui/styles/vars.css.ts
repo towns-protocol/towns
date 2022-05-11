@@ -99,6 +99,7 @@ const root = createGlobalTheme(":root", {
       "25vh": `25vh`,
       "50vh": `50vh`,
       "75vh": `75vh`,
+      "100vh": `100vh`,
       "100%": `100%`,
       "100": `100px`,
       "200": `200px`,
