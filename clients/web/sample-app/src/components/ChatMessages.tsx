@@ -1,5 +1,10 @@
 import { Box, Divider, TextField, Theme, Typography } from "@mui/material";
-import { Membership, RoomMessage, getShortUsername, useMatrixStore } from "use-matrix-client";
+import {
+  Membership,
+  RoomMessage,
+  getShortUsername,
+  useMatrixStore,
+} from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { AcceptInvitation } from "./AcceptInvitation";
@@ -15,16 +20,22 @@ export function ChatMessages(props: Props): JSX.Element {
   const { allMessages } = useMatrixStore();
   const [newMessage, setNewMessage] = useState<string>("");
 
-  const onTextChanged = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(event.target.value);
-  }, []);
+  const onTextChanged = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setNewMessage(event.target.value);
+    },
+    []
+  );
 
-  const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && newMessage) {
-      await props.sendMessage(props.roomId, newMessage);
-      setNewMessage("");
-    }
-  }, [newMessage, props]);
+  const onKeyDown = useCallback(
+    async (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === "Enter" && newMessage) {
+        await props.sendMessage(props.roomId, newMessage);
+        setNewMessage("");
+      }
+    },
+    [newMessage, props]
+  );
 
   const roomMessages = useMemo(() => {
     if (allMessages) {
@@ -37,34 +48,50 @@ export function ChatMessages(props: Props): JSX.Element {
     return undefined;
   }, [allMessages, props.roomId]);
 
-  const messagesLength = useMemo(() => roomMessages?.length, [roomMessages?.length]);
+  const messagesLength = useMemo(
+    () => roomMessages?.length,
+    [roomMessages?.length]
+  );
 
   const chatMessages = useMemo(() => {
     if (props.membership === Membership.Invite) {
       return (
         <AcceptInvitation roomId={props.roomId} joinRoom={props.joinRoom} />
-      ); 
+      );
     } else if (roomMessages && messagesLength && props.roomId) {
       if (roomMessages.length > 0) {
         return roomMessages.map((m: RoomMessage, index: number) => (
-          <Typography key={index} display="block" variant="body1" component="span" sx={messageStyle}>
+          <Typography
+            key={index}
+            display="block"
+            variant="body1"
+            component="span"
+            sx={messageStyle}
+          >
             {`${getShortUsername(m.sender)}: ${m.message}`}
           </Typography>
         ));
       } else {
-        <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+        <Typography
+          display="block"
+          variant="body1"
+          component="span"
+          sx={messageStyle}
+        >
           There are no messages.
-        </Typography>
+        </Typography>;
       }
     }
-  }, [props.membership, props.roomId, props.joinRoom, roomMessages, messagesLength]);
+  }, [
+    props.membership,
+    props.roomId,
+    props.joinRoom,
+    roomMessages,
+    messagesLength,
+  ]);
 
   return (
-    <Box
-      display="flex"
-      flexGrow="1"
-      flexDirection="column"
-    >
+    <Box display="flex" flexGrow="1" flexDirection="column">
       {chatMessages}
       <Box display="flex" flexDirection="row" flexGrow={1} />
       {props.membership === Membership.Join ? (
@@ -78,7 +105,8 @@ export function ChatMessages(props: Props): JSX.Element {
               fullWidth={true}
               onChange={onTextChanged}
               onKeyDown={onKeyDown}
-              value={newMessage} />
+              value={newMessage}
+            />
           </Box>
         </>
       ) : null}

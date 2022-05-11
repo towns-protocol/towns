@@ -23,7 +23,6 @@ export { useMatrixStore } from "./store/use-matrix-store";
 export { useMatrixClient } from "./hooks/use-matrix-client";
 export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
 
-import { Buffer } from "buffer";
-
 // Workaround unhandled exception "Buffer is not defined" exception in keccak
+import { Buffer } from "buffer";
 window.Buffer = Buffer;

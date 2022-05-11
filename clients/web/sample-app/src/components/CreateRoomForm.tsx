@@ -1,4 +1,15 @@
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Theme, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  TextField,
+  Theme,
+  Typography,
+} from "@mui/material";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
@@ -14,11 +25,17 @@ export function CreateRoomForm(props: Props): JSX.Element {
   const [isDM, setIsDM] = useState<string>(false.toString());
   const { createRoom } = useMatrixClient();
 
-  const disableCreateButton = useMemo(() => roomName.length === 0, [roomName.length]);
+  const disableCreateButton = useMemo(
+    () => roomName.length === 0,
+    [roomName.length]
+  );
 
-  const onChangeRoomName = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setRoomName(event.target.value);
-  }, []);
+  const onChangeRoomName = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setRoomName(event.target.value);
+    },
+    []
+  );
 
   const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
     setVisibility(event.target.value as Visibility);
@@ -48,21 +65,19 @@ export function CreateRoomForm(props: Props): JSX.Element {
       justifyContent="center"
       sx={{
         p: (theme: Theme) => theme.spacing(8),
-      }}>
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
-        sx={spacingStyle}>
+      }}
+    >
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
         CREATE ROOM
       </Typography>
       <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
-        <Box display="grid" alignItems="center" gridTemplateColumns="repeat(2, 1fr)" marginTop="10px">
-          <Typography
-            variant="body1"
-            noWrap
-            component="div"
-            sx={spacingStyle}>
+        <Box
+          display="grid"
+          alignItems="center"
+          gridTemplateColumns="repeat(2, 1fr)"
+          marginTop="10px"
+        >
+          <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
             Room name:
           </Typography>
           <TextField
@@ -70,14 +85,15 @@ export function CreateRoomForm(props: Props): JSX.Element {
             label="Name of the room"
             variant="filled"
             onChange={onChangeRoomName}
-            />
+          />
         </Box>
-        <Box display="grid" alignItems="center" gridTemplateColumns="repeat(2, 1fr)" marginTop="20px">
-          <Typography
-            variant="body1"
-            noWrap
-            component="div"
-            sx={spacingStyle}>
+        <Box
+          display="grid"
+          alignItems="center"
+          gridTemplateColumns="repeat(2, 1fr)"
+          marginTop="20px"
+        >
+          <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
             Visibility:
           </Typography>
           <Box minWidth="120px">
@@ -95,12 +111,13 @@ export function CreateRoomForm(props: Props): JSX.Element {
             </FormControl>
           </Box>
         </Box>
-        <Box display="grid" alignItems="center" gridTemplateColumns="repeat(2, 1fr)" marginTop="20px">
-          <Typography
-            variant="body1"
-            noWrap
-            component="div"
-            sx={spacingStyle}>
+        <Box
+          display="grid"
+          alignItems="center"
+          gridTemplateColumns="repeat(2, 1fr)"
+          marginTop="20px"
+        >
+          <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
             Is DM:
           </Typography>
           <Box minWidth="120px">
@@ -120,7 +137,12 @@ export function CreateRoomForm(props: Props): JSX.Element {
         </Box>
         <Box></Box>
         <Box display="flex" flexDirection="column" alignItems="center">
-          <Button variant="contained" color="primary" onClick={onClickCreateRoom} disabled={disableCreateButton}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onClickCreateRoom}
+            disabled={disableCreateButton}
+          >
             Create
           </Button>
         </Box>

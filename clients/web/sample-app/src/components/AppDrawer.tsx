@@ -1,5 +1,10 @@
 import { Button, IconButton, Theme } from "@mui/material";
-import { Membership, getShortUsername, isRoom, useMatrixStore } from "use-matrix-client";
+import {
+  Membership,
+  getShortUsername,
+  isRoom,
+  useMatrixStore,
+} from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -33,7 +38,9 @@ interface CurrentChatRoom {
 export default function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentChatRoom, setCurrentChatRoom] = useState<CurrentChatRoom | undefined>(undefined);
+  const [currentChatRoom, setCurrentChatRoom] = useState<
+    CurrentChatRoom | undefined
+  >(undefined);
   const { rooms, username } = useMatrixStore();
   const [showCreateRoomForm, setShowCreateRoomForm] = useState<boolean>(false);
 
@@ -62,7 +69,11 @@ export default function AppDrawer(props: Props): JSX.Element {
   const onClickLeaveRoom = useCallback(() => {
     if (rooms) {
       for (const r of Object.values(rooms)) {
-        if (isRoom(r) && r.membership === Membership.Join && r.roomId !== currentChatRoom?.roomId) {
+        if (
+          isRoom(r) &&
+          r.membership === Membership.Join &&
+          r.roomId !== currentChatRoom?.roomId
+        ) {
           return setCurrentChatRoom({
             roomId: r.roomId,
             membership: r.membership,
@@ -72,17 +83,20 @@ export default function AppDrawer(props: Props): JSX.Element {
     }
   }, [currentChatRoom?.roomId, rooms]);
 
-  const goToRoom = useCallback((roomId: string) => {
-    if (rooms) {
-      const room = rooms[roomId];
-      if (room) {
-        setCurrentChatRoom({
-          roomId: roomId,
-          membership: Membership.Join,
-        });
+  const goToRoom = useCallback(
+    (roomId: string) => {
+      if (rooms) {
+        const room = rooms[roomId];
+        if (room) {
+          setCurrentChatRoom({
+            roomId: roomId,
+            membership: Membership.Join,
+          });
+        }
       }
-    }
-  }, [rooms]);
+    },
+    [rooms]
+  );
 
   const drawer = (
     <div>
@@ -93,8 +107,9 @@ export default function AppDrawer(props: Props): JSX.Element {
         flexDirection="row"
         alignItems="center"
         sx={{
-          pl: (theme: Theme) => theme.spacing(2)
-        }}>
+          pl: (theme: Theme) => theme.spacing(2),
+        }}
+      >
         <IconButton
           size="medium"
           edge="start"
@@ -102,8 +117,9 @@ export default function AppDrawer(props: Props): JSX.Element {
           aria-label="menu"
           onClick={onClickCreateRoom}
           sx={{
-            pr: (theme: Theme) => theme.spacing(1)
-          }}>
+            pr: (theme: Theme) => theme.spacing(1),
+          }}
+        >
           <AddIcon />
         </IconButton>
         <Button onClick={onClickCreateRoom}>
@@ -112,34 +128,28 @@ export default function AppDrawer(props: Props): JSX.Element {
             noWrap
             component="div"
             sx={{
-              pr: (theme: Theme) => theme.spacing(1)
-            }}>
+              pr: (theme: Theme) => theme.spacing(1),
+            }}
+          >
             Create Room
           </Typography>
         </Button>
       </Box>
       <Divider />
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
-        sx={spacingStyle}>
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
         Joined
       </Typography>
       <Rooms membership={Membership.Join} onClickRoom={onClickRoom} />
       <Divider />
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
-        sx={spacingStyle}>
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
         Invited
       </Typography>
       <Rooms membership={Membership.Invite} onClickRoom={onClickRoom} />
     </div>
   );
 
-  const container = window !== undefined ? () => window().document.body : undefined;
+  const container =
+    window !== undefined ? () => window().document.body : undefined;
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -152,11 +162,7 @@ export default function AppDrawer(props: Props): JSX.Element {
         }}
       >
         <Box display="flex" flexDirection="row" alignItems="center">
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={spacingStyle}>
+          <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
             Matrix Client
           </Typography>
           <Box display="flex" flexDirection="row" flexGrow={1} />
@@ -184,7 +190,10 @@ export default function AppDrawer(props: Props): JSX.Element {
           }}
           sx={{
             display: { xs: "block", sm: "none" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
         >
           {drawer}
@@ -193,7 +202,10 @@ export default function AppDrawer(props: Props): JSX.Element {
           variant="permanent"
           sx={{
             display: { xs: "none", sm: "block" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
           open
         >
@@ -206,25 +218,25 @@ export default function AppDrawer(props: Props): JSX.Element {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-        }}>
+        }}
+      >
         <Toolbar />
-        {showCreateRoomForm ?
+        {showCreateRoomForm ? (
           <CreateRoomForm onClick={onClickRoom} />
-          :
-          currentChatRoom ?
+        ) : currentChatRoom ? (
           <Chat
             roomId={currentChatRoom.roomId}
             membership={currentChatRoom.membership}
             onClickLeaveRoom={onClickLeaveRoom}
-            goToRoom={goToRoom} />
-          :
-          null}
+            goToRoom={goToRoom}
+          />
+        ) : null}
       </Box>
     </Box>
   );
 }
 
 const spacingStyle = {
-    padding: (theme: Theme) => theme.spacing(2),
-    gap: (theme: Theme) => theme.spacing(1),
+  padding: (theme: Theme) => theme.spacing(2),
+  gap: (theme: Theme) => theme.spacing(1),
 };

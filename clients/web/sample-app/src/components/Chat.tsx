@@ -32,19 +32,28 @@ export function Chat(props: Props): JSX.Element {
     setShowInviteForm(false);
   }, []);
 
-  const onClickSendInvite = useCallback(async (roomId: string, inviteeId: string) => {
-    setShowInviteForm(false);
-    await inviteUser(roomId, inviteeId);
-  }, [inviteUser]);
+  const onClickSendInvite = useCallback(
+    async (roomId: string, inviteeId: string) => {
+      setShowInviteForm(false);
+      await inviteUser(roomId, inviteeId);
+    },
+    [inviteUser]
+  );
 
-  const onClickSendMessage = useCallback(async (roomId: string, message: string) => {
-    await sendMessage(roomId, message);
-  }, [sendMessage]);
+  const onClickSendMessage = useCallback(
+    async (roomId: string, message: string) => {
+      await sendMessage(roomId, message);
+    },
+    [sendMessage]
+  );
 
-  const onClickJoinRoom = useCallback(async (roomId: string) => {
-    await joinRoom(roomId);
-    props.goToRoom(roomId);
-  }, [joinRoom, props]);
+  const onClickJoinRoom = useCallback(
+    async (roomId: string) => {
+      await joinRoom(roomId);
+      props.goToRoom(roomId);
+    },
+    [joinRoom, props]
+  );
 
   const roomName = useMemo(() => {
     if (rooms) {
@@ -70,9 +79,9 @@ export function Chat(props: Props): JSX.Element {
     >
       <Grid container spacing={2}>
         <Grid item xs={10} md={10}>
-        <Typography variant="h6" component="span" sx={headerStyle}>
-          {roomName}
-        </Typography>
+          <Typography variant="h6" component="span" sx={headerStyle}>
+            {roomName}
+          </Typography>
         </Grid>
         <Grid item xs={1} md={1}>
           <Invite onClick={onClickOpenInviteForm} />
@@ -81,11 +90,21 @@ export function Chat(props: Props): JSX.Element {
           <LeaveRoom onClick={onClickLeaveRoom} />
         </Grid>
       </Grid>
-      {showInviteForm ?
-        <InviteForm roomId={props.roomId} roomName={roomName} sendInvite={onClickSendInvite} onClickCancel={onClickCloseInviteForm} />
-        :
-        <ChatMessages roomId={props.roomId} membership={props.membership} sendMessage={onClickSendMessage} joinRoom={onClickJoinRoom} />
-      }
+      {showInviteForm ? (
+        <InviteForm
+          roomId={props.roomId}
+          roomName={roomName}
+          sendInvite={onClickSendInvite}
+          onClickCancel={onClickCloseInviteForm}
+        />
+      ) : (
+        <ChatMessages
+          roomId={props.roomId}
+          membership={props.membership}
+          sendMessage={onClickSendMessage}
+          joinRoom={onClickJoinRoom}
+        />
+      )}
     </Box>
   );
 }

@@ -11,8 +11,10 @@ export function Main(): JSX.Element {
     <div>
       {isAuthenticated ? (
         <AppDrawer />
+      ) : debugWithPassword ? (
+        <LoginUsernamePassword />
       ) : (
-        debugWithPassword ? <LoginUsernamePassword /> : <Login />
+        <Login />
       )}
     </div>
   );

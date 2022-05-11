@@ -14,10 +14,20 @@ export function AcceptInvitation(props: Props): JSX.Element {
 
   return (
     <Box display="flex" flexDirection="column">
-      <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-      You have to join the room to see the messages.
+      <Typography
+        display="block"
+        variant="body1"
+        component="span"
+        sx={messageStyle}
+      >
+        You have to join the room to see the messages.
       </Typography>
-      <Box display="flex" flexDirection="column" alignItems="center" marginTop="10px">
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        marginTop="10px"
+      >
         <Button variant="contained" color="primary" onClick={onClick}>
           Join
         </Button>

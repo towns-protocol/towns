@@ -1,4 +1,4 @@
-import { List, ListItem, ListItemText } from '@mui/material';
+import { List, ListItem, ListItemText } from "@mui/material";
 import { Membership, Room, isRoom, useMatrixStore } from "use-matrix-client";
 
 import { useMemo } from "react";
@@ -30,20 +30,20 @@ export function Rooms(props: Props): JSX.Element {
     if (foundRooms) {
       const items = [];
       for (const r of foundRooms) {
-        items.push((
-          <ListItem button key={r.roomId} onClick={() => props.onClickRoom(r.roomId, props.membership)}>
+        items.push(
+          <ListItem
+            button
+            key={r.roomId}
+            onClick={() => props.onClickRoom(r.roomId, props.membership)}
+          >
             <ListItemText>{r.name}</ListItemText>
           </ListItem>
-        ));
+        );
       }
-      return items; 
+      return items;
     }
     return undefined;
   }, [foundRooms, props]);
 
-  return (
-    <List>    
-      {roomItems}
-    </List>
-  );
+  return <List>{roomItems}</List>;
 }

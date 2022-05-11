@@ -11,11 +11,17 @@ interface Props {
 export function InviteForm(props: Props): JSX.Element {
   const [inviteeUserId, setInviteeUserId] = useState<string>("");
 
-  const disableInviteButton = useMemo(() => inviteeUserId.length === 0, [inviteeUserId.length]);
+  const disableInviteButton = useMemo(
+    () => inviteeUserId.length === 0,
+    [inviteeUserId.length]
+  );
 
-  const onChangeUserId = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setInviteeUserId(event.target.value);
-  }, []);
+  const onChangeUserId = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInviteeUserId(event.target.value);
+    },
+    []
+  );
 
   const onClickInvite = useCallback(async () => {
     props.sendInvite(props.roomId, inviteeUserId);
@@ -29,21 +35,19 @@ export function InviteForm(props: Props): JSX.Element {
       justifyContent="center"
       sx={{
         p: (theme: Theme) => theme.spacing(8),
-      }}>
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
-        sx={spacingStyle}>
+      }}
+    >
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
         INVITE TO JOIN ROOM "{props.roomName}"
       </Typography>
       <Box display="grid" gridTemplateRows="repeat(3, 1fr)">
-        <Box display="grid" alignItems="center" gridTemplateColumns="repeat(2, 1fr)" marginTop="10px">
-          <Typography
-            variant="body1"
-            noWrap
-            component="div"
-            sx={spacingStyle}>
+        <Box
+          display="grid"
+          alignItems="center"
+          gridTemplateColumns="repeat(2, 1fr)"
+          marginTop="10px"
+        >
+          <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
             Invitee user ID:
           </Typography>
           <TextField
@@ -52,17 +56,30 @@ export function InviteForm(props: Props): JSX.Element {
             variant="filled"
             fullWidth={true}
             onChange={onChangeUserId}
-            />
+          />
         </Box>
         <Box />
-        <Box display="grid" alignItems="center" gridTemplateColumns="repeat(2, 1fr)">
+        <Box
+          display="grid"
+          alignItems="center"
+          gridTemplateColumns="repeat(2, 1fr)"
+        >
           <Box display="flex" flexDirection="column" alignItems="center">
-            <Button variant="contained" color="primary" onClick={onClickInvite} disabled={disableInviteButton}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onClickInvite}
+              disabled={disableInviteButton}
+            >
               Invite
             </Button>
           </Box>
           <Box display="flex" flexDirection="column" alignItems="center">
-            <Button variant="contained" color="primary" onClick={props.onClickCancel}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={props.onClickCancel}
+            >
               Cancel
             </Button>
           </Box>

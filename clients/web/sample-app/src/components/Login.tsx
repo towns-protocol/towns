@@ -1,5 +1,20 @@
-import { Alert, Box, Button, CircularProgress, Snackbar, Theme, Typography } from "@mui/material";
-import { LoginStatus, WalletStatus, useMatrixClient, useMatrixStore, useWeb3Context, getShortUsername } from "use-matrix-client";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Theme,
+  Typography,
+} from "@mui/material";
+import {
+  LoginStatus,
+  WalletStatus,
+  useMatrixClient,
+  useMatrixStore,
+  useWeb3Context,
+  getShortUsername,
+} from "use-matrix-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
@@ -13,7 +28,8 @@ Your authentication status will reset after 24 hours.`;
 export function Login(): JSX.Element {
   const styles = useStyles();
   const [showError, setShowError] = useState<string | undefined>(undefined);
-  const { getIsWalletIdRegistered, loginWithWallet, registerWallet } = useMatrixClient();
+  const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
+    useMatrixClient();
   const { loginStatus, loginError } = useMatrixStore();
   const { accounts, chainId, requestAccounts, walletStatus } = useWeb3Context();
   const [walletRegistered, setWalletRegistered] = useState<boolean>(true);
@@ -34,20 +50,26 @@ export function Login(): JSX.Element {
         setShowError("Connecting wallet");
         break;
       case WalletStatus.StillRequestingUnlock:
-         setShowError("Connecting wallet - please unlock your wallet provider");
-         break;
+        setShowError("Connecting wallet - please unlock your wallet provider");
+        break;
       default:
         break;
-    } 
+    }
   }, [requestAccounts, walletStatus]);
 
-  const onLoginWithWallet = useCallback(async function () {
-    loginWithWallet(StatementToSign);
-  }, [loginWithWallet]);
+  const onLoginWithWallet = useCallback(
+    async function () {
+      loginWithWallet(StatementToSign);
+    },
+    [loginWithWallet]
+  );
 
-  const onRegisterNewWallet = useCallback(async function () {
-    registerWallet(StatementToSign);
-  }, [registerWallet]);
+  const onRegisterNewWallet = useCallback(
+    async function () {
+      registerWallet(StatementToSign);
+    },
+    [registerWallet]
+  );
 
   const onCloseAlert = useCallback(function () {
     setShowError(undefined);
@@ -65,15 +87,18 @@ export function Login(): JSX.Element {
     switch (walletStatus) {
       case WalletStatus.Unlocked:
         if (loginStatus === LoginStatus.Registering) {
-          return (
-             <CircularProgress size={56} />
-          );
+          return <CircularProgress size={56} />;
         } else if (loginStatus === LoginStatus.LoggedOut) {
           return (
-            <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onRegisterNewWallet}>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ margin: "10px" }}
+              onClick={onRegisterNewWallet}
+            >
               Register new wallet
             </Button>
-          );  
+          );
         }
         break;
       default:
@@ -86,46 +111,67 @@ export function Login(): JSX.Element {
       case WalletStatus.Error:
       case WalletStatus.Unknown:
         return (
-          <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onConnectClick}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ margin: "10px" }}
+            onClick={onConnectClick}
+          >
             Connect Wallet
           </Button>
         );
       case WalletStatus.Unlocked:
         if (loginStatus === LoginStatus.LoggingIn) {
-          return (
-             <CircularProgress size={56} />
-          );
+          return <CircularProgress size={56} />;
         } else if (loginStatus === LoginStatus.LoggedOut) {
           return (
-            <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onLoginWithWallet}>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ margin: "10px" }}
+              onClick={onLoginWithWallet}
+            >
               Sign in with wallet
             </Button>
-          );  
+          );
         }
         break;
       case WalletStatus.RequestUnlock:
         return (
-          <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onConnectClick}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ margin: "10px" }}
+            onClick={onConnectClick}
+          >
             Connecting wallet
           </Button>
         );
       case WalletStatus.StillRequestingUnlock:
-          return (
-            <Button variant="contained" color="primary" sx={{ margin: "10px"}} onClick={onConnectClick}>
-              Connecting wallet - please unlock your wallet provider
-            </Button>
-          );
+        return (
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ margin: "10px" }}
+            onClick={onConnectClick}
+          >
+            Connecting wallet - please unlock your wallet provider
+          </Button>
+        );
       default:
         break;
     }
   }, [loginStatus, onConnectClick, onLoginWithWallet, walletStatus]);
 
   useEffect(() => {
-    if (loginStatus === LoginStatus.LoggedOut && walletStatus === WalletStatus.Unlocked) {
+    if (
+      loginStatus === LoginStatus.LoggedOut &&
+      walletStatus === WalletStatus.Unlocked
+    ) {
       const getIsRegistered = async () => {
         const isRegistered = await getIsWalletIdRegistered();
         setWalletRegistered(isRegistered);
-      }
+      };
 
       getIsRegistered().catch((reason: any) => {
         setShowError(reason);
@@ -146,7 +192,14 @@ export function Login(): JSX.Element {
             Wallet: {myWalletAddress}
           </Typography>
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", margin: "10px", alignItems: "Center" }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(1, 1fr)",
+            margin: "10px",
+            alignItems: "Center",
+          }}
+        >
           {!walletRegistered && registerButton}
           {walletRegistered && signInButton}
         </Box>
@@ -154,10 +207,11 @@ export function Login(): JSX.Element {
       <Snackbar
         open={showError ? true : false}
         autoHideDuration={5000}
-        onClose={onCloseAlert}>
-          <Alert onClose={onCloseAlert} severity="error">
-            {showError}
-          </Alert>
+        onClose={onCloseAlert}
+      >
+        <Alert onClose={onCloseAlert} severity="error">
+          {showError}
+        </Alert>
       </Snackbar>
     </div>
   );
