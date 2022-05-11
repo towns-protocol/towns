@@ -60,7 +60,6 @@ export const Login = () => {
   }, [loginError]);
 
   useEffect(() => {
-    console.log("foo", showError);
     if (showError) {
       console.log(showError);
     }

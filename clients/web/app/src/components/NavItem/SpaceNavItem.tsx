@@ -1,9 +1,9 @@
 import React from "react";
 import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
 import { Box, ButtonText, Heading, Icon, Stack } from "@ui";
-import { fakeSpaceCache } from "data/SpaceData";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { Tooltip, TooltipRenderer } from "ui/components/Tooltip/Tooltip";
+import { useSpaceDataStore } from "store/spacesStore";
 import { NavItem } from "./_NavItem";
 
 type Props = {
@@ -17,8 +17,9 @@ type Props = {
 };
 
 const SpaceTooltip = (props: { id: string }) => {
+  const { spaceCache } = useSpaceDataStore();
   const { id } = props;
-  const { name } = fakeSpaceCache[id];
+  const { name } = spaceCache[id];
   return (
     <Tooltip
       horizontal

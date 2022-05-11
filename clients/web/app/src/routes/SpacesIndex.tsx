@@ -12,11 +12,12 @@ import {
   Paragraph,
   Stack,
 } from "@ui";
-import { fakeSpaces } from "data/SpaceData";
+import { useSpaceDataStore } from "store/spacesStore";
 
 export const SpacesIndex = () => {
   const { spaceId } = useParams();
-  const space = fakeSpaces.find((s) => s.id === spaceId) ?? fakeSpaces[0];
+  const { spaces } = useSpaceDataStore();
+  const space = spaces.find((s) => s.id === spaceId) ?? spaces[0];
   return (
     <>
       <Stack

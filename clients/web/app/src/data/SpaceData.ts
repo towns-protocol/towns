@@ -1,3 +1,6 @@
+import { useEffect, useMemo } from "react";
+import { Membership, isRoom, useMatrixStore, Rooms } from "use-matrix-client";
+import create, { SetState } from "zustand";
 import { ChannelGroups, fakeChannelGroups } from "./ChannelData";
 
 /**
@@ -12,12 +15,6 @@ export type SpaceData = {
   // should belong to usersettings
   pinned?: boolean;
   channels: ChannelGroups;
-};
-
-const numFakeSpaces = 8;
-
-export const getFakeSpace = (index?: number) => {
-  index = index ?? Math.ceil(Math.random() * numFakeSpaces);
 };
 
 export const fakeSpaces: SpaceData[] = [
@@ -91,8 +88,3 @@ export const fakeSpaces: SpaceData[] = [
     channels: fakeChannelGroups,
   },
 ];
-
-export const fakeSpaceCache = fakeSpaces.reduce(
-  (keep, current) => (keep = { ...keep, [current.id]: current }),
-  {} as { [key: string]: SpaceData }
-);
