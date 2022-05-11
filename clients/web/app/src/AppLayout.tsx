@@ -12,6 +12,7 @@ import { TopBar } from "@components/TopBar";
 import { Box, Stack, TopLayerPortalContext } from "@ui";
 import { fakeSpaces } from "data/SpaceData";
 import { usePersistPanes } from "hooks/usePersistPanes";
+import { useRootTheme } from "hooks/useRootTheme";
 import { atoms } from "ui/styles/atoms/atoms.css";
 import { Web3Bar } from "@components/Web3";
 
@@ -19,13 +20,17 @@ const MATRIX_HOMESERVER_URL = "http://localhost:8008";
 
 export const AppLayout = () => {
   const overlayRef = useRef<HTMLElement>(null);
+  const { toggleTheme } = useRootTheme({
+    useDefaultOSTheme: false,
+    ammendHTMLBody: true,
+  });
 
   return (
     <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
       <TopLayerPortalContext.Provider value={{ rootRef: overlayRef }}>
         <Stack grow border color="default" minHeight="100vh">
           <Web3Bar />
-          <TopBar />
+          <TopBar onClick={toggleTheme} />
           <PaneContainer />
         </Stack>
         <Box>
@@ -45,8 +50,6 @@ const PaneContainer = () => {
     spaceRoute && fakeSpaces.find((s) => s.id === spaceRoute.params.space);
 
   const { onSizesChange, sizes } = usePersistPanes("main");
-
-  console.log(sizes);
 
   return (
     <Stack horizontal grow position="relative">

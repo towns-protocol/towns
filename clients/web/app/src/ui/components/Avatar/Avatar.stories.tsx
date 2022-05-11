@@ -8,7 +8,7 @@ export default {
   component: Avatar,
   argTypes: {
     size: {
-      defaultValue: "lg",
+      defaultValue: "avatar_lg",
       control: "select",
     },
     src: {
