@@ -1,6 +1,6 @@
+import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
-import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import { Button, Dropdown, Icon, Input } from "@ui";
 
 interface Props {
@@ -56,7 +56,7 @@ export const CreateRoomForm = (props: Props) => {
       </>
     );
   }, []);
-
+  console.log({ visibility, isDM, roomName });
   return (
     <>
       <h1>🚧 🚧 New Space 🚧 🚧</h1>
@@ -64,15 +64,20 @@ export const CreateRoomForm = (props: Props) => {
       <Input placeholder="Type here..." onChange={onRoomNameChange} />
       <p>Visibility:</p>
       <Dropdown
-        items={VisibilityOptions}
+        options={VisibilityOptions.map((value) => ({ label: value, value }))}
         renderSelected={renderDropdown}
-        selected={VisibilityOptions[1]}
+        selected={visibility}
+        onChange={(value) => setVisibility(value as Visibility)}
       />
       <p>Is DM:</p>
       <Dropdown
-        items={IsDmOptions}
+        options={IsDmOptions.map((value) => ({
+          label: String(value),
+          value: String(value),
+        }))}
         renderSelected={renderDropdown}
-        selected={IsDmOptions[1].toString()}
+        selected={isDM}
+        onChange={(value) => setIsDM(value)}
       />
       <Button onClick={onClickCreateRoom}>Create</Button>
     </>

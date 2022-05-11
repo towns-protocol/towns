@@ -68,7 +68,7 @@ const UserDropDown = () => {
 
   return (
     <Dropdown
-      items={pseudos}
+      options={pseudos.map((p) => ({ label: p.displayName, value: p.id }))}
       renderSelected={renderSelected}
       selected={pseudos[0].id}
     />
