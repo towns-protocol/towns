@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Membership, useMatrixStore } from "use-matrix-client";
 import { CreateRoomForm } from "@components/Web3";
 import { Login } from "@components/Web3/Login";
-import { Box, Stack } from "@ui";
+import { Box } from "@ui";
 
 export const SpacesNew = () => {
   const { isAuthenticated } = useMatrixStore();
@@ -19,11 +19,7 @@ export const SpacesNew = () => {
 
   return (
     <Box grow padding="lg" gap="md">
-      {isAuthenticated || Math.random() > 0 ? (
-        <CreateRoomForm onClick={onCreateRoom} />
-      ) : (
-        <Login />
-      )}
+      {isAuthenticated ? <CreateRoomForm onClick={onCreateRoom} /> : <Login />}
     </Box>
   );
 };

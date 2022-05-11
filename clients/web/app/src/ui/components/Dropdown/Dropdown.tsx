@@ -11,12 +11,12 @@ type Props = {
 // & HTMLAttributes<HTMLSelectElement>;
 
 export function Dropdown(props: Props) {
-  const { selected, renderSelected, options: items } = props;
-  const Selected = useCallback(() => {
-    return typeof renderSelected === "function"
-      ? renderSelected(selected)
-      : selected;
-  }, [renderSelected, selected]);
+  const { selected, options: items } = props;
+  // const Selected = useCallback(() => {
+  //   return typeof renderSelected === "function"
+  //     ? renderSelected(selected)
+  //     : selected;
+  // }, [renderSelected, selected]);
 
   // renderSelected ?? (({ selected?: string }) => <>{props.selected}</>);
 
