@@ -5,3 +5,5 @@ node_modules
 *.json
 .yarn/*
 yarn.lock
+
+vite.config.ts

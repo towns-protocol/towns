@@ -20,7 +20,7 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 # Setup
 
-1) Run `yarn install` from the root of the repository 
+1. Run `yarn install` and `yarn prepare` from the root of the repository
 
 2) Run a dendrite server. Follow instructions in /servers/README.md "Build and Run Dendrite"
 

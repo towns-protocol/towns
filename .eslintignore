@@ -1,0 +1,12 @@
+dist
+node_modules
+docs
+storybook-static
+
+servers/
+contracts/lib/
+
+vite.config.ts
+
+.yarn/*
+yarn.lock

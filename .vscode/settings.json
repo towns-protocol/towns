@@ -1,4 +1,7 @@
 {
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
   "eslint.workingDirectories": [
     "./clients/web/lib",
     "./clients/web/app",
@@ -9,4 +12,3 @@
     "build.experimentalWorkspaceModule": true
   }
 }
-
