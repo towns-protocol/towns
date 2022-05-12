@@ -17,36 +17,47 @@ import { useSpaceDataStore } from "store/spacesStore";
 export const SpacesIndex = () => {
   const { spaceId } = useParams();
   const { spaces } = useSpaceDataStore();
-  const space = spaces.find((s) => s.id === spaceId) ?? spaces[0];
+  const space = spaces.find((s) => s.id === spaceId);
   return (
     <>
-      <Stack
-        borderBottom
-        grow
-        alignItems="center"
-        paddingBottom="none"
-        position="relative"
-        maxHeight="400"
-      >
-        <Box position="absolute" width="100%" height="100%">
-          {space.bannerSrc && (
-            <BackgroundImage
-              size="cover"
-              overlay="dark"
-              src={space.bannerSrc}
-            />
-          )}
-        </Box>
-        <Box position="relative" width="100%" height="100%" alignItems="center">
-          <LiquidContainer grow width="100%">
-            <SpaceBanner avatarSrc={space.avatarSrc} name={space.name} />
-            <SpaceMenu />
-          </LiquidContainer>
-        </Box>
-      </Stack>
-      <Box grow alignItems="center" background="level1">
-        <SpaceMessages />
-      </Box>
+      {space ? (
+        <>
+          <Stack
+            borderBottom
+            grow
+            alignItems="center"
+            paddingBottom="none"
+            position="relative"
+            maxHeight="400"
+          >
+            <Box position="absolute" width="100%" height="100%">
+              {space.bannerSrc && (
+                <BackgroundImage
+                  size="cover"
+                  overlay="dark"
+                  src={space.bannerSrc}
+                />
+              )}
+            </Box>
+            <Box
+              position="relative"
+              width="100%"
+              height="100%"
+              alignItems="center"
+            >
+              <LiquidContainer grow width="100%">
+                <SpaceBanner avatarSrc={space.avatarSrc} name={space.name} />
+                <SpaceMenu />
+              </LiquidContainer>
+            </Box>
+          </Stack>
+          <Box grow alignItems="center" background="level1">
+            <SpaceMessages />
+          </Box>
+        </>
+      ) : (
+        <p>Space {spaceId} not found</p>
+      )}
     </>
   );
 };
