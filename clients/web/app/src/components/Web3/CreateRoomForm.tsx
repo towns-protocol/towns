@@ -56,7 +56,6 @@ export const CreateRoomForm = (props: Props) => {
       </>
     );
   }, []);
-  console.log({ visibility, isDM, roomName });
   return (
     <>
       <h1>🚧 🚧 New Space 🚧 🚧</h1>

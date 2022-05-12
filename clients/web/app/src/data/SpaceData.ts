@@ -17,6 +17,13 @@ export type SpaceData = {
   channels: ChannelGroups;
 };
 
+export const emptySpace: SpaceData = {
+  id: "none",
+  name: "Space Not Found",
+  avatarSrc: "/placeholders/nft_10.png",
+  channels: [],
+};
+
 export const fakeSpaces: SpaceData[] = [
   {
     id: "bored-ape-yacht-club",

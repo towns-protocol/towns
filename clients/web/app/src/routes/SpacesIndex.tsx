@@ -1,5 +1,5 @@
-import React, { ComponentProps, forwardRef } from "react";
-import { useParams } from "react-router";
+import React, { ComponentProps, forwardRef, useCallback } from "react";
+import { useNavigate, useParams } from "react-router";
 import { Message } from "@components/Message";
 import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
 import {
@@ -17,7 +17,14 @@ import { useSpaceDataStore } from "store/spacesStore";
 export const SpacesIndex = () => {
   const { spaceId } = useParams();
   const { spaces } = useSpaceDataStore();
+  const navigate = useNavigate();
+
   const space = spaces.find((s) => s.id === spaceId);
+  const onSettingsClicked = useCallback(() => {
+    console.log("settings clicked");
+    navigate("/spaces/" + spaceId + "/settings");
+  }, [navigate, spaceId]);
+
   return (
     <>
       {space ? (
@@ -46,7 +53,11 @@ export const SpacesIndex = () => {
               alignItems="center"
             >
               <LiquidContainer grow width="100%">
-                <SpaceBanner avatarSrc={space.avatarSrc} name={space.name} />
+                <SpaceBanner
+                  avatarSrc={space.avatarSrc}
+                  name={space.name}
+                  onSettingsClicked={onSettingsClicked}
+                />
                 <SpaceMenu />
               </LiquidContainer>
             </Box>
