@@ -9,20 +9,23 @@ interface AppState {
 }
 
 export const useStore = create(
-  persist<AppState>((set) => ({
-    theme: undefined,
-    setTheme: (theme) => {
-      set(() => ({ theme }));
-    },
-    paneSizes: {},
-    setPaneSizes: (id: string, sizes: number[]) =>
-      set((state) => {
-        return {
-          paneSizes: {
-            ...state.paneSizes,
-            [id]: sizes,
-          },
-        };
-      }),
-  }))
+  persist<AppState>(
+    (set) => ({
+      theme: undefined,
+      setTheme: (theme) => {
+        set(() => ({ theme }));
+      },
+      paneSizes: {},
+      setPaneSizes: (id: string, sizes: number[]) =>
+        set((state) => {
+          return {
+            paneSizes: {
+              ...state.paneSizes,
+              [id]: sizes,
+            },
+          };
+        }),
+    }),
+    { name: "zionstate" }
+  )
 );
