@@ -2,15 +2,15 @@ import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMatrixClient } from "use-matrix-client";
 import { Box } from "@ui";
-import { useSpaceDataStore } from "store/spacesStore";
-import { emptySpace } from "data/SpaceData";
+import { useSpaceDataStore } from "store/spaceDataStore";
 import { InviteUserToRoomForm } from "@components/Web3";
 
 export const SpacesInvite = () => {
   const { spaceId } = useParams();
-  const { spaceCache } = useSpaceDataStore();
+  const { getSpaceData } = useSpaceDataStore();
   const { inviteUser } = useMatrixClient();
-  const space = spaceId ? spaceCache[spaceId] : emptySpace;
+  const space = getSpaceData(spaceId);
+
   const navigate = useNavigate();
 
   const onCancelClicked = useCallback(async () => {

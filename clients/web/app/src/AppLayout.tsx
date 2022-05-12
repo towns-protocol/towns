@@ -14,7 +14,7 @@ import { Box, Stack, TopLayerPortalContext } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 import { useRootTheme } from "hooks/useRootTheme";
 import { useSpaceDataListener } from "hooks/useSpaceDataListener";
-import { useSpaceDataStore } from "store/spacesStore";
+import { useSpaceDataStore } from "store/spaceDataStore";
 import { atoms } from "ui/styles/atoms/atoms.css";
 
 const MATRIX_HOMESERVER_URL = "http://localhost:8008";

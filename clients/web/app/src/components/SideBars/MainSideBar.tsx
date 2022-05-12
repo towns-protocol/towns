@@ -2,7 +2,7 @@ import React from "react";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { SideBar } from "@components/SideBars/_SideBar";
-import { useSpaceDataStore } from "store/spacesStore";
+import { useSpaceDataStore } from "store/spaceDataStore";
 
 export const MainSideBar = () => {
   const { spaces } = useSpaceDataStore();

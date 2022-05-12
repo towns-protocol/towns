@@ -2,7 +2,7 @@ import { Membership, isRoom, useMatrixStore } from "use-matrix-client";
 import { useEffect } from "react";
 import { fakeChannelGroups } from "data/ChannelData";
 import { SpaceData, fakeSpaces } from "data/SpaceData";
-import { useSpaceDataStore } from "store/spacesStore";
+import { useSpaceDataStore } from "store/spaceDataStore";
 
 export function useSpaceDataListener() {
   const { rooms } = useMatrixStore();

@@ -12,7 +12,7 @@ import {
   Paragraph,
   Stack,
 } from "@ui";
-import { useSpaceDataStore } from "store/spacesStore";
+import { useSpaceDataStore } from "store/spaceDataStore";
 
 export const SpacesIndex = () => {
   const { spaceId } = useParams();
