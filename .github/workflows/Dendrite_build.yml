@@ -106,8 +106,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
         run: go build -trimpath -v -o "bin/" ./cmd/...
-          working-directory: servers/dendrite
-
+        working-directory: servers/dendrite
 
   # Dummy step to gate other tests on without repeating the whole list
   initial-tests-done:
@@ -143,10 +142,10 @@ jobs:
             ${{ runner.os }}-go-upgrade
       - name: Build upgrade-tests
         run: go build ./cmd/dendrite-upgrade-tests
-          working-directory: servers/dendrite
+        working-directory: servers/dendrite
       - name: Test upgrade
         run: ./dendrite-upgrade-tests --head .
-          working-directory: servers/dendrite
+        working-directory: servers/dendrite
 
   # run Sytest in different variations
   sytest:
@@ -181,7 +180,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Run Sytest
         run: servers/dendrite/bootstrap.sh dendrite
-          working-directory: servers/dendrite/src
+        working-directory: servers/dendrite/src
       - name: Summarise results.tap
         if: ${{ always() }}
         run: /sytest/scripts/tap_to_gha.pl /logs/results.tap
