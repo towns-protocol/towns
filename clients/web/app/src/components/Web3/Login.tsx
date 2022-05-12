@@ -6,7 +6,7 @@ import {
   useMatrixStore,
   useWeb3Context,
 } from "use-matrix-client";
-import { Button } from "@ui";
+import { Button, Stack } from "@ui";
 
 const StatementToSign = `Click to sign in and accept the Harmony Terms of Service: https://harmony.xyz/tos.
 
@@ -55,7 +55,7 @@ export const Login = () => {
 
   useEffect(() => {
     if (loginError?.message) {
-      console.log(loginError.message);
+      console.log("loginError: ", loginError.message);
     }
   }, [loginError]);
 
@@ -85,6 +85,20 @@ export const Login = () => {
     console.log("Web3 walletStatus", walletStatus);
     switch (walletStatus) {
       case WalletStatus.Error:
+        return (
+          <Stack
+            horizontal
+            borderBottom
+            paddingX="md"
+            height="height_xl"
+            gap="sm"
+            justifyContent="spaceBetween"
+            alignItems="center"
+          >
+            <span>Error...</span>{" "}
+            <Button onClick={onConnectClick}>Connect Wallet</Button>
+          </Stack>
+        );
       case WalletStatus.Unknown:
         return <Button onClick={onConnectClick}>Connect Wallet</Button>;
       case WalletStatus.Unlocked:
