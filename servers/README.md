@@ -1,43 +1,112 @@
 # Overview
 
-The Dendrite server is a subtree ofr our dendrite fork <https://github.com/HereNotThere/dendrite> from the upstream of <https://github.com/matrix-org/dendrite.git>
+Harmony repo does not have a direct relationship with dendrite (main). It has a subtree
+relationship with dendrite-fork. The dendrite-fork's <https://github.com/HereNotThere/dendrite> upstream is
+dendrite (main) <https://github.com/matrix-org/dendrite.git>. dendrite-fork has all of our server changes
+including the ones which are not accepted by dendrite main.
 
 It was intially populated with:
 
 ```bash
 git remote add dendrite-fork https://github.com/HereNotThere/dendrite.git
 git fetch dendrite-fork
-git subtree add --prefix=servers/dendrite dendrite-fork main
+git subtree add --prefix servers/dendrite dendrite-fork main
 ```
 
-## Pulling changes from upstream
+The repo relationships:
+
+```text
+harmony\servers\dendrite
+<----------------------->
+        |
+        |
+        | (subtree)
+        |
+        |
+        V
+dendrite-fork (hnt's fork)
+<------------------------>
+        |
+        |
+        | (upstream)
+        |
+        |
+        V
+dendrite (main)
+<------------->
+```
+
+The next few sections describe the steps to pull and push changes between each repo.
+
+- [Pulling from dendrite-fork into harmony repo](#pulling-from-dendrite-fork-into-harmony-repo)
+- [Pushing changes from harmony repo to dendrite-fork](#pushing-changes-from-harmony-repo-to-dendrite-fork)
+- [Pulling changes from dendrite (main) into dendrite-fork](#pulling-changes-from-dendrite-main-into-dendrite-fork)
+- [Pushing changes to dendrite main](#pushing-changes-to-dendrite-main)
+
+This is followed by information about building and running the dendrite server,
+building and running tests, etc.
+
+## Pulling from dendrite-fork into harmony repo
 
 ```bash
 git fetch dendrite-fork
-git subtree pull --prefix=servers/dendrite dendrite-fork main --squash
+git subtree pull --prefix servers/dendrite dendrite-fork main --squash
 ```
 
-This command will pull the changes since the last time it ran and create a merge commit on top. Keep in mind that the pulled commits might be older than the latest commit of your code though, so they might not appear directly when you call git log.
+This command will pull the changes since the last time it ran and create a merge
+commit on top. Keep in mind that the pulled commits might be older than the latest
+commit of your code though, so they might not appear directly when you call git log.
 
-## Pushing changes to upstream
-
-There is a fork of <https://github.com/matrix-org/dendrite.git> at <https://github.com/HereNotThere/dendrite.git>. This fork is registerd as a remote named dendrite-fork. To push changes upstream we first push them to this fork, reconcile any changes, and then create a PR to Dendrite from this foork.
-
-The fork was created with this command
-
-```bash
-git remote add dendrite-fork https://github.com/HereNotThere/dendrite.git
-```
-
-To push to the fork, use this command
-
-```bash
-git subtree push --prefix=servers/dendrite dendrite-fork main
-```
-
-Further reading about maintaininf the subtree may be found here:
-
+Further reading about maintaining the subtree may be found here:
 <https://www.atlassian.com/git/tutorials/git-subtree>
+
+## Pushing changes from harmony repo to dendrite-fork
+
+You should be able to push changes to a branch using the command:
+
+```bash
+git subtree push --prefix servers/dendrite dendrite-fork my-feature-branch
+```
+
+This should create a branch in the remote dendrite-fork, and allow you
+to create and submit a PR.
+Go to <https://github.com/HereNotThere/dendrite>. Make sure to change the
+base repository from matrix-org/dendrite to `HereNotThere/dendrite`.
+
+Once the PR is approved and merged, pull the changes into your local harmony with:
+
+```bash
+git checkout main
+git subtree pull --prefix servers/dendrite dendrite-fork main --squash
+```
+
+## Pulling changes from dendrite (main) into dendrite-fork
+
+Periodically, we should pull the latest from dendrite main (upstream) into our fork
+to make sure that our fork picks up the latest features and bug fixes in main.
+
+To sync the upstream dendrite main repo, follow the general steps at
+<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork>.
+
+If the merge conflicts are difficult to resolve, the cleanest way is to clone
+dendrite-fork outside of the harmony repo and do it with simple git commands.
+
+Then do the usual merge conflict resolution, commit and push the branch to
+the remote dendrite fork.
+
+Go to <https://github.com/HereNotThere/dendrite>. Make sure to change the
+base repository from matrix-org/dendrite to `HereNotThere/dendrite`.
+Submit a PR to merge.
+
+## Pushing changes to dendrite main
+
+Since our dendrite fork contains our stuff, it may have hard-to-resolve merge conflicts
+with dendrite main. The cleanest way to submit changes to dendrite main is to create
+a fork of <https://github.com/matrix-org/dendrite>, and then follow their
+[Contributing to Dendrite](https://github.com/matrix-org/dendrite/blob/main/docs/CONTRIBUTING.md#contributing-to-dendrite)
+process.
+
+General steps to fork a repo <https://docs.github.com/en/get-started/quickstart/fork-a-repo>
 
 ## Build and run Dendrite
 
