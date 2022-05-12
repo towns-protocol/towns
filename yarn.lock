@@ -13142,7 +13142,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-react-app@npm:^7.0.0, eslint-config-react-app@npm:^7.0.1":
+"eslint-config-react-app@npm:^7.0.1":
   version: 7.0.1
   resolution: "eslint-config-react-app@npm:7.0.1"
   dependencies:
@@ -16268,9 +16268,8 @@ __metadata:
     babel-loader: ^8.2.4
     clsx: ^1.1.1
     eslint: ^8.12.0
-    eslint-config-react-app: ^7.0.0
+    eslint-config-react-app: ^7.0.1
     eslint-import-resolver-typescript: ^2.7.1
-    eslint-plugin-import: ^2.25.4
     eslint-plugin-mdx: ^1.17.0
     framer-motion: ^6.3.2
     http-status-codes: ^2.2.0
