@@ -1,4 +1,4 @@
-import { Membership, isRoom, useMatrixStore, Room } from "use-matrix-client";
+import { Membership, Room, isRoom, useMatrixStore } from "use-matrix-client";
 import { useEffect } from "react";
 import { fakeChannelGroups } from "data/ChannelData";
 import { SpaceData, fakeSpaces } from "data/SpaceData";
@@ -33,11 +33,11 @@ export function useSpaceDataListener() {
     if (rooms) {
       // find the spaces
       spaces = Object.values(rooms)
-        .filter((r) => r.membership === Membership.Join)
+        .filter((r) => isRoom(r) && r.membership === Membership.Join)
         .map(formatSpace);
       // find the invites
       invites = Object.values(rooms)
-        .filter((r) => r.membership === Membership.Invite)
+        .filter((r) => isRoom(r) && r.membership === Membership.Invite)
         .map(formatInvite);
     }
     // for debugging stick some fake spaces on the end!
