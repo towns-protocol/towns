@@ -1,6 +1,3 @@
-import { useEffect, useMemo } from "react";
-import { Membership, isRoom, useMatrixStore, Rooms } from "use-matrix-client";
-import create, { SetState } from "zustand";
 import { ChannelGroups, fakeChannelGroups } from "./ChannelData";
 
 /**
