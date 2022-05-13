@@ -8,7 +8,9 @@ on:
   workflow_dispatch: # A build was manually requested
   workflow_call: # Another pipeline called us
     secrets:
-      DOCKER_TOKEN:
+      DOCKER_HUB_TOKEN:
+        required: true
+      DOCKER_HUB_USER:
         required: true
 
 env:
