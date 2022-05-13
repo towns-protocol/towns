@@ -49,7 +49,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .
-          file: ./build/docker/Dockerfile.monolith
+          file: ./servers/dendrite/build/docker/Dockerfile.monolith
           platforms: ${{ env.PLATFORMS }}
           push: true
           tags: |
@@ -64,7 +64,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           context: .
-          file: ./build/docker/Dockerfile.monolith
+          file: ./servers/dendrite/build/docker/Dockerfile.monolith
           platforms: ${{ env.PLATFORMS }}
           push: true
           tags: |
