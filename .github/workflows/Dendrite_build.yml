@@ -92,6 +92,10 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
+      - name: Install cross-compilation tools
+        uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: aarch64-unknown-linux-gnu
       - uses: actions/checkout@v3
       - name: Setup go
         uses: actions/setup-go@v2
