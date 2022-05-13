@@ -67,7 +67,7 @@ export const SpacesIndex = () => {
           </Box>
         </>
       ) : (
-        <p>Space {spaceId} not found</p>
+        <p>Space "{spaceId}" not found</p>
       )}
     </>
   );

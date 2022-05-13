@@ -5,12 +5,23 @@ import { SideBar } from "@components/SideBars/_SideBar";
 import { useSpaceDataStore } from "store/spaceDataStore";
 
 export const MainSideBar = () => {
-  const { spaces } = useSpaceDataStore();
+  const { spaces, invites } = useSpaceDataStore();
 
   return (
     <SideBar paddingY="sm">
       {navItems.map((n, index) => (
         <ActionNavItem key={n.id} {...n} />
+      ))}
+      {invites.map((m, index) => (
+        <SpaceNavItem
+          isInvite
+          key={m.id}
+          active={m.active}
+          id={m.id}
+          name={m.name}
+          avatar={m.avatarSrc}
+          pinned={m.pinned}
+        />
       ))}
       {spaces.map((m, index) => (
         <SpaceNavItem

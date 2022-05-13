@@ -14,6 +14,7 @@ type Props = {
   pinned?: boolean;
   exact?: boolean;
   compact?: boolean;
+  isInvite?: boolean;
 };
 
 const SpaceTooltip = (props: { id: string }) => {
@@ -39,7 +40,16 @@ const SpaceTooltip = (props: { id: string }) => {
 };
 
 export const SpaceNavItem = (props: Props) => {
-  const { id, active, avatar, exact, name, pinned, compact: isCompact } = props;
+  const {
+    id,
+    active,
+    avatar,
+    exact,
+    name,
+    pinned,
+    compact: isCompact,
+    isInvite,
+  } = props;
 
   return (
     <TooltipRenderer
@@ -48,7 +58,12 @@ export const SpaceNavItem = (props: Props) => {
       render={<SpaceTooltip id={props.id} />}
     >
       {({ triggerProps }) => (
-        <NavItem id={id} to={`/spaces/${id}`} exact={exact} {...triggerProps}>
+        <NavItem
+          id={id}
+          to={isInvite ? `/invites/${id}` : `/spaces/${id}`}
+          exact={exact}
+          {...triggerProps}
+        >
           <Avatar
             animate
             src={avatar}
@@ -65,7 +80,7 @@ export const SpaceNavItem = (props: Props) => {
             strong={active}
             display={{ tablet: "none" }}
           >
-            {name}
+            {isInvite ? "(Invite) " + name : name}
           </ButtonText>
           <Box shrink display={{ tablet: "none" }} color="gray2">
             {pinned && <Icon type="pin" size="square_sm" padding="xs" />}

@@ -1,35 +1,49 @@
-import { Membership, isRoom, useMatrixStore } from "use-matrix-client";
+import { Membership, isRoom, useMatrixStore, Room } from "use-matrix-client";
 import { useEffect } from "react";
 import { fakeChannelGroups } from "data/ChannelData";
 import { SpaceData, fakeSpaces } from "data/SpaceData";
 import { useSpaceDataStore } from "store/spaceDataStore";
 
+/// formatting helper for changing a room to a space
+const formatRoom = (r: Room, avatarSrc: string): SpaceData => {
+  return {
+    id: r.roomId,
+    name: r.name,
+    avatarSrc: avatarSrc,
+    pinned: false,
+    channels: fakeChannelGroups,
+  };
+};
+
+/// formatting helper for changing a room invite to a space
+const formatInvite = (r: Room): SpaceData =>
+  formatRoom(r, "/placeholders/nft_4.png");
+
+/// formatting helper for changing a room join to a space
+const formatSpace = (r: Room): SpaceData =>
+  formatRoom(r, "/placeholders/nft_29.png");
+
 export function useSpaceDataListener() {
   const { rooms } = useMatrixStore();
-  const { setSpaces } = useSpaceDataStore();
+  const { setSpaces, setInvites } = useSpaceDataStore();
 
   useEffect(() => {
-    const spaces: SpaceData[] = [];
+    let invites: SpaceData[] = [];
+    let spaces: SpaceData[] = [];
     if (rooms) {
-      for (const r of Object.values(rooms)) {
-        if (isRoom(r) && r.membership === Membership.Join) {
-          spaces.push({
-            id: r.roomId,
-            name: r.name,
-            avatarSrc: "/placeholders/nft_29.png",
-            pinned: false,
-            channels: fakeChannelGroups,
-          });
-        }
-      }
+      // find the spaces
+      spaces = Object.values(rooms)
+        .filter((r) => r.membership === Membership.Join)
+        .map(formatSpace);
+      // find the invites
+      invites = Object.values(rooms)
+        .filter((r) => r.membership === Membership.Invite)
+        .map(formatInvite);
     }
-    for (const s of fakeSpaces) {
-      spaces.push(s);
-    }
-    console.log(
-      "useSpaceDataLister",
-      spaces.map((space) => space.name)
-    );
+    // for debugging stick some fake spaces on the end!
+    spaces = spaces.concat(fakeSpaces);
+
     setSpaces(spaces);
-  }, [rooms, setSpaces]);
+    setInvites(invites);
+  }, [rooms, setSpaces, setInvites]);
 }
