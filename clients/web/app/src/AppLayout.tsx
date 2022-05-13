@@ -64,13 +64,13 @@ const PaneContainer = () => {
           onChange={onSizesChange}
         >
           {/* left-side side-bars goes here */}
-          <Allotment.Pane snap minSize={65} maxSize={320}>
+          <Allotment.Pane snap minSize={65} maxSize={320} preferredSize="250px">
             {space ? <SpaceSideBar space={space} /> : <MainSideBar />}
           </Allotment.Pane>
 
           <Allotment.Pane
-            snap
-            minSize={65}
+            preferredSize="250px"
+            minSize={messageRoute ? 65 : 0}
             maxSize={320}
             visible={!!messageRoute}
           >
