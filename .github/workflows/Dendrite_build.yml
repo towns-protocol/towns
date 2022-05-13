@@ -198,4 +198,5 @@ jobs:
     needs: [integration-tests-done]
     uses: HereNotThere/harmony/.github/workflows/Dendrite_docker.yml@main
     secrets:
-      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
+      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
