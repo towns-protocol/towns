@@ -2,25 +2,40 @@ import React from "react";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { SideBar } from "@components/SideBars/_SideBar";
-import { fakeSpaces } from "data/SpaceData";
+import { useSpaceDataStore } from "store/spaceDataStore";
 
-export const MainSideBar = () => (
-  <SideBar paddingY="sm">
-    {navItems.map((n, index) => (
-      <ActionNavItem key={n.id} {...n} />
-    ))}
-    {fakeSpaces.map((m, index) => (
-      <SpaceNavItem
-        key={m.name}
-        active={m.active}
-        id={m.id}
-        name={m.name}
-        avatar={m.avatarSrc}
-        pinned={m.pinned}
-      />
-    ))}
-  </SideBar>
-);
+export const MainSideBar = () => {
+  const { spaces, invites } = useSpaceDataStore();
+
+  return (
+    <SideBar paddingY="sm">
+      {navItems.map((n, index) => (
+        <ActionNavItem key={n.id} {...n} />
+      ))}
+      {invites.map((m, index) => (
+        <SpaceNavItem
+          isInvite
+          key={m.id}
+          active={m.active}
+          id={m.id}
+          name={m.name}
+          avatar={m.avatarSrc}
+          pinned={m.pinned}
+        />
+      ))}
+      {spaces.map((m, index) => (
+        <SpaceNavItem
+          key={m.id}
+          active={m.active}
+          id={m.id}
+          name={m.name}
+          avatar={m.avatarSrc}
+          pinned={m.pinned}
+        />
+      ))}
+    </SideBar>
+  );
+};
 
 const navItems = [
   { id: "home", link: "/", icon: "home", label: "Home" },

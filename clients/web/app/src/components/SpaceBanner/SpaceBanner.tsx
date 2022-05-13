@@ -6,6 +6,7 @@ type Props = {
   bannerSrc?: string;
   avatarSrc?: string;
   name?: string;
+  onSettingsClicked?: () => void;
 };
 
 const pseudos = [fakeUsers[0], fakeUsers[10], fakeUsers[20]];
@@ -25,7 +26,12 @@ export const SpaceBanner = (props: Props) => {
           <SpaceSummary />
         </Stack>
         {/* actions container */}
-        <Stack alignItems="center" direction="row" gap="sm">
+        <Stack
+          alignItems="center"
+          direction="row"
+          gap="sm"
+          onClick={props.onSettingsClicked}
+        >
           <UserDropDown />
           <Icon
             type="settings"

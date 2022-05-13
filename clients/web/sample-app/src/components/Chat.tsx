@@ -74,7 +74,7 @@ export function Chat(props: Props): JSX.Element {
       display="flex"
       flexDirection="column"
       sx={{
-        height: { xs: "640px" },
+        height: { xs: "140px" },
       }}
     >
       <Grid container spacing={2}>

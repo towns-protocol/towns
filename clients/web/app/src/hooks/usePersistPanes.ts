@@ -14,12 +14,7 @@ export const usePersistPanes = (id: string) => {
 
   const onSizesChange = useCallback(
     (sizes: number[]) => {
-      setPaneData(
-        id,
-        Array(3)
-          .fill(undefined)
-          .map((_, i) => sizes[i] ?? 0)
-      );
+      setPaneData(id, sizes);
     },
     [id, setPaneData]
   );

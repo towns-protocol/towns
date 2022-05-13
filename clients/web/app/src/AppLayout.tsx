@@ -9,16 +9,18 @@ import {
   SpaceSideBar,
 } from "@components/SideBars";
 import { TopBar } from "@components/TopBar";
+import { Web3Bar } from "@components/Web3";
 import { Box, Stack, TopLayerPortalContext } from "@ui";
-import { fakeSpaces } from "data/SpaceData";
 import { usePersistPanes } from "hooks/usePersistPanes";
 import { useRootTheme } from "hooks/useRootTheme";
+import { useSpaceDataListener } from "hooks/useSpaceDataListener";
+import { useSpaceDataStore } from "store/spaceDataStore";
 import { atoms } from "ui/styles/atoms/atoms.css";
-import { Web3Bar } from "@components/Web3";
 
 const MATRIX_HOMESERVER_URL = "http://localhost:8008";
 
 export const AppLayout = () => {
+  useSpaceDataListener();
   const overlayRef = useRef<HTMLElement>(null);
   const { toggleTheme } = useRootTheme({
     useDefaultOSTheme: false,
@@ -46,8 +48,9 @@ export const AppLayout = () => {
 const PaneContainer = () => {
   const messageRoute = useMatch({ path: "/messages", end: false });
   const spaceRoute = useMatch({ path: "/spaces/:space", end: false });
+  const { spaces } = useSpaceDataStore();
   const space =
-    spaceRoute && fakeSpaces.find((s) => s.id === spaceRoute.params.space);
+    spaceRoute && spaces.find((s) => s.id === spaceRoute.params.space);
 
   const { onSizesChange, sizes } = usePersistPanes("main");
 
@@ -61,13 +64,13 @@ const PaneContainer = () => {
           onChange={onSizesChange}
         >
           {/* left-side side-bars goes here */}
-          <Allotment.Pane snap minSize={65} maxSize={320}>
+          <Allotment.Pane snap minSize={65} maxSize={320} preferredSize="250px">
             {space ? <SpaceSideBar space={space} /> : <MainSideBar />}
           </Allotment.Pane>
 
           <Allotment.Pane
-            snap
-            minSize={65}
+            preferredSize="250px"
+            minSize={messageRoute ? 65 : 0}
             maxSize={320}
             visible={!!messageRoute}
           >

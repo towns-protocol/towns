@@ -14,10 +14,11 @@ export type SpaceData = {
   channels: ChannelGroups;
 };
 
-const numFakeSpaces = 8;
-
-export const getFakeSpace = (index?: number) => {
-  index = index ?? Math.ceil(Math.random() * numFakeSpaces);
+export const emptySpace: SpaceData = {
+  id: "none",
+  name: "Space Not Found",
+  avatarSrc: "/placeholders/nft_10.png",
+  channels: [],
 };
 
 export const fakeSpaces: SpaceData[] = [
@@ -91,8 +92,3 @@ export const fakeSpaces: SpaceData[] = [
     channels: fakeChannelGroups,
   },
 ];
-
-export const fakeSpaceCache = fakeSpaces.reduce(
-  (keep, current) => (keep = { ...keep, [current.id]: current }),
-  {} as { [key: string]: SpaceData }
-);

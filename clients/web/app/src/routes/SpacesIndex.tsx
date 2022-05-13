@@ -1,5 +1,16 @@
-import React, { ComponentProps, forwardRef } from "react";
-import { useParams } from "react-router";
+import React, {
+  ComponentProps,
+  forwardRef,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
+import { useNavigate, useParams } from "react-router";
+import {
+  RoomMessage,
+  useMatrixClient,
+  useMatrixStore,
+} from "use-matrix-client";
 import { Message } from "@components/Message";
 import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
 import {
@@ -8,44 +19,120 @@ import {
   Box,
   BoxProps,
   ButtonText,
+  Divider,
   Heading,
   Paragraph,
   Stack,
 } from "@ui";
-import { fakeSpaces } from "data/SpaceData";
+import { useSpaceDataStore } from "store/spaceDataStore";
+import { MessageInput } from "@components/MessageInput/MessageInput";
 
 export const SpacesIndex = () => {
   const { spaceId } = useParams();
-  const space = fakeSpaces.find((s) => s.id === spaceId) ?? fakeSpaces[0];
+  const { spaces } = useSpaceDataStore();
+  const navigate = useNavigate();
+  const { allMessages } = useMatrixStore();
+  const { sendMessage } = useMatrixClient();
+  const [newMessage, setNewMessage] = useState<string>("");
+
+  const space = spaces.find((s) => s.id === spaceId);
+  const onSettingsClicked = useCallback(() => {
+    navigate("/spaces/" + spaceId + "/settings");
+  }, [navigate, spaceId]);
+
+  const onTextChanged = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setNewMessage(event.target.value);
+    },
+    [setNewMessage]
+  );
+
+  const onKeyDown = useCallback(
+    async (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!spaceId) {
+        return;
+      }
+      if (event.key === "Enter" && newMessage) {
+        await sendMessage(spaceId, newMessage);
+        setNewMessage("");
+      }
+    },
+    [newMessage, sendMessage, spaceId, setNewMessage]
+  );
+
+  const roomMessages = useMemo(() => {
+    if (allMessages && spaceId) {
+      const messages = allMessages[spaceId];
+      if (messages && messages.length > 0) {
+        return messages;
+      }
+    }
+
+    return undefined;
+  }, [allMessages, spaceId]);
+
+  const messagesLength = useMemo(
+    () => roomMessages?.length,
+    [roomMessages?.length]
+  );
+
   return (
     <>
-      <Stack
-        borderBottom
-        grow
-        alignItems="center"
-        paddingBottom="none"
-        position="relative"
-        maxHeight="400"
-      >
-        <Box position="absolute" width="100%" height="100%">
-          {space.bannerSrc && (
-            <BackgroundImage
-              size="cover"
-              overlay="dark"
-              src={space.bannerSrc}
+      {space ? (
+        <>
+          <Stack
+            borderBottom
+            grow
+            alignItems="center"
+            paddingBottom="none"
+            position="relative"
+            maxHeight="400"
+          >
+            <Box position="absolute" width="100%" height="100%">
+              {space.bannerSrc && (
+                <BackgroundImage
+                  size="cover"
+                  overlay="dark"
+                  src={space.bannerSrc}
+                />
+              )}
+            </Box>
+            <Box
+              position="relative"
+              width="100%"
+              height="100%"
+              alignItems="center"
+            >
+              <LiquidContainer grow width="100%">
+                <SpaceBanner
+                  avatarSrc={space.avatarSrc}
+                  name={space.name}
+                  onSettingsClicked={onSettingsClicked}
+                />
+                <SpaceMenu />
+              </LiquidContainer>
+            </Box>
+          </Stack>
+          <Box grow alignItems="center" background="level1">
+            {roomMessages && messagesLength ? (
+              <SpaceMessages messages={roomMessages} />
+            ) : (
+              <FakeSpaceMessages />
+            )}
+          </Box>
+
+          <Divider />
+          <Box gap="md">
+            <MessageInput
+              value={newMessage}
+              onChange={onTextChanged}
+              onKeyDown={onKeyDown}
             />
-          )}
-        </Box>
-        <Box position="relative" width="100%" height="100%" alignItems="center">
-          <LiquidContainer grow width="100%">
-            <SpaceBanner avatarSrc={space.avatarSrc} name={space.name} />
-            <SpaceMenu />
-          </LiquidContainer>
-        </Box>
-      </Stack>
-      <Box grow alignItems="center" background="level1">
-        <SpaceMessages />
-      </Box>
+          </Box>
+        </>
+      ) : (
+        <p>Space "{spaceId}" not found</p>
+      )}
     </>
   );
 };
@@ -63,7 +150,23 @@ export const LiquidContainer = forwardRef<
   />
 ));
 
-const SpaceMessages = () => (
+const SpaceMessages = (props: { messages: RoomMessage[] }) => (
+  <LiquidContainer gap="sm" paddingY="sm">
+    {props.messages.map((m, index) => (
+      <RoundedMessage
+        channel=""
+        name={m.sender}
+        avatar={<Avatar circle src="/placeholders/nft_2.png" />}
+        date="Today sometime?"
+        reactions={{}}
+      >
+        <Paragraph>{m.message}</Paragraph>
+      </RoundedMessage>
+    ))}
+  </LiquidContainer>
+);
+
+const FakeSpaceMessages = () => (
   <LiquidContainer gap="sm" paddingY="sm">
     <RoundedMessage
       channel="announcements"

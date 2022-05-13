@@ -6,8 +6,6 @@ import { fontStyles } from "./Text.css";
 
 const f = fontStyles.find((f) => f.fontFamily === "TitleFont")?.className;
 
-console.log({ fontStyles, f });
-
 export const base = style([
   {
     fontFamily: "TitleFont",
