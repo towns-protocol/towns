@@ -16,6 +16,7 @@ import { FontLoader } from "ui/utils/FontLoader";
 import { SpacesSettings } from "routes/SpacesSettings";
 import { SpacesInvite } from "routes/SpacesInvite";
 import { InvitesIndex } from "routes/InvitesIndex";
+import { MeIndex } from "routes/MeIndex";
 
 FontLoader.init();
 
@@ -24,6 +25,7 @@ export const App = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<HomeIndex />} />
+        <Route path="/me" element={<MeIndex />} />
         <Route path="/messages" element={<Messages />}>
           <Route path="new" element={<MessagesNew />} />
           <Route path=":conversationId" element={<MessagesRead />} />
