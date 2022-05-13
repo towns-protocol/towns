@@ -153,53 +153,30 @@ jobs:
     needs: initial-tests-done
     name: "Sytest (${{ matrix.label }})"
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - label: SQLite
-
-          - label: SQLite, full HTTP APIs
-            api: full-http
-
-          - label: PostgreSQL
-            postgres: postgres
-
-          - label: PostgreSQL, full HTTP APIs
-            postgres: postgres
-            api: full-http
-    container:
-      image: matrixdotorg/sytest-dendrite:latest
-      volumes:
-        - ${{ github.workspace }}/servers/dendrite:/src
-      env:
-        POSTGRES: ${{ matrix.postgres && 1}}
-        API: ${{ matrix.api && 1 }}
-        SYTEST_BRANCH: ${{ github.head_ref }}
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:14-alpine
+        # Provide the password for postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dendrite
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v2
       - name: Run Sytest
-        run: /bootstrap.sh dendrite
-        working-directory: /src
-      - name: Summarise results.tap
-        if: ${{ always() }}
-        run: /sytest/scripts/tap_to_gha.pl /logs/results.tap
-      - name: Sytest List Maintenance
-        if: ${{ always() }}
-        run: /src/show-expected-fail-tests.sh /logs/results.tap /src/sytest-whitelist /src/sytest-blacklist
-        continue-on-error: true # not fatal
-      - name: Are We Synapse Yet?
-        if: ${{ always() }}
-        run: /src/are-we-synapse-yet.py /logs/results.tap -v
-        continue-on-error: true # not fatal
-      - name: Upload Sytest logs
-        uses: actions/upload-artifact@v2
-        if: ${{ always() }}
-        with:
-          name: Sytest Logs - ${{ job.status }} - (Dendrite, ${{ join(matrix.*, ', ') }})
-          path: |
-            /logs/results.tap
-            /logs/**/*.log*
+        run: ./run-sytest.sh
+        working-directory: servers/dendrite
 
   integration-tests-done:
     name: Integration tests passed
