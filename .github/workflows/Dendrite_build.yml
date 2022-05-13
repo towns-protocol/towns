@@ -171,7 +171,7 @@ jobs:
     container:
       image: matrixdotorg/sytest-dendrite:latest
       volumes:
-        - ${{ github.workspace }}/servers/dendrite/src:/src
+        - ${{ github.workspace }}/servers/dendrite:/src
       env:
         POSTGRES: ${{ matrix.postgres && 1}}
         API: ${{ matrix.api && 1 }}
