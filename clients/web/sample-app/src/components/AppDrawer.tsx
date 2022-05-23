@@ -19,6 +19,7 @@ import { Logout } from "./Logout";
 import { Rooms } from "./Rooms";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import { Me } from "./Me";
 
 const drawerWidth = 240;
 
@@ -98,6 +99,10 @@ export default function AppDrawer(props: Props): JSX.Element {
     [rooms]
   );
 
+  const onHomeClick = () => {
+    setCurrentChatRoom(undefined);
+  };
+
   const drawer = (
     <div>
       <Toolbar />
@@ -162,9 +167,17 @@ export default function AppDrawer(props: Props): JSX.Element {
         }}
       >
         <Box display="flex" flexDirection="row" alignItems="center">
-          <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-            Matrix Client
-          </Typography>
+          <Button onClick={onHomeClick} variant="text">
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={spacingStyle}
+              color="white"
+            >
+              Matrix Client
+            </Typography>
+          </Button>
           <Box display="flex" flexDirection="row" flexGrow={1} />
           <Box sx={spacingStyle} alignItems="right">
             {myWalletAddress}
@@ -230,7 +243,9 @@ export default function AppDrawer(props: Props): JSX.Element {
             onClickLeaveRoom={onClickLeaveRoom}
             goToRoom={goToRoom}
           />
-        ) : null}
+        ) : (
+          <Me />
+        )}
       </Box>
     </Box>
   );
