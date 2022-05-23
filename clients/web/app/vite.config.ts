@@ -12,9 +12,7 @@ export default defineConfig({
     tsconfigPaths(),
     checker({ typescript: true }),
     eslintPlugin({
-      exclude: [
-        /.*.css.ts.*/
-      ]
+      exclude: [/.*.css.ts.*/, /node_modules/],
     }),
     vanillaExtractPlugin(),
   ],
