@@ -44,7 +44,7 @@ export const SpacesIndex = () => {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setNewMessage(event.target.value);
     },
-    [setNewMessage]
+    [setNewMessage],
   );
 
   const onKeyDown = useCallback(
@@ -57,7 +57,7 @@ export const SpacesIndex = () => {
         setNewMessage("");
       }
     },
-    [newMessage, sendMessage, spaceId, setNewMessage]
+    [newMessage, sendMessage, spaceId, setNewMessage],
   );
 
   const roomMessages = useMemo(() => {
@@ -73,7 +73,7 @@ export const SpacesIndex = () => {
 
   const messagesLength = useMemo(
     () => roomMessages?.length,
-    [roomMessages?.length]
+    [roomMessages?.length],
   );
 
   return (

@@ -25,7 +25,7 @@ export function Dropdown(props: Props) {
       const selectEvent = e as React.FormEvent<HTMLSelectElement>;
       props.onChange && props.onChange(selectEvent.currentTarget.value);
     },
-    [props]
+    [props],
   );
 
   return (

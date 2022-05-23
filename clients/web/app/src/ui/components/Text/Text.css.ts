@@ -110,7 +110,7 @@ siblings.forEach((s) => {
   siblings.forEach((m) =>
     globalStyle(`${boxStyleBase}:not(.${withGapClass}) >  ${s} + ${m}`, {
       marginTop: vars.space.md,
-    })
+    }),
   );
 });
 
@@ -121,7 +121,7 @@ globalStyle(
   `${fontStyles[0].className} ${fontStyles[0].className}:before, ${fontStyles[0].className} ${fontStyles[0].className}:after`,
   {
     marginTop: 0,
-  }
+  },
 );
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - global text decoration
@@ -178,7 +178,7 @@ globalStyle(
   `${debugClass} ${fontStyles[0].className}:not(${truncateParentStyle})`,
   {
     boxShadow: "0 0 0 1px #FF09",
-  }
+  },
 );
 globalStyle(`${debugClass} p:not(${fontStyles[0].className})`, {
   // implicit paragraphs declared by inner HTML

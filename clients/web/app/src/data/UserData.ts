@@ -38,5 +38,5 @@ export const fakeUsers = Array(numFakeUsers)
 /** {id: user} */
 export const fakeUserCache = fakeUsers.reduce(
   (keep, current) => (keep = { ...keep, [current.id]: current }),
-  {} as { [key: string]: UserData }
+  {} as { [key: string]: UserData },
 );

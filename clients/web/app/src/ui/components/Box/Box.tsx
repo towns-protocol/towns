@@ -155,7 +155,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
       ...nativeProps,
       ref,
     },
-    children
+    children,
   );
 });
 

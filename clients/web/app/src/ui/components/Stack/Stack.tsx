@@ -15,5 +15,5 @@ export const Stack = forwardRef<HTMLElement, StackProps>(
       direction={boxProps.direction ?? (horizontal ? "row" : "column")}
       {...boxProps}
     />
-  )
+  ),
 );

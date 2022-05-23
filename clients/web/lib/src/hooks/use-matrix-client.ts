@@ -1,6 +1,6 @@
 import { ICreateRoomOpts, MatrixClient, createClient } from "matrix-js-sdk";
-import { LoginStatus, getUsernameFromId, toLowerCaseUsername } from "./login";
-import { useCallback, useContext, useMemo } from "react";
+import { LoginStatus, getUsernameFromId } from "./login";
+import { useCallback, useContext } from "react";
 
 import { CreateRoomInfo } from "../types/matrix-types";
 import { MatrixContext } from "../components/MatrixContextProvider";
@@ -23,7 +23,6 @@ interface LoginServerResponse {
 export function useMatrixClient() {
   const {
     homeServer,
-    username,
     setDeviceId,
     setLoginError,
     setLoginStatus,
@@ -173,7 +172,7 @@ export function useMatrixClient() {
     if (matrixClient) {
       await matrixClient.invite(
         roomId,
-        toLowerCaseUsername(userId),
+        userId.toLowerCase(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
         function (err: any, data: any) {
           if (err) {

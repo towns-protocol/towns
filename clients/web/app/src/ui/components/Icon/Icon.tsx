@@ -42,7 +42,7 @@ export const BackIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -62,7 +62,7 @@ export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -75,7 +75,7 @@ export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const CloseIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -94,7 +94,7 @@ export const CloseIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const DownIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -107,7 +107,7 @@ export const DownIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -128,7 +128,7 @@ export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const LockIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -148,7 +148,7 @@ export const LockIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="black"
       />
     </svg>
-  )
+  ),
 );
 
 export const MessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -161,7 +161,7 @@ export const MessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const NewMessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -181,7 +181,7 @@ export const NewMessageIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const PinIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
@@ -212,7 +212,7 @@ export const PlusIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const SettingsIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -225,7 +225,7 @@ export const SettingsIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -245,7 +245,7 @@ export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const TagIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
@@ -300,7 +300,7 @@ export const ThreadsIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="currentColor"
       />
     </svg>
-  )
+  ),
 );
 
 export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
@@ -320,7 +320,7 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
         fill="white"
       />
     </svg>
-  )
+  ),
 );
 
 export const EthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (

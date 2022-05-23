@@ -75,35 +75,13 @@ export function getUsernameFromId(
   userId: string | undefined
 ): string | undefined {
   if (userId) {
-    const regexName = /^@(?<username>\w+):/;
+    const regexName = /^@(?<username>.*):/;
     const match = regexName.exec(userId);
     const username = match?.groups?.username ?? undefined;
     return username;
   }
 
   return undefined;
-}
-
-function getServernameFromId(userId: string | undefined): string | undefined {
-  if (userId) {
-    const regexName = /^@\w+:(?<servername>\w+)/;
-    const match = regexName.exec(userId);
-    const servername = match?.groups?.servername ?? undefined;
-    return servername;
-  }
-
-  return undefined;
-}
-
-export function toLowerCaseUsername(userId: string): string {
-  const username = getUsernameFromId(userId);
-  const servername = getServernameFromId(userId);
-  if (username && servername) {
-    userId = `@${username.toLowerCase()}:${servername}`;
-  }
-
-  console.log(`toLowerCaseUsername() = ${userId}`);
-  return userId;
 }
 
 export function getShortUsername(userId: string): string {

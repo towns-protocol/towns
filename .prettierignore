@@ -1,0 +1,14 @@
+dist
+node_modules
+docs
+storybook-static
+.storybook
+
+servers/
+contracts/lib/
+
+*.sol
+
+.yarn/*
+.vscode
+yarn.lock

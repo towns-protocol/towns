@@ -5,7 +5,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "buildweb": "cd './clients/web/app/' && yarn run build"
+    "lint": "eslint . --cache",
+    "lint:fix": "yarn lint --fix",
+    "lint:format": "prettier --write .",
+    "prepare": "husky install",
+    "postinstall": "husky install"
   },
   "workspaces": [
     "contracts",
@@ -13,5 +17,26 @@
     "clients/web/lib",
     "clients/web/sample-app",
     "clients/governance-ui/"
-  ]
+  ],
+  "lint-staged": {
+    "*.{js,mdx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{json,yml}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "devDependencies": {
+    "eslint": "^8.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^12.4.1",
+    "prettier": "^2.6.2"
+  }
 }

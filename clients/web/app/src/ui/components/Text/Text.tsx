@@ -57,7 +57,7 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
       className={clsx(
         truncate && truncateParentStyle,
         fontStyles[0].className,
-        className
+        className,
       )}
       {...textProps}
       {...boxProps}

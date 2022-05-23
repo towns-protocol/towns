@@ -43,14 +43,14 @@ export const Login = () => {
     async function () {
       loginWithWallet(StatementToSign);
     },
-    [loginWithWallet]
+    [loginWithWallet],
   );
 
   const onRegisterNewWallet = useCallback(
     async function () {
       registerWallet(StatementToSign);
     },
-    [registerWallet]
+    [registerWallet],
   );
 
   useEffect(() => {

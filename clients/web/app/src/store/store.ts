@@ -26,6 +26,6 @@ export const useStore = create(
           };
         }),
     }),
-    { name: "zionstate" }
-  )
+    { name: "zionstate" },
+  ),
 );

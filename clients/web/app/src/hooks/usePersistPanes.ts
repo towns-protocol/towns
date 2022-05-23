@@ -16,7 +16,7 @@ export const usePersistPanes = (id: string) => {
     (sizes: number[]) => {
       setPaneData(id, sizes);
     },
-    [id, setPaneData]
+    [id, setPaneData],
   );
 
   return {

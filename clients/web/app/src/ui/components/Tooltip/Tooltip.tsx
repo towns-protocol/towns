@@ -94,7 +94,7 @@ export const TooltipRenderer = ({
             triggerRect={triggerRect}
             placement={placement}
           />,
-          root
+          root,
         )}
     </>
   );
@@ -153,12 +153,12 @@ const OffsetContainer = (props: OffsetContainerProps) => {
 
     pos.left = Math.max(
       containerBounds.left,
-      Math.min(containerBounds.right - size.width, pos.left)
+      Math.min(containerBounds.right - size.width, pos.left),
     );
 
     pos.top = Math.max(
       containerBounds.top,
-      Math.min(containerBounds.bottom - size.width, pos.top)
+      Math.min(containerBounds.bottom - size.width, pos.top),
     );
 
     return {

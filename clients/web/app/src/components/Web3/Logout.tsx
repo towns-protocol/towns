@@ -10,7 +10,7 @@ export function Logout(): JSX.Element | null {
     async function () {
       await logout();
     },
-    [logout]
+    [logout],
   );
 
   return isAuthenticated ? <Button onClick={onLogout}>Logout</Button> : null;

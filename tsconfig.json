@@ -3,20 +3,21 @@
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
-    "baseUrl": "./src",
-    "declaration": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "jsx": "react",
+    "lib": ["dom", "dom.iterable", "esnext"],
     "module": "esnext",
     "moduleResolution": "node",
-    "outDir": "./dist",
+    "noEmit": true,
     "resolveJsonModule": true,
     "rootDir": "src",
     "skipLibCheck": true,
     "strict": true,
-    "strictNullChecks": false,
-    "target": "esnext"
+    "strictNullChecks": true,
+    "target": "esnext",
+    "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*"]
+  "exclude": ["node_modules", "dist", "*.d.ts"]
 }

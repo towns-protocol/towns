@@ -15,7 +15,7 @@ export const InviteUserToRoomForm = (props: Props) => {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setInviteeUserId(event.target.value);
     },
-    []
+    [],
   );
   const onInviteClicked = useCallback(async () => {
     console.log("invite clicked", inviteeUserId);

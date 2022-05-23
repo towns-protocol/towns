@@ -44,7 +44,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
         avatarAtoms({
           size: size ?? height,
         }),
-        avatarBaseStyle
+        avatarBaseStyle,
       )}
       style={{
         backgroundImage: `url(${src})`,
