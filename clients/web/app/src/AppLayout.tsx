@@ -16,7 +16,7 @@ import { useSpaceDataListener } from "hooks/useSpaceDataListener";
 import { useSpaceDataStore } from "store/spaceDataStore";
 import { atoms } from "ui/styles/atoms/atoms.css";
 
-const MATRIX_HOMESERVER_URL = "http://localhost:8008";
+const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
 
 export const AppLayout = () => {
   useSpaceDataListener();

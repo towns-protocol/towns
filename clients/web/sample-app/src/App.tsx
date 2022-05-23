@@ -5,7 +5,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 
 const MATRIX_HOMESERVER_URL =
-  process.env.MATRIX_HOME_SERVER ?? "http://localhost:8008";
+  process.env.MATRIX_HOME_SERVER ?? "https://node1.hntlabs.com";
 
 export function App(): JSX.Element {
   return (
