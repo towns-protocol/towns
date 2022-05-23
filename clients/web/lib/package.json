@@ -2,6 +2,7 @@
   "name": "use-matrix-client",
   "description": "Matrix client common wrapper / helper functions",
   "version": "1.0.0",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
