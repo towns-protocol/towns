@@ -124,22 +124,29 @@ export const Login = () => {
   }, [loginStatus, onConnectClick, onLoginWithWallet, walletStatus]);
 
   useEffect(() => {
-    if (
-      loginStatus === LoginStatus.LoggedOut &&
-      walletStatus === WalletStatus.Unlocked
-    ) {
-      const getIsRegistered = async () => {
-        const isRegistered = await getIsWalletIdRegistered();
-        setWalletRegistered(isRegistered);
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      getIsRegistered().catch((reason: any) => {
-        setShowError(reason);
-      });
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        if (
+          loginStatus === LoginStatus.LoggedOut &&
+          walletStatus === WalletStatus.Unlocked
+        ) {
+          const isRegistered = await getIsWalletIdRegistered();
+          if (!cancelled) {
+            setWalletRegistered(isRegistered);
+          }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (reason: any) {
+        if (!cancelled) {
+          setShowError(reason);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [getIsWalletIdRegistered, loginStatus, walletStatus]);
-
   return (
     <div>
       {!walletRegistered && registerButton}
