@@ -1,6 +1,5 @@
 {
   "name": "web3-step2",
-  "packageManager": "yarn@3.2.0",
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
@@ -16,7 +15,7 @@
     "clients/web/app",
     "clients/web/lib",
     "clients/web/sample-app",
-    "clients/governance-ui/"
+    "clients/governance-ui"
   ],
   "lint-staged": {
     "*.{js,mdx,ts,tsx}": [
