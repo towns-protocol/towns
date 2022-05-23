@@ -11,7 +11,7 @@ export const notUndefined = <T>(x: T | undefined): x is T => {
 export const assignBoolToDefaultValue = <T>(
   value: boolean | T,
   trueValue: T,
-  falseValue?: T
+  falseValue?: T,
 ) => {
   return typeof value !== "boolean"
     ? value

@@ -14,7 +14,7 @@ export const SpacesNew = () => {
       console.log("room created", roomId, membership);
       navigate("/spaces/" + roomId);
     },
-    [navigate]
+    [navigate],
   );
 
   return (

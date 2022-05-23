@@ -22,7 +22,7 @@ export const SpacesInvite = () => {
       await inviteUser(spaceId, inviteeUserId);
       navigate("/spaces/" + spaceId);
     },
-    [inviteUser, navigate]
+    [inviteUser, navigate],
   );
 
   return (

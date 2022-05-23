@@ -18,14 +18,14 @@ export const CreateRoomForm = (props: Props) => {
 
   const disableCreateButton = useMemo(
     () => roomName.length === 0,
-    [roomName.length]
+    [roomName.length],
   );
 
   const onRoomNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setRoomName(event.target.value);
     },
-    []
+    [],
   );
 
   const onClickCreateRoom = useCallback(async () => {

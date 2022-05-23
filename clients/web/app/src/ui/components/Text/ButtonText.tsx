@@ -28,5 +28,5 @@ export const ButtonText = forwardRef<HTMLElement, ButtonTextProps>(
         className={clsx([style.base, className])}
       />
     );
-  }
+  },
 );

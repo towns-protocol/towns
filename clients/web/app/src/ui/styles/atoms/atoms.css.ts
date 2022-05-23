@@ -149,7 +149,7 @@ export const atoms = createSprinkles(
   typeProperties,
   blockProperties,
   responsiveAtomicProperties,
-  gridItemProperties
+  gridItemProperties,
 );
 
 export type Atoms = Parameters<typeof atoms>[0];

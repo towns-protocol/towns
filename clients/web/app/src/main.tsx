@@ -23,7 +23,7 @@ if (isDev) {
 
   window.addEventListener("error", showErrorOverlay);
   window.addEventListener("unhandledrejection", ({ reason }) =>
-    showErrorOverlay(reason)
+    showErrorOverlay(reason),
   );
 }
 
@@ -35,6 +35,6 @@ if (node) {
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }

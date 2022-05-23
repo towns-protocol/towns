@@ -29,5 +29,5 @@ export const useSpaceDataStore = create<SpaceDataStore>(
     },
     invites: [],
     setInvites: (invites: SpaceData[]) => set({ invites: invites }),
-  })
+  }),
 );
