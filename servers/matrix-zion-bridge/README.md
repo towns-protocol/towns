@@ -15,7 +15,7 @@ The Rust build tools are installed as part of `yarn install`. No need to install
 ```bash
 # Install the dependencies
 cd servers/matrix-zion-bridge
-yarn
+yarn install
 source $HOME/.cargo/env
 
 # Build and run the server

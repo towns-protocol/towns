@@ -9,7 +9,7 @@
     "/bin"
   ],
   "scripts": {
-    "install": "./prepareInstall.sh",
+    "install": "./install.sh",
     "build": "tsc",
     "start": "node ./bin/app.js",
     "dev": "ts-node ./src/app.ts",
