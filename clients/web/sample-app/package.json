@@ -1,6 +1,6 @@
 {
   "name": "sample-app",
-  "packageManager": "yarn@3.2.0",
+  "version": "0.0.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.8.2",
@@ -20,7 +20,7 @@
     "react-router-dom": "^6.3.0",
     "react-scripts": "^5.0.0",
     "typescript": "^4.6.3",
-    "use-matrix-client": "workspace:*",
+    "use-matrix-client": "*",
     "zustand": "^3.7.1"
   },
   "scripts": {

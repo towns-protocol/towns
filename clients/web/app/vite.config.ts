@@ -11,7 +11,9 @@ export default defineConfig({
     react(),
     tsconfigPaths(),
     checker({ typescript: true }),
-    eslintPlugin({ fix: true }),
+    eslintPlugin({
+      exclude: [/.*.css.ts.*/, /node_modules/],
+    }),
     vanillaExtractPlugin(),
   ],
   server: {

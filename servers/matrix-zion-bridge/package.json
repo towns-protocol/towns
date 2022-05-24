@@ -1,0 +1,27 @@
+{
+  "name": "matrix-zion-bridge",
+  "description": "Bridge between Matrix and Zion smart contracts",
+  "license": "MIT",
+  "private": true,
+  "version": "0.0.0",
+  "main": "bin/app.js",
+  "files": [
+    "/bin"
+  ],
+  "scripts": {
+    "install": "./install.sh",
+    "build": "tsc",
+    "start": "node ./bin/app.js",
+    "dev": "ts-node ./src/app.ts",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@types/node": "^17.0.32",
+    "express": "^4.18.1",
+    "matrix-appservice-bridge": "^4.0.1",
+    "typescript": "^4.6.4"
+  },
+  "devDependencies": {
+    "ts-node": "^10.7.0"
+  }
+}
