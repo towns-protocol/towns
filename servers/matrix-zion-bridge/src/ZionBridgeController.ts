@@ -34,7 +34,6 @@ export class ZionBridgeController implements BridgeController {
     remote?: RemoteUser | undefined;
   } | null | void> {
     console.log(`${PrintTag} onUserQuery`, matrixUser);
-    return;
   }
 
   public async onAliasQuery(
@@ -46,7 +45,6 @@ export class ZionBridgeController implements BridgeController {
     remote?: RemoteRoom;
   } | null | void> {
     console.log(`${PrintTag} onAliasQuery`, alias);
-    return;
   }
 
   public onLog(text: string, isError: boolean): void {
