@@ -59,7 +59,7 @@ export function useMatrixClient() {
       }
       return undefined;
     },
-    [matrixClient]
+    [matrixClient],
   );
 
   const logout = useCallback(
@@ -77,7 +77,7 @@ export function useMatrixClient() {
       setLoginStatus(LoginStatus.LoggedOut);
       setAccessToken("");
     },
-    [matrixClient]
+    [matrixClient, setAccessToken, setLoginStatus],
   );
 
   const loginWithPassword = useCallback(
@@ -87,7 +87,7 @@ export function useMatrixClient() {
       const response = await matrixLoginWithPassword(
         homeServer,
         username,
-        password
+        password,
       );
       if (response.accessToken) {
         setAccessToken(response.accessToken);
@@ -106,7 +106,16 @@ export function useMatrixClient() {
         });
       }
     },
-    [homeServer]
+    [
+      homeServer,
+      logout,
+      setAccessToken,
+      setDeviceId,
+      setLoginError,
+      setLoginStatus,
+      setUserId,
+      setUsername,
+    ],
   );
 
   const registerNewUser = useCallback(
@@ -129,77 +138,90 @@ export function useMatrixClient() {
         });
       }
     },
-    [homeServer]
+    [
+      homeServer,
+      logout,
+      setAccessToken,
+      setDeviceId,
+      setLoginError,
+      setLoginStatus,
+      setUserId,
+      setUsername,
+    ],
   );
 
-  const sendMessage = useCallback(async function (
-    roomId: string,
-    message: string
-  ) {
-    if (matrixClient) {
-      const content = {
-        body: `${message}`,
-        msgtype: "m.text",
+  const sendMessage = useCallback(
+    async function (roomId: string, message: string) {
+      if (matrixClient) {
+        const content = {
+          body: `${message}`,
+          msgtype: "m.text",
+        };
+
+        await matrixClient.sendEvent(
+          roomId,
+          "m.room.message",
+          content,
+          "",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+          function (err: any, res: any) {
+            if (err) {
+              console.error(err);
+            }
+          },
+        );
+      }
+    },
+    [matrixClient],
+  );
+
+  const leaveRoom = useCallback(
+    async function (roomId: string) {
+      if (matrixClient) {
+        await matrixClient.leave(roomId);
+        console.log(`Left room ${roomId}`);
+      }
+    },
+    [matrixClient],
+  );
+
+  const inviteUser = useCallback(
+    async function (roomId: string, userId: string) {
+      if (matrixClient) {
+        await matrixClient.invite(
+          roomId,
+          userId.toLowerCase(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+          function (err: any, data: any) {
+            if (err) {
+              console.error(err);
+            }
+          },
+        );
+        console.log(`Invited user ${userId} to join room ${roomId}`);
+      }
+    },
+    [matrixClient],
+  );
+
+  const joinRoom = useCallback(
+    async function (roomId: string) {
+      const opts = {
+        syncRoom: true,
       };
 
-      await matrixClient.sendEvent(
-        roomId,
-        "m.room.message",
-        content,
-        "",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-        function (err: any, res: any) {
-          if (err) {
-            console.error(err);
-          }
+      try {
+        if (matrixClient) {
+          await matrixClient.joinRoom(roomId, opts);
+          console.log(`Joined room[${roomId}]`);
         }
-      );
-    }
-  },
-  []);
-
-  const leaveRoom = useCallback(async function (roomId: string) {
-    if (matrixClient) {
-      await matrixClient.leave(roomId);
-      console.log(`Left room ${roomId}`);
-    }
-  }, []);
-
-  const inviteUser = useCallback(async function (
-    roomId: string,
-    userId: string
-  ) {
-    if (matrixClient) {
-      await matrixClient.invite(
-        roomId,
-        userId.toLowerCase(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-        function (err: any, data: any) {
-          if (err) {
-            console.error(err);
-          }
-        }
-      );
-      console.log(`Invited user ${userId} to join room ${roomId}`);
-    }
-  },
-  []);
-
-  const joinRoom = useCallback(async function (roomId: string) {
-    const opts = {
-      syncRoom: true,
-    };
-
-    try {
-      if (matrixClient) {
-        await matrixClient.joinRoom(roomId, opts);
-        console.log(`Joined room[${roomId}]`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (ex: any) {
+        console.error(`Error joining room[${roomId}]`, ex.stack);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (ex: any) {
-      console.error(`Error joining room[${roomId}]`, ex.stack);
-    }
-  }, []);
+    },
+    [matrixClient],
+  );
 
   return {
     createRoom,
@@ -219,7 +241,7 @@ export function useMatrixClient() {
 async function matrixRegisterUser(
   homeServerUrl: string,
   username: string,
-  password: string
+  password: string,
 ): Promise<LoginServerResponse> {
   let error: string | undefined;
   try {
@@ -231,7 +253,7 @@ async function matrixRegisterUser(
       {
         type: "m.login.dummy",
         //type: "m.login.password",
-      }
+      },
     );
     console.log(`response:`, JSON.stringify(response));
     return {
@@ -258,7 +280,7 @@ async function matrixRegisterUser(
 async function matrixLoginWithPassword(
   homeServerUrl: string,
   username: string,
-  password: string
+  password: string,
 ): Promise<LoginServerResponse> {
   let error: string | undefined;
   try {

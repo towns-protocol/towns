@@ -72,7 +72,7 @@ interface LoginFlow {
 }
 
 export function getUsernameFromId(
-  userId: string | undefined
+  userId: string | undefined,
 ): string | undefined {
   if (userId) {
     const regexName = /^@(?<username>.*):/;
@@ -109,7 +109,7 @@ export function isLoginFlowPublicKeyEthereum(o: any): o is UserInteractive {
 
 export function getParamsPublicKeyEthereum(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  p: any
+  p: any,
 ): PublicKeyEtheremParams | undefined {
   const params = p[LoginTypePublicKeyEthereum];
   if (params !== undefined) {

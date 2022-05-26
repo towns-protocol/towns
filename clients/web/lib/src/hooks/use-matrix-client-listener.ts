@@ -29,7 +29,7 @@ interface SyncMembership {
 
 export function useMatrixClientListener(
   homeServerUrl: string,
-  initialSyncLimit = 20
+  initialSyncLimit = 20,
 ) {
   const { homeServer, isAuthenticated, userId, setHomeServer } =
     useMatrixStore();
@@ -43,9 +43,12 @@ export function useMatrixClientListener(
   const handleRoomTimelineEvent = useRoomTimelineEventHandler(matrixClientRef);
   const handleSync = useSync(matrixClientRef);
 
-  useEffect(function () {
-    setHomeServer(homeServerUrl);
-  }, []);
+  useEffect(
+    function () {
+      setHomeServer(homeServerUrl);
+    },
+    [homeServerUrl, setHomeServer],
+  );
 
   const startClient = useCallback(
     async function () {
@@ -68,7 +71,7 @@ export function useMatrixClientListener(
             } else {
               console.log(state);
             }
-          }
+          },
         );
 
         client.on(
@@ -76,7 +79,7 @@ export function useMatrixClientListener(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           function (event: any, room: any, toStartOfTimeline: any) {
             handleRoomTimelineEvent(event, room, toStartOfTimeline);
-          }
+          },
         );
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,11 +87,19 @@ export function useMatrixClientListener(
           RoomMemberEvent.Membership,
           function (event: MatrixEvent, member: RoomMember) {
             handleRoomMembershipEvent(event, member);
-          }
+          },
         );
       }
     },
-    [accessToken, homeServer, initialSyncLimit, userId]
+    [
+      accessToken,
+      handleRoomMembershipEvent,
+      handleRoomTimelineEvent,
+      handleSync,
+      homeServer,
+      initialSyncLimit,
+      userId,
+    ],
   );
 
   useEffect(() => {
@@ -120,7 +131,7 @@ function printRoom(room: Room): void {
     console.log(
       `Room[${room.roomId}] = { name: "${
         room.name
-      }", membership: ${room.getMyMembership()} }`
+      }", membership: ${room.getMyMembership()} }`,
     );
   } else {
     console.log(`"room" is undefined. Cannot print.`);
@@ -140,7 +151,7 @@ function useSync(matrixClientRef: MutableRefObject<MatrixClient>) {
         setAllRooms(rooms);
       }
     },
-    [syncInfo]
+    [matrixClientRef, setAllRooms, syncInfo],
   );
 
   const handleSyncAll = useCallback(function () {
@@ -152,7 +163,7 @@ function useSync(matrixClientRef: MutableRefObject<MatrixClient>) {
 }
 
 function useRoomMembershipEventHandler(
-  matrixClientRef: MutableRefObject<MatrixClient>
+  matrixClientRef: MutableRefObject<MatrixClient>,
 ) {
   const { joinRoom, leaveRoom, setRoom, updateMembership } = useMatrixStore();
   const [syncInfo, setSyncInfo] = useState<SyncMembership>();
@@ -168,122 +179,128 @@ function useRoomMembershipEventHandler(
           syncInfo.roomId,
           syncInfo.userId,
           syncInfo.membership,
-          syncInfo.userId === matrixClientRef.current.getUserId()
+          syncInfo.userId === matrixClientRef.current.getUserId(),
         );
       }
     },
-    [syncInfo]
+    [matrixClientRef, setRoom, syncInfo, updateMembership],
   );
 
-  const handleRoomMembershipEvent = useCallback(function (
-    event: MatrixEvent,
-    member: RoomMember
-  ) {
-    console.log(`RoomMember.membership event`, {
-      eventType: event.getType(),
-      userId: member.userId,
-      roomId: member.roomId,
-      membership: member.membership,
-    });
+  const handleRoomMembershipEvent = useCallback(
+    function (event: MatrixEvent, member: RoomMember) {
+      console.log(`RoomMember.membership event`, {
+        eventType: event.getType(),
+        userId: member.userId,
+        roomId: member.roomId,
+        membership: member.membership,
+      });
 
-    switch (member.membership) {
-      case Membership.Invite: {
-        setSyncInfo({
-          roomId: member.roomId,
-          userId: member.userId,
-          membership: member.membership as Membership,
-        });
-        break;
+      switch (member.membership) {
+        case Membership.Invite: {
+          setSyncInfo({
+            roomId: member.roomId,
+            userId: member.userId,
+            membership: member.membership as Membership,
+          });
+          break;
+        }
+        case Membership.Join: {
+          joinRoom(
+            member.roomId,
+            member.userId,
+            member.userId === matrixClientRef.current.getUserId(),
+          );
+          break;
+        }
+        case Membership.Leave: {
+          leaveRoom(
+            member.roomId,
+            member.userId,
+            member.userId === matrixClientRef.current.getUserId(),
+          );
+          break;
+        }
+        default:
+          break;
       }
-      case Membership.Join: {
-        joinRoom(
-          member.roomId,
-          member.userId,
-          member.userId === matrixClientRef.current.getUserId()
-        );
-        break;
-      }
-      case Membership.Leave: {
-        leaveRoom(
-          member.roomId,
-          member.userId,
-          member.userId === matrixClientRef.current.getUserId()
-        );
-        break;
-      }
-      default:
-        break;
-    }
-  },
-  []);
+    },
+    [joinRoom, leaveRoom, matrixClientRef],
+  );
 
   return handleRoomMembershipEvent;
 }
 
 function useRoomTimelineEventHandler(
-  matrixClientRef: MutableRefObject<MatrixClient>
+  matrixClientRef: MutableRefObject<MatrixClient>,
 ) {
   const { createRoom, setNewMessage, setRoomName, updateMembership } =
     useMatrixStore();
 
-  const handleRoomTimelineEvent = useCallback(function (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    event: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    room: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-    toStartOfTimeline: any
-  ) {
-    switch (event.getType()) {
-      case "m.room.message": {
-        console.log(
-          `Room[${room.roomId}]: ${event.sender.name}, ${event.event.content.body}`
-        );
-        setNewMessage(room.roomId, event.sender.name, event.event.content.body);
-        break;
-      }
-      case "m.room.create": {
-        console.log(`m.room.create`, { roomId: room.roomId });
-        createRoom(room.roomId);
-        break;
-      }
-      case "m.room.name": {
-        const roomId = event.getRoomId();
-        const name = event.getContent().name;
-        console.log(`m.room.name`, {
-          roomId,
-          name,
-        });
-        setRoomName(roomId, name);
-        break;
-      }
-      case "m.room.member": {
-        const roomId = event.getRoomId();
-        const userId = event.getStateKey();
-        const membership = event.getContent().membership;
-        console.log(`m.room.member`, {
-          roomId,
-          userId,
-          membership,
-          content: event.getContent(),
-          event: JSON.stringify(event),
-        });
-
-        if (roomId && userId && membership) {
-          updateMembership(
+  const handleRoomTimelineEvent = useCallback(
+    function (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      event: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      room: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+      toStartOfTimeline: any,
+    ) {
+      switch (event.getType()) {
+        case "m.room.message": {
+          console.log(
+            `Room[${room.roomId}]: ${event.sender.name}, ${event.event.content.body}`,
+          );
+          setNewMessage(
+            room.roomId,
+            event.sender.name,
+            event.event.content.body,
+          );
+          break;
+        }
+        case "m.room.create": {
+          console.log(`m.room.create`, { roomId: room.roomId });
+          createRoom(room.roomId);
+          break;
+        }
+        case "m.room.name": {
+          const roomId = event.getRoomId();
+          const name = event.getContent().name;
+          console.log(`m.room.name`, {
+            roomId,
+            name,
+          });
+          setRoomName(roomId, name);
+          break;
+        }
+        case "m.room.member": {
+          const roomId = event.getRoomId();
+          const userId = event.getStateKey();
+          const membership = event.getContent().membership;
+          console.log(`m.room.member`, {
             roomId,
             userId,
             membership,
-            matrixClientRef.current.getUserId() === userId
-          );
+            content: event.getContent(),
+            event: JSON.stringify(event),
+          });
+
+          if (roomId && userId && membership) {
+            updateMembership(
+              roomId,
+              userId,
+              membership,
+              matrixClientRef.current.getUserId() === userId,
+            );
+          }
+          break;
         }
-        break;
+        default:
+          console.log(`Room.timeline event`, event.getType());
+          break;
       }
-      default:
-        console.log(`Room.timeline event`, event.getType());
-        break;
-    }
-  }, []);
+    },
+    [createRoom, matrixClientRef, setNewMessage, setRoomName, updateMembership],
+  );
 
   return handleRoomTimelineEvent;
 }

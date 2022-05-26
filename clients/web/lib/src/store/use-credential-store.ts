@@ -10,5 +10,5 @@ export const useCredentialStore = createStore<CredentialStoreStates>(
     accessToken: null,
     setAccessToken: (accessToken: string | undefined) =>
       set({ accessToken: accessToken ?? null }),
-  })
+  }),
 );

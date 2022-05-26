@@ -21,12 +21,12 @@ export type MatrixStoreStates = {
   joinRoom: (
     roomId: string,
     userId: string,
-    isMyRoomMembership: boolean
+    isMyRoomMembership: boolean,
   ) => void;
   leaveRoom: (
     roomId: string,
     userId: string,
-    isMyRoomMembership: boolean
+    isMyRoomMembership: boolean,
   ) => void;
   setRoom: (room: MatrixRoom) => void;
   setAllRooms: (rooms: MatrixRoom[]) => void;
@@ -39,7 +39,7 @@ export type MatrixStoreStates = {
     roomId: string,
     userId: string,
     membership: Membership,
-    isMyRoomMembership: boolean
+    isMyRoomMembership: boolean,
   ) => void;
 };
 
@@ -83,7 +83,7 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => createRoom(state, roomId)),
     setNewMessage: (roomId: string, sender: string, message: string) =>
       set((state: MatrixStoreStates) =>
-        setNewMessage(state, roomId, sender, message)
+        setNewMessage(state, roomId, sender, message),
       ),
     setRoom: (room: MatrixRoom) =>
       set((state: MatrixStoreStates) => setRoom(state, room)),
@@ -93,11 +93,11 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
     joinRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
       set((state: MatrixStoreStates) =>
-        joinRoom(state, roomId, userId, isMyRoomMembership)
+        joinRoom(state, roomId, userId, isMyRoomMembership),
       ),
     leaveRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
       set((state: MatrixStoreStates) =>
-        leaveRoom(state, roomId, userId, isMyRoomMembership)
+        leaveRoom(state, roomId, userId, isMyRoomMembership),
       ),
     userId: null,
     setUserId: (userId: string | undefined) => set({ userId: userId ?? null }),
@@ -108,12 +108,12 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       roomId: string,
       userId: string,
       membership: Membership,
-      isMyRoomMembership: boolean
+      isMyRoomMembership: boolean,
     ) =>
       set((state: MatrixStoreStates) =>
-        updateMembership(state, roomId, userId, membership, isMyRoomMembership)
+        updateMembership(state, roomId, userId, membership, isMyRoomMembership),
       ),
-  })
+  }),
 );
 
 function createRoom(state: MatrixStoreStates, roomId: string) {
@@ -132,7 +132,7 @@ function setNewMessage(
   state: MatrixStoreStates,
   roomId: string,
   sender: string,
-  message: string
+  message: string,
 ) {
   const changedAllMessages = state.allMessages ? { ...state.allMessages } : {};
   const changedRoomMessages = changedAllMessages[roomId]
@@ -210,7 +210,7 @@ function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
 function setRoomName(
   state: MatrixStoreStates,
   roomId: string,
-  newName: string
+  newName: string,
 ) {
   const room = state.rooms?.[roomId];
   if (room && room.name !== newName) {
@@ -230,7 +230,7 @@ function updateMembership(
   roomId: string,
   userId: string,
   membership: Membership,
-  isMyRoomMembership: boolean
+  isMyRoomMembership: boolean,
 ) {
   const room = state.rooms?.[roomId];
   if (room) {
@@ -257,7 +257,7 @@ function leaveRoom(
   state: MatrixStoreStates,
   roomId: string,
   userId: string,
-  isMyRoomMembership: boolean
+  isMyRoomMembership: boolean,
 ) {
   const room = state.rooms?.[roomId];
   if (room) {
@@ -283,7 +283,7 @@ function joinRoom(
   state: MatrixStoreStates,
   roomId: string,
   userId: string,
-  isMyRoomMembership: boolean
+  isMyRoomMembership: boolean,
 ) {
   const room = state.rooms?.[roomId];
   if (room) {

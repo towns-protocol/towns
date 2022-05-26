@@ -14,7 +14,7 @@ interface Props {
 export function MatrixContextProvider(props: Props): JSX.Element {
   const { matrixClient } = useMatrixClientListener(
     props.homeServerUrl,
-    props.initialSyncLimit
+    props.initialSyncLimit,
   );
 
   return (

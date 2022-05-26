@@ -61,47 +61,57 @@ export function useMatrixWalletSignIn() {
         return getChainIdEip155(chainId);
       }
     },
-    [chainId]
+    [chainId],
   );
 
   const walletAddress = useMemo(
     () =>
       accounts && accounts.length > 0 ? accounts[0].toLowerCase() : undefined,
-    [accounts]
+    [accounts],
   );
 
-  const authenticationError = useCallback(function (
-    error: AuthenticationError
-  ): void {
-    console.error(error.message);
-    setLoginStatus(LoginStatus.LoggedOut);
-    setLoginError(error);
-  },
-  []);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const authenticationSuccess = useCallback(function (response: any) {
-    const { access_token, device_id, user_id } = response;
-    if (access_token && device_id && user_id) {
-      setAccessToken(access_token);
-      setDeviceId(device_id);
-      setUserId(user_id);
-      setUsername(getUsernameFromId(user_id));
-      setLoginStatus(LoginStatus.LoggedIn);
-    } else {
-      setLoginError({
-        code: StatusCodes.UNAUTHORIZED,
-        message:
-          "Server did not return access_token, user_id, and / or device_id",
-      });
+  const authenticationError = useCallback(
+    function (error: AuthenticationError): void {
+      console.error(error.message);
       setLoginStatus(LoginStatus.LoggedOut);
-    }
-  }, []);
+      setLoginError(error);
+    },
+    [setLoginError, setLoginStatus],
+  );
+
+  const authenticationSuccess = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function (response: any) {
+      const { access_token, device_id, user_id } = response;
+      if (access_token && device_id && user_id) {
+        setAccessToken(access_token);
+        setDeviceId(device_id);
+        setUserId(user_id);
+        setUsername(getUsernameFromId(user_id));
+        setLoginStatus(LoginStatus.LoggedIn);
+      } else {
+        setLoginError({
+          code: StatusCodes.UNAUTHORIZED,
+          message:
+            "Server did not return access_token, user_id, and / or device_id",
+        });
+        setLoginStatus(LoginStatus.LoggedOut);
+      }
+    },
+    [
+      setAccessToken,
+      setDeviceId,
+      setLoginError,
+      setLoginStatus,
+      setUserId,
+      setUsername,
+    ],
+  );
 
   const signMessage = useCallback(
     async function (
       sessionId: string,
-      statementToSign: string
+      statementToSign: string,
     ): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
       const { messageToSign, hashFields } = createMessageToSign({
@@ -132,7 +142,7 @@ export function useMatrixWalletSignIn() {
 
       console.log(`[signMessage] end`);
     },
-    [chainIdEip155, homeServer, sign, walletAddress]
+    [chainIdEip155, homeServer, sign, walletAddress],
   );
 
   const getIsWalletIdRegistered = useCallback(
@@ -143,7 +153,7 @@ export function useMatrixWalletSignIn() {
           // isUsernameAvailable returns true if you can register
           // a new account for that id.
           const isAvailable = await matrixClient.isUsernameAvailable(
-            walletAddress
+            walletAddress,
           );
           // Not available means the id is registered
           const isRegistered = isAvailable === false;
@@ -158,18 +168,18 @@ export function useMatrixWalletSignIn() {
       console.log(`[getWalletIdRegistered] true`);
       return true;
     },
-    [homeServer, walletAddress]
+    [homeServer, walletAddress],
   );
 
   const createAndSignAuthData = useCallback(
     async function (
       sessionId: string,
-      statementToSign: string
+      statementToSign: string,
     ): Promise<AuthenticationData | undefined> {
       try {
         const { signature, hashFields, message } = await signMessage(
           sessionId,
-          statementToSign
+          statementToSign,
         );
         if (signature) {
           // Send the signed message and auth data to the server.
@@ -189,7 +199,7 @@ export function useMatrixWalletSignIn() {
       }
       return undefined;
     },
-    [signMessage, walletAddress]
+    [signMessage, walletAddress],
   );
 
   const registerWallet = useCallback(
@@ -205,7 +215,7 @@ export function useMatrixWalletSignIn() {
           try {
             const { sessionId, chainIds, error } = await newRegisterSession(
               matrixClient,
-              walletAddress
+              walletAddress,
             );
             console.log(
               "[registerWallet] newRegisterSession result, sessionId =",
@@ -219,13 +229,13 @@ export function useMatrixWalletSignIn() {
               chainIdEip155,
               typeof chainIdEip155,
               " in chainIds =",
-              chainIds
+              chainIds,
             );
             if (!error && sessionId && chainIds.includes(chainIdEip155)) {
               // Prompt the user to sign the message.
               const authData: AuthenticationData = await createAndSignAuthData(
                 sessionId,
-                statementToSign
+                statementToSign,
               );
               const auth: RegistrationAuthentication = {
                 type: LoginTypePublicKey,
@@ -242,16 +252,16 @@ export function useMatrixWalletSignIn() {
                   };
                   console.log(
                     `[registerWallet] sending registerRequest`,
-                    request
+                    request,
                   );
 
                   const response = await matrixClient.registerRequest(
                     request,
-                    LoginTypePublicKey
+                    LoginTypePublicKey,
                   );
                   console.log(
                     `[registerWallet] received response from registerRequest`,
-                    response
+                    response,
                   );
 
                   if (response.access_token) {
@@ -287,7 +297,7 @@ export function useMatrixWalletSignIn() {
               authenticationError({
                 code: StatusCodes.UNAUTHORIZED,
                 message: `Server does not allow registration for blockchain network ${getChainName(
-                  chainIdEip155
+                  chainIdEip155,
                 )}`,
               });
             } else {
@@ -319,12 +329,14 @@ export function useMatrixWalletSignIn() {
     [
       authenticationError,
       authenticationSuccess,
+      chainId,
       chainIdEip155,
       createAndSignAuthData,
       homeServer,
       loginStatus,
+      setLoginStatus,
       walletAddress,
-    ]
+    ],
   );
 
   const loginWithWallet = useCallback(
@@ -341,14 +353,14 @@ export function useMatrixWalletSignIn() {
               await getPublicKeySignInSupported(matrixClient);
             if (isPublicKeySignInSupported) {
               const { sessionId, chainIds, error } = await newLoginSession(
-                matrixClient
+                matrixClient,
               );
 
               if (!error && sessionId && chainIds.includes(chainIdEip155)) {
                 // Prompt the user to sign the message.
                 const auth = await createAndSignAuthData(
                   sessionId,
-                  statementToSign
+                  statementToSign,
                 );
 
                 if (auth) {
@@ -358,7 +370,7 @@ export function useMatrixWalletSignIn() {
                       LoginTypePublicKey,
                       {
                         auth,
-                      }
+                      },
                     );
 
                     if (response.access_token) {
@@ -394,7 +406,7 @@ export function useMatrixWalletSignIn() {
                 authenticationError({
                   code: StatusCodes.UNAUTHORIZED,
                   message: `Server does not allow login for blockchain network ${getChainName(
-                    chainIdEip155
+                    chainIdEip155,
                   )}`,
                 });
               } else {
@@ -435,8 +447,9 @@ export function useMatrixWalletSignIn() {
       createAndSignAuthData,
       homeServer,
       loginStatus,
+      setLoginStatus,
       walletAddress,
-    ]
+    ],
   );
 
   return {
@@ -473,7 +486,7 @@ Resources:
 function createMessageFromTemplate(
   statement: string,
   messageInfo: PublicKeyEthereumHashFields,
-  hash: string
+  hash: string,
 ) {
   // See https://github.com/HereNotThere/harmony/blob/main/servers/matrix-publickey-login-spec.md for message template.
 
@@ -487,7 +500,7 @@ Hash: ${hash}
 }
 
 async function getPublicKeySignInSupported(
-  client: MatrixClient
+  client: MatrixClient,
 ): Promise<boolean> {
   // Get supported flows from the server.
   // loginFlows return type is wrong. Cast it to the expected type.
@@ -503,7 +516,7 @@ function getAuthority(uri: string): string {
 }
 
 function ensureSpecCompliantAuthenticationData(
-  authInput: PublicKeyEthereumHashFields
+  authInput: PublicKeyEthereumHashFields,
 ): PublicKeyEthereumHashFields {
   // Parse and extract the RFC 3986 authority.
   const authority = getAuthority(authInput.domain);
@@ -547,7 +560,7 @@ function createMessageToSign(args: {
     messageToSign: createMessageFromTemplate(
       args.statementToSign,
       hashFields,
-      hash
+      hash,
     ),
   };
 }
@@ -577,7 +590,7 @@ async function newLoginSession(client: MatrixClient): Promise<NewSession> {
         return newSessionSuccess(loginFlows.session, params);
       } else {
         return newSessionError(
-          `Server did not return information about the chain IDs or version`
+          `Server did not return information about the chain IDs or version`,
         );
       }
     } else {
@@ -592,7 +605,7 @@ async function newLoginSession(client: MatrixClient): Promise<NewSession> {
 
 async function newRegisterSession(
   client: MatrixClient,
-  walletAddress: string
+  walletAddress: string,
 ): Promise<NewSession> {
   console.log(`[newRegisterSession] start`);
   try {
@@ -619,7 +632,7 @@ async function newRegisterSession(
       console.log(
         ` [newRegisterSession] Register session info`,
         loginFlows,
-        params
+        params,
       );
       return newSessionSuccess(loginFlows.session, params);
     } else {
@@ -634,7 +647,7 @@ async function newRegisterSession(
 
 function newSessionSuccess(
   sessionId: string,
-  params: PublicKeyEtheremParams
+  params: PublicKeyEtheremParams,
 ): NewSession {
   return {
     sessionId,

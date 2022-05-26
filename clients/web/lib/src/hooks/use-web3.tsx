@@ -77,16 +77,16 @@ function useWeb3() {
           logger.info(
             `onAccountsChanged: ${accounts.join(":")} accounts.length ${
               accounts.length
-            }`
+            }`,
           );
           setAccounts((oldAccounts) =>
             oldAccounts &&
             oldAccounts.length === accounts.length &&
             oldAccounts.every((oldAccount) =>
-              accounts.some((account) => account === oldAccount)
+              accounts.some((account) => account === oldAccount),
             )
               ? oldAccounts
-              : accounts
+              : accounts,
           );
           if (accounts.length > 0) {
             setWalletStatus(WalletStatus.Unlocked);
@@ -117,10 +117,10 @@ function useWeb3() {
             oldAccounts &&
             oldAccounts.length === accounts.length &&
             oldAccounts.every((oldAccount) =>
-              accounts.some((account) => account === oldAccount)
+              accounts.some((account) => account === oldAccount),
             )
               ? oldAccounts
-              : accounts
+              : accounts,
           );
           if (accounts.length > 0) {
             setWalletStatus(WalletStatus.Unlocked);
@@ -164,10 +164,10 @@ function useWeb3() {
           oldAccounts &&
           oldAccounts.length === accounts.length &&
           oldAccounts.every((oldAccount) =>
-            accounts.some((account) => account === oldAccount)
+            accounts.some((account) => account === oldAccount),
           )
             ? oldAccounts
-            : accounts
+            : accounts,
         );
         if (accounts.length > 0) {
           setWalletStatus(WalletStatus.Unlocked);
@@ -179,7 +179,7 @@ function useWeb3() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         logger.error(
-          `Error requesting eth_requestAccounts: ${error.message}. Code: ${error.code}. Data: ${error.data}`
+          `Error requesting eth_requestAccounts: ${error.message}. Code: ${error.code}. Data: ${error.data}`,
         );
         setWalletStatus(WalletStatus.Error);
         return { accounts: [], chainId: undefined };
@@ -211,17 +211,17 @@ function useWeb3() {
       } catch (error: any) {
         logger.error(
           `Error requesting personal_ecRecover: ${error.message}.
-       Code: ${error.code}. Data: ${error.data}`
+       Code: ${error.code}. Data: ${error.data}`,
         );
       }
     },
-    [ethereum]
+    [ethereum],
   );
 
   const sign = useCallback(
     async (
       message: string,
-      walletAddress: string
+      walletAddress: string,
     ): Promise<string | undefined> => {
       try {
         const signature = await ethereum.request({
@@ -237,11 +237,11 @@ function useWeb3() {
       } catch (error: any) {
         logger.error(
           `Error requesting personal_sign: ${error.message}.
-       Code: ${error.code}. Data: ${error.data}`
+       Code: ${error.code}. Data: ${error.data}`,
         );
       }
     },
-    [ethereum]
+    [ethereum],
   );
 
   return {
