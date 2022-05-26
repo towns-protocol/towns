@@ -61,14 +61,14 @@ export function Login(): JSX.Element {
     async function () {
       loginWithWallet(StatementToSign);
     },
-    [loginWithWallet]
+    [loginWithWallet],
   );
 
   const onRegisterNewWallet = useCallback(
     async function () {
       registerWallet(StatementToSign);
     },
-    [registerWallet]
+    [registerWallet],
   );
 
   const onCloseAlert = useCallback(function () {
@@ -164,19 +164,27 @@ export function Login(): JSX.Element {
   }, [loginStatus, onConnectClick, onLoginWithWallet, walletStatus]);
 
   useEffect(() => {
-    if (
-      loginStatus === LoginStatus.LoggedOut &&
-      walletStatus === WalletStatus.Unlocked
-    ) {
-      const getIsRegistered = async () => {
-        const isRegistered = await getIsWalletIdRegistered();
-        setWalletRegistered(isRegistered);
-      };
-
-      getIsRegistered().catch((reason: any) => {
-        setShowError(reason);
-      });
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        if (
+          loginStatus === LoginStatus.LoggedOut &&
+          walletStatus === WalletStatus.Unlocked
+        ) {
+          const isRegistered = await getIsWalletIdRegistered();
+          if (!cancelled) {
+            setWalletRegistered(isRegistered);
+          }
+        }
+      } catch (reason: any) {
+        if (!cancelled) {
+          setShowError(reason);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [getIsWalletIdRegistered, loginStatus, walletStatus]);
 
   return (
