@@ -15,3 +15,7 @@
 
 # Debug
 **/__debug_bin
+
+# Dendrite debugging
+dendrite/slack-registration.yaml
+dendrite/zion-registration.yaml

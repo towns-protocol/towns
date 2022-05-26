@@ -1,8 +1,9 @@
-# VS Code
-.vscode/
-
 # Build files
 bin/
 
 # Development-time files
 config.yaml
+zion-registration.yaml
+debug.log.*
+error.log.*
+*.db

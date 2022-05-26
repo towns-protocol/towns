@@ -1,6 +1,7 @@
 import {
   BridgeContext,
   BridgeController,
+  Logging,
   MatrixUser,
   PresenceEvent,
   ReadReceiptEvent,
@@ -11,21 +12,26 @@ import {
   WeakEvent,
 } from "matrix-appservice-bridge";
 
+import { LOGGER_NAME } from "./global-const";
+
 const PrintTag = "[ZionBridgeController]";
+const log = Logging.get(LOGGER_NAME);
+
 export class ZionBridgeController implements BridgeController {
   public async onEvent(
     request: Request<WeakEvent>,
-    context?: BridgeContext | undefined
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    context?: BridgeContext | undefined,
   ): Promise<void> {
     const ev = request.getData();
-    console.log(`${PrintTag} onEvent`, ev);
+    log.info(`${PrintTag} onEvent`, ev);
   }
 
   public async onEphemeralEvent(
-    request: Request<TypingEvent | ReadReceiptEvent | PresenceEvent>
+    request: Request<TypingEvent | ReadReceiptEvent | PresenceEvent>,
   ): Promise<void> {
     const ev = request.getData();
-    console.log(`${PrintTag} onEphemeralEvent`, ev);
+    log.info(`${PrintTag} onEphemeralEvent`, ev);
   }
 
   public async onUserQuery(matrixUser: MatrixUser): Promise<{
@@ -33,21 +39,22 @@ export class ZionBridgeController implements BridgeController {
     url?: string | undefined;
     remote?: RemoteUser | undefined;
   } | null | void> {
-    console.log(`${PrintTag} onUserQuery`, matrixUser);
+    log.info(`${PrintTag} onUserQuery`, matrixUser);
   }
 
   public async onAliasQuery(
     alias: string,
-    aliasLocalpart: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    aliasLocalpart: string,
   ): Promise<{
     roomId?: string;
     creationOpts?: Record<string, unknown>;
     remote?: RemoteRoom;
   } | null | void> {
-    console.log(`${PrintTag} onAliasQuery`, alias);
+    log.info(`${PrintTag} onAliasQuery`, alias);
   }
 
   public onLog(text: string, isError: boolean): void {
-    console.log(`${PrintTag} onLog`, { text, isError });
+    log.info(`${PrintTag} onLog`, { text, isError });
   }
 }

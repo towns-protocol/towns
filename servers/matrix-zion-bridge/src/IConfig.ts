@@ -11,7 +11,6 @@ export interface ILoggerConfig {
 }
 
 export interface IConfig {
-  homeserverUrl: string;
   domain: string;
   logging: ILoggerConfig;
   homeserver: {
@@ -20,4 +19,6 @@ export interface IConfig {
     appservice_port?: number;
     appservice_host?: string;
   };
+  homeserverUrl: string;
+  username_prefix: string;
 }

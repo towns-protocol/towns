@@ -12,7 +12,8 @@
     "install": "./install.sh",
     "build": "tsc",
     "start": "node ./bin/app.js",
-    "dev": "ts-node ./src/app.ts",
+    "dev": "ts-node ./src/app.ts -c config.yaml -p 6789",
+    "register": "ts-node ./src/app.ts -r -f zion-registration.yaml -c config.yaml -u http://localhost:6789",
     "watch": "tsc --watch"
   },
   "dependencies": {

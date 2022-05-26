@@ -1,11 +1,13 @@
 import { Cli } from "matrix-appservice-bridge";
-import { ZionCliOpts } from "./ZionCliOpts";
+import { ZionServer } from "./ZionServer";
 
-const cli = new Cli(
-  new ZionCliOpts({
-    defaultPort: 6868,
-    registrationFilename: "zion-registration.yaml",
-    schema: "zion-config-schema.yaml",
-  })
-);
+const zionServer = new ZionServer({
+  defaultPort: 6868,
+  registrationPath: "zion-registration.yaml",
+  schema: "zion-config-schema.yaml",
+});
+
+const cli = new Cli(zionServer);
+zionServer.setCliHook(cli);
+
 cli.run();
