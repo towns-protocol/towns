@@ -23,7 +23,7 @@ const formatInvite = (r: Room): SpaceData =>
 const formatSpace = (r: Room): SpaceData =>
   formatRoom(r, "/placeholders/nft_29.png");
 
-export function useSpaceDataListener() {
+export const useSpaceDataListener = () => {
   const { rooms } = useMatrixStore();
   const { setSpaces, setInvites } = useSpaceDataStore();
 
@@ -46,4 +46,4 @@ export function useSpaceDataListener() {
     setSpaces(spaces);
     setInvites(invites);
   }, [rooms, setSpaces, setInvites]);
-}
+};

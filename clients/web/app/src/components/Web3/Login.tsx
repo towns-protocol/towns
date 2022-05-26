@@ -39,19 +39,13 @@ export const Login = () => {
     }
   }, [requestAccounts, walletStatus]);
 
-  const onLoginWithWallet = useCallback(
-    async function () {
-      loginWithWallet(StatementToSign);
-    },
-    [loginWithWallet],
-  );
+  const onLoginWithWallet = useCallback(() => {
+    loginWithWallet(StatementToSign);
+  }, [loginWithWallet]);
 
-  const onRegisterNewWallet = useCallback(
-    async function () {
-      registerWallet(StatementToSign);
-    },
-    [registerWallet],
-  );
+  const onRegisterNewWallet = useCallback(() => {
+    registerWallet(StatementToSign);
+  }, [registerWallet]);
 
   useEffect(() => {
     if (loginError?.message) {

@@ -13,7 +13,7 @@ export const SpacesInvite = () => {
 
   const navigate = useNavigate();
 
-  const onCancelClicked = useCallback(async () => {
+  const onCancelClicked = useCallback(() => {
     navigate(spaceId ? "/spaces/" + spaceId : "/");
   }, [navigate, spaceId]);
 

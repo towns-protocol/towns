@@ -17,8 +17,8 @@ export const SpacesSettings = () => {
     console.log("leave clicked", spaceId);
     if (spaceId) {
       await leaveRoom(spaceId);
-      navigate("/");
     }
+    navigate("/");
   }, [leaveRoom, navigate, spaceId]);
 
   return (
