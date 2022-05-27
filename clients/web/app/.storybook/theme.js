@@ -1,7 +1,6 @@
 // .storybook/YourTheme.js
 
-import { create } from "@storybook/theming";
-import { themes } from "@storybook/theming";
+import { create, themes } from "@storybook/theming";
 
 const base = {
   appBorderRadius: 0,
@@ -9,7 +8,7 @@ const base = {
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
   fontCode: "monospace",
   inputBorderRadius: 0,
-  brandTitle: "Harmony",
+  brandTitle: "Zion",
   // brandUrl: "https://hntlabs.com",
   // brandImage: "https://hntlabs.com/hntlabs_og.png",
 };
