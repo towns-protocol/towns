@@ -1,7 +1,8 @@
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
-import { Button, Dropdown, Icon, Input } from "@ui";
+import { ContextBar } from "@components/ContextBar";
+import { Box, Button, Dropdown, Stack, TextField } from "@ui";
 
 interface Props {
   onClick: (roomId: string, membership: Membership) => void;
@@ -46,39 +47,45 @@ export const CreateRoomForm = (props: Props) => {
     }
   }, [createRoom, isDM, props, roomName, visibility, disableCreateButton]);
 
-  const renderDropdown = useCallback((selected?: string) => {
-    return !selected ? (
-      <></>
-    ) : (
-      <>
-        {selected}
-        <Icon type="down" size="square_inline" />
-      </>
-    );
-  }, []);
   return (
     <>
-      <h1>🚧 🚧 New Space 🚧 🚧</h1>
-      <p>Room Name:</p>
-      <Input placeholder="Type here..." onChange={onRoomNameChange} />
-      <p>Visibility:</p>
-      <Dropdown
-        options={VisibilityOptions.map((value) => ({ label: value, value }))}
-        renderSelected={renderDropdown}
-        selected={visibility}
-        onChange={(value) => setVisibility(value as Visibility)}
-      />
-      <p>Is DM:</p>
-      <Dropdown
-        options={IsDmOptions.map((value) => ({
-          label: String(value),
-          value: String(value),
-        }))}
-        renderSelected={renderDropdown}
-        selected={isDM}
-        onChange={(value) => setIsDM(value)}
-      />
-      <Button onClick={onClickCreateRoom}>Create</Button>
+      <ContextBar>New Space </ContextBar>
+      <Box grow centerContent>
+        <Stack padding gap="lg" minWidth="400">
+          <Stack gap="lg">
+            <TextField
+              label="Room Name"
+              secondaryLabel="(required)"
+              placeholder="Type here..."
+              onChange={onRoomNameChange}
+            />
+
+            <Dropdown
+              label="Visibility"
+              message=""
+              options={VisibilityOptions.map((value) => ({
+                label: value,
+                value,
+              }))}
+              defaultValue={visibility}
+              onChange={(value) => setVisibility(value as Visibility)}
+            />
+
+            <Dropdown
+              label="Is DM:"
+              options={IsDmOptions.map((value) => ({
+                label: String(value),
+                value: String(value),
+              }))}
+              defaultValue={isDM}
+              onChange={(value) => setIsDM(value)}
+            />
+          </Stack>
+          <Button size="input_lg" icon="plus" onClick={onClickCreateRoom}>
+            Create
+          </Button>
+        </Stack>
+      </Box>
     </>
   );
 };

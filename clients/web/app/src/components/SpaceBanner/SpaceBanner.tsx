@@ -76,7 +76,7 @@ const UserDropDown = () => {
     <Dropdown
       options={pseudos.map((p) => ({ label: p.displayName, value: p.id }))}
       renderSelected={renderSelected}
-      selected={pseudos[0].id}
+      defaultValue={pseudos[0].id}
     />
   );
 };

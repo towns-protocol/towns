@@ -1,55 +1,53 @@
+import clsx from "clsx";
 import React, { useCallback } from "react";
 import { Stack } from "../Stack/Stack";
+import { Field, FieldBaseProps } from "../_internal/Field/Field";
+import * as styles from "./Dropdown.css";
 
 type Props = {
-  selected?: string;
   defaultValue?: string;
   options: { label: string; value: string }[];
   renderSelected?: (selected?: string) => JSX.Element;
   onChange?: (value: string) => void;
-};
-// & HTMLAttributes<HTMLSelectElement>;
+} & FieldBaseProps;
 
-export function Dropdown(props: Props) {
-  const { selected, options: items } = props;
-  // const Selected = useCallback(() => {
-  //   return typeof renderSelected === "function"
-  //     ? renderSelected(selected)
-  //     : selected;
-  // }, [renderSelected, selected]);
-
-  // renderSelected ?? (({ selected?: string }) => <>{props.selected}</>);
+export const Dropdown = (props: Props) => {
+  const {
+    defaultValue,
+    options,
+    onChange: delegatedOnChange,
+    ...fieldProps
+  } = props;
 
   const onChange = useCallback(
     (e: React.FormEvent) => {
       const selectEvent = e as React.FormEvent<HTMLSelectElement>;
-      props.onChange && props.onChange(selectEvent.currentTarget.value);
+      delegatedOnChange && delegatedOnChange(selectEvent.currentTarget.value);
     },
-    [props],
+    [delegatedOnChange],
   );
 
   return (
-    <Stack
-      horizontal
-      as="select"
-      background="level2"
-      alignItems="center"
-      height="x4"
-      paddingX="md"
-      rounded="sm"
-      fontSize="md"
-      onChange={onChange}
-    >
-      {/* <Selected /> */}
-      {items.map((o) => (
-        <option
-          key={o.value}
-          value={o.value}
-          selected={String(o.value) === String(selected)}
-        >
-          {String(o.label)}
-        </option>
-      ))}
-    </Stack>
+    <Field {...fieldProps}>
+      {(overlays, { className, ...inputProps }) => (
+        <>
+          <Stack
+            horizontal
+            as="select"
+            className={clsx(className, styles.dropdown)}
+            onChange={onChange}
+            {...inputProps}
+            defaultValue={defaultValue}
+          >
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {String(o.label)}
+              </option>
+            ))}
+          </Stack>
+          {overlays}
+        </>
+      )}
+    </Field>
   );
-}
+};

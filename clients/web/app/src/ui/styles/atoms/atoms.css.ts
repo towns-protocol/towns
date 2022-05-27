@@ -23,21 +23,26 @@ const responsiveAtomicProperties = defineProperties({
     // display
     display: ["block", "flex", "grid", "inline-block", "none", "contents"],
 
+    pointerEvents: ["all", "auto", "none"],
+
     // size
     aspectRatio: aspectRatio,
     height: {
       ...vars.dims.baseline,
       ...vars.dims.height,
+      ...vars.dims.input,
       ...vars.dims.screen,
     },
     minHeight: {
       ...vars.dims.baseline,
       ...vars.dims.height,
+      ...vars.dims.input,
       ...vars.dims.screen,
     },
     maxHeight: {
       ...vars.dims.baseline,
       ...vars.dims.height,
+      ...vars.dims.input,
       ...vars.dims.screen,
     },
     width: { ...vars.dims.baseline, ...vars.dims.height, ...vars.dims.screen },

@@ -1,6 +1,17 @@
 import React from "react";
-import { Input } from "@ui";
+import { Box, TextField } from "@ui";
 
 export const Search = () => {
-  return <Input type="search" placeholder="Search" />;
+  return (
+    <Box>
+      <TextField
+        noBorder
+        height="input_md"
+        width="300"
+        background="level2"
+        icon="search"
+        placeholder="Search..."
+      />
+    </Box>
+  );
 };

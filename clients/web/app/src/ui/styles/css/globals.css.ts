@@ -8,7 +8,7 @@ globalStyle("html, body", {
   textRendering: "optimizeLegibility",
   WebkitFontSmoothing: "antialiased",
   MozOsxFontSmoothing: "grayscale",
-  fontSize: vars.fontSize.lg,
+  fontSize: vars.fontSize.md,
 });
 
 globalStyle("*", {

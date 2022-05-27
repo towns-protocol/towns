@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Button, Input } from "@ui";
+import { Button, TextField } from "@ui";
 
 interface Props {
   spaceName: string;
@@ -30,7 +30,7 @@ export const InviteUserToRoomForm = (props: Props) => {
     <>
       <h1> Invite user to join space "{props.spaceName}" </h1>
       <p>Invitee user id:</p>
-      <Input placeholder="@userId:homeServer" onChange={onChangeUserId} />
+      <TextField placeholder="@userId:homeServer" onChange={onChangeUserId} />
       <Button onClick={onInviteClicked}>INVITE</Button>
       <Button onClick={props.onCancelClicked}>CANCEL</Button>
     </>

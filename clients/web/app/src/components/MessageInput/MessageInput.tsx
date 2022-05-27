@@ -1,5 +1,5 @@
 import React from "react";
-import { Avatar, Box, Input } from "@ui";
+import { Avatar, Stack, TextField } from "@ui";
 
 export const MessageInput = ({
   size = "input_lg",
@@ -12,16 +12,17 @@ export const MessageInput = ({
   onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   value?: string | number;
 }) => (
-  <Box grow direction="row">
-    <Input
-      grow
+  <Stack grow horizontal>
+    <TextField
+      noBorder
+      background="level1"
       placeholder="Type here..."
       icon="plus"
       height={size}
-      after={<Avatar size="avatar_xs" />}
       value={value}
+      after={<Avatar size="avatar_xs" />}
       onChange={onChange}
       onKeyDown={onKeyDown}
     />
-  </Box>
+  </Stack>
 );

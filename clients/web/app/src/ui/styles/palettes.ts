@@ -20,7 +20,7 @@ const tone = {
   critical: "#e71a16",
   warning: "#e78216",
   positive: FigmaPalette.Green,
-  neutral: FigmaPalette.MedGrey,
+  neutral: FigmaPalette.Grey,
   accent: FigmaPalette.Red,
   etherum: FigmaPalette.ENSBlue,
 } as const;

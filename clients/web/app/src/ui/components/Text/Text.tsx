@@ -8,9 +8,16 @@ import {
   truncateTextStyle,
 } from "./Text.css";
 
-type Props = {
-  // HTML representation
-  as?: "p" | "span" | "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5";
+type ParagraphProps = {
+  as?: "p" | "span" | "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "label";
+};
+
+type LabelProps = {
+  as: "label";
+  for: string;
+};
+
+type Props = (ParagraphProps | LabelProps) & {
   // HTML class name
   className?: string;
   // React child nodes

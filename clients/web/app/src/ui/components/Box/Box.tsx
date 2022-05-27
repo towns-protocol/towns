@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import React, {
-  HTMLAttributes,
+  AllHTMLAttributes,
   createElement,
   forwardRef,
   useMemo,
@@ -36,7 +36,6 @@ type ShorthandProps = {
 };
 
 type Props = {
-  as?: keyof JSX.IntrinsicElements;
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -45,8 +44,11 @@ type Props = {
   debug?: boolean;
 } & ShorthandProps &
   OmitShorthandSprinkles &
-  /* TODO: possible to match with typeof `as` ? */
-  HTMLAttributes<HTMLDivElement>;
+  // filter Props conflicting with HTML attributes
+  Omit<
+    AllHTMLAttributes<HTMLElement>,
+    "width" | "height" | "className" | "colSpan" | "size"
+  >;
 
 const boxDefaults: Atoms = {
   display: "flex",
