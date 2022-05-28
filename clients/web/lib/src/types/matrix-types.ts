@@ -15,6 +15,7 @@ export interface Room {
   membership: string;
   members: Members;
   inviter?: string;
+  isSpaceRoom?: boolean;
 }
 
 export interface Rooms {
@@ -44,6 +45,7 @@ export interface CreateRoomInfo {
   roomName: string;
   visibility: Visibility;
   isDirectMessage?: boolean;
+  isSpace: boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

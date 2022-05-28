@@ -47,6 +47,11 @@ export function useMatrixClient() {
             name: createInfo.roomName,
             is_direct: createInfo.isDirectMessage,
           };
+          if (createInfo.isSpace) {
+            options.creation_content = {
+              type: "m.space",
+            };
+          }
           const response = await matrixClient.createRoom(options);
           console.log(`Created room`, JSON.stringify(response));
           return response.room_id;

@@ -188,6 +188,7 @@ function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
           ? r.guessDMUserId()
           : undefined,
       members: {},
+      isSpaceRoom: r.isSpaceRoom(),
     };
     const members = r.getMembersWithMembership(Membership.Join);
     for (const m of members) {

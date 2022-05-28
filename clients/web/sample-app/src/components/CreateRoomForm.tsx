@@ -27,14 +27,14 @@ export function CreateRoomForm(props: Props): JSX.Element {
 
   const disableCreateButton = useMemo(
     () => roomName.length === 0,
-    [roomName.length]
+    [roomName.length],
   );
 
   const onChangeRoomName = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setRoomName(event.target.value);
     },
-    []
+    [],
   );
 
   const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
@@ -50,6 +50,7 @@ export function CreateRoomForm(props: Props): JSX.Element {
       roomName,
       visibility,
       isDirectMessage: isDM === "true",
+      isSpace: false,
     };
     const roomId = await createRoom(createRoomInfo);
     if (roomId) {
