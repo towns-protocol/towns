@@ -21,7 +21,7 @@
     "matrix-js-sdk": "^17.2.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-router": "^6.3.0",
+    "react-router-dom": "^6.3.0",
     "use-matrix-client": "*",
     "vanilla-classnames": "^0.1.0"
   },
