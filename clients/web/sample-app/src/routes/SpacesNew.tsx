@@ -1,7 +1,7 @@
 export const SpacesNew = () => {
   return (
     <div>
-      <h1>SpacesNew</h1>
+      <h1>CREATE SPACE!</h1>
     </div>
   );
 };

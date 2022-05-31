@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
 
-export const Spaces = () => {
+export const Rooms = () => {
   return <Outlet />;
 };

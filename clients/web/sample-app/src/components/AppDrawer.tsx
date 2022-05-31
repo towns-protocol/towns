@@ -2,7 +2,6 @@ import { Button, IconButton, Theme } from "@mui/material";
 import {
   Membership,
   getShortUsername,
-  isRoom,
   useMatrixStore,
 } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
@@ -10,8 +9,6 @@ import { useCallback, useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import { Chat } from "./Chat";
-import { CreateRoomForm } from "./CreateRoomForm";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
@@ -19,8 +16,7 @@ import { Logout } from "./Logout";
 import { Rooms } from "./Rooms";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { Me } from "./Me";
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 
@@ -32,19 +28,11 @@ interface Props {
   window?: () => Window;
 }
 
-interface CurrentChatRoom {
-  roomId: string;
-  membership: string;
-}
-
 export default function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentChatRoom, setCurrentChatRoom] = useState<
-    CurrentChatRoom | undefined
-  >(undefined);
-  const { rooms, username } = useMatrixStore();
-  const [showCreateRoomForm, setShowCreateRoomForm] = useState<boolean>(false);
+  const { username } = useMatrixStore();
 
   const myWalletAddress = useMemo(() => {
     if (username) {
@@ -56,52 +44,16 @@ export default function AppDrawer(props: Props): JSX.Element {
     setMobileOpen(!mobileOpen);
   }, [mobileOpen]);
 
-  const onClickRoom = useCallback((roomId: string, membership: Membership) => {
-    setShowCreateRoomForm(false);
-    setCurrentChatRoom({
-      roomId,
-      membership,
-    });
-  }, []);
+  const onClickRoom = (roomId: string, membership: Membership) => {
+    navigate("/rooms/" + roomId);
+  };
 
-  const onClickCreateRoom = useCallback(() => {
-    setShowCreateRoomForm(true);
-  }, []);
-
-  const onClickLeaveRoom = useCallback(() => {
-    if (rooms) {
-      for (const r of Object.values(rooms)) {
-        if (
-          isRoom(r) &&
-          r.membership === Membership.Join &&
-          r.roomId !== currentChatRoom?.roomId
-        ) {
-          return setCurrentChatRoom({
-            roomId: r.roomId,
-            membership: r.membership,
-          });
-        }
-      }
-    }
-  }, [currentChatRoom?.roomId, rooms]);
-
-  const goToRoom = useCallback(
-    (roomId: string) => {
-      if (rooms) {
-        const room = rooms[roomId];
-        if (room) {
-          setCurrentChatRoom({
-            roomId: roomId,
-            membership: Membership.Join,
-          });
-        }
-      }
-    },
-    [rooms],
-  );
+  const onClickCreateRoom = () => {
+    navigate("/rooms/new");
+  };
 
   const onHomeClick = () => {
-    setCurrentChatRoom(undefined);
+    navigate("/");
   };
 
   const drawer = (
@@ -235,18 +187,7 @@ export default function AppDrawer(props: Props): JSX.Element {
         }}
       >
         <Toolbar />
-        {showCreateRoomForm ? (
-          <CreateRoomForm onClick={onClickRoom} />
-        ) : currentChatRoom ? (
-          <Chat
-            roomId={currentChatRoom.roomId}
-            membership={currentChatRoom.membership}
-            onClickLeaveRoom={onClickLeaveRoom}
-            goToRoom={goToRoom}
-          />
-        ) : (
-          <Outlet />
-        )}
+        <Outlet />
       </Box>
     </Box>
   );

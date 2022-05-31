@@ -8,7 +8,10 @@ import { Home } from "./routes/Home";
 import { Spaces } from "./routes/Spaces";
 import { SpacesNew } from "./routes/SpacesNew";
 import AppDrawer from "./components/AppDrawer";
-import { Me } from "./components/Me";
+import { SpacesIndex } from "./routes/SpacesIndex";
+import { Rooms } from "./routes/Rooms";
+import { RoomsIndex } from "./routes/RoomsIndex";
+import { RoomsNew } from "./routes/RoomsNew";
 
 const MATRIX_HOMESERVER_URL =
   process.env.MATRIX_HOME_SERVER ?? "https://node1.hntlabs.com";
@@ -22,9 +25,15 @@ export function App(): JSX.Element {
             <Routes>
               <Route element={<Main />}>
                 <Route element={<AppDrawer />}>
-                  <Route index element={<Me />} />
+                  <Route index element={<Home />} />
+                  <Route path="rooms/new" element={<RoomsNew />} />
+                  <Route path="rooms/:roomId" element={<Rooms />}>
+                    <Route index element={<RoomsIndex />}></Route>
+                  </Route>
                   <Route path="spaces/new" element={<SpacesNew />} />
-                  <Route path="spaces/:spaceId" element={<Spaces />} />
+                  <Route path="spaces/:spaceId" element={<Spaces />}>
+                    <Route index element={<SpacesIndex />} />
+                  </Route>
                   <Route path="*" element={<Home />} />
                 </Route>
               </Route>
