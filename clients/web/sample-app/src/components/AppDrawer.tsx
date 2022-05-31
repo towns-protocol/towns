@@ -52,6 +52,14 @@ export default function AppDrawer(props: Props): JSX.Element {
     navigate("/rooms/new");
   };
 
+  const onClickSpace = (spaceId: string, membership: Membership) => {
+    navigate("/spaces/" + spaceId);
+  };
+
+  const onClickCreateSpace = () => {
+    navigate("/spaces/new");
+  };
+
   const onHomeClick = () => {
     navigate("/");
   };
@@ -60,17 +68,36 @@ export default function AppDrawer(props: Props): JSX.Element {
     <div>
       <Toolbar />
       <Divider />
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+        Spaces
+      </Typography>
+      <Rooms
+        membership={Membership.Join}
+        isSpace={true}
+        onClickRoom={onClickSpace}
+      />
+      <Divider />
+      <SidebarNewItemButton label="Create Space" onClick={onClickCreateSpace} />
+      <Divider />
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+        Rooms
+      </Typography>
+      <Rooms
+        membership={Membership.Join}
+        isSpace={false}
+        onClickRoom={onClickRoom}
+      />
+      <Divider />
       <SidebarNewItemButton label="Create Room" onClick={onClickCreateRoom} />
       <Divider />
       <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        Joined
+        Invites
       </Typography>
-      <Rooms membership={Membership.Join} onClickRoom={onClickRoom} />
-      <Divider />
-      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        Invited
-      </Typography>
-      <Rooms membership={Membership.Invite} onClickRoom={onClickRoom} />
+      <Rooms
+        membership={Membership.Invite}
+        isSpace={false}
+        onClickRoom={onClickRoom}
+      />
     </div>
   );
 

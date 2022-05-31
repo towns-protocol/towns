@@ -6,16 +6,22 @@ import { useMemo } from "react";
 interface Props {
   membership: Membership;
   onClickRoom: (roomId: string, membership: Membership) => void;
+  isSpace: boolean;
 }
 
 export function Rooms(props: Props): JSX.Element {
   const { rooms } = useMatrixStore();
+  const { isSpace, membership, onClickRoom } = props;
 
   const foundRooms = useMemo(() => {
     if (rooms) {
       const foundRooms: Room[] = [];
       for (const r of Object.values(rooms)) {
-        if (isRoom(r) && r.membership === props.membership) {
+        if (
+          isRoom(r) &&
+          r.membership === membership &&
+          r.isSpaceRoom === isSpace
+        ) {
           foundRooms.push(r);
         }
       }
@@ -24,7 +30,7 @@ export function Rooms(props: Props): JSX.Element {
     }
 
     return undefined;
-  }, [props.membership, rooms]);
+  }, [isSpace, membership, rooms]);
 
   const roomItems = useMemo(() => {
     if (foundRooms) {
@@ -34,16 +40,16 @@ export function Rooms(props: Props): JSX.Element {
           <ListItem
             button
             key={r.roomId}
-            onClick={() => props.onClickRoom(r.roomId, props.membership)}
+            onClick={() => onClickRoom(r.roomId, membership)}
           >
             <ListItemText>{r.name}</ListItemText>
-          </ListItem>
+          </ListItem>,
         );
       }
       return items;
     }
     return undefined;
-  }, [foundRooms, props]);
+  }, [foundRooms, membership, onClickRoom]);
 
   return <List>{roomItems}</List>;
 }
