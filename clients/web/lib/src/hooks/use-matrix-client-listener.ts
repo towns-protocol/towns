@@ -259,7 +259,7 @@ function useRoomTimelineEventHandler(
         }
         case "m.room.create": {
           console.log(`m.room.create`, { roomId: room.roomId });
-          createRoom(room.roomId);
+          createRoom(room.roomId, room.isSpaceRoom());
           break;
         }
         case "m.room.name": {

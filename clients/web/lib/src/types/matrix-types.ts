@@ -15,7 +15,7 @@ export interface Room {
   membership: string;
   members: Members;
   inviter?: string;
-  isSpaceRoom?: boolean;
+  isSpaceRoom: boolean;
 }
 
 export interface Rooms {

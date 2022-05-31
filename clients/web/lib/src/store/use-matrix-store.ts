@@ -5,7 +5,7 @@ import createStore, { SetState } from "zustand";
 import { Room as MatrixRoom } from "matrix-js-sdk";
 
 export type MatrixStoreStates = {
-  createRoom: (roomId: string) => void;
+  createRoom: (roomId: string, isSpace: boolean) => void;
   isAuthenticated: boolean;
   deviceId: string | null;
   setDeviceId: (deviceId: string | undefined) => void;
@@ -79,8 +79,8 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set({ homeServer: homeServer ?? null }),
     rooms: null,
     allMessages: null,
-    createRoom: (roomId: string) =>
-      set((state: MatrixStoreStates) => createRoom(state, roomId)),
+    createRoom: (roomId: string, isSpace: boolean) =>
+      set((state: MatrixStoreStates) => createRoom(state, roomId, isSpace)),
     setNewMessage: (roomId: string, sender: string, message: string) =>
       set((state: MatrixStoreStates) =>
         setNewMessage(state, roomId, sender, message),
@@ -116,15 +116,20 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
   }),
 );
 
-function createRoom(state: MatrixStoreStates, roomId: string) {
+function createRoom(
+  state: MatrixStoreStates,
+  roomId: string,
+  isSpace: boolean,
+) {
   const changedRooms = { ...state.rooms };
-  const newdRoom: Room = {
+  const newRoom: Room = {
     roomId,
     name: "",
     membership: null,
     members: {},
+    isSpaceRoom: isSpace,
   };
-  changedRooms[roomId] = newdRoom;
+  changedRooms[roomId] = newRoom;
   return { rooms: changedRooms };
 }
 
@@ -157,6 +162,7 @@ function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
         ? room.guessDMUserId()
         : undefined,
     members: {},
+    isSpaceRoom: room.isSpaceRoom(),
   };
   const members = room.getMembersWithMembership(Membership.Join);
   for (const m of members) {
