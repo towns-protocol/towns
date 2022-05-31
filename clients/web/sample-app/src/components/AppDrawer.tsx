@@ -20,6 +20,7 @@ import { Rooms } from "./Rooms";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { Me } from "./Me";
+import { Outlet } from "react-router";
 
 const drawerWidth = 240;
 
@@ -96,7 +97,7 @@ export default function AppDrawer(props: Props): JSX.Element {
         }
       }
     },
-    [rooms]
+    [rooms],
   );
 
   const onHomeClick = () => {
@@ -244,7 +245,7 @@ export default function AppDrawer(props: Props): JSX.Element {
             goToRoom={goToRoom}
           />
         ) : (
-          <Me />
+          <Outlet />
         )}
       </Box>
     </Box>
