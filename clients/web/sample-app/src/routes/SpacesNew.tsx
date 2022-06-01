@@ -1,7 +1,11 @@
+import { useNavigate } from "react-router-dom";
+import { Membership } from "use-matrix-client";
+import { CreateSpaceForm } from "../components/CreateSpaceForm";
+
 export const SpacesNew = () => {
-  return (
-    <div>
-      <h1>CREATE SPACE!</h1>
-    </div>
-  );
+  const navigate = useNavigate();
+  const onSpaceCreated = (roomId: string, membership: Membership) => {
+    navigate("/rooms/" + roomId);
+  };
+  return <CreateSpaceForm onClick={onSpaceCreated} />;
 };

@@ -19,10 +19,9 @@ interface Props {
   onClick: (roomId: string, membership: Membership) => void;
 }
 
-export function CreateRoomForm(props: Props): JSX.Element {
+export const CreateSpaceForm = (props: Props) => {
   const [roomName, setRoomName] = useState<string>("");
   const [visibility, setVisibility] = useState<Visibility>(Visibility.Private);
-  const [isDM, setIsDM] = useState<string>(false.toString());
   const { createRoom } = useMatrixClient();
   const { onClick } = props;
 
@@ -42,22 +41,18 @@ export function CreateRoomForm(props: Props): JSX.Element {
     setVisibility(event.target.value as Visibility);
   }, []);
 
-  const onChangeIsDM = useCallback((event: SelectChangeEvent) => {
-    setIsDM(event.target.value as string);
-  }, []);
-
-  const onClickCreateRoom = useCallback(async () => {
+  const onClickCreateSpace = useCallback(async () => {
     const createRoomInfo: CreateRoomInfo = {
       roomName,
       visibility,
-      isDirectMessage: isDM === "true",
-      isSpace: false,
+      isDirectMessage: false,
+      isSpace: true,
     };
     const roomId = await createRoom(createRoomInfo);
     if (roomId) {
       onClick(roomId, Membership.Join);
     }
-  }, [createRoom, isDM, onClick, roomName, visibility]);
+  }, [createRoom, onClick, roomName, visibility]);
 
   return (
     <Box
@@ -70,7 +65,7 @@ export function CreateRoomForm(props: Props): JSX.Element {
       }}
     >
       <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        CREATE ROOM
+        CREATE SPACE
       </Typography>
       <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
         <Box
@@ -80,11 +75,11 @@ export function CreateRoomForm(props: Props): JSX.Element {
           marginTop="10px"
         >
           <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
-            Room name:
+            Space name:
           </Typography>
           <TextField
             id="filled-basic"
-            label="Name of the room"
+            label="Name of the space"
             variant="filled"
             onChange={onChangeRoomName}
           />
@@ -118,31 +113,12 @@ export function CreateRoomForm(props: Props): JSX.Element {
           alignItems="center"
           gridTemplateColumns="repeat(2, 1fr)"
           marginTop="20px"
-        >
-          <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
-            Is DM:
-          </Typography>
-          <Box minWidth="120px">
-            <FormControl fullWidth>
-              <InputLabel id="is-dm-select-label"></InputLabel>
-              <Select
-                labelId="is-dm--select-label"
-                id="is-dm--select"
-                value={isDM}
-                onChange={onChangeIsDM}
-              >
-                <MenuItem value={false.toString()}>false</MenuItem>
-                <MenuItem value={true.toString()}>true</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
-        <Box></Box>
+        ></Box>
         <Box display="flex" flexDirection="column" alignItems="center">
           <Button
             variant="contained"
             color="primary"
-            onClick={onClickCreateRoom}
+            onClick={onClickCreateSpace}
             disabled={disableCreateButton}
           >
             Create
@@ -151,7 +127,7 @@ export function CreateRoomForm(props: Props): JSX.Element {
       </Box>
     </Box>
   );
-}
+};
 
 const spacingStyle = {
   padding: (theme: Theme) => theme.spacing(2),
