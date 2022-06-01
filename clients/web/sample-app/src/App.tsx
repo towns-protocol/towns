@@ -13,8 +13,8 @@ import { Rooms } from "./routes/Rooms";
 import { RoomsIndex } from "./routes/RoomsIndex";
 import { RoomsNew } from "./routes/RoomsNew";
 
-const MATRIX_HOMESERVER_URL =
-  process.env.MATRIX_HOME_SERVER ?? "https://node1.hntlabs.com";
+const MATRIX_HOMESERVER_URL = process.env
+  .REACT_APP_MATRIX_HOME_SERVER as string;
 
 export function App(): JSX.Element {
   return (
