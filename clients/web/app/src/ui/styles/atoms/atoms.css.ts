@@ -125,6 +125,7 @@ const responsiveAtomicProperties = defineProperties({
     alignSelf: { ...flexAlignment, baseline: "baseline" },
     justifyContent: flexJustifyAlignment,
     justifySelf: flexAlignment,
+    zIndex: vars.zIndex,
   },
 
   shorthands: {

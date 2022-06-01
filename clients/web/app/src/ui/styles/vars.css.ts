@@ -205,6 +205,11 @@ const root = createGlobalTheme(":root", {
     11: `span 11`,
     12: `span 12`,
   } as const,
+
+  zIndex: {
+    ui: "100",
+    tooltips: "10000",
+  } as const,
 });
 
 const defaultColorTheme = createGlobalTheme(":root", color, palettes.light);

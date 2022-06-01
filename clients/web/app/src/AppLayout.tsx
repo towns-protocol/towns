@@ -10,7 +10,7 @@ import {
 } from "@components/SideBars";
 import { TopBar } from "@components/TopBar";
 import { Web3Bar } from "@components/Web3";
-import { Box, Stack, TopLayerPortalContext } from "@ui";
+import { Box, RootLayerContext, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 import { useSpaceDataListener } from "hooks/useSpaceDataListener";
 import { useSpaceDataStore } from "store/spaceDataStore";
@@ -28,7 +28,7 @@ export const AppLayout = () => {
 
   return (
     <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
-      <TopLayerPortalContext.Provider value={{ rootRef: overlayRef }}>
+      <RootLayerContext.Provider value={{ rootLayerRef: overlayRef }}>
         <Stack grow border color="default" minHeight="100vh">
           <Web3Bar />
           <TopBar onClick={onAvatarClicked} />
@@ -36,10 +36,10 @@ export const AppLayout = () => {
         </Stack>
         <Box>
           <AnimatePresence>
-            <Box ref={overlayRef} />
+            <Box ref={overlayRef} zIndex="tooltips" />
           </AnimatePresence>
         </Box>
-      </TopLayerPortalContext.Provider>
+      </RootLayerContext.Provider>
     </MatrixContextProvider>
   );
 };

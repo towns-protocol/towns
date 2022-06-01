@@ -1,8 +1,15 @@
 import React from "react";
 import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
-import { Box, ButtonText, Heading, Icon, Stack } from "@ui";
+import {
+  Box,
+  ButtonText,
+  Heading,
+  Icon,
+  Stack,
+  Tooltip,
+  TooltipRenderer,
+} from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
-import { Tooltip, TooltipRenderer } from "ui/components/Tooltip/Tooltip";
 import { useSpaceDataStore } from "store/spaceDataStore";
 import { NavItem } from "./_NavItem";
 
