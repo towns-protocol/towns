@@ -1,4 +1,5 @@
 import { ICreateRoomOpts, MatrixClient, createClient } from "matrix-js-sdk";
+import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 import { LoginStatus, getUsernameFromId } from "./login";
 import { useCallback, useContext } from "react";
 
@@ -8,6 +9,7 @@ import { StatusCodes } from "http-status-codes";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
+import type { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
 
 interface LoginServerResponse {
   accessToken: string | undefined;
@@ -36,6 +38,22 @@ export function useMatrixClient() {
 
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
+
+  const syncSpace = useCallback(
+    async function (spaceId: string): Promise<IHierarchyRoom[]> {
+      if (!matrixClient) {
+        return;
+      }
+      const room = matrixClient.getRoom(spaceId);
+      if (!room) {
+        console.log("couldn't find room for spcaceId:", spaceId);
+        return Promise.resolve([]);
+      }
+      const foo = new RoomHierarchy(room);
+      return foo.load();
+    },
+    [matrixClient],
+  );
 
   const createRoom = useCallback(
     async function (createInfo: CreateRoomInfo): Promise<string | undefined> {
@@ -240,6 +258,7 @@ export function useMatrixClient() {
     registerNewUser,
     registerWallet,
     sendMessage,
+    syncSpace,
   };
 }
 
