@@ -1,6 +1,6 @@
 import { Allotment } from "allotment";
 import React from "react";
-import { useOutlet, useParams } from "react-router";
+import { useOutlet, useParams } from "react-router-dom";
 import { ContextBar } from "@components/ContextBar";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";

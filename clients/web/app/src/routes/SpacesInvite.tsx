@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMatrixClient } from "use-matrix-client";
 import { Box } from "@ui";
 import { useSpaceDataStore } from "store/spaceDataStore";

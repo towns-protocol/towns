@@ -1,5 +1,5 @@
 import React from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter } from "react-router-dom";
 import { darkTheme, lightTheme } from "ui/styles/vars.css";
 import { Box, BoxProps, Grid, Stack, Text } from "../ui/components";
 import { crossClass } from "./Storybook.css";

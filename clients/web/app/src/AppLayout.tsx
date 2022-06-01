@@ -1,7 +1,7 @@
 import { Allotment } from "allotment";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef } from "react";
-import { Outlet, useMatch, useNavigate } from "react-router";
+import { Outlet, useMatch, useNavigate } from "react-router-dom";
 import { MatrixContextProvider } from "use-matrix-client";
 import {
   MainSideBar,

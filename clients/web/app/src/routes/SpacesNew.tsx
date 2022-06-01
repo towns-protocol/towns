@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { Membership, useMatrixStore } from "use-matrix-client";
 import { Login } from "@components/Web3/Login";
 import { CreateRoomForm } from "@components/Web3";
