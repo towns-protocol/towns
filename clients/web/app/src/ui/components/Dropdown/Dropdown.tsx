@@ -7,7 +7,6 @@ import * as styles from "./Dropdown.css";
 type Props = {
   defaultValue?: string;
   options: { label: string; value: string }[];
-  renderSelected?: (selected?: string) => JSX.Element;
   onChange?: (value: string) => void;
 } & FieldBaseProps;
 
@@ -35,6 +34,7 @@ export const Dropdown = (props: Props) => {
             horizontal
             as="select"
             className={clsx(className, styles.dropdown)}
+            paddingRight="lg"
             onChange={onChange}
             {...inputProps}
             defaultValue={defaultValue}

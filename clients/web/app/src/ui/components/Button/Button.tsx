@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack } from "@ui";
+import { Heading, Stack } from "@ui";
 import { vars } from "ui/styles/vars.css";
 import { Icon, IconName } from "../Icon";
 import { ButtonStyleVariants, buttonStyle } from "./Button.css";
@@ -7,23 +7,31 @@ import { ButtonStyleVariants, buttonStyle } from "./Button.css";
 type StyleProps = Omit<NonNullable<ButtonStyleVariants>, "active">;
 type Props = {
   children: React.ReactNode;
-  variant?: keyof typeof vars.color.tone;
+  tone?: keyof typeof vars.color.tone;
   icon?: IconName;
-  onClick: () => void;
+  disabled?: boolean;
+  onClick?: () => void;
 } & StyleProps;
 
-export const Button = ({ size, variant, icon, children, onClick }: Props) => (
+export const Button = ({
+  size,
+  disabled,
+  tone,
+  icon,
+  children,
+  onClick,
+}: Props) => (
   <Stack
     horizontal
+    cursor={disabled ? "default" : "pointer"}
     as="button"
     className={buttonStyle({ size })}
     justifyContent="center"
     alignItems="center"
-    background={variant ?? "neutral"}
-    color="onTone"
+    background={tone ?? "neutral"}
     onClick={onClick}
   >
     {icon && <Icon type={icon} size="square_inline" />}
-    {children}
+    <Heading level={5}>{children}</Heading>
   </Stack>
 );

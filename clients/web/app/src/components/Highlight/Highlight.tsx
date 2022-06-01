@@ -1,11 +1,11 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Card } from "ui/components/Card/Card";
 import {
   Avatar,
   BackgroundImage,
   Box,
   BoxProps,
+  Card,
   Heading,
   Paragraph,
   Stack,

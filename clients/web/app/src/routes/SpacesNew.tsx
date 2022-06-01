@@ -1,8 +1,9 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Membership, useMatrixStore } from "use-matrix-client";
-import { Login } from "@components/Web3/Login";
+import { Box, Heading, Paragraph, Stack } from "@ui";
 import { CreateRoomForm } from "@components/Web3";
+import { Login } from "@components/Web3/Login";
 
 export const SpacesNew = () => {
   const { isAuthenticated } = useMatrixStore();
@@ -15,10 +16,23 @@ export const SpacesNew = () => {
     },
     [navigate],
   );
-
-  return isAuthenticated ? (
-    <CreateRoomForm onClick={onCreateRoom} />
-  ) : (
-    <Login />
+  return (
+    <Stack alignItems="center" height="100%">
+      <Stack grow width="600">
+        <Box paddingY="lg">
+          <Heading level={2} textAlign="center">
+            New Space
+          </Heading>
+        </Box>
+        {isAuthenticated ? (
+          <CreateRoomForm onClick={onCreateRoom} />
+        ) : (
+          <Box centerContent gap="md" color="gray2">
+            <Paragraph textAlign="center">Please sign-in to continue</Paragraph>
+            <Login />
+          </Box>
+        )}
+      </Stack>
+    </Stack>
   );
 };

@@ -16,6 +16,7 @@ export type FieldBaseProps = {
   noBorder?: boolean;
   label?: string;
   secondaryLabel?: string;
+  description?: string;
   message?: React.ReactNode;
 
   id?: NonNullable<FormElementProps["id"]>;
@@ -65,7 +66,9 @@ export const Field = (props: Props) => {
   const {
     label,
     secondaryLabel,
+    description,
     message,
+    noBorder,
     tone = "neutral",
     height = "input_lg",
     prefix,
@@ -83,17 +86,22 @@ export const Field = (props: Props) => {
   const id = props.id || label?.replace(/[^a-z]/gi, "_").toLowerCase() || "";
 
   return (
-    <Stack grow gap="sm" width={width}>
+    <Stack grow gap="md" width={width} borderRadius="sm">
       {label && (
-        <FieldLabel label={label} secondaryLabel={secondaryLabel} for={id} />
+        <FieldLabel
+          label={label}
+          secondaryLabel={secondaryLabel}
+          description={description}
+          for={id}
+        />
       )}
       <Stack
         grow
         horizontal
+        background={background}
         position="relative"
         alignItems="center"
         paddingX="md"
-        background={background}
         gap="sm"
         borderRadius="sm"
       >
@@ -102,7 +110,7 @@ export const Field = (props: Props) => {
         )}
         {before}
         {children(
-          !props.noBorder && <FieldOutline tone={tone} />,
+          !noBorder && <FieldOutline tone={tone} />,
           {
             id,
             height,

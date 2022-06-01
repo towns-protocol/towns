@@ -23,6 +23,12 @@ export const avatarSizes = {
     height: vars.dims.square.square_lg,
     "--size": vars.dims.square.square_lg,
   },
+  // revisit when sizes are settled
+  avatar_x6: {
+    width: vars.dims.baseline.x6,
+    height: vars.dims.baseline.x6,
+    "--size": vars.dims.baseline.x6,
+  },
   avatar_xl: {
     width: vars.dims.square.square_xl,
     height: vars.dims.square.square_xl,

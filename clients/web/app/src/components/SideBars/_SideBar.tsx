@@ -45,7 +45,6 @@ export const SideBar = (props: Props) => {
         overflowY="scroll"
         {...props}
         absoluteFill
-        gap="xs"
       />
     </SidebarContext.Provider>
   );

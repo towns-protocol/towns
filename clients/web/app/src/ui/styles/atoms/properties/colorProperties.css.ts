@@ -49,8 +49,8 @@ export const colorAtomicProperties = defineProperties({
         color: vars.color.text.onTone,
       },
       neutral: {
-        background: vars.color.background.neutral,
-        color: vars.color.text.onTone,
+        background: vars.color.background.inverted,
+        color: vars.color.text.inverted,
       },
       accent: {
         background: vars.color.background.accent,

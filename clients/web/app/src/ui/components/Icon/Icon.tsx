@@ -393,7 +393,15 @@ type IconProps = {
 } & IconAtoms;
 
 export const Icon = (props: IconProps) => {
-  const { size = "square_md", color, background, type, className } = props;
+  const {
+    size = "square_md",
+    color,
+    background,
+    type,
+    height,
+    className,
+    ...boxProps
+  } = props;
   const Icon = iconMap[type ?? "bell"];
 
   return (
@@ -410,6 +418,7 @@ export const Icon = (props: IconProps) => {
           ? "none"
           : "xs")
       }
+      {...boxProps}
     >
       <Icon width="100%" height="100%" />
     </Box>

@@ -1,9 +1,9 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMatrixClient } from "use-matrix-client";
-import { Box } from "@ui";
-import { useSpaceDataStore } from "store/spaceDataStore";
 import { InviteUserToRoomForm } from "@components/Web3";
+import { Stack } from "@ui";
+import { useSpaceDataStore } from "store/spaceDataStore";
 
 export const SpacesInvite = () => {
   const { spaceId } = useParams();
@@ -26,13 +26,15 @@ export const SpacesInvite = () => {
   );
 
   return (
-    <Box grow padding="lg" gap="md">
-      <InviteUserToRoomForm
-        spaceName={space.name}
-        spaceId={space.id}
-        onCancelClicked={onCancelClicked}
-        onInviteClicked={onInviteClicked}
-      />
-    </Box>
+    <Stack alignItems="center" height="100%">
+      <Stack grow width="600">
+        <InviteUserToRoomForm
+          spaceName={space.name}
+          spaceId={space.id}
+          onCancelClicked={onCancelClicked}
+          onInviteClicked={onInviteClicked}
+        />
+      </Stack>
+    </Stack>
   );
 };

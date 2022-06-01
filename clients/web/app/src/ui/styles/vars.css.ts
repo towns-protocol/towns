@@ -105,6 +105,7 @@ const root = createGlobalTheme(":root", {
       "200": `200px`,
       "300": `300px`,
       "400": `400px`,
+      "600": `600px`,
       "1200": `1200px`,
       "1440": `1440px`,
       tablet: `${breakpoints.tablet}px`,
@@ -117,7 +118,7 @@ const root = createGlobalTheme(":root", {
       // drop downs
       input_md: `${baseline * 4}px`,
       // chat input
-      input_lg: `${baseline * 5}px`,
+      input_lg: `${baseline * 6}px`,
     },
   } as const,
 

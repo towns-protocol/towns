@@ -60,7 +60,7 @@ export const SpaceNavItem = (props: Props) => {
 
   return (
     <TooltipRenderer
-      id={props.id}
+      layoutId="navitem"
       placement="horizontal"
       render={<SpaceTooltip id={props.id} />}
     >

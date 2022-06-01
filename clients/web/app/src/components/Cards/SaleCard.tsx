@@ -1,6 +1,13 @@
 import React from "react";
-import { BackgroundImage, Box, BoxProps, Heading, Icon, Stack } from "@ui";
-import { Card } from "ui/components/Card/Card";
+import {
+  BackgroundImage,
+  Box,
+  BoxProps,
+  Card,
+  Heading,
+  Icon,
+  Stack,
+} from "@ui";
 
 type Props = {
   colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;

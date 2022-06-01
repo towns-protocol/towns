@@ -34,7 +34,7 @@ const light = (() => {
     level3: FigmaPalette.LightGrey,
     /** opacity overlay, highlighting content undependently of parent layer layers */
     overlay: `rgba(255,255,255,0.5)`,
-    inverted: FigmaPalette.Black,
+    inverted: FigmaPalette.XDarkGrey,
   } as const;
   const text = {
     default: "#252934",
@@ -46,10 +46,15 @@ const light = (() => {
     onTone: FigmaPalette.White,
   };
 
+  const shadow = {
+    card: `rgba(25, 27, 33, 0.2)`,
+  } as const;
+
   return {
     tone,
     layer,
     text,
+    shadow,
     foreground: {
       ...text,
       ...tone,
@@ -70,7 +75,7 @@ const dark = (() => {
     level3: FigmaPalette.DarkGrey,
     /** opacity overlay, highlighting content undependently of parent layer background */
     overlay: `rgba(255,255,255,0.5)`,
-    inverted: FigmaPalette.White,
+    inverted: FigmaPalette.LightGrey,
   } as const;
   const text = {
     default: FigmaPalette.White,
@@ -81,10 +86,17 @@ const dark = (() => {
     inverted: FigmaPalette.Black,
     onTone: FigmaPalette.White,
   } as const;
+
+  const shadow = {
+    card: `rgba(25, 27, 33, 1)`,
+  } as const;
+
   return {
     tone,
     layer,
     text,
+    shadow,
+
     foreground: {
       ...text,
       ...tone,

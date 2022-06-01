@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Button, TextField } from "@ui";
+import { Box, Button, Heading, Stack, TextField } from "@ui";
 
 interface Props {
   spaceName: string;
@@ -27,12 +27,26 @@ export const InviteUserToRoomForm = (props: Props) => {
   }, [inviteeUserId, props]);
 
   return (
-    <>
-      <h1> Invite user to join space "{props.spaceName}" </h1>
-      <p>Invitee user id:</p>
-      <TextField placeholder="@userId:homeServer" onChange={onChangeUserId} />
-      <Button onClick={onInviteClicked}>INVITE</Button>
-      <Button onClick={props.onCancelClicked}>CANCEL</Button>
-    </>
+    <Stack padding gap="lg" minWidth="400">
+      <Box paddingY="lg">
+        <Heading level={2} textAlign="center">
+          Invite User to join space <br />
+          {props.spaceName}
+        </Heading>
+      </Box>
+      <Stack gap="lg">
+        <TextField
+          label="Invitee user id"
+          placeholder="@userId:homeServer"
+          onChange={onChangeUserId}
+        />
+        <Button size="input_lg" onClick={onInviteClicked}>
+          Invite
+        </Button>
+        <Button size="input_lg" tone="neutral" onClick={props.onCancelClicked}>
+          Cancel
+        </Button>
+      </Stack>
+    </Stack>
   );
 };

@@ -19,8 +19,8 @@ export const useRootTheme = (settings: ThemeSettings) => {
   useEffect(() => {
     if (typeof theme === "undefined") {
       const defaultDark =
-        useDefaultOSTheme &&
-        !!window.matchMedia("(prefers-color-scheme: dark)").matches;
+        !useDefaultOSTheme ||
+        !window.matchMedia("(prefers-color-scheme: dark)").matches;
 
       setTheme(defaultDark ? "dark" : "light");
     }
@@ -53,5 +53,5 @@ export const useRootTheme = (settings: ThemeSettings) => {
     }
   }, [settings.ammendHTMLBody, themeClass]);
 
-  return { toggleTheme };
+  return { toggleTheme, theme };
 };

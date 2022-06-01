@@ -3,11 +3,10 @@ import { Box, TextField } from "@ui";
 
 export const Search = () => {
   return (
-    <Box>
+    <Box shrink width="200">
       <TextField
         noBorder
         height="input_md"
-        width="300"
         background="level2"
         icon="search"
         placeholder="Search..."

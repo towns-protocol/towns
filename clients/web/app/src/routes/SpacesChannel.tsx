@@ -9,13 +9,12 @@ import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
   const { channel } = useParams();
-  const { sizes, onSizesChange: onAllotmentChange } =
-    usePersistPanes("channel");
+  const { sizes, onSizesChange } = usePersistPanes("channel");
   const outlet = useOutlet();
 
   return (
     <Stack horizontal minHeight="100%">
-      <Allotment sizes={sizes} onChange={onAllotmentChange}>
+      <Allotment sizes={sizes} onChange={onSizesChange}>
         <Allotment.Pane>
           <Box grow>
             <ContextBar title={`# ${channel}`} />

@@ -4,12 +4,12 @@ import {
   BackgroundImage,
   Box,
   BoxProps,
+  Card,
   Heading,
   Paragraph,
   Stack,
 } from "@ui";
 import { fakeUserCache } from "data/UserData";
-import { Card } from "ui/components/Card/Card";
 
 type Props = {
   userId: string;

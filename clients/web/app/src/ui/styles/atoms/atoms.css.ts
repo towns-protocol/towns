@@ -21,12 +21,24 @@ const responsiveAtomicProperties = defineProperties({
   ...responsivePropertiesMixin,
   properties: {
     // display
-    display: ["block", "flex", "grid", "inline-block", "none", "contents"],
+    display: [
+      "block",
+      "flex",
+      "grid",
+      "inline-block",
+      "inline",
+      "none",
+      "contents",
+    ],
 
     pointerEvents: ["all", "auto", "none"],
 
     // size
     aspectRatio: aspectRatio,
+    boxShadow: {
+      card: `0 0 40px ${vars.color.shadow.card}`,
+    },
+
     height: {
       ...vars.dims.baseline,
       ...vars.dims.height,

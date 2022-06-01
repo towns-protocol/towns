@@ -4,7 +4,7 @@ import { vars } from "ui/styles/vars.css";
 export const buttonStyle = recipe({
   base: {
     border: "none",
-    borderRadius: vars.borderRadius.xs,
+    borderRadius: vars.borderRadius.sm,
   },
   defaultVariants: {
     size: "input_md",

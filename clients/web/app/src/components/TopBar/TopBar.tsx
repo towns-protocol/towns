@@ -1,10 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useMatrixStore } from "use-matrix-client";
+import { ProfileSettingsCard } from "@components/Cards/ProfileSettingsCard";
 import { Logo } from "@components/Logo/Logo";
 import { Search } from "@components/Search";
-import { Avatar, Box, Icon, Stack } from "@ui";
+import { Login } from "@components/Web3/Login";
+import { Avatar, Box, Icon, Stack, TooltipRenderer } from "@ui";
+import { NotificationCard } from "@components/Cards/NotificationCard";
 
-export const TopBar = (props: { onClick?: () => void }) => {
+const positionTop = {
+  top: 0,
+};
+
+export const TopBar = (props: { onToggleTheme?: () => void }) => {
+  const { isAuthenticated, username, userId } = useMatrixStore();
+
   return (
     <Stack
       borderBottom
@@ -17,7 +27,7 @@ export const TopBar = (props: { onClick?: () => void }) => {
       gap="md"
       color="gray2"
       position="sticky"
-      style={{ top: 0, zIndex: 10 }}
+      style={positionTop}
     >
       <Box color="default">
         <Link to="/">
@@ -25,14 +35,33 @@ export const TopBar = (props: { onClick?: () => void }) => {
         </Link>
       </Box>
       <Box grow />
-      <Search />
-      <Icon size="square_lg" type="bell" background="level1" />
-      <Avatar
-        circle
-        size="avatar_lg"
-        src="/placeholders/nft_1.png"
-        onClick={props.onClick}
-      />
+      {!isAuthenticated ? (
+        <Login />
+      ) : (
+        <>
+          <Search />
+          <TooltipRenderer
+            trigger="click"
+            layoutId="topbar"
+            render={<NotificationCard />}
+          >
+            {({ triggerProps }) => (
+              <Box {...triggerProps}>
+                <Icon size="square_lg" type="bell" background="level1" />
+              </Box>
+            )}
+          </TooltipRenderer>
+          <TooltipRenderer
+            layoutId="topbar"
+            trigger="click"
+            render={<ProfileSettingsCard userId={userId} username={username} />}
+          >
+            {({ triggerProps }) => (
+              <Avatar circle size="avatar_lg" {...triggerProps} />
+            )}
+          </TooltipRenderer>
+        </>
+      )}
     </Stack>
   );
 };

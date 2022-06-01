@@ -1,5 +1,18 @@
 import React, { useCallback } from "react";
-import { Avatar, Box, Dropdown, Heading, Icon, Paragraph, Stack } from "@ui";
+import { useMatrixClient } from "use-matrix-client";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Avatar,
+  Box,
+  Card,
+  Divider,
+  Dropdown,
+  Heading,
+  Icon,
+  Paragraph,
+  Stack,
+  TooltipRenderer,
+} from "@ui";
 import { fakeUsers } from "data/UserData";
 
 type Props = {
@@ -26,22 +39,76 @@ export const SpaceBanner = (props: Props) => {
           <SpaceSummary />
         </Stack>
         {/* actions container */}
-        <Stack
-          alignItems="center"
-          direction="row"
-          gap="sm"
-          onClick={props.onSettingsClicked}
-        >
-          <UserDropDown />
-          <Icon
-            type="settings"
-            background="level2"
-            size="square_lg"
-            padding="sm"
+        <Stack horizontal alignItems="center" gap="sm">
+          <Dropdown
+            height="input_md"
+            options={pseudos.map((p) => ({
+              label: p.displayName,
+              value: p.id,
+            }))}
+            defaultValue={pseudos[0].id}
           />
+          <TooltipRenderer
+            placement="vertical"
+            render={<SpaceSettingsMenu />}
+            layoutId="dropdown"
+            trigger="click"
+          >
+            {({ triggerProps }) => (
+              <Box onClick={props.onSettingsClicked} {...triggerProps}>
+                <Icon
+                  type="settings"
+                  background="level2"
+                  size="square_lg"
+                  padding="sm"
+                />
+              </Box>
+            )}
+          </TooltipRenderer>
         </Stack>
       </Stack>
     </Stack>
+  );
+};
+
+const SpaceSettingsMenu = () => {
+  const { spaceId } = useParams();
+  const { leaveRoom } = useMatrixClient();
+  const navigate = useNavigate();
+
+  const onInviteClicked = useCallback(() => {
+    console.log("invite clicked");
+    navigate("/spaces/" + spaceId + "/invite");
+  }, [navigate, spaceId]);
+
+  const onLeaveClicked = useCallback(async () => {
+    console.log("leave clicked", spaceId);
+    if (spaceId) {
+      await leaveRoom(spaceId);
+    }
+    navigate("/");
+  }, [leaveRoom, navigate, spaceId]);
+
+  const onSettingsClicked = useCallback(() => {
+    navigate("/spaces/" + spaceId + "/settings");
+  }, []);
+
+  return (
+    <Card padding minWidth="200">
+      <Stack gap="sm">
+        <Box cursor="pointer" onClick={onInviteClicked}>
+          Invite User
+        </Box>
+        <Divider />
+        <Box cursor="pointer" onClick={onLeaveClicked}>
+          Leave Space
+        </Box>
+        <Divider />
+        <Box cursor="pointer" onClick={onSettingsClicked}>
+          Settings
+        </Box>
+      </Stack>
+    </Card>
   );
 };
 
@@ -57,26 +124,3 @@ export const SpaceSummary = ({ compact }: { compact?: boolean }) => (
     </Stack>
   </Stack>
 );
-
-const UserDropDown = () => {
-  const renderSelected = useCallback((selected?: string) => {
-    const user = fakeUsers.find((u) => selected === u.id);
-    return !user ? (
-      <></>
-    ) : (
-      <>
-        {user.displayName}
-        <Avatar circle src={user.avatarSrc} size="avatar_xs" />
-        <Icon type="down" size="square_inline" />
-      </>
-    );
-  }, []);
-
-  return (
-    <Dropdown
-      options={pseudos.map((p) => ({ label: p.displayName, value: p.id }))}
-      renderSelected={renderSelected}
-      defaultValue={pseudos[0].id}
-    />
-  );
-};

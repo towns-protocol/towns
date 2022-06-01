@@ -1,7 +1,7 @@
 import { Allotment } from "allotment";
 import { AnimatePresence } from "framer-motion";
 import React, { useRef } from "react";
-import { Outlet, useMatch, useNavigate } from "react-router-dom";
+import { Outlet, useMatch } from "react-router";
 import { MatrixContextProvider } from "use-matrix-client";
 import {
   MainSideBar,
@@ -9,9 +9,9 @@ import {
   SpaceSideBar,
 } from "@components/SideBars";
 import { TopBar } from "@components/TopBar";
-import { Web3Bar } from "@components/Web3";
 import { Box, RootLayerContext, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
+import { useRootTheme } from "hooks/useRootTheme";
 import { useSpaceDataListener } from "hooks/useSpaceDataListener";
 import { useSpaceDataStore } from "store/spaceDataStore";
 import { atoms } from "ui/styles/atoms/atoms.css";
@@ -21,17 +21,16 @@ const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
 export const AppLayout = () => {
   useSpaceDataListener();
   const overlayRef = useRef<HTMLElement>(null);
-  const navigate = useNavigate();
-  const onAvatarClicked = () => {
-    navigate("/me");
-  };
+  const { toggleTheme } = useRootTheme({
+    ammendHTMLBody: true,
+    useDefaultOSTheme: false,
+  });
 
   return (
     <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
       <RootLayerContext.Provider value={{ rootLayerRef: overlayRef }}>
         <Stack grow border color="default" minHeight="100vh">
-          <Web3Bar />
-          <TopBar onClick={onAvatarClicked} />
+          <TopBar onToggleTheme={toggleTheme} />
           <PaneContainer />
         </Stack>
         <Box>

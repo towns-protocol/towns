@@ -1,8 +1,17 @@
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
-import { ContextBar } from "@components/ContextBar";
-import { Box, Button, Dropdown, Stack, TextField } from "@ui";
+import {
+  Box,
+  Button,
+  Dropdown,
+  Heading,
+  Paragraph,
+  Stack,
+  Text,
+  TextField,
+} from "@ui";
+import { atoms } from "ui/styles/atoms/atoms.css";
 
 interface Props {
   onClick: (roomId: string, membership: Membership) => void;
@@ -38,7 +47,6 @@ export const CreateRoomForm = (props: Props) => {
       roomName,
       visibility,
       isDirectMessage: isDM === "true",
-      isSpace: false,
     };
     const roomId = await createRoom(createRoomInfo);
 
@@ -49,44 +57,56 @@ export const CreateRoomForm = (props: Props) => {
   }, [createRoom, isDM, props, roomName, visibility, disableCreateButton]);
 
   return (
-    <>
-      <ContextBar>New Space </ContextBar>
-      <Box grow centerContent>
-        <Stack padding gap="lg" minWidth="400">
-          <Stack gap="lg">
-            <TextField
-              label="Room Name"
-              secondaryLabel="(required)"
-              placeholder="Type here..."
-              onChange={onRoomNameChange}
-            />
+    <Stack padding gap="lg" minWidth="400">
+      <Stack gap="lg">
+        <TextField
+          autoFocus
+          noBorder
+          background="level1"
+          label="Room Name"
+          secondaryLabel="(required)"
+          description="This is your official space name that you own. Your space's URL will contain the same name."
+          placeholder="Room Name"
+          onChange={onRoomNameChange}
+        />
 
-            <Dropdown
-              label="Visibility"
-              message=""
-              options={VisibilityOptions.map((value) => ({
-                label: value,
-                value,
-              }))}
-              defaultValue={visibility}
-              onChange={(value) => setVisibility(value as Visibility)}
-            />
+        <Dropdown
+          noBorder
+          background="level1"
+          label="Visibility"
+          message=""
+          options={VisibilityOptions.map((value) => ({
+            label: value,
+            value,
+          }))}
+          defaultValue={visibility}
+          onChange={(value) => setVisibility(value as Visibility)}
+        />
 
-            <Dropdown
-              label="Is DM:"
-              options={IsDmOptions.map((value) => ({
-                label: String(value),
-                value: String(value),
-              }))}
-              defaultValue={isDM}
-              onChange={(value) => setIsDM(value)}
-            />
-          </Stack>
-          <Button size="input_lg" icon="plus" onClick={onClickCreateRoom}>
-            Create
-          </Button>
-        </Stack>
-      </Box>
-    </>
+        <Dropdown
+          noBorder
+          background="level1"
+          label="Is DM:"
+          options={IsDmOptions.map((value) => ({
+            label: String(value),
+            value: String(value),
+          }))}
+          defaultValue={isDM}
+          onChange={(value) => setIsDM(value)}
+        />
+
+        <Box gap="md">
+          <Heading level={4}>Space URL</Heading>
+          <Paragraph>This is what your official URL will look like</Paragraph>
+          <Paragraph strong truncate size="md" display="inline-block">
+            zion.xyz/
+            <span className={atoms({ color: "gray2" })}>{roomName}</span>
+          </Paragraph>
+        </Box>
+      </Stack>
+      <Button size="input_lg" onClick={onClickCreateRoom}>
+        Create
+      </Button>
+    </Stack>
   );
 };

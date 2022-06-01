@@ -166,7 +166,7 @@ export const HomeIndex = () => (
               Top discussions
             </Heading>
           </Box>
-          <Card colSpan={12} padding="md" background="default">
+          <Card colSpan={12} padding="md">
             <Message
               channel="announcements"
               name="sunsoutapesout"
