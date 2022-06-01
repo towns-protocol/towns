@@ -1,26 +1,25 @@
 import { useCallback } from "react";
 import { useStore } from "store/store";
 
-/**
- * TODO: keep track on individual panes and map size array depending on setup,
- * A:[menu, main] / B:[menu / menu2 / main]
- * A.1(main) should be equal to B.2(main)
- */
-export const usePersistPanes = (id: string) => {
-  const { sizes, setPaneData } = useStore((state) => ({
-    sizes: state.paneSizes[id] ?? [],
-    setPaneData: state.setPaneSizes,
+export const usePersistPanes = (config: string[]) => {
+  const { sizes, setPaneSize } = useStore((state) => ({
+    sizes: state.paneSizes,
+    setPaneSize: state.setPaneSize,
   }));
 
   const onSizesChange = useCallback(
     (sizes: number[]) => {
-      setPaneData(id, sizes);
+      if (sizes.length === config.length) {
+        sizes.forEach(
+          (size, index) => size > 0 && setPaneSize(config[index], size),
+        );
+      }
     },
-    [id, setPaneData],
+    [config, setPaneSize],
   );
 
   return {
     onSizesChange,
-    sizes: sizes.map((s) => s ?? 0),
+    sizes: config.map((c) => sizes[c] ?? 0) || [],
   };
 };

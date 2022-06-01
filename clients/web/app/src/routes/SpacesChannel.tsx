@@ -9,7 +9,7 @@ import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
   const { channel } = useParams();
-  const { sizes, onSizesChange } = usePersistPanes("channel");
+  const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
 
   return (

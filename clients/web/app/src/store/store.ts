@@ -4,8 +4,8 @@ import { persist } from "zustand/middleware";
 interface AppState {
   theme?: "dark" | "light";
   setTheme: (theme: "dark" | "light") => void;
-  paneSizes: { [id: string]: number[] };
-  setPaneSizes: (id: string, sizes: number[]) => void;
+  paneSizes: { [id: string]: number };
+  setPaneSize: (id: string, size: number) => void;
 }
 
 export const useStore = create(
@@ -16,12 +16,13 @@ export const useStore = create(
         set(() => ({ theme }));
       },
       paneSizes: {},
-      setPaneSizes: (id: string, sizes: number[]) =>
+      setPaneSize: (id: string, size: number) =>
         set((state) => {
+          console.log("setting sizes", id, size);
           return {
             paneSizes: {
               ...state.paneSizes,
-              [id]: sizes,
+              [id]: size,
             },
           };
         }),

@@ -1,6 +1,6 @@
-import { Allotment } from "allotment";
+import { Allotment, AllotmentHandle } from "allotment";
 import { AnimatePresence } from "framer-motion";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Outlet, useMatch } from "react-router";
 import { MatrixContextProvider } from "use-matrix-client";
 import {
@@ -44,41 +44,56 @@ export const AppLayout = () => {
 };
 
 const PaneContainer = () => {
+  const allotemntRef = useRef<AllotmentHandle>(null);
   const messageRoute = useMatch({ path: "/messages", end: false });
   const spaceRoute = useMatch({ path: "/spaces/:space", end: false });
+
   const { spaces } = useSpaceDataStore();
   const space =
     spaceRoute && spaces.find((s) => s.id === spaceRoute.params.space);
 
-  const { onSizesChange, sizes } = usePersistPanes("main");
+  const config = ["primary-menu", "secondary-menu", "content"];
+  const { onSizesChange, sizes } = usePersistPanes(config);
+
+  const isSecondarySidebarActive = !!messageRoute;
+  useEffect(() => {
+    allotemntRef.current?.reset();
+  }, [isSecondarySidebarActive]);
 
   return (
     <Stack horizontal grow position="relative">
       <Box absoluteFill>
         <Allotment
           proportionalLayout
+          ref={allotemntRef}
           className={atoms({ minHeight: "100%" })}
-          defaultSizes={sizes}
           onChange={onSizesChange}
         >
-          {/* left-side side-bars goes here */}
-          <Allotment.Pane snap minSize={65} maxSize={320} preferredSize="250px">
+          {/* left-side side-bar goes here */}
+          <Allotment.Pane
+            minSize={65}
+            maxSize={320}
+            preferredSize={sizes[0] || 250}
+          >
             {space ? <SpaceSideBar space={space} /> : <MainSideBar />}
           </Allotment.Pane>
 
+          {/* secondary side bar */}
           <Allotment.Pane
-            preferredSize="250px"
-            minSize={messageRoute ? 65 : 0}
+            minSize={180}
             maxSize={320}
-            visible={!!messageRoute}
+            visible={!!isSecondarySidebarActive}
+            preferredSize={sizes[1] || 250}
           >
-            {messageRoute && <MessagesSideBar />}
+            <MessagesSideBar />
           </Allotment.Pane>
 
           {/* main container */}
-          <Box absoluteFill overflowY="scroll">
-            <Outlet />
-          </Box>
+          <Allotment.Pane>
+            <Box absoluteFill overflowY="scroll">
+              <Outlet />
+            </Box>
+          </Allotment.Pane>
         </Allotment>
       </Box>
     </Stack>
