@@ -1,4 +1,4 @@
-import { Button, IconButton, Theme } from "@mui/material";
+import { Button, Theme } from "@mui/material";
 import {
   Membership,
   getShortUsername,
@@ -6,7 +6,6 @@ import {
 } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -17,6 +16,7 @@ import { Rooms } from "./Rooms";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { Outlet, useNavigate } from "react-router-dom";
+import { SidebarNewItemButton } from "./SidebarNewItemButton";
 
 const drawerWidth = 240;
 
@@ -60,39 +60,7 @@ export default function AppDrawer(props: Props): JSX.Element {
     <div>
       <Toolbar />
       <Divider />
-      <Box
-        display="flex"
-        flexDirection="row"
-        alignItems="center"
-        sx={{
-          pl: (theme: Theme) => theme.spacing(2),
-        }}
-      >
-        <IconButton
-          size="medium"
-          edge="start"
-          color="inherit"
-          aria-label="menu"
-          onClick={onClickCreateRoom}
-          sx={{
-            pr: (theme: Theme) => theme.spacing(1),
-          }}
-        >
-          <AddIcon />
-        </IconButton>
-        <Button onClick={onClickCreateRoom}>
-          <Typography
-            variant="body1"
-            noWrap
-            component="div"
-            sx={{
-              pr: (theme: Theme) => theme.spacing(1),
-            }}
-          >
-            Create Room
-          </Typography>
-        </Button>
-      </Box>
+      <SidebarNewItemButton label="Create Room" onClick={onClickCreateRoom} />
       <Divider />
       <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
         Joined
