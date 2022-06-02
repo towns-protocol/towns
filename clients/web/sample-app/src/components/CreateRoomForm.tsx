@@ -14,6 +14,7 @@ import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
+import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
 interface Props {
   onClick: (roomId: string, membership: Membership) => void;
@@ -46,7 +47,7 @@ export function CreateRoomForm(props: Props): JSX.Element {
     setIsDM(event.target.value as string);
   }, []);
 
-  const onClickCreateRoom = useCallback(async () => {
+  const onClickCreateRoom = useAsyncButtonCallback(async () => {
     const createRoomInfo: CreateRoomInfo = {
       roomName,
       visibility,

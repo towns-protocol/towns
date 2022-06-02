@@ -12,8 +12,8 @@ import {
 } from "@mui/material";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
-
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
+import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
 interface Props {
   onClick: (roomId: string, membership: Membership) => void;
@@ -41,7 +41,7 @@ export const CreateSpaceForm = (props: Props) => {
     setVisibility(event.target.value as Visibility);
   }, []);
 
-  const onClickCreateSpace = useCallback(async () => {
+  const onClickCreateSpace = useAsyncButtonCallback(async () => {
     const createRoomInfo: CreateRoomInfo = {
       roomName,
       visibility,
