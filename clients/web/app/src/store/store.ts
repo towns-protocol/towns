@@ -18,7 +18,6 @@ export const useStore = create(
       paneSizes: {},
       setPaneSize: (id: string, size: number) =>
         set((state) => {
-          console.log("setting sizes", id, size);
           return {
             paneSizes: {
               ...state.paneSizes,
