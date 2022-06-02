@@ -1,6 +1,7 @@
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
+import { atoms } from "ui/styles/atoms/atoms.css";
 import {
   Box,
   Button,
@@ -8,10 +9,8 @@ import {
   Heading,
   Paragraph,
   Stack,
-  Text,
   TextField,
 } from "@ui";
-import { atoms } from "ui/styles/atoms/atoms.css";
 
 interface Props {
   onClick: (roomId: string, membership: Membership) => void;
@@ -47,6 +46,7 @@ export const CreateRoomForm = (props: Props) => {
       roomName,
       visibility,
       isDirectMessage: isDM === "true",
+      isSpace: true,
     };
     const roomId = await createRoom(createRoomInfo);
 

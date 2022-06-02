@@ -9,8 +9,9 @@ import {
   Tooltip,
   TooltipRenderer,
 } from "@ui";
-import { Avatar } from "ui/components/Avatar/Avatar";
 import { useSpaceDataStore } from "store/spaceDataStore";
+import { Avatar } from "ui/components/Avatar/Avatar";
+import { useSizeContext } from "ui/hooks/useSizeContext";
 import { NavItem } from "./_NavItem";
 
 type Props = {
@@ -36,7 +37,6 @@ const SpaceTooltip = (props: { id: string }) => {
       gap="md"
       padding="md"
       background="default"
-      display={{ desktop: "none", tablet: "flex" }}
     >
       <Stack grow justifyContent="center" gap="sm">
         <Heading level={4}>{name}</Heading>
@@ -58,11 +58,15 @@ export const SpaceNavItem = (props: Props) => {
     isInvite,
   } = props;
 
+  const sizeContext = useSizeContext();
+  // TODO: use tokens
+  const isSmall = sizeContext.lessThan(180);
+
   return (
     <TooltipRenderer
       layoutId="navitem"
       placement="horizontal"
-      render={<SpaceTooltip id={props.id} />}
+      render={(isSmall && <SpaceTooltip id={props.id} />) || <></>}
     >
       {({ triggerProps }) => (
         <NavItem
@@ -85,11 +89,10 @@ export const SpaceNavItem = (props: Props) => {
             truncate
             color={active ? "default" : undefined}
             strong={active}
-            display={{ tablet: "none" }}
           >
             {isInvite ? "(Invite) " + name : name}
           </ButtonText>
-          <Box shrink display={{ tablet: "none" }} color="gray2">
+          <Box shrink display={isSmall ? "none" : undefined} color="gray2">
             {pinned && <Icon type="pin" size="square_sm" padding="xs" />}
           </Box>
         </NavItem>

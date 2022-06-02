@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ngneat/falso": "^5.0.0",
+    "@react-hook/resize-observer": "^1.2.5",
     "allotment": "^1.13.0",
     "clsx": "^1.1.1",
     "framer-motion": "^6.3.2",

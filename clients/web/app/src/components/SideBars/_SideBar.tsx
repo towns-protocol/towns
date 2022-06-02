@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useState } from "react";
-import { BoxProps, Stack } from "@ui";
+import { BoxProps, SizeBox } from "@ui";
 
 type Props = BoxProps;
 
@@ -38,7 +38,7 @@ export const SideBar = (props: Props) => {
         setActiveItem,
       }}
     >
-      <Stack
+      <SizeBox
         grow
         background="level1"
         overflowX="hidden"

@@ -3,6 +3,7 @@ import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { Box, Paragraph, Stack } from "@ui";
 import { SpaceData } from "data/SpaceData";
+import { useSizeContext } from "ui/hooks/useSizeContext";
 import { SideBar } from "./_SideBar";
 
 type Props = {
@@ -35,8 +36,18 @@ export const SpaceSideBar = (props: Props) => {
         label="Mentions"
         link={`/spaces/${space.id}/mentions`}
       />
-      {space.channels.map((group) => (
-        <Stack key={group.label}>
+      {space && <Channels space={space} />}
+    </SideBar>
+  );
+};
+
+const Channels = (props: { space: SpaceData }) => {
+  const sizeContext = useSizeContext();
+  const isSmall = sizeContext.lessThan(120);
+  return (
+    <>
+      {props.space?.channels.map((group) => (
+        <Stack key={group.label} display={isSmall ? "none" : undefined}>
           <Box
             paddingX="md"
             height="height_lg"
@@ -54,12 +65,12 @@ export const SpaceSideBar = (props: Props) => {
               key={group.label + tag.id}
               icon="tag"
               highlight={tag.highlight}
-              link={`/spaces/${space.id}/${tag.id}`}
+              link={`/spaces/${props.space.id}/${tag.id}`}
               label={tag.id}
             />
           ))}
         </Stack>
       ))}
-    </SideBar>
+    </>
   );
 };
