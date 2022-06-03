@@ -31,11 +31,11 @@
     }
   },
   "devDependencies": {
-    "eslint": "^8.15.0",
+    "eslint": "^8.16.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^12.4.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.0",
     "prettier": "^2.6.2"
   }
 }
