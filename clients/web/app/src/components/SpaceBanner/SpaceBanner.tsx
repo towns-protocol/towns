@@ -91,7 +91,7 @@ const SpaceSettingsMenu = () => {
 
   const onSettingsClicked = useCallback(() => {
     navigate("/spaces/" + spaceId + "/settings");
-  }, []);
+  }, [navigate, spaceId]);
 
   return (
     <Card padding minWidth="200">
