@@ -8,6 +8,7 @@ export { isRoom, Membership } from "./types/matrix-types";
 
 export type {
   CreateRoomInfo,
+  CreateSpaceInfo,
   Member,
   Members,
   Room,

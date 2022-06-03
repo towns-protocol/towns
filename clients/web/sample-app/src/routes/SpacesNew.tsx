@@ -5,7 +5,7 @@ import { CreateSpaceForm } from "../components/CreateSpaceForm";
 export const SpacesNew = () => {
   const navigate = useNavigate();
   const onSpaceCreated = (roomId: string, membership: Membership) => {
-    navigate("/rooms/" + roomId);
+    navigate("/spaces/" + roomId);
   };
   return <CreateSpaceForm onClick={onSpaceCreated} />;
 };

@@ -10,7 +10,11 @@ import {
   Theme,
   Typography,
 } from "@mui/material";
-import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
+import {
+  CreateSpaceInfo,
+  Membership,
+  useMatrixClient,
+} from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
@@ -20,19 +24,19 @@ interface Props {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-  const [roomName, setRoomName] = useState<string>("");
+  const [spaceName, setSpaceName] = useState<string>("");
   const [visibility, setVisibility] = useState<Visibility>(Visibility.Private);
-  const { createRoom } = useMatrixClient();
+  const { createSpace } = useMatrixClient();
   const { onClick } = props;
 
   const disableCreateButton = useMemo(
-    () => roomName.length === 0,
-    [roomName.length],
+    () => spaceName.length === 0,
+    [spaceName.length],
   );
 
-  const onChangeRoomName = useCallback(
+  const onChangespaceName = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setRoomName(event.target.value);
+      setSpaceName(event.target.value);
     },
     [],
   );
@@ -42,17 +46,15 @@ export const CreateSpaceForm = (props: Props) => {
   }, []);
 
   const onClickCreateSpace = useAsyncButtonCallback(async () => {
-    const createRoomInfo: CreateRoomInfo = {
-      roomName,
+    const createSpaceInfo: CreateSpaceInfo = {
+      spaceName,
       visibility,
-      isDirectMessage: false,
-      isSpace: true,
     };
-    const roomId = await createRoom(createRoomInfo);
+    const roomId = await createSpace(createSpaceInfo);
     if (roomId) {
       onClick(roomId, Membership.Join);
     }
-  }, [createRoom, onClick, roomName, visibility]);
+  }, [createSpace, onClick, spaceName, visibility]);
 
   return (
     <Box
@@ -81,7 +83,7 @@ export const CreateSpaceForm = (props: Props) => {
             id="filled-basic"
             label="Name of the space"
             variant="filled"
-            onChange={onChangeRoomName}
+            onChange={onChangespaceName}
           />
         </Box>
         <Box

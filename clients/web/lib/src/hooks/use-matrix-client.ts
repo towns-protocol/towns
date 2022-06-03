@@ -3,7 +3,7 @@ import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 import { LoginStatus, getUsernameFromId } from "./login";
 import { useCallback, useContext } from "react";
 
-import { CreateRoomInfo } from "../types/matrix-types";
+import { CreateRoomInfo, CreateSpaceInfo } from "../types/matrix-types";
 import { MatrixContext } from "../components/MatrixContextProvider";
 import { StatusCodes } from "http-status-codes";
 import { useCredentialStore } from "../store/use-credential-store";
@@ -55,34 +55,84 @@ export function useMatrixClient() {
     [matrixClient],
   );
 
-  const createRoom = useCallback(
-    async function (createInfo: CreateRoomInfo): Promise<string | undefined> {
+  const createSpace = useCallback(
+    async function (
+      createSpaceInfo: CreateSpaceInfo,
+    ): Promise<string | undefined> {
       try {
         if (matrixClient) {
           const options: ICreateRoomOpts = {
-            //room_alias_name: "my_room_alias3",
-            visibility: createInfo.visibility,
-            name: createInfo.roomName,
-            is_direct: createInfo.isDirectMessage,
-          };
-          if (createInfo.isSpace) {
-            options.creation_content = {
+            visibility: createSpaceInfo.visibility,
+            name: createSpaceInfo.spaceName,
+            is_direct: false,
+            creation_content: {
               type: "m.space",
-            };
-          }
+            },
+          };
           const response = await matrixClient.createRoom(options);
-          console.log(`Created room`, JSON.stringify(response));
+          console.log("Created space", JSON.stringify(response));
           return response.room_id;
         } else {
-          console.error(`Not logged in. Cannot create room`);
+          console.error("Not logged in. Cannot create room");
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (ex: any) {
-        console.error(`Error creating room`, ex.stack);
+        console.error("Error creating room", ex.stack);
       }
       return undefined;
     },
     [matrixClient],
+  );
+
+  const createRoom = useCallback(
+    async function (createInfo: CreateRoomInfo): Promise<string | undefined> {
+      try {
+        if (matrixClient) {
+          // initial state
+          const options: ICreateRoomOpts = {
+            //room_alias_name: "my_room_alias3",
+            visibility: createInfo.visibility,
+            name: createInfo.roomName,
+            is_direct: createInfo.isDirectMessage === true,
+            initial_state: [],
+          };
+          // add our parent room if we have one
+          if (createInfo.parentSpaceId) {
+            options.initial_state.push({
+              type: "m.space.parent",
+              state_key: createInfo.parentSpaceId,
+              content: {
+                canonical: true,
+                via: [homeServer],
+              },
+            });
+          }
+          const response = await matrixClient.createRoom(options);
+          console.log("Created room", JSON.stringify(response));
+          if (createInfo.parentSpaceId) {
+            await matrixClient.sendStateEvent(
+              createInfo.parentSpaceId,
+              "m.space.child",
+              {
+                auto_join: false,
+                suggested: false,
+                via: [homeServer],
+              },
+              response.room_id,
+            );
+          }
+
+          return response.room_id;
+        } else {
+          console.error("Not logged in. Cannot create room");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (ex: any) {
+        console.error("Error creating room", ex.stack);
+      }
+      return undefined;
+    },
+    [homeServer, matrixClient],
   );
 
   const logout = useCallback(
@@ -91,10 +141,10 @@ export function useMatrixClient() {
       if (matrixClient) {
         try {
           await matrixClient.logout();
-          console.log(`Logged out`);
+          console.log("Logged out");
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (ex: any) {
-          console.error(`Error logging out:`, ex.stack);
+          console.error("Error logging out:", ex.stack);
         }
       }
       setLoginStatus(LoginStatus.LoggedOut);
@@ -248,6 +298,7 @@ export function useMatrixClient() {
 
   return {
     createRoom,
+    createSpace,
     getIsWalletIdRegistered,
     inviteUser,
     joinRoom,

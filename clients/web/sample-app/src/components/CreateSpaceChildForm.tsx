@@ -17,15 +17,15 @@ import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
 interface Props {
+  parentSpaceId: string;
   onClick: (roomId: string, membership: Membership) => void;
 }
 
-export function CreateRoomForm(props: Props): JSX.Element {
+export function CreateSpaceChildForm(props: Props): JSX.Element {
   const [roomName, setRoomName] = useState<string>("");
   const [visibility, setVisibility] = useState<Visibility>(Visibility.Private);
-  const [isDM, setIsDM] = useState<string>(false.toString());
   const { createRoom } = useMatrixClient();
-  const { onClick } = props;
+  const { onClick, parentSpaceId } = props;
 
   const disableCreateButton = useMemo(
     () => roomName.length === 0,
@@ -43,21 +43,18 @@ export function CreateRoomForm(props: Props): JSX.Element {
     setVisibility(event.target.value as Visibility);
   }, []);
 
-  const onChangeIsDM = useCallback((event: SelectChangeEvent) => {
-    setIsDM(event.target.value as string);
-  }, []);
-
   const onClickCreateRoom = useAsyncButtonCallback(async () => {
     const createRoomInfo: CreateRoomInfo = {
       roomName,
       visibility,
-      isDirectMessage: isDM === "true",
+      isDirectMessage: false,
+      parentSpaceId: parentSpaceId,
     };
     const roomId = await createRoom(createRoomInfo);
     if (roomId) {
       onClick(roomId, Membership.Join);
     }
-  }, [createRoom, isDM, onClick, roomName, visibility]);
+  }, [createRoom, onClick, parentSpaceId, roomName, visibility]);
 
   return (
     <Box
@@ -70,7 +67,7 @@ export function CreateRoomForm(props: Props): JSX.Element {
       }}
     >
       <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        CREATE ROOM
+        CREATE CHANNEL
       </Typography>
       <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
         <Box
@@ -80,7 +77,7 @@ export function CreateRoomForm(props: Props): JSX.Element {
           marginTop="10px"
         >
           <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
-            Room name:
+            Channel name:
           </Typography>
           <TextField
             id="filled-basic"
@@ -109,30 +106,6 @@ export function CreateRoomForm(props: Props): JSX.Element {
               >
                 <MenuItem value={Visibility.Private}>private</MenuItem>
                 <MenuItem value={Visibility.Public}>public</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
-        <Box
-          display="grid"
-          alignItems="center"
-          gridTemplateColumns="repeat(2, 1fr)"
-          marginTop="20px"
-        >
-          <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
-            Is DM:
-          </Typography>
-          <Box minWidth="120px">
-            <FormControl fullWidth>
-              <InputLabel id="is-dm-select-label"></InputLabel>
-              <Select
-                labelId="is-dm--select-label"
-                id="is-dm--select"
-                value={isDM}
-                onChange={onChangeIsDM}
-              >
-                <MenuItem value={false.toString()}>false</MenuItem>
-                <MenuItem value={true.toString()}>true</MenuItem>
               </Select>
             </FormControl>
           </Box>

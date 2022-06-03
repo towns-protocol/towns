@@ -41,11 +41,16 @@ export interface RoomsMessages {
   [roomId: string]: RoomMessage[];
 }
 
+export interface CreateSpaceInfo {
+  spaceName: string;
+  visibility: Visibility;
+}
+
 export interface CreateRoomInfo {
   roomName: string;
   visibility: Visibility;
   isDirectMessage?: boolean;
-  isSpace: boolean;
+  parentSpaceId?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

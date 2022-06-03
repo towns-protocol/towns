@@ -46,7 +46,6 @@ export const CreateRoomForm = (props: Props) => {
       roomName,
       visibility,
       isDirectMessage: isDM === "true",
-      isSpace: true,
     };
     const roomId = await createRoom(createRoomInfo);
 
