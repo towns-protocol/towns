@@ -59,6 +59,14 @@ export interface Eip4361Info {
   statement: string; // is a human-readable ASCII assertion that the user will sign, and it must not contain '\n' (the byte 0x0a).
 }
 
+export interface LoginServerResponse {
+  accessToken: string | undefined;
+  userId: string | undefined;
+  homeServer: string | undefined;
+  deviceId: string | undefined;
+  error?: string;
+}
+
 interface UserInteractive {
   completed: string[];
   flows: UserInteractiveFlow[];

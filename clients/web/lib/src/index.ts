@@ -21,12 +21,12 @@ export type {
   Rooms,
   RoomMessage,
   RoomsMessages,
+  Space,
+  SpaceChild,
 } from "./types/matrix-types";
 
 export { MatrixContextProvider } from "./components/MatrixContextProvider";
-
 export { useMatrixStore } from "./store/use-matrix-store";
-
 export { useMatrixClient } from "./hooks/use-matrix-client";
 export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
 

@@ -9,6 +9,27 @@ export enum Membership {
   Leave = "leave",
 }
 
+export interface Space {
+  id: string;
+  name: string;
+  membership?: string;
+  members: Members;
+  inviter?: string;
+  children: SpaceChild[];
+}
+
+export interface SpaceChild {
+  roomId: string;
+  name?: string;
+  avatarUrl?: string;
+  topic?: string;
+  canonicalAlias?: string;
+  aliases?: string[];
+  worldReadable: boolean;
+  guestCanJoin: boolean;
+  numjoinedMembers: number;
+}
+
 export interface Room {
   roomId: string;
   name: string;

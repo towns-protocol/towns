@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useParams } from "react-router-dom";
-import { useMatrixClient, useMatrixStore } from "use-matrix-client";
+import { Room, useMatrixClient, useMatrixStore } from "use-matrix-client";
 
 export const Spaces = () => {
   const { spaceId } = useParams();
-
   const { rooms } = useMatrixStore();
-  const space = spaceId && rooms ? rooms[spaceId] : undefined;
-
   const { syncSpace } = useMatrixClient();
+  const [space, setSpace] = useState<Room | undefined>(undefined);
+
+  useEffect(() => {
+    setSpace(spaceId && rooms ? rooms[spaceId] : undefined);
+  }, [spaceId, rooms]);
 
   useEffect(() => {
     let cancelled = false;
