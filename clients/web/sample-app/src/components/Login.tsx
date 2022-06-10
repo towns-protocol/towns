@@ -19,11 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
 
-const StatementToSign = `Click to sign in and accept the Harmony Terms of Service: https://harmony.xyz/tos.
-
-This request will not trigger a blockchain transaction or cost any gas fees.
-
-Your authentication status will reset after 24 hours.`;
+const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
 
 export function Login(): JSX.Element {
   const styles = useStyles();

@@ -1,25 +1,25 @@
 import {
   AuthenticationData,
   AuthenticationError,
+  Eip4361Info,
   LoginFlows,
   LoginStatus,
   LoginTypePublicKey,
+  LoginTypePublicKeyEthereum,
   PublicKeyEtheremParams,
   RegisterRequest,
   RegistrationAuthentication,
-  PublicKeyEthereumHashFields,
   getChainIdEip155,
   getChainName,
   getParamsPublicKeyEthereum,
   getUsernameFromId,
   isLoginFlowPublicKeyEthereum,
-  LoginTypePublicKeyEthereum,
 } from "./login";
 import { MatrixClient, MatrixError, createClient } from "matrix-js-sdk";
 import { useCallback, useMemo } from "react";
 
+import { SiweMessage } from "siwe";
 import { StatusCodes } from "http-status-codes";
-import keccak256 from "keccak256";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useWeb3Context } from "./use-web3";
@@ -27,13 +27,13 @@ import { useWeb3Context } from "./use-web3";
 interface NewSession {
   sessionId: string;
   version: number;
-  chainIds: string[];
+  chainIds: number[];
+  nonce: string;
   error?: string;
 }
 
 interface SignedAuthenticationData {
   signature: string;
-  hashFields: PublicKeyEthereumHashFields;
   message: string;
 }
 
@@ -65,8 +65,7 @@ export function useMatrixWalletSignIn() {
   );
 
   const walletAddress = useMemo(
-    () =>
-      accounts && accounts.length > 0 ? accounts[0].toLowerCase() : undefined,
+    () => (accounts && accounts.length > 0 ? accounts[0] : undefined),
     [accounts],
   );
 
@@ -109,17 +108,17 @@ export function useMatrixWalletSignIn() {
   );
 
   const signMessage = useCallback(
-    async function (
-      sessionId: string,
-      statementToSign: string,
-    ): Promise<SignedAuthenticationData | undefined> {
+    async function (args: {
+      statementToSign: string;
+      nonce: string;
+    }): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
-      const { messageToSign, hashFields } = createMessageToSign({
+      const messageToSign = createMessageToSign({
         walletAddress,
         chainId: chainIdEip155,
         homeServer,
-        nonce: sessionId,
-        statementToSign,
+        nonce: args.nonce,
+        statementToSign: args.statementToSign,
       });
 
       // Prompt the user to sign the message.
@@ -130,12 +129,10 @@ export function useMatrixWalletSignIn() {
           signature,
           walletAddress,
           messageToSign,
-          hashFields,
         });
 
         return {
           signature,
-          hashFields,
           message: messageToSign,
         };
       }
@@ -172,22 +169,22 @@ export function useMatrixWalletSignIn() {
   );
 
   const createAndSignAuthData = useCallback(
-    async function (
-      sessionId: string,
-      statementToSign: string,
-    ): Promise<AuthenticationData | undefined> {
+    async function (args: {
+      sessionId: string;
+      nonce: string;
+      statementToSign: string;
+    }): Promise<AuthenticationData | undefined> {
       try {
-        const { signature, hashFields, message } = await signMessage(
-          sessionId,
-          statementToSign,
-        );
+        const { signature, message } = await signMessage({
+          nonce: args.nonce,
+          statementToSign: args.statementToSign,
+        });
         if (signature) {
           // Send the signed message and auth data to the server.
           const auth: AuthenticationData = {
             type: LoginTypePublicKeyEthereum,
-            session: sessionId,
+            session: args.sessionId,
             message,
-            hashFields,
             signature,
             address: walletAddress,
           };
@@ -213,30 +210,15 @@ export function useMatrixWalletSignIn() {
 
           const matrixClient = createClient(homeServer);
           try {
-            const { sessionId, chainIds, error } = await newRegisterSession(
-              matrixClient,
-              walletAddress,
-            );
-            console.log(
-              "[registerWallet] newRegisterSession result, sessionId =",
-              sessionId,
-              "original chainId =",
-              chainId,
-              typeof chainId,
-              "error =",
-              error,
-              "and looking for chainIdEip155 =",
-              chainIdEip155,
-              typeof chainIdEip155,
-              " in chainIds =",
-              chainIds,
-            );
+            const { sessionId, chainIds, nonce, error } =
+              await newRegisterSession(matrixClient, walletAddress);
             if (!error && sessionId && chainIds.includes(chainIdEip155)) {
               // Prompt the user to sign the message.
-              const authData: AuthenticationData = await createAndSignAuthData(
+              const authData: AuthenticationData = await createAndSignAuthData({
                 sessionId,
                 statementToSign,
-              );
+                nonce,
+              });
               const auth: RegistrationAuthentication = {
                 type: LoginTypePublicKey,
                 session: sessionId,
@@ -329,7 +311,6 @@ export function useMatrixWalletSignIn() {
     [
       authenticationError,
       authenticationSuccess,
-      chainId,
       chainIdEip155,
       createAndSignAuthData,
       homeServer,
@@ -352,16 +333,16 @@ export function useMatrixWalletSignIn() {
             const isPublicKeySignInSupported =
               await getPublicKeySignInSupported(matrixClient);
             if (isPublicKeySignInSupported) {
-              const { sessionId, chainIds, error } = await newLoginSession(
-                matrixClient,
-              );
+              const { sessionId, chainIds, nonce, error } =
+                await newLoginSession(matrixClient);
 
               if (!error && sessionId && chainIds.includes(chainIdEip155)) {
                 // Prompt the user to sign the message.
-                const auth = await createAndSignAuthData(
+                const auth = await createAndSignAuthData({
                   sessionId,
                   statementToSign,
-                );
+                  nonce,
+                });
 
                 if (auth) {
                   // Send the signed message and auth data to the server.
@@ -459,46 +440,6 @@ export function useMatrixWalletSignIn() {
   };
 }
 
-/**
- * Create a message for signing. See https://eips.ethereum.org/EIPS/eip-4361
- * for message template.
- * 
- * Note: *** It is important to preserve the \n in the message. Signature verification
- * includes the \n in the template.
- * 
- * Example message to be signed:
-
-service.org wants you to sign in with your wallet account:
-0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
-
-I accept the ServiceOrg Terms of Service: https://service.org/tos
-
-URI: https://service.org/login
-Version: 1
-Chain ID: 1
-Hash: yfSIwarByPfKFxeYSCWN3XoIgNgeEFJffbwFA+JxYbA=
-Issued At: 2021-09-30T16:25:24Z
-Resources:
-- ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/
-- https://example.com/my-web2-claim.json
- * 
- */
-function createMessageFromTemplate(
-  statement: string,
-  messageInfo: PublicKeyEthereumHashFields,
-  hash: string,
-) {
-  // See https://github.com/HereNotThere/harmony/blob/main/servers/matrix-publickey-login-spec.md for message template.
-
-  return `${messageInfo.domain} wants you to sign in with your account:
-${messageInfo.address}
-
-${statement}
-
-Hash: ${hash}
-`;
-}
-
 async function getPublicKeySignInSupported(
   client: MatrixClient,
 ): Promise<boolean> {
@@ -511,58 +452,51 @@ async function getPublicKeySignInSupported(
 
 function getAuthority(uri: string): string {
   const url = new URL(uri);
-  const authority = url.port ? `${url.hostname}:${url.port}` : url.hostname;
-  return authority;
+  // Bug in siwe-go package on the server. Doesn't recognize port.
+  //const authority = url.port ? `${url.hostname}:${url.port}` : url.hostname;
+  return url.hostname;
 }
 
-function ensureSpecCompliantAuthenticationData(
-  authInput: PublicKeyEthereumHashFields,
-): PublicKeyEthereumHashFields {
-  // Parse and extract the RFC 3986 authority.
-  const authority = getAuthority(authInput.domain);
-
-  return {
-    ...authInput,
-    domain: authority,
-  };
-}
-
-function createHash(messageFields: PublicKeyEthereumHashFields): string {
-  const fieldStr = JSON.stringify(messageFields);
-  const hash = keccak256(fieldStr).toString("base64");
-  console.log(`createHash`, { hash, fieldStr });
-  return hash;
-}
-
+/**
+ * Create a message for signing. See https://eips.ethereum.org/EIPS/eip-4361
+ * for message template.
+ */
 function createMessageToSign(args: {
   walletAddress: string;
-  chainId: string;
+  chainId: number;
   homeServer: string;
   nonce: string;
   statementToSign: string;
-}): {
-  hashFields: PublicKeyEthereumHashFields;
-  messageToSign: string;
-} {
+}): string {
   // Create the auth metadata for signing.
-  const hashFields = ensureSpecCompliantAuthenticationData({
-    domain: args.homeServer,
+  const eip4361: Eip4361Info = {
+    authority: getAuthority(args.homeServer),
     address: args.walletAddress,
     version: "1",
     chainId: args.chainId,
     nonce: args.nonce,
+    statement: args.statementToSign,
+  };
+
+  const siweMessage = new SiweMessage({
+    domain: eip4361.authority,
+    address: eip4361.address,
+    statement: eip4361.statement,
+    uri: origin,
+    version: "1",
+    chainId: eip4361.chainId,
+    nonce: eip4361.nonce,
   });
 
-  const hash = createHash(hashFields);
+  console.log(`[createMessageToSign][SiweMessage]`, siweMessage);
 
-  return {
-    hashFields,
-    messageToSign: createMessageFromTemplate(
-      args.statementToSign,
-      hashFields,
-      hash,
-    ),
-  };
+  const messageToSign = siweMessage.prepareMessage();
+  console.log(
+    `[createMessageToSign][siweMessage.prepareMessage]`,
+    messageToSign,
+  );
+
+  return messageToSign;
 }
 
 async function newLoginSession(client: MatrixClient): Promise<NewSession> {
@@ -653,12 +587,14 @@ function newSessionSuccess(
     sessionId,
     chainIds: params.chain_ids,
     version: params.version,
+    nonce: params.nonce,
   };
 }
 
 function newSessionError(error: string): NewSession {
   return {
     sessionId: "",
+    nonce: "",
     chainIds: [],
     version: 0,
     error,

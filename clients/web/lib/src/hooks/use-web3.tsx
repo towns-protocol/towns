@@ -1,7 +1,8 @@
+import React, { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import React, { ReactNode } from "react";
 import { createGenericContext } from "../utils/create-generic-context";
+import { ethers } from "ethers";
 import { logger } from "../utils/logger";
 
 export enum WalletStatus {
@@ -53,6 +54,10 @@ function useWeb3() {
       method: "eth_accounts",
       params: [],
     });
+
+    for (let i = 0; i < accounts.length; i++) {
+      accounts[i] = ethers.utils.getAddress(accounts[i]);
+    }
     return accounts;
   }, [ethereum]);
 

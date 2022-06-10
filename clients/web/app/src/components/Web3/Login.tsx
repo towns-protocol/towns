@@ -8,11 +8,7 @@ import {
 } from "use-matrix-client";
 import { Button, Stack } from "@ui";
 
-const StatementToSign = `Click to sign in and accept the Harmony Terms of Service: https://harmony.xyz/tos.
-
-This request will not trigger a blockchain transaction or cost any gas fees.
-
-Your authentication status will reset after 24 hours.`;
+const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
 
 export const Login = () => {
   const [showError, setShowError] = useState<string | undefined>(undefined);
