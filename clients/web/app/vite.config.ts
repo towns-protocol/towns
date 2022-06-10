@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import checker from "vite-plugin-checker";
 import tsconfigPaths from "vite-tsconfig-paths";
 import eslintPlugin from "vite-plugin-eslint";
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,6 +16,7 @@ export default defineConfig({
       exclude: [/.*.css.ts.*/, /node_modules/],
     }),
     vanillaExtractPlugin(),
+    visualizer({ filename: "dist/stats.html" }),
   ],
   server: {
     hmr: {
