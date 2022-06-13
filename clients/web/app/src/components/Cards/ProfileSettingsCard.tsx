@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router";
+import { useMatrixClient } from "use-matrix-client";
 import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
 import { useStore } from "store/store";
 
@@ -23,9 +24,11 @@ export const ProfileSettingsCard = (props: Props) => {
     navigate("/me");
   }, [navigate]);
 
+  const { logout } = useMatrixClient();
+
   const onLogoutClick = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
+    logout();
+  }, [logout]);
 
   return (
     <Card padding="md" gap="sm" width="300" fontSize="md">

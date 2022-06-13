@@ -32,7 +32,7 @@ Default.args = {
 export const ToneCritical = Template.bind({});
 ToneCritical.args = {
   ...Default.args,
-  tone: "critical",
+  tone: "negative",
 };
 
 export const TonePositive = Template.bind({});
@@ -57,5 +57,5 @@ After.args = {
 export const Background = Template.bind({});
 Background.args = {
   ...Default.args,
-  background: "level2",
+  background: "level3",
 };

@@ -4,7 +4,10 @@ import { vars } from "ui/styles/vars.css";
 export const buttonStyle = recipe({
   base: {
     border: "none",
-    borderRadius: vars.borderRadius.sm,
+    borderRadius: vars.borderRadius.xs,
+    ":hover": {
+      boxShadow: `0 1px 6px 0px rgba(0,0,0,0.3)`,
+    },
   },
   defaultVariants: {
     size: "input_md",
@@ -14,15 +17,15 @@ export const buttonStyle = recipe({
       input_sm: {
         fontSize: vars.fontSize.sm,
         height: vars.dims.input.input_sm,
-        fontVariationSettings: vars.fontVariationSettings.strong,
+        fontVariationSettings: vars.fontVariationSettings.normal,
         paddingLeft: vars.space.sm,
         paddingRight: vars.space.sm,
         gap: vars.space.xs,
       },
       input_md: {
-        fontSize: vars.fontSize.md,
+        fontSize: vars.fontSize.sm,
         height: vars.dims.input.input_md,
-        fontVariationSettings: vars.fontVariationSettings.strong,
+        fontVariationSettings: vars.fontVariationSettings.normal,
         paddingLeft: vars.space.md,
         paddingRight: vars.space.md,
         gap: vars.space.sm,

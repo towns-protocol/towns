@@ -8,12 +8,12 @@ export const MessagesNew = () => (
   <Stack grow>
     <ContextBar
       title="New Message"
-      before={<Icon type="message" background="level1" />}
+      before={<Icon type="message" background="level2" />}
     />
     <ContextBar>
       <Paragraph size="md">To:</Paragraph>
       <Box
-        background="level2"
+        background="level3"
         gap="xs"
         direction="row"
         padding="xs"

@@ -1,6 +1,8 @@
 import React from "react";
+import clsx from "clsx";
 import { Box } from "@ui";
 import { Field, FieldBaseProps } from "../_internal/Field/Field";
+import * as styles from "./TextField.css";
 
 type NativeInputProps = React.AllHTMLAttributes<HTMLInputElement>;
 
@@ -21,13 +23,14 @@ export const TextField = (props: Props) => {
   const { type, placeholder, ...fieldProps } = props;
   return (
     <Field {...fieldProps}>
-      {(overlays, inputProps) => (
+      {(overlays, { className, ...inputProps }) => (
         <>
           <Box
             as="input"
             {...inputProps}
             type={type}
             placeholder={placeholder}
+            className={clsx(className, styles.input)}
           />
           {overlays}
         </>

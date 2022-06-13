@@ -1,6 +1,6 @@
 import { defineProperties } from "@vanilla-extract/sprinkles";
-import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 import { vars } from "ui/styles/vars.css";
+import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 
 export const avatarSizes = {
   avatar_xs: {

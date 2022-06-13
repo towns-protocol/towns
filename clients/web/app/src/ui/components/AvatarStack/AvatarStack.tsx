@@ -1,6 +1,6 @@
 import React from "react";
 import { Avatar, Stack } from "@ui";
-import { avatarSizes } from "ui/styles/atoms/properties/avatarProperties.css";
+import { avatarSizes } from "ui/components/Avatar/avatarProperties.css";
 
 type Props = {
   userIds: string[];

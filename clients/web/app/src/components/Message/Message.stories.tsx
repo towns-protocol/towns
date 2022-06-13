@@ -2,7 +2,7 @@ import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
 import { Paragraph } from "@ui";
 import { StoryContainer } from "stories/StoryUtils";
-import { palettes } from "ui/styles/palettes";
+import { themes } from "ui/styles/themes";
 import { vars } from "ui/styles/vars.css";
 import { Message } from "./Message";
 
@@ -40,8 +40,8 @@ export default {
       type: "string",
     },
     background: {
-      options: Object.keys(palettes.dark.background),
-      defaultValue: "level1",
+      options: Object.keys(themes.dark.background),
+      defaultValue: "level2",
     },
     padding: {
       options: Object.keys(vars.space),

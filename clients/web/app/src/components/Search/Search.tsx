@@ -7,7 +7,7 @@ export const Search = () => {
       <TextField
         noBorder
         height="input_md"
-        background="level2"
+        background="level3"
         icon="search"
         placeholder="Search..."
       />

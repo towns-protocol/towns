@@ -1,12 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useMatrixStore } from "use-matrix-client";
+import { NotificationCard } from "@components/Cards/NotificationCard";
 import { ProfileSettingsCard } from "@components/Cards/ProfileSettingsCard";
 import { Logo } from "@components/Logo/Logo";
 import { Search } from "@components/Search";
 import { Login } from "@components/Web3/Login";
 import { Avatar, Box, Icon, Stack, TooltipRenderer } from "@ui";
-import { NotificationCard } from "@components/Cards/NotificationCard";
 
 const positionTop = {
   top: 0,
@@ -22,7 +22,7 @@ export const TopBar = (props: { onToggleTheme?: () => void }) => {
       shrink={false}
       height="height_xl"
       paddingX="md"
-      background="level1"
+      background="level2"
       alignItems="center"
       gap="md"
       color="gray2"

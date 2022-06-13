@@ -54,7 +54,7 @@ const MessageItem = ({
         paddingX="sm"
         height="x6"
         alignItems="center"
-        background={selected ? "level2" : undefined}
+        background={selected ? "level3" : undefined}
       >
         <Avatar circle src="/placeholders/nft_2.png" size="avatar_lg" />
         <Stack grow gap="sm">

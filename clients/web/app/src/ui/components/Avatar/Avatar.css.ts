@@ -1,7 +1,7 @@
 import { style } from "@vanilla-extract/css";
 import { createSprinkles } from "@vanilla-extract/sprinkles";
 import { vcn } from "vanilla-classnames";
-import { avatarProperties } from "ui/styles/atoms/properties/avatarProperties.css";
+import { avatarProperties } from "ui/components/Avatar/avatarProperties.css";
 import { vars } from "ui/styles/vars.css";
 
 /**
@@ -17,7 +17,7 @@ export const avatarBaseStyle = style({
 
 export const avatarToggleClasses = vcn({
   border: style({
-    border: `2px solid ${vars.color.layer.default}`,
+    border: `2px solid ${vars.color.layer.level1}`,
   }),
   circle: style({
     borderRadius: vars.borderRadius.full,

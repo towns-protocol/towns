@@ -60,8 +60,7 @@ export const CreateRoomForm = (props: Props) => {
       <Stack gap="lg">
         <TextField
           autoFocus
-          noBorder
-          background="level1"
+          background="level2"
           label="Room Name"
           secondaryLabel="(required)"
           description="This is your official space name that you own. Your space's URL will contain the same name."
@@ -70,8 +69,7 @@ export const CreateRoomForm = (props: Props) => {
         />
 
         <Dropdown
-          noBorder
-          background="level1"
+          background="level2"
           label="Visibility"
           message=""
           options={VisibilityOptions.map((value) => ({
@@ -83,8 +81,7 @@ export const CreateRoomForm = (props: Props) => {
         />
 
         <Dropdown
-          noBorder
-          background="level1"
+          background="level2"
           label="Is DM:"
           options={IsDmOptions.map((value) => ({
             label: String(value),

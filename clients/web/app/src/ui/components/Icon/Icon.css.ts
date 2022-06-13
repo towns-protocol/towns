@@ -1,7 +1,7 @@
 import { style } from "@vanilla-extract/css";
 import { createSprinkles } from "@vanilla-extract/sprinkles";
-import { iconProperties } from "ui/styles/atoms/properties/iconProperties.css";
 import { vars } from "ui/styles/vars.css";
+import { iconProperties } from "./iconProperties.css";
 
 export const iconAtoms = createSprinkles(iconProperties);
 

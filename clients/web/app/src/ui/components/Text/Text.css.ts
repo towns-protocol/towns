@@ -1,6 +1,6 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
-import { boxStyleBase } from "ui/styles/atoms/atoms.css";
+import { boxClass } from "ui/styles/atoms/atoms.css";
 import { debugClass } from "ui/styles/css/debug.css";
 import { vars } from "ui/styles/vars.css";
 import { fontSettings } from "ui/utils/FontLoader";
@@ -95,9 +95,9 @@ fontSettings.forEach((font) => {
   const fontStyle = fontStyles.find((f) => f.fontFamily === font.fontFamily);
   if (fontStyle) {
     font.targets.forEach((e) => {
-      globalStyle(`${boxStyleBase} ${e}`, fontStyle.baseProperties);
-      globalStyle(`${boxStyleBase} ${e}:before `, fontStyle.styleBefore);
-      globalStyle(`${boxStyleBase} ${e}:after `, fontStyle.styleAfter);
+      globalStyle(`${boxClass} ${e}`, fontStyle.baseProperties);
+      globalStyle(`${boxClass} ${e}:before `, fontStyle.styleBefore);
+      globalStyle(`${boxClass} ${e}:after `, fontStyle.styleAfter);
     });
   }
 });
@@ -108,7 +108,7 @@ const siblings = ["p", "h1", "h2", "h3", "h4", "h5"] as const;
 
 siblings.forEach((s) => {
   siblings.forEach((m) =>
-    globalStyle(`${boxStyleBase}:not(.${withGapClass}) >  ${s} + ${m}`, {
+    globalStyle(`${boxClass}:not(.${withGapClass}) >  ${s} + ${m}`, {
       marginTop: vars.space.md,
     }),
   );

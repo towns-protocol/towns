@@ -14,8 +14,7 @@ export const MessageInput = ({
 }) => (
   <Stack grow horizontal>
     <TextField
-      noBorder
-      background="level1"
+      background="level2"
       placeholder="Type here..."
       icon="plus"
       height={size}

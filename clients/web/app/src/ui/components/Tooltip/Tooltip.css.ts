@@ -13,7 +13,7 @@ export const arrowLeft = style({
       display: "block",
       position: `absolute`,
       border: `7px solid`,
-      borderColor: `transparent ${vars.color.background.default} transparent transparent`,
+      borderColor: `transparent ${vars.color.background.level1} transparent transparent`,
       left: "0",
       top: "50%",
       transform: `translate(-100%, -50%)`,

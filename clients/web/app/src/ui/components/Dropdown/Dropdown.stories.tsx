@@ -22,19 +22,19 @@ const Template: ComponentStory<typeof Dropdown> = (props) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  label: "Fruit",
+  label: "Chain",
   icon: "lock",
   options: [
-    { label: "Apple", value: "apple" },
-    { label: "Banana", value: "banana" },
-    { label: "Lemon", value: "lemon" },
+    { label: "Mainet", value: "1" },
+    { label: "Arbitrum One", value: "42161" },
+    { label: "Optimism", value: "10" },
   ],
 };
 
-export const ToneCritical = Template.bind({});
-ToneCritical.args = {
+export const ToneNegative = Template.bind({});
+ToneNegative.args = {
   ...Default.args,
-  tone: "critical",
+  tone: "negative",
 };
 
 export const TonePositive = Template.bind({});

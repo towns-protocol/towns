@@ -1,7 +1,9 @@
+import { defineProperties } from "@vanilla-extract/sprinkles";
 import { vars } from "ui/styles/vars.css";
+import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 
 export const border = {
-  default: `1px solid ${vars.color.background.level3}`,
+  default: `1px solid ${vars.color.background.level4}`,
   strong: `1px solid ${vars.color.text.default}`,
   inverted: `1px solid ${vars.color.text.inverted}`,
 } as const;
@@ -58,3 +60,148 @@ export const flexGrow = {
   x8: 8,
   x9: 9,
 } as const;
+
+export const boxProperties = defineProperties({
+  ...responsivePropertiesMixin,
+  properties: {
+    // display
+    display: [
+      "block",
+      "flex",
+      "grid",
+      "inline-block",
+      "inline",
+      "none",
+      "contents",
+    ],
+
+    pointerEvents: ["all", "auto", "none"],
+
+    // size
+    aspectRatio: aspectRatio,
+    boxShadow: {
+      card: `0 0 40px ${vars.color.shadow.card}`,
+    },
+
+    height: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.input,
+      ...vars.dims.screen,
+    },
+    minHeight: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.input,
+      ...vars.dims.screen,
+    },
+    maxHeight: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.input,
+      ...vars.dims.screen,
+    },
+    width: { ...vars.dims.baseline, ...vars.dims.height, ...vars.dims.screen },
+    minWidth: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+    maxWidth: {
+      ...vars.dims.baseline,
+      ...vars.dims.height,
+      ...vars.dims.screen,
+    },
+
+    square: {
+      square_xxs: {
+        height: vars.dims.square.square_xxs,
+        width: vars.dims.square.square_xxs,
+      },
+      square_xs: {
+        height: vars.dims.square.square_xs,
+        width: vars.dims.square.square_xs,
+      },
+      square_sm: {
+        height: vars.dims.square.square_sm,
+        width: vars.dims.square.square_sm,
+      },
+      square_md: {
+        height: vars.dims.square.square_md,
+        width: vars.dims.square.square_md,
+      },
+      square_lg: {
+        height: vars.dims.square.square_lg,
+        width: vars.dims.square.square_lg,
+      },
+      square_xl: {
+        height: vars.dims.square.square_xl,
+        width: vars.dims.square.square_xl,
+      },
+      square_xxl: {
+        height: vars.dims.square.square_xxl,
+        width: vars.dims.square.square_xxl,
+      },
+      square_inline: {
+        height: vars.dims.square.square_inline,
+        width: vars.dims.square.square_inline,
+      },
+    },
+
+    // padding
+    paddingLeft: vars.space,
+    paddingRight: vars.space,
+    paddingTop: vars.space,
+    paddingBottom: vars.space,
+
+    // padding
+    insetX: vars.insetX,
+    insetY: vars.insetY,
+
+    // border
+    borderLeft: border,
+    borderRight: border,
+    borderTop: border,
+    borderBottom: border,
+    borderRadius: vars.borderRadius,
+    borderTopLeftRadius: vars.borderRadius,
+    borderTopRightRadius: vars.borderRadius,
+    borderBottomLeftRadius: vars.borderRadius,
+    borderBottomRightRadius: vars.borderRadius,
+
+    // flex
+    flexDirection: flexDirection,
+    gap: vars.space,
+    flexWrap: ["wrap", "nowrap"],
+    flexGrow: flexGrow,
+    flexShrink: flexGrow,
+    flexBasis: { ...vars.dims.height, ...vars.dims.screen },
+    alignContent: { ...flexAlignment, baseline: "baseline" },
+    alignItems: { ...flexAlignment, baseline: "baseline" },
+    alignSelf: { ...flexAlignment, baseline: "baseline" },
+    justifyContent: flexJustifyAlignment,
+    justifySelf: flexAlignment,
+    zIndex: vars.zIndex,
+  },
+
+  shorthands: {
+    basis: ["flexBasis"],
+    direction: ["flexDirection"],
+    inset: ["insetX", "insetY"],
+    paddingX: ["paddingLeft", "paddingRight"],
+    paddingY: ["paddingTop", "paddingBottom"],
+    padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],
+
+    border: ["borderLeft", "borderRight", "borderTop", "borderBottom"],
+    rounded: [
+      "borderTopLeftRadius",
+      "borderTopRightRadius",
+      "borderBottomLeftRadius",
+      "borderBottomRightRadius",
+    ],
+    roundedTop: ["borderTopLeftRadius", "borderTopRightRadius"],
+    roundedBottom: ["borderBottomLeftRadius", "borderBottomRightRadius"],
+    roundedRight: ["borderTopRightRadius", "borderBottomRightRadius"],
+    roundedLeft: ["borderTopLeftRadius", "borderBottomLeftRadius"],
+  },
+});

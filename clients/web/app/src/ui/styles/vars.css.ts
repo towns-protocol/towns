@@ -4,15 +4,15 @@ import {
   createThemeContract,
 } from "@vanilla-extract/css";
 import { breakpoints } from "./breakpoints";
-import { palettes } from "./palettes";
+import { themes } from "./themes";
 
 // export const zoom = 1.1;
 export const baseline = 8;
 export const fontBase = 15;
 
-const color = createThemeContract(palettes.light);
-export const lightTheme = createTheme(color, palettes.light);
-export const darkTheme = createTheme(color, palettes.dark);
+const color = createThemeContract(themes.light);
+export const lightTheme = createTheme(color, themes.light);
+export const darkTheme = createTheme(color, themes.dark);
 
 const root = createGlobalTheme(":root", {
   bl: `${baseline}px`,
@@ -213,7 +213,7 @@ const root = createGlobalTheme(":root", {
   } as const,
 });
 
-const defaultColorTheme = createGlobalTheme(":root", color, palettes.light);
+const defaultColorTheme = createGlobalTheme(":root", color, themes.light);
 
 export const vars = {
   ...root,

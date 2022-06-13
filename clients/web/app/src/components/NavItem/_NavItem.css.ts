@@ -11,7 +11,7 @@ export const highlightSelectedInactive = style({
 
 export const highlightActive = atoms({
   rounded: "xs",
-  background: "level2",
+  background: "level3",
 });
 
 export const highlightTransitionSwift = style({

@@ -22,7 +22,7 @@ export const ActionNavItem = ({
         <Icon
           type={icon}
           padding="sm"
-          background="level2"
+          background="level3"
           color="gray2"
           size={{ desktop: "square_lg", tablet: "square_lg" }}
         />

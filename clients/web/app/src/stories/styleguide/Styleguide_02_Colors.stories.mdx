@@ -1,20 +1,68 @@
 import { Meta } from "@storybook/addon-docs";
 import { vars } from "../../ui/styles/vars.css";
-import { Box, Icon, Paragraph } from "../../ui/components";
-import { Row } from "../StoryUtils";
+import { Box, Icon, Paragraph, Text } from "../../ui/components";
+import { Row, StoryContainer } from "../StoryUtils";
+const descriptions = {
+  background: {
+    none: "same as 'undefined'",
+    inverted: "inverts background / foreground",
+  },
+};
 
 <Meta title="Style Guide/Colors" />
 
-# Colors
+# Color System
 
-## Background Fills
+## Background
+
+The `background` property is semantic and will adapt the background-fill of a container
+depending to the current theme. The text color will also adapt to the choosen background
+unless its explicitely overriden by the `color` property.
+The backgrounds are described in levels where the first one is also the default (think of the
+ground-floor in a building).
+If the `background` property is omitted, the container will remain transparent and
+pass-through the background color of its parent container.
+
+<h4>Example:</h4>
+
+```tsx
+<Stack background="level3">
+  <Text>Default text color</Text>
+</Stack>
+```
+
+<h4>Variants:</h4>
 
 <Box>
   {Object.keys(vars.color.layer).map((c) => (
-    <Row key={c} label={c} invert={c.match(/overlay/)}>
-      <Box padding background={c}>
+    <Row
+      key={c}
+      label={
+        descriptions.background[c] ? (
+          <>
+            <Text>{c}</Text>
+            <Text color="gray2">{descriptions.background[c]}</Text>
+          </>
+        ) : (
+          c
+        )
+      }
+    >
+      <StoryContainer background={c}>
         <Paragraph>Default text color</Paragraph>
-      </Box>
+      </StoryContainer>
+    </Row>
+  ))}
+</Box>
+
+## Tones
+
+<Box>
+  {Object.keys(vars.color.tone).map((c) => (
+    <Row key={c} label={c}>
+      <StoryContainer background={c}>
+        <Paragraph>Default text color</Paragraph>
+      </StoryContainer>
     </Row>
   ))}
 </Box>
@@ -23,33 +71,26 @@ import { Row } from "../StoryUtils";
 
 <Box>
   {Object.keys(vars.color.text).map((c) => (
-    <Row
-      key={c}
-      label={c}
-      backgroundVariant={
-        c.match(/inverted/i)
-          ? "inverted"
-          : c.match(/onTone/)
-          ? "accent"
-          : undefined
-      }
-    >
-      <Box direction="row" alignItems="center" gap="md">
-        <Icon color={c} />
-        <Paragraph color={c}>Text color</Paragraph>
-      </Box>
-    </Row>
-  ))}
-</Box>
-
-## Tones (placeholders ⚠️)
-
-<Box>
-  {Object.keys(vars.color.tone).map((c) => (
-    <Row key={c} label={c} invert={c.match(/overlay/)}>
-      <Box padding background={c}>
-        <Paragraph>Default text color</Paragraph>
-      </Box>
+    <Row key={c} label={c}>
+      <StoryContainer
+        background={
+          c.match(/inverted|overlay/i)
+            ? "inverted"
+            : c.match(/tone/i)
+            ? "etherum"
+            : "default"
+        }
+        direction="row"
+        centerContent
+        gap="md"
+      >
+        <>
+          <Icon color={c} />
+          <Paragraph textTransform="capitalize" color={c}>
+            {c} text
+          </Paragraph>
+        </>
+      </StoryContainer>
     </Row>
   ))}
 </Box>

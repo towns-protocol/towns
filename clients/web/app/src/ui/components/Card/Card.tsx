@@ -5,7 +5,7 @@ import { StackProps } from "../Stack/Stack";
 export const Card = ({ children, ...boxProps }: StackProps) => {
   return (
     <Stack
-      background="level1"
+      background="level2"
       borderRadius="md"
       overflow="hidden"
       position="relative"

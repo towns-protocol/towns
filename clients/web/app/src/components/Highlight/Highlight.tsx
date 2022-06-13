@@ -39,7 +39,7 @@ export const Highlight = ({
       tablet: type === "background" ? 12 : 6,
       desktop: colSpan,
     }}
-    background={{ lightMode: "default", darkMode: "level2" }}
+    background={{ lightMode: "default", darkMode: "level3" }}
     aspectRatio={type === "background" ? "2/1" : undefined}
     {...boxProps}
   >

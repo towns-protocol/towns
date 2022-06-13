@@ -4,14 +4,22 @@ import { Box, BoxProps } from "@ui";
 import * as styles from "./FieldOutline.css";
 import { FieldTone } from "../Field";
 
-export const FieldOutline = (props: { tone: FieldTone }) => (
+type Props = {
+  tone: FieldTone;
+  noBorder: boolean;
+};
+
+export const FieldOutline = (props: Props) => (
   <>
     <OutlineOverlay
       className={clsx([styles.outlineBase, styles.outlines["focus"]])}
     />
-    <OutlineOverlay
-      className={clsx(styles.outlineBase, styles.outlines[props.tone])}
-    />
+    {(!props.noBorder || !props.tone || props.tone !== "neutral") && (
+      <OutlineOverlay
+        className={clsx(styles.outlineBase, styles.outlines[props.tone])}
+      />
+    )}
+
     <OutlineOverlay className={clsx([styles.outlineBase, styles.hidden])} />
   </>
 );

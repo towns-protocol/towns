@@ -19,6 +19,8 @@ export const GridItem = (props: { children?: React.ReactNode }) => (
   </Box>
 );
 
+const themes = [lightTheme, darkTheme];
+
 export const Row = ({
   label,
   columns = 2,
@@ -50,19 +52,55 @@ export const Row = ({
 
 export const StoryContainer = ({
   stacked,
+  background = "level2",
   children,
+  ...boxProps
 }: {
+  background?: BoxProps["background"];
   stacked?: boolean;
+
   children?: React.ReactNode;
 }) => (
   <MemoryRouter>
-    <Stack grow direction={stacked ? "column" : "row"} maxWidth="desktop">
-      <Stack grow background="level1" padding="lg" className={lightTheme}>
-        {children}
-      </Stack>
-      <Stack grow background="level1" padding="lg" className={darkTheme}>
-        {children}
-      </Stack>
+    <Stack
+      grow
+      boxShadow="card"
+      direction={stacked ? "column" : "row"}
+      maxWidth="desktop"
+    >
+      {themes.map((theme) => (
+        <Stack
+          grow
+          key={theme}
+          padding="md"
+          className={theme}
+          background="default"
+          color="default"
+        >
+          {background && (background as string).match(/overlay|tone/) ? (
+            <Box centerContent grow background="inverted" padding="md">
+              <Box
+                centerContent
+                grow
+                background={background}
+                padding="md"
+                {...boxProps}
+              >
+                {children}
+              </Box>
+            </Box>
+          ) : (
+            <Box
+              centerContent
+              background={background}
+              padding="md"
+              {...boxProps}
+            >
+              {children}
+            </Box>
+          )}
+        </Stack>
+      ))}
     </Stack>
   </MemoryRouter>
 );

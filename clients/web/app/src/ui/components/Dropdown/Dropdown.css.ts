@@ -5,9 +5,9 @@ export const dropdown = style({
   color: "inherit",
   appearance: "none",
   backgroundImage: `
-    linear-gradient(45deg, transparent 50%, ${vars.color.background.level3} 50%),
-    linear-gradient(135deg, ${vars.color.background.level3} 50%, transparent 50%),
-    linear-gradient(to right, ${vars.color.background.level3}, ${vars.color.background.level3})`,
+    linear-gradient(45deg, transparent 50%, ${vars.color.background.level4} 50%),
+    linear-gradient(135deg, ${vars.color.background.level4} 50%, transparent 50%),
+    linear-gradient(to right, ${vars.color.background.level4}, ${vars.color.background.level4})`,
   backgroundPosition: `
     calc(100% - 5px) 50%,
     calc(100% - 0px) 50%,

@@ -30,7 +30,7 @@ export const SpaceBanner = (props: Props) => {
     <Stack grow width="100%" justifyContent="center">
       <Stack horizontal gap="md" padding="md">
         {/* avatar container */}
-        <Box border padding="sm" borderRadius="lg" background="level1">
+        <Box border padding="sm" borderRadius="lg" background="level2">
           <Avatar src={avatarSrc} size="avatar_xxl" />
         </Box>
         {/* title and stats container */}
@@ -58,7 +58,7 @@ export const SpaceBanner = (props: Props) => {
               <Box onClick={props.onSettingsClicked} {...triggerProps}>
                 <Icon
                   type="settings"
-                  background="level2"
+                  background="level3"
                   size="square_lg"
                   padding="sm"
                 />

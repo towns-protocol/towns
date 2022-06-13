@@ -18,7 +18,7 @@ export const Replies = ({
         centerContent
         rounded="xs"
         height="x4"
-        background="level2"
+        background="level3"
         paddingX="sm"
         direction="row"
         gap="line"

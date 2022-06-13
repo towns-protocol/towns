@@ -1,14 +1,17 @@
 import React, { AllHTMLAttributes, ReactNode } from "react";
 import { BoxProps, Stack } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
+import { ToneName } from "ui/styles/themes";
 import * as styles from "./Field.css";
 import { FieldLabel } from "./FieldLabel";
 import { FieldOutline } from "./FieldOutline";
 
 type FormElementProps = AllHTMLAttributes<HTMLFormElement>;
 
-export const tones = ["neutral", "critical", "positive"] as const;
-export type FieldTone = typeof tones[number];
+export type FieldTone =
+  | typeof ToneName.Positive
+  | typeof ToneName.Negative
+  | typeof ToneName.Neutral;
 
 export type FieldBaseProps = {
   tone?: FieldTone;
@@ -110,7 +113,7 @@ export const Field = (props: Props) => {
         )}
         {before}
         {children(
-          !noBorder && <FieldOutline tone={tone} />,
+          <FieldOutline tone={tone} noBorder={!!noBorder} />,
           {
             id,
             height,

@@ -36,7 +36,17 @@ import { Row, Square } from "../StoryUtils";
         <Box
           background="inverted"
           height="height_md"
-          style={{ width: vars.space[c] }}
+          style={
+            c.match(/paragraph|line/)
+              ? {
+                  height: vars.space[c],
+                  width: vars.space["lg"],
+                }
+              : {
+                  width: vars.space[c],
+                  height: vars.space["lg"],
+                }
+          }
         />
       </Box>
     </Row>

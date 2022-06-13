@@ -27,7 +27,7 @@ export const SaleCard = ({
 }: Props) => (
   <Card
     colSpan={{ tablet: 6, desktop: colSpan }}
-    background={{ lightMode: "default", darkMode: "level2" }}
+    background={{ lightMode: "default", darkMode: "level3" }}
     aspectRatio="1/1"
     {...boxProps}
   >

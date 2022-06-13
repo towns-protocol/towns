@@ -1,7 +1,7 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
 import { StoryContainer } from "stories/StoryUtils";
-import { avatarSizes } from "ui/styles/atoms/properties/avatarProperties.css";
+import { avatarSizes } from "ui/components/Avatar/avatarProperties.css";
 import { AvatarStack } from "./AvatarStack";
 
 export default {

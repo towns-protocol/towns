@@ -41,13 +41,13 @@ export const outlines = styleVariants({
     vars: {
       [focusedOpacityVar]: "0",
     },
-    boxShadow: `inset 0 0 0 1px ${vars.color.background.level3}`,
+    boxShadow: `inset 0 0 0 1px ${vars.color.background.etherum}`,
   },
-  critical: {
+  negative: {
     vars: {
       [focusedOpacityVar]: "0",
     },
-    boxShadow: `inset 0 0 0 1px ${vars.color.foreground.critical}`,
+    boxShadow: `inset 0 0 0 1px ${vars.color.foreground.negative}`,
   },
   positive: {
     vars: {

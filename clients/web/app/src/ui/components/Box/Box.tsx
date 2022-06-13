@@ -5,7 +5,7 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { Atoms, atoms, boxStyleBase } from "ui/styles/atoms/atoms.css";
+import { Atoms, atoms, boxClass } from "ui/styles/atoms/atoms.css";
 import { debugClass } from "ui/styles/css/debug.css";
 import { absoluteFillClass } from "ui/styles/css/utils.css";
 import { vars } from "ui/styles/vars.css";
@@ -123,7 +123,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     return {
       nativeProps,
       atomicClasses: clsx([
-        boxStyleBase,
+        boxClass,
         atoms({
           ...boxDefaults,
           ...fromShorthand,

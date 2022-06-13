@@ -113,7 +113,7 @@ export const SpacesIndex = () => {
               </LiquidContainer>
             </Box>
           </Stack>
-          <Box grow alignItems="center" background="level1">
+          <Box grow alignItems="center" background="level2">
             {roomMessages && messagesLength ? (
               <SpaceMessages messages={roomMessages} />
             ) : (
@@ -241,7 +241,7 @@ const QuotedMessage = (props: {
     <Stack
       rounded="sm"
       padding="md"
-      background="level2"
+      background="level3"
       gap="md"
       color="default"
     >
@@ -274,7 +274,7 @@ const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
     shrink
     height="x4"
     paddingX="md"
-    background={props.selected ? "level2" : undefined}
+    background={props.selected ? "level3" : undefined}
     roundedTop="sm"
     justifyContent="center"
   >

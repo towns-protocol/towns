@@ -17,7 +17,7 @@ export const Reactions = (props: {
           key={k}
           gap="sm"
           rounded="lg"
-          background="level2"
+          background="level3"
           color="gray1"
           paddingX="sm"
           border={props.userReaction === k}
