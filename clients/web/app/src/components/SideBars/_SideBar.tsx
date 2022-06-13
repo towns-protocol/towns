@@ -40,7 +40,6 @@ export const SideBar = (props: Props) => {
     >
       <SizeBox
         grow
-        background="level2"
         overflowX="hidden"
         overflowY="scroll"
         {...props}

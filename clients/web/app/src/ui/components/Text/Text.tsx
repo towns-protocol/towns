@@ -24,7 +24,7 @@ type Props = (ParagraphProps | LabelProps) & {
   children?: React.ReactNode;
 
   // Size token
-  size?: "sm" | "md" | "lg" | "xl" | "xl24" | "xl32";
+  size?: BoxProps["fontSize"];
 
   truncate?: boolean;
 

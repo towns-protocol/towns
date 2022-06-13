@@ -46,31 +46,29 @@ export const NavItem = forwardRef<
 
   return (
     <ConditionalNavLink end={exact} to={to}>
-      <Stack
-        position="relative"
-        paddingX="sm"
-        paddingY="none"
-        {...props}
-        ref={ref}
+      <Box
+        paddingY="sm"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        {/* background fill to highlight element */}
-        <NavItemHighlight selected={!!match} hovered={isHovered} />
-        <Stack
-          horizontal
-          grow
-          position="relative"
-          rounded="xs"
-          alignItems="center"
-          gap="sm"
-          minHeight="x6"
-          paddingX="sm"
-          fontWeight={match ? "normal" : "strong"}
-        >
-          {children}
+        <Stack position="relative" paddingX="sm" {...props} ref={ref}>
+          {/* background fill to highlight element */}
+          <NavItemHighlight selected={!!match} hovered={isHovered} />
+          <Stack
+            horizontal
+            grow
+            position="relative"
+            rounded="xs"
+            alignItems="center"
+            gap="sm"
+            minHeight="x6"
+            paddingX="sm"
+            fontWeight={match ? "normal" : "strong"}
+          >
+            {children}
+          </Stack>
         </Stack>
-      </Stack>
+      </Box>
     </ConditionalNavLink>
   );
 });

@@ -101,10 +101,13 @@ const root = createGlobalTheme(":root", {
       "75vh": `75vh`,
       "100vh": `100vh`,
       "100%": `100%`,
+      "1": "1px",
+      "2": "2px",
       "100": `100px`,
       "200": `200px`,
       "300": `300px`,
       "400": `400px`,
+      "500": `500px`,
       "600": `600px`,
       "1200": `1200px`,
       "1440": `1440px`,
@@ -177,6 +180,7 @@ const root = createGlobalTheme(":root", {
     // note: before setting the naming, figure the sizes we actually use
     xl24: `${32}px`,
     xl32: `${37}px`,
+    logo: `${64}px`,
   } as const,
 
   textAlign: {

@@ -6,7 +6,8 @@ import {
   useMatrixStore,
   useWeb3Context,
 } from "use-matrix-client";
-import { Button, Stack } from "@ui";
+
+import { Button, Paragraph, Stack } from "@ui";
 
 const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
 
@@ -86,7 +87,9 @@ export const Login = () => {
             alignItems="center"
           >
             <span>Error...</span>{" "}
-            <Button onClick={onConnectClick}>Connect Wallet</Button>
+            <Button icon="wallet" onClick={onConnectClick}>
+              Connect Wallet
+            </Button>
           </Stack>
         );
       case WalletStatus.Unknown:
@@ -95,18 +98,19 @@ export const Login = () => {
         if (loginStatus === LoginStatus.LoggingIn) {
           return <span>"..."</span>;
         } else if (loginStatus === LoginStatus.LoggedOut) {
-          return (
-            <Button onClick={onLoginWithWallet}>Sign in with wallet</Button>
-          );
+          return <Button onClick={onLoginWithWallet}>Sign in</Button>;
         }
         break;
       case WalletStatus.RequestUnlock:
         return <Button onClick={onConnectClick}>Connecting wallet</Button>;
       case WalletStatus.StillRequestingUnlock:
         return (
-          <Button onClick={onConnectClick}>
-            Connecting wallet - please unlock your wallet provider
-          </Button>
+          <Stack horizontal>
+            <Paragraph truncate>
+              Connecting wallet - please unlock your wallet provider
+            </Paragraph>
+            <Button onClick={onConnectClick}>Connect Wallet</Button>
+          </Stack>
         );
       default:
         break;
@@ -138,9 +142,9 @@ export const Login = () => {
     };
   }, [getIsWalletIdRegistered, loginStatus, walletStatus]);
   return (
-    <div>
+    <>
       {!walletRegistered && registerButton}
       {walletRegistered && signInButton}
-    </div>
+    </>
   );
 };

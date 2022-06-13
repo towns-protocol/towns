@@ -23,6 +23,29 @@ export const emptySpace: SpaceData = {
 
 export const fakeSpaces: SpaceData[] = [
   {
+    id: "council",
+    name: "Zion Council",
+    avatarSrc: "/placeholders/nft_10.png",
+    pinned: true,
+    channels: [
+      {
+        label: "Welcome",
+        tags: [
+          { id: "general" },
+          { id: "introductions", highlight: true },
+          { id: "feature-request", highlight: true },
+        ],
+      },
+      {
+        label: "Crypto",
+        tags: [
+          { id: "markets", highlight: true },
+          { id: "NFTs", highlight: true },
+        ],
+      },
+    ],
+  },
+  {
     id: "bored-ape-yacht-club",
     name: "Bored Ape Yacht Club",
     avatarSrc: "/placeholders/nft_10.png",

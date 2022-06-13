@@ -3,6 +3,7 @@ import { RecipeVariants, recipe } from "@vanilla-extract/recipes";
 export const BackgroundContainerStyle = recipe({
   base: {
     backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
   },
   defaultVariants: {},
   variants: {
