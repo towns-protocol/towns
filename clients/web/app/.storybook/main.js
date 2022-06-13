@@ -17,6 +17,12 @@ module.exports = {
       }),
       vanillaExtractPlugin(),
     );
+
+    config.define = {
+      ...config.define,
+      global: "window",
+    };
+
     return config;
   },
 };
