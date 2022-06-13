@@ -7,6 +7,7 @@ import {
   useWeb3Context,
 } from "use-matrix-client";
 
+import { Spinner } from "@components/Spinner";
 import { Button, Paragraph, Stack } from "@ui";
 
 const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
@@ -60,7 +61,7 @@ export const Login = () => {
     switch (walletStatus) {
       case WalletStatus.Unlocked:
         if (loginStatus === LoginStatus.Registering) {
-          return <span>"..."</span>;
+          return <Spinner />;
         } else if (loginStatus === LoginStatus.LoggedOut) {
           return (
             <Button onClick={onRegisterNewWallet}>Register new wallet</Button>
@@ -96,7 +97,7 @@ export const Login = () => {
         return <Button onClick={onConnectClick}>Connect Wallet</Button>;
       case WalletStatus.Unlocked:
         if (loginStatus === LoginStatus.LoggingIn) {
-          return <span>"..."</span>;
+          return <Spinner />;
         } else if (loginStatus === LoginStatus.LoggedOut) {
           return <Button onClick={onLoginWithWallet}>Sign in</Button>;
         }
