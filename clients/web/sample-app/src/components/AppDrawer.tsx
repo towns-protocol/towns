@@ -1,9 +1,11 @@
 import { Button, Theme } from "@mui/material";
 import {
   Membership,
+  createUserIdFromString,
   getShortUsername,
   useMatrixStore,
 } from "use-matrix-client";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useCallback, useMemo, useState } from "react";
 
 import AppBar from "@mui/material/AppBar";
@@ -13,10 +15,9 @@ import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import { Logout } from "./Logout";
 import { Rooms } from "./Rooms";
+import { SidebarNewItemButton } from "./SidebarNewItemButton";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { Outlet, useNavigate } from "react-router-dom";
-import { SidebarNewItemButton } from "./SidebarNewItemButton";
 
 const drawerWidth = 240;
 
@@ -32,13 +33,14 @@ export default function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { username } = useMatrixStore();
+  const { userId } = useMatrixStore();
 
   const myWalletAddress = useMemo(() => {
-    if (username) {
-      return getShortUsername(username);
+    if (userId) {
+      const uid = createUserIdFromString(userId);
+      return uid ? getShortUsername(uid.accountAddress) : undefined;
     }
-  }, [username]);
+  }, [userId]);
 
   const handleDrawerToggle = useCallback(() => {
     setMobileOpen(!mobileOpen);
@@ -128,7 +130,13 @@ export default function AppDrawer(props: Props): JSX.Element {
           </Button>
           <Box display="flex" flexDirection="row" flexGrow={1} />
           <Box sx={spacingStyle} alignItems="right">
-            {myWalletAddress}
+            <Button onClick={onHomeClick} variant="text">
+              <Typography
+                color="white"
+              >
+                {myWalletAddress}
+              </Typography>
+            </Button>
           </Box>
           <Box sx={spacingStyle}>
             <Logout />

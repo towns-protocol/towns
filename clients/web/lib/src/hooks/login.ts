@@ -29,7 +29,7 @@ export interface LoginFlows {
 }
 export interface AuthenticationData {
   type: string;
-  address: string;
+  user_id: string;
   session: string;
   message: string;
   signature: string;
@@ -69,28 +69,6 @@ interface UserInteractive {
 
 interface LoginFlow {
   type: string;
-}
-
-export function getUsernameFromId(
-  userId: string | undefined,
-): string | undefined {
-  if (userId) {
-    const regexName = /^@(?<username>.*):/;
-    const match = regexName.exec(userId);
-    const username = match?.groups?.username ?? undefined;
-    return username;
-  }
-
-  return undefined;
-}
-
-export function getShortUsername(userId: string): string {
-  // Wallet address starts with 0x.....
-  if (userId && userId.startsWith("0x") && userId.length === 42) {
-    const last4 = userId.length - 4;
-    return `${userId.slice(0, 5)}....${userId.slice(last4)}`;
-  }
-  return userId;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -12,10 +12,13 @@ import {
   getChainIdEip155,
   getChainName,
   getParamsPublicKeyEthereum,
-  getUsernameFromId,
   isLoginFlowPublicKeyEthereum,
 } from "./login";
 import { MatrixClient, MatrixError, createClient } from "matrix-js-sdk";
+import {
+  createUserIdFromEthereumAddress,
+  getUsernameFromId,
+} from "../types/user-identifier";
 import { useCallback, useMemo } from "react";
 
 import { SiweMessage } from "siwe";
@@ -64,9 +67,14 @@ export function useMatrixWalletSignIn() {
     [chainId],
   );
 
-  const walletAddress = useMemo(
-    () => (accounts && accounts.length > 0 ? accounts[0] : undefined),
-    [accounts],
+  const userIdentifier = useMemo(
+    function () {
+      if (accounts && accounts.length > 0) {
+        return createUserIdFromEthereumAddress(accounts[0], chainIdEip155);
+      }
+      return undefined;
+    },
+    [accounts, chainIdEip155],
   );
 
   const authenticationError = useCallback(
@@ -85,9 +93,9 @@ export function useMatrixWalletSignIn() {
       if (access_token && device_id && user_id) {
         setAccessToken(access_token);
         setDeviceId(device_id);
+        setLoginStatus(LoginStatus.LoggedIn);
         setUserId(user_id);
         setUsername(getUsernameFromId(user_id));
-        setLoginStatus(LoginStatus.LoggedIn);
       } else {
         setLoginError({
           code: StatusCodes.UNAUTHORIZED,
@@ -114,20 +122,23 @@ export function useMatrixWalletSignIn() {
     }): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
       const messageToSign = createMessageToSign({
-        walletAddress,
-        chainId: chainIdEip155,
+        walletAddress: userIdentifier.accountAddress,
+        chainId: userIdentifier.chainId,
         homeServer,
         nonce: args.nonce,
         statementToSign: args.statementToSign,
       });
 
       // Prompt the user to sign the message.
-      const signature = await sign(messageToSign, walletAddress);
+      const signature = await sign(
+        messageToSign,
+        userIdentifier.accountAddress,
+      );
 
       if (signature) {
         console.log(`[signMessage] succeeded`, {
           signature,
-          walletAddress,
+          userIdentifier,
           messageToSign,
         });
 
@@ -139,18 +150,18 @@ export function useMatrixWalletSignIn() {
 
       console.log(`[signMessage] end`);
     },
-    [chainIdEip155, homeServer, sign, walletAddress],
+    [homeServer, sign, userIdentifier],
   );
 
   const getIsWalletIdRegistered = useCallback(
     async function (): Promise<boolean> {
-      if (homeServer && walletAddress) {
+      if (homeServer && userIdentifier) {
         const matrixClient = createClient(homeServer);
         try {
           // isUsernameAvailable returns true if you can register
           // a new account for that id.
           const isAvailable = await matrixClient.isUsernameAvailable(
-            walletAddress,
+            userIdentifier.matrixUserIdLocalpart,
           );
           // Not available means the id is registered
           const isRegistered = isAvailable === false;
@@ -165,7 +176,7 @@ export function useMatrixWalletSignIn() {
       console.log(`[getWalletIdRegistered] true`);
       return true;
     },
-    [homeServer, walletAddress],
+    [homeServer, userIdentifier],
   );
 
   const createAndSignAuthData = useCallback(
@@ -186,7 +197,7 @@ export function useMatrixWalletSignIn() {
             session: args.sessionId,
             message,
             signature,
-            address: walletAddress,
+            user_id: userIdentifier.matrixUserIdLocalpart,
           };
           return auth;
         }
@@ -196,7 +207,7 @@ export function useMatrixWalletSignIn() {
       }
       return undefined;
     },
-    [signMessage, walletAddress],
+    [signMessage, userIdentifier],
   );
 
   const registerWallet = useCallback(
@@ -204,15 +215,22 @@ export function useMatrixWalletSignIn() {
       console.log(`[registerWallet] start`);
       // Registration of a new wallet is allowed if the user is currently logged out.
       if (loginStatus === LoginStatus.LoggedOut) {
-        if (walletAddress && chainIdEip155 && homeServer) {
+        if (userIdentifier && userIdentifier.chainId && homeServer) {
           // Signal to the UI that registration is in progress.
           setLoginStatus(LoginStatus.Registering);
 
           const matrixClient = createClient(homeServer);
           try {
             const { sessionId, chainIds, nonce, error } =
-              await newRegisterSession(matrixClient, walletAddress);
-            if (!error && sessionId && chainIds.includes(chainIdEip155)) {
+              await newRegisterSession(
+                matrixClient,
+                userIdentifier.matrixUserIdLocalpart,
+              );
+            if (
+              !error &&
+              sessionId &&
+              chainIds.includes(userIdentifier.chainId)
+            ) {
               // Prompt the user to sign the message.
               const authData: AuthenticationData = await createAndSignAuthData({
                 sessionId,
@@ -230,7 +248,7 @@ export function useMatrixWalletSignIn() {
                 try {
                   const request: RegisterRequest = {
                     auth,
-                    username: walletAddress,
+                    username: userIdentifier.matrixUserIdLocalpart,
                   };
                   console.log(
                     `[registerWallet] sending registerRequest`,
@@ -251,7 +269,7 @@ export function useMatrixWalletSignIn() {
                   } else {
                     authenticationError({
                       code: StatusCodes.UNAUTHORIZED,
-                      message: `Attempt to register wallet ${walletAddress} failed!`,
+                      message: `Attempt to register wallet ${userIdentifier} failed!`,
                     });
                   }
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -275,11 +293,11 @@ export function useMatrixWalletSignIn() {
                   message: `Attempt to sign the registration message failed!`,
                 });
               }
-            } else if (!chainIds.includes(chainIdEip155)) {
+            } else if (!chainIds.includes(userIdentifier.chainId)) {
               authenticationError({
                 code: StatusCodes.UNAUTHORIZED,
                 message: `Server does not allow registration for blockchain network ${getChainName(
-                  chainIdEip155,
+                  userIdentifier.chainId,
                 )}`,
               });
             } else {
@@ -299,8 +317,7 @@ export function useMatrixWalletSignIn() {
           authenticationError({
             code: StatusCodes.UNAUTHORIZED,
             message: `Missing information for wallet registration {
-                walletAddress: ${walletAddress ?? "undefined"},
-                chainId: ${chainIdEip155 ?? "undefined"},
+                userIdentifier: ${userIdentifier ?? "undefined"},
                 homeServer: ${homeServer ?? "undefined"},
               }`,
           });
@@ -311,12 +328,11 @@ export function useMatrixWalletSignIn() {
     [
       authenticationError,
       authenticationSuccess,
-      chainIdEip155,
       createAndSignAuthData,
       homeServer,
       loginStatus,
       setLoginStatus,
-      walletAddress,
+      userIdentifier,
     ],
   );
 
@@ -324,7 +340,7 @@ export function useMatrixWalletSignIn() {
     async function (statementToSign: string): Promise<void> {
       // Login is allowed if the user is currently logged out.
       if (loginStatus === LoginStatus.LoggedOut) {
-        if (walletAddress && chainIdEip155 && homeServer) {
+        if (userIdentifier && userIdentifier.chainId && homeServer) {
           // Signal to the UI that login is in progress.
           setLoginStatus(LoginStatus.LoggingIn);
 
@@ -336,7 +352,11 @@ export function useMatrixWalletSignIn() {
               const { sessionId, chainIds, nonce, error } =
                 await newLoginSession(matrixClient);
 
-              if (!error && sessionId && chainIds.includes(chainIdEip155)) {
+              if (
+                !error &&
+                sessionId &&
+                chainIds.includes(userIdentifier.chainId)
+              ) {
                 // Prompt the user to sign the message.
                 const auth = await createAndSignAuthData({
                   sessionId,
@@ -383,11 +403,11 @@ export function useMatrixWalletSignIn() {
                     message: `Attempt to sign the login message failed!`,
                   });
                 }
-              } else if (!chainIds.includes(chainIdEip155)) {
+              } else if (!chainIds.includes(userIdentifier.chainId)) {
                 authenticationError({
                   code: StatusCodes.UNAUTHORIZED,
                   message: `Server does not allow login for blockchain network ${getChainName(
-                    chainIdEip155,
+                    userIdentifier.chainId,
                   )}`,
                 });
               } else {
@@ -413,8 +433,7 @@ export function useMatrixWalletSignIn() {
           authenticationError({
             code: StatusCodes.UNAUTHORIZED,
             message: `Missing information for login {
-                walletAddress: ${walletAddress ?? "undefined"},
-                chainId: ${chainIdEip155 ?? "undefined"},
+                userIdentifier: ${userIdentifier ?? "undefined"},
                 homeServer: ${homeServer ?? "undefined"},
               }`,
           });
@@ -424,12 +443,11 @@ export function useMatrixWalletSignIn() {
     [
       authenticationError,
       authenticationSuccess,
-      chainIdEip155,
       createAndSignAuthData,
       homeServer,
       loginStatus,
       setLoginStatus,
-      walletAddress,
+      userIdentifier,
     ],
   );
 

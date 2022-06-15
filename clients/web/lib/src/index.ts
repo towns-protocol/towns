@@ -1,10 +1,16 @@
-export {
-  LoginStatus,
-  getUsernameFromId,
-  getShortUsername,
-} from "./hooks/login";
+export { LoginStatus } from "./hooks/login";
 
 export { isRoom, Membership } from "./types/matrix-types";
+
+export type { UserIdentifier } from "./types/user-identifier";
+
+export {
+  createUserIdFromEthereumAddress,
+  createUserIdFromString,
+  getShortUsername,
+  getUsernameFromId,
+  isUserIdentifier,
+} from "./types/user-identifier";
 
 export type {
   CreateRoomInfo,

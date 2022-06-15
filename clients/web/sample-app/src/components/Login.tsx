@@ -13,11 +13,12 @@ import {
   useMatrixClient,
   useMatrixStore,
   useWeb3Context,
-  getShortUsername,
+  createUserIdFromEthereumAddress,
 } from "use-matrix-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
+import { getChainIdEip155 } from "use-matrix-client/dist/hooks/login";
 
 const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
 
@@ -32,9 +33,25 @@ export function Login(): JSX.Element {
 
   const myWalletAddress = useMemo(() => {
     if (accounts && accounts.length > 0) {
-      return getShortUsername(accounts[0]);
+      return accounts[0];
     }
   }, [accounts]);
+
+  const chainIdEip155 = useMemo(
+    function () {
+      if (chainId) {
+        return getChainIdEip155(chainId);
+      }
+    },
+    [chainId],
+  );
+
+  const userIdentifier = useMemo(() => {
+    if (myWalletAddress && chainIdEip155) {
+      return createUserIdFromEthereumAddress(myWalletAddress, chainIdEip155);
+    }
+    return undefined;
+  }, [chainIdEip155, myWalletAddress]);
 
   const onConnectClick = useCallback(() => {
     switch (walletStatus) {
@@ -185,7 +202,7 @@ export function Login(): JSX.Element {
 
   return (
     <div className={styles.container}>
-      <Box sx={{ display: "grid", gridTemplateRows: "repeat(3, 1fr)" }}>
+      <Box sx={{ display: "grid", gridTemplateRows: "repeat(4, 1fr)" }}>
         <Box sx={{ display: "grid", marginTop: "5px", alignItems: "Center" }}>
           <Typography variant="h6" component="span">
             Wallet status: {walletStatus}, Chain Id: {chainId}
@@ -193,7 +210,12 @@ export function Login(): JSX.Element {
         </Box>
         <Box sx={{ display: "grid", marginTop: "10px", alignItems: "Center" }}>
           <Typography variant="h6" component="span">
-            Wallet: {myWalletAddress}
+            Wallet address: {myWalletAddress}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "grid", marginTop: "10px", alignItems: "Center" }}>
+          <Typography variant="h6" component="span">
+            Matrix ID Localpart: {userIdentifier?.matrixUserIdLocalpart}
           </Typography>
         </Box>
         <Box

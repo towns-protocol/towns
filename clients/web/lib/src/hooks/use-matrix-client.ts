@@ -1,15 +1,16 @@
+import { CreateRoomInfo, CreateSpaceInfo } from "../types/matrix-types";
 import { ICreateRoomOpts, MatrixClient, createClient } from "matrix-js-sdk";
-import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
-import { LoginStatus, getUsernameFromId } from "./login";
 import { useCallback, useContext } from "react";
 
-import { CreateRoomInfo, CreateSpaceInfo } from "../types/matrix-types";
+import type { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
+import { LoginStatus } from "./login";
 import { MatrixContext } from "../components/MatrixContextProvider";
+import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 import { StatusCodes } from "http-status-codes";
+import { getUsernameFromId } from "../types/user-identifier";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
-import type { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
 
 interface LoginServerResponse {
   accessToken: string | undefined;
@@ -191,7 +192,7 @@ export function useMatrixClient() {
     ],
   );
 
-  const registerNewUser = useCallback(
+  const registerPasswordUser = useCallback(
     async function (username: string, password: string): Promise<void> {
       await logout();
       setLoginStatus(LoginStatus.LoggingIn);
@@ -306,7 +307,7 @@ export function useMatrixClient() {
     loginWithPassword,
     loginWithWallet,
     logout,
-    registerNewUser,
+    registerPasswordUser,
     registerWallet,
     sendMessage,
     syncSpace,

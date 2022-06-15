@@ -17,7 +17,7 @@ export function LoginUsernamePassword(): JSX.Element {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showError, setShowError] = useState<string | undefined>(undefined);
-  const { loginWithPassword, registerNewUser } = useMatrixClient();
+  const { loginWithPassword, registerPasswordUser } = useMatrixClient();
   const { loginError } = useMatrixStore();
 
   const onChangedUsername = useCallback(
@@ -43,9 +43,9 @@ export function LoginUsernamePassword(): JSX.Element {
 
   const onRegister = useCallback(
     async function () {
-      registerNewUser(username, password);
+      registerPasswordUser(username, password);
     },
-    [password, registerNewUser, username]
+    [password, registerPasswordUser, username]
   );
 
   const onCloseAlert = useCallback(function () {

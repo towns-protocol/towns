@@ -131,7 +131,7 @@ cp dendrite-config.yaml dendrite.yaml
 #    ethereum:
 #      enabled: true
 #      version: 1
-#      chain_ids: ["4"] # https://chainlist.org/
+#      chain_ids: [4] # https://chainlist.org/
 
 
 # Build and run the server:
