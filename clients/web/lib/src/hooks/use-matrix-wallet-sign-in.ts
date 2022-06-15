@@ -69,7 +69,7 @@ export function useMatrixWalletSignIn() {
 
   const userIdentifier = useMemo(
     function () {
-      if (accounts && accounts.length > 0) {
+      if (accounts && accounts.length > 0 && chainIdEip155) {
         return createUserIdFromEthereumAddress(accounts[0], chainIdEip155);
       }
       return undefined;
@@ -121,6 +121,14 @@ export function useMatrixWalletSignIn() {
       nonce: string;
     }): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
+      if (!userIdentifier) {
+        console.log(`[signMessage] no userIdentifier`);
+        return undefined;
+      }
+      if (!homeServer) {
+        console.log(`[signMessage] undefined homeServer`);
+        return undefined;
+      }
       const messageToSign = createMessageToSign({
         walletAddress: userIdentifier.accountAddress,
         chainId: userIdentifier.chainId,
@@ -186,10 +194,21 @@ export function useMatrixWalletSignIn() {
       statementToSign: string;
     }): Promise<AuthenticationData | undefined> {
       try {
-        const { signature, message } = await signMessage({
+        if (!userIdentifier) {
+          console.log(`[createAndSignAuthData] no userIdentifier`);
+          return undefined;
+        }
+        const signedAuthenticationData = await signMessage({
           nonce: args.nonce,
           statementToSign: args.statementToSign,
         });
+        if (!signedAuthenticationData) {
+          console.log(
+            `[createAndSignAuthData] undefined signedAuthenticationData`,
+          );
+          return undefined;
+        }
+        const { signature, message } = signedAuthenticationData;
         if (signature) {
           // Send the signed message and auth data to the server.
           const auth: AuthenticationData = {
@@ -232,16 +251,20 @@ export function useMatrixWalletSignIn() {
               chainIds.includes(userIdentifier.chainId)
             ) {
               // Prompt the user to sign the message.
-              const authData: AuthenticationData = await createAndSignAuthData({
-                sessionId,
-                statementToSign,
-                nonce,
-              });
-              const auth: RegistrationAuthentication = {
-                type: LoginTypePublicKey,
-                session: sessionId,
-                public_key_response: authData,
-              };
+              const authData: AuthenticationData | undefined =
+                await createAndSignAuthData({
+                  sessionId,
+                  statementToSign,
+                  nonce,
+                });
+
+              const auth: RegistrationAuthentication | undefined = authData
+                ? {
+                    type: LoginTypePublicKey,
+                    session: sessionId,
+                    public_key_response: authData,
+                  }
+                : undefined;
 
               if (auth) {
                 // Send the signed message and auth data to the server.
@@ -283,7 +306,7 @@ export function useMatrixWalletSignIn() {
                     data: error.data,
                   });
                   authenticationError({
-                    code: error.httpStatus,
+                    code: error.httpStatus ?? 0,
                     message: error.message,
                   });
                 }
@@ -393,7 +416,7 @@ export function useMatrixWalletSignIn() {
                       data: error.data,
                     });
                     authenticationError({
-                      code: error.httpStatus,
+                      code: error.httpStatus ?? 0,
                       message: error.message,
                     });
                   }
@@ -581,6 +604,10 @@ async function newRegisterSession(
     ) {
       const loginFlows = error.data;
       const params = getParamsPublicKeyEthereum(error.data.params);
+      if (!params) {
+        console.log("[newRegisterSession] No public key ethereum params");
+        return newSessionError(`${error.httpStatus} ${error.message}`);
+      }
       console.log(
         ` [newRegisterSession] Register session info`,
         loginFlows,

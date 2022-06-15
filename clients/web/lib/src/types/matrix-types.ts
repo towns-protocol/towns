@@ -12,7 +12,7 @@ export enum Membership {
 export interface Room {
   roomId: string;
   name: string;
-  membership: string;
+  membership?: string;
   members: Members;
   inviter?: string;
   isSpaceRoom: boolean;

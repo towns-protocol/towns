@@ -43,7 +43,7 @@ export function useMatrixClient() {
   const syncSpace = useCallback(
     async function (spaceId: string): Promise<IHierarchyRoom[]> {
       if (!matrixClient) {
-        return;
+        return Promise.resolve([]);
       }
       const room = matrixClient.getRoom(spaceId);
       if (!room) {
@@ -95,18 +95,19 @@ export function useMatrixClient() {
             visibility: createInfo.visibility,
             name: createInfo.roomName,
             is_direct: createInfo.isDirectMessage === true,
-            initial_state: [],
           };
           // add our parent room if we have one
           if (createInfo.parentSpaceId) {
-            options.initial_state.push({
-              type: "m.space.parent",
-              state_key: createInfo.parentSpaceId,
-              content: {
-                canonical: true,
-                via: [homeServer],
+            options.initial_state = [
+              {
+                type: "m.space.parent",
+                state_key: createInfo.parentSpaceId,
+                content: {
+                  canonical: true,
+                  via: [homeServer],
+                },
               },
-            });
+            ];
           }
           const response = await matrixClient.createRoom(options);
           console.log("Created room", JSON.stringify(response));
@@ -159,7 +160,7 @@ export function useMatrixClient() {
       await logout();
       setLoginStatus(LoginStatus.LoggingIn);
       const response = await matrixLoginWithPassword(
-        homeServer,
+        homeServer ?? "",
         username,
         password,
       );
@@ -196,7 +197,11 @@ export function useMatrixClient() {
     async function (username: string, password: string): Promise<void> {
       await logout();
       setLoginStatus(LoginStatus.LoggingIn);
-      const response = await matrixRegisterUser(homeServer, username, password);
+      const response = await matrixRegisterUser(
+        homeServer ?? "",
+        username,
+        password,
+      );
       if (response.accessToken) {
         setAccessToken(response.accessToken);
         setDeviceId(response.deviceId);
@@ -322,10 +327,11 @@ async function matrixRegisterUser(
   let error: string | undefined;
   try {
     const newClient = createClient(homeServerUrl);
+    const sessionId = "";
     const response = await newClient.register(
       username.toLowerCase(),
       password,
-      undefined,
+      sessionId,
       {
         type: "m.login.dummy",
         //type: "m.login.password",

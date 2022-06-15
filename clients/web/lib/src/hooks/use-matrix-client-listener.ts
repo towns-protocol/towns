@@ -138,7 +138,7 @@ function printRoom(room: Room): void {
   }
 }
 
-function useSync(matrixClientRef: MutableRefObject<MatrixClient>) {
+function useSync(matrixClientRef: MutableRefObject<MatrixClient | undefined>) {
   const [syncInfo, setSyncInfo] = useState<unknown>();
   const { setAllRooms } = useMatrixStore();
 
@@ -163,14 +163,14 @@ function useSync(matrixClientRef: MutableRefObject<MatrixClient>) {
 }
 
 function useRoomMembershipEventHandler(
-  matrixClientRef: MutableRefObject<MatrixClient>,
+  matrixClientRef: MutableRefObject<MatrixClient | undefined>,
 ) {
   const { joinRoom, leaveRoom, setRoom, updateMembership } = useMatrixStore();
   const [syncInfo, setSyncInfo] = useState<SyncMembership>();
 
   useEffect(
     function () {
-      if (matrixClientRef.current) {
+      if (matrixClientRef.current && syncInfo) {
         const room = matrixClientRef.current.getRoom(syncInfo.roomId);
         if (room) {
           setRoom(room);
@@ -194,7 +194,10 @@ function useRoomMembershipEventHandler(
         roomId: member.roomId,
         membership: member.membership,
       });
-
+      if (!matrixClientRef.current) {
+        console.log(`matrixClientRef.current is undefined`);
+        return;
+      }
       switch (member.membership) {
         case Membership.Invite: {
           setSyncInfo({
@@ -231,7 +234,7 @@ function useRoomMembershipEventHandler(
 }
 
 function useRoomTimelineEventHandler(
-  matrixClientRef: MutableRefObject<MatrixClient>,
+  matrixClientRef: MutableRefObject<MatrixClient | undefined>,
 ) {
   const { createRoom, setNewMessage, setRoomName, updateMembership } =
     useMatrixStore();
@@ -245,6 +248,14 @@ function useRoomTimelineEventHandler(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       toStartOfTimeline: any,
     ) {
+      console.log(`RoomTimelineEvent`, {
+        eventType: event.getType(),
+        roomId: room.roomId,
+      });
+      if (!matrixClientRef.current) {
+        console.log(`matrixClientRef.current is undefined`);
+        return;
+      }
       switch (event.getType()) {
         case "m.room.message": {
           console.log(

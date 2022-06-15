@@ -13,7 +13,7 @@ export type MatrixStoreStates = {
   setHomeServer: (homeServer: string | undefined) => void;
   loginStatus: LoginStatus;
   setLoginStatus: (loginStatus: LoginStatus) => void;
-  loginError: AuthenticationError;
+  loginError: AuthenticationError | null;
   setLoginError: (error: AuthenticationError | undefined) => void;
   allMessages: RoomsMessages | null;
   setNewMessage: (roomId: string, sender: string, message: string) => void;
@@ -125,7 +125,7 @@ function createRoom(
   const newRoom: Room = {
     roomId,
     name: "",
-    membership: null,
+    membership: undefined,
     members: {},
     isSpaceRoom: isSpace,
   };
@@ -241,8 +241,10 @@ function updateMembership(
 ) {
   const room = state.rooms?.[roomId];
   if (room) {
-    const member = room.members[userId] ?? { membership: null as Membership };
-    if (member.membership !== membership) {
+    if (
+      room.members[userId] == null ||
+      room.members[userId].membership !== membership
+    ) {
       const changedRooms = { ...state.rooms };
       const changedRoom = { ...room };
       if (isMyRoomMembership) {
