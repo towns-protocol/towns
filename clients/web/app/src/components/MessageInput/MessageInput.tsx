@@ -18,7 +18,6 @@ export const MessageInput = ({
       placeholder="Type here..."
       icon="plus"
       height={size}
-      value={value}
       after={<Avatar size="avatar_xs" />}
       onChange={onChange}
       onKeyDown={onKeyDown}

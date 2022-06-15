@@ -1,29 +1,21 @@
 import clsx from "clsx";
 import React from "react";
-import { Box, BoxProps } from "@ui";
-import * as styles from "./FieldOutline.css";
+import { Box } from "@ui";
 import { FieldTone } from "../Field";
+import * as styles from "./FieldOutline.css";
 
 type Props = {
   tone: FieldTone;
-  noBorder: boolean;
+  withBorder?: boolean;
+  disabled?: boolean;
 };
 
 export const FieldOutline = (props: Props) => (
-  <>
-    <OutlineOverlay
-      className={clsx([styles.outlineBase, styles.outlines["focus"]])}
-    />
-    {(!props.noBorder || !props.tone || props.tone !== "neutral") && (
-      <OutlineOverlay
-        className={clsx(styles.outlineBase, styles.outlines[props.tone])}
-      />
-    )}
-
-    <OutlineOverlay className={clsx([styles.outlineBase, styles.hidden])} />
-  </>
-);
-
-const OutlineOverlay = (props: BoxProps) => (
-  <Box absoluteFill rounded="sm" pointerEvents="none" {...props} />
+  <Box
+    absoluteFill
+    rounded="sm"
+    pointerEvents="none"
+    {...props}
+    className={clsx([styles.fieldOutline, styles.fieldTones[props.tone]])}
+  />
 );

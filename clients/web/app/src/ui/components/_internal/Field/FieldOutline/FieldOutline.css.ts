@@ -3,56 +3,58 @@ import { vars } from "ui/styles/vars.css";
 import { field } from "../Field.css";
 
 const focusedOpacityVar = createVar();
+const focusedColorVar = createVar();
 
-export const hidden = style({
-  opacity: 0,
-});
-
-export const outlineBase = style({
+export const fieldOutline = style({
+  vars: {
+    [focusedOpacityVar]: "1",
+    [focusedColorVar]: vars.color.foreground.etherum,
+  },
   transition: `opacity 120ms ease`,
+  boxShadow: `inset 0 0 0 1px ${focusedColorVar}`,
+
   selectors: {
+    [`${field} ~ &`]: {
+      opacity: 0,
+      boxShadow: `0 0 0 2px ${focusedColorVar}`,
+    },
     [`${field}:focus ~ &`]: {
       opacity: focusedOpacityVar,
+      boxShadow: `0 0 0 2px ${focusedColorVar}`,
     },
     [`${field}:hover:not(:disabled) ~ &, ${field}:focus ~ &`]: {
       opacity: focusedOpacityVar,
+      boxShadow: `0 0 0 2px ${focusedColorVar}`,
     },
   },
 });
 
-export const outlines = styleVariants({
-  focus: {
-    vars: {
-      [focusedOpacityVar]: "0.5",
-    },
-    opacity: 0,
-    transition: `opacity 120ms ease`,
-    boxShadow: ` 0 0 0 2px ${vars.color.foreground.etherum}`,
-    selectors: {
-      [`${field}:focus ~ &`]: {
-        opacity: focusedOpacityVar,
-      },
-      [`${field}:hover ~ &`]: {
-        opacity: focusedOpacityVar,
-      },
-    },
-  },
+export const fieldTones = styleVariants({
   neutral: {
+    opacity: 0,
     vars: {
-      [focusedOpacityVar]: "0",
+      [focusedOpacityVar]: "1",
+      [focusedColorVar]: vars.color.foreground.etherum,
     },
-    boxShadow: `inset 0 0 0 1px ${vars.color.background.etherum}`,
   },
   negative: {
+    opacity: 1,
     vars: {
-      [focusedOpacityVar]: "0",
+      [focusedOpacityVar]: "1",
+      [focusedColorVar]: vars.color.foreground.negative,
     },
-    boxShadow: `inset 0 0 0 1px ${vars.color.foreground.negative}`,
   },
   positive: {
+    opacity: 1,
     vars: {
-      [focusedOpacityVar]: "0",
+      [focusedOpacityVar]: "1",
+      [focusedColorVar]: vars.color.foreground.positive,
     },
-    boxShadow: `inset 0 0 0 1px ${vars.color.foreground.positive}`,
+  },
+  etherum: {
+    vars: {
+      [focusedOpacityVar]: "1",
+      [focusedColorVar]: vars.color.foreground.etherum,
+    },
   },
 });

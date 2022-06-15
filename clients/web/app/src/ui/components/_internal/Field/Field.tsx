@@ -11,33 +11,50 @@ type FormElementProps = AllHTMLAttributes<HTMLFormElement>;
 export type FieldTone =
   | typeof ToneName.Positive
   | typeof ToneName.Negative
-  | typeof ToneName.Neutral;
+  | typeof ToneName.Neutral
+  | typeof ToneName.ENS;
 
 export type FieldBaseProps = {
+  /** color tone to be applied to the border typically for warnings */
   tone?: FieldTone;
+  /** color of the input content */
+  inputColor?: BoxProps["color"];
+  /** field background */
   background?: BoxProps["background"];
-  noBorder?: boolean;
+  /** label, or title of to display above the field */
   label?: string;
+  /** custom label renderer, overrides the default one */
+  renderLabel?: (label: string) => JSX.Element;
+  /** content to display besides the label, e.g. `(required)`*/
   secondaryLabel?: string;
+  /** a longer description displaying between the label and the field */
   description?: string;
+  /** a message to show under the field when interacting (notes or warnings) */
   message?: React.ReactNode;
-
+  /** id to be used internally  */
   id?: NonNullable<FormElementProps["id"]>;
-  value?: FormElementProps["value"];
+  /** name of the field to be used internally  */
   name?: FormElementProps["name"];
+  /** if the input is disabled  */
   disabled?: FormElementProps["disabled"];
+  /** if autoComplete is enabled  */
   autoComplete?: FormElementProps["autoComplete"];
+  /** if autoFocus is enabled  */
   autoFocus?: boolean;
+  /** string to be prepended at the beginning of the input */
+  prefix?: string;
+  /** name of the optional icon to display on the left of the input */
   icon?: IconName;
   /** JSX node to be appended at the end of the field */
   after?: React.ReactNode;
   /** JSX node to be appended at the start of the field */
   before?: React.ReactNode;
-  prefix?: string;
-  required?: boolean;
-
+  /** height of the input */
   height?: BoxProps["height"];
+  /** width of the input */
   width?: BoxProps["width"];
+  /** horizontal padding of the input */
+  paddingX?: BoxProps["paddingX"];
 };
 
 type PassthroughProps =
@@ -67,30 +84,38 @@ type Props = FieldBaseProps & {
 
 export const Field = (props: Props) => {
   const {
+    inputColor,
     label,
+    prefix,
+    renderLabel,
     secondaryLabel,
     description,
     message,
-    noBorder,
     tone = "neutral",
     height = "input_lg",
-    prefix,
     icon,
     children,
     background,
     after,
     before,
     width,
+    paddingX = "md",
     ...inputProps
   } = props;
 
   const className = styles.field;
 
-  const id = props.id || label?.replace(/[^a-z]/gi, "_").toLowerCase() || "";
+  const id =
+    props.id ||
+    props.name ||
+    label?.replace(/[^a-z]/gi, "_").toLowerCase() ||
+    "";
 
   return (
     <Stack grow gap="md" width={width} borderRadius="sm">
-      {label && (
+      {label && renderLabel ? (
+        renderLabel(label)
+      ) : (
         <FieldLabel
           label={label}
           secondaryLabel={secondaryLabel}
@@ -104,16 +129,18 @@ export const Field = (props: Props) => {
         background={background}
         position="relative"
         alignItems="center"
-        paddingX="md"
+        paddingX={paddingX}
         gap="sm"
         borderRadius="sm"
+        color={inputColor}
+        id="container"
       >
         {props.icon && (
           <Icon type={props.icon} size="square_xs" color="gray2" />
         )}
         {before}
         {children(
-          <FieldOutline tone={tone} noBorder={!!noBorder} />,
+          <FieldOutline tone={tone} disabled={props.disabled} />,
           {
             id,
             height,

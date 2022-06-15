@@ -1,5 +1,5 @@
-import React from "react";
 import clsx from "clsx";
+import React, { InputHTMLAttributes, forwardRef } from "react";
 import { Box } from "@ui";
 import { Field, FieldBaseProps } from "../_internal/Field/Field";
 import * as styles from "./TextField.css";
@@ -17,15 +17,17 @@ type Props = {
   placeholder?: string;
   type?: NativeInputProps["type"];
 } & FieldBaseProps &
-  InputCallbackProps;
+  InputCallbackProps &
+  InputHTMLAttributes<HTMLInputElement>;
 
-export const TextField = (props: Props) => {
+export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const { type, placeholder, ...fieldProps } = props;
   return (
     <Field {...fieldProps}>
       {(overlays, { className, ...inputProps }) => (
         <>
           <Box
+            ref={ref}
             as="input"
             {...inputProps}
             type={type}
@@ -37,4 +39,4 @@ export const TextField = (props: Props) => {
       )}
     </Field>
   );
-};
+});
