@@ -125,7 +125,7 @@ function createRoom(
   const newRoom: Room = {
     roomId,
     name: "",
-    membership: undefined,
+    membership: "",
     members: {},
     isSpaceRoom: isSpace,
   };

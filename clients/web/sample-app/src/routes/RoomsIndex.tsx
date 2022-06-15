@@ -23,7 +23,7 @@ export const RoomsIndex = () => {
   return currentChatRoom ? (
     <Chat
       roomId={currentChatRoom.roomId}
-      membership={currentChatRoom.membership ?? ""}
+      membership={currentChatRoom.membership}
       onClickLeaveRoom={onClickLeaveRoom}
       goToRoom={goToRoom}
     />
