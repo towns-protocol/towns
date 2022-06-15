@@ -18703,6 +18703,11 @@ react-transition-group@^4.4.2:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
+react-use-event-hook@^0.9.2:
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/react-use-event-hook/-/react-use-event-hook-0.9.2.tgz#8d70f440a89d3216e573e6e6a194ca4fb0863cb3"
+  integrity sha512-nJQkI9yqtdHdcBNsuuHqWJQapVKMYZYG5FkqaoGf2EP+/2zWfFwq55L3qDfFCq5KtCzUHsmDbT7wZMCOol5oOQ==
+
 react@^18.1.0:
   version "18.1.0"
   resolved "https://registry.yarnpkg.com/react/-/react-18.1.0.tgz#6f8620382decb17fdc5cc223a115e2adbf104890"

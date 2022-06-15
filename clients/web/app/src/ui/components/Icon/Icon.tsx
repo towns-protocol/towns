@@ -323,6 +323,48 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   ),
 );
 
+export const VerifiedIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+      ref={ref}
+    >
+      <rect x="2" y="2" width="20" height="20" rx="10" fill="#18A0FB" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16.2817 8.82934C16.4987 9.0463 16.4987 9.39806 16.2817 9.61502L10.3333 15.5634L7.71826 12.9484C7.5013 12.7314 7.5013 12.3796 7.71826 12.1627C7.93522 11.9457 8.28698 11.9457 8.50393 12.1627L10.3333 13.9921L15.496 8.82934C15.713 8.61239 16.0648 8.61239 16.2817 8.82934Z"
+        fill="#F4F7F9"
+      />
+    </svg>
+  ),
+);
+
+export const WalletIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6 4C5.44772 4 5 4.44772 5 5C5 5.55228 5.44772 6 6 6H16C16 4.89543 15.1046 4 14 4H6ZM6 2C4.34315 2 3 3.34315 3 5V17C3 19.2091 4.79086 21 7 21H17C19.2091 21 21 19.2091 21 17V10C21 8.13616 19.7252 6.57006 18 6.12602V6V5C18 3.34315 16.6569 2 15 2H14H6ZM16 8H17C18.1046 8 19 8.89543 19 10V17C19 18.1046 18.1046 19 17 19H7C5.89543 19 5 18.1046 5 17V7.82929C5.31278 7.93985 5.64936 8 6 8H16ZM15.5 15C16.3284 15 17 14.3284 17 13.5C17 12.6716 16.3284 12 15.5 12C14.6716 12 14 12.6716 14 13.5C14 14.3284 14.6716 15 15.5 15Z"
+        fill="currentColor"
+      />
+    </svg>
+  ),
+);
+
 export const EthIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
   <svg
     width="16"
@@ -379,6 +421,8 @@ const iconMap = {
   tag: TagIcon,
   token: TokenIcon,
   threads: ThreadsIcon,
+  verified: VerifiedIcon,
+  wallet: WalletIcon,
 } as const;
 
 export const iconTypes = Object.keys(iconMap);
