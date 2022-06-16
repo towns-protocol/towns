@@ -5,8 +5,13 @@ import { useMatrixStore } from "../../store/use-matrix-store";
 export const useRoomTimelineEventHandler = (
   matrixClientRef: MutableRefObject<MatrixClient | undefined>,
 ) => {
-  const { createRoom, setNewMessage, setRoomName, updateMembership } =
-    useMatrixStore();
+  const {
+    createRoom,
+    setNewMessage,
+    setRoomName,
+    updateMembership,
+    createSpaceChild,
+  } = useMatrixStore();
 
   const handleRoomTimelineEvent = useCallback(
     function (
@@ -17,19 +22,12 @@ export const useRoomTimelineEventHandler = (
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       toStartOfTimeline: any,
     ) {
-      console.log(`RoomTimelineEvent`, {
-        eventType: event.getType(),
-        roomId: room.roomId,
-      });
       if (!matrixClientRef.current) {
         console.log(`matrixClientRef.current is undefined`);
         return;
       }
       switch (event.getType()) {
         case "m.room.message": {
-          console.log(
-            `Room[${room.roomId}]: ${event.sender.name}, ${event.event.content.body}`,
-          );
           setNewMessage(
             room.roomId,
             event.sender.name,
@@ -38,17 +36,12 @@ export const useRoomTimelineEventHandler = (
           break;
         }
         case "m.room.create": {
-          console.log(`m.room.create`, { roomId: room.roomId });
           createRoom(room.roomId, room.isSpaceRoom());
           break;
         }
         case "m.room.name": {
           const roomId = event.getRoomId();
           const name = event.getContent().name;
-          console.log(`m.room.name`, {
-            roomId,
-            name,
-          });
           setRoomName(roomId, name);
           break;
         }
@@ -56,14 +49,6 @@ export const useRoomTimelineEventHandler = (
           const roomId = event.getRoomId();
           const userId = event.getStateKey();
           const membership = event.getContent().membership;
-          console.log(`m.room.member`, {
-            roomId,
-            userId,
-            membership,
-            content: event.getContent(),
-            event: JSON.stringify(event),
-          });
-
           if (roomId && userId && membership) {
             updateMembership(
               roomId,
@@ -74,20 +59,25 @@ export const useRoomTimelineEventHandler = (
           }
           break;
         }
-        // case "m.space.child": {
-        //   const roomId = event.getRoomId();
-        //   const childId = event.getStateKey();
-        //   if (event.getContent()) {
-        //   } else {
-
-        //   }
-        // }
+        case "m.space.child": {
+          const roomId = event.getRoomId();
+          const childId = event.getStateKey();
+          createSpaceChild(roomId, childId);
+          break;
+        }
         default:
-          console.log(`Unhandled Room.timeline event`, event);
+          console.log(`Unhandled Room.timeline event`, event.getType(), event);
           break;
       }
     },
-    [createRoom, matrixClientRef, setNewMessage, setRoomName, updateMembership],
+    [
+      createRoom,
+      createSpaceChild,
+      matrixClientRef,
+      setNewMessage,
+      setRoomName,
+      updateMembership,
+    ],
   );
 
   return handleRoomTimelineEvent;

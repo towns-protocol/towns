@@ -1,3 +1,4 @@
+import { Divider } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Outlet, useParams } from "react-router-dom";
 import { Room, useMatrixClient, useMatrixStore } from "use-matrix-client";
@@ -13,29 +14,24 @@ export const Spaces = () => {
   }, [spaceId, rooms]);
 
   useEffect(() => {
-    let cancelled = false;
     (async () => {
       try {
         if (spaceId) {
-          const hierarchy = await syncSpace(spaceId);
-          if (!cancelled) {
-            console.log("space hierarchy", hierarchy);
-          }
+          await syncSpace(spaceId);
         }
       } catch (reason: any) {
         console.log("SpacesIndex error:", reason);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => {};
   }, [spaceId, syncSpace]);
 
   return space ? (
     <>
       <h1>{space.name}</h1>
       <h3>id: {spaceId}</h3>
-      <Outlet />;
+      <Divider />
+      <Outlet />
     </>
   ) : (
     <h1> Space {spaceId} not found</h1>

@@ -45,34 +45,29 @@ export const useMatrixClientListener = (
       const client = createClient(options);
       await client.startClient({ initialSyncLimit });
       matrixClientRef.current = client;
-
-      client.once(
-        ClientEvent.Sync,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-        (state: any, prevState: any, res: any) => {
-          if (state === "PREPARED") {
-            handleSync();
-          } else {
-            console.log(state);
-          }
-        },
-      );
+      /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+      client.once(ClientEvent.Sync, (state: any, prevState: any, res: any) => {
+        if (state === "PREPARED") {
+          handleSync();
+        } else {
+          console.log("Unhandled sync event:", state);
+        }
+      });
 
       client.on(
         RoomEvent.Timeline,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (event: any, room: any, toStartOfTimeline: any) => {
           handleRoomTimelineEvent(event, room, toStartOfTimeline);
         },
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       client.on(
         RoomMemberEvent.Membership,
         (event: MatrixEvent, member: RoomMember) => {
           handleRoomMembershipEvent(event, member);
         },
       );
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
     }
   }, [
     accessToken,

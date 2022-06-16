@@ -25,12 +25,10 @@ export const useSyncSpace = () => {
         roomHierarchy = new RoomHierarchy(room);
         matrixRoomHierarchies.current[spaceId] = roomHierarchy;
       }
-      console.log("checking room H");
       while (roomHierarchy.canLoadMore || roomHierarchy.loading) {
-        console.log("checking room H awaiting load!!");
+        console.log("syncing space", spaceId);
         await roomHierarchy.load();
       }
-      console.log("checking room H done!!");
       const space = setSpace(room, roomHierarchy);
       return Promise.resolve(space.children);
     },

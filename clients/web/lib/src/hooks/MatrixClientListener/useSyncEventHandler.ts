@@ -34,7 +34,7 @@ function printRooms(rooms: Room[]): void {
 function printRoom(room: Room): void {
   if (room) {
     console.log(
-      `Room[${room.roomId}] = { name: "${
+      `    Room[${room.roomId}] = { name: "${
         room.name
       }", membership: ${room.getMyMembership()} }`,
     );

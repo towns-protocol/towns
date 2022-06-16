@@ -43,6 +43,7 @@ export type MatrixStoreStates = {
   setRoomName: (roomId: string, roomName: string) => void;
   spaces: { [spaceId: string]: Space };
   setSpace: (spaceRoom: MatrixRoom, roomHierarchy: RoomHierarchy) => Space;
+  createSpaceChild: (spaceId: string, roomId: string) => void;
   userId: string | null;
   setUserId: (userId: string | undefined) => void;
   username: string | null;
@@ -116,6 +117,10 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => setSpace(state, newSpace));
       return newSpace;
     },
+    createSpaceChild: (spaceId: string, roomId: string) =>
+      set((state: MatrixStoreStates) =>
+        createSpaceChild(state, spaceId, roomId),
+      ),
     joinRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
       set((state: MatrixStoreStates) =>
         joinRoom(state, roomId, userId, isMyRoomMembership),
@@ -194,16 +199,29 @@ function setSpace(state: MatrixStoreStates, newSpace: Space) {
   return { spaces: changedSpaces };
 }
 
+function createSpaceChild(
+  state: MatrixStoreStates,
+  spaceId: string,
+  roomId: string,
+) {
+  const room = state.rooms?.[roomId];
+  const space = state.spaces?.[spaceId];
+  if (!room || !space) {
+    return state;
+  }
+  if (space.children.find((c) => c.roomId === roomId)) {
+    return state;
+  }
+  space.children.push(toZionSpaceChildFromRoom(room));
+  const changedSpaces = { ...state.spaces };
+  changedSpaces[spaceId] = space;
+  return { spaces: changedSpaces };
+}
+
 function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
   const changedRooms: Rooms = {};
   for (const r of matrixRooms) {
-    console.log(`matrixRoom[${r.roomId}]`, { name: r.name });
     changedRooms[r.roomId] = toZionRoom(r);
-    console.log(`setAllRooms changedRooms`, {
-      roomId: changedRooms[r.roomId].roomId,
-      name: changedRooms[r.roomId].name,
-      membership: changedRooms[r.roomId].membership,
-    });
   }
   return { rooms: changedRooms };
 }
@@ -342,5 +360,19 @@ function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
     worldReadable: r.world_readable,
     guestCanJoin: r.guest_can_join,
     numjoinedMembers: r.num_joined_members,
+  };
+}
+
+function toZionSpaceChildFromRoom(r: Room): SpaceChild {
+  return {
+    roomId: r.roomId,
+    name: r.name,
+    avatarUrl: undefined, // r.avatarUrl,
+    topic: undefined, // r.topic,
+    canonicalAlias: undefined, // r.canonicalAlias,
+    aliases: undefined, // r.aliases,
+    worldReadable: true, // r.worldReadable,
+    guestCanJoin: true, // r.guestCanJoin,
+    numjoinedMembers: Object.keys(r.members).length,
   };
 }

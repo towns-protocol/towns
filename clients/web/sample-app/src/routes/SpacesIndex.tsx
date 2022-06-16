@@ -17,7 +17,7 @@ export const SpacesIndex = () => {
   const onClickChannel = useCallback(
     (roomId: string) => {
       if (spaceId) {
-        navigate(`/spaces/${spaceId}/rooms/${roomId}`);
+        navigate(`/spaces/${spaceId}/channels/${roomId}`);
       }
     },
     [spaceId, navigate],
@@ -25,7 +25,6 @@ export const SpacesIndex = () => {
 
   const channelItems = useMemo(() => {
     if (space) {
-      console.log("mapping", space.children);
       return space.children.map((r: SpaceChild) => (
         <ListItem
           button

@@ -81,7 +81,7 @@ export function CreateSpaceChildForm(props: Props): JSX.Element {
           </Typography>
           <TextField
             id="filled-basic"
-            label="Name of the room"
+            label="Name of the channel"
             variant="filled"
             onChange={onChangeRoomName}
           />
