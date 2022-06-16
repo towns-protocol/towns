@@ -11,9 +11,13 @@ const positionTop = {
   top: 0,
 };
 
-export const TopBar = (props: { onToggleTheme?: () => void }) => {
-  const { isAuthenticated, username, userId } = useMatrixStore();
-
+export const TopBar = (props: {
+  onToggleTheme?: () => void;
+  authenticated: boolean;
+  username?: string | null;
+  userId?: string | null;
+}) => {
+  const { authenticated: isAuthenticated, username, userId } = props;
   return (
     <Stack
       borderBottom
@@ -26,7 +30,7 @@ export const TopBar = (props: { onToggleTheme?: () => void }) => {
       position="sticky"
       style={positionTop}
     >
-      <Box color="default" justifyContent="center" width="200">
+      <Box color="default" justifyContent="center" width="100">
         <Link to="/">
           <MinimalLogo />
         </Link>
@@ -35,7 +39,7 @@ export const TopBar = (props: { onToggleTheme?: () => void }) => {
         <TopMenu />
       </Stack>
       <Box />
-      <Box justifyContent="center" alignItems="end" width="200">
+      <Box justifyContent="center" alignItems="end" width="100">
         {!isAuthenticated || !(username && userId) ? (
           <Login />
         ) : (

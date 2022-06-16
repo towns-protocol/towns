@@ -29,7 +29,7 @@ import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
 
 FontLoader.init();
 
-const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
+export const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
 
 export const App = () => {
   return (
@@ -40,7 +40,7 @@ export const App = () => {
 };
 
 const AllRoutes = () => {
-  const { isAuthenticated } = useMatrixStore();
+  const { isAuthenticated, userId, username } = useMatrixStore();
 
   const { toggleTheme } = useRootTheme({
     ammendHTMLBody: true,
@@ -58,7 +58,12 @@ const AllRoutes = () => {
         <Route
           element={
             <>
-              <TopBar onToggleTheme={toggleTheme} />
+              <TopBar
+                authenticated={isAuthenticated}
+                userId={userId}
+                username={username}
+                onToggleTheme={toggleTheme}
+              />
               <Outlet />
             </>
           }
