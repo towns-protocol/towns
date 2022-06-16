@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Paragraph, Stack, Text } from "@ui";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
@@ -9,8 +9,12 @@ import { SpaceData } from "data/SpaceData";
 
 export const MainSideBar = () => {
   const { spaces, invites } = useSpaceDataStore();
-
   const space = spaces.find((s) => s.id === "council");
+
+  const realSpaces = useMemo(
+    () => spaces.filter((s) => !s.isFakeSpace),
+    [spaces],
+  );
 
   return (
     <SideBar paddingY="sm">
@@ -40,6 +44,7 @@ export const MainSideBar = () => {
         />
       ))}
       {space && <Channels space={space} />}
+      {realSpaces.length && <RealSpaces spaces={realSpaces} />}
     </SideBar>
   );
 };
@@ -84,6 +89,35 @@ const Channels = (props: { space: SpaceData }) => {
             />
           ))}
         </Stack>
+      ))}
+    </>
+  );
+};
+
+const RealSpaces = (props: { spaces: SpaceData[] }) => {
+  const { spaces } = props;
+  return (
+    <>
+      <Box
+        paddingX="md"
+        height="height_lg"
+        paddingY="sm"
+        justifyContent="end"
+        display={{ tablet: "none", desktop: "flex" }}
+      >
+        <Paragraph color="gray2" textTransform="uppercase">
+          Your Spaces:
+        </Paragraph>
+      </Box>
+      {spaces.map((m, index) => (
+        <SpaceNavItem
+          key={m.id}
+          active={m.active}
+          id={m.id}
+          name={m.name}
+          avatar={m.avatarSrc}
+          pinned={m.pinned}
+        />
       ))}
     </>
   );

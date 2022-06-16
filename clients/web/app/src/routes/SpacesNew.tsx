@@ -2,16 +2,15 @@ import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Membership, useMatrixStore } from "use-matrix-client";
 import { Box, Heading, Paragraph, Stack } from "@ui";
-import { CreateRoomForm } from "@components/Web3";
+import { CreateSpaceForm } from "@components/Web3";
 import { Login } from "@components/Web3/Login";
 
 export const SpacesNew = () => {
   const { isAuthenticated } = useMatrixStore();
   const navigate = useNavigate();
 
-  const onCreateRoom = useCallback(
+  const onCreateSpace = useCallback(
     (roomId: string, membership: Membership) => {
-      console.log("room created", roomId, membership);
       navigate("/spaces/" + roomId);
     },
     [navigate],
@@ -25,7 +24,7 @@ export const SpacesNew = () => {
           </Heading>
         </Box>
         {isAuthenticated ? (
-          <CreateRoomForm onClick={onCreateRoom} />
+          <CreateSpaceForm onClick={onCreateSpace} />
         ) : (
           <Box centerContent gap="md" color="gray2">
             <Paragraph textAlign="center">Please sign-in to continue</Paragraph>

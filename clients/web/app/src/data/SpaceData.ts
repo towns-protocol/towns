@@ -12,6 +12,7 @@ export type SpaceData = {
   // should belong to usersettings
   pinned?: boolean;
   channels: ChannelGroups;
+  isFakeSpace?: boolean;
 };
 
 export const emptySpace: SpaceData = {
@@ -115,3 +116,7 @@ export const fakeSpaces: SpaceData[] = [
     channels: fakeChannelGroups,
   },
 ];
+
+fakeSpaces.forEach((space) => {
+  space.isFakeSpace = true;
+});

@@ -1,29 +1,20 @@
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
-import { atoms } from "ui/styles/atoms/atoms.css";
-import {
-  Box,
-  Button,
-  Dropdown,
-  Heading,
-  Paragraph,
-  Stack,
-  TextField,
-} from "@ui";
+import { Button, Dropdown, Stack, TextField } from "@ui";
 
 interface Props {
+  parentSpaceId: string;
   onClick: (roomId: string, membership: Membership) => void;
 }
 
-export const CreateRoomForm = (props: Props) => {
+export const CreateChannelForm = (props: Props) => {
   const VisibilityOptions = [Visibility.Private, Visibility.Public];
-  const IsDmOptions = [false, true];
 
   const [roomName, setRoomName] = useState<string>("");
   const [visibility, setVisibility] = useState<Visibility>(Visibility.Public);
-  const [isDM, setIsDM] = useState<string>(false.toString());
   const { createRoom } = useMatrixClient();
+  const { onClick, parentSpaceId } = props;
 
   const disableCreateButton = useMemo(
     () => roomName.length === 0,
@@ -39,21 +30,29 @@ export const CreateRoomForm = (props: Props) => {
 
   const onClickCreateRoom = useCallback(async () => {
     if (disableCreateButton) {
-      console.log("please enter a room name");
+      console.log("please enter a channel name");
       return;
     }
     const createRoomInfo: CreateRoomInfo = {
       roomName,
       visibility,
-      isDirectMessage: isDM === "true",
+      isDirectMessage: false,
+      parentSpaceId: parentSpaceId,
     };
     const roomId = await createRoom(createRoomInfo);
 
     if (roomId) {
-      console.log("room created with id", roomId);
-      props.onClick(roomId, Membership.Join);
+      console.log("channel created with id", roomId);
+      onClick(roomId, Membership.Join);
     }
-  }, [createRoom, isDM, props, roomName, visibility, disableCreateButton]);
+  }, [
+    disableCreateButton,
+    roomName,
+    visibility,
+    parentSpaceId,
+    createRoom,
+    onClick,
+  ]);
 
   return (
     <Stack padding gap="lg" minWidth="400">
@@ -61,10 +60,10 @@ export const CreateRoomForm = (props: Props) => {
         <TextField
           autoFocus
           background="level2"
-          label="Room Name"
+          label="Channel Name"
           secondaryLabel="(required)"
-          description="This is your official space name that you own. Your space's URL will contain the same name."
-          placeholder="Room Name"
+          description="This is a channel within your space. This channel will have a unique url."
+          placeholder="Channel Name"
           onChange={onRoomNameChange}
         />
 
@@ -79,28 +78,12 @@ export const CreateRoomForm = (props: Props) => {
           defaultValue={visibility}
           onChange={(value) => setVisibility(value as Visibility)}
         />
-
-        <Dropdown
-          background="level2"
-          label="Is DM:"
-          options={IsDmOptions.map((value) => ({
-            label: String(value),
-            value: String(value),
-          }))}
-          defaultValue={isDM}
-          onChange={(value) => setIsDM(value)}
-        />
-
-        <Box gap="md">
-          <Heading level={4}>Space URL</Heading>
-          <Paragraph>This is what your official URL will look like</Paragraph>
-          <Paragraph strong truncate size="md" display="inline-block">
-            zion.xyz/
-            <span className={atoms({ color: "gray2" })}>{roomName}</span>
-          </Paragraph>
-        </Box>
       </Stack>
-      <Button size="input_lg" onClick={onClickCreateRoom}>
+      <Button
+        size="input_lg"
+        disabled={disableCreateButton}
+        onClick={onClickCreateRoom}
+      >
         Create
       </Button>
     </Stack>

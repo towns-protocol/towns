@@ -33,11 +33,11 @@ export const useSpaceDataListener = () => {
     if (rooms) {
       // find the spaces
       spaces = Object.values(rooms)
-        .filter((r) => isRoom(r) && r.membership === Membership.Join)
+        .filter((r) => r.isSpaceRoom && r.membership === Membership.Join)
         .map(formatSpace);
       // find the invites
       invites = Object.values(rooms)
-        .filter((r) => isRoom(r) && r.membership === Membership.Invite)
+        .filter((r) => r.membership === Membership.Invite)
         .map(formatInvite);
     }
     // for debugging stick some fake spaces on the end!

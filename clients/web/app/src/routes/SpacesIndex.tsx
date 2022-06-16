@@ -2,6 +2,7 @@ import React, {
   ComponentProps,
   forwardRef,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -32,10 +33,23 @@ export const SpacesIndex = () => {
   const { spaces } = useSpaceDataStore();
   const navigate = useNavigate();
   const { allMessages } = useMatrixStore();
-  const { sendMessage } = useMatrixClient();
+  const { sendMessage, syncSpace } = useMatrixClient();
   const [newMessage, setNewMessage] = useState<string>("");
 
   const space = spaces.find((s) => s.id === spaceId);
+
+  useEffect(() => {
+    (async () => {
+      if (spaceId) {
+        try {
+          await syncSpace(spaceId);
+        } catch (reason) {
+          console.log("SpacesIndex error:", reason);
+        }
+      }
+    })();
+  }, [spaceId, syncSpace]);
+
   const onSettingsClicked = useCallback(() => {
     navigate("/spaces/" + spaceId + "/settings");
   }, [navigate, spaceId]);
