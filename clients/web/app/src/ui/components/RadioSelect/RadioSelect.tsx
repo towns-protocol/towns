@@ -50,6 +50,7 @@ export const RadioSelect = (props: Props) => {
               {options.map((o) => {
                 return (
                   <Checkbox
+                    key={o.value}
                     id={inputProps?.id}
                     label={o.label}
                     value={o.value}

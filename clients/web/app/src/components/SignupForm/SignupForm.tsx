@@ -142,7 +142,7 @@ export const SignupForm = () => {
               animate={{
                 opacity: !!fieldNFT && !selected ? 0.5 : 1,
                 borderColor: !selected
-                  ? "transparent"
+                  ? `rgba(255,255,255,0)`
                   : vars.color.foreground.default,
               }}
             >
