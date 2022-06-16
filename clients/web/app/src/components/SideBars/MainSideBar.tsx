@@ -44,7 +44,7 @@ export const MainSideBar = () => {
         />
       ))}
       {space && <Channels space={space} />}
-      {realSpaces.length && <RealSpaces spaces={realSpaces} />}
+      {realSpaces.length > 0 && <RealSpaces spaces={realSpaces} />}
     </SideBar>
   );
 };
