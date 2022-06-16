@@ -49,10 +49,22 @@ export const TopBar = (props: { onToggleTheme?: () => void }) => {
 };
 
 const TopMenu = () => {
+  // todo: there must be a smoother way of doing this...
+  const manifesto = useMatch(`manifesto`);
+  const protocol = useMatch(`protocol`);
+  const dao = useMatch(`dao`);
+  // "chat" link should be highlighted for all nested "app" routes. The
+  // following ones need to be excluded
+  const isAppRoute = !(manifesto || protocol || dao);
+
   const { isAuthenticated } = useMatrixStore();
   return (
     <Stack horizontal height="100%" justifyContent="spaceBetween">
-      {isAuthenticated && <TopMenuLink to="/">Chat</TopMenuLink>}
+      {isAuthenticated && (
+        <TopMenuLink exact={!isAppRoute} to="/">
+          Chat
+        </TopMenuLink>
+      )}
       <TopMenuLink to="/manifesto">Manifesto</TopMenuLink>
       <TopMenuLink to="/protocol">Protocol</TopMenuLink>
       <TopMenuLink to="/dao">DAO</TopMenuLink>
@@ -73,7 +85,7 @@ const TopMenuLink = ({
 
   const match = useMatch({
     path: resolved.pathname || "/",
-    end: exact,
+    end: !!exact,
   });
 
   return (

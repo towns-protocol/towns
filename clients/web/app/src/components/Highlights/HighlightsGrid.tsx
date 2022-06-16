@@ -17,7 +17,7 @@ const Placeholder = () => {
   const sizeContext = useContext(SizeContext);
   const size = sizeContext?.size.width ?? 1000;
   const colSpan = size > 1400 ? 3 : size > 1100 ? 4 : size > 600 ? 6 : 12;
-  return (
+  return !size ? null : (
     <Box
       padding
       border
