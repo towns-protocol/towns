@@ -49,9 +49,12 @@ building and running tests, etc.
 ## Pulling from dendrite-fork into harmony repo
 
 ```bash
-git fetch dendrite-fork
-git subtree pull --prefix servers/dendrite dendrite-fork main --squash
+git checkout -b some-name
+git subtree pull --prefix servers/dendrite dendrite-fork main
+git push --set-upstream origin some-name
 ```
+
+Create a PR, and merge the latest subtree changes to the harmony repo.
 
 This command will pull the changes since the last time it ran and create a merge
 commit on top. Keep in mind that the pulled commits might be older than the latest
@@ -76,9 +79,12 @@ base repository from matrix-org/dendrite to `HereNotThere/dendrite`.
 Once the PR is approved and merged, pull the changes into your local harmony with:
 
 ```bash
-git checkout main
-git subtree pull --prefix servers/dendrite dendrite-fork main --squash
+git checkout -b some-name
+git subtree pull --prefix servers/dendrite dendrite-fork main
+git push --set-upstream origin some-name
 ```
+
+Create a PR, and merge the latest subtree changes to the harmony repo.
 
 ## Pulling changes from dendrite (main) into dendrite-fork
 
