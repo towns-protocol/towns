@@ -3,7 +3,7 @@ import { Outlet, Route, Routes, useNavigate } from "react-router-dom";
 import useEvent from "react-use-event-hook";
 import { MatrixContextProvider, useMatrixStore } from "use-matrix-client";
 import { TopBar } from "@components/TopBar";
-import { Box, Heading } from "@ui";
+import { Box, Heading, Paragraph } from "@ui";
 import { AppLayout } from "AppLayout";
 import { useRootTheme } from "hooks/useRootTheme";
 import { HomeIndex } from "routes/Home";
@@ -25,6 +25,7 @@ import { SpacesSettings } from "routes/SpacesSettings";
 import { SpaceThreads } from "routes/SpaceThreads";
 import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
+import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
 
 FontLoader.init();
 
@@ -76,7 +77,26 @@ const AllRoutes = () => {
           </Route>
           {isAuthenticated && (
             <Route element={<SidebarLayout />}>
-              <Route index element={<HomeIndex />} />
+              <Route element={<HomeIndex />}>
+                <Route index element={<HighlightsGrid />} />
+                <Route
+                  path="proposals"
+                  element={
+                    <Box centerContent grow>
+                      <Paragraph>Proposals</Paragraph>
+                    </Box>
+                  }
+                />
+                <Route
+                  path="members"
+                  element={
+                    <Box centerContent grow>
+                      <Paragraph>Members</Paragraph>
+                    </Box>
+                  }
+                />
+              </Route>
+
               <Route path="me" element={<MeIndex />} />
               <Route path="messages" element={<Messages />}>
                 <Route path="new" element={<MessagesNew />} />

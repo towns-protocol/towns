@@ -41,7 +41,7 @@ export const SidebarLayout = () => {
         >
           {/* left-side side-bar goes here */}
           <Allotment.Pane
-            minSize={65}
+            minSize={190}
             maxSize={320}
             preferredSize={sizes[0] || 250}
           >
