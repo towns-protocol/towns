@@ -14,11 +14,11 @@ export const MessageInput = ({
 }) => (
   <Stack grow horizontal>
     <TextField
-      background="level2"
+      background="level1"
       placeholder="Type here..."
       icon="plus"
       height={size}
-      after={<Avatar size="avatar_xs" />}
+      after={<Avatar circle src="/placeholders/nft_10.png" size="avatar_md" />}
       onChange={onChange}
       onKeyDown={onKeyDown}
     />

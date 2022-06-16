@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Avatar, Box, Text } from "@ui";
+import { Avatar, Stack, Text } from "@ui";
 
 export const Replies = ({
   replies,
@@ -14,13 +14,14 @@ export const Replies = ({
 
   return (
     <NavLink to={link}>
-      <Box
-        centerContent
+      <Stack
+        horizontal
+        border
+        alignItems="center"
         rounded="xs"
-        height="x4"
+        height="input_lg"
         background="level3"
         paddingX="sm"
-        direction="row"
         gap="line"
       >
         {replies.userIds.map((id) => (
@@ -28,13 +29,13 @@ export const Replies = ({
             circle
             key={id}
             src={`/placeholders/nft_${id}.png`}
-            size="avatar_xs"
+            size="avatar_md"
           />
         ))}
-        <Text as="span" size="sm" color="gray1">
+        <Text as="span">
           {numReplies} {numReplies > 1 ? "replies" : "reply"}
         </Text>
-      </Box>
+      </Stack>
     </NavLink>
   );
 };

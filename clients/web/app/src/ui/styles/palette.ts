@@ -12,8 +12,8 @@ export const Figma = {
   DarkMode: {
     Level1: "#151418",
     Level2: "#222026",
-    Level3: "#38323E",
-    Level4: "#484150",
+    Level3: "#312E36",
+    Level4: "#494651",
     //
     Primary: "#FFFFFF",
     Secondary: "#CECBD8",

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
-import { Box, Grid, Heading, SizeBox } from "@ui";
+import { Box, Heading, SizeBox } from "@ui";
 import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";
 
