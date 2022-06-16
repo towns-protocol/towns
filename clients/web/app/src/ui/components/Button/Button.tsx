@@ -1,5 +1,6 @@
+import { motion } from "framer-motion";
 import React, { ButtonHTMLAttributes } from "react";
-import { Stack } from "@ui";
+import { Box } from "@ui";
 import { ToneNameType } from "ui/styles/themes";
 import { Icon, IconName } from "../Icon";
 import { ButtonStyleVariants, buttonStyle } from "./Button.css";
@@ -12,7 +13,10 @@ type Props = {
   icon?: IconName;
   disabled?: boolean;
   onClick?: () => void;
-} & ButtonHTMLAttributes<HTMLButtonElement> &
+} & Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onDrag" | "onDragEnd" | "onDragStart" | "onAnimationStart"
+> &
   StyleProps;
 
 export const Button = ({
@@ -24,8 +28,10 @@ export const Button = ({
   onClick,
   ...inputProps
 }: Props) => (
-  <Stack
-    horizontal
+  <MotionStack
+    layout
+    initial={false}
+    direction="row"
     as="button"
     cursor={disabled ? "default" : "pointer"}
     className={buttonStyle({ size })}
@@ -35,7 +41,13 @@ export const Button = ({
     onClick={onClick}
     {...inputProps}
   >
-    {icon && <Icon type={icon} size="square_inline" />}
-    {children}
-  </Stack>
+    {icon && (
+      <motion.div layout="position">
+        <Icon type={icon} size="square_inline" />
+      </motion.div>
+    )}
+    <motion.div layout="position">{children}</motion.div>
+  </MotionStack>
 );
+
+const MotionStack = motion(Box);

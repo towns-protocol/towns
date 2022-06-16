@@ -4,9 +4,15 @@ import { vars } from "ui/styles/vars.css";
 export const buttonStyle = recipe({
   base: {
     border: "none",
+    whiteSpace: "nowrap",
     borderRadius: vars.borderRadius.xs,
-    ":hover": {
-      boxShadow: `0 1px 6px 0px rgba(0,0,0,0.3)`,
+    transition: "all 1s",
+
+    selectors: {
+      "&:hover": {
+        transition: "all 320ms",
+        boxShadow: `0 0 0px 1px ${vars.color.tone.cta1}`,
+      },
     },
   },
   defaultVariants: {
