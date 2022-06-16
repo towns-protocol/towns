@@ -20,7 +20,7 @@ module.exports = {
 
     config.define = {
       ...config.define,
-      global: "window",
+      ...(configType.match(/development/i) ? { global: "window" } : {}),
     };
 
     return config;
