@@ -4,7 +4,9 @@ import { RefCallBack } from "react-hook-form";
 import { Box, Text } from "@ui";
 import { Grid } from "../Grid/Grid";
 import { Stack } from "../Stack/Stack";
-import { Field, FieldBaseProps } from "../_internal/Field/Field";
+import { Field, FieldBaseProps, FieldTone } from "../_internal/Field/Field";
+import * as fieldStyles from "../_internal/Field/Field.css";
+import { FieldOutline } from "../_internal/Field/FieldOutline";
 import * as styles from "./RadioSelect.css";
 
 type Props = {
@@ -55,6 +57,7 @@ export const RadioSelect = (props: Props) => {
                     label={o.label}
                     value={o.value}
                     render={render}
+                    tone={props.tone ?? "neutral"}
                     applyChildProps={applyChildProps}
                   />
                 );
@@ -72,6 +75,7 @@ const Checkbox = (props: {
   id?: string;
   label: string;
   value: string;
+  tone: FieldTone;
   render?: (value: string, selected: boolean) => JSX.Element;
   applyChildProps: Props["applyChildProps"];
 }) => {
@@ -92,22 +96,33 @@ const Checkbox = (props: {
       pointerEvents="all"
       key={labelId}
     >
-      <Box
-        as="input"
-        type="radio"
-        color="inherit"
-        name={id}
-        id={labelId}
-        key={value}
-        value={value}
-        className={render ? styles.hiddenRadio : styles.radio}
-        ref={(e) => {
-          ref?.(e);
-          fieldRef.current = e as HTMLInputElement;
-        }}
-        {...childProps}
-      />
-
+      <Stack horizontal position="relative">
+        <Box
+          as="input"
+          type="radio"
+          color="negative"
+          name={id}
+          id={labelId}
+          key={value}
+          value={value}
+          className={clsx([
+            fieldStyles.field,
+            render ? styles.hiddenRadio : styles.radio,
+          ])}
+          ref={(e) => {
+            ref?.(e);
+            fieldRef.current = e as HTMLInputElement;
+          }}
+          {...childProps}
+        />
+        {!render && (
+          <FieldOutline
+            tone={props.tone ?? "neutral"}
+            disabled={false}
+            rounded="full"
+          />
+        )}
+      </Stack>
       {render ? (
         render(value, !!fieldRef?.current?.checked)
       ) : (

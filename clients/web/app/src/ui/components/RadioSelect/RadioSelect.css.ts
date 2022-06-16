@@ -7,6 +7,7 @@ export const radio = style({
   cursor: "pointer",
   position: "relative",
   display: "flex",
+  outline: "none",
   justifyContent: "center",
   alignItems: "center",
   appearance: "none",
