@@ -11,6 +11,9 @@ import { vars } from "ui/styles/vars.css";
 
 export const avatarBaseStyle = style({
   backgroundSize: "cover",
+});
+
+export const squircleMask = style({
   WebkitMaskImage: `url(/squircle.svg)`,
   WebkitMaskSize: `cover`,
 });

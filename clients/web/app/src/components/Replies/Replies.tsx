@@ -19,9 +19,8 @@ export const Replies = ({
         border
         alignItems="center"
         rounded="xs"
-        height="input_lg"
         background="level3"
-        paddingX="sm"
+        padding="sm"
         gap="line"
       >
         {replies.userIds.map((id) => (

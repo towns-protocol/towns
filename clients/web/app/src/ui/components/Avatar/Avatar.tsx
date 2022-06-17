@@ -7,6 +7,7 @@ import {
   avatarAtoms,
   avatarBaseStyle,
   avatarToggleClasses,
+  squircleMask,
 } from "./Avatar.css";
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
   insetX?: BoxProps["insetX"];
   insetY?: BoxProps["insetY"];
   inset?: BoxProps["inset"];
+  boxShadow?: BoxProps["boxShadow"];
 } & AvatarAtoms;
 
 export type AvatarProps = Props;
@@ -41,6 +43,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
       shrink={false}
       className={clsx(
         avatarToggleClasses({ stacked, border, circle }),
+        !circle && squircleMask,
         avatarAtoms({
           size: size ?? height,
         }),

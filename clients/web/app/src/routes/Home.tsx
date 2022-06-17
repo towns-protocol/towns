@@ -7,7 +7,7 @@ import { LiquidContainer } from "./SpacesIndex";
 export const HomeIndex = () => (
   <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">
     <LiquidContainer fullbleed position="relative">
-      <SizeBox grow gap="lg">
+      <SizeBox grow gap="lg" paddingTop="lg">
         <HomeNav />
         <Outlet />
       </SizeBox>

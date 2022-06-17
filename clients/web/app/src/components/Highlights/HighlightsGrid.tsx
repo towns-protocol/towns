@@ -1,47 +1,127 @@
-import React, { useContext } from "react";
+import React, { useContext, useMemo } from "react";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Reactions } from "@components/Reactions";
 import { Replies } from "@components/Replies";
-import { Avatar, Box, Grid, Paragraph, Stack } from "@ui";
+import { Avatar, BackgroundImage, Box, Grid, Paragraph, Stack } from "@ui";
+import { Message, fakeMessages } from "data/HighlightsData";
+import { fakeUserCache } from "data/UserData";
 import { SizeContext } from "ui/hooks/useSizeContext";
 
+const colSpanMap = {
+  4: 3,
+  3: 4,
+  2: 6,
+  1: 12,
+} as const;
+
 export const HighlightsGrid = () => {
+  const sizeContext = useContext(SizeContext);
+  const size = sizeContext?.size.width ?? 0;
+  const col = size > 1400 ? 4 : size > 1100 ? 3 : size > 600 ? 2 : 1;
+  const columns = useColumns(fakeMessages, col);
+
+  if (!size) {
+    return null;
+  }
+
+  const colSpan = colSpanMap[col];
+
   return (
-    <Grid columns={12} gap="md">
-      <Placeholder />
+    <Grid columns={12}>
+      {columns.map(
+        (c, i) =>
+          c.messages.length && (
+            <Stack colSpan={colSpan} gap="md" key={c.id}>
+              {c.messages.map((m, index) => (
+                <Placeholder message={m} key={m.id} index={index} />
+              ))}
+            </Stack>
+          ),
+      )}
     </Grid>
   );
 };
 
-const Placeholder = () => {
-  const sizeContext = useContext(SizeContext);
-  const size = sizeContext?.size.width ?? 1000;
-  const colSpan = size > 1400 ? 3 : size > 1100 ? 4 : size > 600 ? 6 : 12;
-  return !size ? null : (
-    <Box
-      padding
-      border
-      rounded="md"
-      background="level2"
-      colSpan={colSpan}
-      gap="md"
-    >
-      <Stack gap="md" maxWidth="500" justifyContent="center">
-        <Avatar circle size="avatar_x6" />
-        <Paragraph color="gray2">benrb.eth</Paragraph>
-        <Paragraph color="default">
-          Welcome council members! We’re excited to show you Zion and get your
-          thoughts on what to work on next. Can’t wait to learn more about your.
-          Introduce yourself here in this thread!
-        </Paragraph>
-        <Paragraph color="gray2" size="sm">
-          Today at 11:01AM
-        </Paragraph>
-        <Stack horizontal>
-          <Replies replies={{ userIds: [1, 2, 3], fakeLength: 23 }} />
+const useColumns = (messages: Message[], col: number) => {
+  return useMemo(() => {
+    const initialColumns = Array(col)
+      .fill(0)
+      .map((_, i) => ({ id: `col-${i}`, messages: [] }));
+
+    return messages.reduce(
+      (columns: { id: string; messages: Message[] }[], m, i) => {
+        const columnIndex = i % col;
+        const column: Message[] = columns[columnIndex].messages;
+        column.push(m);
+        return columns;
+      },
+      initialColumns,
+    );
+  }, [col, messages]);
+};
+
+type PlaceholderProps = {
+  index: number;
+  message: Message;
+};
+
+const Placeholder = (props: PlaceholderProps) => {
+  const { message } = props;
+
+  const user = fakeUserCache[message.userId];
+
+  return (
+    <Box border shrink rounded="md" background="level2" overflow="hidden">
+      <Stack justifyContent="center">
+        {message.imageUrl && (
+          <Box grow position="relative" height="200">
+            <BackgroundImage
+              padding
+              src={message.imageUrl}
+              justifyContent="end"
+            >
+              <Avatar
+                circle
+                size="avatar_x6"
+                src={user.avatarSrc}
+                boxShadow="avatar"
+              />
+            </BackgroundImage>
+          </Box>
+        )}
+
+        <Stack padding gap="md">
+          {!message.imageUrl && (
+            <Avatar circle size="avatar_x6" src={user.avatarSrc} />
+          )}
+          <Paragraph color="gray2">{user.displayName}</Paragraph>
+          <Paragraph color="gray1">{message.body}</Paragraph>
+          <Paragraph color="gray2" size="sm">
+            Today at 11:01AM
+          </Paragraph>
+          {message.link && (
+            <Stack
+              border
+              paddingY="paragraph"
+              paddingX="sm"
+              background="level3"
+              rounded="sm"
+              gap="sm"
+            >
+              <Paragraph>{message.link.title}</Paragraph>
+              <Paragraph truncate size="sm" color="gray2">
+                {message.link.href}
+              </Paragraph>
+            </Stack>
+          )}
+          {message.replies && (
+            <Stack horizontal>
+              <Replies replies={message.replies} />
+            </Stack>
+          )}
+          {message.reactions && <Reactions reactions={message.reactions} />}
+          <MessageInput size="input_md" />
         </Stack>
-        <Reactions reactions={{ "📐": size, "💯": colSpan }} />
-        <MessageInput />
       </Stack>
     </Box>
   );

@@ -119,8 +119,13 @@ const root = createGlobalTheme(":root", {
     input: {
       input_sm: `${baseline * 3}px`,
       // drop downs
-      input_md: `${baseline * 4}px`,
+      input_md: `${baseline * 5}px`,
       // chat input
+      input_lg: `${baseline * 6}px`,
+    },
+    button: {
+      input_sm: `${baseline * 3}px`,
+      input_md: `${baseline * 4}px`,
       input_lg: `${baseline * 6}px`,
     },
   } as const,

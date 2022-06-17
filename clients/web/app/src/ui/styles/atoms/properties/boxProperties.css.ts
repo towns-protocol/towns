@@ -70,6 +70,7 @@ export const boxProperties = defineProperties({
       "flex",
       "grid",
       "inline-block",
+      "inline-flex",
       "inline",
       "none",
       "contents",
@@ -80,7 +81,8 @@ export const boxProperties = defineProperties({
     // size
     aspectRatio: aspectRatio,
     boxShadow: {
-      card: `0 0 40px ${vars.color.shadow.card}`,
+      avatar: `0 4px 4px ${vars.color.shadow.medium}`,
+      card: `0 0 40px ${vars.color.shadow.light}`,
     },
 
     height: {

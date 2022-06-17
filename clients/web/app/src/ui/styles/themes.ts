@@ -54,7 +54,8 @@ const light = (() => {
   };
 
   const shadow = {
-    card: `rgba(25, 27, 33, 0.2)`,
+    light: `rgba(25, 27, 33, 0.2)`,
+    medium: `rgba(0, 0, 0, 0.25)`,
   } as const;
 
   return {
@@ -97,7 +98,8 @@ const dark = (() => {
   } as const;
 
   const shadow = {
-    card: `rgba(25, 27, 33, 1)`,
+    light: `rgba(25, 27, 33, 0.2)`,
+    medium: `rgba(0, 0, 0, 0.25)`,
   } as const;
 
   return {
