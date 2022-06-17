@@ -65,7 +65,7 @@ const Channels = (props: { space: SpaceData }) => {
   const isSmall = sizeContext.lessThan(120);
   return (
     <>
-      {props.space?.channels.map((group) => (
+      {props.space?.channelGroups.map((group) => (
         <Stack key={group.label} display={isSmall ? "none" : undefined}>
           <Box
             paddingX="md"
@@ -77,14 +77,14 @@ const Channels = (props: { space: SpaceData }) => {
               {group.label}
             </Paragraph>
           </Box>
-          {group.tags.map((tag) => (
+          {group.channels.map((channel) => (
             <ActionNavItem
-              id={group.label + tag.id}
-              key={group.label + tag.id}
+              id={group.label + channel.id}
+              key={group.label + channel.id}
               icon="tag"
-              highlight={tag.highlight}
-              link={`/spaces/${props.space.id}/${tag.id}`}
-              label={tag.id}
+              highlight={channel.highlight}
+              link={`/spaces/${props.space.id}/${channel.id}`}
+              label={channel.label}
             />
           ))}
         </Stack>

@@ -130,8 +130,10 @@ export const SpacesIndex = () => {
           <Box grow alignItems="center" background="level2">
             {roomMessages && messagesLength ? (
               <SpaceMessages messages={roomMessages} />
-            ) : (
+            ) : space.isFakeSpace ? (
               <FakeSpaceMessages />
+            ) : (
+              <></>
             )}
           </Box>
 

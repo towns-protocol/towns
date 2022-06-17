@@ -26,6 +26,7 @@ import { SpaceThreads } from "routes/SpaceThreads";
 import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
 import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
+import { SpacesNewChannel } from "routes/SpacesNewChannel";
 
 FontLoader.init();
 
@@ -117,6 +118,7 @@ const AllRoutes = () => {
                 <Route path="mentions" element={<SpaceMentions />} />
                 <Route path="settings" element={<SpacesSettings />} />
                 <Route path="invite" element={<SpacesInvite />} />
+                <Route path="channels/new" element={<SpacesNewChannel />} />
                 <Route path=":channel" element={<SpacesChannel />}>
                   <Route
                     path="replies/:messageId"
