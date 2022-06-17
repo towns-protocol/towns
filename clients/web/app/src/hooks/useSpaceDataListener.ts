@@ -1,4 +1,4 @@
-import { Membership, Room, isRoom, useMatrixStore } from "use-matrix-client";
+import { Membership, Room, useMatrixStore } from "use-matrix-client";
 import { useEffect } from "react";
 import { fakeChannelGroups } from "data/ChannelData";
 import { SpaceData, fakeSpaces } from "data/SpaceData";
