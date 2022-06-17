@@ -4,7 +4,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useState,
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -20,13 +19,11 @@ import {
   Box,
   BoxProps,
   ButtonText,
-  Divider,
   Heading,
   Paragraph,
   Stack,
 } from "@ui";
 import { useSpaceDataStore } from "store/spaceDataStore";
-import { MessageInput } from "@components/MessageInput/MessageInput";
 
 export const SpacesIndex = () => {
   const { spaceId } = useParams();
