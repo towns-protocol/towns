@@ -57,9 +57,10 @@ export const SpacesChannel = () => {
     },
     [newMessage, sendMessage, channelId, setNewMessage],
   );
+
   return (
     <Stack horizontal minHeight="100%">
-      <Allotment defaultSizes={sizes} onChange={onSizesChange}>
+      <Allotment onChange={onSizesChange}>
         <Allotment.Pane>
           <Box grow>
             <ContextBar title={`# ${channelId}`} />
@@ -80,7 +81,11 @@ export const SpacesChannel = () => {
           </Box>
         </Allotment.Pane>
         {outlet && (
-          <Allotment.Pane minSize={300} preferredSize={320} maxSize={640}>
+          <Allotment.Pane
+            minSize={300}
+            maxSize={640}
+            preferredSize={sizes[1] || 320}
+          >
             {outlet}
           </Allotment.Pane>
         )}
