@@ -1,6 +1,5 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 import React from "react";
-import { MemoryRouter } from "react-router-dom";
 import { StoryContainer } from "stories/StoryUtils";
 import { TopBar } from "./TopBar";
 

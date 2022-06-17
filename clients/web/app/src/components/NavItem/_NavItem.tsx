@@ -47,7 +47,7 @@ export const NavItem = forwardRef<
   return (
     <ConditionalNavLink end={exact} to={to}>
       <Box
-        paddingY="sm"
+        paddingY="xs"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >

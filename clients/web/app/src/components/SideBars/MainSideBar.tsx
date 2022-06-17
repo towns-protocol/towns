@@ -97,13 +97,7 @@ const RealSpaces = (props: { spaces: SpaceData[] }) => {
   const { spaces } = props;
   return (
     <>
-      <Box
-        paddingX="md"
-        height="height_lg"
-        paddingY="sm"
-        justifyContent="end"
-        display={{ tablet: "none", desktop: "flex" }}
-      >
+      <Box paddingX="md" height="height_lg" paddingY="sm" justifyContent="end">
         <Paragraph color="gray2" textTransform="uppercase">
           Your Spaces:
         </Paragraph>

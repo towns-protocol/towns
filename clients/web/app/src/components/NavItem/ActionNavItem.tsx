@@ -21,14 +21,13 @@ export const ActionNavItem = ({
       {icon && (
         <Icon
           type={icon}
-          padding="sm"
-          background="level3"
+          padding="line"
+          background="level2"
           color="gray2"
-          size={{ desktop: "square_lg", tablet: "square_lg" }}
+          size="square_lg"
         />
       )}
       <ButtonText
-        display={{ tablet: "none" }}
         color={isHighlight ? "default" : "gray1"}
         strong={isHighlight}
       >

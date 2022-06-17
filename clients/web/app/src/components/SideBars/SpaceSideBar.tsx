@@ -53,7 +53,6 @@ const Channels = (props: { space: SpaceData }) => {
             height="height_lg"
             paddingY="sm"
             justifyContent="end"
-            display={{ tablet: "none", desktop: "flex" }}
           >
             <Paragraph color="gray2" textTransform="uppercase">
               {group.label}
