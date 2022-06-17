@@ -119,7 +119,7 @@ const AllRoutes = () => {
                 <Route path="settings" element={<SpacesSettings />} />
                 <Route path="invite" element={<SpacesInvite />} />
                 <Route path="channels/new" element={<SpacesNewChannel />} />
-                <Route path=":channel" element={<SpacesChannel />}>
+                <Route path=":channelId" element={<SpacesChannel />}>
                   <Route
                     path="replies/:messageId"
                     element={<SpacesChannelReplies />}

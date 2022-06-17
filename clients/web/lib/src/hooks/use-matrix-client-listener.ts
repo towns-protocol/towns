@@ -56,8 +56,20 @@ export const useMatrixClientListener = (
 
       client.on(
         RoomEvent.Timeline,
-        (event: any, room: any, toStartOfTimeline: any) => {
-          handleRoomTimelineEvent(event, room, toStartOfTimeline);
+        (
+          event: any,
+          room: any,
+          toStartOfTimeline: any,
+          removed: any,
+          data: any,
+        ) => {
+          handleRoomTimelineEvent(
+            event,
+            room,
+            toStartOfTimeline,
+            removed,
+            data,
+          );
         },
       );
 

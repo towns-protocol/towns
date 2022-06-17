@@ -13,26 +13,35 @@ export const useRoomTimelineEventHandler = (
     createSpaceChild,
   } = useMatrixStore();
 
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
   const handleRoomTimelineEvent = useCallback(
     function (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       event: any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       room: any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       toStartOfTimeline: any,
+      removed: any,
+      data: any,
     ) {
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
       if (!matrixClientRef.current) {
         console.log(`matrixClientRef.current is undefined`);
         return;
       }
       switch (event.getType()) {
         case "m.room.message": {
-          setNewMessage(
-            room.roomId,
-            event.sender.name,
-            event.event.content.body,
-          );
+          console.log("m.room.message", {
+            event: event,
+            toStart: toStartOfTimeline,
+            removed: removed,
+            data: data,
+          });
+          setNewMessage(room.roomId, {
+            eventId: event.event.event_id,
+            sender: event.sender.name,
+            body: event.event.content.body,
+            msgType: event.event.content.msgtype,
+            originServerTs: event.event.content.origin_server_ts,
+          });
           break;
         }
         case "m.room.create": {

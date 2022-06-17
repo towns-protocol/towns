@@ -54,8 +54,11 @@ export interface Members {
 }
 
 export interface RoomMessage {
+  eventId: string;
   sender: string;
-  message: string;
+  body: string;
+  msgType: string;
+  originServerTs: number;
 }
 
 export interface RoomsMessages {

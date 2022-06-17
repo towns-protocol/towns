@@ -18,29 +18,30 @@ interface Props {
 
 export function ChatMessages(props: Props): JSX.Element {
   const { allMessages } = useMatrixStore();
-  const [newMessage, setNewMessage] = useState<string>("");
+  const [currentMessage, setCurrentMessage] = useState<string>("");
 
   const onTextChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setNewMessage(event.target.value);
+      setCurrentMessage(event.target.value);
     },
-    []
+    [],
   );
 
   const onKeyDown = useCallback(
     async (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter" && newMessage) {
-        await props.sendMessage(props.roomId, newMessage);
-        setNewMessage("");
+      if (event.key === "Enter" && currentMessage) {
+        await props.sendMessage(props.roomId, currentMessage);
+        setCurrentMessage("");
       }
     },
-    [newMessage, props]
+    [currentMessage, props],
   );
 
   const roomMessages = useMemo(() => {
     if (allMessages) {
       const messages = allMessages[props.roomId];
       if (messages && messages.length > 0) {
+        console.log("messages", messages);
         return messages;
       }
     }
@@ -50,7 +51,7 @@ export function ChatMessages(props: Props): JSX.Element {
 
   const messagesLength = useMemo(
     () => roomMessages?.length,
-    [roomMessages?.length]
+    [roomMessages?.length],
   );
 
   const chatMessages = useMemo(() => {
@@ -68,7 +69,7 @@ export function ChatMessages(props: Props): JSX.Element {
             component="span"
             sx={messageStyle}
           >
-            {`${getShortUsername(m.sender)}: ${m.message}`}
+            {`${getShortUsername(m.sender)}: ${m.body}`}
           </Typography>
         ));
       } else {
@@ -105,7 +106,7 @@ export function ChatMessages(props: Props): JSX.Element {
               fullWidth={true}
               onChange={onTextChanged}
               onKeyDown={onKeyDown}
-              value={newMessage}
+              value={currentMessage}
             />
           </Box>
         </>

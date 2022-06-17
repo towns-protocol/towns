@@ -33,10 +33,22 @@ export const SpacesIndex = () => {
   const { spaces } = useSpaceDataStore();
   const navigate = useNavigate();
   const { allMessages } = useMatrixStore();
-  const { sendMessage, syncSpace } = useMatrixClient();
-  const [newMessage, setNewMessage] = useState<string>("");
+  const { syncSpace } = useMatrixClient();
 
-  const space = spaces.find((s) => s.id === spaceId);
+  const space = useMemo(
+    () => spaces.find((s) => s.id === spaceId),
+    [spaceId, spaces],
+  );
+
+  const spaceMessages = useMemo(
+    () => (allMessages && spaceId ? allMessages[spaceId] ?? [] : []),
+    [allMessages, spaceId],
+  );
+
+  const messagesLength = useMemo(
+    () => spaceMessages.length,
+    [spaceMessages.length],
+  );
 
   useEffect(() => {
     (async () => {
@@ -53,42 +65,6 @@ export const SpacesIndex = () => {
   const onSettingsClicked = useCallback(() => {
     navigate("/spaces/" + spaceId + "/settings");
   }, [navigate, spaceId]);
-
-  const onTextChanged = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setNewMessage(event.target.value);
-    },
-    [setNewMessage],
-  );
-
-  const onKeyDown = useCallback(
-    async (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (!spaceId) {
-        return;
-      }
-      if (event.key === "Enter" && newMessage) {
-        await sendMessage(spaceId, newMessage);
-        setNewMessage("");
-      }
-    },
-    [newMessage, sendMessage, spaceId, setNewMessage],
-  );
-
-  const roomMessages = useMemo(() => {
-    if (allMessages && spaceId) {
-      const messages = allMessages[spaceId];
-      if (messages && messages.length > 0) {
-        return messages;
-      }
-    }
-
-    return undefined;
-  }, [allMessages, spaceId]);
-
-  const messagesLength = useMemo(
-    () => roomMessages?.length,
-    [roomMessages?.length],
-  );
 
   return (
     <>
@@ -128,22 +104,13 @@ export const SpacesIndex = () => {
             </Box>
           </Stack>
           <Box grow alignItems="center" background="level2">
-            {roomMessages && messagesLength ? (
-              <SpaceMessages messages={roomMessages} />
+            {messagesLength ? (
+              <SpaceMessages messages={spaceMessages} />
             ) : space.isFakeSpace ? (
               <FakeSpaceMessages />
             ) : (
               <></>
             )}
-          </Box>
-
-          <Divider />
-          <Box gap="md">
-            <MessageInput
-              value={newMessage}
-              onChange={onTextChanged}
-              onKeyDown={onKeyDown}
-            />
           </Box>
         </>
       ) : (
@@ -171,12 +138,13 @@ const SpaceMessages = (props: { messages: RoomMessage[] }) => (
     {props.messages.map((m, index) => (
       <RoundedMessage
         channel=""
+        key={m.eventId}
         name={m.sender}
         avatar={<Avatar circle src="/placeholders/nft_2.png" />}
         date="Today sometime?"
         reactions={{}}
       >
-        <Paragraph>{m.message}</Paragraph>
+        <Paragraph>{m.body}</Paragraph>
       </RoundedMessage>
     ))}
   </LiquidContainer>

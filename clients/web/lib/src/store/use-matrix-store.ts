@@ -3,6 +3,7 @@ import {
   Members,
   Membership,
   Room,
+  RoomMessage,
   Rooms,
   RoomsMessages,
   Space,
@@ -26,7 +27,7 @@ export type MatrixStoreStates = {
   loginError: AuthenticationError | null;
   setLoginError: (error: AuthenticationError | undefined) => void;
   allMessages: RoomsMessages | null;
-  setNewMessage: (roomId: string, sender: string, message: string) => void;
+  setNewMessage: (roomId: string, message: RoomMessage) => void;
   rooms: Rooms | null;
   joinRoom: (
     roomId: string,
@@ -94,10 +95,8 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     allMessages: null,
     createRoom: (roomId: string, isSpace: boolean) =>
       set((state: MatrixStoreStates) => createRoom(state, roomId, isSpace)),
-    setNewMessage: (roomId: string, sender: string, message: string) =>
-      set((state: MatrixStoreStates) =>
-        setNewMessage(state, roomId, sender, message),
-      ),
+    setNewMessage: (roomId: string, message: RoomMessage) =>
+      set((state: MatrixStoreStates) => setNewMessage(state, roomId, message)),
     setRoom: (room: MatrixRoom) =>
       set((state: MatrixStoreStates) => setRoom(state, room)),
     setAllRooms: (rooms: MatrixRoom[]) =>
@@ -166,17 +165,13 @@ function createRoom(
 function setNewMessage(
   state: MatrixStoreStates,
   roomId: string,
-  sender: string,
-  message: string,
+  message: RoomMessage,
 ) {
   const changedAllMessages = state.allMessages ? { ...state.allMessages } : {};
   const changedRoomMessages = changedAllMessages[roomId]
     ? [...changedAllMessages[roomId]]
     : [];
-  changedRoomMessages.push({
-    sender,
-    message,
-  });
+  changedRoomMessages.push(message);
   changedAllMessages[roomId] = changedRoomMessages;
   return { allMessages: changedAllMessages };
 }
