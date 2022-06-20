@@ -1,7 +1,7 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
-import { boxClass } from "ui/styles/atoms/atoms.css";
-import { debugClass } from "ui/styles/css/debug.css";
+import { boxClass } from "ui/styles/atoms.css";
+import { debugClass } from "ui/styles/globals/debug.css";
 import { vars } from "ui/styles/vars.css";
 import { fontSettings } from "ui/utils/FontLoader";
 import { withGapClass } from "../Box/Box";

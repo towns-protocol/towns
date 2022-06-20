@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Box, Paragraph } from "@ui";
 import { Logo } from "@components/Logo";
-import { atoms } from "ui/styles/atoms/atoms.css";
+import { atoms } from "ui/styles/atoms.css";
 
 export const SiteHome = () => (
   <Box centerContent grow height="100%" gap="md">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { useStore } from "store/store";
-import { atoms } from "ui/styles/atoms/atoms.css";
+import { atoms } from "ui/styles/atoms.css";
 import { darkTheme, lightTheme } from "ui/styles/vars.css";
 
 type ThemeSettings = {

@@ -9,7 +9,7 @@ import {
 import { Box, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 import { useSpaceDataStore } from "store/spaceDataStore";
-import { atoms } from "ui/styles/atoms/atoms.css";
+import { atoms } from "ui/styles/atoms.css";
 
 export const SidebarLayout = () => {
   const allotemntRef = useRef<AllotmentHandle>(null);

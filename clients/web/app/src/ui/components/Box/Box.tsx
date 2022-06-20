@@ -5,9 +5,9 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { Atoms, atoms, boxClass } from "ui/styles/atoms/atoms.css";
-import { debugClass } from "ui/styles/css/debug.css";
-import { absoluteFillClass } from "ui/styles/css/utils.css";
+import { Atoms, atoms, boxClass } from "ui/styles/atoms.css";
+import { debugClass } from "ui/styles/globals/debug.css";
+import { absoluteFillClass } from "ui/styles/globals/utils.css";
 import { vars } from "ui/styles/vars.css";
 import { assignBoolToDefaultValue } from "ui/utils/utils";
 

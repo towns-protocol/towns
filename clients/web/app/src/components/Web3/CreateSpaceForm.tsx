@@ -5,7 +5,7 @@ import {
   Membership,
   useMatrixClient,
 } from "use-matrix-client";
-import { atoms } from "ui/styles/atoms/atoms.css";
+import { atoms } from "ui/styles/atoms.css";
 import {
   Box,
   Button,

@@ -1,6 +1,6 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
-export const debugClass = style({});
+export const debugClass = style({}, "debug");
 
 globalStyle(".debug-grid:after", {
   pointerEvents: "none",

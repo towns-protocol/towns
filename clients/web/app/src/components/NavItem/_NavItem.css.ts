@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { atoms } from "ui/styles/atoms/atoms.css";
+import { atoms } from "ui/styles/atoms.css";
 
 export const highlightInactive = atoms({
   rounded: "md",
