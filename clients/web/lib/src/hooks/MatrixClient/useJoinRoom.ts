@@ -7,13 +7,9 @@ export const useJoinRoom = () => {
 
   return useCallback(
     async (roomId: string) => {
-      const opts = {
-        syncRoom: true,
-      };
-
       try {
         if (matrixClient) {
-          await matrixClient.joinRoom(roomId, opts);
+          await joinZionRoom({ matrixClient, roomId });
           console.log(`Joined room[${roomId}]`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,4 +19,15 @@ export const useJoinRoom = () => {
     },
     [matrixClient],
   );
+};
+
+export const joinZionRoom = async (props: {
+  matrixClient: MatrixClient;
+  roomId: string;
+}) => {
+  const { matrixClient, roomId } = props;
+  const opts = {
+    syncRoom: true,
+  };
+  await matrixClient.joinRoom(roomId, opts);
 };

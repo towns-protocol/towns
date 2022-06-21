@@ -8,25 +8,34 @@ export const useSendMessage = () => {
   return useCallback(
     async (roomId: string, message: string): Promise<void> => {
       if (matrixClient) {
-        const content = {
-          body: `${message}`,
-          msgtype: "m.text",
-        };
-
-        await matrixClient.sendEvent(
-          roomId,
-          "m.room.message",
-          content,
-          "",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-          function (err: any, res: any) {
-            if (err) {
-              console.error(err);
-            }
-          },
-        );
+        await sendZionMessage({ matrixClient, roomId, message });
       }
     },
     [matrixClient],
+  );
+};
+
+export const sendZionMessage = async (props: {
+  matrixClient: MatrixClient;
+  roomId: string;
+  message: string;
+}) => {
+  const { matrixClient, roomId, message } = props;
+  const content = {
+    body: `${message}`,
+    msgtype: "m.text",
+  };
+
+  await matrixClient.sendEvent(
+    roomId,
+    "m.room.message",
+    content,
+    "",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+    function (err: any, res: any) {
+      if (err) {
+        console.error(err);
+      }
+    },
   );
 };

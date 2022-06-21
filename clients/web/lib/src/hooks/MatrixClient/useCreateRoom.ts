@@ -11,43 +11,8 @@ export const useCreateRoom = () => {
   return useCallback(
     async (createInfo: CreateRoomInfo): Promise<string | undefined> => {
       try {
-        if (matrixClient) {
-          // initial state
-          const options: ICreateRoomOpts = {
-            //room_alias_name: "my_room_alias3",
-            visibility: createInfo.visibility,
-            name: createInfo.roomName,
-            is_direct: createInfo.isDirectMessage === true,
-          };
-          // add our parent room if we have one
-          if (createInfo.parentSpaceId) {
-            options.initial_state = [
-              {
-                type: "m.space.parent",
-                state_key: createInfo.parentSpaceId,
-                content: {
-                  canonical: true,
-                  via: [homeServer],
-                },
-              },
-            ];
-          }
-          const response = await matrixClient.createRoom(options);
-          console.log("Created room", JSON.stringify(response));
-          if (createInfo.parentSpaceId) {
-            await matrixClient.sendStateEvent(
-              createInfo.parentSpaceId,
-              "m.space.child",
-              {
-                auto_join: false,
-                suggested: false,
-                via: [homeServer],
-              },
-              response.room_id,
-            );
-          }
-
-          return response.room_id;
+        if (matrixClient && homeServer) {
+          return await createZionRoom({ matrixClient, homeServer, createInfo });
         } else {
           console.error("Not logged in. Cannot create room");
         }
@@ -59,4 +24,48 @@ export const useCreateRoom = () => {
     },
     [homeServer, matrixClient],
   );
+};
+
+export const createZionRoom = async (props: {
+  matrixClient: MatrixClient;
+  homeServer: string;
+  createInfo: CreateRoomInfo;
+}): Promise<string> => {
+  const { matrixClient, homeServer, createInfo } = props;
+  // initial state
+  const options: ICreateRoomOpts = {
+    //room_alias_name: "my_room_alias3",
+    visibility: createInfo.visibility,
+    name: createInfo.roomName,
+    is_direct: createInfo.isDirectMessage === true,
+  };
+  // add our parent room if we have one
+  if (createInfo.parentSpaceId) {
+    options.initial_state = [
+      {
+        type: "m.space.parent",
+        state_key: createInfo.parentSpaceId,
+        content: {
+          canonical: true,
+          via: [homeServer],
+        },
+      },
+    ];
+  }
+  const response = await matrixClient.createRoom(options);
+  console.log("Created room", JSON.stringify(response));
+  if (createInfo.parentSpaceId) {
+    await matrixClient.sendStateEvent(
+      createInfo.parentSpaceId,
+      "m.space.child",
+      {
+        auto_join: false,
+        suggested: false,
+        via: [homeServer],
+      },
+      response.room_id,
+    );
+  }
+
+  return response.room_id;
 };

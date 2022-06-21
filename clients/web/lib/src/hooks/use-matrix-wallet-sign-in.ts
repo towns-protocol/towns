@@ -133,6 +133,7 @@ export function useMatrixWalletSignIn() {
         walletAddress: userIdentifier.accountAddress,
         chainId: userIdentifier.chainId,
         homeServer,
+        origin,
         nonce: args.nonce,
         statement: args.statement,
       });
@@ -491,7 +492,7 @@ async function getPublicKeySignInSupported(
   return supportedFlows.flows.some((f) => f.type === LoginTypePublicKey);
 }
 
-function getAuthority(uri: string): string {
+export function getAuthority(uri: string): string {
   const url = new URL(uri);
   // Bug in siwe-go package on the server. Doesn't recognize port.
   //const authority = url.port ? `${url.hostname}:${url.port}` : url.hostname;
@@ -502,10 +503,11 @@ function getAuthority(uri: string): string {
  * Create a message for signing. See https://eips.ethereum.org/EIPS/eip-4361
  * for message template.
  */
-function createMessageToSign(args: {
+export function createMessageToSign(args: {
   walletAddress: string;
   chainId: number;
   homeServer: string;
+  origin: string;
   nonce: string;
   statement: string;
 }): string {
@@ -518,12 +520,11 @@ function createMessageToSign(args: {
     nonce: args.nonce,
     statement: args.statement,
   };
-
   const siweMessage = new SiweMessage({
     domain: eip4361.authority,
     address: eip4361.address,
     statement: eip4361.statement,
-    uri: origin,
+    uri: args.origin,
     version: "1",
     chainId: eip4361.chainId,
     nonce: eip4361.nonce,
@@ -540,7 +541,9 @@ function createMessageToSign(args: {
   return messageToSign;
 }
 
-async function newLoginSession(client: MatrixClient): Promise<NewSession> {
+export async function newLoginSession(
+  client: MatrixClient,
+): Promise<NewSession> {
   console.log(`[newLoginSession] start`);
   try {
     // According to the Client-Server API specm send a GET
@@ -578,7 +581,7 @@ async function newLoginSession(client: MatrixClient): Promise<NewSession> {
   return newSessionError("Unauthorized");
 }
 
-async function newRegisterSession(
+export async function newRegisterSession(
   client: MatrixClient,
   walletAddress: string,
 ): Promise<NewSession> {
