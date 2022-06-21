@@ -117,7 +117,7 @@ export function useMatrixWalletSignIn() {
 
   const signMessage = useCallback(
     async function (args: {
-      statementToSign: string;
+      statement: string;
       nonce: string;
     }): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
@@ -134,7 +134,7 @@ export function useMatrixWalletSignIn() {
         chainId: userIdentifier.chainId,
         homeServer,
         nonce: args.nonce,
-        statementToSign: args.statementToSign,
+        statement: args.statement,
       });
 
       // Prompt the user to sign the message.
@@ -191,7 +191,7 @@ export function useMatrixWalletSignIn() {
     async function (args: {
       sessionId: string;
       nonce: string;
-      statementToSign: string;
+      statement: string;
     }): Promise<AuthenticationData | undefined> {
       try {
         if (!userIdentifier) {
@@ -200,7 +200,7 @@ export function useMatrixWalletSignIn() {
         }
         const signedAuthenticationData = await signMessage({
           nonce: args.nonce,
-          statementToSign: args.statementToSign,
+          statement: args.statement,
         });
         if (!signedAuthenticationData) {
           console.log(
@@ -230,7 +230,7 @@ export function useMatrixWalletSignIn() {
   );
 
   const registerWallet = useCallback(
-    async function (statementToSign: string): Promise<void> {
+    async function (statement: string): Promise<void> {
       console.log(`[registerWallet] start`);
       // Registration of a new wallet is allowed if the user is currently logged out.
       if (loginStatus === LoginStatus.LoggedOut) {
@@ -254,7 +254,7 @@ export function useMatrixWalletSignIn() {
               const authData: AuthenticationData | undefined =
                 await createAndSignAuthData({
                   sessionId,
-                  statementToSign,
+                  statement,
                   nonce,
                 });
 
@@ -360,7 +360,7 @@ export function useMatrixWalletSignIn() {
   );
 
   const loginWithWallet = useCallback(
-    async function (statementToSign: string): Promise<void> {
+    async function (statement: string): Promise<void> {
       // Login is allowed if the user is currently logged out.
       if (loginStatus === LoginStatus.LoggedOut) {
         if (userIdentifier && userIdentifier.chainId && homeServer) {
@@ -383,7 +383,7 @@ export function useMatrixWalletSignIn() {
                 // Prompt the user to sign the message.
                 const auth = await createAndSignAuthData({
                   sessionId,
-                  statementToSign,
+                  statement,
                   nonce,
                 });
 
@@ -507,7 +507,7 @@ function createMessageToSign(args: {
   chainId: number;
   homeServer: string;
   nonce: string;
-  statementToSign: string;
+  statement: string;
 }): string {
   // Create the auth metadata for signing.
   const eip4361: Eip4361Info = {
@@ -516,7 +516,7 @@ function createMessageToSign(args: {
     version: "1",
     chainId: args.chainId,
     nonce: args.nonce,
-    statement: args.statementToSign,
+    statement: args.statement,
   };
 
   const siweMessage = new SiweMessage({

@@ -10,7 +10,8 @@ import {
 import { Spinner } from "@components/Spinner";
 import { Button, Paragraph, Stack } from "@ui";
 
-const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
+const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`;
+const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`;
 
 export const Login = () => {
   const [showError, setShowError] = useState<string | undefined>(undefined);
@@ -38,11 +39,11 @@ export const Login = () => {
   }, [requestAccounts, walletStatus]);
 
   const onLoginWithWallet = useCallback(() => {
-    loginWithWallet(StatementToSign);
+    loginWithWallet(loginMsgToSign);
   }, [loginWithWallet]);
 
   const onRegisterNewWallet = useCallback(() => {
-    registerWallet(StatementToSign);
+    registerWallet(registerWalletMsgToSign);
   }, [registerWallet]);
 
   useEffect(() => {

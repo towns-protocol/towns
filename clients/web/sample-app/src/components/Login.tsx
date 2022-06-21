@@ -20,7 +20,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { makeStyles } from "@mui/styles";
 import { getChainIdEip155 } from "use-matrix-client/dist/hooks/login";
 
-const StatementToSign = `Click to sign in and accept the Harmony Terms of Service.`;
+const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`;
+const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`;
 
 export function Login(): JSX.Element {
   const styles = useStyles();
@@ -72,14 +73,14 @@ export function Login(): JSX.Element {
 
   const onLoginWithWallet = useCallback(
     async function () {
-      loginWithWallet(StatementToSign);
+      loginWithWallet(loginMsgToSign);
     },
     [loginWithWallet],
   );
 
   const onRegisterNewWallet = useCallback(
     async function () {
-      registerWallet(StatementToSign);
+      registerWallet(registerWalletMsgToSign);
     },
     [registerWallet],
   );
