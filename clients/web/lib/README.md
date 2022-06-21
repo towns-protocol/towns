@@ -6,8 +6,16 @@ Common lib for Harmony clients.
 
 ```bash
 cd clients/web/lib
-yarn install
+yarn install # note, yarn install doesn't always work from this folder, try from root
 yarn build
+```
+
+## Tests
+
+We've implemented integration tests that run against a live server. See [Build and run Dendrite](../../../servers/README.md) to run a dendrite server locally
+
+```bash
+yarn test
 ```
 
 ## Tips and Tricks
