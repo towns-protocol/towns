@@ -9,7 +9,7 @@ type Props = {
   src?: string;
   alt?: string;
   size?: "cover" | "contain";
-} & BoxProps &
+} & Omit<BoxProps, "size"> &
   BackgroundVariantProps;
 
 export const BackgroundImage = ({

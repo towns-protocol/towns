@@ -2,7 +2,20 @@ import { defineProperties } from "@vanilla-extract/sprinkles";
 
 export const blockProperties = defineProperties({
   properties: {
-    position: ["relative", "absolute", "fixed", "static", "sticky"],
+    position: {
+      relative: "relative",
+      absolute: "absolute",
+      absoluteFill: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+      },
+      fixed: "fixed",
+      static: "static",
+      sticky: "sticky",
+    },
     overflowX: ["hidden", "visible", "auto", "scroll"],
     overflowY: ["hidden", "visible", "auto", "scroll"],
     cursor: [

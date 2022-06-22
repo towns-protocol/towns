@@ -15,7 +15,7 @@ type Props = {
   onClick?: () => void;
 } & Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  "onDrag" | "onDragEnd" | "onDragStart" | "onAnimationStart"
+  "onDrag" | "onDragEnd" | "onDragStart" | "onAnimationStart" | "size" | "color"
 > &
   StyleProps;
 

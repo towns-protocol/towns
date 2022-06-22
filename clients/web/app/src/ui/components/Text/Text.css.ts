@@ -1,10 +1,9 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
-import { boxClass } from "ui/styles/atoms.css";
+import { boxClass, containerWithGapClass } from "ui/styles/atoms.css";
 import { debugClass } from "ui/styles/globals/debug.css";
 import { vars } from "ui/styles/vars.css";
 import { fontSettings } from "ui/utils/FontLoader";
-import { withGapClass } from "../Box/Box";
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - dynamic properties
 
@@ -108,7 +107,7 @@ const siblings = ["p", "h1", "h2", "h3", "h4", "h5"] as const;
 
 siblings.forEach((s) => {
   siblings.forEach((m) =>
-    globalStyle(`${boxClass}:not(.${withGapClass}) >  ${s} + ${m}`, {
+    globalStyle(`${boxClass}:not(.${containerWithGapClass}) >  ${s} + ${m}`, {
       marginTop: vars.space.md,
     }),
   );

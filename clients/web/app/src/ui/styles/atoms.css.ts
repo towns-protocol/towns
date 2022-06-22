@@ -17,9 +17,12 @@ export const atoms = createSprinkles(
 );
 
 export type Atoms = Parameters<typeof atoms>[0];
+export type AtomNames = keyof Atoms;
 
 export const boxClass = style({
   selectors: {
     [`${debugClass} &`]: { boxShadow: "0 0 0 1px #90f7" },
   },
 });
+
+export const containerWithGapClass = style({});

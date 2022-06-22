@@ -27,6 +27,7 @@ import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
 import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
 import { SpacesNewChannel } from "routes/SpacesNewChannel";
+import { Playground } from "@components/Playground";
 
 FontLoader.init();
 
@@ -52,6 +53,7 @@ const AllRoutes = () => {
 
   return (
     <Routes>
+      <Route path="/playground" element={<Playground />} />
       <Route element={<AppLayout authenticated={isAuthenticated} />}>
         {isAuthenticated && (
           <Route path="/onboarding" element={<Onboarding />} />

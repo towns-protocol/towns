@@ -5,154 +5,150 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
-import { Atoms, atoms, boxClass } from "ui/styles/atoms.css";
-import { debugClass } from "ui/styles/globals/debug.css";
-import { absoluteFillClass } from "ui/styles/globals/utils.css";
-import { vars } from "ui/styles/vars.css";
-import { assignBoolToDefaultValue } from "ui/utils/utils";
-
-// shorthands allow `true` or `false` for assigning default values in addition
-// to the normal presets. Since bools aren't allowed as Atoms we need to
-// filter them out from the type.
-type OmitShorthandSprinkles = Omit<
+import {
+  AtomNames,
   Atoms,
-  | "border"
-  | "borderTop"
-  | "borderBottom"
-  | "borderLeft"
-  | "borderRight"
-  | "padding"
->;
+  atoms,
+  boxClass,
+  containerWithGapClass,
+} from "ui/styles/atoms.css";
+import { debugClass } from "ui/styles/globals/debug.css";
+import { vars } from "ui/styles/vars.css";
 
-type ShorthandProps = {
-  borderTop?: boolean | Atoms["borderTop"];
-  borderBottom?: boolean | Atoms["borderBottom"];
-  borderLeft?: boolean | Atoms["borderLeft"];
-  borderRight?: boolean | Atoms["borderRight"];
-  border?: boolean | Atoms["border"];
-  padding?: boolean | Atoms["padding"];
-  grow?: boolean | Atoms["flexGrow"];
-  shrink?: boolean | Atoms["flexShrink"];
-};
+const shorthands = {
+  border: [{ border: "default" }, { border: "none" }],
+  borderLeft: [{ borderLeft: "default" }, { borderLeft: "none" }],
+  borderRight: [{ borderRight: "default" }, { borderRight: "none" }],
+  borderTop: [{ borderTop: "default" }, { borderTop: "none" }],
+  borderBottom: [{ borderBottom: "default" }, { borderBottom: "none" }],
+  grow: [{ flexGrow: "x1" }, { flexGrow: "x0" }],
+  shrink: [{ flexShrink: "x1" }, { flexShrink: "x0" }],
+  padding: [{ padding: "md" }, { padding: "none" }],
+  gap: [{ gap: "md" }, { gap: "none" }],
+  horizontal: [{ flexDirection: "row" }, { flexDirection: "column" }],
+  centerContent: [{ justifyContent: "center", alignItems: "center" }],
+  absoluteFill: [{ position: "absoluteFill" }, {}],
+} as const;
 
-type Props = {
-  children?: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-  absoluteFill?: boolean;
-  centerContent?: boolean;
-  debug?: boolean;
-} & ShorthandProps &
-  OmitShorthandSprinkles &
-  // filter Props conflicting with HTML attributes
-  Omit<
-    AllHTMLAttributes<HTMLElement>,
-    "width" | "height" | "className" | "colSpan" | "size"
-  >;
+const shorhandAttributes = new Set(Object.keys(shorthands));
 
-const boxDefaults: Atoms = {
+const defaultAtoms: Atoms = {
   display: "flex",
   direction: "column",
 } as const;
 
-export const withGapClass = "with-gap";
+type BaseProps = {
+  children?: React.ReactNode;
+  className?: string;
+  debug?: boolean;
+  style?: React.CSSProperties;
+};
+
+/**
+ * All inherited HTML attributes except the ones colliding with atom props
+ * (e.g. width, height, size)
+ */
+type HTMLProps = Omit<AllHTMLAttributes<HTMLElement>, AtomNames>;
+
+type ShorthandAttrs = keyof typeof shorthands;
+
+/**
+ * List of attributes allowing either a value or a shorthand
+ * e.g atom: <Box padding='md' />  shorthand: <Box padding />
+ */
+type HybridShorthandAttrs = Extract<ShorthandAttrs, AtomNames>;
+
+/**
+ * List of props that are exclusively related to shorthands
+ * e.g. <Box horizontal />
+ */
+type ExclusiveShorthandProps = {
+  [K in Exclude<ShorthandAttrs, HybridShorthandAttrs>]?: boolean;
+};
+
+// list of atoms without shorthands
+type AtomPropsExcludingShorthands = Omit<Atoms, ShorthandAttrs>;
+
+// Specific type for atom Props allowing shorthands
+type AtomsAllowingShorthands = {
+  [K in HybridShorthandAttrs]?: boolean | Atoms[K];
+};
+
+type Props = HTMLProps &
+  BaseProps &
+  Omit<ExclusiveShorthandProps, HybridShorthandAttrs> &
+  AtomPropsExcludingShorthands &
+  AtomsAllowingShorthands;
+
+export type BoxProps = Props;
 
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
   const {
     as = "div",
+    border,
     className,
     children,
-    centerContent,
     debug,
-    grow,
-    shrink,
-    absoluteFill,
-    borderTop,
-    borderBottom,
-    borderLeft,
-    borderRight,
-    border,
-    padding,
     style,
     ...restProps
   } = props;
 
-  const fromShorthand = useMemo(() => {
-    const shorthands: Atoms = {};
+  const atomShorthands = useMemo(() => {
+    return (Object.entries(shorthands) as Entries<typeof shorthands>).reduce(
+      (keep, [s, v]) => {
+        if (typeof props[s] === "boolean") {
+          const shorthand = props[s] ? v[0] : v[1];
+          keep = { ...keep, ...shorthand };
+        }
+        return keep;
+      },
+      {},
+    );
+  }, [props]);
 
-    shorthands.border = assignBoolToDefaultValue(border, "default");
-    shorthands.borderTop = assignBoolToDefaultValue(borderTop, "default");
-    shorthands.borderBottom = assignBoolToDefaultValue(borderBottom, "default");
-    shorthands.borderLeft = assignBoolToDefaultValue(borderLeft, "default");
-    shorthands.borderRight = assignBoolToDefaultValue(borderRight, "default");
-    shorthands.padding = assignBoolToDefaultValue(padding, "md");
-    shorthands.flexGrow = assignBoolToDefaultValue(grow, "x1", "x0");
-    shorthands.flexShrink = assignBoolToDefaultValue(shrink, "x1", "x0");
-
-    if (centerContent === true) {
-      shorthands.justifyContent = "center";
-      shorthands.alignItems = "center";
-    }
-
-    return shorthands;
-  }, [
-    border,
-    borderBottom,
-    borderLeft,
-    borderRight,
-    borderTop,
-    centerContent,
-    grow,
-    padding,
-    shrink,
-  ]);
-
-  const { atomicClasses, nativeProps } = useMemo(() => {
+  /**
+   * separate out the atoms from the rest of the props
+   */
+  const { atomProps, nativeProps } = useMemo(() => {
     const nativeProps: Record<string, unknown> = {};
-    const atomicProps = (
-      Object.keys(restProps) as Array<keyof OmitShorthandSprinkles>
-    ).reduce((keep: Record<string, unknown>, k) => {
+    const atomProps = (
+      Object.keys(restProps) as Array<keyof AtomPropsExcludingShorthands>
+    ).reduce((atomProps: Record<string, unknown>, k) => {
       if (atoms.properties.has(k) && typeof k !== "undefined") {
-        keep[k] = restProps[k];
+        atomProps[k] = restProps[k];
       } else {
-        nativeProps[k] = restProps[k];
+        // do not forward shorthands to component props
+        if (!shorhandAttributes.has(k)) {
+          nativeProps[k] = restProps[k];
+        }
       }
-      return keep;
+      return atomProps;
     }, {} as Atoms);
 
     return {
       nativeProps,
-      atomicClasses: clsx([
-        boxClass,
-        atoms({
-          ...boxDefaults,
-          ...fromShorthand,
-          ...atomicProps,
-        }),
-        className,
-        {
-          [withGapClass]: props.gap && props.gap !== vars.space.none,
-        },
-        {
-          [absoluteFillClass]: absoluteFill,
-          [debugClass]: debug,
-        },
-      ]),
+      atomProps,
     };
-  }, [absoluteFill, className, debug, fromShorthand, props.gap, restProps]);
+  }, [restProps]);
 
-  // const dynamicStyle = useMemo(() => {
-  //   const style: React.CSSProperties = props.style ?? {};
-  //   if (notUndefined(basis)) {
-  //     style.flexBasis = toPx(basis);
-  //   }
-  //   return style;
-  // }, [basis, props.style]);
+  const generatedClassNames = clsx([
+    boxClass,
+    atoms({
+      ...defaultAtoms,
+      ...atomProps,
+      ...atomShorthands,
+    }),
+    {
+      [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
+      [debugClass]: debug,
+    },
+    className,
+  ]);
 
   return createElement(
     as,
     {
-      className: atomicClasses,
+      className: generatedClassNames,
       style: props.style,
       ...nativeProps,
       ref,
@@ -161,4 +157,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
   );
 });
 
-export type BoxProps = Parameters<typeof Box>[0];
+// https://stackoverflow.com/questions/60141960/typescript-key-value-relation-preserving-object-entries-type
+type Entries<T> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T][];
