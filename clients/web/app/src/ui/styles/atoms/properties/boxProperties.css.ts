@@ -3,6 +3,7 @@ import { vars } from "ui/styles/vars.css";
 import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 
 export const border = {
+  none: `none`,
   default: `1px solid ${vars.color.background.level4}`,
   strong: `2px solid ${vars.color.text.default}`,
   inverted: `1px solid ${vars.color.text.inverted}`,

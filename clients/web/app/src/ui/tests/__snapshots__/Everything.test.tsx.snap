@@ -2,73 +2,73 @@
 
 exports[`Everything > should match previous snapshot 1`] = `
 <div
-  className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+  className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4"
 >
   <h1
-    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl32_desktop__1dzo0x2s textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl32_desktop__1dzo0x2s textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
   >
     Heading
   </h1>
   <h1
-    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl32_desktop__1dzo0x2s textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl32_desktop__1dzo0x2s textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
   >
     Heading 1
   </h1>
   <h2
-    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl24_desktop__1dzo0x2o textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl24_desktop__1dzo0x2o textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
   >
     Heading 2
   </h2>
   <h3
-    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl_desktop__1dzo0x2k textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl_desktop__1dzo0x2k textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
   >
     Heading 3
   </h3>
   <h4
-    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_lg_desktop__1dzo0x2g textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_lg_desktop__1dzo0x2g textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
   >
     Heading 4
   </h4>
   <div
-    className="atoms_box__reo9080 boxProperties_flexDirection_row_desktop__us3d3f16w boxProperties_display_flex_desktop__us3d3f4"
+    className="atoms_box__reo9080 boxProperties_flexDirection_row_desktop__us3d3f17c boxProperties_display_flex_desktop__us3d3f4"
   >
     <div
-      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4"
     >
       H1
     </div>
     <div
-      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4"
     >
       H2
     </div>
   </div>
   <div
-    className="atoms_box__reo9080 boxProperties_flexDirection_row_desktop__us3d3f16w boxProperties_display_flex_desktop__us3d3f4"
+    className="atoms_box__reo9080 boxProperties_flexDirection_row_desktop__us3d3f17c boxProperties_display_flex_desktop__us3d3f4"
   >
     <div
-      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4"
     >
       H1
     </div>
     <div
-      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4"
     >
       H2
     </div>
   </div>
   <div
-    className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+    className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4"
   >
     <div
-      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4 colorProperties_color_accent_lightMode__6xxol10"
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4 colorProperties_color_accent_lightMode__6xxol10"
     />
     <div
-      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4 colorProperties_color_cta1_lightMode__6xxol1a"
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_flex_desktop__us3d3f4 colorProperties_color_cta1_lightMode__6xxol1a"
     />
   </div>
   <span
-    className="atoms_box__reo9080 textProperties_fontVariationSettings_normal_desktop__1dzo0x20 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_md_desktop__1dzo0x2c textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_normal_desktop__1dzo0x20 boxProperties_flexDirection_column_desktop__us3d3f17g boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_md_desktop__1dzo0x2c textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
   >
     Text
   </span>

@@ -14,7 +14,7 @@ export const assignBoolToDefaultValue = <T>(
   falseValue?: T,
 ) => {
   return typeof value !== "boolean"
-    ? value
+    ? undefined
     : value === true
     ? trueValue
     : falseValue;
