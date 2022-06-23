@@ -1,4 +1,5 @@
-import { randNumber, randUser } from "@ngneat/falso";
+import { rand, randHexaDecimal, randNumber, randUser } from "@ngneat/falso";
+import { shortenAddress } from "@components/Cards/ProfileSettingsCard";
 
 /**
  * simplified representation of a user
@@ -10,6 +11,8 @@ export type UserData = {
   avatarSrc?: string;
   tokens?: number;
   spaceIds?: string[];
+  role: string;
+  address: string;
 };
 
 // number of avatars
@@ -27,6 +30,8 @@ export const getFakeUserData = (index?: number): UserData => {
       .map((_, i) => String(i)),
     avatarSrc: `/placeholders/nft_${index + 1}.png`,
     displayName: r.username,
+    role: rand(["Founder", "Moderator", "Council Member"]),
+    address: shortenAddress(`0x${randHexaDecimal({ length: 42 }).join("")}`),
   };
 };
 

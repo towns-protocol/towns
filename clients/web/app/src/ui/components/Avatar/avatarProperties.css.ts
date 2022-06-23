@@ -39,6 +39,11 @@ export const avatarSizes = {
     height: vars.dims.square.square_xxl,
     "--size": vars.dims.square.square_xxl,
   },
+  avatar_100: {
+    width: vars.dims.screen["100%"],
+    height: vars.dims.screen["100%"],
+    "--size": vars.dims.screen["100%"],
+  },
 } as const;
 
 export const avatarProperties = defineProperties({

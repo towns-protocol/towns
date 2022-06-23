@@ -28,6 +28,8 @@ import { FontLoader } from "ui/utils/FontLoader";
 import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
 import { SpacesNewChannel } from "routes/SpacesNewChannel";
 import { Playground } from "@components/Playground";
+import { MembersPage } from "@components/Members/MembersPage";
+import { ProposalPage } from "@components/Proposals/ProposalPage";
 
 FontLoader.init();
 
@@ -87,22 +89,8 @@ const AllRoutes = () => {
             <Route element={<SidebarLayout />}>
               <Route element={<HomeIndex />}>
                 <Route index element={<HighlightsGrid />} />
-                <Route
-                  path="proposals"
-                  element={
-                    <Box centerContent grow>
-                      <Paragraph>Proposals</Paragraph>
-                    </Box>
-                  }
-                />
-                <Route
-                  path="members"
-                  element={
-                    <Box centerContent grow>
-                      <Paragraph>Members</Paragraph>
-                    </Box>
-                  }
-                />
+                <Route path="proposals" element={<ProposalPage />} />
+                <Route path="members" element={<MembersPage />} />
               </Route>
 
               <Route path="me" element={<MeIndex />} />

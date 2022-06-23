@@ -37,8 +37,10 @@ export const ProfileSettingsCard = (props: Props) => {
           <Avatar circle size="avatar_x6" />
         </Box>
         <Stack grow gap="sm" fontWeight="strong" color="gray2">
-          <Heading level={5}>{username && shorten(username, 6, 2)}</Heading>
-          <Heading level={5}>{userId && shorten(userId, 6, 16)}</Heading>
+          <Heading level={5}>
+            {username && shortenAddress(username, 6, 2)}
+          </Heading>
+          <Heading level={5}>{userId && shortenAddress(userId, 6, 16)}</Heading>
         </Stack>
       </Stack>
       <Divider space="xs" />
@@ -56,7 +58,12 @@ const MenuItem = (props: BoxProps) => (
   <Stack horizontal cursor="pointer" {...props} />
 );
 
-const shorten = (s: string, charsStart = 6, charsEnd = 2, delimiter = "..") => {
+export const shortenAddress = (
+  s: string,
+  charsStart = 6,
+  charsEnd = 2,
+  delimiter = "..",
+) => {
   return (s?.length ?? 0) <= charsStart + delimiter.length + charsEnd
     ? s
     : `${s.substring(0, charsStart)}${delimiter}${s.substring(
