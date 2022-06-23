@@ -1,0 +1,123 @@
+// Vitest Snapshot v1
+
+exports[`Everything > should match previous snapshot 1`] = `
+<div
+  className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+>
+  <h1
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl32_desktop__1dzo0x2s textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+  >
+    Heading
+  </h1>
+  <h1
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl32_desktop__1dzo0x2s textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+  >
+    Heading 1
+  </h1>
+  <h2
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl24_desktop__1dzo0x2o textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+  >
+    Heading 2
+  </h2>
+  <h3
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_xl_desktop__1dzo0x2k textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+  >
+    Heading 3
+  </h3>
+  <h4
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_strong_desktop__1dzo0x24 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_lg_desktop__1dzo0x2g textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+  >
+    Heading 4
+  </h4>
+  <div
+    className="atoms_box__reo9080 boxProperties_flexDirection_row_desktop__us3d3f16w boxProperties_display_flex_desktop__us3d3f4"
+  >
+    <div
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+    >
+      H1
+    </div>
+    <div
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+    >
+      H2
+    </div>
+  </div>
+  <div
+    className="atoms_box__reo9080 boxProperties_flexDirection_row_desktop__us3d3f16w boxProperties_display_flex_desktop__us3d3f4"
+  >
+    <div
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+    >
+      H1
+    </div>
+    <div
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+    >
+      H2
+    </div>
+  </div>
+  <div
+    className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4"
+  >
+    <div
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4 colorProperties_color_accent_lightMode__6xxol10"
+    />
+    <div
+      className="atoms_box__reo9080 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_flex_desktop__us3d3f4 colorProperties_color_cta1_lightMode__6xxol1a"
+    />
+  </div>
+  <span
+    className="atoms_box__reo9080 textProperties_fontVariationSettings_normal_desktop__1dzo0x20 boxProperties_flexDirection_column_desktop__us3d3f170 boxProperties_display_block_desktop__us3d3f0 textProperties_fontSize_md_desktop__1dzo0x2c textProperties_textTransform_none_desktop__1dzo0x21o textProperties_textAlign_left_desktop__1dzo0x210 Text__hecx1ow"
+  >
+    Text
+  </span>
+  <svg
+    fill="none"
+    height="32"
+    viewBox="0 0 200 67"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M71.8719 66.7008V2.51172H59.4158V66.7008H71.8719Z"
+      fill="currentColor"
+    />
+    <path
+      d="M155.499 66.7008V10.6484H157.207L159.417 25.5153L181.115 66.7008H200V2.51172H188.147V58.5642H186.439L184.128 43.6972L162.531 2.51172H143.646V66.7008H155.499Z"
+      fill="currentColor"
+    />
+    <path
+      d="M-5.18128e-07 14.3651L49.6235 14.3651L49.6235 16.0728L34.7566 25.8167L-2.0286e-06 48.9207L-2.8058e-06 66.7008L57.7602 66.7008L57.7602 55.9524L8.13666 55.9524L8.13666 54.2447L17.981 51.9343L57.7602 26.4194L57.7602 2.51172L0 2.51172L-5.18128e-07 14.3651Z"
+      fill="currentColor"
+    />
+    <circle
+      cx="107.232"
+      cy="33.7018"
+      fill="url(#paint0_linear_1205_31033)"
+      r="33.7018"
+    />
+    <defs>
+      <linearGradient
+        gradientUnits="userSpaceOnUse"
+        id="paint0_linear_1205_31033"
+        x1="107.232"
+        x2="107.232"
+        y1="38.2975"
+        y2="67.4037"
+      >
+        <stop
+          stopColor="#C9356A"
+        />
+        <stop
+          offset="0.364583"
+          stopColor="#BB1B1B"
+        />
+        <stop
+          offset="1"
+          stopColor="#FA773F"
+        />
+      </linearGradient>
+    </defs>
+  </svg>
+</div>
+`;

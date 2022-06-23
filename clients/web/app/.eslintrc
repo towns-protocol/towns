@@ -22,6 +22,7 @@
     "prettier"
   ],
   "rules": {
+    "import/no-named-as-default-member": "off",
     "react/display-name": "off",
     "react/jsx-boolean-value": ["warn", "never"],
     "react/jsx-curly-brace-presence": [
@@ -33,6 +34,7 @@
     "react/no-multi-comp": "off",
     "react/prop-types": "off",
     "react/self-closing-comp": "warn",
+
     "react/jsx-sort-props": [
       "warn",
       {
