@@ -1,7 +1,7 @@
 import React from "react";
 import TestRenderer from "react-test-renderer";
 import { describe, expect, it } from "vitest";
-import { atoms } from "ui/styles/atoms/atoms.css";
+import { atoms } from "ui/styles/atoms.css";
 import { toJsonTree } from "utils/test_util";
 import { Box } from "./Box";
 
