@@ -16,6 +16,7 @@ We've implemented integration tests that run against a live server. See [Build a
 
 ```bash
 yarn test
+# OR - run from visual studio code via the "Jest: current file in 'web/lib/` commmand
 ```
 
 ## Tips and Tricks
