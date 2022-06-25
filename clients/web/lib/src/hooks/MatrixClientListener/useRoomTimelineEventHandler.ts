@@ -22,7 +22,6 @@ export const useRoomTimelineEventHandler = (
       removed: any,
       data: any,
     ) {
-      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
       if (!matrixClientRef.current) {
         console.log(`matrixClientRef.current is undefined`);
         return;
@@ -88,6 +87,6 @@ export const useRoomTimelineEventHandler = (
       updateMembership,
     ],
   );
-
+  /* eslint-enable */
   return handleRoomTimelineEvent;
 };
