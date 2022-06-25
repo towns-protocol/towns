@@ -4,16 +4,17 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
+          {
             "type": "node",
             "request": "launch",
             "name": "Jest: current file in 'web/lib/",
             //"env": { "NODE_ENV": "test" },
-            "program": "${workspaceFolder}/node_modules/.bin/jest",
-            "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "--forceExit", "${fileWorkspaceFolder}"],
+            "program": "${workspaceFolder}/clients/web/lib/node_modules/.bin/jest",
+            "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "--verbose", "-i", "--no-cache", "--forceExit"],
             "console": "integratedTerminal",
             "windows": {
-              "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+              "program": "${workspaceFolder}/clients/web/lib/node_modules/jest/bin/jest"
             }
+          }
     ]
 }
