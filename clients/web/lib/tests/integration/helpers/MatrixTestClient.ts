@@ -39,12 +39,12 @@ export class MatrixTestClient {
   private matrixDeviceId?: string;
 
   constructor(name: string, homeServer: string) {
+    // init state
     this.name = name;
     this.homeServer = homeServer;
     // create an initial client, this won't have an auth token
-    this.client = new MatrixClient({
+    this.client = createClient({
       baseUrl: homeServer,
-      request: require("request"),
     });
     // create a random wallet, we're web3!
     this.wallet = Wallet.createRandom();
@@ -148,7 +148,6 @@ export class MatrixTestClient {
       accessToken: this.matrixAccessToken,
       userId: this.matrixUserId,
       deviceId: this.matrixDeviceId,
-      request: require("request"),
     };
 
     // abandon the previous client

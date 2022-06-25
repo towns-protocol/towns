@@ -1,10 +1,14 @@
-import { MatrixEvent } from "matrix-js-sdk";
+import { MatrixEvent, request } from "matrix-js-sdk";
 import { MatrixTestClient } from "./helpers/MatrixTestClient";
 import { Visibility } from "../../src/types/matrix-types";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("sendAMessage", () => {
+  beforeAll(() => {
+    // set up required global for the matrix client to allow us to make http requests
+    request(require("request")); // eslint-disable-line @typescript-eslint/no-var-requires
+  });
   test("create room, invite user, accept invite, and send message", async () => {
     const homeServer = "http://localhost:8008";
     // create clients
