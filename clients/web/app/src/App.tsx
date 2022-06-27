@@ -3,7 +3,7 @@ import { Outlet, Route, Routes, useNavigate } from "react-router-dom";
 import useEvent from "react-use-event-hook";
 import { MatrixContextProvider, useMatrixStore } from "use-matrix-client";
 import { TopBar } from "@components/TopBar";
-import { Box, Heading, Paragraph } from "@ui";
+import { Box, Heading } from "@ui";
 import { AppLayout } from "AppLayout";
 import { useRootTheme } from "hooks/useRootTheme";
 import { HomeIndex } from "routes/Home";
