@@ -10,7 +10,7 @@ export const MembersPage = () => {
         <Box key={u.id} colSpan={1}>
           <Box padding>
             <Box aspectRatio="1/1" />
-            <Avatar circle src={u.avatarSrc} size="avatar_100" />
+            <Avatar circle src={u.avatarSrc} size="avatar_xl" />
           </Box>
           <Box textAlign="center" gap="paragraph">
             <Paragraph textAlign="center" size="sm">

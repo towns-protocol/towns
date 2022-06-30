@@ -7,8 +7,8 @@ import { breakpoints } from "./breakpoints";
 import { themes } from "./themes";
 
 // export const zoom = 1.1;
-export const baseline = 8;
-export const fontBase = 15;
+export const baseline = 8 as const;
+export const fontBase = 15 as const;
 
 const color = createThemeContract(themes.light);
 export const lightTheme = createTheme(color, themes.light);
@@ -163,7 +163,7 @@ const root = createGlobalTheme(":root", {
 
   borderRadius: {
     none: "0",
-    xxs: `${baseline * 0.5}px`,
+    xxs: `${baseline * 0.5}px` as const,
     xs: `${baseline * 0.75}px`,
     sm: `${baseline * 1}px`,
     md: `${baseline * 1.5}px`,

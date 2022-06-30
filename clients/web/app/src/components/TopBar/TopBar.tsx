@@ -93,12 +93,12 @@ const TopMenuLink = ({
   });
 
   return (
-    <Stack width="200" gap="sm">
+    <Stack gap="sm">
       <Box height="2" />
-      <Box grow centerContent>
+      <Box grow centerContent paddingX="lg">
         <NavLink to={to}>
           <ButtonText
-            size="lg"
+            size="md"
             color={match ? "cta1" : "gray2"}
             className={styles.buttonText}
           >

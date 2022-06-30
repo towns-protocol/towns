@@ -16,7 +16,7 @@ export const Proposal = (props: Props) => {
   return (
     <Card padding border horizontal gap>
       <Box shrink>
-        <Avatar circle src={user.avatarSrc} size="avatar_x6" />
+        <Avatar circle src={user.avatarSrc} size="avatar_md" />
       </Box>
       <Box grow color="gray2" gap="paragraph">
         <Paragraph>{user.displayName}</Paragraph>

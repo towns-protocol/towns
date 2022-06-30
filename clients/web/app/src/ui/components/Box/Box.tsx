@@ -83,15 +83,7 @@ type Props = HTMLProps &
 export type BoxProps = Props;
 
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
-  const {
-    as = "div",
-    border,
-    className,
-    children,
-    debug,
-    style,
-    ...restProps
-  } = props;
+  const { as = "div", className, children, debug, style, ...restProps } = props;
 
   const atomShorthands = useMemo(() => {
     return (Object.entries(shorthands) as Entries<typeof shorthands>).reduce(

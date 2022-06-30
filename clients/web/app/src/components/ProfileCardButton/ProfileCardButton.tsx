@@ -15,6 +15,6 @@ export const ProfileCardButton = (props: Props) => (
       <ProfileSettingsCard userId={props.userId} username={props.username} />
     }
   >
-    {({ triggerProps }) => <Avatar circle size="avatar_lg" {...triggerProps} />}
+    {({ triggerProps }) => <Avatar circle size="avatar_x4" {...triggerProps} />}
   </TooltipRenderer>
 );

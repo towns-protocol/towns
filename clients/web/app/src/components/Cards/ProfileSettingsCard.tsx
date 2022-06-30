@@ -34,7 +34,7 @@ export const ProfileSettingsCard = (props: Props) => {
     <Card padding="md" gap="sm" width="300" fontSize="md">
       <Stack horizontal gap="md" alignItems="center">
         <Box>
-          <Avatar circle size="avatar_x6" />
+          <Avatar circle size="avatar_md" />
         </Box>
         <Stack grow gap="sm" fontWeight="strong" color="gray2">
           <Heading level={5}>

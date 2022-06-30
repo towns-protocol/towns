@@ -23,7 +23,7 @@ const Item = (props: {
   children: React.ReactNode;
 }) => (
   <Stack horizontal gap="md" alignItems="center">
-    <Avatar size="avatar_x6" src={props.avatar} />
+    <Avatar size="avatar_md" src={props.avatar} />
     <Stack gap="sm">
       <Text size="sm" color="gray1">
         Doodles

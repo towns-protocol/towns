@@ -21,7 +21,6 @@ type Props = {
   active?: boolean;
   pinned?: boolean;
   exact?: boolean;
-  compact?: boolean;
   isInvite?: boolean;
 };
 
@@ -47,16 +46,7 @@ const SpaceTooltip = (props: { id: string }) => {
 };
 
 export const SpaceNavItem = (props: Props) => {
-  const {
-    id,
-    active,
-    avatar,
-    exact,
-    name,
-    pinned,
-    compact: isCompact,
-    isInvite,
-  } = props;
+  const { id, active, avatar, exact, name, pinned, isInvite } = props;
 
   const sizeContext = useSizeContext();
   // TODO: use tokens
@@ -71,19 +61,13 @@ export const SpaceNavItem = (props: Props) => {
       {({ triggerProps }) => (
         <NavItem
           id={id}
-          to={isInvite ? `/invites/${id}` : `/spaces/${id}`}
+          to={
+            isInvite ? `/invites/${id}` : `/spaces/${id.replace(/\./gi, "%2E")}`
+          }
           exact={exact}
           {...triggerProps}
         >
-          <Avatar
-            animate
-            src={avatar}
-            size={
-              isCompact
-                ? { desktop: "avatar_sm", tablet: "avatar_lg" }
-                : { desktop: "avatar_lg", tablet: "avatar_lg" }
-            }
-          />
+          <Avatar animate src={avatar} size="avatar_x4" />
           <ButtonText
             grow
             truncate

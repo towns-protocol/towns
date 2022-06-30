@@ -4,45 +4,34 @@ import { responsivePropertiesMixin } from "ui/styles/breakpoints";
 
 export const avatarSizes = {
   avatar_xs: {
-    width: vars.dims.square.square_xs,
-    height: vars.dims.square.square_xs,
-    "--size": vars.dims.square.square_xs,
+    width: vars.dims.baseline.x2,
+    height: vars.dims.baseline.x2,
+    "--size": vars.dims.baseline.x2,
   },
   avatar_sm: {
-    width: vars.dims.square.square_sm,
-    height: vars.dims.square.square_sm,
-    "--size": vars.dims.square.square_sm,
+    width: vars.dims.baseline.x3,
+    height: vars.dims.baseline.x3,
+    "--size": vars.dims.baseline.x3,
+  },
+  avatar_x4: {
+    width: vars.dims.baseline.x4,
+    height: vars.dims.baseline.x4,
+    "--size": vars.dims.baseline.x4,
   },
   avatar_md: {
-    width: vars.dims.square.square_md,
-    height: vars.dims.square.square_md,
-    "--size": vars.dims.square.square_md,
-  },
-  avatar_lg: {
-    width: vars.dims.square.square_lg,
-    height: vars.dims.square.square_lg,
-    "--size": vars.dims.square.square_lg,
-  },
-  // revisit when sizes are settled
-  avatar_x6: {
     width: vars.dims.baseline.x6,
     height: vars.dims.baseline.x6,
     "--size": vars.dims.baseline.x6,
   },
+  avatar_lg: {
+    width: vars.dims.baseline.x8,
+    height: vars.dims.baseline.x8,
+    "--size": vars.dims.baseline.x8,
+  },
   avatar_xl: {
-    width: vars.dims.square.square_xl,
-    height: vars.dims.square.square_xl,
-    "--size": vars.dims.square.square_xl,
-  },
-  avatar_xxl: {
-    width: vars.dims.square.square_xxl,
-    height: vars.dims.square.square_xxl,
-    "--size": vars.dims.square.square_xxl,
-  },
-  avatar_100: {
-    width: vars.dims.screen["100%"],
-    height: vars.dims.screen["100%"],
-    "--size": vars.dims.screen["100%"],
+    width: vars.dims.baseline.x20,
+    height: vars.dims.baseline.x20,
+    "--size": vars.dims.baseline.x20,
   },
 } as const;
 

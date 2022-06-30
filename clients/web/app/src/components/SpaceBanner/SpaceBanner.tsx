@@ -31,7 +31,7 @@ export const SpaceBanner = (props: Props) => {
       <Stack horizontal gap="md" padding="md">
         {/* avatar container */}
         <Box border padding="sm" borderRadius="lg" background="level2">
-          <Avatar src={avatarSrc} size="avatar_xxl" />
+          <Avatar src={avatarSrc} size="avatar_lg" />
         </Box>
         {/* title and stats container */}
         <Stack grow justifyContent="center" gap="md">

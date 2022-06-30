@@ -28,7 +28,7 @@ export const Replies = ({
             circle
             key={id}
             src={`/placeholders/nft_${id}.png`}
-            size="avatar_md"
+            size="avatar_sm"
           />
         ))}
         <Text as="span">
