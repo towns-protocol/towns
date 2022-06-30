@@ -9,6 +9,7 @@ export const typeProperties = defineProperties({
     fontSize: vars.fontSize,
     textAlign: vars.textAlign,
     textTransform: vars.textTransform,
+    fontStyle: ["normal", "italic"],
   },
   shorthands: {
     fontWeight: ["fontVariationSettings"],

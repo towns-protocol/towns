@@ -1,18 +1,26 @@
-import React from "react";
-import { Box, Heading, Stack } from "@ui";
-import { atoms } from "ui/styles/atoms.css";
+import React, { useCallback, useState } from "react";
+import {
+  RichTextEditor,
+  RichTextPreview,
+} from "@components/RichText/RichTextEditor";
+import { Stack } from "@ui";
 
 export const Playground = () => {
-  console.log(atoms.properties);
+  const [messages, setMessages] = useState<{ id: string; value: string }[]>([]);
+
+  const onSend = useCallback((value: string) => {
+    setMessages((m) => [...m, { id: Math.random().toString(), value }]);
+  }, []);
   return (
-    <Box padding border centerContent height="100vh">
-      <Stack border grow gap padding>
-        <Heading>LINE</Heading>
-        <Heading>LINE</Heading>
-        <Box position="relative" width="200">
-          <Box absoluteFill aspectRatio="1/1" background="accent" />
-        </Box>
+    <Stack padding border centerContent height="100vh">
+      <Stack gap grow>
+        {messages.map((m) => (
+          <RichTextPreview content={m.value} key={m.id} />
+        ))}
       </Stack>
-    </Box>
+      <Stack gap padding>
+        <RichTextEditor onSend={onSend} />
+      </Stack>
+    </Stack>
   );
 };

@@ -14,6 +14,10 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@lexical/link": "^0.3.6",
+    "@lexical/list": "^0.3.6",
+    "@lexical/react": "^0.3.6",
+    "@lexical/rich-text": "^0.3.6",
     "@ngneat/falso": "^5.6.0",
     "@react-hook/resize-observer": "^1.2.5",
     "allotment": "^1.14.1",
@@ -21,6 +25,7 @@
     "ethers": "5.5.1",
     "framer-motion": "^6.3.10",
     "http-status-codes": "^2.2.0",
+    "lexical": "^0.3.6",
     "matrix-js-sdk": "^18.0.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",

@@ -18,18 +18,19 @@ export const fieldOutline = style({
       opacity: 0,
       boxShadow: `0 0 0 2px ${focusedColorVar}`,
     },
-    [`${field}:focus ~ &`]: {
+    [`${field}:focus ~ &, ${field}.focused ~ &`]: {
       opacity: focusedOpacityVar,
       boxShadow: `0 0 0 2px ${focusedColorVar}`,
     },
-    [`${field}:focus-visible ~ &`]: {
+    [`${field}:focus-visible ~ &, ${field}.focus-visible ~ &`]: {
       opacity: focusedOpacityVar,
       boxShadow: `0 0 0 2px ${focusedColorVar}`,
     },
-    [`${field}:hover:not(:disabled) ~ &, ${field}:focus ~ &`]: {
-      opacity: focusedOpacityVar,
-      boxShadow: `0 0 0 2px ${focusedColorVar}`,
-    },
+    // [`${field}:hover:not(:disabled) ~ &, ${field}:focus ~ &, ${field}.focused ~ &`]:
+    //   {
+    //     opacity: focusedOpacityVar,
+    //     boxShadow: `0 0 0 2px ${focusedColorVar}`,
+    //   },
   },
 });
 

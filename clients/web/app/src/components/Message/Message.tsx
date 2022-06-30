@@ -34,10 +34,12 @@ export const Message = ({
   <Stack horizontal gap="paragraph" {...boxProps}>
     {/* left / avatar gutter */}
     {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-    <Box centerContent height="height_sm">
-      <Box inset="xxs">
-        {typeof avatar === "string" ? <Avatar src={avatar} /> : avatar}
-      </Box>
+    <Box>
+      {typeof avatar === "string" ? (
+        <Avatar src={avatar} size="avatar_lg" />
+      ) : (
+        avatar
+      )}
     </Box>
     {/* right / main content */}
     <Stack grow gap={condensed ? "paragraph" : "md"}>
@@ -50,7 +52,10 @@ export const Message = ({
           color={name?.match(/\.eth$/) ? "etherum" : "gray1"}
           as="span"
         >
-          {name}
+          {`${name.substring(0, 6)}..${name.substring(
+            name.length - 4,
+            name.length,
+          )}`}
         </Text>
         {/* channel */}
         {channel && (
@@ -61,13 +66,7 @@ export const Message = ({
           </NavLink>
         )}
         {/* date, alignment tbc depending on context */}
-        <Text
-          grow={!condensed}
-          fontSize="sm"
-          color="gray2"
-          as="span"
-          textAlign="right"
-        >
+        <Text fontSize="sm" color="gray2" as="span" textAlign="right">
           {date}
         </Text>
       </Box>
