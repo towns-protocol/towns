@@ -15,8 +15,7 @@ git subtree add --prefix servers/dendrite dendrite-fork main
 
 The repo relationships:
 
-```text
-harmony\servers\dendrite
+harmony\servers\dendrite      [Pulling from dendrite-fork into harmony repo](#pulling-from-dendrite-fork-into-harmony-repo)
 <----------------------->
         |
         |
@@ -24,22 +23,21 @@ harmony\servers\dendrite
         |
         |
         V
-dendrite-fork (hnt's fork)
-<------------------------>
+dendrite-fork (hnt's fork)    [Pushing changes to the dendrite-fork](#pushing-changes-to-the-dendrite-fork)
+<------------------------>    [Pulling changes from dendrite (main) into dendrite-fork](#pulling-changes-from-dendrite-main-into-dendrite-fork)
         |
         |
         | (upstream)
         |
         |
         V
-dendrite (main)
+dendrite (main)                [Pushing changes to dendrite main](#pushing-changes-to-dendrite-main)
 <------------->
-```
 
 The next few sections describe the steps to pull and push changes between each repo.
 
 - [Pulling from dendrite-fork into harmony repo](#pulling-from-dendrite-fork-into-harmony-repo)
-- [Pushing changes from harmony repo to dendrite-fork](#pushing-changes-from-harmony-repo-to-dendrite-fork)
+- [Pushing changes to the dendrite-fork](#pushing-changes-to-the-dendrite-fork)
 - [Pulling changes from dendrite (main) into dendrite-fork](#pulling-changes-from-dendrite-main-into-dendrite-fork)
 - [Pushing changes to dendrite main](#pushing-changes-to-dendrite-main)
 
@@ -63,20 +61,25 @@ commit of your code though, so they might not appear directly when you call git 
 Further reading about maintaining the subtree may be found here:
 <https://www.atlassian.com/git/tutorials/git-subtree>
 
-## Pushing changes from harmony repo to dendrite-fork
+## Pushing changes to the dendrite-fork
 
-You should be able to push changes to a branch using the command:
+The cleanest way to push changes to the dendrite-fork is to clone the repo,
+create your PR, merge the changes, and then follow the steps in
+[Pulling from dendrite-fork into harmony repo](#pulling-from-dendrite-fork-into-harmony-repo)
+to pull the changes into the harmony subtree.
 
 ```bash
-git subtree push --prefix servers/dendrite dendrite-fork my-feature-branch
+# clone the dendrite fork
+git clone https://github.com/HereNotThere/dendrite.git
 ```
 
+Now make your changes in a local git branch. Push it to remote.
 This should create a branch in the remote dendrite-fork, and allow you
 to create and submit a PR.
 Go to <https://github.com/HereNotThere/dendrite>. Make sure to change the
 base repository from matrix-org/dendrite to `HereNotThere/dendrite`.
 
-Once the PR is approved and merged, pull the changes into your local harmony with:
+Once the PR is merged, pull the changes into your local harmony with:
 
 ```bash
 git checkout -b some-name
@@ -128,20 +131,39 @@ cd dendrite
  ./bin/generate-keys --tls-cert server.crt --tls-key server.key
 
 # Copy and modify the config file - you'll need to set a server name and paths to the keys# at the very least, along with setting up the database connection strings.
-cp dendrite-config.yaml dendrite.yaml
+cp dendrite-sample.monolith.yaml dendrite.yaml
+```
 
-# update the public key authentication section of the yaml file:
+Update the public key authentication section of the yaml file:
 
-#  # public key authentication
-#  public_key_authentication:
-#    ethereum:
-#      enabled: true
-#      version: 1
-#      chain_ids: [4] # https://chainlist.org/
+```yaml
+# Configuration for the Client API.
+client_api:
+  # ... other settings
 
+  # Prevents new users from being able to register on this homeserver, except when
+  # using the registration shared secret below.
+  registration_disabled: false
 
-# Build and run the server:
-./bin/dendrite-monolith-server --tls-cert server.crt --tls-key server.key --config dendrite.yaml
+# Enable or disable password authentication.
+  password_authentication_disabled: false
+
+# public key authentication
+  public_key_authentication:
+    ethereum:
+      enabled: true
+      version: 1
+      chain_ids: [4]
+```
+
+## Build and run the server
+
+```bash
+./bin/dendrite-monolith-server \
+--tls-cert server.crt \
+--tls-key server.key \
+--config dendrite.yaml \
+--really-enable-open-registration
 
 ```
 
@@ -190,13 +212,10 @@ For example, if the test Local device key changes get to remote servers was mark
 If you are running the tests from Harmony repo:
 
 ```bash
-docker run --rm --name sytest
--v <your-harmony-git>/servers/dendrite/syts:/sytest
--v <your-harmony-git>/servers/dendrite:/src
--v <your-harmony-git>/servers/dendrite/logs/test:/logs
--v ~/go/:/gopath
--e "POSTGRES=1" -e "DENDRITE_TRACE_HTTP=1"
-matrixdotorg/sytest-dendrite:latest tests/50federation/40devicelists.pl
+docker run --rm \
+-v <your-harmony-git>/servers/dendrite:/src \
+-v <your-harmony-git>/servers/dendrite/logs/test:/logs \
+matrixdotorg/sytest-dendrite tests/50federation/40devicelists.pl
 ```
 
 See sytest.md for the full description of these flags.
@@ -204,11 +223,8 @@ See sytest.md for the full description of these flags.
 If you are running the tests from Dendrite main:
 
 ```bash
-docker run --rm --name sytest
--v <your-dendrite-main-git>/syts:/sytest
--v <your-dendrite-main-git>:/src
--v <your-dendrite-main-git>/logs/test:/logs
--v ~/go/:/gopath
--e "POSTGRES=1" -e "DENDRITE_TRACE_HTTP=1"
+docker run --rm \
+-v <your-dendrite-main-git>:/src \
+-v <your-dendrite-main-git>/logs/test:/logs \
 matrixdotorg/sytest-dendrite:latest tests/50federation/40devicelists.pl
 ```
