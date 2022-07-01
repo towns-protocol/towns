@@ -1,7 +1,10 @@
-import React, { useEffect } from "react";
-import { Outlet, Route, Routes, useNavigate } from "react-router-dom";
-import useEvent from "react-use-event-hook";
+import React from "react";
+import { Outlet, Route, Routes } from "react-router-dom";
 import { MatrixContextProvider, useMatrixStore } from "use-matrix-client";
+import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
+import { MembersPage } from "@components/Members/MembersPage";
+import { Playground } from "@components/Playground";
+import { ProposalPage } from "@components/Proposals/ProposalPage";
 import { TopBar } from "@components/TopBar";
 import { Box, Heading } from "@ui";
 import { AppLayout } from "AppLayout";
@@ -21,15 +24,11 @@ import { SpacesChannelReplies } from "routes/SpacesChannelThread";
 import { SpacesIndex } from "routes/SpacesIndex";
 import { SpacesInvite } from "routes/SpacesInvite";
 import { SpacesNew } from "routes/SpacesNew";
+import { SpacesNewChannel } from "routes/SpacesNewChannel";
 import { SpacesSettings } from "routes/SpacesSettings";
 import { SpaceThreads } from "routes/SpaceThreads";
 import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
-import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
-import { SpacesNewChannel } from "routes/SpacesNewChannel";
-import { Playground } from "@components/Playground";
-import { MembersPage } from "@components/Members/MembersPage";
-import { ProposalPage } from "@components/Proposals/ProposalPage";
 
 FontLoader.init();
 
@@ -51,7 +50,7 @@ const AllRoutes = () => {
     useDefaultOSTheme: false,
   });
 
-  useNavigateOnAuth("/onboarding", isAuthenticated);
+  // useNavigateOnAuth("/onboarding", isAuthenticated);
 
   return (
     <Routes>
@@ -124,12 +123,12 @@ const AllRoutes = () => {
   );
 };
 
-const useNavigateOnAuth = (to: string, isAuthenticated: boolean) => {
-  const navigate = useNavigate();
-  const stableNavigate = useEvent(() => navigate("/onboarding"));
-  useEffect(() => {
-    if (isAuthenticated) {
-      stableNavigate();
-    }
-  }, [isAuthenticated, stableNavigate]);
-};
+// const useNavigateOnAuth = (to: string, isAuthenticated: boolean) => {
+//   const navigate = useNavigate();
+//   const stableNavigate = useEvent(() => navigate("/onboarding"));
+//   useEffect(() => {
+//     if (isAuthenticated) {
+//       stableNavigate();
+//     }
+//   }, [isAuthenticated, stableNavigate]);
+// };

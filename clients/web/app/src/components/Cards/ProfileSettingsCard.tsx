@@ -24,6 +24,10 @@ export const ProfileSettingsCard = (props: Props) => {
     navigate("/me");
   }, [navigate]);
 
+  const onSetupClick = useCallback(() => {
+    navigate("/onboarding");
+  }, [navigate]);
+
   const { logout } = useMatrixClient();
 
   const onLogoutClick = useCallback(() => {
@@ -31,8 +35,8 @@ export const ProfileSettingsCard = (props: Props) => {
   }, [logout]);
 
   return (
-    <Card padding="md" gap="sm" width="300" fontSize="md">
-      <Stack horizontal gap="md" alignItems="center">
+    <Card paddingBottom="md" width="300" fontSize="md">
+      <Stack horizontal padding gap="md" alignItems="center">
         <Box>
           <Avatar circle size="avatar_md" />
         </Box>
@@ -48,14 +52,20 @@ export const ProfileSettingsCard = (props: Props) => {
         Switch to {theme !== "light" ? "light" : "dark"} theme
       </MenuItem>
       <MenuItem onClick={onSettingsClick}>Profile</MenuItem>
+      <MenuItem onClick={onSetupClick}>Setup</MenuItem>
+
       <Divider space="xs" />
       <MenuItem onClick={onLogoutClick}>Logout</MenuItem>
     </Card>
   );
 };
 
-const MenuItem = (props: BoxProps) => (
-  <Stack horizontal cursor="pointer" {...props} />
+const MenuItem = ({ children, ...props }: BoxProps) => (
+  <Box grow paddingY="sm" background={{ hover: "level3" }} {...props}>
+    <Stack horizontal paddingX="md" cursor="pointer">
+      {children}
+    </Stack>
+  </Box>
 );
 
 export const shortenAddress = (
