@@ -48,7 +48,7 @@ export const SpacesChannel = () => {
         <Allotment.Pane>
           <Box grow height="100%">
             <Stack grow>
-              <MessageList messages={channelMessages} />
+              <MessageList key={channelId} messages={channelMessages} />
               <Box paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
                   autoFocus
