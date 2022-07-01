@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { RoomMessage } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
@@ -11,23 +11,31 @@ export const MessageScroller = (props: { messages: RoomMessage[] }) => {
     messages.find((m) => m.sender === "???" || true)?.eventId,
   );
   return (
-    <Stack grow position="relative" overflow="scroll" ref={containerRef}>
+    <Stack grow ref={containerRef} position="relative">
       <Stack absoluteFill>
-        <Stack gap="lg" paddingY="lg" paddingX="lg">
-          {props.messages.map((m, index) => (
-            <Message
-              key={m.eventId}
-              name={m.sender}
-              avatar={
-                <Avatar circle src="/placeholders/nft_2.png" size="avatar_md" />
-              }
-              date="11:01AM"
-            >
-              <RichTextPreview content={m.body} />
-            </Message>
-          ))}
+        <Stack overflowY="scroll" height="100%">
+          <Stack grow paddingY="md" justifyContent="end">
+            {props.messages.map((m, index) => (
+              <Message
+                key={m.eventId}
+                name={m.sender}
+                paddingX="lg"
+                paddingY="md"
+                avatar={
+                  <Avatar
+                    circle
+                    src="/placeholders/nft_2.png"
+                    size="avatar_md"
+                  />
+                }
+                date="11:01AM"
+              >
+                <RichTextPreview content={m.body} />
+              </Message>
+            ))}
+          </Stack>
+          <div ref={endRef} />
         </Stack>
-        <div ref={endRef} />
       </Stack>
     </Stack>
   );
@@ -43,12 +51,6 @@ const useMessageScroll = (
   useLayoutEffect(() => {
     endRef.current?.scrollIntoView();
   }, [lastMessageId]);
-
-  useEffect(() => {
-    setTimeout(() => {
-      endRef.current?.scrollIntoView();
-    }, 50);
-  }, []);
 
   return { endRef, containerRef };
 };

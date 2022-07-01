@@ -17,7 +17,7 @@ type Props = {
   rounded?: BoxProps["rounded"];
   padding?: BoxProps["padding"];
   background?: BoxProps["background"];
-};
+} & BoxProps;
 
 export const Message = ({
   avatar,
@@ -31,7 +31,12 @@ export const Message = ({
   children,
   ...boxProps
 }: Props) => (
-  <Stack horizontal gap="paragraph" {...boxProps}>
+  <Stack
+    horizontal
+    gap="paragraph"
+    {...boxProps}
+    background={{ hover: "level2" }}
+  >
     {/* left / avatar gutter */}
     {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
     <Box>

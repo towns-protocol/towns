@@ -72,6 +72,7 @@ export const colorProperties = defineProperties({
     /** instead of using a media-query, we refer to the class set from JS on the
      * root element from within App.tsx */
     darkMode: { selector: `${darkTheme} &` },
+    hover: { selector: `&:hover` },
   },
   defaultCondition: "lightMode",
   properties: {
