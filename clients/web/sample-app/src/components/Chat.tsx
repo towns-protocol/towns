@@ -37,14 +37,14 @@ export function Chat(props: Props): JSX.Element {
       setShowInviteForm(false);
       await inviteUser(roomId, inviteeId);
     },
-    [inviteUser]
+    [inviteUser],
   );
 
   const onClickSendMessage = useCallback(
     async (roomId: string, message: string) => {
       await sendMessage(roomId, message);
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const onClickJoinRoom = useCallback(
@@ -52,7 +52,7 @@ export function Chat(props: Props): JSX.Element {
       await joinRoom(roomId);
       props.goToRoom(roomId);
     },
-    [joinRoom, props]
+    [joinRoom, props],
   );
 
   const roomName = useMemo(() => {

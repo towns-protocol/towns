@@ -131,11 +131,7 @@ export default function AppDrawer(props: Props): JSX.Element {
           <Box display="flex" flexDirection="row" flexGrow={1} />
           <Box sx={spacingStyle} alignItems="right">
             <Button onClick={onHomeClick} variant="text">
-              <Typography
-                color="white"
-              >
-                {myWalletAddress}
-              </Typography>
+              <Typography color="white">{myWalletAddress}</Typography>
             </Button>
           </Box>
           <Box sx={spacingStyle}>

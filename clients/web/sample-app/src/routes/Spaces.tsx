@@ -19,11 +19,10 @@ export const Spaces = () => {
         if (spaceId) {
           await syncSpace(spaceId);
         }
-      } catch (reason: any) {
+      } catch (reason: unknown) {
         console.log("SpacesIndex error:", reason);
       }
     })();
-    return () => {};
   }, [spaceId, syncSpace]);
 
   return space ? (

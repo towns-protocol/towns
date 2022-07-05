@@ -190,7 +190,7 @@ export function Login(): JSX.Element {
             setWalletRegistered(isRegistered);
           }
         }
-      } catch (reason: any) {
+      } catch (reason: unknown) {
         if (!cancelled) {
           setShowError(reason);
         }

@@ -24,28 +24,28 @@ export function LoginUsernamePassword(): JSX.Element {
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setUsername(event.target.value);
     },
-    []
+    [],
   );
 
   const onChangedPassword = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setPassword(event.target.value);
     },
-    []
+    [],
   );
 
   const onLogin = useCallback(
     async function () {
       loginWithPassword(username, password);
     },
-    [loginWithPassword, password, username]
+    [loginWithPassword, password, username],
   );
 
   const onRegister = useCallback(
     async function () {
       registerPasswordUser(username, password);
     },
-    [password, registerPasswordUser, username]
+    [password, registerPasswordUser, username],
   );
 
   const onCloseAlert = useCallback(function () {

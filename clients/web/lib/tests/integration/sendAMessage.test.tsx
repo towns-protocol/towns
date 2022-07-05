@@ -1,9 +1,6 @@
 import { MatrixEvent } from "matrix-js-sdk";
-import { generateTestingUtils } from "eth-testing";
-import { ethers } from "ethers";
 import { MatrixTestClient } from "./helpers/MatrixTestClient";
 import { Visibility } from "../../src/types/matrix-types";
-import { useWeb3Context } from "../../src/hooks/use-web3";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 

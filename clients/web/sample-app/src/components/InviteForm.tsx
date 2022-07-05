@@ -13,14 +13,14 @@ export function InviteForm(props: Props): JSX.Element {
 
   const disableInviteButton = useMemo(
     () => inviteeUserId.length === 0,
-    [inviteeUserId.length]
+    [inviteeUserId.length],
   );
 
   const onChangeUserId = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setInviteeUserId(event.target.value);
     },
-    []
+    [],
   );
 
   const onClickInvite = useCallback(async () => {
