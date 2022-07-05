@@ -11,14 +11,17 @@
   "scripts": {
     "preinstall": "tsc",
     "build": "tsc",
-    "watch": "tsc --watch",
-    "test": "tsc && jest --forceExit"
+    "lint": "eslint .",
+    "lint:fix": "yarn lint --fix",
+    "test": "tsc && jest --forceExit",
+    "watch": "tsc --watch"
   },
   "devDependencies": {
     "@testing-library/dom": "^8.14.0",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^14.2.1",
     "@types/jest": "^28.1.2",
+    "eslint": "^8.16.0",
     "eslint-plugin-react-hooks": "^4.5.0",
     "eth-testing": "^1.1.0",
     "ethers": "5.5.1",
