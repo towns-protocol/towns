@@ -10,7 +10,6 @@ import { useInvites, useSpaces } from "hooks/useSpaceData";
 export const MainSideBar = () => {
   const spaces = useSpaces();
   const invites = useInvites();
-  const space = spaces.find((s) => s.id.slug === "council");
 
   const realSpaces = useMemo(
     () => spaces.filter((s) => !s.isFakeSpace),
@@ -19,17 +18,6 @@ export const MainSideBar = () => {
 
   return (
     <SideBar paddingY="sm">
-      <Stack padding position="relative" background="level1" gap="md">
-        <Text as="h1" size="logo" fontWeight="strong">
-          ZION
-        </Text>
-        <Text as="h1" size="logo" fontWeight="strong">
-          COU
-        </Text>
-        <Text as="h1" size="logo" fontWeight="strong">
-          NCIL
-        </Text>
-      </Stack>
       {navItems.map((n, index) => (
         <ActionNavItem key={n.id} {...n} />
       ))}
@@ -44,7 +32,7 @@ export const MainSideBar = () => {
           pinned={false}
         />
       ))}
-      {space && <Channels space={space} />}
+      {/* {space && <Channels space={space} />} */}
       {realSpaces.length > 0 && <RealSpaces spaces={realSpaces} />}
     </SideBar>
   );
@@ -52,16 +40,16 @@ export const MainSideBar = () => {
 
 const navItems = [
   { id: "home", link: "/", icon: "home", label: "Home" },
-  {
-    id: "messages",
-    link: "/messages/latest",
-    icon: "message",
-    label: "Messages",
-  },
+  // {
+  //   id: "messages",
+  //   link: "/messages/latest",
+  //   icon: "message",
+  //   label: "Messages",
+  // },
   { id: "spaces/new", link: "/spaces/new", icon: "plus", label: "New Space" },
 ] as const;
 
-const Channels = (props: { space: SpaceData }) => {
+export const Channels = (props: { space: SpaceData }) => {
   const sizeContext = useSizeContext();
   const isSmall = sizeContext.lessThan(120);
   return (

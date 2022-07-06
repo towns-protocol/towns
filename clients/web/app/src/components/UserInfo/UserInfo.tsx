@@ -17,9 +17,7 @@ export const UserInfo = ({ userId }: Props) => {
       <Avatar circle src={avatarSrc} size="avatar_xl" />
       <Heading level={2}>{displayName}</Heading>
       <Stack horizontal alignItems="center" gap="sm" color="gray2">
-        <ButtonText size="md" fontWeight="strong">
-          {userData.tokens}
-        </ButtonText>
+        {userData.tokens}
         <Icon type="token" />
         {numSpaces && (
           <Paragraph size="md">

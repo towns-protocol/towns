@@ -9,7 +9,7 @@ import { TopBar } from "@components/TopBar";
 import { Box, Heading } from "@ui";
 import { AppLayout } from "AppLayout";
 import { useRootTheme } from "hooks/useRootTheme";
-import { HomeIndex } from "routes/Home";
+import { HomeLayout } from "routes/HomeLayout";
 import { InvitesIndex } from "routes/InvitesIndex";
 import { MeIndex } from "routes/MeIndex";
 import { Messages } from "routes/Messages";
@@ -29,6 +29,7 @@ import { SpacesSettings } from "routes/SpacesSettings";
 import { SpaceThreads } from "routes/SpaceThreads";
 import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
+import { SpaceLayout } from "routes/SpaceLayout";
 
 FontLoader.init();
 
@@ -86,12 +87,9 @@ const AllRoutes = () => {
           </Route>
           {isAuthenticated && (
             <Route element={<SidebarLayout />}>
-              <Route element={<HomeIndex />}>
+              <Route element={<HomeLayout />}>
                 <Route index element={<HighlightsGrid />} />
-                <Route path="proposals" element={<ProposalPage />} />
-                <Route path="members" element={<MembersPage />} />
               </Route>
-
               <Route path="me" element={<MeIndex />} />
               <Route path="messages" element={<Messages />}>
                 <Route path="new" element={<MessagesNew />} />
@@ -102,13 +100,18 @@ const AllRoutes = () => {
               </Route>
               <Route path="spaces/new" element={<SpacesNew />} />
               <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                <Route index element={<SpacesIndex />} />
+                <Route element={<SpaceLayout />}>
+                  <Route index element={<HighlightsGrid />} />
+                  <Route path="proposals" element={<ProposalPage />} />
+                  <Route path="members" element={<MembersPage />} />
+                </Route>
                 <Route path="threads" element={<SpaceThreads />} />
                 <Route path="mentions" element={<SpaceMentions />} />
                 <Route path="settings" element={<SpacesSettings />} />
                 <Route path="invite" element={<SpacesInvite />} />
                 <Route path="channels/new" element={<SpacesNewChannel />} />
-                <Route path=":channelSlug" element={<SpacesChannel />}>
+
+                <Route path="channels/:channelSlug" element={<SpacesChannel />}>
                   <Route
                     path="replies/:messageId"
                     element={<SpacesChannelReplies />}

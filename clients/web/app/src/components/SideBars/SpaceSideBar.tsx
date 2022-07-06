@@ -4,6 +4,7 @@ import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { Box, Paragraph, Stack } from "@ui";
 import { SpaceData } from "data/SpaceData";
 import { useSizeContext } from "ui/hooks/useSizeContext";
+import { atoms } from "ui/styles/atoms.css";
 import { SideBar } from "./_SideBar";
 
 type Props = {
@@ -15,6 +16,18 @@ export const SpaceSideBar = (props: Props) => {
 
   return (
     <SideBar paddingY="sm">
+      <Stack padding position="relative" background="level1" gap="md">
+        <img
+          src="/placeholders/space_1.png"
+          alt="space logo"
+          width="500"
+          className={atoms({
+            flexGrow: "x1",
+            display: "flex",
+            width: "100%",
+          })}
+        />
+      </Stack>
       <ActionNavItem icon="back" link="/" id="" label="Back" />
       {space && (
         <SpaceNavItem
@@ -51,6 +64,7 @@ const Channels = (props: { space: SpaceData }) => {
   const sizeContext = useSizeContext();
   const isSmall = sizeContext.lessThan(120);
   const { space } = props;
+
   return (
     <>
       {space.channelGroups.map((group) => (

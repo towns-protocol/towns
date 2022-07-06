@@ -4,7 +4,7 @@ import { Box, Heading, SizeBox } from "@ui";
 import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";
 
-export const HomeIndex = () => (
+export const HomeLayout = () => (
   <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">
     <LiquidContainer fullbleed position="relative">
       <SizeBox grow gap="lg" paddingTop="lg">
@@ -17,9 +17,9 @@ export const HomeIndex = () => (
 
 export const HomeNav = () => (
   <Stack horizontal gap="lg">
-    <HomeNavItem to="/">Highlights </HomeNavItem>
-    <HomeNavItem to="/proposals">Proposals</HomeNavItem>
-    <HomeNavItem to="/members">Members</HomeNavItem>
+    <HomeNavItem to="/">All Highlights </HomeNavItem>
+    {/* <HomeNavItem to="/proposals">Proposals</HomeNavItem> */}
+    {/* <HomeNavItem to="/members">Members</HomeNavItem> */}
   </Stack>
 );
 

@@ -1,15 +1,15 @@
 import React from "react";
+import { ContextBar } from "@components/ContextBar";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { UserInfo } from "@components/UserInfo/UserInfo";
 import { Avatar, Divider, Paragraph } from "@ui";
 import { Stack } from "ui/components/Stack/Stack";
-import { ContextBar } from "@components/ContextBar";
 
 export const MessagesRead = () => (
   <Stack grow>
     <ContextBar>
-      <Avatar circle src="/placeholders/nft_4.png" size="avatar_md" />
+      <Avatar circle src="/placeholders/nft_4.png" size="avatar_x4" />
       <Paragraph size="lg" color="default">
         iamblue
       </Paragraph>

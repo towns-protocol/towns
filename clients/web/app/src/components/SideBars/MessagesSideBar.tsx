@@ -56,7 +56,7 @@ const MessageItem = ({
         alignItems="center"
         background={selected ? "level3" : undefined}
       >
-        <Avatar circle src="/placeholders/nft_2.png" size="avatar_lg" />
+        <Avatar circle src="/placeholders/nft_2.png" size="avatar_md" />
         <Stack grow gap="sm">
           <ButtonText
             color={active ? "default" : "default"}

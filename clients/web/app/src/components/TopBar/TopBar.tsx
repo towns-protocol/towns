@@ -36,7 +36,7 @@ export const TopBar = (props: {
         </Link>
       </Box>
       <Stack grow height="100%" alignItems="center" justifyContent="stretch">
-        <TopMenu />
+        {!isAuthenticated && <TopMenu />}
       </Stack>
       <Box />
       <Box justifyContent="center" alignItems="end" width="100">

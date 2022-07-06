@@ -16,6 +16,7 @@ export const SidebarLayout = () => {
   const messageRoute = useMatch({ path: "/messages", end: false });
   const spaceRoute = useMatch({ path: "/spaces/:spaceSlug", end: false });
   const space = useSpaceData(spaceRoute?.params.spaceSlug);
+
   const config = ["primary-menu", "secondary-menu", "content"];
   const { onSizesChange, sizes } = usePersistPanes(config);
 
