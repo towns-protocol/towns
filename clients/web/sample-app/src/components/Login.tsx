@@ -190,7 +190,8 @@ export function Login(): JSX.Element {
             setWalletRegistered(isRegistered);
           }
         }
-      } catch (reason: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (reason: any) {
         if (!cancelled) {
           setShowError(reason);
         }
