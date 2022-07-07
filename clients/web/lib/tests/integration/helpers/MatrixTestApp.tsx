@@ -8,9 +8,7 @@ interface Props {
 export const MatrixTestApp = (props: Props) => {
   const { homeServerUrl, children } = props;
   return (
-    <MatrixContextProvider
-      homeServerUrl={homeServerUrl}
-    >
+    <MatrixContextProvider homeServerUrl={homeServerUrl}>
       {children}
     </MatrixContextProvider>
   );

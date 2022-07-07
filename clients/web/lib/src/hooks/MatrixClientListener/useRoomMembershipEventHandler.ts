@@ -1,5 +1,5 @@
 import { MatrixClient, MatrixEvent, RoomMember } from "matrix-js-sdk";
-import { MutableRefObject, useCallback, useEffect, useState } from "react";
+import { MutableRefObject, useCallback } from "react";
 import { Membership } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
