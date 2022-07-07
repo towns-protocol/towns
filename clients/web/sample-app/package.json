@@ -20,6 +20,7 @@
     "react-router-dom": "^6.3.0",
     "react-scripts": "^5.0.1",
     "siwe": "^1.1.6",
+    "slugify": "^1.6.5",
     "typescript": "^4.7.2",
     "use-matrix-client": "*",
     "zustand": "^3.7.2"
