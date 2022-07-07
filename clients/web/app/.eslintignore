@@ -2,8 +2,10 @@ storybook-static/
 dist/
 public/
 node_modules
+mdx.d.ts
 *.json
 .yarn/*
 yarn.lock
 
 vite.config.ts
+vitest.config.ts

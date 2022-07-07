@@ -1,10 +1,11 @@
 import { Box, Button, TextField, Theme, Typography } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
+import { RoomIdentifier } from "use-matrix-client";
 
 interface Props {
-  roomId: string;
+  roomId: RoomIdentifier;
   roomName: string;
-  sendInvite: (roomId: string, invitee: string) => Promise<void>;
+  sendInvite: (roomId: RoomIdentifier, invitee: string) => Promise<void>;
   onClickCancel: () => void;
 }
 

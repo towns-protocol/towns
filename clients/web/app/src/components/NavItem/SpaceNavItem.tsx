@@ -1,4 +1,5 @@
 import React from "react";
+import { RoomIdentifier } from "use-matrix-client";
 import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
 import {
   Box,
@@ -9,13 +10,12 @@ import {
   Tooltip,
   TooltipRenderer,
 } from "@ui";
-import { useSpaceDataStore } from "store/spaceDataStore";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { NavItem } from "./_NavItem";
 
 type Props = {
-  id: string;
+  id: RoomIdentifier;
   name: string;
   avatar: string;
   active?: boolean;
@@ -24,15 +24,13 @@ type Props = {
   isInvite?: boolean;
 };
 
-const SpaceTooltip = (props: { id: string }) => {
-  const { getSpaceData } = useSpaceDataStore();
-  const { id } = props;
-  const { name } = getSpaceData(id);
+const SpaceTooltip = (props: { id: RoomIdentifier; name: string }) => {
+  const { id, name } = props;
   return (
     <Tooltip
       horizontal
-      id={id}
-      key={id}
+      id={id.slug}
+      key={id.slug}
       gap="md"
       padding="md"
       background="default"
@@ -56,14 +54,14 @@ export const SpaceNavItem = (props: Props) => {
     <TooltipRenderer
       layoutId="navitem"
       placement="horizontal"
-      render={(isSmall && <SpaceTooltip id={props.id} />) || <></>}
+      render={
+        (isSmall && <SpaceTooltip id={props.id} name={props.name} />) || <></>
+      }
     >
       {({ triggerProps }) => (
         <NavItem
-          id={id}
-          to={
-            isInvite ? `/invites/${id}` : `/spaces/${id.replace(/\./gi, "%2E")}`
-          }
+          id={id.slug}
+          to={isInvite ? `/invites/${id.slug}` : `/spaces/${id.slug}`}
           exact={exact}
           {...triggerProps}
         >

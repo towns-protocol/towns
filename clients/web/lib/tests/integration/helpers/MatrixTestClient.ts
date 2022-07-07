@@ -23,7 +23,10 @@ import { createZionRoom } from "../../../src/hooks/MatrixClient/useCreateRoom";
 import { inviteZionUser } from "../../../src/hooks/MatrixClient/useInviteUser";
 import { joinZionRoom } from "../../../src/hooks/MatrixClient/useJoinRoom";
 import { sendZionMessage } from "../../../src/hooks/MatrixClient/useSendMessage";
-import { CreateRoomInfo } from "../../../src/types/matrix-types";
+import {
+  CreateRoomInfo,
+  RoomIdentifier,
+} from "../../../src/types/matrix-types";
 import { sleepUntil } from "./TestUtils";
 
 export class MatrixTestClient {
@@ -182,7 +185,7 @@ export class MatrixTestClient {
   }
 
   /// create a room and return the roomId
-  public async createRoom(createInfo: CreateRoomInfo): Promise<string> {
+  public async createRoom(createInfo: CreateRoomInfo): Promise<RoomIdentifier> {
     return createZionRoom({
       matrixClient: this.client,
       homeServer: this.homeServer,
@@ -191,17 +194,17 @@ export class MatrixTestClient {
   }
 
   /// invite a user to your room
-  public async inviteUser(userId: string, roomId: string) {
+  public async inviteUser(userId: string, roomId: RoomIdentifier) {
     return inviteZionUser({ matrixClient: this.client, userId, roomId });
   }
 
   /// join room
-  public async joinRoom(roomId: string) {
+  public async joinRoom(roomId: RoomIdentifier) {
     return await joinZionRoom({ matrixClient: this.client, roomId });
   }
 
   /// send a message to a room
-  public async sendMessage(roomId: string, message: string) {
+  public async sendMessage(roomId: RoomIdentifier, message: string) {
     return await sendZionMessage({
       matrixClient: this.client,
       roomId,

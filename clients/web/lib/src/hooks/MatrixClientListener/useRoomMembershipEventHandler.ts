@@ -1,6 +1,6 @@
 import { MatrixClient, MatrixEvent, RoomMember } from "matrix-js-sdk";
 import { MutableRefObject, useCallback } from "react";
-import { Membership } from "../../types/matrix-types";
+import { makeRoomIdentifier, Membership } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
 export const useRoomMembershipEventHandler = (
@@ -28,7 +28,7 @@ export const useRoomMembershipEventHandler = (
             setRoom(room);
           }
           updateMembership(
-            member.roomId,
+            makeRoomIdentifier(member.roomId),
             member.userId,
             member.membership as Membership,
             member.userId === matrixClientRef.current.getUserId(),
@@ -37,7 +37,7 @@ export const useRoomMembershipEventHandler = (
         }
         case Membership.Join: {
           joinRoom(
-            member.roomId,
+            makeRoomIdentifier(member.roomId),
             member.userId,
             member.userId === matrixClientRef.current.getUserId(),
           );
@@ -45,7 +45,7 @@ export const useRoomMembershipEventHandler = (
         }
         case Membership.Leave: {
           leaveRoom(
-            member.roomId,
+            makeRoomIdentifier(member.roomId),
             member.userId,
             member.userId === matrixClientRef.current.getUserId(),
           );

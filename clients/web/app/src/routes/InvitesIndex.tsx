@@ -1,39 +1,56 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMatrixClient } from "use-matrix-client";
+import { RoomIdentifier, useMatrixClient } from "use-matrix-client";
 import { Box, Stack } from "@ui";
-import { useSpaceDataStore } from "store/spaceDataStore";
 import { AcceptRoomInviteForm } from "@components/Web3";
+import { useInviteData, useSpaces } from "hooks/useSpaceData";
+import { ChannelGroup } from "data/ChannelData";
+import { SpaceData } from "data/SpaceData";
 
 export const InvitesIndex = () => {
-  const { spaceId } = useParams();
-  const { invites } = useSpaceDataStore();
+  const { inviteSlug } = useParams();
   const { leaveRoom, joinRoom } = useMatrixClient();
   const navigate = useNavigate();
+  const invite = useInviteData(inviteSlug);
+  const spaces = useSpaces();
 
-  const space = invites.find((s) => s.id === spaceId);
+  const hasChannel = (channelGroup: ChannelGroup, id: RoomIdentifier) =>
+    channelGroup.channels.some((c) => c.id.slug === id.slug);
+  const hasChannelGroup = useCallback(
+    (space: SpaceData, id: RoomIdentifier) =>
+      space.channelGroups.some((channelGroup) => hasChannel(channelGroup, id)),
+    [],
+  );
+  const getParentSpaceId = useCallback(
+    (id: RoomIdentifier) => spaces.find((space) => hasChannelGroup(space, id)),
+    [hasChannelGroup, spaces],
+  );
 
   const onAccept = useCallback(async () => {
-    if (!spaceId) {
-      console.error("onAccept Room Invite, spaceId undefined");
+    if (!invite?.id) {
+      console.error("onAccept Room Invite, space?.id undefined");
       return;
     }
-    await joinRoom(spaceId);
-    navigate("/spaces/" + spaceId);
-  }, [spaceId, joinRoom, navigate]);
+    await joinRoom(invite.id);
+    navigate(
+      invite.isSpaceRoom
+        ? "/spaces/" + invite.id.slug
+        : "/" + getParentSpaceId(invite.id)?.id.slug + "/" + invite.id.slug,
+    );
+  }, [getParentSpaceId, invite, joinRoom, navigate]);
 
   const onDecline = useCallback(async () => {
-    if (!spaceId) {
-      console.error("onDecline Room Invite, spaceId undefined");
+    if (!invite?.id) {
+      console.error("onDecline Room Invite, space undefined");
       return;
     }
-    await leaveRoom(spaceId);
+    await leaveRoom(invite.id);
     navigate("/");
-  }, [spaceId, leaveRoom, navigate]);
+  }, [invite?.id, leaveRoom, navigate]);
 
   return (
     <>
-      {space ? (
+      {invite ? (
         <>
           <Stack
             borderBottom
@@ -52,7 +69,7 @@ export const InvitesIndex = () => {
               gap="md"
             >
               <AcceptRoomInviteForm
-                spaceName={space.name}
+                spaceName={invite.name}
                 onAcceptInviteClicked={onAccept}
                 onDeclineInviteClicked={onDecline}
               />
@@ -60,7 +77,7 @@ export const InvitesIndex = () => {
           </Stack>
         </>
       ) : (
-        <p>Invite "{spaceId}" not found</p>
+        <p>Invite "{inviteSlug}" not found</p>
       )}
     </>
   );

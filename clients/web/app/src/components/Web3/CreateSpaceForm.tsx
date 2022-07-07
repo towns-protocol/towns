@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import {
   CreateSpaceInfo,
   Membership,
+  RoomIdentifier,
   useMatrixClient,
 } from "use-matrix-client";
 import { atoms } from "ui/styles/atoms.css";
@@ -17,7 +18,7 @@ import {
 } from "@ui";
 
 interface Props {
-  onClick: (roomId: string, membership: Membership) => void;
+  onClick: (roomId: RoomIdentifier, membership: Membership) => void;
 }
 
 export const CreateSpaceForm = (props: Props) => {

@@ -4,12 +4,13 @@ import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { SideBar } from "@components/SideBars/_SideBar";
 import { Box, Paragraph, Stack, Text } from "@ui";
 import { SpaceData } from "data/SpaceData";
-import { useSpaceDataStore } from "store/spaceDataStore";
 import { useSizeContext } from "ui/hooks/useSizeContext";
+import { useInvites, useSpaces } from "hooks/useSpaceData";
 
 export const MainSideBar = () => {
-  const { spaces, invites } = useSpaceDataStore();
-  const space = spaces.find((s) => s.id === "council");
+  const spaces = useSpaces();
+  const invites = useInvites();
+  const space = spaces.find((s) => s.id.slug === "council");
 
   const realSpaces = useMemo(
     () => spaces.filter((s) => !s.isFakeSpace),
@@ -35,12 +36,12 @@ export const MainSideBar = () => {
       {invites.map((m, index) => (
         <SpaceNavItem
           isInvite
-          key={m.id}
-          active={m.active}
+          key={m.id.slug}
+          active={false}
           id={m.id}
           name={m.name}
           avatar={m.avatarSrc}
-          pinned={m.pinned}
+          pinned={false}
         />
       ))}
       {space && <Channels space={space} />}
@@ -79,11 +80,11 @@ const Channels = (props: { space: SpaceData }) => {
           </Box>
           {group.channels.map((channel) => (
             <ActionNavItem
-              id={group.label + channel.id}
-              key={group.label + channel.id}
+              id={group.label + channel.id.slug}
+              key={group.label + channel.id.slug}
               icon="tag"
               highlight={channel.highlight}
-              link={`/spaces/${props.space.id}/${channel.id}`}
+              link={`/spaces/${props.space.id.slug}/${channel.id.slug}`}
               label={channel.label}
             />
           ))}
@@ -104,7 +105,7 @@ const RealSpaces = (props: { spaces: SpaceData[] }) => {
       </Box>
       {spaces.map((m, index) => (
         <SpaceNavItem
-          key={m.id}
+          key={m.id.slug}
           active={m.active}
           id={m.id}
           name={m.name}

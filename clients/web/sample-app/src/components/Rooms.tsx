@@ -1,11 +1,17 @@
 import { List, ListItem, ListItemText } from "@mui/material";
-import { Membership, Room, isRoom, useMatrixStore } from "use-matrix-client";
+import {
+  Membership,
+  Room,
+  RoomIdentifier,
+  isRoom,
+  useMatrixStore,
+} from "use-matrix-client";
 
 import { useMemo } from "react";
 
 interface Props {
   membership: Membership;
-  onClickRoom: (roomId: string, membership: Membership) => void;
+  onClickRoom: (id: RoomIdentifier, membership: Membership) => void;
   isSpace: boolean;
 }
 
@@ -39,8 +45,8 @@ export function Rooms(props: Props): JSX.Element {
         items.push(
           <ListItem
             button
-            key={r.roomId}
-            onClick={() => onClickRoom(r.roomId, membership)}
+            key={r.id.slug}
+            onClick={() => onClickRoom(r.id, membership)}
           >
             <ListItemText>{r.name}</ListItemText>
           </ListItem>,

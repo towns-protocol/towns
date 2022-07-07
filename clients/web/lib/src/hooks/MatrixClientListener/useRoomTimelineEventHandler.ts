@@ -1,6 +1,6 @@
 import { MatrixClient, MatrixEvent, Room } from "matrix-js-sdk";
 import { MutableRefObject, useCallback } from "react";
-import { Membership } from "types/matrix-types";
+import { makeRoomIdentifier, Membership } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
 export const useRoomTimelineEventHandler = (
@@ -43,7 +43,7 @@ export const useRoomTimelineEventHandler = (
             console.error("m.room.message event has no event_id or content");
             break;
           }
-          setNewMessage(room.roomId, {
+          setNewMessage(makeRoomIdentifier(room.roomId), {
             eventId: event.event.event_id,
             sender: event.sender.name,
             body: event.event.content.body,
@@ -53,7 +53,7 @@ export const useRoomTimelineEventHandler = (
           break;
         }
         case "m.room.create": {
-          createRoom(room.roomId, room.isSpaceRoom());
+          createRoom(makeRoomIdentifier(room.roomId), room.isSpaceRoom());
           break;
         }
         case "m.room.name": {
@@ -63,7 +63,7 @@ export const useRoomTimelineEventHandler = (
             console.error("m.room.name event has no roomId");
             break;
           }
-          setRoomName(roomId, name);
+          setRoomName(makeRoomIdentifier(roomId), name);
           break;
         }
         case "m.room.member": {
@@ -76,7 +76,7 @@ export const useRoomTimelineEventHandler = (
           }
           if (roomId && userId && membership) {
             updateMembership(
-              roomId,
+              makeRoomIdentifier(roomId),
               userId,
               membership,
               matrixClientRef.current.getUserId() === userId,
@@ -91,7 +91,10 @@ export const useRoomTimelineEventHandler = (
             console.error("m.space.child event has no roomId or childId");
             break;
           }
-          createSpaceChild(roomId, childId);
+          createSpaceChild(
+            makeRoomIdentifier(roomId),
+            makeRoomIdentifier(childId),
+          );
           break;
         }
         default:

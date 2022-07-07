@@ -14,7 +14,8 @@
   ],
   "plugins": ["@typescript-eslint", "prettier"],
   "rules": {
-    "@typescript-eslint/no-floating-promises": "error"
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-base-to-string": "error"
   },
   "globals": {
     "React": "writable"

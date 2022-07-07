@@ -97,18 +97,18 @@ const AllRoutes = () => {
                 <Route path="new" element={<MessagesNew />} />
                 <Route path=":conversationId" element={<MessagesRead />} />
               </Route>
-              <Route path="invites/:spaceId" element={<Spaces />}>
+              <Route path="invites/:inviteId" element={<Spaces />}>
                 <Route index element={<InvitesIndex />} />
               </Route>
               <Route path="spaces/new" element={<SpacesNew />} />
-              <Route path="spaces/:spaceId" element={<Spaces />}>
+              <Route path="spaces/:spaceSlug" element={<Spaces />}>
                 <Route index element={<SpacesIndex />} />
                 <Route path="threads" element={<SpaceThreads />} />
                 <Route path="mentions" element={<SpaceMentions />} />
                 <Route path="settings" element={<SpacesSettings />} />
                 <Route path="invite" element={<SpacesInvite />} />
                 <Route path="channels/new" element={<SpacesNewChannel />} />
-                <Route path=":channelId" element={<SpacesChannel />}>
+                <Route path=":channelSlug" element={<SpacesChannel />}>
                   <Route
                     path="replies/:messageId"
                     element={<SpacesChannelReplies />}

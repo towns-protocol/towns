@@ -4,16 +4,17 @@ import {
   RoomMessage,
   getShortUsername,
   useMatrixStore,
+  RoomIdentifier,
 } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { AcceptInvitation } from "./AcceptInvitation";
 
 interface Props {
-  roomId: string;
+  roomId: RoomIdentifier;
   membership: string;
-  sendMessage: (roomId: string, message: string) => Promise<void>;
-  joinRoom: (roomId: string) => Promise<void>;
+  sendMessage: (roomId: RoomIdentifier, message: string) => Promise<void>;
+  joinRoom: (roomId: RoomIdentifier) => Promise<void>;
 }
 
 export function ChatMessages(props: Props): JSX.Element {
@@ -39,7 +40,7 @@ export function ChatMessages(props: Props): JSX.Element {
 
   const roomMessages = useMemo(() => {
     if (allMessages) {
-      const messages = allMessages[props.roomId];
+      const messages = allMessages[props.roomId.slug];
       if (messages && messages.length > 0) {
         console.log("messages", messages);
         return messages;

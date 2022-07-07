@@ -1,16 +1,6 @@
-import React, {
-  ComponentProps,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { ComponentProps, forwardRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  RoomMessage,
-  useMatrixClient,
-  useMatrixStore,
-} from "use-matrix-client";
+import { RoomMessage, useMatrixStore } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
 import {
@@ -23,23 +13,18 @@ import {
   Paragraph,
   Stack,
 } from "@ui";
-import { useSpaceDataStore } from "store/spaceDataStore";
+import { useSpaceData } from "hooks/useSpaceData";
 
 export const SpacesIndex = () => {
-  const { spaceId } = useParams();
-  const { spaces } = useSpaceDataStore();
+  const { spaceSlug } = useParams();
   const navigate = useNavigate();
   const { allMessages } = useMatrixStore();
-  const { syncSpace } = useMatrixClient();
-
-  const space = useMemo(
-    () => spaces.find((s) => s.id === spaceId),
-    [spaceId, spaces],
-  );
+  const space = useSpaceData(spaceSlug);
 
   const spaceMessages = useMemo(
-    () => (allMessages && spaceId ? allMessages[spaceId] ?? [] : []),
-    [allMessages, spaceId],
+    () =>
+      allMessages && space?.id.slug ? allMessages[space?.id.slug] ?? [] : [],
+    [allMessages, space?.id.slug],
   );
 
   const messagesLength = useMemo(
@@ -47,21 +32,9 @@ export const SpacesIndex = () => {
     [spaceMessages.length],
   );
 
-  useEffect(() => {
-    (async () => {
-      if (spaceId) {
-        try {
-          await syncSpace(spaceId);
-        } catch (reason) {
-          console.log("SpacesIndex error:", reason);
-        }
-      }
-    })();
-  }, [spaceId, syncSpace]);
-
   const onSettingsClicked = useCallback(() => {
-    navigate("/spaces/" + spaceId + "/settings");
-  }, [navigate, spaceId]);
+    navigate("/spaces/" + space?.id.slug + "/settings");
+  }, [navigate, space?.id.slug]);
 
   return (
     <>
@@ -111,7 +84,7 @@ export const SpacesIndex = () => {
           </Box>
         </>
       ) : (
-        <p>Space "{spaceId}" not found</p>
+        <p>Space "{spaceSlug}" not found</p>
       )}
     </>
   );

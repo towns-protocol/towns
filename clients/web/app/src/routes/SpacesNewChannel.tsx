@@ -1,20 +1,21 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Membership } from "use-matrix-client";
+import { Membership, RoomIdentifier, useSpaceId } from "use-matrix-client";
 import { Box, Heading, Paragraph, Stack } from "@ui";
 import { CreateChannelForm } from "@components/Web3";
 
 export const SpacesNewChannel = () => {
   const navigate = useNavigate();
-  const { spaceId } = useParams();
+  const { spaceSlug } = useParams();
+  const spaceId = useSpaceId(spaceSlug);
 
   const onCreateChannel = useCallback(
-    (roomId: string, membership: Membership) => {
-      if (spaceId) {
-        navigate("/spaces/" + spaceId + "/" + roomId);
+    (roomId: RoomIdentifier, membership: Membership) => {
+      if (spaceId?.slug) {
+        navigate("/spaces/" + spaceId?.slug + "/" + roomId.slug);
       }
     },
-    [navigate, spaceId],
+    [navigate, spaceId?.slug],
   );
   return (
     <Stack alignItems="center" height="100%">

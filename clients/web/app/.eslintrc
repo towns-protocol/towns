@@ -8,6 +8,7 @@
       "impliedStrict": true,
       "experimentalObjectRestSpread": true
     },
+    "project": "./tsconfig.json",
     "allowImportExportEverywhere": true
   },
   "plugins": ["@typescript-eslint", "import", "react", "jest"],
@@ -22,6 +23,7 @@
     "prettier"
   ],
   "rules": {
+    "@typescript-eslint/no-base-to-string": "error",
     "import/no-named-as-default-member": "off",
     "react/display-name": "off",
     "react/jsx-boolean-value": ["warn", "never"],

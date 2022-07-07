@@ -1,10 +1,11 @@
+import { RoomIdentifier, makeRoomIdentifier } from "use-matrix-client";
 import { ChannelGroup, fakeChannelGroups } from "./ChannelData";
 
 /**
  * Simplified representation of a space
  */
 export type SpaceData = {
-  id: string;
+  id: RoomIdentifier;
   name: string;
   avatarSrc: string;
   bannerSrc?: string;
@@ -16,7 +17,7 @@ export type SpaceData = {
 };
 
 export const emptySpace: SpaceData = {
-  id: "none",
+  id: makeRoomIdentifier("none"),
   name: "Space Not Found",
   avatarSrc: "/placeholders/nft_10.png",
   channelGroups: [],
@@ -24,7 +25,7 @@ export const emptySpace: SpaceData = {
 
 export const fakeSpaces: SpaceData[] = [
   {
-    id: "council",
+    id: makeRoomIdentifier("council"),
     name: "Zion Council",
     avatarSrc: "/placeholders/nft_10.png",
     pinned: true,
@@ -32,29 +33,41 @@ export const fakeSpaces: SpaceData[] = [
       {
         label: "Welcome",
         channels: [
-          { id: "general", label: "general" },
-          { id: "introductions", label: "introductions", highlight: true },
-          { id: "feature-request", label: "feature-request", highlight: true },
+          { id: makeRoomIdentifier("general"), label: "general" },
+          {
+            id: makeRoomIdentifier("introductions"),
+            label: "introductions",
+            highlight: true,
+          },
+          {
+            id: makeRoomIdentifier("feature-request"),
+            label: "feature-request",
+            highlight: true,
+          },
         ],
       },
       {
         label: "Crypto",
         channels: [
-          { id: "markets", label: "markets", highlight: true },
-          { id: "NFTs", label: "NFTs", highlight: true },
+          {
+            id: makeRoomIdentifier("markets"),
+            label: "markets",
+            highlight: true,
+          },
+          { id: makeRoomIdentifier("NFTs"), label: "NFTs", highlight: true },
         ],
       },
     ],
   },
   {
-    id: "bored-ape-yacht-club",
+    id: makeRoomIdentifier("bored-ape-yacht-club"),
     name: "Bored Ape Yacht Club",
     avatarSrc: "/placeholders/nft_10.png",
     pinned: true,
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "crypto-punks",
+    id: makeRoomIdentifier("crypto-punks"),
     name: "Crypto Punks",
     avatarSrc: "/placeholders/nft_14.png",
     bannerSrc: "/placeholders/frame_5.png",
@@ -63,7 +76,7 @@ export const fakeSpaces: SpaceData[] = [
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "doodles",
+    id: makeRoomIdentifier("doodles"),
     name: "Doodles",
     avatarSrc: "/placeholders/nft_41.png",
     bannerSrc: "/placeholders/frame_4.png",
@@ -71,14 +84,14 @@ export const fakeSpaces: SpaceData[] = [
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "fwb",
+    id: makeRoomIdentifier("fwb"),
     name: "FWB",
     avatarSrc: "/placeholders/nft_18.png",
     bannerSrc: "/placeholders/frame_4.png",
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "world-of-women",
+    id: makeRoomIdentifier("world-of-women"),
     name: "World of Women",
     avatarSrc: "/placeholders/nft_26.png",
     bannerSrc: "/placeholders/frame_4.png",
@@ -86,7 +99,7 @@ export const fakeSpaces: SpaceData[] = [
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "mutant-ape-yacht-club",
+    id: makeRoomIdentifier("mutant-ape-yacht-club"),
     name: "Mutant Ape Yacht Club",
     avatarSrc: "/placeholders/nft_37.png",
     bannerSrc: "/placeholders/frame_4.png",
@@ -94,14 +107,14 @@ export const fakeSpaces: SpaceData[] = [
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "the-sandbox",
+    id: makeRoomIdentifier("the-sandbox"),
     name: "The Sandbox",
     avatarSrc: "/placeholders/nft_33.png",
     bannerSrc: "/placeholders/frame_4.png",
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "azuki",
+    id: makeRoomIdentifier("azuki"),
     name: "Azuki",
     avatarSrc: "/placeholders/nft_40.png",
     bannerSrc: "/placeholders/frame_4.png",
@@ -109,7 +122,7 @@ export const fakeSpaces: SpaceData[] = [
     channelGroups: fakeChannelGroups,
   },
   {
-    id: "clone-x",
+    id: makeRoomIdentifier("clone-x"),
     name: "Clone X - X Takashi Murakami",
     avatarSrc: "/placeholders/nft_19.png",
     bannerSrc: "/placeholders/frame_4.png",

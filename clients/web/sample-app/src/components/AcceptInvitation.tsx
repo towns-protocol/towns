@@ -1,10 +1,11 @@
 import { Box, Button, Theme, Typography } from "@mui/material";
 
 import { useCallback } from "react";
+import { RoomIdentifier } from "use-matrix-client";
 
 interface Props {
-  roomId: string;
-  joinRoom: (roomId: string) => Promise<void>;
+  roomId: RoomIdentifier;
+  joinRoom: (roomId: RoomIdentifier) => Promise<void>;
 }
 
 export function AcceptInvitation(props: Props): JSX.Element {

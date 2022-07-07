@@ -1,13 +1,16 @@
 import { AuthenticationError, LoginStatus } from "../hooks/login";
 import {
+  makeRoomIdentifier,
   Members,
   Membership,
   Room,
+  RoomIdentifier,
   RoomMessage,
   Rooms,
   RoomsMessages,
   Space,
   SpaceChild,
+  Spaces,
 } from "../types/matrix-types";
 import createStore, { SetState } from "zustand";
 
@@ -16,7 +19,7 @@ import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 import { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
 
 export type MatrixStoreStates = {
-  createRoom: (roomId: string, isSpace: boolean) => void;
+  createRoom: (roomId: RoomIdentifier, isSpace: boolean) => void;
   isAuthenticated: boolean;
   deviceId: string | null;
   setDeviceId: (deviceId: string | undefined) => void;
@@ -27,30 +30,30 @@ export type MatrixStoreStates = {
   loginError: AuthenticationError | null;
   setLoginError: (error: AuthenticationError | undefined) => void;
   allMessages: RoomsMessages | null;
-  setNewMessage: (roomId: string, message: RoomMessage) => void;
+  setNewMessage: (roomId: RoomIdentifier, message: RoomMessage) => void;
   rooms: Rooms | null;
   joinRoom: (
-    roomId: string,
+    roomId: RoomIdentifier,
     userId: string,
     isMyRoomMembership: boolean,
   ) => void;
   leaveRoom: (
-    roomId: string,
+    roomId: RoomIdentifier,
     userId: string,
     isMyRoomMembership: boolean,
   ) => void;
   setRoom: (room: MatrixRoom) => void;
   setAllRooms: (rooms: MatrixRoom[]) => void;
-  setRoomName: (roomId: string, roomName: string) => void;
-  spaces: { [spaceId: string]: Space };
+  setRoomName: (roomId: RoomIdentifier, roomName: string) => void;
+  spaces: Spaces;
   setSpace: (spaceRoom: MatrixRoom, roomHierarchy: RoomHierarchy) => Space;
-  createSpaceChild: (spaceId: string, roomId: string) => void;
+  createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) => void;
   userId: string | null;
   setUserId: (userId: string | undefined) => void;
   username: string | null;
   setUsername: (username: string | undefined) => void;
   updateMembership: (
-    roomId: string,
+    roomId: RoomIdentifier,
     userId: string,
     membership: Membership,
     isMyRoomMembership: boolean,
@@ -93,20 +96,20 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set({ homeServer: homeServer ?? null }),
     rooms: null,
     allMessages: null,
-    createRoom: (roomId: string, isSpace: boolean) =>
+    createRoom: (roomId: RoomIdentifier, isSpace: boolean) =>
       set((state: MatrixStoreStates) => createRoom(state, roomId, isSpace)),
-    setNewMessage: (roomId: string, message: RoomMessage) =>
+    setNewMessage: (roomId: RoomIdentifier, message: RoomMessage) =>
       set((state: MatrixStoreStates) => setNewMessage(state, roomId, message)),
     setRoom: (room: MatrixRoom) =>
       set((state: MatrixStoreStates) => setRoom(state, room)),
     setAllRooms: (rooms: MatrixRoom[]) =>
       set((state: MatrixStoreStates) => setAllRooms(state, rooms)),
-    setRoomName: (roomId: string, roomName: string) =>
+    setRoomName: (roomId: RoomIdentifier, roomName: string) =>
       set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
     spaces: {},
     setSpace: (spaceRoom: MatrixRoom, roomHierarchy: RoomHierarchy) => {
       const newSpace: Space = {
-        id: spaceRoom.roomId,
+        id: makeRoomIdentifier(spaceRoom.roomId),
         name: spaceRoom.name,
         members: toZionMembers(spaceRoom),
         children: roomHierarchy.rooms
@@ -116,15 +119,23 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => setSpace(state, newSpace));
       return newSpace;
     },
-    createSpaceChild: (spaceId: string, roomId: string) =>
+    createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) =>
       set((state: MatrixStoreStates) =>
         createSpaceChild(state, spaceId, roomId),
       ),
-    joinRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
+    joinRoom: (
+      roomId: RoomIdentifier,
+      userId: string,
+      isMyRoomMembership: boolean,
+    ) =>
       set((state: MatrixStoreStates) =>
         joinRoom(state, roomId, userId, isMyRoomMembership),
       ),
-    leaveRoom: (roomId: string, userId: string, isMyRoomMembership: boolean) =>
+    leaveRoom: (
+      roomId: RoomIdentifier,
+      userId: string,
+      isMyRoomMembership: boolean,
+    ) =>
       set((state: MatrixStoreStates) =>
         leaveRoom(state, roomId, userId, isMyRoomMembership),
       ),
@@ -134,7 +145,7 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     setUsername: (username: string | undefined) =>
       set({ username: username ?? null }),
     updateMembership: (
-      roomId: string,
+      roomId: RoomIdentifier,
       userId: string,
       membership: Membership,
       isMyRoomMembership: boolean,
@@ -147,41 +158,41 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
 
 function createRoom(
   state: MatrixStoreStates,
-  roomId: string,
+  roomId: RoomIdentifier,
   isSpace: boolean,
 ) {
   const changedRooms = { ...state.rooms };
   const newRoom: Room = {
-    roomId,
+    id: roomId,
     name: "",
     membership: "",
     members: {},
     isSpaceRoom: isSpace,
   };
-  changedRooms[roomId] = newRoom;
+  changedRooms[roomId.slug] = newRoom;
   return { rooms: changedRooms };
 }
 
 function setNewMessage(
   state: MatrixStoreStates,
-  roomId: string,
+  roomId: RoomIdentifier,
   message: RoomMessage,
 ) {
   const changedAllMessages = state.allMessages ? { ...state.allMessages } : {};
-  const changedRoomMessages = changedAllMessages[roomId]
-    ? [...changedAllMessages[roomId]]
+  const changedRoomMessages = changedAllMessages[roomId.slug]
+    ? [...changedAllMessages[roomId.slug]]
     : [];
   changedRoomMessages.push(message);
-  changedAllMessages[roomId] = changedRoomMessages;
+  changedAllMessages[roomId.slug] = changedRoomMessages;
   return { allMessages: changedAllMessages };
 }
 
 function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
   const changedRooms = { ...state.rooms };
   const changedRoom: Room = toZionRoom(room);
-  changedRooms[room.roomId] = changedRoom;
+  changedRooms[changedRoom.id.slug] = changedRoom;
   console.log(`setRoom changedRooms`, {
-    roomId: changedRoom.roomId,
+    roomId: changedRoom.id.matrixRoomId,
     name: changedRoom.name,
     membership: changedRoom.membership,
   });
@@ -190,48 +201,49 @@ function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
 
 function setSpace(state: MatrixStoreStates, newSpace: Space) {
   const changedSpaces = { ...state.spaces };
-  changedSpaces[newSpace.id] = newSpace;
+  changedSpaces[newSpace.id.slug] = newSpace;
   return { spaces: changedSpaces };
 }
 
 function createSpaceChild(
   state: MatrixStoreStates,
-  spaceId: string,
-  roomId: string,
+  spaceId: RoomIdentifier,
+  roomId: RoomIdentifier,
 ) {
-  const room = state.rooms?.[roomId];
-  const space = state.spaces?.[spaceId];
+  const room = state.rooms?.[roomId.slug];
+  const space = state.spaces?.[spaceId.slug];
   if (!room || !space) {
     return state;
   }
-  if (space.children.find((c) => c.roomId === roomId)) {
+  if (space.children.find((c) => c.id.matrixRoomId === roomId.matrixRoomId)) {
     return state;
   }
   space.children.push(toZionSpaceChildFromRoom(room));
   const changedSpaces = { ...state.spaces };
-  changedSpaces[spaceId] = space;
+  changedSpaces[spaceId.slug] = space;
   return { spaces: changedSpaces };
 }
 
 function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
   const changedRooms: Rooms = {};
   for (const r of matrixRooms) {
-    changedRooms[r.roomId] = toZionRoom(r);
+    const changedRoom = toZionRoom(r);
+    changedRooms[changedRoom.id.slug] = changedRoom;
   }
   return { rooms: changedRooms };
 }
 
 function setRoomName(
   state: MatrixStoreStates,
-  roomId: string,
+  roomId: RoomIdentifier,
   newName: string,
 ) {
-  const room = state.rooms?.[roomId];
+  const room = state.rooms?.[roomId.slug];
   if (room && room.name !== newName) {
     const changedRoom = { ...room };
     changedRoom.name = newName;
     const changedRooms = { ...state.rooms };
-    changedRooms[roomId] = changedRoom;
+    changedRooms[roomId.slug] = changedRoom;
     console.log(`setRoomName ${JSON.stringify(changedRoom)}`);
     return { rooms: changedRooms };
   }
@@ -241,12 +253,12 @@ function setRoomName(
 
 function updateMembership(
   state: MatrixStoreStates,
-  roomId: string,
+  roomId: RoomIdentifier,
   userId: string,
   membership: Membership,
   isMyRoomMembership: boolean,
 ) {
-  const room = state.rooms?.[roomId];
+  const room = state.rooms?.[roomId.slug];
   if (room) {
     if (
       room.members[userId] == null ||
@@ -260,7 +272,7 @@ function updateMembership(
       const changedMember = { ...changedRoom.members[userId] };
       changedMember.membership = membership;
       changedRoom.members[userId] = changedMember;
-      changedRooms[roomId] = changedRoom;
+      changedRooms[roomId.slug] = changedRoom;
       console.log(`updateMembership ${JSON.stringify(changedRoom)}`);
       return { rooms: changedRooms };
     }
@@ -271,11 +283,11 @@ function updateMembership(
 
 function leaveRoom(
   state: MatrixStoreStates,
-  roomId: string,
+  roomId: RoomIdentifier,
   userId: string,
   isMyRoomMembership: boolean,
 ) {
-  const room = state.rooms?.[roomId];
+  const room = state.rooms?.[roomId.slug];
   if (room) {
     const member = room.members[userId];
     if (member && member.membership !== Membership.Leave) {
@@ -287,7 +299,7 @@ function leaveRoom(
         changedRoom.membership = Membership.Leave;
       }
       changedRoom.members[userId] = changedMember;
-      changedRooms[roomId] = changedRoom;
+      changedRooms[roomId.slug] = changedRoom;
       return { rooms: changedRooms };
     }
   }
@@ -297,11 +309,11 @@ function leaveRoom(
 
 function joinRoom(
   state: MatrixStoreStates,
-  roomId: string,
+  roomId: RoomIdentifier,
   userId: string,
   isMyRoomMembership: boolean,
 ) {
-  const room = state.rooms?.[roomId];
+  const room = state.rooms?.[roomId.slug];
   if (room) {
     const member = room.members[userId];
     if (member && member.membership !== Membership.Join) {
@@ -313,7 +325,7 @@ function joinRoom(
         changedRoom.membership = Membership.Join;
       }
       changedRoom.members[userId] = changedMember;
-      changedRooms[roomId] = changedRoom;
+      changedRooms[roomId.slug] = changedRoom;
       return { rooms: changedRooms };
     }
   }
@@ -323,7 +335,7 @@ function joinRoom(
 
 function toZionRoom(r: MatrixRoom): Room {
   return {
-    roomId: r.roomId,
+    id: makeRoomIdentifier(r.roomId),
     name: r.name,
     membership: r.getMyMembership(),
     inviter:
@@ -346,7 +358,7 @@ function toZionMembers(r: MatrixRoom): Members {
 
 function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
   return {
-    roomId: r.room_id,
+    id: makeRoomIdentifier(r.room_id),
     name: r.name,
     avatarUrl: r.avatar_url,
     topic: r.topic,
@@ -360,7 +372,7 @@ function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
 
 function toZionSpaceChildFromRoom(r: Room): SpaceChild {
   return {
-    roomId: r.roomId,
+    id: r.id,
     name: r.name,
     avatarUrl: undefined, // r.avatarUrl,
     topic: undefined, // r.topic,

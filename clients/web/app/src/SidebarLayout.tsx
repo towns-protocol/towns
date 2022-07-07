@@ -8,19 +8,14 @@ import {
 } from "@components/SideBars";
 import { Box, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
-import { useSpaceDataStore } from "store/spaceDataStore";
 import { atoms } from "ui/styles/atoms.css";
+import { useSpaceData } from "hooks/useSpaceData";
 
 export const SidebarLayout = () => {
   const allotemntRef = useRef<AllotmentHandle>(null);
   const messageRoute = useMatch({ path: "/messages", end: false });
-  const spaceRoute = useMatch({ path: "/spaces/:space", end: false });
-
-  const { spaces } = useSpaceDataStore();
-
-  const space =
-    spaceRoute && spaces.find((s) => s.id === spaceRoute.params.space);
-
+  const spaceRoute = useMatch({ path: "/spaces/:spaceSlug", end: false });
+  const space = useSpaceData(spaceRoute?.params.spaceSlug);
   const config = ["primary-menu", "secondary-menu", "content"];
   const { onSizesChange, sizes } = usePersistPanes(config);
 

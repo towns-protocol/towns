@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from "react";
+import { RoomIdentifier } from "use-matrix-client";
 import { Box, Button, Heading, Stack, TextField } from "@ui";
 
 interface Props {
   spaceName: string;
-  spaceId: string;
-  onInviteClicked: (spaceId: string, inviteeUserId: string) => void;
+  spaceId: RoomIdentifier;
+  onInviteClicked: (spaceId: RoomIdentifier, inviteeUserId: string) => void;
   onCancelClicked: () => void;
 }
 

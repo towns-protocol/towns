@@ -1,12 +1,13 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
 import { MatrixClient } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
+import { RoomIdentifier } from "../../types/matrix-types";
 
 export const useSendMessage = () => {
   const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
 
   return useCallback(
-    async (roomId: string, message: string): Promise<void> => {
+    async (roomId: RoomIdentifier, message: string): Promise<void> => {
       if (matrixClient) {
         await sendZionMessage({ matrixClient, roomId, message });
       }
@@ -17,7 +18,7 @@ export const useSendMessage = () => {
 
 export const sendZionMessage = async (props: {
   matrixClient: MatrixClient;
-  roomId: string;
+  roomId: RoomIdentifier;
   message: string;
 }) => {
   const { matrixClient, roomId, message } = props;
@@ -27,7 +28,7 @@ export const sendZionMessage = async (props: {
   };
 
   await matrixClient.sendEvent(
-    roomId,
+    roomId.matrixRoomId,
     "m.room.message",
     content,
     "",

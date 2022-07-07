@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Membership } from "use-matrix-client";
+import { Membership, RoomIdentifier } from "use-matrix-client";
 import { Box, Heading, Stack } from "@ui";
 import { CreateSpaceForm } from "@components/Web3";
 
@@ -8,8 +8,8 @@ export const SpacesNew = () => {
   const navigate = useNavigate();
 
   const onCreateSpace = useCallback(
-    (roomId: string, membership: Membership) => {
-      navigate("/spaces/" + roomId);
+    (roomId: RoomIdentifier, membership: Membership) => {
+      navigate("/spaces/" + roomId.slug);
     },
     [navigate],
   );

@@ -1,15 +1,16 @@
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Membership } from "use-matrix-client";
+import { Membership, RoomIdentifier, useSpaceId } from "use-matrix-client";
 import { CreateSpaceChildForm } from "../components/CreateSpaceChildForm";
 
 export const SpacesNewChannel = () => {
   console.log("spaces new channel");
-  const { spaceId } = useParams();
+  const { spaceSlug } = useParams();
+  const spaceId = useSpaceId(spaceSlug);
   const navigate = useNavigate();
   const onSpaceCreated = useCallback(
-    (roomId: string, membership: Membership) => {
-      navigate("/spaces/" + spaceId + "/channels/" + roomId);
+    (roomId: RoomIdentifier, membership: Membership) => {
+      navigate("/spaces/" + spaceId?.slug + "/channels/" + roomId.slug);
     },
     [navigate, spaceId],
   );

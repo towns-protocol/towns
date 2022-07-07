@@ -6,40 +6,41 @@ import { MessageList } from "@components/MessageScroller";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
-import { useSpaceDataStore } from "store/spaceDataStore";
+import { useSpaceData } from "hooks/useSpaceData";
 
 export const SpacesChannel = () => {
-  const { spaceId: paramSpaceId, channelId: paramChannelId } = useParams();
-  const spaceId = paramSpaceId?.replaceAll(/\(dot\)/gi, ".");
-  const channelId = paramChannelId?.replaceAll(/\(dot\)/gi, ".");
+  const { spaceSlug, channelSlug } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
   const { allMessages } = useMatrixStore();
   const { sendMessage } = useMatrixClient();
-
-  const { spaces } = useSpaceDataStore();
-
-  const space = useMemo(
-    () => spaces.find((s) => s.id === spaceId),
-    [spaceId, spaces],
-  );
+  const space = useSpaceData(spaceSlug);
 
   const channelMessages = useMemo(
-    () => (allMessages && channelId ? allMessages[channelId] ?? [] : []),
-    [allMessages, channelId],
+    () => (allMessages && channelSlug ? allMessages[channelSlug] ?? [] : []),
+    [allMessages, channelSlug],
   );
 
-  const channel = space?.channelGroups.find((g) =>
-    g.channels.find((c) => c.id === channelId),
+  const channelGroup = useMemo(
+    () =>
+      space?.channelGroups.find((g) =>
+        g.channels.find((c) => c.id.slug === channelSlug),
+      ),
+    [space?.channelGroups, channelSlug],
+  );
+
+  const channel = useMemo(
+    () => channelGroup?.channels.find((c) => c.id.slug === channelSlug),
+    [channelGroup?.channels, channelSlug],
   );
 
   const onSend = useCallback(
     (value: string) => {
-      if (value && channelId) {
-        sendMessage(channelId, value);
+      if (value && channel?.id) {
+        sendMessage(channel?.id, value);
       }
     },
-    [channelId, sendMessage],
+    [channel?.id, sendMessage],
   );
 
   return (
@@ -48,7 +49,7 @@ export const SpacesChannel = () => {
         <Allotment.Pane>
           <Box grow height="100%">
             <Stack grow>
-              <MessageList key={channelId} messages={channelMessages} />
+              <MessageList key={channelSlug} messages={channelMessages} />
               <Box paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
                   autoFocus

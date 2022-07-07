@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useMatrixClient } from "use-matrix-client";
+import { useMatrixClient, useSpaceId } from "use-matrix-client";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Avatar,
@@ -72,14 +72,15 @@ export const SpaceBanner = (props: Props) => {
 };
 
 const SpaceSettingsMenu = () => {
-  const { spaceId } = useParams();
+  const { spaceSlug } = useParams();
   const { leaveRoom } = useMatrixClient();
   const navigate = useNavigate();
+  const spaceId = useSpaceId(spaceSlug);
 
   const onInviteClicked = useCallback(() => {
     console.log("invite clicked");
-    navigate("/spaces/" + spaceId + "/invite");
-  }, [navigate, spaceId]);
+    navigate("/spaces/" + spaceId?.slug + "/invite");
+  }, [navigate, spaceId?.slug]);
 
   const onLeaveClicked = useCallback(async () => {
     console.log("leave clicked", spaceId);
@@ -90,8 +91,8 @@ const SpaceSettingsMenu = () => {
   }, [leaveRoom, navigate, spaceId]);
 
   const onSettingsClicked = useCallback(() => {
-    navigate("/spaces/" + spaceId + "/settings");
-  }, [navigate, spaceId]);
+    navigate("/spaces/" + spaceId?.slug + "/settings");
+  }, [navigate, spaceId?.slug]);
 
   return (
     <Card padding minWidth="200">

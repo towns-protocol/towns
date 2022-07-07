@@ -1,6 +1,7 @@
 import {
   CreateRoomInfo,
   CreateSpaceInfo,
+  RoomIdentifier,
   SpaceChild,
 } from "../types/matrix-types";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
@@ -23,16 +24,16 @@ export function useMatrixClient() {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
 
-  const syncSpace: (spaceId: string) => Promise<SpaceChild[]> = useSyncSpace();
-  const createSpace: (createSpaceInfo: CreateSpaceInfo) => Promise<string | undefined> = useCreateSpace();
-  const createRoom: (createInfo: CreateRoomInfo) => Promise<string | undefined> = useCreateRoom();
+  const syncSpace: (spaceId: RoomIdentifier) => Promise<SpaceChild[]> = useSyncSpace();
+  const createSpace: (createSpaceInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined> = useCreateSpace();
+  const createRoom: (createInfo: CreateRoomInfo) => Promise<RoomIdentifier | undefined> = useCreateRoom();
   const logout: () => Promise<void> = useLogout();
   const loginWithPassword: (username: string, password: string) => Promise<void> = useLoginWithPassword();
   const registerPasswordUser: (username: string, password: string) => Promise<void> = useRegisterPasswordUser();
-  const sendMessage: (roomId: string, message: string) => Promise<void> = useSendMessage();
-  const leaveRoom: (roomId: string) => Promise<void> = useLeaveRoom();
-  const inviteUser: (roomId: string, userId: string) => Promise<void> = useInviteUser();
-  const joinRoom: (roomId: string) => Promise<void> = useJoinRoom();
+  const sendMessage: (roomId: RoomIdentifier, message: string) => Promise<void> = useSendMessage();
+  const leaveRoom: (roomId: RoomIdentifier) => Promise<void> = useLeaveRoom();
+  const inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void> = useInviteUser();
+  const joinRoom: (roomId: RoomIdentifier) => Promise<void> = useJoinRoom();
 
   return {
     createRoom,

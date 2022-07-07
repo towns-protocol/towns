@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { Membership } from "use-matrix-client";
+import { Membership, RoomIdentifier } from "use-matrix-client";
 import { CreateRoomForm } from "../components/CreateRoomForm";
 
 export const RoomsNew = () => {
   const navigate = useNavigate();
-  const onClickRoom = (roomId: string, membership: Membership) => {
-    navigate("/rooms/" + roomId);
+  const onClickRoom = (roomId: RoomIdentifier, membership: Membership) => {
+    navigate("/rooms/" + roomId.slug);
   };
   return <CreateRoomForm onClick={onClickRoom} />;
 };

@@ -4,6 +4,7 @@ import {
   createUserIdFromString,
   getShortUsername,
   useMatrixStore,
+  RoomIdentifier,
 } from "use-matrix-client";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useCallback, useMemo, useState } from "react";
@@ -46,16 +47,16 @@ export default function AppDrawer(props: Props): JSX.Element {
     setMobileOpen(!mobileOpen);
   }, [mobileOpen]);
 
-  const onClickRoom = (roomId: string, membership: Membership) => {
-    navigate("/rooms/" + roomId);
+  const onClickRoom = (roomId: RoomIdentifier, membership: Membership) => {
+    navigate("/rooms/" + roomId.slug);
   };
 
   const onClickCreateRoom = () => {
     navigate("/rooms/new");
   };
 
-  const onClickSpace = (spaceId: string, membership: Membership) => {
-    navigate("/spaces/" + spaceId);
+  const onClickSpace = (spaceId: RoomIdentifier, membership: Membership) => {
+    navigate("/spaces/" + spaceId.slug);
   };
 
   const onClickCreateSpace = () => {

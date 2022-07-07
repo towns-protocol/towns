@@ -293,7 +293,7 @@ export function useMatrixWalletSignIn() {
                   } else {
                     authenticationError({
                       code: StatusCodes.UNAUTHORIZED,
-                      message: `Attempt to register wallet ${userIdentifier} failed!`,
+                      message: `Attempt to register wallet ${userIdentifier.matrixUserId} failed!`,
                     });
                   }
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -341,7 +341,7 @@ export function useMatrixWalletSignIn() {
           authenticationError({
             code: StatusCodes.UNAUTHORIZED,
             message: `Missing information for wallet registration {
-                userIdentifier: ${userIdentifier ?? "undefined"},
+                userIdentifier: ${userIdentifier?.matrixUserId ?? "undefined"},
                 homeServer: ${homeServer ?? "undefined"},
               }`,
           });
@@ -457,7 +457,7 @@ export function useMatrixWalletSignIn() {
           authenticationError({
             code: StatusCodes.UNAUTHORIZED,
             message: `Missing information for login {
-                userIdentifier: ${userIdentifier ?? "undefined"},
+                userIdentifier: ${userIdentifier?.matrixUserId ?? "undefined"},
                 homeServer: ${homeServer ?? "undefined"},
               }`,
           });

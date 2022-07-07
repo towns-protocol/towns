@@ -29,14 +29,14 @@ export function App(): JSX.Element {
                 <Route element={<AppDrawer />}>
                   <Route index element={<Home />} />
                   <Route path="rooms/new" element={<RoomsNew />} />
-                  <Route path="rooms/:roomId" element={<Rooms />}>
+                  <Route path="rooms/:roomSlug" element={<Rooms />}>
                     <Route index element={<RoomsIndex />}></Route>
                   </Route>
                   <Route path="spaces/new" element={<SpacesNew />} />
-                  <Route path="spaces/:spaceId" element={<Spaces />}>
+                  <Route path="spaces/:spaceSlug" element={<Spaces />}>
                     <Route index element={<SpacesIndex />} />
                     <Route path="channels/new" element={<SpacesNewChannel />} />
-                    <Route path="channels/:roomId" element={<Rooms />}>
+                    <Route path="channels/:roomSlug" element={<Rooms />}>
                       <Route index element={<RoomsIndex />}></Route>
                     </Route>
                   </Route>

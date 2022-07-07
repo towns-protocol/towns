@@ -1,26 +1,25 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMatrixClient } from "use-matrix-client";
+import { RoomIdentifier, useMatrixClient } from "use-matrix-client";
 import { InviteUserToRoomForm } from "@components/Web3";
 import { Stack } from "@ui";
-import { useSpaceDataStore } from "store/spaceDataStore";
+import { useSpaceData } from "hooks/useSpaceData";
 
 export const SpacesInvite = () => {
-  const { spaceId } = useParams();
-  const { getSpaceData } = useSpaceDataStore();
+  const { spaceSlug } = useParams();
   const { inviteUser } = useMatrixClient();
-  const space = getSpaceData(spaceId);
+  const space = useSpaceData(spaceSlug);
 
   const navigate = useNavigate();
 
   const onCancelClicked = useCallback(() => {
-    navigate(spaceId ? "/spaces/" + spaceId : "/");
-  }, [navigate, spaceId]);
+    navigate(space?.id.slug ? "/spaces/" + space.id.slug : "/");
+  }, [navigate, space?.id.slug]);
 
   const onInviteClicked = useCallback(
-    async (spaceId: string, inviteeUserId: string) => {
+    async (spaceId: RoomIdentifier, inviteeUserId: string) => {
       await inviteUser(spaceId, inviteeUserId);
-      navigate("/spaces/" + spaceId);
+      navigate("/spaces/" + spaceId.slug);
     },
     [inviteUser, navigate],
   );
@@ -28,12 +27,16 @@ export const SpacesInvite = () => {
   return (
     <Stack alignItems="center" height="100%">
       <Stack grow width="600">
-        <InviteUserToRoomForm
-          spaceName={space.name}
-          spaceId={space.id}
-          onCancelClicked={onCancelClicked}
-          onInviteClicked={onInviteClicked}
-        />
+        {space ? (
+          <InviteUserToRoomForm
+            spaceName={space.name}
+            spaceId={space.id}
+            onCancelClicked={onCancelClicked}
+            onInviteClicked={onInviteClicked}
+          />
+        ) : (
+          <div>404</div>
+        )}
       </Stack>
     </Stack>
   );

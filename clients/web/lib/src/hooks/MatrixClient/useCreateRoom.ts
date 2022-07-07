@@ -2,14 +2,18 @@ import { MatrixContext } from "../../components/MatrixContextProvider";
 import { ICreateRoomOpts, MatrixClient } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
 import { useMatrixStore } from "../../store/use-matrix-store";
-import { CreateRoomInfo } from "types/matrix-types";
+import {
+  CreateRoomInfo,
+  makeRoomIdentifier,
+  RoomIdentifier,
+} from "../../types/matrix-types";
 
 export const useCreateRoom = () => {
   const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
   const { homeServer } = useMatrixStore();
 
   return useCallback(
-    async (createInfo: CreateRoomInfo): Promise<string | undefined> => {
+    async (createInfo: CreateRoomInfo): Promise<RoomIdentifier | undefined> => {
       try {
         if (matrixClient && homeServer) {
           return await createZionRoom({ matrixClient, homeServer, createInfo });
@@ -30,7 +34,7 @@ export const createZionRoom = async (props: {
   matrixClient: MatrixClient;
   homeServer: string;
   createInfo: CreateRoomInfo;
-}): Promise<string> => {
+}): Promise<RoomIdentifier> => {
   const { matrixClient, homeServer, createInfo } = props;
   // initial state
   const options: ICreateRoomOpts = {
@@ -44,7 +48,7 @@ export const createZionRoom = async (props: {
     options.initial_state = [
       {
         type: "m.space.parent",
-        state_key: createInfo.parentSpaceId,
+        state_key: createInfo.parentSpaceId.matrixRoomId,
         content: {
           canonical: true,
           via: [homeServer],
@@ -56,7 +60,7 @@ export const createZionRoom = async (props: {
   console.log("Created room", JSON.stringify(response));
   if (createInfo.parentSpaceId) {
     await matrixClient.sendStateEvent(
-      createInfo.parentSpaceId,
+      createInfo.parentSpaceId.matrixRoomId,
       "m.space.child",
       {
         auto_join: false,
@@ -67,5 +71,5 @@ export const createZionRoom = async (props: {
     );
   }
 
-  return response.room_id;
+  return makeRoomIdentifier(response.room_id);
 };

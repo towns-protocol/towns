@@ -1,5 +1,9 @@
 import { Box, Grid, Theme, Typography } from "@mui/material";
-import { useMatrixClient, useMatrixStore } from "use-matrix-client";
+import {
+  RoomIdentifier,
+  useMatrixClient,
+  useMatrixStore,
+} from "use-matrix-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ChatMessages } from "./ChatMessages";
@@ -8,10 +12,10 @@ import { InviteForm } from "./InviteForm";
 import { LeaveRoom } from "./LeaveRoom";
 
 interface Props {
-  roomId: string;
+  roomId: RoomIdentifier;
   membership: string;
   onClickLeaveRoom: () => void;
-  goToRoom: (roomId: string) => void;
+  goToRoom: (roomId: RoomIdentifier) => void;
 }
 
 export function Chat(props: Props): JSX.Element {
@@ -33,7 +37,7 @@ export function Chat(props: Props): JSX.Element {
   }, []);
 
   const onClickSendInvite = useCallback(
-    async (roomId: string, inviteeId: string) => {
+    async (roomId: RoomIdentifier, inviteeId: string) => {
       setShowInviteForm(false);
       await inviteUser(roomId, inviteeId);
     },
@@ -41,14 +45,14 @@ export function Chat(props: Props): JSX.Element {
   );
 
   const onClickSendMessage = useCallback(
-    async (roomId: string, message: string) => {
+    async (roomId: RoomIdentifier, message: string) => {
       await sendMessage(roomId, message);
     },
     [sendMessage],
   );
 
   const onClickJoinRoom = useCallback(
-    async (roomId: string) => {
+    async (roomId: RoomIdentifier) => {
       await joinRoom(roomId);
       props.goToRoom(roomId);
     },
@@ -57,7 +61,7 @@ export function Chat(props: Props): JSX.Element {
 
   const roomName = useMemo(() => {
     if (rooms) {
-      const room = rooms[props.roomId];
+      const room = rooms[props.roomId.slug];
       if (room) {
         return room.name;
       }

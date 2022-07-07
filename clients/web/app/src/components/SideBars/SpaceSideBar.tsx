@@ -26,7 +26,7 @@ export const SpaceSideBar = (props: Props) => {
       )}
       <ActionNavItem
         icon="threads"
-        link={`/spaces/${space.id}/threads`}
+        link={`/spaces/${space.id.slug}/threads`}
         id="threads"
         label="Threads"
       />
@@ -34,13 +34,13 @@ export const SpaceSideBar = (props: Props) => {
         icon="at"
         id="mentions"
         label="Mentions"
-        link={`/spaces/${space.id}/mentions`}
+        link={`/spaces/${space.id.slug}/mentions`}
       />
       <ActionNavItem
         icon="plus"
         id="newChannel"
         label="New Channel"
-        link={`/spaces/${space.id}/channels/new`}
+        link={`/spaces/${space.id.slug}/channels/new`}
       />
       {space && <Channels space={space} />}
     </SideBar>
@@ -67,11 +67,11 @@ const Channels = (props: { space: SpaceData }) => {
           </Box>
           {group.channels.map((channel) => (
             <ActionNavItem
-              id={group.label + channel.id}
-              key={group.label + channel.id}
+              id={group.label + channel.id.slug}
+              key={group.label + channel.id.slug}
               icon="tag"
               highlight={channel.highlight}
-              link={`/spaces/${props.space.id}/${channel.id}`}
+              link={`/spaces/${props.space.id.slug}/${channel.id.slug}`}
               label={channel.label}
             />
           ))}

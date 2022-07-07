@@ -1,3 +1,5 @@
+import slugify from "slugify";
+
 export enum Visibility {
   Private = "private",
   Public = "public",
@@ -9,8 +11,13 @@ export enum Membership {
   Leave = "leave",
 }
 
+export interface RoomIdentifier {
+  slug: string;
+  matrixRoomId: string;
+}
+
 export interface Space {
-  id: string;
+  id: RoomIdentifier;
   name: string;
   membership?: string;
   members: Members;
@@ -18,8 +25,12 @@ export interface Space {
   children: SpaceChild[];
 }
 
+export interface Spaces {
+  [slug: string]: Space;
+}
+
 export interface SpaceChild {
-  roomId: string;
+  id: RoomIdentifier;
   name?: string;
   avatarUrl?: string;
   topic?: string;
@@ -31,7 +42,7 @@ export interface SpaceChild {
 }
 
 export interface Room {
-  roomId: string;
+  id: RoomIdentifier;
   name: string;
   membership: string;
   members: Members;
@@ -40,7 +51,7 @@ export interface Room {
 }
 
 export interface Rooms {
-  [roomId: string]: Room;
+  [slug: string]: Room;
 }
 
 export interface Member {
@@ -62,7 +73,7 @@ export interface RoomMessage {
 }
 
 export interface RoomsMessages {
-  [roomId: string]: RoomMessage[];
+  [slug: string]: RoomMessage[];
 }
 
 export interface CreateSpaceInfo {
@@ -74,16 +85,24 @@ export interface CreateRoomInfo {
   roomName: string;
   visibility: Visibility;
   isDirectMessage?: boolean;
-  parentSpaceId?: string;
+  parentSpaceId?: RoomIdentifier;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isRoom(room: any): room is Room {
   const r = room as Room;
   return (
-    r.roomId !== undefined &&
+    r.id != undefined &&
+    r.id.matrixRoomId !== undefined &&
     r.name !== undefined &&
     r.members !== undefined &&
     r.membership !== undefined
   );
+}
+
+export function makeRoomIdentifier(roomId: string): RoomIdentifier {
+  return {
+    slug: slugify(roomId, { remove: /[*+~.()'"!:@]/g, strict: true }),
+    matrixRoomId: roomId,
+  };
 }

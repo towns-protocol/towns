@@ -1,11 +1,16 @@
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
-import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
+import {
+  CreateRoomInfo,
+  Membership,
+  RoomIdentifier,
+  useMatrixClient,
+} from "use-matrix-client";
 import { Button, Dropdown, Stack, TextField } from "@ui";
 
 interface Props {
-  parentSpaceId: string;
-  onClick: (roomId: string, membership: Membership) => void;
+  parentSpaceId: RoomIdentifier;
+  onClick: (roomId: RoomIdentifier, membership: Membership) => void;
 }
 
 export const CreateChannelForm = (props: Props) => {

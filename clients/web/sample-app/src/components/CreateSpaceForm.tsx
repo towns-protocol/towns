@@ -13,6 +13,7 @@ import {
 import {
   CreateSpaceInfo,
   Membership,
+  RoomIdentifier,
   useMatrixClient,
 } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
@@ -20,7 +21,7 @@ import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
 interface Props {
-  onClick: (roomId: string, membership: Membership) => void;
+  onClick: (roomId: RoomIdentifier, membership: Membership) => void;
 }
 
 export const CreateSpaceForm = (props: Props) => {

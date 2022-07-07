@@ -1,32 +1,31 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Room, useMatrixStore } from "use-matrix-client";
+import { RoomIdentifier, useMatrixStore } from "use-matrix-client";
 import { Chat } from "../components/Chat";
 
 export const RoomsIndex = () => {
   const navigate = useNavigate();
-  const { roomId } = useParams();
+  const { roomSlug } = useParams();
   const { rooms } = useMatrixStore();
-  const [currentChatRoom, setCurrentChatRoom] = useState<Room | undefined>();
-
-  useEffect(() => {
-    setCurrentChatRoom(roomId && rooms ? rooms[roomId] : undefined);
-  }, [roomId, rooms]);
+  const currentChatRoom = useMemo(
+    () => (roomSlug && rooms ? rooms[roomSlug] : undefined),
+    [roomSlug, rooms],
+  );
 
   const onClickLeaveRoom = useCallback(() => {
     navigate("/");
   }, [navigate]);
 
   const goToRoom = useCallback(
-    (roomId: string) => {
-      navigate("/rooms/" + roomId);
+    (roomId: RoomIdentifier) => {
+      navigate("/rooms/" + roomId.slug);
     },
     [navigate],
   );
 
   return currentChatRoom ? (
     <Chat
-      roomId={currentChatRoom.roomId}
+      roomId={currentChatRoom.id}
       membership={currentChatRoom.membership}
       onClickLeaveRoom={onClickLeaveRoom}
       goToRoom={goToRoom}

@@ -1,36 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMatrixStore, Space } from "use-matrix-client";
+import { useSpace } from "use-matrix-client";
 import { List, ListItem, ListItemText } from "@mui/material";
-import { SpaceChild } from "use-matrix-client/dist/types/matrix-types";
+import {
+  RoomIdentifier,
+  SpaceChild,
+} from "use-matrix-client/dist/types/matrix-types";
 
 export const SpacesIndex = () => {
-  const { spaceId } = useParams();
+  const { spaceSlug } = useParams();
   const navigate = useNavigate();
-  const { spaces } = useMatrixStore();
-  const [space, setSpace] = useState<Space | undefined>(undefined);
-
-  useEffect(() => {
-    setSpace(spaceId && spaces ? spaces[spaceId] : undefined);
-  }, [spaceId, spaces]);
+  const space = useSpace(spaceSlug);
 
   const onClickChannel = useCallback(
-    (roomId: string) => {
-      if (spaceId) {
-        navigate(`/spaces/${spaceId}/channels/${roomId}`);
+    (roomId: RoomIdentifier) => {
+      if (space?.id.slug) {
+        navigate(`/spaces/${space.id.slug}/channels/${roomId.slug}`);
       }
     },
-    [spaceId, navigate],
+    [space?.id.slug, navigate],
   );
 
   const channelItems = useMemo(() => {
     if (space) {
       return space.children.map((r: SpaceChild) => (
-        <ListItem
-          button
-          key={r.roomId}
-          onClick={() => onClickChannel(r.roomId)}
-        >
+        <ListItem button key={r.id.slug} onClick={() => onClickChannel(r.id)}>
           <ListItemText>{r.name}</ListItemText>
         </ListItem>
       ));
@@ -39,8 +33,8 @@ export const SpacesIndex = () => {
   }, [space, onClickChannel]);
 
   const onCreateChannelClick = useCallback(() => {
-    navigate("/spaces/" + spaceId + "/channels/new");
-  }, [navigate, spaceId]);
+    navigate("/spaces/" + space?.id.slug + "/channels/new");
+  }, [navigate, space?.id.slug]);
 
   return space ? (
     <>
@@ -48,6 +42,6 @@ export const SpacesIndex = () => {
       <List>{channelItems}</List>
     </>
   ) : (
-    <h1> Space {spaceId} not found</h1>
+    <h1> Space {spaceSlug} not found</h1>
   );
 };

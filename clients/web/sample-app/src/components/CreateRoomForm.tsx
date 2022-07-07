@@ -10,14 +10,19 @@ import {
   Theme,
   Typography,
 } from "@mui/material";
-import { CreateRoomInfo, Membership, useMatrixClient } from "use-matrix-client";
+import {
+  CreateRoomInfo,
+  Membership,
+  RoomIdentifier,
+  useMatrixClient,
+} from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
 interface Props {
-  onClick: (roomId: string, membership: Membership) => void;
+  onClick: (roomId: RoomIdentifier, membership: Membership) => void;
 }
 
 export function CreateRoomForm(props: Props): JSX.Element {
