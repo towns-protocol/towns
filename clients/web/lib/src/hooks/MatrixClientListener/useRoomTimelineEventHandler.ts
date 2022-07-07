@@ -1,5 +1,6 @@
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient, MatrixEvent, Room } from "matrix-js-sdk";
 import { MutableRefObject, useCallback } from "react";
+import { Membership } from "types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
 export const useRoomTimelineEventHandler = (
@@ -16,8 +17,8 @@ export const useRoomTimelineEventHandler = (
   /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
   const handleRoomTimelineEvent = useCallback(
     function (
-      event: any,
-      room: any,
+      event: MatrixEvent,
+      room: Room,
       toStartOfTimeline: any,
       removed: any,
       data: any,
@@ -34,6 +35,14 @@ export const useRoomTimelineEventHandler = (
             removed: removed,
             data: data,
           });
+          if (
+            !event.event.event_id ||
+            !event.event.content ||
+            !event.event.content.msgtype
+          ) {
+            console.error("m.room.message event has no event_id or content");
+            break;
+          }
           setNewMessage(room.roomId, {
             eventId: event.event.event_id,
             sender: event.sender.name,
@@ -50,13 +59,21 @@ export const useRoomTimelineEventHandler = (
         case "m.room.name": {
           const roomId = event.getRoomId();
           const name = event.getContent().name;
+          if (!roomId) {
+            console.error("m.room.name event has no roomId");
+            break;
+          }
           setRoomName(roomId, name);
           break;
         }
         case "m.room.member": {
           const roomId = event.getRoomId();
           const userId = event.getStateKey();
-          const membership = event.getContent().membership;
+          const membership = event.getContent().membership as Membership;
+          if (!roomId || !membership) {
+            console.error("m.room.member event has no roomId or membership");
+            break;
+          }
           if (roomId && userId && membership) {
             updateMembership(
               roomId,
@@ -70,6 +87,10 @@ export const useRoomTimelineEventHandler = (
         case "m.space.child": {
           const roomId = event.getRoomId();
           const childId = event.getStateKey();
+          if (!roomId || !childId) {
+            console.error("m.space.child event has no roomId or childId");
+            break;
+          }
           createSpaceChild(roomId, childId);
           break;
         }

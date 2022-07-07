@@ -7,6 +7,7 @@ import {
   RoomMember,
   RoomMemberEvent,
   createClient,
+  Room,
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef } from "react";
 import { useCredentialStore } from "../store/use-credential-store";
@@ -57,9 +58,9 @@ export const useMatrixClientListener = (
       client.on(
         RoomEvent.Timeline,
         (
-          event: any,
-          room: any,
-          toStartOfTimeline: any,
+          event: MatrixEvent,
+          room: Room,
+          toStartOfTimeline: boolean,
           removed: any,
           data: any,
         ) => {
@@ -75,8 +76,12 @@ export const useMatrixClientListener = (
 
       client.on(
         RoomMemberEvent.Membership,
-        (event: MatrixEvent, member: RoomMember) => {
-          handleRoomMembershipEvent(event, member);
+        (
+          event: MatrixEvent,
+          member: RoomMember,
+          oldMembership: string | null,
+        ) => {
+          handleRoomMembershipEvent(event, member, oldMembership);
         },
       );
       /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */

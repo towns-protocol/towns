@@ -9,7 +9,8 @@ export const useRoomMembershipEventHandler = (
   const { joinRoom, leaveRoom, setRoom, updateMembership } = useMatrixStore();
 
   const handleRoomMembershipEvent = useCallback(
-    (event: MatrixEvent, member: RoomMember) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (event: MatrixEvent, member: RoomMember, oldMembership: string | null) => {
       console.log(`RoomMember.membership event`, {
         eventType: event.getType(),
         userId: member.userId,
