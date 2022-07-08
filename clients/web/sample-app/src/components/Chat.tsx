@@ -7,9 +7,11 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ChatMessages } from "./ChatMessages";
-import { Invite } from "./Invite";
+import { InviteButton } from "./Buttons/InviteButton";
 import { InviteForm } from "./InviteForm";
-import { LeaveRoom } from "./LeaveRoom";
+import { LeaveRoomButton } from "./Buttons/LeaveRoomButton";
+import { SettingsButton } from "./Buttons/SettingsButton";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface Props {
   roomId: RoomIdentifier;
@@ -19,9 +21,19 @@ interface Props {
 }
 
 export function Chat(props: Props): JSX.Element {
+  const { spaceSlug, roomSlug } = useParams();
   const { rooms } = useMatrixStore();
   const { inviteUser, leaveRoom, joinRoom, sendMessage } = useMatrixClient();
   const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  const onClickSettings = useCallback(() => {
+    if (spaceSlug && roomSlug) {
+      navigate("/spaces/" + spaceSlug + "/channels/" + roomSlug + "/settings");
+    } else if (roomSlug) {
+      navigate("/rooms/" + roomSlug + "/settings");
+    }
+  }, [spaceSlug, roomSlug, navigate]);
 
   const onClickLeaveRoom = useCallback(async () => {
     await leaveRoom(props.roomId);
@@ -82,16 +94,19 @@ export function Chat(props: Props): JSX.Element {
       }}
     >
       <Grid container spacing={2}>
-        <Grid item xs={10} md={10}>
+        <Grid item xs={9} md={9}>
           <Typography variant="h6" component="span" sx={headerStyle}>
             {roomName}
           </Typography>
         </Grid>
         <Grid item xs={1} md={1}>
-          <Invite onClick={onClickOpenInviteForm} />
+          <SettingsButton onClick={onClickSettings} />
         </Grid>
         <Grid item xs={1} md={1}>
-          <LeaveRoom onClick={onClickLeaveRoom} />
+          <InviteButton onClick={onClickOpenInviteForm} />
+        </Grid>
+        <Grid item xs={1} md={1}>
+          <LeaveRoomButton onClick={onClickLeaveRoom} />
         </Grid>
       </Grid>
       {showInviteForm ? (

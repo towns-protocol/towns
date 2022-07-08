@@ -16,7 +16,7 @@ import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import { Logout } from "./Logout";
 import { Rooms } from "./Rooms";
-import { SidebarNewItemButton } from "./SidebarNewItemButton";
+import { SidebarNewItemButton } from "./Buttons/SidebarNewItemButton";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 

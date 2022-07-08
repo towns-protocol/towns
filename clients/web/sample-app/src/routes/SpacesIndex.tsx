@@ -12,6 +12,12 @@ export const SpacesIndex = () => {
   const navigate = useNavigate();
   const space = useSpace(spaceSlug);
 
+  const onClickSettings = useCallback(() => {
+    if (spaceSlug) {
+      navigate("/spaces/" + spaceSlug + "/settings");
+    }
+  }, [spaceSlug, navigate]);
+
   const onClickChannel = useCallback(
     (roomId: RoomIdentifier) => {
       if (space?.id.slug) {
@@ -38,7 +44,12 @@ export const SpacesIndex = () => {
 
   return space ? (
     <>
-      <button onClick={onCreateChannelClick}>Create a channel</button>
+      <p>
+        <button onClick={onClickSettings}>Space settings</button>
+      </p>
+      <p>
+        <button onClick={onCreateChannelClick}>Create a channel</button>
+      </p>
       <List>{channelItems}</List>
     </>
   ) : (

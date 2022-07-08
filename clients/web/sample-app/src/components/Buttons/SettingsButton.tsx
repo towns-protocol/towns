@@ -1,14 +1,14 @@
 import { IconButton, Theme, Tooltip } from "@mui/material";
 
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import Settings from "@mui/icons-material/Settings";
 
 interface Props {
-  onClick: () => Promise<void>;
+  onClick: () => void;
 }
 
-export function LeaveRoom(props: Props): JSX.Element {
+export function SettingsButton(props: Props): JSX.Element {
   return (
-    <Tooltip title="Leave room">
+    <Tooltip title="Settings">
       <IconButton
         size="medium"
         edge="start"
@@ -19,7 +19,7 @@ export function LeaveRoom(props: Props): JSX.Element {
           pr: (theme: Theme) => theme.spacing(1),
         }}
       >
-        <ExitToAppIcon />
+        <Settings />
       </IconButton>
     </Tooltip>
   );

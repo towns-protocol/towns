@@ -1,14 +1,14 @@
 import { IconButton, Theme, Tooltip } from "@mui/material";
 
-import GroupAddIcon from "@mui/icons-material/GroupAdd";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 
 interface Props {
-  onClick: () => void;
+  onClick: () => Promise<void>;
 }
 
-export function Invite(props: Props): JSX.Element {
+export function LeaveRoomButton(props: Props): JSX.Element {
   return (
-    <Tooltip title="Invite">
+    <Tooltip title="Leave room">
       <IconButton
         size="medium"
         edge="start"
@@ -19,7 +19,7 @@ export function Invite(props: Props): JSX.Element {
           pr: (theme: Theme) => theme.spacing(1),
         }}
       >
-        <GroupAddIcon />
+        <ExitToAppIcon />
       </IconButton>
     </Tooltip>
   );
