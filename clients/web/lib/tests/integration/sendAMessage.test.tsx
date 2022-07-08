@@ -36,7 +36,7 @@ describe("sendAMessage", () => {
     // alice should expect an invite to the room
     expect(
       await alice.eventually(
-        (x) => x.client.getRoom(roomId.roomId) != undefined,
+        (x) => x.client.getRoom(roomId.matrixRoomId) != undefined,
       ),
     ).toBe(true);
 
@@ -51,7 +51,7 @@ describe("sendAMessage", () => {
       await alice.eventually(
         (x) =>
           x.client
-            .getRoom(roomId.roomId)
+            .getRoom(roomId.matrixRoomId)
             ?.timeline.find(
               (event: MatrixEvent) =>
                 event.event.content?.body === "Hello Alice!",
