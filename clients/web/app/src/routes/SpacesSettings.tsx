@@ -15,7 +15,6 @@ export const SpacesSettings = () => {
   }, [navigate, spaceId?.slug]);
 
   const onLeaveClicked = useCallback(async () => {
-    console.log("leave clicked", spaceId);
     if (spaceId) {
       await leaveRoom(spaceId);
     }

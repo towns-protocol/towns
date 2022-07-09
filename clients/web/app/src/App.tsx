@@ -17,11 +17,11 @@ import { MessagesNew } from "routes/MessagesNew";
 import { MessagesRead } from "routes/MessagesRead";
 import { Onboarding } from "routes/Onboarding";
 import { SiteHome } from "routes/SiteHome";
+import { SpaceLayout } from "routes/SpaceLayout";
 import { SpaceMentions } from "routes/SpaceMentions";
 import { Spaces } from "routes/Spaces";
 import { SpacesChannel } from "routes/SpacesChannel";
 import { SpacesChannelReplies } from "routes/SpacesChannelThread";
-import { SpacesIndex } from "routes/SpacesIndex";
 import { SpacesInvite } from "routes/SpacesInvite";
 import { SpacesNew } from "routes/SpacesNew";
 import { SpacesNewChannel } from "routes/SpacesNewChannel";
@@ -29,7 +29,6 @@ import { SpacesSettings } from "routes/SpacesSettings";
 import { SpaceThreads } from "routes/SpaceThreads";
 import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
-import { SpaceLayout } from "routes/SpaceLayout";
 
 FontLoader.init();
 
