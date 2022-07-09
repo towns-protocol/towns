@@ -1,12 +1,27 @@
-import React from "react";
-import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
+import React, { useEffect } from "react";
 import { useParams } from "react-router";
-import { Box, Heading, SizeBox } from "@ui";
+import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
+import { useMatrixClient } from "use-matrix-client";
 import { Stack } from "ui/components/Stack/Stack";
+import { Box, Heading, SizeBox } from "@ui";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceLayout = () => {
   const { spaceId } = useParams();
+  const { syncSpace } = useMatrixClient();
+
+  useEffect(() => {
+    (async () => {
+      if (spaceId) {
+        try {
+          await syncSpace(spaceId);
+        } catch (reason) {
+          console.log("SpacesIndex error:", reason);
+        }
+      }
+    })();
+  }, [spaceId, syncSpace]);
+
   if (!spaceId) {
     return null;
   }
