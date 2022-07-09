@@ -1,14 +1,16 @@
 import React, { useEffect } from "react";
 import { useParams } from "react-router";
 import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
-import { useMatrixClient } from "use-matrix-client";
+import { RoomIdentifier, useMatrixClient, useSpaceId } from "use-matrix-client";
 import { Stack } from "ui/components/Stack/Stack";
 import { Box, Heading, SizeBox } from "@ui";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceLayout = () => {
-  const { spaceId } = useParams();
+  const { spaceSlug } = useParams();
   const { syncSpace } = useMatrixClient();
+
+  const spaceId = useSpaceId(spaceSlug);
 
   useEffect(() => {
     (async () => {
@@ -37,13 +39,17 @@ export const SpaceLayout = () => {
   );
 };
 
-export const SpaceNav = (props: { spaceId: string }) => (
+export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
   <Stack horizontal gap="lg">
-    <SpaceNavItem to={`/spaces/${props.spaceId}`}>All Highlights </SpaceNavItem>
-    <SpaceNavItem to={`/spaces/${props.spaceId}/proposals`}>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}`}>
+      All Highlights{" "}
+    </SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/proposals`}>
       Proposals
     </SpaceNavItem>
-    <SpaceNavItem to={`/spaces/${props.spaceId}/members`}>Members</SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/members`}>
+      Members
+    </SpaceNavItem>
   </Stack>
 );
 
