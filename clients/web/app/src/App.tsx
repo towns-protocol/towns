@@ -97,7 +97,7 @@ const AllRoutes = () => {
                 <Route path="new" element={<MessagesNew />} />
                 <Route path=":conversationId" element={<MessagesRead />} />
               </Route>
-              <Route path="invites/:inviteId" element={<Spaces />}>
+              <Route path="invites/:inviteSlug" element={<Spaces />}>
                 <Route index element={<InvitesIndex />} />
               </Route>
               <Route path="spaces/new" element={<SpacesNew />} />
