@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMatrixClient, useSpaceId } from "use-matrix-client";
-import { Box, Button } from "@ui";
+import { Box, Button, Heading, Stack } from "@ui";
 
 export const SpacesSettings = () => {
   const { spaceSlug } = useParams();
@@ -23,10 +23,12 @@ export const SpacesSettings = () => {
   }, [leaveRoom, navigate, spaceId]);
 
   return (
-    <Box grow padding="lg" gap="md">
-      <h1> Settings </h1>
-      <Button onClick={onInviteClicked}>Invite</Button>
-      <Button onClick={onLeaveClicked}>Leave Room</Button>
-    </Box>
+    <Stack horizontal padding="lg" gap="md">
+      <Box shrink gap>
+        <Heading>Settings</Heading>
+        <Button onClick={onInviteClicked}>Invite</Button>
+        <Button onClick={onLeaveClicked}>Leave Room</Button>
+      </Box>
+    </Stack>
   );
 };

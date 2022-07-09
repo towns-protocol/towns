@@ -88,7 +88,7 @@ const RealSpaces = (props: { spaces: SpaceData[] }) => {
     <>
       <Box paddingX="md" height="height_lg" paddingY="sm" justifyContent="end">
         <Paragraph color="gray2" textTransform="uppercase">
-          Your Spaces:
+          Your Spaces
         </Paragraph>
       </Box>
       {spaces.map((m, index) => (
