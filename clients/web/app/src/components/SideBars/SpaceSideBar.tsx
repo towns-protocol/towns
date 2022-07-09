@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { useNavigate } from "react-router";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { Box, Paragraph, Stack } from "@ui";
@@ -14,6 +15,15 @@ type Props = {
 export const SpaceSideBar = (props: Props) => {
   const { space } = props;
 
+  const navigate = useNavigate();
+
+  const onSettings = useCallback(
+    (id: string) => {
+      navigate(`/spaces/${id}/settings`);
+    },
+    [navigate],
+  );
+
   return (
     <SideBar paddingY="sm">
       <Stack padding position="relative" background="level1" gap="md">
@@ -28,13 +38,15 @@ export const SpaceSideBar = (props: Props) => {
           })}
         />
       </Stack>
-      <ActionNavItem icon="back" link="/" id="" label="Back" />
+      <ActionNavItem icon="back" link="/" id="back" label="Back" />
       {space && (
         <SpaceNavItem
           exact
+          settings
+          name={space.name}
           id={space.id}
           avatar={space.avatarSrc}
-          name={space.name}
+          onSettings={onSettings}
         />
       )}
       <ActionNavItem
@@ -85,7 +97,7 @@ const Channels = (props: { space: SpaceData }) => {
               key={group.label + channel.id.slug}
               icon="tag"
               highlight={channel.highlight}
-              link={`/spaces/${props.space.id.slug}/${channel.id.slug}`}
+              link={`/spaces/${props.space.id.slug}/channels/${channel.id.slug}`}
               label={channel.label}
             />
           ))}

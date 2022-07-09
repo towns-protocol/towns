@@ -12,7 +12,7 @@ type Props = {
   tone?: ToneNameType;
   icon?: IconName;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 } & Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "onDrag" | "onDragEnd" | "onDragStart" | "onAnimationStart" | "size" | "color"

@@ -1,18 +1,26 @@
 import React from "react";
 import { Stack } from "@ui";
 import { StackProps } from "../Stack/Stack";
+import { ArrowHead } from "./CardArrowHead";
 
-export const Card = ({ children, ...boxProps }: StackProps) => {
+type Props = {
+  arrow?: boolean;
+} & StackProps;
+
+export const Card = ({ children, arrow, ...boxProps }: Props) => {
   return (
-    <Stack
-      background="level2"
-      borderRadius="md"
-      overflow="hidden"
-      position="relative"
-      boxShadow="card"
-      {...boxProps}
-    >
-      {children}
-    </Stack>
+    <>
+      {arrow && <ArrowHead />}
+      <Stack
+        background="level2"
+        borderRadius="md"
+        overflow="hidden"
+        position="relative"
+        boxShadow="card"
+        {...boxProps}
+      >
+        {children}
+      </Stack>
+    </>
   );
 };

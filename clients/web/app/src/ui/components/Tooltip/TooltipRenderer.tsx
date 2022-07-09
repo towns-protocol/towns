@@ -1,4 +1,5 @@
 import React, {
+  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -25,12 +26,16 @@ type Props = {
 
 type TriggerProps = {
   ref: (ref: HTMLElement | null) => void;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   tabIndex: 0;
   cursor: "pointer";
 };
+
+export const TooltipContext = createContext<{
+  placement: "horizontal" | "vertical";
+}>({ placement: "vertical" });
 
 export const TooltipRenderer = (props: Props) => {
   const {
@@ -82,11 +87,15 @@ export const TooltipRenderer = (props: Props) => {
     };
   }, [active]);
 
-  const onClick = useCallback(() => {
-    if (trigger === Trigger.click) {
-      setActive(true);
-    }
-  }, [trigger]);
+  const onClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (trigger === Trigger.click) {
+        e.preventDefault();
+        setActive(true);
+      }
+    },
+    [trigger],
+  );
 
   useEffect(() => {
     if (!triggerRef) return;
@@ -121,7 +130,7 @@ export const TooltipRenderer = (props: Props) => {
   const root = useContext(RootLayerContext).rootLayerRef?.current;
 
   return !children ? null : (
-    <>
+    <TooltipContext.Provider value={{ placement }}>
       {children({
         triggerProps: {
           tabIndex: 0,
@@ -147,6 +156,6 @@ export const TooltipRenderer = (props: Props) => {
           />,
           root,
         )}
-    </>
+    </TooltipContext.Provider>
   );
 };
