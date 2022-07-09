@@ -22,7 +22,7 @@ type Props = {
   active?: boolean;
   pinned?: boolean;
   settings?: boolean;
-  onSettings?: (id: string) => void;
+  onSettings?: (id: RoomIdentifier) => void;
   exact?: boolean;
   isInvite?: boolean;
 };

@@ -1,9 +1,9 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMatrixClient } from "use-matrix-client";
+import { RoomIdentifier, useMatrixClient } from "use-matrix-client";
 import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
 
-type Props = { spaceId: string };
+type Props = { spaceId: RoomIdentifier };
 
 export const SpaceSettingsCard = (props: Props) => {
   const { spaceId } = props;
@@ -13,7 +13,7 @@ export const SpaceSettingsCard = (props: Props) => {
   const onInviteClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      navigate(`/spaces/${spaceId}/invite`);
+      navigate(`/spaces/${spaceId.slug}/invite`);
     },
     [navigate, spaceId],
   );
@@ -32,7 +32,7 @@ export const SpaceSettingsCard = (props: Props) => {
             <Avatar size="avatar_md" type="space" />
           </Box>
           <Stack grow gap="sm" fontWeight="strong" color="gray2">
-            <Heading level={5}>{spaceId}</Heading>
+            <Heading level={5}>{spaceId.slug}</Heading>
           </Stack>
         </Stack>
         <Divider space="xs" />

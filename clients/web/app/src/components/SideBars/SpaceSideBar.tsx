@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router";
+import { RoomIdentifier } from "use-matrix-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { Box, Paragraph, Stack } from "@ui";
@@ -18,8 +19,8 @@ export const SpaceSideBar = (props: Props) => {
   const navigate = useNavigate();
 
   const onSettings = useCallback(
-    (id: string) => {
-      navigate(`/spaces/${id}/settings`);
+    (id: RoomIdentifier) => {
+      navigate(`/spaces/${id.slug}/settings`);
     },
     [navigate],
   );
