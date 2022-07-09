@@ -69,11 +69,7 @@ export const ShareCard = ({
             fontSize="sm"
           >
             <Paragraph size="sm">Shared by</Paragraph>
-            <Avatar
-              circle
-              size="avatar_xs"
-              src={fakeUserCache[userId].avatarSrc}
-            />
+            <Avatar size="avatar_xs" src={fakeUserCache[userId].avatarSrc} />
             <Paragraph size="sm">{fakeUserCache[userId].displayName}</Paragraph>
           </Stack>
         </Stack>

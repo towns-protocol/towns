@@ -20,7 +20,7 @@ export const MessagesNew = () => (
         rounded="xs"
         alignItems="center"
       >
-        <Avatar circle size="avatar_xs" />
+        <Avatar size="avatar_xs" />
         <Paragraph size="sm">godguy23</Paragraph>
       </Box>
     </ContextBar>

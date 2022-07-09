@@ -13,12 +13,13 @@ import {
 type Props = {
   src?: string;
   animate?: boolean;
+  type?: "user" | "space";
   onClick?: BoxProps["onClick"];
   insetX?: BoxProps["insetX"];
   insetY?: BoxProps["insetY"];
   inset?: BoxProps["inset"];
   boxShadow?: BoxProps["boxShadow"];
-} & AvatarAtoms;
+} & Omit<AvatarAtoms, "circle">;
 
 export type AvatarProps = Props;
 
@@ -27,7 +28,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
     animate = false,
     size = "avatar_md",
     height = "avatar_md",
-    circle = false,
+    type = "user",
     stacked = false,
     border,
     src = "/placeholders/nft_5.png",
@@ -42,8 +43,8 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
       ref={ref}
       shrink={false}
       className={clsx(
-        avatarToggleClasses({ stacked, border, circle }),
-        !circle && squircleMask,
+        avatarToggleClasses({ stacked, border, circle: type === "user" }),
+        type === "space" && squircleMask,
         avatarAtoms({
           size: size ?? height,
         }),

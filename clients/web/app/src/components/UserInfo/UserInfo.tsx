@@ -1,7 +1,7 @@
 import React from "react";
-import { AvatarStack } from "ui/components/AvatarStack";
-import { Avatar, ButtonText, Heading, Icon, Paragraph, Stack } from "@ui";
+import { Avatar, Heading, Icon, Paragraph, Stack } from "@ui";
 import { fakeUserCache } from "data/UserData";
+import { AvatarStack } from "ui/components/AvatarStack";
 
 type Props = {
   userId: string;
@@ -14,7 +14,7 @@ export const UserInfo = ({ userId }: Props) => {
 
   return (
     <Stack gap="md">
-      <Avatar circle src={avatarSrc} size="avatar_xl" />
+      <Avatar src={avatarSrc} size="avatar_xl" />
       <Heading level={2}>{displayName}</Heading>
       <Stack horizontal alignItems="center" gap="sm" color="gray2">
         {userData.tokens}

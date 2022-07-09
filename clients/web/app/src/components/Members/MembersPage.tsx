@@ -9,7 +9,7 @@ export const MembersPage = () => {
       {users.map((u) => (
         <Box gap key={u.id} colSpan={1}>
           <Box centerContent aspectRatio="1/1">
-            <Avatar circle src={u.avatarSrc} size="avatar_xl" />
+            <Avatar src={u.avatarSrc} size="avatar_xl" />
           </Box>
           <Box textAlign="center" gap="paragraph">
             <Paragraph textAlign="center" size="sm">

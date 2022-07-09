@@ -25,7 +25,6 @@ export const Replies = ({
       >
         {replies.userIds.map((id) => (
           <Avatar
-            circle
             key={id}
             src={`/placeholders/nft_${id}.png`}
             size="avatar_sm"

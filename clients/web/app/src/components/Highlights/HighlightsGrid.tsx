@@ -81,7 +81,6 @@ const Placeholder = (props: PlaceholderProps) => {
               justifyContent="end"
             >
               <Avatar
-                circle
                 size="avatar_md"
                 src={user.avatarSrc}
                 boxShadow="avatar"
@@ -92,7 +91,7 @@ const Placeholder = (props: PlaceholderProps) => {
 
         <Stack padding gap="md">
           {!message.imageUrl && (
-            <Avatar circle size="avatar_md" src={user.avatarSrc} />
+            <Avatar size="avatar_md" src={user.avatarSrc} />
           )}
           <Paragraph color="gray2">{user.displayName}</Paragraph>
           <Paragraph color="gray1">{message.body}</Paragraph>

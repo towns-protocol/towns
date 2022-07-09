@@ -17,7 +17,7 @@ export const SpaceThreads = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={<Avatar circle size="avatar_sm" />}
+            avatar={<Avatar size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             reactions={{ "👋": 20 }}
@@ -38,9 +38,7 @@ export const SpaceThreads = () => {
           <Paragraph color="accent">Show 150 more replies</Paragraph>
           <Message
             condensed
-            avatar={
-              <Avatar circle size="avatar_sm" src="/placeholders/nft_2.png" />
-            }
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >
@@ -53,9 +51,7 @@ export const SpaceThreads = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={
-              <Avatar circle size="avatar_sm" src="/placeholders/nft_30.png" />
-            }
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_30.png" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
           >
@@ -64,7 +60,7 @@ export const SpaceThreads = () => {
           <Paragraph color="accent">Show 150 more replies</Paragraph>
           <Message
             condensed
-            avatar={<Avatar circle size="avatar_sm" />}
+            avatar={<Avatar size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
             reactions={{ "👀": 20, "🤑": 2 }}
@@ -79,9 +75,7 @@ export const SpaceThreads = () => {
 
           <Message
             condensed
-            avatar={
-              <Avatar circle size="avatar_sm" src="/placeholders/nft_2.png" />
-            }
+            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
             name="deiguy"
             date="Today at 12:01AM"
           >

@@ -22,11 +22,7 @@ export const MessageScroller = (props: { messages: RoomMessage[] }) => {
                 paddingX="lg"
                 paddingY="md"
                 avatar={
-                  <Avatar
-                    circle
-                    src="/placeholders/nft_2.png"
-                    size="avatar_md"
-                  />
+                  <Avatar src="/placeholders/nft_2.png" size="avatar_md" />
                 }
                 date="11:01AM"
               >

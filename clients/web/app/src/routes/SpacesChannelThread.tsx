@@ -16,7 +16,7 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="threadpeep3k"
         date="Today, 11pm"
-        avatar={<Avatar circle size="avatar_sm" />}
+        avatar={<Avatar size="avatar_sm" />}
       >
         <Paragraph>This is so nice wher did you find out?</Paragraph>
       </Message>
@@ -24,9 +24,7 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="m00nfLee"
         date="Today, 11:03pm"
-        avatar={
-          <Avatar circle size="avatar_sm" src="/placeholders/nft_3.png" />
-        }
+        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_3.png" />}
       >
         <Paragraph>:eyes:</Paragraph>
       </Message>
@@ -34,9 +32,7 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="threadpeep3k"
         date="Today, 11:04pm"
-        avatar={
-          <Avatar circle size="avatar_sm" src="/placeholders/nft_9.png" />
-        }
+        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_9.png" />}
       >
         <Paragraph>It's a thread...</Paragraph>
       </Message>
@@ -44,9 +40,7 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="m00nfLee"
         date="Today, 11:03pm"
-        avatar={
-          <Avatar circle size="avatar_sm" src="/placeholders/nft_3.png" />
-        }
+        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_3.png" />}
       >
         <Paragraph>what doyou mean?</Paragraph>
       </Message>
@@ -54,9 +48,7 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => (
         condensed
         name="m00nfLee"
         date="Today, 11:03pm"
-        avatar={
-          <Avatar circle size="avatar_sm" src="/placeholders/nft_34.png" />
-        }
+        avatar={<Avatar size="avatar_sm" src="/placeholders/nft_34.png" />}
       >
         <Paragraph>pls stop</Paragraph>
       </Message>

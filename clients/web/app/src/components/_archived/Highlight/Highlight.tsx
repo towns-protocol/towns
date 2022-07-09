@@ -96,7 +96,7 @@ const NamedAvatar = ({
   size?: AvatarProps["size"];
 } & Omit<BoxProps, "size">) => (
   <Stack horizontal alignItems="center" gap="sm" {...boxProps}>
-    <Avatar border circle size={size} src={fakeUserCache[userId].avatarSrc} />
+    <Avatar border size={size} src={fakeUserCache[userId].avatarSrc} />
     <Paragraph size={size === "avatar_md" ? "md" : "sm"}>
       {fakeUserCache[userId].displayName}
     </Paragraph>

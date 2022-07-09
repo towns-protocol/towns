@@ -110,7 +110,7 @@ const SpaceMessages = (props: { messages: RoomMessage[] }) => (
         channel=""
         key={m.eventId}
         name={m.sender}
-        avatar={<Avatar circle src="/placeholders/nft_2.png" />}
+        avatar={<Avatar src="/placeholders/nft_2.png" />}
         date="Today sometime?"
         reactions={{}}
       >
@@ -125,7 +125,7 @@ const FakeSpaceMessages = () => (
     <RoundedMessage
       channel="announcements"
       name="sunsoutapesout"
-      avatar={<Avatar circle src="/placeholders/nft_2.png" />}
+      avatar={<Avatar src="/placeholders/nft_2.png" />}
       date="Today at 11:01 AM"
       reactions={{ "👋": 20 }}
     >
@@ -146,7 +146,7 @@ const FakeSpaceMessages = () => (
     <RoundedMessage
       channel="general"
       name="hana.eth"
-      avatar={<Avatar circle src="/placeholders/nft_20.png" />}
+      avatar={<Avatar src="/placeholders/nft_20.png" />}
       date="Today at 11:01 AM"
       replies={{ userIds: [1, 2, 3], fakeLength: 150 }}
     >
@@ -156,7 +156,7 @@ const FakeSpaceMessages = () => (
     <RoundedMessage
       channel="crypto-talk"
       name="shimmyshimmy"
-      avatar={<Avatar circle src="/placeholders/nft_40.png" />}
+      avatar={<Avatar src="/placeholders/nft_40.png" />}
       date="Today at 11:01 AM"
       reactions={{ "😍": 3, "😂": 13, "💀": 5 }}
       userReaction="😍"
@@ -168,9 +168,7 @@ const FakeSpaceMessages = () => (
       </Paragraph>
 
       <QuotedMessage
-        avatar={
-          <Avatar circle size="avatar_lg" src="/placeholders/nft_25.png" />
-        }
+        avatar={<Avatar size="avatar_lg" src="/placeholders/nft_25.png" />}
       >
         <Paragraph>
           It's been inspiring seeing our community come together in support of

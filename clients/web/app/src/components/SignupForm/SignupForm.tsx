@@ -146,7 +146,7 @@ export const SignupForm = () => {
                   : vars.color.foreground.default,
               }}
             >
-              <Avatar circle src={value} size="avatar_lg" />
+              <Avatar src={value} size="avatar_lg" />
             </MotionBox>
           )}
           options={placeholders.nfts.map((value) => ({ value, label: value }))}
