@@ -5,6 +5,7 @@ import { MinimalLogo } from "@components/Logo/Logo";
 import { ProfileCardButton } from "@components/ProfileCardButton/ProfileCardButton";
 import { Login } from "@components/Web3/Login";
 import { Box, ButtonText, Stack } from "@ui";
+import { atoms } from "ui/styles/atoms.css";
 import * as styles from "./TopBar.css";
 
 const positionTop = {
@@ -23,7 +24,7 @@ export const TopBar = (props: {
       borderBottom
       direction="row"
       shrink={false}
-      height="height_xl"
+      height="x6"
       paddingX="md"
       gap="md"
       color="gray2"
@@ -32,7 +33,7 @@ export const TopBar = (props: {
     >
       <Box color="default" justifyContent="center" width="100">
         <Link to="/">
-          <MinimalLogo />
+          <MinimalLogo className={atoms({ height: "x4" })} />
         </Link>
       </Box>
       <Stack grow height="100%" alignItems="center" justifyContent="stretch">

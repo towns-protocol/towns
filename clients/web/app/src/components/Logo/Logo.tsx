@@ -46,12 +46,17 @@ export const Logo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>(
   ),
 );
 
-export const MinimalLogo = () => (
+export const MinimalLogo = forwardRef<
+  SVGSVGElement,
+  HTMLAttributes<SVGSVGElement>
+>((props, ref) => (
   <svg
     height="32"
-    viewBox="0 0 200 68"
+    viewBox="0 0 200 66"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    {...props}
+    ref={ref}
   >
     <circle cx="33" cy="33" r="33" fill="url(#paint0_linear_1205_31033)" />
     <defs>
@@ -69,4 +74,4 @@ export const MinimalLogo = () => (
       </linearGradient>
     </defs>
   </svg>
-);
+));
