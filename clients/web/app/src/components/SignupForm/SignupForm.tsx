@@ -1,9 +1,10 @@
+import { motion } from "framer-motion";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useWeb3Context } from "use-matrix-client";
 import useEvent from "react-use-event-hook";
-import { motion } from "framer-motion";
+import { useWeb3Context } from "use-matrix-client";
+import { vars } from "ui/styles/vars.css";
 import {
   Avatar,
   Box,
@@ -14,7 +15,6 @@ import {
   Stack,
   TextField,
 } from "@ui";
-import { vars } from "ui/styles/vars.css";
 
 const placeholders = {
   names: [
