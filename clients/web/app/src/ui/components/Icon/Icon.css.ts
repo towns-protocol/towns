@@ -7,8 +7,8 @@ export const iconAtoms = createSprinkles(iconProperties);
 
 export const iconBaseStyle = style({
   borderRadius: vars.borderRadius.sm,
-  WebkitMaskImage: `url(/squircle.svg)`,
-  WebkitMaskSize: `cover`,
+  // WebkitMaskImage: `url(/squircle.svg)`,
+  // WebkitMaskSize: `cover`,
 });
 
 export type IconAtoms = Parameters<typeof iconAtoms>[0];
