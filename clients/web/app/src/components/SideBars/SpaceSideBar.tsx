@@ -1,12 +1,14 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { RoomIdentifier } from "use-matrix-client";
+import { motion } from "framer-motion";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { Box, Paragraph, Stack } from "@ui";
 import { SpaceData } from "data/SpaceData";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { atoms } from "ui/styles/atoms.css";
+import { FadeIn } from "@components/Transitions";
 import { SideBar } from "./_SideBar";
 
 type Props = {
@@ -28,16 +30,18 @@ export const SpaceSideBar = (props: Props) => {
   return (
     <SideBar paddingY="sm">
       <Stack padding position="relative" background="level1" gap="md">
-        <img
-          src="/placeholders/space_1.png"
-          alt="space logo"
-          width="500"
-          className={atoms({
-            flexGrow: "x1",
-            display: "flex",
-            width: "100%",
-          })}
-        />
+        <FadeIn>
+          <img
+            src="/placeholders/space_1.png"
+            alt="space logo"
+            width="500"
+            className={atoms({
+              flexGrow: "x1",
+              display: "flex",
+              width: "100%",
+            })}
+          />
+        </FadeIn>
       </Stack>
       <ActionNavItem icon="back" link="/" id="back" label="Back" />
       {space && (
