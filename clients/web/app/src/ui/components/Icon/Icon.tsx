@@ -520,7 +520,7 @@ const iconMap = {
   strikethrough: StrikethroughIcon,
   tag: TagIcon,
   token: TokenIcon,
-  threads: ThreadsIcon,
+  threads: MessageIcon,
   type: TypeIcon,
   verified: VerifiedIcon,
   wallet: WalletIcon,
