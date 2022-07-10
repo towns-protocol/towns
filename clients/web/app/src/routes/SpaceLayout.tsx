@@ -18,7 +18,7 @@ export const SpaceLayout = () => {
         try {
           await syncSpace(spaceId);
         } catch (reason) {
-          console.log("SpacesIndex error:", reason);
+          console.warn("SpacesIndex error:", reason);
         }
       }
     })();
