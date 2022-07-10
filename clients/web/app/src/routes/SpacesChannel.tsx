@@ -47,18 +47,16 @@ export const SpacesChannel = () => {
     <Stack horizontal minHeight="100%">
       <Allotment onChange={onSizesChange}>
         <Allotment.Pane>
-          <Box grow height="100%">
-            <Stack grow>
-              <MessageList key={channelSlug} messages={channelMessages} />
-              <Box paddingBottom="lg" paddingX="lg">
-                <RichTextEditor
-                  autoFocus
-                  initialValue=""
-                  placeholder={`Send a message to #${channel?.label}`}
-                  onSend={onSend}
-                />
-              </Box>
-            </Stack>
+          <Box grow absoluteFill height="100%" overflow="hidden">
+            <MessageList key={channelSlug} messages={channelMessages} />
+            <Box paddingBottom="lg" paddingX="lg">
+              <RichTextEditor
+                autoFocus
+                initialValue=""
+                placeholder={`Send a message to #${channel?.label}`}
+                onSend={onSend}
+              />
+            </Box>
           </Box>
         </Allotment.Pane>
         {outlet && (

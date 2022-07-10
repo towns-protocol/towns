@@ -1,23 +1,44 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, {
+  RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { useInView } from "react-intersection-observer";
 import { RoomMessage } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
 import { Avatar, Stack } from "@ui";
+import { FadeIn } from "@components/Transitions";
 
 export const MessageScroller = (props: { messages: RoomMessage[] }) => {
-  const { messages } = props;
-  const { containerRef, endRef } = useMessageScroll(
+  const { messages: allMessages } = props;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const { ref, displayCount } = useLoadMore(
+    containerRef,
+    contentRef,
+    allMessages.length,
+  );
+  const messages = allMessages.slice(-displayCount);
+
+  const { endRef } = useMessageScroll(
+    containerRef,
     messages[messages.length - 1]?.eventId,
     messages.find((m) => m.sender === "???" || true)?.eventId,
   );
+
   return (
-    <Stack grow ref={containerRef} position="relative">
-      <Stack absoluteFill>
-        <Stack overflowY="scroll" height="100%">
-          <Stack grow paddingY="md" justifyContent="end">
-            {props.messages.map((m, index) => (
+    <Stack grow ref={containerRef} overflow="auto">
+      <Stack grow style={{ minHeight: "min-content" }}>
+        <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
+          <div ref={ref} />
+          {messages.map((m, index) => (
+            <FadeIn key={m.eventId}>
               <Message
-                key={m.eventId}
                 name={m.sender}
                 paddingX="lg"
                 paddingY="md"
@@ -28,20 +49,78 @@ export const MessageScroller = (props: { messages: RoomMessage[] }) => {
               >
                 <RichTextPreview content={m.body} />
               </Message>
-            ))}
-          </Stack>
-          <div ref={endRef} />
+            </FadeIn>
+          ))}
         </Stack>
+        <div ref={endRef} />
       </Stack>
     </Stack>
   );
 };
 
+const useLoadMore = (
+  containerRef: RefObject<HTMLDivElement>,
+  contentRef: RefObject<HTMLDivElement>,
+  total: number,
+) => {
+  const [displayCount, setDisplayCount] = useState(10);
+  const { ref, inView } = useInView({
+    root: containerRef.current,
+    rootMargin: "50%",
+    threshold: 0,
+  });
+
+  const scrollDataRef = useRef<{ y: number; height: number }>();
+
+  useEffect(() => {
+    console.log(`${displayCount} / ${total}`);
+    if (inView && displayCount < total) {
+      const timeout = setTimeout(() => {
+        if (!contentRef.current || !containerRef.current) {
+          return;
+        }
+        scrollDataRef.current = {
+          y: containerRef.current?.scrollTop,
+          height: containerRef.current.scrollHeight,
+        };
+        setDisplayCount((c) => c + 5);
+      }, 500);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [containerRef, contentRef, displayCount, inView, total]);
+
+  useLayoutEffect(() => {
+    if (!contentRef.current || !containerRef.current) {
+      console.warn(">>", 1);
+      return;
+    }
+
+    const prev = scrollDataRef.current;
+    const height = containerRef.current.scrollHeight;
+
+    if (prev) {
+      const target = prev.y + height - prev.height;
+      console.log(target, prev, height);
+      containerRef.current.scrollTo(0, target);
+    } else {
+      console.warn(">>", 2, height);
+      containerRef.current.scrollTo(0, height);
+    }
+
+    if (displayCount >= total) {
+      return;
+    }
+  }, [containerRef, contentRef, displayCount, total]);
+  return { ref, displayCount };
+};
+
 const useMessageScroll = (
+  containerRef: RefObject<HTMLDivElement>,
   lastMessageId?: string,
   lastMessageByMeId?: string,
 ) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
