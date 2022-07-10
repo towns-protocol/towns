@@ -1,4 +1,6 @@
 import React, { useContext, useMemo } from "react";
+import { useParams } from "react-router";
+import { useSpaceId } from "use-matrix-client";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Reactions } from "@components/Reactions";
 import { Replies } from "@components/Replies";
@@ -14,11 +16,15 @@ const colSpanMap = {
   1: 12,
 } as const;
 
-export const HighlightsGrid = () => {
+export const Highlights = () => {
+  const { spaceSlug } = useParams();
+  const spaceId = useSpaceId(spaceSlug);
+
   const sizeContext = useContext(SizeContext);
   const size = sizeContext?.size.width ?? 0;
   const col = size > 1400 ? 4 : size > 1100 ? 3 : size > 600 ? 2 : 1;
-  const columns = useColumns(fakeMessages, col);
+  const messages = useMemo(() => fakeMessages(spaceSlug ?? ""), [spaceSlug]);
+  const columns = useColumns(messages, col);
 
   if (!size) {
     return null;
@@ -26,14 +32,21 @@ export const HighlightsGrid = () => {
 
   const colSpan = colSpanMap[col];
 
+  const isMainSpace = !spaceId;
+
   return (
     <Grid columns={12}>
       {columns.map(
-        (c, i) =>
+        (c) =>
           c.messages.length && (
             <Stack colSpan={colSpan} gap="md" key={c.id}>
               {c.messages.map((m, index) => (
-                <Placeholder message={m} key={m.id} index={index} />
+                <Placeholder
+                  message={m}
+                  key={m.id}
+                  index={index}
+                  mainSpace={isMainSpace}
+                />
               ))}
             </Stack>
           ),
@@ -63,15 +76,22 @@ const useColumns = (messages: Message[], col: number) => {
 type PlaceholderProps = {
   index: number;
   message: Message;
+  mainSpace: boolean;
 };
 
 const Placeholder = (props: PlaceholderProps) => {
-  const { message } = props;
+  const { message, mainSpace: isMainSpace } = props;
 
   const user = fakeUserCache[message.userId];
 
   return (
-    <Box border shrink rounded="md" background="level2" overflow="hidden">
+    <Box
+      border
+      shrink
+      rounded="md"
+      background={isMainSpace ? "default" : "level2"}
+      overflow="hidden"
+    >
       <Stack justifyContent="center">
         {message.imageUrl && (
           <Box grow position="relative" height="200">

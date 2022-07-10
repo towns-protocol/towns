@@ -41,9 +41,7 @@ export const SpaceLayout = () => {
 
 export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
   <Stack horizontal gap="lg">
-    <SpaceNavItem to={`/spaces/${props.spaceId.slug}`}>
-      All Highlights{" "}
-    </SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}`}>Highlights</SpaceNavItem>
     <SpaceNavItem to={`/spaces/${props.spaceId.slug}/proposals`}>
       Proposals
     </SpaceNavItem>

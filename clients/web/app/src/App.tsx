@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, Route, Routes } from "react-router-dom";
 import { MatrixContextProvider, useMatrixStore } from "use-matrix-client";
-import { HighlightsGrid } from "@components/Highlights/HighlightsGrid";
+import { Highlights } from "@components/Highlights/HomeHighlights";
 import { MembersPage } from "@components/Members/MembersPage";
 import { Playground } from "@components/Playground";
 import { ProposalPage } from "@components/Proposals/ProposalPage";
@@ -87,7 +87,7 @@ const AllRoutes = () => {
           {isAuthenticated && (
             <Route element={<SidebarLayout />}>
               <Route element={<HomeLayout />}>
-                <Route index element={<HighlightsGrid />} />
+                <Route index element={<Highlights />} />
               </Route>
               <Route path="me" element={<MeIndex />} />
               <Route path="messages" element={<Messages />}>
@@ -100,7 +100,7 @@ const AllRoutes = () => {
               <Route path="spaces/new" element={<SpacesNew />} />
               <Route path="spaces/:spaceSlug" element={<Spaces />}>
                 <Route element={<SpaceLayout />}>
-                  <Route index element={<HighlightsGrid />} />
+                  <Route index element={<Highlights />} />
                   <Route path="proposals" element={<ProposalPage />} />
                   <Route path="members" element={<MembersPage />} />
                 </Route>

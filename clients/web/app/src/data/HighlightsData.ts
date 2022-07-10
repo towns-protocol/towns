@@ -15,7 +15,8 @@ const userIndex = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 const images = Array(9)
   .fill(0)
   .map((_, i) => `/placeholders/frame_${i}.png`);
-const getIncrementalImageIndex = incrementalNumber({
+
+let getIncrementalImageIndex = incrementalNumber({
   from: 0,
   to: 10,
   step: 1,
@@ -31,28 +32,39 @@ export interface Message {
   link?: { title: string; href: string };
 }
 
-export const fakeMessages: Message[] = Array(12)
-  .fill("")
-  .map((_, index) => {
-    const link = getRandomLink();
-    const message: Message = {
-      id: `message${index}`,
-      body: randSentence({
-        length: Math.floor(randNumber({ min: 1, max: 2 })),
-      }).join(""),
-      userId: fakeUsers[rand(userIndex)].id,
-      reactions: getRandomReactions(),
-      replies: getRandomReplies(),
-      imageUrl: !link ? getRandomImage() : undefined,
-      link,
-    };
-    return message;
+export const fakeMessages = (spaceId: string): Message[] => {
+  const isMain = !spaceId;
+  seed(spaceId);
+
+  getIncrementalImageIndex = incrementalNumber({
+    from: 0,
+    to: 10,
+    step: 1,
   });
 
-function getRandomImage() {
+  return Array(12)
+    .fill("")
+    .map((_, index) => {
+      const link = getRandomLink();
+      const message: Message = {
+        id: `message${index}`,
+        body: randSentence({
+          length: Math.floor(randNumber({ min: 1, max: 2 })),
+        }).join(""),
+        userId: fakeUsers[rand(userIndex)].id,
+        reactions: getRandomReactions(),
+        replies: getRandomReplies(),
+        imageUrl: !link ? getRandomImage(isMain ? 0.01 : 0.2) : undefined,
+        link,
+      };
+      return message;
+    });
+};
+
+function getRandomImage(chance = 0.5) {
   const i = getIncrementalImageIndex();
 
-  if (randFloat({ min: 0, max: 1 }) > 0.5 && i) {
+  if (randFloat({ min: 0, max: 1 }) > chance && i) {
     return images[i];
   }
 }
