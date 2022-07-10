@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Outlet, Route, Routes } from "react-router-dom";
+import useEvent from "react-use-event-hook";
 import { MatrixContextProvider, useMatrixStore } from "use-matrix-client";
 import { Highlights } from "@components/Highlights/HomeHighlights";
 import { MembersPage } from "@components/Members/MembersPage";
@@ -50,7 +52,7 @@ const AllRoutes = () => {
     useDefaultOSTheme: false,
   });
 
-  // useNavigateOnAuth("/onboarding", isAuthenticated);
+  useNavigateOnAuth("/", isAuthenticated);
 
   return (
     <Routes>
@@ -125,12 +127,12 @@ const AllRoutes = () => {
   );
 };
 
-// const useNavigateOnAuth = (to: string, isAuthenticated: boolean) => {
-//   const navigate = useNavigate();
-//   const stableNavigate = useEvent(() => navigate("/onboarding"));
-//   useEffect(() => {
-//     if (isAuthenticated) {
-//       stableNavigate();
-//     }
-//   }, [isAuthenticated, stableNavigate]);
-// };
+const useNavigateOnAuth = (to: string, isAuthenticated: boolean) => {
+  const navigate = useNavigate();
+  const stableNavigate = useEvent(() => navigate(to));
+  useEffect(() => {
+    if (isAuthenticated) {
+      stableNavigate();
+    }
+  }, [isAuthenticated, stableNavigate]);
+};
