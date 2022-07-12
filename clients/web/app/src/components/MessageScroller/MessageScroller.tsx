@@ -73,7 +73,7 @@ const useLoadMore = (
   const scrollDataRef = useRef<{ y: number; height: number }>();
 
   useEffect(() => {
-    console.log(`${displayCount} / ${total}`);
+    // console.log(`${displayCount} / ${total}`);
     if (inView && displayCount < total) {
       const timeout = setTimeout(() => {
         if (!contentRef.current || !containerRef.current) {
@@ -93,7 +93,6 @@ const useLoadMore = (
 
   useLayoutEffect(() => {
     if (!contentRef.current || !containerRef.current) {
-      console.warn(">>", 1);
       return;
     }
 
@@ -102,10 +101,8 @@ const useLoadMore = (
 
     if (prev) {
       const target = prev.y + height - prev.height;
-      console.log(target, prev, height);
       containerRef.current.scrollTo(0, target);
     } else {
-      console.warn(">>", 2, height);
       containerRef.current.scrollTo(0, height);
     }
 
