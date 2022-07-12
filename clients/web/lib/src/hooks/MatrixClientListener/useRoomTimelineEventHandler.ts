@@ -36,6 +36,7 @@ export const useRoomTimelineEventHandler = (
             data: data,
           });
           if (
+            !event.sender ||
             !event.event.event_id ||
             !event.event.content ||
             !event.event.content.msgtype

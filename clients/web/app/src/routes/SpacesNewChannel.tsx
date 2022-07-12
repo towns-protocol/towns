@@ -12,7 +12,7 @@ export const SpacesNewChannel = () => {
   const onCreateChannel = useCallback(
     (roomId: RoomIdentifier, membership: Membership) => {
       if (spaceId?.slug) {
-        navigate("/spaces/" + spaceId?.slug + "/" + roomId.slug);
+        navigate("/spaces/" + spaceId.slug + "/channels/" + roomId.slug + "/");
       }
     },
     [navigate, spaceId?.slug],

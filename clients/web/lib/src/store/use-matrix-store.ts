@@ -46,7 +46,7 @@ export type MatrixStoreStates = {
   setAllRooms: (rooms: MatrixRoom[]) => void;
   setRoomName: (roomId: RoomIdentifier, roomName: string) => void;
   spaces: Spaces;
-  setSpace: (spaceRoom: MatrixRoom, roomHierarchy: RoomHierarchy) => Space;
+  setSpace: (spaceRoom: Room, roomHierarchy: RoomHierarchy) => Space;
   createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) => void;
   userId: string | null;
   setUserId: (userId: string | undefined) => void;
@@ -107,14 +107,17 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     setRoomName: (roomId: RoomIdentifier, roomName: string) =>
       set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
     spaces: {},
-    setSpace: (spaceRoom: MatrixRoom, roomHierarchy: RoomHierarchy) => {
+    setSpace: (spaceRoom: Room, roomHierarchy: RoomHierarchy) => {
       const newSpace: Space = {
-        id: makeRoomIdentifier(spaceRoom.roomId),
+        id: spaceRoom.id,
         name: spaceRoom.name,
-        members: toZionMembers(spaceRoom),
+        members: spaceRoom.members,
+        membership: spaceRoom.membership,
         children: roomHierarchy.rooms
-          .filter((r) => r.room_id != spaceRoom.roomId)
-          .map((r) => toZionSpaceChild(r)),
+          ? roomHierarchy.rooms
+              .filter((r) => r.room_id != spaceRoom.id.matrixRoomId)
+              .map((r) => toZionSpaceChild(r))
+          : [],
       };
       set((state: MatrixStoreStates) => setSpace(state, newSpace));
       return newSpace;
@@ -162,6 +165,9 @@ function createRoom(
   isSpace: boolean,
 ) {
   const changedRooms = { ...state.rooms };
+  if (changedRooms[roomId.slug] != null) {
+    return { rooms: changedRooms };
+  }
   const newRoom: Room = {
     id: roomId,
     name: "",
@@ -182,7 +188,9 @@ function setNewMessage(
   const changedRoomMessages = changedAllMessages[roomId.slug]
     ? [...changedAllMessages[roomId.slug]]
     : [];
-  changedRoomMessages.push(message);
+  if (!changedRoomMessages.some((m) => m.eventId === message.eventId)) {
+    changedRoomMessages.push(message);
+  }
   changedAllMessages[roomId.slug] = changedRoomMessages;
   return { allMessages: changedAllMessages };
 }
@@ -225,7 +233,7 @@ function createSpaceChild(
 }
 
 function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
-  const changedRooms: Rooms = {};
+  const changedRooms = { ...state.rooms };
   for (const r of matrixRooms) {
     const changedRoom = toZionRoom(r);
     changedRooms[changedRoom.id.slug] = changedRoom;
@@ -244,7 +252,7 @@ function setRoomName(
     changedRoom.name = newName;
     const changedRooms = { ...state.rooms };
     changedRooms[roomId.slug] = changedRoom;
-    console.log(`setRoomName ${JSON.stringify(changedRoom)}`);
+    //console.log(`setRoomName ${JSON.stringify(changedRoom)}`);
     return { rooms: changedRooms };
   }
   console.log(`setRoomName no op`);

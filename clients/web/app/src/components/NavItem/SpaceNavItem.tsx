@@ -82,7 +82,7 @@ export const SpaceNavItem = (props: Props) => {
       {({ triggerProps }) => (
         <NavItem
           id={id.slug}
-          to={isInvite ? `/invites/${id.slug}` : `/spaces/${id.slug}`}
+          to={isInvite ? `/invites/${id.slug}/` : `/spaces/${id.slug}/`}
           exact={exact}
           {...triggerProps}
         >

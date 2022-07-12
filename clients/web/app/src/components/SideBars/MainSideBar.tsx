@@ -1,20 +1,14 @@
-import React, { useMemo } from "react";
+import React from "react";
+import { SpaceData, useInvites, useSpaces } from "use-matrix-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { SideBar } from "@components/SideBars/_SideBar";
 import { Box, Paragraph, Stack } from "@ui";
-import { SpaceData } from "data/SpaceData";
-import { useInvites, useSpaces } from "hooks/useSpaceData";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 
 export const MainSideBar = () => {
   const spaces = useSpaces();
   const invites = useInvites();
-
-  const realSpaces = useMemo(
-    () => spaces.filter((s) => !s.isFakeSpace),
-    [spaces],
-  );
 
   return (
     <SideBar paddingY="sm">
@@ -33,7 +27,7 @@ export const MainSideBar = () => {
         />
       ))}
       {/* {space && <Channels space={space} />} */}
-      {realSpaces.length > 0 && <RealSpaces spaces={realSpaces} />}
+      {spaces.length > 0 && <RealSpaces spaces={spaces} />}
     </SideBar>
   );
 };
@@ -72,7 +66,7 @@ export const Channels = (props: { space: SpaceData }) => {
               key={group.label + channel.id.slug}
               icon="tag"
               highlight={channel.highlight}
-              link={`/spaces/${props.space.id.slug}/${channel.id.slug}`}
+              link={`/spaces/${props.space.id.slug}/channels/${channel.id.slug}/`}
               label={channel.label}
             />
           ))}

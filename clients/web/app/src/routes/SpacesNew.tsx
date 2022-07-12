@@ -9,7 +9,7 @@ export const SpacesNew = () => {
 
   const onCreateSpace = useCallback(
     (roomId: RoomIdentifier, membership: Membership) => {
-      navigate("/spaces/" + roomId.slug);
+      navigate("/spaces/" + roomId.slug + "/");
     },
     [navigate],
   );

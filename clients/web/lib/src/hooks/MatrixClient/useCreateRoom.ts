@@ -6,10 +6,12 @@ import {
   CreateRoomInfo,
   makeRoomIdentifier,
   RoomIdentifier,
+  Visibility,
+  ZionContext,
 } from "../../types/matrix-types";
 
 export const useCreateRoom = () => {
-  const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
+  const { matrixClient } = useContext<ZionContext>(MatrixContext);
   const { homeServer } = useMatrixStore();
 
   return useCallback(
@@ -42,19 +44,30 @@ export const createZionRoom = async (props: {
     visibility: createInfo.visibility,
     name: createInfo.roomName,
     is_direct: createInfo.isDirectMessage === true,
+    initial_state: [
+      {
+        type: "m.room.join_rules",
+        state_key: "",
+        content: {
+          join_rule:
+            createInfo.visibility == Visibility.Public ? "public" : "private",
+        },
+      },
+    ],
   };
   // add our parent room if we have one
   if (createInfo.parentSpaceId) {
-    options.initial_state = [
-      {
-        type: "m.space.parent",
-        state_key: createInfo.parentSpaceId.matrixRoomId,
-        content: {
-          canonical: true,
-          via: [homeServer],
-        },
+    if (!options.initial_state) {
+      options.initial_state = [];
+    }
+    options.initial_state.push({
+      type: "m.space.parent",
+      state_key: createInfo.parentSpaceId.matrixRoomId,
+      content: {
+        canonical: true,
+        via: [homeServer],
       },
-    ];
+    });
   }
   const response = await matrixClient.createRoom(options);
   console.log("Created room", JSON.stringify(response));

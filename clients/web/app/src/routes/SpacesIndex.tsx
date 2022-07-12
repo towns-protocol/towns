@@ -1,6 +1,6 @@
 import React, { ComponentProps, forwardRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RoomMessage, useMatrixStore } from "use-matrix-client";
+import { RoomMessage, useMatrixStore, useSpace } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
 import {
@@ -13,13 +13,12 @@ import {
   Paragraph,
   Stack,
 } from "@ui";
-import { useSpaceData } from "hooks/useSpaceData";
 
 export const SpacesIndex = () => {
   const { spaceSlug } = useParams();
   const navigate = useNavigate();
   const { allMessages } = useMatrixStore();
-  const space = useSpaceData(spaceSlug);
+  const space = useSpace(spaceSlug);
 
   const spaceMessages = useMemo(
     () =>
@@ -76,7 +75,7 @@ export const SpacesIndex = () => {
           <Box grow alignItems="center" background="level2">
             {messagesLength ? (
               <SpaceMessages messages={spaceMessages} />
-            ) : space.isFakeSpace ? (
+            ) : space.id.slug === "Council" ? (
               <FakeSpaceMessages />
             ) : (
               <></>

@@ -31,14 +31,24 @@ import { SpacesSettings } from "routes/SpacesSettings";
 import { SpaceThreads } from "routes/SpaceThreads";
 import { SidebarLayout } from "SidebarLayout";
 import { FontLoader } from "ui/utils/FontLoader";
+import { SpaceHome } from "routes/SpaceHome";
+import { ChannelSettings } from "routes/ChannelSettings";
 
 FontLoader.init();
 
 export const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
+export const ZION_SPACE_ID = "!qDhRwYHK9GySLLFU:node1.hntlabs.com";
+export const ZION_SPACE_NAME = "Zion"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
+export const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 
 export const App = () => {
   return (
-    <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
+    <MatrixContextProvider
+      homeServerUrl={MATRIX_HOMESERVER_URL}
+      defaultSpaceId={ZION_SPACE_ID}
+      defaultSpaceName={ZION_SPACE_NAME}
+      defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
+    >
       <AllRoutes />
     </MatrixContextProvider>
   );
@@ -86,7 +96,10 @@ const AllRoutes = () => {
           </Route>
           {isAuthenticated && (
             <Route element={<SidebarLayout />}>
-              <Route element={<HomeLayout />}>
+              <Route element={<Spaces />}>
+                <Route index element={<SpaceHome />} />
+              </Route>
+              <Route path="home" element={<HomeLayout />}>
                 <Route index element={<Highlights />} />
               </Route>
               <Route path="me" element={<MeIndex />} />
@@ -99,8 +112,9 @@ const AllRoutes = () => {
               </Route>
               <Route path="spaces/new" element={<SpacesNew />} />
               <Route path="spaces/:spaceSlug" element={<Spaces />}>
+                <Route index element={<SpaceHome />} />
                 <Route element={<SpaceLayout />}>
-                  <Route index element={<Highlights />} />
+                  <Route path="highlights" element={<Highlights />} />
                   <Route path="proposals" element={<ProposalPage />} />
                   <Route path="members" element={<MembersPage />} />
                 </Route>
@@ -116,6 +130,10 @@ const AllRoutes = () => {
                     element={<SpacesChannelReplies />}
                   />
                 </Route>
+                <Route
+                  path="channels/:channelSlug/settings"
+                  element={<ChannelSettings />}
+                />
               </Route>
             </Route>
           )}

@@ -12,7 +12,7 @@ type Props = {
   reactions?: { [key: string]: number };
   userReaction?: string;
   replies?: { userIds: number[]; fakeLength?: number };
-  date: string;
+  date?: string;
   children?: React.ReactNode;
   rounded?: BoxProps["rounded"];
   padding?: BoxProps["padding"];
@@ -71,9 +71,11 @@ export const Message = ({
           </NavLink>
         )}
         {/* date, alignment tbc depending on context */}
-        <Text fontSize="sm" color="gray2" as="span" textAlign="right">
-          {date}
-        </Text>
+        {date && (
+          <Text fontSize="sm" color="gray2" as="span" textAlign="right">
+            {date}
+          </Text>
+        )}
       </Box>
 
       <Box fontSize="md" color="default" maxWidth="1200">

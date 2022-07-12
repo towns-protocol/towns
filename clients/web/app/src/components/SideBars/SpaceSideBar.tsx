@@ -1,11 +1,15 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router";
-import { RoomIdentifier } from "use-matrix-client";
+import {
+  Membership,
+  RoomIdentifier,
+  SpaceData,
+  useInvitesForSpace,
+} from "use-matrix-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";
 import { Box, Paragraph, Stack } from "@ui";
-import { SpaceData } from "data/SpaceData";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { atoms } from "ui/styles/atoms.css";
 import { SideBar } from "./_SideBar";
@@ -16,7 +20,7 @@ type Props = {
 
 export const SpaceSideBar = (props: Props) => {
   const { space } = props;
-
+  const invites = useInvitesForSpace(space.id);
   const navigate = useNavigate();
 
   const onSettings = useCallback(
@@ -43,35 +47,55 @@ export const SpaceSideBar = (props: Props) => {
           />
         </FadeIn>
       </Stack>
-      <ActionNavItem icon="back" link="/" id="back" label="Back" />
       {space && (
         <SpaceNavItem
           exact
-          settings
           name={space.name}
           id={space.id}
           avatar={space.avatarSrc}
+          settings={space.membership === Membership.Join}
           onSettings={onSettings}
         />
       )}
-      <ActionNavItem
-        icon="threads"
-        link={`/spaces/${space.id.slug}/threads`}
-        id="threads"
-        label="Threads"
-      />
-      <ActionNavItem
-        icon="at"
-        id="mentions"
-        label="Mentions"
-        link={`/spaces/${space.id.slug}/mentions`}
-      />
-      <ActionNavItem
-        icon="plus"
-        id="newChannel"
-        label="New Channel"
-        link={`/spaces/${space.id.slug}/channels/new`}
-      />
+      {space?.membership === Membership.Join && (
+        <>
+          <ActionNavItem
+            icon="threads"
+            link={`/spaces/${space.id.slug}/highlights`}
+            id="highlights"
+            label="Highlights"
+          />
+          <ActionNavItem
+            icon="threads"
+            link={`/spaces/${space.id.slug}/threads`}
+            id="threads"
+            label="Threads"
+          />
+          <ActionNavItem
+            icon="at"
+            id="mentions"
+            label="Mentions"
+            link={`/spaces/${space.id.slug}/mentions`}
+          />
+          <ActionNavItem
+            icon="plus"
+            id="newChannel"
+            label="New Channel"
+            link={`/spaces/${space.id.slug}/channels/new`}
+          />
+        </>
+      )}
+      {invites.map((m, index) => (
+        <SpaceNavItem
+          isInvite
+          key={m.id.slug}
+          active={false}
+          id={m.id}
+          name={m.name}
+          avatar={m.avatarSrc}
+          pinned={false}
+        />
+      ))}
       {space && <Channels space={space} />}
     </SideBar>
   );
@@ -102,7 +126,7 @@ const Channels = (props: { space: SpaceData }) => {
               key={group.label + channel.id.slug}
               icon="tag"
               highlight={channel.highlight}
-              link={`/spaces/${props.space.id.slug}/channels/${channel.id.slug}`}
+              link={`/spaces/${props.space.id.slug}/channels/${channel.id.slug}/`}
               label={channel.label}
             />
           ))}

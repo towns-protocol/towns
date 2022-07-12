@@ -5,7 +5,13 @@ import { Box, Button, Heading, Stack, TextField } from "@ui";
 interface Props {
   spaceName: string;
   spaceId: RoomIdentifier;
-  onInviteClicked: (spaceId: RoomIdentifier, inviteeUserId: string) => void;
+  roomName?: string;
+  roomId?: RoomIdentifier;
+  onInviteClicked: (
+    spaceId: RoomIdentifier,
+    roomId: RoomIdentifier | undefined,
+    inviteeUserId: string,
+  ) => void;
   onCancelClicked: () => void;
 }
 
@@ -24,15 +30,15 @@ export const InviteUserToRoomForm = (props: Props) => {
       console.log("error, invitee is empty");
       return;
     }
-    props.onInviteClicked(props.spaceId, inviteeUserId);
+    props.onInviteClicked(props.spaceId, props.roomId, inviteeUserId);
   }, [inviteeUserId, props]);
 
   return (
     <Stack padding gap="lg" minWidth="400">
       <Box paddingY="lg">
         <Heading level={2} textAlign="center">
-          Invite User to join space <br />
-          {props.spaceName}
+          Invite User to join <br />
+          {props.roomName ?? props.spaceName}
         </Heading>
       </Box>
       <Stack gap="lg">

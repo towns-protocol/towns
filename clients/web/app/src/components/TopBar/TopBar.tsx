@@ -33,7 +33,7 @@ export const TopBar = (props: {
       style={positionTop}
     >
       <Box color="default" justifyContent="center" width="100">
-        <Link to="/">
+        <Link to={isAuthenticated ? "/home" : "/"}>
           <MinimalLogo className={atoms({ height: "x4" })} />
         </Link>
       </Box>
@@ -74,7 +74,7 @@ const TopMenu = () => {
   return (
     <Stack horizontal height="100%" justifyContent="spaceBetween">
       {isAuthenticated && (
-        <TopMenuLink exact={!isAppRoute} to="/">
+        <TopMenuLink exact={!isAppRoute} to="/home">
           Chat
         </TopMenuLink>
       )}

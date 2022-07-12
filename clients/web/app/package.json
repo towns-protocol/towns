@@ -34,7 +34,6 @@
     "react-router": "^6.3.0",
     "react-use-event-hook": "^0.9.2",
     "siwe": "^1.1.6",
-    "slugify": "^1.6.5",
     "use-matrix-client": "*",
     "vanilla-classnames": "^0.1.0",
     "zustand": "^4.0.0-rc.1"

@@ -1,10 +1,9 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
-import { MatrixClient } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
-import { RoomIdentifier } from "../../types/matrix-types";
+import { RoomIdentifier, ZionContext } from "../../types/matrix-types";
 
 export const useLeaveRoom = () => {
-  const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
+  const { matrixClient } = useContext<ZionContext>(MatrixContext);
 
   return useCallback(
     async (roomId: RoomIdentifier) => {

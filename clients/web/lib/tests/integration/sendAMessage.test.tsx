@@ -22,7 +22,9 @@ describe("sendAMessage", () => {
     const alice = clients[1];
 
     // start them up
-    await Promise.all(clients.map((client) => client.startClient()));
+    await Promise.all(
+      clients.map((client) => client.registerWalletAndStartClient()),
+    );
 
     // bob creates a room
     const roomId = await bob.createRoom({

@@ -3,6 +3,7 @@ import {
   CreateSpaceInfo,
   RoomIdentifier,
   SpaceChild,
+  ZionContext,
 } from "../types/matrix-types";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
@@ -15,6 +16,8 @@ import { useSendMessage } from "./MatrixClient/useSendMessage";
 import { useLeaveRoom } from "./MatrixClient/useLeaveRoom";
 import { useInviteUser } from "./MatrixClient/useInviteUser";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
+import { MatrixContext } from "../components/MatrixContextProvider";
+import { useContext, useMemo } from "react";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -23,7 +26,9 @@ import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 export function useMatrixClient() {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
+  const { matrixClient } = useContext<ZionContext>(MatrixContext);
 
+  const clientRunning = useMemo(() => matrixClient != null && matrixClient.clientRunning, [matrixClient]); 
   const syncSpace: (spaceId: RoomIdentifier) => Promise<SpaceChild[]> = useSyncSpace();
   const createSpace: (createSpaceInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined> = useCreateSpace();
   const createRoom: (createInfo: CreateRoomInfo) => Promise<RoomIdentifier | undefined> = useCreateRoom();
@@ -36,6 +41,7 @@ export function useMatrixClient() {
   const joinRoom: (roomId: RoomIdentifier) => Promise<void> = useJoinRoom();
 
   return {
+    clientRunning,
     createRoom,
     createSpace,
     getIsWalletIdRegistered,

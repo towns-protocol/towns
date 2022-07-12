@@ -1,15 +1,15 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
-import { MatrixClient } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
 import { useCredentialStore } from "../../store/use-credential-store";
 import { useMatrixStore } from "../../store/use-matrix-store";
 import { LoginStatus } from "../login";
+import { ZionContext } from "types/matrix-types";
 
 export const useLogout = () => {
   const { setLoginStatus } = useMatrixStore();
   const { setAccessToken } = useCredentialStore();
 
-  const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
+  const { matrixClient } = useContext<ZionContext>(MatrixContext);
 
   return useCallback(
     async function (): Promise<void> {

@@ -56,7 +56,7 @@ export default function AppDrawer(props: Props): JSX.Element {
   };
 
   const onClickSpace = (spaceId: RoomIdentifier, membership: Membership) => {
-    navigate("/spaces/" + spaceId.slug);
+    navigate("/spaces/" + spaceId.slug + "/");
   };
 
   const onClickCreateSpace = () => {

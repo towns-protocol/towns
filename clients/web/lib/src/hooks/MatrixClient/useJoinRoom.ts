@@ -1,24 +1,30 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
 import { MatrixClient } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
-import { RoomIdentifier } from "../../types/matrix-types";
+import {
+  makeRoomIdentifier,
+  RoomIdentifier,
+  ZionContext,
+} from "../../types/matrix-types";
+import { useMatrixStore } from "../../store/use-matrix-store";
 
 export const useJoinRoom = () => {
-  const matrixClient = useContext<MatrixClient | undefined>(MatrixContext);
-
+  const { matrixClient } = useContext<ZionContext>(MatrixContext);
+  const { createRoom } = useMatrixStore();
   return useCallback(
     async (roomId: RoomIdentifier) => {
       try {
         if (matrixClient) {
-          await joinZionRoom({ matrixClient, roomId });
-          console.log(`Joined room[${roomId.matrixRoomId}]`);
+          const room = await joinZionRoom({ matrixClient, roomId });
+          console.log(`Joined room[${roomId.matrixRoomId}]`, room);
+          createRoom(makeRoomIdentifier(room.roomId), room.isSpaceRoom());
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (ex: any) {
         console.error(`Error joining room[${roomId.matrixRoomId}]`, ex.stack);
       }
     },
-    [matrixClient],
+    [createRoom, matrixClient],
   );
 };
 
@@ -30,5 +36,5 @@ export const joinZionRoom = async (props: {
   const opts = {
     syncRoom: true,
   };
-  await matrixClient.joinRoom(roomId.matrixRoomId, opts);
+  return await matrixClient.joinRoom(roomId.matrixRoomId, opts);
 };

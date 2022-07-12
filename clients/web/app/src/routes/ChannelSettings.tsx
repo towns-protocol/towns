@@ -1,19 +1,26 @@
 import React, { useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { RoomIdentifier, useMatrixClient, useSpace } from "use-matrix-client";
-import { InviteUserToRoomForm } from "@components/Web3";
+import { useNavigate, useParams } from "react-router";
+import {
+  RoomIdentifier,
+  useChannel,
+  useMatrixClient,
+  useSpace,
+} from "use-matrix-client";
 import { Stack } from "@ui";
+import { InviteUserToRoomForm } from "@components/Web3";
 
-export const SpacesInvite = () => {
-  const { spaceSlug } = useParams();
+export const ChannelSettings = () => {
+  const { spaceSlug, channelSlug } = useParams();
   const { inviteUser } = useMatrixClient();
-  const space = useSpace(spaceSlug);
-
   const navigate = useNavigate();
+  const space = useSpace(spaceSlug);
+  const channel = useChannel(spaceSlug, channelSlug);
 
   const onCancelClicked = useCallback(() => {
-    navigate(space?.id.slug ? "/spaces/" + space.id.slug : "/");
-  }, [navigate, space?.id.slug]);
+    navigate(
+      "/spaces/" + space?.id.slug + "/channels/" + channel?.id.slug + "/",
+    );
+  }, [channel?.id.slug, navigate, space?.id.slug]);
 
   const onInviteClicked = useCallback(
     async (
@@ -21,7 +28,7 @@ export const SpacesInvite = () => {
       roomId: RoomIdentifier | undefined,
       inviteeUserId: string,
     ) => {
-      await inviteUser(spaceId, inviteeUserId);
+      await inviteUser(roomId ?? spaceId, inviteeUserId);
       navigate("/spaces/" + spaceId.slug + "/");
     },
     [inviteUser, navigate],
@@ -34,6 +41,8 @@ export const SpacesInvite = () => {
           <InviteUserToRoomForm
             spaceName={space.name}
             spaceId={space.id}
+            roomName={channel?.label}
+            roomId={channel?.id}
             onCancelClicked={onCancelClicked}
             onInviteClicked={onInviteClicked}
           />

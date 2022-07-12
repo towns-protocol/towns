@@ -1,29 +1,14 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useParams } from "react-router";
 import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
-import { RoomIdentifier, useMatrixClient, useSpaceId } from "use-matrix-client";
+import { RoomIdentifier, useSpaceId } from "use-matrix-client";
 import { Stack } from "ui/components/Stack/Stack";
 import { Box, Heading, SizeBox } from "@ui";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceLayout = () => {
   const { spaceSlug } = useParams();
-  const { syncSpace } = useMatrixClient();
-
   const spaceId = useSpaceId(spaceSlug);
-
-  useEffect(() => {
-    (async () => {
-      if (spaceId) {
-        try {
-          await syncSpace(spaceId);
-        } catch (reason) {
-          console.warn("SpacesIndex error:", reason);
-        }
-      }
-    })();
-  }, [spaceId, syncSpace]);
-
   if (!spaceId) {
     return null;
   }
@@ -41,7 +26,9 @@ export const SpaceLayout = () => {
 
 export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
   <Stack horizontal gap="lg">
-    <SpaceNavItem to={`/spaces/${props.spaceId.slug}`}>Highlights</SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/highlights`}>
+      Highlights
+    </SpaceNavItem>
     <SpaceNavItem to={`/spaces/${props.spaceId.slug}/proposals`}>
       Proposals
     </SpaceNavItem>

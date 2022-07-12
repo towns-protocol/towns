@@ -1,6 +1,7 @@
 import { Allotment, AllotmentHandle } from "allotment";
 import React, { useEffect, useRef } from "react";
 import { Outlet, useMatch } from "react-router";
+import { useSpace } from "use-matrix-client";
 import {
   MainSideBar,
   MessagesSideBar,
@@ -9,13 +10,13 @@ import {
 import { Box, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 import { atoms } from "ui/styles/atoms.css";
-import { useSpaceData } from "hooks/useSpaceData";
 
 export const SidebarLayout = () => {
   const allotemntRef = useRef<AllotmentHandle>(null);
   const messageRoute = useMatch({ path: "/messages", end: false });
   const spaceRoute = useMatch({ path: "/spaces/:spaceSlug", end: false });
-  const space = useSpaceData(spaceRoute?.params.spaceSlug);
+  const homeRoute = useMatch({ path: "/home", end: true });
+  const space = useSpace(spaceRoute?.params.spaceSlug);
 
   const config = ["primary-menu", "secondary-menu", "content"];
   const { onSizesChange, sizes } = usePersistPanes(config);
@@ -41,7 +42,11 @@ export const SidebarLayout = () => {
             maxSize={320}
             preferredSize={sizes[0] || 250}
           >
-            {space ? <SpaceSideBar space={space} /> : <MainSideBar />}
+            {space && !homeRoute ? (
+              <SpaceSideBar space={space} />
+            ) : (
+              <MainSideBar />
+            )}
           </Allotment.Pane>
 
           {/* secondary side bar */}

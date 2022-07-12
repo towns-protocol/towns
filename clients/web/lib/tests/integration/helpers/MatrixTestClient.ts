@@ -2,6 +2,7 @@ import { Wallet } from "ethers";
 import {
   ClientEvent,
   createClient,
+  EventType,
   ICreateClientOpts,
   MatrixClient,
 } from "matrix-js-sdk";
@@ -25,9 +26,11 @@ import { joinZionRoom } from "../../../src/hooks/MatrixClient/useJoinRoom";
 import { sendZionMessage } from "../../../src/hooks/MatrixClient/useSendMessage";
 import {
   CreateRoomInfo,
+  CreateSpaceInfo,
   RoomIdentifier,
 } from "../../../src/types/matrix-types";
 import { sleepUntil } from "./TestUtils";
+import { createZionSpace } from "../../../src/hooks/MatrixClient/useCreateSpace";
 
 export class MatrixTestClient {
   public name: string;
@@ -144,7 +147,7 @@ export class MatrixTestClient {
   /// start a message client, will register the wallet if it's not already registered
   public async startClient() {
     if (!this.matrixAccessToken || !this.matrixUserId) {
-      await this.registerWallet();
+      throw new Error("Client not registered");
     }
     const options: ICreateClientOpts = {
       baseUrl: this.homeServer,
@@ -178,6 +181,13 @@ export class MatrixTestClient {
     await sunk;
   }
 
+  public async registerWalletAndStartClient() {
+    if (!this.matrixAccessToken || !this.matrixUserId) {
+      await this.registerWallet();
+    }
+    return this.startClient();
+  }
+
   /// stop the matrix client
   public stopClient() {
     this.log("stopping client");
@@ -191,6 +201,13 @@ export class MatrixTestClient {
       homeServer: this.homeServer,
       createInfo: createInfo,
     });
+  }
+
+  /// create a space and return the roomId
+  public async createSpace(
+    createSpaceInfo: CreateSpaceInfo,
+  ): Promise<RoomIdentifier> {
+    return createZionSpace({ matrixClient: this.client, createSpaceInfo });
   }
 
   /// invite a user to your room
@@ -210,5 +227,28 @@ export class MatrixTestClient {
       roomId,
       message,
     });
+  }
+
+  /// set the room invite level
+  public async setRoomInviteLevel(roomId: RoomIdentifier, level: number) {
+    const room = this.client.getRoom(roomId.matrixRoomId);
+    if (!room) {
+      throw new Error(`Room ${roomId.matrixRoomId} not found`);
+    }
+
+    const powerLevelsEvent = room.currentState.getStateEvents(
+      EventType.RoomPowerLevels,
+      "",
+    );
+    const joinRules = room.currentState.getJoinRule();
+    console.log("joinRules", joinRules);
+    const powerLevels = powerLevelsEvent && powerLevelsEvent.getContent();
+    powerLevels.invite = level;
+    const response = await this.client.sendStateEvent(
+      roomId.matrixRoomId,
+      EventType.RoomPowerLevels,
+      powerLevels,
+    );
+    console.log("setRoomInviteLevel", response);
   }
 }

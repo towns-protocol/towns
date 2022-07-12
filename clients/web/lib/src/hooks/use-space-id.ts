@@ -1,10 +1,12 @@
-import { useMemo } from "react";
-import { useMatrixStore } from "../store/use-matrix-store";
+import { MatrixContext } from "../components/MatrixContextProvider";
+import { useContext, useMemo } from "react";
+import { makeRoomIdentifierFromSlug, ZionContext } from "../types/matrix-types";
 
-export function useSpaceId(slug: string | undefined) {
-  const { rooms } = useMatrixStore();
+/// returns default space id if no space slug is provided
+export function useSpaceId(slug: string | undefined = undefined) {
+  const { defaultSpaceId } = useContext<ZionContext>(MatrixContext);
   return useMemo(
-    () => (rooms && slug ? rooms[slug]?.id : undefined),
-    [slug, rooms],
+    () => (slug ? makeRoomIdentifierFromSlug(slug) : defaultSpaceId),
+    [slug, defaultSpaceId],
   );
 }

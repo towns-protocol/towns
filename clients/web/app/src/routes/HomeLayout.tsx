@@ -17,7 +17,7 @@ export const HomeLayout = () => (
 
 export const HomeNav = () => (
   <Stack horizontal gap="lg">
-    <HomeNavItem to="/">All Highlights </HomeNavItem>
+    <HomeNavItem to="/home">All Highlights </HomeNavItem>
   </Stack>
 );
 

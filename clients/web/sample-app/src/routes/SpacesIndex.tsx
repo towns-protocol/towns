@@ -3,15 +3,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSpace } from "use-matrix-client";
 import { List, ListItem, ListItemText } from "@mui/material";
 import {
+  ChannelGroup,
+  Channel,
   RoomIdentifier,
-  SpaceChild,
 } from "use-matrix-client/dist/types/matrix-types";
 
 export const SpacesIndex = () => {
   const { spaceSlug } = useParams();
   const navigate = useNavigate();
   const space = useSpace(spaceSlug);
-
   const onClickSettings = useCallback(() => {
     if (spaceSlug) {
       navigate("/spaces/" + spaceSlug + "/settings");
@@ -21,7 +21,7 @@ export const SpacesIndex = () => {
   const onClickChannel = useCallback(
     (roomId: RoomIdentifier) => {
       if (space?.id.slug) {
-        navigate(`/spaces/${space.id.slug}/channels/${roomId.slug}`);
+        navigate(`/spaces/${space.id.slug}/channels/${roomId.slug}/`);
       }
     },
     [space?.id.slug, navigate],
@@ -29,11 +29,13 @@ export const SpacesIndex = () => {
 
   const channelItems = useMemo(() => {
     if (space) {
-      return space.children.map((r: SpaceChild) => (
-        <ListItem button key={r.id.slug} onClick={() => onClickChannel(r.id)}>
-          <ListItemText>{r.name}</ListItemText>
-        </ListItem>
-      ));
+      return space.channelGroups.flatMap((r: ChannelGroup) =>
+        r.channels.map((c: Channel) => (
+          <ListItem button key={c.id.slug} onClick={() => onClickChannel(c.id)}>
+            <ListItemText>{c.label}</ListItemText>
+          </ListItem>
+        )),
+      );
     }
     return [];
   }, [space, onClickChannel]);

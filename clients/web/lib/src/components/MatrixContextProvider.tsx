@@ -1,25 +1,44 @@
-import { MatrixClient } from "matrix-js-sdk";
 import { Web3Provider } from "../hooks/use-web3";
 import React, { createContext } from "react";
 import { useMatrixClientListener } from "../hooks/use-matrix-client-listener";
+import { makeRoomIdentifier, ZionContext } from "../types/matrix-types";
 
-export const MatrixContext = createContext<MatrixClient | undefined>(undefined);
+export const MatrixContext = createContext<ZionContext>({});
 
 interface Props {
   homeServerUrl: string;
+  defaultSpaceId?: string;
+  defaultSpaceName?: string; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
+  defaultSpaceAvatarSrc?: string; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
   initialSyncLimit?: number;
   children: JSX.Element;
 }
 
 export function MatrixContextProvider(props: Props): JSX.Element {
-  const { matrixClient } = useMatrixClientListener(
-    props.homeServerUrl,
-    props.initialSyncLimit,
-  );
+  const {
+    homeServerUrl,
+    defaultSpaceId,
+    defaultSpaceName,
+    defaultSpaceAvatarSrc,
+    initialSyncLimit,
+  } = props;
 
+  const { matrixClient } = useMatrixClientListener(
+    homeServerUrl,
+    initialSyncLimit,
+  );
   return (
     <Web3Provider>
-      <MatrixContext.Provider value={matrixClient}>
+      <MatrixContext.Provider
+        value={{
+          matrixClient: matrixClient,
+          defaultSpaceId: defaultSpaceId
+            ? makeRoomIdentifier(defaultSpaceId)
+            : undefined,
+          defaultSpaceName: defaultSpaceName,
+          defaultSpaceAvatarSrc: defaultSpaceAvatarSrc,
+        }}
+      >
         {props.children}
       </MatrixContext.Provider>
     </Web3Provider>

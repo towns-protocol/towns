@@ -1,30 +1,14 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RoomIdentifier, useMatrixClient } from "use-matrix-client";
+import { useInviteData, useMatrixClient } from "use-matrix-client";
 import { Box, Stack } from "@ui";
 import { AcceptRoomInviteForm } from "@components/Web3";
-import { useInviteData, useSpaces } from "hooks/useSpaceData";
-import { ChannelGroup } from "data/ChannelData";
-import { SpaceData } from "data/SpaceData";
 
 export const InvitesIndex = () => {
   const { inviteSlug } = useParams();
   const { leaveRoom, joinRoom } = useMatrixClient();
   const navigate = useNavigate();
   const invite = useInviteData(inviteSlug);
-  const spaces = useSpaces();
-
-  const hasChannel = (channelGroup: ChannelGroup, id: RoomIdentifier) =>
-    channelGroup.channels.some((c) => c.id.slug === id.slug);
-  const hasChannelGroup = useCallback(
-    (space: SpaceData, id: RoomIdentifier) =>
-      space.channelGroups.some((channelGroup) => hasChannel(channelGroup, id)),
-    [],
-  );
-  const getParentSpaceId = useCallback(
-    (id: RoomIdentifier) => spaces.find((space) => hasChannelGroup(space, id)),
-    [hasChannelGroup, spaces],
-  );
 
   const onAccept = useCallback(async () => {
     if (!invite?.id) {
@@ -35,9 +19,13 @@ export const InvitesIndex = () => {
     navigate(
       invite.isSpaceRoom
         ? "/spaces/" + invite.id.slug
-        : "/" + getParentSpaceId(invite.id)?.id.slug + "/" + invite.id.slug,
+        : "/" +
+            invite.spaceParentId?.slug +
+            "/channels/" +
+            invite.id.slug +
+            "/",
     );
-  }, [getParentSpaceId, invite, joinRoom, navigate]);
+  }, [invite, joinRoom, navigate]);
 
   const onDecline = useCallback(async () => {
     if (!invite?.id) {
