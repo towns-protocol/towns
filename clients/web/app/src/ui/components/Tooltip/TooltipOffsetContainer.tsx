@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Box } from "../Box/Box";
+import { Box, BoxProps } from "../Box/Box";
 import { Placement } from "./TooltipConstants";
 
 type OffsetContainerProps = {
@@ -8,6 +8,7 @@ type OffsetContainerProps = {
   placement: Placement;
   render: JSX.Element;
   triggerRect: DOMRect;
+  distance?: BoxProps["padding"];
   animatePresence?: boolean;
   onMouseLeave: () => void;
   containerRef: React.MutableRefObject<HTMLDivElement | null>;
@@ -26,6 +27,7 @@ export const OverlayOffset = (props: OffsetContainerProps) => {
     render,
     placement,
     containerRef,
+    distance = "md",
     layoutId = "tooltip",
   } = props;
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -90,7 +92,7 @@ export const OverlayOffset = (props: OffsetContainerProps) => {
   }, [ref]);
 
   const content = (
-    <Box padding ref={ref} onMouseLeave={props.onMouseLeave}>
+    <Box padding={distance} ref={ref} onMouseLeave={props.onMouseLeave}>
       {render}
     </Box>
   );

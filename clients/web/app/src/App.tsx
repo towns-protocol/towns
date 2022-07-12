@@ -57,10 +57,8 @@ const AllRoutes = () => {
   return (
     <Routes>
       <Route path="/playground" element={<Playground />} />
-      <Route element={<AppLayout authenticated={isAuthenticated} />}>
-        {isAuthenticated && (
-          <Route path="/onboarding" element={<Onboarding />} />
-        )}
+      <Route element={<AppLayout />}>
+        <Route path="/register" element={<Onboarding />} />
         <Route
           element={
             <>

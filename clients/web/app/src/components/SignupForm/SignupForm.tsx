@@ -3,7 +3,13 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import useEvent from "react-use-event-hook";
-import { useWeb3Context } from "use-matrix-client";
+import {
+  LoginStatus,
+  WalletStatus,
+  useMatrixClient,
+  useMatrixStore,
+  useWeb3Context,
+} from "use-matrix-client";
 import { vars } from "ui/styles/vars.css";
 import {
   Avatar,
@@ -15,6 +21,11 @@ import {
   Stack,
   TextField,
 } from "@ui";
+import {
+  ButtonStatus,
+  registerWalletMsgToSign,
+  useCheckRegistrationStatusWhen,
+} from "@components/Login/LoginComponent";
 
 const placeholders = {
   names: [
@@ -46,9 +57,34 @@ export const SignupForm = () => {
     });
 
   const navigate = useNavigate();
+  const { walletStatus } = useWeb3Context();
+  const { loginStatus } = useMatrixStore();
+  const isConnected =
+    walletStatus === WalletStatus.Unlocked &&
+    loginStatus === LoginStatus.LoggedOut;
+  const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected);
+
+  console.log({ registrationStatus });
+
+  useEffect(() => {
+    if (!isConnected || registrationStatus === ButtonStatus.Login) {
+      console.log("navigate away");
+    } else {
+      console.log("STAY");
+    }
+  }, [isConnected, navigate, registrationStatus]);
+
+  const { registerWallet } = useMatrixClient();
 
   const onSubmit = (data: { displayName: string }) => {
-    navigate("/");
+    (async () => {
+      try {
+        await registerWallet(registerWalletMsgToSign);
+      } catch (e: unknown) {
+        console.warn(e);
+      }
+      navigate("/");
+    })();
   };
   const [fieldENS, fieldDisplayName, fieldNFT] = watch([
     "ens",

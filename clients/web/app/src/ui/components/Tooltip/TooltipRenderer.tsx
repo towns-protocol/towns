@@ -17,10 +17,10 @@ const Trigger = {
 } as const;
 
 type Props = {
-  layoutId: string;
+  layoutId?: string;
   placement?: Placement;
   children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode;
-  render: JSX.Element;
+  render: JSX.Element | undefined;
   trigger?: typeof Trigger[keyof typeof Trigger];
 };
 
@@ -145,6 +145,7 @@ export const TooltipRenderer = (props: Props) => {
       {active &&
         triggerRect &&
         root &&
+        render &&
         createPortal(
           <OverlayOffset
             layoutId={layoutId}

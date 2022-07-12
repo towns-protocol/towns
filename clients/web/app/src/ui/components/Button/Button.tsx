@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { Variants, motion } from "framer-motion";
 import React, { ButtonHTMLAttributes } from "react";
 import { Box } from "@ui";
 import { ToneNameType } from "ui/styles/themes";
@@ -30,24 +30,27 @@ export const Button = ({
 }: Props) => (
   <MotionStack
     layout
-    initial={false}
-    direction="row"
+    horizontal
     as="button"
     cursor={disabled ? "default" : "pointer"}
     className={buttonStyle({ size })}
     justifyContent="center"
     alignItems="center"
     background={tone}
+    variants={buttonVariants}
+    whileHover="hover"
     onClick={onClick}
     {...inputProps}
   >
-    {icon && (
-      <motion.div layout="position">
-        <Icon type={icon} size="square_inline" />
-      </motion.div>
-    )}
-    <motion.div layout="position">{children}</motion.div>
+    {icon && <Icon type={icon} size="square_inline" />}
+    {children}
   </MotionStack>
 );
+
+const buttonVariants: Variants = {
+  hover: {
+    // border: `0 0 0 1px ${Figma.Colors.Orange}`,
+  },
+};
 
 const MotionStack = motion(Box);

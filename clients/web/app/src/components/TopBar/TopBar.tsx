@@ -1,9 +1,9 @@
 import React from "react";
 import { Link, NavLink, useMatch, useResolvedPath } from "react-router-dom";
 import { useMatrixStore } from "use-matrix-client";
+import { LoginComponent } from "@components/Login/LoginComponent";
 import { MinimalLogo } from "@components/Logo/Logo";
 import { ProfileCardButton } from "@components/ProfileCardButton/ProfileCardButton";
-import { Login } from "@components/Web3/Login";
 import { Box, ButtonText, Stack } from "@ui";
 import { atoms } from "ui/styles/atoms.css";
 import * as styles from "./TopBar.css";
@@ -19,6 +19,7 @@ export const TopBar = (props: {
   userId?: string | null;
 }) => {
   const { authenticated: isAuthenticated, username, userId } = props;
+  console.log({ isAuthenticated });
   return (
     <Stack
       borderBottom
@@ -41,6 +42,13 @@ export const TopBar = (props: {
       </Stack>
       <Box />
       <Box justifyContent="center" alignItems="end" width="100">
+        {isAuthenticated && userId && username ? (
+          <ProfileCardButton username={username} userId={userId} />
+        ) : (
+          <LoginComponent />
+        )}
+      </Box>
+      {/* <Box justifyContent="center" alignItems="end" width="100">
         {!isAuthenticated || !(username && userId) ? (
           <Login />
         ) : (
@@ -48,7 +56,7 @@ export const TopBar = (props: {
             <ProfileCardButton username={username} userId={userId} />
           </>
         )}
-      </Box>
+      </Box> */}
     </Stack>
   );
 };

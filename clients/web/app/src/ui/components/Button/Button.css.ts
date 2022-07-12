@@ -6,11 +6,11 @@ export const buttonStyle = recipe({
     border: "none",
     whiteSpace: "nowrap",
     borderRadius: vars.borderRadius.xs,
-    transition: "all 1s",
+    transition: "box-shadow 1s",
 
     selectors: {
       "&:hover": {
-        transition: "all 320ms",
+        transition: "box-shadow 320ms",
         boxShadow: `0 0 0px 1px ${vars.color.tone.cta1}`,
       },
     },

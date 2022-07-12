@@ -90,6 +90,8 @@ const root = createGlobalTheme(":root", {
       none: "0",
       auto: "auto",
       // for testing !
+      "min-content": `min-content`,
+      "max-content": `max-content`,
       "5vw": `5vw`,
       "10vw": `10vw`,
       "25vw": `25vw`,

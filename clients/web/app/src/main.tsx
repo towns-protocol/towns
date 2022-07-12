@@ -1,8 +1,9 @@
-import React from "react";
-import { BrowserRouter } from "react-router-dom";
-import { createRoot } from "react-dom/client";
-import { App } from "./App";
 import "allotment/dist/style.css";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { MainLayout } from "MainLayout";
+import { App } from "./App";
 
 const isDev = import.meta.env.DEV;
 
@@ -33,7 +34,9 @@ if (node) {
   createRoot(node).render(
     <React.StrictMode>
       <BrowserRouter>
-        <App />
+        <MainLayout>
+          <App />
+        </MainLayout>
       </BrowserRouter>
     </React.StrictMode>,
   );
