@@ -12,6 +12,8 @@ import { RichTextPreview } from "@components/RichText/RichTextEditor";
 import { Avatar, Stack } from "@ui";
 import { FadeIn } from "@components/Transitions";
 
+const INITIAL_MESSAGE_COUNT = 15;
+
 export const MessageScroller = (props: { messages: RoomMessage[] }) => {
   const { messages: allMessages } = props;
 
@@ -37,7 +39,7 @@ export const MessageScroller = (props: { messages: RoomMessage[] }) => {
         <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
           <div ref={ref} />
           {messages.map((m, index) => (
-            <FadeIn key={m.eventId}>
+            <FadeIn fast key={m.eventId} disabled={index > 5}>
               <Message
                 name={m.sender}
                 paddingX="lg"
@@ -63,7 +65,7 @@ const useLoadMore = (
   contentRef: RefObject<HTMLDivElement>,
   total: number,
 ) => {
-  const [displayCount, setDisplayCount] = useState(10);
+  const [displayCount, setDisplayCount] = useState(INITIAL_MESSAGE_COUNT);
   const { ref, inView } = useInView({
     root: containerRef.current,
     rootMargin: "50%",

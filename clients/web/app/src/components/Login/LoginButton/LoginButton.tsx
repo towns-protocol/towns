@@ -13,14 +13,12 @@ export const LoginButton = (props: {
 }) => {
   const hasSpinner = useDeferredLoading(props.loading);
 
-  useEffect(() => {
-    console.log(">>", props.label);
-  }, [props.label]);
-
   return (
     <AnimatePresence exitBeforeEnter>
       <Button onClick={props.onClick}>
-        <FadeIn key={props.label}>{props.label}</FadeIn>
+        <FadeIn layout key={props.label}>
+          {props.label}
+        </FadeIn>
         {hasSpinner && (
           <FadeIn delay>
             <ButtonSpinner />
@@ -41,7 +39,7 @@ const useDeferredLoading = (isLoading?: boolean) => {
     if (isLoading) {
       const timeout = setTimeout(() => {
         setDeferredLoading(true);
-      }, 1000);
+      }, 160);
       return () => {
         clearTimeout(timeout);
       };
