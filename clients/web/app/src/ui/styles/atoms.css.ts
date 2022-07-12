@@ -7,6 +7,7 @@ import { boxProperties } from "./properties/boxProperties.css";
 import { colorProperties } from "./properties/colorProperties.css";
 import { gridItemProperties } from "./properties/gridItemProperties.css";
 import { typeProperties } from "./properties/textProperties.css";
+import { imageProperties } from "./properties/imageProperties.css";
 
 export const atoms = createSprinkles(
   colorProperties,
@@ -14,6 +15,7 @@ export const atoms = createSprinkles(
   blockProperties,
   boxProperties,
   gridItemProperties,
+  imageProperties,
 );
 
 export type Atoms = Parameters<typeof atoms>[0];

@@ -2,10 +2,10 @@ import React, { useMemo } from "react";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { SideBar } from "@components/SideBars/_SideBar";
-import { Box, Paragraph, Stack, Text } from "@ui";
+import { Box, Paragraph, Stack } from "@ui";
 import { SpaceData } from "data/SpaceData";
-import { useSizeContext } from "ui/hooks/useSizeContext";
 import { useInvites, useSpaces } from "hooks/useSpaceData";
+import { useSizeContext } from "ui/hooks/useSizeContext";
 
 export const MainSideBar = () => {
   const spaces = useSpaces();
