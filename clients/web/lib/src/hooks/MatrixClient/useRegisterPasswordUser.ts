@@ -78,7 +78,6 @@ async function matrixRegisterUser(
     return {
       accessToken: response.access_token,
       deviceId: response.device_id,
-      homeServer: response.home_server,
       userId: response.user_id,
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,7 +89,6 @@ async function matrixRegisterUser(
   return {
     accessToken: undefined,
     deviceId: undefined,
-    homeServer: undefined,
     userId: undefined,
     error,
   };

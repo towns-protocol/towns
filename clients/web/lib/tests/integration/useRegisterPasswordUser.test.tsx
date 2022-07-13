@@ -5,7 +5,6 @@
 import React from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
-import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useMatrixClient } from "../../src/hooks/use-matrix-client";
 import { LoginStatus } from "../../src/hooks/login";
@@ -18,7 +17,7 @@ import { request } from "matrix-js-sdk";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-describe("walletStatus", () => {
+describe("useTegisterPasswordUser", () => {
   const homeServer = "http://localhost:8008";
   const chainId = "0x4";
   const testingUtils: TestingUtils = generateTestingUtils({
@@ -38,28 +37,19 @@ describe("walletStatus", () => {
     // Clear all mocks between tests
     testingUtils.clearAllMocks();
   });
-  test("new user registers a new wallet and is logged in", async () => {
-    // create a wallet for bob
-    const bobWallet = ethers.Wallet.createRandom();
-    // setup the mocks
-    testingUtils.mockChainId("0x4");
-    testingUtils.mockRequestAccounts([bobWallet.address], { chainId: chainId });
-    testingUtils.mockConnectedWallet([bobWallet.address], { chainId: chainId });
-    testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
-      return bobWallet.signMessage((params as string[])[0]);
-    });
+  test("username / password registration", async () => {
+    const bobId = ethers.Wallet.createRandom().address;
+    testingUtils.mockRequestAccounts([], { chainId: chainId });
+    testingUtils.mockConnectedWallet([], { chainId: chainId });
     // create a veiw for the wallet
-    const TestWalletStatus = () => {
-      const { walletStatus, chainId } = useWeb3Context();
+    const RegisterUsernamePasswordComponent = () => {
       const { loginStatus, loginError } = useMatrixStore();
-      const { registerWallet } = useMatrixClient();
+      const { registerPasswordUser } = useMatrixClient();
       return (
         <>
-          <div data-testid="walletStatus">{walletStatus}</div>
-          <div data-testid="chainId">{chainId}</div>
           <div data-testid="loginStatus">{loginStatus}</div>
           <div data-testid="loginError">{loginError?.message ?? ""}</div>
-          <button onClick={() => void registerWallet("...register?")}>
+          <button onClick={() => void registerPasswordUser(bobId, "password1")}>
             Register
           </button>
         </>
@@ -68,18 +58,13 @@ describe("walletStatus", () => {
     // render it
     render(
       <MatrixTestApp homeServerUrl={homeServer}>
-        <TestWalletStatus />
+        <RegisterUsernamePasswordComponent />
       </MatrixTestApp>,
     );
     // get our test elements
-    const walletStatus = screen.getByTestId("walletStatus");
     const loginStatus = screen.getByTestId("loginStatus");
     const loginError = screen.getByTestId("loginError");
     const registerButton = screen.getByRole("button", { name: "Register" });
-    // wait for our wallet to get unlocked
-    await waitFor(() =>
-      expect(walletStatus).toHaveTextContent(WalletStatus.Unlocked),
-    );
     // verify that we are logged out without error
     expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut);
     expect(loginError).toHaveTextContent("");

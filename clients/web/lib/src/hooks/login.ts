@@ -62,7 +62,6 @@ export interface Eip4361Info {
 export interface LoginServerResponse {
   accessToken: string | undefined;
   userId: string | undefined;
-  homeServer: string | undefined;
   deviceId: string | undefined;
   error?: string;
 }
