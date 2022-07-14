@@ -9,8 +9,9 @@ import { useInView } from "react-intersection-observer";
 import { RoomMessage } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
-import { Avatar, Stack } from "@ui";
 import { FadeIn } from "@components/Transitions";
+import { Avatar, Stack } from "@ui";
+import { messageFilter } from "hooks/useMessageThread";
 
 const INITIAL_MESSAGE_COUNT = 15;
 const USER_AVATARS = [
@@ -50,8 +51,13 @@ const USER_AVATARS = [
   "/placeholders/nft_34.png",
 ];
 
-export const MessageScroller = (props: { messages: RoomMessage[] }) => {
-  const { messages: allMessages } = props;
+export const MessageScroller = (props: {
+  messages: RoomMessage[];
+  onSelectMessage?: (id: string) => void;
+  hideThreads?: boolean;
+  before?: JSX.Element;
+}) => {
+  const { messages } = props;
 
   const userAvatars = useRef<{ [userId: string]: string }>({});
   const userAvatarIndex = useRef<number>(0);
@@ -72,14 +78,18 @@ export const MessageScroller = (props: { messages: RoomMessage[] }) => {
   const { ref, displayCount } = useLoadMore(
     containerRef,
     contentRef,
-    allMessages.length,
+    messages.length,
   );
-  const messages = allMessages.slice(-displayCount);
+
+  const filteredMessages = props.hideThreads
+    ? messages.filter(messageFilter)
+    : messages;
+
+  const paginatedMessages = filteredMessages.slice(-displayCount);
 
   const { endRef } = useMessageScroll(
     containerRef,
-    messages[messages.length - 1]?.eventId,
-    messages.find((m) => m.sender === "???" || true)?.eventId,
+    paginatedMessages[paginatedMessages.length - 1]?.eventId,
   );
 
   return (
@@ -87,15 +97,24 @@ export const MessageScroller = (props: { messages: RoomMessage[] }) => {
       <Stack grow style={{ minHeight: "min-content" }}>
         <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
           <div ref={ref} />
-          {messages.map((m, index) => (
-            <FadeIn fast key={m.eventId} disabled={index > 5}>
+          {paginatedMessages.map((m, index) => (
+            <FadeIn
+              fast
+              key={m.eventId}
+              disabled={
+                index > paginatedMessages.length - INITIAL_MESSAGE_COUNT
+              }
+            >
               <Message
+                id={m.eventId}
                 name={m.sender}
                 paddingX="lg"
                 paddingY="md"
                 avatar={
                   <Avatar src={getUserAvatar(m.sender)} size="avatar_md" />
                 }
+                date="11:01AM"
+                onSelectMessage={props.onSelectMessage}
               >
                 <RichTextPreview content={m.body} />
               </Message>
