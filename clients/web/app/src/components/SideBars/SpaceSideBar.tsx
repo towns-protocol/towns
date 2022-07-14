@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import {
   Membership,
   RoomIdentifier,
@@ -102,6 +102,7 @@ export const SpaceSideBar = (props: Props) => {
 };
 
 const Channels = (props: { space: SpaceData }) => {
+  const { channelSlug } = useParams();
   const sizeContext = useSizeContext();
   const isSmall = sizeContext.lessThan(120);
   const { space } = props;
