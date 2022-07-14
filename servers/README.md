@@ -98,7 +98,8 @@ To sync the upstream dendrite main repo, follow the general steps at
 <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork>.
 
 If the merge conflicts are difficult to resolve, the cleanest way is to clone
-dendrite-fork outside of the harmony repo and do it with simple git commands.
+dendrite-fork outside of the harmony repo and do it with simple git commands. See
+[Syncing a fork branch from the command line](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork#syncing-a-fork-branch-from-the-command-line)
 
 Then do the usual merge conflict resolution, commit and push the branch to
 the remote dendrite fork.
