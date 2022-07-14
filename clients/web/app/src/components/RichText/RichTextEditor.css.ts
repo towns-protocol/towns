@@ -8,6 +8,10 @@ export const contentEditable = style(
   "debug-contentEditable",
 );
 
+export const richTextEditorUI = style({
+  padding: vars.dims.baseline.x3,
+});
+
 globalStyle(`${contentEditable} p + p, ${contentEditable} li + li`, {
   marginTop: vars.dims.baseline.x1,
 });

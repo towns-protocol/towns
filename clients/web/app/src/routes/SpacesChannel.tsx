@@ -1,5 +1,6 @@
 import { Allotment } from "allotment";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
+import { useNavigate, useNavigate } from "react-router";
 import { useOutlet, useParams } from "react-router-dom";
 import {
   useChannel,
@@ -7,14 +8,15 @@ import {
   useMessages,
   useSpaceId,
 } from "use-matrix-client";
-import { useNavigate } from "react-router";
+import { useSpaceData } from "hooks/useSpaceData";
+import { Channel } from "data/ChannelData";
 import { MessageList } from "@components/MessageScroller";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Icon, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
-  const { spaceSlug, channelSlug } = useParams();
+  const { spaceSlug, channelSlug, messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
   const { sendMessage } = useMatrixClient();
@@ -37,40 +39,49 @@ export const SpacesChannel = () => {
     navigate(`/spaces/${spaceId?.slug}/channels/${channel?.id.slug}/settings`);
   }, [channel?.id.slug, navigate, spaceId?.slug]);
 
+  const navigate = useNavigate();
+  const onSelectMessage = (eventId: string) => {
+    navigate(`/spaces/${spaceSlug}/channels/${channelSlug}/replies/${eventId}`);
+  };
+
+  const hasThreadOpen = !!messageId;
+
   return (
-    <>
-      <Box
-        color={{ hover: "default", default: "gray2" }}
-        onClick={onSettingClick}
-      >
-        <Icon type="settings" size="square_sm" />
-      </Box>
-      <Stack horizontal minHeight="100%">
-        <Allotment onChange={onSizesChange}>
-          <Allotment.Pane>
-            <Box grow absoluteFill height="100%" overflow="hidden">
-              <MessageList key={channelSlug} messages={channelMessages} />
-              <Box paddingBottom="lg" paddingX="lg">
-                <RichTextEditor
-                  autoFocus
-                  initialValue=""
-                  placeholder={`Send a message 3 to #${channel?.label}`}
-                  onSend={onSend}
-                />
-              </Box>
-            </Box>
-          </Allotment.Pane>
-          {outlet && (
-            <Allotment.Pane
-              minSize={300}
-              maxSize={640}
-              preferredSize={sizes[1] || 320}
+    <Stack horizontal minHeight="100%">
+      <Allotment onChange={onSizesChange}>
+        <Allotment.Pane minSize={550}>
+          <Box grow absoluteFill height="100%">
+            <Box
+              color={{ hover: "default", default: "gray2" }}
+              onClick={onSettingClick}
             >
-              {outlet}
-            </Allotment.Pane>
-          )}
-        </Allotment>
-      </Stack>
-    </>
+              <Icon type="settings" size="square_sm" />
+            </Box>
+            <MessageList
+              hideThreads
+              key={channelSlug}
+              messages={channelMessages}
+              before={channel && <ChanelIntro channel={channel} />}
+              onSelectMessage={onSelectMessage}
+            />
+            <Box paddingBottom="lg" paddingX="lg">
+              <RichTextEditor
+                autoFocus={!hasThreadOpen}
+                initialValue=""
+                placeholder={`Send a message to #${channel?.label}`}
+                onSend={onSend}
+              />
+            </Box>
+          </Box>
+        </Allotment.Pane>
+        {outlet && (
+          <Allotment.Pane minSize={300} preferredSize={sizes[1] || 840}>
+            {outlet}
+          </Allotment.Pane>
+        )}
+      </Allotment>
+    </Stack>
   );
 };
+
+const ChanelIntro = (props: { channel: Channel }) => <Stack>Hello</Stack>;

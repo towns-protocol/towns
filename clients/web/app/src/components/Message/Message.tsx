@@ -13,6 +13,8 @@ type Props = {
   userReaction?: string;
   replies?: { userIds: number[]; fakeLength?: number };
   date?: string;
+  onSelectMessage?: (id: string) => void;
+  id?: string;
   children?: React.ReactNode;
   rounded?: BoxProps["rounded"];
   padding?: BoxProps["padding"];
@@ -20,6 +22,7 @@ type Props = {
 } & BoxProps;
 
 export const Message = ({
+  id,
   avatar,
   condensed,
   name,
@@ -29,46 +32,27 @@ export const Message = ({
   userReaction,
   date,
   children,
+  onSelectMessage,
   ...boxProps
-}: Props) => (
-  <Stack
-    horizontal
-    gap="paragraph"
-    {...boxProps}
-    background={{ hover: "level2" }}
-  >
-    {/* left / avatar gutter */}
-    {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-    <Box>
-      {typeof avatar === "string" ? (
-        <Avatar src={avatar} size="avatar_lg" />
-      ) : (
-        avatar
-      )}
-    </Box>
-    {/* right / main content */}
-    <Stack grow gap={condensed ? "paragraph" : "md"}>
-      {/* name & date top row */}
-      <Box direction="row" gap="sm" alignItems="center" height="height_sm">
-        {/* display name */}
-        <Text
-          truncate
-          fontSize="md"
-          color={name?.match(/\.eth$/) ? "etherum" : "gray1"}
-          as="span"
-        >
-          {`${name.substring(0, 6)}..${name.substring(
-            name.length - 4,
-            name.length,
-          )}`}
-        </Text>
-        {/* channel */}
-        {channel && (
-          <NavLink to={channel}>
-            <ButtonText color="default" as="span">
-              #{channel}
-            </ButtonText>
-          </NavLink>
+}: Props) => {
+  const onClick = () => {
+    id && onSelectMessage?.(id);
+  };
+  return (
+    <Stack
+      horizontal
+      gap="paragraph"
+      {...boxProps}
+      background={{ hover: "level2" }}
+      onClick={onClick}
+    >
+      {/* left / avatar gutter */}
+      {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
+      <Box>
+        {typeof avatar === "string" ? (
+          <Avatar src={avatar} size="avatar_lg" />
+        ) : (
+          avatar
         )}
         {/* date, alignment tbc depending on context */}
         {date && (
@@ -77,20 +61,50 @@ export const Message = ({
           </Text>
         )}
       </Box>
+      {/* right / main content */}
+      <Stack grow gap={condensed ? "paragraph" : "md"}>
+        {/* name & date top row */}
+        <Box direction="row" gap="sm" alignItems="center" height="height_sm">
+          {/* display name */}
+          <Text
+            truncate
+            fontSize="md"
+            color={name?.match(/\.eth$/) ? "etherum" : "gray1"}
+            as="span"
+          >
+            {`${name.substring(0, 6)}..${name.substring(
+              name.length - 4,
+              name.length,
+            )}`}
+          </Text>
+          {/* channel */}
+          {channel && (
+            <NavLink to={channel}>
+              <ButtonText color="default" as="span">
+                #{channel}
+              </ButtonText>
+            </NavLink>
+          )}
+          {/* date, alignment tbc depending on context */}
+          <Text fontSize="sm" color="gray2" as="span" textAlign="right">
+            {date}
+          </Text>
+        </Box>
 
-      <Box fontSize="md" color="default" maxWidth="1200">
-        {children}
-      </Box>
-      {reactions && (
-        <Box direction="row">
-          <Reactions reactions={reactions} userReaction={userReaction} />
+        <Box fontSize="md" color="default" maxWidth="1200">
+          {children}
         </Box>
-      )}
-      {replies && (
-        <Box direction="row">
-          <Replies replies={replies} />
-        </Box>
-      )}
+        {reactions && (
+          <Box direction="row">
+            <Reactions reactions={reactions} userReaction={userReaction} />
+          </Box>
+        )}
+        {replies && (
+          <Box direction="row">
+            <Replies replies={replies} />
+          </Box>
+        )}
+      </Stack>
     </Stack>
-  </Stack>
-);
+  );
+};

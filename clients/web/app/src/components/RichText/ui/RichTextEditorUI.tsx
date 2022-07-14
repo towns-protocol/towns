@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from "react";
 import { Box, Stack } from "@ui";
 
-import { Toolbar } from "./Toolbar/RichTextEditorToolbar";
 import { RichTextEditorControls } from "./Controls/RichTextEditorControls";
+import { Toolbar } from "./Toolbar/RichTextEditorToolbar";
+import { richTextEditorUI } from "../RichTextEditor.css";
 
 export const RichTextUI = (props: {
   children: React.ReactNode;
@@ -15,11 +16,11 @@ export const RichTextUI = (props: {
   }, []);
   return (
     <Stack
-      padding
       gap
+      className={richTextEditorUI}
       rounded="sm"
       background={props.focused ? "level3" : "level2"}
-      minWidth={props.readOnly ? undefined : "600"}
+      minWidth={props.readOnly ? undefined : "200"}
       position="relative"
     >
       {isTypeToggled && <Toolbar />}
@@ -30,7 +31,6 @@ export const RichTextUI = (props: {
           onToggleType={onToggleType}
         />
       </Stack>
-      {/* <FieldOutline withBorder tone="neutral" /> */}
     </Stack>
   );
 };
