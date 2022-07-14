@@ -83,3 +83,21 @@ export const useSendReply = (
 
   return { sendReply };
 };
+
+/**
+ * Collect messages with replies
+ * FIXME: rough implementation
+ **/
+export const useMessageReplyCount = (messages: RoomMessage[]) => {
+  return useMemo(
+    () =>
+      messages.reduce((threads, m) => {
+        const relatedTo = m.content?.["m.relates_to"]?.event_id;
+        if (relatedTo) {
+          threads[relatedTo] = threads[relatedTo] ? threads[relatedTo] + 1 : 1;
+        }
+        return threads;
+      }, {} as { [key: string]: number }),
+    [messages],
+  );
+};

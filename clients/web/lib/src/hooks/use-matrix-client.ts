@@ -35,7 +35,7 @@ export function useMatrixClient() {
   const logout: () => Promise<void> = useLogout();
   const loginWithPassword: (username: string, password: string) => Promise<void> = useLoginWithPassword();
   const registerPasswordUser: (username: string, password: string) => Promise<void> = useRegisterPasswordUser();
-  const sendMessage: (roomId: RoomIdentifier, message: string) => Promise<void> = useSendMessage();
+  const sendMessage: (roomId: RoomIdentifier, message: string, parentId?: string) => Promise<void> = useSendMessage();
   const leaveRoom: (roomId: RoomIdentifier) => Promise<void> = useLeaveRoom();
   const inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void> = useInviteUser();
   const joinRoom: (roomId: RoomIdentifier) => Promise<void> = useJoinRoom();

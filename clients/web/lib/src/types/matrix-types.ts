@@ -1,4 +1,4 @@
-import { MatrixClient } from "matrix-js-sdk";
+import { IContent, MatrixClient } from "matrix-js-sdk";
 
 export enum Visibility {
   Private = "private",
@@ -113,6 +113,7 @@ export interface RoomMessage {
   body: string;
   msgType: string;
   originServerTs: number;
+  content?: IContent;
 }
 
 export interface RoomsMessages {

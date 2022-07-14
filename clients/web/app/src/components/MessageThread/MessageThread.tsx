@@ -5,7 +5,7 @@ import {
   RichTextPreview,
 } from "@components/RichText/RichTextEditor";
 import { Avatar, Box, Divider, IconButton, Stack } from "@ui";
-import { useMessageThread, useSendReply } from "hooks/useMessageThread";
+import { useMessageThread, useSendReply } from "hooks/useFixMeMessageThread";
 
 type Props = {
   spaceSlug: string;

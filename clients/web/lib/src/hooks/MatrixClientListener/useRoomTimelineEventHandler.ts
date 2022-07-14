@@ -49,6 +49,7 @@ export const useRoomTimelineEventHandler = (
             sender: event.sender.name,
             body: event.event.content.body,
             msgType: event.event.content.msgtype,
+            content: event.event.content,
             originServerTs: event.event.content.origin_server_ts,
           });
           break;

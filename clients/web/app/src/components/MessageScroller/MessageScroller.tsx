@@ -10,8 +10,11 @@ import { RoomMessage } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
 import { FadeIn } from "@components/Transitions";
-import { Avatar, Stack } from "@ui";
-import { messageFilter } from "hooks/useMessageThread";
+import { Avatar, Box, Stack } from "@ui";
+import {
+  messageFilter,
+  useMessageReplyCount,
+} from "hooks/useFixMeMessageThread";
 
 const INITIAL_MESSAGE_COUNT = 15;
 const USER_AVATARS = [
@@ -92,6 +95,8 @@ export const MessageScroller = (props: {
     paginatedMessages[paginatedMessages.length - 1]?.eventId,
   );
 
+  const repliedMessages = useMessageReplyCount(messages);
+
   return (
     <Stack grow ref={containerRef} overflow="auto">
       <Stack grow style={{ minHeight: "min-content" }}>
@@ -117,6 +122,24 @@ export const MessageScroller = (props: {
                 onSelectMessage={props.onSelectMessage}
               >
                 <RichTextPreview content={m.body} />
+                {repliedMessages[m.eventId] && (
+                  <Box horizontal paddingY="sm">
+                    <Box
+                      shrink
+                      centerContent
+                      horizontal
+                      gap="sm"
+                      paddingY="sm"
+                      paddingX="sm"
+                      background="level2"
+                      rounded="xs"
+                    >
+                      <Avatar size="avatar_sm" />
+                      {repliedMessages[m.eventId]} $
+                      {repliedMessages[m.eventId] > 1 ? "Replies" : "Reply"}
+                    </Box>
+                  </Box>
+                )}
               </Message>
             </FadeIn>
           ))}
