@@ -80,9 +80,11 @@ export const Message = ({
             </NavLink>
           )}
           {/* date, alignment tbc depending on context */}
-          <Text fontSize="sm" color="gray2" as="span" textAlign="right">
-            {date}
-          </Text>
+          {date && (
+            <Text fontSize="sm" color="gray2" as="span" textAlign="right">
+              {date}
+            </Text>
+          )}
         </Box>
 
         <Box fontSize="md" color="default" maxWidth="1200">

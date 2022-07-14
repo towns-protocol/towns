@@ -102,6 +102,7 @@ export const SpaceSideBar = (props: Props) => {
 };
 
 const Channels = (props: { space: SpaceData }) => {
+  const { channelSlug } = useParams();
   const sizeContext = useSizeContext();
   const isSmall = sizeContext.lessThan(120);
   const { space } = props;
@@ -125,7 +126,7 @@ const Channels = (props: { space: SpaceData }) => {
               id={group.label + channel.id.slug}
               key={group.label + channel.id.slug}
               icon="tag"
-              highlight={channel.highlight}
+              highlight={channel.id.slug === channelSlug}
               link={`/spaces/${props.space.id.slug}/channels/${channel.id.slug}/`}
               label={channel.label}
             />
