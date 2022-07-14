@@ -102,7 +102,6 @@ export const SpaceSideBar = (props: Props) => {
 };
 
 const Channels = (props: { space: SpaceData }) => {
-  const { channelSlug } = useParams();
   const sizeContext = useSizeContext();
   const isSmall = sizeContext.lessThan(120);
   const { space } = props;

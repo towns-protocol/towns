@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo } from "react";
 import {
   RoomMessage,
+  useChannel,
   useMatrixClient,
   useMatrixStore,
 } from "use-matrix-client";
-import { useSpaceData } from "./useSpaceData";
 
 export const messageFilter = (m: RoomMessage) => !m.content?.["m.relates_to"];
 
@@ -13,12 +13,21 @@ export const messageFilter = (m: RoomMessage) => !m.content?.["m.relates_to"];
  * there's a few ways of doing this, by enabling `experimentalThreadSupport` in
  * the client or building a proper reducer looking up parent events recursively
  **/
-export const useMessageThread = (channelSlug: string, messageId: string) => {
+export const useMessageThread = (
+  spaceSlug: string,
+  channelSlug: string,
+  messageId: string,
+) => {
   const { allMessages } = useMatrixStore();
 
+  const channel = useChannel(spaceSlug, channelSlug);
+
   const channelMessages = useMemo(
-    () => (allMessages && channelSlug ? allMessages[channelSlug] ?? [] : []),
-    [allMessages, channelSlug],
+    () =>
+      allMessages && channelSlug
+        ? allMessages[channel?.id.slug ?? ""] ?? []
+        : [],
+    [allMessages, channel?.id.slug, channelSlug],
   );
 
   const parentMessage = useMemo(() => {
@@ -56,20 +65,8 @@ export const useSendReply = (
 ) => {
   const { sendMessage } = useMatrixClient();
 
-  const space = useSpaceData(spaceSlug);
+  const channel = useChannel(spaceSlug, channelSlug);
 
-  const channelGroup = useMemo(
-    () =>
-      space?.channelGroups.find((g) =>
-        g.channels.find((c) => c.id.slug === channelSlug),
-      ),
-    [space?.channelGroups, channelSlug],
-  );
-
-  const channel = useMemo(
-    () => channelGroup?.channels.find((c) => c.id.slug === channelSlug),
-    [channelGroup?.channels, channelSlug],
-  );
   const sendReply = useCallback(
     (value: string) => {
       if (value && channel?.id) {

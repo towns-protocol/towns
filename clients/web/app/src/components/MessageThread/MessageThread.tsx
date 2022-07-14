@@ -15,8 +15,11 @@ type Props = {
 };
 export const MessageThread = (props: Props) => {
   const { spaceSlug, channelSlug, messageId } = props;
-  const { parentMessage, messages } = useMessageThread(channelSlug, messageId);
-
+  const { parentMessage, messages } = useMessageThread(
+    spaceSlug,
+    channelSlug,
+    messageId,
+  );
   const { sendReply } = useSendReply(spaceSlug, channelSlug, messageId);
 
   const onSend = (value: string) => {

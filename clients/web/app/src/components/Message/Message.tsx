@@ -54,12 +54,6 @@ export const Message = ({
         ) : (
           avatar
         )}
-        {/* date, alignment tbc depending on context */}
-        {date && (
-          <Text fontSize="sm" color="gray2" as="span" textAlign="right">
-            {date}
-          </Text>
-        )}
       </Box>
       {/* right / main content */}
       <Stack grow gap={condensed ? "paragraph" : "md"}>

@@ -118,7 +118,6 @@ export const MessageScroller = (props: {
                 avatar={
                   <Avatar src={getUserAvatar(m.sender)} size="avatar_md" />
                 }
-                date="11:01AM"
                 onSelectMessage={props.onSelectMessage}
               >
                 <RichTextPreview content={m.body} />
@@ -133,10 +132,12 @@ export const MessageScroller = (props: {
                       paddingX="sm"
                       background="level2"
                       rounded="xs"
+                      cursor="pointer"
+                      onClick={() => props.onSelectMessage?.(m.eventId)}
                     >
                       <Avatar size="avatar_sm" />
-                      {repliedMessages[m.eventId]} $
-                      {repliedMessages[m.eventId] > 1 ? "Replies" : "Reply"}
+                      {repliedMessages[m.eventId]}
+                      {repliedMessages[m.eventId] > 1 ? " Replies" : " Reply"}
                     </Box>
                   </Box>
                 )}
