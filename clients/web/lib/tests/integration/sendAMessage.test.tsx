@@ -61,6 +61,21 @@ describe("sendAMessage", () => {
       ),
     ).toBe(true);
 
+    await alice.sendMessage(roomId, "Hello Bob!");
+
+    // alice should receive the message
+    expect(
+      await bob.eventually(
+        (x) =>
+          x.client
+            .getRoom(roomId.matrixRoomId)
+            ?.timeline.find(
+              (event: MatrixEvent) =>
+                event.event.content?.body === "Hello Bob!",
+            ) != undefined,
+      ),
+    ).toBe(true);
+
     // stop clients
     clients.map((client) => client.stopClient());
   });

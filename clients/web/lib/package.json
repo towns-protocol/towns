@@ -13,7 +13,7 @@
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "yarn lint --fix",
-    "test": "tsc && jest --forceExit",
+    "test": "tsc && NODE_ENV=development jest --forceExit",
     "watch": "tsc --watch"
   },
   "devDependencies": {
