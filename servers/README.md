@@ -146,7 +146,7 @@ client_api:
   registration_disabled: false
 
 # Enable or disable password authentication.
-  password_authentication_disabled: false
+  password_authentication_disabled: true
 
 # public key authentication
   public_key_authentication:
