@@ -43,6 +43,7 @@ export const InviteUserToRoomForm = (props: Props) => {
       </Box>
       <Stack gap="lg">
         <TextField
+          background="level2"
           label="Invitee user id"
           placeholder="@userId:homeServer"
           onChange={onChangeUserId}

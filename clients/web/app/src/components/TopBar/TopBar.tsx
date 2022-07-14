@@ -19,7 +19,6 @@ export const TopBar = (props: {
   userId?: string | null;
 }) => {
   const { authenticated: isAuthenticated, username, userId } = props;
-  console.log({ isAuthenticated });
   return (
     <Stack
       borderBottom
