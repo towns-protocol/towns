@@ -11,7 +11,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { QuoteNode } from "@lexical/rich-text";
 import clsx from "clsx";
-import { EditorThemeClasses } from "lexical";
+import { $setSelection, EditorThemeClasses } from "lexical";
 import React, { useState } from "react";
 import * as fieldStyles from "ui/components/_internal/Field/Field.css";
 import { atoms } from "ui/styles/atoms.css";
@@ -57,9 +57,11 @@ const useInitialConfig = (
     ...initialConfig,
     readOnly,
     editorState: () => {
-      return initialValue
+      const state = initialValue
         ? $convertFromMarkdownString(initialValue, TRANSFORMERS)
         : undefined;
+      $setSelection(null);
+      return state;
     },
   };
 };
@@ -68,6 +70,7 @@ const fieldClassName = clsx([fieldStyles.field, styles.contentEditable]);
 
 export const RichTextPreview = (props: { content: string }) => {
   const initialConfig = useInitialConfig(props.content, true);
+
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <RichTextPlugin
