@@ -11,6 +11,7 @@ export const useSendMessage = () => {
       roomId: RoomIdentifier,
       message: string,
       parentId?: string,
+      messageType = "m.text",
     ): Promise<void> => {
       if (matrixClient) {
         await sendZionMessage({
@@ -18,6 +19,7 @@ export const useSendMessage = () => {
           roomId,
           message,
           parentId,
+          messageType,
         });
       }
     },
@@ -25,17 +27,18 @@ export const useSendMessage = () => {
   );
 };
 
+/** treat message as a reply to parentId if specified */
 export const sendZionMessage = async (props: {
   matrixClient: MatrixClient;
   roomId: RoomIdentifier;
   message: string;
-  /** treat message as a reply to parentId if specified */
   parentId?: string;
+  messageType: string;
 }) => {
-  const { matrixClient, roomId, message, parentId } = props;
+  const { matrixClient, roomId, message, parentId, messageType } = props;
   const content = {
     body: `${message}`,
-    msgtype: "m.text",
+    msgtype: messageType,
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   const cb = function (err: any, res: any) {

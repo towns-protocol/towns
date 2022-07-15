@@ -29,7 +29,7 @@ export const useRoomTimelineEventHandler = (
       }
       switch (event.getType()) {
         case "m.room.message": {
-          console.log("m.room.message", {
+          console.log("m.room.message: " + event.event.event_id ?? "-", {
             event: event,
             toStart: toStartOfTimeline,
             removed: removed,

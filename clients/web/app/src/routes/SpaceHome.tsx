@@ -38,9 +38,9 @@ export const SpaceHome = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (space?.id && space?.membership === Membership.Join) {
-        sendMessage(space?.id, "🌚 ¿wen moon? 🌝");
+        sendMessage(space?.id, "🌚 ¿wen moon? 🌝", undefined, "m.wenmoon");
       }
-    }, 5000);
+    }, 7000);
     return () => clearInterval(interval);
   }, [sendMessage, space?.id, space?.membership]);
 

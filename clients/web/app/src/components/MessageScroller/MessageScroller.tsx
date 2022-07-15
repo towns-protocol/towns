@@ -120,7 +120,7 @@ export const MessageScroller = (props: {
                 }
                 onSelectMessage={props.onSelectMessage}
               >
-                <RichTextPreview content={m.body} />
+                <RichTextPreview content={getMessageContent(m)} />
                 {repliedMessages[m.eventId] && (
                   <Box horizontal paddingY="sm">
                     <Box
@@ -219,3 +219,14 @@ const useMessageScroll = (
 
   return { endRef, containerRef };
 };
+
+function getMessageContent(message: RoomMessage) {
+  switch (message.msgType) {
+    case "m.wenmoon":
+      return `${message.body}\n*${message.eventId}*`;
+    case "m.text":
+      return message.body;
+    default:
+      return `${message.body}\n*Unsupported message type* **${message.msgType}**`;
+  }
+}
