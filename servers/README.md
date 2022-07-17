@@ -70,7 +70,7 @@ to pull the changes into the harmony subtree.
 
 ```bash
 # clone the dendrite fork
-git clone https://github.com/HereNotThere/dendrite.git
+git clone git@github.com:HereNotThere/dendrite.git
 ```
 
 Now make your changes in a local git branch. Push it to remote.
