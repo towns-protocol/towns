@@ -36,7 +36,7 @@ export const useSyncSpace = () => {
       } catch (reason) {
         console.error("syncing space error", spaceId.matrixRoomId, reason);
       }
-      console.log("syncing synced space", spaceId.matrixRoomId);
+      console.log("syncing synced space", spaceId.matrixRoomId, roomHierarchy);
       const space = setSpace(zionRoom, roomHierarchy);
       return Promise.resolve(space.children);
     },

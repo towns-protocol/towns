@@ -5,6 +5,7 @@ import {
   EventType,
   ICreateClientOpts,
   MatrixClient,
+  Room,
 } from "matrix-js-sdk";
 import {
   getChainIdEip155,
@@ -32,6 +33,7 @@ import {
 } from "../../../src/types/matrix-types";
 import { sleepUntil } from "./TestUtils";
 import { createZionSpace } from "../../../src/hooks/MatrixClient/useCreateSpace";
+import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 
 export class MatrixTestClient {
   static allClients: MatrixTestClient[] = [];
@@ -242,6 +244,30 @@ export class MatrixTestClient {
       message,
       options,
     });
+  }
+
+  public async syncSpace(spaceId: RoomIdentifier) {
+    const matrixRoom =
+      this.client.getRoom(spaceId.matrixRoomId) ||
+      new Room(
+        spaceId.matrixRoomId,
+        this.client,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.userIdentifier.matrixUserId!,
+      );
+
+    const roomHierarchy = new RoomHierarchy(matrixRoom);
+
+    try {
+      while (roomHierarchy.canLoadMore || roomHierarchy.loading) {
+        console.log("syncing space", spaceId.matrixRoomId);
+        await roomHierarchy.load();
+      }
+    } catch (reason) {
+      console.error("syncing space error", spaceId.matrixRoomId, reason);
+    }
+    console.log("syncing synced space", spaceId.matrixRoomId);
+    return roomHierarchy;
   }
 
   /// set the room invite level

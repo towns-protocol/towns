@@ -1,5 +1,9 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
-import { ICreateRoomOpts, MatrixClient } from "matrix-js-sdk";
+import {
+  ICreateRoomOpts,
+  ICreateRoomStateEvent,
+  MatrixClient,
+} from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
 import { useMatrixStore } from "../../store/use-matrix-store";
 import {
@@ -44,31 +48,9 @@ export const createZionRoom = async (props: {
     visibility: createInfo.visibility,
     name: createInfo.roomName,
     is_direct: createInfo.isDirectMessage === true,
-    initial_state: [
-      {
-        type: "m.room.join_rules",
-        state_key: "",
-        content: {
-          join_rule:
-            createInfo.visibility == Visibility.Public ? "public" : "private",
-        },
-      },
-    ],
+    initial_state: getInitialState(homeServer, createInfo),
   };
-  // add our parent room if we have one
-  if (createInfo.parentSpaceId) {
-    if (!options.initial_state) {
-      options.initial_state = [];
-    }
-    options.initial_state.push({
-      type: "m.space.parent",
-      state_key: createInfo.parentSpaceId.matrixRoomId,
-      content: {
-        canonical: true,
-        via: [homeServer],
-      },
-    });
-  }
+  // create the room
   const response = await matrixClient.createRoom(options);
   console.log("Created room", JSON.stringify(response));
   if (createInfo.parentSpaceId) {
@@ -76,8 +58,6 @@ export const createZionRoom = async (props: {
       createInfo.parentSpaceId.matrixRoomId,
       "m.space.child",
       {
-        auto_join: false,
-        suggested: false,
         via: [homeServer],
       },
       response.room_id,
@@ -86,3 +66,52 @@ export const createZionRoom = async (props: {
 
   return makeRoomIdentifier(response.room_id);
 };
+
+function getInitialState(
+  homeServer: string,
+  createInfo: CreateRoomInfo,
+  bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
+): ICreateRoomStateEvent[] {
+  const initialState: ICreateRoomStateEvent[] = [];
+
+  if (createInfo.parentSpaceId) {
+    initialState.push({
+      type: "m.space.parent",
+      state_key: createInfo.parentSpaceId.matrixRoomId,
+      content: {
+        canonical: true,
+        via: [homeServer],
+      },
+    });
+  }
+
+  if (
+    createInfo.parentSpaceId &&
+    createInfo.visibility == Visibility.Public &&
+    bRestrictedToParentSpace
+  ) {
+    initialState.push({
+      type: "m.room.join_rules",
+      state_key: "",
+      content: {
+        join_rule: "restricted",
+        allow: [
+          {
+            room_id: createInfo.parentSpaceId.matrixRoomId,
+            type: "m.room_membership",
+          },
+        ],
+      },
+    });
+  } else {
+    initialState.push({
+      type: "m.room.join_rules",
+      state_key: "",
+      content: {
+        join_rule:
+          createInfo.visibility == Visibility.Public ? "public" : "invite",
+      },
+    });
+  }
+  return initialState;
+}

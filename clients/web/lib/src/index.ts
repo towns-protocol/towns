@@ -4,6 +4,7 @@ export { LoginStatus } from "./hooks/login";
 export { useMatrixStore } from "./store/use-matrix-store";
 export { useMatrixClient } from "./hooks/use-matrix-client";
 export { useMessages } from "./hooks/use-messages";
+export { useMyMembership } from "./hooks/use-my-membership";
 export { useRoom } from "./hooks/use-room";
 export {
   useSpace,

@@ -126,8 +126,8 @@ describe("defaultSpaceId", () => {
     const spaceName = screen.getByTestId("spaceName");
     const roomMembership = screen.getByTestId("roomMembership");
     const spaceMembership = screen.getByTestId("spaceMembership");
-    // const channelsCount = screen.getByTestId("channelsCount");
-    // const channelName = screen.getByTestId("channelName");
+    const channelsCount = screen.getByTestId("channelsCount");
+    const channelName = screen.getByTestId("channelName");
 
     const registerButton = screen.getByRole("button", { name: "Register" });
     const joinButton = screen.getByRole("button", { name: "Join" });
@@ -165,8 +165,8 @@ describe("defaultSpaceId", () => {
       expect(spaceMembership).toHaveTextContent(Membership.Join),
     );
     // todo sync public channels...
-    // await waitFor(() => expect(channelsCount).toHaveTextContent("1"));
-    // await waitFor(() => expect(channelName).toHaveTextContent("janes channel"));
+    await waitFor(() => expect(channelsCount).toHaveTextContent("1"));
+    await waitFor(() => expect(channelName).toHaveTextContent("janes channel"));
   });
 });
 

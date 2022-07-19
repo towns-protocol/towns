@@ -6,6 +6,7 @@ import {
   MessageType,
   useMatrixClient,
   useMessages,
+  useMyMembership,
   useSpace,
 } from "use-matrix-client";
 import { MessageList } from "@components/MessageScroller";
@@ -18,7 +19,7 @@ export const SpaceHome = () => {
   const { onSizesChange } = usePersistPanes(["channel", "right"]);
   const { sendMessage, joinRoom } = useMatrixClient();
   const space = useSpace(spaceSlug);
-
+  const myMembership = useMyMembership(space?.id);
   const spaceMessages = useMessages(space?.id.slug);
 
   const onSend = useCallback(
@@ -30,7 +31,7 @@ export const SpaceHome = () => {
     [space?.id, sendMessage],
   );
 
-  const joinSpace = useCallback(() => {
+  const onJoinSpace = useCallback(() => {
     if (space?.id) {
       joinRoom(space.id);
     }
@@ -38,14 +39,14 @@ export const SpaceHome = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (space?.id && space?.membership === Membership.Join) {
+      if (space?.id && myMembership === Membership.Join) {
         sendMessage(space?.id, "🌚 ¿wen moon? 🌝", {
           messageType: MessageType.WenMoon,
         });
       }
     }, 7000);
     return () => clearInterval(interval);
-  }, [sendMessage, space?.id, space?.membership]);
+  }, [sendMessage, space?.id, myMembership]);
 
   if (!space) {
     return null;
@@ -55,7 +56,9 @@ export const SpaceHome = () => {
     <Stack horizontal minHeight="100%">
       <Allotment onChange={onSizesChange}>
         <Allotment.Pane>
-          {space.membership === Membership.Join ? (
+          {myMembership !== Membership.Join ? (
+            <Button onClick={onJoinSpace}>Join {space.name}</Button>
+          ) : (
             <Box grow absoluteFill height="100%" overflow="hidden">
               <MessageList key={space.id.slug} messages={spaceMessages} />
               <Box paddingBottom="lg" paddingX="lg">
@@ -67,8 +70,6 @@ export const SpaceHome = () => {
                 />
               </Box>
             </Box>
-          ) : (
-            <Button onClick={joinSpace}>Join {space.name}</Button>
           )}
         </Allotment.Pane>
       </Allotment>

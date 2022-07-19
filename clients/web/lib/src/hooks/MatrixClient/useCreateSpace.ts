@@ -50,7 +50,7 @@ export const createZionSpace = async (props: {
           join_rule:
             createSpaceInfo.visibility == Visibility.Public
               ? "public"
-              : "private",
+              : "invite",
         },
       },
     ],
