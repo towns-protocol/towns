@@ -1,29 +1,16 @@
-import { MatrixEvent, request } from "matrix-js-sdk";
-import { MatrixTestClient } from "./helpers/MatrixTestClient";
+import { MatrixEvent } from "matrix-js-sdk";
 import { Visibility } from "../../src/types/matrix-types";
+import { registerAndStartClients } from "./helpers/TestUtils";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("sendAMessage", () => {
-  beforeAll(() => {
-    // set up required global for the matrix client to allow us to make http requests
-    request(require("request")); // eslint-disable-line @typescript-eslint/no-var-requires
-  });
+  const homeServer = "http://localhost:8008";
   test("create room, invite user, accept invite, and send message", async () => {
-    const homeServer = "http://localhost:8008";
     // create clients
-    const clients = [
-      new MatrixTestClient("bob", homeServer),
-      new MatrixTestClient("alice", homeServer),
-    ];
-
-    // assign clients to local variables
-    const bob = clients[0];
-    const alice = clients[1];
-
-    // start them up
-    await Promise.all(
-      clients.map((client) => client.registerWalletAndStartClient()),
+    const { bob, alice } = await registerAndStartClients(
+      ["bob", "alice"],
+      homeServer,
     );
 
     // bob creates a room
@@ -75,9 +62,6 @@ describe("sendAMessage", () => {
             ) != undefined,
       ),
     ).toBe(true);
-
-    // stop clients
-    clients.map((client) => client.stopClient());
   });
 });
 

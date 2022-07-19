@@ -33,6 +33,14 @@ import { sleepUntil } from "./TestUtils";
 import { createZionSpace } from "../../../src/hooks/MatrixClient/useCreateSpace";
 
 export class MatrixTestClient {
+  static allClients: MatrixTestClient[] = [];
+  static async cleanup() {
+    console.log("========= MatrixTestClient: cleanup =========");
+    await Promise.all(this.allClients.map((client) => client.stopClient()));
+    this.allClients = [];
+    console.log("========= MatrixTestClient: cleanup done =========");
+  }
+
   public name: string;
   public client: MatrixClient;
   public wallet: Wallet;
@@ -60,6 +68,7 @@ export class MatrixTestClient {
       getChainIdEip155(this.chainId),
     );
     this.log("new client");
+    MatrixTestClient.allClients.push(this);
   }
 
   /// log a message to the console with the user's name and part of the wallet address
@@ -226,6 +235,8 @@ export class MatrixTestClient {
       matrixClient: this.client,
       roomId,
       message,
+      parentId: undefined,
+      messageType: "m.text",
     });
   }
 

@@ -12,7 +12,7 @@ import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
-import { request, Visibility } from "matrix-js-sdk";
+import { Visibility } from "matrix-js-sdk";
 import { MatrixTestClient } from "./helpers/MatrixTestClient";
 import { useSpace } from "../../src/hooks/use-space";
 import { useRoom } from "../../src/hooks/use-room";
@@ -35,8 +35,6 @@ describe("defaultSpaceId", () => {
       value: testingUtils.getProvider(),
       writable: true,
     });
-    // set up required global for the matrix client to allow us to make http requests
-    request(require("request")); // eslint-disable-line @typescript-eslint/no-var-requires
   });
   afterEach(() => {
     // Clear all mocks between tests

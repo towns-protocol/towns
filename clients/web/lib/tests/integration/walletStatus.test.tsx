@@ -12,7 +12,6 @@ import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
-import { request } from "matrix-js-sdk";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -31,8 +30,6 @@ describe("walletStatus", () => {
       value: testingUtils.getProvider(),
       writable: true,
     });
-    // set up required global for the matrix client to allow us to make http requests
-    request(require("request")); // eslint-disable-line @typescript-eslint/no-var-requires
   });
   afterEach(() => {
     // Clear all mocks between tests
