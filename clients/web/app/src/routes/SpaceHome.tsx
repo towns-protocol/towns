@@ -3,6 +3,7 @@ import React, { useCallback, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
   Membership,
+  MessageType,
   useMatrixClient,
   useMessages,
   useSpace,
@@ -38,7 +39,9 @@ export const SpaceHome = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (space?.id && space?.membership === Membership.Join) {
-        sendMessage(space?.id, "🌚 ¿wen moon? 🌝", undefined, "m.wenmoon");
+        sendMessage(space?.id, "🌚 ¿wen moon? 🌝", {
+          messageType: MessageType.WenMoon,
+        });
       }
     }, 7000);
     return () => clearInterval(interval);

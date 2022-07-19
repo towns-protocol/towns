@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import { useInView } from "react-intersection-observer";
-import { RoomMessage } from "use-matrix-client";
+import { MessageType, RoomMessage } from "use-matrix-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
 import { FadeIn } from "@components/Transitions";
@@ -222,9 +222,9 @@ const useMessageScroll = (
 
 function getMessageContent(message: RoomMessage) {
   switch (message.msgType) {
-    case "m.wenmoon":
+    case MessageType.WenMoon:
       return `${message.body}\n*${message.eventId}*`;
-    case "m.text":
+    case MessageType.Text:
       return message.body;
     default:
       return `${message.body}\n*Unsupported message type* **${message.msgType}**`;

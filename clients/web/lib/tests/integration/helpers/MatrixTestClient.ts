@@ -28,6 +28,7 @@ import {
   CreateRoomInfo,
   CreateSpaceInfo,
   RoomIdentifier,
+  SendMessageOptions,
 } from "../../../src/types/matrix-types";
 import { sleepUntil } from "./TestUtils";
 import { createZionSpace } from "../../../src/hooks/MatrixClient/useCreateSpace";
@@ -230,13 +231,16 @@ export class MatrixTestClient {
   }
 
   /// send a message to a room
-  public async sendMessage(roomId: RoomIdentifier, message: string) {
+  public async sendMessage(
+    roomId: RoomIdentifier,
+    message: string,
+    options: SendMessageOptions = {},
+  ) {
     return await sendZionMessage({
       matrixClient: this.client,
       roomId,
       message,
-      parentId: undefined,
-      messageType: "m.text",
+      options,
     });
   }
 

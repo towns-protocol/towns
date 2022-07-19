@@ -1,7 +1,12 @@
 import { MatrixClient } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
 import { MatrixContext } from "../../components/MatrixContextProvider";
-import { RoomIdentifier, ZionContext } from "../../types/matrix-types";
+import {
+  MessageType,
+  RoomIdentifier,
+  SendMessageOptions,
+  ZionContext,
+} from "../../types/matrix-types";
 
 export const useSendMessage = () => {
   const { matrixClient } = useContext<ZionContext>(MatrixContext);
@@ -10,16 +15,14 @@ export const useSendMessage = () => {
     async (
       roomId: RoomIdentifier,
       message: string,
-      parentId?: string,
-      messageType = "m.text",
+      options: SendMessageOptions = {},
     ): Promise<void> => {
       if (matrixClient) {
         await sendZionMessage({
           matrixClient,
           roomId,
           message,
-          parentId,
-          messageType,
+          options,
         });
       }
     },
@@ -32,13 +35,12 @@ export const sendZionMessage = async (props: {
   matrixClient: MatrixClient;
   roomId: RoomIdentifier;
   message: string;
-  parentId?: string;
-  messageType: string;
+  options: SendMessageOptions;
 }) => {
-  const { matrixClient, roomId, message, parentId, messageType } = props;
+  const { matrixClient, roomId, message, options } = props;
   const content = {
     body: `${message}`,
-    msgtype: messageType,
+    msgtype: options.messageType ?? MessageType.Text,
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
   const cb = function (err: any, res: any) {
@@ -47,7 +49,7 @@ export const sendZionMessage = async (props: {
     }
   };
 
-  if (!parentId) {
+  if (!options.threadId) {
     await matrixClient.sendEvent(
       roomId.matrixRoomId,
       "m.room.message",
@@ -59,13 +61,13 @@ export const sendZionMessage = async (props: {
     // send as reply
     await matrixClient.sendEvent(
       roomId.matrixRoomId,
-      parentId,
+      options.threadId,
       "m.room.message",
       {
         ...content,
         "m.relates_to": {
           "m.in_reply_to": {
-            event_id: parentId,
+            event_id: options.threadId,
           },
         },
       },

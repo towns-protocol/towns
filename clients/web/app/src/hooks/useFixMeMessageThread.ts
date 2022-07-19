@@ -9,6 +9,7 @@ import {
 export const messageFilter = (m: RoomMessage) => !m.content?.["m.relates_to"];
 
 /**
+ * TODO: https://github.com/HereNotThere/harmony/issues/203
  * FIXME: this is an awful shortcut in order to get something on the screen
  * there's a few ways of doing this, by enabling `experimentalThreadSupport` in
  * the client or building a proper reducer looking up parent events recursively
@@ -61,7 +62,7 @@ export const useMessageThread = (
 export const useSendReply = (
   spaceSlug?: string,
   channelSlug?: string,
-  parentId?: string,
+  threadId?: string,
 ) => {
   const { sendMessage } = useMatrixClient();
 
@@ -70,12 +71,11 @@ export const useSendReply = (
   const sendReply = useCallback(
     (value: string) => {
       if (value && channel?.id) {
-        const threadId = parentId;
-        sendMessage(channel?.id, value, threadId);
+        sendMessage(channel?.id, value, { threadId: threadId });
       }
       return sendReply;
     },
-    [channel?.id, parentId, sendMessage],
+    [channel?.id, threadId, sendMessage],
   );
 
   return { sendReply };

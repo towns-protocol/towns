@@ -132,6 +132,18 @@ export interface CreateRoomInfo {
   parentSpaceId?: RoomIdentifier;
 }
 
+/// use to send different types of messages, e.g. text, emoji, image, etc.
+/// currently unsupported: Emote = "m.emote", Notice = "m.notice", Image = "m.image", File = "m.file", Audio = "m.audio", Location = "m.location", Video = "m.video",
+export enum MessageType {
+  Text = "m.text",
+  WenMoon = "m.wenmoon",
+}
+
+export interface SendMessageOptions {
+  threadId?: string;
+  messageType?: MessageType;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isRoom(room: any): room is Room {
   const r = room as Room;
