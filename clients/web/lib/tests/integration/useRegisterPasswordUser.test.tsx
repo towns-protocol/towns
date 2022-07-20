@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
@@ -13,8 +13,6 @@ import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 describe("useTegisterPasswordUser", () => {
   const chainId = process.env.CHAIN_ID;
@@ -72,5 +70,3 @@ describe("useTegisterPasswordUser", () => {
     );
   });
 });
-
-/* eslint-enable */

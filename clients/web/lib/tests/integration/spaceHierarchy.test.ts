@@ -1,7 +1,6 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Visibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("spaceHierarchy", () => {
   test("create a public space and a public room, have user join space and search for space childs", async () => {
@@ -78,5 +77,3 @@ describe("spaceHierarchy", () => {
     expect(alice_roomInfo.roomId).toEqual(roomId.matrixRoomId);
   });
 });
-
-/* eslint-enable */

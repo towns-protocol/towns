@@ -4,19 +4,27 @@ interface Props {
   defaultSpaceId?: string;
   defaultSpaceName?: string;
   defaultSpaceAvatarSrc?: string;
+  initialSyncLimit?: number;
   children: JSX.Element;
 }
 
 export const MatrixTestApp = (props: Props) => {
-  const { defaultSpaceId, defaultSpaceName, defaultSpaceAvatarSrc, children } =
-    props;
+  const {
+    defaultSpaceId,
+    defaultSpaceName,
+    defaultSpaceAvatarSrc,
+    initialSyncLimit,
+    children,
+  } = props;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const homeServerUrl = process.env.HOMESERVER!;
   return (
     <MatrixContextProvider
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      homeServerUrl={process.env.HOMESERVER!}
+      homeServerUrl={homeServerUrl}
       defaultSpaceId={defaultSpaceId}
       defaultSpaceName={defaultSpaceName}
       defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}
+      initialSyncLimit={initialSyncLimit}
     >
       {children}
     </MatrixContextProvider>

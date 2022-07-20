@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
@@ -13,14 +13,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
 import { Visibility } from "matrix-js-sdk";
-import { MatrixTestClient } from "./helpers/MatrixTestClient";
 import { useSpace } from "../../src/hooks/use-space";
 import { useRoom } from "../../src/hooks/use-room";
 import { Membership } from "../../src/types/matrix-types";
+import { registerAndStartClients } from "./helpers/TestUtils";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 describe("defaultSpaceId", () => {
   const chainId = process.env.CHAIN_ID!;
@@ -41,8 +39,8 @@ describe("defaultSpaceId", () => {
     testingUtils.clearAllMocks();
   });
   test("new user sees default space information", async () => {
-    const jane = new MatrixTestClient("jane");
-    await jane.registerWalletAndStartClient();
+    // create clients
+    const { jane } = await registerAndStartClients(["jane"]);
     // create a room
     const defaultSpaceId = await jane.createSpace({
       spaceName: "janes room",
@@ -172,5 +170,3 @@ describe("defaultSpaceId", () => {
     await waitFor(() => expect(channelName).toHaveTextContent("janes channel"));
   });
 });
-
-/* eslint-enable */
