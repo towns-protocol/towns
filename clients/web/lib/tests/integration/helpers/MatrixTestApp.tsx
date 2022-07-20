@@ -1,7 +1,6 @@
 import { MatrixContextProvider } from "../../../src/components/MatrixContextProvider";
 
 interface Props {
-  homeServerUrl: string;
   defaultSpaceId?: string;
   defaultSpaceName?: string;
   defaultSpaceAvatarSrc?: string;
@@ -9,16 +8,12 @@ interface Props {
 }
 
 export const MatrixTestApp = (props: Props) => {
-  const {
-    homeServerUrl,
-    defaultSpaceId,
-    defaultSpaceName,
-    defaultSpaceAvatarSrc,
-    children,
-  } = props;
+  const { defaultSpaceId, defaultSpaceName, defaultSpaceAvatarSrc, children } =
+    props;
   return (
     <MatrixContextProvider
-      homeServerUrl={homeServerUrl}
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      homeServerUrl={process.env.HOMESERVER!}
       defaultSpaceId={defaultSpaceId}
       defaultSpaceName={defaultSpaceName}
       defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}

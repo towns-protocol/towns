@@ -17,8 +17,7 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 describe("useTegisterPasswordUser", () => {
-  const homeServer = "http://localhost:8008";
-  const chainId = "0x4";
+  const chainId = process.env.CHAIN_ID;
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -54,7 +53,7 @@ describe("useTegisterPasswordUser", () => {
     };
     // render it
     render(
-      <MatrixTestApp homeServerUrl={homeServer}>
+      <MatrixTestApp>
         <RegisterUsernamePasswordComponent />
       </MatrixTestApp>,
     );

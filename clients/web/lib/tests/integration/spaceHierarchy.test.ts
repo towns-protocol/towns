@@ -4,13 +4,9 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("spaceHierarchy", () => {
-  const homeServer = "http://localhost:8008";
   test("create a public space and a public room, have user join space and search for space childs", async () => {
     // create clients
-    const { bob, alice } = await registerAndStartClients(
-      ["bob", "alice"],
-      homeServer,
-    );
+    const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
 
     // bob creates a space
     const spaceId = await bob.createSpace({
@@ -45,10 +41,7 @@ describe("spaceHierarchy", () => {
   });
   test("create a private space and a public room, have user join space and search for space childs", async () => {
     // create clients
-    const { bob, alice } = await registerAndStartClients(
-      ["bob", "alice"],
-      homeServer,
-    );
+    const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
 
     // bob creates a space
     const spaceId = await bob.createSpace({

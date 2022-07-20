@@ -5,13 +5,9 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("sendAMessage", () => {
-  const homeServer = "http://localhost:8008";
   test("create room, invite user, accept invite, and send message", async () => {
     // create clients
-    const { bob, alice } = await registerAndStartClients(
-      ["bob", "alice"],
-      homeServer,
-    );
+    const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
 
     // bob creates a room
     const roomId = await bob.createRoom({

@@ -49,19 +49,22 @@ export class MatrixTestClient {
   public wallet: Wallet;
   public userIdentifier: UserIdentifier;
   public homeServer: string;
-  public chainId = "0x4"; // rinkby
+  public chainId: string;
   public initialSyncLimit = 20;
   public matrixUserId?: string;
   private matrixAccessToken?: string;
   private matrixDeviceId?: string;
 
-  constructor(name: string, homeServer: string) {
+  constructor(name: string) {
     // init state
     this.name = name;
-    this.homeServer = homeServer;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this.chainId = process.env.CHAIN_ID!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this.homeServer = process.env.HOMESERVER!;
     // create an initial client, this won't have an auth token
     this.client = createClient({
-      baseUrl: homeServer,
+      baseUrl: this.homeServer,
     });
     // create a random wallet, we're web3!
     this.wallet = Wallet.createRandom();

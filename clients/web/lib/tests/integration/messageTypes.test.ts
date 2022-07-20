@@ -5,12 +5,10 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 describe("messageTypes", () => {
-  const homeServer = "http://localhost:8008";
   test("send a m.wenmoon message to test message types", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(
-      ["bob", "alice"],
-      homeServer,
+      ["bob", "alice"]
     );
 
     // bob creates a public room

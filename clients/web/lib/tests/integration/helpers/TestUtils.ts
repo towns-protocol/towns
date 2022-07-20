@@ -32,12 +32,9 @@ export async function sleepUntil<T>(
 
 export async function registerAndStartClients(
   clientNames: string[],
-  homeServer: string,
 ): Promise<Record<string, MatrixTestClient>> {
   // create new matrix test clients
-  const clients = clientNames.map(
-    (name) => new MatrixTestClient(name, homeServer),
-  );
+  const clients = clientNames.map((name) => new MatrixTestClient(name));
   // start them up
   await Promise.all(
     clients.map((client) => client.registerWalletAndStartClient()),

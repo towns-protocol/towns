@@ -18,8 +18,7 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 describe("walletStatus", () => {
-  const homeServer = "http://localhost:8008";
-  const chainId = "0x4";
+  const chainId = process.env.CHAIN_ID!;
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -39,7 +38,7 @@ describe("walletStatus", () => {
     // create a wallet for bob
     const bobWallet = ethers.Wallet.createRandom();
     // setup the mocks
-    testingUtils.mockChainId("0x4");
+    testingUtils.mockChainId(chainId);
     testingUtils.mockRequestAccounts([bobWallet.address], { chainId: chainId });
     testingUtils.mockConnectedWallet([bobWallet.address], { chainId: chainId });
     testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
@@ -64,7 +63,7 @@ describe("walletStatus", () => {
     };
     // render it
     render(
-      <MatrixTestApp homeServerUrl={homeServer}>
+      <MatrixTestApp>
         <TestWalletStatus />
       </MatrixTestApp>,
     );

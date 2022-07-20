@@ -23,8 +23,8 @@ import { Membership } from "../../src/types/matrix-types";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 describe("defaultSpaceId", () => {
+  const chainId = process.env.CHAIN_ID!;
   jest.setTimeout(60000);
-  const homeServer = "http://localhost:8008";
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -41,7 +41,7 @@ describe("defaultSpaceId", () => {
     testingUtils.clearAllMocks();
   });
   test("new user sees default space information", async () => {
-    const jane = new MatrixTestClient("jane", homeServer);
+    const jane = new MatrixTestClient("jane");
     await jane.registerWalletAndStartClient();
     // create a room
     const defaultSpaceId = await jane.createSpace({
@@ -59,9 +59,13 @@ describe("defaultSpaceId", () => {
     // create a wallet for bob
     const bobWallet = ethers.Wallet.createRandom();
     // setup the mocks
-    testingUtils.mockChainId("0x4");
-    testingUtils.mockRequestAccounts([bobWallet.address], { chainId: "0x4" });
-    testingUtils.mockConnectedWallet([bobWallet.address], { chainId: "0x4" });
+    testingUtils.mockChainId(chainId);
+    testingUtils.mockRequestAccounts([bobWallet.address], {
+      chainId: chainId,
+    });
+    testingUtils.mockConnectedWallet([bobWallet.address], {
+      chainId: chainId,
+    });
     testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
       return bobWallet.signMessage((params as string[])[0]);
     });
@@ -111,7 +115,6 @@ describe("defaultSpaceId", () => {
     // render it
     render(
       <MatrixTestApp
-        homeServerUrl={homeServer}
         defaultSpaceId={defaultSpaceId.matrixRoomId}
         defaultSpaceName="janes room"
       >
