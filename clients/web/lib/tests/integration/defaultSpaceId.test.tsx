@@ -139,8 +139,9 @@ describe("defaultSpaceId", () => {
     // click the register button
     fireEvent.click(registerButton);
     // expect our status to change to logged in
-    await waitFor(() =>
-      expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
+    await waitFor(
+      () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
+      { timeout: 5000 },
     );
     // expect our default room to sync, even though we haven't joined it
     await waitFor(() => expect(spaceRoomName).toHaveTextContent("janes room"), {
@@ -160,7 +161,7 @@ describe("defaultSpaceId", () => {
     // expect our room membership to be populated
     await waitFor(
       () => expect(roomMembership).toHaveTextContent(Membership.Join),
-      { timeout: 250 },
+      { timeout: 5000 },
     );
     await waitFor(() =>
       expect(spaceMembership).toHaveTextContent(Membership.Join),
