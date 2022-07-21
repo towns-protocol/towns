@@ -5,6 +5,7 @@ import {
   CreateSpaceInfo,
   makeRoomIdentifier,
   RoomIdentifier,
+  RoomVisibility,
   ZionContext,
 } from "../../types/matrix-types";
 
@@ -36,7 +37,7 @@ export const createZionSpace = async (props: {
 }): Promise<RoomIdentifier> => {
   const { matrixClient, createSpaceInfo } = props;
   const options: ICreateRoomOpts = {
-    visibility: createSpaceInfo.visibility,
+    visibility: createSpaceInfo.visibility as unknown as Visibility,
     name: createSpaceInfo.spaceName,
     is_direct: false,
     creation_content: {
@@ -48,14 +49,14 @@ export const createZionSpace = async (props: {
         state_key: "",
         content: {
           join_rule:
-            createSpaceInfo.visibility == Visibility.Public
+            createSpaceInfo.visibility == RoomVisibility.Public
               ? "public"
               : "invite",
         },
       },
     ],
     power_level_content_override: {
-      invite: createSpaceInfo.visibility == Visibility.Public ? 0 : 50,
+      invite: createSpaceInfo.visibility == RoomVisibility.Public ? 0 : 50,
     },
   };
   const response = await matrixClient.createRoom(options);

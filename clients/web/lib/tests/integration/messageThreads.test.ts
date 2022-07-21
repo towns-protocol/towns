@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MatrixEvent } from "matrix-js-sdk";
-import { Visibility } from "../../src/types/matrix-types";
+import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("messageThreads", () => {
@@ -10,7 +10,7 @@ describe("messageThreads", () => {
     // bob creates a public room
     const roomId = await bob.createRoom({
       roomName: "bob's room",
-      visibility: Visibility.Public,
+      visibility: RoomVisibility.Public,
     });
     // alice joins the room
     await alice.joinRoom(roomId);

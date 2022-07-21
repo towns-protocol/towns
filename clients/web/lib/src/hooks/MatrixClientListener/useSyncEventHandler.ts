@@ -10,9 +10,10 @@ export const useSyncEventHandler = (
 
   useEffect(() => {
     if (matrixClientRef.current) {
-      console.log(`Sync all rooms`);
       const rooms = matrixClientRef.current.getRooms();
-      printRooms(rooms);
+      if (process.env.REACT_APP_VERY_VERBOSE) {
+        printRooms(rooms);
+      }
       setAllRooms(rooms);
     }
   }, [matrixClientRef, setAllRooms, syncInfo]);

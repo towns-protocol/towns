@@ -3,6 +3,7 @@ import {
   ICreateRoomOpts,
   ICreateRoomStateEvent,
   MatrixClient,
+  Visibility,
 } from "matrix-js-sdk";
 import { useCallback, useContext } from "react";
 import { useMatrixStore } from "../../store/use-matrix-store";
@@ -10,7 +11,7 @@ import {
   CreateRoomInfo,
   makeRoomIdentifier,
   RoomIdentifier,
-  Visibility,
+  RoomVisibility,
   ZionContext,
 } from "../../types/matrix-types";
 
@@ -45,7 +46,7 @@ export const createZionRoom = async (props: {
   // initial state
   const options: ICreateRoomOpts = {
     //room_alias_name: "my_room_alias3",
-    visibility: createInfo.visibility,
+    visibility: createInfo.visibility as unknown as Visibility,
     name: createInfo.roomName,
     is_direct: createInfo.isDirectMessage === true,
     initial_state: getInitialState(homeServer, createInfo),
@@ -54,14 +55,21 @@ export const createZionRoom = async (props: {
   const response = await matrixClient.createRoom(options);
   console.log("Created room", JSON.stringify(response));
   if (createInfo.parentSpaceId) {
-    await matrixClient.sendStateEvent(
-      createInfo.parentSpaceId.matrixRoomId,
-      "m.space.child",
-      {
-        via: [homeServer],
-      },
-      response.room_id,
-    );
+    try {
+      await matrixClient.sendStateEvent(
+        createInfo.parentSpaceId.matrixRoomId,
+        "m.space.child",
+        {
+          via: [homeServer],
+        },
+        response.room_id,
+      );
+    } catch (ex) {
+      console.error("Error sending child room event", ex);
+      await matrixClient.leave(response.room_id);
+      await matrixClient.forget(response.room_id, true);
+      throw ex;
+    }
   }
 
   return makeRoomIdentifier(response.room_id);
@@ -87,7 +95,7 @@ function getInitialState(
 
   if (
     createInfo.parentSpaceId &&
-    createInfo.visibility == Visibility.Public &&
+    createInfo.visibility == RoomVisibility.Public &&
     bRestrictedToParentSpace
   ) {
     initialState.push({
@@ -109,7 +117,7 @@ function getInitialState(
       state_key: "",
       content: {
         join_rule:
-          createInfo.visibility == Visibility.Public ? "public" : "invite",
+          createInfo.visibility == RoomVisibility.Public ? "public" : "invite",
       },
     });
   }

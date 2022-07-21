@@ -15,7 +15,7 @@ export const SpaceSettingsCard = (props: Props) => {
       e.preventDefault();
       navigate(`/spaces/${spaceId.slug}/invite`);
     },
-    [navigate, spaceId],
+    [navigate, spaceId.slug],
   );
 
   const { leaveRoom } = useMatrixClient();
@@ -23,6 +23,14 @@ export const SpaceSettingsCard = (props: Props) => {
     await leaveRoom(spaceId);
     navigate("/");
   }, [leaveRoom, navigate, spaceId]);
+
+  const onSettingsClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      navigate(`/spaces/${spaceId.slug}/settings`);
+    },
+    [navigate, spaceId.slug],
+  );
 
   return (
     <Box position="relative">
@@ -38,6 +46,7 @@ export const SpaceSettingsCard = (props: Props) => {
         <Divider space="xs" />
         <MenuItem onClick={onInviteClick}>Invite</MenuItem>
         <MenuItem onClick={onLeaveClick}>Leave</MenuItem>
+        <MenuItem onClick={onSettingsClick}>Settings</MenuItem>
       </Card>
     </Box>
   );

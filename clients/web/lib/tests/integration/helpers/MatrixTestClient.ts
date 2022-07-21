@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Wallet } from "ethers";
 import {
   ClientEvent,
@@ -25,9 +26,13 @@ import { createZionRoom } from "../../../src/hooks/MatrixClient/useCreateRoom";
 import { inviteZionUser } from "../../../src/hooks/MatrixClient/useInviteUser";
 import { joinZionRoom } from "../../../src/hooks/MatrixClient/useJoinRoom";
 import { sendZionMessage } from "../../../src/hooks/MatrixClient/useSendMessage";
+import { setZionPowerLevel } from "../../../src/hooks/MatrixClient/useSetPowerLevel";
+import { enrichPowerLevels } from "../../../src/hooks/use-power-levels";
 import {
   CreateRoomInfo,
   CreateSpaceInfo,
+  PowerLevel,
+  PowerLevels,
   RoomIdentifier,
   SendMessageOptions,
 } from "../../../src/types/matrix-types";
@@ -58,9 +63,7 @@ export class MatrixTestClient {
   constructor(name: string) {
     // init state
     this.name = name;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.chainId = process.env.CHAIN_ID!;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.homeServer = process.env.HOMESERVER!;
     // create an initial client, this won't have an auth token
     this.client = createClient({
@@ -255,7 +258,6 @@ export class MatrixTestClient {
       new Room(
         spaceId.matrixRoomId,
         this.client,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.userIdentifier.matrixUserId!,
       );
 
@@ -275,24 +277,46 @@ export class MatrixTestClient {
 
   /// set the room invite level
   public async setRoomInviteLevel(roomId: RoomIdentifier, level: number) {
+    const current = (await this.getPowerLevels(roomId)).levels.find(
+      (x) => x.definition.key == "invite",
+    );
+    if (!current) {
+      throw new Error("invite level not found");
+    }
+    const response = await setZionPowerLevel(
+      this.client,
+      roomId,
+      current,
+      level,
+    );
+    console.log("setRoomInviteLevel", response);
+  }
+
+  /// set any power level
+  public async setPowerLevel(
+    roomId: RoomIdentifier,
+    current: PowerLevel,
+    newValue: number,
+  ) {
+    return await setZionPowerLevel(this.client, roomId, current, newValue);
+  }
+
+  public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
     const room = this.client.getRoom(roomId.matrixRoomId);
     if (!room) {
       throw new Error(`Room ${roomId.matrixRoomId} not found`);
     }
-
     const powerLevelsEvent = room.currentState.getStateEvents(
       EventType.RoomPowerLevels,
       "",
     );
-    const joinRules = room.currentState.getJoinRule();
-    console.log("joinRules", joinRules);
-    const powerLevels = powerLevelsEvent && powerLevelsEvent.getContent();
-    powerLevels.invite = level;
-    const response = await this.client.sendStateEvent(
-      roomId.matrixRoomId,
-      EventType.RoomPowerLevels,
-      powerLevels,
-    );
-    console.log("setRoomInviteLevel", response);
+    const powerLevels = powerLevelsEvent ? powerLevelsEvent.getContent() : {};
+    return enrichPowerLevels(powerLevels);
+  }
+
+  public getPowerLevel(roomId: RoomIdentifier, key: string): PowerLevel {
+    return this.getPowerLevels(roomId).levels.find(
+      (x) => x.definition.key === key,
+    )!;
   }
 }

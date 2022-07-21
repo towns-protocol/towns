@@ -1,9 +1,9 @@
-import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   CreateRoomInfo,
   Membership,
   RoomIdentifier,
+  RoomVisibility,
   useMatrixClient,
 } from "use-matrix-client";
 import { Button, Dropdown, Stack, TextField } from "@ui";
@@ -14,10 +14,12 @@ interface Props {
 }
 
 export const CreateChannelForm = (props: Props) => {
-  const VisibilityOptions = [Visibility.Private, Visibility.Public];
+  const VisibilityOptions = [RoomVisibility.Private, RoomVisibility.Public];
 
   const [roomName, setRoomName] = useState<string>("");
-  const [visibility, setVisibility] = useState<Visibility>(Visibility.Public);
+  const [visibility, setVisibility] = useState<RoomVisibility>(
+    RoomVisibility.Public,
+  );
   const { createRoom } = useMatrixClient();
   const { onClick, parentSpaceId } = props;
 
@@ -81,7 +83,7 @@ export const CreateChannelForm = (props: Props) => {
             value,
           }))}
           defaultValue={visibility}
-          onChange={(value) => setVisibility(value as Visibility)}
+          onChange={(value) => setVisibility(value as RoomVisibility)}
         />
       </Stack>
       <Button

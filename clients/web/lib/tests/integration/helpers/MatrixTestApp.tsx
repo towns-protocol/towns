@@ -1,6 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+import { Wallet } from "ethers";
+import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixContextProvider } from "../../../src/components/MatrixContextProvider";
 
 interface Props {
+  testingUtils: TestingUtils;
+  wallet: Wallet;
   defaultSpaceId?: string;
   defaultSpaceName?: string;
   defaultSpaceAvatarSrc?: string;
@@ -10,14 +15,24 @@ interface Props {
 
 export const MatrixTestApp = (props: Props) => {
   const {
+    testingUtils,
+    wallet,
     defaultSpaceId,
     defaultSpaceName,
     defaultSpaceAvatarSrc,
     initialSyncLimit,
     children,
   } = props;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  // pull environment variables from the process
+  const chainId = process.env.CHAIN_ID!;
   const homeServerUrl = process.env.HOMESERVER!;
+  // mock up the wallet
+  testingUtils.mockChainId(chainId);
+  testingUtils.mockRequestAccounts([wallet.address], { chainId: chainId });
+  testingUtils.mockConnectedWallet([wallet.address], { chainId: chainId });
+  testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
+    return wallet.signMessage((params as string[])[0]);
+  });
   return (
     <MatrixContextProvider
       homeServerUrl={homeServerUrl}

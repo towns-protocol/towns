@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MatrixEvent } from "matrix-js-sdk";
-import { Visibility } from "../../src/types/matrix-types";
+import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("sendAMessage", () => {
@@ -10,7 +10,7 @@ describe("sendAMessage", () => {
     // bob creates a room
     const roomId = await bob.createRoom({
       roomName: "bob's room",
-      visibility: Visibility.Private,
+      visibility: RoomVisibility.Private,
     });
     // bob invites alice to the room
     await bob.inviteUser(alice.matrixUserId!, roomId);

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Visibility } from "../../src/types/matrix-types";
+import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("spaceHierarchy", () => {
@@ -10,13 +10,13 @@ describe("spaceHierarchy", () => {
     // bob creates a space
     const spaceId = await bob.createSpace({
       spaceName: "bob's space",
-      visibility: Visibility.Public,
+      visibility: RoomVisibility.Public,
     });
 
     // bob creates a room
     const roomId = await bob.createRoom({
       roomName: "bob's room",
-      visibility: Visibility.Public,
+      visibility: RoomVisibility.Public,
       parentSpaceId: spaceId,
     });
 
@@ -45,13 +45,13 @@ describe("spaceHierarchy", () => {
     // bob creates a space
     const spaceId = await bob.createSpace({
       spaceName: "bob's private space",
-      visibility: Visibility.Private,
+      visibility: RoomVisibility.Private,
     });
 
     // bob creates a room
     const roomId = await bob.createRoom({
       roomName: "bob's room",
-      visibility: Visibility.Public,
+      visibility: RoomVisibility.Public,
       parentSpaceId: spaceId,
     });
 

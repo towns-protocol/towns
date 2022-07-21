@@ -15,7 +15,6 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("useTegisterPasswordUser", () => {
-  const chainId = process.env.CHAIN_ID;
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -32,9 +31,8 @@ describe("useTegisterPasswordUser", () => {
     testingUtils.clearAllMocks();
   });
   test("username / password registration", async () => {
-    const bobId = ethers.Wallet.createRandom().address;
-    testingUtils.mockRequestAccounts([], { chainId: chainId });
-    testingUtils.mockConnectedWallet([], { chainId: chainId });
+    const bobWallet = ethers.Wallet.createRandom();
+    const bobId = bobWallet.address;
     // create a veiw for the wallet
     const RegisterUsernamePasswordComponent = () => {
       const { loginStatus, loginError } = useMatrixStore();
@@ -51,7 +49,7 @@ describe("useTegisterPasswordUser", () => {
     };
     // render it
     render(
-      <MatrixTestApp>
+      <MatrixTestApp testingUtils={testingUtils} wallet={bobWallet}>
         <RegisterUsernamePasswordComponent />
       </MatrixTestApp>,
     );

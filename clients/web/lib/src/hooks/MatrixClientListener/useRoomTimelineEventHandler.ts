@@ -9,6 +9,7 @@ export const useRoomTimelineEventHandler = (
   const {
     createRoom,
     setNewMessage,
+    setPowerLevels,
     setRoomName,
     updateMembership,
     createSpaceChild,
@@ -99,8 +100,29 @@ export const useRoomTimelineEventHandler = (
           );
           break;
         }
+        case "m.space.parent": {
+          // no-op, handled by m.space.child
+          break;
+        }
+        case "m.room.power_levels": {
+          const roomId = event.getRoomId();
+          const content = event.event.content;
+          if (!roomId || !content) {
+            console.error("m.room.power_levels event has no roomId or content");
+            break;
+          }
+          console.log("power levels", roomId, content);
+          setPowerLevels(makeRoomIdentifier(roomId), content);
+          break;
+        }
         default:
-          console.log(`Unhandled Room.timeline event`, event.getType(), event);
+          console.log(`Unhandled Room.timeline event`, event.getType(), {
+            event: event,
+            roomId: room.roomId,
+            toStartOfTimeline: toStartOfTimeline,
+            removed: removed,
+            data: data,
+          });
           break;
       }
     },
@@ -109,6 +131,7 @@ export const useRoomTimelineEventHandler = (
       createSpaceChild,
       matrixClientRef,
       setNewMessage,
+      setPowerLevels,
       setRoomName,
       updateMembership,
     ],

@@ -1,6 +1,6 @@
 import { IContent, MatrixClient } from "matrix-js-sdk";
 
-export enum Visibility {
+export enum RoomVisibility {
   Private = "private",
   Public = "public",
 }
@@ -122,12 +122,12 @@ export interface RoomsMessages {
 
 export interface CreateSpaceInfo {
   spaceName: string;
-  visibility: Visibility;
+  visibility: RoomVisibility;
 }
 
 export interface CreateRoomInfo {
   roomName: string;
-  visibility: Visibility;
+  visibility: RoomVisibility;
   isDirectMessage?: boolean;
   parentSpaceId?: RoomIdentifier;
 }
@@ -142,6 +142,24 @@ export enum MessageType {
 export interface SendMessageOptions {
   threadId?: string;
   messageType?: MessageType;
+}
+
+export interface PowerLevels {
+  userPowers: { [userId: string]: number };
+  levels: PowerLevel[];
+}
+
+export interface PowerLevel {
+  value: number;
+  definition: PowerLevelDefinition;
+}
+
+export interface PowerLevelDefinition {
+  key: string;
+  name: string;
+  description: string;
+  default: number;
+  parent?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

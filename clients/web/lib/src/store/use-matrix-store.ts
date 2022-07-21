@@ -31,6 +31,11 @@ export type MatrixStoreStates = {
   setLoginError: (error: AuthenticationError | undefined) => void;
   allMessages: RoomsMessages | null;
   setNewMessage: (roomId: RoomIdentifier, message: RoomMessage) => void;
+  powerLevels: { [roomId: string]: Record<string, unknown> };
+  setPowerLevels: (
+    roomId: RoomIdentifier,
+    powerLevels: Record<string, unknown>,
+  ) => void;
   rooms: Rooms | null;
   joinRoom: (
     roomId: RoomIdentifier,
@@ -96,6 +101,15 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set({ homeServer: homeServer ?? null }),
     rooms: null,
     allMessages: null,
+    powerLevels: {},
+    setPowerLevels: (
+      roomId: RoomIdentifier,
+      powerLevels: Record<string, unknown>,
+    ) =>
+      set((state: MatrixStoreStates) =>
+        setPowerLevels(state, roomId, powerLevels),
+      ),
+
     createRoom: (roomId: RoomIdentifier, isSpace: boolean) =>
       set((state: MatrixStoreStates) => createRoom(state, roomId, isSpace)),
     setNewMessage: (roomId: RoomIdentifier, message: RoomMessage) =>
@@ -177,6 +191,16 @@ function createRoom(
   };
   changedRooms[roomId.slug] = newRoom;
   return { rooms: changedRooms };
+}
+
+function setPowerLevels(
+  state: MatrixStoreStates,
+  roomId: RoomIdentifier,
+  powerLevels: Record<string, unknown>,
+) {
+  const changedPowerLevels = { ...state.powerLevels };
+  changedPowerLevels[roomId.slug] = powerLevels;
+  return { powerLevels: changedPowerLevels };
 }
 
 function setNewMessage(

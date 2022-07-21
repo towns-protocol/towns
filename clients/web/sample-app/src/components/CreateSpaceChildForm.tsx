@@ -14,11 +14,11 @@ import {
   CreateRoomInfo,
   Membership,
   RoomIdentifier,
+  RoomVisibility,
   useMatrixClient,
 } from "use-matrix-client";
 import { useCallback, useMemo, useState } from "react";
 
-import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
 interface Props {
@@ -28,7 +28,9 @@ interface Props {
 
 export function CreateSpaceChildForm(props: Props): JSX.Element {
   const [roomName, setRoomName] = useState<string>("");
-  const [visibility, setVisibility] = useState<Visibility>(Visibility.Private);
+  const [visibility, setVisibility] = useState<RoomVisibility>(
+    RoomVisibility.Private,
+  );
   const { createRoom } = useMatrixClient();
   const { onClick, parentSpaceId } = props;
 
@@ -45,7 +47,7 @@ export function CreateSpaceChildForm(props: Props): JSX.Element {
   );
 
   const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
-    setVisibility(event.target.value as Visibility);
+    setVisibility(event.target.value as RoomVisibility);
   }, []);
 
   const onClickCreateRoom = useAsyncButtonCallback(async () => {
@@ -109,8 +111,8 @@ export function CreateSpaceChildForm(props: Props): JSX.Element {
                 value={visibility}
                 onChange={onChangeVisibility}
               >
-                <MenuItem value={Visibility.Private}>private</MenuItem>
-                <MenuItem value={Visibility.Public}>public</MenuItem>
+                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
+                <MenuItem value={RoomVisibility.Public}>public</MenuItem>
               </Select>
             </FormControl>
           </Box>

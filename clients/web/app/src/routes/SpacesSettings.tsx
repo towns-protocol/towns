@@ -1,33 +1,61 @@
 import React, { useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useMatrixClient, useSpaceId } from "use-matrix-client";
-import { Box, Button, Heading, Stack } from "@ui";
+import { useParams } from "react-router-dom";
+import {
+  PowerLevel,
+  useMatrixClient,
+  usePowerLevels,
+  useSpaceId,
+} from "use-matrix-client";
+import { Box, Heading, Paragraph, Stack, TextField } from "@ui";
 
 export const SpacesSettings = () => {
   const { spaceSlug } = useParams();
-  const { leaveRoom } = useMatrixClient();
-  const navigate = useNavigate();
+  const { setPowerLevel } = useMatrixClient();
   const spaceId = useSpaceId(spaceSlug);
+  const powerLevels = usePowerLevels(spaceId);
 
-  const onInviteClicked = useCallback(() => {
-    console.log("invite clicked");
-    navigate("/spaces/" + spaceId?.slug + "/invite");
-  }, [navigate, spaceId?.slug]);
-
-  const onLeaveClicked = useCallback(async () => {
-    if (spaceId) {
-      await leaveRoom(spaceId);
-    }
-    navigate("/");
-  }, [leaveRoom, navigate, spaceId]);
-
+  const onLevelChanged = useCallback(
+    (level: PowerLevel, newValue: number) => {
+      if (spaceId) {
+        setPowerLevel(spaceId, level, newValue);
+      }
+    },
+    [setPowerLevel, spaceId],
+  );
   return (
     <Stack horizontal padding="lg" gap="md">
       <Box shrink gap>
         <Heading>Settings</Heading>
-        <Button onClick={onInviteClicked}>Invite</Button>
-        <Button onClick={onLeaveClicked}>Leave Room</Button>
+        {powerLevels.levels.map((level: PowerLevel) => (
+          <PowerLevelView level={level} onLevelChanged={onLevelChanged} />
+        ))}
       </Box>
     </Stack>
+  );
+};
+
+const PowerLevelView = (props: {
+  level: PowerLevel;
+  onLevelChanged: (level: PowerLevel, newValue: number) => void;
+}) => {
+  const { level, onLevelChanged } = props;
+  const onTextFieldChanged = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = parseInt(event.target.value);
+      onLevelChanged(level, newValue);
+    },
+    [level, onLevelChanged],
+  );
+
+  return (
+    <Paragraph>
+      <b>{level.definition.name}:</b> {level.definition.description}
+      <TextField
+        id={level.definition.key}
+        value={level.value}
+        onChange={onTextFieldChanged}
+      />
+      <br />
+    </Paragraph>
   );
 };

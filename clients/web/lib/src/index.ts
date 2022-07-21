@@ -5,6 +5,7 @@ export { useMatrixStore } from "./store/use-matrix-store";
 export { useMatrixClient } from "./hooks/use-matrix-client";
 export { useMessages } from "./hooks/use-messages";
 export { useMyMembership } from "./hooks/use-my-membership";
+export { usePowerLevels } from "./hooks/use-power-levels";
 export { useRoom } from "./hooks/use-room";
 export {
   useSpace,
@@ -23,6 +24,9 @@ export type {
   CreateSpaceInfo,
   Member,
   Members,
+  PowerLevel,
+  PowerLevels,
+  PowerLevelDefinition,
   Room,
   RoomIdentifier,
   Rooms,
@@ -39,6 +43,7 @@ export {
   makeRoomIdentifier,
   Membership,
   MessageType,
+  RoomVisibility,
 } from "./types/matrix-types";
 
 export type { UserIdentifier } from "./types/user-identifier";

@@ -1,9 +1,9 @@
-import { Visibility } from "matrix-js-sdk/lib/@types/partials";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   CreateSpaceInfo,
   Membership,
   RoomIdentifier,
+  RoomVisibility,
   useMatrixClient,
 } from "use-matrix-client";
 import { atoms } from "ui/styles/atoms.css";
@@ -22,9 +22,11 @@ interface Props {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-  const VisibilityOptions = [Visibility.Private, Visibility.Public];
+  const VisibilityOptions = [RoomVisibility.Private, RoomVisibility.Public];
   const [spaceName, setSpaceName] = useState<string>("");
-  const [visibility, setVisibility] = useState<Visibility>(Visibility.Public);
+  const [visibility, setVisibility] = useState<RoomVisibility>(
+    RoomVisibility.Public,
+  );
   const { createSpace } = useMatrixClient();
 
   const disableCreateButton = useMemo(
@@ -78,7 +80,7 @@ export const CreateSpaceForm = (props: Props) => {
             value,
           }))}
           defaultValue={visibility}
-          onChange={(value) => setVisibility(value as Visibility)}
+          onChange={(value) => setVisibility(value as RoomVisibility)}
         />
 
         <Box gap="md">

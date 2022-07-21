@@ -12,16 +12,14 @@ import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
-import { Visibility } from "matrix-js-sdk";
 import { useSpace } from "../../src/hooks/use-space";
 import { useRoom } from "../../src/hooks/use-room";
-import { Membership } from "../../src/types/matrix-types";
+import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("defaultSpaceId", () => {
-  const chainId = process.env.CHAIN_ID!;
   jest.setTimeout(60000);
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
@@ -41,33 +39,22 @@ describe("defaultSpaceId", () => {
   test("new user sees default space information", async () => {
     // create clients
     const { jane } = await registerAndStartClients(["jane"]);
-    // create a room
+    // create a wallet for bob
+    const bobWallet = ethers.Wallet.createRandom();
+    // create a space
     const defaultSpaceId = await jane.createSpace({
-      spaceName: "janes room",
-      visibility: Visibility.Public,
+      spaceName: "janes space",
+      visibility: RoomVisibility.Public,
     });
-
+    //
     await jane.createRoom({
       roomName: "janes channel",
-      visibility: Visibility.Public,
+      visibility: RoomVisibility.Public,
       parentSpaceId: defaultSpaceId,
     });
     // set the invite level to 0
-    //await jane.setRoomInviteLevel(defaultSpaceId, 0);
-    // create a wallet for bob
-    const bobWallet = ethers.Wallet.createRandom();
-    // setup the mocks
-    testingUtils.mockChainId(chainId);
-    testingUtils.mockRequestAccounts([bobWallet.address], {
-      chainId: chainId,
-    });
-    testingUtils.mockConnectedWallet([bobWallet.address], {
-      chainId: chainId,
-    });
-    testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
-      return bobWallet.signMessage((params as string[])[0]);
-    });
-    // create a veiw for the wallet
+    //await jane.setRoomInviteLevel(defaultSpaceId, 0); TODO
+    // create a veiw for bob
     const TestDefaultRoom = () => {
       const { walletStatus } = useWeb3Context();
       const { loginStatus, loginError } = useMatrixStore();
@@ -113,8 +100,10 @@ describe("defaultSpaceId", () => {
     // render it
     render(
       <MatrixTestApp
+        testingUtils={testingUtils}
+        wallet={bobWallet}
         defaultSpaceId={defaultSpaceId.matrixRoomId}
-        defaultSpaceName="janes room"
+        defaultSpaceName="janes space"
       >
         <TestDefaultRoom />
       </MatrixTestApp>,
@@ -144,11 +133,14 @@ describe("defaultSpaceId", () => {
       { timeout: 5000 },
     );
     // expect our default room to sync, even though we haven't joined it
-    await waitFor(() => expect(spaceRoomName).toHaveTextContent("janes room"), {
-      timeout: 10000,
-    });
+    await waitFor(
+      () => expect(spaceRoomName).toHaveTextContent("janes space"),
+      {
+        timeout: 10000,
+      },
+    );
     // expect our default space to sync, even though we haven't joined it
-    await waitFor(() => expect(spaceName).toHaveTextContent("janes room"), {
+    await waitFor(() => expect(spaceName).toHaveTextContent("janes space"), {
       timeout: 10000,
     });
     // wait for the client to boot up, this is async

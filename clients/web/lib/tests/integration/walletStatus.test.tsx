@@ -16,7 +16,6 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("walletStatus", () => {
-  const chainId = process.env.CHAIN_ID!;
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -35,13 +34,6 @@ describe("walletStatus", () => {
   test("new user registers a new wallet and is logged in", async () => {
     // create a wallet for bob
     const bobWallet = ethers.Wallet.createRandom();
-    // setup the mocks
-    testingUtils.mockChainId(chainId);
-    testingUtils.mockRequestAccounts([bobWallet.address], { chainId: chainId });
-    testingUtils.mockConnectedWallet([bobWallet.address], { chainId: chainId });
-    testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
-      return bobWallet.signMessage((params as string[])[0]);
-    });
     // create a veiw for the wallet
     const TestWalletStatus = () => {
       const { walletStatus, chainId } = useWeb3Context();
@@ -61,7 +53,7 @@ describe("walletStatus", () => {
     };
     // render it
     render(
-      <MatrixTestApp>
+      <MatrixTestApp testingUtils={testingUtils} wallet={bobWallet}>
         <TestWalletStatus />
       </MatrixTestApp>,
     );
@@ -80,8 +72,9 @@ describe("walletStatus", () => {
     // click the register button
     fireEvent.click(registerButton);
     // expect our status to change to logged in
-    await waitFor(() =>
-      expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
+    await waitFor(
+      () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
+      { timeout: 5000 },
     );
   });
 });
