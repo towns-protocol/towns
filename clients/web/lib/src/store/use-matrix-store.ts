@@ -8,14 +8,13 @@ import {
   RoomMessage,
   Rooms,
   RoomsMessages,
-  Space,
   SpaceChild,
-  Spaces,
+  SpaceHierarchy,
+  SpaceHierarcies,
 } from "../types/matrix-types";
 import createStore, { SetState } from "zustand";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
-import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 import { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
 
 export type MatrixStoreStates = {
@@ -50,8 +49,12 @@ export type MatrixStoreStates = {
   setRoom: (room: MatrixRoom) => void;
   setAllRooms: (rooms: MatrixRoom[]) => void;
   setRoomName: (roomId: RoomIdentifier, roomName: string) => void;
-  spaces: Spaces;
-  setSpace: (spaceRoom: Room, roomHierarchy: RoomHierarchy) => Space;
+  spaceHierarchies: SpaceHierarcies;
+  setSpace: (
+    spaceId: RoomIdentifier,
+    root: IHierarchyRoom,
+    children: IHierarchyRoom[],
+  ) => SpaceHierarchy;
   createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) => void;
   userId: string | null;
   setUserId: (userId: string | undefined) => void;
@@ -120,21 +123,20 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => setAllRooms(state, rooms)),
     setRoomName: (roomId: RoomIdentifier, roomName: string) =>
       set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
-    spaces: {},
-    setSpace: (spaceRoom: Room, roomHierarchy: RoomHierarchy) => {
-      const newSpace: Space = {
-        id: spaceRoom.id,
-        name: spaceRoom.name,
-        members: spaceRoom.members,
-        membership: spaceRoom.membership,
-        children: roomHierarchy.rooms
-          ? roomHierarchy.rooms
-              .filter((r) => r.room_id != spaceRoom.id.matrixRoomId)
-              .map((r) => toZionSpaceChild(r))
-          : [],
+    spaceHierarchies: {},
+    setSpace: (
+      spaceId: RoomIdentifier,
+      root: IHierarchyRoom,
+      children: IHierarchyRoom[],
+    ) => {
+      const spaceHierarchy = {
+        root: toZionSpaceChild(root),
+        children: children.map((r) => toZionSpaceChild(r)),
       };
-      set((state: MatrixStoreStates) => setSpace(state, newSpace));
-      return newSpace;
+      set((state: MatrixStoreStates) =>
+        setSpace(state, spaceId, spaceHierarchy),
+      );
+      return spaceHierarchy;
     },
     createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) =>
       set((state: MatrixStoreStates) =>
@@ -231,10 +233,14 @@ function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
   return { rooms: changedRooms };
 }
 
-function setSpace(state: MatrixStoreStates, newSpace: Space) {
-  const changedSpaces = { ...state.spaces };
-  changedSpaces[newSpace.id.slug] = newSpace;
-  return { spaces: changedSpaces };
+function setSpace(
+  state: MatrixStoreStates,
+  spaceId: RoomIdentifier,
+  newSpace: SpaceHierarchy,
+) {
+  const changedSpaces = { ...state.spaceHierarchies };
+  changedSpaces[spaceId.slug] = newSpace;
+  return { spaceHierarchies: changedSpaces };
 }
 
 function createSpaceChild(
@@ -243,17 +249,18 @@ function createSpaceChild(
   roomId: RoomIdentifier,
 ) {
   const room = state.rooms?.[roomId.slug];
-  const space = state.spaces?.[spaceId.slug];
+  const space = state.spaceHierarchies?.[spaceId.slug];
   if (!room || !space) {
     return state;
   }
   if (space.children.find((c) => c.id.matrixRoomId === roomId.matrixRoomId)) {
+    console.log("createSpaceChild: no op");
     return state;
   }
   space.children.push(toZionSpaceChildFromRoom(room));
-  const changedSpaces = { ...state.spaces };
+  const changedSpaces = { ...state.spaceHierarchies };
   changedSpaces[spaceId.slug] = space;
-  return { spaces: changedSpaces };
+  return { spaceHierarchies: changedSpaces };
 }
 
 function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
@@ -391,7 +398,7 @@ function toZionMembers(r: MatrixRoom): Members {
 function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
   return {
     id: makeRoomIdentifier(r.room_id),
-    name: r.name,
+    name: r.name ?? "Unknown",
     avatarUrl: r.avatar_url,
     topic: r.topic,
     canonicalAlias: r.canonical_alias,

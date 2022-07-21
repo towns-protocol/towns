@@ -103,7 +103,7 @@ describe("defaultSpaceId", () => {
         testingUtils={testingUtils}
         wallet={bobWallet}
         defaultSpaceId={defaultSpaceId.matrixRoomId}
-        defaultSpaceName="janes space"
+        defaultSpaceName="janes space (fake default)"
       >
         <TestDefaultRoom />
       </MatrixTestApp>,
@@ -134,15 +134,19 @@ describe("defaultSpaceId", () => {
     );
     // expect our default room to sync, even though we haven't joined it
     await waitFor(
-      () => expect(spaceRoomName).toHaveTextContent("janes space"),
+      () =>
+        expect(spaceRoomName).toHaveTextContent("janes space (fake default)"),
       {
         timeout: 10000,
       },
     );
     // expect our default space to sync, even though we haven't joined it
-    await waitFor(() => expect(spaceName).toHaveTextContent("janes space"), {
-      timeout: 10000,
-    });
+    await waitFor(
+      () => expect(spaceName).toHaveTextContent("janes space (fake default)"),
+      {
+        timeout: 10000,
+      },
+    );
     // wait for the client to boot up, this is async
     await waitFor(() => expect(clientRunning).toHaveTextContent("true"));
     // expect our room membership to be empty
@@ -158,7 +162,18 @@ describe("defaultSpaceId", () => {
     await waitFor(() =>
       expect(spaceMembership).toHaveTextContent(Membership.Join),
     );
-    // todo sync public channels...
+    // expect our default room to sync
+    await waitFor(
+      () => expect(spaceRoomName).toHaveTextContent("janes space"),
+      {
+        timeout: 10000,
+      },
+    );
+    // expect our default space to sync
+    await waitFor(() => expect(spaceName).toHaveTextContent("janes space"), {
+      timeout: 10000,
+    });
+    // check for public channels...
     await waitFor(() => expect(channelsCount).toHaveTextContent("1"));
     await waitFor(() => expect(channelName).toHaveTextContent("janes channel"));
   });

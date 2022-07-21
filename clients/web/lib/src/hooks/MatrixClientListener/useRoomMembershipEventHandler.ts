@@ -65,6 +65,11 @@ export const useRoomMembershipEventHandler = (
         }
         case Membership.Join: {
           joinRoom(roomId, member.userId, member.userId === client.getUserId());
+          setSyncInfo({
+            roomId: roomId,
+            userId: member.userId,
+            membership: member.membership as Membership,
+          });
           break;
         }
         case Membership.Leave: {

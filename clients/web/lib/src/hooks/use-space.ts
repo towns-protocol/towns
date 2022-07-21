@@ -7,9 +7,9 @@ import {
   Membership,
   Room,
   RoomIdentifier,
-  Space,
   SpaceChild,
   SpaceData,
+  SpaceHierarchy,
   ZionContext,
 } from "../types/matrix-types";
 import { useMatrixStore } from "../store/use-matrix-store";
@@ -19,14 +19,23 @@ import { MatrixContext } from "../components/MatrixContextProvider";
 
 /// returns default space if no space slug is provided
 export function useSpace(
-  slug: string | undefined = undefined,
+  inSpaceId: string | RoomIdentifier | undefined = undefined,
 ): SpaceData | undefined {
   const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
     useContext<ZionContext>(MatrixContext);
-  const { spaces } = useMatrixStore();
+  const { spaceHierarchies } = useMatrixStore();
   const { clientRunning, syncSpace } = useMatrixClient();
-  const spaceRoomId = slug ? makeRoomIdentifierFromSlug(slug) : defaultSpaceId;
+  const spaceRoomId =
+    inSpaceId == undefined
+      ? defaultSpaceId
+      : typeof inSpaceId === "string"
+      ? makeRoomIdentifierFromSlug(inSpaceId)
+      : inSpaceId;
   const spaceRoom = useRoom(spaceRoomId);
+  const spaceHierarchy = useMemo(
+    () => (spaceRoomId?.slug ? spaceHierarchies[spaceRoomId.slug] : undefined),
+    [spaceRoomId?.slug, spaceHierarchies],
+  );
   useEffect(() => {
     void (async () => {
       try {
@@ -40,23 +49,30 @@ export function useSpace(
   }, [clientRunning, spaceRoom?.id, syncSpace]);
 
   return useMemo(() => {
-    if (spaceRoomId && spaces && spaces[spaceRoomId.slug]) {
-      return formatSpace(spaces[spaceRoomId.slug], "/placeholders/nft_29.png");
+    if (spaceRoomId && spaceHierarchy) {
+      return formatSpace(
+        spaceRoom ?? spaceHierarchy.root,
+        spaceHierarchy,
+        spaceRoom?.membership ?? "",
+        "/placeholders/nft_29.png",
+      );
     } else if (
       clientRunning &&
       defaultSpaceId &&
       spaceRoomId?.matrixRoomId == defaultSpaceId?.matrixRoomId
     ) {
       // this bit is temporary because client.peek(...) ("rooms_initial_sync") is unimplemented in dendrite https://github.com/HereNotThere/harmony/issues/188
-      const defaultSpace: Space = {
+      const defaultSpaceRoom: Room = {
         id: defaultSpaceId,
         name: defaultSpaceName ?? "Default Space",
         members: {},
-        children: [],
         membership: "",
+        isSpaceRoom: true,
       };
       return formatSpace(
-        defaultSpace,
+        defaultSpaceRoom,
+        undefined,
+        defaultSpaceRoom.membership,
         defaultSpaceAvatarSrc ?? "/placeholders/nft_29.png",
       );
     }
@@ -66,8 +82,9 @@ export function useSpace(
     defaultSpaceAvatarSrc,
     defaultSpaceId,
     defaultSpaceName,
+    spaceHierarchy,
+    spaceRoom,
     spaceRoomId,
-    spaces,
   ]);
 }
 
@@ -77,7 +94,7 @@ export const useSpaces = () => {
     () =>
       Object.values(rooms ?? [])
         .filter((r) => r.isSpaceRoom && r.membership === Membership.Join)
-        .map((r) => formatRoom(r, "/placeholders/nft_29.png")),
+        .map((r) => formatRoom(r, r.membership, "/placeholders/nft_29.png")),
     [rooms],
   );
 };
@@ -143,13 +160,24 @@ function getParentSpaceId(
 }
 
 /// formatting helper for changing a room join to a space
-function formatSpace(r: Space, avatarSrc: string): SpaceData {
-  return formatRoom(r, avatarSrc, toChannelGroups(r.children));
+function formatSpace(
+  root: Room | SpaceChild,
+  spaceHierarchy: SpaceHierarchy | undefined,
+  membership: string,
+  avatarSrc: string,
+): SpaceData {
+  return formatRoom(
+    root,
+    membership,
+    avatarSrc,
+    toChannelGroups(spaceHierarchy?.children ?? []),
+  );
 }
 
 /// formatting helper for changing a room to a space
 function formatRoom(
-  r: Space | Room,
+  r: Room | SpaceChild,
+  membership: string,
   avatarSrc: string,
   channelGroups: ChannelGroup[] = [],
 ): SpaceData {
@@ -159,7 +187,7 @@ function formatRoom(
     avatarSrc: avatarSrc,
     pinned: false,
     channelGroups: channelGroups,
-    membership: r.membership,
+    membership: membership,
   };
 }
 

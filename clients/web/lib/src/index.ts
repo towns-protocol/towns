@@ -33,7 +33,6 @@ export type {
   RoomMessage,
   RoomsMessages,
   SendMessageOptions,
-  Space,
   SpaceChild,
   SpaceData,
 } from "./types/matrix-types";

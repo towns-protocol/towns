@@ -295,12 +295,14 @@ export class MatrixTestClient {
   /// set any power level
   public async setPowerLevel(
     roomId: RoomIdentifier,
-    current: PowerLevel,
+    key: string,
     newValue: number,
   ) {
+    const current = this.getPowerLevel(roomId, key);
     return await setZionPowerLevel(this.client, roomId, current, newValue);
   }
 
+  /// get the power levels for a room
   public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
     const room = this.client.getRoom(roomId.matrixRoomId);
     if (!room) {
@@ -314,6 +316,7 @@ export class MatrixTestClient {
     return enrichPowerLevels(powerLevels);
   }
 
+  /// get a specific power level for a room
   public getPowerLevel(roomId: RoomIdentifier, key: string): PowerLevel {
     return this.getPowerLevels(roomId).levels.find(
       (x) => x.definition.key === key,

@@ -11,7 +11,7 @@ import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
 import { LoginStatus } from "../../src/hooks/login";
 
 describe("powerLevels", () => {
-  jest.setTimeout(10000000);
+  jest.setTimeout(10000);
   const testingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,

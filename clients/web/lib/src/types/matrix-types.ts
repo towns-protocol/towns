@@ -59,22 +59,18 @@ export type SpaceData = {
   membership: string;
 };
 
-export interface Space {
-  id: RoomIdentifier;
-  name: string;
-  membership: string;
-  members: Members;
-  inviter?: string;
-  children: SpaceChild[];
+export interface SpaceHierarcies {
+  [slug: string]: SpaceHierarchy;
 }
 
-export interface Spaces {
-  [slug: string]: Space;
+export interface SpaceHierarchy {
+  root: SpaceChild;
+  children: SpaceChild[];
 }
 
 export interface SpaceChild {
   id: RoomIdentifier;
-  name?: string;
+  name: string;
   avatarUrl?: string;
   topic?: string;
   canonicalAlias?: string;

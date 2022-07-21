@@ -37,8 +37,23 @@ export const useSyncSpace = () => {
         console.error("syncing space error", spaceId.matrixRoomId, reason);
       }
       console.log("syncing synced space", spaceId.matrixRoomId, roomHierarchy);
-      const space = setSpace(zionRoom, roomHierarchy);
-      return Promise.resolve(space.children);
+      const root = roomHierarchy.rooms.find(
+        (r) => r.room_id === spaceId.matrixRoomId,
+      );
+      const children = roomHierarchy.rooms.filter(
+        (r) => r.room_id !== spaceId.matrixRoomId,
+      );
+      if (!root) {
+        console.error(
+          "syncing space error",
+          spaceId.matrixRoomId,
+          "no root",
+          roomHierarchy,
+        );
+        return Promise.resolve([]);
+      }
+      const spaceHierarchy = setSpace(spaceId, root, children);
+      return Promise.resolve(spaceHierarchy.children);
     },
     [matrixClient, rooms, setSpace, userId],
   );
