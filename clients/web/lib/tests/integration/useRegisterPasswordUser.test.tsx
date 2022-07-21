@@ -14,7 +14,7 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("useTegisterPasswordUser", () => {
+describe("useRegisterPasswordUser", () => {
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -63,8 +63,9 @@ describe("useTegisterPasswordUser", () => {
     // click the register button
     fireEvent.click(registerButton);
     // expect our status to change to logged in
-    await waitFor(() =>
-      expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
+    await waitFor(
+      () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
+      { timeout: 3000 },
     );
   });
 });

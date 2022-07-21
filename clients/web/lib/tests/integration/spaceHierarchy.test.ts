@@ -21,7 +21,7 @@ describe("spaceHierarchy", () => {
     });
 
     const bob_spaceInfo = await bob.syncSpace(spaceId);
-    expect(bob_spaceInfo.rooms.length).toEqual(2);
+    expect(bob_spaceInfo?.children.length).toEqual(1);
 
     // alice peeks the space // todo https://github.com/HereNotThere/harmony/issues/188
     // await alice.client.peekInRoom(spaceId.matrixRoomId);
@@ -32,7 +32,7 @@ describe("spaceHierarchy", () => {
 
     // alice syncs the space
     const alice_spaceInfo = await alice.syncSpace(spaceId);
-    expect(alice_spaceInfo.rooms.length).toEqual(2);
+    expect(alice_spaceInfo?.children.length).toEqual(1);
 
     // can she join it?
     const alice_roomInfo = await alice.joinRoom(roomId);
@@ -56,11 +56,11 @@ describe("spaceHierarchy", () => {
     });
 
     const bob_spaceInfo = await bob.syncSpace(spaceId);
-    expect(bob_spaceInfo.rooms.length).toEqual(2);
+    expect(bob_spaceInfo?.children.length).toEqual(1);
 
     // alice syncs the space before getting an invite...
     const alice_spaceInfo_pre_join = await alice.syncSpace(spaceId);
-    expect(alice_spaceInfo_pre_join.rooms).toBeUndefined();
+    expect(alice_spaceInfo_pre_join?.children).toBeUndefined();
 
     // bob invites alice
     await bob.inviteUser(alice.matrixUserId!, spaceId);
@@ -70,7 +70,7 @@ describe("spaceHierarchy", () => {
 
     // alice syncs the space
     const alice_spaceInfo = await alice.syncSpace(spaceId);
-    expect(alice_spaceInfo.rooms.length).toEqual(2);
+    expect(alice_spaceInfo?.children.length).toEqual(1);
 
     // can she join it?
     const alice_roomInfo = await alice.joinRoom(roomId);

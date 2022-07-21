@@ -23,7 +23,7 @@ export function useSpace(
 ): SpaceData | undefined {
   const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
     useContext<ZionContext>(MatrixContext);
-  const { spaceHierarchies } = useMatrixStore();
+  const { spaceHierarchies, spacesUpdateRecievedAt } = useMatrixStore();
   const { clientRunning, syncSpace } = useMatrixClient();
   const spaceRoomId =
     inSpaceId == undefined
@@ -36,17 +36,26 @@ export function useSpace(
     () => (spaceRoomId?.slug ? spaceHierarchies[spaceRoomId.slug] : undefined),
     [spaceRoomId?.slug, spaceHierarchies],
   );
+  const spaceCacheBuster = useMemo(
+    () =>
+      spaceRoomId?.slug ? spacesUpdateRecievedAt[spaceRoomId.slug] : undefined,
+    [spaceRoomId?.slug, spacesUpdateRecievedAt],
+  );
   useEffect(() => {
     void (async () => {
       try {
         if (clientRunning && spaceRoom?.id) {
+          console.log(
+            "syncing space from use-space with cachebuster",
+            spaceCacheBuster,
+          );
           await syncSpace(spaceRoom?.id);
         }
       } catch (reason: unknown) {
         console.log("SpacesIndex error:", reason);
       }
     })();
-  }, [clientRunning, spaceRoom?.id, syncSpace]);
+  }, [clientRunning, spaceRoom?.id, syncSpace, spaceCacheBuster]);
 
   return useMemo(() => {
     if (spaceRoomId && spaceHierarchy) {

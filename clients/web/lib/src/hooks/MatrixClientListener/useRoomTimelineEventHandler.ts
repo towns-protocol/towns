@@ -11,8 +11,8 @@ export const useRoomTimelineEventHandler = (
     setNewMessage,
     setPowerLevels,
     setRoomName,
+    setSpaceUpdateRecievedAt,
     updateMembership,
-    createSpaceChild,
   } = useMatrixStore();
 
   /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
@@ -94,14 +94,18 @@ export const useRoomTimelineEventHandler = (
             console.error("m.space.child event has no roomId or childId");
             break;
           }
-          createSpaceChild(
-            makeRoomIdentifier(roomId),
-            makeRoomIdentifier(childId),
-          );
+          console.log("space child", roomId, event);
+          setSpaceUpdateRecievedAt(makeRoomIdentifier(roomId));
           break;
         }
         case "m.space.parent": {
-          // no-op, handled by m.space.child
+          const childId = event.getRoomId();
+          const roomId = event.getStateKey();
+          if (!roomId || !childId) {
+            console.error("m.space.parent event has no roomId or childId");
+            break;
+          }
+          setSpaceUpdateRecievedAt(makeRoomIdentifier(roomId));
           break;
         }
         case "m.room.power_levels": {
@@ -128,11 +132,11 @@ export const useRoomTimelineEventHandler = (
     },
     [
       createRoom,
-      createSpaceChild,
       matrixClientRef,
       setNewMessage,
       setPowerLevels,
       setRoomName,
+      setSpaceUpdateRecievedAt,
       updateMembership,
     ],
   );

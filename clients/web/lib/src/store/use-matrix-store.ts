@@ -49,13 +49,14 @@ export type MatrixStoreStates = {
   setRoom: (room: MatrixRoom) => void;
   setAllRooms: (rooms: MatrixRoom[]) => void;
   setRoomName: (roomId: RoomIdentifier, roomName: string) => void;
+  spacesUpdateRecievedAt: { [spaceId: string]: number };
+  setSpaceUpdateRecievedAt: (spaceId: RoomIdentifier) => void;
   spaceHierarchies: SpaceHierarcies;
   setSpace: (
     spaceId: RoomIdentifier,
     root: IHierarchyRoom,
     children: IHierarchyRoom[],
   ) => SpaceHierarchy;
-  createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) => void;
   userId: string | null;
   setUserId: (userId: string | undefined) => void;
   username: string | null;
@@ -123,6 +124,11 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => setAllRooms(state, rooms)),
     setRoomName: (roomId: RoomIdentifier, roomName: string) =>
       set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
+    spacesUpdateRecievedAt: {},
+    setSpaceUpdateRecievedAt: (spaceId: RoomIdentifier) =>
+      set((state: MatrixStoreStates) =>
+        setSpaceUpdateRecievedAt(state, spaceId),
+      ),
     spaceHierarchies: {},
     setSpace: (
       spaceId: RoomIdentifier,
@@ -138,10 +144,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       );
       return spaceHierarchy;
     },
-    createSpaceChild: (spaceId: RoomIdentifier, roomId: RoomIdentifier) =>
-      set((state: MatrixStoreStates) =>
-        createSpaceChild(state, spaceId, roomId),
-      ),
     joinRoom: (
       roomId: RoomIdentifier,
       userId: string,
@@ -233,6 +235,15 @@ function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
   return { rooms: changedRooms };
 }
 
+function setSpaceUpdateRecievedAt(
+  state: MatrixStoreStates,
+  spaceId: RoomIdentifier,
+) {
+  const changed = { ...state.spacesUpdateRecievedAt };
+  changed[spaceId.slug] = Date.now();
+  return { spacesUpdateRecievedAt: changed };
+}
+
 function setSpace(
   state: MatrixStoreStates,
   spaceId: RoomIdentifier,
@@ -240,26 +251,6 @@ function setSpace(
 ) {
   const changedSpaces = { ...state.spaceHierarchies };
   changedSpaces[spaceId.slug] = newSpace;
-  return { spaceHierarchies: changedSpaces };
-}
-
-function createSpaceChild(
-  state: MatrixStoreStates,
-  spaceId: RoomIdentifier,
-  roomId: RoomIdentifier,
-) {
-  const room = state.rooms?.[roomId.slug];
-  const space = state.spaceHierarchies?.[spaceId.slug];
-  if (!room || !space) {
-    return state;
-  }
-  if (space.children.find((c) => c.id.matrixRoomId === roomId.matrixRoomId)) {
-    console.log("createSpaceChild: no op");
-    return state;
-  }
-  space.children.push(toZionSpaceChildFromRoom(room));
-  const changedSpaces = { ...state.spaceHierarchies };
-  changedSpaces[spaceId.slug] = space;
   return { spaceHierarchies: changedSpaces };
 }
 
@@ -406,19 +397,5 @@ function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
     worldReadable: r.world_readable,
     guestCanJoin: r.guest_can_join,
     numjoinedMembers: r.num_joined_members,
-  };
-}
-
-function toZionSpaceChildFromRoom(r: Room): SpaceChild {
-  return {
-    id: r.id,
-    name: r.name,
-    avatarUrl: undefined, // r.avatarUrl,
-    topic: undefined, // r.topic,
-    canonicalAlias: undefined, // r.canonicalAlias,
-    aliases: undefined, // r.aliases,
-    worldReadable: true, // r.worldReadable,
-    guestCanJoin: true, // r.guestCanJoin,
-    numjoinedMembers: Object.keys(r.members).length,
   };
 }
