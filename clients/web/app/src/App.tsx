@@ -37,8 +37,8 @@ import { ChannelSettings } from "routes/ChannelSettings";
 FontLoader.init();
 
 export const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
-export const ZION_SPACE_ID = "!qDhRwYHK9GySLLFU:node1.hntlabs.com";
-export const ZION_SPACE_NAME = "Zion"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
+export const ZION_SPACE_ID = "!V2Gs6CLcXwOokgiq:node1.hntlabs.com";
+export const ZION_SPACE_NAME = "Zion Preview"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 export const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 
 export const App = () => {
