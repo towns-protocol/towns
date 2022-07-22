@@ -15,7 +15,8 @@ git subtree add --prefix servers/dendrite dendrite-fork main
 
 The repo relationships:
 
-harmony\servers\dendrite      [Pulling from dendrite-fork into harmony repo](#pulling-from-dendrite-fork-into-harmony-repo)
+```text
+harmony\servers\dendrite   (See #pulling-from-dendrite-fork-into-harmony-repo)
 <----------------------->
         |
         |
@@ -23,16 +24,17 @@ harmony\servers\dendrite      [Pulling from dendrite-fork into harmony repo](#pu
         |
         |
         V
-dendrite-fork (hnt's fork)    [Pushing changes to the dendrite-fork](#pushing-changes-to-the-dendrite-fork)
-<------------------------>    [Pulling changes from dendrite (main) into dendrite-fork](#pulling-changes-from-dendrite-main-into-dendrite-fork)
+dendrite-fork (hnt's fork)  (See #pushing-changes-to-the-dendrite-fork,
+<------------------------>   #pulling-changes-from-dendrite-main-into-dendrite-fork)
         |
         |
         | (upstream)
         |
         |
         V
-dendrite (main)                [Pushing changes to dendrite main](#pushing-changes-to-dendrite-main)
+dendrite (main)             (See #pushing-changes-to-dendrite-main)
 <------------->
+```
 
 The next few sections describe the steps to pull and push changes between each repo.
 
