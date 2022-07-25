@@ -50,6 +50,7 @@ export const createZionRoom = async (props: {
     name: createInfo.roomName,
     is_direct: createInfo.isDirectMessage === true,
     initial_state: getInitialState(homeServer, createInfo),
+    room_version: "10",
   };
   // create the room
   const response = await matrixClient.createRoom(options);

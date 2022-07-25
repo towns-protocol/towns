@@ -40,6 +40,7 @@ export const createZionSpace = async (props: {
     visibility: createSpaceInfo.visibility as unknown as Visibility,
     name: createSpaceInfo.spaceName,
     is_direct: false,
+    room_version: "10",
     creation_content: {
       type: "m.space",
     },
