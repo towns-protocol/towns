@@ -1,4 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+import React from "react";
 import { useEffect } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { generateTestingUtils } from "eth-testing";
@@ -43,6 +47,8 @@ describe("spaceChildUpdates", () => {
     });
     // set the space child prop on the room to 0 so that anyone can make channels
     await bob.setPowerLevel(roomId, "m.space.child", 0);
+    // stop bob, we'll be using him in the react component
+    bob.stopClient();
     // alice joins the room
     await alice.joinRoom(roomId);
     // create a power levels view for bob
@@ -54,14 +60,6 @@ describe("spaceChildUpdates", () => {
       useEffect(() => {
         void loginWithWallet("login...");
       }, [loginWithWallet]);
-      const renderNuber = (num: number | undefined) => {
-        if (!num) {
-          return "undefined";
-        }
-        if (num == 0) return;
-        ("zero");
-        return num.toString();
-      };
       // content
       return (
         <>
@@ -69,11 +67,9 @@ describe("spaceChildUpdates", () => {
           <div data-testid="loginError">{loginError?.message ?? ""}</div>
           <div data-testid="spaceId">{space?.id.matrixRoomId}</div>
           <div data-testid="spaceChildCount">
-            {renderNuber(
-              space?.channelGroups && space?.channelGroups?.length > 0
-                ? space?.channelGroups[0].channels.length
-                : 0,
-            )}
+            {space?.channelGroups && space?.channelGroups?.length > 0
+              ? space?.channelGroups[0].channels.length.toString()
+              : "undefined"}
           </div>
         </>
       );
