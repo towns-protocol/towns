@@ -52,8 +52,6 @@ describe("defaultSpaceId", () => {
       visibility: RoomVisibility.Public,
       parentSpaceId: defaultSpaceId,
     });
-    // set the invite level to 0
-    //await jane.setRoomInviteLevel(defaultSpaceId, 0); TODO
     // create a veiw for bob
     const TestDefaultRoom = () => {
       const { walletStatus } = useWeb3Context();
