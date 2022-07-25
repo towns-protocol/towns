@@ -10,6 +10,7 @@ import {
   SpaceChild,
   SpaceData,
   SpaceHierarchy,
+  toRoomIdentifier,
   ZionContext,
 } from "../types/matrix-types";
 import { useMatrixStore } from "../store/use-matrix-store";
@@ -19,18 +20,13 @@ import { MatrixContext } from "../components/MatrixContextProvider";
 
 /// returns default space if no space slug is provided
 export function useSpace(
-  inSpaceId: string | RoomIdentifier | undefined = undefined,
+  slugOrId: RoomIdentifier | string | undefined = undefined,
 ): SpaceData | undefined {
   const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
     useContext<ZionContext>(MatrixContext);
   const { spaceHierarchies, spacesUpdateRecievedAt } = useMatrixStore();
   const { clientRunning, syncSpace } = useMatrixClient();
-  const spaceRoomId =
-    inSpaceId == undefined
-      ? defaultSpaceId
-      : typeof inSpaceId === "string"
-      ? makeRoomIdentifierFromSlug(inSpaceId)
-      : inSpaceId;
+  const spaceRoomId = toRoomIdentifier(slugOrId ?? defaultSpaceId);
   const spaceRoom = useRoom(spaceRoomId);
   const spaceHierarchy = useMemo(
     () => (spaceRoomId?.slug ? spaceHierarchies[spaceRoomId.slug] : undefined),

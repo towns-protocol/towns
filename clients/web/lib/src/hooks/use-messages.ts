@@ -1,12 +1,10 @@
-import { makeRoomIdentifierFromSlug } from "../types/matrix-types";
+import { RoomIdentifier, toRoomIdentifier } from "../types/matrix-types";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useMemo } from "react";
 
-export const useMessages = (channelSlug: string | undefined) => {
+export const useMessages = (slugOrId: RoomIdentifier | string | undefined) => {
   const { allMessages } = useMatrixStore();
-  const roomId = channelSlug
-    ? makeRoomIdentifierFromSlug(channelSlug)
-    : undefined;
+  const roomId = toRoomIdentifier(slugOrId);
 
   return useMemo(
     () => (allMessages && roomId?.slug ? allMessages[roomId.slug] ?? [] : []),

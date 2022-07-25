@@ -2,23 +2,18 @@ import { useMemo } from "react";
 import { powerLevelDefinitions } from "../data/power-level-definitions";
 import { useMatrixStore } from "../store/use-matrix-store";
 import {
-  makeRoomIdentifierFromSlug,
   PowerLevel,
   PowerLevelDefinition,
   RoomIdentifier,
   PowerLevels,
+  toRoomIdentifier,
 } from "../types/matrix-types";
 
 export const usePowerLevels = (
-  inRoomId: RoomIdentifier | string | undefined,
+  slugOrId: RoomIdentifier | string | undefined,
 ): PowerLevels => {
-  const roomId =
-    typeof inRoomId === "string"
-      ? makeRoomIdentifierFromSlug(inRoomId)
-      : inRoomId;
-
+  const roomId = toRoomIdentifier(slugOrId);
   const { powerLevels } = useMatrixStore();
-
   const levels = useMemo(
     () => (roomId && powerLevels ? powerLevels[roomId.slug] : undefined),
     [roomId, powerLevels],

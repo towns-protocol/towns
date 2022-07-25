@@ -1,15 +1,13 @@
 import { useMemo } from "react";
-import { makeRoomIdentifierFromSlug } from "../types/matrix-types";
+import { RoomIdentifier, toRoomIdentifier } from "../types/matrix-types";
 import { useSpace } from "./use-space";
 
 export const useChannel = (
-  spaceSlug: string | undefined,
-  channelSlug: string | undefined,
+  spaceSlugOrId: RoomIdentifier | string | undefined,
+  channelSlugOrId: RoomIdentifier | string | undefined,
 ) => {
-  const channelId = channelSlug
-    ? makeRoomIdentifierFromSlug(channelSlug)
-    : undefined;
-  const spaceId = spaceSlug ? makeRoomIdentifierFromSlug(spaceSlug) : undefined;
+  const channelId = toRoomIdentifier(channelSlugOrId);
+  const spaceId = toRoomIdentifier(spaceSlugOrId);
   const space = useSpace(spaceId?.slug);
 
   const channelGroup = useMemo(
