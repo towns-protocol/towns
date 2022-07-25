@@ -18,7 +18,7 @@ export const InvitesIndex = () => {
     await joinRoom(invite.id);
     navigate(
       invite.isSpaceRoom
-        ? "/spaces/" + invite.id.slug
+        ? "/spaces/" + invite.id.slug + "/"
         : "/" +
             invite.spaceParentId?.slug +
             "/channels/" +
