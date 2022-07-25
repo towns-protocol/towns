@@ -148,10 +148,10 @@ client_api:
   # using the registration shared secret below.
   registration_disabled: false
 
-# Enable or disable password authentication.
+  # Enable or disable password authentication.
   password_authentication_disabled: true
 
-# public key authentication
+  # public key authentication
   public_key_authentication:
     ethereum:
       enabled: true
@@ -230,4 +230,24 @@ docker run --rm \
 -v <your-dendrite-main-git>:/src \
 -v <your-dendrite-main-git>/logs/test:/logs \
 matrixdotorg/sytest-dendrite:latest tests/50federation/40devicelists.pl
+```
+
+### Run tests through MITM
+
+Install mit proxy
+
+```console
+brew install mitmproxy
+```
+
+Then start the proxy listening on 8009
+
+```console
+mitmweb -p 8009 --mode reverse:http://localhost:8008/
+```
+
+Then change the jest config in jest-setup.ts to point to 8009
+
+```
+process.env.HOMESERVER = "http://localhost:8009"; // "https://node1.hntlabs.com";
 ```
