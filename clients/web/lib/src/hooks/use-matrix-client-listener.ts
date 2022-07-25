@@ -20,7 +20,7 @@ export const useMatrixClientListener = (
   homeServerUrl: string,
   initialSyncLimit = 20,
 ) => {
-  const { homeServer, setHomeServer, isAuthenticated, userId } =
+  const { deviceId, homeServer, setHomeServer, isAuthenticated, userId } =
     useMatrixStore();
 
   const { accessToken } = useCredentialStore();
@@ -37,11 +37,12 @@ export const useMatrixClientListener = (
   }, [homeServerUrl, setHomeServer]);
 
   const startClient = useCallback(async () => {
-    if (accessToken && homeServer && userId) {
+    if (accessToken && homeServer && userId && deviceId) {
       const options: ICreateClientOpts = {
         baseUrl: homeServer,
         accessToken: accessToken,
         userId: userId,
+        deviceId: deviceId,
       };
       const client = createClient(options);
       await client.startClient({ initialSyncLimit });
@@ -88,6 +89,7 @@ export const useMatrixClientListener = (
     }
   }, [
     accessToken,
+    deviceId,
     handleRoomMembershipEvent,
     handleRoomTimelineEvent,
     handleSync,
