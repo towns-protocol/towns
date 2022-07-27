@@ -27,6 +27,7 @@ export const MatrixTestApp = (props: Props) => {
   // pull environment variables from the process
   const chainId = process.env.CHAIN_ID!;
   const homeServerUrl = process.env.HOMESERVER!;
+  const disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
   // mock up the wallet
   testingUtils.mockChainId(chainId);
   testingUtils.mockRequestAccounts([wallet.address], { chainId: chainId });
@@ -37,6 +38,7 @@ export const MatrixTestApp = (props: Props) => {
   return (
     <MatrixContextProvider
       homeServerUrl={homeServerUrl}
+      disableEncryption={disableEncryption}
       defaultSpaceId={defaultSpaceId}
       defaultSpaceName={defaultSpaceName}
       defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}

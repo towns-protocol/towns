@@ -54,6 +54,7 @@ export class MatrixTestClient {
   public userIdentifier: UserIdentifier;
   public homeServer: string;
   public chainId: string;
+  public disableEncryption: boolean;
   public initialSyncLimit = 20;
   public matrixUserId?: string;
   private matrixAccessToken?: string;
@@ -64,6 +65,7 @@ export class MatrixTestClient {
     this.name = name;
     this.chainId = process.env.CHAIN_ID!;
     this.homeServer = process.env.HOMESERVER!;
+    this.disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
     // create an initial client, this won't have an auth token
     this.client = createClient({
       baseUrl: this.homeServer,
@@ -178,9 +180,11 @@ export class MatrixTestClient {
     // create a new one, with the new access token
     this.client = createClient(options);
     // start it up, this begins a sync command
-    await this.client.initCrypto();
-    // disable log?
-    this.client.setGlobalErrorOnUnknownDevices(false);
+    if (!this.disableEncryption) {
+      await this.client.initCrypto();
+      // disable log?
+      this.client.setGlobalErrorOnUnknownDevices(false);
+    }
     // start client
     await this.client.startClient({ initialSyncLimit: this.initialSyncLimit });
     // wait for the sync to complete
@@ -221,6 +225,7 @@ export class MatrixTestClient {
       matrixClient: this.client,
       homeServer: this.homeServer,
       createInfo: createInfo,
+      disableEncryption: this.disableEncryption,
     });
   }
 
@@ -228,7 +233,11 @@ export class MatrixTestClient {
   public async createSpace(
     createSpaceInfo: CreateSpaceInfo,
   ): Promise<RoomIdentifier> {
-    return createZionSpace({ matrixClient: this.client, createSpaceInfo });
+    return createZionSpace({
+      matrixClient: this.client,
+      createSpaceInfo,
+      disableEncryption: this.disableEncryption,
+    });
   }
 
   /// invite a user to your room
