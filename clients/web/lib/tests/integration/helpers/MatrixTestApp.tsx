@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+import React from "react";
 import { Wallet } from "ethers";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixContextProvider } from "../../../src/components/MatrixContextProvider";

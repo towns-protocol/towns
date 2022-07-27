@@ -4,6 +4,9 @@ import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("sendAMessage", () => {
+  // usefull for debugging or running against cloud servers
+  jest.setTimeout(30 * 1000);
+  // test: sendAMessage
   test("create room, invite user, accept invite, and send message", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
@@ -30,9 +33,11 @@ describe("sendAMessage", () => {
         (x) =>
           x.client
             .getRoom(roomId.matrixRoomId)
-            ?.timeline.find(
+            ?.getLiveTimeline()
+            .getEvents()
+            .find(
               (event: MatrixEvent) =>
-                event.event.content?.body === "Hello Alice!",
+                event.getContent()?.body === "Hello Alice!",
             ) != undefined,
       ),
     ).toBe(true);
@@ -44,9 +49,10 @@ describe("sendAMessage", () => {
         (x) =>
           x.client
             .getRoom(roomId.matrixRoomId)
-            ?.timeline.find(
-              (event: MatrixEvent) =>
-                event.event.content?.body === "Hello Bob!",
+            ?.getLiveTimeline()
+            .getEvents()
+            .find(
+              (event: MatrixEvent) => event.getContent()?.body === "Hello Bob!",
             ) != undefined,
       ),
     ).toBe(true);

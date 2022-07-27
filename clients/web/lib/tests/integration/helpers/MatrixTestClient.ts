@@ -178,6 +178,10 @@ export class MatrixTestClient {
     // create a new one, with the new access token
     this.client = createClient(options);
     // start it up, this begins a sync command
+    await this.client.initCrypto();
+    // disable log?
+    this.client.setGlobalErrorOnUnknownDevices(false);
+    // start client
     await this.client.startClient({ initialSyncLimit: this.initialSyncLimit });
     // wait for the sync to complete
     const sunk = new Promise<string>((resolve, reject) => {

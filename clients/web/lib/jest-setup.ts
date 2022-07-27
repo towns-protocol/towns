@@ -1,16 +1,29 @@
 import "@testing-library/jest-dom";
 import "@testing-library/jest-dom/extend-expect";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React from "react";
-import { request } from "matrix-js-sdk";
+import { request as matrixRequest } from "matrix-js-sdk";
 import { MatrixTestClient } from "./tests/integration/helpers/MatrixTestClient";
+import { webcrypto } from "node:crypto";
+import * as Olm from "olm";
+import * as request from "request";
 
-process.env.HOMESERVER = "http://localhost:8008"; // "https://node1.hntlabs.com";
+process.env.HOMESERVER = "http://localhost:8008"; //"https://node1.hntlabs.com";
 process.env.CHAIN_ID = "0x4"; // rinkby
 
-beforeAll(() => {
+// This is here to extend the globalThis interface for loading Olm, should be in global.d.ts but
+// that wasn't working
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface globalThis {
+  Olm: typeof import("olm");
+}
+
+beforeAll(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).crypto = webcrypto;
+  globalThis.Olm = Olm;
+  await globalThis.Olm.init();
+
   // set up required global for the matrix client to allow us to make http requests
-  request(require("request")); // eslint-disable-line @typescript-eslint/no-var-requires
+  matrixRequest(request);
 });
 
 afterEach(() => {

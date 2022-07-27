@@ -24,7 +24,10 @@ export function App(): JSX.Element {
     <BrowserRouter>
       <ThemeProvider theme={theme}>
         <Container maxWidth="md">
-          <MatrixContextProvider homeServerUrl={MATRIX_HOMESERVER_URL}>
+          <MatrixContextProvider
+            homeServerUrl={MATRIX_HOMESERVER_URL}
+            disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
+          >
             <Routes>
               <Route element={<Main />}>
                 <Route element={<AppDrawer />}>

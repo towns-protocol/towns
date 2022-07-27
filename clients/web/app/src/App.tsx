@@ -44,6 +44,7 @@ export const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is te
 export const App = () => {
   return (
     <MatrixContextProvider
+      disableEncryption // todo remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
       homeServerUrl={MATRIX_HOMESERVER_URL}
       defaultSpaceId={ZION_SPACE_ID}
       defaultSpaceName={ZION_SPACE_NAME}

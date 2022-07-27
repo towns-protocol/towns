@@ -8,6 +8,7 @@ import {
   RoomMemberEvent,
   createClient,
   Room,
+  MatrixEventEvent,
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef } from "react";
 import { useCredentialStore } from "../store/use-credential-store";
@@ -18,6 +19,7 @@ import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler"
 
 export const useMatrixClientListener = (
   homeServerUrl: string,
+  disableEncryption?: boolean,
   initialSyncLimit = 20,
 ) => {
   const { deviceId, homeServer, setHomeServer, isAuthenticated, userId } =
@@ -45,6 +47,10 @@ export const useMatrixClientListener = (
         deviceId: deviceId,
       };
       const client = createClient(options);
+      if (disableEncryption !== true) {
+        await client.initCrypto();
+        client.setGlobalErrorOnUnknownDevices(false);
+      }
       await client.startClient({ initialSyncLimit });
       matrixClientRef.current = client;
       /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
@@ -75,6 +81,22 @@ export const useMatrixClientListener = (
         },
       );
 
+      client.on(MatrixEventEvent.Decrypted, (event: MatrixEvent) => {
+        console.log(
+          "recieved decrypted event",
+          event.getType(),
+          event.getId(),
+          event.getRoomId(),
+        );
+        const roomId = event.getRoomId();
+        if (roomId) {
+          const room = client.getRoom(roomId);
+          if (room) {
+            handleRoomTimelineEvent(event, room, false, false, {});
+          }
+        }
+      });
+
       client.on(
         RoomMemberEvent.Membership,
         (
@@ -90,6 +112,7 @@ export const useMatrixClientListener = (
   }, [
     accessToken,
     deviceId,
+    disableEncryption,
     handleRoomMembershipEvent,
     handleRoomTimelineEvent,
     handleSync,

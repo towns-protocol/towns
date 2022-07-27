@@ -27,6 +27,7 @@
     "http-status-codes": "^2.2.0",
     "lexical": "^0.3.6",
     "matrix-js-sdk": "^19.0.0",
+    "olm": "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-hook-form": "^7.32.1",

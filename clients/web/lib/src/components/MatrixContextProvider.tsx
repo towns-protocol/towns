@@ -7,6 +7,7 @@ export const MatrixContext = createContext<ZionContext>({});
 
 interface Props {
   homeServerUrl: string;
+  disableEncryption?: boolean;
   defaultSpaceId?: string;
   defaultSpaceName?: string; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
   defaultSpaceAvatarSrc?: string; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
@@ -17,6 +18,7 @@ interface Props {
 export function MatrixContextProvider(props: Props): JSX.Element {
   const {
     homeServerUrl,
+    disableEncryption,
     defaultSpaceId,
     defaultSpaceName,
     defaultSpaceAvatarSrc,
@@ -25,6 +27,7 @@ export function MatrixContextProvider(props: Props): JSX.Element {
 
   const { matrixClient } = useMatrixClientListener(
     homeServerUrl,
+    disableEncryption,
     initialSyncLimit,
   );
   return (
@@ -32,6 +35,7 @@ export function MatrixContextProvider(props: Props): JSX.Element {
       <MatrixContext.Provider
         value={{
           matrixClient: matrixClient,
+          disableEncryption: disableEncryption,
           defaultSpaceId: defaultSpaceId
             ? makeRoomIdentifier(defaultSpaceId)
             : undefined,

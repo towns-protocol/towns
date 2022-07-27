@@ -28,30 +28,21 @@ export const useRoomTimelineEventHandler = (
         console.log(`matrixClientRef.current is undefined`);
         return;
       }
+      console.log("handleRoomTimelineEvent", event.getType());
+      const content = event.getContent();
       switch (event.getType()) {
         case "m.room.message": {
-          console.log("m.room.message: " + event.event.event_id ?? "-", {
-            event: event,
-            toStart: toStartOfTimeline,
-            removed: removed,
-            data: data,
-          });
-          if (
-            !event.sender ||
-            !event.event.event_id ||
-            !event.event.content ||
-            !event.event.content.msgtype
-          ) {
+          if (!event.getSender() || !content || !content.msgtype) {
             console.error("m.room.message event has no event_id or content");
             break;
           }
           setNewMessage(makeRoomIdentifier(room.roomId), {
-            eventId: event.event.event_id,
-            sender: event.sender.name,
-            body: event.event.content.body,
-            msgType: event.event.content.msgtype,
-            content: event.event.content,
-            originServerTs: event.event.content.origin_server_ts,
+            eventId: event.getId(),
+            sender: event.getSender(),
+            body: content.body,
+            msgType: content.msgtype,
+            content: content,
+            originServerTs: content.origin_server_ts,
           });
           break;
         }
@@ -110,13 +101,18 @@ export const useRoomTimelineEventHandler = (
         }
         case "m.room.power_levels": {
           const roomId = event.getRoomId();
-          const content = event.event.content;
+          const content = event.getContent();
           if (!roomId || !content) {
             console.error("m.room.power_levels event has no roomId or content");
             break;
           }
           console.log("power levels", roomId, content);
           setPowerLevels(makeRoomIdentifier(roomId), content);
+          break;
+        }
+        case "m.room.encrypted": {
+          // encrypted events are reparsed after a MatrixEventEvent.Decrypted event
+          console.log("encrypted event for room:", event.getRoomId());
           break;
         }
         default:

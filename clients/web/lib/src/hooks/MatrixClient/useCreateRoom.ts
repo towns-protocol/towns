@@ -16,14 +16,20 @@ import {
 } from "../../types/matrix-types";
 
 export const useCreateRoom = () => {
-  const { matrixClient } = useContext<ZionContext>(MatrixContext);
+  const { disableEncryption, matrixClient } =
+    useContext<ZionContext>(MatrixContext);
   const { homeServer } = useMatrixStore();
 
   return useCallback(
     async (createInfo: CreateRoomInfo): Promise<RoomIdentifier | undefined> => {
       try {
         if (matrixClient && homeServer) {
-          return await createZionRoom({ matrixClient, homeServer, createInfo });
+          return await createZionRoom({
+            matrixClient,
+            homeServer,
+            createInfo,
+            disableEncryption,
+          });
         } else {
           console.error("Not logged in. Cannot create room");
         }
@@ -33,7 +39,7 @@ export const useCreateRoom = () => {
       }
       return undefined;
     },
-    [homeServer, matrixClient],
+    [disableEncryption, homeServer, matrixClient],
   );
 };
 
@@ -41,15 +47,16 @@ export const createZionRoom = async (props: {
   matrixClient: MatrixClient;
   homeServer: string;
   createInfo: CreateRoomInfo;
+  disableEncryption?: boolean;
 }): Promise<RoomIdentifier> => {
-  const { matrixClient, homeServer, createInfo } = props;
+  const { matrixClient, homeServer, createInfo, disableEncryption } = props;
   // initial state
   const options: ICreateRoomOpts = {
     //room_alias_name: "my_room_alias3",
     visibility: createInfo.visibility as unknown as Visibility,
     name: createInfo.roomName,
     is_direct: createInfo.isDirectMessage === true,
-    initial_state: getInitialState(homeServer, createInfo),
+    initial_state: makeInitialState(homeServer, createInfo, disableEncryption),
     room_version: "10",
   };
   // create the room
@@ -76,12 +83,25 @@ export const createZionRoom = async (props: {
   return makeRoomIdentifier(response.room_id);
 };
 
-function getInitialState(
+function makeInitialState(
   homeServer: string,
   createInfo: CreateRoomInfo,
+  bDisableEncryption?: boolean,
   bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
 ): ICreateRoomStateEvent[] {
   const initialState: ICreateRoomStateEvent[] = [];
+
+  if (bDisableEncryption !== true) {
+    initialState.push({
+      content: {
+        algorithm: "m.megolm.v1.aes-sha2",
+        rotation_period_ms: 604800000,
+        rotation_period_msgs: 100,
+      },
+      state_key: "",
+      type: "m.room.encryption",
+    });
+  }
 
   if (createInfo.parentSpaceId) {
     initialState.push({

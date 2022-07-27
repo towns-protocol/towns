@@ -1,5 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { generateTestingUtils } from "eth-testing";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
