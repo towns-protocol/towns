@@ -8,13 +8,13 @@ import { generateTestingUtils } from "eth-testing";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useMatrixClient } from "../../src/hooks/use-matrix-client";
-import { registerAndStartClients } from "./helpers/TestUtils";
+import { registerAndStartClients, sleep } from "./helpers/TestUtils";
 import { usePowerLevels } from "../../src/hooks/use-power-levels";
 import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
 import { LoginStatus } from "../../src/hooks/login";
 
 describe("powerLevels", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(20000);
   const testingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,
@@ -42,6 +42,9 @@ describe("powerLevels", () => {
     await bob.inviteUser(alice.matrixUserId!, roomId);
     // alice joins the room
     await alice.joinRoom(roomId);
+    // stop bob
+    bob.stopClient();
+    await sleep(50);
     // create a power levels view for bob
     const PowerLevelContent = (props: { roomId: RoomIdentifier }) => {
       const { loginStatus, loginError } = useMatrixStore();
@@ -101,10 +104,8 @@ describe("powerLevels", () => {
     // expect the power level to change
     await waitFor(() => expect(spaceChildLevel).toHaveTextContent("0")); // note to self, this doesn't work
     // expect alice to see the power level change
-    await waitFor(
-      () =>
-        expect(alice.getPowerLevel(roomId, "m.space.child").value).toEqual(0),
-      { timeout: 3000 },
+    await waitFor(() =>
+      expect(alice.getPowerLevel(roomId, "m.space.child").value).toEqual(0),
     );
     // expect that alice can make a space child
     await expect(

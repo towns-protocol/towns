@@ -126,24 +126,16 @@ describe("defaultSpaceId", () => {
     // click the register button
     fireEvent.click(registerButton);
     // expect our status to change to logged in
-    await waitFor(
-      () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
-      { timeout: 5000 },
+    await waitFor(() =>
+      expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
     );
     // expect our default room to sync, even though we haven't joined it
-    await waitFor(
-      () =>
-        expect(spaceRoomName).toHaveTextContent("janes space (fake default)"),
-      {
-        timeout: 10000,
-      },
+    await waitFor(() =>
+      expect(spaceRoomName).toHaveTextContent("janes space (fake default)"),
     );
     // expect our default space to sync, even though we haven't joined it
-    await waitFor(
-      () => expect(spaceName).toHaveTextContent("janes space (fake default)"),
-      {
-        timeout: 10000,
-      },
+    await waitFor(() =>
+      expect(spaceName).toHaveTextContent("janes space (fake default)"),
     );
     // wait for the client to boot up, this is async
     await waitFor(() => expect(clientRunning).toHaveTextContent("true"));
@@ -153,24 +145,16 @@ describe("defaultSpaceId", () => {
     // click the register button
     fireEvent.click(joinButton);
     // expect our room membership to be populated
-    await waitFor(
-      () => expect(roomMembership).toHaveTextContent(Membership.Join),
-      { timeout: 5000 },
+    await waitFor(() =>
+      expect(roomMembership).toHaveTextContent(Membership.Join),
     );
     await waitFor(() =>
       expect(spaceMembership).toHaveTextContent(Membership.Join),
     );
     // expect our default room to sync
-    await waitFor(
-      () => expect(spaceRoomName).toHaveTextContent("janes space"),
-      {
-        timeout: 10000,
-      },
-    );
+    await waitFor(() => expect(spaceRoomName).toHaveTextContent("janes space"));
     // expect our default space to sync
-    await waitFor(() => expect(spaceName).toHaveTextContent("janes space"), {
-      timeout: 10000,
-    });
+    await waitFor(() => expect(spaceName).toHaveTextContent("janes space"));
     // check for public channels...
     await waitFor(() => expect(channelsCount).toHaveTextContent("1"));
     await waitFor(() => expect(channelName).toHaveTextContent("janes channel"));

@@ -5,6 +5,7 @@ import { MatrixTestClient } from "./tests/integration/helpers/MatrixTestClient";
 import { webcrypto } from "node:crypto";
 import * as Olm from "olm";
 import * as request from "request";
+import { Config, configure } from "@testing-library/dom";
 
 process.env.HOMESERVER = "http://localhost:8008"; //"https://node1.hntlabs.com";
 process.env.CHAIN_ID = "0x4"; // rinkby
@@ -22,7 +23,11 @@ beforeAll(async () => {
   (globalThis as any).crypto = webcrypto;
   globalThis.Olm = Olm;
   await globalThis.Olm.init();
-
+  // set up the matrix config func
+  configure((config: Config) => {
+    config.asyncUtilTimeout = 10000;
+    return config;
+  });
   // set up required global for the matrix client to allow us to make http requests
   matrixRequest(request);
 });

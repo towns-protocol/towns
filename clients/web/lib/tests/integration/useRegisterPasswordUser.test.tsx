@@ -63,9 +63,8 @@ describe("useRegisterPasswordUser", () => {
     // click the register button
     fireEvent.click(registerButton);
     // expect our status to change to logged in
-    await waitFor(
-      () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
-      { timeout: 3000 },
+    await waitFor(() =>
+      expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
     );
   });
 });

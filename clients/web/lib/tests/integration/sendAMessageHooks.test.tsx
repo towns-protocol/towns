@@ -111,27 +111,17 @@ describe("sendAMessageHook", () => {
       name: "Send Message",
     });
     // wait for the channel join
-    await waitFor(
-      () => expect(channelMembership).toHaveTextContent(Membership.Join),
-      {
-        timeout: 20000,
-      },
+    await waitFor(() =>
+      expect(channelMembership).toHaveTextContent(Membership.Join),
     );
-    //
-    await sleep(50);
-    console.log("!!!!!!!!! ahhhhhhh ");
     // have jane send a message to bob
     await jane.sendMessage(janesChannelId, "hello bob");
     // expect our message to show
-    await waitFor(() => expect(message0).toHaveTextContent("hello bob"), {
-      timeout: 10000,
-    });
+    await waitFor(() => expect(message0).toHaveTextContent("hello bob"));
     // have bob send a message to jane
     fireEvent.click(sendMessageButton);
     // expect it to render as well
-    await waitFor(() => expect(message1).toHaveTextContent("hello jane"), {
-      timeout: 10000,
-    });
+    await waitFor(() => expect(message1).toHaveTextContent("hello jane"));
     // expect jane to recieve the message
     expect(
       await jane.eventually(

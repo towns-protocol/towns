@@ -4,6 +4,7 @@ import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("messageThreads", () => {
+  jest.setTimeout(20000);
   test("send a threaded message", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
