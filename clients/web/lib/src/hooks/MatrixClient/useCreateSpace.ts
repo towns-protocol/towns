@@ -1,5 +1,6 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
 import {
+  HistoryVisibility,
   ICreateRoomOpts,
   ICreateRoomStateEvent,
   MatrixClient,
@@ -69,17 +70,25 @@ function makeInitialState(
   createSpaceInfo: CreateSpaceInfo,
   bDisableEncryption?: boolean,
 ) {
-  const initialState: ICreateRoomStateEvent[] = [];
-  initialState.push({
-    type: "m.room.join_rules",
-    state_key: "",
-    content: {
-      join_rule:
-        createSpaceInfo.visibility == RoomVisibility.Public
-          ? "public"
-          : "invite",
+  const initialState: ICreateRoomStateEvent[] = [
+    {
+      type: "m.room.join_rules",
+      state_key: "",
+      content: {
+        join_rule:
+          createSpaceInfo.visibility == RoomVisibility.Public
+            ? "public"
+            : "invite",
+      },
     },
-  });
+    {
+      type: "m.room.history_visibility",
+      state_key: "",
+      content: {
+        history_visibility: HistoryVisibility.Shared,
+      },
+    },
+  ];
   if (bDisableEncryption !== true) {
     initialState.push({
       content: {

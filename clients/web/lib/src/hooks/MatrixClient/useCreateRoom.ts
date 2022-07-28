@@ -1,5 +1,6 @@
 import { MatrixContext } from "../../components/MatrixContextProvider";
 import {
+  HistoryVisibility,
   ICreateRoomOpts,
   ICreateRoomStateEvent,
   MatrixClient,
@@ -89,7 +90,16 @@ function makeInitialState(
   bDisableEncryption?: boolean,
   bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
 ): ICreateRoomStateEvent[] {
-  const initialState: ICreateRoomStateEvent[] = [];
+  const initialState: ICreateRoomStateEvent[] = [
+    {
+      type: "m.room.history_visibility",
+      state_key: "",
+      content: {
+        history_visibility:
+          createInfo.historyVisibility ?? HistoryVisibility.Shared,
+      },
+    },
+  ];
 
   if (bDisableEncryption !== true) {
     initialState.push({

@@ -1,4 +1,4 @@
-import { IContent, MatrixClient } from "matrix-js-sdk";
+import { HistoryVisibility, IContent, MatrixClient } from "matrix-js-sdk";
 
 export enum RoomVisibility {
   Private = "private",
@@ -126,6 +126,7 @@ export interface CreateRoomInfo {
   roomName: string;
   visibility: RoomVisibility;
   isDirectMessage?: boolean;
+  historyVisibility?: HistoryVisibility;
   parentSpaceId?: RoomIdentifier;
 }
 
