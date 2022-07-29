@@ -15,7 +15,7 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("walletStatus", () => {
+describe("walletStatusHooks", () => {
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,

@@ -19,7 +19,7 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("defaultSpaceId", () => {
+describe("defaultSpaceIdHooks", () => {
   jest.setTimeout(60000);
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",

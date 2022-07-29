@@ -9,10 +9,14 @@ import {
   createClient,
   Room,
   MatrixEventEvent,
+  UserEvent,
+  User,
+  EventType,
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef } from "react";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
+import { useMyProfileUpdatedEventHandler } from "./MatrixClientListener/useMyProfileUpdatedEventHandler";
 import { useRoomMembershipEventHandler } from "./MatrixClientListener/useRoomMembershipEventHandler";
 import { useRoomTimelineEventHandler } from "./MatrixClientListener/useRoomTimelineEventHandler";
 import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler";
@@ -33,6 +37,8 @@ export const useMatrixClientListener = (
     useRoomMembershipEventHandler(matrixClientRef);
   const handleRoomTimelineEvent = useRoomTimelineEventHandler(matrixClientRef);
   const handleSync = useSyncEventHandler(matrixClientRef);
+  const handleMyProfileUpdated =
+    useMyProfileUpdatedEventHandler(matrixClientRef);
 
   useEffect(() => {
     setHomeServer(homeServerUrl);
@@ -105,14 +111,54 @@ export const useMatrixClientListener = (
           oldMembership: string | null,
         ) => {
           handleRoomMembershipEvent(event, member, oldMembership);
+
+          if (
+            event.getType() === EventType.RoomMember &&
+            event.getSender() === userId &&
+            event.getStateKey() === userId
+          ) {
+            handleMyProfileUpdated();
+          }
         },
       );
+
+      const currentUser = client.getUser(userId);
+      if (currentUser) {
+        currentUser.on(
+          UserEvent.AvatarUrl,
+          (event: MatrixEvent | undefined, user: User) => {
+            if (user.userId == userId) {
+              handleMyProfileUpdated();
+            }
+          },
+        );
+
+        currentUser.on(
+          UserEvent.DisplayName,
+          (event: MatrixEvent | undefined, user: User) => {
+            if (user.userId == userId) {
+              handleMyProfileUpdated();
+            }
+          },
+        );
+
+        // fetch profile info
+        const profileInfo = await client.getProfileInfo(userId);
+        if (profileInfo.displayname) {
+          currentUser.displayName = profileInfo.displayname;
+        }
+        if (profileInfo.avatar_url) {
+          currentUser.avatarUrl = profileInfo.avatar_url;
+        }
+        handleMyProfileUpdated();
+      }
       /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
     }
   }, [
     accessToken,
     deviceId,
     disableEncryption,
+    handleMyProfileUpdated,
     handleRoomMembershipEvent,
     handleRoomTimelineEvent,
     handleSync,

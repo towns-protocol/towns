@@ -14,7 +14,7 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("useRegisterPasswordUser", () => {
+describe("useRegisterPasswordUserHooks", () => {
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
     verbose: true,

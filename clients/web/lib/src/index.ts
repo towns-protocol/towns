@@ -3,8 +3,10 @@ export { useChannel } from "./hooks/use-channel";
 export { LoginStatus } from "./hooks/login";
 export { useMatrixStore } from "./store/use-matrix-store";
 export { useMatrixClient } from "./hooks/use-matrix-client";
+export { useMember } from "./hooks/use-member";
 export { useMessages } from "./hooks/use-messages";
 export { useMyMembership } from "./hooks/use-my-membership";
+export { useMyProfile } from "./hooks/use-my-profile";
 export { usePowerLevels } from "./hooks/use-power-levels";
 export { useRoom } from "./hooks/use-room";
 export {

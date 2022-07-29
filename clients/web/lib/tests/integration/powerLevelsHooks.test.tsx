@@ -13,7 +13,7 @@ import { usePowerLevels } from "../../src/hooks/use-power-levels";
 import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
 import { LoginStatus } from "../../src/hooks/login";
 
-describe("powerLevels", () => {
+describe("powerLevelsHooks", () => {
   jest.setTimeout(20000);
   const testingUtils = generateTestingUtils({
     providerType: "MetaMask",

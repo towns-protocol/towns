@@ -19,6 +19,12 @@ export interface ZionContext {
   defaultSpaceAvatarSrc?: string;
 }
 
+export interface MyProfile {
+  displayName: string;
+  avatarUrl: string;
+  fetchedAt?: Date;
+}
+
 export interface RoomIdentifier {
   slug: string;
   matrixRoomId: string;
@@ -98,6 +104,7 @@ export interface Member {
   userId: string;
   name: string;
   membership: Membership;
+  avatarUrl?: string;
 }
 
 export interface Members {

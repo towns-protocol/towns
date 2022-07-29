@@ -14,7 +14,7 @@ import { useSpace } from "../../src/hooks/use-space";
 import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
 import { LoginStatus } from "../../src/hooks/login";
 
-describe("spaceChildUpdates", () => {
+describe("spaceHierarchyHooks", () => {
   jest.setTimeout(10000);
   const testingUtils = generateTestingUtils({
     providerType: "MetaMask",

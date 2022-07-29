@@ -19,6 +19,8 @@ import { useLeaveRoom } from "./MatrixClient/useLeaveRoom";
 import { useInviteUser } from "./MatrixClient/useInviteUser";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useSetPowerLevel } from "./MatrixClient/useSetPowerLevel";
+import { useSetAvatarUrl } from "./MatrixClient/useSetAvatarUrl";
+import { useSetDisplayName } from "./MatrixClient/useSetDisplayName";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -41,6 +43,8 @@ export function useMatrixClient() {
   const leaveRoom: (roomId: RoomIdentifier) => Promise<void> = useLeaveRoom();
   const inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void> = useInviteUser();
   const joinRoom: (roomId: RoomIdentifier) => Promise<void> = useJoinRoom();
+  const setDisplayName = useSetDisplayName();
+  const setAvatarUrl = useSetAvatarUrl();
 
   return {
     clientRunning,
@@ -58,5 +62,7 @@ export function useMatrixClient() {
     sendMessage,
     setPowerLevel,
     syncSpace,
+    setDisplayName,
+    setAvatarUrl
   };
 }

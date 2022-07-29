@@ -2,24 +2,22 @@
  * @jest-environment jsdom
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
-import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
-import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useMatrixClient } from "../../src/hooks/use-matrix-client";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
-import { useMyMembership } from "../../src/hooks/use-my-membership";
 import { useMessages } from "../../src/hooks/use-messages";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
-import { registerAndStartClients, sleep } from "./helpers/TestUtils";
+import { registerAndStartClients } from "./helpers/TestUtils";
 import { MatrixEvent } from "matrix-js-sdk";
+import { RegisterAndJoinSpace } from "./helpers/TestComponents";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("sendAMessageHook", () => {
+describe("sendAMessageHooks", () => {
   jest.setTimeout(60000);
   const testingUtils: TestingUtils = generateTestingUtils({
     providerType: "MetaMask",
@@ -54,39 +52,17 @@ describe("sendAMessageHook", () => {
     });
     // create a veiw for bob
     const TestRoomMessages = () => {
-      const { walletStatus } = useWeb3Context();
-      const { loginStatus, loginError } = useMatrixStore();
-      const { clientRunning, registerWallet, joinRoom, sendMessage } =
-        useMatrixClient();
-      const myMembership = useMyMembership(janesChannelId);
+      const { sendMessage } = useMatrixClient();
       const messages = useMessages(janesChannelId);
-      useEffect(() => {
-        if (walletStatus == WalletStatus.Unlocked) {
-          void (async () => {
-            await registerWallet("login...");
-          })();
-        }
-      }, [registerWallet, walletStatus]);
-      useEffect(() => {
-        if (clientRunning) {
-          void (async () => {
-            await joinRoom(janesSpaceId);
-            await joinRoom(janesChannelId);
-          })();
-        }
-      }, [clientRunning, joinRoom]);
       const onClickSendMessage = useCallback(async () => {
         await sendMessage(janesChannelId, "hello jane");
       }, [sendMessage]);
       return (
         <>
-          <div data-testid="walletStatus">{walletStatus}</div>
-          <div data-testid="loginStatus">{loginStatus}</div>
-          <div data-testid="loginError">{loginError?.message ?? ""}</div>
-          <div data-testid="clientRunning">
-            {clientRunning ? "true" : "false"}
-          </div>
-          <div data-testid="channelMembership"> {myMembership} </div>
+          <RegisterAndJoinSpace
+            spaceId={janesSpaceId}
+            channelId={janesChannelId}
+          />
           <button onClick={onClickSendMessage}>Send Message</button>
           <div data-testid="message0">
             {messages.length > 0 ? messages[0].body : "empty"}

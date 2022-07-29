@@ -92,7 +92,7 @@ export class MatrixTestClient {
 
   // check if something eventually becomes true
   public async eventually(
-    condition: (client: MatrixTestClient) => boolean,
+    condition: (client: MatrixTestClient) => boolean | undefined,
     timeout = 2000,
     checkEvery = 100,
   ): Promise<boolean> {
