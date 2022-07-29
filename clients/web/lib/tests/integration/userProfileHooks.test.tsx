@@ -15,6 +15,7 @@ import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients, sleep } from "./helpers/TestUtils";
 import { RoomMember } from "matrix-js-sdk";
 import { RegisterAndJoinSpace } from "./helpers/TestComponents";
+import { useMessages } from "../../src/hooks/use-messages";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -59,6 +60,7 @@ describe("userProfileHooks", () => {
       const { setDisplayName, setAvatarUrl } = useMatrixClient();
       const myProfile = useMyProfile();
       const alicesMemberInfo = useMember(alice.matrixUserId!, alicesSpaceId);
+      const messages = useMessages(alicesChannelId);
       const onClickSetProfileInfo = useCallback(async () => {
         await setDisplayName("Bob's your uncle");
         await setAvatarUrl("bob.png");
@@ -82,6 +84,9 @@ describe("userProfileHooks", () => {
           <div data-testid="alicesMemberAvatar">
             {alicesMemberInfo?.avatarUrl ?? "unknown"}
           </div>
+          <div data-testid="messageSender">
+            {messages.length > 0 ? messages[0].sender : "none"}
+          </div>
         </>
       );
     };
@@ -97,6 +102,7 @@ describe("userProfileHooks", () => {
     const myProfileAvatar = screen.getByTestId("myProfileAvatar");
     const alicesMemberName = screen.getByTestId("alicesMemberName");
     const alicesMemberAvatar = screen.getByTestId("alicesMemberAvatar");
+    const messageSender = screen.getByTestId("messageSender");
     const setProfileInfoButton = screen.getByRole("button", {
       name: "Set Profile Info",
     });
@@ -130,5 +136,11 @@ describe("userProfileHooks", () => {
           .some((x: RoomMember) => x.name === "Bob's your uncle"),
       ),
     ).toBe(true);
+    // have alice send a message
+    await alice.sendMessage(alicesChannelId, "hello");
+    // expect a result
+    await waitFor(() =>
+      expect(messageSender).toHaveTextContent("Alice's your aunt"),
+    );
   }); // end test with bob
 }); // end describe

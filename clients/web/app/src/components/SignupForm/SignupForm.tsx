@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import useEvent from "react-use-event-hook";
@@ -8,6 +8,7 @@ import {
   WalletStatus,
   useMatrixClient,
   useMatrixStore,
+  useMyProfile,
   useWeb3Context,
 } from "use-matrix-client";
 import { vars } from "ui/styles/vars.css";
@@ -22,7 +23,6 @@ import {
   TextField,
 } from "@ui";
 import {
-  ButtonStatus,
   registerWalletMsgToSign,
   useCheckRegistrationStatusWhen,
 } from "@components/Login/LoginComponent";
@@ -45,7 +45,8 @@ const placeholders = {
 };
 
 export const SignupForm = () => {
-  const { accounts } = useWeb3Context();
+  const { accounts, walletStatus } = useWeb3Context();
+  const { registerWallet, setDisplayName, setAvatarUrl } = useMatrixClient();
   const { setValue, resetField, register, handleSubmit, watch, formState } =
     useForm({
       defaultValues: {
@@ -57,35 +58,64 @@ export const SignupForm = () => {
     });
 
   const navigate = useNavigate();
-  const { walletStatus } = useWeb3Context();
   const { loginStatus } = useMatrixStore();
-  const isConnected =
-    walletStatus === WalletStatus.Unlocked &&
-    loginStatus === LoginStatus.LoggedOut;
+  const myProfile = useMyProfile();
+  const isConnected = walletStatus === WalletStatus.Unlocked;
   const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected);
 
   console.log({ registrationStatus });
-
+  console.log(
+    "loaded onboarding",
+    isConnected,
+    registrationStatus,
+    loginStatus,
+    myProfile,
+  );
   useEffect(() => {
-    if (!isConnected || registrationStatus === ButtonStatus.Login) {
+    if (!isConnected) {
       console.log("navigate away");
+      navigate("/");
     } else {
       console.log("STAY");
     }
   }, [isConnected, navigate, registrationStatus]);
 
-  const { registerWallet } = useMatrixClient();
-
-  const onSubmit = (data: { displayName: string }) => {
-    (async () => {
-      try {
-        await registerWallet(registerWalletMsgToSign);
-      } catch (e: unknown) {
-        console.warn(e);
-      }
-      navigate("/");
-    })();
-  };
+  const onSubmit = useCallback(
+    (data: { displayName: string; nft: string }) => {
+      (async () => {
+        try {
+          if (!isConnected) {
+            console.error("Wallet not connected, shouldn't be on this page");
+            navigate("/");
+            return;
+          }
+          if (loginStatus === LoginStatus.LoggedOut) {
+            await registerWallet(registerWalletMsgToSign);
+          }
+          if (data.displayName !== myProfile?.displayName) {
+            await setDisplayName(data.displayName);
+          }
+          if (data.nft !== myProfile?.avatarUrl) {
+            await setAvatarUrl(data.nft);
+          }
+        } catch (e: unknown) {
+          console.warn(e);
+        }
+        console.log("navigate away 2");
+        navigate("/");
+      })();
+    },
+    [
+      isConnected,
+      loginStatus,
+      myProfile?.avatarUrl,
+      myProfile?.displayName,
+      navigate,
+      registerWallet,
+      setAvatarUrl,
+      setDisplayName,
+    ],
+  );
   const [fieldENS, fieldDisplayName, fieldNFT] = watch([
     "ens",
     "displayName",

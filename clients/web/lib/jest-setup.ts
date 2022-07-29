@@ -25,7 +25,10 @@ beforeAll(async () => {
   await globalThis.Olm.init();
   // set up the matrix config func
   configure((config: Config) => {
-    config.asyncUtilTimeout = 10000;
+    // this is necessary for the full test suite to pass, but when it's enabled
+    // the waitUntil tests don't print nice html state on failure, making it hard to debug
+    // leaving it disabled for now
+    // config.asyncUtilTimeout = 10000;
     return config;
   });
   // set up required global for the matrix client to allow us to make http requests

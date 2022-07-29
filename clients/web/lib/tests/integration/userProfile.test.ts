@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { MatrixEvent } from "matrix-js-sdk";
 import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
@@ -78,5 +79,26 @@ describe("userProfile", () => {
             ?.getMxcAvatarUrl() === "https://example.com/alice.png",
       ),
     ).toBe(true);
+    // send a message
+    await bob.sendMessage(roomId, "hello");
+    // alice should see the message
+    expect(
+      await alice.eventually((x) =>
+        x.client
+          .getRoom(roomId.matrixRoomId)
+          ?.getLiveTimeline()
+          .getEvents()
+          .some((event: MatrixEvent) => event.getContent()?.body === "hello"),
+      ),
+    ).toBe(true);
+    // get the message
+    const message = alice.client
+      .getRoom(roomId.matrixRoomId)
+      ?.getLiveTimeline()
+      .getEvents()
+      .find((event: MatrixEvent) => event.getContent()?.body === "hello");
+
+    // sender?
+    expect(message?.sender?.rawDisplayName).toBe("Bob's your uncle");
   }); // end test
 }); // end describe

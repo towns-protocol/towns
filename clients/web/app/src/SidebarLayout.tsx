@@ -1,7 +1,7 @@
 import { Allotment, AllotmentHandle } from "allotment";
 import React, { useEffect, useRef } from "react";
-import { Outlet, useMatch } from "react-router";
-import { useSpace } from "use-matrix-client";
+import { Outlet, useMatch, useNavigate } from "react-router";
+import { useMatrixStore, useMyProfile, useSpace } from "use-matrix-client";
 import {
   MainSideBar,
   MessagesSideBar,
@@ -17,7 +17,9 @@ export const SidebarLayout = () => {
   const spaceRoute = useMatch({ path: "/spaces/:spaceSlug", end: false });
   const homeRoute = useMatch({ path: "/home", end: true });
   const space = useSpace(spaceRoute?.params.spaceSlug);
-
+  const myProfile = useMyProfile();
+  const { userId } = useMatrixStore();
+  const navigate = useNavigate();
   const config = ["primary-menu", "secondary-menu", "content"];
   const { onSizesChange, sizes } = usePersistPanes(config);
 
@@ -26,6 +28,21 @@ export const SidebarLayout = () => {
   useEffect(() => {
     allotemntRef.current?.reset();
   }, [isSecondarySidebarActive]);
+
+  useEffect(() => {
+    // cheap and dirty onboarding check
+    if (myProfile != null) {
+      if (
+        myProfile.displayName === userId ||
+        myProfile.displayName === "" ||
+        myProfile.avatarUrl === "" ||
+        myProfile.avatarUrl === null
+      ) {
+        console.log("navigte to register for extra onboarding!!");
+        navigate("/register");
+      }
+    }
+  }, [myProfile, navigate, userId]);
 
   return (
     <Stack horizontal grow position="relative">

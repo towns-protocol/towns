@@ -38,7 +38,9 @@ export const useRoomTimelineEventHandler = (
           }
           setNewMessage(makeRoomIdentifier(room.roomId), {
             eventId: event.getId(),
-            sender: event.getSender(),
+            sender: event.sender.rawDisplayName,
+            senderAvatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
+            senderId: event.getSender(),
             body: content.body,
             msgType: content.msgtype,
             content: content,

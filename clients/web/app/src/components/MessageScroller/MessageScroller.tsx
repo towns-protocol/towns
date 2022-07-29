@@ -17,42 +17,6 @@ import {
 } from "hooks/useFixMeMessageThread";
 
 const INITIAL_MESSAGE_COUNT = 15;
-const USER_AVATARS = [
-  "/placeholders/nft_1.png",
-  "/placeholders/nft_2.png",
-  "/placeholders/nft_3.png",
-  "/placeholders/nft_4.png",
-  "/placeholders/nft_5.png",
-  "/placeholders/nft_6.png",
-  "/placeholders/nft_7.png",
-  "/placeholders/nft_8.png",
-  "/placeholders/nft_9.png",
-  "/placeholders/nft_10.png",
-  "/placeholders/nft_11.png",
-  "/placeholders/nft_12.png",
-  "/placeholders/nft_13.png",
-  "/placeholders/nft_14.png",
-  "/placeholders/nft_15.png",
-  "/placeholders/nft_16.png",
-  "/placeholders/nft_17.png",
-  "/placeholders/nft_18.png",
-  "/placeholders/nft_19.png",
-  "/placeholders/nft_20.png",
-  "/placeholders/nft_21.png",
-  "/placeholders/nft_22.png",
-  "/placeholders/nft_23.png",
-  "/placeholders/nft_24.png",
-  "/placeholders/nft_25.png",
-  "/placeholders/nft_26.png",
-  "/placeholders/nft_27.png",
-  "/placeholders/nft_28.png",
-  "/placeholders/nft_29.png",
-  "/placeholders/nft_30.png",
-  "/placeholders/nft_31.png",
-  "/placeholders/nft_32.png",
-  "/placeholders/nft_33.png",
-  "/placeholders/nft_34.png",
-];
 
 export const MessageScroller = (props: {
   messages: RoomMessage[];
@@ -61,19 +25,6 @@ export const MessageScroller = (props: {
   before?: JSX.Element;
 }) => {
   const { messages } = props;
-
-  const userAvatars = useRef<{ [userId: string]: string }>({});
-  const userAvatarIndex = useRef<number>(0);
-  const getUserAvatar = (userId: string) => {
-    let avatar = userAvatars.current[userId];
-    if (!avatar) {
-      avatar = USER_AVATARS[userAvatarIndex.current];
-      userAvatars.current[userId] = avatar;
-      userAvatarIndex.current =
-        (userAvatarIndex.current + 1) % USER_AVATARS.length;
-    }
-    return avatar;
-  };
 
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -115,9 +66,7 @@ export const MessageScroller = (props: {
                 name={m.sender}
                 paddingX="lg"
                 paddingY="md"
-                avatar={
-                  <Avatar src={getUserAvatar(m.sender)} size="avatar_md" />
-                }
+                avatar={<Avatar src={m.senderAvatarUrl} size="avatar_md" />}
                 onSelectMessage={props.onSelectMessage}
               >
                 <RichTextPreview content={getMessageContent(m)} />

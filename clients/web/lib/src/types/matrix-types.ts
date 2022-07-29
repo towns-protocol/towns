@@ -114,10 +114,12 @@ export interface Members {
 export interface RoomMessage {
   eventId: string;
   sender: string;
+  senderAvatarUrl?: string;
+  senderId: string;
   body: string;
   msgType: string;
   originServerTs: number;
-  content?: IContent;
+  content: IContent;
 }
 
 export interface RoomsMessages {

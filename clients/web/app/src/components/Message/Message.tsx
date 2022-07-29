@@ -66,10 +66,7 @@ export const Message = ({
             color={name?.match(/\.eth$/) ? "etherum" : "gray1"}
             as="span"
           >
-            {`${name.substring(0, 6)}..${name.substring(
-              name.length - 4,
-              name.length,
-            )}`}
+            {name}
           </Text>
           {/* channel */}
           {channel && (
