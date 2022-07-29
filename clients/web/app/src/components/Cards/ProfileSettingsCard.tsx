@@ -4,10 +4,14 @@ import { useMatrixClient } from "use-matrix-client";
 import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
 import { useStore } from "store/store";
 
-type Props = { userId: string | null; username: string | null };
+type Props = {
+  userId: string | null;
+  username: string | null;
+  displayName?: string;
+};
 
 export const ProfileSettingsCard = (props: Props) => {
-  const { userId = "", username = "" } = props;
+  const { userId = "", username = "", displayName } = props;
 
   const { setTheme, theme } = useStore((state) => ({
     theme: state.theme,
@@ -41,6 +45,7 @@ export const ProfileSettingsCard = (props: Props) => {
           <Avatar size="avatar_md" />
         </Box>
         <Stack grow gap="sm" fontWeight="strong" color="gray2">
+          <Heading level={5}>{displayName && displayName}</Heading>
           <Heading level={5}>
             {username && shortenAddress(username, 6, 2)}
           </Heading>

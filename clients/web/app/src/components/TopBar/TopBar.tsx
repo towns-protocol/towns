@@ -17,8 +17,16 @@ export const TopBar = (props: {
   authenticated: boolean;
   username?: string | null;
   userId?: string | null;
+  displayName?: string;
+  avatarUrl?: string;
 }) => {
-  const { authenticated: isAuthenticated, username, userId } = props;
+  const {
+    authenticated: isAuthenticated,
+    username,
+    userId,
+    displayName,
+    avatarUrl,
+  } = props;
   return (
     <Stack
       borderBottom
@@ -42,20 +50,16 @@ export const TopBar = (props: {
       <Box />
       <Box justifyContent="center" alignItems="end" width="100">
         {isAuthenticated && userId && username ? (
-          <ProfileCardButton username={username} userId={userId} />
+          <ProfileCardButton
+            username={username}
+            userId={userId}
+            displayName={displayName}
+            avatarUrl={avatarUrl}
+          />
         ) : (
           <LoginComponent />
         )}
       </Box>
-      {/* <Box justifyContent="center" alignItems="end" width="100">
-        {!isAuthenticated || !(username && userId) ? (
-          <Login />
-        ) : (
-          <>
-            <ProfileCardButton username={username} userId={userId} />
-          </>
-        )}
-      </Box> */}
     </Stack>
   );
 };

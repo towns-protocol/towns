@@ -1,16 +1,26 @@
 import { Stack } from "@mui/material";
 import { useMemo } from "react";
-import { createUserIdFromString, useMatrixStore } from "use-matrix-client";
+import {
+  createUserIdFromString,
+  useMatrixStore,
+  useMyProfile,
+} from "use-matrix-client";
 
 export const Me = () => {
   const { userId } = useMatrixStore();
-
+  const myProfile = useMyProfile();
   const userIdentifier = useMemo(() => {
     return userId ? createUserIdFromString(userId) : undefined;
   }, [userId]);
 
   return (
     <Stack>
+      <p>
+        My Display Name: <strong>{myProfile?.displayName ?? "unset"}</strong>
+      </p>
+      <p>
+        My Avatar Url: <strong>{myProfile?.avatarUrl ?? "unset"}</strong>
+      </p>
       <p>
         My User ID: <strong>{userId}</strong>
       </p>

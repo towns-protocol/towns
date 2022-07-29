@@ -2,7 +2,11 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Outlet, Route, Routes } from "react-router-dom";
 import useEvent from "react-use-event-hook";
-import { MatrixContextProvider, useMatrixStore } from "use-matrix-client";
+import {
+  MatrixContextProvider,
+  useMatrixStore,
+  useMyProfile,
+} from "use-matrix-client";
 import { Highlights } from "@components/Highlights/HomeHighlights";
 import { MembersPage } from "@components/Members/MembersPage";
 import { Playground } from "@components/Playground";
@@ -57,7 +61,7 @@ export const App = () => {
 
 const AllRoutes = () => {
   const { isAuthenticated, userId, username } = useMatrixStore();
-
+  const myProfile = useMyProfile();
   const { toggleTheme } = useRootTheme({
     ammendHTMLBody: true,
     useDefaultOSTheme: false,
@@ -77,6 +81,8 @@ const AllRoutes = () => {
                 authenticated={isAuthenticated}
                 userId={userId}
                 username={username}
+                displayName={myProfile?.displayName}
+                avatarUrl={myProfile?.avatarUrl}
                 onToggleTheme={toggleTheme}
               />
               <Outlet />

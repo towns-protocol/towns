@@ -5,6 +5,8 @@ import { Avatar, TooltipRenderer } from "@ui";
 type Props = {
   userId: string;
   username: string;
+  displayName?: string;
+  avatarUrl?: string;
 };
 
 export const ProfileCardButton = (props: Props) => (
@@ -12,9 +14,15 @@ export const ProfileCardButton = (props: Props) => (
     layoutId="topbar"
     trigger="click"
     render={
-      <ProfileSettingsCard userId={props.userId} username={props.username} />
+      <ProfileSettingsCard
+        userId={props.userId}
+        username={props.username}
+        displayName={props.displayName}
+      />
     }
   >
-    {({ triggerProps }) => <Avatar size="avatar_x4" {...triggerProps} />}
+    {({ triggerProps }) => (
+      <Avatar src={props.avatarUrl} size="avatar_x4" {...triggerProps} />
+    )}
   </TooltipRenderer>
 );
