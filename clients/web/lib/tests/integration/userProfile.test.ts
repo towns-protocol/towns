@@ -14,8 +14,8 @@ describe("userProfile", () => {
     await bob.client.setDisplayName("Bob's your uncle");
     await bob.client.setAvatarUrl("https://example.com/bob.png");
     // bob creates a room
-    const roomId = await bob.createRoom({
-      roomName: "bob's room",
+    const roomId = await bob.createSpace({
+      name: "bob's room",
       visibility: RoomVisibility.Public,
     });
     // alice joins the room

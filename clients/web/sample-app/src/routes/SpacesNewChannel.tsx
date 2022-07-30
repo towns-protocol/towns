@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Membership, RoomIdentifier, useSpaceId } from "use-matrix-client";
-import { CreateSpaceChildForm } from "../components/CreateSpaceChildForm";
+import { CreateChannelForm } from "../components/CreateChannelForm";
 
 export const SpacesNewChannel = () => {
   console.log("spaces new channel");
@@ -15,7 +15,7 @@ export const SpacesNewChannel = () => {
     [navigate, spaceId],
   );
   return spaceId ? (
-    <CreateSpaceChildForm parentSpaceId={spaceId} onClick={onSpaceCreated} />
+    <CreateChannelForm parentSpaceId={spaceId} onClick={onSpaceCreated} />
   ) : (
     <h3>404</h3>
   );

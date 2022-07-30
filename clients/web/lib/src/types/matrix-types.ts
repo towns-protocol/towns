@@ -127,16 +127,15 @@ export interface RoomsMessages {
 }
 
 export interface CreateSpaceInfo {
-  spaceName: string;
+  name: string;
   visibility: RoomVisibility;
 }
 
-export interface CreateRoomInfo {
-  roomName: string;
+export interface CreateChannelInfo {
+  name: string;
   visibility: RoomVisibility;
-  isDirectMessage?: boolean;
+  parentSpaceId: RoomIdentifier;
   historyVisibility?: HistoryVisibility;
-  parentSpaceId?: RoomIdentifier;
 }
 
 /// use to send different types of messages, e.g. text, emoji, image, etc.

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  CreateRoomInfo,
+  CreateChannelInfo,
   Membership,
   RoomIdentifier,
   RoomVisibility,
@@ -16,37 +16,36 @@ interface Props {
 export const CreateChannelForm = (props: Props) => {
   const VisibilityOptions = [RoomVisibility.Private, RoomVisibility.Public];
 
-  const [roomName, setRoomName] = useState<string>("");
+  const [channelName, setChannelName] = useState<string>("");
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Public,
   );
-  const { createRoom } = useMatrixClient();
+  const { createChannel } = useMatrixClient();
   const { onClick, parentSpaceId } = props;
 
   const disableCreateButton = useMemo(
-    () => roomName.length === 0,
-    [roomName.length],
+    () => channelName.length === 0,
+    [channelName.length],
   );
 
-  const onRoomNameChange = useCallback(
+  const onChannelNameChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setRoomName(event.target.value);
+      setChannelName(event.target.value);
     },
     [],
   );
 
-  const onClickCreateRoom = useCallback(async () => {
+  const onClickCreatChannel = useCallback(async () => {
     if (disableCreateButton) {
       console.log("please enter a channel name");
       return;
     }
-    const createRoomInfo: CreateRoomInfo = {
-      roomName,
+    const createChannelInfo: CreateChannelInfo = {
+      name: channelName,
       visibility,
-      isDirectMessage: false,
       parentSpaceId: parentSpaceId,
     };
-    const roomId = await createRoom(createRoomInfo);
+    const roomId = await createChannel(createChannelInfo);
 
     if (roomId) {
       console.log("channel created with id", roomId);
@@ -54,10 +53,10 @@ export const CreateChannelForm = (props: Props) => {
     }
   }, [
     disableCreateButton,
-    roomName,
+    channelName,
     visibility,
     parentSpaceId,
-    createRoom,
+    createChannel,
     onClick,
   ]);
 
@@ -71,7 +70,7 @@ export const CreateChannelForm = (props: Props) => {
           secondaryLabel="(required)"
           description="This is a channel within your space. This channel will have a unique url."
           placeholder="Channel Name"
-          onChange={onRoomNameChange}
+          onChange={onChannelNameChange}
         />
 
         <Dropdown
@@ -89,7 +88,7 @@ export const CreateChannelForm = (props: Props) => {
       <Button
         size="input_lg"
         disabled={disableCreateButton}
-        onClick={onClickCreateRoom}
+        onClick={onClickCreatChannel}
       >
         Create
       </Button>

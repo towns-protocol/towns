@@ -35,7 +35,7 @@ describe("powerLevelsHooks", () => {
     const { alice, bob } = await registerAndStartClients(["alice", "bob"]);
     // bob creates a room
     const roomId = await bob.createSpace({
-      spaceName: "bob's space",
+      name: "bob's space",
       visibility: RoomVisibility.Private,
     });
     // bob invites alice to the room
@@ -93,8 +93,8 @@ describe("powerLevelsHooks", () => {
     await waitFor(() => expect(spaceChildLevel).toHaveTextContent("50"));
     // expect that alice can't make a space child
     await expect(
-      alice.createRoom({
-        roomName: "alice's channel",
+      alice.createChannel({
+        name: "alice's channel",
         visibility: RoomVisibility.Private,
         parentSpaceId: roomId,
       }),
@@ -109,8 +109,8 @@ describe("powerLevelsHooks", () => {
     );
     // expect that alice can make a space child
     await expect(
-      alice.createRoom({
-        roomName: "alice's channel",
+      alice.createChannel({
+        name: "alice's channel",
         visibility: RoomVisibility.Private,
         parentSpaceId: roomId,
       }),

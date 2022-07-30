@@ -9,23 +9,25 @@ import {
 import { useCallback, useContext } from "react";
 import { useMatrixStore } from "../../store/use-matrix-store";
 import {
-  CreateRoomInfo,
+  CreateChannelInfo,
   makeRoomIdentifier,
   RoomIdentifier,
   RoomVisibility,
   ZionContext,
 } from "../../types/matrix-types";
 
-export const useCreateRoom = () => {
+export const useCreateChannel = () => {
   const { disableEncryption, matrixClient } =
     useContext<ZionContext>(MatrixContext);
   const { homeServer } = useMatrixStore();
 
   return useCallback(
-    async (createInfo: CreateRoomInfo): Promise<RoomIdentifier | undefined> => {
+    async (
+      createInfo: CreateChannelInfo,
+    ): Promise<RoomIdentifier | undefined> => {
       try {
         if (matrixClient && homeServer) {
-          return await createZionRoom({
+          return await createZionChannel({
             matrixClient,
             homeServer,
             createInfo,
@@ -44,10 +46,10 @@ export const useCreateRoom = () => {
   );
 };
 
-export const createZionRoom = async (props: {
+export const createZionChannel = async (props: {
   matrixClient: MatrixClient;
   homeServer: string;
-  createInfo: CreateRoomInfo;
+  createInfo: CreateChannelInfo;
   disableEncryption?: boolean;
 }): Promise<RoomIdentifier> => {
   const { matrixClient, homeServer, createInfo, disableEncryption } = props;
@@ -55,8 +57,8 @@ export const createZionRoom = async (props: {
   const options: ICreateRoomOpts = {
     //room_alias_name: "my_room_alias3",
     visibility: createInfo.visibility as unknown as Visibility,
-    name: createInfo.roomName,
-    is_direct: createInfo.isDirectMessage === true,
+    name: createInfo.name,
+    is_direct: false,
     initial_state: makeInitialState(homeServer, createInfo, disableEncryption),
     room_version: "10",
   };
@@ -86,7 +88,7 @@ export const createZionRoom = async (props: {
 
 function makeInitialState(
   homeServer: string,
-  createInfo: CreateRoomInfo,
+  createInfo: CreateChannelInfo,
   bDisableEncryption?: boolean,
   bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
 ): ICreateRoomStateEvent[] {

@@ -10,13 +10,13 @@ describe("spaceHierarchy", () => {
 
     // bob creates a space
     const spaceId = await bob.createSpace({
-      spaceName: "bob's space",
+      name: "bob's space",
       visibility: RoomVisibility.Public,
     });
 
     // bob creates a room
-    const roomId = await bob.createRoom({
-      roomName: "bob's room",
+    const roomId = await bob.createChannel({
+      name: "bob's room",
       visibility: RoomVisibility.Public,
       parentSpaceId: spaceId,
     });
@@ -45,13 +45,13 @@ describe("spaceHierarchy", () => {
 
     // bob creates a space
     const spaceId = await bob.createSpace({
-      spaceName: "bob's private space",
+      name: "bob's private space",
       visibility: RoomVisibility.Private,
     });
 
     // bob creates a room
-    const roomId = await bob.createRoom({
-      roomName: "bob's room",
+    const roomId = await bob.createChannel({
+      name: "bob's room",
       visibility: RoomVisibility.Public,
       parentSpaceId: spaceId,
     });

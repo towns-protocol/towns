@@ -9,8 +9,8 @@ describe("messageTypes", () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
     // bob creates a public room
-    const roomId = await bob.createRoom({
-      roomName: "bob's room",
+    const roomId = await bob.createSpace({
+      name: "bob's room",
       visibility: RoomVisibility.Public,
     });
     // alice joins the room

@@ -41,12 +41,12 @@ describe("sendAMessageHooks", () => {
     const bobWallet = ethers.Wallet.createRandom();
     // create a space
     const janesSpaceId = await jane.createSpace({
-      spaceName: "janes space",
+      name: "janes space",
       visibility: RoomVisibility.Public,
     });
     //
-    const janesChannelId = await jane.createRoom({
-      roomName: "janes channel",
+    const janesChannelId = await jane.createChannel({
+      name: "janes channel",
       visibility: RoomVisibility.Public,
       parentSpaceId: janesSpaceId,
     });

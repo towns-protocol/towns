@@ -50,7 +50,7 @@ export const createZionSpace = async (props: {
   const { matrixClient, createSpaceInfo, disableEncryption } = props;
   const options: ICreateRoomOpts = {
     visibility: createSpaceInfo.visibility as unknown as Visibility,
-    name: createSpaceInfo.spaceName,
+    name: createSpaceInfo.name,
     is_direct: false,
     room_version: "10",
     creation_content: {

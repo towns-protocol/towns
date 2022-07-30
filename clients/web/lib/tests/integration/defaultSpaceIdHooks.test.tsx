@@ -43,12 +43,12 @@ describe("defaultSpaceIdHooks", () => {
     const bobWallet = ethers.Wallet.createRandom();
     // create a space
     const defaultSpaceId = await jane.createSpace({
-      spaceName: "janes space",
+      name: "janes space",
       visibility: RoomVisibility.Public,
     });
     //
-    await jane.createRoom({
-      roomName: "janes channel",
+    await jane.createChannel({
+      name: "janes channel",
       visibility: RoomVisibility.Public,
       parentSpaceId: defaultSpaceId,
     });

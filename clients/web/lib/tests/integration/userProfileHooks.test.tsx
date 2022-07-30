@@ -46,12 +46,12 @@ describe("userProfileHooks", () => {
     const bobWallet = ethers.Wallet.createRandom();
     // create a space
     const alicesSpaceId = await alice.createSpace({
-      spaceName: "alices space",
+      name: "alices space",
       visibility: RoomVisibility.Public,
     });
     //
-    const alicesChannelId = await alice.createRoom({
-      roomName: "alices channel",
+    const alicesChannelId = await alice.createChannel({
+      name: "alices channel",
       visibility: RoomVisibility.Public,
       parentSpaceId: alicesSpaceId,
     });

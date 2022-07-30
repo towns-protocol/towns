@@ -11,7 +11,6 @@ import AppDrawer from "./components/AppDrawer";
 import { SpacesIndex } from "./routes/SpacesIndex";
 import { Rooms } from "./routes/Rooms";
 import { RoomsIndex } from "./routes/RoomsIndex";
-import { RoomsNew } from "./routes/RoomsNew";
 import { SpacesNewChannel } from "./routes/SpacesNewChannel";
 import { NotFound } from "./routes/NotFound";
 import { RoomSettings } from "./routes/RoomSettings";
@@ -32,7 +31,6 @@ export function App(): JSX.Element {
               <Route element={<Main />}>
                 <Route element={<AppDrawer />}>
                   <Route index element={<Home />} />
-                  <Route path="rooms/new" element={<RoomsNew />} />
                   <Route path="rooms/:roomSlug" element={<Rooms />}>
                     <Route index element={<RoomsIndex />}></Route>
                     <Route path="settings" element={<RoomSettings />}></Route>

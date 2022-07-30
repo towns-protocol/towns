@@ -47,7 +47,7 @@ export const CreateSpaceForm = (props: Props) => {
       return;
     }
     const createSpaceInfo: CreateSpaceInfo = {
-      spaceName,
+      name: spaceName,
       visibility,
     };
     const roomId = await createSpace(createSpaceInfo);

@@ -21,14 +21,14 @@ import {
   createUserIdFromEthereumAddress,
   UserIdentifier,
 } from "../../../src/types/user-identifier";
-import { createZionRoom } from "../../../src/hooks/MatrixClient/useCreateRoom";
+import { createZionChannel } from "../../../src/hooks/MatrixClient/useCreateChannel";
 import { inviteZionUser } from "../../../src/hooks/MatrixClient/useInviteUser";
 import { joinZionRoom } from "../../../src/hooks/MatrixClient/useJoinRoom";
 import { sendZionMessage } from "../../../src/hooks/MatrixClient/useSendMessage";
 import { setZionPowerLevel } from "../../../src/hooks/MatrixClient/useSetPowerLevel";
 import { enrichPowerLevels } from "../../../src/hooks/use-power-levels";
 import {
-  CreateRoomInfo,
+  CreateChannelInfo,
   CreateSpaceInfo,
   PowerLevel,
   PowerLevels,
@@ -220,8 +220,10 @@ export class MatrixTestClient {
   }
 
   /// create a room and return the roomId
-  public async createRoom(createInfo: CreateRoomInfo): Promise<RoomIdentifier> {
-    return createZionRoom({
+  public async createChannel(
+    createInfo: CreateChannelInfo,
+  ): Promise<RoomIdentifier> {
+    return createZionChannel({
       matrixClient: this.client,
       homeServer: this.homeServer,
       createInfo: createInfo,

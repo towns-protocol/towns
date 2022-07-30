@@ -50,7 +50,7 @@ export const CreateSpaceForm = (props: Props) => {
 
   const onClickCreateSpace = useAsyncButtonCallback(async () => {
     const createSpaceInfo: CreateSpaceInfo = {
-      spaceName,
+      name: spaceName,
       visibility,
     };
     const roomId = await createSpace(createSpaceInfo);

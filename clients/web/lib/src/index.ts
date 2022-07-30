@@ -22,7 +22,7 @@ export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
 export type {
   Channel,
   ChannelGroup,
-  CreateRoomInfo,
+  CreateChannelInfo,
   CreateSpaceInfo,
   Member,
   Members,

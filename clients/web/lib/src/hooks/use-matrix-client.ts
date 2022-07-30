@@ -1,7 +1,7 @@
 import { useContext, useMemo } from "react";
 import { MatrixContext } from "../components/MatrixContextProvider";
 import {
-  CreateRoomInfo,
+  CreateChannelInfo,
   CreateSpaceInfo,
   RoomIdentifier,
   SpaceChild,
@@ -10,7 +10,7 @@ import {
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 import { useCreateSpace } from "./MatrixClient/useCreateSpace";
-import { useCreateRoom } from "./MatrixClient/useCreateRoom";
+import { useCreateChannel } from "./MatrixClient/useCreateChannel";
 import { useLogout } from "./MatrixClient/useLogout";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
@@ -34,7 +34,7 @@ export function useMatrixClient() {
   const clientRunning = useMemo(() => matrixClient != null && matrixClient.clientRunning, [matrixClient]); 
   const syncSpace: (spaceId: RoomIdentifier) => Promise<SpaceChild[]> = useSyncSpace();
   const createSpace: (createSpaceInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined> = useCreateSpace();
-  const createRoom: (createInfo: CreateRoomInfo) => Promise<RoomIdentifier | undefined> = useCreateRoom();
+  const createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined> = useCreateChannel();
   const logout: () => Promise<void> = useLogout();
   const loginWithPassword: (username: string, password: string) => Promise<void> = useLoginWithPassword();
   const registerPasswordUser: (username: string, password: string) => Promise<void> = useRegisterPasswordUser();
@@ -48,7 +48,7 @@ export function useMatrixClient() {
 
   return {
     clientRunning,
-    createRoom,
+    createChannel,
     createSpace,
     getIsWalletIdRegistered,
     inviteUser,

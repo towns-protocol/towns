@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  CreateRoomInfo,
+  CreateChannelInfo,
   Membership,
   RoomIdentifier,
   RoomVisibility,
@@ -26,22 +26,22 @@ interface Props {
   onClick: (roomId: RoomIdentifier, membership: Membership) => void;
 }
 
-export function CreateSpaceChildForm(props: Props): JSX.Element {
-  const [roomName, setRoomName] = useState<string>("");
+export function CreateChannelForm(props: Props): JSX.Element {
+  const [channelName, setChannelName] = useState<string>("");
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Private,
   );
-  const { createRoom } = useMatrixClient();
+  const { createChannel } = useMatrixClient();
   const { onClick, parentSpaceId } = props;
 
   const disableCreateButton = useMemo(
-    () => roomName.length === 0,
-    [roomName.length],
+    () => channelName.length === 0,
+    [channelName.length],
   );
 
-  const onChangeRoomName = useCallback(
+  const onChangeChannelName = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setRoomName(event.target.value);
+      setChannelName(event.target.value);
     },
     [],
   );
@@ -50,18 +50,17 @@ export function CreateSpaceChildForm(props: Props): JSX.Element {
     setVisibility(event.target.value as RoomVisibility);
   }, []);
 
-  const onClickCreateRoom = useAsyncButtonCallback(async () => {
-    const createRoomInfo: CreateRoomInfo = {
-      roomName,
+  const onClickCreateChannel = useAsyncButtonCallback(async () => {
+    const createRoomInfo: CreateChannelInfo = {
+      name: channelName,
       visibility,
-      isDirectMessage: false,
       parentSpaceId: parentSpaceId,
     };
-    const roomId = await createRoom(createRoomInfo);
+    const roomId = await createChannel(createRoomInfo);
     if (roomId) {
       onClick(roomId, Membership.Join);
     }
-  }, [createRoom, onClick, parentSpaceId, roomName, visibility]);
+  }, [createChannel, onClick, parentSpaceId, channelName, visibility]);
 
   return (
     <Box
@@ -90,7 +89,7 @@ export function CreateSpaceChildForm(props: Props): JSX.Element {
             id="filled-basic"
             label="Name of the channel"
             variant="filled"
-            onChange={onChangeRoomName}
+            onChange={onChangeChannelName}
           />
         </Box>
         <Box
@@ -122,7 +121,7 @@ export function CreateSpaceChildForm(props: Props): JSX.Element {
           <Button
             variant="contained"
             color="primary"
-            onClick={onClickCreateRoom}
+            onClick={onClickCreateChannel}
             disabled={disableCreateButton}
           >
             Create

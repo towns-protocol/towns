@@ -11,8 +11,8 @@ describe("sendAMessage", () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
     // bob creates a room
-    const roomId = await bob.createRoom({
-      roomName: "bob's room",
+    const roomId = await bob.createSpace({
+      name: "bob's room",
       visibility: RoomVisibility.Private,
     });
     // bob invites alice to the room

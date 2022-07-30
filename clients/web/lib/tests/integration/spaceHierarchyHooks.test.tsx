@@ -36,12 +36,12 @@ describe("spaceHierarchyHooks", () => {
     const { alice, bob } = await registerAndStartClients(["alice", "bob"]);
     // bob creates a space
     const roomId = await bob.createSpace({
-      spaceName: "bob's space",
+      name: "bob's space",
       visibility: RoomVisibility.Public,
     });
     // and a channel
-    await bob.createRoom({
-      roomName: "bob's channel",
+    await bob.createChannel({
+      name: "bob's channel",
       visibility: RoomVisibility.Public,
       parentSpaceId: roomId,
     });
@@ -90,8 +90,8 @@ describe("spaceHierarchyHooks", () => {
     // expect the initial space child count to be 1
     await waitFor(() => expect(spaceChildCount).toHaveTextContent("1"));
     // have alice create a channel
-    await alice.createRoom({
-      roomName: "alice's channel",
+    await alice.createChannel({
+      name: "alice's channel",
       visibility: RoomVisibility.Public,
       parentSpaceId: roomId,
     });
