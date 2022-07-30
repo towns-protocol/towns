@@ -79,7 +79,7 @@ describe("userProfileHooks", () => {
             {myProfile?.avatarUrl ?? "unknown"}
           </div>
           <div data-testid="alicesMemberName">
-            {alicesMemberInfo?.name ?? "unknown"} foo
+            {alicesMemberInfo?.name ?? "unknown"}
           </div>
           <div data-testid="alicesMemberAvatar">
             {alicesMemberInfo?.avatarUrl ?? "unknown"}

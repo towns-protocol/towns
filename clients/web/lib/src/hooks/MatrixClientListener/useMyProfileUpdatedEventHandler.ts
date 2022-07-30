@@ -28,7 +28,7 @@ export const useMyProfileUpdatedEventHandler = (
       console.log("matrix user is undefined");
       return;
     }
-    console.log("handleMyProfileUpdated", {
+    console.log("handleMyProfileUpdated", userId, {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
     });

@@ -111,14 +111,6 @@ export const useMatrixClientListener = (
           oldMembership: string | null,
         ) => {
           handleRoomMembershipEvent(event, member, oldMembership);
-
-          if (
-            event.getType() === EventType.RoomMember &&
-            event.getSender() === userId &&
-            event.getStateKey() === userId
-          ) {
-            handleMyProfileUpdated();
-          }
         },
       );
 
