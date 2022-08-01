@@ -11,7 +11,6 @@ import {
   MatrixEventEvent,
   UserEvent,
   User,
-  EventType,
 } from "matrix-js-sdk";
 import { useCallback, useEffect, useRef } from "react";
 import { useCredentialStore } from "../store/use-credential-store";

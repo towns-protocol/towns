@@ -8,10 +8,11 @@ import { generateTestingUtils } from "eth-testing";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useMatrixClient } from "../../src/hooks/use-matrix-client";
-import { registerAndStartClients, sleep } from "./helpers/TestUtils";
+import { registerAndStartClients } from "./helpers/TestUtils";
 import { usePowerLevels } from "../../src/hooks/use-power-levels";
 import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
 import { LoginStatus } from "../../src/hooks/login";
+import { sleep } from "../../src/utils/zion-utils";
 
 describe("powerLevelsHooks", () => {
   jest.setTimeout(20000);

@@ -8,8 +8,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixTestApp } from "./helpers/MatrixTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
-import { registerAndStartClients } from "./helpers/TestUtils";
-import { LoginWithWallet, RegisterWallet } from "./helpers/TestComponents";
+import { RegisterWallet } from "./helpers/TestComponents";
 import { ethers } from "ethers";
 import { LoginStatus } from "../../src/hooks/login";
 

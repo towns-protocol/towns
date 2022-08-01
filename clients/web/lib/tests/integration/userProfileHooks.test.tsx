@@ -12,10 +12,11 @@ import { MatrixTestApp } from "./helpers/MatrixTestApp";
 import { useMember } from "../../src/hooks/use-member";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
-import { registerAndStartClients, sleep } from "./helpers/TestUtils";
+import { registerAndStartClients } from "./helpers/TestUtils";
 import { RoomMember } from "matrix-js-sdk";
 import { RegisterAndJoinSpace } from "./helpers/TestComponents";
 import { useMessages } from "../../src/hooks/use-messages";
+import { sleep } from "../../src/utils/zion-utils";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

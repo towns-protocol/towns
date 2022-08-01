@@ -25,9 +25,11 @@ describe("messageTypes", () => {
         (x) =>
           x.client
             .getRoom(roomId.matrixRoomId)
-            ?.timeline.find(
+            ?.getLiveTimeline()
+            .getEvents()
+            .find(
               (event: MatrixEvent) =>
-                event.event.content?.msgtype === MessageType.WenMoon,
+                event.getContent().msgtype === MessageType.WenMoon,
             ) != undefined,
       ),
     ).toBe(true);

@@ -15,6 +15,7 @@ import {
   RoomVisibility,
   ZionContext,
 } from "../../types/matrix-types";
+import { sleepUntil } from "../../utils/zion-utils";
 
 export const useCreateChannel = () => {
   const { disableEncryption, matrixClient } =
@@ -64,7 +65,13 @@ export const createZionChannel = async (props: {
   };
   // create the room
   const response = await matrixClient.createRoom(options);
-  console.log("Created room", JSON.stringify(response));
+  if (disableEncryption !== true) {
+    const encrypted = await sleepUntil(matrixClient, (x) =>
+      x.isRoomEncrypted(response.room_id),
+    );
+    console.log("Created channel isRoomEncrypted:", encrypted);
+  }
+  console.log("Created channel", JSON.stringify(response));
   if (createInfo.parentSpaceId) {
     try {
       await matrixClient.sendStateEvent(

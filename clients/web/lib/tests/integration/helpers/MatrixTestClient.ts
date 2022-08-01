@@ -35,7 +35,7 @@ import {
   RoomIdentifier,
   SendMessageOptions,
 } from "../../../src/types/matrix-types";
-import { sleepUntil } from "./TestUtils";
+import { sleepUntil } from "../../../src/utils/zion-utils";
 import { createZionSpace } from "../../../src/hooks/MatrixClient/useCreateSpace";
 import { syncZionSpace } from "../../../src/hooks/MatrixClient/useSyncSpace";
 

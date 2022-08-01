@@ -56,5 +56,5 @@ describe("sendAMessage", () => {
             ) != undefined,
       ),
     ).toBe(true);
-  });
-});
+  }); // end test
+}); // end describe
