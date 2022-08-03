@@ -1,7 +1,7 @@
 import { Allotment, AllotmentHandle } from "allotment";
 import React, { useEffect, useRef } from "react";
 import { Outlet, useMatch, useNavigate } from "react-router";
-import { useMatrixStore, useMyProfile, useSpace } from "use-matrix-client";
+import { useMatrixStore, useMyProfile, useSpace } from "use-zion-client";
 import {
   MainSideBar,
   MessagesSideBar,

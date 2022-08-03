@@ -4,8 +4,8 @@ import {
   Membership,
   RoomIdentifier,
   RoomVisibility,
-  useMatrixClient,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { atoms } from "ui/styles/atoms.css";
 import {
   Box,
@@ -27,7 +27,7 @@ export const CreateSpaceForm = (props: Props) => {
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Public,
   );
-  const { createSpace } = useMatrixClient();
+  const { createSpace } = useZionClient();
 
   const disableCreateButton = useMemo(
     () => spaceName.length === 0,

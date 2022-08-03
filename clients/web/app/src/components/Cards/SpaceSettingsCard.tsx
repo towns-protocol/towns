@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { RoomIdentifier, useMatrixClient } from "use-matrix-client";
+import { RoomIdentifier, useZionClient } from "use-zion-client";
 import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
 
 type Props = { spaceId: RoomIdentifier };
@@ -18,7 +18,7 @@ export const SpaceSettingsCard = (props: Props) => {
     [navigate, spaceId.slug],
   );
 
-  const { leaveRoom } = useMatrixClient();
+  const { leaveRoom } = useZionClient();
   const onLeaveClick = useCallback(async () => {
     await leaveRoom(spaceId);
     navigate("/");

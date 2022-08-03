@@ -3,7 +3,6 @@ import {
   makeRoomIdentifier,
   Members,
   Membership,
-  MyProfile,
   Room,
   RoomIdentifier,
   RoomMessage,
@@ -19,14 +18,10 @@ import { Room as MatrixRoom } from "matrix-js-sdk";
 import { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
 
 export type MatrixStoreStates = {
-  myProfile: MyProfile | null;
-  setMyProfile: (profile: MyProfile) => void;
   createRoom: (roomId: RoomIdentifier, isSpace: boolean) => void;
   isAuthenticated: boolean;
   deviceId: string | null;
   setDeviceId: (deviceId: string | undefined) => void;
-  homeServer: string | null;
-  setHomeServer: (homeServer: string | undefined) => void;
   loginStatus: LoginStatus;
   setLoginStatus: (loginStatus: LoginStatus) => void;
   loginError: AuthenticationError | null;
@@ -74,8 +69,6 @@ export type MatrixStoreStates = {
 
 export const useMatrixStore = createStore<MatrixStoreStates>(
   (set: SetState<MatrixStoreStates>) => ({
-    myProfile: null,
-    setMyProfile: (profile: MyProfile) => set({ myProfile: profile }),
     isAuthenticated: false,
     loginStatus: LoginStatus.LoggedOut,
     setLoginStatus: (loginStatus: LoginStatus) =>
@@ -105,9 +98,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     deviceId: null,
     setDeviceId: (deviceId: string | undefined) =>
       set({ deviceId: deviceId ?? null }),
-    homeServer: null,
-    setHomeServer: (homeServer: string | undefined) =>
-      set({ homeServer: homeServer ?? null }),
     rooms: null,
     allMessages: null,
     powerLevels: {},

@@ -15,8 +15,8 @@ import {
   Membership,
   RoomIdentifier,
   RoomVisibility,
-  useMatrixClient,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { useCallback, useMemo, useState } from "react";
 
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
@@ -31,7 +31,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Private,
   );
-  const { createChannel } = useMatrixClient();
+  const { createChannel } = useZionClient();
   const { onClick, parentSpaceId } = props;
 
   const disableCreateButton = useMemo(

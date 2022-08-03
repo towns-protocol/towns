@@ -7,7 +7,7 @@ import {
   Theme,
   Typography,
 } from "@mui/material";
-import { useMatrixClient, useMatrixStore } from "use-matrix-client";
+import { useZionClient, useMatrixStore } from "use-zion-client";
 import { useCallback, useEffect, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
@@ -17,7 +17,7 @@ export function LoginUsernamePassword(): JSX.Element {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showError, setShowError] = useState<string | undefined>(undefined);
-  const { loginWithPassword, registerPasswordUser } = useMatrixClient();
+  const { loginWithPassword, registerPasswordUser } = useZionClient();
   const { loginError } = useMatrixStore();
 
   const onChangedUsername = useCallback(

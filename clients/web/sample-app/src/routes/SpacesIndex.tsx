@@ -1,12 +1,12 @@
 import { useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSpace } from "use-matrix-client";
-import { List, ListItem, ListItemText } from "@mui/material";
 import {
+  useSpace,
   ChannelGroup,
   Channel,
   RoomIdentifier,
-} from "use-matrix-client/dist/types/matrix-types";
+} from "use-zion-client";
+import { List, ListItem, ListItemText } from "@mui/material";
 
 export const SpacesIndex = () => {
   const { spaceSlug } = useParams();

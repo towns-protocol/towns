@@ -1,4 +1,3 @@
-import { MatrixContext } from "../../components/MatrixContextProvider";
 import {
   HistoryVisibility,
   ICreateRoomOpts,
@@ -6,42 +5,13 @@ import {
   MatrixClient,
   Visibility,
 } from "matrix-js-sdk";
-import { useCallback, useContext } from "react";
+import { sleepUntil } from "../../utils/zion-utils";
 import {
   CreateSpaceInfo,
   makeRoomIdentifier,
   RoomIdentifier,
   RoomVisibility,
-  ZionContext,
 } from "../../types/matrix-types";
-import { sleepUntil } from "../../utils/zion-utils";
-
-export const useCreateSpace = () => {
-  const { disableEncryption, matrixClient } =
-    useContext<ZionContext>(MatrixContext);
-  return useCallback(
-    async (
-      createSpaceInfo: CreateSpaceInfo,
-    ): Promise<RoomIdentifier | undefined> => {
-      try {
-        if (matrixClient) {
-          return await createZionSpace({
-            matrixClient,
-            createSpaceInfo,
-            disableEncryption,
-          });
-        } else {
-          console.error("Not logged in. Cannot create space");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (ex: any) {
-        console.error("Error creating space", ex.stack);
-      }
-      return undefined;
-    },
-    [disableEncryption, matrixClient],
-  );
-};
 
 export const createZionSpace = async (props: {
   matrixClient: MatrixClient;

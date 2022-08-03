@@ -6,12 +6,12 @@ import React from "react";
 import { generateTestingUtils } from "eth-testing";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { LoginWithWallet } from "./helpers/TestComponents";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
 import { useInvites, useSpaces } from "../../src/hooks/use-space";
 
@@ -42,14 +42,14 @@ describe("userProfileOnAcceptInviteHooks", () => {
     // save off the wallet
     const aliceWallet = alice.wallet;
     // set display name and avatar
-    await alice.client.setDisplayName("Alice's your aunt");
-    await alice.client.setAvatarUrl("alice.png");
+    await alice.setDisplayName("Alice's your aunt");
+    await alice.setAvatarUrl("alice.png");
     // stop alice
     alice.stopClient();
     // create a veiw for alice
     const TestUserProfileOnAcceptInvite = () => {
       const myProfile = useMyProfile();
-      const { joinRoom } = useMatrixClient();
+      const { joinRoom } = useZionClient();
       const invites = useInvites();
       const spaces = useSpaces();
       const roomId = invites[0]?.id ?? spaces[0]?.id;
@@ -71,9 +71,9 @@ describe("userProfileOnAcceptInviteHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={aliceWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={aliceWallet}>
         <TestUserProfileOnAcceptInvite />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const myProfileName = screen.getByTestId("myProfileName");
@@ -90,7 +90,7 @@ describe("userProfileOnAcceptInviteHooks", () => {
       visibility: RoomVisibility.Private,
     });
     // bob invites alice to the room
-    await bob.inviteUser(alice.matrixUserId!, roomId);
+    await bob.inviteUser(roomId, alice.matrixUserId!);
     // wait for the invite to show (this will transition back to 0 after the invite is accepted)
     await waitFor(() => expect(invitesCount).toHaveTextContent("1"));
     // click the accept button

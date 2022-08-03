@@ -1,6 +1,6 @@
 import { Container } from "@mui/material";
 import { Main } from "./components/Main";
-import { MatrixContextProvider } from "use-matrix-client";
+import { MatrixContextProvider } from "use-zion-client";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 import { BrowserRouter, Route, Routes } from "react-router-dom";

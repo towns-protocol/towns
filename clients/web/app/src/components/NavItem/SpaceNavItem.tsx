@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { RoomIdentifier } from "use-matrix-client";
+import { RoomIdentifier } from "use-zion-client";
 import { SpaceSettingsCard } from "@components/Cards/SpaceSettingsCard";
 import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
 import {

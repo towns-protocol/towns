@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Membership, RoomIdentifier, useSpaceId } from "use-matrix-client";
+import { Membership, RoomIdentifier, useSpaceId } from "use-zion-client";
 import { CreateChannelForm } from "../components/CreateChannelForm";
 
 export const SpacesNewChannel = () => {

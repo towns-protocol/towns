@@ -15,8 +15,8 @@ import {
   Membership,
   RoomIdentifier,
   RoomVisibility,
-  useMatrixClient,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { useCallback, useMemo, useState } from "react";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 
@@ -29,7 +29,7 @@ export const CreateSpaceForm = (props: Props) => {
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Private,
   );
-  const { createSpace } = useMatrixClient();
+  const { createSpace } = useZionClient();
   const { onClick } = props;
 
   const disableCreateButton = useMemo(

@@ -6,11 +6,11 @@ import useEvent from "react-use-event-hook";
 import {
   LoginStatus,
   WalletStatus,
-  useMatrixClient,
   useMatrixStore,
   useMyProfile,
   useWeb3Context,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { vars } from "ui/styles/vars.css";
 import {
   Avatar,
@@ -46,7 +46,7 @@ const placeholders = {
 
 export const SignupForm = () => {
   const { accounts, walletStatus } = useWeb3Context();
-  const { registerWallet, setDisplayName, setAvatarUrl } = useMatrixClient();
+  const { registerWallet, setDisplayName, setAvatarUrl } = useZionClient();
   const { setValue, resetField, register, handleSubmit, watch, formState } =
     useForm({
       defaultValues: {

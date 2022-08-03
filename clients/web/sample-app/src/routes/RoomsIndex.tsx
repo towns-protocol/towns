@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RoomIdentifier, useRoom } from "use-matrix-client";
+import { RoomIdentifier, useRoom } from "use-zion-client";
 import { Chat } from "../components/Chat";
 
 export const RoomsIndex = () => {

@@ -4,7 +4,7 @@ import {
   createUserIdFromString,
   useMatrixStore,
   useMyProfile,
-} from "use-matrix-client";
+} from "use-zion-client";
 
 export const Me = () => {
   const { userId } = useMatrixStore();

@@ -6,7 +6,7 @@ import React from "react";
 import { generateTestingUtils } from "eth-testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { RegisterWallet } from "./helpers/TestComponents";
 import { ethers } from "ethers";
@@ -49,9 +49,9 @@ describe("userProfileOnboardingHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={aliceWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={aliceWallet}>
         <TestUserProfileOnLaunch />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const myProfileName = screen.getByTestId("myProfileName");

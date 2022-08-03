@@ -7,11 +7,11 @@ import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
 import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useSpace } from "../../src/hooks/use-space";
 import { useRoom } from "../../src/hooks/use-room";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
@@ -56,7 +56,7 @@ describe("defaultSpaceIdHooks", () => {
     const TestDefaultRoom = () => {
       const { walletStatus } = useWeb3Context();
       const { loginStatus, loginError } = useMatrixStore();
-      const { registerWallet, joinRoom, clientRunning } = useMatrixClient();
+      const { registerWallet, joinRoom, clientRunning } = useZionClient();
       const defaultSpace = useSpace();
       const defaultRoom = useRoom(defaultSpaceId);
       const onClickRegisterWallet = useCallback(() => {
@@ -97,14 +97,14 @@ describe("defaultSpaceIdHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp
+      <ZionTestApp
         testingUtils={testingUtils}
         wallet={bobWallet}
         defaultSpaceId={defaultSpaceId.matrixRoomId}
         defaultSpaceName="janes space (fake default)"
       >
         <TestDefaultRoom />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const walletStatus = screen.getByTestId("walletStatus");

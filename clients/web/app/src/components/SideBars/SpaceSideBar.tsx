@@ -5,7 +5,7 @@ import {
   RoomIdentifier,
   SpaceData,
   useInvitesForSpace,
-} from "use-matrix-client";
+} from "use-zion-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";

@@ -7,11 +7,11 @@ import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
 import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -38,7 +38,7 @@ describe("walletStatusHooks", () => {
     const TestWalletStatus = () => {
       const { walletStatus, chainId } = useWeb3Context();
       const { loginStatus, loginError } = useMatrixStore();
-      const { registerWallet } = useMatrixClient();
+      const { registerWallet } = useZionClient();
       return (
         <>
           <div data-testid="walletStatus">{walletStatus}</div>
@@ -53,9 +53,9 @@ describe("walletStatusHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
         <TestWalletStatus />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const walletStatus = screen.getByTestId("walletStatus");

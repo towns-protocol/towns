@@ -6,7 +6,7 @@ import React from "react";
 import { generateTestingUtils } from "eth-testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { LoginWithWallet } from "./helpers/TestComponents";
@@ -36,8 +36,8 @@ describe("userProfileOnLaunchHooks", () => {
     // save off the wallet
     const aliceWallet = alice.wallet;
     // set display name and avatar
-    await alice.client.setDisplayName("Alice's your aunt");
-    await alice.client.setAvatarUrl("alice.png");
+    await alice.setDisplayName("Alice's your aunt");
+    await alice.setAvatarUrl("alice.png");
     // stop alice
     alice.stopClient();
     // create a veiw for alice
@@ -57,9 +57,9 @@ describe("userProfileOnLaunchHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={aliceWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={aliceWallet}>
         <TestUserProfileOnLaunch />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const myProfileName = screen.getByTestId("myProfileName");

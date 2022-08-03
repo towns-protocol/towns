@@ -3,14 +3,14 @@ import { useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import {
   PowerLevel,
-  useMatrixClient,
+  useZionClient,
   usePowerLevels,
   useRoom,
-} from "use-matrix-client";
+} from "use-zion-client";
 
 export const RoomSettings = () => {
   const { spaceSlug, roomSlug } = useParams();
-  const { setPowerLevel } = useMatrixClient();
+  const { setPowerLevel } = useZionClient();
   // if we have a room id, use it, otherwise pull up the space id
   const targetId = useMemo(() => roomSlug || spaceSlug, [roomSlug, spaceSlug]);
   const room = useRoom(targetId);

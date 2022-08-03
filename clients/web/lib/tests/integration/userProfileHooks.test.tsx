@@ -5,10 +5,10 @@
 import React, { useCallback } from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMember } from "../../src/hooks/use-member";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
@@ -41,8 +41,8 @@ describe("userProfileHooks", () => {
     // create clients
     const { alice } = await registerAndStartClients(["alice"]);
     // set display name and avatar
-    await alice.client.setDisplayName("Alice's your aunt");
-    await alice.client.setAvatarUrl("alice.png");
+    await alice.setDisplayName("Alice's your aunt");
+    await alice.setAvatarUrl("alice.png");
     // create a wallet for bob
     const bobWallet = ethers.Wallet.createRandom();
     // create a space
@@ -58,7 +58,7 @@ describe("userProfileHooks", () => {
     });
     // create a veiw for bob
     const TestUserProfile = () => {
-      const { setDisplayName, setAvatarUrl } = useMatrixClient();
+      const { setDisplayName, setAvatarUrl } = useZionClient();
       const myProfile = useMyProfile();
       const alicesMemberInfo = useMember(alice.matrixUserId!, alicesSpaceId);
       const messages = useMessages(alicesChannelId);
@@ -93,9 +93,9 @@ describe("userProfileHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
         <TestUserProfile />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const channelMembership = screen.getByTestId("channelMembership"); // from RegisterAndJoinSpace
@@ -131,8 +131,8 @@ describe("userProfileHooks", () => {
     // double check that alice sees the same info
     expect(
       await alice.eventually((x) =>
-        x.client
-          .getRoom(alicesChannelId.matrixRoomId)
+        x
+          .getRoom(alicesChannelId)
           ?.getMembers()
           .some((x: RoomMember) => x.name === "Bob's your uncle"),
       ),

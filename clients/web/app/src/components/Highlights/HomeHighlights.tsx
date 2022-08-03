@@ -1,6 +1,6 @@
 import React, { useContext, useMemo } from "react";
 import { useParams } from "react-router";
-import { useSpaceId } from "use-matrix-client";
+import { useSpaceId } from "use-zion-client";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Reactions } from "@components/Reactions";
 import { Replies } from "@components/Replies";

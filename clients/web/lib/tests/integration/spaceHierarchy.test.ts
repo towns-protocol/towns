@@ -64,7 +64,7 @@ describe("spaceHierarchy", () => {
     expect(alice_spaceInfo_pre_join?.children).toBeUndefined();
 
     // bob invites alice
-    await bob.inviteUser(alice.matrixUserId!, spaceId);
+    await bob.inviteUser(spaceId, alice.matrixUserId!);
 
     // alice joins the space
     await alice.joinRoom(spaceId);

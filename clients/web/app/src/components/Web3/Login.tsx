@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   LoginStatus,
   WalletStatus,
-  useMatrixClient,
   useMatrixStore,
   useWeb3Context,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 
 import { Spinner } from "@components/Spinner";
 import { Button, Paragraph, Stack } from "@ui";
@@ -16,7 +16,7 @@ const registerWalletMsgToSign = `Click to register and accept the Harmony Terms 
 export const Login = () => {
   const [showError, setShowError] = useState<string | undefined>(undefined);
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
-    useMatrixClient();
+    useZionClient();
   const { loginStatus, loginError } = useMatrixStore();
   const { requestAccounts, walletStatus } = useWeb3Context();
   const [walletRegistered, setWalletRegistered] = useState<boolean>(true);

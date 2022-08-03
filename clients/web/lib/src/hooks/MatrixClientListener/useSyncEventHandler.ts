@@ -1,9 +1,10 @@
-import { MatrixClient, Room } from "matrix-js-sdk";
+import { ZionClient } from "../../client/ZionClient";
+import { Room } from "matrix-js-sdk";
 import { MutableRefObject, useCallback, useEffect, useState } from "react";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
 export const useSyncEventHandler = (
-  matrixClientRef: MutableRefObject<MatrixClient | undefined>,
+  matrixClientRef: MutableRefObject<ZionClient | undefined>,
 ) => {
   const [syncInfo, setSyncInfo] = useState<unknown>();
   const { setAllRooms } = useMatrixStore();

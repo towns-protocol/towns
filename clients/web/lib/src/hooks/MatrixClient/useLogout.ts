@@ -9,14 +9,14 @@ export const useLogout = () => {
   const { setLoginStatus } = useMatrixStore();
   const { setAccessToken } = useCredentialStore();
 
-  const { matrixClient } = useContext<ZionContext>(MatrixContext);
+  const { client } = useContext<ZionContext>(MatrixContext);
 
   return useCallback(
     async function (): Promise<void> {
       setLoginStatus(LoginStatus.LoggingOut);
-      if (matrixClient) {
+      if (client) {
         try {
-          await matrixClient.logout();
+          await client.logout();
           console.log("Logged out");
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (ex: any) {
@@ -26,6 +26,6 @@ export const useLogout = () => {
       setLoginStatus(LoginStatus.LoggedOut);
       setAccessToken("");
     },
-    [matrixClient, setAccessToken, setLoginStatus],
+    [client, setAccessToken, setLoginStatus],
   );
 };

@@ -22,7 +22,7 @@ describe("isEncrypted", () => {
       visibility: RoomVisibility.Public,
     });
     // is it encrypted?
-    expect(bob.client.isRoomEncrypted(spaceId.matrixRoomId)).toBe(true);
+    expect(bob.isRoomEncrypted(spaceId)).toBe(true);
     // bob creates a channel
     const channelId = await bob.createChannel({
       name: "bob's channel",
@@ -30,6 +30,6 @@ describe("isEncrypted", () => {
       parentSpaceId: spaceId,
     });
     // is it encrypted?
-    expect(bob.client.isRoomEncrypted(channelId.matrixRoomId)).toBe(true);
+    expect(bob.isRoomEncrypted(channelId)).toBe(true);
   }); // end test
 }); // end describe

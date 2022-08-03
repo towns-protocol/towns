@@ -5,7 +5,7 @@ import {
   RoomIdentifier,
   isRoom,
   useMatrixStore,
-} from "use-matrix-client";
+} from "use-zion-client";
 
 import { useMemo } from "react";
 

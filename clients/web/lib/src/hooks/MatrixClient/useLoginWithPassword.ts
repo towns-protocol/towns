@@ -1,22 +1,19 @@
 import { LoginServerResponse, LoginStatus } from "../login";
 import { StatusCodes } from "http-status-codes";
 import { createClient } from "matrix-js-sdk";
-import { useCallback } from "react";
+import { useCallback, useContext } from "react";
 import { useCredentialStore } from "../../store/use-credential-store";
 import { useMatrixStore } from "../../store/use-matrix-store";
 import { getUsernameFromId } from "../../types/user-identifier";
 import { useLogout } from "./useLogout";
+import { ZionContext } from "../../types/matrix-types";
+import { MatrixContext } from "../../components/MatrixContextProvider";
 
 export const useLoginWithPassword = () => {
-  const {
-    homeServer,
-    setDeviceId,
-    setLoginError,
-    setLoginStatus,
-    setUserId,
-    setUsername,
-  } = useMatrixStore();
+  const { setDeviceId, setLoginError, setLoginStatus, setUserId, setUsername } =
+    useMatrixStore();
 
+  const { homeServer } = useContext<ZionContext>(MatrixContext);
   const { setAccessToken } = useCredentialStore();
   const logout: () => Promise<void> = useLogout();
 

@@ -1,34 +1,9 @@
 import { MatrixClient } from "matrix-js-sdk";
-import { useCallback, useContext } from "react";
-import { MatrixContext } from "../../components/MatrixContextProvider";
 import {
   MessageType,
   RoomIdentifier,
   SendMessageOptions,
-  ZionContext,
 } from "../../types/matrix-types";
-
-export const useSendMessage = () => {
-  const { matrixClient } = useContext<ZionContext>(MatrixContext);
-
-  return useCallback(
-    async (
-      roomId: RoomIdentifier,
-      message: string,
-      options: SendMessageOptions = {},
-    ): Promise<void> => {
-      if (matrixClient) {
-        await sendZionMessage({
-          matrixClient,
-          roomId,
-          message,
-          options,
-        });
-      }
-    },
-    [matrixClient],
-  );
-};
 
 /** treat message as a reply to parentId if specified */
 export const sendZionMessage = async (props: {

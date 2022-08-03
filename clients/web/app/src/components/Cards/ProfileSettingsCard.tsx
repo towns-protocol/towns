@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMatrixClient } from "use-matrix-client";
+import { useZionClient } from "use-zion-client";
 import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
 import { useStore } from "store/store";
 
@@ -32,7 +32,7 @@ export const ProfileSettingsCard = (props: Props) => {
     navigate("/onboarding");
   }, [navigate]);
 
-  const { logout } = useMatrixClient();
+  const { logout } = useZionClient();
 
   const onLogoutClick = useCallback(() => {
     logout();

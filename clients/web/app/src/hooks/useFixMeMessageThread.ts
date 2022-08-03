@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo } from "react";
 import {
   RoomMessage,
   useChannel,
-  useMatrixClient,
   useMatrixStore,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 
 export const messageFilter = (m: RoomMessage) => !m.content?.["m.relates_to"];
 
@@ -64,7 +64,7 @@ export const useSendReply = (
   channelSlug?: string,
   threadId?: string,
 ) => {
-  const { sendMessage } = useMatrixClient();
+  const { sendMessage } = useZionClient();
 
   const channel = useChannel(spaceSlug, channelSlug);
 

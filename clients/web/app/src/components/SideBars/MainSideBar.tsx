@@ -1,5 +1,5 @@
 import React from "react";
-import { SpaceData, useInvites, useSpaces } from "use-matrix-client";
+import { SpaceData, useInvites, useSpaces } from "use-zion-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { SideBar } from "@components/SideBars/_SideBar";

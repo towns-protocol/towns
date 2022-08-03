@@ -11,8 +11,8 @@ describe("userProfile", () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
     // bob sets user name and profile photo
-    await bob.client.setDisplayName("Bob's your uncle");
-    await bob.client.setAvatarUrl("https://example.com/bob.png");
+    await bob.setDisplayName("Bob's your uncle");
+    await bob.setAvatarUrl("https://example.com/bob.png");
     // bob creates a room
     const roomId = await bob.createSpace({
       name: "bob's room",
@@ -24,24 +24,20 @@ describe("userProfile", () => {
     expect(
       await alice.eventually(
         (x) =>
-          x.client.getRoom(roomId.matrixRoomId)?.getMember(bob.matrixUserId!)
-            ?.name === "Bob's your uncle",
+          x.getRoom(roomId)?.getMember(bob.matrixUserId!)?.name ===
+          "Bob's your uncle",
       ),
     ).toBe(true);
     // alice should see bob's profile photo
     expect(
       await alice.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
-            ?.getMember(bob.matrixUserId!)
-            ?.getMxcAvatarUrl() === "https://example.com/bob.png",
+          x.getRoom(roomId)?.getMember(bob.matrixUserId!)?.getMxcAvatarUrl() ===
+          "https://example.com/bob.png",
       ),
     ).toBe(true);
     // log alice's view of bob
-    const alicesViewOfBob = alice.client
-      .getRoom(roomId.matrixRoomId)
-      ?.getMember(bob.matrixUserId!);
+    const alicesViewOfBob = alice.getRoom(roomId)?.getMember(bob.matrixUserId!);
     console.log("alice sees bob as", {
       name: alicesViewOfBob?.name,
       disambiguate: alicesViewOfBob?.disambiguate,
@@ -49,9 +45,7 @@ describe("userProfile", () => {
       avatarUrl: alicesViewOfBob?.getMxcAvatarUrl(),
     });
     // log bob's view of alice
-    const bobsViewOfAlice = bob.client
-      .getRoom(roomId.matrixRoomId)
-      ?.getMember(alice.matrixUserId!);
+    const bobsViewOfAlice = bob.getRoom(roomId)?.getMember(alice.matrixUserId!);
     console.log("bob sees alice as", {
       name: bobsViewOfAlice?.name,
       disambiguate: bobsViewOfAlice?.disambiguate,
@@ -59,22 +53,22 @@ describe("userProfile", () => {
       avatarUrl: bobsViewOfAlice?.getMxcAvatarUrl(),
     });
     // alice updates her profile
-    await alice.client.setDisplayName("Alice's your aunt");
-    await alice.client.setAvatarUrl("https://example.com/alice.png");
+    await alice.setDisplayName("Alice's your aunt");
+    await alice.setAvatarUrl("https://example.com/alice.png");
     // bob should see alices new user name
     expect(
       await bob.eventually(
         (x) =>
-          x.client.getRoom(roomId.matrixRoomId)?.getMember(alice.matrixUserId!)
-            ?.name === "Alice's your aunt",
+          x.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name ===
+          "Alice's your aunt",
       ),
     ).toBe(true);
     // alice should see bob's profile photo
     expect(
       await bob.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
+          x
+            .getRoom(roomId)
             ?.getMember(alice.matrixUserId!)
             ?.getMxcAvatarUrl() === "https://example.com/alice.png",
       ),
@@ -84,16 +78,16 @@ describe("userProfile", () => {
     // alice should see the message
     expect(
       await alice.eventually((x) =>
-        x.client
-          .getRoom(roomId.matrixRoomId)
+        x
+          .getRoom(roomId)
           ?.getLiveTimeline()
           .getEvents()
           .some((event: MatrixEvent) => event.getContent()?.body === "hello"),
       ),
     ).toBe(true);
     // get the message
-    const message = alice.client
-      .getRoom(roomId.matrixRoomId)
+    const message = alice
+      .getRoom(roomId)
       ?.getLiveTimeline()
       .getEvents()
       .find((event: MatrixEvent) => event.getContent()?.body === "hello");

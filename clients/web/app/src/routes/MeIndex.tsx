@@ -1,5 +1,5 @@
 import React from "react";
-import { useMatrixStore, useMyProfile } from "use-matrix-client";
+import { useMatrixStore, useMyProfile } from "use-zion-client";
 import { Heading } from "@ui";
 import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";

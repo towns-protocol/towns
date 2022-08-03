@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import { useInView } from "react-intersection-observer";
-import { MessageType, RoomMessage } from "use-matrix-client";
+import { MessageType, RoomMessage } from "use-zion-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
 import { FadeIn } from "@components/Transitions";

@@ -14,7 +14,7 @@ interface Props {
   children: JSX.Element;
 }
 
-export const MatrixTestApp = (props: Props) => {
+export const ZionTestApp = (props: Props) => {
   const {
     testingUtils,
     wallet,

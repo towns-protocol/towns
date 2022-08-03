@@ -6,11 +6,11 @@ import React from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -36,7 +36,7 @@ describe("useRegisterPasswordUserHooks", () => {
     // create a veiw for the wallet
     const RegisterUsernamePasswordComponent = () => {
       const { loginStatus, loginError } = useMatrixStore();
-      const { registerPasswordUser } = useMatrixClient();
+      const { registerPasswordUser } = useZionClient();
       return (
         <>
           <div data-testid="loginStatus">{loginStatus}</div>
@@ -49,9 +49,9 @@ describe("useRegisterPasswordUserHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
         <RegisterUsernamePasswordComponent />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const loginStatus = screen.getByTestId("loginStatus");

@@ -5,9 +5,9 @@
 import React, { useCallback, useEffect } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { generateTestingUtils } from "eth-testing";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { usePowerLevels } from "../../src/hooks/use-power-levels";
 import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
@@ -40,7 +40,7 @@ describe("powerLevelsHooks", () => {
       visibility: RoomVisibility.Private,
     });
     // bob invites alice to the room
-    await bob.inviteUser(alice.matrixUserId!, roomId);
+    await bob.inviteUser(roomId, alice.matrixUserId!);
     // alice joins the room
     await alice.joinRoom(roomId);
     // stop bob
@@ -49,7 +49,7 @@ describe("powerLevelsHooks", () => {
     // create a power levels view for bob
     const PowerLevelContent = (props: { roomId: RoomIdentifier }) => {
       const { loginStatus, loginError } = useMatrixStore();
-      const { loginWithWallet, setPowerLevel } = useMatrixClient();
+      const { loginWithWallet, setPowerLevel } = useZionClient();
       const powerLevels = usePowerLevels(props.roomId);
       const spaceChildLevel = powerLevels.levels.find(
         (x) => x.definition.key == "m.space.child",
@@ -79,9 +79,9 @@ describe("powerLevelsHooks", () => {
     };
 
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={bob.wallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={bob.wallet}>
         <PowerLevelContent roomId={roomId} />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // expect our status to change to logged in
     const loginStatus = screen.getByTestId("loginStatus");
@@ -106,7 +106,7 @@ describe("powerLevelsHooks", () => {
     await waitFor(() => expect(spaceChildLevel).toHaveTextContent("0")); // note to self, this doesn't work
     // expect alice to see the power level change
     await waitFor(() =>
-      expect(alice.getPowerLevel(roomId, "m.space.child").value).toEqual(0),
+      expect(alice.getPowerLevel(roomId, "m.space.child")?.value).toEqual(0),
     );
     // expect that alice can make a space child
     await expect(

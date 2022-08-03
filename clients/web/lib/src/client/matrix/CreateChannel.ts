@@ -1,4 +1,3 @@
-import { MatrixContext } from "../../components/MatrixContextProvider";
 import {
   HistoryVisibility,
   ICreateRoomOpts,
@@ -6,46 +5,13 @@ import {
   MatrixClient,
   Visibility,
 } from "matrix-js-sdk";
-import { useCallback, useContext } from "react";
-import { useMatrixStore } from "../../store/use-matrix-store";
+import { sleepUntil } from "../../utils/zion-utils";
 import {
   CreateChannelInfo,
   makeRoomIdentifier,
   RoomIdentifier,
   RoomVisibility,
-  ZionContext,
 } from "../../types/matrix-types";
-import { sleepUntil } from "../../utils/zion-utils";
-
-export const useCreateChannel = () => {
-  const { disableEncryption, matrixClient } =
-    useContext<ZionContext>(MatrixContext);
-  const { homeServer } = useMatrixStore();
-
-  return useCallback(
-    async (
-      createInfo: CreateChannelInfo,
-    ): Promise<RoomIdentifier | undefined> => {
-      try {
-        if (matrixClient && homeServer) {
-          return await createZionChannel({
-            matrixClient,
-            homeServer,
-            createInfo,
-            disableEncryption,
-          });
-        } else {
-          console.error("Not logged in. Cannot create room");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (ex: any) {
-        console.error("Error creating room", ex.stack);
-      }
-      return undefined;
-    },
-    [disableEncryption, homeServer, matrixClient],
-  );
-};
 
 export const createZionChannel = async (props: {
   matrixClient: MatrixClient;

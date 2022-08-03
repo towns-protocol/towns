@@ -3,15 +3,15 @@ import { useNavigate, useParams } from "react-router";
 import {
   RoomIdentifier,
   useChannel,
-  useMatrixClient,
   useSpace,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { Stack } from "@ui";
 import { InviteUserToRoomForm } from "@components/Web3";
 
 export const ChannelSettings = () => {
   const { spaceSlug, channelSlug } = useParams();
-  const { inviteUser } = useMatrixClient();
+  const { inviteUser } = useZionClient();
   const navigate = useNavigate();
   const space = useSpace(spaceSlug);
   const channel = useChannel(spaceSlug, channelSlug);

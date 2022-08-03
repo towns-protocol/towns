@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useMatrixClient, useSpaceId } from "use-matrix-client";
+import { useSpaceId, useZionClient } from "use-zion-client";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Avatar,
@@ -73,7 +73,7 @@ export const SpaceBanner = (props: Props) => {
 
 const SpaceSettingsMenu = () => {
   const { spaceSlug } = useParams();
-  const { leaveRoom } = useMatrixClient();
+  const { leaveRoom } = useZionClient();
   const navigate = useNavigate();
   const spaceId = useSpaceId(spaceSlug);
 

@@ -1,7 +1,7 @@
 import { Box, Button, Theme, Typography } from "@mui/material";
 
 import { useCallback } from "react";
-import { RoomIdentifier } from "use-matrix-client";
+import { RoomIdentifier } from "use-zion-client";
 
 interface Props {
   roomId: RoomIdentifier;

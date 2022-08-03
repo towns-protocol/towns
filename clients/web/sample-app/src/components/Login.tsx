@@ -10,15 +10,15 @@ import {
 import {
   LoginStatus,
   WalletStatus,
-  useMatrixClient,
+  useZionClient,
   useMatrixStore,
   useWeb3Context,
   createUserIdFromEthereumAddress,
-} from "use-matrix-client";
+  getChainIdEip155,
+} from "use-zion-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
-import { getChainIdEip155 } from "use-matrix-client/dist/hooks/login";
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`;
 const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`;
@@ -27,7 +27,7 @@ export function Login(): JSX.Element {
   const styles = useStyles();
   const [showError, setShowError] = useState<string | undefined>(undefined);
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
-    useMatrixClient();
+    useZionClient();
   const { loginStatus, loginError } = useMatrixStore();
   const { accounts, chainId, requestAccounts, walletStatus } = useWeb3Context();
   const [walletRegistered, setWalletRegistered] = useState<boolean>(true);

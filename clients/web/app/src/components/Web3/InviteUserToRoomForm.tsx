@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { RoomIdentifier } from "use-matrix-client";
+import { RoomIdentifier } from "use-zion-client";
 import { Box, Button, Heading, Stack, TextField } from "@ui";
 
 interface Props {

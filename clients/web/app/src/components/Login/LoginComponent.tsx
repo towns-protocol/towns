@@ -3,10 +3,10 @@ import { useNavigate } from "react-router";
 import {
   LoginStatus,
   WalletStatus,
-  useMatrixClient,
   useMatrixStore,
   useWeb3Context,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { LoginButton } from "./LoginButton/LoginButton";
 import { ButtonTooltip } from "./LoginButton/Tooltip/ButtonTooltip";
 
@@ -30,7 +30,7 @@ const REDIRECT_SIGNUP = true;
 export const LoginComponent = () => {
   const navigate = useNavigate();
   const { loginStatus, loginError } = useMatrixStore();
-  const { loginWithWallet, registerWallet } = useMatrixClient();
+  const { loginWithWallet, registerWallet } = useZionClient();
   const { requestAccounts, walletStatus } = useWeb3Context();
 
   const handleConnect = useCallback(() => {
@@ -178,7 +178,7 @@ const getButtonStatus = (
  * async registration check fired once the wallet is unlocked
  **/
 export const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
-  const { getIsWalletIdRegistered } = useMatrixClient();
+  const { getIsWalletIdRegistered } = useZionClient();
   const [registrationStatus, setRegistrationStatus] = useState<ButtonStatus>();
 
   useEffect(() => {

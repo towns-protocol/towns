@@ -1,12 +1,12 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RoomIdentifier, useMatrixClient, useSpace } from "use-matrix-client";
+import { RoomIdentifier, useSpace, useZionClient } from "use-zion-client";
 import { InviteUserToRoomForm } from "@components/Web3";
 import { Stack } from "@ui";
 
 export const SpacesInvite = () => {
   const { spaceSlug } = useParams();
-  const { inviteUser } = useMatrixClient();
+  const { inviteUser } = useZionClient();
   const space = useSpace(spaceSlug);
 
   const navigate = useNavigate();

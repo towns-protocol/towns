@@ -5,11 +5,11 @@ import { useOutlet, useParams } from "react-router-dom";
 import {
   Membership,
   useChannel,
-  useMatrixClient,
   useMessages,
   useMyMembership,
   useSpaceId,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { usePersistPanes } from "hooks/usePersistPanes";
 import { Box, Button, Icon, Stack } from "@ui";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
@@ -19,7 +19,7 @@ export const SpacesChannel = () => {
   const { spaceSlug, channelSlug, messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
-  const { joinRoom, sendMessage } = useMatrixClient();
+  const { joinRoom, sendMessage } = useZionClient();
   const navigate = useNavigate();
 
   const spaceId = useSpaceId(spaceSlug);

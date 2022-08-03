@@ -1,8 +1,8 @@
 export { MatrixContextProvider } from "./components/MatrixContextProvider";
 export { useChannel } from "./hooks/use-channel";
-export { LoginStatus } from "./hooks/login";
+export { LoginStatus, getChainIdEip155 } from "./hooks/login";
 export { useMatrixStore } from "./store/use-matrix-store";
-export { useMatrixClient } from "./hooks/use-matrix-client";
+export { useZionClient } from "./hooks/use-zion-client";
 export { useMember } from "./hooks/use-member";
 export { useMessages } from "./hooks/use-messages";
 export { useMyMembership } from "./hooks/use-my-membership";

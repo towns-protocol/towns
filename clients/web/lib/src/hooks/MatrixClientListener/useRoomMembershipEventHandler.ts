@@ -1,4 +1,4 @@
-import { MatrixClient, MatrixEvent, RoomMember } from "matrix-js-sdk";
+import { MatrixEvent, RoomMember } from "matrix-js-sdk";
 import { MutableRefObject, useCallback, useEffect, useState } from "react";
 import {
   makeRoomIdentifier,
@@ -6,6 +6,7 @@ import {
   RoomIdentifier,
 } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
+import { ZionClient } from "../../client/ZionClient";
 
 interface SyncMembership {
   roomId: RoomIdentifier;
@@ -14,7 +15,7 @@ interface SyncMembership {
 }
 
 export const useRoomMembershipEventHandler = (
-  matrixClientRef: MutableRefObject<MatrixClient | undefined>,
+  matrixClientRef: MutableRefObject<ZionClient | undefined>,
 ) => {
   const { joinRoom, leaveRoom, setRoom, updateMembership } = useMatrixStore();
 
@@ -22,9 +23,7 @@ export const useRoomMembershipEventHandler = (
 
   useEffect(() => {
     if (matrixClientRef.current && syncInfo) {
-      const room = matrixClientRef.current.getRoom(
-        syncInfo.roomId.matrixRoomId,
-      );
+      const room = matrixClientRef.current.getRoom(syncInfo.roomId);
       if (room) {
         setRoom(room);
       }

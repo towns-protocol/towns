@@ -4,8 +4,8 @@ import {
   Membership,
   RoomIdentifier,
   RoomVisibility,
-  useMatrixClient,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { Button, Dropdown, Stack, TextField } from "@ui";
 
 interface Props {
@@ -20,7 +20,7 @@ export const CreateChannelForm = (props: Props) => {
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Public,
   );
-  const { createChannel } = useMatrixClient();
+  const { createChannel } = useZionClient();
   const { onClick, parentSpaceId } = props;
 
   const disableCreateButton = useMemo(

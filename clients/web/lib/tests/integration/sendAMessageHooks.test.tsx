@@ -5,10 +5,10 @@
 import React, { useCallback } from "react";
 import { generateTestingUtils } from "eth-testing";
 import { ethers } from "ethers";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TestingUtils } from "eth-testing/lib/testing-utils";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMessages } from "../../src/hooks/use-messages";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
@@ -52,7 +52,7 @@ describe("sendAMessageHooks", () => {
     });
     // create a veiw for bob
     const TestRoomMessages = () => {
-      const { sendMessage } = useMatrixClient();
+      const { sendMessage } = useZionClient();
       const messages = useMessages(janesChannelId);
       const onClickSendMessage = useCallback(async () => {
         await sendMessage(janesChannelId, "hello jane");
@@ -75,9 +75,9 @@ describe("sendAMessageHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
         <TestRoomMessages />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // get our test elements
     const channelMembership = screen.getByTestId("channelMembership");
@@ -102,8 +102,8 @@ describe("sendAMessageHooks", () => {
     expect(
       await jane.eventually(
         (x) =>
-          x.client
-            .getRoom(janesChannelId.matrixRoomId)
+          x
+            .getRoom(janesChannelId)
             ?.getLiveTimeline()
             .getEvents()
             .find(

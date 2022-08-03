@@ -1,4 +1,5 @@
-import { HistoryVisibility, IContent, MatrixClient } from "matrix-js-sdk";
+import { ZionClient } from "../client/ZionClient";
+import { HistoryVisibility, IContent } from "matrix-js-sdk";
 
 export enum RoomVisibility {
   Private = "private",
@@ -12,7 +13,8 @@ export enum Membership {
 }
 
 export interface ZionContext {
-  matrixClient?: MatrixClient;
+  client?: ZionClient;
+  homeServer?: string;
   disableEncryption?: boolean; // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
   defaultSpaceId?: RoomIdentifier;
   defaultSpaceName?: string;

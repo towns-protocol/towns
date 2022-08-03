@@ -23,8 +23,8 @@ describe("messageTypes", () => {
     expect(
       await bob.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
+          x
+            .getRoom(roomId)
             ?.getLiveTimeline()
             .getEvents()
             .find(

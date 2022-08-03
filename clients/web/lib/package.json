@@ -1,6 +1,6 @@
 {
-  "name": "use-matrix-client",
-  "description": "Matrix client common wrapper / helper functions",
+  "name": "use-zion-client",
+  "description": "Zion client, bundles matrix and web3 functionality",
   "version": "1.0.0",
   "license": "MIT",
   "main": "dist/index.js",

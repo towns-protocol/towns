@@ -2,15 +2,15 @@ import React, { useCallback } from "react";
 import { useParams } from "react-router-dom";
 import {
   PowerLevel,
-  useMatrixClient,
   usePowerLevels,
   useSpaceId,
-} from "use-matrix-client";
+  useZionClient,
+} from "use-zion-client";
 import { Box, Heading, Paragraph, Stack, TextField } from "@ui";
 
 export const SpacesSettings = () => {
   const { spaceSlug } = useParams();
-  const { setPowerLevel } = useMatrixClient();
+  const { setPowerLevel } = useZionClient();
   const spaceId = useSpaceId(spaceSlug);
   const powerLevels = usePowerLevels(spaceId);
 

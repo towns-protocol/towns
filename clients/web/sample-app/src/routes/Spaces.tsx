@@ -1,6 +1,6 @@
 import { Divider } from "@mui/material";
 import { Outlet, useParams } from "react-router-dom";
-import { useSpace } from "use-matrix-client";
+import { useSpace } from "use-zion-client";
 
 export const Spaces = () => {
   const { spaceSlug } = useParams();

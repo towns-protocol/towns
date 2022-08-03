@@ -1,6 +1,6 @@
 import { Web3Provider } from "../hooks/use-web3";
 import React, { createContext } from "react";
-import { useMatrixClientListener } from "../hooks/use-matrix-client-listener";
+import { useZionClientListener } from "../hooks/use-zion-client-listener";
 import { makeRoomIdentifier, ZionContext } from "../types/matrix-types";
 
 export const MatrixContext = createContext<ZionContext>({});
@@ -15,6 +15,8 @@ interface Props {
   children: JSX.Element;
 }
 
+const DEFAULT_INITIAL_SYNC_LIMIT = 20;
+
 export function MatrixContextProvider(props: Props): JSX.Element {
   const {
     homeServerUrl,
@@ -24,17 +26,17 @@ export function MatrixContextProvider(props: Props): JSX.Element {
     defaultSpaceAvatarSrc,
     initialSyncLimit,
   } = props;
-
-  const { matrixClient } = useMatrixClientListener(
+  const { client } = useZionClientListener({
     homeServerUrl,
     disableEncryption,
-    initialSyncLimit,
-  );
+    initialSyncLimit: initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
+  });
   return (
     <Web3Provider>
       <MatrixContext.Provider
         value={{
-          matrixClient: matrixClient,
+          client: client,
+          homeServer: homeServerUrl,
           disableEncryption: disableEncryption,
           defaultSpaceId: defaultSpaceId
             ? makeRoomIdentifier(defaultSpaceId)

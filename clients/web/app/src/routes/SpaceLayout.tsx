@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router";
 import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
-import { RoomIdentifier, useSpaceId } from "use-matrix-client";
+import { RoomIdentifier, useSpaceId } from "use-zion-client";
 import { Stack } from "ui/components/Stack/Stack";
 import { Box, Heading, SizeBox } from "@ui";
 import { LiquidContainer } from "./SpacesIndex";

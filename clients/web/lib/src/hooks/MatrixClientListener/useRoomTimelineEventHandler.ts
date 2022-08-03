@@ -1,10 +1,11 @@
-import { MatrixClient, MatrixEvent, Room } from "matrix-js-sdk";
+import { MatrixEvent, Room } from "matrix-js-sdk";
 import { MutableRefObject, useCallback } from "react";
 import { makeRoomIdentifier, Membership } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
+import { ZionClient } from "../../client/ZionClient";
 
 export const useRoomTimelineEventHandler = (
-  matrixClientRef: MutableRefObject<MatrixClient | undefined>,
+  matrixClientRef: MutableRefObject<ZionClient | undefined>,
 ) => {
   const {
     createRoom,

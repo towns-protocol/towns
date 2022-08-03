@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Membership, RoomIdentifier } from "use-matrix-client";
+import { Membership, RoomIdentifier } from "use-zion-client";
 import { CreateSpaceForm } from "../components/CreateSpaceForm";
 
 export const SpacesNew = () => {

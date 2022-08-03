@@ -16,13 +16,11 @@ describe("sendAMessage", () => {
       visibility: RoomVisibility.Private,
     });
     // bob invites alice to the room
-    await bob.inviteUser(alice.matrixUserId!, roomId);
+    await bob.inviteUser(roomId, alice.matrixUserId!);
     // alice should expect an invite to the room
-    expect(
-      await alice.eventually(
-        (x) => x.client.getRoom(roomId.matrixRoomId) != undefined,
-      ),
-    ).toBe(true);
+    expect(await alice.eventually((x) => x.getRoom(roomId) != undefined)).toBe(
+      true,
+    );
     // alice joins the room
     await alice.joinRoom(roomId);
     // bob sends a message to the room
@@ -31,8 +29,8 @@ describe("sendAMessage", () => {
     expect(
       await alice.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
+          x
+            .getRoom(roomId)
             ?.getLiveTimeline()
             .getEvents()
             .find(
@@ -47,8 +45,8 @@ describe("sendAMessage", () => {
     expect(
       await bob.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
+          x
+            .getRoom(roomId)
             ?.getLiveTimeline()
             .getEvents()
             .find(

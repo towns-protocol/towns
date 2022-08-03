@@ -1,6 +1,6 @@
 import { Login } from "./Login";
 import { LoginUsernamePassword } from "./LoginUsernamePassword";
-import { useMatrixStore } from "use-matrix-client";
+import { useMatrixStore } from "use-zion-client";
 import { Outlet } from "react-router-dom";
 
 const debugWithPassword = false;

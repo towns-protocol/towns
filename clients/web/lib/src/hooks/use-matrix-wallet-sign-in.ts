@@ -19,15 +19,17 @@ import {
   createUserIdFromEthereumAddress,
   getUsernameFromId,
 } from "../types/user-identifier";
-import { useCallback, useMemo } from "react";
+import { useCallback, useContext, useMemo } from "react";
 
 import { SiweMessage } from "siwe";
 import { StatusCodes } from "http-status-codes";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useWeb3Context } from "./use-web3";
+import { ZionContext } from "../types/matrix-types";
+import { MatrixContext } from "../components/MatrixContextProvider";
 
-interface NewSession {
+export interface NewSession {
   sessionId: string;
   version: number;
   chainIds: number[];
@@ -42,7 +44,6 @@ interface SignedAuthenticationData {
 
 export function useMatrixWalletSignIn() {
   const {
-    homeServer,
     loginStatus,
     setLoginError,
     setLoginStatus,
@@ -50,6 +51,7 @@ export function useMatrixWalletSignIn() {
     setUserId,
     setUsername,
   } = useMatrixStore();
+  const { homeServer } = useContext<ZionContext>(MatrixContext);
   const { setAccessToken } = useCredentialStore();
   const { accounts, sign } = useWeb3Context();
   let { chainId } = useWeb3Context();

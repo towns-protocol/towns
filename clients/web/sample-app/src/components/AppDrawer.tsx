@@ -5,7 +5,7 @@ import {
   getShortUsername,
   useMatrixStore,
   RoomIdentifier,
-} from "use-matrix-client";
+} from "use-zion-client";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useCallback, useMemo, useState } from "react";
 

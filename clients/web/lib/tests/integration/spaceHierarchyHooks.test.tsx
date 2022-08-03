@@ -6,9 +6,9 @@ import React from "react";
 import { useEffect } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { generateTestingUtils } from "eth-testing";
-import { MatrixTestApp } from "./helpers/MatrixTestApp";
+import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
-import { useMatrixClient } from "../../src/hooks/use-matrix-client";
+import { useZionClient } from "../../src/hooks/use-zion-client";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { useSpace } from "../../src/hooks/use-space";
 import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
@@ -54,7 +54,7 @@ describe("spaceHierarchyHooks", () => {
     // create a power levels view for bob
     const SpaceChannelsContent = (props: { roomId: RoomIdentifier }) => {
       const { loginStatus, loginError } = useMatrixStore();
-      const { loginWithWallet } = useMatrixClient();
+      const { loginWithWallet } = useZionClient();
       const space = useSpace(props.roomId);
       // effect to log in
       useEffect(() => {
@@ -76,9 +76,9 @@ describe("spaceHierarchyHooks", () => {
     };
     // render it
     render(
-      <MatrixTestApp testingUtils={testingUtils} wallet={bob.wallet}>
+      <ZionTestApp testingUtils={testingUtils} wallet={bob.wallet}>
         <SpaceChannelsContent roomId={roomId} />
-      </MatrixTestApp>,
+      </ZionTestApp>,
     );
     // gather our test elements
     const loginStatus = screen.getByTestId("loginStatus");

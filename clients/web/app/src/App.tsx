@@ -6,7 +6,7 @@ import {
   MatrixContextProvider,
   useMatrixStore,
   useMyProfile,
-} from "use-matrix-client";
+} from "use-zion-client";
 import { Highlights } from "@components/Highlights/HomeHighlights";
 import { MembersPage } from "@components/Members/MembersPage";
 import { Playground } from "@components/Playground";

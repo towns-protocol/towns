@@ -1,6 +1,6 @@
 import React, { ComponentProps, forwardRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RoomMessage, useMatrixStore, useSpace } from "use-matrix-client";
+import { RoomMessage, useMatrixStore, useSpace } from "use-zion-client";
 import { Message } from "@components/Message";
 import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
 import {

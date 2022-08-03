@@ -14,7 +14,7 @@ import {
   ZionContext,
 } from "../types/matrix-types";
 import { useMatrixStore } from "../store/use-matrix-store";
-import { useMatrixClient } from "./use-matrix-client";
+import { useZionClient } from "./use-zion-client";
 import { useRoom } from "./use-room";
 import { MatrixContext } from "../components/MatrixContextProvider";
 
@@ -25,7 +25,7 @@ export function useSpace(
   const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
     useContext<ZionContext>(MatrixContext);
   const { spaceHierarchies, spacesUpdateRecievedAt } = useMatrixStore();
-  const { clientRunning, syncSpace } = useMatrixClient();
+  const { clientRunning, syncSpace } = useZionClient();
   const spaceRoomId = toRoomIdentifier(slugOrId ?? defaultSpaceId);
   const spaceRoom = useRoom(spaceRoomId);
   const spaceHierarchy = useMemo(

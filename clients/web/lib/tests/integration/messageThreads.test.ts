@@ -21,16 +21,16 @@ describe("messageThreads", () => {
     expect(
       await bob.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
+          x
+            .getRoom(roomId)
             ?.timeline.find(
               (event: MatrixEvent) => event.event.content?.body === "hi Bob!",
             ) != undefined,
       ),
     ).toBe(true);
     // get the message id
-    const messageId = bob.client
-      .getRoom(roomId.matrixRoomId)!
+    const messageId = bob
+      .getRoom(roomId)!
       .timeline.find(
         (event: MatrixEvent) => event.event.content?.body === "hi Bob!",
       )!.event.event_id;
@@ -40,8 +40,8 @@ describe("messageThreads", () => {
     expect(
       await alice.eventually(
         (x) =>
-          x.client
-            .getRoom(roomId.matrixRoomId)
+          x
+            .getRoom(roomId)
             ?.timeline.find(
               (event: MatrixEvent) =>
                 event.event.content &&

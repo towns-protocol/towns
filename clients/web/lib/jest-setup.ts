@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import "@testing-library/jest-dom/extend-expect";
 import { request as matrixRequest } from "matrix-js-sdk";
-import { MatrixTestClient } from "./tests/integration/helpers/MatrixTestClient";
+import { ZionTestClient } from "./tests/integration/helpers/ZionTestClient";
 import { webcrypto } from "node:crypto";
 import * as Olm from "olm";
 import * as request from "request";
@@ -37,5 +37,5 @@ beforeAll(async () => {
 
 afterEach(() => {
   // stop all test clients
-  return MatrixTestClient.cleanup();
+  return ZionTestClient.cleanup();
 }, 5000);
