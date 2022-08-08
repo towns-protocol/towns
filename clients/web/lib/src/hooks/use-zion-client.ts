@@ -56,6 +56,7 @@ export function useZionClient(): ZionClientImpl {
     useMatrixWalletSignIn();
   const { client } = useContext<ZionContext>(MatrixContext);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const withCatch = <T extends Array<any>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
   ) => {
@@ -63,6 +64,7 @@ export function useZionClient(): ZionClientImpl {
       if (client && fn) {
         try {
           return fn.apply(client, args);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (ex: any) {
           console.error("Error", ex.stack, ex);
           return Promise.resolve(undefined);
