@@ -54,11 +54,7 @@ export function useMatrixWalletSignIn() {
   const { homeServer } = useContext<ZionContext>(MatrixContext);
   const { setAccessToken } = useCredentialStore();
   const { accounts, sign } = useWeb3Context();
-  let { chainId } = useWeb3Context();
-  // ChainId can be a hex number in str, unhex it here.
-  if (chainId && chainId.startsWith("0x")) {
-    chainId = "" + +chainId;
-  }
+  const { chainId } = useWeb3Context();
 
   const chainIdEip155 = useMemo(
     function () {

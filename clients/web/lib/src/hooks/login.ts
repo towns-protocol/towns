@@ -104,38 +104,45 @@ export function getParamsPublicKeyEthereum(
 }
 
 export function getChainIdEip155(chainId: string): number {
-  // ChainId should not have 0x prefix.
-  // https://eips.ethereum.org/EIPS/eip-155
-  const cid = chainId.replace(/0x/g, "");
-  return cid ? parseInt(cid) : -1;
+  if (chainId.startsWith("0x")) {
+    return parseInt(chainId, 16);
+  } else {
+    return parseInt(chainId);
+  }
+}
+
+export function getChainHexString(chainId: number): string {
+  return chainId.toString(16);
 }
 
 // https://chainlist.org/
 // https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
 export function getChainName(chainId: number): string {
   switch (chainId) {
-    case 1 || "0x1":
+    case 1:
       return "Ethereum Mainnet";
-    case 2 || "0x2":
+    case 2:
       return "Expanse Mainnet";
-    case 3 || "0x3":
+    case 3:
       return "Ropsten Test Network";
-    case 4 || "0x4":
+    case 4:
       return "Rinkeby Test Network";
-    case 5 || "0x5":
+    case 5:
       return "Goerli Test Network";
-    case 42 || "0x42":
+    case 42:
       return "Kovan Test Network";
-    case 56 || "0x56":
+    case 56:
       return "Binance Smart Chain Mainnet";
-    case 137 || "0x137":
+    case 137:
       return "Polygon Mainnet";
-    case 42161 || "0x42161":
+    case 42161:
       return "Arbitrum One";
-    case 10 || "0x10":
+    case 10:
       return "Optimism";
-    case 100 || "0x100":
+    case 100:
       return "Gnosis Chain";
+    case 1337:
+      return "Geth private chains";
     default:
       return chainId.toString();
   }
