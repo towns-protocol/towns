@@ -21,19 +21,18 @@ import {
 } from "../types/user-identifier";
 import { useCallback, useContext, useMemo } from "react";
 
+import { MatrixContext } from "../components/MatrixContextProvider";
 import { SiweMessage } from "siwe";
 import { StatusCodes } from "http-status-codes";
+import { ZionContext } from "../types/matrix-types";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useWeb3Context } from "./use-web3";
-import { ZionContext } from "../types/matrix-types";
-import { MatrixContext } from "../components/MatrixContextProvider";
 
 export interface NewSession {
   sessionId: string;
   version: number;
   chainIds: number[];
-  nonce: string;
   error?: string;
 }
 
@@ -114,10 +113,9 @@ export function useMatrixWalletSignIn() {
   );
 
   const signMessage = useCallback(
-    async function (args: {
-      statement: string;
-      nonce: string;
-    }): Promise<SignedAuthenticationData | undefined> {
+    async function (
+      statement: string,
+    ): Promise<SignedAuthenticationData | undefined> {
       console.log(`[signMessage] start`);
       if (!userIdentifier) {
         console.log(`[signMessage] no userIdentifier`);
@@ -132,8 +130,7 @@ export function useMatrixWalletSignIn() {
         chainId: userIdentifier.chainId,
         homeServer,
         origin,
-        nonce: args.nonce,
-        statement: args.statement,
+        statement,
       });
 
       // Prompt the user to sign the message.
@@ -189,7 +186,6 @@ export function useMatrixWalletSignIn() {
   const createAndSignAuthData = useCallback(
     async function (args: {
       sessionId: string;
-      nonce: string;
       statement: string;
     }): Promise<AuthenticationData | undefined> {
       try {
@@ -197,10 +193,7 @@ export function useMatrixWalletSignIn() {
           console.log(`[createAndSignAuthData] no userIdentifier`);
           return undefined;
         }
-        const signedAuthenticationData = await signMessage({
-          nonce: args.nonce,
-          statement: args.statement,
-        });
+        const signedAuthenticationData = await signMessage(args.statement);
         if (!signedAuthenticationData) {
           console.log(
             `[createAndSignAuthData] undefined signedAuthenticationData`,
@@ -239,11 +232,10 @@ export function useMatrixWalletSignIn() {
 
           const matrixClient = createClient(homeServer);
           try {
-            const { sessionId, chainIds, nonce, error } =
-              await newRegisterSession(
-                matrixClient,
-                userIdentifier.matrixUserIdLocalpart,
-              );
+            const { sessionId, chainIds, error } = await newRegisterSession(
+              matrixClient,
+              userIdentifier.matrixUserIdLocalpart,
+            );
             if (
               !error &&
               sessionId &&
@@ -254,7 +246,6 @@ export function useMatrixWalletSignIn() {
                 await createAndSignAuthData({
                   sessionId,
                   statement,
-                  nonce,
                 });
 
               const auth: RegistrationAuthentication | undefined = authData
@@ -371,8 +362,9 @@ export function useMatrixWalletSignIn() {
             const isPublicKeySignInSupported =
               await getPublicKeySignInSupported(matrixClient);
             if (isPublicKeySignInSupported) {
-              const { sessionId, chainIds, nonce, error } =
-                await newLoginSession(matrixClient);
+              const { sessionId, chainIds, error } = await newLoginSession(
+                matrixClient,
+              );
 
               if (
                 !error &&
@@ -383,7 +375,6 @@ export function useMatrixWalletSignIn() {
                 const auth = await createAndSignAuthData({
                   sessionId,
                   statement,
-                  nonce,
                 });
 
                 if (auth) {
@@ -506,7 +497,6 @@ export function createMessageToSign(args: {
   chainId: number;
   homeServer: string;
   origin: string;
-  nonce: string;
   statement: string;
 }): string {
   // Create the auth metadata for signing.
@@ -515,7 +505,6 @@ export function createMessageToSign(args: {
     address: args.walletAddress,
     version: "1",
     chainId: args.chainId,
-    nonce: args.nonce,
     statement: args.statement,
   };
   const siweMessage = new SiweMessage({
@@ -525,7 +514,7 @@ export function createMessageToSign(args: {
     uri: args.origin,
     version: "1",
     chainId: eip4361.chainId,
-    nonce: eip4361.nonce,
+    nonce: "", // Auto-generate.
   });
 
   console.log(`[createMessageToSign][SiweMessage]`, siweMessage);
@@ -633,14 +622,12 @@ function newSessionSuccess(
     sessionId,
     chainIds: params.chain_ids,
     version: params.version,
-    nonce: params.nonce,
   };
 }
 
 function newSessionError(error: string): NewSession {
   return {
     sessionId: "",
-    nonce: "",
     chainIds: [],
     version: 0,
     error,
