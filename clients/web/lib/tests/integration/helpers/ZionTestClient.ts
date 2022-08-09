@@ -79,7 +79,7 @@ export class ZionTestClient extends ZionClient {
 
     // create a registration request, this reaches out to our server and sets up a session
     // and passes back info on about the server
-    const { sessionId, chainIds, nonce, error } = await this.preRegister(
+    const { sessionId, chainIds, error } = await this.preRegister(
       this.wallet.address,
     );
 
@@ -98,7 +98,6 @@ export class ZionTestClient extends ZionClient {
       chainId: this.userIdentifier.chainId,
       homeServer: this.opts.homeServerUrl,
       origin,
-      nonce: nonce,
       statement: "this is a test registration",
     });
 
