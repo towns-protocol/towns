@@ -8,7 +8,7 @@ import * as request from "request";
 import { Config, configure } from "@testing-library/dom";
 
 process.env.HOMESERVER = "http://localhost:8008"; //"https://node1.hntlabs.com";
-process.env.CHAIN_ID = "0x4"; // rinkby
+process.env.CHAIN_ID = "0x539"; // localhost, "0x4"; // rinkby
 process.env.DISABLE_ENCRYPTION = "false";
 
 // This is here to extend the globalThis interface for loading Olm, should be in global.d.ts but

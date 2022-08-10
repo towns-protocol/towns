@@ -13,6 +13,7 @@ yarn build
 ## Tests
 
 We've implemented integration tests that run against a live server. See [Build and run Dendrite](../../../servers/README.md) to run a dendrite server locally
+And run against a local blockchain, See [Zion-Governance](https://github.com:HereNotThere/zion-governance)
 
 ```bash
 yarn test
