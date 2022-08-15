@@ -30,3 +30,6 @@ export interface StartClientOpts {
     oldMembership: string | null,
   ) => void;
 }
+export enum ZionClientEvent {
+  NewSpace = "ZionClient.NewSpace",
+}

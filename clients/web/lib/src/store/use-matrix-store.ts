@@ -16,6 +16,7 @@ import createStore, { SetState } from "zustand";
 
 import { Room as MatrixRoom } from "matrix-js-sdk";
 import { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
+import { ZionClientEvent } from "client/ZionClientTypes";
 
 export type MatrixStoreStates = {
   createRoom: (roomId: RoomIdentifier, isSpace: boolean) => void;
@@ -65,6 +66,8 @@ export type MatrixStoreStates = {
     membership: Membership,
     isMyRoomMembership: boolean,
   ) => void;
+  zionClientEvents: { [event in ZionClientEvent]?: number };
+  triggerZionClientEvent: (event: ZionClientEvent) => void;
 };
 
 export const useMatrixStore = createStore<MatrixStoreStates>(
@@ -169,6 +172,9 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) =>
         updateMembership(state, roomId, userId, membership, isMyRoomMembership),
       ),
+    zionClientEvents: {},
+    triggerZionClientEvent: (event: ZionClientEvent) =>
+      set((state: MatrixStoreStates) => triggerZionClientEvent(state, event)),
   }),
 );
 
@@ -237,6 +243,15 @@ function setSpaceUpdateRecievedAt(
   const changed = { ...state.spacesUpdateRecievedAt };
   changed[spaceId.slug] = Date.now();
   return { spacesUpdateRecievedAt: changed };
+}
+
+function triggerZionClientEvent(
+  state: MatrixStoreStates,
+  event: ZionClientEvent,
+) {
+  const changed = { ...state.zionClientEvents };
+  changed[event] = Date.now();
+  return { zionClientEvents: changed };
 }
 
 function setSpace(

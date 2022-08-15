@@ -15,6 +15,8 @@ import { useLogout } from "./MatrixClient/useLogout";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
+import { ZionClientEvent } from "../client/ZionClientTypes";
+import { useMatrixStore } from "../store/use-matrix-store";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -54,16 +56,23 @@ interface ZionClientImpl {
 export function useZionClient(): ZionClientImpl {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
+  const { triggerZionClientEvent } = useMatrixStore();
   const { client } = useContext<ZionContext>(MatrixContext);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const withCatch = <T extends Array<any>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
+    event: ZionClientEvent | undefined = undefined,
   ) => {
     return (...args: T): Promise<U | undefined> => {
       if (client && fn) {
         try {
-          return fn.apply(client, args);
+          return fn.apply(client, args).then((value: U | undefined) => {
+            if (event) {
+              triggerZionClientEvent(event);
+            }
+            return value;
+          });
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (ex: any) {
           console.error("Error", ex.stack, ex);
