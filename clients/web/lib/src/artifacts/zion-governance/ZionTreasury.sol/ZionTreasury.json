@@ -1,0 +1,19 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "linkReferences": {}
+  },
+  "ast": {
+    "absolutePath": "contracts/governance/ZionTreasury.sol",
+    "id": 818,
+    "exportedSymbols": {},
+    "nodeType": "SourceUnit",
+    "src": "0:0:6"
+  },
+  "id": 6
+}

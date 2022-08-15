@@ -1,0 +1,284 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "spaceId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "roomId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "enum SpaceStructs.EntitlementType",
+          "name": "entitlementType",
+          "type": "uint8"
+        }
+      ],
+      "name": "isEntitled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "isEntitled(uint256,uint256,address,uint8)": "6f09c765"
+  },
+  "ast": {
+    "absolutePath": "contracts/spaces/entitlement_modules/ISpaceEntitlementModule.sol",
+    "id": 1828,
+    "exportedSymbols": {
+      "ISpaceEntitlementModule": [
+        1827
+      ],
+      "SpaceStructs": [
+        1199
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "37:971:12",
+    "nodes": [
+      {
+        "id": 1811,
+        "nodeType": "PragmaDirective",
+        "src": "37:23:12",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ]
+      },
+      {
+        "id": 1812,
+        "nodeType": "ImportDirective",
+        "src": "62:29:12",
+        "absolutePath": "contracts/spaces/SpaceStructs.sol",
+        "file": "../SpaceStructs.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 1828,
+        "sourceUnit": 1200,
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "id": 1827,
+        "nodeType": "ContractDefinition",
+        "src": "93:914:12",
+        "nodes": [
+          {
+            "id": 1826,
+            "nodeType": "FunctionDefinition",
+            "src": "233:187:12",
+            "functionSelector": "6f09c765",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isEntitled",
+            "nameLocation": "242:10:12",
+            "parameters": {
+              "id": 1822,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1814,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "270:7:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1826,
+                  "src": "262:15:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1813,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "262:7:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1816,
+                  "mutability": "mutable",
+                  "name": "roomId",
+                  "nameLocation": "295:6:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1826,
+                  "src": "287:14:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1815,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "287:7:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1818,
+                  "mutability": "mutable",
+                  "name": "userAddress",
+                  "nameLocation": "319:11:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1826,
+                  "src": "311:19:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1817,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "311:7:12",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1821,
+                  "mutability": "mutable",
+                  "name": "entitlementType",
+                  "nameLocation": "369:15:12",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1826,
+                  "src": "340:44:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_EntitlementType_$1190",
+                    "typeString": "enum SpaceStructs.EntitlementType"
+                  },
+                  "typeName": {
+                    "id": 1820,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 1819,
+                      "name": "SpaceStructs.EntitlementType",
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 1190,
+                      "src": "340:28:12"
+                    },
+                    "referencedDeclaration": 1190,
+                    "src": "340:28:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_EntitlementType_$1190",
+                      "typeString": "enum SpaceStructs.EntitlementType"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "252:138:12"
+            },
+            "returnParameters": {
+              "id": 1825,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1824,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1826,
+                  "src": "414:4:12",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 1823,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "414:4:12",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "413:6:12"
+            },
+            "scope": 1827,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "ISpaceEntitlementModule",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          1827
+        ],
+        "name": "ISpaceEntitlementModule",
+        "nameLocation": "103:23:12",
+        "scope": 1828,
+        "usedErrors": []
+      }
+    ],
+    "license": "Unlicense"
+  },
+  "id": 12
+}
