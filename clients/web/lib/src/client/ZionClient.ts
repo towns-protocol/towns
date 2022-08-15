@@ -53,9 +53,6 @@ export class ZionClient {
   public get auth(): ZionAuth | undefined {
     return this._auth;
   }
-  public get clientRunning(): boolean {
-    return this.client.clientRunning;
-  }
   private _auth?: ZionAuth;
   private client: MatrixClient;
 
@@ -120,7 +117,7 @@ export class ZionClient {
     if (this.auth) {
       throw new Error("already authenticated");
     }
-    if (this.clientRunning) {
+    if (this.client.clientRunning) {
       throw new Error("client already running");
     }
     // stop everything

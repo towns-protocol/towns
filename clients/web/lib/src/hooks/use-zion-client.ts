@@ -85,10 +85,7 @@ export function useZionClient(): ZionClientImpl {
     };
   };
 
-  const clientRunning = useMemo(
-    () => client?.clientRunning == true,
-    [client?.clientRunning],
-  );
+  const clientRunning = useMemo(() => client !== undefined, [client]);
   const joinRoom = useJoinRoom();
   const loginWithPassword = useLoginWithPassword();
   const logout = useLogout();
