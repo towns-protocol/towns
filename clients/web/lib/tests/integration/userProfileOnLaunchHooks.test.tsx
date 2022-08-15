@@ -3,9 +3,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { generateTestingUtils } from "eth-testing";
 import { render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { registerAndStartClients } from "./helpers/TestUtils";
@@ -15,26 +13,11 @@ import { LoginWithWallet } from "./helpers/TestComponents";
 
 describe("userProfileOnLaunchHooks", () => {
   jest.setTimeout(10000);
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("user sees own info on next app launch", async () => {
     // create clients
     const { alice } = await registerAndStartClients(["alice"]);
-    // save off the wallet
-    const aliceWallet = alice.wallet;
+    // save off the provider
+    const aliceProvider = alice.provider;
     // set display name and avatar
     await alice.setDisplayName("Alice's your aunt");
     await alice.setAvatarUrl("alice.png");
@@ -57,7 +40,7 @@ describe("userProfileOnLaunchHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={aliceWallet}>
+      <ZionTestApp provider={aliceProvider}>
         <TestUserProfileOnLaunch />
       </ZionTestApp>,
     );

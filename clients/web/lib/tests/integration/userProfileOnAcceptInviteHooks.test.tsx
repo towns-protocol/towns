@@ -3,9 +3,7 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { generateTestingUtils } from "eth-testing";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { registerAndStartClients } from "./helpers/TestUtils";
@@ -19,28 +17,13 @@ import { useInvites, useSpaces } from "../../src/hooks/use-space";
 
 describe("userProfileOnAcceptInviteHooks", () => {
   jest.setTimeout(10000);
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   /// when we accept an invite, matrix is sending us our own membership info without
   /// saturating it with the proper display name (avatar info seems correct).
   test("user sees own info after accepting an invite", async () => {
     // create clients
     const { alice, bob } = await registerAndStartClients(["alice", "bob"]);
     // save off the wallet
-    const aliceWallet = alice.wallet;
+    const aliceProvider = alice.provider;
     // set display name and avatar
     await alice.setDisplayName("Alice's your aunt");
     await alice.setAvatarUrl("alice.png");
@@ -71,7 +54,7 @@ describe("userProfileOnAcceptInviteHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={aliceWallet}>
+      <ZionTestApp provider={aliceProvider}>
         <TestUserProfileOnAcceptInvite />
       </ZionTestApp>,
     );

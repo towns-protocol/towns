@@ -3,44 +3,27 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from "react";
-import { generateTestingUtils } from "eth-testing";
-import { ethers } from "ethers";
 import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useSpace } from "../../src/hooks/use-space";
 import { useRoom } from "../../src/hooks/use-room";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
+import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("defaultSpaceIdHooks", () => {
   jest.setTimeout(60000);
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("new user sees default space information", async () => {
     // create clients
     const { jane } = await registerAndStartClients(["jane"]);
     // create a wallet for bob
-    const bobWallet = ethers.Wallet.createRandom();
+    const bobProvider = new ZionTestWeb3Provider();
     // create a space
     const defaultSpaceId = await jane.createSpace({
       name: "janes space",
@@ -98,8 +81,7 @@ describe("defaultSpaceIdHooks", () => {
     // render it
     render(
       <ZionTestApp
-        testingUtils={testingUtils}
-        wallet={bobWallet}
+        provider={bobProvider}
         defaultSpaceId={defaultSpaceId.matrixRoomId}
         defaultSpaceName="janes space (fake default)"
       >

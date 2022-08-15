@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { Wallet } from "ethers";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { MatrixContextProvider } from "../../../src/components/MatrixContextProvider";
+import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 
 interface Props {
-  testingUtils: TestingUtils;
-  wallet: Wallet;
+  provider: ZionTestWeb3Provider;
   defaultSpaceId?: string;
   defaultSpaceName?: string;
   defaultSpaceAvatarSrc?: string;
@@ -16,8 +14,7 @@ interface Props {
 
 export const ZionTestApp = (props: Props) => {
   const {
-    testingUtils,
-    wallet,
+    provider,
     defaultSpaceId,
     defaultSpaceName,
     defaultSpaceAvatarSrc,
@@ -25,20 +22,19 @@ export const ZionTestApp = (props: Props) => {
     children,
   } = props;
   // pull environment variables from the process
-  const chainId = process.env.CHAIN_ID!;
   const homeServerUrl = process.env.HOMESERVER!;
   const disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
-  // mock up the wallet
-  testingUtils.mockChainId(chainId);
-  testingUtils.mockRequestAccounts([wallet.address], { chainId: chainId });
-  testingUtils.mockConnectedWallet([wallet.address], { chainId: chainId });
-  testingUtils.lowLevel.mockRequest("personal_sign", async (params: any) => {
-    return wallet.signMessage((params as string[])[0]);
+
+  Object.defineProperty(window, "ethereum", {
+    value: provider,
+    writable: true,
   });
+
   return (
     <MatrixContextProvider
       homeServerUrl={homeServerUrl}
       disableEncryption={disableEncryption}
+      getSignerFn={provider ? () => provider.wallet : undefined}
       defaultSpaceId={defaultSpaceId}
       defaultSpaceName={defaultSpaceName}
       defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}

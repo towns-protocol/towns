@@ -3,37 +3,20 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { generateTestingUtils } from "eth-testing";
-import { ethers } from "ethers";
 import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
+import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("walletStatusHooks", () => {
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("new user registers a new wallet and is logged in", async () => {
-    // create a wallet for bob
-    const bobWallet = ethers.Wallet.createRandom();
+    // create a provider for bob
+    const bobProvider = new ZionTestWeb3Provider();
     // create a veiw for the wallet
     const TestWalletStatus = () => {
       const { walletStatus, chainId } = useWeb3Context();
@@ -53,7 +36,7 @@ describe("walletStatusHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp provider={bobProvider}>
         <TestWalletStatus />
       </ZionTestApp>,
     );

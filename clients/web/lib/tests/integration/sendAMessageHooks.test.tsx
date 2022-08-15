@@ -3,42 +3,25 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from "react";
-import { generateTestingUtils } from "eth-testing";
-import { ethers } from "ethers";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMessages } from "../../src/hooks/use-messages";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { MatrixEvent } from "matrix-js-sdk";
 import { RegisterAndJoinSpace } from "./helpers/TestComponents";
+import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("sendAMessageHooks", () => {
   jest.setTimeout(60000);
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("user can join a room, see messages, and send messages", async () => {
     // create clients
     const { jane } = await registerAndStartClients(["jane"]);
     // create a wallet for bob
-    const bobWallet = ethers.Wallet.createRandom();
+    const bobProvider = new ZionTestWeb3Provider();
     // create a space
     const janesSpaceId = await jane.createSpace({
       name: "janes space",
@@ -75,7 +58,7 @@ describe("sendAMessageHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp provider={bobProvider}>
         <TestRoomMessages />
       </ZionTestApp>,
     );

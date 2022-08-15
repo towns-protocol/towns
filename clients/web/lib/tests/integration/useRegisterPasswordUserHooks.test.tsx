@@ -3,36 +3,19 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { generateTestingUtils } from "eth-testing";
-import { ethers } from "ethers";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
+import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("useRegisterPasswordUserHooks", () => {
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("username / password registration", async () => {
-    const bobWallet = ethers.Wallet.createRandom();
-    const bobId = bobWallet.address;
+    const bobProvider = new ZionTestWeb3Provider();
+    const bobId = bobProvider.wallet.address;
     // create a veiw for the wallet
     const RegisterUsernamePasswordComponent = () => {
       const { loginStatus, loginError } = useMatrixStore();
@@ -49,7 +32,7 @@ describe("useRegisterPasswordUserHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp provider={bobProvider}>
         <RegisterUsernamePasswordComponent />
       </ZionTestApp>,
     );

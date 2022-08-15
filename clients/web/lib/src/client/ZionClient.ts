@@ -183,6 +183,7 @@ export class ZionClient {
   public stopClient() {
     this.client.stopClient();
     this.client.removeAllListeners();
+    this.log("stopped client");
   }
 
   /************************************************

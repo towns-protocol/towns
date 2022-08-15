@@ -46,6 +46,10 @@ function useWeb3() {
     }
   });
 
+  const getProvider = useCallback(() => {
+    return ethereum ? new ethers.providers.Web3Provider(ethereum) : undefined;
+  }, [ethereum]);
+
   const getAccounts = useCallback(async () => {
     const accounts: string[] = await ethereum.request({
       jsonrpc: "2.0",
@@ -249,6 +253,7 @@ function useWeb3() {
   );
 
   return {
+    getProvider,
     providerInstalled,
     requestAccounts,
     sign,

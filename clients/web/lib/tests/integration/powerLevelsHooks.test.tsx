@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { generateTestingUtils } from "eth-testing";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useZionClient } from "../../src/hooks/use-zion-client";
@@ -16,21 +15,6 @@ import { sleep } from "../../src/utils/zion-utils";
 
 describe("powerLevelsHooks", () => {
   jest.setTimeout(20000);
-  const testingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("create a space with two users, reduce the level required to create a space child", async () => {
     // create clients
     const { alice, bob } = await registerAndStartClients(["alice", "bob"]);
@@ -79,7 +63,7 @@ describe("powerLevelsHooks", () => {
     };
 
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={bob.wallet}>
+      <ZionTestApp provider={bob.provider}>
         <PowerLevelContent roomId={roomId} />
       </ZionTestApp>,
     );

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Wallet } from "ethers";
 import { ZionClient } from "../../../src/client/ZionClient";
 import {
   getChainIdEip155,
@@ -14,6 +13,7 @@ import {
 } from "../../../src/types/user-identifier";
 import { RoomIdentifier } from "../../../src/types/matrix-types";
 import { sleepUntil } from "../../../src/utils/zion-utils";
+import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 
 export class ZionTestClient extends ZionClient {
   static allClients: ZionTestClient[] = [];
@@ -24,8 +24,7 @@ export class ZionTestClient extends ZionClient {
     console.log("========= ZionTestClient: cleanup done =========");
   }
 
-  public wallet: Wallet;
-  public chainId: string;
+  public provider: ZionTestWeb3Provider;
   public userIdentifier: UserIdentifier;
   public get matrixUserId(): string | undefined {
     return this.auth?.userId;
@@ -38,28 +37,37 @@ export class ZionTestClient extends ZionClient {
         homeServerUrl: process.env.HOMESERVER!,
         initialSyncLimit: 20,
         disableEncryption: process.env.DISABLE_ENCRYPTION === "true",
+        getSigner: () => this.provider.wallet,
+        getProvider: () => {
+          return this.provider;
+        },
       },
       name,
     );
-    // init state
-    this.chainId = process.env.CHAIN_ID!;
-    // create a random wallet, we're web3!
-    this.wallet = Wallet.createRandom();
+    // initialize our provider that wraps our wallet and chain communication
+    this.provider = new ZionTestWeb3Provider();
     // construct a user identifier for later
     this.userIdentifier = createUserIdFromEthereumAddress(
-      this.wallet.address,
-      getChainIdEip155(this.chainId),
+      this.provider.wallet.address,
+      getChainIdEip155(this.provider.chainId),
     );
+    // add ourselves to the list of all clients
     ZionTestClient.allClients.push(this);
   }
 
   /// log a message to the console with the user's name and part of the wallet address
   protected log(message: string, ...optionalParams: unknown[]) {
-    console.log(
-      `${this.name}(${this.userIdentifier.accountAddress.substring(0, 5)}...)`,
-      message,
-      ...optionalParams,
+    console.log(`${this.getUniqueName()}`, message, ...optionalParams);
+  }
+
+  public getUniqueName(): string {
+    const dx = 6;
+    const addressLength = this.userIdentifier.accountAddress.length;
+    const pre = this.userIdentifier.accountAddress.substring(0, dx);
+    const post = this.userIdentifier.accountAddress.substring(
+      addressLength - dx,
     );
+    return `${this.name}${pre}_${post}`;
   }
 
   // check if something eventually becomes true
@@ -71,6 +79,13 @@ export class ZionTestClient extends ZionClient {
     return sleepUntil(this, condition, timeout, checkEvery);
   }
 
+  /// add some funds to this wallet
+  public async fundWallet(amount = 0.1) {
+    const result = await this.provider.fundWallet(amount);
+    this.log("funded wallet: ", result.hash);
+    return result;
+  }
+
   /// register this users wallet with the matrix server
   /// a.ellis, would be nice if this used the same code as the web client
   public async registerWallet() {
@@ -80,7 +95,7 @@ export class ZionTestClient extends ZionClient {
     // create a registration request, this reaches out to our server and sets up a session
     // and passes back info on about the server
     const { sessionId, chainIds, error } = await this.preRegister(
-      this.wallet.address,
+      this.provider.wallet.address,
     );
 
     // hopefully we didn't get an error
@@ -89,8 +104,8 @@ export class ZionTestClient extends ZionClient {
     }
 
     // make sure the server supports our chainId
-    if (!chainIds.find((x) => x == getChainIdEip155(this.chainId))) {
-      throw new Error(`ChainId ${this.chainId} not found`);
+    if (!chainIds.find((x) => x == getChainIdEip155(this.provider.chainId))) {
+      throw new Error(`ChainId ${this.provider.chainId} not found`);
     }
 
     const messageToSign = createMessageToSign({
@@ -101,7 +116,7 @@ export class ZionTestClient extends ZionClient {
       statement: "this is a test registration",
     });
 
-    const signature = await this.wallet.signMessage(messageToSign);
+    const signature = await this.provider.wallet.signMessage(messageToSign);
 
     const request: RegisterRequest = {
       auth: {

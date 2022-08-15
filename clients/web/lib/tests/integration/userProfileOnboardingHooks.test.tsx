@@ -3,38 +3,21 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { generateTestingUtils } from "eth-testing";
 import { render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
 import { RegisterWallet } from "./helpers/TestComponents";
-import { ethers } from "ethers";
 import { LoginStatus } from "../../src/hooks/login";
+import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("userProfileOnboardingHooks", () => {
   jest.setTimeout(10000);
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   /// make sure that we load a user profile on launch
   test("user sees own non-null profile on first launch", async () => {
-    // create wallet
-    const aliceWallet = ethers.Wallet.createRandom();
+    // create provider
+    const aliceProvider = new ZionTestWeb3Provider();
     // create a veiw for alice
     const TestUserProfileOnLaunch = () => {
       const myProfile = useMyProfile();
@@ -49,7 +32,7 @@ describe("userProfileOnboardingHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={aliceWallet}>
+      <ZionTestApp provider={aliceProvider}>
         <TestUserProfileOnLaunch />
       </ZionTestApp>,
     );
@@ -65,7 +48,7 @@ describe("userProfileOnboardingHooks", () => {
         `eip155=3a${parseInt(
           process.env.CHAIN_ID!,
           16,
-        )}=3a${aliceWallet.address.toLowerCase()}`,
+        )}=3a${aliceProvider.wallet.address.toLowerCase()}`,
       ),
     );
   }); // end test

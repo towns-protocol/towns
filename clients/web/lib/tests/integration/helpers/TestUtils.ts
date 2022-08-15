@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { ZionTestClient } from "./ZionTestClient";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,4 +25,29 @@ export async function registerAndStartClients(
     },
     {},
   );
+}
+
+let makeUniqueNameCount = 0;
+export function makeUniqueName(prefix: string): string {
+  return `${prefix}_${Date.now()}_${makeUniqueNameCount++}`;
+}
+
+export async function fundWallet(
+  walletToFund: ethers.Wallet,
+  provider: ethers.providers.Provider,
+  amount = 0.1,
+) {
+  const fundedWallet = new ethers.Wallet(
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    process.env.FUNDED_WALLET_PRIVATE_KEY!,
+    provider,
+  );
+  const tx = {
+    from: fundedWallet.address,
+    to: walletToFund.address,
+    value: ethers.utils.parseEther(amount.toString()),
+    gasLimit: 1000000,
+  };
+  const result = await fundedWallet.sendTransaction(tx);
+  return result;
 }

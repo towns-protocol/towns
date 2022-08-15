@@ -3,11 +3,8 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from "react";
-import { generateTestingUtils } from "eth-testing";
-import { ethers } from "ethers";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TestingUtils } from "eth-testing/lib/testing-utils";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMember } from "../../src/hooks/use-member";
 import { useMyProfile } from "../../src/hooks/use-my-profile";
@@ -17,26 +14,12 @@ import { RoomMember } from "matrix-js-sdk";
 import { RegisterAndJoinSpace } from "./helpers/TestComponents";
 import { useMessages } from "../../src/hooks/use-messages";
 import { sleep } from "../../src/utils/zion-utils";
+import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("userProfileHooks", () => {
   jest.setTimeout(10000);
-  const testingUtils: TestingUtils = generateTestingUtils({
-    providerType: "MetaMask",
-    verbose: true,
-  });
-  beforeAll(() => {
-    // Manually inject the mocked provider in the window as MetaMask does
-    Object.defineProperty(window, "ethereum", {
-      value: testingUtils.getProvider(),
-      writable: true,
-    });
-  });
-  afterEach(() => {
-    // Clear all mocks between tests
-    testingUtils.clearAllMocks();
-  });
   test("user can join a room, see username and avatar info", async () => {
     // create clients
     const { alice } = await registerAndStartClients(["alice"]);
@@ -44,7 +27,7 @@ describe("userProfileHooks", () => {
     await alice.setDisplayName("Alice's your aunt");
     await alice.setAvatarUrl("alice.png");
     // create a wallet for bob
-    const bobWallet = ethers.Wallet.createRandom();
+    const bobProvider = new ZionTestWeb3Provider();
     // create a space
     const alicesSpaceId = await alice.createSpace({
       name: "alices space",
@@ -93,7 +76,7 @@ describe("userProfileHooks", () => {
     };
     // render it
     render(
-      <ZionTestApp testingUtils={testingUtils} wallet={bobWallet}>
+      <ZionTestApp provider={bobProvider}>
         <TestUserProfile />
       </ZionTestApp>,
     );

@@ -1,23 +1,42 @@
 import { ZionClient } from "../client/ZionClient";
-import { ZionOpts } from "../client/ZionClientTypes";
 import { useCallback, useEffect, useRef } from "react";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useRoomMembershipEventHandler } from "./MatrixClientListener/useRoomMembershipEventHandler";
 import { useRoomTimelineEventHandler } from "./MatrixClientListener/useRoomTimelineEventHandler";
 import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler";
+import { useWeb3Context } from "./use-web3";
+import { ethers } from "ethers";
 
-export const useZionClientListener = (opts: ZionOpts) => {
+export const useZionClientListener = (
+  homeServerUrl: string,
+  initialSyncLimit: number,
+  disableEncryption?: boolean,
+  getSignerFn?: () => ethers.Signer,
+) => {
+  const { getProvider } = useWeb3Context();
   const { deviceId, isAuthenticated, userId } = useMatrixStore();
   const { accessToken } = useCredentialStore();
 
   // for historical reasons we only return the client when it's authed and ready
   const clientRef = useRef<ZionClient>();
+  const getSigner = useCallback(() => {
+    if (getSignerFn) {
+      return getSignerFn();
+    }
+    return getProvider()?.getSigner();
+  }, [getProvider, getSignerFn]);
 
   // singleton client for the app
   const clientSingleton = useRef<ZionClient>();
   if (!clientSingleton.current) {
-    clientSingleton.current = new ZionClient(opts);
+    clientSingleton.current = new ZionClient({
+      homeServerUrl,
+      initialSyncLimit,
+      disableEncryption,
+      getProvider,
+      getSigner,
+    });
   }
 
   const handleRoomMembershipEvent = useRoomMembershipEventHandler(clientRef);
