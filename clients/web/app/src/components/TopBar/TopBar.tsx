@@ -20,13 +20,7 @@ export const TopBar = (props: {
   displayName?: string;
   avatarUrl?: string;
 }) => {
-  const {
-    authenticated: isAuthenticated,
-    username,
-    userId,
-    displayName,
-    avatarUrl,
-  } = props;
+  const { authenticated: isAuthenticated, username, userId } = props;
   return (
     <Stack
       borderBottom
@@ -50,12 +44,7 @@ export const TopBar = (props: {
       <Box />
       <Box justifyContent="center" alignItems="end" width="100">
         {isAuthenticated && userId && username ? (
-          <ProfileCardButton
-            username={username}
-            userId={userId}
-            displayName={displayName}
-            avatarUrl={avatarUrl}
-          />
+          <ProfileCardButton />
         ) : (
           <LoginComponent />
         )}

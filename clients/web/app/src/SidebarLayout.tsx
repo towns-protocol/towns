@@ -2,6 +2,7 @@ import { Allotment, AllotmentHandle } from "allotment";
 import React, { useEffect, useRef } from "react";
 import { Outlet, useMatch, useNavigate } from "react-router";
 import { useMatrixStore, useMyProfile, useSpace } from "use-zion-client";
+import useEvent from "react-use-event-hook";
 import {
   MainSideBar,
   MessagesSideBar,
@@ -20,7 +21,7 @@ export const SidebarLayout = () => {
   const myProfile = useMyProfile();
   const { userId } = useMatrixStore();
   const navigate = useNavigate();
-  const config = ["primary-menu", "secondary-menu", "content"];
+  const config = ["spaces", "primary-menu", "secondary-menu", "content"];
   const { onSizesChange, sizes } = usePersistPanes(config);
 
   const isSecondarySidebarActive = !!messageRoute;
@@ -44,34 +45,54 @@ export const SidebarLayout = () => {
     }
   }, [myProfile, navigate, userId]);
 
+  const isSpacesExpanded = sizes[0] > 65;
+
+  const onExpandSpaces = useEvent(() => {
+    const newSizes = [...sizes];
+
+    newSizes[0] = isSpacesExpanded ? 65 : 250;
+    onSizesChange(newSizes);
+    setTimeout(() => {
+      allotemntRef.current?.reset();
+    }, 0);
+  });
+
   return (
     <Stack horizontal grow position="relative">
       <Box absoluteFill>
         <Allotment
-          proportionalLayout
+          // proportionalLayout
           ref={allotemntRef}
           className={atoms({ minHeight: "100%" })}
           onChange={onSizesChange}
         >
           {/* left-side side-bar goes here */}
           <Allotment.Pane
-            minSize={190}
-            maxSize={320}
-            preferredSize={sizes[0] || 250}
+            minSize={65}
+            maxSize={250}
+            preferredSize={sizes[0] || 65}
           >
-            {space && !homeRoute ? (
-              <SpaceSideBar space={space} />
-            ) : (
-              <MainSideBar />
-            )}
+            <MainSideBar
+              expanded={isSpacesExpanded}
+              onExpandClick={onExpandSpaces}
+            />
+          </Allotment.Pane>
+
+          {/* left-side side-bar goes here */}
+          <Allotment.Pane
+            minSize={180}
+            maxSize={250}
+            preferredSize={sizes[1] || 250}
+          >
+            {space && !homeRoute ? <SpaceSideBar space={space} /> : <></>}
           </Allotment.Pane>
 
           {/* secondary side bar */}
           <Allotment.Pane
             minSize={180}
-            maxSize={320}
+            maxSize={250}
             visible={!!isSecondarySidebarActive}
-            preferredSize={sizes[1] || 250}
+            preferredSize={sizes[2] || 250}
           >
             <MessagesSideBar />
           </Allotment.Pane>

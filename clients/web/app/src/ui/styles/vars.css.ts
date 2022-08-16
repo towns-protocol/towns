@@ -169,10 +169,9 @@ const root = createGlobalTheme(":root", {
 
   borderRadius: {
     none: "0",
-    xxs: `${baseline * 0.5}px` as const,
-    xs: `${baseline * 0.75}px`,
+    xs: `${baseline * 0.5}px`,
     sm: `${baseline * 1}px`,
-    md: `${baseline * 1.5}px`,
+    md: `${baseline * 2}px`,
     lg: `${baseline * 4}px`,
     xl: `${baseline * 8}px`,
     full: "999999px",

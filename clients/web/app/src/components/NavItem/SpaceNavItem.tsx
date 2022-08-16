@@ -1,24 +1,18 @@
 import React, { useCallback } from "react";
 import { RoomIdentifier } from "use-zion-client";
 import { SpaceSettingsCard } from "@components/Cards/SpaceSettingsCard";
-import { SpaceSummary } from "@components/SpaceBanner/SpaceBanner";
-import {
-  Box,
-  ButtonText,
-  Heading,
-  Icon,
-  Stack,
-  Tooltip,
-  TooltipRenderer,
-} from "@ui";
+import { SpaceNavTooltip } from "@components/Tooltips/SpaceNavTooltip";
+import { Box, ButtonText, Icon, TooltipRenderer } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
+import { IconName } from "ui/components/Icon";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { NavItem } from "./_NavItem";
 
 type Props = {
   id: RoomIdentifier;
   name: string;
-  avatar: string;
+  avatar?: string;
+  icon?: IconName;
   active?: boolean;
   pinned?: boolean;
   settings?: boolean;
@@ -27,31 +21,13 @@ type Props = {
   isInvite?: boolean;
 };
 
-const SpaceTooltip = (props: { id: RoomIdentifier; name: string }) => {
-  const { id, name } = props;
-  return (
-    <Tooltip
-      horizontal
-      id={id.slug}
-      key={id.slug}
-      gap="md"
-      padding="md"
-      background="default"
-    >
-      <Stack grow justifyContent="center" gap="sm">
-        <Heading level={4}>{name}</Heading>
-        <SpaceSummary compact />
-      </Stack>
-    </Tooltip>
-  );
-};
-
 export const SpaceNavItem = (props: Props) => {
   const {
     id,
     active,
     avatar,
     exact,
+    icon,
     name,
     pinned,
     settings,
@@ -76,7 +52,9 @@ export const SpaceNavItem = (props: Props) => {
       layoutId="navitem"
       placement="horizontal"
       render={
-        (isSmall && <SpaceTooltip id={props.id} name={props.name} />) || <></>
+        (isSmall && (
+          <SpaceNavTooltip id={props.id.slug} name={props.name} />
+        )) || <></>
       }
     >
       {({ triggerProps }) => (
@@ -86,7 +64,19 @@ export const SpaceNavItem = (props: Props) => {
           exact={exact}
           {...triggerProps}
         >
-          <Avatar animate src={avatar} size="avatar_x4" type="space" />
+          {avatar && (
+            <Avatar animate src={avatar} size="avatar_x4" type="space" />
+          )}
+
+          {icon && (
+            <Icon
+              type={icon}
+              color="gray2"
+              background="level2"
+              size="square_lg"
+            />
+          )}
+
           <ButtonText
             grow
             truncate
@@ -95,9 +85,11 @@ export const SpaceNavItem = (props: Props) => {
           >
             {isInvite ? "(Invite) " + name : name}
           </ButtonText>
+
           <Box shrink display={isSmall ? "none" : undefined} color="gray2">
             {pinned && <Icon type="pin" size="square_sm" padding="xs" />}
           </Box>
+
           {settings && (
             <TooltipRenderer
               trigger="click"

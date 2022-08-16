@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoomIdentifier, useZionClient } from "use-zion-client";
 import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
+import { Icon, IconName } from "ui/components/Icon";
 
 type Props = { spaceId: RoomIdentifier };
 
@@ -52,9 +53,21 @@ export const SpaceSettingsCard = (props: Props) => {
   );
 };
 
-const MenuItem = ({ children, ...props }: BoxProps) => (
+export const MenuItem = ({
+  children,
+  ...props
+}: BoxProps & { icon?: IconName }) => (
   <Box grow paddingY="sm" background={{ hover: "level3" }} {...props}>
-    <Stack horizontal paddingX="md" cursor="pointer">
+    <Stack horizontal gap paddingX="md" cursor="pointer" alignItems="center">
+      {props.icon && (
+        <Icon
+          color={props.color}
+          type={props.icon}
+          background="level3"
+          size="square_lg"
+          padding="sm"
+        />
+      )}
       {children}
     </Stack>
   </Box>

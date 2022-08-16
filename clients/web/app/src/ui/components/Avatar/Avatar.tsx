@@ -44,7 +44,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
       shrink={false}
       className={clsx(
         avatarToggleClasses({ stacked, border, circle: type === "user" }),
-        type === "space" && squircleMask,
+        undefined,
         avatarAtoms({
           size: size ?? height,
         }),

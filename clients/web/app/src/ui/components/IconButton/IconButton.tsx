@@ -5,18 +5,31 @@ import { IconAtoms } from "ui/components/Icon/Icon.css";
 import * as styles from "./IconButton.css";
 
 type Props = {
+  opaque?: boolean;
   active?: boolean;
   icon: IconName;
   size?: IconAtoms["size"];
-} & BoxProps;
+} & Omit<BoxProps, "size">;
+
 export const IconButton = (props: Props) => {
-  const { size = "square_sm", icon, active, ...boxProps } = props;
+  const {
+    size = "square_sm",
+    icon,
+    active: isActive,
+    opaque: isOpaque,
+    ...boxProps
+  } = props;
   return (
     <Box
       className={styles.iconButton}
-      inset="xxs"
       {...boxProps}
-      color={active ? "default" : "gray2"}
+      background={{
+        default: !isOpaque ? undefined : isActive ? "level3" : "level2",
+        hover: "level3",
+      }}
+      padding="xs"
+      rounded="xs"
+      color={isActive ? "default" : "gray2"}
     >
       <Icon type={props.icon} size={size} />
     </Box>

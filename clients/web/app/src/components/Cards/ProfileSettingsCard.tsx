@@ -1,26 +1,27 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useZionClient } from "use-zion-client";
-import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
-import { useStore } from "store/store";
+import { Avatar, Box, Card, Divider, Paragraph, Stack } from "@ui";
+import { MenuItem } from "./SpaceSettingsCard";
 
 type Props = {
   userId: string | null;
   username: string | null;
   displayName?: string;
+  avatarUrl?: string;
 };
 
 export const ProfileSettingsCard = (props: Props) => {
-  const { userId = "", username = "", displayName } = props;
+  const { username = "", avatarUrl, displayName } = props;
 
-  const { setTheme, theme } = useStore((state) => ({
-    theme: state.theme,
-    setTheme: state.setTheme,
-  }));
+  // const { setTheme, theme } = useStore((state) => ({
+  //   theme: state.theme,
+  //   setTheme: state.setTheme,
+  // }));
 
-  const onThemeClick = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
+  // const onThemeClick = () => {
+  //   setTheme(theme === "light" ? "dark" : "light");
+  // };
 
   const navigate = useNavigate();
 
@@ -29,7 +30,7 @@ export const ProfileSettingsCard = (props: Props) => {
   }, [navigate]);
 
   const onSetupClick = useCallback(() => {
-    navigate("/onboarding");
+    navigate("/register");
   }, [navigate]);
 
   const { logout } = useZionClient();
@@ -39,39 +40,42 @@ export const ProfileSettingsCard = (props: Props) => {
   }, [logout]);
 
   return (
-    <Card paddingBottom="md" width="300" fontSize="md">
+    <Card border paddingBottom="sm" width="300" fontSize="md">
       <Stack horizontal padding gap="md" alignItems="center">
         <Box>
-          <Avatar size="avatar_md" />
+          <Avatar size="avatar_x4" src={avatarUrl} />
         </Box>
-        <Stack grow gap="sm" fontWeight="strong" color="gray2">
-          <Heading level={5}>{displayName && displayName}</Heading>
-          <Heading level={5}>
+        <Stack grow gap fontWeight="strong" color="default">
+          <Paragraph>{displayName && displayName}</Paragraph>
+          <Paragraph color="gray2">
             {username && shortenAddress(username, 6, 2)}
-          </Heading>
-          <Heading level={5}>{userId && shortenAddress(userId, 6, 16)}</Heading>
+          </Paragraph>
         </Stack>
       </Stack>
-      <Divider space="xs" />
-      <MenuItem onClick={onThemeClick}>
+      <Divider />
+      {/* <MenuItem icon="settings" onClick={onThemeClick}>
         Switch to {theme !== "light" ? "light" : "dark"} theme
+      </MenuItem> */}
+      <MenuItem icon="profile" onClick={onSettingsClick}>
+        Profile
       </MenuItem>
-      <MenuItem onClick={onSettingsClick}>Profile</MenuItem>
-      <MenuItem onClick={onSetupClick}>Setup</MenuItem>
-
-      <Divider space="xs" />
-      <MenuItem onClick={onLogoutClick}>Logout</MenuItem>
+      <MenuItem icon="settings" onClick={onSetupClick}>
+        Preferences
+      </MenuItem>
+      <MenuItem icon="logout" onClick={onLogoutClick}>
+        Logout
+      </MenuItem>
     </Card>
   );
 };
 
-const MenuItem = ({ children, ...props }: BoxProps) => (
-  <Box grow paddingY="sm" background={{ hover: "level3" }} {...props}>
-    <Stack horizontal paddingX="md" cursor="pointer">
-      {children}
-    </Stack>
-  </Box>
-);
+// const MenuItem = ({ children, ...props }: BoxProps) => (
+//   <Box grow paddingY="sm" background={{ hover: "level3" }} {...props}>
+//     <Stack horizontal paddingX="md" cursor="pointer">
+//       {children}
+//     </Stack>
+//   </Box>
+// );
 
 export const shortenAddress = (
   s: string,

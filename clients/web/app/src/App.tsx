@@ -76,17 +76,21 @@ const AllRoutes = () => {
         <Route path="/register" element={<Onboarding />} />
         <Route
           element={
-            <>
-              <TopBar
-                authenticated={isAuthenticated}
-                userId={userId}
-                username={username}
-                displayName={myProfile?.displayName}
-                avatarUrl={myProfile?.avatarUrl}
-                onToggleTheme={toggleTheme}
-              />
+            isAuthenticated ? (
               <Outlet />
-            </>
+            ) : (
+              <>
+                <TopBar
+                  authenticated={isAuthenticated}
+                  userId={userId}
+                  username={username}
+                  displayName={myProfile?.displayName}
+                  avatarUrl={myProfile?.avatarUrl}
+                  onToggleTheme={toggleTheme}
+                />
+                <Outlet />
+              </>
+            )
           }
         >
           <Route path="*" element={<SiteHome />} />

@@ -11,6 +11,7 @@ import { vars } from "ui/styles/vars.css";
 
 export const avatarBaseStyle = style({
   backgroundSize: "cover",
+  borderRadius: vars.borderRadius.xs,
 });
 
 export const squircleMask = style({
