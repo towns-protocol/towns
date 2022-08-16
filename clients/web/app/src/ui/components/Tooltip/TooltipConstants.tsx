@@ -1,1 +1,1 @@
-export type Placement = "horizontal" | "vertical";
+export type Placement = "horizontal" | "vertical" | "pointer";

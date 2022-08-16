@@ -7,13 +7,15 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import useEvent from "react-use-event-hook";
 import { RootLayerContext } from "./OverlayPortal";
 import { Placement } from "./TooltipConstants";
-import { OverlayOffset } from "./TooltipOffsetContainer";
+import { TooltipOffsetContainer } from "./TooltipOffsetContainer";
 
 const Trigger = {
   hover: "hover",
   click: "click",
+  contextmenu: "contextmenu",
 } as const;
 
 type Props = {
@@ -27,14 +29,18 @@ type Props = {
 type TriggerProps = {
   ref: (ref: HTMLElement | null) => void;
   onClick?: (e: React.MouseEvent) => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   tabIndex: 0;
   cursor: "pointer";
 };
 
+// keeping this for further refactoring
+const KEEP_OPEN_ON_CLICK_INSIDE = false;
+
 export const TooltipContext = createContext<{
-  placement: "horizontal" | "vertical";
+  placement: Placement;
 }>({ placement: "vertical" });
 
 export const TooltipRenderer = (props: Props) => {
@@ -48,30 +54,63 @@ export const TooltipRenderer = (props: Props) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [triggerRect, setTriggerRect] = useState<DOMRect>();
+  const [hitPosition, setHitPosition] = useState<[number, number]>();
   const [active, setActive] = useState(false);
   const [triggerRef, setTriggerRef] = useState<HTMLElement | null>(null);
 
-  const onMouseEnter = useCallback(() => {
+  const onMouseEnter = useEvent(() => {
     if (!triggerRef) return;
-
     const domRect = triggerRef.getBoundingClientRect();
     setTriggerRect(domRect);
     if (trigger === Trigger.hover) {
       setActive(true);
     }
-  }, [trigger, triggerRef]);
+  });
 
+  const updateCoordsFromEvent = useEvent((e: React.MouseEvent) => {
+    if (triggerRef) {
+      setHitPosition([e.clientX, +e.clientY]);
+      const domRect = triggerRef.getBoundingClientRect();
+      setTriggerRect(domRect);
+    }
+  });
+
+  const onContextMenu = useEvent((e: React.MouseEvent) => {
+    if (triggerRef && trigger === Trigger.contextmenu) {
+      e.preventDefault();
+      updateCoordsFromEvent(e);
+
+      setActive(true);
+    }
+  });
+
+  // handles cancelling of tooltip
   useEffect(() => {
     if (!active) return;
 
-    const onClick = (e: MouseEvent) => {
+    const onGlobalClick = (e: MouseEvent) => {
+      if (trigger === "contextmenu") {
+        // prevents system context to popup when cancelling
+        e.preventDefault();
+      }
+
       const overlayContainer = containerRef.current;
+
       const clickedNode = e.target as Node;
-      if (
+
+      const isClickOutside =
         overlayContainer &&
         clickedNode &&
-        !overlayContainer.contains(clickedNode)
-      ) {
+        !overlayContainer.contains(clickedNode);
+
+      if (KEEP_OPEN_ON_CLICK_INSIDE) {
+        // in some cases you might want to keep the popup open even when
+        // clicking inside - there's no such case at the moment but could
+        // become handy
+        if (isClickOutside) {
+          setActive(false);
+        }
+      } else {
         setActive(false);
       }
     };
@@ -79,13 +118,15 @@ export const TooltipRenderer = (props: Props) => {
     // if we add the handled to current callstack the listener gets called
     // immediately which is not the intention
     setTimeout(() => {
-      window.addEventListener("click", onClick);
+      window.addEventListener("click", onGlobalClick);
+      window.addEventListener("contextmenu", onGlobalClick);
     });
 
     return () => {
-      window.removeEventListener("click", onClick);
+      window.removeEventListener("click", onGlobalClick);
+      window.removeEventListener("contextmenu", onGlobalClick);
     };
-  }, [active]);
+  }, [active, trigger]);
 
   const onClick = useCallback(
     (e: React.MouseEvent) => {
@@ -109,12 +150,6 @@ export const TooltipRenderer = (props: Props) => {
     }
   }, [trigger]);
 
-  const onTooltipLeave = useCallback(() => {
-    if (trigger === Trigger.hover) {
-      setActive(false);
-    }
-  }, [trigger]);
-
   useEffect(() => {
     const onBlur = () => {
       // setActive(false);
@@ -129,6 +164,8 @@ export const TooltipRenderer = (props: Props) => {
 
   const root = useContext(RootLayerContext).rootLayerRef?.current;
 
+  const distance = placement === "pointer" ? "none" : undefined;
+
   return !children ? null : (
     <TooltipContext.Provider value={{ placement }}>
       {children({
@@ -138,6 +175,8 @@ export const TooltipRenderer = (props: Props) => {
           onMouseEnter,
           onClick: trigger === Trigger.click ? onClick : undefined,
           onMouseLeave,
+          onContextMenu:
+            trigger === Trigger.contextmenu ? onContextMenu : undefined,
           cursor: "pointer",
         },
       })}
@@ -147,13 +186,16 @@ export const TooltipRenderer = (props: Props) => {
         root &&
         render &&
         createPortal(
-          <OverlayOffset
+          <TooltipOffsetContainer
+            disableBackgroundInteraction={trigger !== "hover"}
+            distance={distance}
             layoutId={layoutId}
             containerRef={containerRef}
             render={render}
             triggerRect={triggerRect}
+            hitPosition={hitPosition}
             placement={placement}
-            onMouseLeave={onTooltipLeave}
+            onMouseLeave={onMouseLeave}
           />,
           root,
         )}

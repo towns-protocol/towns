@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import {
   Membership,
   RoomIdentifier,
@@ -7,6 +7,7 @@ import {
   useInvitesForSpace,
 } from "use-zion-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
+import { ChannelNavItem } from "@components/NavItem/ChannelNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";
 import { Box, Paragraph, Stack } from "@ui";
@@ -96,13 +97,12 @@ export const SpaceSideBar = (props: Props) => {
           pinned={false}
         />
       ))}
-      {space && <Channels space={space} />}
+      {space && <ChannelList space={space} />}
     </SideBar>
   );
 };
 
-const Channels = (props: { space: SpaceData }) => {
-  const { channelSlug } = useParams();
+const ChannelList = (props: { space: SpaceData }) => {
   const sizeContext = useSizeContext();
   const isSmall = sizeContext.lessThan(120);
   const { space } = props;
@@ -121,16 +121,17 @@ const Channels = (props: { space: SpaceData }) => {
               {group.label}
             </Paragraph>
           </Box>
-          {group.channels.map((channel) => (
-            <ActionNavItem
-              id={group.label + channel.id.slug}
-              key={group.label + channel.id.slug}
-              icon="tag"
-              highlight={channel.id.slug === channelSlug}
-              link={`/spaces/${props.space.id.slug}/channels/${channel.id.slug}/`}
-              label={channel.label}
-            />
-          ))}
+          {group.channels.map((channel) => {
+            const key = `${group.label}/${channel.id.slug}`;
+            return (
+              <ChannelNavItem
+                key={key}
+                id={key}
+                space={space}
+                channel={channel}
+              />
+            );
+          })}
         </Stack>
       ))}
     </>

@@ -35,6 +35,7 @@ export const NavItem = forwardRef<
       setActiveItem(id);
     }
   };
+
   const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     props.onMouseLeave && props.onMouseLeave(e);
     if (setActiveItem && id && activeItem === id) {
@@ -46,11 +47,7 @@ export const NavItem = forwardRef<
 
   return (
     <ConditionalNavLink end={exact} to={to}>
-      <Box
-        paddingY="xs"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+      <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         <Stack position="relative" paddingX="sm" {...props} ref={ref}>
           {/* background fill to highlight element */}
           <NavItemHighlight selected={!!match} hovered={isHovered} />
@@ -83,18 +80,18 @@ type HighlightProps = {
 };
 
 const NavItemHighlight = (props: HighlightProps) => {
-  const { selected: isSelected, hovered: isHovered } = props;
+  const { selected: isSelected } = props;
 
   // if one item is hovered (current or sibling)
   const { isInteracting } = useContext(SidebarContext);
 
   // if the element is highlighted
-  const isHighlight = isInteracting ? isHovered : isSelected;
+  const isHighlight = isSelected;
 
   // enables some emphasis for the following conditions:
   // 1/ if the first or last item touched when hovering the menu
   // 2/ if the pre-selected item transitioning back to its initial state
-  const isProminentInteraction = isInteracting === isSelected && !isHovered;
+  const isProminentInteraction = false; //!isInteracting === isSelected && !isHovered;
 
   const transition = isInteracting
     ? // minimal effects whilst interacting

@@ -8,9 +8,11 @@ type OffsetContainerProps = {
   placement: Placement;
   render: JSX.Element;
   triggerRect: DOMRect;
+  hitPosition: [number, number] | undefined;
   distance?: BoxProps["padding"];
   animatePresence?: boolean;
   onMouseLeave: () => void;
+  disableBackgroundInteraction?: boolean;
   containerRef: React.MutableRefObject<HTMLDivElement | null>;
 
   containerBounds?: {
@@ -21,14 +23,16 @@ type OffsetContainerProps = {
   };
 };
 
-export const OverlayOffset = (props: OffsetContainerProps) => {
+export const TooltipOffsetContainer = (props: OffsetContainerProps) => {
   const {
     triggerRect,
+    hitPosition,
     render,
     placement,
     containerRef,
     distance = "md",
     layoutId = "tooltip",
+    disableBackgroundInteraction,
   } = props;
   const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -75,14 +79,19 @@ export const OverlayOffset = (props: OffsetContainerProps) => {
 
     pos.top = Math.max(
       containerBounds.top,
-      Math.min(containerBounds.bottom - size.width, pos.top),
+      Math.min(containerBounds.bottom - size.height, pos.top),
     );
+
+    if (hitPosition) {
+      pos.left = hitPosition[0];
+      pos.top = hitPosition[1];
+    }
 
     return {
       ...baseStyle,
       ...pos,
     };
-  }, [placement, size, triggerRect, containerBounds]);
+  }, [hitPosition, containerBounds, placement, size, triggerRect]);
 
   useLayoutEffect(() => {
     const domRect = ref.current?.getBoundingClientRect();
@@ -93,16 +102,22 @@ export const OverlayOffset = (props: OffsetContainerProps) => {
 
   const content = (
     <Box padding={distance} ref={ref} onMouseLeave={props.onMouseLeave}>
-      {render}
+      {/* avoid overlapping exact bounds */}
+      <Box insetX="xs">{render}</Box>
     </Box>
   );
 
   return size.width === 0 ? (
     <div style={style}>{content}</div>
   ) : (
-    <motion.div {...layoutAnimation} layoutId={layoutId} style={style}>
-      <motion.div>{content}</motion.div>
-    </motion.div>
+    <Box
+      absoluteFill
+      pointerEvents={disableBackgroundInteraction ? "auto" : "none"}
+    >
+      <motion.div {...layoutAnimation} layoutId={layoutId} style={style}>
+        <motion.div>{content}</motion.div>
+      </motion.div>
+    </Box>
   );
 };
 
