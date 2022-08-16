@@ -5,12 +5,17 @@ import { RoomIdentifier } from "use-zion-client";
 interface Props {
   roomId: RoomIdentifier;
   roomName: string;
+  isSpace?: boolean;
   sendInvite: (roomId: RoomIdentifier, invitee: string) => Promise<void>;
   onClickCancel: () => void;
 }
 
 export function InviteForm(props: Props): JSX.Element {
   const [inviteeUserId, setInviteeUserId] = useState<string>("");
+
+  const header = props.isSpace
+    ? `Invite to join space "${props.roomName}"`
+    : `Invite to join room "${props.roomName}"`;
 
   const disableInviteButton = useMemo(
     () => inviteeUserId.length === 0,
@@ -39,7 +44,7 @@ export function InviteForm(props: Props): JSX.Element {
       }}
     >
       <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        INVITE TO JOIN ROOM "{props.roomName}"
+        {header}
       </Typography>
       <Box display="grid" gridTemplateRows="repeat(3, 1fr)">
         <Box

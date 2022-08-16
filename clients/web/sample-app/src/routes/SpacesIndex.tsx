@@ -5,6 +5,7 @@ import {
   ChannelGroup,
   Channel,
   RoomIdentifier,
+  useZionClient,
 } from "use-zion-client";
 import { List, ListItem, ListItemText } from "@mui/material";
 
@@ -12,6 +13,8 @@ export const SpacesIndex = () => {
   const { spaceSlug } = useParams();
   const navigate = useNavigate();
   const space = useSpace(spaceSlug);
+  const { leaveRoom } = useZionClient();
+
   const onClickSettings = useCallback(() => {
     if (spaceSlug) {
       navigate("/spaces/" + spaceSlug + "/settings");
@@ -44,6 +47,17 @@ export const SpacesIndex = () => {
     navigate("/spaces/" + space?.id.slug + "/channels/new");
   }, [navigate, space?.id.slug]);
 
+  const onClickInvite = useCallback(() => {
+    navigate("/spaces/" + space?.id.slug + "/invite");
+  }, [navigate, space?.id.slug]);
+
+  const onClickLeaveSpace = useCallback(async () => {
+    if (space?.id) {
+      await leaveRoom(space.id);
+      navigate("/");
+    }
+  }, [leaveRoom, navigate, space?.id]);
+
   return space ? (
     <>
       <p>
@@ -51,6 +65,12 @@ export const SpacesIndex = () => {
       </p>
       <p>
         <button onClick={onCreateChannelClick}>Create a channel</button>
+      </p>
+      <p>
+        <button onClick={onClickInvite}>Invite to space</button>
+      </p>
+      <p>
+        <button onClick={onClickLeaveSpace}>Leave space</button>
       </p>
       <List>{channelItems}</List>
     </>
