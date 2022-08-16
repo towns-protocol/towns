@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoomIdentifier, useZionClient } from "use-zion-client";
-import { Icon, IconName } from "ui/components/Icon";
+import { IconName } from "ui/components/Icon";
 import { Box, BoxProps, Card, Icon, Stack } from "@ui";
 
 type Props = { spaceId: RoomIdentifier; spaceName: string };

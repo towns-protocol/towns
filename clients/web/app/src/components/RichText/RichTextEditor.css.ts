@@ -9,7 +9,7 @@ export const contentEditable = style(
 );
 
 export const richTextEditorUI = style({
-  padding: vars.dims.baseline.x3,
+  padding: vars.dims.baseline.x2,
 });
 
 globalStyle(`${contentEditable} p + p, ${contentEditable} li + li`, {
@@ -18,4 +18,8 @@ globalStyle(`${contentEditable} p + p, ${contentEditable} li + li`, {
 
 globalStyle(`${contentEditable} ul`, {
   marginTop: vars.dims.baseline.x1,
+});
+
+globalStyle(`${contentEditable} a`, {
+  color: vars.color.foreground.accent,
 });

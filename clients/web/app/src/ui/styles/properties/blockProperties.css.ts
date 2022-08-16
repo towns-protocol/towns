@@ -12,6 +12,27 @@ export const blockProperties = defineProperties({
         bottom: 0,
         left: 0,
       },
+      topLeft: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+      },
+      topRight: {
+        position: "absolute",
+        top: 0,
+        right: 0,
+      },
+      bottomLeft: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+      },
+      bottomRight: {
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+      },
+
       fixed: "fixed",
       static: "static",
       sticky: "sticky",

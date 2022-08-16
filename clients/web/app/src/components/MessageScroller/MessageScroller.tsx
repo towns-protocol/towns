@@ -6,11 +6,15 @@ import React, {
   useState,
 } from "react";
 import { useInView } from "react-intersection-observer";
+import useEvent from "react-use-event-hook";
 import { MessageType, RoomMessage } from "use-zion-client";
 import { Message } from "@components/Message";
-import { RichTextPreview } from "@components/RichText/RichTextEditor";
+import {
+  RichTextEditor,
+  RichTextPreview,
+} from "@components/RichText/RichTextEditor";
 import { FadeIn } from "@components/Transitions";
-import { Avatar, Box, Stack } from "@ui";
+import { Avatar, Box, Button, Stack } from "@ui";
 import {
   messageFilter,
   useMessageReplyCount,
@@ -47,6 +51,21 @@ export const MessageScroller = (props: {
   );
 
   const repliedMessages = useMessageReplyCount(messages);
+  const [editMessageId, setEditMessageId] = useState<string>();
+  const onEditMessage = useEvent((messageId: string) => {
+    setEditMessageId(() =>
+      editMessageId === messageId ? undefined : messageId,
+    );
+  });
+
+  const onSaveEditedMessage = (value: string) => {
+    // saveMessage(editMessageId, value);
+    setEditMessageId(undefined);
+  };
+
+  const onCancelEdit = useEvent(() => {
+    setEditMessageId(undefined);
+  });
 
   return (
     <Stack grow ref={containerRef} overflow="auto">
@@ -68,9 +87,27 @@ export const MessageScroller = (props: {
                 paddingX="lg"
                 paddingY="md"
                 avatar={<Avatar src={m.senderAvatarUrl} size="avatar_md" />}
+                editing={editMessageId === m.eventId}
+                onEditMessage={onEditMessage}
                 onSelectMessage={props.onSelectMessage}
               >
-                <RichTextPreview content={getMessageContent(m)} />
+                {editMessageId === m.eventId ? (
+                  <Stack gap>
+                    <RichTextEditor
+                      editing
+                      initialValue={m.body}
+                      onSend={onSaveEditedMessage}
+                    />
+                    <Stack horizontal gap>
+                      <Button tone="neutral" onClick={onCancelEdit}>
+                        Cancel
+                      </Button>
+                      {/* <Button onClick={onCancelEdit}>Save</Button> */}
+                    </Stack>
+                  </Stack>
+                ) : (
+                  <RichTextPreview content={getMessageContent(m)} />
+                )}
                 {repliedMessages[m.eventId] && (
                   <Box horizontal paddingY="sm">
                     <Box

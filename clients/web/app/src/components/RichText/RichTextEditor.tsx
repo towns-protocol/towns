@@ -44,6 +44,7 @@ type Props = {
   onSend: (value: string) => void;
   autoFocus?: boolean;
   readOnly?: boolean;
+  editing?: boolean;
   placeholder?: string;
   initialValue?: string;
   container?: (props: { children: React.ReactNode }) => JSX.Element;
@@ -82,7 +83,11 @@ export const RichTextPreview = (props: { content: string }) => {
 };
 
 export const RichTextEditor = (props: Props) => {
-  const { placeholder = "Write something ...", onSend } = props;
+  const {
+    placeholder = "Write something ...",
+    editing: isEditing,
+    onSend,
+  } = props;
   const initialConfig = useInitialConfig(props.initialValue, false);
 
   const [focused, setFocused] = useState(false);
@@ -92,7 +97,7 @@ export const RichTextEditor = (props: Props) => {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <RichTextUI focused={focused}>
+      <RichTextUI focused={focused} editing={isEditing}>
         <RichTextPlugin
           contentEditable={<ContentEditable className={fieldClassName} />}
           placeholder={<RichTextPlaceholder placeholder={placeholder} />}

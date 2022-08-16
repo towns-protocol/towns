@@ -17,8 +17,6 @@ import useEvent from "react-use-event-hook";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { createPortal } from "react-dom";
 import { Box, RootLayerContext, Stack } from "@ui";
-
-import { TooltipContext } from "ui/components/Tooltip/TooltipRenderer";
 import { richTextEditorUI } from "../RichTextEditor.css";
 import { RichTextEditorControls } from "./Controls/RichTextEditorControls";
 import { InlineToolbar } from "./InlineToolbar";
@@ -27,6 +25,7 @@ import { Toolbar } from "./Toolbar/RichTextEditorToolbar";
 
 export const RichTextUI = (props: {
   children: React.ReactNode;
+  editing?: boolean;
   focused: boolean;
   readOnly?: boolean;
 }) => {
@@ -139,7 +138,7 @@ export const RichTextUI = (props: {
       gap
       className={richTextEditorUI}
       rounded="sm"
-      background={props.focused ? "level3" : "level2"}
+      background={props.focused || props.editing ? "level3" : "level2"}
       minWidth={props.readOnly ? undefined : "200"}
       position="relative"
     >

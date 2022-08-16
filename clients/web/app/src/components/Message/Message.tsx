@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Replies } from "@components/Replies/Replies";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
+import { MessageContextMenu } from "./MessageContextMenu";
 
 type Props = {
   avatar: string | React.ReactNode;
@@ -13,7 +14,9 @@ type Props = {
   userReaction?: string;
   replies?: { userIds: number[]; fakeLength?: number };
   date?: string;
+  editing?: boolean;
   onSelectMessage?: (id: string) => void;
+  onEditMessage?: (id: string) => void;
   id?: string;
   children?: React.ReactNode;
   rounded?: BoxProps["rounded"];
@@ -27,24 +30,41 @@ export const Message = ({
   condensed,
   name,
   channel,
+  editing: isEditing,
   reactions,
   replies,
   userReaction,
   date,
   children,
+  onEditMessage,
   onSelectMessage,
   ...boxProps
 }: Props) => {
-  const onClick = () => {
+  const onSelectThread = () => {
     id && onSelectMessage?.(id);
+  };
+
+  const onEdit = () => {
+    id && onEditMessage?.(id);
+  };
+  const [showMenu, setShowMenu] = useState(false);
+  const onMouseOver = () => {
+    setShowMenu(true);
+  };
+  const onMouseOut = () => {
+    setShowMenu(false);
   };
   return (
     <Stack
       horizontal
       gap="paragraph"
       {...boxProps}
-      background={{ hover: "level2" }}
-      onClick={onClick}
+      background={{
+        default: isEditing ? "level2" : undefined,
+        hover: "level2",
+      }}
+      onMouseOver={onMouseOver}
+      onMouseLeave={onMouseOut}
     >
       {/* left / avatar gutter */}
       {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -56,7 +76,7 @@ export const Message = ({
         )}
       </Box>
       {/* right / main content */}
-      <Stack grow gap={condensed ? "paragraph" : "md"}>
+      <Stack grow gap={condensed ? "paragraph" : "md"} position="relative">
         {/* name & date top row */}
         <Box direction="row" gap="sm" alignItems="center" height="height_sm">
           {/* display name */}
@@ -84,7 +104,12 @@ export const Message = ({
           )}
         </Box>
 
-        <Box fontSize="md" color="default" maxWidth="1200">
+        <Box
+          pointerEvents="auto"
+          fontSize="md"
+          color="default"
+          onClick={!isEditing ? onEdit : undefined}
+        >
           {children}
         </Box>
         {reactions && (
@@ -95,6 +120,11 @@ export const Message = ({
         {replies && (
           <Box direction="row">
             <Replies replies={replies} />
+          </Box>
+        )}
+        {showMenu && !isEditing && (
+          <Box position="topRight">
+            <MessageContextMenu onOpenThread={onSelectThread} onEdit={onEdit} />
           </Box>
         )}
       </Stack>
