@@ -7,7 +7,6 @@ import {
   avatarAtoms,
   avatarBaseStyle,
   avatarToggleClasses,
-  squircleMask,
 } from "./Avatar.css";
 
 type Props = {
