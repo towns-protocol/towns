@@ -1,10 +1,10 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoomIdentifier, useZionClient } from "use-zion-client";
-import { Avatar, Box, BoxProps, Card, Divider, Heading, Stack } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
+import { Box, BoxProps, Card, Icon, Stack } from "@ui";
 
-type Props = { spaceId: RoomIdentifier };
+type Props = { spaceId: RoomIdentifier; spaceName: string };
 
 export const SpaceSettingsCard = (props: Props) => {
   const { spaceId } = props;
@@ -35,19 +35,16 @@ export const SpaceSettingsCard = (props: Props) => {
 
   return (
     <Box position="relative">
-      <Card border arrow paddingBottom="md" width="300" fontSize="md">
-        <Stack horizontal padding gap="md" alignItems="center">
-          <Box>
-            <Avatar size="avatar_md" type="space" />
-          </Box>
-          <Stack grow gap="sm" fontWeight="strong" color="gray2">
-            <Heading level={5}>{spaceId.slug}</Heading>
-          </Stack>
-        </Stack>
-        <Divider space="xs" />
-        <MenuItem onClick={onInviteClick}>Invite</MenuItem>
-        <MenuItem onClick={onLeaveClick}>Leave</MenuItem>
-        <MenuItem onClick={onSettingsClick}>Settings</MenuItem>
+      <Card border width="300" fontSize="md" paddingY="sm">
+        <MenuItem icon="invite" onClick={onInviteClick}>
+          Invite
+        </MenuItem>
+        <MenuItem icon="settings" onClick={onSettingsClick}>
+          Settings
+        </MenuItem>
+        <MenuItem color="secondary" icon="logout" onClick={onLeaveClick}>
+          Leave {props.spaceName}
+        </MenuItem>
       </Card>
     </Box>
   );
@@ -72,16 +69,3 @@ export const MenuItem = ({
     </Stack>
   </Box>
 );
-
-export const shortenAddress = (
-  s: string,
-  charsStart = 6,
-  charsEnd = 2,
-  delimiter = "..",
-) => {
-  return (s?.length ?? 0) <= charsStart + delimiter.length + charsEnd
-    ? s
-    : `${s.substring(0, charsStart)}${delimiter}${s.substring(
-        s.length - charsEnd,
-      )}`;
-};

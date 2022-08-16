@@ -10,9 +10,10 @@ import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { ChannelNavItem } from "@components/NavItem/ChannelNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";
-import { Box, Paragraph, Stack } from "@ui";
+import { Stack } from "@ui";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { atoms } from "ui/styles/atoms.css";
+import { ChannelNavGroup } from "@components/NavItem/ChannelNavGroup";
 import { SideBar } from "./_SideBar";
 
 type Props = {
@@ -32,8 +33,8 @@ export const SpaceSideBar = (props: Props) => {
   );
 
   return (
-    <SideBar paddingY="sm">
-      <Stack padding position="relative" background="level1" gap="md">
+    <SideBar>
+      <Stack position="relative" background="level1" gap="md">
         <FadeIn>
           <img
             src="/placeholders/space_1.png"
@@ -48,56 +49,62 @@ export const SpaceSideBar = (props: Props) => {
           />
         </FadeIn>
       </Stack>
-      {space && (
-        <SpaceNavItem
-          exact
-          name={space.name}
-          id={space.id}
-          avatar={space.avatarSrc}
-          settings={space.membership === Membership.Join}
-          onSettings={onSettings}
-        />
-      )}
-      {space?.membership === Membership.Join && (
-        <>
-          <ActionNavItem
-            icon="threads"
-            link={`/spaces/${space.id.slug}/highlights`}
-            id="highlights"
-            label="Highlights"
+      <Stack paddingY="md">
+        {space && (
+          <SpaceNavItem
+            exact
+            name={"Home" ?? space.name}
+            icon="home"
+            id={space.id}
+            settings={space.membership === Membership.Join}
+            onSettings={onSettings}
           />
-          <ActionNavItem
-            icon="threads"
-            link={`/spaces/${space.id.slug}/threads`}
-            id="threads"
-            label="Threads"
+        )}
+        {space?.membership === Membership.Join && (
+          <>
+            <ActionNavItem
+              icon="threads"
+              link={`/spaces/${space.id.slug}/highlights`}
+              id="highlights"
+              label="Highlights"
+            />
+            <ActionNavItem
+              icon="threads"
+              link={`/spaces/${space.id.slug}/threads`}
+              id="threads"
+              label="Threads"
+            />
+            <ActionNavItem
+              icon="at"
+              id="mentions"
+              label="Mentions"
+              link={`/spaces/${space.id.slug}/mentions`}
+            />
+          </>
+        )}
+        {invites.map((m, index) => (
+          <SpaceNavItem
+            isInvite
+            key={m.id.slug}
+            active={false}
+            id={m.id}
+            name={m.name}
+            avatar={m.avatarSrc}
+            pinned={false}
           />
-          <ActionNavItem
-            icon="at"
-            id="mentions"
-            label="Mentions"
-            link={`/spaces/${space.id.slug}/mentions`}
-          />
-          <ActionNavItem
-            icon="plus"
-            id="newChannel"
-            label="New Channel"
-            link={`/spaces/${space.id.slug}/channels/new`}
-          />
-        </>
-      )}
-      {invites.map((m, index) => (
-        <SpaceNavItem
-          isInvite
-          key={m.id.slug}
-          active={false}
-          id={m.id}
-          name={m.name}
-          avatar={m.avatarSrc}
-          pinned={false}
-        />
-      ))}
-      {space && <ChannelList space={space} />}
+        ))}
+        {space && (
+          <>
+            <ChannelList space={space} />
+            <ActionNavItem
+              icon="plus"
+              id="newChannel"
+              label="Create channel"
+              link={`/spaces/${space.id.slug}/channels/new`}
+            />
+          </>
+        )}
+      </Stack>
     </SideBar>
   );
 };
@@ -111,16 +118,7 @@ const ChannelList = (props: { space: SpaceData }) => {
     <>
       {space.channelGroups.map((group) => (
         <Stack key={group.label} display={isSmall ? "none" : undefined}>
-          <Box
-            paddingX="md"
-            height="height_lg"
-            paddingY="sm"
-            justifyContent="end"
-          >
-            <Paragraph color="gray2" textTransform="uppercase">
-              {group.label}
-            </Paragraph>
-          </Box>
+          <ChannelNavGroup>{group.label}</ChannelNavGroup>
           {group.channels.map((channel) => {
             const key = `${group.label}/${channel.id.slug}`;
             return (

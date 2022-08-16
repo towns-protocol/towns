@@ -94,7 +94,7 @@ export const SpaceNavItem = (props: Props) => {
             <TooltipRenderer
               trigger="click"
               placement="horizontal"
-              render={<SpaceSettingsCard spaceId={id} />}
+              render={<SpaceSettingsCard spaceId={id} spaceName={props.name} />}
               layoutId="settings"
             >
               {({ triggerProps }) => (

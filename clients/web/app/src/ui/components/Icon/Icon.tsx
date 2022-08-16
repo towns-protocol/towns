@@ -169,6 +169,32 @@ export const HomeIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   ),
 );
 
+export const InviteIcon = forwardRef<SVGSVGElement, SVGIconProps>(
+  (props, ref) => (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+      ref={ref}
+    >
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M4 5C3.45228 5 3 5.45228 3 6V18C3 18.5477 3.45228 19 4 19H20C20.5477 19 21 18.5477 21 18V6C21 5.45228 20.5477 5 20 5H4ZM1 6C1 4.34772 2.34772 3 4 3H20C21.6523 3 23 4.34772 23 6V18C23 19.6523 21.6523 21 20 21H4C2.34772 21 1 19.6523 1 18V6Z"
+        fill="currentColor"
+      />
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M1.18073 5.4265C1.49745 4.97405 2.12098 4.86402 2.57343 5.18073L12 11.7793L21.4265 5.18073C21.879 4.86402 22.5025 4.97405 22.8192 5.4265C23.1359 5.87895 23.0259 6.50248 22.5734 6.8192L12.5734 13.8192C12.2291 14.0602 11.7708 14.0602 11.4265 13.8192L1.4265 6.8192C0.974052 6.50248 0.864017 5.87895 1.18073 5.4265Z"
+        fill="currentColor"
+      />
+    </svg>
+  ),
+);
+
 export const ItalicIcon = forwardRef<SVGSVGElement, SVGIconProps>(
   (props, ref) => (
     <svg
@@ -599,7 +625,9 @@ const iconMap = {
   emoji: EmojiIcon,
   eth: EthIcon,
   home: HomeIcon,
+  invite: InviteIcon,
   italic: ItalicIcon,
+
   lock: LockIcon,
   logout: LogoutIcon,
   message: MessageIcon,
