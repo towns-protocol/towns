@@ -107,6 +107,7 @@ export const RichTextEditor = (props: Props) => {
       <HistoryPlugin />
       <LinkPlugin />
       <SendMarkdownPlugin onSend={onSend} />
+
       <AutoFocusPlugin />
     </LexicalComposer>
   );

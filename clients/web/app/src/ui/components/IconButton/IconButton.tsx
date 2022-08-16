@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, BoxProps } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
-import { IconAtoms } from "ui/components/Icon/Icon.css";
 import * as styles from "./IconButton.css";
+import { IconAtoms } from "../Icon/Icon.css";
 
 type Props = {
   opaque?: boolean;
