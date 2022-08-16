@@ -22,6 +22,7 @@ import { TooltipContext } from "ui/components/Tooltip/TooltipRenderer";
 import { richTextEditorUI } from "../RichTextEditor.css";
 import { RichTextEditorControls } from "./Controls/RichTextEditorControls";
 import { InlineToolbar } from "./InlineToolbar";
+import { AddLinkModal } from "./LinkModal";
 import { Toolbar } from "./Toolbar/RichTextEditorToolbar";
 
 export const RichTextUI = (props: {
@@ -36,6 +37,20 @@ export const RichTextUI = (props: {
 
   const absoluteRef = useRef<HTMLDivElement>(null);
 
+  const [linkLinkModal, setLinkModal] = useState(false);
+  const onHideModal = useEvent(() => {
+    setLinkModal(false);
+  });
+
+  const onLinkClick = useEvent(() => {
+    setLinkModal(true);
+  });
+
+  const [editor] = useLexicalComposerContext();
+  const onSaveLink = useEvent((url: string) => {
+    console.log({ editor, url });
+    editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
+  });
   const [toolbarPosition, setToolbarPosition] = useState<{
     top: number;
     left: number;
@@ -153,6 +168,9 @@ export const RichTextUI = (props: {
             </Box>,
             rootLayerRef?.current,
           )}
+        {linkLinkModal && (
+          <AddLinkModal onHide={onHideModal} onSaveLink={onSaveLink} />
+        )}
       </Stack>
     </Stack>
   );

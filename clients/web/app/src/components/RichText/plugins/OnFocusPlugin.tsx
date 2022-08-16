@@ -17,6 +17,12 @@ export const OnFocusPlugin = (props: Props) => {
   useEffect(() => {
     if (!hasFocus && props.autoFocus) {
       const onKeyDown = () => {
+        const numInputs = document.querySelectorAll(
+          "[contentEditable], input",
+        ).length;
+        if (numInputs > 1) {
+          return;
+        }
         editor.focus(() => {
           // If we try and move selection to the same point with setBaseAndExtent, it won't
           // trigger a re-focus on the element. So in the case this occurs, we'll need to correct it.
