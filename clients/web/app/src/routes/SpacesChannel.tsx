@@ -7,13 +7,13 @@ import {
   useChannel,
   useMessages,
   useMyMembership,
-  useSpaceId,
   useZionClient,
 } from "use-zion-client";
-import { usePersistPanes } from "hooks/usePersistPanes";
-import { Box, Button, Icon, Stack } from "@ui";
-import { RichTextEditor } from "@components/RichText/RichTextEditor";
+import { ChannelHeader } from "@components/ChannelHeader";
 import { MessageList } from "@components/MessageScroller";
+import { RichTextEditor } from "@components/RichText/RichTextEditor";
+import { Box, Button, Stack } from "@ui";
+import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
   const { spaceSlug, channelSlug, messageId } = useParams();
@@ -22,7 +22,6 @@ export const SpacesChannel = () => {
   const { joinRoom, sendMessage } = useZionClient();
   const navigate = useNavigate();
 
-  const spaceId = useSpaceId(spaceSlug);
   const channel = useChannel(spaceSlug, channelSlug);
   const myMembership = useMyMembership(channel?.id);
   const channelMessages = useMessages(channelSlug);
@@ -41,10 +40,6 @@ export const SpacesChannel = () => {
       joinRoom(channel.id);
     }
   }, [joinRoom, channel?.id]);
-
-  const onSettingClick = useCallback(() => {
-    navigate(`/spaces/${spaceId?.slug}/channels/${channel?.id.slug}/settings`);
-  }, [channel?.id.slug, navigate, spaceId?.slug]);
 
   const onSelectMessage = (eventId: string) => {
     navigate(`/spaces/${spaceSlug}/channels/${channelSlug}/replies/${eventId}`);
@@ -65,19 +60,18 @@ export const SpacesChannel = () => {
       <Allotment onChange={onSizesChange}>
         <Allotment.Pane minSize={550}>
           {myMembership !== Membership.Join ? (
-            <Button onClick={onJoinChannel}>Join {channel.label}</Button>
+            <Box absoluteFill centerContent>
+              <Button key={channelSlug} size="input_lg" onClick={onJoinChannel}>
+                Join #{channel.label}
+              </Button>
+            </Box>
           ) : (
             <Box grow absoluteFill height="100%">
-              <Box
-                color={{ hover: "default", default: "gray2" }}
-                onClick={onSettingClick}
-              >
-                <Icon type="settings" size="square_sm" />
-              </Box>
               <MessageList
                 hideThreads
                 key={channelSlug}
                 messages={channelMessages}
+                before={<ChannelHeader name={channel.label} />}
                 onSelectMessage={onSelectMessage}
               />
               <Box paddingBottom="lg" paddingX="lg">

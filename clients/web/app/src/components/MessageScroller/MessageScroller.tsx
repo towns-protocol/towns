@@ -53,6 +53,7 @@ export const MessageScroller = (props: {
       <Stack grow style={{ minHeight: "min-content" }}>
         <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
           <div ref={ref} />
+          {props.before}
           {paginatedMessages.map((m, index) => (
             <FadeIn
               fast
