@@ -9,7 +9,7 @@
     "/dist"
   ],
   "scripts": {
-    "preinstall": "tsc",
+    "prepack": "tsc",
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "yarn lint --fix",
