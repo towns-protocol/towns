@@ -1,5 +1,3 @@
-import { useContext, useMemo } from "react";
-import { MatrixContext } from "../components/MatrixContextProvider";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -9,14 +7,17 @@ import {
   SpaceChild,
   ZionContext,
 } from "../types/matrix-types";
-import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
-import { useSyncSpace } from "./MatrixClient/useSyncSpace";
-import { useLogout } from "./MatrixClient/useLogout";
-import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
-import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
-import { useJoinRoom } from "./MatrixClient/useJoinRoom";
+import { useContext, useMemo } from "react";
+
+import { MatrixContext } from "../components/MatrixContextProvider";
 import { ZionClientEvent } from "../client/ZionClientTypes";
+import { useJoinRoom } from "./MatrixClient/useJoinRoom";
+import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
+import { useLogout } from "./MatrixClient/useLogout";
 import { useMatrixStore } from "../store/use-matrix-store";
+import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
+import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
+import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -43,6 +44,7 @@ interface ZionClientImpl {
     message: string,
     options?: SendMessageOptions,
   ) => Promise<void>;
+  sendNotice: (roomId: RoomIdentifier, message: string) => Promise<void>;
   setPowerLevel: (
     roomId: RoomIdentifier,
     current: string | PowerLevel,
@@ -106,6 +108,7 @@ export function useZionClient(): ZionClientImpl {
     registerPasswordUser,
     registerWallet,
     sendMessage: withCatch(client?.sendMessage),
+    sendNotice: withCatch(client?.sendNotice),
     setPowerLevel: withCatch(client?.setPowerLevel),
     syncSpace,
     setDisplayName: withCatch(client?.setDisplayName),

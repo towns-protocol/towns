@@ -251,6 +251,16 @@ export class ZionClient {
   }
 
   /************************************************
+   * sendNotice
+   *************************************************/
+  public async sendNotice(
+    roomId: RoomIdentifier,
+    message: string,
+  ): Promise<void> {
+    await this.client.sendNotice(roomId.matrixRoomId, message);
+  }
+
+  /************************************************
    * syncSpace
    *************************************************/
   public async syncSpace(spaceId: RoomIdentifier) {
