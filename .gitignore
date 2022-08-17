@@ -22,13 +22,17 @@ contracts/.openzeppelin/unknown-*.json
 abi/
 
 /docs
+
 servers/identity/localhost-key.pem
 servers/identity/localhost.pem
 servers/identity/.env
 servers/identity/identity
 servers/identity/generated
+servers/dendrite/vendor/
+servers/dendrite/zion-registration.yaml
+servers/matrix-zion-bridge/zion-registration.yaml
+
 clients/web/app/storybook-static
 
 contracts/deployments/localhost/
-servers/dendrite/vendor/
 .eslintcache

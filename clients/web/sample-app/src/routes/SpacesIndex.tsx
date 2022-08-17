@@ -1,13 +1,15 @@
-import { useCallback, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import {
-  useSpace,
-  ChannelGroup,
   Channel,
+  ChannelGroup,
   RoomIdentifier,
+  useSpace,
   useZionClient,
 } from "use-zion-client";
 import { List, ListItem, ListItemText } from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
+
+import { SpaceSettings } from "./SpaceSettings";
+import { useCallback, useMemo } from "react";
 
 export const SpacesIndex = () => {
   const { spaceSlug } = useParams();
@@ -71,6 +73,9 @@ export const SpacesIndex = () => {
       </p>
       <p>
         <button onClick={onClickLeaveSpace}>Leave space</button>
+      </p>
+      <p>
+        {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}
       </p>
       <List>{channelItems}</List>
     </>

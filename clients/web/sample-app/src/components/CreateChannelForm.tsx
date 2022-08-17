@@ -110,8 +110,8 @@ export function CreateChannelForm(props: Props): JSX.Element {
                 value={visibility}
                 onChange={onChangeVisibility}
               >
-                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
                 <MenuItem value={RoomVisibility.Public}>public</MenuItem>
+                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
               </Select>
             </FormControl>
           </Box>
