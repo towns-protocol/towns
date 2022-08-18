@@ -1,5 +1,5 @@
 {
-  "name": "web3-step2",
+  "name": "harmony",
   "license": "MIT",
   "version": "1.0.0",
   "private": true,
@@ -7,15 +7,17 @@
     "lint": "eslint . --cache",
     "lint:fix": "yarn lint --fix",
     "lint:format": "prettier --write .",
+    "build:contracts-zion": "yarn workspace @harmony/zion-governance build",
     "prepare": "husky install",
     "postinstall": "husky install"
   },
   "workspaces": [
-    "contracts",
     "clients/web/app",
     "clients/web/lib",
     "clients/web/sample-app",
-    "clients/governance-ui"
+    "clients/governance-ui",
+    "contracts/*",
+    "packages/*"
   ],
   "lint-staged": {
     "*.{js,mdx,ts,tsx}": [
@@ -36,6 +38,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.0",
-    "prettier": "^2.6.2"
+    "prettier": "^2.6.2",
+    "ts-node": "^10.9.1"
   }
 }

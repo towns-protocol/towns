@@ -36,3 +36,5 @@ clients/web/app/storybook-static
 
 contracts/deployments/localhost/
 .eslintcache
+cache_hardhat
+artifacts_*

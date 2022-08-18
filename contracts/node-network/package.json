@@ -1,0 +1,9 @@
+{
+  "name": "node-network",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "^4.7.3"
+  }
+}

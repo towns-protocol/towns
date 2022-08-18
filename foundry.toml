@@ -1,0 +1,13 @@
+[profile.default]
+src = 'contracts'
+out = 'artifacts_foundry'
+test = "test/foundry"
+libs = ["node_modules", "lib"]
+
+[profile.governance]
+src = 'contracts/zion-governance/contracts'
+test = 'contracts/zion-governance/test/foundy'
+out = 'contracts/zion-governance/artifacts_foundry'
+ffi = true
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "outDir": "dist",
+    "declaration": true,
+    "rootDirs": ["./src", "./scripts", "./test", "./contracts"]
+  },
+  "exclude": ["dist", "./node_modules"],
+  "include": [
+    "./contracts",
+    "./src",
+    "./scripts",
+    "./test",
+    "./deploy",
+    "./typechain",
+    "./utils",
+    "./typechain-types",
+    "./hardhat.config.ts"
+  ],
+  "files": ["./hardhat.config.ts"]
+}

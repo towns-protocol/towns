@@ -1,0 +1,12 @@
+{
+  "name": "@harmony/prettier-config",
+  "version": "1.0.0",
+  "main": "config.js",
+  "license": "MIT",
+  "peerDependencies": {
+    "eslint": ">=8"
+  },
+  "devDependencies": {
+    "prettier": "^2.7.1"
+  }
+}
