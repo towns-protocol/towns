@@ -12,6 +12,7 @@
 /**/yarn.lock
 
 /node_modules
+/**/node_modules
 /typechain-types
 /cache
 /artifacts
