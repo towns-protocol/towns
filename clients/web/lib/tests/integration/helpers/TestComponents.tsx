@@ -55,7 +55,7 @@ interface RegisterAndJoinSpaceProps {
 export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
   const { spaceId, channelId } = props;
   const { clientRunning, joinRoom } = useZionClient();
-  const mySpaceMembership = useMyMembership(channelId);
+  const mySpaceMembership = useMyMembership(spaceId);
   const myChannelMembership = useMyMembership(channelId);
   useEffect(() => {
     if (clientRunning) {
