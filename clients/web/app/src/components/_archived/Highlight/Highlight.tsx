@@ -52,7 +52,7 @@ export const Highlight = ({
           </Box>
           <Box gap="paragraph">
             <NavLink to="/spaces/bored-ape-yacht-club/announcements">
-              <Heading level={6}>
+              <Heading>
                 {space} {channel && `#${channel}`}
               </Heading>
             </NavLink>
@@ -67,7 +67,7 @@ export const Highlight = ({
         </Box>
         <Stack grow gap="md" paddingY="sm" paddingX="sm">
           {space && (
-            <Heading level={6} color="gray2">
+            <Heading color="gray2">
               {space} {channel && `#${channel}`}
             </Heading>
           )}

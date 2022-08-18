@@ -4,9 +4,7 @@ import { Avatar, Card, Heading, Stack, Text } from "@ui";
 export const NotificationCard = () => {
   return (
     <Card padding="md" gap="md" width="400">
-      <Heading level={5} color="gray2">
-        Notifications
-      </Heading>
+      <Heading color="gray2">Notifications</Heading>
       <Item avatar="/placeholders/nft_30.png" name="Doodles">
         A proposal <strong>100 ETH Donation to RELI3F</strong> is up for voting
       </Item>

@@ -127,7 +127,7 @@ const getTooltipMessage = (status: ButtonStatus) => {
       return "something went wrong, please make sure your wallet is unlocked";
     case ButtonStatus.Login:
     case ButtonStatus.LoginProgress:
-      return "click to login in with your wallet";
+      return "";
     case ButtonStatus.Register:
       return "register a new account";
     default:

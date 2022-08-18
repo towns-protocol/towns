@@ -6,7 +6,6 @@ globalStyle(":root", {
 });
 
 globalStyle("h1, h2, h3, h4, h5", {
-  fontFamily: "TitleFont, sans-serif",
 });
 
 globalStyle("p", {

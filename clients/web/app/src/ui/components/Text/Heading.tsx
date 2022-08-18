@@ -5,18 +5,12 @@ enum HeadingNames {
   h1 = "h1",
   h2 = "h2",
   h3 = "h3",
-  h4 = "h4",
-  h5 = "h5",
 }
 
 const HeadingLevel = {
-  1: { el: HeadingNames.h1, size: "xl32" as const },
-  2: { el: HeadingNames.h2, size: "xl24" as const },
-  3: { el: HeadingNames.h3, size: "xl" as const },
-  // not sure if heading is appropriate below xl rather <P strong />
-  4: { el: HeadingNames.h4, size: "lg" as const },
-  5: { el: HeadingNames.h5, size: "md" as const },
-  6: { el: HeadingNames.h5, size: "sm" as const },
+  1: { el: HeadingNames.h1, size: "h1" as const },
+  2: { el: HeadingNames.h2, size: "h2" as const },
+  3: { el: HeadingNames.h3, size: "h3" as const },
 } as const;
 
 type HeadingProps = {
@@ -32,7 +26,7 @@ type HeadingProps = {
 } & Omit<TextProps, "size" | "fontSize">;
 
 export const Heading = forwardRef<HTMLElement, HeadingProps>((props, ref) => {
-  const { level = 1, strong = true, ...textProps } = props;
+  const { level = 1, ...textProps } = props;
   const { el, size } = HeadingLevel[level];
-  return <Text as={el} strong={strong} size={size} ref={ref} {...textProps} />;
+  return <Text strong as={el} size={size} ref={ref} {...textProps} />;
 });

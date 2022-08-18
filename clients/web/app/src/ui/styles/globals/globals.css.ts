@@ -24,6 +24,24 @@ globalStyle("ul,ol", {
   listStyle: "none",
 });
 
+globalStyle("h1", {
+  fontSize: vars.fontSize.h1,
+});
+globalStyle("h2", {
+  fontSize: vars.fontSize.h2,
+});
+globalStyle("h3", {
+  fontSize: vars.fontSize.h3,
+});
+
+globalStyle("h4", {
+  fontSize: vars.fontSize.lg,
+});
+
+globalStyle("p", {
+  fontSize: vars.fontSize.md,
+});
+
 globalStyle("table", {
   borderCollapse: "collapse",
   borderSpacing: 0,

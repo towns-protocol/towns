@@ -11,13 +11,13 @@ const nonResponsiveProperties = defineProperties({
   properties: {
     color: vars.color.foreground,
     fontVariationSettings: vars.fontVariationSettings,
+    fontWeight: vars.fontWeight,
     fontSize: vars.fontSize,
     textAlign: vars.textAlign,
     textTransform: vars.textTransform,
   },
   shorthands: {
     size: ["fontSize"],
-    fontWeight: ["fontVariationSettings"],
   },
 });
 
@@ -40,7 +40,6 @@ export const fontStyles = fontSettings.reduce((fontStyles, font) => {
   /* space between lines  */
   const baseProperties = {
     lineHeight: capSize.lineHeight,
-    letterSpacing: "-0.02em",
   } as const;
 
   const styleBefore = {
@@ -94,6 +93,10 @@ fontSettings.forEach((font) => {
   const fontStyle = fontStyles.find((f) => f.fontFamily === font.fontFamily);
   if (fontStyle) {
     font.targets.forEach((e) => {
+      globalStyle(`${boxClass} ${e}`, {
+        fontFamily: font.fontFamily,
+        ...(font.styles ? font.styles : {}),
+      });
       globalStyle(`${boxClass} ${e}`, fontStyle.baseProperties);
       globalStyle(`${boxClass} ${e}:before `, fontStyle.styleBefore);
       globalStyle(`${boxClass} ${e}:after `, fontStyle.styleAfter);
@@ -125,24 +128,11 @@ globalStyle(
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - global text decoration
 
-globalStyle(`h1,h2,h3,h4,h5`, {
-  fontWeight: "400",
-  fontVariationSettings: '"wdth" 100, "wght" 600, "ital" 0',
-});
-
 /**
  * Links
  */
 globalStyle(`${fontStyles[0].className} a`, {
   // color: vars.color.foreground.accent,
-});
-
-/**
- * Strong text
- */
-globalStyle(`${fontStyles[0].className} strong`, {
-  fontVariationSettings: vars.fontVariationSettings.strong,
-  color: vars.color.text.default,
 });
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - truncated text

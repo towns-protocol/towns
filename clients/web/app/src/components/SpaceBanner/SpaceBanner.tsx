@@ -35,7 +35,7 @@ export const SpaceBanner = (props: Props) => {
         </Box>
         {/* title and stats container */}
         <Stack grow justifyContent="center" gap="md">
-          <Heading level={3}>{name}</Heading>
+          <Heading>{name}</Heading>
           <SpaceSummary />
         </Stack>
         {/* actions container */}

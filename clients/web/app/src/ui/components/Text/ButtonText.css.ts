@@ -8,8 +8,6 @@ const f = fontStyles.find((f) => f.fontFamily === "TitleFont")?.className;
 
 export const base = style([
   {
-    fontFamily: "TitleFont",
-    fontWeight: "normal",
   },
   f ?? "",
 ]);

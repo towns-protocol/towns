@@ -182,15 +182,19 @@ const root = createGlobalTheme(":root", {
     strong: '"wdth" 100, "wght" 600, "ital" 0',
   } as const,
 
+  fontWeight: {
+    normal: "normal",
+    strong: "600",
+  } as const,
+
   fontSize: {
     sm: `${13}px`,
     md: `${15}px`,
-    lg: `${17}px`,
-    xl: `${24}px`,
+    lg: `${18}px`,
     // note: before setting the naming, figure the sizes we actually use
-    xl24: `${32}px`,
-    xl32: `${37}px`,
-    logo: `${64}px`,
+    h1: `${72}px`,
+    h2: `${48}px`,
+    h3: `${18}px`,
   } as const,
 
   textAlign: {

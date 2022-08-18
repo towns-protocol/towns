@@ -52,7 +52,7 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
 
   const textProps = {
     fontSize: size,
-    fontWeight: fontWeight ?? (strong ? "strong" : "normal"),
+    fontWeight: fontWeight ?? (strong ? "strong" : undefined),
     textTransform,
     textAlign,
   };

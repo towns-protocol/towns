@@ -51,7 +51,7 @@ export const ShareCard = ({
           <Stack horizontal grow>
             <Stack gap="paragraph">
               {space && (
-                <Heading level={6} color="gray2">
+                <Heading color="gray2">
                   {space} {channel && `#${channel}`}
                 </Heading>
               )}

@@ -7,7 +7,7 @@ export type ParagraphProps = {
   as?: "p" | "span" | "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5";
   className?: string;
   children?: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg";
   truncate?: boolean;
   strong?: boolean;
 } & Omit<TextSprinkles, "size" | "fontSize"> &

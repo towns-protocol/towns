@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  BackgroundImage,
-  Box,
-  BoxProps,
-  Card,
-  Heading,
-  Icon,
-  Stack,
-} from "@ui";
+import { BackgroundImage, Box, BoxProps, Card, Icon, Stack, Text } from "@ui";
 
 type Props = {
   colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
@@ -33,10 +25,8 @@ export const SaleCard = ({
   >
     <Box grow>{imageSrc && <BackgroundImage src={imageSrc} />}</Box>
     <Stack gap="md" padding="md">
-      <Heading level={6} color="gray1">
-        {space}
-      </Heading>
-      <Heading level={4}>{supply}</Heading>
+      <Text color="gray1">{space}</Text>
+      <Text>{supply}</Text>
       <Stack horizontal>
         <Icon type="eth" size="square_inline" />
         {floorPrice}

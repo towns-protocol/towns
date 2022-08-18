@@ -17,7 +17,9 @@ export const AddLinkModal = (props: {
   return (
     <ModalContainer onHide={props.onHide}>
       <Stack gap="lg">
-        <Heading level={4}>Add Link</Heading>
+        <Text strong size="lg">
+          Add Link
+        </Text>
         <TextField
           autoFocus
           ref={fieldRef}
@@ -26,7 +28,7 @@ export const AddLinkModal = (props: {
           label="Link"
           autoComplete="false"
           type="text"
-          placeholder="e.g https://google.com"
+          placeholder="e.g. https://mirror.xyz/"
         />
         <Stack horizontal gap justifyContent="end">
           <Button tone="neutral" onClick={props.onHide}>

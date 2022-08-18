@@ -6,12 +6,13 @@ export const typeProperties = defineProperties({
   ...responsivePropertiesMixin,
   properties: {
     fontVariationSettings: vars.fontVariationSettings,
+    fontWeight: vars.fontWeight,
     fontSize: vars.fontSize,
     textAlign: vars.textAlign,
     textTransform: vars.textTransform,
     fontStyle: ["normal", "italic"],
   },
   shorthands: {
-    fontWeight: ["fontVariationSettings"],
+    // fontWeight: ["fontVariationSettings"],
   },
 });
