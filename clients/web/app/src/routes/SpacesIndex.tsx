@@ -98,7 +98,6 @@ export const LiquidContainer = forwardRef<
     width="100%"
     {...props}
     ref={ref}
-    paddingX="lg"
   />
 ));
 
@@ -199,7 +198,7 @@ const QuotedMessage = (props: {
       <Stack horizontal gap="sm" height="height_md" alignItems="center">
         {props.avatar}
         <Box gap="sm" color="gray1">
-          <Heading level={6}>Bored Ape Yacht Club</Heading>
+          <Heading>Bored Ape Yacht Club</Heading>
           <Paragraph size="sm">@boredapeYC</Paragraph>
         </Box>
       </Stack>

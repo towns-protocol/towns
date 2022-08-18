@@ -2,7 +2,7 @@ import { AnimatePresence } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import { FadeIn } from "@components/Transitions";
 import { Button } from "@ui";
-import { IconName } from "ui/components/Icon";
+import { Icon, IconName } from "ui/components/Icon";
 import { ButtonSpinner } from "./Spinner/ButtonSpinner";
 
 export const LoginButton = (props: {
@@ -15,7 +15,10 @@ export const LoginButton = (props: {
 
   return (
     <AnimatePresence exitBeforeEnter>
-      <Button onClick={props.onClick}>
+      <Button minWidth="250" onClick={props.onClick}>
+        <FadeIn layout key="metamaks">
+          <Icon type="metamask" />
+        </FadeIn>
         <FadeIn layout key={props.label}>
           {props.label}
         </FadeIn>

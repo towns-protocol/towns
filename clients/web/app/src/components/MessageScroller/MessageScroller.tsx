@@ -14,7 +14,7 @@ import {
   RichTextPreview,
 } from "@components/RichText/RichTextEditor";
 import { FadeIn } from "@components/Transitions";
-import { Avatar, Box, Button, Stack } from "@ui";
+import { Avatar, Box, Button, Paragraph, Stack } from "@ui";
 import {
   messageFilter,
   useMessageReplyCount,
@@ -99,7 +99,14 @@ export const MessageScroller = (props: {
                       onSend={onSaveEditedMessage}
                     />
                     <Stack horizontal gap>
-                      <Button tone="neutral" onClick={onCancelEdit}>
+                      <Button
+                        size="button_sm"
+                        tone="cta1"
+                        onClick={onCancelEdit}
+                      >
+                        Save
+                      </Button>
+                      <Button size="button_sm" onClick={onCancelEdit}>
                         Cancel
                       </Button>
                       {/* <Button onClick={onCancelEdit}>Save</Button> */}
@@ -109,22 +116,19 @@ export const MessageScroller = (props: {
                   <RichTextPreview content={getMessageContent(m)} />
                 )}
                 {repliedMessages[m.eventId] && (
-                  <Box horizontal paddingY="sm">
+                  <Box horizontal paddingY="md">
                     <Box
                       shrink
                       centerContent
                       horizontal
                       gap="sm"
-                      paddingY="sm"
-                      paddingX="sm"
-                      background="level2"
-                      rounded="xs"
                       cursor="pointer"
                       onClick={() => props.onSelectMessage?.(m.eventId)}
                     >
-                      <Avatar size="avatar_sm" />
-                      {repliedMessages[m.eventId]}
-                      {repliedMessages[m.eventId] > 1 ? " Replies" : " Reply"}
+                      <Paragraph strong size="sm" color="accent">
+                        {repliedMessages[m.eventId]}
+                        {repliedMessages[m.eventId] > 1 ? " replies" : " reply"}
+                      </Paragraph>
                     </Box>
                   </Box>
                 )}
@@ -210,7 +214,9 @@ const useMessageScroll = (
 function getMessageContent(message: RoomMessage) {
   switch (message.msgType) {
     case MessageType.WenMoon:
-      return `${message.body}\n*${message.eventId}*`;
+      return `${message.body} 
+      ${message.eventId}
+      `;
     case MessageType.Text:
       return message.body;
     default:

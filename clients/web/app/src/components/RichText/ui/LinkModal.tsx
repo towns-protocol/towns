@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from "react";
 import { ModalContainer } from "@components/Modals/ModalContainer";
-import { Button, Heading, Stack, TextField } from "@ui";
+import { Button, Stack, Text, TextField } from "@ui";
 
 export const AddLinkModal = (props: {
   onHide: () => void;
@@ -31,10 +31,10 @@ export const AddLinkModal = (props: {
           placeholder="e.g. https://mirror.xyz/"
         />
         <Stack horizontal gap justifyContent="end">
-          <Button tone="neutral" onClick={props.onHide}>
-            Cancel
+          <Button onClick={props.onHide}>Cancel</Button>
+          <Button tone="cta1" onClick={onSave}>
+            Save
           </Button>
-          <Button onClick={onSave}>Save</Button>
         </Stack>
       </Stack>
     </ModalContainer>

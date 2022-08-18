@@ -84,7 +84,7 @@ export const CreateSpaceForm = (props: Props) => {
         />
 
         <Box gap="md">
-          <Heading level={4}>Space URL</Heading>
+          <Heading>Space URL</Heading>
           <Paragraph>This is what your official URL will look like</Paragraph>
           <Paragraph strong truncate size="md" display="inline-block">
             zion.xyz/
@@ -92,7 +92,7 @@ export const CreateSpaceForm = (props: Props) => {
           </Paragraph>
         </Box>
       </Stack>
-      <Button size="input_lg" onClick={onClickCreateSpace}>
+      <Button size="button_lg" onClick={onClickCreateSpace}>
         Create
       </Button>
     </Stack>

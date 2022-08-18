@@ -35,11 +35,11 @@ export const Proposal = (props: Props) => {
       </Box>
       <Box>
         {!props.results ? (
-          <Button tone="positive" size="input_sm">
+          <Button tone="positive" size="button_sm">
             Open
           </Button>
         ) : (
-          <Button tone="cta2" size="input_sm">
+          <Button tone="cta2" size="button_sm">
             Closed
           </Button>
         )}

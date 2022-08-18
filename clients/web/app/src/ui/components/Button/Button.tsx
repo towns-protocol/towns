@@ -1,7 +1,7 @@
 import { Variants, motion } from "framer-motion";
 import React, { ButtonHTMLAttributes } from "react";
-import { Box } from "@ui";
-import { ToneNameType } from "ui/styles/themes";
+import { Box, BoxProps } from "@ui";
+import { vars } from "ui/styles/vars.css";
 import { Icon, IconName } from "../Icon";
 import { ButtonStyleVariants, buttonStyle } from "./Button.css";
 
@@ -9,9 +9,10 @@ type StyleProps = Omit<NonNullable<ButtonStyleVariants>, "active">;
 
 type Props = {
   children?: React.ReactNode;
-  tone?: ToneNameType;
+  tone?: keyof typeof vars.color.background;
   icon?: IconName;
   disabled?: boolean;
+  minWidth?: BoxProps["minWidth"];
   onClick?: (e: React.MouseEvent) => void;
 } & Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -20,9 +21,9 @@ type Props = {
   StyleProps;
 
 export const Button = ({
-  size = "input_md",
+  size = "button_md",
   disabled,
-  tone = "cta1",
+  tone = "level3",
   icon,
   children,
   onClick,

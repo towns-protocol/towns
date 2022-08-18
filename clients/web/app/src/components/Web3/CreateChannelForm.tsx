@@ -86,7 +86,7 @@ export const CreateChannelForm = (props: Props) => {
         />
       </Stack>
       <Button
-        size="input_lg"
+        size="button_lg"
         disabled={disableCreateButton}
         onClick={onClickCreatChannel}
       >

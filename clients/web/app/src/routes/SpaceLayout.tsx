@@ -3,21 +3,27 @@ import { useParams } from "react-router";
 import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
 import { RoomIdentifier, useSpaceId } from "use-zion-client";
 import { Stack } from "ui/components/Stack/Stack";
-import { Box, Heading, SizeBox } from "@ui";
+import { Box, Button, SizeBox } from "@ui";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceLayout = () => {
   const { spaceSlug } = useParams();
+  const home = useMatch("/spaces/:space/");
+
   const spaceId = useSpaceId(spaceSlug);
   if (!spaceId) {
     return null;
   }
   return (
-    <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">
+    <Stack horizontal grow justifyContent="center" basis="1200">
       <LiquidContainer fullbleed position="relative">
-        <SizeBox grow gap="lg" paddingTop="lg">
-          <SpaceNav spaceId={spaceId} />
-          <Outlet />
+        <SizeBox grow gap="lg">
+          <Box paddingX="lg" paddingTop="lg">
+            <SpaceNav spaceId={spaceId} />
+          </Box>
+          <Box grow position="relative" paddingX={home ? undefined : "lg"}>
+            <Outlet />
+          </Box>
         </SizeBox>
       </LiquidContainer>
     </Stack>
@@ -25,7 +31,7 @@ export const SpaceLayout = () => {
 };
 
 export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
-  <Stack horizontal gap="lg">
+  <Stack horizontal gap="md">
     <SpaceNavItem to={`/spaces/${props.spaceId.slug}/highlights`}>
       Highlights
     </SpaceNavItem>
@@ -35,6 +41,7 @@ export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
     <SpaceNavItem to={`/spaces/${props.spaceId.slug}/members`}>
       Members
     </SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/`}>Chat</SpaceNavItem>
   </Stack>
 );
 
@@ -53,9 +60,9 @@ const SpaceNavItem = (props: {
   return (
     <Box>
       <NavLink to={props.to}>
-        <Heading level={2} color={match ? "default" : "gray2"}>
+        <Button size="button_md" tone={match ? "cta1" : "level2"}>
           {props.children}
-        </Heading>
+        </Button>
       </NavLink>
     </Box>
   );

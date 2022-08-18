@@ -50,7 +50,7 @@ const root = createGlobalTheme(":root", {
       // hero avatar
       square_xxl: `${baseline * 10}px`,
 
-      square_inline: `1.2em`,
+      square_inline: `1.5em`,
     },
     height: {
       /** text */
@@ -106,7 +106,9 @@ const root = createGlobalTheme(":root", {
       "1": "1px",
       "2": "2px",
       "100": `100px`,
+      "150": `150px`,
       "200": `200px`,
+      "250": `250px`,
       "300": `300px`,
       "400": `400px`,
       "500": `500px`,
@@ -130,9 +132,9 @@ const root = createGlobalTheme(":root", {
       input_lg: `${baseline * 6}px`,
     },
     button: {
-      input_sm: `${baseline * 3}px`,
-      input_md: `${baseline * 4}px`,
-      input_lg: `${baseline * 6}px`,
+      button_sm: `${baseline * 4}px`,
+      button_md: `${baseline * 6}px`,
+      button_lg: `${baseline * 8}px`,
     },
   } as const,
 

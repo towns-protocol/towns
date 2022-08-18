@@ -42,11 +42,8 @@ export const ChannelNavItem = (props: Props) => {
               size="square_lg"
             />
           }
-          <ButtonText
-            color={isHighlight ? "default" : "gray1"}
-            strong={isHighlight}
-          >
-            {channel.label}
+          <ButtonText strong={isHighlight}>
+            {channel.label.toLocaleLowerCase()}
           </ButtonText>
         </NavItem>
       )}

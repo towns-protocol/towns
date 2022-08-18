@@ -45,12 +45,12 @@ export const SidebarLayout = () => {
     }
   }, [myProfile, navigate, userId]);
 
-  const isSpacesExpanded = sizes[0] > 65;
+  const isSpacesExpanded = sizes[0] > 120;
 
   const onExpandSpaces = useEvent(() => {
     const newSizes = [...sizes];
 
-    newSizes[0] = isSpacesExpanded ? 65 : 250;
+    newSizes[0] = isSpacesExpanded ? 65 : 320;
     onSizesChange(newSizes);
     setTimeout(() => {
       allotemntRef.current?.reset();
@@ -69,7 +69,7 @@ export const SidebarLayout = () => {
           {/* left-side side-bar goes here */}
           <Allotment.Pane
             minSize={65}
-            maxSize={250}
+            maxSize={320}
             preferredSize={sizes[0] || 65}
           >
             <MainSideBar
@@ -81,8 +81,8 @@ export const SidebarLayout = () => {
           {/* left-side side-bar goes here */}
           <Allotment.Pane
             minSize={180}
-            maxSize={250}
-            preferredSize={sizes[1] || 250}
+            maxSize={320}
+            preferredSize={sizes[1] || 320}
           >
             {space && !homeRoute ? <SpaceSideBar space={space} /> : <></>}
           </Allotment.Pane>
@@ -90,9 +90,9 @@ export const SidebarLayout = () => {
           {/* secondary side bar */}
           <Allotment.Pane
             minSize={180}
-            maxSize={250}
+            maxSize={320}
             visible={!!isSecondarySidebarActive}
-            preferredSize={sizes[2] || 250}
+            preferredSize={sizes[2] || 320}
           >
             <MessagesSideBar />
           </Allotment.Pane>

@@ -27,12 +27,7 @@ export const ActionNavItem = ({
           size="square_lg"
         />
       )}
-      <ButtonText
-        color={isHighlight ? "default" : "gray1"}
-        strong={isHighlight}
-      >
-        {label}
-      </ButtonText>
+      <ButtonText>{label}</ButtonText>
     </NavItem>
   );
 };

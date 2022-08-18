@@ -16,10 +16,10 @@ import {
   Avatar,
   Box,
   Button,
-  Heading,
   Icon,
   RadioSelect,
   Stack,
+  Text,
   TextField,
 } from "@ui";
 import {
@@ -44,22 +44,36 @@ const placeholders = {
     .map((_, index) => `/placeholders/nft_${index + 1}.png`),
 };
 
-export const SignupForm = () => {
+export const RegisterForm = () => {
   const { accounts, walletStatus } = useWeb3Context();
   const { registerWallet, setDisplayName, setAvatarUrl } = useZionClient();
+  const navigate = useNavigate();
+  const { loginStatus } = useMatrixStore();
+  const myProfile = useMyProfile();
+
   const { setValue, resetField, register, handleSubmit, watch, formState } =
     useForm({
       defaultValues: {
         walletAddress: accounts[0],
         ens: undefined,
-        displayName: "",
+        displayName: myProfile?.displayName ?? "",
         nft: "",
       },
     });
 
-  const navigate = useNavigate();
-  const { loginStatus } = useMatrixStore();
-  const myProfile = useMyProfile();
+  useEffect(() => {
+    const displayName = myProfile?.displayName;
+    if (displayName) {
+      setValue("displayName", displayName);
+    }
+  }, [myProfile?.displayName, setValue]);
+  useEffect(() => {
+    const avatarUrl = myProfile?.avatarUrl;
+    if (avatarUrl) {
+      setValue("nft", avatarUrl);
+    }
+  }, [myProfile?.avatarUrl, setValue]);
+
   const isConnected = walletStatus === WalletStatus.Unlocked;
   const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected);
 
@@ -181,9 +195,9 @@ export const SignupForm = () => {
             <RadioSelect
               label="(Optional) Set an ENS as your username:"
               renderLabel={(label) => (
-                <Heading level={5} color="gray2">
+                <Text size="lg" color="gray2">
                   {label}
-                </Heading>
+                </Text>
               )}
               columns={2}
               options={placeholders.names.map((value) => ({
@@ -219,8 +233,8 @@ export const SignupForm = () => {
           applyChildProps={() => register("nft", { required: false })}
         />
       )}
-      <Button type="submit" size="input_lg" tone="cta1">
-        Submit
+      <Button type="submit" tone="cta1">
+        Next
       </Button>
     </Stack>
   );

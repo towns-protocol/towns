@@ -1,6 +1,5 @@
 import React from "react";
 import { useMatrixStore, useMyProfile } from "use-zion-client";
-import { Heading } from "@ui";
 import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";
 
@@ -11,10 +10,9 @@ export const MeIndex = () => {
     return <>"404"</>;
   }
   return (
-    <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">
+    <Stack horizontal grow justifyContent="center" basis="1200">
       <LiquidContainer fullbleed position="relative">
-        <Stack gap="lg" width="600">
-          <Heading level={2}>Welcome </Heading>
+        <Stack padding gap="lg" width="600">
           <Stack gap="md">
             <p>
               IsAuthenticated: <strong>{String(isAuthenticated)}</strong>

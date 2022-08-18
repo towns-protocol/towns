@@ -50,11 +50,12 @@ export const MainSideBar = (props: Props) => {
       <Stack
         padding
         gap
+        key="profile_container"
         justifyContent="spaceBetween"
         alignItems="start"
         horizontal={isExpanded}
       >
-        <ProfileCardButton />
+        <ProfileCardButton expanded={isExpanded} />
         <IconButton
           centerContent
           opaque

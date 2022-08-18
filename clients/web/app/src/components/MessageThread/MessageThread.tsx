@@ -42,9 +42,8 @@ export const MessageThread = (props: Props) => {
             <Message
               paddingX="lg"
               paddingY="sm"
-              name="m00nfLee"
-              date="Today, 11:03pm"
-              avatar={<Avatar />}
+              name={parentMessage.sender}
+              avatar={<Avatar src={parentMessage.senderAvatarUrl} />}
             >
               <RichTextPreview content={parentMessage.body} />
             </Message>
@@ -59,9 +58,8 @@ export const MessageThread = (props: Props) => {
               <Message
                 paddingX="lg"
                 paddingY="sm"
-                name="m00nfLee"
-                date="Today, 11:03pm"
-                avatar={<Avatar src="/placeholders/nft_3.png" />}
+                name={m.sender}
+                avatar={<Avatar src={m.senderAvatarUrl} />}
               >
                 <RichTextPreview content={m.body} />
               </Message>

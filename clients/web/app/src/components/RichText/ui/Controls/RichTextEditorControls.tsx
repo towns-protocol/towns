@@ -6,7 +6,7 @@ export const RichTextEditorControls = (props: {
   onToggleType: () => void;
 }) => {
   return (
-    <Stack horizontal gap color="gray2" alignItems="end" height="100%">
+    <Stack horizontal gap="sm" color="gray2" alignItems="end" height="100%">
       <IconButton icon="emoji" />
       <IconButton
         icon="type"

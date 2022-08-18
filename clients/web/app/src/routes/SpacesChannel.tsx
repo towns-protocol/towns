@@ -61,7 +61,11 @@ export const SpacesChannel = () => {
         <Allotment.Pane minSize={550}>
           {myMembership !== Membership.Join ? (
             <Box absoluteFill centerContent>
-              <Button key={channelSlug} size="input_lg" onClick={onJoinChannel}>
+              <Button
+                key={channelSlug}
+                size="button_lg"
+                onClick={onJoinChannel}
+              >
                 Join #{channel.label}
               </Button>
             </Box>

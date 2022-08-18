@@ -16,30 +16,30 @@ export const buttonStyle = recipe({
     },
   },
   defaultVariants: {
-    size: "input_md",
+    size: "button_md",
   },
   variants: {
     size: {
-      input_sm: {
+      button_sm: {
         fontSize: vars.fontSize.sm,
-        height: vars.dims.button.input_sm,
-        fontVariationSettings: vars.fontVariationSettings.normal,
-        paddingLeft: vars.space.sm,
-        paddingRight: vars.space.sm,
-        gap: vars.space.xs,
-      },
-      input_md: {
-        fontSize: vars.fontSize.sm,
-        height: vars.dims.button.input_md,
+        height: vars.dims.button.button_sm,
         fontVariationSettings: vars.fontVariationSettings.normal,
         paddingLeft: vars.space.md,
         paddingRight: vars.space.md,
         gap: vars.space.sm,
       },
-      input_lg: {
+      button_md: {
+        fontSize: vars.fontSize.md,
+        height: vars.dims.button.button_md,
+        fontVariationSettings: vars.fontVariationSettings.normal,
+        paddingLeft: vars.dims.baseline.x3,
+        paddingRight: vars.dims.baseline.x3,
+        gap: vars.space.sm,
+      },
+      button_lg: {
         fontSize: vars.fontSize.lg,
-        fontVariationSettings: vars.fontVariationSettings.strong,
-        height: vars.dims.button.input_lg,
+        fontVariationSettings: vars.fontVariationSettings.normal,
+        height: vars.dims.button.button_lg,
         padding: vars.space.md,
         paddingLeft: vars.space.lg,
         paddingRight: vars.space.lg,

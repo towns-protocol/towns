@@ -62,12 +62,12 @@ export const SpaceSideBar = (props: Props) => {
         )}
         {space?.membership === Membership.Join && (
           <>
-            <ActionNavItem
+            {/* <ActionNavItem
               icon="threads"
               link={`/spaces/${space.id.slug}/highlights`}
               id="highlights"
               label="Highlights"
-            />
+            /> */}
             <ActionNavItem
               icon="threads"
               link={`/spaces/${space.id.slug}/threads`}

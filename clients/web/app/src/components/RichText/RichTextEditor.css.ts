@@ -1,4 +1,5 @@
 import { globalStyle, style } from "@vanilla-extract/css";
+import { atoms } from "ui/styles/atoms.css";
 import { vars } from "ui/styles/vars.css";
 
 export const contentEditable = style(
@@ -8,8 +9,9 @@ export const contentEditable = style(
   "debug-contentEditable",
 );
 
-export const richTextEditorUI = style({
-  padding: vars.dims.baseline.x2,
+export const richTextEditorUI = atoms({
+  paddingX: "md",
+  paddingY: "paragraph",
 });
 
 globalStyle(`${contentEditable} p + p, ${contentEditable} li + li`, {

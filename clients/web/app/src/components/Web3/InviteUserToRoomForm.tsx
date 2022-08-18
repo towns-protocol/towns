@@ -48,10 +48,10 @@ export const InviteUserToRoomForm = (props: Props) => {
           placeholder="@userId:homeServer"
           onChange={onChangeUserId}
         />
-        <Button size="input_lg" onClick={onInviteClicked}>
+        <Button size="button_lg" onClick={onInviteClicked}>
           Invite
         </Button>
-        <Button size="input_lg" tone="neutral" onClick={props.onCancelClicked}>
+        <Button size="button_lg" tone="neutral" onClick={props.onCancelClicked}>
           Cancel
         </Button>
       </Stack>
