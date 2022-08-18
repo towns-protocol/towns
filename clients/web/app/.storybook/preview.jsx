@@ -1,4 +1,4 @@
-import { darkClass, lightClass } from '../src/ui/styles/css/storybook.css';
+import { darkClass, lightClass } from '../src/ui/styles/globals/storybook.css';
 import { FontLoader } from '../src/ui/utils/FontLoader';
 import { themeDark, themeLight } from './theme';
 
