@@ -6,11 +6,7 @@ import { fontStyles } from "./Text.css";
 
 const f = fontStyles.find((f) => f.fontFamily === "TitleFont")?.className;
 
-export const base = style([
-  {
-  },
-  f ?? "",
-]);
+export const base = style([{}, f ?? ""]);
 
 export const flexaProperties = defineProperties({
   ...responsivePropertiesMixin,

@@ -5,8 +5,7 @@ globalStyle(":root", {
   fontFamily: "BodyFont, sans-serif",
 });
 
-globalStyle("h1, h2, h3, h4, h5", {
-});
+globalStyle("h1, h2, h3, h4, h5", {});
 
 globalStyle("p", {
   fontSize: vars.fontSize.md,
