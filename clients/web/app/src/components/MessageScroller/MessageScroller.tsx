@@ -1,3 +1,4 @@
+import { RelationType } from "matrix-js-sdk";
 import React, {
   RefObject,
   useEffect,
@@ -14,9 +15,11 @@ import {
   RichTextPreview,
 } from "@components/RichText/RichTextEditor";
 import { FadeIn } from "@components/Transitions";
-import { Avatar, Box, Button, Paragraph, Stack } from "@ui";
+import { Avatar, Box, Paragraph, Stack } from "@ui";
+import { useEditMessage } from "hooks/useEditMessage";
+import { useEditedMessages } from "hooks/useFixMeEditMessage";
 import {
-  messageFilter,
+  useFilterReplies,
   useMessageReplyCount,
 } from "hooks/useFixMeMessageThread";
 
@@ -27,6 +30,10 @@ export const MessageScroller = (props: {
   onSelectMessage?: (id: string) => void;
   hideThreads?: boolean;
   before?: JSX.Element;
+  messageContext?: {
+    spaceSlug: string;
+    channelSlug: string;
+  };
 }) => {
   const { messages } = props;
 
@@ -39,11 +46,12 @@ export const MessageScroller = (props: {
     messages.length,
   );
 
-  const filteredMessages = props.hideThreads
-    ? messages.filter(messageFilter)
-    : messages;
-
-  const paginatedMessages = filteredMessages.slice(-displayCount);
+  // strip-out replies on main timeline (hack!)
+  const { filteredMessages } = useFilterReplies(messages, props.hideThreads);
+  // replace original messages by edits (hack!)
+  const { editedMessages } = useEditedMessages(filteredMessages);
+  // create a slice of messages to display
+  const paginatedMessages = editedMessages.slice(-displayCount);
 
   const { endRef } = useMessageScroll(
     containerRef,
@@ -58,9 +66,16 @@ export const MessageScroller = (props: {
     );
   });
 
+  const { sendEditedMessage } = useEditMessage(
+    props.messageContext?.spaceSlug,
+    props.messageContext?.channelSlug,
+  );
+
   const onSaveEditedMessage = (value: string) => {
-    // saveMessage(editMessageId, value);
-    setEditMessageId(undefined);
+    if (editMessageId) {
+      sendEditedMessage(value, editMessageId);
+      setEditMessageId(undefined);
+    }
   };
 
   const onCancelEdit = useEvent(() => {
@@ -95,25 +110,20 @@ export const MessageScroller = (props: {
                   <Stack gap>
                     <RichTextEditor
                       editing
+                      displayButtons
                       initialValue={m.body}
                       onSend={onSaveEditedMessage}
+                      onCancel={onCancelEdit}
                     />
-                    <Stack horizontal gap>
-                      <Button
-                        size="button_sm"
-                        tone="cta1"
-                        onClick={onCancelEdit}
-                      >
-                        Save
-                      </Button>
-                      <Button size="button_sm" onClick={onCancelEdit}>
-                        Cancel
-                      </Button>
-                      {/* <Button onClick={onCancelEdit}>Save</Button> */}
-                    </Stack>
                   </Stack>
                 ) : (
-                  <RichTextPreview content={getMessageContent(m)} />
+                  <RichTextPreview
+                    content={getMessageContent(m)}
+                    edited={
+                      m.content["m.relates_to"]?.rel_type ===
+                      RelationType.Replace
+                    }
+                  />
                 )}
                 {repliedMessages[m.eventId] && (
                   <Box horizontal paddingY="md">

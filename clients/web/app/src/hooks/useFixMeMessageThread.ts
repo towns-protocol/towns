@@ -1,12 +1,19 @@
-import { useCallback, useEffect, useMemo } from "react";
-import {
-  RoomMessage,
-  useChannel,
-  useMatrixStore,
-  useZionClient,
-} from "use-zion-client";
+import { useMemo } from "react";
+import { RoomMessage, useChannel, useMatrixStore } from "use-zion-client";
 
-export const messageFilter = (m: RoomMessage) => !m.content?.["m.relates_to"];
+export const useFilterReplies = (messages: RoomMessage[], bypass = false) => {
+  const filteredMessages = useMemo(
+    () =>
+      bypass
+        ? messages
+        : messages.filter(
+            (m: RoomMessage) => !m.content?.["m.relates_to"]?.["m.in_reply_to"],
+          ),
+    [bypass, messages],
+  );
+
+  return { filteredMessages };
+};
 
 /**
  * TODO: https://github.com/HereNotThere/harmony/issues/203
@@ -36,49 +43,21 @@ export const useMessageThread = (
   }, [channelMessages, messageId]);
 
   const messages = channelMessages.reduce((messages, m) => {
-    const content = m.content;
-    if (content) {
-      const parent = content["m.relates_to"]?.event_id;
-      if (
-        parent === messageId &&
-        !messages.some((s) => s.eventId === m.eventId)
-      ) {
-        return [...messages, m];
-      }
+    const reply = getMessageAsReply(m);
+    const parentId = reply && reply["m.relates_to"].event_id;
+    if (
+      parentId === messageId &&
+      !messages.some((s) => s.eventId === m.eventId)
+    ) {
+      return [...messages, m];
     }
     return messages;
   }, [] as RoomMessage[]);
-
-  useEffect(() => {
-    console.log({ messages });
-  }, [messages]);
 
   return {
     parentMessage,
     messages,
   };
-};
-
-export const useSendReply = (
-  spaceSlug?: string,
-  channelSlug?: string,
-  threadId?: string,
-) => {
-  const { sendMessage } = useZionClient();
-
-  const channel = useChannel(spaceSlug, channelSlug);
-
-  const sendReply = useCallback(
-    (value: string) => {
-      if (value && channel?.id) {
-        sendMessage(channel?.id, value, { threadId: threadId });
-      }
-      return sendReply;
-    },
-    [channel?.id, threadId, sendMessage],
-  );
-
-  return { sendReply };
 };
 
 /**
@@ -89,12 +68,26 @@ export const useMessageReplyCount = (messages: RoomMessage[]) => {
   return useMemo(
     () =>
       messages.reduce((threads, m) => {
-        const relatedTo = m.content?.["m.relates_to"]?.event_id;
-        if (relatedTo) {
-          threads[relatedTo] = threads[relatedTo] ? threads[relatedTo] + 1 : 1;
+        const reply = getMessageAsReply(m);
+        const parentId = reply && reply["m.relates_to"].event_id;
+        if (parentId) {
+          threads[parentId] = threads[parentId] ? threads[parentId] + 1 : 1;
         }
         return threads;
       }, {} as { [key: string]: number }),
     [messages],
   );
+};
+
+const getMessageAsReply = (m: RoomMessage) => {
+  const content = m.content;
+  const relatesTo = content?.["m.relates_to"];
+  //?.["rel_type"] === "io.element.thread";
+  if (
+    relatesTo &&
+    relatesTo["m.in_reply_to"] &&
+    relatesTo.rel_type === "io.element.thread"
+  ) {
+    return { ...m, "m.relates_to": { ...relatesTo } } as const;
+  }
 };

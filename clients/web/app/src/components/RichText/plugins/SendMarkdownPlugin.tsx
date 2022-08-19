@@ -6,15 +6,18 @@ import {
   COMMAND_PRIORITY_HIGH,
   KEY_ENTER_COMMAND,
 } from "lexical";
-import { useCallback, useLayoutEffect } from "react";
+import React, { useCallback, useLayoutEffect } from "react";
+import { Button, Stack } from "@ui";
 
 export const SendMarkdownPlugin = (props: {
+  displayButtons?: boolean;
   onSend: (value: string) => void;
+  onCancel?: () => void;
 }) => {
-  const { onSend: onEnterPress } = props;
+  const { onSend } = props;
   const [editor] = useLexicalComposerContext();
 
-  const { parseMarkdown } = useParseMarkdown(onEnterPress);
+  const { parseMarkdown } = useParseMarkdown(onSend);
 
   useLayoutEffect(() => {
     return mergeRegister(
@@ -32,9 +35,32 @@ export const SendMarkdownPlugin = (props: {
         COMMAND_PRIORITY_HIGH,
       ),
     );
-  }, [editor, onEnterPress, parseMarkdown]);
+  }, [editor, onSend, parseMarkdown]);
 
-  return null;
+  const sendMessage = useCallback(() => {
+    parseMarkdown();
+    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, true);
+  }, [editor, parseMarkdown]);
+
+  return props.displayButtons ? (
+    <EditMessageButtons onCancel={props.onCancel} onSave={sendMessage} />
+  ) : null;
+};
+
+const EditMessageButtons = (props: {
+  onSave?: () => void;
+  onCancel?: () => void;
+}) => {
+  return (
+    <Stack horizontal gap>
+      <Button size="button_sm" tone="cta1" onClick={props.onSave}>
+        Save
+      </Button>
+      <Button size="button_sm" onClick={props.onCancel}>
+        Cancel
+      </Button>
+    </Stack>
+  );
 };
 
 const useParseMarkdown = (onEnterPress: (value: string) => void) => {

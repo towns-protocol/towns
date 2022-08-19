@@ -1,5 +1,5 @@
 import { Allotment } from "allotment";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useOutlet, useParams } from "react-router-dom";
 import {
@@ -47,6 +47,12 @@ export const SpacesChannel = () => {
 
   const hasThreadOpen = !!messageId;
 
+  const messageContext = useMemo(() => {
+    if (spaceSlug && channelSlug) {
+      return { spaceSlug, channelSlug };
+    }
+  }, [channelSlug, spaceSlug]);
+
   if (!channel) {
     return (
       <div>
@@ -76,6 +82,7 @@ export const SpacesChannel = () => {
                 key={channelSlug}
                 messages={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
+                messageContext={messageContext}
                 onSelectMessage={onSelectMessage}
               />
               <Box paddingBottom="lg" paddingX="lg">

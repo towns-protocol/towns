@@ -4,6 +4,7 @@ import {
   MatrixClient,
   MatrixEvent,
   MatrixEventEvent,
+  PendingEventOrdering,
   Room as MatrixRoom,
   RoomEvent,
   RoomMemberEvent,
@@ -13,6 +14,7 @@ import {
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
+  EditMessageOptions,
   PowerLevel,
   PowerLevels,
   RoomIdentifier,
@@ -34,6 +36,7 @@ import { joinZionRoom } from "./matrix/Join";
 import { sendZionMessage } from "./matrix/SendMessage";
 import { setZionPowerLevel } from "./matrix/SetPowerLevels";
 import { syncZionSpace } from "./matrix/SyncSpace";
+import { editZionMessage } from "./matrix/EditMessage";
 
 /***
  * Zion Client
@@ -137,6 +140,9 @@ export class ZionClient {
     }
     // start client
     await this.client.startClient({
+      // FIXME: this slows down the experience but seems to be needed to allow
+      // message editing
+      pendingEventOrdering: PendingEventOrdering.Detached,
       initialSyncLimit: this.opts.initialSyncLimit,
     });
     // wait for the sync to complete
@@ -246,6 +252,19 @@ export class ZionClient {
     options: SendMessageOptions = {},
   ) {
     return await sendZionMessage({
+      matrixClient: this.client,
+      roomId,
+      message,
+      options,
+    });
+  }
+
+  public async editMessage(
+    roomId: RoomIdentifier,
+    message: string,
+    options: EditMessageOptions,
+  ) {
+    return await editZionMessage({
       matrixClient: this.client,
       roomId,
       message,

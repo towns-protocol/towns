@@ -1,6 +1,7 @@
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
+  EditMessageOptions,
   PowerLevel,
   RoomIdentifier,
   SendMessageOptions,
@@ -46,6 +47,11 @@ interface ZionClientImpl {
     options?: SendMessageOptions,
   ) => Promise<void>;
   sendNotice: (roomId: RoomIdentifier, message: string) => Promise<void>;
+  editMessage: (
+    roomId: RoomIdentifier,
+    message: string,
+    options: EditMessageOptions,
+  ) => Promise<void>;
   setPowerLevel: (
     roomId: RoomIdentifier,
     current: string | PowerLevel,
@@ -111,6 +117,7 @@ export function useZionClient(): ZionClientImpl {
     scrollback: withCatch(client?.scrollback),
     sendMessage: withCatch(client?.sendMessage),
     sendNotice: withCatch(client?.sendNotice),
+    editMessage: withCatch(client?.editMessage),
     setPowerLevel: withCatch(client?.setPowerLevel),
     syncSpace,
     setDisplayName: withCatch(client?.setDisplayName),

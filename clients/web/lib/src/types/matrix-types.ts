@@ -152,6 +152,10 @@ export interface SendMessageOptions {
   messageType?: MessageType;
 }
 
+export interface EditMessageOptions {
+  originalEventId: string;
+}
+
 export interface PowerLevels {
   userPowers: { [userId: string]: number };
   levels: PowerLevel[];
