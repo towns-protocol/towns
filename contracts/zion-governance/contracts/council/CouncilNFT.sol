@@ -5,25 +5,17 @@ import "solmate/tokens/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "murky/Merkle.sol";
+import { Errors } from "../libraries/Errors.sol";
+import { Events } from "../libraries/Events.sol";
 
-/// @notice thrown when an incorrect amount of ETH is sent to mint
-error MintPriceNotPaid();
-/// @notice thrown when the max supply is reached
-error MaxSupply();
-/// @notice thrown when a token is not minted
-error NonExistentTokenURI();
-/// @notice thrown when the withdraw payment transaction fails
-error WithdrawTransfer();
-
-/// @notice thrown when user tries to mint more than 1 token with same wallet
-error AlreadyMinted();
-
+/**
+* @title CouncilNFT
+* @author HNT Labs
+*
+* @notice This is the main NFT contract for the council of Zion
+*/
 contract CouncilNFT is ERC721, Ownable {
     using Strings for uint256;
-
-    /// @notice emitted when an NFT is minted
-    /// @param recipient the address that receives the NFT
-    event Minted(address indexed recipient);
 
     /// @notice the base uri for the nft metadata including image uri
     string public baseURI;
@@ -73,7 +65,7 @@ contract CouncilNFT is ERC721, Ownable {
         uint256 allowance,
         bytes32[] calldata proof
     ) public payable returns (uint256) {
-        if (alreadyMinted[recipient]) revert AlreadyMinted();
+        if (alreadyMinted[recipient]) revert Errors.AlreadyMinted();
 
         if (allowlistMint == true) {
             require(allowance == 1, "Not allowed to mint yet");
@@ -106,16 +98,16 @@ contract CouncilNFT is ERC721, Ownable {
     /// @notice Mint the NFT to the user
     function mintTo(address recipient) private returns (uint256) {
         if (msg.value != MINT_PRICE) {
-            revert MintPriceNotPaid();
+            revert Errors.MintPriceNotPaid();
         }
         uint256 newItemId = ++currentTokenId;
         if (newItemId > TOTAL_SUPPLY) {
-            revert MaxSupply();
+            revert Errors.MaxSupply();
         }
         alreadyMinted[recipient] = true;
         _safeMint(recipient, newItemId);
 
-        emit Minted(recipient);
+        emit Events.Minted(recipient);
         return newItemId;
     }
 
@@ -130,7 +122,7 @@ contract CouncilNFT is ERC721, Ownable {
         returns (string memory)
     {
         if (ownerOf(tokenId) == address(0)) {
-            revert NonExistentTokenURI();
+            revert Errors.NonExistentTokenURI();
         }
         return
             bytes(baseURI).length > 0
@@ -144,7 +136,7 @@ contract CouncilNFT is ERC721, Ownable {
         uint256 balance = address(this).balance;
         (bool transferTx, ) = payee.call{value: balance}("");
         if (!transferTx) {
-            revert WithdrawTransfer();
+            revert Errors.WithdrawTransfer();
         }
     }
 

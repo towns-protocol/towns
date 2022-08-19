@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+library Errors {
+  /// @notice thrown when an incorrect amount of ETH is sent to mint
+  error MintPriceNotPaid();
+
+  /// @notice thrown when the max supply is reached
+  error MaxSupply();
+
+  /// @notice thrown when a token is not minted
+  error NonExistentTokenURI();
+
+  /// @notice thrown when the withdraw payment transaction fails
+  error WithdrawTransfer();
+
+  /// @notice thrown when user tries to mint more than 1 token with same wallet
+  error AlreadyMinted();
+}

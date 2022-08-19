@@ -23,7 +23,8 @@
     "bootstrap": "yarn clean && yarn build",
     "build": "yarn build:deps && yarn compile && FOUNDRY_PROFILE=governance forge build",
     "build:deps": "../../scripts/install-deps.sh",
-    "compile": "hardhat compile"
+    "compile": "hardhat compile",
+    "compile:foundry": "FOUNDRY_PROFILE=governance forge build"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@latest",

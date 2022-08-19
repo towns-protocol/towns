@@ -1,88 +1,36 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "murky/Merkle.sol";
 import "forge-std/Test.sol";
-import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "murky/Merkle.sol";
+import {MerkleHelper} from "./utils/MerkleHelper.sol";
+import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 
-contract NFTTest is Test {
+contract NFTTest is Test, MerkleHelper {
     using stdStorage for StdStorage;
     using Strings for uint256;
 
     CouncilNFT private nft;
-    Merkle private m;
+    Merkle private merkle;
 
-    uint256 private NFT_PRICE = .08 ether;
+    uint256 private NFT_PRICE = 0.08 ether;
     uint256 private NFT_SUPPLY = 2500;
 
     bytes32[] private allowlistData;
 
-    /// constants for testing
-    address private allowlist1 = address(1);
-    address private allowlist2 = address(2);
-    address private waitlist1 = address(3);
-    address private waitlist2 = address(4);
-    mapping(address => uint256) private userAllowanceMap;
-    mapping(address => uint256) private userPositionMap;
-
     function setUp() public {
         //initialize the test data
-        initPositionsAllowances();
-        allowlistData = generateAllowlistData();
+        _initPositionsAllowances();
+        allowlistData = _generateAllowlistData();
 
         //generate a merkle root from the allowlisted users test data
-        m = new Merkle();
-        bytes32 root = m.getRoot(allowlistData);
+        merkle = new Merkle();
+        bytes32 root = merkle.getRoot(allowlistData);
 
         //deploy the nft
         nft = new CouncilNFT("Zion", "zion", "baseUri", root);
-    }
-
-    /// initialze some constans for test users
-    function initPositionsAllowances() private {
-        userAllowanceMap[allowlist1] = 1;
-        userAllowanceMap[allowlist2] = 1;
-        userAllowanceMap[waitlist1] = 0;
-        userAllowanceMap[waitlist2] = 0;
-
-        userPositionMap[allowlist1] = 0;
-        userPositionMap[allowlist2] = 1;
-        userPositionMap[waitlist1] = 2;
-        userPositionMap[waitlist2] = 3;
-    }
-
-    /// Generates some data for a merkle proof to be used for the allowlist
-    function generateAllowlistData() internal view returns (bytes32[] memory) {
-        bytes32[] memory data = new bytes32[](4);
-
-        data[userPositionMap[allowlist1]] = keccak256(
-            abi.encodePacked(
-                allowlist1,
-                Strings.toString(userAllowanceMap[allowlist1])
-            )
-        );
-        data[userPositionMap[allowlist2]] = keccak256(
-            abi.encodePacked(
-                allowlist2,
-                Strings.toString(userAllowanceMap[allowlist2])
-            )
-        );
-        data[userPositionMap[waitlist1]] = keccak256(
-            abi.encodePacked(
-                waitlist1,
-                Strings.toString(userAllowanceMap[waitlist1])
-            )
-        );
-        data[userPositionMap[waitlist2]] = keccak256(
-            abi.encodePacked(
-                waitlist2,
-                Strings.toString(userAllowanceMap[waitlist2])
-            )
-        );
-
-        return data;
     }
 
     /// if public minting has not started, normal mints should fail
@@ -127,7 +75,7 @@ contract NFTTest is Test {
         uint256 position = userPositionMap[testingAddress];
         uint256 allowance = userAllowanceMap[testingAddress];
 
-        bytes32[] memory proof = m.getProof(allowlistData, position);
+        bytes32[] memory proof = merkle.getProof(allowlistData, position);
         nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
     }
 
@@ -138,7 +86,7 @@ contract NFTTest is Test {
         uint256 position = userPositionMap[waitlist1];
         uint256 allowance = 55; //random number
 
-        bytes32[] memory proof = m.getProof(allowlistData, position);
+        bytes32[] memory proof = merkle.getProof(allowlistData, position);
         nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
     }
 
@@ -151,7 +99,7 @@ contract NFTTest is Test {
         uint256 position = userPositionMap[testingAddress];
         uint256 allowance = userAllowanceMap[testingAddress];
 
-        bytes32[] memory proof = m.getProof(allowlistData, position);
+        bytes32[] memory proof = merkle.getProof(allowlistData, position);
         nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
     }
 
@@ -164,7 +112,7 @@ contract NFTTest is Test {
         uint256 position = userPositionMap[testingAddress];
         uint256 allowance = userAllowanceMap[testingAddress];
 
-        bytes32[] memory proof = m.getProof(allowlistData, position);
+        bytes32[] memory proof = merkle.getProof(allowlistData, position);
         nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
     }
 
@@ -175,7 +123,7 @@ contract NFTTest is Test {
         uint256 position = userPositionMap[testingAddress];
         uint256 allowance = userAllowanceMap[testingAddress];
 
-        bytes32[] memory proof = m.getProof(allowlistData, position);
+        bytes32[] memory proof = merkle.getProof(allowlistData, position);
         nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
     }
 
