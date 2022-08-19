@@ -5,9 +5,9 @@ import {
   Logging,
 } from "matrix-appservice-bridge";
 
+import { Main } from "./Main";
 import { IConfig } from "./IConfig";
 import { LOGGER_NAME } from "./global-const";
-import { Main } from "./Main";
 
 const PrintTag = "[ZionServer]";
 
@@ -112,19 +112,9 @@ export class ZionServer implements CliOpts<ConfigType> {
       throw Error("registration must be defined");
     }
 
-    const main = new Main(config, registration);
+    const main = new Main(config, registration); //new Main(config, registration);
     try {
-      const isRunning = await main.run(
-        port ||
-          config.homeserver.appservice_port ||
-          this.cliOptions.defaultPort,
-      );
-      if (isRunning) {
-        log.info("Zion bridge listening on port", port);
-      } else {
-        log.info("Zion bridge failed to start");
-        process.exit(1);
-      }
+      await main.startService();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (ex: any) {
       log.error("Failed to start:", ex);
@@ -134,7 +124,8 @@ export class ZionServer implements CliOpts<ConfigType> {
     process.on("SIGTERM", async () => {
       log.info("Got SIGTERM");
       try {
-        await main.killBridge();
+        //await main.killBridge();
+        main.stopService();
         process.exit(0);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (ex: any) {

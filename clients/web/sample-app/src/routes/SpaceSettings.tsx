@@ -1,5 +1,12 @@
 import { useCallback, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import { useSpace, useZionClient } from "use-zion-client";
 import { useStore } from "../store/store";
+
+enum TokenRequirement {
+  Required = "/require_token",
+  None = "/require_none",
+}
 
 interface Props {
   spaceId: string;
@@ -8,6 +15,9 @@ interface Props {
 export function SpaceSettings(props: Props): JSX.Element {
   const { allSpaceSettings, setRequireToken } = useStore();
   const spaceSetting = allSpaceSettings[props.spaceId];
+  const { spaceSlug } = useParams();
+  const space = useSpace(spaceSlug);
+  const { sendNotice } = useZionClient();
 
   const requireToken = useMemo(() => {
     if (spaceSetting) {
@@ -17,10 +27,17 @@ export function SpaceSettings(props: Props): JSX.Element {
   }, [spaceSetting]);
 
   const onChangeValue = useCallback(
-    function (event: React.ChangeEvent<HTMLInputElement>) {
-      setRequireToken(props.spaceId, event.target.value === "true");
+    async function (event: React.ChangeEvent<HTMLInputElement>) {
+      if (space?.id) {
+        const isTokenRequired = event.target.value === "true";
+        setRequireToken(space.id.matrixRoomId, isTokenRequired);
+        const tokenRequirement = isTokenRequired
+          ? TokenRequirement.Required
+          : TokenRequirement.None;
+        await sendNotice(space.id, tokenRequirement);
+      }
     },
-    [props.spaceId, setRequireToken],
+    [sendNotice, setRequireToken, space?.id],
   );
 
   return (

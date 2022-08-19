@@ -22,7 +22,7 @@ export const createZionChannel = async (props: {
   const { matrixClient, homeServer, createInfo, disableEncryption } = props;
   // initial state
   const options: ICreateRoomOpts = {
-    //room_alias_name: "my_room_alias3",
+    room_alias_name: createInfo.name,
     visibility: createInfo.visibility as unknown as Visibility,
     name: createInfo.name,
     is_direct: false,

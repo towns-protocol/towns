@@ -11,7 +11,7 @@
   "scripts": {
     "install": "./install.sh",
     "build": "tsc",
-    "start": "node ./bin/app.js",
+    "start": "node ./bin/app.js -c config.yaml -p 6789",
     "dev": "ts-node ./src/app.ts -c config.yaml -p 6789",
     "register": "ts-node ./src/app.ts -r -f zion-registration.yaml -c config.yaml -u http://localhost:6789",
     "watch": "tsc --watch"
@@ -19,7 +19,8 @@
   "dependencies": {
     "@types/node": "^17.0.32",
     "express": "^4.18.1",
-    "matrix-appservice-bridge": "^4.0.1",
+    "matrix-appservice-bridge": "^5.1.0",
+    "matrix-bot-sdk": "^0.6.1",
     "typescript": "^4.6.4"
   },
   "devDependencies": {

@@ -2,8 +2,12 @@
 bin/
 
 # Development-time files
+.vscode/settings.json
 config.yaml
 zion-registration.yaml
+zion-registration.copy.yaml
 debug.log.*
 error.log.*
 *.db
+
+yarn-error.log
