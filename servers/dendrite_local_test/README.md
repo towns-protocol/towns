@@ -1,22 +1,15 @@
 # Run local dendirete test server
 
-Build from dendrite root:
+Build dendrite:
 
 ```bash
-cd ../dendrite
 ./build.sh
-```
-
-Return to dendrite_local_test dir:
-
-```bash
-cd ../dendrite_local_test
 ```
 
 Modify `vars.env` and `dendrite.yaml` as desired and deploy:
 
 ```bash
-./deploys.sh
+./deploy.sh
 ```
 
 Run all dendrites in background:
