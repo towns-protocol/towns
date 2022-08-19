@@ -21,4 +21,5 @@ export interface IConfig {
   };
   homeserverUrl: string;
   username_prefix: string;
+  web3ProviderKey: string;
 }

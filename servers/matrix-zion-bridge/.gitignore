@@ -1,3 +1,6 @@
+# Environment files
+.env
+
 # Build files
 bin/
 

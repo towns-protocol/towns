@@ -1,3 +1,5 @@
+import * as dotenv from "dotenv";
+
 import {
   AppServiceRegistration,
   Cli,
@@ -5,9 +7,11 @@ import {
   Logging,
 } from "matrix-appservice-bridge";
 
-import { Main } from "./Main";
 import { IConfig } from "./IConfig";
 import { LOGGER_NAME } from "./global-const";
+import { Main } from "./Main";
+
+dotenv.config();
 
 const PrintTag = "[ZionServer]";
 
@@ -75,7 +79,7 @@ export class ZionServer implements CliOpts<ConfigType> {
 
   public generateRegistration = (
     reg: AppServiceRegistration,
-    callback: (finalReg: AppServiceRegistration) => void,
+    callback: (finalReg: AppServiceRegistration) => void
   ): void => {
     const config = this.cli?.getConfig() as IConfig | null;
     if (!config) {
@@ -88,7 +92,7 @@ export class ZionServer implements CliOpts<ConfigType> {
     reg.addRegexPattern(
       "users",
       `@${config.username_prefix}.*:${config.homeserver.server_name}`,
-      true,
+      true
     );
     console.log(`${PrintTag} generateRegistration`, reg);
     callback(reg);
@@ -97,7 +101,7 @@ export class ZionServer implements CliOpts<ConfigType> {
   public run = async (
     port: number | null,
     rawConfig: ConfigType | null,
-    registration: AppServiceRegistration | null,
+    registration: AppServiceRegistration | null
   ): Promise<void> => {
     console.log(`${PrintTag} run`, port, rawConfig, registration);
 
@@ -105,6 +109,9 @@ export class ZionServer implements CliOpts<ConfigType> {
     if (!config) {
       throw Error("Config not ready");
     }
+
+    config.web3ProviderKey = process.env.INFURA_API_KEY ?? "";
+
     Logging.configure(config.logging || {});
     const log = Logging.get(LOGGER_NAME);
     // Format config
@@ -112,7 +119,7 @@ export class ZionServer implements CliOpts<ConfigType> {
       throw Error("registration must be defined");
     }
 
-    const main = new Main(config, registration); //new Main(config, registration);
+    const main = new Main(config, registration);
     try {
       await main.startService();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

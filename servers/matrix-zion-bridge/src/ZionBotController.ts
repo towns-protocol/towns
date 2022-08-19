@@ -6,39 +6,50 @@ import {
 } from "matrix-bot-sdk";
 import { CreateRoomFunction, CreateUserFunction } from "./appservice-types";
 
+import { IConfig } from "./IConfig";
 import { M_UNAUTHORIZED_ACCESS } from "./global-const";
 import { WeakEvent } from "matrix-appservice-bridge";
+import { createUserIdFromString } from "./UserIdentifier";
+import { ethers } from "ethers";
 
 const PRINT_TAG = "[ZionBotController]";
+
+interface Web3Providers {
+  [networkId: number]: ethers.providers.Provider;
+}
 
 export class ZionBotController {
   private appservice: Appservice;
   private isTokenRequired: boolean;
+  private config: IConfig;
+  private web3Providers: Web3Providers;
 
-  constructor(appservice: Appservice) {
+  constructor(appservice: Appservice, config: IConfig) {
     this.appservice = appservice;
+    this.config = config;
     this.isTokenRequired = false;
+    this.web3Providers = {};
 
     appservice.on("room.event", (roomId, event) =>
-      this.onRoomEvent(roomId, event),
+      this.onRoomEvent(roomId, event)
     );
     appservice.on("room.message", (roomId, event) =>
-      this.onRoomMessage(roomId, event),
+      this.onRoomMessage(roomId, event)
     );
     appservice.on("query.user", (userId, createUser) =>
-      this.onQueryUser(userId, createUser),
+      this.onQueryUser(userId, createUser)
     );
     appservice.on("query.room", (roomAlias, createRoom) =>
-      this.onQueryRoom(roomAlias, createRoom),
+      this.onQueryRoom(roomAlias, createRoom)
     );
     appservice.on("room.invite", (roomId, event) =>
-      this.onRoomInvite(roomId, event),
+      this.onRoomInvite(roomId, event)
     );
     appservice.on("room.join", (roomId, event) =>
-      this.onRoomJoin(roomId, event),
+      this.onRoomJoin(roomId, event)
     );
     appservice.on("room.leave", (roomId, event) =>
-      this.onRoomLeave(roomId, event),
+      this.onRoomLeave(roomId, event)
     );
   }
 
@@ -68,7 +79,7 @@ export class ZionBotController {
   public async onQueryUser(
     userId: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createUser: CreateUserFunction,
+    createUser: CreateUserFunction
   ): Promise<void> {
     // This is called when the homeserver queries a user's existence. At this point, a
     // user should be created. To do that, give an object or Promise of an object in the
@@ -85,7 +96,7 @@ export class ZionBotController {
   public async onQueryRoom(
     roomAlias: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createRoom: CreateRoomFunction,
+    createRoom: CreateRoomFunction
   ): Promise<void> {
     // This is called when the homeserver queries to find out if a room alias exists. At
     // this point, a room should be created and associated with the room alias. To do
@@ -108,7 +119,7 @@ export class ZionBotController {
   public async onRoomInvite(roomId: string, event: WeakEvent): Promise<void> {
     LogService.info(
       PRINT_TAG,
-      `Received invite for ${event["state_key"]} to ${roomId}`,
+      `Received invite for ${event["state_key"]} to ${roomId}`
     );
     if (event.state_key === this.appservice.botUserId) {
       const isBotInRoom = await this.isBotInRoom(roomId);
@@ -122,12 +133,11 @@ export class ZionBotController {
     LogService.info(PRINT_TAG, `Joined ${roomId} as ${event["state_key"]}`);
     const stateKey = event.state_key;
     if (stateKey) {
-      const isAdminUser = await this.isRoomCreator(roomId, stateKey);
+      const isAdminUser = await this.isAdmin(roomId, stateKey);
       if (isAdminUser) {
-        // Auto-invite the bot.
+        // As the admin, invite the bot to the space / room.
         await this.inviteBotToRoom(roomId, stateKey);
       } else if (stateKey === event.sender) {
-        //const intent = this.appservice.botIntent;
         try {
           const isAccessAllowed = await this.isAccessAllowed(roomId, stateKey);
           if (!isAccessAllowed) {
@@ -155,10 +165,35 @@ export class ZionBotController {
     LogService.info(PRINT_TAG, `Left ${roomId} as ${event["state_key"]}`);
   }
 
-  private async isRoomCreator(
-    roomId: string,
-    userId?: string,
-  ): Promise<boolean> {
+  private getWeb3Provider(
+    networkId: number
+  ): ethers.providers.Provider | undefined {
+    let provider = this.web3Providers[networkId];
+
+    if (!provider) {
+      switch (networkId) {
+        case 1337: {
+          provider = new ethers.providers.JsonRpcProvider(
+            "http://localhost:8545"
+          );
+          break;
+        }
+        default: {
+          provider = new ethers.providers.InfuraProvider(
+            networkId,
+            this.config.web3ProviderKey
+          );
+          break;
+        }
+      }
+      if (provider) {
+        this.web3Providers[networkId] = provider;
+      }
+    }
+    return provider;
+  }
+
+  private async isAdmin(roomId: string, userId?: string): Promise<boolean> {
     if (userId) {
       const intent = this.appservice.getIntentForUserId(userId);
       const roomCreator = await this.getRoomCreator(intent, roomId);
@@ -169,7 +204,7 @@ export class ZionBotController {
 
   private async getRoomCreator(
     intent: Intent,
-    roomId: string,
+    roomId: string
   ): Promise<string | undefined> {
     const roomEvents = await intent.underlyingClient.getRoomState(roomId);
     for (let i = 0; i < roomEvents.length; i++) {
@@ -189,18 +224,18 @@ export class ZionBotController {
 
   private async inviteBotToRoom(
     roomAdminId: string,
-    roomId: string,
+    roomId: string
   ): Promise<void> {
     if (!(await this.isBotInRoom(roomId))) {
       const intent = this.appservice.getIntentForUserId(roomAdminId);
       await intent.underlyingClient.inviteUser(
         this.appservice.botUserId,
-        roomId,
+        roomId
       );
       await intent.underlyingClient.setUserPowerLevel(
         this.appservice.botUserId,
         roomId,
-        51,
+        51
       );
     }
   }
@@ -221,7 +256,7 @@ export class ZionBotController {
           if (m.membership === "join" || m.membership === "invite") {
             // Kick out users who don't have access.
             LogService.info(
-              `Access denied. Ban user ${m.stateKey}, membership: ${m.content.membership}`,
+              `Access denied. Ban user ${m.stateKey}, membership: ${m.content.membership}`
             );
             await this.banUser({ roomId, userId: m.stateKey });
           }
@@ -235,22 +270,25 @@ export class ZionBotController {
 
   private async onReceiveNotice(
     roomId: string,
-    event: WeakEvent,
+    event: WeakEvent
   ): Promise<void> {
-    const body = event["content"]["body"];
-    switch (body) {
-      case "/require_token": {
-        this.isTokenRequired = true;
-        await this.enforceAccess(roomId);
-        break;
+    const isAdmin = await this.isAdmin(roomId, event.sender);
+    if (isAdmin) {
+      const body = event["content"]["body"];
+      switch (body) {
+        case "/require_token": {
+          this.isTokenRequired = true;
+          await this.enforceAccess(roomId);
+          break;
+        }
+        case "/require_none": {
+          this.isTokenRequired = false;
+          await this.enforceAccess(roomId);
+          break;
+        }
+        default:
+          break;
       }
-      case "/require_none": {
-        this.isTokenRequired = false;
-        await this.enforceAccess(roomId);
-        break;
-      }
-      default:
-        break;
     }
   }
 
@@ -258,18 +296,17 @@ export class ZionBotController {
     const body = event["content"]["body"];
     LogService.info(
       PRINT_TAG,
-      `Received message ${event["event_id"]} from ${event["sender"]} in ${roomId}: ${body}`,
+      `Received message ${event["event_id"]} from ${event["sender"]} in ${roomId}: ${body}`
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async isAccessAllowed(
     roomId: string,
-    userId: string,
+    userId: string
   ): Promise<boolean> {
     const roomCreator = await this.getRoomCreator(
       this.appservice.botIntent,
-      roomId,
+      roomId
     );
     if (
       userId === this.appservice.botUserId ||
@@ -278,7 +315,18 @@ export class ZionBotController {
       return true;
     }
 
-    // Disallow any user without token.
+    if (this.isTokenRequired) {
+      const id = createUserIdFromString(userId);
+      if (id) {
+        const provider = this.getWeb3Provider(id.chainId);
+        if (provider) {
+          const balance = await provider.getBalance(id.accountAddress);
+          return balance.gt(0);
+        }
+      }
+    }
+
+    // No token requirement.
     return !this.isTokenRequired;
   }
 
@@ -289,7 +337,7 @@ export class ZionBotController {
     await this.appservice.botIntent.underlyingClient.banUser(
       args.userId,
       args.roomId,
-      M_UNAUTHORIZED_ACCESS,
+      M_UNAUTHORIZED_ACCESS
     );
   }
 
@@ -302,7 +350,7 @@ export class ZionBotController {
       if (args.membershipEvent.raw.content.reason === M_UNAUTHORIZED_ACCESS) {
         await this.appservice.botIntent.underlyingClient.unbanUser(
           args.userId,
-          args.roomId,
+          args.roomId
         );
       }
     }
@@ -312,7 +360,7 @@ export class ZionBotController {
     return await this.appservice.botIntent.underlyingClient.getRoomMembers(
       roomId,
       undefined,
-      ["join", "invite", "ban"], // Only interested in these types of membership.
+      ["join", "invite", "ban"] // Only interested in these types of membership.
     );
   }
 

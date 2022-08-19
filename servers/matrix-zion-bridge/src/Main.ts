@@ -15,7 +15,7 @@ import {
 import { IConfig } from "./IConfig";
 import { ZionBotController } from "./ZionBotController";
 
-const PrintTag = "[BotMain]";
+const PrintTag = "[Main]";
 
 initializeLogService();
 
@@ -28,12 +28,12 @@ export class Main {
     const options: IAppserviceOptions = getAppserviceOptions(
       config,
       registration,
-      this.storage,
+      this.storage
     );
 
     this.appService = new Appservice(options);
     AutojoinRoomsMixin.setupOnAppservice(this.appService);
-    this.controller = new ZionBotController(this.appService);
+    this.controller = new ZionBotController(this.appService, config);
   }
 
   public async startService(): Promise<void> {
@@ -50,7 +50,7 @@ export class Main {
 function getAppserviceOptions(
   config: IConfig,
   registration: AppServiceRegistration,
-  storage: IAppserviceStorageProvider,
+  storage: IAppserviceStorageProvider
 ): IAppserviceOptions {
   const port = getPort(registration.getAppServiceUrl());
   const options: IAppserviceOptions = {
