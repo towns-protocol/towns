@@ -5,8 +5,9 @@ import "solmate/tokens/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "murky/Merkle.sol";
-import { Errors } from "../libraries/Errors.sol";
-import { Events } from "../libraries/Events.sol";
+import { Errors } from "./libraries/Errors.sol";
+import { Events } from "./libraries/Events.sol";
+import { Constants } from "./libraries/Constants.sol";
 
 /**
 * @title CouncilNFT
@@ -22,12 +23,6 @@ contract CouncilNFT is ERC721, Ownable {
 
     /// @notice the counter token id for the next mint
     uint256 public currentTokenId;
-
-    /// @notice the total supply of the collection
-    uint256 public constant TOTAL_SUPPLY = 2500;
-
-    /// @notice the mint price for an individual nft
-    uint256 public constant MINT_PRICE = 0.08 ether;
 
     /// @notice mapping to track which  users have already minted an nft
     mapping(address => bool) public alreadyMinted;
@@ -94,16 +89,14 @@ contract CouncilNFT is ERC721, Ownable {
     }
 
     /// @notice Verify that the user sent the proper amount of ether to mint
-    /// @notice Verify that their are still more NFTs to mint
+    /// @notice Verify that there are still more NFTs to mint
     /// @notice Mint the NFT to the user
     function mintTo(address recipient) private returns (uint256) {
-        if (msg.value != MINT_PRICE) {
-            revert Errors.MintPriceNotPaid();
-        }
+        if (msg.value != Constants.MINT_PRICE) revert Errors.MintPriceNotPaid();
+
         uint256 newItemId = ++currentTokenId;
-        if (newItemId > TOTAL_SUPPLY) {
-            revert Errors.MaxSupply();
-        }
+        if (newItemId > Constants.TOTAL_SUPPLY) revert Errors.MaxSupply();
+
         alreadyMinted[recipient] = true;
         _safeMint(recipient, newItemId);
 

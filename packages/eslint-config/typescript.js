@@ -23,6 +23,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:import/typescript",
     "prettier",
+    "plugin:prettier/recommended",
   ],
   plugins: ["@typescript-eslint", "import"],
   overrides: [

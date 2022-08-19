@@ -134,6 +134,7 @@ const config: HardhatUserConfig = {
     sources: "./contracts/zion-governance/contracts",
     cache: "./contracts/zion-governance/cache_hardhat",
     artifacts: "./contracts/zion-governance/artifacts_hardhat",
+    tests: "./contracts/zion-governance/test",
   },
 };
 

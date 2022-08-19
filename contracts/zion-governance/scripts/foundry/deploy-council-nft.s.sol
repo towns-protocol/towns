@@ -5,7 +5,7 @@ import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 import "murky/Merkle.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
-contract DeploySpaceManagerScript is Script {
+contract DeployCouncilOfZionNFTScript is Script {
     using Strings for uint256;
 
     function run() external {

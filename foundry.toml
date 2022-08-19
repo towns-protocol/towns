@@ -4,10 +4,17 @@ out = 'artifacts_foundry'
 test = "test/foundry"
 libs = ["node_modules", "lib"]
 
+optimizer = true              # Enable or disable the solc optimizer
+# optimizer_runs = 999999       # The number of optimizer runs
+# verbosity = 3                 # The verbosity of tests
+# bytecode_hash = "none"        # For deterministic code
+# block_timestamp = 1622400000  # Timestamp for tests (non-zero)
+
 [profile.governance]
 src = 'contracts/zion-governance/contracts'
-test = 'contracts/zion-governance/test/foundy'
+test = 'contracts/zion-governance/test/foundry'
 out = 'contracts/zion-governance/artifacts_foundry'
+gas_reports = ["CouncilNFT"]
 ffi = true
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

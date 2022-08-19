@@ -21,10 +21,12 @@
   },
   "scripts": {
     "bootstrap": "yarn clean && yarn build",
-    "build": "yarn build:deps && yarn compile && FOUNDRY_PROFILE=governance forge build",
+    "build": "yarn build:deps && yarn compile:hh && yarn compile:foundry",
     "build:deps": "../../scripts/install-deps.sh",
-    "compile": "hardhat compile",
-    "compile:foundry": "FOUNDRY_PROFILE=governance forge build"
+    "compile:hh": "hardhat compile",
+    "clean": "hardhat clean && FOUNDRY_PROFILE=governance forge clean",
+    "compile:foundry": "FOUNDRY_PROFILE=governance forge build",
+    "test:foundry": "FOUNDRY_PROFILE=governance forge test"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@latest",
