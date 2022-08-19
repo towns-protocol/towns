@@ -39,6 +39,7 @@ interface ZionClientImpl {
   loginWithWallet: (statement: string) => Promise<void>;
   registerPasswordUser: (username: string, password: string) => Promise<void>;
   registerWallet: (statement: string) => Promise<void>;
+  scrollback(roomId: RoomIdentifier, limit?: number): Promise<void>;
   sendMessage: (
     roomId: RoomIdentifier,
     message: string,
@@ -107,6 +108,7 @@ export function useZionClient(): ZionClientImpl {
     logout,
     registerPasswordUser,
     registerWallet,
+    scrollback: withCatch(client?.scrollback),
     sendMessage: withCatch(client?.sendMessage),
     sendNotice: withCatch(client?.sendNotice),
     setPowerLevel: withCatch(client?.setPowerLevel),

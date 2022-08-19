@@ -1,8 +1,3 @@
-import { LoginTypePublicKey, RegisterRequest } from "../hooks/login";
-import {
-  newRegisterSession,
-  NewSession,
-} from "../hooks/use-matrix-wallet-sign-in";
 import {
   ClientEvent,
   EventType,
@@ -15,8 +10,6 @@ import {
   User,
   UserEvent,
 } from "matrix-js-sdk";
-import { createMatrixClient } from "./matrix/CreateClient";
-import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -25,14 +18,22 @@ import {
   RoomIdentifier,
   SendMessageOptions,
 } from "../types/matrix-types";
-import { createZionSpace } from "./matrix/CreateSpace";
+import { LoginTypePublicKey, RegisterRequest } from "../hooks/login";
+import {
+  NewSession,
+  newRegisterSession,
+} from "../hooks/use-matrix-wallet-sign-in";
+import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
+
+import { createMatrixClient } from "./matrix/CreateClient";
 import { createZionChannel } from "./matrix/CreateChannel";
+import { createZionSpace } from "./matrix/CreateSpace";
+import { enrichPowerLevels } from "./matrix/PowerLevels";
 import { inviteZionUser } from "./matrix/InviteUser";
 import { joinZionRoom } from "./matrix/Join";
 import { sendZionMessage } from "./matrix/SendMessage";
-import { syncZionSpace } from "./matrix/SyncSpace";
-import { enrichPowerLevels } from "./matrix/PowerLevels";
 import { setZionPowerLevel } from "./matrix/SetPowerLevels";
+import { syncZionSpace } from "./matrix/SyncSpace";
 
 /***
  * Zion Client
@@ -124,6 +125,8 @@ export class ZionClient {
     this.stopClient();
     // set auth
     this._auth = auth;
+    // helpful logs
+    this.log(`startClient`);
     // new client
     this.client = createMatrixClient(this.opts, this.auth);
     // start it up, this begins a sync command
@@ -389,6 +392,20 @@ export class ZionClient {
    ************************************************/
   public async setAvatarUrl(url: string): Promise<void> {
     await this.client.setAvatarUrl(url);
+  }
+
+  /************************************************
+   * scrollback
+   ************************************************/
+  public async scrollback(
+    roomId: RoomIdentifier,
+    limit?: number,
+  ): Promise<void> {
+    const room = this.client.getRoom(roomId.matrixRoomId);
+    if (!room) {
+      throw new Error("room not found");
+    }
+    await this.client.scrollback(room, limit);
   }
 
   /************************************************
