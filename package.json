@@ -16,6 +16,7 @@
     "clients/web/lib",
     "clients/web/sample-app",
     "clients/governance-ui",
+    "contracts/zion-governance",
     "packages/*"
   ],
   "lint-staged": {
