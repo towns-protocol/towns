@@ -1,4 +1,4 @@
-import { EditorConfig, TextNode } from "lexical";
+import { EditorConfig, SerializedTextNode, TextNode } from "lexical";
 import { vars } from "ui/styles/vars.css";
 
 export class AnnotationNode extends TextNode {
@@ -25,6 +25,20 @@ export class AnnotationNode extends TextNode {
     const isUpdated = super.updateDOM(prevNode, dom, config);
 
     return isUpdated;
+  }
+
+  static importJSON(serializedNode: SerializedTextNode): AnnotationNode {
+    const node = $createAnnotationNode(serializedNode.text);
+    node.setFormat(serializedNode.format);
+    return node;
+  }
+
+  exportJSON(): SerializedTextNode {
+    return {
+      ...super.exportJSON(),
+      type: this.getType(),
+      version: 1,
+    };
   }
 }
 
