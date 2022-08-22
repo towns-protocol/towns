@@ -1,12 +1,6 @@
 import { RelationType } from "matrix-js-sdk";
-import React, {
-  RefObject,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import { useInView } from "react-intersection-observer";
+import React, { useRef, useState } from "react";
+// import { useInView } from "react-intersection-observer";
 import useEvent from "react-use-event-hook";
 import { MessageType, RoomMessage, useMatrixStore } from "use-zion-client";
 import { Message } from "@components/Message";
@@ -30,6 +24,8 @@ export const MessageScroller = (props: {
   onSelectMessage?: (id: string) => void;
   hideThreads?: boolean;
   before?: JSX.Element;
+  after?: JSX.Element;
+
   messageContext?: {
     spaceSlug: string;
     channelSlug: string;
@@ -40,11 +36,12 @@ export const MessageScroller = (props: {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { ref, displayCount } = useLoadMore(
-    containerRef,
-    contentRef,
-    messages.length,
-  );
+  /* FIXME: cancels lazy reveal of messages */
+  // const { ref, displayCount } = useLoadMore(
+  //   containerRef,
+  //   contentRef,
+  //   messages.length,
+  // );
 
   const { userId } = useMatrixStore();
 
@@ -53,12 +50,15 @@ export const MessageScroller = (props: {
   // replace original messages by edits (hack!)
   const { editedMessages } = useEditedMessages(filteredMessages);
   // create a slice of messages to display
-  const paginatedMessages = editedMessages.slice(-displayCount);
 
-  const { endRef } = useMessageScroll(
-    containerRef,
-    paginatedMessages[paginatedMessages.length - 1]?.eventId,
-  );
+  /* FIXME: cancels lazy reveal of messages */
+  const paginatedMessages = editedMessages.slice(); //editedMessages.slice(-displayCount);
+
+  /* FIXME: cancels lazy reveal of messages */
+  // const { endRef } = useMessageScroll(
+  //   containerRef,
+  //   paginatedMessages[paginatedMessages.length - 1]?.eventId,
+  // );
 
   const repliedMessages = useMessageReplyCount(messages);
 
@@ -90,7 +90,8 @@ export const MessageScroller = (props: {
     <Stack grow ref={containerRef} overflow="auto">
       <Stack grow style={{ minHeight: "min-content" }}>
         <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
-          <div ref={ref} />
+          {/* FIXME: cancels lazy reveal of messages */}
+          {/* <div ref={ref} /> */}
           {props.before}
           {paginatedMessages.map((m, index) => (
             <FadeIn
@@ -150,13 +151,17 @@ export const MessageScroller = (props: {
               </Message>
             </FadeIn>
           ))}
+          {props.after}
         </Stack>
-        <div ref={endRef} />
+
+        {/* FIXME: cancels lazy reveal of messages */}
+        {/* <div ref={endRef} /> */}
       </Stack>
     </Stack>
   );
 };
 
+/* FIXME: cancels lazy reveal of messages 
 const useLoadMore = (
   containerRef: RefObject<HTMLDivElement>,
   contentRef: RefObject<HTMLDivElement>,
@@ -211,7 +216,9 @@ const useLoadMore = (
   }, [containerRef, contentRef, displayCount, total]);
   return { ref, displayCount };
 };
+*/
 
+/* FIXME: cancels lazy reveal of messages 
 const useMessageScroll = (
   containerRef: RefObject<HTMLDivElement>,
   lastMessageId?: string,
@@ -225,6 +232,7 @@ const useMessageScroll = (
 
   return { endRef, containerRef };
 };
+*/
 
 function getMessageContent(message: RoomMessage) {
   switch (message.msgType) {

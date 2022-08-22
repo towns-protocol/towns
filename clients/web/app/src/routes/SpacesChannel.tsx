@@ -11,14 +11,14 @@ import {
 import { ChannelHeader } from "@components/ChannelHeader";
 import { MessageList } from "@components/MessageScroller";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
-import { Box, Button, Stack } from "@ui";
+import { Box, Button, Divider, Paragraph, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
   const { spaceSlug, channelSlug, messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
-  const { joinRoom, sendMessage } = useZionClient();
+  const { joinRoom, sendMessage, scrollback } = useZionClient();
   const navigate = useNavigate();
 
   const channel = useChannel(spaceSlug, channelSlug);
@@ -33,6 +33,12 @@ export const SpacesChannel = () => {
     },
     [channel?.id, sendMessage],
   );
+
+  const onLoadMore = useCallback(() => {
+    if (channel?.id) {
+      scrollback(channel.id);
+    }
+  }, [channel?.id, scrollback]);
 
   const onJoinChannel = useCallback(() => {
     if (channel?.id) {
@@ -81,10 +87,24 @@ export const SpacesChannel = () => {
                 key={channelSlug}
                 messages={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
+                after={
+                  <Box gap padding="lg" rounded="xs">
+                    <Divider label="debug" />
+                    <Button animate={false} onClick={onLoadMore}>
+                      Load Messages
+                    </Button>
+
+                    <Paragraph size="sm" color="gray2">
+                      length: {channelMessages.length}
+                    </Paragraph>
+                    <Divider />
+                  </Box>
+                }
                 messageContext={messageContext}
                 onSelectMessage={onSelectMessage}
               />
-              <Box paddingBottom="lg" paddingX="lg">
+
+              <Box gap paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
                   autoFocus={!hasThreadOpen}
                   initialValue=""
