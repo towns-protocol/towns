@@ -16,4 +16,16 @@ library Errors {
 
   /// @notice thrown when user tries to mint more than 1 token with same wallet
   error AlreadyMinted();
+
+  /// @notice thrown when no tokens are provided
+  error NoTokensProvided();
+
+  /// @notice thrown when a token is not owned by the user
+  error NotTokenOwner();
+
+  /// @notice thrown when no tokens are staked by user
+  error NoStakedTokens();
+
+  /// @notice thrown when no there are not points to claim by user
+  error NoPointsToClaim();
 }

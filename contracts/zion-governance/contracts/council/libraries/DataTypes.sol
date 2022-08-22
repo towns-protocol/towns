@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
+
+library DataTypes {
+  /// @notice An enum containing the different states the protocol can be in, limiting certain actions.
+  /// @param Unpaused The fully unpaused state
+  /// @param Paused The fully paused state
+  enum ContractState {
+    Unpaused,
+    Paused
+  }
+
+
+  /// @notice A struct containing a staked token
+  struct StakedToken {
+    // wallet address of user
+    address staker;
+    // token id of the nft being staked
+    uint256 tokenId;
+  }
+
+  /// @notice A struct containing a single staker
+  struct Staker {
+    // amount of tokens staked
+    uint256 amountStaked;
+    // staked token ids
+    StakedToken[] stakedTokens;
+    // last time the points were calculated for this user
+    uint256 timeOfLastUpdate;
+    // calculated, but unclaimed points for the user
+    // points are calculated each time the user writes to the contract
+    uint256 unclaimedPoints;
+  }
+}
