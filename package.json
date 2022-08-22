@@ -16,7 +16,6 @@
     "clients/web/lib",
     "clients/web/sample-app",
     "clients/governance-ui",
-    "contracts/*",
     "packages/*"
   ],
   "lint-staged": {
@@ -40,5 +39,6 @@
     "lint-staged": "^13.0.0",
     "prettier": "^2.6.2",
     "ts-node": "^10.9.1"
-  }
+  },
+  "packageManager": "yarn@3.2.2"
 }

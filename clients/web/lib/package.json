@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "prepack": "tsc",
+    "postinstall": "tsc",
     "build": "tsc",
     "lint": "eslint .",
     "lint:fix": "yarn lint --fix",

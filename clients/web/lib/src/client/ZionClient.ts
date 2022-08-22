@@ -368,7 +368,7 @@ export class ZionClient {
   /************************************************
    * getUser
    ************************************************/
-  public getUser(userId: string): User {
+  public getUser(userId: string): User | null {
     return this.client.getUser(userId);
   }
 
