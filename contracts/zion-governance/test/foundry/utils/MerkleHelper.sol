@@ -44,7 +44,7 @@ abstract contract MerkleHelper {
       data[userPositionMap[testAddress]] = keccak256(
         abi.encodePacked(
           testAddress,
-          Strings.toString(userAllowanceMap[testAddress])
+          userAllowanceMap[testAddress]
         )
       );
     }

@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "solmate/tokens/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "murky/Merkle.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { Events } from "./libraries/Events.sol";
 import { Constants } from "./libraries/Constants.sol";
+
 
 /**
 * @title CouncilNFT
@@ -67,10 +68,10 @@ contract CouncilNFT is ERC721, Ownable {
         }
 
         //Verify user is on the list with the correct allowance
-        string memory senderPacked = string(abi.encodePacked(recipient));
         bytes32 payload = keccak256(
-            abi.encodePacked(senderPacked, Strings.toString(allowance))
+            abi.encodePacked(recipient, allowance)
         );
+
         require(
             merkle.verifyProof(root, proof, payload) == true,
             "Invalid merkle tree proof supplied"

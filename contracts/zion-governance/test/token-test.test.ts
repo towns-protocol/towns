@@ -1,4 +1,4 @@
-import { expect } from "./chai-setup";
+import { expect } from "chai";
 
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 

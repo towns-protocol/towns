@@ -41,8 +41,8 @@ const allowlist = {
   "0x90f79bf6eb2c4f870365e785982e1f101e93b906": 0,
 };
 
-const address: string = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266";
-const allowance: number = 1;
+const address = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266";
+const allowance = 1;
 
 main(allowlist, address, allowance)
   .then(() => {

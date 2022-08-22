@@ -1,4 +1,4 @@
-import { expect } from "./chai-setup";
+import { expect } from "chai";
 
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 
@@ -19,17 +19,11 @@ describe("Space manager contract", function () {
 
     console.log("Zion space manager address is ", zionSpaceManager.address);
     await zionSpaceManager.createSpace(spaceName, [entitlementManagerAddress]);
-    const {
-      spaceId,
-      createdAt,
-      name,
-      creatorAddress,
-      ownerAddress,
-    } = await zionSpaceManager.getSpaceValues(1);
+    const { spaceId, createdAt, name, creatorAddress, ownerAddress } =
+      await zionSpaceManager.getSpaceValues(1);
 
-    const entitlementManagerAddresses = await zionSpaceManager.getSpaceEntitlementManagerAddresses(
-      spaceId
-    );
+    const entitlementManagerAddresses =
+      await zionSpaceManager.getSpaceEntitlementManagerAddresses(spaceId);
     // const spaceValues2 = await zionSpaceManager.getSpaceValues(2);
     // const spaceValues0 = await zionSpaceManager.getSpaceValues(0);
     console.log(`Space id is ${spaceId}`);

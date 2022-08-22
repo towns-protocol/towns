@@ -1,18 +1,15 @@
+import { HardhatUserConfig, subtask, task } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+
+import "hardhat-deploy";
+import "@openzeppelin/hardhat-upgrades";
+import "hardhat-preprocessor";
+
+import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from "hardhat/builtin-tasks/task-names";
+
 import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-
-import { HardhatUserConfig, subtask, task } from "hardhat/config";
-import "hardhat-deploy";
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-etherscan";
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "hardhat-gas-reporter";
-import "solidity-coverage";
-import "@openzeppelin/hardhat-upgrades";
-import "hardhat-preprocessor";
-import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from "hardhat/builtin-tasks/task-names";
 
 dotenv.config();
 
@@ -44,31 +41,12 @@ function getRemappings() {
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
   async (_, __, runSuper) => {
     const paths = await runSuper();
-    paths.forEach((path: string) => {
-      console.log(`path: ${path}`);
-    });
+    // paths.forEach((path: string) => {
+    //   console.log(`path: ${path}`);
+    // });
     return paths.filter((p: string) => !p.endsWith(".t.sol"));
   }
 );
-
-// subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS, async (_, { config }) => {
-//   const mainContracts = await glob(
-//     path.join(config.paths.root, "contracts/**/*.sol")
-//   );
-//   const testContracts = await glob(
-//     path.join(config.paths.root, "test/**/*.sol")
-//   );
-//   // and so on
-
-//   return [
-//     ...mainContracts,
-//     ...testContracts,
-//     // and so on
-//   ].map(path.normalize); // not sure if normalize is needed here
-// });
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -126,7 +104,7 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "./contracts/zion-governance/typechain-types",
     target: "ethers-v5",
-    alwaysGenerateOverloads: false, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
+    alwaysGenerateOverloads: false,
   },
 
   paths: {
