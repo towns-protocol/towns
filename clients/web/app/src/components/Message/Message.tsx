@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Replies } from "@components/Replies/Replies";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
+import { atoms } from "ui/styles/atoms.css";
 import { MessageContextMenu } from "./MessageContextMenu";
 
 type Props = {
@@ -82,7 +83,7 @@ export const Message = ({
       {/* right / main content */}
       <Stack grow gap={condensed ? "paragraph" : "md"} position="relative">
         {/* name & date top row */}
-        <Box direction="row" gap="sm" alignItems="center" height="height_sm">
+        <Box horizontal gap="sm" alignItems="center" height="height_sm">
           {/* display name */}
           <Text
             truncate
@@ -91,6 +92,10 @@ export const Message = ({
             as="span"
           >
             {name}
+            <span className={atoms({ fontSize: "sm", color: "gray2" })}>
+              {" "}
+              {id?.substring(0, 10)}
+            </span>
           </Text>
           {/* channel */}
           {channel && (

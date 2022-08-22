@@ -13,6 +13,7 @@ type Props = {
   icon?: IconName;
   disabled?: boolean;
   minWidth?: BoxProps["minWidth"];
+  animate?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 } & Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -21,6 +22,7 @@ type Props = {
   StyleProps;
 
 export const Button = ({
+  animate = true,
   size = "button_md",
   disabled,
   tone = "level3",
@@ -30,8 +32,8 @@ export const Button = ({
   ...inputProps
 }: Props) => (
   <MotionStack
-    layout
     horizontal
+    layout={animate}
     as="button"
     cursor={disabled ? "default" : "pointer"}
     className={buttonStyle({ size })}
