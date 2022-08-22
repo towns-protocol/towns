@@ -43,7 +43,7 @@
     "siwe": "^1.1.6",
     "use-zion-client": "workspace:*",
     "vanilla-classnames": "^0.1.0",
-    "zustand": "^4.0.0-rc.1"
+    "zustand": "^4.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.18.2",
