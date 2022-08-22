@@ -117,7 +117,7 @@ export const Message = ({
           pointerEvents="auto"
           fontSize="md"
           color="default"
-          onClick={!isEditing && isEditable ? onEdit : undefined}
+          onDoubleClick={!isEditing && isEditable ? onEdit : undefined}
         >
           {children}
         </Box>
