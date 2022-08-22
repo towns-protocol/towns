@@ -140,9 +140,7 @@ export class ZionClient {
     }
     // start client
     await this.client.startClient({
-      // FIXME: this slows down the experience but seems to be needed to allow
-      // message editing
-      pendingEventOrdering: PendingEventOrdering.Detached,
+      pendingEventOrdering: PendingEventOrdering.Chronological,
       initialSyncLimit: this.opts.initialSyncLimit,
     });
     // wait for the sync to complete

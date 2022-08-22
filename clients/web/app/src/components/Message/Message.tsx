@@ -15,6 +15,7 @@ type Props = {
   replies?: { userIds: number[]; fakeLength?: number };
   date?: string;
   editing?: boolean;
+  editable?: boolean;
   onSelectMessage?: (id: string) => void;
   onEditMessage?: (id: string) => void;
   id?: string;
@@ -30,6 +31,7 @@ export const Message = ({
   condensed,
   name,
   channel,
+  editable: isEditable,
   editing: isEditing,
   reactions,
   replies,
@@ -47,7 +49,9 @@ export const Message = ({
   const onEdit = () => {
     id && onEditMessage?.(id);
   };
+
   const [showMenu, setShowMenu] = useState(false);
+
   const onMouseOver = () => {
     setShowMenu(true);
   };
@@ -108,7 +112,7 @@ export const Message = ({
           pointerEvents="auto"
           fontSize="md"
           color="default"
-          onClick={!isEditing ? onEdit : undefined}
+          onClick={!isEditing && isEditable ? onEdit : undefined}
         >
           {children}
         </Box>
@@ -124,7 +128,11 @@ export const Message = ({
         )}
         {showMenu && !isEditing && (
           <Box position="topRight">
-            <MessageContextMenu onOpenThread={onSelectThread} onEdit={onEdit} />
+            <MessageContextMenu
+              editable={isEditable}
+              onOpenThread={onSelectThread}
+              onEdit={onEdit}
+            />
           </Box>
         )}
       </Stack>

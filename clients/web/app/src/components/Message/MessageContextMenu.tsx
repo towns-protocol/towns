@@ -3,6 +3,7 @@ import { IconButton, Stack } from "@ui";
 import { vars } from "ui/styles/vars.css";
 
 type Props = {
+  editable?: boolean;
   onEdit?: () => void;
   onOpenThread?: () => void;
 };
@@ -24,7 +25,7 @@ export const MessageContextMenu = (props: Props) => {
         transform: `translateX(calc(-100% - ${vars.space.sm})) translateY(calc(-100% + 1 * ${vars.space.md}))`,
       }}
     >
-      {props.onEdit && (
+      {props.editable && props.onEdit && (
         <IconButton icon="edit" size="square_sm" onClick={props.onEdit} />
       )}
       {props.onOpenThread && (

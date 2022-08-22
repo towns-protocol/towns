@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useInView } from "react-intersection-observer";
 import useEvent from "react-use-event-hook";
-import { MessageType, RoomMessage } from "use-zion-client";
+import { MessageType, RoomMessage, useMatrixStore } from "use-zion-client";
 import { Message } from "@components/Message";
 import {
   RichTextEditor,
@@ -46,6 +46,8 @@ export const MessageScroller = (props: {
     messages.length,
   );
 
+  const { userId } = useMatrixStore();
+
   // strip-out replies on main timeline (hack!)
   const { filteredMessages } = useFilterReplies(messages, props.hideThreads);
   // replace original messages by edits (hack!)
@@ -59,7 +61,9 @@ export const MessageScroller = (props: {
   );
 
   const repliedMessages = useMessageReplyCount(messages);
+
   const [editMessageId, setEditMessageId] = useState<string>();
+
   const onEditMessage = useEvent((messageId: string) => {
     setEditMessageId(() =>
       editMessageId === messageId ? undefined : messageId,
@@ -101,6 +105,7 @@ export const MessageScroller = (props: {
                 name={m.sender}
                 paddingX="lg"
                 paddingY="md"
+                editable={m.senderId === userId && !!m.eventId?.match(/^\$/)}
                 avatar={<Avatar src={m.senderAvatarUrl} size="avatar_md" />}
                 editing={editMessageId === m.eventId}
                 onEditMessage={onEditMessage}
