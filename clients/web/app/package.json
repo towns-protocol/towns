@@ -14,10 +14,10 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@lexical/link": "^0.3.6",
-    "@lexical/list": "^0.3.6",
-    "@lexical/react": "^0.3.6",
-    "@lexical/rich-text": "^0.3.6",
+    "@lexical/link": "^0.3.11",
+    "@lexical/list": "^0.3.11",
+    "@lexical/react": "^0.3.11",
+    "@lexical/rich-text": "^0.3.11",
     "@ngneat/falso": "^5.6.0",
     "@react-hook/resize-observer": "^1.2.5",
     "allotment": "^1.14.1",

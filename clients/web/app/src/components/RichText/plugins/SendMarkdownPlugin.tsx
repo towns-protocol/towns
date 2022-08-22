@@ -5,6 +5,7 @@ import {
   CLEAR_EDITOR_COMMAND,
   COMMAND_PRIORITY_HIGH,
   KEY_ENTER_COMMAND,
+  LexicalCommand,
 } from "lexical";
 import React, { useCallback, useLayoutEffect } from "react";
 import { Button, Stack } from "@ui";
@@ -26,7 +27,7 @@ export const SendMarkdownPlugin = (props: {
         (e: KeyboardEvent) => {
           if (!e.shiftKey) {
             parseMarkdown();
-            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, true);
+            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
             e.preventDefault();
             return true;
           }
@@ -39,7 +40,7 @@ export const SendMarkdownPlugin = (props: {
 
   const sendMessage = useCallback(() => {
     parseMarkdown();
-    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, true);
+    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
   }, [editor, parseMarkdown]);
 
   return props.displayButtons ? (
