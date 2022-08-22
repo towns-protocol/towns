@@ -1,6 +1,7 @@
 import React from "react";
-import { useParams } from "react-router";
-import { NavLink, Outlet, useMatch, useResolvedPath } from "react-router-dom";
+import { Outlet, useMatch, useParams, useResolvedPath } from "react-router";
+import { NavLink } from "react-router-dom";
+
 import { RoomIdentifier, useSpaceId } from "use-zion-client";
 import { Stack } from "ui/components/Stack/Stack";
 import { Box, Button, SizeBox } from "@ui";

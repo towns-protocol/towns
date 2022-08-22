@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router";
-import { Outlet, Route, Routes } from "react-router-dom";
+import { Outlet, Route, Routes, useNavigate } from "react-router";
 import useEvent from "react-use-event-hook";
 import { MatrixContextProvider, useMatrixStore } from "use-zion-client";
 import { Highlights } from "@components/Highlights/HomeHighlights";

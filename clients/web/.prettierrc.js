@@ -1,3 +1,9 @@
 module.exports = {
-  ...require("@harmony/prettier-config"),
-};
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "printWidth": 80,
+  "semi": true,
+  "singleQuote": false,
+  "tabWidth": 2,
+  "trailingComma": "all"
+}

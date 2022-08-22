@@ -1,7 +1,6 @@
 import { Allotment } from "allotment";
 import React, { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router";
-import { useOutlet, useParams } from "react-router-dom";
+import { useNavigate, useOutlet, useParams } from "react-router";
 import {
   Membership,
   useChannel,

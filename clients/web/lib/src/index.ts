@@ -56,7 +56,3 @@ export {
   getUsernameFromId,
   isUserIdentifier,
 } from "./types/user-identifier";
-
-// Workaround unhandled exception "Buffer is not defined" exception in keccak
-import { Buffer } from "buffer";
-window.Buffer = Buffer;

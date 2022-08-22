@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";

@@ -5,7 +5,8 @@ import React, {
   forwardRef,
   useContext,
 } from "react";
-import { NavLink, useMatch, useResolvedPath } from "react-router-dom";
+import { useMatch, useResolvedPath } from "react-router";
+import { NavLink } from "react-router-dom";
 import { Box, BoxProps, Stack } from "@ui";
 import { SidebarContext } from "@components/SideBars/_SideBar";
 import * as styles from "./_NavItem.css";
@@ -46,7 +47,7 @@ export const NavItem = forwardRef<
   const isHovered = activeItem === id;
 
   return (
-    <ConditionalNavLink end={exact} to={to}>
+    <ConditionalNavLink to={to}>
       <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
         <Stack position="relative" paddingX="sm" {...props} ref={ref}>
           {/* background fill to highlight element */}

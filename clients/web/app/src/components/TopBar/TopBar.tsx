@@ -1,5 +1,7 @@
 import React from "react";
-import { Link, NavLink, useMatch, useResolvedPath } from "react-router-dom";
+import { useMatch, useResolvedPath } from "react-router";
+import { Link, NavLink } from "react-router-dom";
+
 import { useMatrixStore } from "use-zion-client";
 import { LoginComponent } from "@components/Login/LoginComponent";
 import { MinimalLogo } from "@components/Logo/Logo";

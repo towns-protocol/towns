@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import useEvent from "react-use-event-hook";
 import {
   LoginStatus,

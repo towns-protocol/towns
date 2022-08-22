@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { useInviteData, useZionClient } from "use-zion-client";
 import { Box, Stack } from "@ui";
 import { AcceptRoomInviteForm } from "@components/Web3";

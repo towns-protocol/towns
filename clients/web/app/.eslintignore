@@ -2,6 +2,7 @@ storybook-static/
 dist/
 public/
 node_modules
+**/node_modules
 mdx.d.ts
 *.json
 .yarn/*

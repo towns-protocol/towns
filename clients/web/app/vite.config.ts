@@ -5,16 +5,16 @@ import checker from "vite-plugin-checker";
 import tsconfigPaths from "vite-tsconfig-paths";
 import eslintPlugin from "vite-plugin-eslint";
 import { visualizer } from "rollup-plugin-visualizer";
+import polyfillNode from "rollup-plugin-polyfill-node";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    polyfillNode(),
     react(),
     tsconfigPaths(),
     checker({ typescript: true }),
-    eslintPlugin({
-      exclude: [/.*.css.ts.*/, /node_modules/],
-    }),
+    eslintPlugin(),
     vanillaExtractPlugin(),
     visualizer({ filename: "dist/stats.html" }),
   ],

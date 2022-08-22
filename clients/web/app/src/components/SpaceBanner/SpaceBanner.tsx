@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useSpaceId, useZionClient } from "use-zion-client";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import {
   Avatar,
   Box,

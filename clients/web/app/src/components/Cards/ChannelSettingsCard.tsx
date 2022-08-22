@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import useEvent from "react-use-event-hook";
 import { RoomIdentifier, useZionClient } from "use-zion-client";
 import { Box, Card } from "@ui";

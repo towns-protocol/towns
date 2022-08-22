@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useZionClient } from "use-zion-client";
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from "@ui";
 import { MenuItem } from "./SpaceSettingsCard";
