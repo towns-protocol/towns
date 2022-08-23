@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React, { forwardRef } from "react";
 import { Box, BoxProps } from "@ui";
 import {

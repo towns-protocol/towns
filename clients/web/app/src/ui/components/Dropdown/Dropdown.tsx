@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React, { useCallback } from "react";
 import { Stack } from "../Stack/Stack";
 import { Field, FieldBaseProps } from "../_internal/Field/Field";

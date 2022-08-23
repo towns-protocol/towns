@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React, { InputHTMLAttributes, forwardRef } from "react";
 import { Box } from "@ui";
 import { Field, FieldBaseProps } from "../_internal/Field/Field";

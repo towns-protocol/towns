@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React, { FormEvent, SelectHTMLAttributes, useRef } from "react";
 import { RefCallBack } from "react-hook-form";
 import { Box, Text } from "@ui";

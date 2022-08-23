@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React from "react";
 import { Stack, StackProps } from "../Stack/Stack";
 import * as style from "./Tooltip.css";

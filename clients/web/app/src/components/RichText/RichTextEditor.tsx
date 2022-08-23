@@ -6,7 +6,7 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React, { useState } from "react";
 import * as fieldStyles from "ui/components/_internal/Field/Field.css";
 import { useInitialConfig } from "./hooks/useInitialConfig";

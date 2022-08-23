@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import React, { forwardRef } from "react";
 import { BoxProps } from "@ui";
 import * as style from "./ButtonText.css";
