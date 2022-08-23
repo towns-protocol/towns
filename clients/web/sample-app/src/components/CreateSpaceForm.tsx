@@ -18,7 +18,12 @@ import {
   useZionClient,
 } from "use-zion-client";
 import { useCallback, useMemo, useState } from "react";
+
+import { SpaceSettings, TokenRequirement } from "../routes/SpaceSettings";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
+import { useStore } from "../store/store";
+
+const NEW_SPACE = "NEW_SPACE";
 
 interface Props {
   onClick: (roomId: RoomIdentifier, membership: Membership) => void;
@@ -29,8 +34,18 @@ export const CreateSpaceForm = (props: Props) => {
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Private,
   );
-  const { createSpace } = useZionClient();
+  const { createSpace, sendNotice } = useZionClient();
   const { onClick } = props;
+
+  const { allSpaceSettings, setRequireToken } = useStore();
+  const spaceSetting = allSpaceSettings[NEW_SPACE];
+
+  const requireToken = useMemo(() => {
+    if (spaceSetting) {
+      return spaceSetting.requireToken;
+    }
+    return false;
+  }, [spaceSetting]);
 
   const disableCreateButton = useMemo(
     () => spaceName.length === 0,
@@ -56,8 +71,29 @@ export const CreateSpaceForm = (props: Props) => {
     const roomId = await createSpace(createSpaceInfo);
     if (roomId) {
       onClick(roomId, Membership.Join);
+      const tokenRequirement = requireToken
+        ? TokenRequirement.Required
+        : TokenRequirement.None;
+      await sendNotice(roomId, tokenRequirement);
+      setRequireToken(roomId.matrixRoomId, requireToken);
+      setRequireToken(NEW_SPACE, false);
     }
-  }, [createSpace, onClick, spaceName, visibility]);
+  }, [
+    createSpace,
+    onClick,
+    requireToken,
+    sendNotice,
+    setRequireToken,
+    spaceName,
+    visibility,
+  ]);
+
+  const onSpaceAccessChangeValue = useCallback(
+    async function (event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+      setRequireToken(NEW_SPACE, event.target.value === "true");
+    },
+    [setRequireToken],
+  );
 
   return (
     <Box
@@ -112,6 +148,12 @@ export const CreateSpaceForm = (props: Props) => {
               </Select>
             </FormControl>
           </Box>
+        </Box>
+        <Box marginTop="20px">
+          <SpaceSettings
+            spaceId={NEW_SPACE}
+            onChangeValue={onSpaceAccessChangeValue}
+          />
         </Box>
         <Box
           display="grid"

@@ -18,17 +18,27 @@ interface Web3Providers {
   [networkId: number]: ethers.providers.Provider;
 }
 
+// TODO: Read from the Space contract
+interface SpaceSetting {
+  matrixRoomId: string;
+  isTokenRequired: boolean;
+}
+
+interface SpaceSettings {
+  [matrixRoomId: string]: SpaceSetting;
+}
+
 export class ZionBotController {
   private appservice: Appservice;
-  private isTokenRequired: boolean;
   private config: IConfig;
   private web3Providers: Web3Providers;
+  private spaceSettings: SpaceSettings;
 
   constructor(appservice: Appservice, config: IConfig) {
     this.appservice = appservice;
     this.config = config;
-    this.isTokenRequired = false;
     this.web3Providers = {};
+    this.spaceSettings = {};
 
     appservice.on("room.event", (roomId, event) =>
       this.onRoomEvent(roomId, event)
@@ -283,12 +293,18 @@ export class ZionBotController {
       const body = event["content"]["body"];
       switch (body) {
         case "/require_token": {
-          this.isTokenRequired = true;
+          this.spaceSettings[roomId] = {
+            matrixRoomId: roomId,
+            isTokenRequired: true,
+          };
           await this.enforceAccess(roomId);
           break;
         }
         case "/require_none": {
-          this.isTokenRequired = false;
+          this.spaceSettings[roomId] = {
+            matrixRoomId: roomId,
+            isTokenRequired: false,
+          };
           await this.enforceAccess(roomId);
           break;
         }
@@ -321,7 +337,8 @@ export class ZionBotController {
       return true;
     }
 
-    if (this.isTokenRequired) {
+    const isTokenRequired = this.spaceSettings[args.roomId]?.isTokenRequired === true;
+    if (isTokenRequired) {
       const id = createUserIdFromString(args.userId);
       if (id) {
         const provider = this.getWeb3Provider(id.chainId);
@@ -333,7 +350,7 @@ export class ZionBotController {
     }
 
     // No token requirement.
-    return !this.isTokenRequired;
+    return !isTokenRequired;
   }
 
   private async banUser(args: {

@@ -3,13 +3,14 @@ import { useParams } from "react-router-dom";
 import { useSpace, useZionClient } from "use-zion-client";
 import { useStore } from "../store/store";
 
-enum TokenRequirement {
+export enum TokenRequirement {
   Required = "/require_token",
   None = "/require_none",
 }
 
 interface Props {
   spaceId: string;
+  onChangeValue?: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
 export function SpaceSettings(props: Props): JSX.Element {
@@ -27,17 +28,21 @@ export function SpaceSettings(props: Props): JSX.Element {
   }, [spaceSetting]);
 
   const onChangeValue = useCallback(
-    async function (event: React.ChangeEvent<HTMLInputElement>) {
-      if (space?.id) {
-        const isTokenRequired = event.target.value === "true";
-        setRequireToken(space.id.matrixRoomId, isTokenRequired);
-        const tokenRequirement = isTokenRequired
-          ? TokenRequirement.Required
-          : TokenRequirement.None;
-        await sendNotice(space.id, tokenRequirement);
+    async function (event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+      if (props.onChangeValue) {
+        return props.onChangeValue(event);
+      } else {
+        if (space?.id) {
+          const isTokenRequired = event.target.value === "true";
+          setRequireToken(space.id.matrixRoomId, isTokenRequired);
+          const tokenRequirement = isTokenRequired
+            ? TokenRequirement.Required
+            : TokenRequirement.None;
+          await sendNotice(space.id, tokenRequirement);
+        }
       }
     },
-    [sendNotice, setRequireToken, space?.id],
+    [props, sendNotice, setRequireToken, space?.id],
   );
 
   return (
