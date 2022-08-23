@@ -31,7 +31,7 @@ servers/identity/identity
 servers/identity/generated
 servers/dendrite/vendor/
 servers/dendrite/zion-registration.yaml
-servers/matrix-zion-bridge/zion-registration.yaml
+servers/matrix-zion-appservice/zion-registration.yaml
 
 clients/web/app/storybook-static
 

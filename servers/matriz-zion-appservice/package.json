@@ -1,5 +1,5 @@
 {
-  "name": "matrix-zion-bridge",
+  "name": "matrix-zion-appservice",
   "description": "Bridge between Matrix and Zion smart contracts",
   "license": "MIT",
   "private": true,

@@ -133,13 +133,16 @@ export class ZionBotController {
     LogService.info(PRINT_TAG, `Joined ${roomId} as ${event["state_key"]}`);
     const stateKey = event.state_key;
     if (stateKey) {
-      const isAdminUser = await this.isAdmin(roomId, stateKey);
-      if (isAdminUser) {
-        // As the admin, invite the bot to the space / room.
-        await this.inviteBotToRoom(roomId, stateKey);
-      } else if (stateKey === event.sender) {
-        try {
-          const isAccessAllowed = await this.isAccessAllowed(roomId, stateKey);
+      try {
+        const isAdminUser = await this.isAdmin(roomId, stateKey);
+        if (isAdminUser) {
+          // As the admin, invite the bot to the space / room.
+          await this.inviteBotToRoom({ roomId, adminId: stateKey });
+        } else if (stateKey === event.sender) {
+          const isAccessAllowed = await this.isAccessAllowed({
+            roomId,
+            userId: stateKey,
+          });
           if (!isAccessAllowed) {
             await this.banUser({ roomId, userId: stateKey });
           } else {
@@ -153,10 +156,10 @@ export class ZionBotController {
               membershipEvent,
             });
           }
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
-          LogService.error(`${PRINT_TAG}`, e);
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (e: any) {
+        LogService.error(`${PRINT_TAG}`, e);
       }
     }
   }
@@ -222,19 +225,19 @@ export class ZionBotController {
     return joinedRooms.includes(roomId);
   }
 
-  private async inviteBotToRoom(
-    roomAdminId: string,
-    roomId: string
-  ): Promise<void> {
-    if (!(await this.isBotInRoom(roomId))) {
-      const intent = this.appservice.getIntentForUserId(roomAdminId);
+  private async inviteBotToRoom(args: {
+    adminId: string;
+    roomId: string;
+  }): Promise<void> {
+    if (!(await this.isBotInRoom(args.roomId))) {
+      const intent = this.appservice.getIntentForUserId(args.adminId);
       await intent.underlyingClient.inviteUser(
         this.appservice.botUserId,
-        roomId
+        args.roomId
       );
       await intent.underlyingClient.setUserPowerLevel(
         this.appservice.botUserId,
-        roomId,
+        args.roomId,
         51
       );
     }
@@ -245,7 +248,10 @@ export class ZionBotController {
       const members = await this.getRoomMembers(roomId);
       for (let i = 0; i < members.length; i++) {
         const m = members[i];
-        const isAccessAllowed = await this.isAccessAllowed(roomId, m.stateKey);
+        const isAccessAllowed = await this.isAccessAllowed({
+          roomId,
+          userId: m.stateKey,
+        });
         if (isAccessAllowed) {
           await this.unbanUser({
             roomId,
@@ -300,23 +306,23 @@ export class ZionBotController {
     );
   }
 
-  private async isAccessAllowed(
-    roomId: string,
-    userId: string
-  ): Promise<boolean> {
+  private async isAccessAllowed(args: {
+    roomId: string;
+    userId: string;
+  }): Promise<boolean> {
     const roomCreator = await this.getRoomCreator(
       this.appservice.botIntent,
-      roomId
+      args.roomId
     );
     if (
-      userId === this.appservice.botUserId ||
-      userId === roomCreator // TODO: Remove this when space contract integration is done.
+      args.userId === this.appservice.botUserId ||
+      args.userId === roomCreator // TODO: Remove this when space contract integration is done.
     ) {
       return true;
     }
 
     if (this.isTokenRequired) {
-      const id = createUserIdFromString(userId);
+      const id = createUserIdFromString(args.userId);
       if (id) {
         const provider = this.getWeb3Provider(id.chainId);
         if (provider) {
@@ -359,8 +365,7 @@ export class ZionBotController {
   private async getRoomMembers(roomId: string): Promise<MembershipEvent[]> {
     return await this.appservice.botIntent.underlyingClient.getRoomMembers(
       roomId,
-      undefined,
-      ["join", "invite", "ban"] // Only interested in these types of membership.
+      undefined
     );
   }
 
