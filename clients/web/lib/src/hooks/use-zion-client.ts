@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -31,6 +32,11 @@ interface ZionClientImpl {
   createChannel: (
     createInfo: CreateChannelInfo,
   ) => Promise<RoomIdentifier | undefined>;
+  editMessage: (
+    roomId: RoomIdentifier,
+    message: string,
+    options: EditMessageOptions,
+  ) => Promise<void>;
   getIsWalletIdRegistered: () => Promise<boolean>;
   inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>;
   joinRoom: (roomId: RoomIdentifier) => Promise<void>;
@@ -47,11 +53,6 @@ interface ZionClientImpl {
     options?: SendMessageOptions,
   ) => Promise<void>;
   sendNotice: (roomId: RoomIdentifier, message: string) => Promise<void>;
-  editMessage: (
-    roomId: RoomIdentifier,
-    message: string,
-    options: EditMessageOptions,
-  ) => Promise<void>;
   setPowerLevel: (
     roomId: RoomIdentifier,
     current: string | PowerLevel,
@@ -65,34 +66,7 @@ interface ZionClientImpl {
 export function useZionClient(): ZionClientImpl {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
-  const { triggerZionClientEvent } = useMatrixStore();
   const { client } = useContext<ZionContext>(MatrixContext);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const withCatch = <T extends Array<any>, U>(
-    fn?: (...args: T) => Promise<U | undefined>,
-    event: ZionClientEvent | undefined = undefined,
-  ) => {
-    return (...args: T): Promise<U | undefined> => {
-      if (client && fn) {
-        try {
-          return fn.apply(client, args).then((value: U | undefined) => {
-            if (event) {
-              triggerZionClientEvent(event);
-            }
-            return value;
-          });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (ex: any) {
-          console.error("Error", ex.stack, ex);
-          return Promise.resolve(undefined);
-        }
-      } else {
-        console.error("Not logged in");
-        return Promise.resolve(undefined);
-      }
-    };
-  };
 
   const clientRunning = useMemo(() => client !== undefined, [client]);
   const joinRoom = useJoinRoom();
@@ -103,24 +77,57 @@ export function useZionClient(): ZionClientImpl {
 
   return {
     clientRunning,
-    createChannel: withCatch(client?.createChannel),
-    createSpace: withCatch(client?.createSpace),
+    createChannel: useWithCatch(client?.createChannel),
+    createSpace: useWithCatch(client?.createSpace),
+    editMessage: useWithCatch(client?.editMessage),
     getIsWalletIdRegistered,
-    inviteUser: withCatch(client?.inviteUser),
+    inviteUser: useWithCatch(client?.inviteUser),
     joinRoom,
-    leaveRoom: withCatch(client?.leave),
+    leaveRoom: useWithCatch(client?.leave),
     loginWithPassword,
     loginWithWallet,
     logout,
     registerPasswordUser,
     registerWallet,
-    scrollback: withCatch(client?.scrollback),
-    sendMessage: withCatch(client?.sendMessage),
-    sendNotice: withCatch(client?.sendNotice),
-    editMessage: withCatch(client?.editMessage),
-    setPowerLevel: withCatch(client?.setPowerLevel),
+    scrollback: useWithCatch(client?.scrollback),
+    sendMessage: useWithCatch(client?.sendMessage),
+    sendNotice: useWithCatch(client?.sendNotice),
+    setPowerLevel: useWithCatch(client?.setPowerLevel),
     syncSpace,
-    setDisplayName: withCatch(client?.setDisplayName),
-    setAvatarUrl: withCatch(client?.setAvatarUrl),
+    setDisplayName: useWithCatch(client?.setDisplayName),
+    setAvatarUrl: useWithCatch(client?.setAvatarUrl),
   };
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const useWithCatch = <T extends Array<any>, U>(
+  fn?: (...args: T) => Promise<U | undefined>,
+  event: ZionClientEvent | undefined = undefined,
+) => {
+  const { triggerZionClientEvent } = useMatrixStore();
+  const { client } = useContext<ZionContext>(MatrixContext);
+  return useMemo(
+    () =>
+      (...args: T): Promise<U | undefined> => {
+        if (client && fn) {
+          try {
+            return fn.apply(client, args).then((value: U | undefined) => {
+              if (event) {
+                triggerZionClientEvent(event);
+              }
+              return value;
+            });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (ex: any) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            console.error("Error", ex.stack, ex);
+            return Promise.resolve(undefined);
+          }
+        } else {
+          console.log("useZionClient: Not logged in");
+          return Promise.resolve(undefined);
+        }
+      },
+    [client, triggerZionClientEvent, fn, event],
+  );
+};
