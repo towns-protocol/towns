@@ -2,122 +2,78 @@
 
 exports[`Everything > should match previous snapshot 1`] = `
 <div
-  className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4"
+  className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4"
 >
   <h1
-    className="atoms__153ynsn0 textProperties_fontVariationSettings_strong_desktop__166oh724 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_xl32_desktop__166oh72s textProperties_textTransform_none_desktop__166oh721o textProperties_textAlign_left_desktop__166oh7210 Text__hecx1ow"
+    className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_h1_desktop__166oh72s textProperties_fontWeight_strong_desktop__166oh72c textProperties_textTransform_none_desktop__166oh721s textProperties_textAlign_left_desktop__166oh7214 Text__hecx1ox"
   >
     Heading
   </h1>
   <h1
-    className="atoms__153ynsn0 textProperties_fontVariationSettings_strong_desktop__166oh724 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_xl32_desktop__166oh72s textProperties_textTransform_none_desktop__166oh721o textProperties_textAlign_left_desktop__166oh7210 Text__hecx1ow"
+    className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_h1_desktop__166oh72s textProperties_fontWeight_strong_desktop__166oh72c textProperties_textTransform_none_desktop__166oh721s textProperties_textAlign_left_desktop__166oh7214 Text__hecx1ox"
   >
     Heading 1
   </h1>
   <h2
-    className="atoms__153ynsn0 textProperties_fontVariationSettings_strong_desktop__166oh724 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_xl24_desktop__166oh72o textProperties_textTransform_none_desktop__166oh721o textProperties_textAlign_left_desktop__166oh7210 Text__hecx1ow"
+    className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_h2_desktop__166oh72w textProperties_fontWeight_strong_desktop__166oh72c textProperties_textTransform_none_desktop__166oh721s textProperties_textAlign_left_desktop__166oh7214 Text__hecx1ox"
   >
     Heading 2
   </h2>
-  <h3
-    className="atoms__153ynsn0 textProperties_fontVariationSettings_strong_desktop__166oh724 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_xl_desktop__166oh72k textProperties_textTransform_none_desktop__166oh721o textProperties_textAlign_left_desktop__166oh7210 Text__hecx1ow"
-  >
-    Heading 3
-  </h3>
-  <h4
-    className="atoms__153ynsn0 textProperties_fontVariationSettings_strong_desktop__166oh724 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_lg_desktop__166oh72g textProperties_textTransform_none_desktop__166oh721o textProperties_textAlign_left_desktop__166oh7210 Text__hecx1ow"
-  >
-    Heading 4
-  </h4>
   <div
-    className="atoms__153ynsn0 boxProperties_flexDirection_row_desktop__3zlyma17c boxProperties_display_flex_desktop__3zlyma4"
+    className="atoms__153ynsn0 boxProperties_flexDirection_row_desktop__3zlyma1c4 boxProperties_display_flex_desktop__3zlyma4"
   >
     <div
-      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4"
+      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4"
     >
       H1
     </div>
     <div
-      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4"
+      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4"
     >
       H2
     </div>
   </div>
   <div
-    className="atoms__153ynsn0 boxProperties_flexDirection_row_desktop__3zlyma17c boxProperties_display_flex_desktop__3zlyma4"
+    className="atoms__153ynsn0 boxProperties_flexDirection_row_desktop__3zlyma1c4 boxProperties_display_flex_desktop__3zlyma4"
   >
     <div
-      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4"
+      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4"
     >
       H1
     </div>
     <div
-      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4"
+      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4"
     >
       H2
     </div>
   </div>
   <div
-    className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4"
+    className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4"
   >
     <div
-      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4 colorProperties_color_accent_lightMode__v57w7310"
+      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4 colorProperties_color_accent_lightMode__v57w7320"
     />
     <div
-      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_flex_desktop__3zlyma4 colorProperties_color_cta1_lightMode__v57w731a"
+      className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_flex_desktop__3zlyma4 colorProperties_color_cta1_lightMode__v57w732k"
     />
   </div>
   <span
-    className="atoms__153ynsn0 textProperties_fontVariationSettings_normal_desktop__166oh720 boxProperties_flexDirection_column_desktop__3zlyma17g boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_md_desktop__166oh72c textProperties_textTransform_none_desktop__166oh721o textProperties_textAlign_left_desktop__166oh7210 Text__hecx1ow"
+    className="atoms__153ynsn0 boxProperties_flexDirection_column_desktop__3zlyma1c8 boxProperties_display_block_desktop__3zlyma0 textProperties_fontSize_md_desktop__166oh72k textProperties_textTransform_none_desktop__166oh721s textProperties_textAlign_left_desktop__166oh7214 Text__hecx1ox"
   >
     Text
   </span>
   <svg
     fill="none"
-    height="32"
-    viewBox="0 0 200 67"
-    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 111 42"
   >
     <path
-      d="M71.8719 66.7008V2.51172H59.4158V66.7008H71.8719Z"
+      d="M48.3278 0H35.9294C35.4296 0 34.9991 0.349615 34.895 0.837919L33.6237 6.89405C33.485 7.54994 33.9878 8.16538 34.6581 8.16538H47.0564C47.5563 8.16538 47.9868 7.81576 48.0908 7.32746L49.3621 1.27133C49.5008 0.615437 48.9981 0 48.3278 0V0Z"
       fill="currentColor"
     />
     <path
-      d="M155.499 66.7008V10.6484H157.207L159.417 25.5153L181.115 66.7008H200V2.51172H188.147V58.5642H186.439L184.128 43.6972L162.531 2.51172H143.646V66.7008H155.499Z"
+      d="M103.21 9.76178C99.0431 9.76178 94.4605 13.9803 94.6483 13.2464C94.8361 12.5125 95.4718 10.5592 94.5992 10.5592C93.7266 10.5592 84.9949 10.5592 81.6606 10.5592C81.1029 10.5592 80.5684 10.8713 80.3806 11.4001C79.1555 14.8644 74.7174 16.0288 71.8165 13.4833C69.4298 11.3885 66.3498 9.76178 62.5358 9.76178C56.9477 9.76178 52.1398 12.6858 49.1233 15.1013C48.034 15.971 46.4622 14.9829 46.7511 13.6191L47.1296 11.8364C47.2683 11.1805 46.7684 10.5621 46.0981 10.5621H7.21866C6.72168 10.5621 6.29406 10.9089 6.18715 11.3943L4.70779 18.1872C4.56332 18.846 5.06607 19.4672 5.7393 19.4672H12.7056C13.6735 19.4672 14.1185 20.6663 13.399 21.3135C9.77575 24.5698 7.1522 27.3436 4.57777 29.8805C2.58698 31.8424 1.18564 34.3186 0.593315 37.0491L0.0241077 39.6495C-0.117472 40.3083 0.38239 40.9295 1.05562 40.9295H40.0998C40.5996 40.9295 41.0301 40.5799 41.1313 40.0945L41.1544 39.9847C41.7265 37.286 44.951 36.4163 47.0169 38.2453C49.3833 40.3401 52.9806 41.7298 58.2566 41.7298C64.6364 41.7298 70.47 37.6327 73.6252 34.9254C74.4082 34.255 75.5871 34.96 75.3733 35.9713L74.596 39.6582C74.4574 40.314 74.9572 40.9324 75.6275 40.9324H88.0259C88.5257 40.9324 88.9562 40.5828 89.0603 40.0945L92.6518 22.9518C93.1661 20.386 94.0791 19.5308 95.0471 19.5308C96.015 19.5308 96.4195 19.9295 95.8474 22.4404L92.2328 39.661C92.0941 40.3169 92.5969 40.9324 93.2672 40.9324H105.611C106.11 40.9324 106.541 40.5828 106.642 40.0945L110.459 21.9838C112.172 13.8185 109.832 9.76467 103.21 9.76467V9.76178ZM22.3417 28.1382C23.3818 27.1385 24.4538 26.0896 25.5344 25.0292C27.1351 23.4603 29.7991 24.9194 29.3339 27.1125L28.6723 30.233C28.4498 31.279 27.5281 32.0244 26.459 32.0244H23.9164C21.8822 32.0244 20.8767 29.5482 22.3417 28.1382ZM59.1148 33.5067C57.8608 33.5067 57.5747 32.3683 57.5747 30.9409C57.5747 28.2596 59.2303 18.1554 62.2555 18.1554C63.2812 18.1554 63.6829 18.7824 63.6829 20.2647C63.6829 22.3797 62.1977 33.5067 59.1176 33.5067H59.1148Z"
       fill="currentColor"
     />
-    <path
-      d="M-5.18128e-07 14.3651L49.6235 14.3651L49.6235 16.0728L34.7566 25.8167L-2.0286e-06 48.9207L-2.8058e-06 66.7008L57.7602 66.7008L57.7602 55.9524L8.13666 55.9524L8.13666 54.2447L17.981 51.9343L57.7602 26.4194L57.7602 2.51172L0 2.51172L-5.18128e-07 14.3651Z"
-      fill="currentColor"
-    />
-    <circle
-      cx="107.232"
-      cy="33.7018"
-      fill="url(#paint0_linear_1205_31033)"
-      r="33.7018"
-    />
-    <defs>
-      <linearGradient
-        gradientUnits="userSpaceOnUse"
-        id="paint0_linear_1205_31033"
-        x1="107.232"
-        x2="107.232"
-        y1="38.2975"
-        y2="67.4037"
-      >
-        <stop
-          stopColor="#C9356A"
-        />
-        <stop
-          offset="0.364583"
-          stopColor="#BB1B1B"
-        />
-        <stop
-          offset="1"
-          stopColor="#FA773F"
-        />
-      </linearGradient>
-    </defs>
   </svg>
 </div>
 `;
