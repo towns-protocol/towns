@@ -2727,6 +2727,7 @@ __metadata:
     "@opengsn/contracts": ^2.2.6
     "@opengsn/provider": ^2.2.6
     "@openzeppelin/contracts": ^4.7.3
+    "@openzeppelin/contracts-upgradeable": ^4.7.3
     "@openzeppelin/hardhat-upgrades": ^1.18.0
     "@typechain/ethers-v5": ^10.1.0
     "@typechain/hardhat": ^6.1.2
@@ -4241,6 +4242,13 @@ __metadata:
     loglevel: ^1.7.1
     winston: ^3.3.3
   checksum: c3f46df1823bde739fe31041aadd4f2352584665d7aaa16888ab76a77dcfe3ec916581ae84bda844e7de0a92b438fa5b60670192c3393ae5a2c5081be817bb17
+  languageName: node
+  linkType: hard
+
+"@openzeppelin/contracts-upgradeable@npm:^4.7.3":
+  version: 4.7.3
+  resolution: "@openzeppelin/contracts-upgradeable@npm:4.7.3"
+  checksum: c9ffb40cb847a975d440204fc6a811f43af960050242f707332b984d29bd16dc242ffa0935de61867aeb9e0357fadedb16b09b276deda5e9775582face831021
   languageName: node
   linkType: hard
 
