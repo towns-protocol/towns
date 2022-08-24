@@ -1,30 +1,17 @@
-import { HardhatUserConfig, subtask, task } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-
-import "hardhat-deploy";
 import "@openzeppelin/hardhat-upgrades";
+import "hardhat-packager";
 import "hardhat-preprocessor";
+import "hardhat-deploy";
 
+import path from "path";
+import fs from "fs";
+
+import { HardhatUserConfig, subtask } from "hardhat/config";
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from "hardhat/builtin-tasks/task-names";
 
 import * as dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
-
 dotenv.config();
-
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
-  let a = 0;
-  for (const account of accounts) {
-    if (a < 2) {
-      a++;
-      console.log(account.address);
-    }
-  }
-});
 
 function getRemappings() {
   let mappings = path.join("../../", "remappings.txt");
@@ -40,11 +27,8 @@ function getRemappings() {
 // prune forge style tests from hardhat paths
 subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS).setAction(
   async (_, __, runSuper) => {
-    const paths = await runSuper();
-    // paths.forEach((path: string) => {
-    //   console.log(`path: ${path}`);
-    // });
-    return paths.filter((p: string) => !p.endsWith(".t.sol"));
+    const paths: string[] = await runSuper();
+    return paths.filter((p) => !p.endsWith(".t.sol") && !p.includes("test"));
   }
 );
 
@@ -102,16 +86,21 @@ const config: HardhatUserConfig = {
     }),
   },
   typechain: {
-    outDir: "./contracts/zion-governance/typechain-types",
+    outDir: "./contracts/zion-governance/src",
     target: "ethers-v5",
     alwaysGenerateOverloads: false,
+  },
+
+  packager: {
+    contracts: ["CouncilNFT", "CouncilStaking", "ZionSpaceManager"],
+    includeFactories: true,
   },
 
   paths: {
     root: "../../",
     sources: "./contracts/zion-governance/contracts",
     cache: "./contracts/zion-governance/cache_hardhat",
-    artifacts: "./contracts/zion-governance/artifacts_hardhat",
+    artifacts: "./contracts/zion-governance/dist/artifacts",
     tests: "./contracts/zion-governance/test",
   },
 };

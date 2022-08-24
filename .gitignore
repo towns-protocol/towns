@@ -39,4 +39,5 @@ contracts/deployments/localhost/
 .eslintcache
 cache_hardhat
 artifacts_*
+tsconfig.tsbuildinfo
 broadcast/

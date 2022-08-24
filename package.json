@@ -7,7 +7,8 @@
     "lint": "eslint . --cache",
     "lint:fix": "yarn lint --fix",
     "lint:format": "prettier --write .",
-    "build:contracts-zion": "yarn workspace @harmony/zion-governance build",
+    "build:contracts-governance": "yarn workspace @harmony/zion-governance build",
+    "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
     "prepare": "husky install",
     "postinstall": "husky install"
   },
@@ -16,6 +17,7 @@
     "clients/web/lib",
     "clients/web/sample-app",
     "clients/governance-ui",
+    "clients/contract-debug-ui",
     "contracts/zion-governance",
     "packages/*"
   ],
