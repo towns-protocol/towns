@@ -11,11 +11,11 @@ export { usePowerLevels } from "./hooks/use-power-levels";
 export { useRoom } from "./hooks/use-room";
 export {
   useSpace,
-  useSpaces,
   useInvites,
   useInvitesForSpace,
   useInviteData,
 } from "./hooks/use-space";
+export { useSpaces, useSpacesFromContract } from "./hooks/use-spaces";
 export { useSpaceId } from "./hooks/use-space-id";
 export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
 
@@ -38,6 +38,8 @@ export type {
   SpaceChild,
   SpaceData,
 } from "./types/matrix-types";
+
+export type { Space, SpaceIdentifier } from "./client/ZionClientTypes";
 
 export {
   isRoom,

@@ -8,6 +8,8 @@ export const MatrixContext = createContext<ZionContext>({});
 
 interface Props {
   homeServerUrl: string;
+  spaceManagerAddress: string;
+  userModuleAddress: string;
   disableEncryption?: boolean;
   getSignerFn?: () => ethers.Signer;
   defaultSpaceId?: string;
@@ -31,6 +33,8 @@ export function MatrixContextProvider(props: Props): JSX.Element {
 const ContextImpl = (props: Props): JSX.Element => {
   const {
     homeServerUrl,
+    spaceManagerAddress,
+    userModuleAddress,
     disableEncryption,
     getSignerFn,
     defaultSpaceId,
@@ -40,6 +44,8 @@ const ContextImpl = (props: Props): JSX.Element => {
   } = props;
   const { client } = useZionClientListener(
     homeServerUrl,
+    spaceManagerAddress,
+    userModuleAddress,
     initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
     disableEncryption,
     getSignerFn,

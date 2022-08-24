@@ -15,10 +15,15 @@ import { SpacesIndex } from "./routes/SpacesIndex";
 import { SpacesNew } from "./routes/SpacesNew";
 import { SpacesNewChannel } from "./routes/SpacesNewChannel";
 import { ThemeProvider } from "@mui/material/styles";
+import { Web3 } from "./routes/Web3";
 import theme from "./theme";
 
 const MATRIX_HOMESERVER_URL = process.env
   .REACT_APP_MATRIX_HOME_SERVER as string;
+const SPACE_MANAGER_ADDRESS = process.env
+  .REACT_APP_SPACE_CONTRACT_ADDRESS as string;
+const USER_MANAGER_ADDRESS = process.env
+  .REACT_APP_USER_MODULE_CONTRACT_ADDRESS as string;
 
 export function App(): JSX.Element {
   return (
@@ -27,6 +32,8 @@ export function App(): JSX.Element {
         <Container maxWidth="md">
           <MatrixContextProvider
             homeServerUrl={MATRIX_HOMESERVER_URL}
+            spaceManagerAddress={SPACE_MANAGER_ADDRESS}
+            userModuleAddress={USER_MANAGER_ADDRESS}
             disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
           >
             <Routes>
@@ -48,6 +55,7 @@ export function App(): JSX.Element {
                       <Route path="settings" element={<RoomSettings />}></Route>
                     </Route>
                   </Route>
+                  <Route path="web3" element={<Web3 />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Route>

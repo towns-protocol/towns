@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ethers } from "ethers";
+import { BigNumberish, ethers } from "ethers";
 import { MatrixEvent, Room, RoomMember } from "matrix-js-sdk";
 
 export interface ZionOpts {
   homeServerUrl: string;
   initialSyncLimit: number;
   disableEncryption?: boolean;
+  spaceManagerAddress: string;
+  userModuleAddress: string;
   getProvider: () => ethers.providers.Provider | undefined;
   getSigner: () => ethers.Signer | undefined;
 }
@@ -30,6 +32,21 @@ export interface StartClientOpts {
     oldMembership: string | null,
   ) => void;
 }
+
+export interface SpaceIdentifier {
+  name: string;
+  id: BigNumberish;
+  key: string;
+}
+
+export interface Space {
+  spaceId: BigNumberish;
+  name: string;
+  createdAt: Date;
+  creatorAddress: string;
+  ownerAddress: string;
+}
+
 export enum ZionClientEvent {
   NewSpace = "ZionClient.NewSpace",
 }

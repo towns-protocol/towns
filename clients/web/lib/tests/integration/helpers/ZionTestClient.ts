@@ -14,11 +14,15 @@ import {
 import { RoomIdentifier } from "../../../src/types/matrix-types";
 import { sleepUntil } from "../../../src/utils/zion-utils";
 import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
+import { makeUniqueName } from "./TestUtils";
 
 export class ZionTestClient extends ZionClient {
   static allClients: ZionTestClient[] = [];
   static async cleanup() {
-    console.log("========= ZionTestClient: cleanup =========");
+    console.log(
+      "========= ZionTestClient: cleanup =========",
+      this.allClients.map((x) => x.getLoggingIdentifier()),
+    );
     await Promise.all(this.allClients.map((client) => client.stopClient()));
     this.allClients = [];
     console.log("========= ZionTestClient: cleanup done =========");
@@ -37,6 +41,8 @@ export class ZionTestClient extends ZionClient {
         homeServerUrl: process.env.HOMESERVER!,
         initialSyncLimit: 20,
         disableEncryption: process.env.DISABLE_ENCRYPTION === "true",
+        spaceManagerAddress: process.env.SPACEMANAGER_ADDRESS!,
+        userModuleAddress: process.env.USERMODULE_ADDRESS!,
         getSigner: () => this.provider.wallet,
         getProvider: () => {
           return this.provider;
@@ -57,17 +63,23 @@ export class ZionTestClient extends ZionClient {
 
   /// log a message to the console with the user's name and part of the wallet address
   protected log(message: string, ...optionalParams: unknown[]) {
-    console.log(`${this.getUniqueName()}`, message, ...optionalParams);
+    console.log(`${this.getLoggingIdentifier()}`, message, ...optionalParams);
   }
 
-  public getUniqueName(): string {
+  /// return name formatted with readable segment of user id and device id
+  public getLoggingIdentifier(): string {
     const dx = 6;
     const addressLength = this.userIdentifier.accountAddress.length;
     const pre = this.userIdentifier.accountAddress.substring(0, dx);
     const post = this.userIdentifier.accountAddress.substring(
       addressLength - dx,
     );
-    return `${this.name}${pre}_${post}`;
+    return `${this.name}${pre}_${post}@${this.auth?.deviceId ?? "unset"}`;
+  }
+
+  /// return a unique name sutable for a space or channel name
+  public makeUniqueName(): string {
+    return makeUniqueName(this.name);
   }
 
   // check if something eventually becomes true

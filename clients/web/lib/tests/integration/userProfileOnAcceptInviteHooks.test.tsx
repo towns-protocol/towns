@@ -11,7 +11,8 @@ import { LoginWithWallet } from "./helpers/TestComponents";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
-import { useInvites, useSpaces } from "../../src/hooks/use-space";
+import { useInvites } from "../../src/hooks/use-space";
+import { useSpaces } from "../../src/hooks/use-spaces";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

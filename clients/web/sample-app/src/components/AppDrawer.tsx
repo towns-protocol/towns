@@ -1,10 +1,10 @@
 import { Button, Theme } from "@mui/material";
 import {
   Membership,
+  RoomIdentifier,
   createUserIdFromString,
   getShortUsername,
   useMatrixStore,
-  RoomIdentifier,
 } from "use-zion-client";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useCallback, useMemo, useState } from "react";
@@ -63,6 +63,10 @@ export default function AppDrawer(props: Props): JSX.Element {
     navigate("/");
   };
 
+  const onWeb3Click = () => {
+    navigate("/web3");
+  };
+
   const drawer = (
     <div>
       <Toolbar />
@@ -95,6 +99,12 @@ export default function AppDrawer(props: Props): JSX.Element {
         isSpace={false}
         onClickRoom={onClickRoom}
       />
+      <Divider />
+      <Button onClick={onWeb3Click} variant="text">
+        <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+          Web 3
+        </Typography>
+      </Button>
     </div>
   );
 

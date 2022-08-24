@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
 import { ZionTestClient } from "./ZionTestClient";
+import { ethers } from "ethers";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -27,9 +27,10 @@ export async function registerAndStartClients(
   );
 }
 
-let makeUniqueNameCount = 0;
 export function makeUniqueName(prefix: string): string {
-  return `${prefix}_${Date.now()}_${makeUniqueNameCount++}`;
+  return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 4095).toString(
+    16,
+  )}`;
 }
 
 export async function fundWallet(

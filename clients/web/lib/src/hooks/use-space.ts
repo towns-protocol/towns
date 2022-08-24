@@ -17,6 +17,7 @@ import { useMatrixStore } from "../store/use-matrix-store";
 import { useZionClient } from "./use-zion-client";
 import { useRoom } from "./use-room";
 import { MatrixContext } from "../components/MatrixContextProvider";
+import { useSpaces } from "./use-spaces";
 
 /// returns default space if no space slug is provided
 export function useSpace(
@@ -92,17 +93,6 @@ export function useSpace(
     spaceRoomId,
   ]);
 }
-
-export const useSpaces = () => {
-  const { rooms } = useMatrixStore();
-  return useMemo(
-    () =>
-      Object.values(rooms ?? [])
-        .filter((r) => r.isSpaceRoom && r.membership === Membership.Join)
-        .map((r) => formatRoom(r, r.membership, "/placeholders/nft_29.png")),
-    [rooms],
-  );
-};
 
 export const useInvites = () => {
   const { rooms } = useMatrixStore();
@@ -180,7 +170,7 @@ function formatSpace(
 }
 
 /// formatting helper for changing a room to a space
-function formatRoom(
+export function formatRoom(
   r: Room | SpaceChild,
   membership: string,
   avatarSrc: string,

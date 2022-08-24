@@ -10,6 +10,8 @@ import { ethers } from "ethers";
 
 export const useZionClientListener = (
   homeServerUrl: string,
+  spaceManagerAddress: string,
+  userModuleAddress: string,
   initialSyncLimit: number,
   disableEncryption?: boolean,
   getSignerFn?: () => ethers.Signer,
@@ -34,6 +36,8 @@ export const useZionClientListener = (
       homeServerUrl,
       initialSyncLimit,
       disableEncryption,
+      spaceManagerAddress,
+      userModuleAddress,
       getProvider,
       getSigner,
     });

@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { useContext, useMemo } from "react";
+import { MatrixContext } from "../components/MatrixContextProvider";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -9,10 +11,6 @@ import {
   SpaceChild,
   ZionContext,
 } from "../types/matrix-types";
-import { useContext, useMemo } from "react";
-
-import { MatrixContext } from "../components/MatrixContextProvider";
-import { ZionClientEvent } from "../client/ZionClientTypes";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
 import { useLogout } from "./MatrixClient/useLogout";
@@ -20,6 +18,9 @@ import { useMatrixStore } from "../store/use-matrix-store";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
+import { ZionClientEvent } from "../client/ZionClientTypes";
+import { BigNumber, BigNumberish } from "ethers";
+import { ZionSpaceManager } from "@harmony/contracts/governance";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -29,6 +30,7 @@ interface ZionClientImpl {
   createSpace: (
     createInfo: CreateSpaceInfo,
   ) => Promise<RoomIdentifier | undefined>;
+  createWeb3Space: (createInfo: CreateSpaceInfo) => Promise<unknown>;
   createChannel: (
     createInfo: CreateChannelInfo,
   ) => Promise<RoomIdentifier | undefined>;
@@ -38,6 +40,19 @@ interface ZionClientImpl {
     options: EditMessageOptions,
   ) => Promise<void>;
   getIsWalletIdRegistered: () => Promise<boolean>;
+  getSpace: (spaceId: BigNumberish) => Promise<
+    | ([BigNumber, BigNumber, string, string, string] & {
+        spaceId: BigNumber;
+        createdAt: BigNumber;
+        name: string;
+        creatorAddress: string;
+        ownerAddress: string;
+      })
+    | undefined
+  >;
+  getSpaces: () => Promise<
+    ZionSpaceManager.SpaceNameIDStructOutput[] | undefined
+  >;
   inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>;
   joinRoom: (roomId: RoomIdentifier) => Promise<void>;
   leaveRoom: (roomId: RoomIdentifier) => Promise<void>;
@@ -79,8 +94,14 @@ export function useZionClient(): ZionClientImpl {
     clientRunning,
     createChannel: useWithCatch(client?.createChannel),
     createSpace: useWithCatch(client?.createSpace),
+    createWeb3Space: useWithCatch(
+      client?.createWeb3Space,
+      ZionClientEvent.NewSpace,
+    ),
     editMessage: useWithCatch(client?.editMessage),
     getIsWalletIdRegistered,
+    getSpace: useWithCatch(client?.getSpace),
+    getSpaces: useWithCatch(client?.getSpaces),
     inviteUser: useWithCatch(client?.inviteUser),
     joinRoom,
     leaveRoom: useWithCatch(client?.leave),

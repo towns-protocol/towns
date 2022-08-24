@@ -16905,6 +16905,7 @@ __metadata:
   resolution: "harmonyweb@workspace:clients/web/app"
   dependencies:
     "@babel/core": ^7.18.13
+    "@harmony/contracts": "workspace:^"
     "@harmony/prettier-config": "workspace:*"
     "@lexical/clipboard": ^0.3.11
     "@lexical/link": ^0.3.11
@@ -27557,6 +27558,7 @@ __metadata:
     "@babel/core": ^7.18.13
     "@emotion/react": ^11.10.0
     "@emotion/styled": ^11.10.0
+    "@harmony/contracts": "workspace:^"
     "@mui/icons-material": ^5.8.4
     "@mui/material": ^5.10.1
     "@mui/styles": ^5.9.3
@@ -31003,6 +31005,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "use-zion-client@workspace:clients/web/lib"
   dependencies:
+    "@harmony/contracts": "workspace:^"
     "@testing-library/dom": ^8.17.1
     "@testing-library/jest-dom": ^5.16.5
     "@testing-library/react": ^13.3.0

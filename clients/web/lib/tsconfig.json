@@ -12,11 +12,11 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
+    "rootDirs": ["./src"],
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,
     "target": "esnext"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*"],
 }
