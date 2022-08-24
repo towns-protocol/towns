@@ -16,8 +16,13 @@ We've implemented integration tests that run against a live server. See [Build a
 And run against a local blockchain, See [Zion-Governance](https://github.com:HereNotThere/zion-governance)
 
 ```bash
+#from client root
+./scripts/start-local-dendrite.sh
+./scripts/start-local-blockchain.sh
+./scripts/deploy-space-manager-contract.sh
+cd clients/web/lib
 yarn test
-# OR - run from visual studio code via the "Jest: current file in 'web/lib/` commmand
+# OR - run from visual studio code via F5 or the "Jest: current file in 'web/lib/` commmand
 ```
 
 ## Tips and Tricks
