@@ -12,6 +12,7 @@ import { SpaceSettings } from "./SpaceSettings";
 import { useCallback, useMemo } from "react";
 
 export const SpacesIndex = () => {
+  console.log("SPACES INDEX");
   const { spaceSlug } = useParams();
   const navigate = useNavigate();
   const space = useSpace(spaceSlug);
@@ -62,21 +63,21 @@ export const SpacesIndex = () => {
 
   return space ? (
     <>
-      <p>
+      <div>
         <button onClick={onClickSettings}>Space settings</button>
-      </p>
-      <p>
+      </div>
+      <div>
         <button onClick={onCreateChannelClick}>Create a channel</button>
-      </p>
-      <p>
+      </div>
+      <div>
         <button onClick={onClickInvite}>Invite to space</button>
-      </p>
-      <p>
+      </div>
+      <div>
         <button onClick={onClickLeaveSpace}>Leave space</button>
-      </p>
-      <p>
+      </div>
+      <div>
         {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}
-      </p>
+      </div>
       <List>{channelItems}</List>
     </>
   ) : (

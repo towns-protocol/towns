@@ -54,6 +54,7 @@ export function SpaceSettings(props: Props): JSX.Element {
           value="true"
           name="requireToken"
           checked={requireToken}
+          readOnly
         />{" "}
         Require token
         <input
@@ -61,6 +62,7 @@ export function SpaceSettings(props: Props): JSX.Element {
           value="false"
           name="requireToken"
           checked={!requireToken}
+          readOnly
         />{" "}
         No tokens required
       </fieldset>
