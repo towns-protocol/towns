@@ -1,5 +1,5 @@
 import { Web3Provider } from "../hooks/use-web3";
-import React, { createContext } from "react";
+import React, { createContext, useMemo } from "react";
 import { useZionClientListener } from "../hooks/use-zion-client-listener";
 import { makeRoomIdentifier, ZionContext } from "../types/matrix-types";
 import { ethers } from "ethers";
@@ -50,15 +50,17 @@ const ContextImpl = (props: Props): JSX.Element => {
     disableEncryption,
     getSignerFn,
   );
+  const convertedDefaultSpaceId = useMemo(
+    () => (defaultSpaceId ? makeRoomIdentifier(defaultSpaceId) : undefined),
+    [defaultSpaceId],
+  );
   return (
     <MatrixContext.Provider
       value={{
         client: client,
         homeServer: homeServerUrl,
         disableEncryption: disableEncryption,
-        defaultSpaceId: defaultSpaceId
-          ? makeRoomIdentifier(defaultSpaceId)
-          : undefined,
+        defaultSpaceId: convertedDefaultSpaceId,
         defaultSpaceName: defaultSpaceName,
         defaultSpaceAvatarSrc: defaultSpaceAvatarSrc,
       }}
