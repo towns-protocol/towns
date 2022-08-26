@@ -35,6 +35,11 @@ contract DeployCouncilOfZionNFTScript is Script {
         CouncilNFT councilNFT = new CouncilNFT(name, symbol, baseURI, root);
         console.log("Deploying Zion Council NFT: ", address(councilNFT));
 
+        councilNFT.privateMint{value: NFT_PRICE}(first, 1, m.getProof(data, 0));
+        councilNFT.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
+        councilNFT.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
+        councilNFT.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
+
         vm.stopBroadcast();
     }
 }

@@ -1,5 +1,6 @@
 import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades";
+import "@nomiclabs/hardhat-ethers";
 import "hardhat-packager";
 import "hardhat-preprocessor";
 import "hardhat-deploy";
