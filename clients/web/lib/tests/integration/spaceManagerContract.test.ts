@@ -8,7 +8,7 @@ describe("spaceManagerContract", () => {
   // test: spaceContract
   test("interact with the space contract", async () => {
     // create clients
-    const { bob } = await registerAndStartClients(["bob", "alice"]);
+    const { bob } = await registerAndStartClients(["bob"]);
     // put some money in bob's account
     await bob.fundWallet();
     // create a space

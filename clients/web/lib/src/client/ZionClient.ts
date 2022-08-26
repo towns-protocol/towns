@@ -28,7 +28,7 @@ import {
 import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
 
 import { BigNumberish } from "ethers";
-import { ZionSpaceManagerProvider } from "./web3/ZionSpaceManagerProvider";
+import { ZionContractProvider } from "./web3/ZionContractProvider";
 import { createMatrixClient } from "./matrix/CreateClient";
 import { createZionChannel } from "./matrix/CreateChannel";
 import { createZionSpace } from "./matrix/CreateSpace";
@@ -40,6 +40,7 @@ import { setZionPowerLevel } from "./matrix/SetPowerLevels";
 import { syncZionSpace } from "./matrix/SyncSpace";
 import { editZionMessage } from "./matrix/EditMessage";
 import { ZionSpaceManager } from "@harmony/contracts/governance";
+import { zionSpaceManagerAbi } from "./web3/ZionAbis";
 
 /***
  * Zion Client
@@ -60,19 +61,21 @@ export class ZionClient {
   public get auth(): ZionAuth | undefined {
     return this._auth;
   }
+  public spaceManager: ZionContractProvider<ZionSpaceManager>;
   private _auth?: ZionAuth;
+
   private client: MatrixClient;
-  private spaceManager: ZionSpaceManagerProvider;
 
   constructor(opts: ZionOpts, name?: string) {
     this.opts = opts;
     this.name = name || "";
-    console.log("!!!!! new ZionClient !!!!!!", this.name, this.opts);
+    console.log("~~~ new ZionClient ~~~", this.name, this.opts);
     this.client = createMatrixClient(opts, this._auth);
-    this.spaceManager = new ZionSpaceManagerProvider(
+    this.spaceManager = new ZionContractProvider<ZionSpaceManager>(
       opts.getProvider,
       opts.getSigner,
       opts.spaceManagerAddress,
+      zionSpaceManagerAbi(),
     );
   }
 
@@ -206,21 +209,21 @@ export class ZionClient {
    *************************************************/
   public async getSpaces() {
     console.log("ZionClient::get spaces");
-    return this.spaceManager.contract.getSpaceNames();
+    return this.spaceManager.unsigned.getSpaceNames();
   }
 
   /************************************************
    * getSpace
    *************************************************/
   public async getSpace(spaceId: BigNumberish) {
-    return this.spaceManager.contract.getSpaceValues(spaceId);
+    return this.spaceManager.unsigned.getSpaceValues(spaceId);
   }
 
   /************************************************
    * createSpace
    *************************************************/
   public async createWeb3Space(createSpaceInfo: CreateSpaceInfo) {
-    return this.spaceManager.signedContract.createSpace(createSpaceInfo.name, [
+    return this.spaceManager.signed.createSpace(createSpaceInfo.name, [
       this.opts.userModuleAddress,
     ]);
   }
