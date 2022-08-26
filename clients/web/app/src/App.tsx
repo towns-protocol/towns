@@ -34,14 +34,12 @@ import { useRootTheme } from "hooks/useRootTheme";
 
 FontLoader.init();
 
-export const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
-export const ZION_SPACE_ID = "!V2Gs6CLcXwOokgiq:node1.hntlabs.com";
-export const ZION_SPACE_NAME = "Zion Preview"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
-export const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
-export const SPACE_MANAGER_ADDRESS =
-  "0x5ee6615d52663131c938a43a280fccc4e9eee97a"; // on rinkeby
-export const USER_MANAGER_ADDRESS =
-  "0x7eca4c7f6e4245b9994b5fdec445673c1bdc0a44"; // on rinkeby
+const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
+const ZION_SPACE_ID = "!V2Gs6CLcXwOokgiq:node1.hntlabs.com";
+const ZION_SPACE_NAME = "Zion Preview"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
+const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
+const SPACE_MANAGER_ADDRESS = "0x5ee6615d52663131c938a43a280fccc4e9eee97a"; // on rinkeby
+const USER_MANAGER_ADDRESS = "0x7eca4c7f6e4245b9994b5fdec445673c1bdc0a44"; // on rinkeby
 
 export const App = () => {
   return (

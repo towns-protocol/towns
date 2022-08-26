@@ -24,8 +24,8 @@ export const ZionTestApp = (props: Props) => {
   // pull environment variables from the process
   const homeServerUrl = process.env.HOMESERVER!;
   const disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
-  const spaceManagerAddress = process.env.SPACEMANAGER_ADDRESS!;
-  const userModuleAddress = process.env.USERMODULE_ADDRESS!;
+  const spaceManagerAddress = process.env.SPACE_MANAGER_ADDRESS!;
+  const userModuleAddress = process.env.USER_MODULE_ADDRESS!;
 
   Object.defineProperty(window, "ethereum", {
     value: provider,

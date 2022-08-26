@@ -13,8 +13,9 @@ process.env.DISABLE_ENCRYPTION = "false";
 process.env.ETHERS_NETWORK = "http://localhost:8545"; // OR "rinkeby"
 process.env.FUNDED_WALLET_PRIVATE_KEY =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"; // we need a wallet with assets to fund our test clients
-process.env.SPACEMANAGER_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-process.env.USERMODULE_ADDRESS = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
+process.env.SPACE_MANAGER_ADDRESS =
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+process.env.USER_MODULE_ADDRESS = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
 
 // This is here to extend the globalThis interface for loading Olm, should be in global.d.ts but
 // that wasn't working

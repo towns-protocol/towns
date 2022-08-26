@@ -41,8 +41,8 @@ export class ZionTestClient extends ZionClient {
         homeServerUrl: process.env.HOMESERVER!,
         initialSyncLimit: 20,
         disableEncryption: process.env.DISABLE_ENCRYPTION === "true",
-        spaceManagerAddress: process.env.SPACEMANAGER_ADDRESS!,
-        userModuleAddress: process.env.USERMODULE_ADDRESS!,
+        spaceManagerAddress: process.env.SPACE_MANAGER_ADDRESS!,
+        userModuleAddress: process.env.USER_MODULE_ADDRESS!,
         getSigner: () => this.provider.wallet,
         getProvider: () => {
           return this.provider;

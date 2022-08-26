@@ -22,7 +22,7 @@ const MATRIX_HOMESERVER_URL = process.env
   .REACT_APP_MATRIX_HOME_SERVER as string;
 const SPACE_MANAGER_ADDRESS = process.env
   .REACT_APP_SPACE_CONTRACT_ADDRESS as string;
-const USER_MANAGER_ADDRESS = process.env
+const USER_MODULE_ADDRESS = process.env
   .REACT_APP_USER_MODULE_CONTRACT_ADDRESS as string;
 
 export function App(): JSX.Element {
@@ -33,7 +33,7 @@ export function App(): JSX.Element {
           <MatrixContextProvider
             homeServerUrl={MATRIX_HOMESERVER_URL}
             spaceManagerAddress={SPACE_MANAGER_ADDRESS}
-            userModuleAddress={USER_MANAGER_ADDRESS}
+            userModuleAddress={USER_MODULE_ADDRESS}
             disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
           >
             <Routes>
