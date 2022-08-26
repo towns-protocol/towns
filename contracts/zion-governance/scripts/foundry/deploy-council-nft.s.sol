@@ -22,8 +22,8 @@ contract DeployCouncilOfZionNFTScript is Script {
 
         data[0] = keccak256(abi.encodePacked(first, uint(1)));
         data[1] = keccak256(abi.encodePacked(second, uint(1)));
-        data[2] = keccak256(abi.encodePacked(third, uint(0)));
-        data[3] = keccak256(abi.encodePacked(fourth, uint(0)));
+        data[2] = keccak256(abi.encodePacked(third, uint(1)));
+        data[3] = keccak256(abi.encodePacked(fourth, uint(1)));
 
         Merkle m = new Merkle();
         bytes32 root = m.getRoot(data);

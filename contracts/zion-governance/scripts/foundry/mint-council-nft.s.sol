@@ -23,16 +23,19 @@ contract DeployCouncilOfZionNFTScript is Script {
 
         data[0] = keccak256(abi.encodePacked(first, uint(1)));
         data[1] = keccak256(abi.encodePacked(second, uint(1)));
-        data[2] = keccak256(abi.encodePacked(third, uint(0)));
-        data[3] = keccak256(abi.encodePacked(fourth, uint(0)));
+        data[2] = keccak256(abi.encodePacked(third, uint(1)));
+        data[3] = keccak256(abi.encodePacked(fourth, uint(1)));
 
         Merkle m = new Merkle();
 
         CouncilNFT councilNFT = CouncilNFT(NFT_ADDRESS);
 
         console.log("Minting NFT");
-        bytes32[] memory proof = m.getProof(data, 0);
-        councilNFT.privateMint{value: NFT_PRICE}(first, 1, proof);
+
+        councilNFT.privateMint{value: NFT_PRICE}(first, 1, m.getProof(data, 0));
+        councilNFT.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
+        councilNFT.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
+        councilNFT.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
 
         vm.stopBroadcast();
     }
