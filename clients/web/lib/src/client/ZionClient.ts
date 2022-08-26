@@ -39,8 +39,16 @@ import { sendZionMessage } from "./matrix/SendMessage";
 import { setZionPowerLevel } from "./matrix/SetPowerLevels";
 import { syncZionSpace } from "./matrix/SyncSpace";
 import { editZionMessage } from "./matrix/EditMessage";
-import { ZionSpaceManager } from "@harmony/contracts/governance";
-import { zionSpaceManagerAbi } from "./web3/ZionAbis";
+import {
+  ZionSpaceManager,
+  CouncilNFT,
+  CouncilStaking,
+} from "@harmony/contracts/governance";
+import {
+  zionCouncilNFTAbi,
+  zionSpaceManagerAbi,
+  zionCouncilStakingAbi,
+} from "./web3/ZionAbis";
 
 /***
  * Zion Client
@@ -62,6 +70,8 @@ export class ZionClient {
     return this._auth;
   }
   public spaceManager: ZionContractProvider<ZionSpaceManager>;
+  public councilNFT: ZionContractProvider<CouncilNFT>;
+  public councilStaking: ZionContractProvider<CouncilStaking>;
   private _auth?: ZionAuth;
 
   private client: MatrixClient;
@@ -76,6 +86,18 @@ export class ZionClient {
       opts.getSigner,
       opts.spaceManagerAddress,
       zionSpaceManagerAbi(),
+    );
+    this.councilNFT = new ZionContractProvider<CouncilNFT>(
+      opts.getProvider,
+      opts.getSigner,
+      opts.councilNFTAddress,
+      zionCouncilNFTAbi(),
+    );
+    this.councilStaking = new ZionContractProvider<CouncilStaking>(
+      opts.getProvider,
+      opts.getSigner,
+      opts.councilStakingAddress,
+      zionCouncilStakingAbi(),
     );
   }
 

@@ -8,6 +8,8 @@ export interface ZionOpts {
   disableEncryption?: boolean;
   spaceManagerAddress: string;
   userModuleAddress: string;
+  councilNFTAddress: string;
+  councilStakingAddress: string;
   getProvider: () => ethers.providers.Provider | undefined;
   getSigner: () => ethers.Signer | undefined;
 }

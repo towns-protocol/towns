@@ -16,6 +16,8 @@ process.env.FUNDED_WALLET_PRIVATE_KEY =
 process.env.SPACE_MANAGER_ADDRESS =
   "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 process.env.USER_MODULE_ADDRESS = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
+process.env.COUNCIL_NFT_ADDRESS = "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9";
+process.env.COUNCIL_STAKING_ADDRESS = "";
 
 // This is here to extend the globalThis interface for loading Olm, should be in global.d.ts but
 // that wasn't working

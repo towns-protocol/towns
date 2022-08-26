@@ -19,7 +19,7 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 #from client root
 ./scripts/start-local-dendrite.sh
 ./scripts/start-local-blockchain.sh
-./scripts/deploy-space-manager-contract.sh
+./scripts/deploy-zion-governance-contracts.sh
 cd clients/web/lib
 yarn test
 # OR - run from visual studio code via F5 or the "Jest: current file in 'web/lib/` commmand

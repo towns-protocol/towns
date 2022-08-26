@@ -43,6 +43,8 @@ export class ZionTestClient extends ZionClient {
         disableEncryption: process.env.DISABLE_ENCRYPTION === "true",
         spaceManagerAddress: process.env.SPACE_MANAGER_ADDRESS!,
         userModuleAddress: process.env.USER_MODULE_ADDRESS!,
+        councilNFTAddress: process.env.COUNCIL_NFT_ADDRESS!,
+        councilStakingAddress: process.env.COUNCIL_STAKING_ADDRESS!,
         getSigner: () => this.provider.wallet,
         getProvider: () => {
           return this.provider;

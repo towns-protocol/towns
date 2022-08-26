@@ -26,7 +26,8 @@ export const ZionTestApp = (props: Props) => {
   const disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
   const spaceManagerAddress = process.env.SPACE_MANAGER_ADDRESS!;
   const userModuleAddress = process.env.USER_MODULE_ADDRESS!;
-
+  const councilNFTAddress = process.env.COUNCIL_NFT_ADDRESS!;
+  const councilStakingAddress = process.env.COUNCIL_STAKING_ADDRESS!;
   Object.defineProperty(window, "ethereum", {
     value: provider,
     writable: true,
@@ -37,6 +38,8 @@ export const ZionTestApp = (props: Props) => {
       homeServerUrl={homeServerUrl}
       spaceManagerAddress={spaceManagerAddress}
       userModuleAddress={userModuleAddress}
+      councilNFTAddress={councilNFTAddress}
+      councilStakingAddress={councilStakingAddress}
       disableEncryption={disableEncryption}
       getSignerFn={provider ? () => provider.wallet : undefined}
       defaultSpaceId={defaultSpaceId}

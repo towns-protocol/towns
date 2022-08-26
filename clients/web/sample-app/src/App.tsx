@@ -24,6 +24,9 @@ const SPACE_MANAGER_ADDRESS = process.env
   .REACT_APP_SPACE_CONTRACT_ADDRESS as string;
 const USER_MODULE_ADDRESS = process.env
   .REACT_APP_USER_MODULE_CONTRACT_ADDRESS as string;
+const COUNCIL_NFT_ADDRESS = process.env.REACT_APP_COUNCIL_NFT_ADDRESS as string;
+const COUNCIL_STAKING_ADDRESS = process.env
+  .REACT_APP_COUNCIL_STAKING_ADDRESS as string;
 
 export function App(): JSX.Element {
   return (
@@ -34,6 +37,8 @@ export function App(): JSX.Element {
             homeServerUrl={MATRIX_HOMESERVER_URL}
             spaceManagerAddress={SPACE_MANAGER_ADDRESS}
             userModuleAddress={USER_MODULE_ADDRESS}
+            councilNFTAddress={COUNCIL_NFT_ADDRESS}
+            councilStakingAddress={COUNCIL_STAKING_ADDRESS}
             disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
           >
             <Routes>

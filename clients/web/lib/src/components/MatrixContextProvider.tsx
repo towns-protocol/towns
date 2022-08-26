@@ -10,6 +10,8 @@ interface Props {
   homeServerUrl: string;
   spaceManagerAddress: string;
   userModuleAddress: string;
+  councilNFTAddress: string;
+  councilStakingAddress: string;
   disableEncryption?: boolean;
   getSignerFn?: () => ethers.Signer;
   defaultSpaceId?: string;
@@ -35,6 +37,8 @@ const ContextImpl = (props: Props): JSX.Element => {
     homeServerUrl,
     spaceManagerAddress,
     userModuleAddress,
+    councilNFTAddress,
+    councilStakingAddress,
     disableEncryption,
     getSignerFn,
     defaultSpaceId,
@@ -46,6 +50,8 @@ const ContextImpl = (props: Props): JSX.Element => {
     homeServerUrl,
     spaceManagerAddress,
     userModuleAddress,
+    councilNFTAddress,
+    councilStakingAddress,
     initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
     disableEncryption,
     getSignerFn,

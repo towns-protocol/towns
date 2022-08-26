@@ -12,6 +12,8 @@ export const useZionClientListener = (
   homeServerUrl: string,
   spaceManagerAddress: string,
   userModuleAddress: string,
+  councilNFTAddress: string,
+  councilStakingAddress: string,
   initialSyncLimit: number,
   disableEncryption?: boolean,
   getSignerFn?: () => ethers.Signer,
@@ -38,6 +40,8 @@ export const useZionClientListener = (
       disableEncryption,
       spaceManagerAddress,
       userModuleAddress,
+      councilNFTAddress,
+      councilStakingAddress,
       getProvider,
       getSigner,
     });
