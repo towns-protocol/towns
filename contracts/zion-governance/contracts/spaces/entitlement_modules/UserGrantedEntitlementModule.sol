@@ -65,7 +65,7 @@ contract UserGrantedEntitlementModule is ISpaceEntitlementModule {
     }
 
     function removeUserEntitlements(
-        address originAddress,
+        address originAddress, // should we check msg.sender instead?
         uint256 spaceId,
         uint256 roomId,
         address userAddress,

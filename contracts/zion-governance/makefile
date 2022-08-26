@@ -44,3 +44,6 @@ deployLocalSpaceManager:
 
 deployLocalCouncilNFT:
 	forge script scripts/foundry/deploy-council-nft.s.sol --rpc-url ${LOCAL_RPC_URL} --private-key ${LOCAL_PRIVATE_KEY} --broadcast -vvvv
+
+mintLocalCouncilNFT:
+	forge script scripts/foundry/mint-council-nft.s.sol --rpc-url ${LOCAL_RPC_URL} --private-key ${LOCAL_PRIVATE_KEY} --broadcast -vvvv

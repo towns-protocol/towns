@@ -81,7 +81,7 @@ contract ZionSpaceManager is ISpaceManager {
         space.name = spaceName;
         space.creatorAddress = msg.sender;
         space.ownerAddress = msg.sender;
-        space.entitlementModuleTags = ["usergranted"];
+        space.entitlementModuleTags = ["usergranted"]; // make an enum of entitlementtags?
         space.entitlementModuleAddresses[
             "usergranted"
         ] = entitlementModuleAddresses[0];

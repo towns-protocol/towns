@@ -9,6 +9,7 @@ contract DeployCouncilOfZionNFTScript is Script {
     using Strings for uint256;
 
     uint256 private NFT_PRICE = 0.08 ether;
+    address private NFT_ADDRESS = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512;
 
     function run() external {
         vm.startBroadcast();
@@ -26,14 +27,12 @@ contract DeployCouncilOfZionNFTScript is Script {
         data[3] = keccak256(abi.encodePacked(fourth, uint(0)));
 
         Merkle m = new Merkle();
-        bytes32 root = m.getRoot(data);
 
-        string memory name = "Zion Council";
-        string memory symbol = "ZC";
-        string
-            memory baseURI = "https://bafybeihuygd5wm43kmxl4pocbv5uchdrkimhfwk75qgbmtlrqsy2bwwijq.ipfs.nftstorage.link/metadata/";
-        CouncilNFT councilNFT = new CouncilNFT(name, symbol, baseURI, root);
-        console.log("Deploying Zion Council NFT: ", address(councilNFT));
+        CouncilNFT councilNFT = CouncilNFT(NFT_ADDRESS);
+
+        console.log("Minting NFT");
+        bytes32[] memory proof = m.getProof(data, 0);
+        councilNFT.privateMint{value: NFT_PRICE}(first, 1, proof);
 
         vm.stopBroadcast();
     }

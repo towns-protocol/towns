@@ -60,3 +60,23 @@ For example: \
 `forge script scripts/foundry/deploy-space-manager.s.sol --rpc-url $LOCAL_RPC_URL --private-key $LOCAL_PRIVATE_KEY --broadcast -vvvv`
 
 Finally update the front-end files with the correct addresses of the deployed contracts
+
+## Deploy the Council NFT and mint on a local node
+
+From the root of the project
+
+on a 1st terminal window, run
+
+```
+anvil
+```
+
+on a 2nd terminal window, run
+
+```
+cd contracts/zion-governance
+make deployLocalCouncilNFT
+make mintLocalCouncilNFT
+```
+
+This will mint an NFT belonging to the address 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, which is the first wallet on the anvil local node.
