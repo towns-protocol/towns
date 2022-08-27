@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { useContext, useMemo } from "react";
-import { MatrixContext } from "../components/MatrixContextProvider";
+import { useMemo } from "react";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -9,7 +8,6 @@ import {
   RoomIdentifier,
   SendMessageOptions,
   SpaceChild,
-  ZionContext,
 } from "../types/matrix-types";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
@@ -21,6 +19,7 @@ import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 import { ZionClientEvent } from "../client/ZionClientTypes";
 import { BigNumber, BigNumberish } from "ethers";
 import { ZionSpaceManager } from "@harmony/contracts/governance";
+import { useZionContext } from "../components/ZionContextProvider";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -81,7 +80,7 @@ interface ZionClientImpl {
 export function useZionClient(): ZionClientImpl {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useMatrixWalletSignIn();
-  const { client } = useContext<ZionContext>(MatrixContext);
+  const { client } = useZionContext();
 
   const clientRunning = useMemo(() => client !== undefined, [client]);
   const joinRoom = useJoinRoom();
@@ -126,7 +125,7 @@ const useWithCatch = <T extends Array<any>, U>(
   event: ZionClientEvent | undefined = undefined,
 ) => {
   const { triggerZionClientEvent } = useMatrixStore();
-  const { client } = useContext<ZionContext>(MatrixContext);
+  const { client } = useZionContext();
   return useMemo(
     () =>
       (...args: T): Promise<U | undefined> => {

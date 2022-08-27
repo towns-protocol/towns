@@ -1,15 +1,11 @@
-import { MatrixContext } from "../../components/MatrixContextProvider";
-import { useCallback, useContext } from "react";
+import { useZionContext } from "../../components/ZionContextProvider";
+import { useCallback } from "react";
 import { useMatrixStore } from "../../store/use-matrix-store";
-import {
-  RoomIdentifier,
-  SpaceChild,
-  ZionContext,
-} from "../../types/matrix-types";
+import { RoomIdentifier, SpaceChild } from "../../types/matrix-types";
 
 export const useSyncSpace = () => {
   const { setSpace } = useMatrixStore();
-  const { client } = useContext<ZionContext>(MatrixContext);
+  const { client } = useZionContext();
   return useCallback(
     async (spaceId: RoomIdentifier): Promise<SpaceChild[]> => {
       if (!client) {

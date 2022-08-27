@@ -1,10 +1,10 @@
-import { MatrixContext } from "../components/MatrixContextProvider";
+import { useZionContext } from "../components/ZionContextProvider";
 import { UserEvent } from "matrix-js-sdk";
-import { useContext, useEffect, useState } from "react";
-import { MyProfile, ZionContext } from "../types/matrix-types";
+import { useEffect, useState } from "react";
+import { MyProfile } from "../types/matrix-types";
 
 export function useMyProfile(): MyProfile | undefined {
-  const { client } = useContext<ZionContext>(MatrixContext);
+  const { client } = useZionContext();
   // const { myProfile } = useMatrixStore();
   const userId = client?.getUserId();
   const user = userId ? client?.getUser(userId) : undefined;

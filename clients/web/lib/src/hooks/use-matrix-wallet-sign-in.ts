@@ -21,13 +21,12 @@ import {
 } from "../types/user-identifier";
 import { useCallback, useContext, useMemo } from "react";
 
-import { MatrixContext } from "../components/MatrixContextProvider";
 import { SiweMessage } from "siwe";
 import { StatusCodes } from "http-status-codes";
-import { ZionContext } from "../types/matrix-types";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useWeb3Context } from "./use-web3";
+import { useZionContext } from "../components/ZionContextProvider";
 
 export interface NewSession {
   sessionId: string;
@@ -50,7 +49,7 @@ export function useMatrixWalletSignIn() {
     setUserId,
     setUsername,
   } = useMatrixStore();
-  const { homeServer } = useContext<ZionContext>(MatrixContext);
+  const { homeServer } = useZionContext();
   const { setAccessToken } = useCredentialStore();
   const { accounts, sign } = useWeb3Context();
   const { chainId } = useWeb3Context();

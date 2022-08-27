@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React from "react";
-import { MatrixContextProvider } from "../../../src/components/MatrixContextProvider";
+import { ZionContextProvider } from "../../../src/components/ZionContextProvider";
 import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 
 interface Props {
@@ -34,7 +34,7 @@ export const ZionTestApp = (props: Props) => {
   });
 
   return (
-    <MatrixContextProvider
+    <ZionContextProvider
       homeServerUrl={homeServerUrl}
       spaceManagerAddress={spaceManagerAddress}
       userModuleAddress={userModuleAddress}
@@ -48,6 +48,6 @@ export const ZionTestApp = (props: Props) => {
       initialSyncLimit={initialSyncLimit}
     >
       {children}
-    </MatrixContextProvider>
+    </ZionContextProvider>
   );
 };

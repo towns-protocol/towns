@@ -12,15 +12,6 @@ export enum Membership {
   Leave = "leave",
 }
 
-export interface ZionContext {
-  client?: ZionClient;
-  homeServer?: string;
-  disableEncryption?: boolean; // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
-  defaultSpaceId?: RoomIdentifier;
-  defaultSpaceName?: string;
-  defaultSpaceAvatarSrc?: string;
-}
-
 export interface MyProfile {
   displayName: string;
   avatarUrl: string;

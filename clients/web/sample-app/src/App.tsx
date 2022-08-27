@@ -4,7 +4,7 @@ import AppDrawer from "./components/AppDrawer";
 import { Container } from "@mui/material";
 import { Home } from "./routes/Home";
 import { Main } from "./components/Main";
-import { MatrixContextProvider } from "use-zion-client";
+import { ZionContextProvider } from "use-zion-client";
 import { NotFound } from "./routes/NotFound";
 import { RoomSettings } from "./routes/RoomSettings";
 import { Rooms } from "./routes/Rooms";
@@ -33,7 +33,7 @@ export function App(): JSX.Element {
     <BrowserRouter>
       <ThemeProvider theme={theme}>
         <Container maxWidth="md">
-          <MatrixContextProvider
+          <ZionContextProvider
             homeServerUrl={MATRIX_HOMESERVER_URL}
             spaceManagerAddress={SPACE_MANAGER_ADDRESS}
             userModuleAddress={USER_MODULE_ADDRESS}
@@ -65,7 +65,7 @@ export function App(): JSX.Element {
                 </Route>
               </Route>
             </Routes>
-          </MatrixContextProvider>
+          </ZionContextProvider>
         </Container>
       </ThemeProvider>
     </BrowserRouter>

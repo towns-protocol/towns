@@ -1,4 +1,4 @@
-export { MatrixContextProvider } from "./components/MatrixContextProvider";
+export { ZionContextProvider } from "./components/ZionContextProvider";
 export { useChannel } from "./hooks/use-channel";
 export { LoginStatus, getChainIdEip155 } from "./hooks/login";
 export { useMatrixStore } from "./store/use-matrix-store";

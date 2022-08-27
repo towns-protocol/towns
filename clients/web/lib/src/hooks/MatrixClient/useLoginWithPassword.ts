@@ -6,14 +6,13 @@ import { useCredentialStore } from "../../store/use-credential-store";
 import { useMatrixStore } from "../../store/use-matrix-store";
 import { getUsernameFromId } from "../../types/user-identifier";
 import { useLogout } from "./useLogout";
-import { ZionContext } from "../../types/matrix-types";
-import { MatrixContext } from "../../components/MatrixContextProvider";
+import { useZionContext } from "../../components/ZionContextProvider";
 
 export const useLoginWithPassword = () => {
   const { setDeviceId, setLoginError, setLoginStatus, setUserId, setUsername } =
     useMatrixStore();
 
-  const { homeServer } = useContext<ZionContext>(MatrixContext);
+  const { homeServer } = useZionContext();
   const { setAccessToken } = useCredentialStore();
   const logout: () => Promise<void> = useLogout();
 

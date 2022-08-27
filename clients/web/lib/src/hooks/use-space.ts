@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Channel,
   ChannelGroup,
@@ -11,20 +11,19 @@ import {
   SpaceData,
   SpaceHierarchy,
   toRoomIdentifier,
-  ZionContext,
 } from "../types/matrix-types";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useZionClient } from "./use-zion-client";
 import { useRoom } from "./use-room";
-import { MatrixContext } from "../components/MatrixContextProvider";
 import { useSpaces } from "./use-spaces";
+import { useZionContext } from "../components/ZionContextProvider";
 
 /// returns default space if no space slug is provided
 export function useSpace(
   slugOrId: RoomIdentifier | string | undefined = undefined,
 ): SpaceData | undefined {
   const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
-    useContext<ZionContext>(MatrixContext);
+    useZionContext();
   const { spaceHierarchies, spacesUpdateRecievedAt } = useMatrixStore();
   const { clientRunning, syncSpace } = useZionClient();
   const spaceRoomId = toRoomIdentifier(slugOrId ?? defaultSpaceId);

@@ -1,18 +1,12 @@
-import { useContext, useMemo } from "react";
-import { MatrixContext } from "../components/MatrixContextProvider";
+import { useZionContext } from "../components/ZionContextProvider";
+import { useMemo } from "react";
 import { useMatrixStore } from "../store/use-matrix-store";
-import {
-  Room,
-  RoomIdentifier,
-  toRoomIdentifier,
-  ZionContext,
-} from "../types/matrix-types";
+import { Room, RoomIdentifier, toRoomIdentifier } from "../types/matrix-types";
 
 export function useRoom(
   slugOrId: RoomIdentifier | string | undefined,
 ): Room | undefined {
-  const { defaultSpaceId, defaultSpaceName } =
-    useContext<ZionContext>(MatrixContext);
+  const { defaultSpaceId, defaultSpaceName } = useZionContext();
   const { rooms } = useMatrixStore();
   const roomId = toRoomIdentifier(slugOrId ?? defaultSpaceId);
   return useMemo(() => {

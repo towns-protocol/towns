@@ -1,10 +1,32 @@
 import { Web3Provider } from "../hooks/use-web3";
 import React, { createContext, useMemo } from "react";
 import { useZionClientListener } from "../hooks/use-zion-client-listener";
-import { makeRoomIdentifier, ZionContext } from "../types/matrix-types";
+import { makeRoomIdentifier, RoomIdentifier } from "../types/matrix-types";
 import { ethers } from "ethers";
+import { ZionClient } from "client/ZionClient";
 
-export const MatrixContext = createContext<ZionContext>({});
+export interface IZionContext {
+  client?: ZionClient;
+  homeServer?: string;
+  disableEncryption?: boolean; // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
+  defaultSpaceId?: RoomIdentifier;
+  defaultSpaceName?: string;
+  defaultSpaceAvatarSrc?: string;
+}
+
+export const ZionContext = createContext<IZionContext | undefined>(undefined);
+
+/**
+ * use instead of React.useContext
+ * and will throw assert if not in a Provider
+ */
+export function useZionContext(): IZionContext {
+  const context = React.useContext(ZionContext);
+  if (!context) {
+    throw new Error("useZionContext must be used in a ZionContextProvider");
+  }
+  return context;
+}
 
 interface Props {
   homeServerUrl: string;
@@ -23,7 +45,7 @@ interface Props {
 
 const DEFAULT_INITIAL_SYNC_LIMIT = 20;
 
-export function MatrixContextProvider(props: Props): JSX.Element {
+export function ZionContextProvider(props: Props): JSX.Element {
   return (
     <Web3Provider>
       <ContextImpl {...props}></ContextImpl>
@@ -61,7 +83,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     [defaultSpaceId],
   );
   return (
-    <MatrixContext.Provider
+    <ZionContext.Provider
       value={{
         client: client,
         homeServer: homeServerUrl,
@@ -72,6 +94,6 @@ const ContextImpl = (props: Props): JSX.Element => {
       }}
     >
       {props.children}
-    </MatrixContext.Provider>
+    </ZionContext.Provider>
   );
 };

@@ -1,14 +1,10 @@
-import { MatrixContext } from "../../components/MatrixContextProvider";
+import { useZionContext } from "../../components/ZionContextProvider";
 import { useCallback, useContext } from "react";
-import {
-  makeRoomIdentifier,
-  RoomIdentifier,
-  ZionContext,
-} from "../../types/matrix-types";
+import { makeRoomIdentifier, RoomIdentifier } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
 export const useJoinRoom = () => {
-  const { client } = useContext<ZionContext>(MatrixContext);
+  const { client } = useZionContext();
   const { createRoom } = useMatrixStore();
   return useCallback(
     async (roomId: RoomIdentifier) => {

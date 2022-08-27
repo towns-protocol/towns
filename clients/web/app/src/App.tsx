@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Outlet, Route, Routes, useNavigate } from "react-router";
 import useEvent from "react-use-event-hook";
-import { MatrixContextProvider, useMatrixStore } from "use-zion-client";
+import { ZionContextProvider, useMatrixStore } from "use-zion-client";
 import { Highlights } from "@components/Highlights/HomeHighlights";
 import { MembersPage } from "@components/Members/MembersPage";
 import { Playground } from "@components/Playground";
@@ -45,7 +45,7 @@ const COUNCIL_STAKING_ADDRESS = "";
 
 export const App = () => {
   return (
-    <MatrixContextProvider
+    <ZionContextProvider
       disableEncryption // todo remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
       homeServerUrl={MATRIX_HOMESERVER_URL}
       spaceManagerAddress={SPACE_MANAGER_ADDRESS}
@@ -57,7 +57,7 @@ export const App = () => {
       defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
     >
       <AllRoutes />
-    </MatrixContextProvider>
+    </ZionContextProvider>
   );
 };
 
