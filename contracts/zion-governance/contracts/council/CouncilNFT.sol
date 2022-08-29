@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "solmate/tokens/ERC721.sol";
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "openzeppelin-contracts/contracts/utils/Strings.sol";
-import "murky/Merkle.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { Events } from "./libraries/Events.sol";
 import { Constants } from "./libraries/Constants.sol";
+import { MerkleProof } from "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol";
 
 
 /**
@@ -28,16 +28,13 @@ contract CouncilNFT is ERC721, Ownable {
     /// @notice mapping to track which  users have already minted an nft
     mapping(address => bool) public alreadyMinted;
 
-    ///@notice the flags dictating the current minting period
-    bool public allowlistMint = false;
-    bool public waitlistMint = false;
-    bool public publicMint = false;
+    // ///@notice the flags dictating the current minting period
+    bool public allowlistMint;
+    bool public waitlistMint;
+    bool public publicMint;
 
     /// @notice the root of the merkle tree for the allowlist
     bytes32 internal immutable root;
-
-    /// the merkle tree for the allowlist
-    Merkle internal merkle;
 
     constructor(
         string memory _name,
@@ -47,7 +44,6 @@ contract CouncilNFT is ERC721, Ownable {
     ) ERC721(_name, _symbol) {
         baseURI = _baseURI;
         root = _root;
-        merkle = new Merkle();
         allowlistMint = true;
     }
 
@@ -73,7 +69,7 @@ contract CouncilNFT is ERC721, Ownable {
         );
 
         require(
-            merkle.verifyProof(root, proof, payload) == true,
+            MerkleProof.verify(proof, root, payload),
             "Invalid merkle tree proof supplied"
         );
 

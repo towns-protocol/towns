@@ -67,7 +67,10 @@ contract CouncilStakingTest is Test, MerkleHelper {
     staking.withdrawToken(tokenId);
 
     assertEq(staking.getStakerAddressByTokenId(tokenId), address(0));
-    assertEq(staking.getStakerByAddress(allowlist1).amountStaked, 0);
+
+    DataTypes.Staker memory staker = staking.getStakerByAddress(allowlist1);
+
+    assertEq(staker.amountStaked, 0);
   }
 
   function testClaimPoints() public {

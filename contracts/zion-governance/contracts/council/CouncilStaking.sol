@@ -77,7 +77,9 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
 
     // Find the index of this token id in the stakedTokens array
     uint256 index = 0;
-    for (uint256 i = 0; i < _stakerByAddress[msg.sender].stakedTokens.length; i++) {
+    uint256 len = _stakerByAddress[msg.sender].stakedTokens.length;
+
+    for (uint256 i = 0; i < len; i++) {
       if (
         _stakerByAddress[msg.sender].stakedTokens[i].tokenId == _tokenId &&
         _stakerByAddress[msg.sender].stakedTokens[i].staker != address(0)
@@ -88,7 +90,9 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
     }
 
     // Set the tokens's staker to be address 0 to mark no longer staked
-    _stakerByAddress[msg.sender].stakedTokens[index].staker = address(0);
+    _stakerByAddress[msg.sender].stakedTokens[index] = _stakerByAddress[msg.sender].stakedTokens[len - 1];
+    _stakerByAddress[msg.sender].stakedTokens.pop();
+    // _stakerByAddress[msg.sender].stakedTokens[index].staker = address(0);
 
     // Decrement the amount staked for this wallet
     _stakerByAddress[msg.sender].amountStaked--;
@@ -116,8 +120,6 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
 
     _stakerByAddress[msg.sender].timeOfLastUpdate = block.timestamp;
     _stakerByAddress[msg.sender].unclaimedPoints = 0;
-
-    // transfer points?
 
     emit Events.PointsClaimed(msg.sender, points);
   }
