@@ -1,5 +1,5 @@
 import { Web3Provider } from "../hooks/use-web3";
-import React, { createContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { useZionClientListener } from "../hooks/use-zion-client-listener";
 import { makeRoomIdentifier, RoomIdentifier } from "../types/matrix-types";
 import { ethers } from "ethers";
@@ -21,7 +21,7 @@ export const ZionContext = createContext<IZionContext | undefined>(undefined);
  * and will throw assert if not in a Provider
  */
 export function useZionContext(): IZionContext {
-  const context = React.useContext(ZionContext);
+  const context = useContext(ZionContext);
   if (!context) {
     throw new Error("useZionContext must be used in a ZionContextProvider");
   }
