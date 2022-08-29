@@ -9,7 +9,7 @@ export { Card } from "./Card/Card";
 export { Divider } from "./Divider/Divider";
 export { Dropdown } from "./Dropdown/Dropdown";
 export { Grid } from "./Grid/Grid";
-export { Icon } from "./Icon";
+export * from "./Icon";
 export { IconButton } from "./IconButton/IconButton";
 export { RadioSelect } from "./RadioSelect/RadioSelect";
 export { Stack } from "./Stack/Stack";

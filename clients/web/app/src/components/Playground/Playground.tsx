@@ -1,11 +1,26 @@
 import React from "react";
-import { Box, BoxProps, Button, Divider, Heading, Paragraph, Stack } from "@ui";
+import {
+  Box,
+  BoxProps,
+  Button,
+  Divider,
+  Heading,
+  Icon,
+  IconName,
+  Paragraph,
+  Stack,
+  iconTypes,
+} from "@ui";
 import { TextProps } from "ui/components/Text/Text";
 import { atoms } from "ui/styles/atoms.css";
+import { RichTextEditor } from "@components/RichText/RichTextEditor";
 
 export const Playground = () => {
   return (
     <Stack absoluteFill padding="lg" gap="lg">
+      <Container label="RichText">
+        <RichTextEditor />
+      </Container>
       <Container label="Headings">
         <Heading level={1}>Heading 1</Heading>
         <Heading level={2}>Heading 2</Heading>
@@ -34,7 +49,7 @@ export const Playground = () => {
           <Button size="button_md">medium</Button>
           <Button size="button_sm">small</Button>
         </Box>
-        <Divider label="icons" />
+        <Divider label="icon buttons" />
         <Box gap alignSelf="start" minWidth="250" alignItems="start">
           <Button tone="cta1" size="button_lg" icon="check">
             Action
@@ -45,6 +60,17 @@ export const Playground = () => {
           <Button tone="cta1" size="button_sm" icon="check">
             Action
           </Button>
+        </Box>
+        <Divider label="icons" />
+        <Box gap alignSelf="start" minWidth="250" alignItems="start">
+          {iconTypes.map((t: IconName) => (
+            <Stack horizontal key={t}>
+              <Box width="x6">
+                <Icon type={t} />
+              </Box>
+              <Box color="gray2">{t}</Box>
+            </Stack>
+          ))}
         </Box>
       </Container>
     </Stack>

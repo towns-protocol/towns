@@ -887,7 +887,7 @@ const iconMap = {
   walletconnect: WalletConnectIcon,
 } as const;
 
-export const iconTypes = Object.keys(iconMap);
+export const iconTypes = Object.keys(iconMap) as IconName[];
 export type IconName = keyof typeof iconMap;
 
 type IconProps = {

@@ -1,18 +1,16 @@
 import { $convertToMarkdownString } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { mergeRegister } from "@lexical/utils";
 import {
   CLEAR_EDITOR_COMMAND,
-  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_LOW,
   KEY_ENTER_COMMAND,
-  LexicalCommand,
 } from "lexical";
-import React, { useCallback, useLayoutEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Button, Stack } from "@ui";
 
 export const SendMarkdownPlugin = (props: {
   displayButtons?: boolean;
-  onSend: (value: string) => void;
+  onSend?: (value: string) => void;
   onCancel?: () => void;
 }) => {
   const { onSend } = props;
@@ -20,21 +18,20 @@ export const SendMarkdownPlugin = (props: {
 
   const { parseMarkdown } = useParseMarkdown(onSend);
 
-  useLayoutEffect(() => {
-    return mergeRegister(
-      editor.registerCommand(
-        KEY_ENTER_COMMAND,
-        (e: KeyboardEvent) => {
-          if (!e.shiftKey) {
-            parseMarkdown();
-            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-            e.preventDefault();
-            return true;
-          }
-          return false;
-        },
-        COMMAND_PRIORITY_HIGH,
-      ),
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_ENTER_COMMAND,
+      (e: KeyboardEvent, editor) => {
+        if (!e.shiftKey) {
+          parseMarkdown();
+          editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return true;
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
     );
   }, [editor, onSend, parseMarkdown]);
 
@@ -64,13 +61,15 @@ const EditMessageButtons = (props: {
   );
 };
 
-const useParseMarkdown = (onEnterPress: (value: string) => void) => {
+const useParseMarkdown = (onSend?: (value: string) => void) => {
   const [editor] = useLexicalComposerContext();
   const parseMarkdown = useCallback(() => {
-    editor.getEditorState().read(() => {
-      const markdown = $convertToMarkdownString();
-      onEnterPress(markdown);
-    });
-  }, [editor, onEnterPress]);
+    if (onSend) {
+      editor.getEditorState().read(() => {
+        const markdown = $convertToMarkdownString();
+        onSend(markdown);
+      });
+    }
+  }, [editor, onSend]);
   return { parseMarkdown };
 };

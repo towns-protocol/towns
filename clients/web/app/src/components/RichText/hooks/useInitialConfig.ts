@@ -11,6 +11,8 @@ import {
 } from "lexical";
 import { atoms } from "ui/styles/atoms.css";
 import { $createAnnotationNode, AnnotationNode } from "../nodes/AnnotationNode";
+import { EmojiNode } from "../nodes/EmojiNode";
+import { MentionNode } from "../nodes/MentionNode";
 
 const theme: EditorThemeClasses = {
   text: {
@@ -28,7 +30,15 @@ const initialConfig = {
   namespace: "zion",
   theme,
   onError,
-  nodes: [ListNode, ListItemNode, QuoteNode, LinkNode, AnnotationNode],
+  nodes: [
+    AnnotationNode,
+    EmojiNode,
+    LinkNode,
+    ListItemNode,
+    ListNode,
+    MentionNode,
+    QuoteNode,
+  ],
 };
 
 export const useInitialConfig = (

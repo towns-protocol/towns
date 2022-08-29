@@ -10,6 +10,9 @@ import { clsx } from "clsx";
 import React, { useState } from "react";
 import * as fieldStyles from "ui/components/_internal/Field/Field.css";
 import { useInitialConfig } from "./hooks/useInitialConfig";
+import { EmojiReplacePlugin } from "./plugins/EmojiReplacePlugin";
+import { EmojiShortcutPlugin } from "./plugins/EmojiShortcutPlugin";
+import { NewMentionsPlugin } from "./plugins/MentionsPlugin";
 import { OnFocusPlugin } from "./plugins/OnFocusPlugin";
 import { SendMarkdownPlugin } from "./plugins/SendMarkdownPlugin";
 import * as styles from "./RichTextEditor.css";
@@ -17,7 +20,7 @@ import { RichTextPlaceholder } from "./ui/Placeholder/RichTextEditorPlaceholder"
 import { RichTextUI } from "./ui/RichTextEditorUI";
 
 type Props = {
-  onSend: (value: string) => void;
+  onSend?: (value: string) => void;
   onCancel?: () => void;
   autoFocus?: boolean;
   readOnly?: boolean;
@@ -75,6 +78,9 @@ export const RichTextEditor = (props: Props) => {
       <MarkdownShortcutPlugin />
       <HistoryPlugin />
       <LinkPlugin />
+      <EmojiReplacePlugin />
+      <NewMentionsPlugin />
+      <EmojiShortcutPlugin />
       <SendMarkdownPlugin
         displayButtons={props.displayButtons}
         onSend={onSend}
