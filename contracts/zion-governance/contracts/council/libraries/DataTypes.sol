@@ -10,7 +10,6 @@ library DataTypes {
     Paused
   }
 
-
   /// @notice A struct containing a staked token
   struct StakedToken {
     // wallet address of user

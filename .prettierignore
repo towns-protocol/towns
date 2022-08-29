@@ -7,8 +7,6 @@ storybook-static
 servers/
 contracts/lib/
 
-*.sol
-
 .yarn/*
 .vscode
 yarn.lock

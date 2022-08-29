@@ -12,6 +12,7 @@
     "compile:hh": "hardhat compile",
     "compile:foundry": "FOUNDRY_PROFILE=governance forge build",
     "copy-definitions": "cp src/*.d.ts dist/src",
+    "format": "prettier --write contracts/**/*.sol",
     "lint": "solhint contracts/**/*.sol",
     "lint:fix": "solhint --fix contracts/**/*.sol",
     "test:foundry": "FOUNDRY_PROFILE=governance forge test",
@@ -20,7 +21,8 @@
   "dependencies": {
     "@opengsn/contracts": "^2.2.6",
     "@openzeppelin/contracts": "^4.7.3",
-    "@openzeppelin/contracts-upgradeable": "^4.7.3"
+    "@openzeppelin/contracts-upgradeable": "^4.7.3",
+    "eslint": "^8.23.0"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.6.4",
@@ -48,7 +50,7 @@
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.32",
     "prettier": "^2.7.1",
-    "prettier-plugin-solidity": "^1.0.0-dev.23",
+    "prettier-plugin-solidity": "^1.0.0-beta.24",
     "solhint": "^3.3.7",
     "solhint-plugin-prettier": "^0.0.5",
     "solidity-coverage": "^0.7.21",

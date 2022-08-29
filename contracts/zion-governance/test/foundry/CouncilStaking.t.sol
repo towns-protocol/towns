@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import  "./../../contracts/council/CouncilNFT.sol";
+import "./../../contracts/council/CouncilNFT.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./../../contracts/council/libraries/Errors.sol";
 import {DataTypes} from "../../contracts/council/libraries/DataTypes.sol";
-import {CouncilStaking} from  "./../../contracts/council/CouncilStaking.sol";
-
+import {CouncilStaking} from "./../../contracts/council/CouncilStaking.sol";
+import "murky/Merkle.sol";
 
 contract CouncilStakingTest is Test, MerkleHelper {
   CouncilNFT private nft;
@@ -120,7 +120,8 @@ contract CouncilStakingTest is Test, MerkleHelper {
     staking.stakeToken(tokenId);
 
     vm.prank(allowlist1);
-    DataTypes.StakedToken[] memory _stakedTokens = staking.getStakedTokensByAddress(allowlist1);
+    DataTypes.StakedToken[] memory _stakedTokens = staking
+      .getStakedTokensByAddress(allowlist1);
 
     for (uint256 i = 0; i < _stakedTokens.length; i++) {
       assertEq(_stakedTokens[i].staker, allowlist1);

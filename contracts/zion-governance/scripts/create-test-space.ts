@@ -8,7 +8,7 @@ async function main(proposalIndex: number) {
 
   const spaceName = "testspaceuno";
   const entitlementModule = await ethers.getContract(
-    "UserGrantedEntitlementModule"
+    "UserGrantedEntitlementModule",
   );
 
   await createSpace(spaceName, entitlementModule.address);
@@ -16,7 +16,7 @@ async function main(proposalIndex: number) {
 
 export async function createSpace(
   spaceName: string,
-  entitlementModuleAddress: string
+  entitlementModuleAddress: string,
 ) {
   const zionSpaceManager = await ethers.getContract("ZionSpaceManager");
 

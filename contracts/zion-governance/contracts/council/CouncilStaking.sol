@@ -26,8 +26,8 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   uint256 public totalSupply;
   uint256 private pointsPerHour = 100000;
 
-  mapping (address => DataTypes.Staker) internal _stakerByAddress;
-  mapping (uint256 => address) internal _stakerAddressByTokenId;
+  mapping(address => DataTypes.Staker) internal _stakerByAddress;
+  mapping(uint256 => address) internal _stakerAddressByTokenId;
 
   function stakeToken(uint256 _tokenId) external nonReentrant {
     // If wallet has other tokens staked, calculate the rewards before adding the new token
@@ -37,13 +37,17 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
     }
 
     // Wallet must own the token being staked
-    if (councilNFT.ownerOf(_tokenId) != msg.sender) revert Errors.NotTokenOwner();
+    if (councilNFT.ownerOf(_tokenId) != msg.sender)
+      revert Errors.NotTokenOwner();
 
     // Transfer the token from the wallet to the staking contract
     councilNFT.transferFrom(msg.sender, address(this), _tokenId);
 
     // Create instance of StakedToken
-    DataTypes.StakedToken memory stakedToken = DataTypes.StakedToken(msg.sender, _tokenId);
+    DataTypes.StakedToken memory stakedToken = DataTypes.StakedToken(
+      msg.sender,
+      _tokenId
+    );
 
     // Add the token to the stakedTokens array
     _stakerByAddress[msg.sender].stakedTokens.push(stakedToken);
@@ -66,10 +70,12 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
 
   function withdrawToken(uint256 _tokenId) external nonReentrant {
     // Make sure the user has at least one token staked before withdrawing
-    if (_stakerByAddress[msg.sender].amountStaked == 0) revert Errors.NoStakedTokens();
+    if (_stakerByAddress[msg.sender].amountStaked == 0)
+      revert Errors.NoStakedTokens();
 
     // Wallet must own the token being withdrawn
-    if (_stakerAddressByTokenId[_tokenId] != msg.sender) revert Errors.NotTokenOwner();
+    if (_stakerAddressByTokenId[_tokenId] != msg.sender)
+      revert Errors.NotTokenOwner();
 
     // Update the points for this user, as the amount of points decreases with less tokens
     uint256 points = _calculatePoints(msg.sender);
@@ -90,7 +96,9 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
     }
 
     // Set the tokens's staker to be address 0 to mark no longer staked
-    _stakerByAddress[msg.sender].stakedTokens[index] = _stakerByAddress[msg.sender].stakedTokens[len - 1];
+    _stakerByAddress[msg.sender].stakedTokens[index] = _stakerByAddress[
+      msg.sender
+    ].stakedTokens[len - 1];
     _stakerByAddress[msg.sender].stakedTokens.pop();
     // _stakerByAddress[msg.sender].stakedTokens[index].staker = address(0);
 
@@ -115,7 +123,8 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
 
   /// @notice Claim accrued points
   function claimPoints() external {
-    uint256 points = _calculatePoints(msg.sender) + _stakerByAddress[msg.sender].unclaimedPoints;
+    uint256 points = _calculatePoints(msg.sender) +
+      _stakerByAddress[msg.sender].unclaimedPoints;
     if (points == 0) revert Errors.NoPointsToClaim();
 
     _stakerByAddress[msg.sender].timeOfLastUpdate = block.timestamp;
@@ -128,22 +137,41 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   // View
   //
 
-  function getStakerByAddress(address _staker) external view returns (DataTypes.Staker memory) {
+  function getStakerByAddress(address _staker)
+    external
+    view
+    returns (DataTypes.Staker memory)
+  {
     return _stakerByAddress[_staker];
   }
 
-  function getStakerAddressByTokenId(uint256 _tokenId) external view returns (address) {
+  function getStakerAddressByTokenId(uint256 _tokenId)
+    external
+    view
+    returns (address)
+  {
     return _stakerAddressByTokenId[_tokenId];
   }
 
-  function getStakedTokensByAddress(address _user) public view returns (DataTypes.StakedToken[] memory) {
+  function getStakedTokensByAddress(address _user)
+    public
+    view
+    returns (DataTypes.StakedToken[] memory)
+  {
     // Check if user has staked
     if (_stakerByAddress[msg.sender].amountStaked > 0) {
       // Returns all the tokens in the stakedToken Array for this user are not -1
-      DataTypes.StakedToken[] memory _stakedTokens = new DataTypes.StakedToken[](_stakerByAddress[_user].amountStaked);
+      DataTypes.StakedToken[]
+        memory _stakedTokens = new DataTypes.StakedToken[](
+          _stakerByAddress[_user].amountStaked
+        );
       uint256 _index = 0;
 
-      for (uint256 j = 0; j < _stakerByAddress[_user].stakedTokens.length; j++) {
+      for (
+        uint256 j = 0;
+        j < _stakerByAddress[_user].stakedTokens.length;
+        j++
+      ) {
         if (_stakerByAddress[_user].stakedTokens[j].staker != (address(0))) {
           _stakedTokens[_index] = _stakerByAddress[_user].stakedTokens[j];
           _index++;
@@ -157,7 +185,8 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   }
 
   function getAvailablePoints(address _staker) public view returns (uint256) {
-    uint256 points = _calculatePoints(_staker) + _stakerByAddress[msg.sender].unclaimedPoints;
+    uint256 points = _calculatePoints(_staker) +
+      _stakerByAddress[msg.sender].unclaimedPoints;
     return points;
   }
 
@@ -165,10 +194,14 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   // Internal
   //
 
-  function _calculatePoints(address _staker) internal view returns(uint256 _rewards) {
+  function _calculatePoints(address _staker)
+    internal
+    view
+    returns (uint256 _rewards)
+  {
     return (((
       ((block.timestamp - _stakerByAddress[_staker].timeOfLastUpdate) *
-          _stakerByAddress[_staker].amountStaked)
+        _stakerByAddress[_staker].amountStaked)
     ) * pointsPerHour) / 3600);
   }
 }

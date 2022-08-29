@@ -7,7 +7,7 @@ async function main(allowlist: any, address: string, allowance: number) {
   console.log(`ChainId is ${chainId}`);
 
   const allowlistLeaves = Object.entries(allowlist).map((token) =>
-    hashAllowlistToken(...token)
+    hashAllowlistToken(...token),
   );
 
   const allowlistTree = new MerkleTree(allowlistLeaves, keccak256, {
@@ -30,7 +30,7 @@ export function hashAllowlistToken(address: any, allowance: any) {
     ethers.utils
       .solidityKeccak256(["address", "uint256"], [address, allowance])
       .slice(2),
-    "hex"
+    "hex",
   );
 }
 
