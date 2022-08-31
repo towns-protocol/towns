@@ -21,7 +21,7 @@ export const Figma = {
   },
   Colors: {
     Purple: "#9F3AEF",
-    Orange: "#FA7052",
+    Orange: "#CC6C53",
     Blue: "#6B71F7",
     ENSBlue: "#18A0FB",
     Green: "#1FED8A",
