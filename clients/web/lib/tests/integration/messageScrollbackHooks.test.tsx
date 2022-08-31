@@ -5,11 +5,12 @@ import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-
 import { LoginWithAuth } from "./helpers/TestComponents";
 import { ZionTestApp } from "./helpers/ZionTestApp";
 import { registerAndStartClients } from "./helpers/TestUtils";
-import { useMessages } from "../../src/hooks/use-messages";
+import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
+import { ChannelContextProvider } from "../../src/components/ChannelContextProvider";
+import { useChannelTimeline } from "../../src/hooks/use-channel-timeline";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 
@@ -43,10 +44,10 @@ describe("messageScrollbackHooks", () => {
     // create a veiw for alice
     const TestComponent = () => {
       const { scrollback } = useZionClient();
-      const messages = useMessages(channelId);
+      const timeline = useChannelTimeline();
       const mySpaceMembership = useMyMembership(spaceId);
-      const onClickScrollback = useCallback(async () => {
-        await scrollback(channelId, 30);
+      const onClickScrollback = useCallback(() => {
+        void scrollback(channelId, 30);
       }, [scrollback]);
       return (
         <>
@@ -54,20 +55,22 @@ describe("messageScrollbackHooks", () => {
           <div data-testid="spaceMembership"> {mySpaceMembership} </div>
           <button onClick={onClickScrollback}>Scrollback</button>
           <div data-testid="messageslength">
-            {messages.length > 0 ? messages.length.toString() : "empty"}
+            {timeline.length > 0 ? timeline.length.toString() : "empty"}
           </div>
-          <ul>
-            {messages.map((message) => (
-              <li key={message.eventId}>{message.body}</li>
-            ))}
-          </ul>
+          <div id="allMessages">
+            {timeline.map((event) => event.fallbackContent).join("\n")}
+          </div>
         </>
       );
     };
     // render it
     render(
       <ZionTestApp provider={alice.provider}>
-        <TestComponent />
+        <SpaceContextProvider spaceId={spaceId}>
+          <ChannelContextProvider channelId={channelId}>
+            <TestComponent />
+          </ChannelContextProvider>
+        </SpaceContextProvider>
       </ZionTestApp>,
     );
     // get our test elements
@@ -81,10 +84,10 @@ describe("messageScrollbackHooks", () => {
       expect(spaceMembership).toHaveTextContent(Membership.Join),
     );
     // expect our message to show
-    await waitFor(() => expect(messageslength).toHaveTextContent("empty")); // TODO, this should be 15ish, we aren't properly decrypting these messages https://github.com/HereNotThere/harmony/issues/223
+    await waitFor(() => expect(messageslength).toHaveTextContent("20"));
     // have bob send a message to jane
     fireEvent.click(scrollbackButton);
     // expect it to render as well
-    await waitFor(() => expect(messageslength).toHaveTextContent("6")); // TODO, this should be 25 we aren't properly decrypting these messages https://github.com/HereNotThere/harmony/issues/223
+    await waitFor(() => expect(messageslength).toHaveTextContent("34"));
   });
 });

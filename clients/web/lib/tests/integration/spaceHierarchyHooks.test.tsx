@@ -9,9 +9,10 @@ import { ZionTestApp } from "./helpers/ZionTestApp";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { registerAndStartClients } from "./helpers/TestUtils";
-import { useSpace } from "../../src/hooks/use-space";
-import { RoomIdentifier, RoomVisibility } from "../../src/types/matrix-types";
+import { useSpaceData } from "../../src/hooks/use-space-data";
+import { RoomVisibility } from "../../src/types/matrix-types";
 import { LoginStatus } from "../../src/hooks/login";
+import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
 
 describe("spaceHierarchyHooks", () => {
   jest.setTimeout(10000);
@@ -19,7 +20,7 @@ describe("spaceHierarchyHooks", () => {
     // create clients
     const { alice, bob } = await registerAndStartClients(["alice", "bob"]);
     // bob creates a space
-    const roomId = await bob.createSpace({
+    const spaceId = await bob.createSpace({
       name: "bob's space",
       visibility: RoomVisibility.Public,
     });
@@ -27,19 +28,19 @@ describe("spaceHierarchyHooks", () => {
     await bob.createChannel({
       name: "bob's channel",
       visibility: RoomVisibility.Public,
-      parentSpaceId: roomId,
+      parentSpaceId: spaceId,
     });
     // set the space child prop on the room to 0 so that anyone can make channels
-    await bob.setPowerLevel(roomId, "m.space.child", 0);
+    await bob.setPowerLevel(spaceId, "m.space.child", 0);
     // stop bob, we'll be using him in the react component
     bob.stopClient();
     // alice joins the room
-    await alice.joinRoom(roomId);
+    await alice.joinRoom(spaceId);
     // create a power levels view for bob
-    const SpaceChannelsContent = (props: { roomId: RoomIdentifier }) => {
+    const SpaceChannelsContent = () => {
       const { loginStatus, loginError } = useMatrixStore();
       const { loginWithWallet } = useZionClient();
-      const space = useSpace(props.roomId);
+      const space = useSpaceData();
       // effect to log in
       useEffect(() => {
         void loginWithWallet("login...");
@@ -61,7 +62,9 @@ describe("spaceHierarchyHooks", () => {
     // render it
     render(
       <ZionTestApp provider={bob.provider}>
-        <SpaceChannelsContent roomId={roomId} />
+        <SpaceContextProvider spaceId={spaceId}>
+          <SpaceChannelsContent />
+        </SpaceContextProvider>
       </ZionTestApp>,
     );
     // gather our test elements
@@ -77,7 +80,7 @@ describe("spaceHierarchyHooks", () => {
     await alice.createChannel({
       name: "alice's channel",
       visibility: RoomVisibility.Public,
-      parentSpaceId: roomId,
+      parentSpaceId: spaceId,
     });
     // wait for the space child count to change
     await waitFor(() => expect(spaceChildCount).toHaveTextContent("2"), {

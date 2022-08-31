@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useSpaceId, useZionClient } from "use-zion-client";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import {
   Avatar,
   Box,
@@ -72,10 +72,9 @@ export const SpaceBanner = (props: Props) => {
 };
 
 const SpaceSettingsMenu = () => {
-  const { spaceSlug } = useParams();
   const { leaveRoom } = useZionClient();
   const navigate = useNavigate();
-  const spaceId = useSpaceId(spaceSlug);
+  const spaceId = useSpaceId();
 
   const onInviteClicked = useCallback(() => {
     console.log("invite clicked");

@@ -2,7 +2,7 @@ import { SpaceIdentifier, ZionClientEvent } from "../client/ZionClientTypes";
 import { useEffect, useMemo, useState } from "react";
 
 import { Membership } from "../types/matrix-types";
-import { formatRoom } from "./use-space";
+import { formatRoom } from "./use-space-data";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useZionClient } from "./use-zion-client";
 import { useZionClientEvent } from "./use-zion-client-event";

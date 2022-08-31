@@ -1,4 +1,5 @@
 import React from "react";
+import { RoomMessageEvent, TimelineEvent, ZTEvent } from "use-zion-client";
 import { Message } from "@components/Message";
 import {
   RichTextEditor,
@@ -9,19 +10,13 @@ import { useMessageThread } from "hooks/useFixMeMessageThread";
 import { useSendReply } from "hooks/useSendReply";
 
 type Props = {
-  spaceSlug: string;
-  channelSlug: string;
   messageId: string;
   onClose?: () => void;
 };
 export const MessageThread = (props: Props) => {
-  const { spaceSlug, channelSlug, messageId } = props;
-  const { parentMessage, messages } = useMessageThread(
-    spaceSlug,
-    channelSlug,
-    messageId,
-  );
-  const { sendReply } = useSendReply(spaceSlug, channelSlug, messageId);
+  const { messageId } = props;
+  const { parentMessage, messages } = useMessageThread(messageId);
+  const { sendReply } = useSendReply(messageId);
 
   const onSend = (value: string) => {
     sendReply(value);
@@ -39,32 +34,13 @@ export const MessageThread = (props: Props) => {
             minHeight: "0px",
           }}
         >
-          {parentMessage && (
-            <Message
-              paddingX="lg"
-              paddingY="sm"
-              name={parentMessage.sender}
-              avatar={<Avatar src={parentMessage.senderAvatarUrl} />}
-            >
-              <RichTextPreview content={parentMessage.body} />
-            </Message>
-          )}
+          {parentMessage && getEventComponent(parentMessage)}
           {!!messages.length && (
             <Box paddingX="lg">
               <Divider space="none" />
             </Box>
           )}
-          {!!messages.length &&
-            messages.map((m) => (
-              <Message
-                paddingX="lg"
-                paddingY="sm"
-                name={m.sender}
-                avatar={<Avatar src={m.senderAvatarUrl} />}
-              >
-                <RichTextPreview content={m.body} />
-              </Message>
-            ))}
+          {!!messages.length && messages.map((m) => getEventComponent(m))}
           <Box
             paddingX="lg"
             paddingY="none"
@@ -111,3 +87,39 @@ const MessageWindow = (props: {
     </Box>
   );
 };
+
+function getEventComponent(event: TimelineEvent) {
+  const content = event.content;
+  switch (content?.kind) {
+    case ZTEvent.RoomMessage:
+      return getRoomMessageContent(content);
+    default:
+      return getGenericComponent(event, event.fallbackContent);
+  }
+}
+
+function getGenericComponent(event: TimelineEvent, content: string) {
+  return (
+    <Message
+      paddingX="lg"
+      paddingY="sm"
+      name={event.eventType}
+      avatar={<Avatar src={undefined} />}
+    >
+      <RichTextPreview content={event.fallbackContent} />
+    </Message>
+  );
+}
+
+function getRoomMessageContent(m: RoomMessageEvent) {
+  return (
+    <Message
+      paddingX="lg"
+      paddingY="sm"
+      name={m.sender.displayName}
+      avatar={<Avatar src={m.sender.avatarUrl} />}
+    >
+      <RichTextPreview content={m.body} />
+    </Message>
+  );
+}

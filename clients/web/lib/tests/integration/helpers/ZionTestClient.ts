@@ -85,11 +85,11 @@ export class ZionTestClient extends ZionClient {
   }
 
   // check if something eventually becomes true
-  public async eventually(
-    condition: (client: ZionTestClient) => boolean | undefined,
+  public async eventually<T>(
+    condition: (client: ZionTestClient) => T,
     timeout = 2000,
     checkEvery = 100,
-  ): Promise<boolean> {
+  ): Promise<T | undefined> {
     return sleepUntil(this, condition, timeout, checkEvery);
   }
 

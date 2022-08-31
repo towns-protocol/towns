@@ -19,7 +19,7 @@ import {
   createUserIdFromEthereumAddress,
   getUsernameFromId,
 } from "../types/user-identifier";
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { SiweMessage } from "siwe";
 import { StatusCodes } from "http-status-codes";

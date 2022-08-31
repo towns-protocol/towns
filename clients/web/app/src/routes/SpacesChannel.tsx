@@ -1,10 +1,11 @@
 import { Allotment } from "allotment";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import { useNavigate, useOutlet, useParams } from "react-router";
 import {
+  ChannelContextProvider,
   Membership,
-  useChannel,
-  useMessages,
+  useChannelData,
+  useChannelTimeline,
   useMyMembership,
   useZionClient,
 } from "use-zion-client";
@@ -15,53 +16,57 @@ import { Box, Button, Divider, Paragraph, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
-  const { spaceSlug, channelSlug, messageId } = useParams();
+  const { channelSlug } = useParams();
+  if (!channelSlug) {
+    return <>SpacesChannel Route expects a channelSlug</>;
+  }
+  return (
+    <ChannelContextProvider channelId={channelSlug}>
+      <SpacesChannelComponent />
+    </ChannelContextProvider>
+  );
+};
+
+const SpacesChannelComponent = () => {
+  const { messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
   const { joinRoom, sendMessage, scrollback } = useZionClient();
   const navigate = useNavigate();
 
-  const channel = useChannel(spaceSlug, channelSlug);
-  const myMembership = useMyMembership(channel?.id);
-  const channelMessages = useMessages(channelSlug);
+  const { spaceId, channelId, channel } = useChannelData();
+  const myMembership = useMyMembership(channelId);
+  const channelMessages = useChannelTimeline();
 
   const onSend = useCallback(
     (value: string) => {
-      if (value && channel?.id) {
-        sendMessage(channel?.id, value);
+      if (value && channelId) {
+        sendMessage(channelId, value);
       }
     },
-    [channel?.id, sendMessage],
+    [channelId, sendMessage],
   );
 
   const onLoadMore = useCallback(() => {
-    if (channel?.id) {
-      scrollback(channel.id);
-    }
-  }, [channel?.id, scrollback]);
+    scrollback(channelId);
+  }, [channelId, scrollback]);
 
   const onJoinChannel = useCallback(() => {
-    if (channel?.id) {
-      joinRoom(channel.id);
-    }
-  }, [joinRoom, channel?.id]);
+    joinRoom(channelId);
+  }, [joinRoom, channelId]);
 
   const onSelectMessage = (eventId: string) => {
-    navigate(`/spaces/${spaceSlug}/channels/${channelSlug}/replies/${eventId}`);
+    navigate(
+      `/spaces/${spaceId.slug}/channels/${channelId.slug}/replies/${eventId}`,
+    );
   };
 
   const hasThreadOpen = !!messageId;
 
-  const messageContext = useMemo(() => {
-    if (spaceSlug && channelSlug) {
-      return { spaceSlug, channelSlug };
-    }
-  }, [channelSlug, spaceSlug]);
-
   if (!channel) {
     return (
       <div>
-        404 Channel {spaceSlug} / {channelSlug} not found
+        404 Channel {spaceId.matrixRoomId} / {channelId.matrixRoomId} not found
       </div>
     );
   }
@@ -73,7 +78,7 @@ export const SpacesChannel = () => {
           {myMembership !== Membership.Join ? (
             <Box absoluteFill centerContent>
               <Button
-                key={channelSlug}
+                key={channelId.slug}
                 size="button_lg"
                 onClick={onJoinChannel}
               >
@@ -84,7 +89,8 @@ export const SpacesChannel = () => {
             <Box grow absoluteFill height="100%">
               <MessageList
                 hideThreads
-                key={channelSlug}
+                key={channelId.slug}
+                channelId={channelId}
                 messages={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
                 after={
@@ -100,7 +106,6 @@ export const SpacesChannel = () => {
                     <Divider />
                   </Box>
                 }
-                messageContext={messageContext}
                 onSelectMessage={onSelectMessage}
               />
 

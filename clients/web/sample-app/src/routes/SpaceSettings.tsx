@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useParams } from "react-router-dom";
-import { useSpace, useZionClient } from "use-zion-client";
+import { useSpaceData, useZionClient } from "use-zion-client";
 import { useStore } from "../store/store";
 
 export enum TokenRequirement {
@@ -16,8 +15,7 @@ interface Props {
 export function SpaceSettings(props: Props): JSX.Element {
   const { allSpaceSettings, setRequireToken } = useStore();
   const spaceSetting = allSpaceSettings[props.spaceId];
-  const { spaceSlug } = useParams();
-  const space = useSpace(spaceSlug);
+  const space = useSpaceData();
   const { sendNotice } = useZionClient();
 
   const requireToken = useMemo(() => {

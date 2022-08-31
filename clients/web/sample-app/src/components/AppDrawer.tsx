@@ -30,7 +30,7 @@ interface Props {
   window?: () => Window;
 }
 
-export default function AppDrawer(props: Props): JSX.Element {
+export function AppDrawer(props: Props): JSX.Element {
   const { window } = props;
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);

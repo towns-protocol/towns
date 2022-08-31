@@ -1,12 +1,12 @@
 import { useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { RoomIdentifier, useRoom } from "use-zion-client";
+import { useNavigate } from "react-router-dom";
+import { RoomIdentifier, useChannelId, useMyMembership } from "use-zion-client";
 import { Chat } from "../components/Chat";
 
-export const RoomsIndex = () => {
+export const ChannelsIndex = () => {
   const navigate = useNavigate();
-  const { roomSlug } = useParams();
-  const room = useRoom(roomSlug);
+  const channelId = useChannelId();
+  const membership = useMyMembership(channelId);
 
   const onClickLeaveRoom = useCallback(() => {
     navigate("/");
@@ -19,16 +19,12 @@ export const RoomsIndex = () => {
     [navigate],
   );
 
-  return room ? (
+  return (
     <Chat
-      roomId={room.id}
-      membership={room.membership}
+      roomId={channelId}
+      membership={membership}
       onClickLeaveRoom={onClickLeaveRoom}
       goToRoom={goToRoom}
     />
-  ) : (
-    <div>
-      <h2>Room Not Found {roomSlug}</h2>
-    </div>
   );
 };

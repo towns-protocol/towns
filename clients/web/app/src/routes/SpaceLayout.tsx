@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, useMatch, useParams, useResolvedPath } from "react-router";
+import { Outlet, useMatch, useResolvedPath } from "react-router";
 import { NavLink } from "react-router-dom";
 
 import { RoomIdentifier, useSpaceId } from "use-zion-client";
@@ -8,10 +8,9 @@ import { Box, Button, SizeBox } from "@ui";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceLayout = () => {
-  const { spaceSlug } = useParams();
   const home = useMatch("/spaces/:space/");
 
-  const spaceId = useSpaceId(spaceSlug);
+  const spaceId = useSpaceId();
   if (!spaceId) {
     return null;
   }

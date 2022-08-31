@@ -1,4 +1,3 @@
-import { ZionClient } from "../client/ZionClient";
 import { HistoryVisibility, IContent } from "matrix-js-sdk";
 
 export enum RoomVisibility {
@@ -23,31 +22,37 @@ export interface RoomIdentifier {
   matrixRoomId: string;
 }
 
-export type InviteData = {
+export interface InviteData {
   id: RoomIdentifier;
   name: string;
   avatarSrc: string;
   bannerSrc?: string;
   isSpaceRoom: boolean;
   spaceParentId?: RoomIdentifier;
-};
+}
 
-export type Channel = {
+export interface ChannelData {
+  spaceId: RoomIdentifier;
+  channelId: RoomIdentifier;
+  channel?: Channel;
+}
+
+export interface Channel {
   id: RoomIdentifier;
   label: string;
   private?: boolean;
   highlight?: boolean;
-};
+}
 
-export type ChannelGroup = {
+export interface ChannelGroup {
   label: string;
   channels: Channel[];
-};
+}
 
 /**
  * representation of a space for the UI
  */
-export type SpaceData = {
+export interface SpaceData {
   id: RoomIdentifier;
   name: string;
   avatarSrc: string;
@@ -57,7 +62,7 @@ export type SpaceData = {
   pinned?: boolean;
   channelGroups: ChannelGroup[];
   membership: string;
-};
+}
 
 export interface SpaceHierarcies {
   [slug: string]: SpaceHierarchy;

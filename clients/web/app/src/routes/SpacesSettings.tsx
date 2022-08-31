@@ -1,5 +1,4 @@
 import React, { useCallback } from "react";
-import { useParams } from "react-router";
 import {
   PowerLevel,
   usePowerLevels,
@@ -9,9 +8,8 @@ import {
 import { Box, Heading, Paragraph, Stack, TextField } from "@ui";
 
 export const SpacesSettings = () => {
-  const { spaceSlug } = useParams();
   const { setPowerLevel } = useZionClient();
-  const spaceId = useSpaceId(spaceSlug);
+  const spaceId = useSpaceId();
   const powerLevels = usePowerLevels(spaceId);
 
   const onLevelChanged = useCallback(

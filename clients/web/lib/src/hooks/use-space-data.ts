@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Channel,
   ChannelGroup,
@@ -10,53 +10,32 @@ import {
   SpaceChild,
   SpaceData,
   SpaceHierarchy,
-  toRoomIdentifier,
 } from "../types/matrix-types";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useZionClient } from "./use-zion-client";
 import { useRoom } from "./use-room";
 import { useSpaces } from "./use-spaces";
 import { useZionContext } from "../components/ZionContextProvider";
+import { useSpaceContext } from "../components/SpaceContextProvider";
 
 /// returns default space if no space slug is provided
-export function useSpace(
-  slugOrId: RoomIdentifier | string | undefined = undefined,
-): SpaceData | undefined {
+export function useSpaceData(): SpaceData | undefined {
   const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
     useZionContext();
-  const { spaceHierarchies, spacesUpdateRecievedAt } = useMatrixStore();
-  const { clientRunning, syncSpace } = useZionClient();
-  const spaceRoomId = toRoomIdentifier(slugOrId ?? defaultSpaceId);
-  const spaceRoom = useRoom(spaceRoomId);
+  const { spaceId } = useSpaceContext();
+  const { spaceHierarchies } = useMatrixStore();
+  const { clientRunning } = useZionClient();
+  const spaceRoom = useRoom(spaceId);
   const spaceHierarchy = useMemo(
-    () => (spaceRoomId?.slug ? spaceHierarchies[spaceRoomId.slug] : undefined),
-    [spaceRoomId?.slug, spaceHierarchies],
+    () => (spaceId?.slug ? spaceHierarchies[spaceId.slug] : undefined),
+    [spaceId?.slug, spaceHierarchies],
   );
-  const spaceCacheBuster = useMemo(
-    () =>
-      spaceRoomId?.slug ? spacesUpdateRecievedAt[spaceRoomId.slug] : undefined,
-    [spaceRoomId?.slug, spacesUpdateRecievedAt],
-  );
-  useEffect(() => {
-    void (async () => {
-      try {
-        if (clientRunning && spaceRoom?.id) {
-          console.log(
-            "syncing space from use-space with cachebuster",
-            spaceCacheBuster,
-          );
-          await syncSpace(spaceRoom?.id);
-        }
-      } catch (reason: unknown) {
-        console.log("SpacesIndex error:", reason);
-      }
-    })();
-  }, [clientRunning, spaceRoom?.id, syncSpace, spaceCacheBuster]);
 
   return useMemo(() => {
-    if (spaceRoomId && spaceHierarchy) {
+    if (spaceRoom || spaceHierarchy) {
       return formatSpace(
-        spaceRoom ?? spaceHierarchy.root,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        spaceRoom ?? spaceHierarchy!.root,
         spaceHierarchy,
         spaceRoom?.membership ?? "",
         "/placeholders/nft_29.png",
@@ -64,7 +43,7 @@ export function useSpace(
     } else if (
       clientRunning &&
       defaultSpaceId &&
-      spaceRoomId?.matrixRoomId == defaultSpaceId?.matrixRoomId
+      spaceId?.matrixRoomId == defaultSpaceId?.matrixRoomId
     ) {
       // this bit is temporary because client.peek(...) ("rooms_initial_sync") is unimplemented in dendrite https://github.com/HereNotThere/harmony/issues/188
       const defaultSpaceRoom: Room = {
@@ -89,7 +68,7 @@ export function useSpace(
     defaultSpaceName,
     spaceHierarchy,
     spaceRoom,
-    spaceRoomId,
+    spaceId,
   ]);
 }
 

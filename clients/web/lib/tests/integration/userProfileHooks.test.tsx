@@ -12,9 +12,11 @@ import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { RoomMember } from "matrix-js-sdk";
 import { RegisterAndJoinSpace } from "./helpers/TestComponents";
-import { useMessages } from "../../src/hooks/use-messages";
 import { sleep } from "../../src/utils/zion-utils";
 import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
+import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
+import { ChannelContextProvider } from "../../src/components/ChannelContextProvider";
+import { useChannelTimeline } from "../../src/hooks/use-channel-timeline";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -44,10 +46,12 @@ describe("userProfileHooks", () => {
       const { setDisplayName, setAvatarUrl } = useZionClient();
       const myProfile = useMyProfile();
       const alicesMemberInfo = useMember(alice.matrixUserId!, alicesSpaceId);
-      const messages = useMessages(alicesChannelId);
-      const onClickSetProfileInfo = useCallback(async () => {
-        await setDisplayName("Bob's your uncle");
-        await setAvatarUrl("bob.png");
+      const messages = useChannelTimeline();
+      const onClickSetProfileInfo = useCallback(() => {
+        void (async () => {
+          await setDisplayName("Bob's your uncle");
+          await setAvatarUrl("bob.png");
+        })();
       }, [setDisplayName, setAvatarUrl]);
       return (
         <>
@@ -69,7 +73,14 @@ describe("userProfileHooks", () => {
             {alicesMemberInfo?.avatarUrl ?? "unknown"}
           </div>
           <div data-testid="messageSender">
-            {messages.length > 0 ? messages[0].sender : "none"}
+            {messages[3]?.content?.kind === "m.room.message"
+              ? messages[3].content.sender.displayName
+              : "none"}
+          </div>
+          <div data-testid="allMessages">
+            {messages
+              .map((m) => `${m.eventType} ${m.fallbackContent}`)
+              .join("\n")}
           </div>
         </>
       );
@@ -77,7 +88,11 @@ describe("userProfileHooks", () => {
     // render it
     render(
       <ZionTestApp provider={bobProvider}>
-        <TestUserProfile />
+        <SpaceContextProvider spaceId={alicesSpaceId}>
+          <ChannelContextProvider channelId={alicesChannelId}>
+            <TestUserProfile />
+          </ChannelContextProvider>
+        </SpaceContextProvider>
       </ZionTestApp>,
     );
     // get our test elements

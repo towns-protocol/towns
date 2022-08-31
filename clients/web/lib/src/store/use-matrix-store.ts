@@ -27,8 +27,6 @@ export type MatrixStoreStates = {
   setLoginStatus: (loginStatus: LoginStatus) => void;
   loginError: AuthenticationError | null;
   setLoginError: (error: AuthenticationError | undefined) => void;
-  allMessages: RoomsMessages | null;
-  setNewMessage: (roomId: RoomIdentifier, message: RoomMessage) => void;
   powerLevels: { [roomId: string]: Record<string, unknown> };
   setPowerLevels: (
     roomId: RoomIdentifier,
@@ -77,7 +75,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     setLoginStatus: (loginStatus: LoginStatus) =>
       loginStatus === LoginStatus.LoggedOut
         ? set({
-            allMessages: null,
             isAuthenticated: false,
             deviceId: null,
             loginStatus,
@@ -102,7 +99,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
     setDeviceId: (deviceId: string | undefined) =>
       set({ deviceId: deviceId ?? null }),
     rooms: null,
-    allMessages: null,
     powerLevels: {},
     setPowerLevels: (
       roomId: RoomIdentifier,
@@ -114,8 +110,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
 
     createRoom: (roomId: RoomIdentifier, isSpace: boolean) =>
       set((state: MatrixStoreStates) => createRoom(state, roomId, isSpace)),
-    setNewMessage: (roomId: RoomIdentifier, message: RoomMessage) =>
-      set((state: MatrixStoreStates) => setNewMessage(state, roomId, message)),
     setRoom: (room: MatrixRoom) =>
       set((state: MatrixStoreStates) => setRoom(state, room)),
     setAllRooms: (rooms: MatrixRoom[]) =>
@@ -206,22 +200,6 @@ function setPowerLevels(
   const changedPowerLevels = { ...state.powerLevels };
   changedPowerLevels[roomId.slug] = powerLevels;
   return { powerLevels: changedPowerLevels };
-}
-
-function setNewMessage(
-  state: MatrixStoreStates,
-  roomId: RoomIdentifier,
-  message: RoomMessage,
-) {
-  const changedAllMessages = state.allMessages ? { ...state.allMessages } : {};
-  const changedRoomMessages = changedAllMessages[roomId.slug]
-    ? [...changedAllMessages[roomId.slug]]
-    : [];
-  if (!changedRoomMessages.some((m) => m.eventId === message.eventId)) {
-    changedRoomMessages.push(message);
-  }
-  changedAllMessages[roomId.slug] = changedRoomMessages;
-  return { allMessages: changedAllMessages };
 }
 
 function setRoom(state: MatrixStoreStates, room: MatrixRoom) {

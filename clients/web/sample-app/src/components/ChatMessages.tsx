@@ -1,10 +1,9 @@
 import { Box, Divider, TextField, Theme, Typography } from "@mui/material";
 import {
   Membership,
-  RoomMessage,
-  getShortUsername,
-  useMatrixStore,
   RoomIdentifier,
+  TimelineEvent,
+  ZTEvent,
 } from "use-zion-client";
 import { useCallback, useMemo, useState } from "react";
 
@@ -12,15 +11,15 @@ import { AcceptInvitation } from "./AcceptInvitation";
 
 interface Props {
   roomId: RoomIdentifier;
+  timeline: TimelineEvent[];
   membership: string;
   sendMessage: (roomId: RoomIdentifier, message: string) => Promise<void>;
   joinRoom: (roomId: RoomIdentifier) => Promise<void>;
 }
 
 export function ChatMessages(props: Props): JSX.Element {
-  const { allMessages } = useMatrixStore();
+  const { timeline } = props;
   const [currentMessage, setCurrentMessage] = useState<string>("");
-
   const onTextChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setCurrentMessage(event.target.value);
@@ -38,31 +37,14 @@ export function ChatMessages(props: Props): JSX.Element {
     [currentMessage, props],
   );
 
-  const roomMessages = useMemo(() => {
-    if (allMessages) {
-      const messages = allMessages[props.roomId.slug];
-      if (messages && messages.length > 0) {
-        console.log("messages", messages);
-        return messages;
-      }
-    }
-
-    return undefined;
-  }, [allMessages, props.roomId]);
-
-  const messagesLength = useMemo(
-    () => roomMessages?.length,
-    [roomMessages?.length],
-  );
-
   const chatMessages = useMemo(() => {
     if (props.membership === Membership.Invite) {
       return (
         <AcceptInvitation roomId={props.roomId} joinRoom={props.joinRoom} />
       );
-    } else if (roomMessages && messagesLength && props.roomId) {
-      if (roomMessages.length > 0) {
-        return roomMessages.map((m: RoomMessage, index: number) => (
+    } else if (props.membership === Membership.Join) {
+      if (timeline.length > 0) {
+        return timeline.map((m: TimelineEvent, index: number) => (
           <Typography
             key={index}
             display="block"
@@ -70,27 +52,34 @@ export function ChatMessages(props: Props): JSX.Element {
             component="span"
             sx={messageStyle}
           >
-            {`${getShortUsername(m.sender)}: ${m.body}`}
+            {`${formatEvent(m)}`}
           </Typography>
         ));
       } else {
+        return (
+          <Typography
+            display="block"
+            variant="body1"
+            component="span"
+            sx={messageStyle}
+          >
+            There are no messages.
+          </Typography>
+        );
+      }
+    } else {
+      return (
         <Typography
           display="block"
           variant="body1"
           component="span"
           sx={messageStyle}
         >
-          There are no messages.
-        </Typography>;
-      }
+          We don't have membership information for this room
+        </Typography>
+      );
     }
-  }, [
-    props.membership,
-    props.roomId,
-    props.joinRoom,
-    roomMessages,
-    messagesLength,
-  ]);
+  }, [props.membership, props.roomId, props.joinRoom, timeline]);
 
   return (
     <Box display="flex" flexGrow="1" flexDirection="column">
@@ -114,6 +103,15 @@ export function ChatMessages(props: Props): JSX.Element {
       ) : null}
     </Box>
   );
+}
+
+function formatEvent(event: TimelineEvent): string {
+  switch (event.content?.kind) {
+    case ZTEvent.RoomMessage:
+      return `${event.content.sender.displayName}: ${event.content.body}`;
+    default:
+      return event.fallbackContent;
+  }
 }
 
 const messageStyle = {

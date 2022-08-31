@@ -1,12 +1,11 @@
 import { Allotment } from "allotment";
 import React, { useCallback, useEffect } from "react";
-import { useParams } from "react-router";
 import {
   Membership,
   MessageType,
-  useMessages,
   useMyMembership,
-  useSpace,
+  useSpaceData,
+  useSpaceTimeline,
   useZionClient,
 } from "use-zion-client";
 import { MessageList } from "@components/MessageScroller";
@@ -15,12 +14,11 @@ import { Box, Button, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpaceHome = () => {
-  const { spaceSlug } = useParams();
   const { onSizesChange } = usePersistPanes(["channel", "right"]);
   const { sendMessage, joinRoom } = useZionClient();
-  const space = useSpace(spaceSlug);
+  const space = useSpaceData();
   const myMembership = useMyMembership(space?.id);
-  const spaceMessages = useMessages(space?.id.slug);
+  const spaceMessages = useSpaceTimeline();
 
   const onSend = useCallback(
     (value: string) => {
@@ -60,7 +58,11 @@ export const SpaceHome = () => {
             <Button onClick={onJoinSpace}>Join {space.name}</Button>
           ) : (
             <Box grow absoluteFill height="100%" overflow="hidden">
-              <MessageList key={space.id.slug} messages={spaceMessages} />
+              <MessageList
+                key={space.id.slug}
+                channelId={space.id}
+                messages={spaceMessages}
+              />
               <Box paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
                   autoFocus

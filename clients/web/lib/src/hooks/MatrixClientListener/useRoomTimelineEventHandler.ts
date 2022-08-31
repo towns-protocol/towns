@@ -1,4 +1,4 @@
-import { MatrixEvent, Room } from "matrix-js-sdk";
+import { IRoomTimelineData, MatrixEvent, Room } from "matrix-js-sdk";
 import { MutableRefObject, useCallback } from "react";
 import { makeRoomIdentifier, Membership } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
@@ -9,7 +9,6 @@ export const useRoomTimelineEventHandler = (
 ) => {
   const {
     createRoom,
-    setNewMessage,
     setPowerLevels,
     setRoomName,
     setSpaceUpdateRecievedAt,
@@ -21,9 +20,9 @@ export const useRoomTimelineEventHandler = (
     function (
       event: MatrixEvent,
       room: Room,
-      toStartOfTimeline: any,
-      removed: any,
-      data: any,
+      toStartOfTimeline: boolean,
+      removed: boolean,
+      data: IRoomTimelineData,
     ) {
       if (!matrixClientRef.current) {
         console.log(`matrixClientRef.current is undefined`);
@@ -33,20 +32,7 @@ export const useRoomTimelineEventHandler = (
       const content = event.getContent();
       switch (event.getType()) {
         case "m.room.message": {
-          if (!event.getSender() || !content || !content.msgtype) {
-            console.error("m.room.message event has no event_id or content");
-            break;
-          }
-          setNewMessage(makeRoomIdentifier(room.roomId), {
-            eventId: event.getId(),
-            sender: event.sender.rawDisplayName,
-            senderAvatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
-            senderId: event.getSender(),
-            body: content.body,
-            msgType: content.msgtype,
-            content: content,
-            originServerTs: content.origin_server_ts,
-          });
+          // implemented with timeline event
           break;
         }
         case "m.room.create": {
@@ -55,9 +41,9 @@ export const useRoomTimelineEventHandler = (
         }
         case "m.room.name": {
           const roomId = event.getRoomId();
-          const name = event.getContent().name;
-          if (!roomId) {
-            console.error("m.room.name event has no roomId");
+          const name = event.getContent().name as string;
+          if (!roomId || !name) {
+            console.error("m.room.name event has no roomId or no name");
             break;
           }
           setRoomName(makeRoomIdentifier(roomId), name);
@@ -132,7 +118,6 @@ export const useRoomTimelineEventHandler = (
     [
       createRoom,
       matrixClientRef,
-      setNewMessage,
       setPowerLevels,
       setRoomName,
       setSpaceUpdateRecievedAt,

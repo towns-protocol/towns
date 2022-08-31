@@ -1,13 +1,18 @@
 import { Box, Grid, Theme, Typography } from "@mui/material";
-import { RoomIdentifier, useZionClient, useMatrixStore } from "use-zion-client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  RoomIdentifier,
+  useZionClient,
+  useChannelData,
+  useChannelTimeline,
+} from "use-zion-client";
+import { useCallback, useEffect, useState } from "react";
 
 import { ChatMessages } from "./ChatMessages";
 import { InviteButton } from "./Buttons/InviteButton";
 import { InviteForm } from "./InviteForm";
 import { LeaveRoomButton } from "./Buttons/LeaveRoomButton";
 import { SettingsButton } from "./Buttons/SettingsButton";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   roomId: RoomIdentifier;
@@ -17,19 +22,17 @@ interface Props {
 }
 
 export function Chat(props: Props): JSX.Element {
-  const { spaceSlug, roomSlug } = useParams();
-  const { rooms } = useMatrixStore();
+  const { spaceId, channelId, channel } = useChannelData();
   const { inviteUser, leaveRoom, joinRoom, sendMessage } = useZionClient();
   const [showInviteForm, setShowInviteForm] = useState<boolean>(false);
   const navigate = useNavigate();
+  const timeline = useChannelTimeline();
 
   const onClickSettings = useCallback(() => {
-    if (spaceSlug && roomSlug) {
-      navigate("/spaces/" + spaceSlug + "/channels/" + roomSlug + "/settings");
-    } else if (roomSlug) {
-      navigate("/rooms/" + roomSlug + "/settings");
-    }
-  }, [spaceSlug, roomSlug, navigate]);
+    navigate(
+      "/spaces/" + spaceId.slug + "/channels/" + channelId.slug + "/settings",
+    );
+  }, [spaceId.slug, channelId.slug, navigate]);
 
   const onClickLeaveRoom = useCallback(async () => {
     await leaveRoom(props.roomId);
@@ -67,15 +70,7 @@ export function Chat(props: Props): JSX.Element {
     [joinRoom, props],
   );
 
-  const roomName = useMemo(() => {
-    if (rooms) {
-      const room = rooms[props.roomId.slug];
-      if (room) {
-        return room.name;
-      }
-    }
-    return "";
-  }, [props.roomId, rooms]);
+  const roomName = channel?.label ?? "";
 
   useEffect(() => {
     setShowInviteForm(false);
@@ -115,6 +110,7 @@ export function Chat(props: Props): JSX.Element {
       ) : (
         <ChatMessages
           roomId={props.roomId}
+          timeline={timeline}
           membership={props.membership}
           sendMessage={onClickSendMessage}
           joinRoom={onClickJoinRoom}

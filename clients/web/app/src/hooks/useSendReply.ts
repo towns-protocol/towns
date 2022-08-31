@@ -1,22 +1,18 @@
 import { useCallback } from "react";
-import { useChannel, useZionClient } from "use-zion-client";
+import { useChannelId, useZionClient } from "use-zion-client";
 
-export const useSendReply = (
-  spaceSlug?: string,
-  channelSlug?: string,
-  threadId?: string,
-) => {
+export const useSendReply = (threadId?: string) => {
   const { sendMessage } = useZionClient();
 
-  const channel = useChannel(spaceSlug, channelSlug);
+  const channelId = useChannelId();
   const sendReply = useCallback(
     (value: string) => {
-      if (value && channel?.id) {
-        sendMessage(channel?.id, value, { threadId: threadId });
+      if (value) {
+        sendMessage(channelId, value, { threadId: threadId });
       }
       return sendReply;
     },
-    [channel?.id, threadId, sendMessage],
+    [channelId, threadId, sendMessage],
   );
 
   return { sendReply };

@@ -11,7 +11,7 @@ import { LoginWithWallet } from "./helpers/TestComponents";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
-import { useInvites } from "../../src/hooks/use-space";
+import { useInvites } from "../../src/hooks/use-space-data";
 import { useSpaces } from "../../src/hooks/use-spaces";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
@@ -27,7 +27,7 @@ describe("userProfileOnAcceptInviteHooks", () => {
     const aliceProvider = alice.provider;
     // set display name and avatar
     await alice.setDisplayName("Alice's your aunt");
-    await alice.setAvatarUrl("alice.png");
+    await alice.setAvatarUrl("alice.p ng");
     // stop alice
     alice.stopClient();
     // create a veiw for alice

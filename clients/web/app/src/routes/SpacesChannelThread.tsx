@@ -1,18 +1,19 @@
 import React, { useCallback } from "react";
 import { useNavigate, useParams } from "react-router";
+import { useChannelData } from "use-zion-client";
 import { MessageThread } from "@components/MessageThread";
 import { Box } from "@ui";
 
 export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => {
-  const { spaceSlug, channelSlug, messageId } = useParams();
-
+  const { messageId } = useParams();
+  const { spaceId, channelId } = useChannelData();
   const navigate = useNavigate();
 
   const handleClose = useCallback(() => {
-    navigate(`/spaces/${spaceSlug}/channels/${channelSlug}`);
-  }, [channelSlug, navigate, spaceSlug]);
+    navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}`);
+  }, [channelId.slug, navigate, spaceId.slug]);
 
-  const isValid = spaceSlug && channelSlug && messageId;
+  const isValid = !!messageId;
 
   return (
     <Box grow absoluteFill height="100%" overflow="hidden">
@@ -21,8 +22,6 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => {
           <Box grow padding="lg">
             <MessageThread
               key={messageId}
-              spaceSlug={spaceSlug}
-              channelSlug={channelSlug}
               messageId={messageId}
               onClose={handleClose}
             />

@@ -1,14 +1,10 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-
-import AppDrawer from "./components/AppDrawer";
 import { Container } from "@mui/material";
 import { Home } from "./routes/Home";
 import { Main } from "./components/Main";
 import { ZionContextProvider } from "use-zion-client";
 import { NotFound } from "./routes/NotFound";
 import { RoomSettings } from "./routes/RoomSettings";
-import { Rooms } from "./routes/Rooms";
-import { RoomsIndex } from "./routes/RoomsIndex";
 import { SpaceInvite } from "./routes/SpaceInvite";
 import { Spaces } from "./routes/Spaces";
 import { SpacesIndex } from "./routes/SpacesIndex";
@@ -17,6 +13,9 @@ import { SpacesNewChannel } from "./routes/SpacesNewChannel";
 import { ThemeProvider } from "@mui/material/styles";
 import { Web3 } from "./routes/Web3";
 import theme from "./theme";
+import { ChannelsIndex } from "./routes/ChannelsIndex";
+import { Channels } from "./routes/Channels";
+import { AuthenticatedContent } from "./routes/AuthenticatedContent";
 
 const MATRIX_HOMESERVER_URL = process.env
   .REACT_APP_MATRIX_HOME_SERVER as string;
@@ -43,20 +42,16 @@ export function App(): JSX.Element {
           >
             <Routes>
               <Route element={<Main />}>
-                <Route element={<AppDrawer />}>
+                <Route element={<AuthenticatedContent />}>
                   <Route index element={<Home />} />
-                  <Route path="rooms/:roomSlug" element={<Rooms />}>
-                    <Route index element={<RoomsIndex />}></Route>
-                    <Route path="settings" element={<RoomSettings />}></Route>
-                  </Route>
                   <Route path="spaces/new" element={<SpacesNew />} />
                   <Route path="spaces/:spaceSlug" element={<Spaces />}>
                     <Route index element={<SpacesIndex />} />
                     <Route path="settings" element={<RoomSettings />}></Route>
                     <Route path="invite" element={<SpaceInvite />} />
                     <Route path="channels/new" element={<SpacesNewChannel />} />
-                    <Route path="channels/:roomSlug" element={<Rooms />}>
-                      <Route index element={<RoomsIndex />}></Route>
+                    <Route path="channels/:channelSlug" element={<Channels />}>
+                      <Route index element={<ChannelsIndex />}></Route>
                       <Route path="settings" element={<RoomSettings />}></Route>
                     </Route>
                   </Route>

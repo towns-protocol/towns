@@ -1,18 +1,16 @@
 import { useCallback } from "react";
-import { useChannel, useZionClient } from "use-zion-client";
+import { RoomIdentifier, useZionClient } from "use-zion-client";
 
-export const useEditMessage = (spaceSlug?: string, channelSlug?: string) => {
+export const useEditMessage = (channelId: RoomIdentifier) => {
   const { editMessage } = useZionClient();
-
-  const channel = useChannel(spaceSlug, channelSlug);
 
   const sendEditedMessage = useCallback(
     (value: string, parentId: string) => {
-      if (value && channel?.id && parentId) {
-        editMessage(channel?.id, value, { originalEventId: parentId });
+      if (value && parentId) {
+        editMessage(channelId, value, { originalEventId: parentId });
       }
     },
-    [channel?.id, editMessage],
+    [channelId, editMessage],
   );
 
   return { sendEditedMessage };

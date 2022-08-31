@@ -1,93 +1,6 @@
-import React, { ComponentProps, forwardRef, useCallback, useMemo } from "react";
-import { useNavigate, useParams } from "react-router";
-import { RoomMessage, useMatrixStore, useSpace } from "use-zion-client";
+import React, { ComponentProps, forwardRef } from "react";
 import { Message } from "@components/Message";
-import { SpaceBanner } from "@components/SpaceBanner/SpaceBanner";
-import {
-  Avatar,
-  BackgroundImage,
-  Box,
-  BoxProps,
-  ButtonText,
-  Heading,
-  Paragraph,
-  Stack,
-} from "@ui";
-
-export const SpacesIndex = () => {
-  const { spaceSlug } = useParams();
-  const navigate = useNavigate();
-  const { allMessages } = useMatrixStore();
-  const space = useSpace(spaceSlug);
-
-  const spaceMessages = useMemo(
-    () =>
-      allMessages && space?.id.slug ? allMessages[space?.id.slug] ?? [] : [],
-    [allMessages, space?.id.slug],
-  );
-
-  const messagesLength = useMemo(
-    () => spaceMessages.length,
-    [spaceMessages.length],
-  );
-
-  const onSettingsClicked = useCallback(() => {
-    navigate("/spaces/" + space?.id.slug + "/settings");
-  }, [navigate, space?.id.slug]);
-
-  return (
-    <>
-      {space ? (
-        <>
-          <Stack
-            borderBottom
-            grow
-            alignItems="center"
-            paddingBottom="none"
-            position="relative"
-            maxHeight="400"
-          >
-            <Box position="absolute" width="100%" height="100%">
-              {space.bannerSrc && (
-                <BackgroundImage
-                  size="cover"
-                  overlay="dark"
-                  src={space.bannerSrc}
-                />
-              )}
-            </Box>
-            <Box
-              position="relative"
-              width="100%"
-              height="100%"
-              alignItems="center"
-            >
-              <LiquidContainer grow width="100%">
-                <SpaceBanner
-                  avatarSrc={space.avatarSrc}
-                  name={space.name}
-                  onSettingsClicked={onSettingsClicked}
-                />
-                <SpaceMenu />
-              </LiquidContainer>
-            </Box>
-          </Stack>
-          <Box grow alignItems="center" background="level2">
-            {messagesLength ? (
-              <SpaceMessages messages={spaceMessages} />
-            ) : space.id.slug === "Council" ? (
-              <FakeSpaceMessages />
-            ) : (
-              <></>
-            )}
-          </Box>
-        </>
-      ) : (
-        <p>Space "{spaceSlug}" not found</p>
-      )}
-    </>
-  );
-};
+import { Box, BoxProps } from "@ui";
 
 export const LiquidContainer = forwardRef<
   HTMLElement,
@@ -101,23 +14,7 @@ export const LiquidContainer = forwardRef<
   />
 ));
 
-const SpaceMessages = (props: { messages: RoomMessage[] }) => (
-  <LiquidContainer gap="sm" paddingY="sm">
-    {props.messages.map((m, index) => (
-      <RoundedMessage
-        channel=""
-        key={m.eventId}
-        name={m.sender}
-        avatar={<Avatar src="/placeholders/nft_2.png" />}
-        date="Today sometime?"
-        reactions={{}}
-      >
-        <Paragraph>{m.body}</Paragraph>
-      </RoundedMessage>
-    ))}
-  </LiquidContainer>
-);
-
+/*
 const FakeSpaceMessages = () => (
   <LiquidContainer gap="sm" paddingY="sm">
     <RoundedMessage
@@ -178,11 +75,12 @@ const FakeSpaceMessages = () => (
     </RoundedMessage>
   </LiquidContainer>
 );
-
+*/
 export const RoundedMessage = (props: ComponentProps<typeof Message>) => (
   <Message rounded="sm" padding="paragraph" background="default" {...props} />
 );
 
+/*
 const QuotedMessage = (props: {
   avatar: React.ReactNode;
   children: React.ReactNode;
@@ -236,3 +134,4 @@ const SpaceMenuItem = (props: { label: string; selected?: boolean }) => (
     </ButtonText>
   </Box>
 );
+*/

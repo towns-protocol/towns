@@ -9,11 +9,13 @@ import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ZionTestApp } from "./helpers/ZionTestApp";
-import { useSpace } from "../../src/hooks/use-space";
+import { useSpaceData } from "../../src/hooks/use-space-data";
 import { useRoom } from "../../src/hooks/use-room";
 import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
+import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
+import { useMyMembership } from "../../src/hooks/use-my-membership";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -40,8 +42,9 @@ describe("defaultSpaceIdHooks", () => {
       const { walletStatus } = useWeb3Context();
       const { loginStatus, loginError } = useMatrixStore();
       const { registerWallet, joinRoom, clientRunning } = useZionClient();
-      const defaultSpace = useSpace();
+      const defaultSpace = useSpaceData();
       const defaultRoom = useRoom(defaultSpaceId);
+      const myMembership = useMyMembership(defaultSpaceId);
       const onClickRegisterWallet = useCallback(() => {
         void registerWallet("...");
       }, [registerWallet]);
@@ -66,6 +69,7 @@ describe("defaultSpaceIdHooks", () => {
           <button onClick={onClickJoinRoom}>Join</button>
           <div data-testid="roomMembership"> {defaultRoom?.membership} </div>
           <div data-testid="spaceMembership"> {defaultSpace?.membership} </div>
+          <div data-testid="myMembership"> {myMembership} </div>
           <div data-testid="channelsCount">
             {`${defaultSpace?.channelGroups.length ?? -1}`}
           </div>
@@ -85,7 +89,9 @@ describe("defaultSpaceIdHooks", () => {
         defaultSpaceId={defaultSpaceId.matrixRoomId}
         defaultSpaceName="janes space (fake default)"
       >
-        <TestDefaultRoom />
+        <SpaceContextProvider spaceId={undefined}>
+          <TestDefaultRoom />
+        </SpaceContextProvider>
       </ZionTestApp>,
     );
     // get our test elements

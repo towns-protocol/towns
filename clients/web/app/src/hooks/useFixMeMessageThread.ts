@@ -1,15 +1,17 @@
 import { useMemo } from "react";
-import { RoomMessage, useChannel, useMatrixStore } from "use-zion-client";
+import { TimelineEvent, ZTEvent, useChannelTimeline } from "use-zion-client";
 
-export const useFilterReplies = (messages: RoomMessage[], bypass = false) => {
+export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
   const filteredMessages = useMemo(
     () =>
       bypass
-        ? messages
-        : messages.filter(
-            (m: RoomMessage) => !m.content?.["m.relates_to"]?.["m.in_reply_to"],
+        ? events
+        : events.filter(
+            (e: TimelineEvent) =>
+              e.content?.kind !== ZTEvent.RoomMessage ||
+              !e.content?.content["m.relates_to"]?.["m.in_reply_to"],
           ),
-    [bypass, messages],
+    [bypass, events],
   );
 
   return { filteredMessages };
@@ -21,21 +23,12 @@ export const useFilterReplies = (messages: RoomMessage[], bypass = false) => {
  * there's a few ways of doing this, by enabling `experimentalThreadSupport` in
  * the client or building a proper reducer looking up parent events recursively
  **/
-export const useMessageThread = (
-  spaceSlug: string,
-  channelSlug: string,
-  messageId: string,
-) => {
-  const { allMessages } = useMatrixStore();
-
-  const channel = useChannel(spaceSlug, channelSlug);
+export const useMessageThread = (messageId: string) => {
+  const timeline = useChannelTimeline();
 
   const channelMessages = useMemo(
-    () =>
-      allMessages && channelSlug
-        ? allMessages[channel?.id.slug ?? ""] ?? []
-        : [],
-    [allMessages, channel?.id.slug, channelSlug],
+    () => timeline.filter((m) => m.content?.kind === ZTEvent.RoomMessage),
+    [timeline],
   );
 
   const parentMessage = useMemo(() => {
@@ -52,7 +45,7 @@ export const useMessageThread = (
       return [...messages, m];
     }
     return messages;
-  }, [] as RoomMessage[]);
+  }, [] as TimelineEvent[]);
 
   return {
     parentMessage,
@@ -64,7 +57,7 @@ export const useMessageThread = (
  * Collect messages with replies
  * FIXME: rough implementation
  **/
-export const useMessageReplyCount = (messages: RoomMessage[]) => {
+export const useMessageReplyCount = (messages: TimelineEvent[]) => {
   return useMemo(
     () =>
       messages.reduce((threads, m) => {
@@ -79,9 +72,12 @@ export const useMessageReplyCount = (messages: RoomMessage[]) => {
   );
 };
 
-const getMessageAsReply = (m: RoomMessage) => {
+const getMessageAsReply = (m: TimelineEvent) => {
   const content = m.content;
-  const relatesTo = content?.["m.relates_to"];
+  const relatesTo =
+    content?.kind === ZTEvent.RoomMessage
+      ? content.content["m.relates_to"]
+      : undefined;
   //?.["rel_type"] === "io.element.thread";
   if (
     relatesTo &&

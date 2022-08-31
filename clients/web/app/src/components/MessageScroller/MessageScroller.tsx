@@ -2,7 +2,14 @@ import { RelationType } from "matrix-js-sdk";
 import React, { useRef, useState } from "react";
 // import { useInView } from "react-intersection-observer";
 import useEvent from "react-use-event-hook";
-import { MessageType, RoomMessage, useMatrixStore } from "use-zion-client";
+import {
+  MessageType,
+  RoomIdentifier,
+  RoomMessageEvent,
+  TimelineEvent,
+  ZTEvent,
+  useMatrixStore,
+} from "use-zion-client";
 import { Message } from "@components/Message";
 import {
   RichTextEditor,
@@ -11,7 +18,6 @@ import {
 import { FadeIn } from "@components/Transitions";
 import { Avatar, Box, Paragraph, Stack } from "@ui";
 import { useEditMessage } from "hooks/useEditMessage";
-import { useEditedMessages } from "hooks/useFixMeEditMessage";
 import {
   useFilterReplies,
   useMessageReplyCount,
@@ -19,19 +25,17 @@ import {
 
 const INITIAL_MESSAGE_COUNT = 15;
 
-export const MessageScroller = (props: {
-  messages: RoomMessage[];
+interface Props {
+  channelId: RoomIdentifier;
+  messages: TimelineEvent[];
   onSelectMessage?: (id: string) => void;
   hideThreads?: boolean;
   before?: JSX.Element;
   after?: JSX.Element;
+}
 
-  messageContext?: {
-    spaceSlug: string;
-    channelSlug: string;
-  };
-}) => {
-  const { messages } = props;
+export const MessageScroller = (props: Props) => {
+  const { channelId, messages } = props;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -47,12 +51,9 @@ export const MessageScroller = (props: {
 
   // strip-out replies on main timeline (hack!)
   const { filteredMessages } = useFilterReplies(messages, props.hideThreads);
-  // replace original messages by edits (hack!)
-  const { editedMessages } = useEditedMessages(filteredMessages);
   // create a slice of messages to display
-
   /* FIXME: cancels lazy reveal of messages */
-  const paginatedMessages = editedMessages.slice(); //editedMessages.slice(-displayCount);
+  const paginatedMessages = filteredMessages.slice(); //editedMessages.slice(-displayCount);
 
   /* FIXME: cancels lazy reveal of messages */
   // const { endRef } = useMessageScroll(
@@ -70,10 +71,7 @@ export const MessageScroller = (props: {
     );
   });
 
-  const { sendEditedMessage } = useEditMessage(
-    props.messageContext?.spaceSlug,
-    props.messageContext?.channelSlug,
-  );
+  const { sendEditedMessage } = useEditMessage(channelId);
 
   const onSaveEditedMessage = (value: string) => {
     if (editMessageId) {
@@ -101,54 +99,16 @@ export const MessageScroller = (props: {
                 index > paginatedMessages.length - INITIAL_MESSAGE_COUNT
               }
             >
-              <Message
-                id={m.eventId}
-                name={m.sender}
-                paddingX="lg"
-                paddingY="md"
-                editable={m.senderId === userId && !!m.eventId?.match(/^\$/)}
-                avatar={<Avatar src={m.senderAvatarUrl} size="avatar_md" />}
-                editing={editMessageId === m.eventId}
-                onEditMessage={onEditMessage}
-                onSelectMessage={props.onSelectMessage}
-              >
-                {editMessageId === m.eventId ? (
-                  <Stack gap>
-                    <RichTextEditor
-                      editing
-                      displayButtons
-                      initialValue={m.body}
-                      onSend={onSaveEditedMessage}
-                      onCancel={onCancelEdit}
-                    />
-                  </Stack>
-                ) : (
-                  <RichTextPreview
-                    content={getMessageContent(m)}
-                    edited={
-                      m.content["m.relates_to"]?.rel_type ===
-                      RelationType.Replace
-                    }
-                  />
-                )}
-                {repliedMessages[m.eventId] && (
-                  <Box horizontal paddingY="md">
-                    <Box
-                      shrink
-                      centerContent
-                      horizontal
-                      gap="sm"
-                      cursor="pointer"
-                      onClick={() => props.onSelectMessage?.(m.eventId)}
-                    >
-                      <Paragraph strong size="sm" color="accent">
-                        {repliedMessages[m.eventId]}
-                        {repliedMessages[m.eventId] > 1 ? " replies" : " reply"}
-                      </Paragraph>
-                    </Box>
-                  </Box>
-                )}
-              </Message>
+              {getEventComponent(
+                userId,
+                editMessageId,
+                onEditMessage,
+                onSaveEditedMessage,
+                onCancelEdit,
+                props,
+                m,
+                repliedMessages,
+              )}
             </FadeIn>
           ))}
           {props.after}
@@ -234,11 +194,120 @@ const useMessageScroll = (
 };
 */
 
-function getMessageContent(message: RoomMessage) {
+function getEventComponent(
+  userId: string | null,
+  editMessageId: string | undefined,
+  onEditMessage: (messageId: string) => void,
+  onSaveEditedMessage: (value: string) => void,
+  onCancelEdit: () => void,
+  props: Props,
+  event: TimelineEvent,
+  repliedMessages: Record<string, number>,
+) {
+  const content = event.content;
+  switch (content?.kind) {
+    case ZTEvent.RoomMessage:
+      return getRoomMessageContent(
+        userId,
+        editMessageId,
+        onEditMessage,
+        onSaveEditedMessage,
+        onCancelEdit,
+        props,
+        event,
+        content,
+        repliedMessages,
+      );
+    case ZTEvent.RoomMember:
+      return getGenericComponent(event, event.fallbackContent);
+    case ZTEvent.RoomCreate:
+      return getGenericComponent(event, event.fallbackContent);
+    default:
+      return getGenericComponent(event, event.fallbackContent);
+  }
+}
+
+function getGenericComponent(event: TimelineEvent, content: string) {
+  return (
+    <Message
+      id={event.eventId}
+      name={event.eventType}
+      paddingX="lg"
+      paddingY="md"
+      editable={false}
+      avatar={<Avatar src={undefined} size="avatar_md" />}
+      editing={false}
+    >
+      <RichTextPreview content={content} edited={false} />
+    </Message>
+  );
+}
+
+function getRoomMessageContent(
+  userId: string | null,
+  editMessageId: string | undefined,
+  onEditMessage: (messageId: string) => void,
+  onSaveEditedMessage: (value: string) => void,
+  onCancelEdit: () => void,
+  props: Props,
+  event: TimelineEvent,
+  m: RoomMessageEvent,
+  repliedMessages: Record<string, number>,
+) {
+  return (
+    <Message
+      id={event.eventId}
+      name={m.sender.displayName}
+      paddingX="lg"
+      paddingY="md"
+      editable={m.sender.id === userId && !event.isLocalPending}
+      avatar={<Avatar src={m.sender.avatarUrl} size="avatar_md" />}
+      editing={editMessageId === event.eventId}
+      onEditMessage={onEditMessage}
+      onSelectMessage={props.onSelectMessage}
+    >
+      {editMessageId === event.eventId ? (
+        <Stack gap>
+          <RichTextEditor
+            editing
+            displayButtons
+            initialValue={m.body}
+            onSend={onSaveEditedMessage}
+            onCancel={onCancelEdit}
+          />
+        </Stack>
+      ) : (
+        <RichTextPreview
+          content={getMessageBody(event.eventId, m)}
+          edited={m.content["m.relates_to"]?.rel_type === RelationType.Replace}
+        />
+      )}
+      {repliedMessages[event.eventId] && (
+        <Box horizontal paddingY="md">
+          <Box
+            shrink
+            centerContent
+            horizontal
+            gap="sm"
+            cursor="pointer"
+            onClick={() => props.onSelectMessage?.(event.eventId)}
+          >
+            <Paragraph strong size="sm" color="accent">
+              {repliedMessages[event.eventId]}
+              {repliedMessages[event.eventId] > 1 ? " replies" : " reply"}
+            </Paragraph>
+          </Box>
+        </Box>
+      )}
+    </Message>
+  );
+}
+
+function getMessageBody(eventId: string, message: RoomMessageEvent): string {
   switch (message.msgType) {
     case MessageType.WenMoon:
       return `${message.body} 
-      ${message.eventId}
+      ${eventId}
       `;
     case MessageType.Text:
       return message.body;

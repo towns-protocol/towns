@@ -2,27 +2,31 @@ import {
   Channel,
   ChannelGroup,
   RoomIdentifier,
-  useSpace,
+  useMyMembership,
+  useSpaceData,
+  useSpaceTimeline,
   useZionClient,
 } from "use-zion-client";
 import { List, ListItem, ListItemText } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { SpaceSettings } from "./SpaceSettings";
 import { useCallback, useMemo } from "react";
+import { ChatMessages } from "../components/ChatMessages";
 
 export const SpacesIndex = () => {
   console.log("SPACES INDEX");
-  const { spaceSlug } = useParams();
   const navigate = useNavigate();
-  const space = useSpace(spaceSlug);
-  const { leaveRoom } = useZionClient();
+  const space = useSpaceData();
+  const membership = useMyMembership(space?.id);
+  const timeline = useSpaceTimeline();
+  const { leaveRoom, sendMessage } = useZionClient();
 
   const onClickSettings = useCallback(() => {
-    if (spaceSlug) {
-      navigate("/spaces/" + spaceSlug + "/settings");
+    if (space?.id.slug) {
+      navigate("/spaces/" + space.id.slug + "/settings");
     }
-  }, [spaceSlug, navigate]);
+  }, [space?.id.slug, navigate]);
 
   const onClickChannel = useCallback(
     (roomId: RoomIdentifier) => {
@@ -61,6 +65,17 @@ export const SpacesIndex = () => {
     }
   }, [leaveRoom, navigate, space?.id]);
 
+  const onClickSendMessage = useCallback(
+    (roomId: RoomIdentifier, message: string) => {
+      return sendMessage(roomId, message);
+    },
+    [sendMessage],
+  );
+
+  const onClickJoinRoom = useCallback(() => {
+    throw new Error("Not implemented");
+  }, []);
+
   return space ? (
     <>
       <div>
@@ -78,9 +93,18 @@ export const SpacesIndex = () => {
       <div>
         {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}
       </div>
+      <h3>Channels:</h3>
       <List>{channelItems}</List>
+      <h3>Space Messages</h3>
+      <ChatMessages
+        roomId={space.id}
+        timeline={timeline}
+        membership={membership}
+        sendMessage={onClickSendMessage}
+        joinRoom={onClickJoinRoom}
+      />
     </>
   ) : (
-    <h1> Space {spaceSlug} not found</h1>
+    <h1> Space not found</h1>
   );
 };

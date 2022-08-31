@@ -1,11 +1,10 @@
 import { Divider } from "@mui/material";
-import { Outlet, useParams } from "react-router-dom";
-import { useSpace } from "use-zion-client";
+import { Outlet } from "react-router-dom";
+import { useSpaceData } from "use-zion-client";
 
 export const Spaces = () => {
-  const { spaceSlug } = useParams();
-  const space = useSpace(spaceSlug);
-
+  const space = useSpaceData();
+  console.log("SPACE CONTENT", space);
   return space ? (
     <>
       <h1>{space.name}</h1>
@@ -14,6 +13,6 @@ export const Spaces = () => {
       <Outlet />
     </>
   ) : (
-    <h1> Space {spaceSlug} not found</h1>
+    <>Space not found!</>
   );
 };

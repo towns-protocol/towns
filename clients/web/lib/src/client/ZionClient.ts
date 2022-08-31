@@ -316,6 +316,9 @@ export class ZionClient {
     });
   }
 
+  /************************************************
+   * sendMessage
+   *************************************************/
   public async editMessage(
     roomId: RoomIdentifier,
     message: string,
@@ -329,6 +332,24 @@ export class ZionClient {
     });
   }
 
+  /************************************************
+   * redactEvent
+   *************************************************/
+  public async redactEvent(
+    roomId: RoomIdentifier,
+    eventId: string,
+    reason?: string,
+  ) {
+    const resp = await this.client.redactEvent(
+      roomId.matrixRoomId,
+      eventId,
+      undefined,
+      {
+        reason,
+      },
+    );
+    console.log("event redacted", roomId.matrixRoomId, eventId, resp);
+  }
   /************************************************
    * sendNotice
    *************************************************/
@@ -411,8 +432,8 @@ export class ZionClient {
   /************************************************
    * getRoom
    ************************************************/
-  public getRoom(roomId: RoomIdentifier): MatrixRoom | null {
-    return this.client.getRoom(roomId.matrixRoomId);
+  public getRoom(roomId: RoomIdentifier): MatrixRoom | undefined {
+    return this.client.getRoom(roomId.matrixRoomId) ?? undefined;
   }
 
   /************************************************
@@ -482,6 +503,35 @@ export class ZionClient {
       throw new Error("room not found");
     }
     await this.client.scrollback(room, limit);
+  }
+
+  /************************************************
+   * on
+   * Some matrix events are only emitted by the client,
+   * not through the room object.
+   ************************************************/
+  public on(
+    event:
+      | MatrixEventEvent.Decrypted
+      | MatrixEventEvent.Replaced
+      | MatrixEventEvent.VisibilityChange,
+    callback: (event: MatrixEvent) => void,
+  ) {
+    this.client.on(event, callback);
+  }
+  /************************************************
+   * removeListener
+   * Some matrix events are only emitted by the client,
+   * not through the room object.
+   ************************************************/
+  public removeListener(
+    event:
+      | MatrixEventEvent.Decrypted
+      | MatrixEventEvent.Replaced
+      | MatrixEventEvent.VisibilityChange,
+    callback: (event: MatrixEvent) => void,
+  ) {
+    this.client.removeListener(event, callback);
   }
 
   /************************************************

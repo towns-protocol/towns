@@ -1,7 +1,12 @@
 import { Allotment, AllotmentHandle } from "allotment";
 import React, { useEffect, useRef } from "react";
 import { Outlet, useMatch, useNavigate } from "react-router";
-import { useMatrixStore, useMyProfile, useSpace } from "use-zion-client";
+import {
+  SpaceContextProvider,
+  useMatrixStore,
+  useMyProfile,
+  useSpaceData,
+} from "use-zion-client";
 import useEvent from "react-use-event-hook";
 import {
   MainSideBar,
@@ -13,11 +18,19 @@ import { usePersistPanes } from "hooks/usePersistPanes";
 import { atoms } from "ui/styles/atoms.css";
 
 export const SidebarLayout = () => {
+  const spaceRoute = useMatch({ path: "/spaces/:spaceSlug", end: false });
+  return (
+    <SpaceContextProvider spaceId={spaceRoute?.params.spaceSlug}>
+      <SidebarLayoutContent />
+    </SpaceContextProvider>
+  );
+};
+
+export const SidebarLayoutContent = () => {
   const allotemntRef = useRef<AllotmentHandle>(null);
   const messageRoute = useMatch({ path: "/messages", end: false });
-  const spaceRoute = useMatch({ path: "/spaces/:spaceSlug", end: false });
   const homeRoute = useMatch({ path: "/home", end: true });
-  const space = useSpace(spaceRoute?.params.spaceSlug);
+  const space = useSpaceData();
   const myProfile = useMyProfile();
   const { userId } = useMatrixStore();
   const navigate = useNavigate();

@@ -1,5 +1,4 @@
 import React, { useContext, useMemo } from "react";
-import { useParams } from "react-router";
 import { useSpaceId } from "use-zion-client";
 import { MessageInput } from "@components/MessageInput/MessageInput";
 import { Reactions } from "@components/Reactions";
@@ -17,13 +16,15 @@ const colSpanMap = {
 } as const;
 
 export const Highlights = () => {
-  const { spaceSlug } = useParams();
-  const spaceId = useSpaceId(spaceSlug);
+  const spaceId = useSpaceId();
 
   const sizeContext = useContext(SizeContext);
   const size = sizeContext?.size.width ?? 0;
   const col = size > 1400 ? 4 : size > 1100 ? 3 : size > 600 ? 2 : 1;
-  const messages = useMemo(() => fakeMessages(spaceSlug ?? ""), [spaceSlug]);
+  const messages = useMemo(
+    () => fakeMessages(spaceId?.slug ?? ""),
+    [spaceId?.slug],
+  );
   const columns = useColumns(messages, col);
 
   if (!size) {

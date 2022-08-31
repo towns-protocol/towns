@@ -1,13 +1,12 @@
 import React, { useCallback } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 import { Membership, RoomIdentifier, useSpaceId } from "use-zion-client";
 import { Box, Heading, Paragraph, Stack } from "@ui";
 import { CreateChannelForm } from "@components/Web3";
 
 export const SpacesNewChannel = () => {
   const navigate = useNavigate();
-  const { spaceSlug } = useParams();
-  const spaceId = useSpaceId(spaceSlug);
+  const spaceId = useSpaceId();
 
   const onCreateChannel = useCallback(
     (roomId: RoomIdentifier, membership: Membership) => {
