@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { Box, BoxProps } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
 import * as styles from "./IconButton.css";
@@ -11,7 +11,7 @@ type Props = {
   size?: IconAtoms["size"];
 } & Omit<BoxProps, "size">;
 
-export const IconButton = (props: Props) => {
+export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const {
     size = "square_sm",
     icon,
@@ -21,6 +21,7 @@ export const IconButton = (props: Props) => {
   } = props;
   return (
     <Box
+      ref={ref}
       className={styles.iconButton}
       {...boxProps}
       background={{
@@ -34,4 +35,4 @@ export const IconButton = (props: Props) => {
       <Icon type={props.icon} size={size} />
     </Box>
   );
-};
+});

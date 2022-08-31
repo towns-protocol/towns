@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { EmojiData } from "emoji-mart";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Replies } from "@components/Replies/Replies";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
@@ -47,18 +48,24 @@ export const Message = ({
     id && onSelectMessage?.(id);
   };
 
+  const onSelectReaction = (data: EmojiData) => {
+    // sendReaction
+  };
+
   const onEdit = () => {
     id && onEditMessage?.(id);
   };
 
   const [showMenu, setShowMenu] = useState(false);
 
-  const onMouseOver = () => {
+  const onMouseOver = useCallback(() => {
     setShowMenu(true);
-  };
-  const onMouseOut = () => {
+  }, []);
+
+  const onMouseOut = useCallback(() => {
     setShowMenu(false);
-  };
+  }, []);
+
   return (
     <Stack
       horizontal
@@ -69,7 +76,7 @@ export const Message = ({
         hover: "level2",
       }}
       onMouseOver={onMouseOver}
-      onMouseLeave={onMouseOut}
+      onMouseOut={onMouseOut}
     >
       {/* left / avatar gutter */}
       {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -121,24 +128,23 @@ export const Message = ({
         >
           {children}
         </Box>
-        {reactions && (
-          <Box direction="row">
+
+        {reactions ? (
+          <Stack horizontal>
             <Reactions reactions={reactions} userReaction={userReaction} />
-          </Box>
-        )}
+          </Stack>
+        ) : null}
         {replies && (
           <Box direction="row">
             <Replies replies={replies} />
           </Box>
         )}
         {showMenu && !isEditing && (
-          <Box position="topRight">
-            <MessageContextMenu
-              editable={isEditable}
-              onOpenThread={onSelectThread}
-              onEdit={onEdit}
-            />
-          </Box>
+          <MessageContextMenu
+            onOpenThread={onSelectThread}
+            onEdit={isEditable ? onEdit : undefined}
+            onSelectReaction={onSelectReaction}
+          />
         )}
       </Stack>
     </Stack>

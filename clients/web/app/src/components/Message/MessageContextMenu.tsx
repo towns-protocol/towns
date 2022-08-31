@@ -1,31 +1,41 @@
+import { EmojiData } from "emoji-mart";
 import React from "react";
+import useEvent from "react-use-event-hook";
 import { IconButton, Stack } from "@ui";
+import { EmojiPickerButton } from "@components/EmojiPickerButton";
 import { vars } from "ui/styles/vars.css";
 
 type Props = {
-  editable?: boolean;
   onEdit?: () => void;
   onOpenThread?: () => void;
+  onSelectReaction?: (data: EmojiData) => void;
+};
+
+const style = {
+  transform: `
+    translateY(calc(-50% - ${vars.space.md}))
+  `,
 };
 
 export const MessageContextMenu = (props: Props) => {
+  const onSelectEmoji = useEvent((data: EmojiData) => {
+    console.log(`react to message with`, data);
+  });
   return (
     <Stack
       horizontal
       border
-      gap="md"
+      gap="xs"
       pointerEvents="auto"
-      position="absolute"
-      background="level2"
+      position="topRight"
+      background="level1"
       rounded="sm"
-      padding="sm"
+      padding="xs"
       width="auto"
       color="gray2"
-      style={{
-        transform: `translateX(calc(-100% - ${vars.space.sm})) translateY(calc(-100% + 1 * ${vars.space.md}))`,
-      }}
+      style={style}
     >
-      {props.editable && props.onEdit && (
+      {props.onEdit && (
         <IconButton icon="edit" size="square_sm" onClick={props.onEdit} />
       )}
       {props.onOpenThread && (
@@ -35,6 +45,7 @@ export const MessageContextMenu = (props: Props) => {
           onClick={props.onOpenThread}
         />
       )}
+      <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
     </Stack>
   );
 };

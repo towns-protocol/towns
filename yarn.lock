@@ -1986,6 +1986,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@emoji-mart/data@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@emoji-mart/data@npm:1.0.5"
+  checksum: 23c983e1355c81c6bcb55f9bf6e9cacc5636910451b58e4a8c5ee4f0c1d63e6c4b8a5d6c46f88053418dde73994afb2361680325f9f0ade4abd9d27e498ca429
+  languageName: node
+  linkType: hard
+
+"@emoji-mart/react@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@emoji-mart/react@npm:1.0.1"
+  peerDependencies:
+    emoji-mart: ^5.2
+    react: ^16.8 || ^17 || ^18
+  checksum: ada175665331955d0ef9b1ef1daf41f33264aa46995d370d05dac78b75711b609336ae3e18924936cfd6116e5f92ce1d9ebf6e96e2da28f5a8d9759d5925bbad
+  languageName: node
+  linkType: hard
+
 "@emotion/babel-plugin@npm:^11.10.0":
   version: 11.10.2
   resolution: "@emotion/babel-plugin@npm:11.10.2"
@@ -6709,6 +6726,15 @@ __metadata:
   dependencies:
     "@types/ms": "*"
   checksum: 0a7b89d8ed72526858f0b61c6fd81f477853e8c4415bb97f48b1b5545248d2ae389931680b94b393b993a7cfe893537a200647d93defe6d87159b96812305adc
+  languageName: node
+  linkType: hard
+
+"@types/emoji-mart@npm:^3.0.9":
+  version: 3.0.9
+  resolution: "@types/emoji-mart@npm:3.0.9"
+  dependencies:
+    "@types/react": "*"
+  checksum: 97e22728985e1542975b5d9ec43fc2bb9bfd1952640be177799a52f3cb5785def80ab59c23c34ac2310604c7097f2c1d24cebf4dd6a17706fceda6725c6d8150
   languageName: node
   linkType: hard
 
@@ -13146,6 +13172,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"emoji-mart@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "emoji-mart@npm:5.2.1"
+  checksum: de4550655a2faa8a7dad7a3a24f75cf146d03d1b06e63cd2a8b6e26d2044d9b4c9d389d79de527a99b65de66f162f98024fab9e7f0772600f1389c3cdf4dde66
+  languageName: node
+  linkType: hard
+
 "emoji-regex@npm:^10.1.0":
   version: 10.1.0
   resolution: "emoji-regex@npm:10.1.0"
@@ -16990,6 +17023,8 @@ __metadata:
   resolution: "harmonyweb@workspace:clients/web/app"
   dependencies:
     "@babel/core": ^7.18.13
+    "@emoji-mart/data": ^1.0.5
+    "@emoji-mart/react": ^1.0.1
     "@harmony/contracts": "workspace:^"
     "@harmony/prettier-config": "workspace:*"
     "@lexical/clipboard": ^0.3.11
@@ -17013,6 +17048,7 @@ __metadata:
     "@storybook/react": ^6.5.10
     "@storybook/testing-library": ^0.0.13
     "@storybook/theming": ^6.5.10
+    "@types/emoji-mart": ^3.0.9
     "@types/react": ^18.0.17
     "@types/react-dom": ^18.0.6
     "@types/react-test-renderer": ^18.0.0
@@ -17027,6 +17063,7 @@ __metadata:
     allotment: ^1.16.0
     babel-loader: ^8.2.5
     clsx: ^1.2.1
+    emoji-mart: ^5.2.1
     eslint: ^8.22.0
     eslint-config-react-app: ^7.0.1
     eslint-config-standard-with-typescript: ^22.0.0

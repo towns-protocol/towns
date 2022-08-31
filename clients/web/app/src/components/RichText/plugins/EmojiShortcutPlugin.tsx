@@ -43,14 +43,14 @@ export const EmojiShortcutPlugin = () => {
       closeMenu: () => void,
     ) => {
       editor.update(() => {
-        const mentionNode = $createEmojiNode("", selectedOption.picture);
+        const emojiNode = $createEmojiNode("", selectedOption.picture);
         const spaceNode = $createTextNode(" ");
 
         if (nodeToReplace) {
-          nodeToReplace.replace(mentionNode);
+          nodeToReplace.replace(emojiNode);
         }
 
-        mentionNode.insertAfter(spaceNode);
+        emojiNode.insertAfter(spaceNode);
         spaceNode.select();
         closeMenu();
       });

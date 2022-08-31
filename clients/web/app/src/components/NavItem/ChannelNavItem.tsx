@@ -33,15 +33,13 @@ export const ChannelNavItem = (props: Props) => {
     >
       {({ triggerProps }) => (
         <NavItem to={link} id={id} {...triggerProps}>
-          {
-            <Icon
-              type="tag"
-              padding="line"
-              background="level2"
-              color="gray2"
-              size="square_lg"
-            />
-          }
+          <Icon
+            type="tag"
+            padding="line"
+            background="level2"
+            color="gray2"
+            size="square_lg"
+          />
           <ButtonText strong={isHighlight}>
             {channel.label.toLocaleLowerCase()}
           </ButtonText>

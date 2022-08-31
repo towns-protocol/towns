@@ -2,6 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
+  $isRangeSelection,
   COMMAND_PRIORITY_LOW,
   SELECTION_CHANGE_COMMAND,
 } from "lexical";
@@ -15,8 +16,10 @@ import React, {
 import useEvent from "react-use-event-hook";
 
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
+import { BaseEmoji, EmojiData } from "emoji-mart";
 import { createPortal } from "react-dom";
 import { Box, RootLayerContext, Stack } from "@ui";
+import { $createEmojiNode } from "../nodes/EmojiNode";
 import { richTextEditorUI } from "../RichTextEditor.css";
 import { RichTextEditorControls } from "./Controls/RichTextEditorControls";
 import { InlineToolbar } from "./InlineToolbar";
@@ -29,10 +32,26 @@ export const RichTextUI = (props: {
   focused: boolean;
   readOnly?: boolean;
 }) => {
+  const [editor] = useLexicalComposerContext();
   const [isTypeToggled, setTypeToggled] = useState(false);
   const onToggleType = useCallback(() => {
     setTypeToggled((s: boolean) => !s);
   }, []);
+
+  const onSelectEmoji = useCallback(
+    (data: EmojiData) => {
+      editor.focus(() => {
+        editor.update(() => {
+          const selection = $getSelection();
+          const emojiNode = $createEmojiNode("", (data as BaseEmoji).native);
+          if ($isRangeSelection(selection)) {
+            selection.insertNodes([emojiNode]);
+          }
+        });
+      });
+    },
+    [editor],
+  );
 
   const absoluteRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +64,6 @@ export const RichTextUI = (props: {
     setLinkModal(true);
   });
 
-  const [editor] = useLexicalComposerContext();
   const onSaveLink = useEvent((url: string) => {
     console.log({ editor, url });
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
@@ -148,6 +166,7 @@ export const RichTextUI = (props: {
         <RichTextEditorControls
           typeToggled={isTypeToggled}
           onToggleType={onToggleType}
+          onSelectEmoji={onSelectEmoji}
         />
 
         {!isTypeToggled &&

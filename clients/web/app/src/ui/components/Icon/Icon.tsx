@@ -890,7 +890,7 @@ const iconMap = {
 export const iconTypes = Object.keys(iconMap) as IconName[];
 export type IconName = keyof typeof iconMap;
 
-type IconProps = {
+export type IconProps = {
   type: IconName;
   background?: keyof typeof vars.color.background;
   color?: BoxProps["color"];
@@ -898,7 +898,7 @@ type IconProps = {
   className?: string;
 } & IconAtoms;
 
-export const Icon = (props: IconProps) => {
+export const Icon = forwardRef<HTMLDivElement, IconProps>((props, ref) => {
   const {
     size = "square_md",
     color,
@@ -924,9 +924,10 @@ export const Icon = (props: IconProps) => {
           ? "none"
           : "xs")
       }
+      ref={ref}
       {...boxProps}
     >
       <Icon width="100%" height="100%" />
     </Box>
   );
-};
+});
