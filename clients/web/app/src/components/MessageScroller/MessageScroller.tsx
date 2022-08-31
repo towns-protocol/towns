@@ -50,7 +50,7 @@ export const MessageScroller = (props: Props) => {
   const { userId } = useMatrixStore();
 
   // strip-out replies on main timeline (hack!)
-  const { filteredMessages } = useFilterReplies(messages, props.hideThreads);
+  const { filteredMessages } = useFilterReplies(messages, !props.hideThreads);
   // create a slice of messages to display
   /* FIXME: cancels lazy reveal of messages */
   const paginatedMessages = filteredMessages.slice(); //editedMessages.slice(-displayCount);
