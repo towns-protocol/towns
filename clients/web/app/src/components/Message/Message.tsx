@@ -1,9 +1,25 @@
-import React, { useCallback, useState } from "react";
-import { NavLink } from "react-router-dom";
 import { EmojiData } from "emoji-mart";
+import React, {
+  MutableRefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { NavLink } from "react-router-dom";
+import { throttle } from "throttle-debounce";
+import {
+  Avatar,
+  Box,
+  BoxProps,
+  ButtonText,
+  RootLayerContext,
+  Stack,
+  Text,
+} from "@ui";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Replies } from "@components/Replies/Replies";
-import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
 import { atoms } from "ui/styles/atoms.css";
 import { MessageContextMenu } from "./MessageContextMenu";
 
@@ -56,27 +72,21 @@ export const Message = ({
     id && onEditMessage?.(id);
   };
 
-  const [showMenu, setShowMenu] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const onMouseOver = useCallback(() => {
-    setShowMenu(true);
-  }, []);
-
-  const onMouseOut = useCallback(() => {
-    setShowMenu(false);
-  }, []);
+  const { isHover, onMouseEnter } = useHover(ref);
 
   return (
     <Stack
       horizontal
+      ref={ref}
       gap="paragraph"
+      onMouseEnter={onMouseEnter}
       {...boxProps}
       background={{
-        default: isEditing ? "level2" : undefined,
+        default: isEditing || isHover ? "level2" : undefined,
         hover: "level2",
       }}
-      onMouseOver={onMouseOver}
-      onMouseOut={onMouseOut}
     >
       {/* left / avatar gutter */}
       {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -139,7 +149,7 @@ export const Message = ({
             <Replies replies={replies} />
           </Box>
         )}
-        {showMenu && !isEditing && (
+        {isHover && !isEditing && (
           <MessageContextMenu
             onOpenThread={onSelectThread}
             onEdit={isEditable ? onEdit : undefined}
@@ -149,4 +159,38 @@ export const Message = ({
       </Stack>
     </Stack>
   );
+};
+
+/**
+ * similar to https://github.com/mjsarfatti/use-mouse-leave but taking into
+ * account child elements and modal container
+ */
+const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
+  const [isHover, setIsHover] = useState(false);
+
+  const onMouseEnter = useCallback(() => {
+    setIsHover(true);
+  }, []);
+
+  const { rootLayerRef } = useContext(RootLayerContext);
+
+  useEffect(() => {
+    if (!isHover) {
+      return;
+    }
+    const onMouseMove = throttle(50, (e: MouseEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!ref.current?.contains(el) && !rootLayerRef?.current?.contains(el)) {
+        setIsHover(false);
+      }
+    });
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("click", onMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("click", onMouseMove);
+    };
+  }, [ref, rootLayerRef, isHover]);
+
+  return { isHover, onMouseEnter };
 };

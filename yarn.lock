@@ -7394,6 +7394,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/throttle-debounce@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@types/throttle-debounce@npm:5.0.0"
+  checksum: f0b1f626816154466a6c7699fa9a87614f2b65c649654d02456e3603c38c29457b40d26c2ac820c2c44574e92f210c21b0cdce747b578d27566d5faa1daaae7e
+  languageName: node
+  linkType: hard
+
 "@types/tough-cookie@npm:*":
   version: 4.0.2
   resolution: "@types/tough-cookie@npm:4.0.2"
@@ -17052,6 +17059,7 @@ __metadata:
     "@types/react": ^18.0.17
     "@types/react-dom": ^18.0.6
     "@types/react-test-renderer": ^18.0.0
+    "@types/throttle-debounce": ^5.0.0
     "@typescript-eslint/eslint-plugin": ^5.34.0
     "@typescript-eslint/parser": ^5.34.0
     "@vanilla-extract/css": ^1.7.3
@@ -17096,6 +17104,7 @@ __metadata:
     siwe: ^1.1.6
     storybook: ^6.5.10
     storybook-dark-mode: ^1.1.0
+    throttle-debounce: ^5.0.0
     typescript: ^4.7.4
     use-zion-client: "workspace:*"
     vanilla-classnames: ^0.1.0
@@ -29908,6 +29917,13 @@ __metadata:
   version: 6.0.1
   resolution: "throat@npm:6.0.1"
   checksum: 782d4171ee4e3cf947483ed2ff1af3e17cc4354c693b9d339284f61f99fbc401d171e0b0d2db3295bb7d447630333e9319c174ebd7ef315c6fb791db9675369c
+  languageName: node
+  linkType: hard
+
+"throttle-debounce@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "throttle-debounce@npm:5.0.0"
+  checksum: aa8bf25828b4f8645ce863589de05d6807ea3debc147ce7d89624638ff8a16792d6d0baa0f8a32a260f0b163444d74020c6087b713ae561fde594b97b6e51f28
   languageName: node
   linkType: hard
 

@@ -65,7 +65,6 @@ export const RichTextUI = (props: {
   });
 
   const onSaveLink = useEvent((url: string) => {
-    console.log({ editor, url });
     editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
   });
   const [toolbarPosition, setToolbarPosition] = useState<{

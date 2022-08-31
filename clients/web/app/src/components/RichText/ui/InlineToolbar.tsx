@@ -80,7 +80,6 @@ export const InlineToolbar = (props: {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
   };
   const onItalicClick = () => {
-    console.log("click");
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
   };
 
