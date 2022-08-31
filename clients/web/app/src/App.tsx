@@ -39,6 +39,7 @@ const ZION_SPACE_ID = "!V2Gs6CLcXwOokgiq:node1.hntlabs.com";
 const ZION_SPACE_NAME = "Zion Preview"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const SPACE_MANAGER_ADDRESS = "0x5ee6615d52663131c938a43a280fccc4e9eee97a"; // on rinkeby
+const TOKEN_MODULE_ADDRESS = ""; // for development on local blockchain - to be replaced with rinkeby address.
 const USER_MANAGER_ADDRESS = "0x7eca4c7f6e4245b9994b5fdec445673c1bdc0a44"; // on rinkeby
 const COUNCIL_NFT_ADDRESS = "";
 const COUNCIL_STAKING_ADDRESS = "";
@@ -49,6 +50,7 @@ export const App = () => {
       disableEncryption // todo remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
       homeServerUrl={MATRIX_HOMESERVER_URL}
       spaceManagerAddress={SPACE_MANAGER_ADDRESS}
+      tokenModuleAddress={TOKEN_MODULE_ADDRESS}
       userModuleAddress={USER_MANAGER_ADDRESS}
       councilNFTAddress={COUNCIL_NFT_ADDRESS}
       councilStakingAddress={COUNCIL_STAKING_ADDRESS}

@@ -42,6 +42,7 @@ export class ZionTestClient extends ZionClient {
         initialSyncLimit: 20,
         disableEncryption: process.env.DISABLE_ENCRYPTION === "true",
         spaceManagerAddress: process.env.SPACE_MANAGER_ADDRESS!,
+        tokenModuleAddress: process.env.TOKEN_MODULE_ADDRESS!,
         userModuleAddress: process.env.USER_MODULE_ADDRESS!,
         councilNFTAddress: process.env.COUNCIL_NFT_ADDRESS!,
         councilStakingAddress: process.env.COUNCIL_STAKING_ADDRESS!,

@@ -245,9 +245,15 @@ export class ZionClient {
    * createSpace
    *************************************************/
   public async createWeb3Space(createSpaceInfo: CreateSpaceInfo) {
-    return this.spaceManager.signed.createSpace(createSpaceInfo.name, [
-      this.opts.userModuleAddress,
-    ]);
+    const entitlementModules: string[] = [];
+    this.opts.userModuleAddress &&
+      entitlementModules.push(this.opts.userModuleAddress);
+    this.opts.tokenModuleAddress &&
+      entitlementModules.push(this.opts.tokenModuleAddress);
+    return this.spaceManager.signed.createSpace(
+      createSpaceInfo.name,
+      entitlementModules,
+    );
   }
   /************************************************
    * createSpace

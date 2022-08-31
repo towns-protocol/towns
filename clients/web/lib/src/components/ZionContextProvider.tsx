@@ -31,6 +31,7 @@ export function useZionContext(): IZionContext {
 interface Props {
   homeServerUrl: string;
   spaceManagerAddress: string;
+  tokenModuleAddress: string;
   userModuleAddress: string;
   councilNFTAddress: string;
   councilStakingAddress: string;
@@ -58,6 +59,7 @@ const ContextImpl = (props: Props): JSX.Element => {
   const {
     homeServerUrl,
     spaceManagerAddress,
+    tokenModuleAddress,
     userModuleAddress,
     councilNFTAddress,
     councilStakingAddress,
@@ -71,6 +73,7 @@ const ContextImpl = (props: Props): JSX.Element => {
   const { client } = useZionClientListener(
     homeServerUrl,
     spaceManagerAddress,
+    tokenModuleAddress,
     userModuleAddress,
     councilNFTAddress,
     councilStakingAddress,

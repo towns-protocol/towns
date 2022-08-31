@@ -11,6 +11,7 @@ import { ethers } from "ethers";
 export const useZionClientListener = (
   homeServerUrl: string,
   spaceManagerAddress: string,
+  tokenModuleAddress: string,
   userModuleAddress: string,
   councilNFTAddress: string,
   councilStakingAddress: string,
@@ -39,6 +40,7 @@ export const useZionClientListener = (
       initialSyncLimit,
       disableEncryption,
       spaceManagerAddress,
+      tokenModuleAddress,
       userModuleAddress,
       councilNFTAddress,
       councilStakingAddress,

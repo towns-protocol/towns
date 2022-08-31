@@ -25,6 +25,7 @@ export const ZionTestApp = (props: Props) => {
   const homeServerUrl = process.env.HOMESERVER!;
   const disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
   const spaceManagerAddress = process.env.SPACE_MANAGER_ADDRESS!;
+  const tokenModuleAddress = process.env.TOKEN_MODULE_ADDRESS!;
   const userModuleAddress = process.env.USER_MODULE_ADDRESS!;
   const councilNFTAddress = process.env.COUNCIL_NFT_ADDRESS!;
   const councilStakingAddress = process.env.COUNCIL_STAKING_ADDRESS!;
@@ -37,6 +38,7 @@ export const ZionTestApp = (props: Props) => {
     <ZionContextProvider
       homeServerUrl={homeServerUrl}
       spaceManagerAddress={spaceManagerAddress}
+      tokenModuleAddress={tokenModuleAddress}
       userModuleAddress={userModuleAddress}
       councilNFTAddress={councilNFTAddress}
       councilStakingAddress={councilStakingAddress}

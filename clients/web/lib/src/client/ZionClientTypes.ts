@@ -7,6 +7,7 @@ export interface ZionOpts {
   initialSyncLimit: number;
   disableEncryption?: boolean;
   spaceManagerAddress: string;
+  tokenModuleAddress: string;
   userModuleAddress: string;
   councilNFTAddress: string;
   councilStakingAddress: string;
