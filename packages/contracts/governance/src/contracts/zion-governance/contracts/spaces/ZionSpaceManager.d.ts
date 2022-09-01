@@ -2,79 +2,105 @@ import type { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, C
 import type { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from "../../../../common";
-export declare namespace ZionSpaceManager {
-    type SpaceNameIDStruct = {
-        name: PromiseOrValue<string>;
-        id: PromiseOrValue<BigNumberish>;
+export declare namespace DataTypes {
+    type AddEntitlementDataStruct = {
+        spaceId: PromiseOrValue<BigNumberish>;
+        entitlement: PromiseOrValue<string>;
+        entitlementTag: PromiseOrValue<string>;
     };
-    type SpaceNameIDStructOutput = [string, BigNumber] & {
+    type AddEntitlementDataStructOutput = [BigNumber, string, string] & {
+        spaceId: BigNumber;
+        entitlement: string;
+        entitlementTag: string;
+    };
+    type CreateSpaceDataStruct = {
+        spaceName: PromiseOrValue<string>;
+        entitlements: PromiseOrValue<string>[];
+    };
+    type CreateSpaceDataStructOutput = [string, string[]] & {
+        spaceName: string;
+        entitlements: string[];
+    };
+    type SpaceInfoStruct = {
+        spaceId: PromiseOrValue<BigNumberish>;
+        createdAt: PromiseOrValue<BigNumberish>;
+        name: PromiseOrValue<string>;
+        creator: PromiseOrValue<string>;
+        owner: PromiseOrValue<string>;
+    };
+    type SpaceInfoStructOutput = [
+        BigNumber,
+        BigNumber,
+        string,
+        string,
+        string
+    ] & {
+        spaceId: BigNumber;
+        createdAt: BigNumber;
         name: string;
-        id: BigNumber;
+        creator: string;
+        owner: string;
     };
 }
 export interface ZionSpaceManagerInterface extends utils.Interface {
     functions: {
-        "addEntitlementModuleAddress(uint256,address,string)": FunctionFragment;
-        "createSpace(string,address[])": FunctionFragment;
-        "getSpaceEntitlementModuleAddresses(uint256)": FunctionFragment;
-        "getSpaceIdFromNetworkSpaceId(uint256)": FunctionFragment;
-        "getSpaceNames()": FunctionFragment;
-        "getSpaceOwner(uint256)": FunctionFragment;
-        "getSpaceValues(uint256)": FunctionFragment;
-        "isEntitled(uint256,uint256,uint8,address)": FunctionFragment;
-        "networkSpaceIdToSpaceId(uint256)": FunctionFragment;
-        "registeredSpaceNames(string)": FunctionFragment;
-        "setNetworkSpaceId(uint256,uint256)": FunctionFragment;
-        "spaces(uint256)": FunctionFragment;
+        "addEntitlementModule((uint256,address,string))": FunctionFragment;
+        "createSpace((string,address[]))": FunctionFragment;
+        "getEntitlementsBySpaceId(uint256)": FunctionFragment;
+        "getSpaceIdByNetworkId(string)": FunctionFragment;
+        "getSpaceInfoBySpaceId(uint256)": FunctionFragment;
+        "getSpaceOwnerBySpaceId(uint256)": FunctionFragment;
+        "getSpaces()": FunctionFragment;
+        "isEntitled(uint256,uint256,address,uint8)": FunctionFragment;
+        "owner()": FunctionFragment;
+        "renounceOwnership()": FunctionFragment;
+        "setNetworkIdToSpaceId(uint256,string)": FunctionFragment;
+        "transferOwnership(address)": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "addEntitlementModuleAddress" | "createSpace" | "getSpaceEntitlementModuleAddresses" | "getSpaceIdFromNetworkSpaceId" | "getSpaceNames" | "getSpaceOwner" | "getSpaceValues" | "isEntitled" | "networkSpaceIdToSpaceId" | "registeredSpaceNames" | "setNetworkSpaceId" | "spaces"): FunctionFragment;
-    encodeFunctionData(functionFragment: "addEntitlementModuleAddress", values: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<string>,
-        PromiseOrValue<string>
-    ]): string;
-    encodeFunctionData(functionFragment: "createSpace", values: [PromiseOrValue<string>, PromiseOrValue<string>[]]): string;
-    encodeFunctionData(functionFragment: "getSpaceEntitlementModuleAddresses", values: [PromiseOrValue<BigNumberish>]): string;
-    encodeFunctionData(functionFragment: "getSpaceIdFromNetworkSpaceId", values: [PromiseOrValue<BigNumberish>]): string;
-    encodeFunctionData(functionFragment: "getSpaceNames", values?: undefined): string;
-    encodeFunctionData(functionFragment: "getSpaceOwner", values: [PromiseOrValue<BigNumberish>]): string;
-    encodeFunctionData(functionFragment: "getSpaceValues", values: [PromiseOrValue<BigNumberish>]): string;
+    getFunction(nameOrSignatureOrTopic: "addEntitlementModule" | "createSpace" | "getEntitlementsBySpaceId" | "getSpaceIdByNetworkId" | "getSpaceInfoBySpaceId" | "getSpaceOwnerBySpaceId" | "getSpaces" | "isEntitled" | "owner" | "renounceOwnership" | "setNetworkIdToSpaceId" | "transferOwnership"): FunctionFragment;
+    encodeFunctionData(functionFragment: "addEntitlementModule", values: [DataTypes.AddEntitlementDataStruct]): string;
+    encodeFunctionData(functionFragment: "createSpace", values: [DataTypes.CreateSpaceDataStruct]): string;
+    encodeFunctionData(functionFragment: "getEntitlementsBySpaceId", values: [PromiseOrValue<BigNumberish>]): string;
+    encodeFunctionData(functionFragment: "getSpaceIdByNetworkId", values: [PromiseOrValue<string>]): string;
+    encodeFunctionData(functionFragment: "getSpaceInfoBySpaceId", values: [PromiseOrValue<BigNumberish>]): string;
+    encodeFunctionData(functionFragment: "getSpaceOwnerBySpaceId", values: [PromiseOrValue<BigNumberish>]): string;
+    encodeFunctionData(functionFragment: "getSpaces", values?: undefined): string;
     encodeFunctionData(functionFragment: "isEntitled", values: [
         PromiseOrValue<BigNumberish>,
         PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<string>
+        PromiseOrValue<string>,
+        PromiseOrValue<BigNumberish>
     ]): string;
-    encodeFunctionData(functionFragment: "networkSpaceIdToSpaceId", values: [PromiseOrValue<BigNumberish>]): string;
-    encodeFunctionData(functionFragment: "registeredSpaceNames", values: [PromiseOrValue<string>]): string;
-    encodeFunctionData(functionFragment: "setNetworkSpaceId", values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]): string;
-    encodeFunctionData(functionFragment: "spaces", values: [PromiseOrValue<BigNumberish>]): string;
-    decodeFunctionResult(functionFragment: "addEntitlementModuleAddress", data: BytesLike): Result;
+    encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+    encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
+    encodeFunctionData(functionFragment: "setNetworkIdToSpaceId", values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]): string;
+    encodeFunctionData(functionFragment: "transferOwnership", values: [PromiseOrValue<string>]): string;
+    decodeFunctionResult(functionFragment: "addEntitlementModule", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "createSpace", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getSpaceEntitlementModuleAddresses", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getSpaceIdFromNetworkSpaceId", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getSpaceNames", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getSpaceOwner", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "getSpaceValues", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getEntitlementsBySpaceId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getSpaceIdByNetworkId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getSpaceInfoBySpaceId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getSpaceOwnerBySpaceId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getSpaces", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "networkSpaceIdToSpaceId", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "registeredSpaceNames", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "setNetworkSpaceId", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "spaces", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "renounceOwnership", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "setNetworkIdToSpaceId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "transferOwnership", data: BytesLike): Result;
     events: {
-        "CreateSpace(address,string)": EventFragment;
+        "OwnershipTransferred(address,address)": EventFragment;
     };
-    getEvent(nameOrSignatureOrTopic: "CreateSpace"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
-export interface CreateSpaceEventObject {
-    owner: string;
-    spaceName: string;
+export interface OwnershipTransferredEventObject {
+    previousOwner: string;
+    newOwner: string;
 }
-export declare type CreateSpaceEvent = TypedEvent<[
+export declare type OwnershipTransferredEvent = TypedEvent<[
     string,
     string
-], CreateSpaceEventObject>;
-export declare type CreateSpaceEventFilter = TypedEventFilter<CreateSpaceEvent>;
+], OwnershipTransferredEventObject>;
+export declare type OwnershipTransferredEventFilter = TypedEventFilter<OwnershipTransferredEvent>;
 export interface ZionSpaceManager extends BaseContract {
     connect(signerOrProvider: Signer | Provider | string): this;
     attach(addressOrName: string): this;
@@ -90,186 +116,120 @@ export interface ZionSpaceManager extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
-        addEntitlementModuleAddress(spaceId: PromiseOrValue<BigNumberish>, _entitlementModuleAddress: PromiseOrValue<string>, tag: PromiseOrValue<string>, overrides?: Overrides & {
+        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
-        createSpace(spaceName: PromiseOrValue<string>, entitlementModuleAddresses: PromiseOrValue<string>[], overrides?: Overrides & {
+        createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
-        getSpaceEntitlementModuleAddresses(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[string[]] & {
-            entitlementModuleAddresses: string[];
+        getEntitlementsBySpaceId(spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[string[]] & {
+            entitlements: string[];
         }>;
-        getSpaceIdFromNetworkSpaceId(networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[BigNumber]>;
-        getSpaceNames(overrides?: CallOverrides): Promise<[
-            ZionSpaceManager.SpaceNameIDStructOutput[]
-        ] & {
-            spaceNames: ZionSpaceManager.SpaceNameIDStructOutput[];
-        }>;
-        getSpaceOwner(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[string] & {
+        getSpaceIdByNetworkId(networkSpaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber]>;
+        getSpaceInfoBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[DataTypes.SpaceInfoStructOutput]>;
+        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[string] & {
             ownerAddress: string;
         }>;
-        getSpaceValues(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
-            BigNumber,
-            BigNumber,
-            string,
-            string,
-            string
-        ] & {
-            spaceId: BigNumber;
-            createdAt: BigNumber;
-            name: string;
-            creatorAddress: string;
-            ownerAddress: string;
-        }>;
-        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, entitlementType: PromiseOrValue<BigNumberish>, userAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[boolean]>;
-        networkSpaceIdToSpaceId(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[BigNumber]>;
-        registeredSpaceNames(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[boolean]>;
-        setNetworkSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
+        getSpaces(overrides?: CallOverrides): Promise<[DataTypes.SpaceInfoStructOutput[]]>;
+        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[boolean]>;
+        owner(overrides?: CallOverrides): Promise<[string]>;
+        renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
-        spaces(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
-            BigNumber,
-            BigNumber,
-            BigNumber,
-            string,
-            string,
-            string
-        ] & {
-            spaceId: BigNumber;
-            createdAt: BigNumber;
-            networkSpaceId: BigNumber;
-            name: string;
-            creatorAddress: string;
-            ownerAddress: string;
-        }>;
+        setNetworkIdToSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkId: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<ContractTransaction>;
+        transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<ContractTransaction>;
     };
-    addEntitlementModuleAddress(spaceId: PromiseOrValue<BigNumberish>, _entitlementModuleAddress: PromiseOrValue<string>, tag: PromiseOrValue<string>, overrides?: Overrides & {
+    addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
-    createSpace(spaceName: PromiseOrValue<string>, entitlementModuleAddresses: PromiseOrValue<string>[], overrides?: Overrides & {
+    createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
-    getSpaceEntitlementModuleAddresses(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string[]>;
-    getSpaceIdFromNetworkSpaceId(networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-    getSpaceNames(overrides?: CallOverrides): Promise<ZionSpaceManager.SpaceNameIDStructOutput[]>;
-    getSpaceOwner(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string>;
-    getSpaceValues(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
-        BigNumber,
-        BigNumber,
-        string,
-        string,
-        string
-    ] & {
-        spaceId: BigNumber;
-        createdAt: BigNumber;
-        name: string;
-        creatorAddress: string;
-        ownerAddress: string;
-    }>;
-    isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, entitlementType: PromiseOrValue<BigNumberish>, userAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
-    networkSpaceIdToSpaceId(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-    registeredSpaceNames(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
-    setNetworkSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
+    getEntitlementsBySpaceId(spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string[]>;
+    getSpaceIdByNetworkId(networkSpaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+    getSpaceInfoBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput>;
+    getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string>;
+    getSpaces(overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput[]>;
+    isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<boolean>;
+    owner(overrides?: CallOverrides): Promise<string>;
+    renounceOwnership(overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
-    spaces(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        string,
-        string,
-        string
-    ] & {
-        spaceId: BigNumber;
-        createdAt: BigNumber;
-        networkSpaceId: BigNumber;
-        name: string;
-        creatorAddress: string;
-        ownerAddress: string;
-    }>;
+    setNetworkIdToSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkId: PromiseOrValue<string>, overrides?: Overrides & {
+        from?: PromiseOrValue<string>;
+    }): Promise<ContractTransaction>;
+    transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
+        from?: PromiseOrValue<string>;
+    }): Promise<ContractTransaction>;
     callStatic: {
-        addEntitlementModuleAddress(spaceId: PromiseOrValue<BigNumberish>, _entitlementModuleAddress: PromiseOrValue<string>, tag: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
-        createSpace(spaceName: PromiseOrValue<string>, entitlementModuleAddresses: PromiseOrValue<string>[], overrides?: CallOverrides): Promise<void>;
-        getSpaceEntitlementModuleAddresses(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string[]>;
-        getSpaceIdFromNetworkSpaceId(networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        getSpaceNames(overrides?: CallOverrides): Promise<ZionSpaceManager.SpaceNameIDStructOutput[]>;
-        getSpaceOwner(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string>;
-        getSpaceValues(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
-            BigNumber,
-            BigNumber,
-            string,
-            string,
-            string
-        ] & {
-            spaceId: BigNumber;
-            createdAt: BigNumber;
-            name: string;
-            creatorAddress: string;
-            ownerAddress: string;
-        }>;
-        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, entitlementType: PromiseOrValue<BigNumberish>, userAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
-        networkSpaceIdToSpaceId(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        registeredSpaceNames(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
-        setNetworkSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<void>;
-        spaces(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[
-            BigNumber,
-            BigNumber,
-            BigNumber,
-            string,
-            string,
-            string
-        ] & {
-            spaceId: BigNumber;
-            createdAt: BigNumber;
-            networkSpaceId: BigNumber;
-            name: string;
-            creatorAddress: string;
-            ownerAddress: string;
-        }>;
+        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: CallOverrides): Promise<void>;
+        createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: CallOverrides): Promise<BigNumber>;
+        getEntitlementsBySpaceId(spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string[]>;
+        getSpaceIdByNetworkId(networkSpaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        getSpaceInfoBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput>;
+        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string>;
+        getSpaces(overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput[]>;
+        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<boolean>;
+        owner(overrides?: CallOverrides): Promise<string>;
+        renounceOwnership(overrides?: CallOverrides): Promise<void>;
+        setNetworkIdToSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
+        transferOwnership(newOwner: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
     };
     filters: {
-        "CreateSpace(address,string)"(owner?: PromiseOrValue<string> | null, spaceName?: PromiseOrValue<string> | null): CreateSpaceEventFilter;
-        CreateSpace(owner?: PromiseOrValue<string> | null, spaceName?: PromiseOrValue<string> | null): CreateSpaceEventFilter;
+        "OwnershipTransferred(address,address)"(previousOwner?: PromiseOrValue<string> | null, newOwner?: PromiseOrValue<string> | null): OwnershipTransferredEventFilter;
+        OwnershipTransferred(previousOwner?: PromiseOrValue<string> | null, newOwner?: PromiseOrValue<string> | null): OwnershipTransferredEventFilter;
     };
     estimateGas: {
-        addEntitlementModuleAddress(spaceId: PromiseOrValue<BigNumberish>, _entitlementModuleAddress: PromiseOrValue<string>, tag: PromiseOrValue<string>, overrides?: Overrides & {
+        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
-        createSpace(spaceName: PromiseOrValue<string>, entitlementModuleAddresses: PromiseOrValue<string>[], overrides?: Overrides & {
+        createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
-        getSpaceEntitlementModuleAddresses(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        getSpaceIdFromNetworkSpaceId(networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        getSpaceNames(overrides?: CallOverrides): Promise<BigNumber>;
-        getSpaceOwner(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        getSpaceValues(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, entitlementType: PromiseOrValue<BigNumberish>, userAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
-        networkSpaceIdToSpaceId(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
-        registeredSpaceNames(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
-        setNetworkSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
+        getEntitlementsBySpaceId(spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
+        getSpaceIdByNetworkId(networkSpaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        getSpaceInfoBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
+        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
+        getSpaces(overrides?: CallOverrides): Promise<BigNumber>;
+        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
+        owner(overrides?: CallOverrides): Promise<BigNumber>;
+        renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
-        spaces(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
+        setNetworkIdToSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkId: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<BigNumber>;
+        transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<BigNumber>;
     };
     populateTransaction: {
-        addEntitlementModuleAddress(spaceId: PromiseOrValue<BigNumberish>, _entitlementModuleAddress: PromiseOrValue<string>, tag: PromiseOrValue<string>, overrides?: Overrides & {
+        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
-        createSpace(spaceName: PromiseOrValue<string>, entitlementModuleAddresses: PromiseOrValue<string>[], overrides?: Overrides & {
+        createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
-        getSpaceEntitlementModuleAddresses(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        getSpaceIdFromNetworkSpaceId(networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        getSpaceNames(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        getSpaceOwner(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        getSpaceValues(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, entitlementType: PromiseOrValue<BigNumberish>, userAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        networkSpaceIdToSpaceId(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        registeredSpaceNames(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        setNetworkSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkSpaceId: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
+        getEntitlementsBySpaceId(spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getSpaceIdByNetworkId(networkSpaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getSpaceInfoBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getSpaces(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
-        spaces(arg0: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        setNetworkIdToSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkId: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<PopulatedTransaction>;
+        transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<PopulatedTransaction>;
     };
 }
 //# sourceMappingURL=ZionSpaceManager.d.ts.map
