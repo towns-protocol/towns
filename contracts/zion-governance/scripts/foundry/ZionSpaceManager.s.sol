@@ -28,9 +28,9 @@ contract DeployZionSpaceManager is Script {
     console.log("Token Entitlement Address", address(tokenEntitlementModule));
 
     // Add token entitlement to space contract
-    zionSpaceManager.addEntitlementModule(
-      DataTypes.AddEntitlementData(1, address(tokenEntitlementModule), "token")
-    );
+    // zionSpaceManager.addEntitlementModule(
+    //   DataTypes.AddEntitlementData(1, address(tokenEntitlementModule), "token")
+    // );
 
     vm.stopBroadcast();
   }
