@@ -1,6 +1,6 @@
 import { Allotment } from "allotment";
 import React, { useCallback } from "react";
-import { useNavigate, useOutlet, useParams } from "react-router";
+import { useOutlet, useParams } from "react-router";
 import {
   ChannelContextProvider,
   Membership,
@@ -10,9 +10,9 @@ import {
   useZionClient,
 } from "use-zion-client";
 import { ChannelHeader } from "@components/ChannelHeader";
-import { MessageList } from "@components/MessageScroller";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
-import { Box, Button, Divider, Paragraph, Stack } from "@ui";
+import { MessageTimelineScroller } from "@components/MessageTimeline";
+import { Box, Button, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
@@ -31,8 +31,7 @@ const SpacesChannelComponent = () => {
   const { messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
-  const { joinRoom, sendMessage, scrollback } = useZionClient();
-  const navigate = useNavigate();
+  const { joinRoom, sendMessage } = useZionClient();
 
   const { spaceId, channelId, channel } = useChannelData();
   const myMembership = useMyMembership(channelId);
@@ -47,19 +46,9 @@ const SpacesChannelComponent = () => {
     [channelId, sendMessage],
   );
 
-  const onLoadMore = useCallback(() => {
-    scrollback(channelId);
-  }, [channelId, scrollback]);
-
   const onJoinChannel = useCallback(() => {
     joinRoom(channelId);
   }, [joinRoom, channelId]);
-
-  const onSelectMessage = (eventId: string) => {
-    navigate(
-      `/spaces/${spaceId.slug}/channels/${channelId.slug}/replies/${eventId}`,
-    );
-  };
 
   const hasThreadOpen = !!messageId;
 
@@ -87,26 +76,13 @@ const SpacesChannelComponent = () => {
             </Box>
           ) : (
             <Box grow absoluteFill height="100%">
-              <MessageList
+              <MessageTimelineScroller
                 hideThreads
                 key={channelId.slug}
+                spaceId={spaceId}
                 channelId={channelId}
-                messages={channelMessages}
+                events={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
-                after={
-                  <Box gap padding="lg" rounded="xs">
-                    <Divider label="debug" />
-                    <Button animate={false} onClick={onLoadMore}>
-                      Load Messages
-                    </Button>
-
-                    <Paragraph size="sm" color="gray2">
-                      length: {channelMessages.length}
-                    </Paragraph>
-                    <Divider />
-                  </Box>
-                }
-                onSelectMessage={onSelectMessage}
               />
 
               <Box gap paddingBottom="lg" paddingX="lg">

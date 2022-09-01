@@ -26,7 +26,9 @@ const root = createGlobalTheme(":root", {
     // 67 occurences
     md: `${baseline * 2}px`, // md
     // 15 occurences
-    lg: `${baseline * 4}px`, // lg
+    lg: `${baseline * 3}px`, // lg
+
+    x4: `${baseline * 4}px`, // old lg
 
     // suited for text spacing
     paragraph: `${baseline * 1.5}px`, // m

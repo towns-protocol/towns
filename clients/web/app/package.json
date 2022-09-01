@@ -31,6 +31,7 @@
     "@types/throttle-debounce": "^5.0.0",
     "allotment": "^1.16.0",
     "clsx": "^1.2.1",
+    "date-fns": "^2.29.2",
     "emoji-mart": "^5.2.1",
     "ethers": "5.7.0",
     "framer-motion": "^7.2.0",

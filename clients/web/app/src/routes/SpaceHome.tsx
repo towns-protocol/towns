@@ -8,7 +8,7 @@ import {
   useSpaceTimeline,
   useZionClient,
 } from "use-zion-client";
-import { MessageList } from "@components/MessageScroller";
+import { MessageTimelineScroller } from "@components/MessageTimeline";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Button, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
@@ -58,10 +58,11 @@ export const SpaceHome = () => {
             <Button onClick={onJoinSpace}>Join {space.name}</Button>
           ) : (
             <Box grow absoluteFill height="100%" overflow="hidden">
-              <MessageList
+              <MessageTimelineScroller
                 key={space.id.slug}
+                spaceId={space.id}
                 channelId={space.id}
-                messages={spaceMessages}
+                events={spaceMessages}
               />
               <Box paddingBottom="lg" paddingX="lg">
                 <RichTextEditor

@@ -22,7 +22,7 @@ export const EmojiPickerContainer = (props: {
   );
 
   return (
-    <Box className={emojiPickerClassName} insetX="xs">
+    <Box className={emojiPickerClassName} insetX="xs" paddingTop="lg">
       <Picker
         className={emojiPickerClassName}
         previewPosition="none"

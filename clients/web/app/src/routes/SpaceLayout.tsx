@@ -3,13 +3,11 @@ import { Outlet, useMatch, useResolvedPath } from "react-router";
 import { NavLink } from "react-router-dom";
 
 import { RoomIdentifier, useSpaceId } from "use-zion-client";
-import { Stack } from "ui/components/Stack/Stack";
 import { Box, Button, SizeBox } from "@ui";
+import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceLayout = () => {
-  const home = useMatch("/spaces/:space/");
-
   const spaceId = useSpaceId();
   if (!spaceId) {
     return null;
@@ -21,7 +19,7 @@ export const SpaceLayout = () => {
           <Box paddingX="lg" paddingTop="lg">
             <SpaceNav spaceId={spaceId} />
           </Box>
-          <Box grow position="relative" paddingX={home ? undefined : "lg"}>
+          <Box grow position="relative" paddingX="lg">
             <Outlet />
           </Box>
         </SizeBox>
@@ -32,7 +30,7 @@ export const SpaceLayout = () => {
 
 export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
   <Stack horizontal gap="md">
-    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/highlights`}>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/`}>
       Highlights
     </SpaceNavItem>
     <SpaceNavItem to={`/spaces/${props.spaceId.slug}/proposals`}>
@@ -41,7 +39,6 @@ export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
     <SpaceNavItem to={`/spaces/${props.spaceId.slug}/members`}>
       Members
     </SpaceNavItem>
-    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/`}>Chat</SpaceNavItem>
   </Stack>
 );
 

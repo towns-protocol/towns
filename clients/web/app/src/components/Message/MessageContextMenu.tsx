@@ -1,14 +1,19 @@
 import { EmojiData } from "emoji-mart";
-import React from "react";
-import useEvent from "react-use-event-hook";
-import { IconButton, Stack } from "@ui";
+import React, { useCallback, useContext } from "react";
+import { RoomIdentifier } from "use-zion-client";
 import { EmojiPickerButton } from "@components/EmojiPickerButton";
+import { TimelineMessageContext } from "@components/MessageTimeline";
+import { IconButton, Stack } from "@ui";
 import { vars } from "ui/styles/vars.css";
+import { useOpenMessageThread } from "hooks/useOpenThread";
 
 type Props = {
-  onEdit?: () => void;
-  onOpenThread?: () => void;
-  onSelectReaction?: (data: EmojiData) => void;
+  eventId: string;
+  channelId?: RoomIdentifier;
+  spaceId?: RoomIdentifier;
+  canEdit?: boolean;
+  canReply?: boolean;
+  canReact?: boolean;
 };
 
 const style = {
@@ -18,34 +23,46 @@ const style = {
 };
 
 export const MessageContextMenu = (props: Props) => {
-  const onSelectEmoji = useEvent((data: EmojiData) => {
-    console.log(`react to message with`, data);
-  });
+  const { eventId, channelId, spaceId } = props;
+
+  const timelineContext = useContext(TimelineMessageContext);
+
+  const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId);
+
+  const onThreadClick = useCallback(() => {
+    onOpenMessageThread(eventId);
+  }, [eventId, onOpenMessageThread]);
+
+  const onEditClick = useCallback(() => {
+    console.log("edit", eventId);
+    timelineContext?.onSelectEditingMessage(eventId);
+  }, [eventId, timelineContext]);
+
+  const onSelectEmoji = useCallback((data: EmojiData) => {
+    // timelineContext?.onReact(eventId, data);
+  }, []);
+
   return (
     <Stack
-      horizontal
       border
+      horizontal
+      background="level1"
+      color="gray2"
       gap="xs"
+      padding="xs"
       pointerEvents="auto"
       position="topRight"
-      background="level1"
       rounded="sm"
-      padding="xs"
-      width="auto"
-      color="gray2"
       style={style}
+      width="auto"
     >
-      {props.onEdit && (
-        <IconButton icon="edit" size="square_sm" onClick={props.onEdit} />
+      {props.canEdit && (
+        <IconButton icon="edit" size="square_sm" onClick={onEditClick} />
       )}
-      {props.onOpenThread && (
-        <IconButton
-          icon="threads"
-          size="square_sm"
-          onClick={props.onOpenThread}
-        />
+      {props.canReply && (
+        <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
       )}
-      <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
+      {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
     </Stack>
   );
 };

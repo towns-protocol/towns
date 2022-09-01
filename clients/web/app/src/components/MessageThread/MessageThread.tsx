@@ -1,11 +1,9 @@
 import React from "react";
-import { RoomMessageEvent, TimelineEvent, ZTEvent } from "use-zion-client";
-import { Message } from "@components/Message";
-import {
-  RichTextEditor,
-  RichTextPreview,
-} from "@components/RichText/RichTextEditor";
-import { Avatar, Box, Divider, IconButton, Stack } from "@ui";
+import { useChannelContext } from "use-zion-client/dist/components/ChannelContextProvider";
+import { TimelineMessage } from "@components/MessageTimeline/events/TimelineMessage";
+import { MessageTimeline } from "@components/MessageTimeline/MessageTimeline";
+import { RichTextEditor } from "@components/RichText/RichTextEditor";
+import { Box, Divider, IconButton, Stack } from "@ui";
 import { useMessageThread } from "hooks/useFixMeMessageThread";
 import { useSendReply } from "hooks/useSendReply";
 
@@ -14,6 +12,7 @@ type Props = {
   onClose?: () => void;
 };
 export const MessageThread = (props: Props) => {
+  const { channelId, spaceId } = useChannelContext();
   const { messageId } = props;
   const { parentMessage, messages } = useMessageThread(messageId);
   const { sendReply } = useSendReply(messageId);
@@ -22,35 +21,43 @@ export const MessageThread = (props: Props) => {
     sendReply(value);
   };
   return (
-    <MessageWindow onClose={props.onClose}>
-      <Box height="100%">
-        <Stack
-          gap
-          overflowY="scroll"
-          paddingTop="md"
-          style={{
-            flex: "1 1 auto",
-            overflowY: "auto",
-            minHeight: "0px",
-          }}
-        >
-          {parentMessage && getEventComponent(parentMessage)}
-          {!!messages.length && (
-            <Box paddingX="lg">
-              <Divider space="none" />
-            </Box>
-          )}
-          {!!messages.length && messages.map((m) => getEventComponent(m))}
-          <Box
-            paddingX="lg"
-            paddingY="none"
-            style={{ position: "sticky", bottom: 0 }}
+    <Stack absoluteFill padding gap position="relative">
+      <MessageWindow onClose={props.onClose}>
+        <Box height="100%">
+          <Stack
+            overflowY="scroll"
+            style={{
+              flex: "1 1 auto",
+              overflowY: "auto",
+              minHeight: "0px",
+            }}
           >
-            <RichTextEditor onSend={onSend} />
-          </Box>
-        </Stack>
+            {parentMessage && (
+              <TimelineMessage
+                channelId={channelId}
+                event={parentMessage}
+                spaceId={spaceId}
+              />
+            )}
+            {!!messages.length && (
+              <Box paddingX="md" paddingTop="md">
+                <Divider space="none" />
+              </Box>
+            )}
+            <Stack>
+              <MessageTimeline
+                events={messages}
+                spaceId={spaceId}
+                channelId={channelId}
+              />
+            </Stack>
+          </Stack>
+        </Box>
+      </MessageWindow>
+      <Box paddingY="none" style={{ position: "sticky", bottom: 0 }}>
+        <RichTextEditor placeholder="Reply..." onSend={onSend} />
       </Box>
-    </MessageWindow>
+    </Stack>
   );
 };
 
@@ -59,67 +66,27 @@ const MessageWindow = (props: {
   onClose?: () => void;
 }) => {
   return (
-    <Box absoluteFill position="relative" padding="lg">
-      <Box
-        border
-        rounded="md"
-        overflow="hidden"
-        maxHeight="100%"
-        paddingBottom="lg"
+    <Box
+      border
+      rounded="sm"
+      overflow="hidden"
+      maxHeight="100%"
+      paddingBottom="md"
+    >
+      <Stack
+        horizontal
+        padding="sm"
+        background="level2"
+        minHeight="x5"
+        alignItems="center"
+        color="gray1"
       >
-        <Stack
-          padding
-          horizontal
-          background="level2"
-          minHeight="x7"
-          alignItems="center"
-          color="gray1"
-        >
-          <Box grow />
-          <Box>
-            {props.onClose && (
-              <IconButton icon="close" onClick={props.onClose} />
-            )}
-          </Box>
-        </Stack>
-        <Box overflow="scroll">{props.children}</Box>
-      </Box>
+        <Box grow />
+        <Box>
+          {props.onClose && <IconButton icon="close" onClick={props.onClose} />}
+        </Box>
+      </Stack>
+      <Box overflow="scroll">{props.children}</Box>
     </Box>
   );
 };
-
-function getEventComponent(event: TimelineEvent) {
-  const content = event.content;
-  switch (content?.kind) {
-    case ZTEvent.RoomMessage:
-      return getRoomMessageContent(content);
-    default:
-      return getGenericComponent(event, event.fallbackContent);
-  }
-}
-
-function getGenericComponent(event: TimelineEvent, content: string) {
-  return (
-    <Message
-      paddingX="lg"
-      paddingY="sm"
-      name={event.eventType}
-      avatar={<Avatar src={undefined} />}
-    >
-      <RichTextPreview content={event.fallbackContent} />
-    </Message>
-  );
-}
-
-function getRoomMessageContent(m: RoomMessageEvent) {
-  return (
-    <Message
-      paddingX="lg"
-      paddingY="sm"
-      name={m.sender.displayName}
-      avatar={<Avatar src={m.sender.avatarUrl} />}
-    >
-      <RichTextPreview content={m.body} />
-    </Message>
-  );
-}

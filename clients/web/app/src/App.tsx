@@ -91,10 +91,11 @@ const AllRoutes = () => {
           {isAuthenticated && (
             <Route element={<SidebarLayout />}>
               <Route element={<Spaces />}>
-                <Route index element={<SpaceHome />} />
-              </Route>
-              <Route path="home" element={<HomeLayout />}>
-                <Route index element={<Highlights />} />
+                <Route element={<SpaceLayout />}>
+                  <Route index element={<Highlights />} />
+                  <Route path="proposals" element={<ProposalPage />} />
+                  <Route path="members" element={<MembersPage />} />
+                </Route>
               </Route>
               <Route path="me" element={<MeIndex />} />
               <Route path="messages" element={<Messages />}>
@@ -107,10 +108,9 @@ const AllRoutes = () => {
               <Route path="spaces/new" element={<SpacesNew />} />
               <Route path="spaces/:spaceSlug" element={<Spaces />}>
                 <Route element={<SpaceLayout />}>
-                  <Route path="highlights" element={<Highlights />} />
+                  <Route index element={<Highlights />} />
                   <Route path="proposals" element={<ProposalPage />} />
                   <Route path="members" element={<MembersPage />} />
-                  <Route index element={<SpaceHome />} />
                 </Route>
                 <Route path="threads" element={<SpaceThreads />} />
                 <Route path="mentions" element={<SpaceMentions />} />
