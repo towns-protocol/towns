@@ -1,216 +1,202 @@
-// SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {ZionSpaceManager} from "../../contracts/spaces/ZionSpaceManager.sol";
 import {Zion} from "../../contracts/governance/Zion.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
-import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlement_modules/UserGrantedEntitlementModule.sol";
-import {TokenEntitlementModule} from "../../contracts/spaces/entitlement_modules/TokenEntitlementModule.sol";
-import {SpaceStructs} from "../../contracts/spaces/SpaceStructs.sol";
+import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlements/UserGrantedEntitlement.sol";
+import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
+import {TokenEntitlementModule} from "../../contracts/spaces/entitlements/TokenEntitlement.sol";
+import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
+import {Constants} from "../../contracts/council/libraries/Constants.sol";
 
 contract TokenEntitlementModuleTest is Test {
-    ZionSpaceManager internal zionSpaceManager;
-    Zion internal zionToken;
-    CouncilNFT internal councilNFT;
-    UserGrantedEntitlementModule internal userGrantedEntitlementModule;
-    TokenEntitlementModule internal tokenEntitlementModule;
+  ZionSpaceManager internal spaceManager;
+  Zion internal zion;
+  UserGrantedEntitlementModule internal userGrantedEntitlementModule;
+  TokenEntitlementModule internal tokenEntitlementModule;
+  CouncilNFT internal councilNFT;
 
-    function setUp() public {
-        zionToken = new Zion();
+  address user1;
+  address user2;
 
-        address first = address(0x101);
-        bytes32[] memory data = new bytes32[](4);
+  function setUp() public {
+    zion = new Zion();
 
-        data[0] = keccak256(abi.encodePacked(first, "1"));
+    user1 = address(2);
+    user2 = address(0x1234);
+    bytes32[] memory data = new bytes32[](4);
+    data[0] = keccak256(abi.encodePacked(user1, "1"));
+    Merkle m = new Merkle();
+    bytes32 root = m.getRoot(data);
 
-        Merkle m = new Merkle();
-        bytes32 root = m.getRoot(data);
+    councilNFT = new CouncilNFT("Zion", "zion", "baseURI", root);
+    councilNFT.startPublicMint();
 
-        councilNFT = new CouncilNFT("Zion", "zion", "baseUri", root);
-        councilNFT.startPublicMint();
-        zionSpaceManager = new ZionSpaceManager();
-        userGrantedEntitlementModule = new UserGrantedEntitlementModule(
-            address(zionSpaceManager)
-        );
-        tokenEntitlementModule = new TokenEntitlementModule(
-            address(zionSpaceManager)
-        );
-    }
+    spaceManager = new ZionSpaceManager();
+    userGrantedEntitlementModule = new UserGrantedEntitlementModule(
+      address(spaceManager)
+    );
+    tokenEntitlementModule = new TokenEntitlementModule(address(spaceManager));
+  }
 
-    function createTestSpaceWithUserGrantedEntitlementModule(
-        string memory spaceName
-    ) private {
-        address[] memory newEntitlementModuleAddresses = new address[](1);
-        newEntitlementModuleAddresses[0] = address(
-            userGrantedEntitlementModule
-        );
-        zionSpaceManager.createSpace(spaceName, newEntitlementModuleAddresses);
-    }
+  function createTestSpaceWithUserGrantedEntitlementModule(
+    string memory spaceName
+  ) private returns (uint256) {
+    address[] memory entitlements = new address[](1);
+    entitlements[0] = address(userGrantedEntitlementModule);
 
-    function transferZionToken(address _to, uint256 quantity) private {
-        zionToken.transfer(_to, quantity);
-    }
+    return
+      spaceManager.createSpace(
+        DataTypes.CreateSpaceData(spaceName, entitlements)
+      );
+  }
 
-    function testERC20TokenEntitlement() public {
-        console.log("starting test");
-        assertTrue(true);
+  function transferZionToken(address _to, uint256 quantity) private {
+    zion.transfer(_to, quantity);
+  }
 
-        //Create the space with the UserGrantedEntitlementModule
-        string memory spaceName = "testspace";
-        uint256 spaceID = 1;
-        uint256 roomID = 0;
-        createTestSpaceWithUserGrantedEntitlementModule(spaceName);
+  function testERC20TokenEntitlement() public {
+    string memory spaceName = "test-space";
+    uint256 roomId = 0;
 
-        //Add the entitlement module to the space
-        zionSpaceManager.addEntitlementModuleAddress(
-            spaceID,
-            address(tokenEntitlementModule),
-            "token"
-        );
+    // create a space with the default user granted entitlement module
+    uint256 spaceId = createTestSpaceWithUserGrantedEntitlementModule(
+      spaceName
+    );
 
-        //Verify the token entitlement module is added to the space
-        address[] memory entitlementModuleAddresses = zionSpaceManager
-            .getSpaceEntitlementModuleAddresses(spaceID);
-        assertEq(entitlementModuleAddresses.length, 2);
-        assertEq(
-            entitlementModuleAddresses[1],
-            address(tokenEntitlementModule)
-        );
+    // Add token entitlement module to space
+    spaceManager.addEntitlementModule(
+      DataTypes.AddEntitlementData(
+        spaceId,
+        address(tokenEntitlementModule),
+        "token"
+      )
+    );
 
-        address userAddress = address(
-            0x1234567890123456789012345678901234567890
-        );
+    // verify the token entitlement module is added to the space
+    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
+      spaceId
+    );
+    assertEq(entitlements.length, 2);
+    assertEq(entitlements[1], address(tokenEntitlementModule));
 
-        //Transfer the token to the user
-        transferZionToken(userAddress, 100);
+    // transfer tokens
+    transferZionToken(user1, 100);
 
-        //Add a token entitlement for holders of the zion token to be moderators
-        address[] memory zionTokenAddressArr = new address[](1);
-        zionTokenAddressArr[0] = address(zionToken);
+    // add token entitlement so zion token holders to be mods
+    address[] memory zionTokenAddress = new address[](1);
+    zionTokenAddress[0] = address(zion);
 
-        uint256[] memory quantityArr = new uint256[](1);
-        quantityArr[0] = 10;
+    uint256[] memory quantityArr = new uint256[](1);
+    quantityArr[0] = 10;
 
-        SpaceStructs.EntitlementType[]
-            memory entitlementTypes = new SpaceStructs.EntitlementType[](1);
-        entitlementTypes[0] = SpaceStructs.EntitlementType.Moderator;
+    DataTypes.EntitlementType[]
+      memory entitlementTypes = new DataTypes.EntitlementType[](1);
+    DataTypes.EntitlementType entitlementType = DataTypes
+      .EntitlementType
+      .Moderator;
+    entitlementTypes[0] = entitlementType;
 
-        tokenEntitlementModule.addTokenEntitlements(
-            spaceID,
-            roomID,
-            "ziontoken",
-            zionTokenAddressArr,
-            quantityArr,
-            entitlementTypes
-        );
+    tokenEntitlementModule.setUserEntitlement(
+      DataTypes.TokenEntitlementData(
+        spaceId,
+        roomId,
+        "ziontoken",
+        zionTokenAddress,
+        quantityArr,
+        entitlementTypes
+      )
+    );
 
-        //Verify the user is entitled as a moderator to the space
-        SpaceStructs.EntitlementType entitlementType = SpaceStructs
-            .EntitlementType
-            .Moderator;
+    bool isEntitled = spaceManager.isEntitled(
+      spaceId,
+      roomId,
+      user1,
+      entitlementType
+    );
 
-        bool isEntitled = zionSpaceManager.isEntitled(
-            spaceID,
-            roomID,
-            entitlementType,
-            userAddress
-        );
+    assertTrue(isEntitled);
 
-        assertEq(isEntitled, true);
+    bool isRandomEntitled = spaceManager.isEntitled(
+      spaceId,
+      roomId,
+      user2,
+      entitlementType
+    );
 
-        //Verify that a random address is not entitled to the token entitlement
-        address randomAddress = address(
-            0x9153F17C52f769Da46C1e85c1A93FCB23D427660
-        );
+    assertFalse(isRandomEntitled);
+  }
 
-        bool isRandomEntitled = zionSpaceManager.isEntitled(
-            spaceID,
-            roomID,
-            entitlementType,
-            randomAddress
-        );
-        assertEq(isRandomEntitled, false);
-    }
+  function testERC721TokenEntitlement() public {
+    // Create a space with the user granted entitlement module
+    string memory spaceName = "test-space";
+    uint256 roomId = 0;
+    uint256 spaceId = createTestSpaceWithUserGrantedEntitlementModule(
+      spaceName
+    );
 
-    function testERC721TokenEntitlement() public {
-        console.log("starting test");
-        assertTrue(true);
+    // Add the token entitlement module to the space
+    spaceManager.addEntitlementModule(
+      DataTypes.AddEntitlementData(
+        spaceId,
+        address(tokenEntitlementModule),
+        "token"
+      )
+    );
 
-        //Create the space with the UserGrantedEntitlementModule
-        string memory spaceName = "testspace";
-        uint256 spaceID = 1;
-        uint256 roomID = 0;
-        createTestSpaceWithUserGrantedEntitlementModule(spaceName);
+    // Verify the token entitlement module is added to the space
+    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
+      spaceId
+    );
+    assertEq(entitlements.length, 2);
+    assertEq(entitlements[1], address(tokenEntitlementModule));
 
-        //Add the entitlement module to the space
-        zionSpaceManager.addEntitlementModuleAddress(
-            spaceID,
-            address(tokenEntitlementModule),
-            "token"
-        );
+    // Transfer token to user1
+    councilNFT.mint{value: Constants.MINT_PRICE}(user1);
 
-        //Verify the token entitlement module is added to the space
-        address[] memory entitlementModuleAddresses = zionSpaceManager
-            .getSpaceEntitlementModuleAddresses(spaceID);
-        assertEq(entitlementModuleAddresses.length, 2);
-        assertEq(
-            entitlementModuleAddresses[1],
-            address(tokenEntitlementModule)
-        );
+    // Add token entitlement so zion token holders to be mods
+    address[] memory councilNFTAddresses = new address[](1);
+    councilNFTAddresses[0] = address(councilNFT);
 
-        address userAddress = address(
-            0x1234567890123456789012345678901234567890
-        );
+    uint256[] memory quantityArr = new uint256[](1);
+    quantityArr[0] = 1;
 
-        //Transfer the token to the user
-        councilNFT.mint{value: 0.08 ether}(userAddress);
+    DataTypes.EntitlementType[]
+      memory entitlementTypes = new DataTypes.EntitlementType[](1);
+    DataTypes.EntitlementType entitlementType = DataTypes
+      .EntitlementType
+      .Moderator;
+    entitlementTypes[0] = entitlementType;
 
-        //Add a token entitlement for holders of the zion council nft to be moderators
-        address[] memory councilNftArr = new address[](1);
-        councilNftArr[0] = address(councilNFT);
+    tokenEntitlementModule.setUserEntitlement(
+      DataTypes.TokenEntitlementData(
+        spaceId,
+        roomId,
+        "councilnft",
+        councilNFTAddresses,
+        quantityArr,
+        entitlementTypes
+      )
+    );
 
-        uint256[] memory quantityArr = new uint256[](1);
-        quantityArr[0] = 1;
+    // Verify user1 is a moderator
+    bool isEntitled = spaceManager.isEntitled(
+      spaceId,
+      roomId,
+      user1,
+      entitlementType
+    );
+    assertTrue(isEntitled);
 
-        SpaceStructs.EntitlementType[]
-            memory entitlementTypes = new SpaceStructs.EntitlementType[](1);
-        entitlementTypes[0] = SpaceStructs.EntitlementType.Moderator;
-
-        tokenEntitlementModule.addTokenEntitlements(
-            spaceID,
-            roomID,
-            "councilnft",
-            councilNftArr,
-            quantityArr,
-            entitlementTypes
-        );
-
-        //Verify the user is entitled as a moderator to the space
-        SpaceStructs.EntitlementType entitlementType = SpaceStructs
-            .EntitlementType
-            .Moderator;
-
-        bool isEntitled = zionSpaceManager.isEntitled(
-            spaceID,
-            roomID,
-            entitlementType,
-            userAddress
-        );
-
-        assertEq(isEntitled, true);
-
-        //Verify that a random address is not entitled to the token entitlement
-        address randomAddress = address(
-            0x9153F17C52f769Da46C1e85c1A93FCB23D427660
-        );
-
-        bool isRandomEntitled = zionSpaceManager.isEntitled(
-            spaceID,
-            roomID,
-            entitlementType,
-            randomAddress
-        );
-        assertEq(isRandomEntitled, false);
-    }
+    // Verify user2 is not a moderator
+    bool isRandomEntitled = spaceManager.isEntitled(
+      spaceId,
+      roomId,
+      user2,
+      entitlementType
+    );
+    assertFalse(isRandomEntitled);
+  }
 }

@@ -13,7 +13,7 @@ describe("Space manager contract", function () {
     console.log("Got token deployer: ", deployer);
     const zionSpaceManager = await ethers.getContract("ZionSpaceManager");
     const userGrantedEntitlementManager = await ethers.getContract(
-      "UserGrantedEntitlementManager"
+      "UserGrantedEntitlementManager",
     );
     const entitlementManagerAddress = userGrantedEntitlementManager.address;
 
@@ -32,10 +32,10 @@ describe("Space manager contract", function () {
     console.log(`Creator address is ${creatorAddress}`);
     console.log(`Owner address is ${ownerAddress}`);
     console.log(
-      `Entitlement manager addresses are ${entitlementManagerAddresses}`
+      `Entitlement manager addresses are ${entitlementManagerAddresses}`,
     );
     console.log(
-      `Entitlement manager address is ${entitlementManagerAddresses[0]}`
+      `Entitlement manager address is ${entitlementManagerAddresses[0]}`,
     );
     expect(spaceId).to.equal(1);
     expect(name).to.equal(spaceName);
@@ -51,7 +51,7 @@ describe("Space manager contract", function () {
 
     const zionSpaceManager = await ethers.getContract("ZionSpaceManager");
     const userGrantedEntitlementManager = await ethers.getContract(
-      "UserGrantedEntitlementManager"
+      "UserGrantedEntitlementManager",
     );
     const entitlementManagerAddress = userGrantedEntitlementManager.address;
 
@@ -63,8 +63,8 @@ describe("Space manager contract", function () {
     // expect(entitlementManagerAddress).to.equal(deployer);
 
     await expect(
-      zionSpaceManager.createSpace(spaceName, [entitlementManagerAddress])
-    ).to.be.revertedWith("Space name already exists");
+      zionSpaceManager.createSpace(spaceName, [entitlementManagerAddress]),
+    ).to.be.rejectedWith("Space name already exists");
   });
 
   //   it("Create space and add read write entitlement", async function () {

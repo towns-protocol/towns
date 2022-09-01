@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -13,8 +13,8 @@ abstract contract MerkleHelper {
   address internal waitlist2 = address(4);
   address internal waitlist3 = address(5);
 
-  mapping(address => uint) internal userAllowanceMap;
-  mapping (address=>uint) internal userPositionMap;
+  mapping(address => uint256) internal userAllowanceMap;
+  mapping(address => uint256) internal userPositionMap;
 
   /// initialze some constans for test users
   function _initPositionsAllowances() internal {
@@ -32,20 +32,14 @@ abstract contract MerkleHelper {
   }
 
   /// Generates some data for a merkle proof to be used for the allowlist
-  function _generateAllowlistData()
-  internal
-  view
-  returns(bytes32[] memory) {
+  function _generateAllowlistData() internal view returns (bytes32[] memory) {
     bytes32[] memory data = new bytes32[](5);
 
     for (uint256 i = 0; i < 5; i++) {
-      address testAddress = address(uint160(uint256(i+1)));
+      address testAddress = address(uint160(uint256(i + 1)));
 
       data[userPositionMap[testAddress]] = keccak256(
-        abi.encodePacked(
-          testAddress,
-          userAllowanceMap[testAddress]
-        )
+        abi.encodePacked(testAddress, userAllowanceMap[testAddress])
       );
     }
 

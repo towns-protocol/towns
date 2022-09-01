@@ -76,7 +76,6 @@ on a 2nd terminal window, run
 ```
 cd contracts/zion-governance
 make deployLocalCouncilNFT
-make mintLocalCouncilNFT
 ```
 
-This will mint an NFT belonging to the address 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, which is the first wallet on the anvil local node.
+This will mint an NFT belonging to the first 4 addresses in the anvil node
