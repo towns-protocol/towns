@@ -14,7 +14,7 @@ import { SpaceContextProvider } from "../../src/components/SpaceContextProvider"
 import { ChannelContextProvider } from "../../src/components/ChannelContextProvider";
 import { useChannelTimeline } from "../../src/hooks/use-channel-timeline";
 import { useChannelId } from "../../src/hooks/use-channel-id";
-import { TimelineEvent } from "../../src/types/timeline-types";
+import { TimelineEvent, ZTEvent } from "../../src/types/timeline-types";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -41,6 +41,11 @@ describe("sendThreadedMessageHooks", () => {
       const { sendMessage, editMessage, redactEvent } = useZionClient();
       const channelId = useChannelId();
       const timeline = useChannelTimeline();
+      const messagesOrRedactions = timeline.filter(
+        (x) =>
+          x.eventType === ZTEvent.RoomMessage ||
+          x.eventType === ZTEvent.RoomRedaction,
+      );
       const onClickSendMessage = useCallback(() => {
         void sendMessage(janesChannelId, "hello jane");
       }, [sendMessage]);
@@ -66,13 +71,14 @@ describe("sendThreadedMessageHooks", () => {
           <button onClick={onRedact}>Redact</button>
           // hard coding indexes to jump to jane's membership join event
           <div data-testid="message0">
-            {timeline.length > 8 ? formatMessage(timeline[8]) : "empty"}
+            {messagesOrRedactions.length > 0
+              ? formatMessage(messagesOrRedactions[0])
+              : "empty"}
           </div>
           <div data-testid="message1">
-            {timeline.length > 9 ? formatMessage(timeline[9]) : "empty"}
-          </div>
-          <div data-testid="message2">
-            {timeline.length > 10 ? formatMessage(timeline[10]) : "empty"}
+            {messagesOrRedactions.length > 1
+              ? formatMessage(messagesOrRedactions[1])
+              : "empty"}
           </div>
           <div id="allMessages">
             {timeline.map((event) => formatMessage(event)).join("\n")}
@@ -94,7 +100,6 @@ describe("sendThreadedMessageHooks", () => {
     const channelMembership = screen.getByTestId("channelMembership");
     const message0 = screen.getByTestId("message0");
     const message1 = screen.getByTestId("message1");
-    const message2 = screen.getByTestId("message2");
     const sendMessageButton = screen.getByRole("button", {
       name: "Send Message",
     });
@@ -104,16 +109,14 @@ describe("sendThreadedMessageHooks", () => {
     await waitFor(() =>
       expect(channelMembership).toHaveTextContent(Membership.Join),
     );
-    // message 0 should be our membership event
-    await waitFor(() => expect(message0).toHaveTextContent("m.room.member"));
     // have jane send a message to bob
     await jane.sendMessage(janesChannelId, "hello bob");
     // expect our message to show
-    await waitFor(() => expect(message1).toHaveTextContent("hello bob"));
+    await waitFor(() => expect(message0).toHaveTextContent("hello bob"));
     // have bob send a message to jane
     fireEvent.click(sendMessageButton);
     // expect it to render as well
-    await waitFor(() => expect(message2).toHaveTextContent("hello jane"));
+    await waitFor(() => expect(message1).toHaveTextContent("hello jane"));
     // expect jane to recieve the message
     expect(
       await jane.eventually(
@@ -130,7 +133,7 @@ describe("sendThreadedMessageHooks", () => {
     // edit the event
     fireEvent.click(editButton);
     // expect the event to be edited
-    await waitFor(() => expect(message2).toHaveTextContent("hello jane gm!"));
+    await waitFor(() => expect(message1).toHaveTextContent("hello jane gm!"));
     // expect jane to see the edited event
     expect(
       await jane.eventually(
@@ -147,6 +150,6 @@ describe("sendThreadedMessageHooks", () => {
     // redact the event
     fireEvent.click(redactButton);
     // exect the message to be empty
-    await waitFor(() => expect(message2).toHaveTextContent("m.room.redaction"));
+    await waitFor(() => expect(message1).toHaveTextContent("m.room.redaction"));
   });
 });

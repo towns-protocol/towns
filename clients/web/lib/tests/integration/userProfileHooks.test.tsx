@@ -17,6 +17,7 @@ import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
 import { ChannelContextProvider } from "../../src/components/ChannelContextProvider";
 import { useChannelTimeline } from "../../src/hooks/use-channel-timeline";
+import { ZTEvent } from "../../src/types/timeline-types";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -46,7 +47,10 @@ describe("userProfileHooks", () => {
       const { setDisplayName, setAvatarUrl } = useZionClient();
       const myProfile = useMyProfile();
       const alicesMemberInfo = useMember(alice.matrixUserId!, alicesSpaceId);
-      const messages = useChannelTimeline();
+      const timeline = useChannelTimeline();
+      const roomMessages = timeline.filter(
+        (x) => x.eventType === ZTEvent.RoomMessage,
+      );
       const onClickSetProfileInfo = useCallback(() => {
         void (async () => {
           await setDisplayName("Bob's your uncle");
@@ -73,12 +77,12 @@ describe("userProfileHooks", () => {
             {alicesMemberInfo?.avatarUrl ?? "unknown"}
           </div>
           <div data-testid="messageSender">
-            {messages[3]?.content?.kind === "m.room.message"
-              ? messages[3].content.sender.displayName
+            {roomMessages[0]?.content?.kind === "m.room.message"
+              ? roomMessages[0].content.sender.displayName
               : "none"}
           </div>
           <div data-testid="allMessages">
-            {messages
+            {timeline
               .map((m) => `${m.eventType} ${m.fallbackContent}`)
               .join("\n")}
           </div>
