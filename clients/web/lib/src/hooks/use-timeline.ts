@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Membership } from "../types/matrix-types";
-import { useChannelContext } from "../components/ChannelContextProvider";
 import {
   HistoryVisibility,
   IRoomTimelineData,

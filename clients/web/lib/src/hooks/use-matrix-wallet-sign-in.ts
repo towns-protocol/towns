@@ -14,7 +14,12 @@ import {
   getParamsPublicKeyEthereum,
   isLoginFlowPublicKeyEthereum,
 } from "./login";
-import { MatrixClient, MatrixError, createClient } from "matrix-js-sdk";
+import {
+  MatrixClient,
+  MatrixError,
+  createClient,
+  IAuthData,
+} from "matrix-js-sdk";
 import {
   createUserIdFromEthereumAddress,
   getUsernameFromId,
@@ -84,7 +89,7 @@ export function useMatrixWalletSignIn() {
 
   const authenticationSuccess = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function (response: any) {
+    function (response: IAuthData) {
       const { access_token, device_id, user_id } = response;
       if (access_token && device_id && user_id) {
         setAccessToken(access_token);
@@ -168,11 +173,10 @@ export function useMatrixWalletSignIn() {
           );
           // Not available means the id is registered
           const isRegistered = isAvailable === false;
-          console.log(`[getWalletIdRegistered] ${isRegistered}`);
+          console.log(`[getWalletIdRegistered]`, isRegistered);
           return isRegistered;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (ex: any) {
-          console.error(ex.message);
+        } catch (ex) {
+          console.error(ex);
         }
       }
       // Assumption: if wallet id is not available (free to register), then it is registered.
@@ -212,8 +216,8 @@ export function useMatrixWalletSignIn() {
           return auth;
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (ex: any) {
-        console.error(ex.message);
+      } catch (ex) {
+        console.error(ex);
       }
       return undefined;
     },
@@ -281,7 +285,9 @@ export function useMatrixWalletSignIn() {
                   } else {
                     authenticationError({
                       code: StatusCodes.UNAUTHORIZED,
-                      message: `Attempt to register wallet ${userIdentifier.matrixUserId} failed!`,
+                      message: `Attempt to register wallet ${
+                        userIdentifier.matrixUserId ?? "undefined"
+                      } failed!`,
                     });
                   }
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -315,14 +321,18 @@ export function useMatrixWalletSignIn() {
             } else {
               authenticationError({
                 code: StatusCodes.UNAUTHORIZED,
-                message: `New registration session failed. Error: ${error}`,
+                message: `New registration session failed. Error: ${
+                  error ?? "undefined"
+                }`,
               });
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (ex: any) {
             authenticationError({
               code: StatusCodes.UNAUTHORIZED,
-              message: `Server error during wallet registration ${ex.message}`,
+              message: `Server error during wallet registration ${
+                (ex as Error)?.message
+              }`,
             });
           }
         } else {
@@ -379,6 +389,7 @@ export function useMatrixWalletSignIn() {
                 if (auth) {
                   // Send the signed message and auth data to the server.
                   try {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                     const response = await matrixClient.login(
                       LoginTypePublicKey,
                       {
@@ -386,8 +397,9 @@ export function useMatrixWalletSignIn() {
                       },
                     );
 
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     if (response.access_token) {
-                      authenticationSuccess(response);
+                      authenticationSuccess(response as IAuthData);
                     } else {
                       authenticationError({
                         code: StatusCodes.UNAUTHORIZED,
@@ -425,7 +437,9 @@ export function useMatrixWalletSignIn() {
               } else {
                 authenticationError({
                   code: StatusCodes.UNAUTHORIZED,
-                  message: `New login session failed. Error: ${error}`,
+                  message: `New login session failed. Error: ${
+                    error ?? "undefined"
+                  }`,
                 });
               }
             } else {
@@ -438,7 +452,9 @@ export function useMatrixWalletSignIn() {
           } catch (ex: any) {
             authenticationError({
               code: StatusCodes.UNAUTHORIZED,
-              message: `Server error during wallet sign in ${ex.message}`,
+              message: `Server error during wallet sign in ${
+                (ex as Error)?.message ?? "undefined"
+              }`,
             });
           }
         } else {
@@ -558,7 +574,9 @@ export async function newLoginSession(
         );
       }
     } else {
-      return newSessionError(`${error.httpStatus} ${error.message}`);
+      return newSessionError(
+        `${error.httpStatus ?? "no-status"} ${error.message}`,
+      );
     }
   }
 
@@ -604,7 +622,9 @@ export async function newRegisterSession(
       );
       return newSessionSuccess(loginFlows.session, params);
     } else {
-      return newSessionError(`${error.httpStatus} ${error.message}`);
+      return newSessionError(
+        `${error.httpStatus ?? "no-status"} ${error.message}`,
+      );
     }
   }
 

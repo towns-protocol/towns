@@ -20,6 +20,7 @@ export function setZionPowerLevel(
   const powerLevels = powerLevelsEvent ? powerLevelsEvent.getContent() : {};
   const newPowerLevels = { ...powerLevels };
   if (def.parent) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     newPowerLevels[def.parent] = {
       ...powerLevels[def.parent],
       [current.definition.key]: newValue,

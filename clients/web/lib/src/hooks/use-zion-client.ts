@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { BigNumberish } from "ethers";
 import {
   CreateChannelInfo,
@@ -57,7 +56,7 @@ interface ZionClientImpl {
   ) => Promise<void>;
   registerPasswordUser: (username: string, password: string) => Promise<void>;
   registerWallet: (statement: string) => Promise<void>;
-  scrollback(roomId: RoomIdentifier, limit?: number): Promise<void>;
+  scrollback: (roomId: RoomIdentifier, limit?: number) => Promise<void>;
   sendMessage: (
     roomId: RoomIdentifier,
     message: string,
@@ -88,32 +87,32 @@ export function useZionClient(): ZionClientImpl {
 
   return {
     clientRunning,
-    createChannel: useWithCatch(client?.createChannel),
-    createSpace: useWithCatch(client?.createSpace),
+    createChannel: useWithCatch(client?.createChannel.bind(client)),
+    createSpace: useWithCatch(client?.createSpace.bind(client)),
     createWeb3Space: useWithCatch(
-      client?.createWeb3Space,
+      client?.createWeb3Space.bind(client),
       ZionClientEvent.NewSpace,
     ),
-    editMessage: useWithCatch(client?.editMessage),
+    editMessage: useWithCatch(client?.editMessage.bind(client)),
     getIsWalletIdRegistered,
-    getSpace: useWithCatch(client?.getSpace),
-    getSpaces: useWithCatch(client?.getSpaces),
-    inviteUser: useWithCatch(client?.inviteUser),
+    getSpace: useWithCatch(client?.getSpace.bind(client)),
+    getSpaces: useWithCatch(client?.getSpaces.bind(client)),
+    inviteUser: useWithCatch(client?.inviteUser.bind(client)),
     joinRoom,
-    leaveRoom: useWithCatch(client?.leave),
+    leaveRoom: useWithCatch(client?.leave.bind(client)),
     loginWithPassword,
     loginWithWallet,
     logout,
-    redactEvent: useWithCatch(client?.redactEvent),
+    redactEvent: useWithCatch(client?.redactEvent.bind(client)),
     registerPasswordUser,
     registerWallet,
-    scrollback: useWithCatch(client?.scrollback),
-    sendMessage: useWithCatch(client?.sendMessage),
-    sendNotice: useWithCatch(client?.sendNotice),
-    setPowerLevel: useWithCatch(client?.setPowerLevel),
+    scrollback: useWithCatch(client?.scrollback.bind(client)),
+    sendMessage: useWithCatch(client?.sendMessage.bind(client)),
+    sendNotice: useWithCatch(client?.sendNotice.bind(client)),
+    setPowerLevel: useWithCatch(client?.setPowerLevel.bind(client)),
     syncSpace,
-    setDisplayName: useWithCatch(client?.setDisplayName),
-    setAvatarUrl: useWithCatch(client?.setAvatarUrl),
+    setDisplayName: useWithCatch(client?.setDisplayName.bind(client)),
+    setAvatarUrl: useWithCatch(client?.setAvatarUrl.bind(client)),
   };
 }
 
@@ -123,18 +122,16 @@ const useWithCatch = <T extends Array<any>, U>(
   event: ZionClientEvent | undefined = undefined,
 ) => {
   const { triggerZionClientEvent } = useMatrixStore();
-  const { client } = useZionContext();
   return useMemo(
     () =>
-      (...args: T): Promise<U | undefined> => {
-        if (client && fn) {
+      async (...args: T): Promise<U | undefined> => {
+        if (fn) {
           try {
-            return fn.apply(client, args).then((value: U | undefined) => {
-              if (event) {
-                triggerZionClientEvent(event);
-              }
-              return value;
-            });
+            const value = await fn(...args);
+            if (event) {
+              triggerZionClientEvent(event);
+            }
+            return value;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (ex: any) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -146,6 +143,6 @@ const useWithCatch = <T extends Array<any>, U>(
           return Promise.resolve(undefined);
         }
       },
-    [client, triggerZionClientEvent, fn, event],
+    [triggerZionClientEvent, fn, event],
   );
 };

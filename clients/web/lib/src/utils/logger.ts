@@ -24,7 +24,7 @@ export const logger: Logger = (() => {
       }
     };
     const internalLogger = pino({ browser: { asObject: true, write } });
-    function getLogger(level: pino.Level) {
+    const getLogger = (level: pino.Level) => {
       return (msg: string, ...args: unknown[]) => {
         const { stack } = new Error(); // captures the current call stack
         const splitStack = stack?.split("\n");
@@ -46,7 +46,7 @@ export const logger: Logger = (() => {
         args.push(splitStack);
         internalLogger[level](args, msg);
       };
-    }
+    };
 
     const logger = {
       info: getLogger("info"),

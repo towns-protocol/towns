@@ -59,7 +59,7 @@ export function ChannelContextProvider(props: Props): JSX.Element {
       spaceId: spaceId,
       channelRoom: channelRoom,
     }),
-    [channelId, client, spaceId, channelRoom],
+    [channelId, spaceId, channelRoom],
   );
   return (
     <ChannelContext.Provider value={channelContext}>

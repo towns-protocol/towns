@@ -28,7 +28,7 @@ describe("spaceManagerContractHooks", () => {
       // spaces
       const spaces = useSpacesFromContract();
       // callback to create a space
-      const onClickCreateSpace = useCallback(async () => {
+      const onClickCreateSpace = useCallback(() => {
         void createWeb3Space({
           name: spaceName,
           visibility: RoomVisibility.Public,

@@ -1,4 +1,4 @@
-import { HistoryVisibility, IContent } from "matrix-js-sdk";
+import { HistoryVisibility } from "matrix-js-sdk";
 
 export enum RoomVisibility {
   Private = "private",
@@ -107,21 +107,6 @@ export interface Member {
 
 export interface Members {
   [userId: string]: Member;
-}
-
-export interface RoomMessage {
-  eventId: string;
-  sender: string;
-  senderAvatarUrl?: string;
-  senderId: string;
-  body: string;
-  msgType: string;
-  originServerTs: number;
-  content: IContent;
-}
-
-export interface RoomsMessages {
-  [slug: string]: RoomMessage[];
 }
 
 export interface CreateSpaceInfo {

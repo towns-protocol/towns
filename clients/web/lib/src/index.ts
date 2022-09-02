@@ -36,8 +36,6 @@ export type {
   Room,
   RoomIdentifier,
   Rooms,
-  RoomMessage,
-  RoomsMessages,
   SendMessageOptions,
   SpaceChild,
   SpaceData,

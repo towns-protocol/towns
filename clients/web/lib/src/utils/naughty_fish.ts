@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 const isBrowser = typeof window !== "undefined";
 
 if (isBrowser) {

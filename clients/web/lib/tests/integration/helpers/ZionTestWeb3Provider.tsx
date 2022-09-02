@@ -7,7 +7,8 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
   public chainId: string;
 
   constructor() {
-    super(process.env.ETHERS_NETWORK!);
+    const networkUrl = process.env.ETHERS_NETWORK!;
+    super(networkUrl);
     this.chainId = process.env.CHAIN_ID!;
     this.wallet = ethers.Wallet.createRandom().connect(this);
     console.log("initializing web3 provider with wallet", this.wallet.address);
@@ -31,7 +32,7 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     } else if (method === "personal_sign") {
       return this.wallet.signMessage((params as string[])[0]);
     } else {
-      return await this.send(method, params);
+      return this.send(method, params);
     }
   }
 }

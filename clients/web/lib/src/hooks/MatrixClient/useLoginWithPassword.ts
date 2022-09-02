@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 import { LoginServerResponse, LoginStatus } from "../login";
 import { StatusCodes } from "http-status-codes";
 import { createClient } from "matrix-js-sdk";
-import { useCallback, useContext } from "react";
+import { useCallback } from "react";
 import { useCredentialStore } from "../../store/use-credential-store";
 import { useMatrixStore } from "../../store/use-matrix-store";
 import { getUsernameFromId } from "../../types/user-identifier";
@@ -72,8 +73,8 @@ async function matrixLoginWithPassword(
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (ex: any) {
-    error = ex.message;
-    console.error(`Error logging in:`, ex.stack);
+    error = (ex as Error)?.message;
+    console.error(`Error logging in:`, (ex as Error)?.stack);
   }
 
   return {

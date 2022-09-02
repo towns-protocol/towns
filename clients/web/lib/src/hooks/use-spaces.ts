@@ -7,7 +7,6 @@ import { formatRoom } from "./use-space-data";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useZionClient } from "./use-zion-client";
 import { useZionClientEvent } from "./use-zion-client-event";
-import { BigNumber } from "ethers";
 
 export const useSpaces = () => {
   const { rooms } = useMatrixStore();

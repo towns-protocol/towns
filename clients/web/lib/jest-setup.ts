@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import "@testing-library/jest-dom";
 import "@testing-library/jest-dom/extend-expect";
 import { request as matrixRequest } from "matrix-js-sdk";

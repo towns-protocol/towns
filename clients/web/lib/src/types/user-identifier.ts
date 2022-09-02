@@ -53,7 +53,9 @@ export function createUserIdFromString(
             ? ethers.utils.getAddress(accountAddress)
             : undefined;
           serverName = match.groups?.serverName;
-        } catch {}
+        } catch (e) {
+          console.error("createServerName failed WithError", e);
+        }
         if (namespace && chainId && accountAddress && serverName) {
           return {
             namespace: "eip155",

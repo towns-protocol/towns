@@ -94,6 +94,7 @@ export function getParamsPublicKeyEthereum(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   p: any,
 ): PublicKeyEtheremParams | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const params = p[LoginTypePublicKeyEthereum];
   if (params !== undefined) {
     return params as PublicKeyEtheremParams;

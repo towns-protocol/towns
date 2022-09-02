@@ -19,7 +19,7 @@ export const useLogout = () => {
           console.log("Logged out");
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (ex: any) {
-          console.error("Error logging out:", ex.stack);
+          console.error("Error logging out:", (ex as Error)?.stack);
         }
       }
       setLoginStatus(LoginStatus.LoggedOut);

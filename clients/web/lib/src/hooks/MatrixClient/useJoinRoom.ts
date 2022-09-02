@@ -1,5 +1,5 @@
 import { useZionContext } from "../../components/ZionContextProvider";
-import { useCallback, useContext } from "react";
+import { useCallback } from "react";
 import { makeRoomIdentifier, RoomIdentifier } from "../../types/matrix-types";
 import { useMatrixStore } from "../../store/use-matrix-store";
 
@@ -16,7 +16,10 @@ export const useJoinRoom = () => {
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (ex: any) {
-        console.error(`Error joining room[${roomId.matrixRoomId}]`, ex.stack);
+        console.error(
+          `Error joining room[${roomId.matrixRoomId}]`,
+          (ex as Error)?.stack,
+        );
       }
     },
     [createRoom, client],
