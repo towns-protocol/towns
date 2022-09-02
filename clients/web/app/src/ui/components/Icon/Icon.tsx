@@ -904,6 +904,7 @@ export const Icon = forwardRef<HTMLDivElement, IconProps>((props, ref) => {
     color,
     background,
     type,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     height,
     className,
     ...boxProps

@@ -14,7 +14,6 @@ type Props = {
 export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const {
     size = "square_sm",
-    icon,
     active: isActive,
     opaque: isOpaque,
     ...boxProps

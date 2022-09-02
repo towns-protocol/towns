@@ -23,12 +23,9 @@ type Props = {
 
 export const RadioSelect = (props: Props) => {
   const {
-    defaultValue,
     options: _options,
     render,
     columns,
-    onChange: delegatedOnChange,
-    onValueChange,
     applyChildProps,
     ...fieldProps
   } = props;
