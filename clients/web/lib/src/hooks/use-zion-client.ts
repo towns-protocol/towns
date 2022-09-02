@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { useMemo } from "react";
+import { BigNumberish } from "ethers";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -9,16 +9,17 @@ import {
   SendMessageOptions,
   SpaceChild,
 } from "../types/matrix-types";
+
+import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
+import { ZionClientEvent } from "../client/ZionClientTypes";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
 import { useLogout } from "./MatrixClient/useLogout";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
+import { useMemo } from "react";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
-import { ZionClientEvent } from "../client/ZionClientTypes";
-import { BigNumber, BigNumberish } from "ethers";
-import { ZionSpaceManager } from "@harmony/contracts/governance";
 import { useZionContext } from "../components/ZionContextProvider";
 
 /**
@@ -39,19 +40,10 @@ interface ZionClientImpl {
     options: EditMessageOptions,
   ) => Promise<void>;
   getIsWalletIdRegistered: () => Promise<boolean>;
-  getSpace: (spaceId: BigNumberish) => Promise<
-    | ([BigNumber, BigNumber, string, string, string] & {
-        spaceId: BigNumber;
-        createdAt: BigNumber;
-        name: string;
-        creatorAddress: string;
-        ownerAddress: string;
-      })
-    | undefined
-  >;
-  getSpaces: () => Promise<
-    ZionSpaceManager.SpaceNameIDStructOutput[] | undefined
-  >;
+  getSpace: (
+    spaceId: BigNumberish,
+  ) => Promise<DataTypes.SpaceInfoStructOutput | undefined>;
+  getSpaces: () => Promise<DataTypes.SpaceInfoStructOutput[] | undefined>;
   inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>;
   joinRoom: (roomId: RoomIdentifier) => Promise<void>;
   leaveRoom: (roomId: RoomIdentifier) => Promise<void>;

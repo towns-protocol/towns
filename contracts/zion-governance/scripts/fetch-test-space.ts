@@ -22,7 +22,7 @@ export async function fetchSpace(spaceId: number) {
     "UserGrantedEntitlementModule"
   );
 
-  const spaceValues = await zionSpaceManager.getSpaceValues(spaceId);
+  const spaceValues = await zionSpaceManager.getSpaceInfoBySpaceId(spaceId);
   console.log("SpaceValues are ", spaceValues);
 
   const entitlementModuleAddress = await zionSpaceManager.getSpaceEntitlementModuleAddresses(

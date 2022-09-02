@@ -4,13 +4,18 @@ import {
   MatrixClient,
   MatrixEvent,
   MatrixEventEvent,
-  PendingEventOrdering,
   Room as MatrixRoom,
+  PendingEventOrdering,
   RoomEvent,
   RoomMemberEvent,
   User,
   UserEvent,
 } from "matrix-js-sdk";
+import {
+  CouncilNFT,
+  CouncilStaking,
+  ZionSpaceManager,
+} from "@harmony/contracts/governance";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -26,29 +31,24 @@ import {
   newRegisterSession,
 } from "../hooks/use-matrix-wallet-sign-in";
 import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
+import {
+  zionCouncilNFTAbi,
+  zionCouncilStakingAbi,
+  zionSpaceManagerAbi,
+} from "./web3/ZionAbis";
 
 import { BigNumberish } from "ethers";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
 import { createMatrixClient } from "./matrix/CreateClient";
 import { createZionChannel } from "./matrix/CreateChannel";
 import { createZionSpace } from "./matrix/CreateSpace";
+import { editZionMessage } from "./matrix/EditMessage";
 import { enrichPowerLevels } from "./matrix/PowerLevels";
 import { inviteZionUser } from "./matrix/InviteUser";
 import { joinZionRoom } from "./matrix/Join";
 import { sendZionMessage } from "./matrix/SendMessage";
 import { setZionPowerLevel } from "./matrix/SetPowerLevels";
 import { syncZionSpace } from "./matrix/SyncSpace";
-import { editZionMessage } from "./matrix/EditMessage";
-import {
-  ZionSpaceManager,
-  CouncilNFT,
-  CouncilStaking,
-} from "@harmony/contracts/governance";
-import {
-  zionCouncilNFTAbi,
-  zionSpaceManagerAbi,
-  zionCouncilStakingAbi,
-} from "./web3/ZionAbis";
 
 /***
  * Zion Client
@@ -231,14 +231,14 @@ export class ZionClient {
    *************************************************/
   public async getSpaces() {
     console.log("ZionClient::get spaces");
-    return this.spaceManager.unsigned.getSpaceNames();
+    return this.spaceManager.unsigned.getSpaces();
   }
 
   /************************************************
    * getSpace
    *************************************************/
   public async getSpace(spaceId: BigNumberish) {
-    return this.spaceManager.unsigned.getSpaceValues(spaceId);
+    return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceId);
   }
 
   /************************************************
@@ -250,10 +250,10 @@ export class ZionClient {
       entitlementModules.push(this.opts.userModuleAddress);
     this.opts.tokenModuleAddress &&
       entitlementModules.push(this.opts.tokenModuleAddress);
-    return this.spaceManager.signed.createSpace(
-      createSpaceInfo.name,
-      entitlementModules,
-    );
+    return this.spaceManager.signed.createSpace({
+      spaceName: createSpaceInfo.name,
+      entitlements: entitlementModules,
+    });
   }
   /************************************************
    * createSpace

@@ -1,6 +1,7 @@
 import { SpaceIdentifier, ZionClientEvent } from "../client/ZionClientTypes";
 import { useEffect, useMemo, useState } from "react";
 
+import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 import { Membership } from "../types/matrix-types";
 import { formatRoom } from "./use-space-data";
 import { useMatrixStore } from "../store/use-matrix-store";
@@ -29,16 +30,17 @@ export const useSpacesFromContract = (): SpaceIdentifier[] => {
   useEffect(() => {
     void (async () => {
       const spaces = await getSpaces();
-      if (!spaces) {
-        return;
+      if (spaces) {
+        setSpaceIdentifiers(
+          spaces.map((x: DataTypes.SpaceInfoStructOutput) => {
+            return {
+              id: x.spaceId,
+              key: x.spaceId.toString(),
+              name: x.name,
+            };
+          }),
+        );
       }
-      setSpaceIdentifiers(
-        spaces.map((x) => ({
-          id: x.id,
-          key: BigNumber.from(x.id).toString(),
-          name: x.name,
-        })),
-      );
     })();
   }, [getSpaces, onNewSpace]);
 

@@ -1,5 +1,4 @@
 import { ethers } from "ethers";
-import { ZionSpaceManager } from "@harmony/contracts/governance";
 
 export class ZionContractProvider<T> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

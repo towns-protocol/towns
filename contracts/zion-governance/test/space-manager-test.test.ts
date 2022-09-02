@@ -20,12 +20,12 @@ describe("Space manager contract", function () {
     console.log("Zion space manager address is ", zionSpaceManager.address);
     await zionSpaceManager.createSpace(spaceName, [entitlementManagerAddress]);
     const { spaceId, createdAt, name, creatorAddress, ownerAddress } =
-      await zionSpaceManager.getSpaceValues(1);
+      await zionSpaceManager.getSpaceInfoBySpaceId(1);
 
     const entitlementManagerAddresses =
       await zionSpaceManager.getSpaceEntitlementManagerAddresses(spaceId);
-    // const spaceValues2 = await zionSpaceManager.getSpaceValues(2);
-    // const spaceValues0 = await zionSpaceManager.getSpaceValues(0);
+    // const spaceValues2 = await zionSpaceManager.getSpaceInfoBySpaceId(2);
+    // const spaceValues0 = await zionSpaceManager.getSpaceInfoBySpaceId(0);
     console.log(`Space id is ${spaceId}`);
     console.log(`Created at is ${createdAt}`);
     console.log(`Name is ${name}`);
@@ -56,7 +56,7 @@ describe("Space manager contract", function () {
     const entitlementManagerAddress = userGrantedEntitlementManager.address;
 
     await zionSpaceManager.createSpace(spaceName, [entitlementManagerAddress]);
-    const { spaceId, name } = await zionSpaceManager.getSpaceValues(1);
+    const { spaceId, name } = await zionSpaceManager.getSpaceInfoBySpaceId(1);
 
     expect(spaceId).to.equal(1);
     expect(name).to.equal(spaceName);
@@ -78,7 +78,7 @@ describe("Space manager contract", function () {
   //       spaceId,
   //       name,
   //       entitlementManagerAddress,
-  //     } = await zionSpaceManager.getSpaceValues(1);
+  //     } = await zionSpaceManager.getSpaceInfoBySpaceId(1);
 
   //     expect(spaceId).to.equal(1);
   //     expect(name).to.equal(spaceName);
