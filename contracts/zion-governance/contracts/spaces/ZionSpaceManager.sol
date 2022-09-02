@@ -32,8 +32,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
   /// @notice Mapping representing the space id by network id
   mapping(string => uint256) internal spaceIdByNetworkId;
 
-  /// @notice Create a new space.
-  /// @param vars The data to create the space.
+  /// @inheritdoc ISpaceManager
   function createSpace(DataTypes.CreateSpaceData calldata vars)
     external
     returns (uint256)
@@ -56,14 +55,14 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     space.creator = _msgSender();
     space.owner = _msgSender();
 
+    // TODO: go through all the entitlements and add them to the space
+
     // check if vars.entitlements support interface
     if (
       IERC165(vars.entitlements[0]).supportsInterface(
         type(ISpaceEntitlementModule).interfaceId
       ) == false
     ) revert Errors.EntitlementModuleNotSupported();
-
-    // TODO: go through all the entitlements and add them to the space
 
     // set default entitlement module
     space.entitlementTags = ["usergranted"];
@@ -90,12 +89,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return spaceId;
   }
 
-  // setDefaultEntitlement (address entitlement) internal onlyOwner {}
-  // getDefaultEntitlement private view returns (address)
-
-  /// @notice Connects the node network id to a space id
-  /// @param spaceId The space id to connect to the network id
-  /// @param networkId The network id to connect to the space id
+  /// @inheritdoc ISpaceManager
   function setNetworkIdToSpaceId(uint256 spaceId, string calldata networkId)
     external
   {
@@ -106,8 +100,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     spaceIdByNetworkId[networkId] = spaceId;
   }
 
-  /// @notice Adds an entitlement module to a space.
-  /// @param vars a struct representing the data to add the entitlement module.
+  /// @inheritdoc ISpaceManager
   function addEntitlementModule(DataTypes.AddEntitlementData calldata vars)
     external
   {
@@ -122,7 +115,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     }
   }
 
-  /// @notice Checks if a user has access to space or room based on the entitlements it holds
+  /// @inheritdoc ISpaceManager
   function isEntitled(
     uint256 spaceId,
     uint256 roomId,
@@ -148,6 +141,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return false;
   }
 
+  /// @inheritdoc ISpaceManager
   function getSpaceInfoBySpaceId(uint256 _spaceId)
     external
     view
@@ -164,6 +158,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
       );
   }
 
+  /// @inheritdoc ISpaceManager
   function getSpaces() external view returns (DataTypes.SpaceInfo[] memory) {
     DataTypes.SpaceInfo[] memory spaces = new DataTypes.SpaceInfo[](
       totalSpaces
@@ -182,6 +177,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return spaces;
   }
 
+  /// @inheritdoc ISpaceManager
   function getEntitlementsBySpaceId(uint256 spaceId)
     public
     view
@@ -197,6 +193,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return entitlements;
   }
 
+  /// @inheritdoc ISpaceManager
   function getSpaceIdByNetworkId(string calldata networkSpaceId)
     external
     view
@@ -205,6 +202,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return spaceIdByNetworkId[networkSpaceId];
   }
 
+  /// @inheritdoc ISpaceManager
   function getSpaceOwnerBySpaceId(uint256 _spaceId)
     external
     view
@@ -236,6 +234,8 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return true;
   }
 
+  /// @notice Checks if a string is a valid space name.
+  /// @param name The name of the space
   function _validateName(string calldata name) private pure {
     bytes memory byteName = bytes(name);
 

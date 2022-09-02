@@ -78,7 +78,6 @@ struct SpaceInfo {
 
 ```solidity
 enum EntitlementType {
-  Owner,
   Administrator,
   Moderator,
   Join,

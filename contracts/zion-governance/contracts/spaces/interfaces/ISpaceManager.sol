@@ -4,12 +4,24 @@ pragma solidity ^0.8.0;
 import {DataTypes} from "../libraries/DataTypes.sol";
 
 interface ISpaceManager {
-  // admin can add and remove mods
-  // mods can add and remove enttilements
+  /// @notice Create a new space.
+  /// @param vars The data to create the space.
   function createSpace(DataTypes.CreateSpaceData calldata vars)
     external
     returns (uint256);
 
+  /// @notice Connects the node network id to a space id
+  /// @param spaceId The space id to connect to the network id
+  /// @param networkId The network id to connect to the space id
+  function setNetworkIdToSpaceId(uint256 spaceId, string calldata networkId)
+    external;
+
+  /// @notice Checks if a user has access to space or room based on the entitlements it holds
+  /// @param spaceId The id of the space
+  /// @param roomId The id of the room
+  /// @param user The address of the user
+  /// @param entitlementType The type of entitlement to check
+  /// @return bool representing if the user has access or not
   function isEntitled(
     uint256 spaceId,
     uint256 roomId,
@@ -17,19 +29,42 @@ interface ISpaceManager {
     DataTypes.EntitlementType entitlementType
   ) external view returns (bool);
 
+  /// @notice Get the space information by id.
+  /// @param _spaceId The id of the space
+  /// @return SpaceInfo a struct representing the space info
   function getSpaceInfoBySpaceId(uint256 _spaceId)
     external
     view
     returns (DataTypes.SpaceInfo memory);
 
+  /// @notice Adds an entitlement module to a space.
+  /// @param vars a struct representing the data to add the entitlement module.
   function addEntitlementModule(DataTypes.AddEntitlementData calldata vars)
     external;
 
+  /// @notice Returns an array of multiple space information objects
+  /// @return SpaceInfo[] an array containing the space info
+  function getSpaces() external view returns (DataTypes.SpaceInfo[] memory);
+
+  /// @notice Returns entitlements for a space
+  /// @param spaceId The id of the space
+  /// @return entitlements an array of entitlements
   function getEntitlementsBySpaceId(uint256 spaceId)
     external
     view
     returns (address[] memory entitlements);
 
+  /// @notice Returns the space id by network id
+  /// @param networkSpaceId The network space id
+  /// @return uint256 Returns the space id
+  function getSpaceIdByNetworkId(string calldata networkSpaceId)
+    external
+    view
+    returns (uint256);
+
+  /// @notice Returns the owner of the space by space id
+  /// @param _spaceId The space id
+  /// @return ownerAddress The address of the owner of the space
   function getSpaceOwnerBySpaceId(uint256 _spaceId)
     external
     view
