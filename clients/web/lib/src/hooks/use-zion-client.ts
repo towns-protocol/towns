@@ -1,4 +1,4 @@
-import { BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -40,7 +40,7 @@ interface ZionClientImpl {
   ) => Promise<void>;
   getIsWalletIdRegistered: () => Promise<boolean>;
   getSpace: (
-    spaceId: BigNumberish,
+    spaceId: BigNumber,
   ) => Promise<DataTypes.SpaceInfoStructOutput | undefined>;
   getSpaces: () => Promise<DataTypes.SpaceInfoStructOutput[] | undefined>;
   inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>;

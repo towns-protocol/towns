@@ -37,7 +37,7 @@ import {
   zionSpaceManagerAbi,
 } from "./web3/ZionAbis";
 
-import { BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
 import { createMatrixClient } from "./matrix/CreateClient";
 import { createZionChannel } from "./matrix/CreateChannel";
@@ -237,7 +237,7 @@ export class ZionClient {
   /************************************************
    * getSpace
    *************************************************/
-  public async getSpace(spaceId: BigNumberish) {
+  public async getSpace(spaceId: BigNumber) {
     return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceId);
   }
 
