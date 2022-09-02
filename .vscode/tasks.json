@@ -1,0 +1,92 @@
+{
+    "version": "2.0.0",
+    "presentation": {
+      "echo": false,
+      "reveal": "always",
+      "focus": false,
+      "panel": "dedicated",
+      "showReuseMessage": true
+    },
+    "tasks": [
+      {
+        "label": "~Start Local Dev~",
+        "dependsOn": [
+          "StartDendrite",
+          "StartBlockchain",
+          "DeployZionGovernance",
+          "WatchSharedLib",
+          "StartApp",
+          "StartSampleApp"
+        ],
+        // Mark as the default build task so cmd/ctrl+shift+b will create them
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        // Try start the task on folder open
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "StartDendrite",
+        "type": "shell",
+        "command": "./scripts/start-local-dendrite.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      },
+      {
+        "label": "StartBlockchain",
+        "type": "shell",
+        "command": "./scripts/start-local-blockchain.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      },
+      {
+        "label": "DeployZionGovernance",
+        "type": "shell",
+        "command": "sleep 2 && ./scripts/deploy-zion-governance-contracts.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      },
+      {
+        "label": "WatchSharedLib",
+        "type": "shell",
+        "command": "cd clients/web/lib && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      },
+      {
+        "label": "StartApp",
+        "type": "shell",
+        "command": "cd clients/web/app && yarn dev",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      },
+      {
+        "label": "StartSampleApp",
+        "type": "shell",
+        "command": "cd clients/web/sample-app && yarn start",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      },
+    ]
+  }
