@@ -5,6 +5,7 @@ module.exports = {
   extends: ["@harmony/eslint-config", "plugin:node/recommended"],
   parserOptions: {
     ecmaVersion: 2020,
+    project: ["./tsconfig.json"],
     sourceType: "module",
   },
   rules: {
