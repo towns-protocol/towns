@@ -46,15 +46,15 @@ describe("sendThreadedMessageHooks", () => {
       }, [sendMessage]);
       const onEdit = useCallback(() => {
         void editMessage(channelId, "hello jane gm!", {
-          originalEventId: timeline[2].eventId,
+          originalEventId: timeline[10].eventId,
         });
       }, [channelId, editMessage, timeline]);
       const onRedact = useCallback(() => {
-        void redactEvent(channelId, timeline[2].eventId);
+        void redactEvent(channelId, timeline[10].eventId);
       }, [channelId, timeline, redactEvent]);
-      const formatMessage = (message: TimelineEvent) => {
-        return `${message.eventType}, ${message.fallbackContent}`;
-      };
+      function formatMessage(e: TimelineEvent) {
+        return `${e.fallbackContent} ${e.eventId}`;
+      }
       return (
         <>
           <RegisterAndJoinSpace
@@ -64,17 +64,18 @@ describe("sendThreadedMessageHooks", () => {
           <button onClick={onClickSendMessage}>Send Message</button>
           <button onClick={onEdit}>Edit</button>
           <button onClick={onRedact}>Redact</button>
+          // hard coding indexes to jump to jane's membership join event
           <div data-testid="message0">
-            {timeline.length > 0 ? formatMessage(timeline[0]) : "empty"}
+            {timeline.length > 8 ? formatMessage(timeline[8]) : "empty"}
           </div>
           <div data-testid="message1">
-            {timeline.length > 1 ? formatMessage(timeline[1]) : "empty"}
+            {timeline.length > 9 ? formatMessage(timeline[9]) : "empty"}
           </div>
           <div data-testid="message2">
-            {timeline.length > 2 ? formatMessage(timeline[2]) : "empty"}
+            {timeline.length > 10 ? formatMessage(timeline[10]) : "empty"}
           </div>
           <div id="allMessages">
-            {timeline.map((event) => event.fallbackContent).join("\n")}
+            {timeline.map((event) => formatMessage(event)).join("\n")}
           </div>
         </>
       );
