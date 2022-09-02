@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers";
 import "hardhat-packager";
 import "hardhat-preprocessor";
 import "hardhat-deploy";
+import "solidity-docgen";
 
 import path from "path";
 import fs from "fs";
@@ -103,6 +104,11 @@ const config: HardhatUserConfig = {
     cache: "./contracts/zion-governance/cache_hardhat",
     artifacts: "./contracts/zion-governance/dist/artifacts",
     tests: "./contracts/zion-governance/test",
+  },
+  docgen: {
+    outputDir: "./contracts/zion-governance/docs",
+    pages: "items",
+    exclude: ["governance"],
   },
 };
 

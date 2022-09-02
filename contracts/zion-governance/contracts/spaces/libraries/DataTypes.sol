@@ -19,13 +19,14 @@ library DataTypes {
   struct Space {
     uint256 spaceId;
     uint256 createdAt;
-    string networkSpaceId; // change to string
+    string networkSpaceId;
     string name;
     address creator;
     address owner; // can be the nft owner
     Space[] rooms; // mapping(uint256 => Room)
     mapping(string => address) entitlements;
     string[] entitlementTags;
+    // bool isActive; TODO: add flag to deactivate space
   }
 
   struct SpaceInfo {
@@ -58,7 +59,9 @@ library DataTypes {
   // DTO
   struct CreateSpaceData {
     string spaceName;
+    // string networkSpaceId;
     address[] entitlements;
+    // TODO: loop through [addresses] and add them to the space if they're registerd,
   }
 
   struct AddEntitlementData {

@@ -13,19 +13,27 @@ import {UserGrantedEntitlementModule} from "./entitlements/UserGrantedEntitlemen
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/// @title ZionSpaceManager
+/// @author HNT Labs
+/// @notice This contract manages the spaces and entitlements in the Zion ecosystem.
 contract ZionSpaceManager is Ownable, ISpaceManager {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
+  /// @notice variable representing the current total amount of spaces in the contract
   uint256 private totalSpaces = 0;
 
   // Storage
+  /// @notice Mapping representing if a space has been registered or not.
   mapping(string => bool) internal spaceIsRegistered;
+
+  /// @notice Mapping representing the space data by id.
   mapping(uint256 => DataTypes.Space) internal spaceById;
+
+  /// @notice Mapping representing the space id by network id
   mapping(string => uint256) internal spaceIdByNetworkId;
 
-  // mapping(uint256 => DataTypes.Entitlement[]) internal spaceEntitlementsBySpaceId;
-
   /// @notice Create a new space.
+  /// @param vars The data to create the space.
   function createSpace(DataTypes.CreateSpaceData calldata vars)
     external
     returns (uint256)
@@ -55,6 +63,8 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
       ) == false
     ) revert Errors.EntitlementModuleNotSupported();
 
+    // TODO: go through all the entitlements and add them to the space
+
     // set default entitlement module
     space.entitlementTags = ["usergranted"];
     space.entitlements["usergranted"] = vars.entitlements[0];
@@ -67,7 +77,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     DataTypes.EntitlementType[]
       memory entitlementTypes = new DataTypes.EntitlementType[](1);
 
-    // set the first entitlement type to be the administrator entitlement type
+    // set the first entitlement type to be the Administrator entitlement type
     entitlementTypes[0] = DataTypes.EntitlementType.Administrator;
 
     // add the user granted entitlement to the entitlement module
@@ -80,7 +90,12 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return spaceId;
   }
 
+  // setDefaultEntitlement (address entitlement) internal onlyOwner {}
+  // getDefaultEntitlement private view returns (address)
+
   /// @notice Connects the node network id to a space id
+  /// @param spaceId The space id to connect to the network id
+  /// @param networkId The network id to connect to the space id
   function setNetworkIdToSpaceId(uint256 spaceId, string calldata networkId)
     external
   {
@@ -92,7 +107,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
   }
 
   /// @notice Adds an entitlement module to a space.
-  // TODO: rename this to registerEntitlementModule
+  /// @param vars a struct representing the data to add the entitlement module.
   function addEntitlementModule(DataTypes.AddEntitlementData calldata vars)
     external
   {
@@ -107,7 +122,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     }
   }
 
-  // Getters
+  /// @notice Checks if a user has access to space or room based on the entitlements it holds
   function isEntitled(
     uint256 spaceId,
     uint256 roomId,
@@ -151,7 +166,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
 
   function getSpaces() external view returns (DataTypes.SpaceInfo[] memory) {
     DataTypes.SpaceInfo[] memory spaces = new DataTypes.SpaceInfo[](
-      totalSpaces - 1
+      totalSpaces
     );
     for (uint256 i = 0; i < totalSpaces; i++) {
       DataTypes.Space storage space = spaceById[i];

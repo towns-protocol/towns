@@ -38,15 +38,15 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
     zionSpaceManager = _zionSpaceManager;
   }
 
+  function name() public pure returns (string memory) {
+    return "Token";
+  }
+
   function setUserEntitlement(DataTypes.TokenEntitlementData calldata vars)
     public
   {
     ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
     address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(vars.spaceId);
-
-    // console.log("ownerAddress: ", ownerAddress);
-    // console.log("msg.sender: ", msg.sender);
-    // console.log("spaceManager: ", zionSpaceManager);
 
     require(
       ownerAddress == msg.sender || msg.sender == zionSpaceManager,
