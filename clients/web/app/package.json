@@ -70,7 +70,7 @@
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
     "@types/react-test-renderer": "^18.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.34.0",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.34.0",
     "@vanilla-extract/css": "^1.7.3",
     "@vanilla-extract/dynamic": "^2.0.2",

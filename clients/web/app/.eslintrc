@@ -18,7 +18,6 @@
     // "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
-    "react-app",
     "plugin:prettier/recommended",
     "prettier"
   ],
