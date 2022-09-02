@@ -9,7 +9,7 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Constants} from "./libraries/Constants.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
-import {UserGrantedEntitlementModule} from "./entitlements/UserGrantedEntitlement.sol";
+import {UserGrantedEntitlementModule} from "./entitlements/UserGrantedEntitlementModule.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
