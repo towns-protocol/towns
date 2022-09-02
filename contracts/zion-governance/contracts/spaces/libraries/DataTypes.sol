@@ -100,4 +100,13 @@ library DataTypes {
     uint256[] quantities;
     EntitlementType[] entitlementTypes;
   }
+
+  struct PurchasableEntitlementData {
+    uint256 spaceId;
+    uint256 roomId;
+    string tag;
+    string description;
+    uint256 value;
+    EntitlementType[] entitlementTypes;
+  }
 }
