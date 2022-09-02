@@ -34,6 +34,11 @@ contract ZionSpaceManagerTest is Test {
       spaceId
     );
 
+    DataTypes.SpaceInfo[] memory spaces = zionSpaceManager.getSpaces();
+
+    assertEq(spaces.length, 1);
+    assertEq(spaces[0].name, "test");
+    assertEq(spaces[0].spaceId, spaceId);
     assertEq(info.name, "test");
     assertEq(entitlements.length, 1);
     assertEq(entitlements[0], address(userGrantedEntitlementModule));

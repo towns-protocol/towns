@@ -168,8 +168,9 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     DataTypes.SpaceInfo[] memory spaces = new DataTypes.SpaceInfo[](
       totalSpaces
     );
+
     for (uint256 i = 0; i < totalSpaces; i++) {
-      DataTypes.Space storage space = spaceById[i];
+      DataTypes.Space storage space = spaceById[i + 1];
       spaces[i] = DataTypes.SpaceInfo(
         space.spaceId,
         space.createdAt,
