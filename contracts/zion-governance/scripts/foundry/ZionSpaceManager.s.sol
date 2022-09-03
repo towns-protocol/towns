@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
 
-import {TokenEntitlementModule} from "./../../contracts/spaces/entitlements/TokenEntitlement.sol";
-import {UserGrantedEntitlementModule} from "./../../contracts/spaces/entitlements/UserGrantedEntitlement.sol";
+import {TokenEntitlementModule} from "./../../contracts/spaces/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "./../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {ZionSpaceManager} from "../../contracts/spaces/ZionSpaceManager.sol";
 import {DataTypes} from "./../../contracts/spaces/libraries/DataTypes.sol";
 

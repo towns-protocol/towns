@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import {ZionSpaceManager} from "./../../contracts/spaces/ZionSpaceManager.sol";
-import {UserGrantedEntitlementModule} from "./../../contracts/spaces/entitlements/UserGrantedEntitlement.sol";
+import {UserGrantedEntitlementModule} from "./../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "./../../contracts/spaces/libraries/DataTypes.sol";
 
 contract ZionSpaceManagerTest is Test {

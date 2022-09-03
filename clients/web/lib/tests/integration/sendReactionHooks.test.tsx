@@ -18,7 +18,7 @@ import { TimelineEvent, ZTEvent } from "../../src/types/timeline-types";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("sendMessageHooks", () => {
+describe("sendReactionHooks", () => {
   jest.setTimeout(60000);
   test("user can join a room, see messages, and send messages", async () => {
     // create clients
@@ -38,29 +38,18 @@ describe("sendMessageHooks", () => {
     });
     // create a veiw for bob
     const TestRoomMessages = () => {
-      const { sendMessage, editMessage, redactEvent } = useZionClient();
+      const { sendReaction } = useZionClient();
       const channelId = useChannelId();
       const timeline = useChannelTimeline();
-      const messagesOrRedactions = timeline.filter(
+      const messages = timeline.filter(
         (x) =>
           x.eventType === ZTEvent.RoomMessage ||
-          x.eventType === ZTEvent.RoomRedaction,
+          x.eventType === ZTEvent.Reaction,
       );
-      // send message
-      const onClickSendMessage = useCallback(() => {
-        void sendMessage(janesChannelId, "hello jane");
-      }, [sendMessage]);
-      // edit message
-      const onEdit = useCallback(() => {
-        void editMessage(channelId, "hello jane gm!", {
-          originalEventId: messagesOrRedactions[1].eventId,
-        });
-      }, [channelId, editMessage, messagesOrRedactions]);
-      // redact message
-      const onRedact = useCallback(() => {
-        void redactEvent(channelId, messagesOrRedactions[1].eventId);
-      }, [channelId, messagesOrRedactions, redactEvent]);
-      // format for easy reading
+      const onSendReaction = useCallback(() => {
+        void sendReaction(channelId, messages[0].eventId, "👍");
+      }, [channelId, messages, sendReaction]);
+      // todo redact reaction
       function formatMessage(e: TimelineEvent) {
         return `${e.fallbackContent} eventId: ${e.eventId}`;
       }
@@ -70,19 +59,13 @@ describe("sendMessageHooks", () => {
             spaceId={janesSpaceId}
             channelId={janesChannelId}
           />
-          <button onClick={onClickSendMessage}>Send Message</button>
-          <button onClick={onEdit}>Edit</button>
-          <button onClick={onRedact}>Redact</button>
+          <button onClick={onSendReaction}>React</button>
           // hard coding indexes to jump to jane's membership join event
           <div data-testid="message0">
-            {messagesOrRedactions.length > 0
-              ? formatMessage(messagesOrRedactions[0])
-              : "empty"}
+            {messages.length > 0 ? formatMessage(messages[0]) : "empty"}
           </div>
           <div data-testid="message1">
-            {messagesOrRedactions.length > 1
-              ? formatMessage(messagesOrRedactions[1])
-              : "empty"}
+            {messages.length > 1 ? formatMessage(messages[1]) : "empty"}
           </div>
           <div id="allMessages">
             {timeline.map((event) => formatMessage(event)).join("\n")}
@@ -104,11 +87,9 @@ describe("sendMessageHooks", () => {
     const channelMembership = screen.getByTestId("channelMembership");
     const message0 = screen.getByTestId("message0");
     const message1 = screen.getByTestId("message1");
-    const sendMessageButton = screen.getByRole("button", {
-      name: "Send Message",
+    const sendReactionButton = screen.getByRole("button", {
+      name: "React",
     });
-    const editButton = screen.getByRole("button", { name: "Edit" });
-    const redactButton = screen.getByRole("button", { name: "Redact" });
     // wait for the channel join
     await waitFor(() =>
       expect(channelMembership).toHaveTextContent(Membership.Join),
@@ -118,9 +99,9 @@ describe("sendMessageHooks", () => {
     // expect our message to show
     await waitFor(() => expect(message0).toHaveTextContent("hello bob"));
     // have bob send a message to jane
-    fireEvent.click(sendMessageButton);
+    fireEvent.click(sendReactionButton);
     // expect it to render as well
-    await waitFor(() => expect(message1).toHaveTextContent("hello jane"));
+    await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.Reaction));
     // expect jane to recieve the message
     expect(
       await jane.eventually(
@@ -129,31 +110,9 @@ describe("sendMessageHooks", () => {
             .getRoom(janesChannelId)
             ?.getLiveTimeline()
             .getEvents()
-            .filter((e) => e.getType() === "m.room.message")
-            .at(-1)
-            ?.getContent().body === "hello jane",
+            .filter((e) => e.getType() === ZTEvent.Reaction)
+            .at(-1) != undefined,
       ),
     ).toBe(true);
-    // edit the event
-    fireEvent.click(editButton);
-    // expect the event to be edited
-    await waitFor(() => expect(message1).toHaveTextContent("hello jane gm!"));
-    // expect jane to see the edited event
-    expect(
-      await jane.eventually(
-        (x) =>
-          x
-            .getRoom(janesChannelId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .filter((e) => e.getType() === "m.room.message")
-            .at(-1)
-            ?.getContent().body === "hello jane gm!",
-      ),
-    ).toBe(true);
-    // redact the event
-    fireEvent.click(redactButton);
-    // exect the message to be empty
-    await waitFor(() => expect(message1).toHaveTextContent("m.room.redaction"));
   });
 });

@@ -63,6 +63,11 @@ interface ZionClientImpl {
     options?: SendMessageOptions,
   ) => Promise<void>;
   sendNotice: (roomId: RoomIdentifier, message: string) => Promise<void>;
+  sendReaction: (
+    roomId: RoomIdentifier,
+    eventId: string,
+    reaction: string,
+  ) => Promise<void>;
   setPowerLevel: (
     roomId: RoomIdentifier,
     current: string | PowerLevel,
@@ -108,6 +113,7 @@ export function useZionClient(): ZionClientImpl {
     registerWallet,
     scrollback: useWithCatch(client?.scrollback.bind(client)),
     sendMessage: useWithCatch(client?.sendMessage.bind(client)),
+    sendReaction: useWithCatch(client?.sendReaction.bind(client)),
     sendNotice: useWithCatch(client?.sendNotice.bind(client)),
     setPowerLevel: useWithCatch(client?.setPowerLevel.bind(client)),
     syncSpace,

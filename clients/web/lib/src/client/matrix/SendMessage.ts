@@ -6,12 +6,12 @@ import {
 } from "../../types/matrix-types";
 
 /** treat message as a reply to parentId if specified */
-export const sendZionMessage = async (props: {
+export async function sendZionMessage(props: {
   matrixClient: MatrixClient;
   roomId: RoomIdentifier;
   message: string;
   options: SendMessageOptions;
-}) => {
+}): Promise<void> {
   const { matrixClient, roomId, message, options } = props;
   const content = {
     body: `${message}`,
@@ -50,4 +50,4 @@ export const sendZionMessage = async (props: {
       cb,
     );
   }
-};
+}
