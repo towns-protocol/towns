@@ -32,6 +32,24 @@ export enum ZTEvent {
   SpaceParent = "m.space.parent",
 }
 
+/// a timeline event should have one or none of the following fields set
+export type TimelineEvent_OneOf =
+  | RoomCanonicalAliasEvent
+  | RoomHistoryVisibilityEvent
+  | RoomJoinRulesEvent
+  | RoomAvatarEvent
+  | RoomCreateEvent
+  | RoomEncryptedEvent
+  | RoomMemberEvent
+  | RoomMessageEvent
+  | RoomNameEvent
+  | RoomRedactionEvent
+  | RoomPowerLevelsEvent
+  | SpaceChildEvent
+  | SpaceParentEvent;
+// NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
+// and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
+
 export interface RoomAvatarEvent {
   kind: ZTEvent.RoomAvatar;
   url?: string;
@@ -118,24 +136,6 @@ export interface SpaceParentEvent {
   kind: ZTEvent.SpaceParent;
   parentId: string;
 }
-
-/// a timeline event should have one or none of the following fields set
-export type TimelineEvent_OneOf =
-  | RoomCanonicalAliasEvent
-  | RoomHistoryVisibilityEvent
-  | RoomJoinRulesEvent
-  | RoomAvatarEvent
-  | RoomCreateEvent
-  | RoomEncryptedEvent
-  | RoomMemberEvent
-  | RoomMessageEvent
-  | RoomNameEvent
-  | RoomRedactionEvent
-  | RoomPowerLevelsEvent
-  | SpaceChildEvent
-  | SpaceParentEvent;
-// NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
-// and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
 
 export interface TimelineEvent {
   eventId: string;

@@ -18,7 +18,7 @@ import { TimelineEvent, ZTEvent } from "../../src/types/timeline-types";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe("sendThreadedMessageHooks", () => {
+describe("sendMessageHooks", () => {
   jest.setTimeout(60000);
   test("user can join a room, see messages, and send messages", async () => {
     // create clients
@@ -46,19 +46,23 @@ describe("sendThreadedMessageHooks", () => {
           x.eventType === ZTEvent.RoomMessage ||
           x.eventType === ZTEvent.RoomRedaction,
       );
+      // send message
       const onClickSendMessage = useCallback(() => {
         void sendMessage(janesChannelId, "hello jane");
       }, [sendMessage]);
+      // edit message
       const onEdit = useCallback(() => {
         void editMessage(channelId, "hello jane gm!", {
-          originalEventId: timeline[10].eventId,
+          originalEventId: messagesOrRedactions[1].eventId,
         });
-      }, [channelId, editMessage, timeline]);
+      }, [channelId, editMessage, messagesOrRedactions]);
+      // redact message
       const onRedact = useCallback(() => {
-        void redactEvent(channelId, timeline[10].eventId);
-      }, [channelId, timeline, redactEvent]);
+        void redactEvent(channelId, messagesOrRedactions[1].eventId);
+      }, [channelId, messagesOrRedactions, redactEvent]);
+      // format for easy reading
       function formatMessage(e: TimelineEvent) {
-        return `${e.fallbackContent} ${e.eventId}`;
+        return `${e.fallbackContent} eventId: ${e.eventId}`;
       }
       return (
         <>

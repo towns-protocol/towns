@@ -6,7 +6,7 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 describe("sendAMessage", () => {
   // usefull for debugging or running against cloud servers
   jest.setTimeout(30 * 1000);
-  // test: sendAMessage
+  // test:
   test("create room, invite user, accept invite, and send message", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);

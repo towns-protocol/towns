@@ -146,11 +146,7 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
             }
             return [
               ...timeline.slice(0, index),
-              {
-                ...timelineEvent,
-                eventId: event.getId(),
-                isLocalPending: false,
-              },
+              toEvent(event),
               ...timeline.slice(index + 1),
             ];
           });
@@ -247,7 +243,7 @@ event.redact
 
 function toEvent(event: MatrixEvent): TimelineEvent {
   const { content, error } = toZionContent(event);
-  const fbc = getFallbackContent(event, content, error);
+  const fbc = `${event.getType()} ${getFallbackContent(event, content, error)}`;
   console.log("!!!! to event", event.getId(), fbc);
   return {
     eventId: event.getId(),
@@ -435,7 +431,7 @@ function toZionContent(event: MatrixEvent): {
         roomId: event.getRoomId(),
       });
       return {
-        error: `${describe()} unhandled event`,
+        error: `${describe()} unhandled`,
       };
   }
 }
@@ -454,36 +450,36 @@ function getFallbackContent(
   const eventType = event.getType();
   switch (content.kind) {
     case ZTEvent.RoomAvatar:
-      return `${eventType} url: ${content.url ?? "undefined"}`;
+      return `url: ${content.url ?? "undefined"}`;
     case ZTEvent.RoomCanonicalAlias: {
       const alt = (content.altAliases ?? []).join(", ");
-      return `${eventType} alias: ${content.alias}, alt alaises: ${alt}`;
+      return `alias: ${content.alias}, alt alaises: ${alt}`;
     }
     case ZTEvent.RoomCreate:
-      return `${eventType} type: ${content.type ?? "none"}`;
+      return `type: ${content.type ?? "none"}`;
     case ZTEvent.RoomEncrypted:
-      return `${eventType} ~Encrypted~`;
+      return `~Encrypted~`;
     case ZTEvent.RoomHistoryVisibility:
-      return `${eventType} newValue: ${content.historyVisibility}`;
+      return `newValue: ${content.historyVisibility}`;
     case ZTEvent.RoomJoinRules:
-      return `${eventType} newValue: ${content.joinRule}`;
+      return `newValue: ${content.joinRule}`;
     case ZTEvent.RoomMember: {
       const name = content.displayName ?? content.userId;
       const avatar = content.avatarUrl ?? "none";
-      return `${eventType} [${content.membership}] name: ${name} avatar: ${avatar}`;
+      return `[${content.membership}] name: ${name} avatar: ${avatar}`;
     }
     case ZTEvent.RoomMessage:
-      return `${eventType} ${content.sender.displayName}: ${content.body}`;
+      return `${content.sender.displayName}: ${content.body}`;
     case ZTEvent.RoomName:
-      return `${eventType} newValue: ${content.name}`;
+      return `newValue: ${content.name}`;
     case ZTEvent.RoomRedaction:
-      return `${eventType} ${content.sender.displayName}: ~Redacted~`;
+      return `${content.sender.displayName}: ~Redacted~`;
     case ZTEvent.RoomPowerLevels:
       return `${eventType}`;
     case ZTEvent.SpaceChild:
-      return `${eventType} childId: ${content.childId}`;
+      return `childId: ${content.childId}`;
     case ZTEvent.SpaceParent:
-      return `${eventType} parentId: ${content.parentId}`;
+      return `parentId: ${content.parentId}`;
     default:
       staticAssertNever(content);
       return `Unreachable`;
