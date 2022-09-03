@@ -1,6 +1,6 @@
 import { EmojiData } from "emoji-mart";
 import React, { useCallback, useContext } from "react";
-import { RoomIdentifier } from "use-zion-client";
+import { RoomIdentifier, useZionClient } from "use-zion-client";
 import { EmojiPickerButton } from "@components/EmojiPickerButton";
 import { TimelineMessageContext } from "@components/MessageTimeline";
 import { IconButton, Stack } from "@ui";
@@ -25,6 +25,7 @@ const style = {
 export const MessageContextMenu = (props: Props) => {
   const { eventId, channelId, spaceId } = props;
 
+  const { sendReaction } = useZionClient();
   const timelineContext = useContext(TimelineMessageContext);
 
   const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId);
@@ -39,7 +40,15 @@ export const MessageContextMenu = (props: Props) => {
   }, [eventId, timelineContext]);
 
   const onSelectEmoji = useCallback((data: EmojiData) => {
-    // timelineContext?.onReact(eventId, data);
+    if (!channelId) {
+      console.error("no channel id");
+      return;
+    }
+    if (!data.id) {
+      console.error("no emoji id");
+      return;
+    }
+    sendReaction(channelId, eventId, data.id);
   }, []);
 
   return (

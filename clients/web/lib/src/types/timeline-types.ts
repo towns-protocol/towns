@@ -17,6 +17,7 @@ import { Membership, PowerLevels } from "./matrix-types";
 
 // Zion Timeline Event
 export enum ZTEvent {
+  Reaction = "m.reaction",
   RoomAvatar = "m.room.avatar",
   RoomCanonicalAlias = "m.room.canonical_alias",
   RoomCreate = "m.room.create",
@@ -34,6 +35,7 @@ export enum ZTEvent {
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
+  | ReactionEvent
   | RoomCanonicalAliasEvent
   | RoomHistoryVisibilityEvent
   | RoomJoinRulesEvent
@@ -49,6 +51,17 @@ export type TimelineEvent_OneOf =
   | SpaceParentEvent;
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
+
+export interface ReactionEvent {
+  kind: ZTEvent.Reaction;
+  sender: {
+    displayName: string;
+    avatarUrl?: string;
+    id: string;
+  };
+  targetEventId: string;
+  reaction: string;
+}
 
 export interface RoomAvatarEvent {
   kind: ZTEvent.RoomAvatar;

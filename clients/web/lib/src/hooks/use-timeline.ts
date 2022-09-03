@@ -266,6 +266,28 @@ function toZionContent(event: MatrixEvent): {
   const eventType = event.getType() as ZTEvent;
 
   switch (eventType) {
+    case ZTEvent.Reaction: {
+      const relation = event.getRelation();
+      const targetEventId = relation?.event_id;
+      const reaction = relation?.key;
+      if (!targetEventId || !reaction) {
+        return {
+          error: `${describe()} invalid reaction event`,
+        };
+      }
+      return {
+        content: {
+          kind: eventType,
+          sender: {
+            id: event.getSender(),
+            displayName: event.sender?.rawDisplayName ?? event.getSender(),
+            avatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
+          },
+          targetEventId: targetEventId,
+          reaction: reaction,
+        },
+      };
+    }
     case ZTEvent.RoomAvatar:
       return {
         content: {
@@ -449,6 +471,8 @@ function getFallbackContent(
   }
   const eventType = event.getType();
   switch (content.kind) {
+    case ZTEvent.Reaction:
+      return `${content.sender.displayName} reacted with ${content.reaction} to ${content.targetEventId}`;
     case ZTEvent.RoomAvatar:
       return `url: ${content.url ?? "undefined"}`;
     case ZTEvent.RoomCanonicalAlias: {

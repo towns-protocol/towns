@@ -10,6 +10,7 @@ import {
   RoomMemberEvent,
   User,
   UserEvent,
+  RelationType,
 } from "matrix-js-sdk";
 import {
   CouncilNFT,
@@ -320,6 +321,25 @@ export class ZionClient {
       message,
       options,
     });
+  }
+
+  public async sendReaction(
+    roomId: RoomIdentifier,
+    eventId: string,
+    reaction: string,
+  ): Promise<void> {
+    const newEventId = await this.client.sendEvent(
+      roomId.matrixRoomId,
+      EventType.Reaction,
+      {
+        "m.relates_to": {
+          rel_type: RelationType.Annotation,
+          event_id: eventId,
+          key: reaction,
+        },
+      },
+    );
+    console.log("sendReaction", newEventId);
   }
 
   /************************************************
