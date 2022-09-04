@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { BigNumber } from "ethers";
 import {
   CreateChannelInfo,
@@ -92,33 +93,33 @@ export function useZionClient(): ZionClientImpl {
 
   return {
     clientRunning,
-    createChannel: useWithCatch(client?.createChannel.bind(client)),
-    createSpace: useWithCatch(client?.createSpace.bind(client)),
+    createChannel: useWithCatch(client?.createChannel),
+    createSpace: useWithCatch(client?.createSpace),
     createWeb3Space: useWithCatch(
-      client?.createWeb3Space.bind(client),
+      client?.createWeb3Space,
       ZionClientEvent.NewSpace,
     ),
-    editMessage: useWithCatch(client?.editMessage.bind(client)),
+    editMessage: useWithCatch(client?.editMessage),
     getIsWalletIdRegistered,
-    getSpace: useWithCatch(client?.getSpace.bind(client)),
-    getSpaces: useWithCatch(client?.getSpaces.bind(client)),
-    inviteUser: useWithCatch(client?.inviteUser.bind(client)),
+    getSpace: useWithCatch(client?.getSpace),
+    getSpaces: useWithCatch(client?.getSpaces),
+    inviteUser: useWithCatch(client?.inviteUser),
     joinRoom,
-    leaveRoom: useWithCatch(client?.leave.bind(client)),
+    leaveRoom: useWithCatch(client?.leave),
     loginWithPassword,
     loginWithWallet,
     logout,
-    redactEvent: useWithCatch(client?.redactEvent.bind(client)),
+    redactEvent: useWithCatch(client?.redactEvent),
     registerPasswordUser,
     registerWallet,
-    scrollback: useWithCatch(client?.scrollback.bind(client)),
-    sendMessage: useWithCatch(client?.sendMessage.bind(client)),
-    sendReaction: useWithCatch(client?.sendReaction.bind(client)),
-    sendNotice: useWithCatch(client?.sendNotice.bind(client)),
-    setPowerLevel: useWithCatch(client?.setPowerLevel.bind(client)),
+    scrollback: useWithCatch(client?.scrollback),
+    sendMessage: useWithCatch(client?.sendMessage),
+    sendReaction: useWithCatch(client?.sendReaction),
+    sendNotice: useWithCatch(client?.sendNotice),
+    setPowerLevel: useWithCatch(client?.setPowerLevel),
     syncSpace,
-    setDisplayName: useWithCatch(client?.setDisplayName.bind(client)),
-    setAvatarUrl: useWithCatch(client?.setAvatarUrl.bind(client)),
+    setDisplayName: useWithCatch(client?.setDisplayName),
+    setAvatarUrl: useWithCatch(client?.setAvatarUrl),
   };
 }
 
@@ -128,12 +129,13 @@ const useWithCatch = <T extends Array<any>, U>(
   event: ZionClientEvent | undefined = undefined,
 ) => {
   const { triggerZionClientEvent } = useMatrixStore();
+  const client = useZionContext().client;
   return useMemo(
     () =>
       async (...args: T): Promise<U | undefined> => {
-        if (fn) {
+        if (fn && client) {
           try {
-            const value = await fn(...args);
+            const value = await fn.apply(client, args);
             if (event) {
               triggerZionClientEvent(event);
             }
@@ -149,6 +151,6 @@ const useWithCatch = <T extends Array<any>, U>(
           return Promise.resolve(undefined);
         }
       },
-    [triggerZionClientEvent, fn, event],
+    [fn, client, event, triggerZionClientEvent],
   );
 };
