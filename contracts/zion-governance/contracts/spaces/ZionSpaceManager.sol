@@ -204,10 +204,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
    * Internal functions
    */
 
-  function addDefaultEntitlementModule(DataTypes.Space storage space)
-    internal
-    onlyOwner
-  {
+  function addDefaultEntitlementModule(DataTypes.Space storage space) internal {
     // check if vars.entitlements support interface
     if (
       IERC165(defaultEntitlementModule).supportsInterface(
