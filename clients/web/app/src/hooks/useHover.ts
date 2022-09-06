@@ -39,7 +39,7 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("click", onMouseMove);
     };
-  }, [ref, rootLayerRef, isHover]);
+  }, [isHover, ref, rootLayerRef]);
 
   return { isHover, onMouseEnter };
 };

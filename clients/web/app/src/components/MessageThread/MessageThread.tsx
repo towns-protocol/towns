@@ -1,4 +1,6 @@
 import React from "react";
+import useEvent from "react-use-event-hook";
+import { useMatrixStore, useZionClient } from "use-zion-client";
 import { useChannelContext } from "use-zion-client/dist/components/ChannelContextProvider";
 import { TimelineMessage } from "@components/MessageTimeline/events/TimelineMessage";
 import { MessageTimeline } from "@components/MessageTimeline/MessageTimeline";
@@ -6,12 +8,14 @@ import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Divider, IconButton, Stack } from "@ui";
 import { useMessageThread } from "hooks/useFixMeMessageThread";
 import { useSendReply } from "hooks/useSendReply";
+import { getIsRoomMessageContent } from "utils/ztevent_util";
 
 type Props = {
   messageId: string;
   onClose?: () => void;
 };
 export const MessageThread = (props: Props) => {
+  const { userId } = useMatrixStore();
   const { channelId, spaceId } = useChannelContext();
   const { messageId } = props;
   const { parentMessage, messages } = useMessageThread(messageId);
@@ -20,6 +24,13 @@ export const MessageThread = (props: Props) => {
   const onSend = (value: string) => {
     sendReply(value);
   };
+  const { sendReaction } = useZionClient();
+  const onReaction = useEvent((eventId: string, reaction: string) => {
+    sendReaction(channelId, eventId, reaction);
+  });
+
+  const parentMessageContent = getIsRoomMessageContent(parentMessage);
+
   return (
     <Stack absoluteFill padding gap position="relative">
       <MessageWindow onClose={props.onClose}>
@@ -32,11 +43,14 @@ export const MessageThread = (props: Props) => {
               minHeight: "0px",
             }}
           >
-            {parentMessage && (
+            {parentMessage && parentMessageContent && (
               <TimelineMessage
+                userId={userId}
                 channelId={channelId}
                 event={parentMessage}
+                eventContent={parentMessageContent}
                 spaceId={spaceId}
+                onReaction={onReaction}
               />
             )}
             {!!messages.length && (

@@ -4,8 +4,10 @@ import {
   randFloat,
   randNumber,
   randSentence,
+  randUser,
   seed,
 } from "@ngneat/falso";
+import { MessageReactions } from "hooks/useFixMeMessageThread";
 import { fakeUsers } from "./UserData";
 
 seed(`update-${new Date().getDay()}`);
@@ -26,7 +28,7 @@ export interface Message {
   id: string;
   body: string;
   userId: string;
-  reactions?: { [key: string]: number };
+  reactions?: MessageReactions;
   replies?: { userIds: number[]; fakeLength: number };
   imageUrl?: string;
   link?: { title: string; href: string };
@@ -70,10 +72,17 @@ function getRandomImage(chance = 0.5) {
 }
 
 function getRandomReactions() {
-  const reactions: { [key: string]: number } = {};
+  const reactions: MessageReactions = new Map();
   for (let i = 0, len = randNumber({ max: 5 }); i < len; i++) {
     const e = rand(emojis);
-    reactions[e] = randNumber({ min: 1, max: 245 });
+    reactions.set(
+      e,
+      new Set(
+        Array(randNumber({ min: 1, max: 245 }))
+          .fill(undefined)
+          .map((r) => randUser().id),
+      ),
+    );
   }
   return reactions;
 }

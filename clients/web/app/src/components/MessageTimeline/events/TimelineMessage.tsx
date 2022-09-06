@@ -3,90 +3,80 @@ import { RelationType } from "matrix-js-sdk";
 import React from "react";
 
 import {
-  MessageType,
   RoomIdentifier,
   RoomMessageEvent,
   TimelineEvent,
-  ZTEvent,
 } from "use-zion-client";
 import { Message } from "@components/Message";
-import { MessageReplies } from "@components/Replies/MessageReplies";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
+import { getMessageBody } from "utils/ztevent_util";
+import { MessageReactions } from "hooks/useFixMeMessageThread";
 import { TimelineMessageEditor } from "./TimelineMessageEditor";
 
 type Props = {
+  userId: string | null;
   channelId: RoomIdentifier;
   editing?: boolean;
   event: TimelineEvent;
+  eventContent: RoomMessageEvent;
   minimal?: boolean;
   own?: boolean;
-  replyCount?: number;
+  reactions?: MessageReactions;
+  replies?: number;
   spaceId: RoomIdentifier;
+  onReaction: (eventId: string, reaction: string) => void;
 };
-
-export function isRoomMessageContent(event: TimelineEvent) {
-  return event?.eventType === ZTEvent.RoomMessage
-    ? (event.content as RoomMessageEvent)
-    : undefined;
-}
 
 export const TimelineMessage = (props: Props) => {
   const {
+    userId,
     channelId,
     editing: isEditing,
     event,
+    eventContent,
     minimal: isMinimal,
     own: isOwn,
-    replyCount,
+    reactions,
+    replies: replyCount,
     spaceId,
+    onReaction,
   } = props;
-
-  const m = isRoomMessageContent(event);
 
   const date = formatDistance(Date.now(), event.originServerTs);
 
-  return !m ? null : (
+  return !event ? null : (
     <Message
+      userId={userId}
       date={date}
-      avatar={m.sender.avatarUrl}
+      avatar={eventContent.sender.avatarUrl}
       channelId={channelId}
       editable={isOwn && !event.isLocalPending}
       eventId={event.eventId}
       minimal={isMinimal}
-      name={`${m.sender.displayName}`}
+      name={`${eventContent.sender.displayName}`}
       paddingBottom={isMinimal ? "sm" : "sm"}
       paddingTop={isMinimal ? "sm" : "lg"}
       paddingX="lg"
       spaceId={spaceId}
+      reactions={reactions}
+      replies={replyCount}
+      onReaction={onReaction}
     >
       {isEditing ? (
         <TimelineMessageEditor
-          initialValue={m.body}
+          initialValue={eventContent.body}
           eventId={event.eventId}
           channelId={channelId}
         />
       ) : (
         <RichTextPreview
-          content={getMessageBody(event.eventId, m)}
-          edited={m.content["m.relates_to"]?.rel_type === RelationType.Replace}
+          content={getMessageBody(event.eventId, eventContent)}
+          edited={
+            eventContent.content["m.relates_to"]?.rel_type ===
+            RelationType.Replace
+          }
         />
-      )}
-      {replyCount && (
-        <MessageReplies replyCount={replyCount} eventId={event.eventId} />
       )}
     </Message>
   );
 };
-
-function getMessageBody(eventId: string, message: RoomMessageEvent): string {
-  switch (message.msgType) {
-    case MessageType.WenMoon:
-      return `${message.body} 
-      ${eventId}
-      `;
-    case MessageType.Text:
-      return message.body;
-    default:
-      return `${message.body}\n*Unsupported message type* **${message.msgType}**`;
-  }
-}

@@ -4,18 +4,19 @@ import { RoomIdentifier } from "use-zion-client";
 import { Reactions } from "@components/Reactions/Reactions";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
 import { useHover } from "hooks/useHover";
-import { Replies } from "@components/Replies";
+import { MessageReactions } from "hooks/useFixMeMessageThread";
+import { MessageReplies } from "@components/Replies/MessageReplies";
 import { MessageContextMenu } from "./MessageContextMenu";
 
 type Props = {
+  userId?: string | null;
   avatar?: string | React.ReactNode;
   name: string;
   condensed?: boolean;
   minimal?: boolean;
   channel?: string;
-  reactions?: { [key: string]: number };
-  userReaction?: string;
-  replies?: { userIds: number[]; fakeLength?: number };
+  reactions?: MessageReactions;
+  replies?: number;
   date?: string;
   editing?: boolean;
   editable?: boolean;
@@ -23,6 +24,7 @@ type Props = {
   channelId?: RoomIdentifier;
   spaceId?: RoomIdentifier;
   children?: React.ReactNode;
+  onReaction?: (eventId: string, reaction: string) => void;
   rounded?: BoxProps["rounded"];
   padding?: BoxProps["padding"];
   background?: BoxProps["background"];
@@ -30,6 +32,7 @@ type Props = {
 
 export const Message = (props: Props) => {
   const {
+    userId,
     eventId,
     avatar,
     condensed,
@@ -40,9 +43,9 @@ export const Message = (props: Props) => {
     editable: isEditable,
     editing: isEditing,
     minimal: isMinimal,
+    onReaction,
     reactions,
     replies,
-    userReaction,
     date,
     children,
     ...boxProps
@@ -108,19 +111,24 @@ export const Message = (props: Props) => {
             )}
           </Box>
         )}
-        <Box pointerEvents="auto" fontSize="md" color="gray1">
+        <Stack pointerEvents="auto" fontSize="md" color="gray1" gap="md">
           {children}
-        </Box>
+        </Stack>
 
         {reactions ? (
           <Stack horizontal>
-            <Reactions reactions={reactions} userReaction={userReaction} />
+            <Reactions
+              userId={userId}
+              parentId={eventId}
+              reactions={reactions}
+              onReaction={onReaction}
+            />
           </Stack>
         ) : null}
 
-        {replies && (
+        {replies && eventId && (
           <Stack horizontal>
-            <Replies replies={replies} />
+            <MessageReplies eventId={eventId} replyCount={replies} />
           </Stack>
         )}
 

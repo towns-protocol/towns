@@ -57,18 +57,58 @@ export const useMessageThread = (messageId: string) => {
  * Collect messages with replies
  * FIXME: rough implementation
  **/
-export const useMessageReplyCount = (messages: TimelineEvent[]) => {
+export const useTimelineRepliesMap = (messages: TimelineEvent[]) => {
   return useMemo(
     () =>
       messages.reduce((threads, m) => {
         const reply = getMessageAsReply(m);
         const parentId = reply && reply["m.relates_to"].event_id;
         if (parentId) {
-          threads[parentId] = threads[parentId] ? threads[parentId] + 1 : 1;
+          threads.set(parentId, (threads.get(parentId) ?? 0) + 1);
         }
         return threads;
-      }, {} as { [key: string]: number }),
+      }, new Map() as Map<string, number>),
     [messages],
+  );
+};
+
+export type MessageReactions = Map<
+  /* reaction name */
+  string,
+  /* set of user ids */
+  Set<string>
+>;
+
+export const useTimelineReactionsMap = (events: TimelineEvent[]) => {
+  return useMemo(
+    () =>
+      events.reduce((reactionsMap, m) => {
+        const content =
+          m.content?.kind === ZTEvent.Reaction ? m.content : undefined;
+
+        const parentId = content && content.targetEventId;
+
+        if (parentId) {
+          const reaction = content.reaction;
+
+          let messageReactions = reactionsMap.get(parentId);
+
+          if (typeof messageReactions === "undefined") {
+            messageReactions = new Map();
+            reactionsMap.set(parentId, messageReactions);
+          }
+
+          let reactions = messageReactions.get(reaction);
+          if (typeof reactions === "undefined") {
+            reactions = new Set();
+            messageReactions.set(reaction, reactions);
+          }
+          reactions.add(content.sender.id);
+        }
+
+        return reactionsMap;
+      }, new Map()),
+    [events],
   );
 };
 

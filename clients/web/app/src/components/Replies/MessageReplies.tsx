@@ -18,8 +18,9 @@ export const MessageReplies = (props: {
     () => onOpenMessageThread(eventId),
     [onOpenMessageThread, eventId],
   );
+
   return (
-    <Box horizontal paddingY="md">
+    <Box horizontal>
       <Box
         shrink
         centerContent

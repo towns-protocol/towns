@@ -20,7 +20,7 @@ export const SpaceThreads = () => {
             avatar={<Avatar size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
-            reactions={{ "👋": 20 }}
+            reactions={new Map([["waving_hand", new Set(["a", "b", "c"])]])}
           >
             <Paragraph>
               gm! name is francine groves and I&apos;m a big nft fan. I
@@ -63,7 +63,12 @@ export const SpaceThreads = () => {
             avatar={<Avatar size="avatar_sm" />}
             name="sunsoutapersout"
             date="Today at 11:01AM"
-            reactions={{ "👀": 20, "🤑": 2 }}
+            reactions={
+              new Map([
+                ["eyes", new Set(["a"])],
+                ["waving_hand", new Set(["a", "b", "c"])],
+              ])
+            }
           >
             <Paragraph>
               I&apos;m a farmer and herbalist (also pagan and ordained), own a

@@ -13,7 +13,8 @@ import { RoomIdentifier, TimelineEvent, useZionClient } from "use-zion-client";
 import { Button, Stack } from "@ui";
 import {
   useFilterReplies,
-  useMessageReplyCount,
+  useTimelineReactionsMap,
+  useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
 import { MessageTimeline } from "./MessageTimeline";
 
@@ -43,7 +44,8 @@ export const MessageTimelineScroller = (props: Props) => {
     events.length,
   );
 
-  const repliedEvents = useMessageReplyCount(events);
+  const messageRepliesMap = useTimelineRepliesMap(events);
+  const messageReactionsMap = useTimelineReactionsMap(events);
 
   // strip-out replies on main timeline (hack!)
   const { filteredMessages } = useFilterReplies(events, !props.hideThreads);
@@ -67,7 +69,8 @@ export const MessageTimelineScroller = (props: Props) => {
             channelId={channelId}
             spaceId={spaceId}
             events={messages}
-            messageRepliesMap={repliedEvents}
+            messageRepliesMap={messageRepliesMap}
+            messageReactionsMap={messageReactionsMap}
           />
           {props.after}
         </Stack>

@@ -7074,6 +7074,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-emoji@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "@types/node-emoji@npm:1.8.1"
+  checksum: c6be9052dced686b93a7ee9f0b1401321df9f44281c0084f0c506d256016bc9093defcad68d9083f5179e292a8794cb710d64e72ab4fb529fab032002fe6d5b5
+  languageName: node
+  linkType: hard
+
 "@types/node-fetch@npm:^2.5.7":
   version: 2.6.2
   resolution: "@types/node-fetch@npm:2.6.2"
@@ -23213,7 +23220,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-emoji@npm:^1.10.0":
+"node-emoji@npm:^1.10.0, node-emoji@npm:^1.11.0":
   version: 1.11.0
   resolution: "node-emoji@npm:1.11.0"
   dependencies:
@@ -31231,6 +31238,7 @@ __metadata:
     "@testing-library/react": ^13.3.0
     "@testing-library/user-event": ^14.4.3
     "@types/jest": ^28.1.7
+    "@types/node-emoji": ^1.8.1
     "@types/react": ^18.0.17
     "@types/request": ^2.48.8
     "@typescript-eslint/eslint-plugin": ^5.36.1
@@ -31242,6 +31250,7 @@ __metadata:
     jest: ^28.1.3
     jest-environment-jsdom: ^28.1.3
     matrix-js-sdk: ^19.3.0
+    node-emoji: ^1.11.0
     olm: "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz"
     pino: ^8.4.2
     react: ^18.2.0
