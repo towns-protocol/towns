@@ -23,3 +23,27 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 2. Run a dendrite server. Follow instructions in /servers/README.md "Build and Run Dendrite"
 
 3. Launch the sample app. Follow instructions in /clients/web/sample-app
+
+## Running everything locally
+
+If you would like to run against a local server and blockchain, first:
+
+```
+cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
+```
+
+Then follow setup instructions in [/contracts](contracts/zion-governance)
+
+Then you can launch everything in VSCode via a vscode/tasks.json that allows all with `CMD+P task ~Start Local Development~`
+
+This workflow
+
+- Launches local dendrite
+- Starts a local block chain
+- Deploys zion contracts
+- starts the app, pointing to staging
+- starts the sample-app, pointing to urls in .env.local
+
+![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
+
+![Screen Shot 2022-09-02 at 3 05 12 PM](https://user-images.githubusercontent.com/950745/188241166-cf387398-6b43-4366-bead-b8c50fd1b0c2.png)

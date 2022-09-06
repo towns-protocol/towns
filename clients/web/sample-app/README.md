@@ -20,6 +20,21 @@ Follow instructions in the root of the repository to run dendrite
 ## Build and run the matrix sample app
 
 ```bash
+cd clients/web/lib
+yarn watch
+cd clients/web/sample-app
+yarn start
+```
+
+## Build and run matrix sample app against local servers
+
+```bash
+cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
+./scripts/start-local-dendrite.sh
+./scripts/start-local-blockchain.sh
+./scripts/deploy-zion-governance-contracts.sh
+cd clients/web/lib
+yarn watch
 cd clients/web/sample-app
 yarn start
 ```
