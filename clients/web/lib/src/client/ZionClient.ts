@@ -74,7 +74,6 @@ export class ZionClient {
   public councilNFT: ZionContractProvider<CouncilNFT>;
   public councilStaking: ZionContractProvider<CouncilStaking>;
   private _auth?: ZionAuth;
-
   private client: MatrixClient;
 
   constructor(opts: ZionOpts, name?: string) {
@@ -161,12 +160,10 @@ export class ZionClient {
     }
     // stop everything
     this.stopClient();
-    // log,
+    // log startOpts
     this.log("Starting client", startOpts);
     // set auth
     this._auth = auth;
-    // helpful logs
-    this.log(`startClient`);
     // new client
     this.client = createMatrixClient(this.opts, this.auth);
     // start it up, this begins a sync command
