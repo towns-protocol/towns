@@ -4,7 +4,7 @@ import "forge-std/Test.sol";
 import {ZionSpaceManager} from "../../contracts/spaces/ZionSpaceManager.sol";
 import {Zion} from "../../contracts/governance/Zion.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
-import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlements/UserGrantedEntitlement.sol";
+import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
 import {PurchasableEntitlementModule} from "../../contracts/spaces/entitlements/PurchasableEntitlement.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
