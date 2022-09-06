@@ -9,7 +9,6 @@ import * as request from "request";
 import { Config, configure } from "@testing-library/dom";
 
 process.env.HOMESERVER = "http://localhost:8008"; // OR "https://node1.hntlabs.com";
-process.env.CHAIN_ID = "0x539"; // localhost,  OR "0x4"; // rinkby
 process.env.DISABLE_ENCRYPTION = "false";
 process.env.ETHERS_NETWORK = "http://localhost:8545"; // OR "rinkeby"
 process.env.FUNDED_WALLET_PRIVATE_KEY =

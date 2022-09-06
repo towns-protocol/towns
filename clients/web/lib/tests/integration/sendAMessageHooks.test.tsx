@@ -73,7 +73,6 @@ describe("sendMessageHooks", () => {
           <button onClick={onClickSendMessage}>Send Message</button>
           <button onClick={onEdit}>Edit</button>
           <button onClick={onRedact}>Redact</button>
-          // hard coding indexes to jump to jane's membership join event
           <div data-testid="message0">
             {messagesOrRedactions.length > 0
               ? formatMessage(messagesOrRedactions[0])

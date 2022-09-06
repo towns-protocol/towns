@@ -1,20 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ZionClient } from "../../../src/client/ZionClient";
 import {
-  getChainIdEip155,
   LoginTypePublicKey,
   LoginTypePublicKeyEthereum,
   RegisterRequest,
 } from "../../../src/hooks/login";
 import { createMessageToSign } from "../../../src/hooks/use-matrix-wallet-sign-in";
-import {
-  createUserIdFromEthereumAddress,
-  UserIdentifier,
-} from "../../../src/types/user-identifier";
+import { createUserIdFromEthereumAddress } from "../../../src/types/user-identifier";
 import { RoomIdentifier } from "../../../src/types/matrix-types";
 import { sleepUntil } from "../../../src/utils/zion-utils";
 import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 import { makeUniqueName } from "./TestUtils";
+import { ethers } from "ethers";
 
 export class ZionTestClient extends ZionClient {
   static allClients: ZionTestClient[] = [];
@@ -29,7 +26,6 @@ export class ZionTestClient extends ZionClient {
   }
 
   public provider: ZionTestWeb3Provider;
-  public userIdentifier: UserIdentifier;
   public get matrixUserId(): string | undefined {
     return this.auth?.userId;
   }
@@ -55,11 +51,6 @@ export class ZionTestClient extends ZionClient {
     );
     // initialize our provider that wraps our wallet and chain communication
     this.provider = new ZionTestWeb3Provider();
-    // construct a user identifier for later
-    this.userIdentifier = createUserIdFromEthereumAddress(
-      this.provider.wallet.address,
-      getChainIdEip155(this.provider.chainId),
-    );
     // add ourselves to the list of all clients
     ZionTestClient.allClients.push(this);
   }
@@ -71,12 +62,13 @@ export class ZionTestClient extends ZionClient {
 
   /// return name formatted with readable segment of user id and device id
   public getLoggingIdentifier(): string {
-    const dx = 6;
-    const addressLength = this.userIdentifier.accountAddress.length;
-    const pre = this.userIdentifier.accountAddress.substring(0, dx);
-    const post = this.userIdentifier.accountAddress.substring(
-      addressLength - dx,
+    const accountAddress = ethers.utils.getAddress(
+      this.provider.wallet.address,
     );
+    const dx = 6;
+    const addressLength = accountAddress.length;
+    const pre = accountAddress.substring(0, dx);
+    const post = accountAddress.substring(addressLength - dx);
     return `${this.name}${pre}_${post}@${this.auth?.deviceId ?? "unset"}`;
   }
 
@@ -118,14 +110,22 @@ export class ZionTestClient extends ZionClient {
       throw error;
     }
 
+    const network = await this.provider.getNetwork();
+    const chainId = network.chainId;
+
+    const userIdentifier = createUserIdFromEthereumAddress(
+      this.provider.wallet.address,
+      chainId,
+    );
+
     // make sure the server supports our chainId
-    if (!chainIds.find((x) => x == getChainIdEip155(this.provider.chainId))) {
-      throw new Error(`ChainId ${this.provider.chainId} not found`);
+    if (!chainIds.find((x) => x == chainId)) {
+      throw new Error(`ChainId ${chainId} not found`);
     }
 
     const messageToSign = createMessageToSign({
-      walletAddress: this.userIdentifier.accountAddress,
-      chainId: this.userIdentifier.chainId,
+      walletAddress: userIdentifier.accountAddress,
+      chainId: userIdentifier.chainId,
       homeServer: this.opts.homeServerUrl,
       origin,
       statement: "this is a test registration",
@@ -142,10 +142,10 @@ export class ZionTestClient extends ZionClient {
           session: sessionId,
           message: messageToSign,
           signature,
-          user_id: this.userIdentifier.matrixUserIdLocalpart,
+          user_id: userIdentifier.matrixUserIdLocalpart,
         },
       },
-      username: this.userIdentifier.matrixUserIdLocalpart,
+      username: userIdentifier.matrixUserIdLocalpart,
     };
 
     // register the user
@@ -153,7 +153,7 @@ export class ZionTestClient extends ZionClient {
 
     this.log(
       "registered, matrixUserIdLocalpart: ",
-      this.userIdentifier.matrixUserIdLocalpart,
+      userIdentifier.matrixUserIdLocalpart,
       "userId: ",
       auth.userId,
     );

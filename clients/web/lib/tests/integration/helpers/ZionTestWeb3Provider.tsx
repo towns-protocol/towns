@@ -1,15 +1,14 @@
 import { ethers } from "ethers";
+import { getChainHexString } from "../../../src/hooks/login";
 import { fundWallet } from "./TestUtils";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
   public wallet: ethers.Wallet;
-  public chainId: string;
 
   constructor() {
     const networkUrl = process.env.ETHERS_NETWORK!;
     super(networkUrl);
-    this.chainId = process.env.CHAIN_ID!;
     this.wallet = ethers.Wallet.createRandom().connect(this);
     console.log("initializing web3 provider with wallet", this.wallet.address);
   }
@@ -28,7 +27,8 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     if (method === "eth_accounts") {
       return [this.wallet.address];
     } else if (method === "eth_chainId") {
-      return this.chainId;
+      const network = await this.getNetwork();
+      return getChainHexString(network.chainId);
     } else if (method === "personal_sign") {
       return this.wallet.signMessage((params as string[])[0]);
     } else {

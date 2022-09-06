@@ -111,7 +111,7 @@ export function getChainIdEip155(chainId: string): number {
 }
 
 export function getChainHexString(chainId: number): string {
-  return chainId.toString(16);
+  return "0x" + chainId.toString(16);
 }
 
 // https://chainlist.org/

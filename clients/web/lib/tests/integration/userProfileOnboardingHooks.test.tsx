@@ -42,13 +42,13 @@ describe("userProfileOnboardingHooks", () => {
     await waitFor(() =>
       expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
     );
+    // get alices chain id
+    const network = await aliceProvider.getNetwork();
+    const chainId = network.chainId;
     // verify alice userid is rendering
     await waitFor(() =>
       expect(myProfileName).toHaveTextContent(
-        `eip155=3a${parseInt(
-          process.env.CHAIN_ID!,
-          16,
-        )}=3a${aliceProvider.wallet.address.toLowerCase()}`,
+        `eip155=3a${chainId}=3a${aliceProvider.wallet.address.toLowerCase()}`,
       ),
     );
   }); // end test

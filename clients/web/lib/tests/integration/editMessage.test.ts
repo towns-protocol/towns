@@ -27,7 +27,7 @@ describe("editMessage", () => {
           x.getRoom(roomId)?.getLiveTimeline().getEvents().at(-1)?.getContent()
             .displayname,
       ),
-    ).toEqual(alice.userIdentifier.matrixUserIdLocalpart.toLowerCase());
+    ).toEqual(alice.matrixUserId!.toLowerCase().replace("@", "").split(":")[0]);
     // bob sends a message to the room
     await bob.sendMessage(roomId, "Hello Balice!");
     // alice should receive the message
