@@ -31,8 +31,14 @@ contract PurchasableEntitlementModuleTest is Test {
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       address(spaceManager)
     );
+
     purchasableEntitlementModule = new PurchasableEntitlementModule(
       address(spaceManager)
+    );
+
+    spaceManager.registerDefaultEntitlementModule(
+      address(userGrantedEntitlementModule),
+      "usergranted"
     );
   }
 

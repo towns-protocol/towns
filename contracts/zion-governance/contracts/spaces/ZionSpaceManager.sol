@@ -22,6 +22,10 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
   /// @notice variable representing the current total amount of spaces in the contract
   uint256 private totalSpaces = 0;
 
+  /// @notice variable representing the default entitlement module address and tag
+  address private defaultEntitlementModule;
+  string private defaultEntitlementModuleTag = "usergranted";
+
   // Storage
   /// @notice Mapping representing if a space has been registered or not.
   mapping(string => bool) internal spaceIsRegistered;
@@ -42,6 +46,9 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     if (spaceIsRegistered[vars.spaceName])
       revert Errors.SpaceAlreadyRegistered();
 
+    if (defaultEntitlementModule == address(0))
+      revert Errors.DefaultEntitlementModuleNotSet();
+
     spaceIsRegistered[vars.spaceName] = true;
 
     // creating space
@@ -55,34 +62,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     space.creator = _msgSender();
     space.owner = _msgSender();
 
-    // TODO: go through all the entitlements and add them to the space
-
-    // check if vars.entitlements support interface
-    if (
-      IERC165(vars.entitlements[0]).supportsInterface(
-        type(ISpaceEntitlementModule).interfaceId
-      ) == false
-    ) revert Errors.EntitlementModuleNotSupported();
-
-    // set default entitlement module
-    space.entitlementTags = ["usergranted"];
-    space.entitlements["usergranted"] = vars.entitlements[0];
-
-    UserGrantedEntitlementModule entitlement = UserGrantedEntitlementModule(
-      vars.entitlements[0]
-    );
-
-    // create array of entitlement types
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-
-    // set the first entitlement type to be the Administrator entitlement type
-    entitlementTypes[0] = DataTypes.EntitlementType.Administrator;
-
-    // add the user granted entitlement to the entitlement module
-    entitlement.setUserEntitlement(
-      DataTypes.EntitlementData(spaceId, 0, _msgSender(), entitlementTypes)
-    );
+    addDefaultEntitlementModule(space);
 
     emit Events.CreateSpace(_msgSender(), vars.spaceName, spaceId);
 
@@ -113,6 +93,15 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
       space.entitlements[vars.entitlementTag] = vars.entitlement;
       space.entitlementTags.push(vars.entitlementTag);
     }
+  }
+
+  /// @inheritdoc ISpaceManager
+  function registerDefaultEntitlementModule(
+    address _entitlementModule,
+    string memory _entitlementModuleTag
+  ) public onlyOwner {
+    defaultEntitlementModule = _entitlementModule;
+    defaultEntitlementModuleTag = _entitlementModuleTag;
   }
 
   /// @inheritdoc ISpaceManager
@@ -211,7 +200,47 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     return spaceById[_spaceId].owner;
   }
 
-  // Helpers
+  /**
+   * Internal functions
+   */
+
+  function addDefaultEntitlementModule(DataTypes.Space storage space)
+    internal
+    onlyOwner
+  {
+    // check if vars.entitlements support interface
+    if (
+      IERC165(defaultEntitlementModule).supportsInterface(
+        type(ISpaceEntitlementModule).interfaceId
+      ) == false
+    ) revert Errors.EntitlementModuleNotSupported();
+
+    // set default entitlement module
+    space.entitlementTags = [defaultEntitlementModuleTag];
+    space.entitlements[defaultEntitlementModuleTag] = defaultEntitlementModule;
+
+    UserGrantedEntitlementModule entitlement = UserGrantedEntitlementModule(
+      defaultEntitlementModule
+    );
+
+    // create array of entitlement types
+    DataTypes.EntitlementType[]
+      memory entitlementTypes = new DataTypes.EntitlementType[](1);
+
+    // set the first entitlement type to be the Administrator entitlement type
+    entitlementTypes[0] = DataTypes.EntitlementType.Administrator;
+
+    // add the user granted entitlement to the entitlement module
+    entitlement.setUserEntitlement(
+      DataTypes.EntitlementData(
+        space.spaceId,
+        0,
+        _msgSender(),
+        entitlementTypes
+      )
+    );
+  }
+
   /// @notice Checks if a string contains valid username ASCII characters [0-1], [a-z] and _.
   /// @param str the string to be checked.
   /// @return true if the string contains only valid characters, false otherwise.

@@ -16,6 +16,11 @@ contract ZionSpaceManagerTest is Test {
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       address(zionSpaceManager)
     );
+
+    zionSpaceManager.registerDefaultEntitlementModule(
+      address(userGrantedEntitlementModule),
+      "usergranted"
+    );
   }
 
   function testCreateSpaceWithUserGrantedEntitlement() public {

@@ -8,4 +8,5 @@ library Errors {
   error NotSpaceOwner();
   error EntitlementAlreadyRegistered();
   error EntitlementModuleNotSupported();
+  error DefaultEntitlementModuleNotSet();
 }

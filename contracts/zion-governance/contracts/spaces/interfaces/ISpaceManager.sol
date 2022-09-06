@@ -10,11 +10,23 @@ interface ISpaceManager {
     external
     returns (uint256);
 
+  // createSpaceWithTokenEntitlement
+
+  // createSpaceWithPurchaseableTokenEntitlement
+
   /// @notice Connects the node network id to a space id
   /// @param spaceId The space id to connect to the network id
   /// @param networkId The network id to connect to the space id
   function setNetworkIdToSpaceId(uint256 spaceId, string calldata networkId)
     external;
+
+  /// @notice Sets the default entitlement for a newly created space
+  /// @param entitlementModuleAddress The address of the entitlement module
+  /// @param entitlementModuleTag The tag of the entitlement module
+  function registerDefaultEntitlementModule(
+    address entitlementModuleAddress,
+    string memory entitlementModuleTag
+  ) external;
 
   /// @notice Checks if a user has access to space or room based on the entitlements it holds
   /// @param spaceId The id of the space

@@ -39,6 +39,11 @@ contract TokenEntitlementModuleTest is Test {
       address(spaceManager)
     );
     tokenEntitlementModule = new TokenEntitlementModule(address(spaceManager));
+
+    spaceManager.registerDefaultEntitlementModule(
+      address(userGrantedEntitlementModule),
+      "usergranted"
+    );
   }
 
   function createTestSpaceWithUserGrantedEntitlementModule(
