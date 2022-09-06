@@ -39,17 +39,20 @@ export const MessageContextMenu = (props: Props) => {
     timelineContext?.onSelectEditingMessage(eventId);
   }, [eventId, timelineContext]);
 
-  const onSelectEmoji = useCallback((data: EmojiData) => {
-    if (!channelId) {
-      console.error("no channel id");
-      return;
-    }
-    if (!data.id) {
-      console.error("no emoji id");
-      return;
-    }
-    sendReaction(channelId, eventId, data.id);
-  }, []);
+  const onSelectEmoji = useCallback(
+    (data: EmojiData) => {
+      if (!channelId) {
+        console.error("no channel id");
+        return;
+      }
+      if (!data.id) {
+        console.error("no emoji id");
+        return;
+      }
+      sendReaction(channelId, eventId, data.id);
+    },
+    [channelId, eventId, sendReaction],
+  );
 
   return (
     <Stack

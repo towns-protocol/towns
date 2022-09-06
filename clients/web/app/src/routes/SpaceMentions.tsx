@@ -24,9 +24,9 @@ export const SpaceMentions = () => {
             date="Today at 12:01AM"
           >
             <Paragraph>
-              Channel about our farm and I'm about to start another about
-              marketing and nft's. Something <strong>@msyou209</strong> could
-              help out with ?
+              Channel about our farm and I&apos;m about to start another about
+              marketing and nft&apos;s. Something <strong>@msyou209</strong>{" "}
+              could help out with ?
             </Paragraph>
           </Message>
           <MessageInput />

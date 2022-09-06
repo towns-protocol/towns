@@ -7,7 +7,7 @@ export const MeIndex = () => {
   const { isAuthenticated, username, userId } = useMatrixStore();
   const myProfile = useMyProfile();
   if (!myProfile) {
-    return <>"404"</>;
+    return <>&quot;404&quot;</>;
   }
   return (
     <Stack horizontal grow justifyContent="center" basis="1200">

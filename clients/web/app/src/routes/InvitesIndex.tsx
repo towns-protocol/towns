@@ -65,7 +65,7 @@ export const InvitesIndex = () => {
           </Stack>
         </>
       ) : (
-        <p>Invite "{inviteSlug}" not found</p>
+        <p>Invite &quot;{inviteSlug}&quot; not found</p>
       )}
     </>
   );

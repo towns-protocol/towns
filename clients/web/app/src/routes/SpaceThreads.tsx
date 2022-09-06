@@ -23,16 +23,16 @@ export const SpaceThreads = () => {
             reactions={{ "👋": 20 }}
           >
             <Paragraph>
-              gm! name is francine groves and I'm a big nft fan. I currently
-              moderate for Veefriends, Boss Beauties, Fame Ladies, BFF, Flyfish
-              Club, Legacy Leaders and All Around Artsy. Soon to add my own
-              project to that list.
+              gm! name is francine groves and I&apos;m a big nft fan. I
+              currently moderate for Veefriends, Boss Beauties, Fame Ladies,
+              BFF, Flyfish Club, Legacy Leaders and All Around Artsy. Soon to
+              add my own project to that list.
             </Paragraph>
             <Paragraph>
-              I'm a farmer and herbalist (also pagan and ordained), own a
+              I&apos;m a farmer and herbalist (also pagan and ordained), own a
               digital marketing agency and am a musician. Husband and I run a
-              YouTube channel about our farm and I'm about to start another
-              about marketing and nft's.
+              YouTube channel about our farm and I&apos;m about to start another
+              about marketing and nft&apos;s.
             </Paragraph>
           </Message>
           <Paragraph color="accent">Show 150 more replies</Paragraph>
@@ -43,8 +43,8 @@ export const SpaceThreads = () => {
             date="Today at 12:01AM"
           >
             <Paragraph>
-              Channel about our farm and I'm about to start another about
-              marketing and nft's.
+              Channel about our farm and I&apos;m about to start another about
+              marketing and nft&apos;s.
             </Paragraph>
           </Message>
           <MessageInput />
@@ -66,10 +66,10 @@ export const SpaceThreads = () => {
             reactions={{ "👀": 20, "🤑": 2 }}
           >
             <Paragraph>
-              I'm a farmer and herbalist (also pagan and ordained), own a
+              I&apos;m a farmer and herbalist (also pagan and ordained), own a
               digital marketing agency and am a musician. Husband and I run a
-              YouTube channel about our farm and I'm about to start another
-              about marketing and nft's.
+              YouTube channel about our farm and I&apos;m about to start another
+              about marketing and nft&apos;s.
             </Paragraph>
           </Message>
 
@@ -80,8 +80,8 @@ export const SpaceThreads = () => {
             date="Today at 12:01AM"
           >
             <Paragraph>
-              Channel about our farm and I'm about to start another about
-              marketing and nft's.
+              Channel about our farm and I&apos;m about to start another about
+              marketing and nft&apos;s.
             </Paragraph>
           </Message>
 

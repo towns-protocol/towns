@@ -25,7 +25,11 @@ export const SpacesSettings = () => {
       <Box shrink gap>
         <Heading>Settings</Heading>
         {powerLevels.levels.map((level: PowerLevel) => (
-          <PowerLevelView level={level} onLevelChanged={onLevelChanged} />
+          <PowerLevelView
+            key={level.definition.key}
+            level={level}
+            onLevelChanged={onLevelChanged}
+          />
         ))}
       </Box>
     </Stack>
