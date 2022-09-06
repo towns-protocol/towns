@@ -11,7 +11,7 @@ import { Config, configure } from "@testing-library/dom";
 process.env.HOMESERVER = "http://localhost:8008"; // OR "https://node1.hntlabs.com";
 process.env.DISABLE_ENCRYPTION = "false";
 process.env.ETHERS_NETWORK = "http://localhost:8545"; // OR "rinkeby"
-process.env.FUNDED_WALLET_PRIVATE_KEY =
+process.env.FUNDED_WALLET_PRIVATE_KEY_0 =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"; // we need a wallet with assets to fund our test clients
 process.env.SPACE_MANAGER_ADDRESS =
   "0x5FbDB2315678afecb367f032d93F642f64180aa3";

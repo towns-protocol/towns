@@ -1,5 +1,6 @@
 import { ZionTestClient } from "./ZionTestClient";
 import { ethers } from "ethers";
+import { TestConstants } from "./TestConstants";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -33,16 +34,8 @@ export function makeUniqueName(prefix: string): string {
   )}`;
 }
 
-export async function fundWallet(
-  walletToFund: ethers.Wallet,
-  provider: ethers.providers.Provider,
-  amount = 0.1,
-) {
-  const fundedWallet = new ethers.Wallet(
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    process.env.FUNDED_WALLET_PRIVATE_KEY!,
-    provider,
-  );
+export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
+  const fundedWallet = TestConstants.FUNDED_WALLET_0;
   const tx = {
     from: fundedWallet.address,
     to: walletToFund.address,

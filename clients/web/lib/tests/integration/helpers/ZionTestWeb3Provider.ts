@@ -4,6 +4,7 @@ import { fundWallet } from "./TestUtils";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
+  // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
   public wallet: ethers.Wallet;
 
   constructor() {
@@ -14,7 +15,7 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
   }
 
   public async fundWallet(amount = 0.1) {
-    return fundWallet(this.wallet, this, amount);
+    return fundWallet(this.wallet, amount);
   }
 
   public async request({
