@@ -59,11 +59,13 @@ const config: HardhatUserConfig = {
       chainId: 1337,
       gas: 6721975,
       gasPrice: 8000000000,
+      allowUnlimitedContractSize: true
     },
     localhost: {
       chainId: 1337,
       gas: 6721975,
       gasPrice: 8000000000,
+      allowUnlimitedContractSize: true
     },
   },
   gasReporter: {
