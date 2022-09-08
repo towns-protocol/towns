@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { BigNumber } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -9,8 +9,11 @@ import {
   SendMessageOptions,
   SpaceChild,
 } from "../types/matrix-types";
+import {
+  DataTypes,
+  ZionSpaceManager,
+} from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 
-import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 import { ZionClientEvent } from "../client/ZionClientTypes";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
@@ -21,6 +24,7 @@ import { useMemo } from "react";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 import { useZionContext } from "../components/ZionContextProvider";
+import { ZionContractProvider } from "client/web3/ZionContractProvider";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -30,7 +34,9 @@ interface ZionClientImpl {
   createSpace: (
     createInfo: CreateSpaceInfo,
   ) => Promise<RoomIdentifier | undefined>;
-  createWeb3Space: (createInfo: CreateSpaceInfo) => Promise<unknown>;
+  createWeb3Space: (
+    createInfo: CreateSpaceInfo,
+  ) => Promise<ContractTransaction | undefined>;
   createChannel: (
     createInfo: CreateChannelInfo,
   ) => Promise<RoomIdentifier | undefined>;
@@ -76,6 +82,7 @@ interface ZionClientImpl {
   ) => Promise<void>;
   setAvatarUrl: (ravatarUrl: string) => Promise<void>;
   setDisplayName: (displayName: string) => Promise<void>;
+  spaceManager: ZionContractProvider<ZionSpaceManager> | undefined;
   syncSpace: (spaceId: RoomIdentifier) => Promise<SpaceChild[]>;
 }
 
@@ -117,6 +124,7 @@ export function useZionClient(): ZionClientImpl {
     sendReaction: useWithCatch(client?.sendReaction),
     sendNotice: useWithCatch(client?.sendNotice),
     setPowerLevel: useWithCatch(client?.setPowerLevel),
+    spaceManager: client?.spaceManager,
     syncSpace,
     setDisplayName: useWithCatch(client?.setDisplayName),
     setAvatarUrl: useWithCatch(client?.setAvatarUrl),

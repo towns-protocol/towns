@@ -22,6 +22,7 @@ export { useSpaces, useSpacesFromContract } from "./hooks/use-spaces";
 export { useSpaceId } from "./hooks/use-space-id";
 export { useSpaceTimeline } from "./hooks/use-space-timeline";
 export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
+export { useIntegratedSpaceManagement } from "./hooks/use-integrated-space-management";
 
 export type {
   Channel,

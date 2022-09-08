@@ -13,10 +13,13 @@ describe("spaceManagerContract", () => {
     await bob.fundWallet();
     // create a space
     const spaceName = bob.makeUniqueName();
-    const receipt = await bob.createWeb3Space({
+    const tx = await bob.createWeb3Space({
       name: spaceName,
       visibility: RoomVisibility.Private,
     });
+    // log our our transaction
+    console.log("tx", tx);
+    const receipt = await tx.wait();
     // log our our transaction
     console.log("receipt", receipt);
     // fetch the spaces

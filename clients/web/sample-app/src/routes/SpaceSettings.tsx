@@ -22,7 +22,7 @@ export function SpaceSettings(props: Props): JSX.Element {
     if (spaceSetting) {
       return spaceSetting.requireToken;
     }
-    return false;
+    return true;
   }, [spaceSetting]);
 
   const onChangeValue = useCallback(
