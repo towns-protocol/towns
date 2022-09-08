@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 cd contracts/zion-governance
-forge build
+yarn clean
 source .env
 make deployLocalSpaceManager
 make deployLocalCouncilNFT

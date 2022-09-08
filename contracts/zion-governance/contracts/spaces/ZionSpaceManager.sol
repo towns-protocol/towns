@@ -90,6 +90,43 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     emit Events.NetworkIdSet(spaceId, networkId);
   }
 
+  function addTokenEntitlement(
+    uint256 spaceId,
+    address entitlementModuleAddress,
+    address tokenAddress,
+    uint256 amount,
+    string memory description,
+    DataTypes.EntitlementType[] memory entitlementTypes
+  ) external {
+    _validateCallerIsSpaceOwner(spaceId);
+
+    address[] memory tokens = new address[](1);
+    uint256[] memory quantities = new uint256[](1);
+
+    tokens[0] = tokenAddress;
+    quantities[0] = amount;
+
+    _whitelistEntitlementModule(
+      spaceId,
+      entitlementModuleAddress,
+      "token-entitlement"
+    );
+
+    _registerEntitlement(
+      spaceId,
+      entitlementModuleAddress,
+      "token-entitlement",
+      entitlementTypes,
+      abi.encode(description, tokens, quantities)
+    );
+
+    emit Events.EntitlementModuleAdded(
+      spaceId,
+      entitlementModuleAddress,
+      "token-entitlement"
+    );
+  }
+
   /// @inheritdoc ISpaceManager
   // pay with our token to whitelist a module ?
   function addEntitlementModule(
