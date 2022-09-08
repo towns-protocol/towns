@@ -89,6 +89,8 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     if (space.owner != _msgSender()) revert Errors.NotSpaceOwner();
     space.networkSpaceId = networkId;
     spaceIdByNetworkId[networkId] = spaceId;
+
+    emit Events.NetworkIdSet(spaceId, networkId);
   }
 
   /// @inheritdoc ISpaceManager
@@ -111,6 +113,12 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
       entitlementTypes,
       data
     );
+
+    emit Events.EntitlementModuleAdded(
+      spaceId,
+      entitlementAddress,
+      entitlementTag
+    );
   }
 
   /// @inheritdoc ISpaceManager
@@ -120,6 +128,11 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
   ) public onlyOwner {
     defaultEntitlementModuleAddress = _entitlementModule;
     defaultEntitlementModuleTag = _entitlementModuleTag;
+
+    emit Events.DefaultEntitlementSet(
+      _entitlementModule,
+      _entitlementModuleTag
+    );
   }
 
   /// @inheritdoc ISpaceManager
