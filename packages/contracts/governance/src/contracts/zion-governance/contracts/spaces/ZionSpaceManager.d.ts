@@ -3,16 +3,6 @@ import type { FunctionFragment, Result, EventFragment } from "@ethersproject/abi
 import type { Listener, Provider } from "@ethersproject/providers";
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from "../../../../common";
 export declare namespace DataTypes {
-    type AddEntitlementDataStruct = {
-        spaceId: PromiseOrValue<BigNumberish>;
-        entitlement: PromiseOrValue<string>;
-        entitlementTag: PromiseOrValue<string>;
-    };
-    type AddEntitlementDataStructOutput = [BigNumber, string, string] & {
-        spaceId: BigNumber;
-        entitlement: string;
-        entitlementTag: string;
-    };
     type CreateSpaceDataStruct = {
         spaceName: PromiseOrValue<string>;
         entitlements: PromiseOrValue<string>[];
@@ -44,7 +34,8 @@ export declare namespace DataTypes {
 }
 export interface ZionSpaceManagerInterface extends utils.Interface {
     functions: {
-        "addEntitlementModule((uint256,address,string))": FunctionFragment;
+        "addEntitlementModule(uint256,address,string,uint8[],bytes)": FunctionFragment;
+        "addTokenEntitlement(uint256,address,address,uint256,string,uint8[])": FunctionFragment;
         "createSpace((string,address[]))": FunctionFragment;
         "getEntitlementsBySpaceId(uint256)": FunctionFragment;
         "getSpaceIdByNetworkId(string)": FunctionFragment;
@@ -53,12 +44,27 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
         "getSpaces()": FunctionFragment;
         "isEntitled(uint256,uint256,address,uint8)": FunctionFragment;
         "owner()": FunctionFragment;
+        "registerDefaultEntitlementModule(address,string)": FunctionFragment;
         "renounceOwnership()": FunctionFragment;
         "setNetworkIdToSpaceId(uint256,string)": FunctionFragment;
         "transferOwnership(address)": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "addEntitlementModule" | "createSpace" | "getEntitlementsBySpaceId" | "getSpaceIdByNetworkId" | "getSpaceInfoBySpaceId" | "getSpaceOwnerBySpaceId" | "getSpaces" | "isEntitled" | "owner" | "renounceOwnership" | "setNetworkIdToSpaceId" | "transferOwnership"): FunctionFragment;
-    encodeFunctionData(functionFragment: "addEntitlementModule", values: [DataTypes.AddEntitlementDataStruct]): string;
+    getFunction(nameOrSignatureOrTopic: "addEntitlementModule" | "addTokenEntitlement" | "createSpace" | "getEntitlementsBySpaceId" | "getSpaceIdByNetworkId" | "getSpaceInfoBySpaceId" | "getSpaceOwnerBySpaceId" | "getSpaces" | "isEntitled" | "owner" | "registerDefaultEntitlementModule" | "renounceOwnership" | "setNetworkIdToSpaceId" | "transferOwnership"): FunctionFragment;
+    encodeFunctionData(functionFragment: "addEntitlementModule", values: [
+        PromiseOrValue<BigNumberish>,
+        PromiseOrValue<string>,
+        PromiseOrValue<string>,
+        PromiseOrValue<BigNumberish>[],
+        PromiseOrValue<BytesLike>
+    ]): string;
+    encodeFunctionData(functionFragment: "addTokenEntitlement", values: [
+        PromiseOrValue<BigNumberish>,
+        PromiseOrValue<string>,
+        PromiseOrValue<string>,
+        PromiseOrValue<BigNumberish>,
+        PromiseOrValue<string>,
+        PromiseOrValue<BigNumberish>[]
+    ]): string;
     encodeFunctionData(functionFragment: "createSpace", values: [DataTypes.CreateSpaceDataStruct]): string;
     encodeFunctionData(functionFragment: "getEntitlementsBySpaceId", values: [PromiseOrValue<BigNumberish>]): string;
     encodeFunctionData(functionFragment: "getSpaceIdByNetworkId", values: [PromiseOrValue<string>]): string;
@@ -72,10 +78,12 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
         PromiseOrValue<BigNumberish>
     ]): string;
     encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+    encodeFunctionData(functionFragment: "registerDefaultEntitlementModule", values: [PromiseOrValue<string>, PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "setNetworkIdToSpaceId", values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "transferOwnership", values: [PromiseOrValue<string>]): string;
     decodeFunctionResult(functionFragment: "addEntitlementModule", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "addTokenEntitlement", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "createSpace", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getEntitlementsBySpaceId", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getSpaceIdByNetworkId", data: BytesLike): Result;
@@ -84,6 +92,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "getSpaces", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "registerDefaultEntitlementModule", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "renounceOwnership", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "setNetworkIdToSpaceId", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "transferOwnership", data: BytesLike): Result;
@@ -116,7 +125,10 @@ export interface ZionSpaceManager extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
-        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
+        addEntitlementModule(spaceId: PromiseOrValue<BigNumberish>, entitlementAddress: PromiseOrValue<string>, entitlementTag: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], data: PromiseOrValue<BytesLike>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<ContractTransaction>;
+        addTokenEntitlement(spaceId: PromiseOrValue<BigNumberish>, entitlementModuleAddress: PromiseOrValue<string>, tokenAddress: PromiseOrValue<string>, amount: PromiseOrValue<BigNumberish>, description: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
         createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
@@ -133,6 +145,9 @@ export interface ZionSpaceManager extends BaseContract {
         getSpaces(overrides?: CallOverrides): Promise<[DataTypes.SpaceInfoStructOutput[]]>;
         isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[boolean]>;
         owner(overrides?: CallOverrides): Promise<[string]>;
+        registerDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, entitlementModuleTag: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<ContractTransaction>;
         renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
@@ -143,7 +158,10 @@ export interface ZionSpaceManager extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
     };
-    addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
+    addEntitlementModule(spaceId: PromiseOrValue<BigNumberish>, entitlementAddress: PromiseOrValue<string>, entitlementTag: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], data: PromiseOrValue<BytesLike>, overrides?: Overrides & {
+        from?: PromiseOrValue<string>;
+    }): Promise<ContractTransaction>;
+    addTokenEntitlement(spaceId: PromiseOrValue<BigNumberish>, entitlementModuleAddress: PromiseOrValue<string>, tokenAddress: PromiseOrValue<string>, amount: PromiseOrValue<BigNumberish>, description: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
@@ -156,6 +174,9 @@ export interface ZionSpaceManager extends BaseContract {
     getSpaces(overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput[]>;
     isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<boolean>;
     owner(overrides?: CallOverrides): Promise<string>;
+    registerDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, entitlementModuleTag: PromiseOrValue<string>, overrides?: Overrides & {
+        from?: PromiseOrValue<string>;
+    }): Promise<ContractTransaction>;
     renounceOwnership(overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
@@ -166,7 +187,8 @@ export interface ZionSpaceManager extends BaseContract {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     callStatic: {
-        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: CallOverrides): Promise<void>;
+        addEntitlementModule(spaceId: PromiseOrValue<BigNumberish>, entitlementAddress: PromiseOrValue<string>, entitlementTag: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], data: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<void>;
+        addTokenEntitlement(spaceId: PromiseOrValue<BigNumberish>, entitlementModuleAddress: PromiseOrValue<string>, tokenAddress: PromiseOrValue<string>, amount: PromiseOrValue<BigNumberish>, description: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], overrides?: CallOverrides): Promise<void>;
         createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: CallOverrides): Promise<BigNumber>;
         getEntitlementsBySpaceId(spaceId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string[]>;
         getSpaceIdByNetworkId(networkSpaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
@@ -175,6 +197,7 @@ export interface ZionSpaceManager extends BaseContract {
         getSpaces(overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput[]>;
         isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<boolean>;
         owner(overrides?: CallOverrides): Promise<string>;
+        registerDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, entitlementModuleTag: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
         renounceOwnership(overrides?: CallOverrides): Promise<void>;
         setNetworkIdToSpaceId(spaceId: PromiseOrValue<BigNumberish>, networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
         transferOwnership(newOwner: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
@@ -184,7 +207,10 @@ export interface ZionSpaceManager extends BaseContract {
         OwnershipTransferred(previousOwner?: PromiseOrValue<string> | null, newOwner?: PromiseOrValue<string> | null): OwnershipTransferredEventFilter;
     };
     estimateGas: {
-        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
+        addEntitlementModule(spaceId: PromiseOrValue<BigNumberish>, entitlementAddress: PromiseOrValue<string>, entitlementTag: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], data: PromiseOrValue<BytesLike>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<BigNumber>;
+        addTokenEntitlement(spaceId: PromiseOrValue<BigNumberish>, entitlementModuleAddress: PromiseOrValue<string>, tokenAddress: PromiseOrValue<string>, amount: PromiseOrValue<BigNumberish>, description: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
         createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
@@ -197,6 +223,9 @@ export interface ZionSpaceManager extends BaseContract {
         getSpaces(overrides?: CallOverrides): Promise<BigNumber>;
         isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<BigNumber>;
         owner(overrides?: CallOverrides): Promise<BigNumber>;
+        registerDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, entitlementModuleTag: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<BigNumber>;
         renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
@@ -208,7 +237,10 @@ export interface ZionSpaceManager extends BaseContract {
         }): Promise<BigNumber>;
     };
     populateTransaction: {
-        addEntitlementModule(vars: DataTypes.AddEntitlementDataStruct, overrides?: Overrides & {
+        addEntitlementModule(spaceId: PromiseOrValue<BigNumberish>, entitlementAddress: PromiseOrValue<string>, entitlementTag: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], data: PromiseOrValue<BytesLike>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<PopulatedTransaction>;
+        addTokenEntitlement(spaceId: PromiseOrValue<BigNumberish>, entitlementModuleAddress: PromiseOrValue<string>, tokenAddress: PromiseOrValue<string>, amount: PromiseOrValue<BigNumberish>, description: PromiseOrValue<string>, entitlementTypes: PromiseOrValue<BigNumberish>[], overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
         createSpace(vars: DataTypes.CreateSpaceDataStruct, overrides?: Overrides & {
@@ -221,6 +253,9 @@ export interface ZionSpaceManager extends BaseContract {
         getSpaces(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         isEntitled(spaceId: PromiseOrValue<BigNumberish>, roomId: PromiseOrValue<BigNumberish>, user: PromiseOrValue<string>, entitlementType: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        registerDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, entitlementModuleTag: PromiseOrValue<string>, overrides?: Overrides & {
+            from?: PromiseOrValue<string>;
+        }): Promise<PopulatedTransaction>;
         renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
