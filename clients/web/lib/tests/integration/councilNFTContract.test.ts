@@ -17,7 +17,7 @@ describe("councilNFTContract", () => {
     // re-create one of the funded anvil wallets that we minted to in the deploy script
     const fundedWallet = new ethers.Wallet(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      process.env.FUNDED_WALLET_PRIVATE_KEY!,
+      process.env.FUNDED_WALLET_PRIVATE_KEY_0!,
       bob.provider,
     );
     // get the balance
