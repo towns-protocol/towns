@@ -111,6 +111,9 @@ export class ZionServer implements CliOpts<ConfigType> {
     }
 
     config.web3ProviderKey = process.env.INFURA_API_KEY ?? "";
+    config.councilNFTAddress = process.env.COUNCIL_NFT_ADDRESS ?? "";
+    config.zionSpaceManagerAddress =
+      process.env.ZION_SPACE_MANAGER_ADDRESS ?? "";
 
     Logging.configure(config.logging || {});
     const log = Logging.get(LOGGER_NAME);

@@ -6,17 +6,14 @@ import {
 } from "matrix-bot-sdk";
 import { CreateRoomFunction, CreateUserFunction } from "./appservice-types";
 
+import { EntitlementType } from "./contracts/ZionContractTypes";
 import { IConfig } from "./IConfig";
 import { M_UNAUTHORIZED_ACCESS } from "./global-const";
 import { WeakEvent } from "matrix-appservice-bridge";
+import { Web3Provider } from "./Web3Provider";
 import { createUserIdFromString } from "./UserIdentifier";
-import { ethers } from "ethers";
 
 const PRINT_TAG = "[ZionBotController]";
-
-interface Web3Providers {
-  [networkId: number]: ethers.providers.Provider;
-}
 
 // TODO: Read from the Space contract
 interface SpaceSetting {
@@ -31,14 +28,14 @@ interface SpaceSettings {
 export class ZionBotController {
   private appservice: Appservice;
   private config: IConfig;
-  private web3Providers: Web3Providers;
+  private web3Provider: Web3Provider;
   private spaceSettings: SpaceSettings;
 
   constructor(appservice: Appservice, config: IConfig) {
     this.appservice = appservice;
     this.config = config;
-    this.web3Providers = {};
     this.spaceSettings = {};
+    this.web3Provider = new Web3Provider(config);
 
     appservice.on("room.event", (roomId, event) =>
       this.onRoomEvent(roomId, event)
@@ -148,6 +145,10 @@ export class ZionBotController {
         if (isAdminUser) {
           // As the admin, invite the bot to the space / room.
           await this.inviteBotToRoom({ roomId, adminId: stateKey });
+          this.spaceSettings[roomId] = {
+            matrixRoomId: roomId,
+            isTokenRequired: false, // default requirement
+          };
         } else if (stateKey === event.sender) {
           const isAccessAllowed = await this.isAccessAllowed({
             roomId,
@@ -176,34 +177,6 @@ export class ZionBotController {
 
   public onRoomLeave(roomId: string, event: WeakEvent): void {
     LogService.info(PRINT_TAG, `Left ${roomId} as ${event["state_key"]}`);
-  }
-
-  private getWeb3Provider(
-    networkId: number
-  ): ethers.providers.Provider | undefined {
-    let provider = this.web3Providers[networkId];
-
-    if (!provider) {
-      switch (networkId) {
-        case 1337: {
-          provider = new ethers.providers.JsonRpcProvider(
-            "http://localhost:8545"
-          );
-          break;
-        }
-        default: {
-          provider = new ethers.providers.InfuraProvider(
-            networkId,
-            this.config.web3ProviderKey
-          );
-          break;
-        }
-      }
-      if (provider) {
-        this.web3Providers[networkId] = provider;
-      }
-    }
-    return provider;
   }
 
   private async isAdmin(roomId: string, userId?: string): Promise<boolean> {
@@ -337,14 +310,29 @@ export class ZionBotController {
       return true;
     }
 
-    const isTokenRequired = this.spaceSettings[args.roomId]?.isTokenRequired === true;
+    const isTokenRequired =
+      this.spaceSettings[args.roomId]?.isTokenRequired === true;
     if (isTokenRequired) {
       const id = createUserIdFromString(args.userId);
       if (id) {
-        const provider = this.getWeb3Provider(id.chainId);
-        if (provider) {
-          const balance = await provider.getBalance(id.accountAddress);
-          return balance.gt(0);
+        try {
+          const contract = this.web3Provider.getZionSpaceManagerContract(
+            id.chainId
+          );
+          if (contract) {
+            const spaces = await contract.read.getSpaces();
+            const isEntitled = await contract.read.isEntitled(
+              0,
+              0,
+              id.accountAddress,
+              EntitlementType.Join,
+            );
+            return isEntitled;
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+          LogService.error(`${PRINT_TAG} [Exception] isAllowedAccess`, e);
+          return false;
         }
       }
     }

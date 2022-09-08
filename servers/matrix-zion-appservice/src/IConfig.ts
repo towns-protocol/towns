@@ -11,7 +11,6 @@ export interface ILoggerConfig {
 }
 
 export interface IConfig {
-  domain: string;
   logging: ILoggerConfig;
   homeserver: {
     url: string;
@@ -19,7 +18,8 @@ export interface IConfig {
     appservice_port?: number;
     appservice_host?: string;
   };
-  homeserverUrl: string;
   username_prefix: string;
-  web3ProviderKey: string;
+  web3ProviderKey: string; // API key for web3 infrastructure provider. E.g. Infura.
+  councilNFTAddress: string; // CouncilNFT contract address on the blockchain
+  zionSpaceManagerAddress: string; // ZionSpaceManager contract address on the blockchain
 }

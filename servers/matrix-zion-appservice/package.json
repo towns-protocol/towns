@@ -17,6 +17,7 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
+    "@harmony/contracts": "workspace:^",
     "@types/node": "^17.0.32",
     "dotenv": "^16.0.1",
     "ethers": "^5.6.9",

@@ -19,7 +19,8 @@
     "clients/governance-ui",
     "clients/contract-debug-ui",
     "contracts/zion-governance",
-    "packages/*"
+    "packages/*",
+    "servers/matrix-zion-appservice"
   ],
   "lint-staged": {
     "*.{js,mdx,ts,tsx}": [

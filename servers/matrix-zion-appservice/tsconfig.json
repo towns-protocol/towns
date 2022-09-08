@@ -1,20 +1,21 @@
 {
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
-    "incremental": true,
-    "target": "ES2019",
-    "module": "commonjs",
     "allowJs": true,
     "checkJs": false,
-    "declaration": true,
-    "sourceMap": true,
-    "outDir": "./bin",
     "composite": false,
-    "strict": true,
+    "declaration": true,
     "esModuleInterop": true,
-    "strictNullChecks": true,
+    "incremental": true,
+    "module": "commonjs",
     "noImplicitAny": true,
+    "outDir": "./bin",
+    "resolveJsonModule": true,
+    "sourceMap": true,
     "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "ES2019"
   },
   "include": [
     "src/**/*"
