@@ -50,22 +50,17 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
     hardhat: {
       chainId: 1337,
       gas: 6721975,
       gasPrice: 8000000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
     },
     localhost: {
       chainId: 1337,
       gas: 6721975,
       gasPrice: 8000000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
     },
   },
   gasReporter: {

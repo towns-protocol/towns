@@ -50,9 +50,13 @@ interface ISpaceManager {
     returns (DataTypes.SpaceInfo memory);
 
   /// @notice Adds an entitlement module to a space.
-  /// @param vars a struct representing the data to add the entitlement module.
-  function addEntitlementModule(DataTypes.AddEntitlementData calldata vars)
-    external;
+  function addEntitlementModule(
+    uint256 spaceId,
+    address entitlementAddress,
+    string memory entitlementTag,
+    DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory data
+  ) external;
 
   /// @notice Returns an array of multiple space information objects
   /// @return SpaceInfo[] an array containing the space info

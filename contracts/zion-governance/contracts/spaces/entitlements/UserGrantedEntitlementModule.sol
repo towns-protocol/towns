@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/console.sol";
 import {ISpaceManager} from "./../interfaces/ISpaceManager.sol";
 import {ISpaceEntitlementModule} from "./../interfaces/ISpaceEntitlementModule.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
@@ -11,12 +10,18 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
   address public immutable zionSpaceManagerAddress;
 
   // Storage
+  struct Entitlement {
+    address grantedBy;
+    uint256 grantedTime;
+    DataTypes.EntitlementType entitlementType;
+  }
+
   struct RoomUserEntitlements {
-    mapping(address => DataTypes.Entitlement[]) entitlementsByAddress;
+    mapping(address => Entitlement[]) entitlementsByAddress;
   }
 
   struct SpaceUserEntitlements {
-    mapping(address => DataTypes.Entitlement[]) entitlementsByAddress;
+    mapping(address => Entitlement[]) entitlementsByAddress;
     mapping(uint256 => RoomUserEntitlements) roomEntitlementsByRoomId;
   }
 
@@ -26,7 +31,7 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
     zionSpaceManagerAddress = _zionSpaceManagerAddress;
   }
 
-  function setUserEntitlement(DataTypes.EntitlementData calldata vars) public {
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars) public {
     ISpaceManager zionSpaceManager = ISpaceManager(zionSpaceManagerAddress);
     address ownerAddress = zionSpaceManager.getSpaceOwnerBySpaceId(
       vars.spaceId
@@ -37,9 +42,11 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
       "Only the owner can update the entitlements"
     );
 
+    address user = abi.decode(vars.entitlementData, (address));
+
     for (uint256 i = 0; i < vars.entitlementTypes.length; i++) {
-      DataTypes.Entitlement memory entitlement = DataTypes.Entitlement(
-        vars.user,
+      Entitlement memory entitlement = Entitlement(
+        user,
         block.timestamp,
         vars.entitlementTypes[i]
       );
@@ -47,12 +54,12 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
       if (vars.roomId > 0) {
         entitlementsBySpaceId[vars.spaceId]
           .roomEntitlementsByRoomId[vars.roomId]
-          .entitlementsByAddress[vars.user]
+          .entitlementsByAddress[user]
           .push(entitlement);
       } else {
-        entitlementsBySpaceId[vars.spaceId]
-          .entitlementsByAddress[vars.user]
-          .push(entitlement);
+        entitlementsBySpaceId[vars.spaceId].entitlementsByAddress[user].push(
+          entitlement
+        );
       }
     }
   }
@@ -64,9 +71,9 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
     DataTypes.EntitlementType entitlementType
   ) public view returns (bool) {
     if (roomId > 0) {
-      DataTypes.Entitlement[] memory entitlements = entitlementsBySpaceId[
-        spaceId
-      ].roomEntitlementsByRoomId[roomId].entitlementsByAddress[user];
+      Entitlement[] memory entitlements = entitlementsBySpaceId[spaceId]
+        .roomEntitlementsByRoomId[roomId]
+        .entitlementsByAddress[user];
 
       for (uint256 i = 0; i < entitlements.length; i++) {
         if (entitlements[i].entitlementType == entitlementType) {
@@ -74,9 +81,8 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
         }
       }
     } else {
-      DataTypes.Entitlement[] memory entitlements = entitlementsBySpaceId[
-        spaceId
-      ].entitlementsByAddress[user];
+      Entitlement[] memory entitlements = entitlementsBySpaceId[spaceId]
+        .entitlementsByAddress[user];
       for (uint256 i = 0; i < entitlements.length; i++) {
         if (entitlements[i].entitlementType == entitlementType) {
           return true;
@@ -102,9 +108,9 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
 
     for (uint256 i = 0; i < _entitlementTypes.length; i++) {
       if (roomId > 0) {
-        DataTypes.Entitlement[] storage entitlements = entitlementsBySpaceId[
-          spaceId
-        ].roomEntitlementsByRoomId[roomId].entitlementsByAddress[user];
+        Entitlement[] storage entitlements = entitlementsBySpaceId[spaceId]
+          .roomEntitlementsByRoomId[roomId]
+          .entitlementsByAddress[user];
 
         for (uint256 j = 0; j < entitlements.length; j++) {
           if (entitlements[j].entitlementType == _entitlementTypes[i]) {
@@ -112,9 +118,8 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
           }
         }
       } else {
-        DataTypes.Entitlement[] storage entitlements = entitlementsBySpaceId[
-          spaceId
-        ].entitlementsByAddress[user];
+        Entitlement[] storage entitlements = entitlementsBySpaceId[spaceId]
+          .entitlementsByAddress[user];
 
         for (uint256 j = 0; j < entitlements.length; j++) {
           if (entitlements[j].entitlementType == _entitlementTypes[i]) {
@@ -129,7 +134,7 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
     uint256 spaceId,
     uint256 roomId,
     address user
-  ) public view returns (DataTypes.Entitlement[] memory) {
+  ) public view returns (Entitlement[] memory) {
     if (roomId > 0) {
       return
         entitlementsBySpaceId[spaceId]

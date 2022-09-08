@@ -16,4 +16,8 @@ interface ISpaceEntitlementModule {
     address userAddress,
     DataTypes.EntitlementType entitlementType
   ) external view returns (bool);
+
+  /// @notice Sets the entitlements for a space
+  /// @param vars struct containing the spaceId, roomId, entitlementType and data
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars) external;
 }

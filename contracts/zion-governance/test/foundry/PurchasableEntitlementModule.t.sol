@@ -6,7 +6,7 @@ import {Zion} from "../../contracts/governance/Zion.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
-import {PurchasableEntitlementModule} from "../../contracts/spaces/entitlements/PurchasableEntitlement.sol";
+import {PurchasableEntitlementModule} from "../../contracts/spaces/entitlements/PurchasableEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
 import {Constants} from "../../contracts/council/libraries/Constants.sol";
@@ -45,12 +45,11 @@ contract PurchasableEntitlementModuleTest is Test {
   function createTestSpaceWithUserGrantedEntitlementModule(
     string memory spaceName
   ) private returns (uint256) {
-    address[] memory entitlements = new address[](1);
-    entitlements[0] = address(userGrantedEntitlementModule);
+    address[] memory newEntitlementModuleAddresses = new address[](0);
 
     return
       spaceManager.createSpace(
-        DataTypes.CreateSpaceData(spaceName, entitlements)
+        DataTypes.CreateSpaceData(spaceName, newEntitlementModuleAddresses)
       );
   }
 
@@ -63,13 +62,24 @@ contract PurchasableEntitlementModuleTest is Test {
       spaceName
     );
 
+    DataTypes.EntitlementType[]
+      memory entitlementTypes = new DataTypes.EntitlementType[](1);
+    DataTypes.EntitlementType entitlementType = DataTypes
+      .EntitlementType
+      .Moderator;
+    entitlementTypes[0] = entitlementType;
+
+    string memory description = "Purchase the entitlement to be a moderator";
+    uint256 value = .08 ether;
+    string memory tag = "buy-moderator";
+
     // Add purchasable entitlement module to space
     spaceManager.addEntitlementModule(
-      DataTypes.AddEntitlementData(
-        spaceId,
-        address(purchasableEntitlementModule),
-        "purchasable"
-      )
+      spaceId,
+      address(purchasableEntitlementModule),
+      "purchasable",
+      entitlementTypes,
+      abi.encode(description, value, tag)
     );
 
     // verify the purchasable entitlement module is added to the space
@@ -78,25 +88,6 @@ contract PurchasableEntitlementModuleTest is Test {
     );
     assertEq(entitlements.length, 2);
     assertEq(entitlements[1], address(purchasableEntitlementModule));
-
-    // add purchasable entitlement so a user could purchase the moderator entitlement
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-    DataTypes.EntitlementType entitlementType = DataTypes
-      .EntitlementType
-      .Moderator;
-    entitlementTypes[0] = entitlementType;
-
-    purchasableEntitlementModule.setPurchasableEntitlement(
-      DataTypes.PurchasableEntitlementData(
-        spaceId,
-        roomId,
-        "buy-moderator",
-        "Purchase the entitlement to be a moderator",
-        .08 ether,
-        entitlementTypes
-      )
-    );
 
     // purchase the entitlement
     vm.startPrank(user1);

@@ -29,7 +29,7 @@ contract ClaimPoolGSN is BaseRelayRecipient {
   //     return "2.2.0";
   // }
 
-  function getZionTokenBalance() public view returns (uint256) {
+  function getZionTokenBalance() public pure returns (uint256) {
     return 17;
   }
 

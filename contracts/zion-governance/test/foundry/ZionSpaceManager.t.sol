@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {ZionSpaceManager} from "./../../contracts/spaces/ZionSpaceManager.sol";
 import {UserGrantedEntitlementModule} from "./../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "./../../contracts/spaces/libraries/DataTypes.sol";
+import {TokenEntitlementModule} from "./../../contracts/spaces/entitlements/TokenEntitlementModule.sol";
 
 contract ZionSpaceManagerTest is Test {
   ZionSpaceManager internal zionSpaceManager;
@@ -24,8 +25,7 @@ contract ZionSpaceManagerTest is Test {
   }
 
   function testCreateSpaceWithUserGrantedEntitlement() public {
-    address[] memory newEntitlementModuleAddresses = new address[](1);
-    newEntitlementModuleAddresses[0] = address(userGrantedEntitlementModule);
+    address[] memory newEntitlementModuleAddresses = new address[](0);
 
     uint256 spaceId = zionSpaceManager.createSpace(
       DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
@@ -50,8 +50,7 @@ contract ZionSpaceManagerTest is Test {
   }
 
   function testCreatorIsSpaceOwner() public {
-    address[] memory newEntitlementModuleAddresses = new address[](1);
-    newEntitlementModuleAddresses[0] = address(userGrantedEntitlementModule);
+    address[] memory newEntitlementModuleAddresses = new address[](0);
 
     uint256 spaceId = zionSpaceManager.createSpace(
       DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
@@ -62,8 +61,8 @@ contract ZionSpaceManagerTest is Test {
   }
 
   function testCreatorIsEntitledAdmin() public {
-    address[] memory newEntitlementModuleAddresses = new address[](1);
-    newEntitlementModuleAddresses[0] = address(userGrantedEntitlementModule);
+    address[] memory newEntitlementModuleAddresses = new address[](0);
+
     uint256 spaceId = zionSpaceManager.createSpace(
       DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
     );

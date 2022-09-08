@@ -9,4 +9,5 @@ library Errors {
   error EntitlementAlreadyRegistered();
   error EntitlementModuleNotSupported();
   error DefaultEntitlementModuleNotSet();
+  error SpaceDoesNotExist();
 }

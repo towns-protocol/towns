@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/console.sol";
 import {ISpaceManager} from "./../interfaces/ISpaceManager.sol";
 import {ISpaceEntitlementModule} from "./../interfaces/ISpaceEntitlementModule.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
@@ -9,7 +8,7 @@ import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract PurchasableEntitlementModule is ERC165, ISpaceEntitlementModule {
+contract PurchasableEntitlementModule is ERC165 {
   address public immutable zionSpaceManager;
 
   mapping(uint256 => SpacePurchasableEntitlements) purchasableEntitlementsBySpaceId;
@@ -40,18 +39,21 @@ contract PurchasableEntitlementModule is ERC165, ISpaceEntitlementModule {
     zionSpaceManager = _zionSpaceManager;
   }
 
-  function setPurchasableEntitlement(
-    DataTypes.PurchasableEntitlementData calldata vars
-  ) public {
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars) public {
     ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
     address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(vars.spaceId);
+
+    (string memory description, uint256 value, string memory tag) = abi.decode(
+      vars.entitlementData,
+      (string, uint256, string)
+    );
 
     require(
       ownerAddress == msg.sender || msg.sender == zionSpaceManager,
       "Only the owner can update entitlements"
     );
 
-    if (vars.value == 0) {
+    if (value == 0) {
       revert("No value provided");
     }
 
@@ -61,7 +63,7 @@ contract PurchasableEntitlementModule is ERC165, ISpaceEntitlementModule {
 
     if (
       purchasableEntitlementsBySpaceId[vars.spaceId]
-        .entitlementsByTag[vars.tag]
+        .entitlementsByTag[tag]
         .price != 0
     ) {
       revert("Entitlement tag already exists");
@@ -72,13 +74,8 @@ contract PurchasableEntitlementModule is ERC165, ISpaceEntitlementModule {
         vars.spaceId
       ];
     spacePurchasableEntitlements.entitlementsByTag[
-      vars.tag
-    ] = PurchasableEntitlement(
-      vars.description,
-      vars.value,
-      vars.entitlementTypes,
-      true
-    );
+      tag
+    ] = PurchasableEntitlement(description, value, vars.entitlementTypes, true);
   }
 
   function disablePurchasableEntitlement(uint256 spaceId, string calldata tag)

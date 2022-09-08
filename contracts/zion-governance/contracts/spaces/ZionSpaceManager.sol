@@ -17,13 +17,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// @author HNT Labs
 /// @notice This contract manages the spaces and entitlements in the Zion ecosystem.
 contract ZionSpaceManager is Ownable, ISpaceManager {
-  using EnumerableSet for EnumerableSet.Bytes32Set;
-
   /// @notice variable representing the current total amount of spaces in the contract
   uint256 private totalSpaces = 0;
 
   /// @notice variable representing the default entitlement module address and tag
-  address private defaultEntitlementModule;
+  address private defaultEntitlementModuleAddress;
   string private defaultEntitlementModuleTag = "usergranted";
 
   // Storage
@@ -46,7 +44,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     if (spaceIsRegistered[vars.spaceName])
       revert Errors.SpaceAlreadyRegistered();
 
-    if (defaultEntitlementModule == address(0))
+    if (defaultEntitlementModuleAddress == address(0))
       revert Errors.DefaultEntitlementModuleNotSet();
 
     spaceIsRegistered[vars.spaceName] = true;
@@ -61,8 +59,21 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     space.name = vars.spaceName;
     space.creator = _msgSender();
     space.owner = _msgSender();
+    space.roomId = 0;
 
-    addDefaultEntitlementModule(space);
+    // create array of entitlement types
+    DataTypes.EntitlementType[]
+      memory entitlementTypes = new DataTypes.EntitlementType[](1);
+    entitlementTypes[0] = DataTypes.EntitlementType.Administrator;
+
+    // create entitlement data
+    _addEntitlement(
+      spaceId,
+      defaultEntitlementModuleAddress,
+      defaultEntitlementModuleTag,
+      entitlementTypes,
+      abi.encode(_msgSender())
+    );
 
     emit Events.CreateSpace(_msgSender(), vars.spaceName, spaceId);
 
@@ -81,18 +92,25 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function addEntitlementModule(DataTypes.AddEntitlementData calldata vars)
-    external
-  {
-    DataTypes.Space storage space = spaceById[vars.spaceId];
+  function addEntitlementModule(
+    uint256 spaceId,
+    address entitlementAddress,
+    string memory entitlementTag,
+    DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory data
+  ) external {
+    DataTypes.Space storage space = spaceById[spaceId];
     if (space.owner != _msgSender()) revert Errors.NotSpaceOwner();
-    if (space.entitlements[vars.entitlementTag] != address(0))
+    if (space.entitlements[entitlementTag] != address(0))
       revert Errors.EntitlementAlreadyRegistered();
 
-    if (space.entitlements[vars.entitlementTag] == address(0)) {
-      space.entitlements[vars.entitlementTag] = vars.entitlement;
-      space.entitlementTags.push(vars.entitlementTag);
-    }
+    _addEntitlement(
+      spaceId,
+      entitlementAddress,
+      entitlementTag,
+      entitlementTypes,
+      data
+    );
   }
 
   /// @inheritdoc ISpaceManager
@@ -100,7 +118,7 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
     address _entitlementModule,
     string memory _entitlementModuleTag
   ) public onlyOwner {
-    defaultEntitlementModule = _entitlementModule;
+    defaultEntitlementModuleAddress = _entitlementModule;
     defaultEntitlementModuleTag = _entitlementModuleTag;
   }
 
@@ -204,60 +222,38 @@ contract ZionSpaceManager is Ownable, ISpaceManager {
    * Internal functions
    */
 
-  function addDefaultEntitlementModule(DataTypes.Space storage space) internal {
-    // check if vars.entitlements support interface
+  function _addEntitlement(
+    uint256 spaceId,
+    address entitlementAddress,
+    string memory entitlementTag,
+    DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory data
+  ) internal {
+    // check if entitlements support interface
     if (
-      IERC165(defaultEntitlementModule).supportsInterface(
+      IERC165(entitlementAddress).supportsInterface(
         type(ISpaceEntitlementModule).interfaceId
       ) == false
     ) revert Errors.EntitlementModuleNotSupported();
 
     // set default entitlement module
-    space.entitlementTags = [defaultEntitlementModuleTag];
-    space.entitlements[defaultEntitlementModuleTag] = defaultEntitlementModule;
+    spaceById[spaceId].entitlementTags.push(entitlementTag);
 
-    UserGrantedEntitlementModule entitlement = UserGrantedEntitlementModule(
-      defaultEntitlementModule
+    spaceById[spaceId].entitlements[entitlementTag] = entitlementAddress;
+
+    ISpaceEntitlementModule entitlementModule = ISpaceEntitlementModule(
+      entitlementAddress
     );
-
-    // create array of entitlement types
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-
-    // set the first entitlement type to be the Administrator entitlement type
-    entitlementTypes[0] = DataTypes.EntitlementType.Administrator;
 
     // add the user granted entitlement to the entitlement module
-    entitlement.setUserEntitlement(
-      DataTypes.EntitlementData(
-        space.spaceId,
-        0,
-        _msgSender(),
-        entitlementTypes
+    entitlementModule.setEntitlement(
+      DataTypes.SetEntitlementData(
+        spaceId,
+        spaceById[spaceId].roomId,
+        entitlementTypes,
+        data
       )
     );
-  }
-
-  /// @notice Checks if a string contains valid username ASCII characters [0-1], [a-z] and _.
-  /// @param str the string to be checked.
-  /// @return true if the string contains only valid characters, false otherwise.
-  function _isAllowedAsciiString(bytes memory str)
-    internal
-    pure
-    returns (bool)
-  {
-    for (uint256 i = 0; i < str.length; i++) {
-      uint8 charInt = uint8(str[i]);
-      if (
-        (charInt >= 1 && charInt <= 47) ||
-        (charInt >= 58 && charInt <= 94) ||
-        charInt == 96 ||
-        charInt >= 123
-      ) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /// @notice Checks if a string is a valid space name.

@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/console.sol";
 import {ISpaceManager} from "./../interfaces/ISpaceManager.sol";
 import {ISpaceEntitlementModule} from "./../interfaces/ISpaceEntitlementModule.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
@@ -9,8 +8,14 @@ import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
+contract TokenEntitlementModule is ERC165 {
   address public immutable zionSpaceManager;
+
+  struct Entitlement {
+    address grantedBy;
+    uint256 grantedTime;
+    DataTypes.EntitlementType entitlementType;
+  }
 
   struct ExternalToken {
     address contractAddress;
@@ -19,7 +24,7 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
 
   struct TokenEntitlement {
     ExternalToken[] tokens;
-    DataTypes.Entitlement[] entitlements;
+    Entitlement[] entitlements;
   }
 
   struct RoomTokenEntitlements {
@@ -42,9 +47,7 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
     return "Token";
   }
 
-  function setUserEntitlement(DataTypes.TokenEntitlementData calldata vars)
-    public
-  {
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars) public {
     ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
     address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(vars.spaceId);
 
@@ -53,11 +56,17 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
       "Only the owner can update entitlements"
     );
 
-    if (vars.tokens.length == 0) {
+    (
+      string memory description,
+      address[] memory tokens,
+      uint256[] memory quantities
+    ) = abi.decode(vars.entitlementData, (string, address[], uint256[]));
+
+    if (tokens.length == 0) {
       revert("No tokens provided");
     }
 
-    if (vars.tokens.length != vars.quantities.length) {
+    if (tokens.length != quantities.length) {
       revert("Token and quantity arrays must be the same length");
     }
 
@@ -65,19 +74,19 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         vars.spaceId
       ].roomEntitlementsByRoomId[vars.roomId].entitlementsByDescription[
-          vars.description
+          description
         ];
 
-      for (uint256 i = 0; i < vars.tokens.length; i++) {
+      for (uint256 i = 0; i < tokens.length; i++) {
         ExternalToken memory externalToken = ExternalToken(
-          vars.tokens[i],
-          vars.quantities[i]
+          tokens[i],
+          quantities[i]
         );
         tokenEntitlement.tokens.push(externalToken);
       }
 
       for (uint256 i = 0; i < vars.entitlementTypes.length; i++) {
-        DataTypes.Entitlement memory entitlement = DataTypes.Entitlement(
+        Entitlement memory entitlement = Entitlement(
           msg.sender,
           block.timestamp,
           vars.entitlementTypes[i]
@@ -87,18 +96,18 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
     } else {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         vars.spaceId
-      ].entitlementsByDescription[vars.description];
+      ].entitlementsByDescription[description];
 
-      for (uint256 i = 0; i < vars.tokens.length; i++) {
+      for (uint256 i = 0; i < tokens.length; i++) {
         ExternalToken memory externalToken = ExternalToken(
-          vars.tokens[i],
-          vars.quantities[i]
+          tokens[i],
+          quantities[i]
         );
         tokenEntitlement.tokens.push(externalToken);
       }
 
       for (uint256 i = 0; i < vars.entitlementTypes.length; i++) {
-        DataTypes.Entitlement memory entitlement = DataTypes.Entitlement(
+        Entitlement memory entitlement = Entitlement(
           msg.sender,
           block.timestamp,
           vars.entitlementTypes[i]
@@ -108,7 +117,7 @@ contract TokenEntitlementModule is ERC165, ISpaceEntitlementModule {
 
         entitlementsBySpaceId[vars.spaceId]
           .tagsByEntitlementType[vars.entitlementTypes[i]]
-          .push(vars.description);
+          .push(description);
       }
     }
   }

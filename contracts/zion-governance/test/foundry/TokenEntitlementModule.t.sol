@@ -49,12 +49,11 @@ contract TokenEntitlementModuleTest is Test {
   function createTestSpaceWithUserGrantedEntitlementModule(
     string memory spaceName
   ) private returns (uint256) {
-    address[] memory entitlements = new address[](1);
-    entitlements[0] = address(userGrantedEntitlementModule);
+    address[] memory newEntitlementModuleAddresses = new address[](0);
 
     return
       spaceManager.createSpace(
-        DataTypes.CreateSpaceData(spaceName, entitlements)
+        DataTypes.CreateSpaceData(spaceName, newEntitlementModuleAddresses)
       );
   }
 
@@ -71,13 +70,27 @@ contract TokenEntitlementModuleTest is Test {
       spaceName
     );
 
+    DataTypes.EntitlementType[]
+      memory entitlementTypes = new DataTypes.EntitlementType[](1);
+    DataTypes.EntitlementType entitlementType = DataTypes
+      .EntitlementType
+      .Moderator;
+    entitlementTypes[0] = entitlementType;
+
+    // add token entitlement so zion token holders to be mods
+    address[] memory tokens = new address[](1);
+    tokens[0] = address(zion);
+
+    uint256[] memory quantities = new uint256[](1);
+    quantities[0] = 10;
+
     // Add token entitlement module to space
     spaceManager.addEntitlementModule(
-      DataTypes.AddEntitlementData(
-        spaceId,
-        address(tokenEntitlementModule),
-        "token"
-      )
+      spaceId,
+      address(tokenEntitlementModule),
+      "token",
+      entitlementTypes,
+      abi.encode("ziontoken", tokens, quantities)
     );
 
     // verify the token entitlement module is added to the space
@@ -89,31 +102,6 @@ contract TokenEntitlementModuleTest is Test {
 
     // transfer tokens
     transferZionToken(user1, 100);
-
-    // add token entitlement so zion token holders to be mods
-    address[] memory zionTokenAddress = new address[](1);
-    zionTokenAddress[0] = address(zion);
-
-    uint256[] memory quantityArr = new uint256[](1);
-    quantityArr[0] = 10;
-
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-    DataTypes.EntitlementType entitlementType = DataTypes
-      .EntitlementType
-      .Moderator;
-    entitlementTypes[0] = entitlementType;
-
-    tokenEntitlementModule.setUserEntitlement(
-      DataTypes.TokenEntitlementData(
-        spaceId,
-        roomId,
-        "ziontoken",
-        zionTokenAddress,
-        quantityArr,
-        entitlementTypes
-      )
-    );
 
     bool isEntitled = spaceManager.isEntitled(
       spaceId,
@@ -142,31 +130,15 @@ contract TokenEntitlementModuleTest is Test {
       spaceName
     );
 
-    // Add the token entitlement module to the space
-    spaceManager.addEntitlementModule(
-      DataTypes.AddEntitlementData(
-        spaceId,
-        address(tokenEntitlementModule),
-        "token"
-      )
-    );
-
-    // Verify the token entitlement module is added to the space
-    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
-      spaceId
-    );
-    assertEq(entitlements.length, 2);
-    assertEq(entitlements[1], address(tokenEntitlementModule));
-
     // Transfer token to user1
     councilNFT.mint{value: Constants.MINT_PRICE}(user1);
 
     // Add token entitlement so zion token holders to be mods
-    address[] memory councilNFTAddresses = new address[](1);
-    councilNFTAddresses[0] = address(councilNFT);
+    address[] memory tokens = new address[](1);
+    tokens[0] = address(councilNFT);
 
-    uint256[] memory quantityArr = new uint256[](1);
-    quantityArr[0] = 1;
+    uint256[] memory quantities = new uint256[](1);
+    quantities[0] = 1;
 
     DataTypes.EntitlementType[]
       memory entitlementTypes = new DataTypes.EntitlementType[](1);
@@ -175,16 +147,21 @@ contract TokenEntitlementModuleTest is Test {
       .Moderator;
     entitlementTypes[0] = entitlementType;
 
-    tokenEntitlementModule.setUserEntitlement(
-      DataTypes.TokenEntitlementData(
-        spaceId,
-        roomId,
-        "councilnft",
-        councilNFTAddresses,
-        quantityArr,
-        entitlementTypes
-      )
+    // Add the token entitlement module to the space
+    spaceManager.addEntitlementModule(
+      spaceId,
+      address(tokenEntitlementModule),
+      "token",
+      entitlementTypes,
+      abi.encode("councilnft", tokens, quantities)
     );
+
+    // Verify the token entitlement module is added to the space
+    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
+      spaceId
+    );
+    assertEq(entitlements.length, 2);
+    assertEq(entitlements[1], address(tokenEntitlementModule));
 
     // Verify user1 is a moderator
     bool isEntitled = spaceManager.isEntitled(
