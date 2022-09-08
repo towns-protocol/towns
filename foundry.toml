@@ -14,7 +14,7 @@ verbosity = 3                 # The verbosity of tests
 src = 'contracts/zion-governance/contracts'
 test = 'contracts/zion-governance/test/foundry'
 out = 'contracts/zion-governance/artifacts_foundry'
-gas_reports = ["CouncilNFT"]
+gas_reports = ["CouncilNFT", "ZionSpaceManager"]
 ffi = true
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

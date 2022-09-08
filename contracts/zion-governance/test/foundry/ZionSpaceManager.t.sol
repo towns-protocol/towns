@@ -9,6 +9,7 @@ import {TokenEntitlementModule} from "./../../contracts/spaces/entitlements/Toke
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
 import "murky/Merkle.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract ZionSpaceManagerTest is Test, MerkleHelper {
   ZionSpaceManager internal zionSpaceManager;
@@ -41,6 +42,9 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
 
     address[] memory newEntitlementModuleAddresses = new address[](0);
 
+    address receiver = address(1);
+
+    vm.prank(address(receiver));
     uint256 spaceId = zionSpaceManager.createSpace(
       DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
     );
@@ -53,9 +57,10 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       memory entitlementTypes = new DataTypes.EntitlementType[](1);
     DataTypes.EntitlementType entitlementType = DataTypes
       .EntitlementType
-      .Administrator;
+      .Moderator;
     entitlementTypes[0] = entitlementType;
 
+    vm.prank(address(receiver));
     zionSpaceManager.addTokenEntitlement(
       spaceId,
       address(tokenEntitlementModule),
@@ -68,6 +73,31 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     address[] memory entitlements = zionSpaceManager.getEntitlementsBySpaceId(
       spaceId
     );
+
+    bool isUserGrantEntitled = zionSpaceManager.isEntitled(
+      spaceId,
+      0,
+      address(receiver),
+      DataTypes.EntitlementType.Administrator
+    );
+
+    assertTrue(isUserGrantEntitled);
+
+    nft.startPublicMint();
+
+    vm.startPrank(address(receiver));
+    vm.deal(address(receiver), 1 ether);
+    nft.mint{value: 0.08 ether}(address(receiver));
+    vm.stopPrank();
+
+    bool isTokenEntitled = zionSpaceManager.isEntitled(
+      spaceId,
+      1,
+      address(receiver),
+      DataTypes.EntitlementType.Moderator
+    );
+
+    assertTrue(isTokenEntitled);
 
     assertEq(entitlements.length, 2);
     assertEq(entitlements[0], address(userGrantedEntitlementModule));

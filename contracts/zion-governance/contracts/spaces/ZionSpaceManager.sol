@@ -99,6 +99,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     DataTypes.EntitlementType[] memory entitlementTypes
   ) external {
     _validateCallerIsSpaceOwner(spaceId);
+    _validateEntitlementInterface(entitlementModuleAddress);
 
     address[] memory tokens = new address[](1);
     uint256[] memory quantities = new uint256[](1);
@@ -177,24 +178,28 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     DataTypes.EntitlementType entitlementType
   ) public view returns (bool) {
     uint256 tagLength = _spaceById[spaceId].entitlementTags.length;
+    bool entitled = false;
 
     for (uint256 i = 0; i < tagLength; i++) {
       address entitlement = _spaceById[spaceId].entitlements[
         _spaceById[spaceId].entitlementTags[i]
       ];
+
       if (entitlement != address(0)) {
         ISpaceEntitlementModule entitlementModule = ISpaceEntitlementModule(
           entitlement
         );
+
         if (
           entitlementModule.isEntitled(spaceId, roomId, user, entitlementType)
         ) {
-          return true;
+          entitled = true;
+          break;
         }
       }
     }
 
-    return false;
+    return entitled;
   }
 
   /// @inheritdoc ISpaceManager
