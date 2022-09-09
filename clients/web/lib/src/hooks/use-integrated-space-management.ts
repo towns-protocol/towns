@@ -17,7 +17,7 @@ export enum TokenRequirement {
 }
 
 export function useIntegratedSpaceManagement() {
-  const { createSpace, createWeb3Space, getSpaces, sendNotice, spaceManager } =
+  const { createSpace, createWeb3Space, sendNotice, spaceManager } =
     useZionClient();
 
   const configureTokenEntitlement = useCallback(
@@ -29,7 +29,10 @@ export function useIntegratedSpaceManagement() {
 
       let contractSpaceId = 0;
       // Find the contract spaceId from the spaces.
-      const spaces = await getSpaces();
+      let spaces = undefined;
+      if (spaceManager) {
+        spaces = await spaceManager.unsigned.getSpaces();
+      }
       if (spaces) {
         for (const s of spaces) {
           if (s.name === spaceName) {
@@ -54,7 +57,7 @@ export function useIntegratedSpaceManagement() {
         console.error(TAG, `Error configuring token entitlement`);
       }
     },
-    [getSpaces, sendNotice, spaceManager],
+    [spaceManager, sendNotice],
   );
 
   const createWeb3SpaceIntegrated = useCallback(

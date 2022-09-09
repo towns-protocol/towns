@@ -9,10 +9,6 @@ import {
   SendMessageOptions,
   SpaceChild,
 } from "../types/matrix-types";
-import {
-  DataTypes,
-  ZionSpaceManager,
-} from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 
 import { ZionClientEvent } from "../client/ZionClientTypes";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
@@ -25,12 +21,20 @@ import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser"
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 import { useZionContext } from "../components/ZionContextProvider";
 import { ZionContractProvider } from "client/web3/ZionContractProvider";
+import {
+  CouncilNFT,
+  CouncilStaking,
+  ZionSpaceManager,
+} from "@harmony/contracts/governance";
 
 /**
  * Matrix client API to interact with the Matrix server.
  */
 interface ZionClientImpl {
   clientRunning: boolean;
+  councilNFT: ZionContractProvider<CouncilNFT> | undefined;
+  councilStaking: ZionContractProvider<CouncilStaking> | undefined;
+  spaceManager: ZionContractProvider<ZionSpaceManager> | undefined;
   createSpace: (
     createInfo: CreateSpaceInfo,
   ) => Promise<RoomIdentifier | undefined>;
@@ -46,10 +50,6 @@ interface ZionClientImpl {
     options: EditMessageOptions,
   ) => Promise<void>;
   getIsWalletIdRegistered: () => Promise<boolean>;
-  getSpace: (
-    spaceId: BigNumber,
-  ) => Promise<DataTypes.SpaceInfoStructOutput | undefined>;
-  getSpaces: () => Promise<DataTypes.SpaceInfoStructOutput[] | undefined>;
   inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>;
   joinRoom: (roomId: RoomIdentifier) => Promise<void>;
   leaveRoom: (roomId: RoomIdentifier) => Promise<void>;
@@ -82,7 +82,6 @@ interface ZionClientImpl {
   ) => Promise<void>;
   setAvatarUrl: (ravatarUrl: string) => Promise<void>;
   setDisplayName: (displayName: string) => Promise<void>;
-  spaceManager: ZionContractProvider<ZionSpaceManager> | undefined;
   syncSpace: (spaceId: RoomIdentifier) => Promise<SpaceChild[]>;
 }
 
@@ -100,6 +99,9 @@ export function useZionClient(): ZionClientImpl {
 
   return {
     clientRunning,
+    councilNFT: client?.councilNFT,
+    councilStaking: client?.councilStaking,
+    spaceManager: client?.spaceManager,
     createChannel: useWithCatch(client?.createChannel),
     createSpace: useWithCatch(client?.createSpace),
     createWeb3Space: useWithCatch(
@@ -108,8 +110,6 @@ export function useZionClient(): ZionClientImpl {
     ),
     editMessage: useWithCatch(client?.editMessage),
     getIsWalletIdRegistered,
-    getSpace: useWithCatch(client?.getSpace),
-    getSpaces: useWithCatch(client?.getSpaces),
     inviteUser: useWithCatch(client?.inviteUser),
     joinRoom,
     leaveRoom: useWithCatch(client?.leave),
@@ -124,7 +124,6 @@ export function useZionClient(): ZionClientImpl {
     sendReaction: useWithCatch(client?.sendReaction),
     sendNotice: useWithCatch(client?.sendNotice),
     setPowerLevel: useWithCatch(client?.setPowerLevel),
-    spaceManager: client?.spaceManager,
     syncSpace,
     setDisplayName: useWithCatch(client?.setDisplayName),
     setAvatarUrl: useWithCatch(client?.setAvatarUrl),

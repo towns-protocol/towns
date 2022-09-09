@@ -20,15 +20,18 @@ export const useSpaces = () => {
 };
 
 export const useSpacesFromContract = (): SpaceIdentifier[] => {
-  const { getSpaces } = useZionClient();
+  const { spaceManager } = useZionClient();
   const [spaceIdentifiers, setSpaceIdentifiers] = useState<SpaceIdentifier[]>(
     [],
   );
   const onNewSpace = useZionClientEvent(ZionClientEvent.NewSpace);
 
   useEffect(() => {
+    if (!spaceManager) {
+      return;
+    }
     void (async () => {
-      const spaces = await getSpaces();
+      const spaces = await spaceManager.unsigned.getSpaces();
       if (spaces) {
         setSpaceIdentifiers(
           spaces.map((x: DataTypes.SpaceInfoStructOutput) => {
@@ -41,7 +44,7 @@ export const useSpacesFromContract = (): SpaceIdentifier[] => {
         );
       }
     })();
-  }, [getSpaces, onNewSpace]);
+  }, [spaceManager, onNewSpace]);
 
   return spaceIdentifiers;
 };

@@ -23,7 +23,7 @@ describe("spaceManagerContract", () => {
     // log our our transaction
     console.log("receipt", receipt);
     // fetch the spaces
-    const spaces = await bob.getSpaces();
+    const spaces = await bob.spaceManager.unsigned.getSpaces();
     // expect a lower case name for the space
     expect(
       spaces.find((s) => s.name === spaceName.toLowerCase()),

@@ -225,21 +225,6 @@ export class ZionClient {
   }
 
   /************************************************
-   * getSpaces
-   *************************************************/
-  public async getSpaces() {
-    console.log("ZionClient::get spaces");
-    return this.spaceManager.unsigned.getSpaces();
-  }
-
-  /************************************************
-   * getSpace
-   *************************************************/
-  public async getSpace(spaceId: BigNumber) {
-    return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceId);
-  }
-
-  /************************************************
    * createSpace
    *************************************************/
   public async createWeb3Space(createSpaceInfo: CreateSpaceInfo) {
