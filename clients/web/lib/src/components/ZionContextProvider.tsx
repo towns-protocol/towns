@@ -6,8 +6,11 @@ import { ethers } from "ethers";
 import { ZionClient } from "client/ZionClient";
 
 export interface IZionContext {
+  councilNFTAddress: string;
+  tokenEntitlementAddress: string; // TokenEntitlementModule Smart Contract address
+  userEntitlementAddress: string; // UserEntitlementModule Smart Contract address.
   client?: ZionClient;
-  homeServer?: string;
+  homeServerUrl?: string;
   disableEncryption?: boolean; // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
   defaultSpaceId?: RoomIdentifier;
   defaultSpaceName?: string;
@@ -31,8 +34,8 @@ export function useZionContext(): IZionContext {
 interface Props {
   homeServerUrl: string;
   spaceManagerAddress: string;
-  tokenModuleAddress: string;
-  userModuleAddress: string;
+  tokenEntitlementAddress: string;
+  userEntitlementAddress: string;
   councilNFTAddress: string;
   councilStakingAddress: string;
   disableEncryption?: boolean;
@@ -59,8 +62,8 @@ const ContextImpl = (props: Props): JSX.Element => {
   const {
     homeServerUrl,
     spaceManagerAddress,
-    tokenModuleAddress,
-    userModuleAddress,
+    tokenEntitlementAddress,
+    userEntitlementAddress,
     councilNFTAddress,
     councilStakingAddress,
     disableEncryption,
@@ -73,8 +76,6 @@ const ContextImpl = (props: Props): JSX.Element => {
   const { client } = useZionClientListener(
     homeServerUrl,
     spaceManagerAddress,
-    tokenModuleAddress,
-    userModuleAddress,
     councilNFTAddress,
     councilStakingAddress,
     initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
@@ -88,12 +89,15 @@ const ContextImpl = (props: Props): JSX.Element => {
   return (
     <ZionContext.Provider
       value={{
-        client: client,
-        homeServer: homeServerUrl,
-        disableEncryption: disableEncryption,
+        councilNFTAddress,
+        tokenEntitlementAddress,
+        userEntitlementAddress,
+        client,
+        homeServerUrl,
+        disableEncryption,
         defaultSpaceId: convertedDefaultSpaceId,
-        defaultSpaceName: defaultSpaceName,
-        defaultSpaceAvatarSrc: defaultSpaceAvatarSrc,
+        defaultSpaceName,
+        defaultSpaceAvatarSrc,
       }}
     >
       {props.children}

@@ -13,7 +13,7 @@ export const useLoginWithPassword = () => {
   const { setDeviceId, setLoginError, setLoginStatus, setUserId, setUsername } =
     useMatrixStore();
 
-  const { homeServer } = useZionContext();
+  const { homeServerUrl } = useZionContext();
   const { setAccessToken } = useCredentialStore();
   const logout: () => Promise<void> = useLogout();
 
@@ -22,7 +22,7 @@ export const useLoginWithPassword = () => {
       await logout();
       setLoginStatus(LoginStatus.LoggingIn);
       const response = await matrixLoginWithPassword(
-        homeServer ?? "",
+        homeServerUrl ?? "",
         username,
         password,
       );
@@ -44,7 +44,7 @@ export const useLoginWithPassword = () => {
       }
     },
     [
-      homeServer,
+      homeServerUrl,
       logout,
       setAccessToken,
       setDeviceId,

@@ -11,7 +11,7 @@ import { useZionContext } from "../../components/ZionContextProvider";
 export const useRegisterPasswordUser = () => {
   const { setDeviceId, setLoginError, setLoginStatus, setUserId, setUsername } =
     useMatrixStore();
-  const { homeServer } = useZionContext();
+  const { homeServerUrl } = useZionContext();
   const { setAccessToken } = useCredentialStore();
   const logout: () => Promise<void> = useLogout();
   return useCallback(
@@ -19,7 +19,7 @@ export const useRegisterPasswordUser = () => {
       await logout();
       setLoginStatus(LoginStatus.LoggingIn);
       const response = await matrixRegisterUser(
-        homeServer ?? "",
+        homeServerUrl ?? "",
         username,
         password,
       );
@@ -39,7 +39,7 @@ export const useRegisterPasswordUser = () => {
       }
     },
     [
-      homeServer,
+      homeServerUrl,
       logout,
       setAccessToken,
       setDeviceId,

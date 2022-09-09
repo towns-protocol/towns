@@ -54,7 +54,7 @@ export function useMatrixWalletSignIn() {
     setUserId,
     setUsername,
   } = useMatrixStore();
-  const { homeServer } = useZionContext();
+  const { homeServerUrl: homeServer } = useZionContext();
   const { setAccessToken } = useCredentialStore();
   const { accounts, sign } = useWeb3Context();
   const { chainId } = useWeb3Context();

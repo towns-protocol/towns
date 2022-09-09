@@ -21,10 +21,10 @@ const MATRIX_HOMESERVER_URL = process.env
   .REACT_APP_MATRIX_HOME_SERVER as string;
 const SPACE_MANAGER_ADDRESS = process.env
   .REACT_APP_SPACE_CONTRACT_ADDRESS as string;
-const TOKEN_MODULE_ADDRESS = process.env
-  .REACT_APP_TOKEN_MODULE_CONTRACT_ADDRESS as string;
-const USER_MODULE_ADDRESS = process.env
-  .REACT_APP_USER_MODULE_CONTRACT_ADDRESS as string;
+const TOKEN_ENTITLEMENT_ADDRESS = process.env
+  .REACT_APP_TOKEN_ENTITLEMENT_ADDRESS as string;
+const USER_ENTITLEMENT_ADDRESS = process.env
+  .REACT_APP_USER_ENTITLEMENT_ADDRESS as string;
 const COUNCIL_NFT_ADDRESS = process.env.REACT_APP_COUNCIL_NFT_ADDRESS as string;
 const COUNCIL_STAKING_ADDRESS = process.env
   .REACT_APP_COUNCIL_STAKING_ADDRESS as string;
@@ -37,8 +37,8 @@ export function App(): JSX.Element {
           <ZionContextProvider
             homeServerUrl={MATRIX_HOMESERVER_URL}
             spaceManagerAddress={SPACE_MANAGER_ADDRESS}
-            tokenModuleAddress={TOKEN_MODULE_ADDRESS}
-            userModuleAddress={USER_MODULE_ADDRESS}
+            tokenEntitlementAddress={TOKEN_ENTITLEMENT_ADDRESS}
+            userEntitlementAddress={USER_ENTITLEMENT_ADDRESS}
             councilNFTAddress={COUNCIL_NFT_ADDRESS}
             councilStakingAddress={COUNCIL_STAKING_ADDRESS}
             disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
