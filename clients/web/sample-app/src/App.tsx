@@ -20,7 +20,7 @@ import { AuthenticatedContent } from "./routes/AuthenticatedContent";
 const MATRIX_HOMESERVER_URL = process.env
   .REACT_APP_MATRIX_HOME_SERVER as string;
 const SPACE_MANAGER_ADDRESS = process.env
-  .REACT_APP_SPACE_CONTRACT_ADDRESS as string;
+  .REACT_APP_SPACE_MANAGER_ADDRESS as string;
 const TOKEN_ENTITLEMENT_ADDRESS = process.env
   .REACT_APP_TOKEN_ENTITLEMENT_ADDRESS as string;
 const USER_ENTITLEMENT_ADDRESS = process.env
