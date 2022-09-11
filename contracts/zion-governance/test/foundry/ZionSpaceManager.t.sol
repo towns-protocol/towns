@@ -40,14 +40,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     //deploy the nft
     CouncilNFT nft = new CouncilNFT("Zion", "zion", "baseUri", root);
 
-    address[] memory newEntitlementModuleAddresses = new address[](0);
-
     address receiver = address(1);
-
-    vm.prank(address(receiver));
-    uint256 spaceId = zionSpaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
-    );
 
     TokenEntitlementModule tokenEntitlementModule = new TokenEntitlementModule(
       address(zionSpaceManager)
@@ -55,19 +48,19 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
 
     DataTypes.EntitlementType[]
       memory entitlementTypes = new DataTypes.EntitlementType[](1);
-    DataTypes.EntitlementType entitlementType = DataTypes
-      .EntitlementType
-      .Moderator;
+    DataTypes.EntitlementType entitlementType = DataTypes.EntitlementType.Join;
     entitlementTypes[0] = entitlementType;
 
     vm.prank(address(receiver));
-    zionSpaceManager.addTokenEntitlement(
-      spaceId,
-      address(tokenEntitlementModule),
-      address(nft),
-      1,
-      "Council NFT",
-      entitlementTypes
+    uint256 spaceId = zionSpaceManager.createSpace(
+      DataTypes.CreateSpaceData("test", "matrix-id"),
+      DataTypes.CreateSpaceTokenEntitlementData(
+        address(tokenEntitlementModule),
+        address(nft),
+        1,
+        "Council NFT",
+        entitlementTypes
+      )
     );
 
     address[] memory entitlements = zionSpaceManager.getEntitlementsBySpaceId(
@@ -94,7 +87,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       spaceId,
       1,
       address(receiver),
-      DataTypes.EntitlementType.Moderator
+      DataTypes.EntitlementType.Join
     );
 
     assertTrue(isTokenEntitled);
@@ -105,10 +98,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
   }
 
   function testCreateSpaceWithUserGrantedEntitlement() public {
-    address[] memory newEntitlementModuleAddresses = new address[](0);
-
     uint256 spaceId = zionSpaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
+      DataTypes.CreateSpaceData("test", "matrix-id")
     );
 
     DataTypes.SpaceInfo memory info = zionSpaceManager.getSpaceInfoBySpaceId(
@@ -130,10 +121,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
   }
 
   function testCreatorIsSpaceOwner() public {
-    address[] memory newEntitlementModuleAddresses = new address[](0);
-
     uint256 spaceId = zionSpaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
+      DataTypes.CreateSpaceData("test", "matrix-id")
     );
 
     address ownerAddress = zionSpaceManager.getSpaceOwnerBySpaceId(spaceId);
@@ -141,10 +130,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
   }
 
   function testCreatorIsEntitledAdmin() public {
-    address[] memory newEntitlementModuleAddresses = new address[](0);
-
     uint256 spaceId = zionSpaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", newEntitlementModuleAddresses)
+      DataTypes.CreateSpaceData("test", "matrix-id")
     );
 
     assertTrue(

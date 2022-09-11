@@ -49,11 +49,9 @@ contract TokenEntitlementModuleTest is Test {
   function createTestSpaceWithUserGrantedEntitlementModule(
     string memory spaceName
   ) private returns (uint256) {
-    address[] memory newEntitlementModuleAddresses = new address[](0);
-
     return
       spaceManager.createSpace(
-        DataTypes.CreateSpaceData(spaceName, newEntitlementModuleAddresses)
+        DataTypes.CreateSpaceData(spaceName, "matrix-id")
       );
   }
 
@@ -85,7 +83,7 @@ contract TokenEntitlementModuleTest is Test {
     quantities[0] = 10;
 
     // Add token entitlement module to space
-    spaceManager.addEntitlementModule(
+    spaceManager.addEntitlement(
       spaceId,
       address(tokenEntitlementModule),
       "token",
@@ -148,7 +146,7 @@ contract TokenEntitlementModuleTest is Test {
     entitlementTypes[0] = entitlementType;
 
     // Add the token entitlement module to the space
-    spaceManager.addEntitlementModule(
+    spaceManager.addEntitlement(
       spaceId,
       address(tokenEntitlementModule),
       "token",

@@ -45,11 +45,9 @@ contract PurchasableEntitlementModuleTest is Test {
   function createTestSpaceWithUserGrantedEntitlementModule(
     string memory spaceName
   ) private returns (uint256) {
-    address[] memory newEntitlementModuleAddresses = new address[](0);
-
     return
       spaceManager.createSpace(
-        DataTypes.CreateSpaceData(spaceName, newEntitlementModuleAddresses)
+        DataTypes.CreateSpaceData(spaceName, "network-id")
       );
   }
 
@@ -74,7 +72,7 @@ contract PurchasableEntitlementModuleTest is Test {
     string memory tag = "buy-moderator";
 
     // Add purchasable entitlement module to space
-    spaceManager.addEntitlementModule(
+    spaceManager.addEntitlement(
       spaceId,
       address(purchasableEntitlementModule),
       "purchasable",

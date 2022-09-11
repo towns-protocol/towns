@@ -4,15 +4,22 @@ pragma solidity ^0.8.0;
 import {DataTypes} from "../libraries/DataTypes.sol";
 
 interface ISpaceManager {
+  // function createSpace(
+  //   DataTypes.CreateSpaceData calldata info,
+  //   DataTypes.CreateSpacePurchaseableEntitlementData calldata entitlement
+  // ) external returns (uint256);
+
   /// @notice Create a new space.
-  /// @param vars The data to create the space.
-  function createSpace(DataTypes.CreateSpaceData calldata vars)
+  /// @param info The data to create the space.
+  function createSpace(DataTypes.CreateSpaceData calldata info)
     external
     returns (uint256);
 
-  // createSpaceWithTokenEntitlement
-
-  // createSpaceWithPurchaseableTokenEntitlement
+  /// @notice Create a new space with a token entitlement.
+  function createSpace(
+    DataTypes.CreateSpaceData calldata info,
+    DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
+  ) external returns (uint256);
 
   /// @notice Connects the node network id to a space id
   /// @param spaceId The space id to connect to the network id
@@ -49,8 +56,8 @@ interface ISpaceManager {
     view
     returns (DataTypes.SpaceInfo memory);
 
-  /// @notice Adds an entitlement module to a space.
-  function addEntitlementModule(
+  /// @notice whitelist an entitlement module to a space and registers an entitlement to an entitlement module
+  function addEntitlement(
     uint256 spaceId,
     address entitlementAddress,
     string memory entitlementTag,

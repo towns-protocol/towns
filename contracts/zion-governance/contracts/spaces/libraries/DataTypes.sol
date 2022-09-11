@@ -60,10 +60,28 @@ library DataTypes {
 
   /// @notice A struct containing the parameters required for creating a space.
   /// @param spaceName The name of the space.
-  /// @param entitlements The entitlements to be granted to the space.
+  /// @param networkId The network id of the space.
   struct CreateSpaceData {
     string spaceName;
-    address[] entitlements;
+    string networkId;
+  }
+
+  /// @notice A struct containing the parameters required for creating a space with a  token entitlement.
+  struct CreateSpaceTokenEntitlementData {
+    address entitlementModuleAddress;
+    address tokenAddress;
+    uint256 quantity;
+    string description;
+    EntitlementType[] entitlementTypes;
+  }
+
+  struct CreateSpacePurchaseableEntitlementData {
+    address entitlementModuleAddress;
+    address tokenAddress;
+    uint256 quantity;
+    uint256 price;
+    string description;
+    EntitlementType[] entitlementTypes;
   }
 
   /// @notice A struct containing the parameters required for setting an entitlement.
