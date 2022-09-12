@@ -16,7 +16,7 @@ interface ISpaceManager {
     returns (uint256);
 
   /// @notice Create a new space with a token entitlement.
-  function createSpace(
+  function createSpaceWithTokenEntitlement(
     DataTypes.CreateSpaceData calldata info,
     DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
   ) external returns (uint256);
@@ -78,9 +78,9 @@ interface ISpaceManager {
     returns (address[] memory entitlements);
 
   /// @notice Returns the space id by network id
-  /// @param networkSpaceId The network space id
+  /// @param networkId The network space id
   /// @return uint256 Returns the space id
-  function getSpaceIdByNetworkId(string calldata networkSpaceId)
+  function getSpaceIdByNetworkId(string calldata networkId)
     external
     view
     returns (uint256);

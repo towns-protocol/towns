@@ -62,7 +62,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function createSpace(
+  function createSpaceWithTokenEntitlement(
     DataTypes.CreateSpaceData calldata info,
     DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
   ) external returns (uint256) {
@@ -86,7 +86,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   {
     _validateCallerIsSpaceOwner(spaceId);
 
-    _spaceById[spaceId].networkSpaceId = networkId;
+    _spaceById[spaceId].networkId = networkId;
     _spaceIdByNetworkId[networkId] = spaceId;
 
     emit Events.NetworkIdSet(spaceId, networkId);

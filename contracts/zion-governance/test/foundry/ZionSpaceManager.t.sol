@@ -52,7 +52,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     entitlementTypes[0] = entitlementType;
 
     vm.prank(address(receiver));
-    uint256 spaceId = zionSpaceManager.createSpace(
+    uint256 spaceId = zionSpaceManager.createSpaceWithTokenEntitlement(
       DataTypes.CreateSpaceData("test", "matrix-id"),
       DataTypes.CreateSpaceTokenEntitlementData(
         address(tokenEntitlementModule),

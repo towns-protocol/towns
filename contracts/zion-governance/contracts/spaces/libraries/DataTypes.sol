@@ -21,7 +21,7 @@ library DataTypes {
   struct Space {
     uint256 spaceId;
     uint256 createdAt;
-    string networkSpaceId;
+    string networkId;
     string name;
     address creator;
     address owner;

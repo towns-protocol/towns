@@ -23,9 +23,11 @@ library ZionSpaceController {
       revert Errors.SpaceAlreadyRegistered();
 
     _spaceByNameHash[spaceNameHash] = spaceId;
+
     _spaceById[spaceId].spaceId = spaceId;
     _spaceById[spaceId].createdAt = block.timestamp;
     _spaceById[spaceId].name = info.spaceName;
+    _spaceById[spaceId].networkId = info.networkId;
     _spaceById[spaceId].creator = creator;
     _spaceById[spaceId].owner = creator;
     _spaceById[spaceId].roomId = 0;
