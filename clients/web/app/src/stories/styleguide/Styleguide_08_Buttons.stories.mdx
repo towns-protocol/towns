@@ -10,7 +10,7 @@ import { Row } from "../StoryUtils";
 ## Sizes
 
 <Box>
-  {Object.keys(vars.dims.input).map((c) => (
+  {Object.keys(vars.dims.button).map((c) => (
     <Row key={c} label={c}>
       <Stack horizontal>
         <Button icon="settings" size={c}>
@@ -43,13 +43,13 @@ import { Row } from "../StoryUtils";
   </Row>
 </Box>
 
-## Variants
+## Tones
 
 <Box>
-  {Object.keys(vars.color.tone).map((c) => (
+  {Object.keys(vars.color.background).map((c) => (
     <Row key={c} label={c}>
       <Stack horizontal>
-        <Button icon="settings" variant={c}>
+        <Button icon="settings" tone={c}>
           Action
         </Button>
       </Stack>

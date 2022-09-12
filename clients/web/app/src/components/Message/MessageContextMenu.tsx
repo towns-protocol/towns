@@ -19,7 +19,7 @@ type Props = {
 
 const style = {
   transform: `
-    translateY(calc(-100% - 0.5 * ${vars.space.md}))
+    translateY(calc(-100% + 0.5 * ${vars.space.md}))
   `,
 };
 

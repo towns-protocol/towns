@@ -32,8 +32,8 @@ export default {
     replies: {
       defaultValue: { userIds: [1, 2, 3, 5] },
     },
-    date: {
-      defaultValue: "Tue 13 May",
+    timestamp: {
+      defaultValue: Date.now() - 3600000 * 4,
     },
     name: {
       defaultValue: "display22",

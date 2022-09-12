@@ -1,7 +1,7 @@
 import { RefObject, useCallback, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
-export const useLoadMore = (
+export const useLazyLoad = (
   onLoadMore: () => void,
   containerRef: RefObject<HTMLDivElement>,
   timelineLength: number,

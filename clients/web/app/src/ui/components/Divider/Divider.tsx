@@ -9,7 +9,7 @@ export const Divider = ({
   align = "center",
   space = "none",
 }: {
-  label?: string;
+  label?: string | React.ReactNode;
   fontSize?: ParagraphProps["size"];
   align?: "left" | "center" | "right";
   space?: BoxProps["paddingY"];
@@ -25,13 +25,19 @@ export const Divider = ({
       <Box borderBottom grow />
     </Box>
   ) : (
-    <Box gap="md" direction="row" alignItems="center" paddingY={space}>
+    <Box gap="sm" direction="row" alignItems="center" paddingY={space}>
       {align !== "left" && <Box borderBottom grow />}
-      <Box>
-        <Paragraph color="gray2" size={fontSize}>
-          {label}
-        </Paragraph>
-      </Box>
+
+      {typeof label !== "string" ? (
+        label
+      ) : (
+        <Box>
+          <Paragraph color="gray2" size={fontSize}>
+            {label}
+          </Paragraph>
+        </Box>
+      )}
+
       {align !== "right" && <Box borderBottom grow />}
     </Box>
   );

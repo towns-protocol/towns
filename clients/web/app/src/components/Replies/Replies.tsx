@@ -20,7 +20,8 @@ export const Replies = ({
         alignItems="center"
         rounded="xs"
         background="level3"
-        padding="sm"
+        paddingY="sm"
+        paddingX="md"
         gap="line"
       >
         {replies.userIds.map((id) => (

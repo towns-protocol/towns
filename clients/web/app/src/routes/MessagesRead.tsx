@@ -26,16 +26,16 @@ export const MessagesRead = () => (
         <Message
           condensed
           name="You"
-          date="Today at 11:01 AM"
-          avatar={<Avatar src="/placeholders/nft_1.png" />}
+          timestamp={Date.now()}
+          avatar="/placeholders/nft_1.png"
         >
           <Paragraph>gm</Paragraph>
         </Message>
         <Message
           condensed
           name="iamblue"
-          date="Today at 11:01 AM"
-          avatar={<Avatar src="/placeholders/nft_4.png" />}
+          timestamp={Date.now()}
+          avatar="/placeholders/nft_4.png"
         >
           <Paragraph>GM My man!!</Paragraph>
         </Message>

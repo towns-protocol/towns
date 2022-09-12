@@ -19,9 +19,9 @@ export const avatarSizes = {
     "--size": vars.dims.baseline.x4,
   },
   avatar_md: {
-    width: vars.dims.baseline.x6,
-    height: vars.dims.baseline.x6,
-    "--size": vars.dims.baseline.x6,
+    width: vars.dims.baseline.x5,
+    height: vars.dims.baseline.x5,
+    "--size": vars.dims.baseline.x5,
   },
   avatar_lg: {
     width: vars.dims.baseline.x8,

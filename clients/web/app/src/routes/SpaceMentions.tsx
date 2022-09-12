@@ -2,7 +2,7 @@ import React from "react";
 import { Outlet } from "react-router";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
-import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
+import { Divider, Icon, Paragraph, Stack } from "@ui";
 import { ContextBar } from "@components/ContextBar";
 
 export const SpaceMentions = () => {
@@ -19,9 +19,10 @@ export const SpaceMentions = () => {
           <Paragraph color="accent">Show 2 more replies</Paragraph>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
+            avatar="/placeholders/nft_2.png"
+            avatarSize="avatar_sm"
             name="deiguy"
-            date="Today at 12:01AM"
+            timestamp={Date.now() - 3600000 * 4}
           >
             <Paragraph>
               Channel about our farm and I&apos;m about to start another about
@@ -33,9 +34,10 @@ export const SpaceMentions = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_30.png" />}
+            avatar="/placeholders/nft_30.png"
+            avatarSize="avatar_sm"
             name="sunsoutapersout"
-            date="Today at 11:01AM"
+            timestamp={Date.now() - 3600000 * 3}
           >
             <Paragraph>
               Can you sign this today <strong>@msyou209</strong>?

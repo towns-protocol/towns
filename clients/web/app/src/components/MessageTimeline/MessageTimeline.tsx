@@ -1,20 +1,21 @@
 import React, { createContext } from "react";
+import useEvent from "react-use-event-hook";
 import {
   RoomIdentifier,
   TimelineEvent,
-  ZTEvent,
   useMatrixStore,
   useZionClient,
 } from "use-zion-client";
-import useEvent from "react-use-event-hook";
 import {
   useTimelineReactionsMap,
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
 
-import { getIsRoomMessageContent } from "utils/ztevent_util";
+import { Box, Divider, Stack } from "@ui";
+
 import { TimelineGenericEvent } from "./events/TimelineGenericEvent";
 import { TimelineMessage } from "./events/TimelineMessage";
+import { RenderEventType, useGroupEvents } from "./hooks/useGroupEvents";
 import { useTimelineMessageEditing } from "./hooks/useTimelineMessageEditing";
 
 type Props = {
@@ -39,47 +40,87 @@ export const MessageTimeline = (props: Props) => {
   const onReaction = useEvent((eventId: string, reaction: string) => {
     sendReaction(channelId, eventId, reaction);
   });
+  const dateGroups = useGroupEvents(events);
 
   return (
     <TimelineMessageContext.Provider value={timelineActions}>
-      {events.map((e, index) => {
-        switch (e.content?.kind) {
-          case ZTEvent.RoomMessage: {
-            const prevousEvent = events[index - 1];
-            const previousContent = getIsRoomMessageContent(prevousEvent);
-            const minimal = previousContent?.sender.id === e.content.sender.id;
-            const reactions = messageReactionsMap?.get(e.eventId);
-            return (
-              <TimelineMessage
-                userId={userId}
-                channelId={channelId}
-                spaceId={spaceId}
-                event={e}
-                eventContent={e.content}
-                minimal={minimal}
-                own={e.content.sender.id === userId}
-                editing={e.eventId === timelineActions.editingMessageId}
-                replies={messageRepliesMap?.get(e.eventId)}
-                reactions={reactions}
-                key={e.eventId}
-                onReaction={onReaction}
+      {dateGroups.map((dateGroup) => {
+        const renderEvents = dateGroup.events;
+        return (
+          <Stack key={dateGroup.date.humanDate}>
+            <Box
+              top="md"
+              display="block"
+              paddingX="lg"
+              position="sticky"
+              zIndex="ui"
+            >
+              <Divider
+                label={
+                  <Box
+                    padding="sm"
+                    rounded="md"
+                    background="default"
+                    color="gray2"
+                    fontSize="sm"
+                  >
+                    {dateGroup.date.humanDate}
+                  </Box>
+                }
               />
-            );
-          }
-          case ZTEvent.Reaction: {
-            return null;
-          }
-          case ZTEvent.RoomMember: {
-            return <TimelineGenericEvent event={e} key={e.eventId} />;
-          }
-          case ZTEvent.RoomCreate: {
-            return <TimelineGenericEvent event={e} key={e.eventId} />;
-          }
+            </Box>
 
-          default: {
-            return <TimelineGenericEvent event={e} key={e.eventId} />;
-          }
-        }
+            {renderEvents.map((r, index) => {
+              switch (r.type) {
+                case RenderEventType.UserMessageGroup: {
+                  const messagesByUser = r.events.map((e, index) => {
+                    const minimal = index > 0;
+                    const reactions = messageReactionsMap?.get(e.eventId);
+                    return (
+                      <TimelineMessage
+                        userId={userId}
+                        channelId={channelId}
+                        spaceId={spaceId}
+                        event={e}
+                        eventContent={e.content}
+                        minimal={minimal}
+                        own={e.content.sender.id === userId}
+                        editing={e.eventId === timelineActions.editingMessageId}
+                        replies={messageRepliesMap?.get(e.eventId)}
+                        reactions={reactions}
+                        key={e.eventId}
+                        onReaction={onReaction}
+                      />
+                    );
+                  });
+
+                  return <Stack paddingY="sm">{messagesByUser}</Stack>;
+                }
+
+                case RenderEventType.RoomMember: {
+                  return (
+                    <TimelineGenericEvent
+                      event={r.event}
+                      key={r.event.eventId}
+                    />
+                  );
+                }
+
+                case RenderEventType.RoomCreate: {
+                  return (
+                    <TimelineGenericEvent
+                      event={r.event}
+                      key={r.event.eventId}
+                    />
+                  );
+                }
+                default: {
+                  return null;
+                }
+              }
+            })}
+          </Stack>
+        );
       })}
     </TimelineMessageContext.Provider>
   );

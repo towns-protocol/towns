@@ -1,23 +1,26 @@
+import { format } from "date-fns";
 import React, { useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { RoomIdentifier } from "use-zion-client";
 import { Reactions } from "@components/Reactions/Reactions";
-import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
-import { useHover } from "hooks/useHover";
-import { MessageReactions } from "hooks/useFixMeMessageThread";
 import { MessageReplies } from "@components/Replies/MessageReplies";
+import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
+import { MessageReactions } from "hooks/useFixMeMessageThread";
+import { useHover } from "hooks/useHover";
+import { AvatarAtoms } from "ui/components/Avatar/Avatar.css";
 import { MessageContextMenu } from "./MessageContextMenu";
 
 type Props = {
   userId?: string | null;
-  avatar?: string | React.ReactNode;
+  avatar?: string;
+  avatarSize?: AvatarAtoms["size"];
   name: string;
   condensed?: boolean;
   minimal?: boolean;
   channel?: string;
   reactions?: MessageReactions;
   replies?: number;
-  date?: string;
+  timestamp?: number;
   editing?: boolean;
   editable?: boolean;
   eventId?: string;
@@ -35,6 +38,7 @@ export const Message = (props: Props) => {
     userId,
     eventId,
     avatar,
+    avatarSize = "avatar_md",
     condensed,
     name,
     channel,
@@ -46,7 +50,7 @@ export const Message = (props: Props) => {
     onReaction,
     reactions,
     replies,
-    date,
+    timestamp,
     children,
     ...boxProps
   } = props;
@@ -55,27 +59,25 @@ export const Message = (props: Props) => {
 
   const { isHover, onMouseEnter } = useHover(ref);
 
+  const date = timestamp ? format(timestamp, "h:mm a") : undefined;
+
   return (
     <Stack
       horizontal
       ref={ref}
-      gap="paragraph"
       onMouseEnter={onMouseEnter}
       {...boxProps}
       background={{
         default: isEditing || isHover ? "level2" : undefined,
-        hover: "level2",
       }}
     >
       {/* left / avatar gutter */}
       {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-      <Box minWidth="x6">
-        {isMinimal ? (
-          <></>
-        ) : typeof avatar === "string" ? (
-          <Avatar src={avatar} size="avatar_md" insetY="xxs" />
+      <Box minWidth="x7">
+        {!isMinimal ? (
+          <Avatar src={avatar} size={avatarSize} insetY="none" />
         ) : (
-          avatar
+          <></>
         )}
       </Box>
 
@@ -105,33 +107,34 @@ export const Message = (props: Props) => {
 
             {/* date, alignment tbc depending on context */}
             {date && (
-              <Text fontSize="md" color="gray2" as="span" textAlign="right">
+              <Text fontSize="sm" color="gray2" as="span" textAlign="right">
                 {date}
               </Text>
             )}
           </Box>
         )}
-        <Stack pointerEvents="auto" fontSize="md" color="gray1" gap="md">
-          {children}
+        <Stack gap="paragraph">
+          <Stack pointerEvents="auto" fontSize="md" color="gray1" gap="md">
+            {children}
+          </Stack>
+
+          {reactions ? (
+            <Stack horizontal>
+              <Reactions
+                userId={userId}
+                parentId={eventId}
+                reactions={reactions}
+                onReaction={onReaction}
+              />
+            </Stack>
+          ) : null}
+
+          {replies && eventId && (
+            <Stack horizontal>
+              <MessageReplies eventId={eventId} replyCount={replies} />
+            </Stack>
+          )}
         </Stack>
-
-        {reactions ? (
-          <Stack horizontal>
-            <Reactions
-              userId={userId}
-              parentId={eventId}
-              reactions={reactions}
-              onReaction={onReaction}
-            />
-          </Stack>
-        ) : null}
-
-        {replies && eventId && (
-          <Stack horizontal>
-            <MessageReplies eventId={eventId} replyCount={replies} />
-          </Stack>
-        )}
-
         {spaceId && channelId && eventId && isHover && !isEditing && (
           <MessageContextMenu
             canReact

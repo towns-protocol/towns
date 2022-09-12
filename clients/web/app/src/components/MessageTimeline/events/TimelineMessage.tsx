@@ -1,4 +1,3 @@
-import { formatDistance } from "date-fns";
 import { RelationType } from "matrix-js-sdk";
 import React from "react";
 
@@ -9,8 +8,8 @@ import {
 } from "use-zion-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
-import { getMessageBody } from "utils/ztevent_util";
 import { MessageReactions } from "hooks/useFixMeMessageThread";
+import { getMessageBody } from "utils/ztevent_util";
 import { TimelineMessageEditor } from "./TimelineMessageEditor";
 
 type Props = {
@@ -42,20 +41,17 @@ export const TimelineMessage = (props: Props) => {
     onReaction,
   } = props;
 
-  const date = formatDistance(Date.now(), event.originServerTs);
-
   return !event ? null : (
     <Message
       userId={userId}
-      date={date}
+      timestamp={event.originServerTs}
       avatar={eventContent.sender.avatarUrl}
       channelId={channelId}
       editable={isOwn && !event.isLocalPending}
       eventId={event.eventId}
       minimal={isMinimal}
       name={`${eventContent.sender.displayName}`}
-      paddingBottom={isMinimal ? "sm" : "sm"}
-      paddingTop={isMinimal ? "sm" : "lg"}
+      paddingY="sm"
       paddingX="lg"
       spaceId={spaceId}
       reactions={reactions}

@@ -1,4 +1,5 @@
 import { defineProperties } from "@vanilla-extract/sprinkles";
+import { vars } from "../vars.css";
 
 export const blockProperties = defineProperties({
   properties: {
@@ -37,6 +38,10 @@ export const blockProperties = defineProperties({
       static: "static",
       sticky: "sticky",
     },
+    top: vars.space,
+    bottom: vars.space,
+    left: vars.space,
+    right: vars.space,
     overflowX: ["hidden", "visible", "auto", "scroll"],
     overflowY: ["hidden", "visible", "auto", "scroll"],
     cursor: [

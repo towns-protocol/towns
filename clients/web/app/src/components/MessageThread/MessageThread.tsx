@@ -34,7 +34,7 @@ export const MessageThread = (props: Props) => {
   return (
     <Stack absoluteFill padding gap position="relative">
       <MessageWindow onClose={props.onClose}>
-        <Stack scroll grow>
+        <Stack scroll grow paddingTop="md">
           {parentMessage && parentMessageContent && (
             <TimelineMessage
               userId={userId}

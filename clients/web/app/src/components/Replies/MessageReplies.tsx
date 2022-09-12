@@ -20,7 +20,13 @@ export const MessageReplies = (props: {
   );
 
   return (
-    <Box horizontal>
+    <Box
+      horizontal
+      height="height_md"
+      paddingX="md"
+      rounded="sm"
+      background="level3"
+    >
       <Box
         shrink
         centerContent
@@ -29,7 +35,7 @@ export const MessageReplies = (props: {
         cursor="pointer"
         onClick={onClick}
       >
-        <Paragraph strong size="sm" color="etherum">
+        <Paragraph size="md" color="default">
           {replyCount}
           {replyCount > 1 ? " replies" : " reply"}
         </Paragraph>

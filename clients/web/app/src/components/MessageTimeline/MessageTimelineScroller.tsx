@@ -7,7 +7,7 @@ import {
   useTimelineReactionsMap,
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
-import { useLoadMore } from "./hooks/useLazyLoad";
+import { useLazyLoad } from "./hooks/useLazyLoad";
 import { usePersistScrollPosition } from "./hooks/usePersistScrollPosition";
 import { useScrollDownOnNewMessage } from "./hooks/useScrollDownOnNewMessage";
 import { MessageTimeline } from "./MessageTimeline";
@@ -34,7 +34,7 @@ export const MessageTimelineScroller = (props: Props) => {
     scrollback(channelId);
   }, [channelId, scrollback]);
 
-  const { intersectionRef } = useLoadMore(
+  const { intersectionRef } = useLazyLoad(
     onLoadMore,
     containerRef,
     events.length,

@@ -2,7 +2,7 @@ import React from "react";
 import { Outlet } from "react-router";
 import { Message } from "@components/Message";
 import { MessageInput } from "@components/MessageInput/MessageInput";
-import { Avatar, Divider, Icon, Paragraph, Stack } from "@ui";
+import { Divider, Icon, Paragraph, Stack } from "@ui";
 import { ContextBar } from "@components/ContextBar";
 
 export const SpaceThreads = () => {
@@ -17,9 +17,10 @@ export const SpaceThreads = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" />}
+            avatar=""
+            avatarSize="avatar_sm"
             name="sunsoutapersout"
-            date="Today at 11:01AM"
+            timestamp={Date.now() - 3600000 * 3}
             reactions={new Map([["waving_hand", new Set(["a", "b", "c"])]])}
           >
             <Paragraph>
@@ -38,9 +39,10 @@ export const SpaceThreads = () => {
           <Paragraph color="accent">Show 150 more replies</Paragraph>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
+            avatar="/placeholders/nft_2.png"
+            avatarSize="avatar_sm"
             name="deiguy"
-            date="Today at 12:01AM"
+            timestamp={Date.now() - 3600000 * 3}
           >
             <Paragraph>
               Channel about our farm and I&apos;m about to start another about
@@ -51,18 +53,20 @@ export const SpaceThreads = () => {
           <Divider label="# general" align="left" />
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_30.png" />}
+            avatar="/placeholders/nft_30.png"
+            avatarSize="avatar_sm"
             name="sunsoutapersout"
-            date="Today at 11:01AM"
+            timestamp={Date.now() - 3600000 * 3}
           >
             <Paragraph>How are you all doing today?</Paragraph>
           </Message>
           <Paragraph color="accent">Show 150 more replies</Paragraph>
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" />}
+            avatar=""
+            avatarSize="avatar_sm"
             name="sunsoutapersout"
-            date="Today at 11:01AM"
+            timestamp={Date.now() - 3600000 * 3}
             reactions={
               new Map([
                 ["eyes", new Set(["a"])],
@@ -80,9 +84,10 @@ export const SpaceThreads = () => {
 
           <Message
             condensed
-            avatar={<Avatar size="avatar_sm" src="/placeholders/nft_2.png" />}
+            avatar="placeholders/nft_2.png"
+            avatarSize="avatar_sm"
             name="deiguy"
-            date="Today at 12:01AM"
+            timestamp={Date.now() - 3600000 * 3}
           >
             <Paragraph>
               Channel about our farm and I&apos;m about to start another about

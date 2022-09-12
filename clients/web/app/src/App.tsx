@@ -48,8 +48,8 @@ export const App = () => {
       disableEncryption // todo remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
       homeServerUrl={MATRIX_HOMESERVER_URL}
       spaceManagerAddress={SPACE_MANAGER_ADDRESS}
-      tokenEntitlementAddress={TOKEN_ENTITLEMENT_ADDRESS}
-      userEntitlementAddress={USER_ENTITLEMENT_ADDRESS}
+      tokenModuleAddress={TOKEN_ENTITLEMENT_ADDRESS}
+      userModuleAddress={USER_ENTITLEMENT_ADDRESS}
       councilNFTAddress={COUNCIL_NFT_ADDRESS}
       councilStakingAddress={COUNCIL_STAKING_ADDRESS}
       defaultSpaceId={ZION_SPACE_ID}
