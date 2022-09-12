@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useZionClient } from "use-zion-client";
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from "@ui";
+import { useStore } from "store/store";
 import { MenuItem } from "./SpaceSettingsCard";
 
 type Props = {
@@ -14,14 +15,14 @@ type Props = {
 export const ProfileSettingsCard = (props: Props) => {
   const { username = "", avatarUrl, displayName } = props;
 
-  // const { setTheme, theme } = useStore((state) => ({
-  //   theme: state.theme,
-  //   setTheme: state.setTheme,
-  // }));
+  const { setTheme, theme } = useStore((state) => ({
+    theme: state.theme,
+    setTheme: state.setTheme,
+  }));
 
-  // const onThemeClick = () => {
-  //   setTheme(theme === "light" ? "dark" : "light");
-  // };
+  const onThemeClick = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
   const navigate = useNavigate();
 
@@ -61,6 +62,9 @@ export const ProfileSettingsCard = (props: Props) => {
       </MenuItem>
       <MenuItem icon="settings" onClick={onSetupClick}>
         Preferences
+      </MenuItem>
+      <MenuItem icon="back" onClick={onThemeClick}>
+        Switch Theme
       </MenuItem>
       <MenuItem icon="logout" onClick={onLogoutClick}>
         Logout
