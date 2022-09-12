@@ -5,6 +5,7 @@ import React, {
   forwardRef,
   useMemo,
 } from "react";
+import { scrollContainerClass } from "ui/styles/globals/scrollcontainer.css";
 import {
   AtomNames,
   Atoms,
@@ -41,6 +42,7 @@ type BaseProps = {
   children?: React.ReactNode;
   className?: string;
   debug?: boolean;
+  scroll?: boolean;
   style?: React.CSSProperties;
 };
 
@@ -83,7 +85,14 @@ type Props = HTMLProps &
 export type BoxProps = Props;
 
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
-  const { as = "div", className, children, debug, ...restProps } = props;
+  const {
+    as = "div",
+    className,
+    children,
+    debug,
+    scroll,
+    ...restProps
+  } = props;
 
   const atomShorthands = useMemo(() => {
     return (Object.entries(shorthands) as Entries<typeof shorthands>).reduce(
@@ -132,6 +141,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     }),
     {
       [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
+      [scrollContainerClass]: scroll,
       [debugClass]: debug,
     },
     className,

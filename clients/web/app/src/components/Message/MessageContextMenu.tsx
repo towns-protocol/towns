@@ -1,11 +1,12 @@
 import { EmojiData } from "emoji-mart";
 import React, { useCallback, useContext } from "react";
 import { RoomIdentifier, useZionClient } from "use-zion-client";
+import { motion } from "framer-motion";
 import { EmojiPickerButton } from "@components/EmojiPickerButton";
 import { TimelineMessageContext } from "@components/MessageTimeline";
 import { IconButton, Stack } from "@ui";
-import { vars } from "ui/styles/vars.css";
 import { useOpenMessageThread } from "hooks/useOpenThread";
+import { vars } from "ui/styles/vars.css";
 
 type Props = {
   eventId: string;
@@ -18,7 +19,7 @@ type Props = {
 
 const style = {
   transform: `
-    translateY(calc(-50% - ${vars.space.md}))
+    translateY(calc(-100% - 0.5 * ${vars.space.md}))
   `,
 };
 
@@ -55,26 +56,53 @@ export const MessageContextMenu = (props: Props) => {
   );
 
   return (
-    <Stack
-      border
-      horizontal
-      background="level1"
-      color="gray2"
-      gap="xs"
-      padding="xs"
-      pointerEvents="auto"
-      position="topRight"
-      rounded="sm"
-      style={style}
-      width="auto"
-    >
-      {props.canEdit && (
-        <IconButton icon="edit" size="square_sm" onClick={onEditClick} />
-      )}
-      {props.canReply && (
-        <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
-      )}
-      {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
-    </Stack>
+    <MotionStack pointerEvents="auto" position="topRight" {...animation}>
+      <Stack
+        border
+        horizontal
+        background="level1"
+        color="gray2"
+        gap="xs"
+        padding="xs"
+        rounded="sm"
+        style={style}
+        width="auto"
+      >
+        {props.canEdit && (
+          <IconButton icon="edit" size="square_sm" onClick={onEditClick} />
+        )}
+        {props.canReply && (
+          <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
+        )}
+        {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
+      </Stack>
+    </MotionStack>
   );
 };
+
+const animation = {
+  initial: "hide",
+  animate: "show",
+  exit: "hide",
+
+  variants: {
+    hide: {
+      y: 10,
+      opacity: 0,
+      transition: {
+        delay: 0,
+        duration: 0.25,
+      },
+    },
+    show: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        delay: 0.5,
+        duration: 0.25,
+      },
+    },
+  },
+} as const;
+
+const MotionStack = motion(Stack);

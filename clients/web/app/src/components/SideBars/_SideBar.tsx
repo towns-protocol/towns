@@ -38,13 +38,7 @@ export const SideBar = (props: Props) => {
         setActiveItem,
       }}
     >
-      <SizeBox
-        grow
-        overflowX="hidden"
-        overflowY="scroll"
-        {...props}
-        absoluteFill
-      />
+      <SizeBox grow scroll overflowX="hidden" {...props} absoluteFill />
     </SidebarContext.Provider>
   );
 };

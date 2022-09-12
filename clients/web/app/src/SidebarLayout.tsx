@@ -112,7 +112,7 @@ export const SidebarLayoutContent = () => {
 
           {/* main container */}
           <Allotment.Pane>
-            <Box absoluteFill overflowY="scroll">
+            <Box absoluteFill scroll>
               <Outlet />
             </Box>
           </Allotment.Pane>

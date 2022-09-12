@@ -34,39 +34,30 @@ export const MessageThread = (props: Props) => {
   return (
     <Stack absoluteFill padding gap position="relative">
       <MessageWindow onClose={props.onClose}>
-        <Box height="100%">
-          <Stack
-            overflowY="scroll"
-            style={{
-              flex: "1 1 auto",
-              overflowY: "auto",
-              minHeight: "0px",
-            }}
-          >
-            {parentMessage && parentMessageContent && (
-              <TimelineMessage
-                userId={userId}
-                channelId={channelId}
-                event={parentMessage}
-                eventContent={parentMessageContent}
-                spaceId={spaceId}
-                onReaction={onReaction}
-              />
-            )}
-            {!!messages.length && (
-              <Box paddingX="md" paddingTop="md">
-                <Divider space="none" />
-              </Box>
-            )}
-            <Stack>
-              <MessageTimeline
-                events={messages}
-                spaceId={spaceId}
-                channelId={channelId}
-              />
-            </Stack>
+        <Stack scroll grow>
+          {parentMessage && parentMessageContent && (
+            <TimelineMessage
+              userId={userId}
+              channelId={channelId}
+              event={parentMessage}
+              eventContent={parentMessageContent}
+              spaceId={spaceId}
+              onReaction={onReaction}
+            />
+          )}
+          {!!messages.length && (
+            <Box paddingX="md" paddingTop="md">
+              <Divider space="none" />
+            </Box>
+          )}
+          <Stack>
+            <MessageTimeline
+              events={messages}
+              spaceId={spaceId}
+              channelId={channelId}
+            />
           </Stack>
-        </Box>
+        </Stack>
       </MessageWindow>
       <Box paddingY="none" style={{ position: "sticky", bottom: 0 }}>
         <RichTextEditor placeholder="Reply..." onSend={onSend} />
@@ -100,7 +91,7 @@ const MessageWindow = (props: {
           {props.onClose && <IconButton icon="close" onClick={props.onClose} />}
         </Box>
       </Stack>
-      <Box overflow="scroll">{props.children}</Box>
+      <Box scroll>{props.children}</Box>
     </Box>
   );
 };

@@ -3,6 +3,7 @@ import React, { useCallback, useEffect } from "react";
 import {
   Membership,
   MessageType,
+  useMatrixStore,
   useMyMembership,
   useSpaceData,
   useSpaceTimeline,
@@ -16,6 +17,7 @@ import { usePersistPanes } from "hooks/usePersistPanes";
 export const SpaceHome = () => {
   const { onSizesChange } = usePersistPanes(["channel", "right"]);
   const { sendMessage, joinRoom } = useZionClient();
+  const { userId } = useMatrixStore();
   const space = useSpaceData();
   const myMembership = useMyMembership(space?.id);
   const spaceMessages = useSpaceTimeline();
@@ -46,7 +48,7 @@ export const SpaceHome = () => {
     return () => clearInterval(interval);
   }, [sendMessage, space?.id, myMembership]);
 
-  if (!space) {
+  if (!space || !userId) {
     return null;
   }
 

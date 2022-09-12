@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { throttle } from "throttle-debounce";
@@ -20,24 +21,38 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
   }, []);
 
   const { rootLayerRef } = useContext(RootLayerContext);
+  const prevRef = useRef({ clientX: 0, clientY: 0 });
 
   useEffect(() => {
     if (!isHover) {
       return;
     }
+
     const onMouseMove = throttle(50, (e: MouseEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const { clientX, clientY } = e ?? prevRef.current;
+      prevRef.current.clientX = clientX;
+      prevRef.current.clientY = clientY;
+      const el = document.elementFromPoint(clientX, clientY);
       if (!ref.current?.contains(el) && !rootLayerRef?.current?.contains(el)) {
         setIsHover(false);
       }
     });
 
+    const onBlur = () => {
+      setIsHover(false);
+    };
+
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("click", onMouseMove);
+    window.addEventListener("blur", onBlur);
+
+    const interval = setInterval(onMouseMove, 100);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("click", onMouseMove);
+      window.removeEventListener("blur", onBlur);
     };
   }, [isHover, ref, rootLayerRef]);
 

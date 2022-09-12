@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { TimelineEvent, ZTEvent, useChannelTimeline } from "use-zion-client";
 
 export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
-  const filteredMessages = useMemo(
+  const filteredEvents = useMemo(
     () =>
       bypass
         ? events
@@ -14,7 +14,7 @@ export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
     [bypass, events],
   );
 
-  return { filteredMessages };
+  return { filteredEvents };
 };
 
 /**

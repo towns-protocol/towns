@@ -1,21 +1,15 @@
-import React, {
-  RefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useRef } from "react";
 
-import { useInView } from "react-intersection-observer";
 import { RoomIdentifier, TimelineEvent, useZionClient } from "use-zion-client";
-import { Button, Stack } from "@ui";
+import { Stack } from "@ui";
 import {
   useFilterReplies,
   useTimelineReactionsMap,
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
+import { useLoadMore } from "./hooks/useLazyLoad";
+import { usePersistScrollPosition } from "./hooks/usePersistScrollPosition";
+import { useScrollDownOnNewMessage } from "./hooks/useScrollDownOnNewMessage";
 import { MessageTimeline } from "./MessageTimeline";
 
 interface Props {
@@ -28,151 +22,47 @@ interface Props {
 }
 
 export const MessageTimelineScroller = (props: Props) => {
-  const { spaceId, channelId, events } = props;
+  const { spaceId, channelId, events, hideThreads } = props;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const { scrollback } = useZionClient();
+
   const onLoadMore = useCallback(() => {
     scrollback(channelId);
   }, [channelId, scrollback]);
 
-  const { ref, LoadMore } = useLoadMore(
+  const { intersectionRef } = useLoadMore(
     onLoadMore,
     containerRef,
-    contentRef,
     events.length,
   );
 
   const messageRepliesMap = useTimelineRepliesMap(events);
   const messageReactionsMap = useTimelineReactionsMap(events);
+  const { filteredEvents } = useFilterReplies(events, !hideThreads);
 
-  // strip-out replies on main timeline (hack!)
-  const { filteredMessages } = useFilterReplies(events, !props.hideThreads);
-
-  const messages = useResetScroll(filteredMessages, containerRef);
-
-  /* FIXME: cancels lazy reveal of messages */
-  const { endRef } = useMessageScroll(
-    containerRef,
-    messages[messages.length - 1]?.eventId,
-  );
+  usePersistScrollPosition(containerRef, contentRef);
+  useScrollDownOnNewMessage(containerRef, contentRef, filteredEvents);
 
   return (
-    <Stack grow ref={containerRef} overflow="auto">
+    <Stack grow scroll ref={containerRef} style={{ overflowAnchor: "none" }}>
       <Stack grow style={{ minHeight: "min-content" }}>
         <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
-          <div ref={ref} />
-          {props.before}
-          {LoadMore}
+          <div ref={intersectionRef} />
           <MessageTimeline
             channelId={channelId}
             spaceId={spaceId}
-            events={messages}
+            events={filteredEvents}
             messageRepliesMap={messageRepliesMap}
             messageReactionsMap={messageReactionsMap}
           />
           {props.after}
         </Stack>
-        <div ref={endRef} />
+        <div ref={bottomRef} />
       </Stack>
     </Stack>
   );
-};
-
-const useLoadMore = (
-  onLoadMore: () => void,
-  containerRef: RefObject<HTMLDivElement>,
-  contentRef: RefObject<HTMLDivElement>,
-  total: number,
-) => {
-  const [currentWatermark, setCurrentWatermark] = useState(total);
-  const { ref, inView } = useInView({
-    root: containerRef.current,
-    rootMargin: "0%",
-    threshold: 0,
-  });
-
-  const triggerLoading = useCallback(() => {
-    setCurrentWatermark(total);
-    onLoadMore();
-  }, [onLoadMore, total]);
-
-  const isLoaded = currentWatermark === total;
-
-  const LoadMore = (
-    <Stack padding horizontal centerContent>
-      <Button
-        animate={false}
-        tone={!isLoaded ? "cta1" : "level2"}
-        onClick={!isLoaded ? triggerLoading : undefined}
-      >
-        Load More
-      </Button>
-    </Stack>
-  );
-
-  useEffect(() => {
-    const isLoaded = currentWatermark === total;
-    if (inView && !isLoaded) {
-      const timeout = setTimeout(() => {
-        // triggerLoading();
-      }, 2000);
-      return () => {
-        clearTimeout(timeout);
-      };
-    }
-  }, [currentWatermark, inView, total, triggerLoading]);
-
-  return { ref, LoadMore };
-};
-
-const useResetScroll = (
-  events: TimelineEvent[],
-  containerRef: RefObject<HTMLDivElement>,
-) => {
-  const scrollDataRef = useRef<{ scrollY: number; height: number }>();
-  const numEvents = events.length;
-  const [totalDisplay, setTotalDisplay] = useState(numEvents);
-
-  const newEvents = useMemo(
-    () => events.slice().reverse().slice(0, totalDisplay).reverse(),
-    [events, totalDisplay],
-  );
-  useEffect(() => {
-    if (numEvents !== totalDisplay) {
-      const scrollY = containerRef.current?.scrollTop ?? 0;
-      const height = containerRef.current?.scrollHeight ?? 0;
-      scrollDataRef.current = {
-        scrollY,
-        height,
-      };
-      setTotalDisplay(numEvents);
-    }
-  }, [containerRef, numEvents, totalDisplay]);
-
-  useLayoutEffect(() => {
-    const height = containerRef.current?.scrollHeight;
-    const prev = scrollDataRef.current;
-
-    if (containerRef.current && height && prev) {
-      const target = height - prev.height;
-      containerRef.current.scrollBy(0, target);
-    }
-  }, [containerRef, totalDisplay]);
-
-  return newEvents;
-};
-
-const useMessageScroll = (
-  containerRef: RefObject<HTMLDivElement>,
-  lastMessageId?: string,
-) => {
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    endRef.current?.scrollIntoView();
-  }, [lastMessageId]);
-
-  return { endRef, containerRef };
 };
