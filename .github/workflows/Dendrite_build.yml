@@ -2,9 +2,13 @@ name: "Dendrite_build"
 
 on:
   push:
+    paths:
+      - servers/**
     branches:
       - main
   pull_request:
+    paths:
+      - servers/**
   release:
     types: [published]
 
