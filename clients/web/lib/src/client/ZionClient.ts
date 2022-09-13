@@ -6,12 +6,13 @@ import {
   MatrixEventEvent,
   Room as MatrixRoom,
   PendingEventOrdering,
+  RelationType,
   RoomEvent,
   RoomMemberEvent,
   User,
   UserEvent,
-  RelationType,
 } from "matrix-js-sdk";
+import { ContractReceipt, ContractTransaction } from "ethers";
 import {
   CouncilNFT,
   CouncilStaking,
@@ -38,7 +39,7 @@ import {
   zionSpaceManagerAbi,
 } from "./web3/ZionAbis";
 
-import { BigNumber } from "ethers";
+import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
 import { createMatrixClient } from "./matrix/CreateClient";
 import { createZionChannel } from "./matrix/CreateChannel";
@@ -225,14 +226,95 @@ export class ZionClient {
   }
 
   /************************************************
-   * createSpace
+   * createWeb3Space
    *************************************************/
-  public async createWeb3Space(createSpaceInfo: CreateSpaceInfo) {
-    return this.spaceManager.signed.createSpace({
-      spaceName: createSpaceInfo.name,
-      entitlements: [],
-    });
+  public async createWeb3Space(
+    createSpaceInfo: CreateSpaceInfo,
+  ): Promise<RoomIdentifier | undefined> {
+    let roomIdentifier: RoomIdentifier | undefined = await this.createSpace(
+      createSpaceInfo,
+    );
+
+    console.log("[createWeb3Space] Matrix createSpace", roomIdentifier);
+
+    if (roomIdentifier) {
+      const spaceInfo: DataTypes.CreateSpaceDataStruct = {
+        spaceName: createSpaceInfo.name,
+        networkId: roomIdentifier.matrixRoomId,
+      };
+
+      let transaction: ContractTransaction | undefined = undefined;
+      let receipt: ContractReceipt | undefined = undefined;
+      try {
+        transaction = await this.spaceManager.signed.createSpace(spaceInfo);
+        receipt = await transaction.wait();
+      } finally {
+        if (receipt?.status === 1) {
+          // Successful created the space on-chain.
+          console.log("[createWeb3Space] createSpace successful");
+        } else {
+          console.log("[createWeb3Space] createSpace failed");
+          // On-chain space creation failed. Abandon this space.
+          await this.leave(roomIdentifier);
+          roomIdentifier = undefined;
+        }
+      }
+    }
+
+    return roomIdentifier;
   }
+
+  /************************************************
+   * createWeb3SpaceWithTokenEntitlement
+   *************************************************/
+  public async createWeb3SpaceWithTokenEntitlement(
+    createSpaceInfo: CreateSpaceInfo,
+    tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct,
+  ): Promise<RoomIdentifier | undefined> {
+    let roomIdentifier: RoomIdentifier | undefined = await this.createSpace(
+      createSpaceInfo,
+    );
+
+    console.log(
+      "[createWeb3SpaceWithTokenEntitlement] Matrix createSpace",
+      roomIdentifier,
+    );
+
+    if (roomIdentifier) {
+      const spaceInfo: DataTypes.CreateSpaceDataStruct = {
+        spaceName: createSpaceInfo.name,
+        networkId: roomIdentifier.matrixRoomId,
+      };
+
+      let transaction: ContractTransaction | undefined = undefined;
+      let receipt: ContractReceipt | undefined = undefined;
+      try {
+        transaction =
+          await this.spaceManager.signed.createSpaceWithTokenEntitlement(
+            spaceInfo,
+            tokenEntitlement,
+          );
+        receipt = await transaction.wait();
+      } finally {
+        if (receipt?.status === 1) {
+          // Successful created the space on-chain.
+          console.log(
+            "[createWeb3SpaceWithTokenEntitlement] createSpaceWithTokenEntitlement successful",
+          );
+        } else {
+          // On-chain space creation failed. Abandon this space.
+          console.log(
+            "[createWeb3SpaceWithTokenEntitlement] createSpaceWithTokenEntitlement failed",
+          );
+          await this.leave(roomIdentifier);
+          roomIdentifier = undefined;
+        }
+      }
+    }
+
+    return roomIdentifier;
+  }
+
   /************************************************
    * createSpace
    *************************************************/

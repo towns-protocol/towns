@@ -30,7 +30,8 @@ export const CreateSpaceForm = (props: Props) => {
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Private,
   );
-  const { createWeb3Space } = useIntegratedSpaceManagement();
+  const { createSpaceWithZionTokenEntitlement } =
+    useIntegratedSpaceManagement();
   const { onClick } = props;
 
   const disableCreateButton = useMemo(
@@ -54,7 +55,7 @@ export const CreateSpaceForm = (props: Props) => {
       name: spaceName,
       visibility,
     };
-    const roomId = await createWeb3Space(createSpaceInfo);
+    const roomId = await createSpaceWithZionTokenEntitlement(createSpaceInfo);
     if (roomId) {
       onClick(roomId, Membership.Join);
     }

@@ -13,15 +13,12 @@ describe("spaceManagerContract", () => {
     await bob.fundWallet();
     // create a space
     const spaceName = bob.makeUniqueName();
-    const tx = await bob.createWeb3Space({
+    const roomId = await bob.createWeb3Space({
       name: spaceName,
       visibility: RoomVisibility.Private,
     });
-    // log our our transaction
-    console.log("tx", tx);
-    const receipt = await tx.wait();
-    // log our our transaction
-    console.log("receipt", receipt);
+    // log our our transaction result.
+    console.log("roomId", roomId);
     // fetch the spaces
     const spaces = await bob.spaceManager.unsigned.getSpaces();
     // expect a lower case name for the space

@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/unbound-method */
-import { BigNumber, ContractTransaction } from "ethers";
+import {
+  CouncilNFT,
+  CouncilStaking,
+  ZionSpaceManager,
+} from "@harmony/contracts/governance";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -10,7 +13,10 @@ import {
   SpaceChild,
 } from "../types/matrix-types";
 
+/* eslint-disable @typescript-eslint/unbound-method */
+import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 import { ZionClientEvent } from "../client/ZionClientTypes";
+import { ZionContractProvider } from "client/web3/ZionContractProvider";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
 import { useLogout } from "./MatrixClient/useLogout";
@@ -20,12 +26,6 @@ import { useMemo } from "react";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
 import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 import { useZionContext } from "../components/ZionContextProvider";
-import { ZionContractProvider } from "client/web3/ZionContractProvider";
-import {
-  CouncilNFT,
-  CouncilStaking,
-  ZionSpaceManager,
-} from "@harmony/contracts/governance";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -40,7 +40,11 @@ interface ZionClientImpl {
   ) => Promise<RoomIdentifier | undefined>;
   createWeb3Space: (
     createInfo: CreateSpaceInfo,
-  ) => Promise<ContractTransaction | undefined>;
+  ) => Promise<RoomIdentifier | undefined>;
+  createWeb3SpaceWithTokenEntitlement: (
+    createInfo: CreateSpaceInfo,
+    tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct,
+  ) => Promise<RoomIdentifier | undefined>;
   createChannel: (
     createInfo: CreateChannelInfo,
   ) => Promise<RoomIdentifier | undefined>;
@@ -106,6 +110,10 @@ export function useZionClient(): ZionClientImpl {
     createSpace: useWithCatch(client?.createSpace),
     createWeb3Space: useWithCatch(
       client?.createWeb3Space,
+      ZionClientEvent.NewSpace,
+    ),
+    createWeb3SpaceWithTokenEntitlement: useWithCatch(
+      client?.createWeb3SpaceWithTokenEntitlement,
       ZionClientEvent.NewSpace,
     ),
     editMessage: useWithCatch(client?.editMessage),

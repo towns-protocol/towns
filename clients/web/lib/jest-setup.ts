@@ -14,12 +14,12 @@ process.env.ETHERS_NETWORK = "http://localhost:8545"; // OR "rinkeby"
 process.env.FUNDED_WALLET_PRIVATE_KEY_0 =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"; // we need a wallet with assets to fund our test clients
 process.env.SPACE_MANAGER_ADDRESS =
-  "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+  "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 process.env.TOKEN_ENTITLEMENT_ADDRESS =
-  "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+  "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 process.env.USER_ENTITLEMENT_ADDRESS =
-  "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512";
-process.env.COUNCIL_NFT_ADDRESS = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707";
+  "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+process.env.COUNCIL_NFT_ADDRESS = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
 process.env.COUNCIL_STAKING_ADDRESS = "";
 
 // This is here to extend the globalThis interface for loading Olm, should be in global.d.ts but
