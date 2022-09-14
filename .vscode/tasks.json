@@ -88,5 +88,15 @@
           "group": "local-development"
         }
       },
+      {
+        "label": "Start MITM",
+        "type": "shell",
+        "command": "mitmweb -p 8009 --mode reverse:http://localhost:8008/",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-development"
+        }
+      }
     ]
   }
