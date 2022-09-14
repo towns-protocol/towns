@@ -2,13 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {ISpaceManager} from "./../interfaces/ISpaceManager.sol";
-import {ISpaceEntitlementModule} from "./../interfaces/ISpaceEntitlementModule.sol";
 import {DataTypes} from "./../libraries/DataTypes.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {SpaceEntitlementModule} from "./SpaceEntitlementModule.sol";
 
-contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
-  address public immutable zionSpaceManagerAddress;
-
+contract UserGrantedEntitlementModule is SpaceEntitlementModule {
   // Storage
   struct Entitlement {
     address grantedBy;
@@ -27,18 +24,23 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
 
   mapping(uint256 => SpaceUserEntitlements) internal entitlementsBySpaceId;
 
-  constructor(address _zionSpaceManagerAddress) {
-    zionSpaceManagerAddress = _zionSpaceManagerAddress;
-  }
+  constructor(
+    string memory name_,
+    string memory description_,
+    address spaceManager_
+  ) SpaceEntitlementModule(name_, description_, spaceManager_) {}
 
-  function setEntitlement(DataTypes.SetEntitlementData calldata vars) public {
-    ISpaceManager zionSpaceManager = ISpaceManager(zionSpaceManagerAddress);
-    address ownerAddress = zionSpaceManager.getSpaceOwnerBySpaceId(
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars)
+    public
+    override
+    returns (bytes memory)
+  {
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
       vars.spaceId
     );
 
     require(
-      ownerAddress == msg.sender || msg.sender == zionSpaceManagerAddress,
+      ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update the entitlements"
     );
 
@@ -62,6 +64,8 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
         );
       }
     }
+
+    return vars.entitlementData;
   }
 
   function isEntitled(
@@ -69,7 +73,7 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
     uint256 roomId,
     address user,
     DataTypes.EntitlementType entitlementType
-  ) public view returns (bool) {
+  ) public view override returns (bool) {
     if (roomId > 0) {
       Entitlement[] memory entitlements = entitlementsBySpaceId[spaceId]
         .roomEntitlementsByRoomId[roomId]
@@ -99,7 +103,7 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
     address user,
     DataTypes.EntitlementType[] calldata _entitlementTypes
   ) public {
-    ISpaceManager zionSpaceManager = ISpaceManager(zionSpaceManagerAddress);
+    ISpaceManager zionSpaceManager = ISpaceManager(_spaceManager);
     address ownerAddress = zionSpaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     if (ownerAddress != originAddress) {
@@ -143,17 +147,5 @@ contract UserGrantedEntitlementModule is ERC165, ISpaceEntitlementModule {
     } else {
       return entitlementsBySpaceId[spaceId].entitlementsByAddress[user];
     }
-  }
-
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165)
-    returns (bool)
-  {
-    return
-      interfaceId == type(ISpaceEntitlementModule).interfaceId ||
-      super.supportsInterface(interfaceId);
   }
 }

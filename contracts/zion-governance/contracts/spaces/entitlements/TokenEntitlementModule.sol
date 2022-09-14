@@ -7,10 +7,9 @@ import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {SpaceEntitlementModule} from "./SpaceEntitlementModule.sol";
 
-contract TokenEntitlementModule is ERC165 {
-  address public immutable zionSpaceManager;
-
+contract TokenEntitlementModule is SpaceEntitlementModule {
   struct Entitlement {
     address grantedBy;
     uint256 grantedTime;
@@ -39,25 +38,28 @@ contract TokenEntitlementModule is ERC165 {
 
   mapping(uint256 => SpaceTokenEntitlements) internal entitlementsBySpaceId;
 
-  constructor(address _zionSpaceManager) {
-    zionSpaceManager = _zionSpaceManager;
-  }
+  constructor(
+    string memory name_,
+    string memory description_,
+    address spaceManager_
+  ) SpaceEntitlementModule(name_, description_, spaceManager_) {}
 
-  function name() public pure returns (string memory) {
-    return "Token";
-  }
-
-  function setEntitlement(DataTypes.SetEntitlementData calldata vars) public {
-    ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(vars.spaceId);
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars)
+    public
+    override
+    returns (bytes memory)
+  {
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
+      vars.spaceId
+    );
 
     require(
-      ownerAddress == msg.sender || msg.sender == zionSpaceManager,
+      ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update entitlements"
     );
 
     (
-      string memory description,
+      string memory desc,
       address[] memory tokens,
       uint256[] memory quantities
     ) = abi.decode(vars.entitlementData, (string, address[], uint256[]));
@@ -73,9 +75,7 @@ contract TokenEntitlementModule is ERC165 {
     if (vars.roomId > 0) {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         vars.spaceId
-      ].roomEntitlementsByRoomId[vars.roomId].entitlementsByDescription[
-          description
-        ];
+      ].roomEntitlementsByRoomId[vars.roomId].entitlementsByDescription[desc];
 
       for (uint256 i = 0; i < tokens.length; i++) {
         ExternalToken memory externalToken = ExternalToken(
@@ -96,7 +96,7 @@ contract TokenEntitlementModule is ERC165 {
     } else {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         vars.spaceId
-      ].entitlementsByDescription[description];
+      ].entitlementsByDescription[desc];
 
       for (uint256 i = 0; i < tokens.length; i++) {
         ExternalToken memory externalToken = ExternalToken(
@@ -117,32 +117,33 @@ contract TokenEntitlementModule is ERC165 {
 
         entitlementsBySpaceId[vars.spaceId]
           .tagsByEntitlementType[vars.entitlementTypes[i]]
-          .push(description);
+          .push(desc);
       }
     }
+
+    return vars.entitlementData;
   }
 
   function removeUserEntitlement(
     uint256 spaceId,
     uint256 roomId,
-    string calldata description,
+    string calldata desc,
     DataTypes.EntitlementType[] memory entitlementTypes
   ) public {
-    ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
+      spaceId
+    );
 
-    if (ownerAddress != msg.sender || msg.sender != zionSpaceManager) {
+    if (ownerAddress != msg.sender || msg.sender != _spaceManager) {
       revert("Only the owner can update entitlements");
     }
 
     if (roomId > 0) {
       delete entitlementsBySpaceId[spaceId]
         .roomEntitlementsByRoomId[roomId]
-        .entitlementsByDescription[description];
+        .entitlementsByDescription[desc];
     } else {
-      delete entitlementsBySpaceId[spaceId].entitlementsByDescription[
-        description
-      ];
+      delete entitlementsBySpaceId[spaceId].entitlementsByDescription[desc];
     }
 
     for (uint256 i = 0; i < entitlementTypes.length; i++) {
@@ -157,7 +158,7 @@ contract TokenEntitlementModule is ERC165 {
     uint256,
     address user,
     DataTypes.EntitlementType entitlementType
-  ) public view returns (bool) {
+  ) public view override returns (bool) {
     string[] memory tags = entitlementsBySpaceId[spaceId].tagsByEntitlementType[
       entitlementType
     ];
@@ -174,10 +175,10 @@ contract TokenEntitlementModule is ERC165 {
   function isTokenEntitled(
     uint256 spaceId,
     address user,
-    string memory tag
+    string memory desc
   ) public view returns (bool) {
     ExternalToken[] memory tokens = entitlementsBySpaceId[spaceId]
-      .entitlementsByDescription[tag]
+      .entitlementsByDescription[desc]
       .tokens;
 
     for (uint256 i = 0; i < tokens.length; i++) {
@@ -195,17 +196,5 @@ contract TokenEntitlementModule is ERC165 {
     }
 
     return false;
-  }
-
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165)
-    returns (bool)
-  {
-    return
-      interfaceId == type(ISpaceEntitlementModule).interfaceId ||
-      super.supportsInterface(interfaceId);
   }
 }

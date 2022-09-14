@@ -29,16 +29,19 @@ contract PurchasableEntitlementModuleTest is Test {
 
     spaceManager = new ZionSpaceManager();
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
+      "User Granted Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms",
       address(spaceManager)
     );
 
     purchasableEntitlementModule = new PurchasableEntitlementModule(
+      "Purchasable Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms based on payments made to the space",
       address(spaceManager)
     );
 
     spaceManager.registerDefaultEntitlementModule(
-      address(userGrantedEntitlementModule),
-      "usergranted"
+      address(userGrantedEntitlementModule)
     );
   }
 
@@ -75,7 +78,6 @@ contract PurchasableEntitlementModuleTest is Test {
     spaceManager.addEntitlement(
       spaceId,
       address(purchasableEntitlementModule),
-      "purchasable",
       entitlementTypes,
       abi.encode(description, value, tag)
     );

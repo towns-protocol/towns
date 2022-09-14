@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {Errors} from "../libraries/Errors.sol";
+import {Events} from "../libraries/Events.sol";
 import {Constants} from "../libraries/Constants.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ISpaceEntitlementModule} from "../interfaces/ISpaceEntitlementModule.sol";
@@ -32,6 +33,11 @@ library ZionSpaceController {
     _spaceById[spaceId].owner = creator;
     _spaceById[spaceId].roomId = 0;
   }
+
+  function _emitSpaceCreated(
+    uint256 spaceId,
+    DataTypes.CreateSpaceData calldata info
+  ) internal {}
 
   /// @notice validates the name of the space
   /// @param name The name of the space

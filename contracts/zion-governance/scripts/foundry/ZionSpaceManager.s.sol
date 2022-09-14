@@ -14,22 +14,26 @@ contract DeployZionSpaceManager is Script {
     ZionSpaceManager zionSpaceManager = new ZionSpaceManager();
     console.log("Deploying ZionSpaceManager a: ", address(zionSpaceManager));
 
-    UserGrantedEntitlementModule grantedEntitlementModule = new UserGrantedEntitlementModule(
+    UserGrantedEntitlementModule userGrantedEntitlementModule = new UserGrantedEntitlementModule(
+        "User Granted Entitlement Module",
+        "Allows users to grant other users access to spaces and rooms",
         address(zionSpaceManager)
       );
+
     console.log(
       "User Granted Entitlement Address",
-      address(grantedEntitlementModule)
+      address(userGrantedEntitlementModule)
     );
 
     TokenEntitlementModule tokenEntitlementModule = new TokenEntitlementModule(
+      "Token Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
       address(zionSpaceManager)
     );
     console.log("Token Entitlement Address", address(tokenEntitlementModule));
 
     zionSpaceManager.registerDefaultEntitlementModule(
-      address(grantedEntitlementModule),
-      "usergranted"
+      address(userGrantedEntitlementModule)
     );
 
     vm.stopBroadcast();

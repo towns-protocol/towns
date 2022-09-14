@@ -7,10 +7,9 @@ import {DataTypes} from "./../libraries/DataTypes.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {SpaceEntitlementModule} from "./SpaceEntitlementModule.sol";
 
-contract PurchasableEntitlementModule is ERC165 {
-  address public immutable zionSpaceManager;
-
+contract PurchasableEntitlementModule is SpaceEntitlementModule {
   mapping(uint256 => SpacePurchasableEntitlements) purchasableEntitlementsBySpaceId;
 
   struct SpacePurchasableEntitlements {
@@ -35,21 +34,28 @@ contract PurchasableEntitlementModule is ERC165 {
 
   mapping(uint256 => uint256) valueBySpaceId;
 
-  constructor(address _zionSpaceManager) {
-    zionSpaceManager = _zionSpaceManager;
-  }
+  constructor(
+    string memory name_,
+    string memory description_,
+    address spaceManager_
+  ) SpaceEntitlementModule(name_, description_, spaceManager_) {}
 
-  function setEntitlement(DataTypes.SetEntitlementData calldata vars) public {
-    ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(vars.spaceId);
+  function setEntitlement(DataTypes.SetEntitlementData calldata vars)
+    public
+    override
+    returns (bytes memory)
+  {
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
+      vars.spaceId
+    );
 
-    (string memory description, uint256 value, string memory tag) = abi.decode(
+    (string memory _description, uint256 value, string memory tag) = abi.decode(
       vars.entitlementData,
       (string, uint256, string)
     );
 
     require(
-      ownerAddress == msg.sender || msg.sender == zionSpaceManager,
+      ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update entitlements"
     );
 
@@ -75,17 +81,25 @@ contract PurchasableEntitlementModule is ERC165 {
       ];
     spacePurchasableEntitlements.entitlementsByTag[
       tag
-    ] = PurchasableEntitlement(description, value, vars.entitlementTypes, true);
+    ] = PurchasableEntitlement(
+      _description,
+      value,
+      vars.entitlementTypes,
+      true
+    );
+
+    return vars.entitlementData;
   }
 
   function disablePurchasableEntitlement(uint256 spaceId, string calldata tag)
     public
   {
-    ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
+      spaceId
+    );
 
     require(
-      ownerAddress == msg.sender || msg.sender == zionSpaceManager,
+      ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update entitlements"
     );
 
@@ -125,7 +139,7 @@ contract PurchasableEntitlementModule is ERC165 {
     uint256 roomId,
     address user,
     DataTypes.EntitlementType entitlementType
-  ) public view returns (bool) {
+  ) public view override returns (bool) {
     string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
       spaceId
     ].userPurchasedEntitlements[user];
@@ -157,11 +171,12 @@ contract PurchasableEntitlementModule is ERC165 {
   }
 
   function withdrawValue(uint256 spaceId) public returns (uint256) {
-    ISpaceManager spaceManager = ISpaceManager(zionSpaceManager);
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
+      spaceId
+    );
 
     require(
-      ownerAddress == msg.sender || msg.sender == zionSpaceManager,
+      ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update entitlements"
     );
 
@@ -176,17 +191,5 @@ contract PurchasableEntitlementModule is ERC165 {
       revert("Could not transfer value");
     }
     return balance;
-  }
-
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165)
-    returns (bool)
-  {
-    return
-      interfaceId == type(ISpaceEntitlementModule).interfaceId ||
-      super.supportsInterface(interfaceId);
   }
 }

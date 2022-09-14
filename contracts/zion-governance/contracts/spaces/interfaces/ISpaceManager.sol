@@ -29,11 +29,8 @@ interface ISpaceManager {
 
   /// @notice Sets the default entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
-  /// @param entitlementModuleTag The tag of the entitlement module
-  function registerDefaultEntitlementModule(
-    address entitlementModuleAddress,
-    string memory entitlementModuleTag
-  ) external;
+  function registerDefaultEntitlementModule(address entitlementModuleAddress)
+    external;
 
   /// @notice Checks if a user has access to space or room based on the entitlements it holds
   /// @param spaceId The id of the space
@@ -60,7 +57,6 @@ interface ISpaceManager {
   function addEntitlement(
     uint256 spaceId,
     address entitlementAddress,
-    string memory entitlementTag,
     DataTypes.EntitlementType[] memory entitlementTypes,
     bytes memory data
   ) external;

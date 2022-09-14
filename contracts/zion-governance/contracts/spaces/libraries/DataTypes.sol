@@ -26,8 +26,11 @@ library DataTypes {
     address creator;
     address owner;
     uint256 roomId;
-    mapping(string => address) entitlements;
-    string[] entitlementTags;
+    mapping(address => bool) hasEntitlement;
+    address[] entitlements;
+
+    // mapping(string => address) entitlements;
+    // string[] entitlementTags;
     // status Status
   }
 
@@ -45,6 +48,7 @@ library DataTypes {
     address owner;
   }
 
+  /// @notice A struct representing the entitlement types.
   enum EntitlementType {
     Administrator,
     Moderator,
@@ -56,6 +60,13 @@ library DataTypes {
     Redact,
     Add_Channel,
     Remove_Channel
+  }
+
+  /// @notice A struct representing minimal info for an entitlement module.
+  struct EntitlementModuleInfo {
+    address entitlementAddress;
+    string entitlementName;
+    string entitlementDescription;
   }
 
   /// @notice A struct containing the parameters required for creating a space.
@@ -84,7 +95,7 @@ library DataTypes {
     EntitlementType[] entitlementTypes;
   }
 
-  /// @notice A struct containing the parameters required for setting an entitlement.
+  /// @notice A struct containing the parameters required for setting an entitlement on an entitlement module.
   struct SetEntitlementData {
     uint256 spaceId;
     uint256 roomId;

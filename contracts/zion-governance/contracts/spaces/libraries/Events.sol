@@ -9,9 +9,10 @@ library Events {
    * @param spaceId The id of the space
    */
   event CreateSpace(
+    uint256 indexed spaceId,
+    address indexed creator,
     address indexed owner,
-    string indexed spaceName,
-    uint256 indexed spaceId
+    string spaceName
   );
 
   /**
@@ -25,21 +26,15 @@ library Events {
    * @dev Emitted when an entitlement module is added to a space
    * @param spaceId The id of the space
    * @param entitlementAddress The address of the entitlement module
-   * @param entitlementTag The tag of the entitlement module
    */
   event EntitlementModuleAdded(
     uint256 indexed spaceId,
-    address indexed entitlementAddress,
-    string indexed entitlementTag
+    address indexed entitlementAddress
   );
 
   /**
    * @dev Emitted when the default entitlement module is set on the contract
    * @param entitlementAddress The address of the entitlement module
-   * @param entitlementTag The tag of the entitlement module
    */
-  event DefaultEntitlementSet(
-    address indexed entitlementAddress,
-    string indexed entitlementTag
-  );
+  event DefaultEntitlementSet(address indexed entitlementAddress);
 }

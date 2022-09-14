@@ -36,13 +36,19 @@ contract TokenEntitlementModuleTest is Test {
 
     spaceManager = new ZionSpaceManager();
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
+      "User Granted Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms",
       address(spaceManager)
     );
-    tokenEntitlementModule = new TokenEntitlementModule(address(spaceManager));
+
+    tokenEntitlementModule = new TokenEntitlementModule(
+      "Token Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+      address(spaceManager)
+    );
 
     spaceManager.registerDefaultEntitlementModule(
-      address(userGrantedEntitlementModule),
-      "usergranted"
+      address(userGrantedEntitlementModule)
     );
   }
 
@@ -86,7 +92,6 @@ contract TokenEntitlementModuleTest is Test {
     spaceManager.addEntitlement(
       spaceId,
       address(tokenEntitlementModule),
-      "token",
       entitlementTypes,
       abi.encode("ziontoken", tokens, quantities)
     );
@@ -149,7 +154,6 @@ contract TokenEntitlementModuleTest is Test {
     spaceManager.addEntitlement(
       spaceId,
       address(tokenEntitlementModule),
-      "token",
       entitlementTypes,
       abi.encode("councilnft", tokens, quantities)
     );
