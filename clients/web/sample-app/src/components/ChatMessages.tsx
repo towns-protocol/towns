@@ -35,6 +35,13 @@ export function ChatMessages(props: Props): JSX.Element {
     membership === Membership.Join &&
     timeline.length > 0 &&
     unreadCounts[roomId.matrixRoomId] > 0;
+  // pull if the first message is create, we've reached the end
+  // Caveat, when we first sync the space in the sample app, there's a leave event
+  // that's prepended to the timeline, not sure where the bug is
+  // issue: https://github.com/HereNotThere/harmony/issues/443
+  const canLoadMore =
+    timeline[0].eventType !== ZTEvent.RoomCreate &&
+    timeline[1].eventType !== ZTEvent.RoomCreate;
 
   const onTextChanged = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +79,7 @@ export function ChatMessages(props: Props): JSX.Element {
       if (timeline.length > 0) {
         return (
           <>
-            {timeline[0].eventType !== ZTEvent.RoomCreate && (
+            {canLoadMore && (
               <Typography
                 key={-1}
                 display="block"
