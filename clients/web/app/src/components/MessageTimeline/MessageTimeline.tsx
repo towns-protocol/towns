@@ -11,8 +11,7 @@ import {
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
 
-import { Box, Divider, Stack } from "@ui";
-
+import { Box, Stack } from "@ui";
 import { TimelineGenericEvent } from "./events/TimelineGenericEvent";
 import { TimelineMessage } from "./events/TimelineMessage";
 import { RenderEventType, useGroupEvents } from "./hooks/useGroupEvents";
@@ -47,29 +46,8 @@ export const MessageTimeline = (props: Props) => {
       {dateGroups.map((dateGroup) => {
         const renderEvents = dateGroup.events;
         return (
-          <Stack key={dateGroup.date.humanDate}>
-            <Box
-              top="md"
-              display="block"
-              paddingX="lg"
-              position="sticky"
-              zIndex="ui"
-            >
-              <Divider
-                label={
-                  <Box
-                    padding="sm"
-                    rounded="md"
-                    background="default"
-                    color="gray2"
-                    fontSize="sm"
-                  >
-                    {dateGroup.date.humanDate}
-                  </Box>
-                }
-              />
-            </Box>
-
+          <Stack key={dateGroup.date.humanDate} position="relative">
+            <DateDivider label={dateGroup.date.humanDate} />
             {renderEvents.map((r, index) => {
               switch (r.type) {
                 case RenderEventType.UserMessageGroup: {
@@ -125,3 +103,26 @@ export const MessageTimeline = (props: Props) => {
     </TimelineMessageContext.Provider>
   );
 };
+
+const DateDivider = (props: { label: string }) => (
+  <>
+    <Box left right top="md" position="absolute" paddingX="lg">
+      <Box borderTop />
+    </Box>
+    <Box centerContent top="md" display="block" position="sticky" zIndex="ui">
+      <Box centerContent>
+        <Box
+          border
+          paddingY="sm"
+          paddingX="md"
+          rounded="md"
+          background="default"
+          color="gray2"
+          fontSize="sm"
+        >
+          {props.label}
+        </Box>
+      </Box>
+    </Box>
+  </>
+);
