@@ -1,6 +1,7 @@
 import { ZionTestClient } from "./ZionTestClient";
 import { ethers } from "ethers";
 import { TestConstants } from "./TestConstants";
+import { EventTimeline } from "matrix-js-sdk";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -32,6 +33,21 @@ export function makeUniqueName(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 4095).toString(
     16,
   )}`;
+}
+
+export function logTimeline(timeline?: EventTimeline) {
+  if (!timeline) {
+    console.log("!!timeline is undefined");
+    return;
+  }
+  timeline.getEvents().forEach((event) => {
+    console.log(
+      "!! timeline event:",
+      event.getType(),
+      event.getSender(),
+      event.getContent(),
+    );
+  });
 }
 
 export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {

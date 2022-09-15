@@ -107,16 +107,15 @@ describe("sendReactionHooks", () => {
     // expect it to render as well
     await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.Reaction));
     // expect jane to recieve the message
-    expect(
-      await jane.eventually(
-        (x) =>
-          x
-            .getRoom(janesChannelId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .filter((e) => e.getType() === ZTEvent.Reaction)
-            .at(-1) != undefined,
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        jane
+          .getRoom(janesChannelId)
+          ?.getLiveTimeline()
+          .getEvents()
+          .at(-1)
+          ?.getType(),
+      ).toBe(ZTEvent.Reaction),
+    );
   });
 });

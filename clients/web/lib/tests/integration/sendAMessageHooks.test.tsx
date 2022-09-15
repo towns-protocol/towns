@@ -125,35 +125,33 @@ describe("sendMessageHooks", () => {
     // expect it to render as well
     await waitFor(() => expect(message1).toHaveTextContent("hello jane"));
     // expect jane to recieve the message
-    expect(
-      await jane.eventually(
-        (x) =>
-          x
-            .getRoom(janesChannelId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .filter((e) => e.getType() === "m.room.message")
-            .at(-1)
-            ?.getContent().body === "hello jane",
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        jane
+          .getRoom(janesChannelId)
+          ?.getLiveTimeline()
+          .getEvents()
+          .filter((e) => e.getType() === "m.room.message")
+          .at(-1)
+          ?.getContent().body,
+      ).toBe("hello jane"),
+    );
     // edit the event
     fireEvent.click(editButton);
     // expect the event to be edited
     await waitFor(() => expect(message1).toHaveTextContent("hello jane gm!"));
     // expect jane to see the edited event
-    expect(
-      await jane.eventually(
-        (x) =>
-          x
-            .getRoom(janesChannelId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .filter((e) => e.getType() === "m.room.message")
-            .at(-1)
-            ?.getContent().body === "hello jane gm!",
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        jane
+          .getRoom(janesChannelId)
+          ?.getLiveTimeline()
+          .getEvents()
+          .filter((e) => e.getType() === "m.room.message")
+          .at(-1)
+          ?.getContent().body,
+      ).toBe("hello jane gm!"),
+    );
     // redact the event
     fireEvent.click(redactButton);
     // exect the message to be empty

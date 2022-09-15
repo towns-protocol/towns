@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { waitFor } from "@testing-library/dom";
 import { MatrixEvent } from "matrix-js-sdk";
 import { MessageType, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
@@ -20,18 +21,17 @@ describe("messageTypes", () => {
       messageType: MessageType.WenMoon,
     });
     // bob should receive the message
-    expect(
-      await bob.eventually(
-        (x) =>
-          x
-            .getRoom(roomId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .find(
-              (event: MatrixEvent) =>
-                event.getContent().msgtype === MessageType.WenMoon,
-            ) != undefined,
-      ),
-    ).toBe(true);
-  });
-});
+    await waitFor(() =>
+      expect(
+        bob
+          .getRoom(roomId)
+          ?.getLiveTimeline()
+          .getEvents()
+          .find(
+            (event: MatrixEvent) =>
+              event.getContent().msgtype === MessageType.WenMoon,
+          ),
+      ).toBeDefined(),
+    );
+  }); // end test
+}); // end describe

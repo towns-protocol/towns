@@ -34,13 +34,9 @@ beforeAll(async () => {
   (globalThis as any).crypto = webcrypto;
   globalThis.Olm = Olm;
   await globalThis.Olm.init();
-  // set up the matrix config func
-  configure((config: Config) => {
-    // this is necessary for the full test suite to pass, but when it's enabled
-    // the waitUntil tests don't print nice html state on failure, making it hard to debug
-    // leaving it disabled for now
-    // config.asyncUtilTimeout = 10000;
-    return config;
+  // dom testing library config for `waitFor(...)`
+  configure({
+    asyncUtilTimeout: 5000, // default is 1000
   });
   // set up required global for the matrix client to allow us to make http requests
   matrixRequest(request);

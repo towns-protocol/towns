@@ -160,8 +160,8 @@ describe("unreadMessageCountHooks", () => {
       { timeout: 10000 },
     );
     // check assumptions
-    expect(spaceHasUnread).toHaveTextContent("undefined");
-    expect(unreadCount).toHaveTextContent("undefined");
+    await waitFor(() => expect(spaceHasUnread).toHaveTextContent("false"));
+    await waitFor(() => expect(unreadCount).toHaveTextContent("undefined"));
     // get invited to the channel
     await jane.inviteUser(janesChannelId, bobId.textContent!);
     // check the count

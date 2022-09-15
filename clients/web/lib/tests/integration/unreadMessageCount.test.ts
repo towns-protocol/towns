@@ -29,10 +29,12 @@ describe("unreadMessageCount", () => {
       parentSpaceId: spaceId,
       visibility: RoomVisibility.Private,
     });
-    // bob invites alice to the room
-    await bob.inviteUser(spaceId, alice.matrixUserId!);
-    await bob.inviteUser(channel_1, alice.matrixUserId!);
-    await bob.inviteUser(channel_2, alice.matrixUserId!);
+    // log
+    console.log("!!!sync room ids", {
+      space: spaceId.matrixRoomId,
+      channel_1: channel_1.matrixRoomId,
+      channel_2: channel_2.matrixRoomId,
+    });
     // set up some local data
     const alicesLastNotifications: Record<string, IUnreadNotificationCounts> =
       {};
@@ -46,6 +48,10 @@ describe("unreadMessageCount", () => {
         );
       }
     });
+    // bob invites alice to the room
+    await bob.inviteUser(spaceId, alice.matrixUserId!);
+    await bob.inviteUser(channel_1, alice.matrixUserId!);
+    await bob.inviteUser(channel_2, alice.matrixUserId!);
     // alice should see the room
     await waitFor(() => expect(alice.getRoom(spaceId)).toBeDefined());
     // initially we have 1 unread messages for space and each channel
@@ -100,14 +106,6 @@ describe("unreadMessageCount", () => {
     await waitFor(() =>
       expect(
         alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count,
-      ).toBe(0),
-    );
-    // clear
-    await alice.sendReadReceipt(channel_2);
-    // and see the update
-    await waitFor(() =>
-      expect(
-        alicesLastNotifications?.[channel_2.matrixRoomId]?.notification_count,
       ).toBe(0),
     );
   }); // end test

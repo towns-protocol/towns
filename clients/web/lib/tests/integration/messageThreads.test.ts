@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { waitFor } from "@testing-library/dom";
 import { MatrixEvent } from "matrix-js-sdk";
 import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("messageThreads", () => {
-  jest.setTimeout(20000);
+  jest.setTimeout(10000);
   test("send a threaded message", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);
@@ -18,16 +19,16 @@ describe("messageThreads", () => {
     // alice sends a wenmoon message
     await alice.sendMessage(roomId, "hi Bob!");
     // bob should receive the message
-    expect(
-      await bob.eventually(
-        (x) =>
-          x
-            .getRoom(roomId)
-            ?.timeline.find(
-              (event: MatrixEvent) => event.event.content?.body === "hi Bob!",
-            ) != undefined,
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        bob
+          .getRoom(roomId)
+          ?.timeline.find(
+            (event: MatrixEvent) => event.event.content?.body === "hi Bob!",
+          ),
+      ).toBeDefined(),
+    );
+
     // get the message id
     const messageId = bob
       .getRoom(roomId)!
@@ -37,17 +38,16 @@ describe("messageThreads", () => {
     // bob sends a threaded message
     await bob.sendMessage(roomId, "hi Alice!", { threadId: messageId });
     // alice should receive the message
-    expect(
-      await alice.eventually(
-        (x) =>
-          x
-            .getRoom(roomId)
-            ?.timeline.find(
-              (event: MatrixEvent) =>
-                event.event.content &&
-                event.event.content["m.relates_to"]?.event_id === messageId,
-            ) != undefined,
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        alice
+          .getRoom(roomId)
+          ?.timeline.find(
+            (event: MatrixEvent) =>
+              event.event.content &&
+              event.event.content["m.relates_to"]?.event_id === messageId,
+          ),
+      ).toBeDefined(),
+    );
   }); // end test - send a threaded message
 }); // end describe

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { waitFor } from "@testing-library/dom";
 import { MatrixEvent } from "matrix-js-sdk";
 import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
@@ -21,21 +22,17 @@ describe("userProfile", () => {
     // alice joins the room
     await alice.joinRoom(roomId);
     // alice should see bob's user name
-    expect(
-      await alice.eventually(
-        (x) =>
-          x.getRoom(roomId)?.getMember(bob.matrixUserId!)?.name ===
-          "Bob's your uncle",
+    await waitFor(() =>
+      expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.name).toBe(
+        "Bob's your uncle",
       ),
-    ).toBe(true);
+    );
     // alice should see bob's profile photo
-    expect(
-      await alice.eventually(
-        (x) =>
-          x.getRoom(roomId)?.getMember(bob.matrixUserId!)?.getMxcAvatarUrl() ===
-          "https://example.com/bob.png",
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.getMxcAvatarUrl(),
+      ).toBe("https://example.com/bob.png"),
+    );
     // log alice's view of bob
     const alicesViewOfBob = alice.getRoom(roomId)?.getMember(bob.matrixUserId!);
     console.log("alice sees bob as", {
@@ -56,42 +53,36 @@ describe("userProfile", () => {
     await alice.setDisplayName("Alice's your aunt");
     await alice.setAvatarUrl("https://example.com/alice.png");
     // bob should see alices new user name
-    expect(
-      await bob.eventually(
-        (x) =>
-          x.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name ===
-          "Alice's your aunt",
+    await waitFor(() =>
+      expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name).toBe(
+        "Alice's your aunt",
       ),
-    ).toBe(true);
+    );
     // alice should see bob's profile photo
-    expect(
-      await bob.eventually(
-        (x) =>
-          x
-            .getRoom(roomId)
-            ?.getMember(alice.matrixUserId!)
-            ?.getMxcAvatarUrl() === "https://example.com/alice.png",
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.getMxcAvatarUrl(),
+      ).toBe("https://example.com/alice.png"),
+    );
     // send a message
     await bob.sendMessage(roomId, "hello");
     // alice should see the message
-    expect(
-      await alice.eventually((x) =>
-        x
+    await waitFor(() =>
+      expect(
+        alice
           .getRoom(roomId)
           ?.getLiveTimeline()
           .getEvents()
-          .some((event: MatrixEvent) => event.getContent()?.body === "hello"),
-      ),
-    ).toBe(true);
+          .at(-1)
+          ?.getContent().body,
+      ).toBe("hello"),
+    );
     // get the message
     const message = alice
       .getRoom(roomId)
       ?.getLiveTimeline()
       .getEvents()
       .find((event: MatrixEvent) => event.getContent()?.body === "hello");
-
     // sender?
     expect(message?.sender?.rawDisplayName).toBe("Bob's your uncle");
   }); // end test

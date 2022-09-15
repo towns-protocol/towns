@@ -8,7 +8,7 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 /// the user can send a message to the room before the room is encrypted
 /// and that message will be stored in plain text in the room dag
 describe("isEncrypted", () => {
-  // test
+  jest.setTimeout(10000);
   test("test that spaces and channels are encrypted when they are created", async () => {
     if (process.env.DISABLE_ENCRYPTION === "true") {
       console.log("Skipping test because DISABLE_ENCRYPTION is true");

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { waitFor } from "@testing-library/dom";
 import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
@@ -21,20 +22,18 @@ describe("messageScrollback", () => {
     //
     // alice should receive 20 messages message
     //
-    expect(
-      await alice.eventually(
-        (x) =>
-          (x.getRoom(roomId)?.getLiveTimeline().getEvents().length ?? 0) == 20,
+    await waitFor(() =>
+      expect(alice.getRoom(roomId)?.getLiveTimeline().getEvents().length).toBe(
+        20,
       ),
-    ).toBe(true);
+    );
     // call scrollback
     await alice.scrollback(roomId, 30);
     // did we get more events?
-    expect(
-      await alice.eventually(
-        (x) =>
-          (x.getRoom(roomId)?.getLiveTimeline().getEvents().length ?? 0) > 20,
-      ),
-    ).toBe(true);
+    await waitFor(() =>
+      expect(
+        alice.getRoom(roomId)?.getLiveTimeline().getEvents().length,
+      ).toBeGreaterThan(20),
+    );
   }); // end test - send a threaded message
 }); // end describe

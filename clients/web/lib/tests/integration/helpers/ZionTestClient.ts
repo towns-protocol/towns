@@ -8,7 +8,6 @@ import {
 import { createMessageToSign } from "../../../src/hooks/use-matrix-wallet-sign-in";
 import { createUserIdFromEthereumAddress } from "../../../src/types/user-identifier";
 import { RoomIdentifier } from "../../../src/types/matrix-types";
-import { sleepUntil } from "../../../src/utils/zion-utils";
 import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 import { makeUniqueName } from "./TestUtils";
 import { ethers } from "ethers";
@@ -73,15 +72,6 @@ export class ZionTestClient extends ZionClient {
   /// return a unique name sutable for a space or channel name
   public makeUniqueName(): string {
     return makeUniqueName(this.name);
-  }
-
-  // check if something eventually becomes true
-  public async eventually<T>(
-    condition: (client: ZionTestClient) => T,
-    timeout = 2000,
-    checkEvery = 100,
-  ): Promise<T | undefined> {
-    return sleepUntil(this, condition, timeout, checkEvery);
   }
 
   /// add some funds to this wallet

@@ -135,14 +135,14 @@ describe("userProfileHooks", () => {
     // verify my (bob) avatar is rendering
     await waitFor(() => expect(myProfileAvatar).toHaveTextContent("bob.png"));
     // double check that alice sees the same info
-    expect(
-      await alice.eventually((x) =>
-        x
+    await waitFor(() =>
+      expect(
+        alice
           .getRoom(alicesChannelId)
           ?.getMembers()
           .some((x: RoomMember) => x.name === "Bob's your uncle"),
-      ),
-    ).toBe(true);
+      ).toBe(true),
+    );
     // have alice send a message
     await alice.sendMessage(alicesChannelId, "hello");
     // expect a result
