@@ -7,8 +7,6 @@ import {
   RoomIdentifier,
   Rooms,
   SpaceChild,
-  SpaceHierarchy,
-  SpaceHierarcies,
 } from "../types/matrix-types";
 import createStore, { SetState } from "zustand";
 
@@ -44,14 +42,6 @@ export type MatrixStoreStates = {
   setRoom: (room: MatrixRoom) => void;
   setAllRooms: (rooms: MatrixRoom[]) => void;
   setRoomName: (roomId: RoomIdentifier, roomName: string) => void;
-  spacesUpdateRecievedAt: { [spaceId: string]: number };
-  setSpaceUpdateRecievedAt: (spaceId: RoomIdentifier) => void;
-  spaceHierarchies: SpaceHierarcies;
-  setSpace: (
-    spaceId: RoomIdentifier,
-    root: IHierarchyRoom,
-    children: IHierarchyRoom[],
-  ) => SpaceHierarchy;
   userId: string | null;
   setUserId: (userId: string | undefined) => void;
   username: string | null;
@@ -114,26 +104,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
       set((state: MatrixStoreStates) => setAllRooms(state, rooms)),
     setRoomName: (roomId: RoomIdentifier, roomName: string) =>
       set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
-    spacesUpdateRecievedAt: {},
-    setSpaceUpdateRecievedAt: (spaceId: RoomIdentifier) =>
-      set((state: MatrixStoreStates) =>
-        setSpaceUpdateRecievedAt(state, spaceId),
-      ),
-    spaceHierarchies: {},
-    setSpace: (
-      spaceId: RoomIdentifier,
-      root: IHierarchyRoom,
-      children: IHierarchyRoom[],
-    ) => {
-      const spaceHierarchy = {
-        root: toZionSpaceChild(root),
-        children: children.map((r) => toZionSpaceChild(r)),
-      };
-      set((state: MatrixStoreStates) =>
-        setSpace(state, spaceId, spaceHierarchy),
-      );
-      return spaceHierarchy;
-    },
     joinRoom: (
       roomId: RoomIdentifier,
       userId: string,
@@ -212,15 +182,6 @@ function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
   return { rooms: changedRooms };
 }
 
-function setSpaceUpdateRecievedAt(
-  state: MatrixStoreStates,
-  spaceId: RoomIdentifier,
-) {
-  const changed = { ...state.spacesUpdateRecievedAt };
-  changed[spaceId.slug] = Date.now();
-  return { spacesUpdateRecievedAt: changed };
-}
-
 function triggerZionClientEvent(
   state: MatrixStoreStates,
   event: ZionClientEvent,
@@ -228,16 +189,6 @@ function triggerZionClientEvent(
   const changed = { ...state.zionClientEvents };
   changed[event] = Date.now();
   return { zionClientEvents: changed };
-}
-
-function setSpace(
-  state: MatrixStoreStates,
-  spaceId: RoomIdentifier,
-  newSpace: SpaceHierarchy,
-) {
-  const changedSpaces = { ...state.spaceHierarchies };
-  changedSpaces[spaceId.slug] = newSpace;
-  return { spaceHierarchies: changedSpaces };
 }
 
 function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
@@ -349,7 +300,7 @@ function joinRoom(
   return state;
 }
 
-function toZionRoom(r: MatrixRoom): Room {
+export function toZionRoom(r: MatrixRoom): Room {
   return {
     id: makeRoomIdentifier(r.roomId),
     name: r.name,
@@ -373,7 +324,7 @@ function toZionMembers(r: MatrixRoom): Members {
   }, {} as Members);
 }
 
-function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
+export function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
   return {
     id: makeRoomIdentifier(r.room_id),
     name: r.name ?? "Unknown",

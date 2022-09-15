@@ -15,6 +15,8 @@ type Props = {
   icon?: IconName;
   active?: boolean;
   pinned?: boolean;
+  newMessages?: boolean;
+  mentions?: number;
   settings?: boolean;
   onSettings?: (id: RoomIdentifier) => void;
   exact?: boolean;
@@ -30,6 +32,8 @@ export const SpaceNavItem = (props: Props) => {
     icon,
     name,
     pinned,
+    newMessages,
+    mentions,
     settings,
     onSettings,
     isInvite,
@@ -83,11 +87,21 @@ export const SpaceNavItem = (props: Props) => {
             color={active ? "default" : "gray1"}
             strong={active}
           >
-            {isInvite ? "(Invite) " + name : name}
+            {isInvite
+              ? "(Invite) " + name
+              : (mentions ?? 0) > 0
+              ? name + " (" + mentions + ")"
+              : name}
           </ButtonText>
 
           <Box shrink display={isSmall ? "none" : undefined} color="gray2">
             {pinned && <Icon type="pin" size="square_sm" padding="xs" />}
+          </Box>
+
+          <Box shrink display={isSmall ? "none" : undefined} color="gray2">
+            {newMessages && (
+              <Icon type="newmessage" size="square_sm" padding="xs" />
+            )}
           </Box>
 
           {settings && (

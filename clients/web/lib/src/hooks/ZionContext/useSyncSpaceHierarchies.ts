@@ -1,0 +1,138 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  MatrixEvent,
+  RoomEvent,
+  Room as MatrixRoom,
+  IRoomTimelineData,
+  EventType,
+} from "matrix-js-sdk";
+import { useEffect, useRef, useState } from "react";
+import { toZionSpaceChild } from "../../store/use-matrix-store";
+import { ZionClient } from "../../client/ZionClient";
+import { SpaceHierarchies } from "../../types/matrix-types";
+
+// the spaces are just tacked on to the matrix design system,
+// child events should be treated like state events, but they are not,
+// so we have to go and fetch them manually
+export function useSyncSpaceHierarchies(
+  client: ZionClient | undefined,
+  spaceIds: string[],
+  invitedToIds: string[],
+): { spaceHierarchies: SpaceHierarchies } {
+  const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>(
+    {},
+  );
+  const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds);
+  const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(
+    null,
+  );
+  const seenSpaceIds = useRef<string[]>(spaceIds);
+  const seenInvitedToIds = useRef<string[]>(invitedToIds);
+
+  const enqueueSpaceId = (spaceId: string) => {
+    setSpaceIdsQueue((prev) => {
+      if (prev.includes(spaceId)) {
+        return prev;
+      }
+      return [...prev, spaceId];
+    });
+  };
+  const dequeueSpaceId = (spaceId: string) => {
+    setSpaceIdsQueue((prev) => {
+      if (!prev.includes(spaceId)) {
+        return prev;
+      }
+      return prev.filter((id) => id !== spaceId);
+    });
+  };
+  // our queue
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    if (inFlightCurrent) {
+      return;
+    }
+    const spaceId = spaceIdsQueue.shift();
+    if (!spaceId) {
+      return;
+    }
+    dequeueSpaceId(spaceId);
+    // console.log("!!!!! hierarchies syncing space", spaceId);
+    const inflight = client
+      .syncSpace(spaceId)
+      .then((hierarchy) => {
+        if (!hierarchy) {
+          return;
+        }
+        setSpaceHierarchies((prev) => {
+          const spaceHierarchy = {
+            root: toZionSpaceChild(hierarchy.root),
+            children: hierarchy.children.map((r) => toZionSpaceChild(r)),
+          };
+          return {
+            ...prev,
+            [spaceId]: spaceHierarchy,
+          };
+        });
+      })
+      .finally(() => {
+        // console.log("!!!!! hierarchies done syncing space", spaceId);
+        setInflightCurrnet(null);
+      });
+    setInflightCurrnet(inflight);
+  }, [client, inFlightCurrent, spaceIdsQueue]);
+  // watch for new or updated space ids
+  useEffect(() => {
+    // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
+    const newIds = spaceIds.filter((x) => !seenSpaceIds.current.includes(x));
+    const removedIds = seenSpaceIds.current.filter(
+      (x) => !spaceIds.includes(x),
+    );
+    // console.log("!!!!! hierarchies new ids", newIds);
+    // console.log("!!!!! hierarchies removed ids", removedIds);
+    newIds.forEach(enqueueSpaceId);
+    removedIds.forEach(dequeueSpaceId);
+    seenSpaceIds.current = spaceIds;
+  }, [spaceIds]);
+  // when we get a new invite, we need to sync all the spaces because we don't know which one it is for yet
+  useEffect(() => {
+    // console.log("!!!!! hierarchies USE EFFECT invitedToIds:", invitedToIds);
+    const newIds = invitedToIds.filter(
+      (x) => !seenInvitedToIds.current.includes(x),
+    );
+    if (newIds.length > 0) {
+      // enqueue all the spaces (we don't know which one it is for yet)
+      spaceIds.forEach(enqueueSpaceId);
+    }
+    seenInvitedToIds.current = invitedToIds;
+  }, [invitedToIds, spaceIds]);
+  // watch client for space udpates
+  useEffect(() => {
+    if (!client) {
+      return;
+    }
+    const onRoomTimelineEvent = (
+      event: MatrixEvent,
+      eventRoom: MatrixRoom,
+      toStartOfTimeline: boolean,
+      removed: boolean,
+      data: IRoomTimelineData,
+    ) => {
+      if (!spaceIds.includes(eventRoom.roomId)) {
+        return;
+      }
+      const eventType = event.getType();
+      if (eventType === EventType.SpaceChild) {
+        // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
+        enqueueSpaceId(eventRoom.roomId);
+      }
+    };
+    client.on(RoomEvent.Timeline, onRoomTimelineEvent);
+    return () => {
+      // console.log("!!! REMOVING EVENTS");
+      client.removeListener(RoomEvent.Timeline, onRoomTimelineEvent);
+    };
+  }, [client, spaceIds]);
+  return { spaceHierarchies };
+}

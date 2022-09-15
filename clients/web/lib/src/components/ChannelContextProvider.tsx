@@ -18,8 +18,7 @@ export const ChannelContext = createContext<IChannelContext | undefined>(
 );
 
 /**
- * use instead of React.useContext
- * and will throw assert if not in a Provider
+ * use instead of React.useContext, throws if not in a Provider
  */
 export function useChannelContext(): IChannelContext {
   const context = useContext(ChannelContext);

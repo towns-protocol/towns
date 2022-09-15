@@ -1,15 +1,16 @@
-import { List, ListItem, ListItemText } from "@mui/material";
+import { List, ListItem, ListItemText, Typography } from "@mui/material";
 import {
   Membership,
-  Room,
   RoomIdentifier,
   isRoom,
   useMatrixStore,
 } from "use-zion-client";
 
 import { useMemo } from "react";
+import { Theme } from "@mui/system";
 
 interface Props {
+  title: string;
   membership: Membership;
   onClickRoom: (id: RoomIdentifier, membership: Membership) => void;
   isSpace: boolean;
@@ -18,44 +19,40 @@ interface Props {
 export function Rooms(props: Props): JSX.Element {
   const { rooms } = useMatrixStore();
   const { isSpace, membership, onClickRoom } = props;
-
   const foundRooms = useMemo(() => {
     if (rooms) {
-      const foundRooms: Room[] = [];
-      for (const r of Object.values(rooms)) {
-        if (
-          isRoom(r) &&
-          r.membership === membership &&
-          r.isSpaceRoom === isSpace
-        ) {
-          foundRooms.push(r);
-        }
-      }
-
-      return foundRooms;
+      return Object.values(rooms).filter(
+        (room) =>
+          isRoom(room) &&
+          room.membership === membership &&
+          room.isSpaceRoom === isSpace,
+      );
     }
-
-    return undefined;
+    return [];
   }, [isSpace, membership, rooms]);
-
-  const roomItems = useMemo(() => {
-    if (foundRooms) {
-      const items = [];
-      for (const r of foundRooms) {
-        items.push(
+  return foundRooms.length > 0 ? (
+    <>
+      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+        {props.title}
+      </Typography>
+      <List>
+        {foundRooms.map((r) => (
           <ListItem
             button
             key={r.id.slug}
             onClick={() => onClickRoom(r.id, membership)}
           >
-            <ListItemText>{r.name}</ListItemText>
-          </ListItem>,
-        );
-      }
-      return items;
-    }
-    return undefined;
-  }, [foundRooms, membership, onClickRoom]);
-
-  return <List>{roomItems}</List>;
+            <ListItemText>{r.name + " hi"}</ListItemText>
+          </ListItem>
+        ))}
+      </List>
+    </>
+  ) : (
+    <></>
+  );
 }
+
+const spacingStyle = {
+  padding: (theme: Theme) => theme.spacing(2),
+  gap: (theme: Theme) => theme.spacing(1),
+};

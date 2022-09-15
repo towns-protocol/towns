@@ -18,7 +18,7 @@ interface Props {
   roomId: RoomIdentifier;
   membership: string;
   onClickLeaveRoom: () => void;
-  goToRoom: (roomId: RoomIdentifier) => void;
+  goToRoom: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void;
 }
 
 export function Chat(props: Props): JSX.Element {
@@ -35,9 +35,9 @@ export function Chat(props: Props): JSX.Element {
   }, [spaceId.slug, channelId.slug, navigate]);
 
   const onClickLeaveRoom = useCallback(async () => {
-    await leaveRoom(props.roomId);
+    await leaveRoom(channelId);
     props.onClickLeaveRoom();
-  }, [leaveRoom, props]);
+  }, [channelId, leaveRoom, props]);
 
   const onClickOpenInviteForm = useCallback(() => {
     setShowInviteForm(true);
@@ -65,9 +65,9 @@ export function Chat(props: Props): JSX.Element {
   const onClickJoinRoom = useCallback(
     async (roomId: RoomIdentifier) => {
       await joinRoom(roomId);
-      props.goToRoom(roomId);
+      props.goToRoom(spaceId, channelId);
     },
-    [joinRoom, props],
+    [channelId, joinRoom, props, spaceId],
   );
 
   const roomName = channel?.label ?? "";

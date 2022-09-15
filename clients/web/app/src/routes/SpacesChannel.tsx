@@ -8,6 +8,7 @@ import {
   useChannelTimeline,
   useMyMembership,
   useZionClient,
+  useZionContext,
 } from "use-zion-client";
 import { ChannelHeader } from "@components/ChannelHeader";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
@@ -31,11 +32,16 @@ const SpacesChannelComponent = () => {
   const { messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
-  const { joinRoom, sendMessage } = useZionClient();
+  const { unreadCounts } = useZionContext();
+  const { joinRoom, sendMessage, sendReadReceipt } = useZionClient();
 
   const { spaceId, channelId, channel } = useChannelData();
+
   const myMembership = useMyMembership(channelId);
   const channelMessages = useChannelTimeline();
+  const hasUnread =
+    channelMessages.length > 0 &&
+    (unreadCounts[channelId.matrixRoomId] ?? 0) > 0;
 
   const onSend = useCallback(
     (value: string) => {
@@ -49,6 +55,13 @@ const SpacesChannelComponent = () => {
   const onJoinChannel = useCallback(() => {
     joinRoom(channelId);
   }, [joinRoom, channelId]);
+
+  const onMarkAsRead = useCallback(() => {
+    void sendReadReceipt(
+      channelId,
+      channelMessages[channelMessages.length - 1].eventId,
+    );
+  }, [channelId, channelMessages, sendReadReceipt]);
 
   const hasThreadOpen = !!messageId;
 
@@ -84,6 +97,15 @@ const SpacesChannelComponent = () => {
                 events={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
               />
+              {hasUnread && (
+                <Button
+                  key={channelId.slug + "mark-as-read"}
+                  size="button_lg"
+                  onClick={onMarkAsRead}
+                >
+                  Click here to Mark as Read (temp)
+                </Button>
+              )}
 
               <Box gap paddingBottom="lg" paddingX="lg">
                 <RichTextEditor

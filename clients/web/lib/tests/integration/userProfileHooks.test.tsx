@@ -100,6 +100,7 @@ describe("userProfileHooks", () => {
       </ZionTestApp>,
     );
     // get our test elements
+    const clientRunning = screen.getByTestId("clientRunning");
     const channelMembership = screen.getByTestId("channelMembership"); // from RegisterAndJoinSpace
     const myProfileName = screen.getByTestId("myProfileName");
     const myProfileAvatar = screen.getByTestId("myProfileAvatar");
@@ -109,9 +110,12 @@ describe("userProfileHooks", () => {
     const setProfileInfoButton = screen.getByRole("button", {
       name: "Set Profile Info",
     });
+    // wait for client to be running
+    await waitFor(() => expect(clientRunning).toHaveTextContent("true"));
     // wait for the channel join
-    await waitFor(() =>
-      expect(channelMembership).toHaveTextContent(Membership.Join),
+    await waitFor(
+      () => expect(channelMembership).toHaveTextContent(Membership.Join),
+      { timeout: 10000 },
     );
     // verify alice name is rendering
     await waitFor(() =>

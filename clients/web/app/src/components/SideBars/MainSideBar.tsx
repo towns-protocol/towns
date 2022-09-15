@@ -1,5 +1,5 @@
 import React from "react";
-import { useInvites, useSpaces } from "use-zion-client";
+import { useInvites, useSpaceContext, useZionContext } from "use-zion-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { ProfileCardButton } from "@components/ProfileCardButton/ProfileCardButton";
@@ -13,7 +13,8 @@ type Props = {
 
 export const MainSideBar = (props: Props) => {
   const { expanded: isExpanded } = props;
-  const spaces = useSpaces();
+  const { spaces, spaceUnreads, spaceMentionCounts } = useZionContext();
+  const { spaceId } = useSpaceContext();
   const invites = useInvites();
 
   return (
@@ -22,11 +23,13 @@ export const MainSideBar = (props: Props) => {
         {spaces.map((s) => (
           <SpaceNavItem
             key={s.id.slug}
-            active={s.active}
+            active={s.id.matrixRoomId === spaceId?.matrixRoomId}
             id={s.id}
             name={s.name}
             avatar={s.avatarSrc}
-            pinned={s.pinned}
+            pinned={false}
+            newMessages={spaceUnreads[s.id.matrixRoomId]}
+            mentions={spaceMentionCounts[s.id.matrixRoomId]}
           />
         ))}
         <ActionNavItem

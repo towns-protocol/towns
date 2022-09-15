@@ -1,19 +1,24 @@
-import { TextField } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { Divider, TextField } from "@mui/material";
+import { useCallback } from "react";
 import { useParams } from "react-router-dom";
 import {
   PowerLevel,
   useZionClient,
   usePowerLevels,
   useRoom,
+  useZionContext,
 } from "use-zion-client";
 
 export const RoomSettings = () => {
-  const { spaceSlug, roomSlug } = useParams();
+  const { spaceSlug, channelSlug } = useParams();
+  const { client } = useZionContext();
   const { setPowerLevel } = useZionClient();
   // if we have a room id, use it, otherwise pull up the space id
-  const targetId = useMemo(() => roomSlug || spaceSlug, [roomSlug, spaceSlug]);
+  const targetId = channelSlug || spaceSlug;
   const room = useRoom(targetId);
+  const matrixRoom = targetId ? client?.getRoom(targetId) : undefined;
+  const joinRule = matrixRoom ? matrixRoom.getJoinRule() : "unknown";
+
   const powerLevels = usePowerLevels(room?.id);
   const onLevelChanged = useCallback(
     (level: PowerLevel, newValue: number) => {
@@ -27,11 +32,19 @@ export const RoomSettings = () => {
     <>
       <h2>Settings</h2>
       <p>
+        <b>RoomName:</b> {room.name}
+      </p>
+      <p>
         <b>RoomId:</b> {room.id.matrixRoomId}
       </p>
       <p>
         <b>IsSpaceRoom:</b> {room.isSpaceRoom ? "true" : "false"}
       </p>
+      <p>
+        <b>Join Rule:</b> {joinRule}
+      </p>
+      <Divider />
+      <h4>Power Levels</h4>
       <ul>
         {powerLevels.levels.map((level) => (
           <PowerLevelView level={level} onLevelChanged={onLevelChanged} />

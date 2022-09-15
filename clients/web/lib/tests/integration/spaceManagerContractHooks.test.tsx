@@ -7,7 +7,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ZionTestApp } from "use-zion-client/tests/integration/helpers/ZionTestApp";
 import { RegisterWallet } from "use-zion-client/tests/integration/helpers/TestComponents";
 import { useZionClient } from "use-zion-client/src/hooks/use-zion-client";
-import { useSpacesFromContract } from "use-zion-client/src/hooks/use-spaces";
+import { useSpacesFromContract } from "use-zion-client/src/hooks/use-spaces-from-contract";
 import { makeUniqueName } from "use-zion-client/tests/integration/helpers/TestUtils";
 import { RoomVisibility } from "use-zion-client/src/types/matrix-types";
 import { ZionTestWeb3Provider } from "use-zion-client/tests/integration/helpers/ZionTestWeb3Provider";

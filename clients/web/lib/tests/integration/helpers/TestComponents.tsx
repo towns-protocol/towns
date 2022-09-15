@@ -12,7 +12,7 @@ import { useZionClient } from "../../../src/hooks/use-zion-client";
 
 export const RegisterWallet = () => {
   const { walletStatus } = useWeb3Context();
-  const { loginStatus, loginError } = useMatrixStore();
+  const { loginStatus, loginError, userId } = useMatrixStore();
   const { clientRunning, registerWallet } = useZionClient();
   useEffect(() => {
     if (walletStatus == WalletStatus.Unlocked) {
@@ -23,6 +23,7 @@ export const RegisterWallet = () => {
   }, [registerWallet, walletStatus]);
   return (
     <>
+      <div data-testid="userId">{userId}</div>
       <div data-testid="walletStatus">{walletStatus}</div>
       <div data-testid="loginStatus">{loginStatus}</div>
       <div data-testid="loginError">{loginError?.message ?? ""}</div>

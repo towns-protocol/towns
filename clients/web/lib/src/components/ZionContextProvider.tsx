@@ -1,15 +1,34 @@
 import { Web3Provider } from "../hooks/use-web3";
 import React, { createContext, useContext, useMemo } from "react";
 import { useZionClientListener } from "../hooks/use-zion-client-listener";
-import { makeRoomIdentifier, RoomIdentifier } from "../types/matrix-types";
+import {
+  makeRoomIdentifier,
+  RoomIdentifier,
+  SpaceHierarchies,
+  SpaceItem,
+} from "../types/matrix-types";
 import { ethers } from "ethers";
-import { ZionClient } from "client/ZionClient";
+import { ZionClient } from "../client/ZionClient";
+import { useNotificationCounts } from "../hooks/ZionContext/useNotificationCounts";
+import { useSpacesIds } from "../hooks/ZionContext/useSpaceIds";
+import { useSpaceUnreads } from "../hooks/ZionContext/useSpaceUnreads";
+import { useSpaceMentionCounts } from "../hooks/ZionContext/useSpaceMentionCounts";
+import { useSpaces } from "../hooks/ZionContext/useSpaces";
+import { useSyncSpaceHierarchies } from "../hooks/ZionContext/useSyncSpaceHierarchies";
 
 export interface IZionContext {
   councilNFTAddress: string;
   tokenEntitlementAddress: string; // TokenEntitlementModule Smart Contract address
   userEntitlementAddress: string; // UserEntitlementModule Smart Contract address.
   client?: ZionClient;
+  unreadCounts: Record<string, number>; // channel or unaggregated space -> count;
+  mentionCounts: Record<string, number>; // channel or unaggregated space -> count;
+  invitedToIds: string[]; // ordered list of invites (spaces and channels)
+  spaceIds: string[]; // ordered list of space ids
+  spaceUnreads: Record<string, boolean>; // spaceId -> aggregated hasUnread
+  spaceMentionCounts: Record<string, number>; // spaceId -> aggregated mentionCount
+  spaces: SpaceItem[];
+  spaceHierarchies: SpaceHierarchies;
   homeServerUrl?: string;
   disableEncryption?: boolean; // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
   defaultSpaceId?: RoomIdentifier;
@@ -20,8 +39,7 @@ export interface IZionContext {
 export const ZionContext = createContext<IZionContext | undefined>(undefined);
 
 /**
- * use instead of React.useContext
- * and will throw assert if not in a Provider
+ * use instead of React.useContext, throws if not in a Provider
  */
 export function useZionContext(): IZionContext {
   const context = useContext(ZionContext);
@@ -82,6 +100,26 @@ const ContextImpl = (props: Props): JSX.Element => {
     disableEncryption,
     getSignerFn,
   );
+  const { unreadCounts, mentionCounts } = useNotificationCounts(client);
+  const { spaceIds, invitedToIds } = useSpacesIds(client);
+  const { spaceMentionCounts } = useSpaceMentionCounts(
+    client,
+    spaceIds,
+    mentionCounts,
+  );
+  const { spaces } = useSpaces(client, spaceIds);
+  const { spaceHierarchies } = useSyncSpaceHierarchies(
+    client,
+    spaceIds,
+    invitedToIds,
+  );
+  const { spaceUnreads } = useSpaceUnreads(
+    client,
+    spaceIds,
+    spaceHierarchies,
+    unreadCounts,
+  );
+
   const convertedDefaultSpaceId = useMemo(
     () => (defaultSpaceId ? makeRoomIdentifier(defaultSpaceId) : undefined),
     [defaultSpaceId],
@@ -93,6 +131,14 @@ const ContextImpl = (props: Props): JSX.Element => {
         tokenEntitlementAddress,
         userEntitlementAddress,
         client,
+        unreadCounts,
+        mentionCounts,
+        invitedToIds,
+        spaceIds,
+        spaceUnreads,
+        spaceMentionCounts,
+        spaces,
+        spaceHierarchies,
         homeServerUrl,
         disableEncryption,
         defaultSpaceId: convertedDefaultSpaceId,

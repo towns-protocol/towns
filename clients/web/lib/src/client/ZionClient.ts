@@ -11,6 +11,7 @@ import {
   RoomMemberEvent,
   User,
   UserEvent,
+  IRoomTimelineData,
 } from "matrix-js-sdk";
 import { ContractReceipt, ContractTransaction } from "ethers";
 import {
@@ -51,6 +52,8 @@ import { joinZionRoom } from "./matrix/Join";
 import { sendZionMessage } from "./matrix/SendMessage";
 import { setZionPowerLevel } from "./matrix/SetPowerLevels";
 import { syncZionSpace } from "./matrix/SyncSpace";
+import { CustomMemoryStore } from "./store/CustomMatrixStore";
+import { ISyncStateData, SyncState } from "matrix-js-sdk/lib/sync";
 
 /***
  * Zion Client
@@ -68,6 +71,7 @@ import { syncZionSpace } from "./matrix/SyncSpace";
 export class ZionClient {
   public readonly opts: ZionOpts;
   public readonly name: string;
+  public store: CustomMemoryStore;
   public get auth(): ZionAuth | undefined {
     return this._auth;
   }
@@ -81,7 +85,10 @@ export class ZionClient {
     this.opts = opts;
     this.name = name || "";
     console.log("~~~ new ZionClient ~~~", this.name, this.opts);
-    this.client = createMatrixClient(opts, this._auth);
+    ({ client: this.client, store: this.store } = createMatrixClient(
+      opts,
+      this._auth,
+    ));
     this.spaceManager = new ZionContractProvider<ZionSpaceManager>(
       opts.getProvider,
       opts.getSigner,
@@ -112,7 +119,10 @@ export class ZionClient {
     this.stopClient();
     await this.client.logout();
     this._auth = undefined;
-    this.client = createMatrixClient(this.opts, this.auth);
+    ({ client: this.client, store: this.store } = createMatrixClient(
+      this.opts,
+      this._auth,
+    ));
   }
 
   /************************************************
@@ -166,7 +176,10 @@ export class ZionClient {
     // set auth
     this._auth = auth;
     // new client
-    this.client = createMatrixClient(this.opts, this.auth);
+    ({ client: this.client, store: this.store } = createMatrixClient(
+      this.opts,
+      this._auth,
+    ));
     // start it up, this begins a sync command
     if (!this.opts.disableEncryption) {
       await this.client.initCrypto();
@@ -182,8 +195,8 @@ export class ZionClient {
     const initialSync = new Promise<string>((resolve, reject) => {
       this.client.once(
         ClientEvent.Sync,
-        (state: unknown, prevState: unknown, res: unknown) => {
-          if (state === "PREPARED") {
+        (state: SyncState, prevState: unknown, res: unknown) => {
+          if (state === SyncState.Prepared) {
             this.log("initial sync complete", this.client.getRooms());
             resolve(state);
           } else {
@@ -448,7 +461,7 @@ export class ZionClient {
   /************************************************
    * syncSpace
    *************************************************/
-  public async syncSpace(spaceId: RoomIdentifier) {
+  public async syncSpace(spaceId: RoomIdentifier | string) {
     if (!this.auth) {
       throw new Error("not authenticated");
     }
@@ -517,8 +530,12 @@ export class ZionClient {
   /************************************************
    * getRoom
    ************************************************/
-  public getRoom(roomId: RoomIdentifier): MatrixRoom | undefined {
-    return this.client.getRoom(roomId.matrixRoomId) ?? undefined;
+  public getRoom(roomId: RoomIdentifier | string): MatrixRoom | undefined {
+    if (typeof roomId === "string") {
+      return this.client.getRoom(roomId) ?? undefined;
+    } else {
+      return this.client.getRoom(roomId.matrixRoomId) ?? undefined;
+    }
   }
 
   /************************************************
@@ -591,16 +608,58 @@ export class ZionClient {
   }
 
   /************************************************
+   * send read receipt
+   * no need to send for every message, matrix uses an "up to" algorithm
+   ************************************************/
+  public async sendReadReceipt(
+    roomId: RoomIdentifier,
+    eventId: string,
+  ): Promise<void> {
+    const room = this.client.getRoom(roomId.matrixRoomId);
+    if (!room) {
+      throw new Error(`room with id ${roomId.matrixRoomId} not found`);
+    }
+    const event = room.findEventById(eventId);
+    if (!event) {
+      throw new Error(
+        `event with room ${roomId.matrixRoomId} id ${eventId} not found`,
+      );
+    }
+    const result = await this.client.sendReadReceipt(event);
+    this.log("read receipt sent", result);
+  }
+
+  /************************************************
    * on
    * Some matrix events are only emitted by the client,
    * not through the room object.
    ************************************************/
   public on(
     event:
+      | ClientEvent.Sync
+      | ClientEvent.Room
       | MatrixEventEvent.Decrypted
       | MatrixEventEvent.Replaced
-      | MatrixEventEvent.VisibilityChange,
-    callback: (event: MatrixEvent) => void,
+      | MatrixEventEvent.VisibilityChange
+      | RoomEvent.Receipt
+      | RoomEvent.Timeline
+      | RoomEvent.MyMembership
+      | RoomEvent.Name,
+    callback:
+      | ((event: MatrixEvent) => void)
+      | ((
+          event: MatrixEvent,
+          room: MatrixRoom,
+          toStartOfTimeline: boolean,
+          removed: boolean,
+          data: IRoomTimelineData,
+        ) => void)
+      | ((
+          state: SyncState,
+          lastState?: SyncState,
+          data?: ISyncStateData,
+        ) => void)
+      | ((room: MatrixRoom) => void),
   ) {
     this.client.on(event, callback);
   }
@@ -611,10 +670,30 @@ export class ZionClient {
    ************************************************/
   public removeListener(
     event:
+      | ClientEvent.Sync
+      | ClientEvent.Room
       | MatrixEventEvent.Decrypted
       | MatrixEventEvent.Replaced
-      | MatrixEventEvent.VisibilityChange,
-    callback: (event: MatrixEvent) => void,
+      | MatrixEventEvent.VisibilityChange
+      | RoomEvent.Receipt
+      | RoomEvent.Timeline
+      | RoomEvent.MyMembership
+      | RoomEvent.Name,
+    callback:
+      | ((event: MatrixEvent) => void)
+      | ((
+          event: MatrixEvent,
+          room: MatrixRoom,
+          toStartOfTimeline: boolean,
+          removed: boolean,
+          data: IRoomTimelineData,
+        ) => void)
+      | ((
+          state: SyncState,
+          lastState?: SyncState,
+          data?: ISyncStateData,
+        ) => void)
+      | ((room: MatrixRoom) => void),
   ) {
     this.client.removeListener(event, callback);
   }

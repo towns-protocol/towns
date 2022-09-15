@@ -3,33 +3,40 @@ import { IHierarchyRoom } from "matrix-js-sdk/lib/@types/spaces";
 import { RoomHierarchy } from "matrix-js-sdk/lib/room-hierarchy";
 import { RoomIdentifier } from "../../types/matrix-types";
 
+export type MatrixSpaceHierarchy = {
+  root: IHierarchyRoom;
+  children: IHierarchyRoom[];
+};
+
 export async function syncZionSpace(
   client: MatrixClient,
-  spaceId: RoomIdentifier,
+  spaceId: RoomIdentifier | string,
   userId: string,
-): Promise<{ root: IHierarchyRoom; children: IHierarchyRoom[] } | undefined> {
+): Promise<MatrixSpaceHierarchy | undefined> {
+  const matrixRoomId =
+    typeof spaceId === "string" ? spaceId : spaceId.matrixRoomId;
   const matrixRoom =
-    client.getRoom(spaceId.matrixRoomId) ||
-    new MatrixRoom(spaceId.matrixRoomId, client, userId);
+    client.getRoom(matrixRoomId) ||
+    new MatrixRoom(matrixRoomId, client, userId);
   const roomHierarchy = new RoomHierarchy(matrixRoom);
   try {
     while (roomHierarchy.canLoadMore || roomHierarchy.loading) {
-      console.log("syncing space", spaceId.matrixRoomId);
+      console.log("syncing space", matrixRoomId);
       await roomHierarchy.load();
     }
   } catch (reason) {
-    console.error("syncing space error", spaceId.matrixRoomId, reason);
+    console.error("syncing space error", matrixRoomId, reason);
   }
   const root = roomHierarchy.rooms
-    ? roomHierarchy.rooms.find((r) => r.room_id === spaceId.matrixRoomId)
+    ? roomHierarchy.rooms.find((r) => r.room_id === matrixRoomId)
     : undefined;
   const children = roomHierarchy.rooms
-    ? roomHierarchy.rooms.filter((r) => r.room_id !== spaceId.matrixRoomId)
+    ? roomHierarchy.rooms.filter((r) => r.room_id !== matrixRoomId)
     : [];
   if (!root) {
     console.error(
       "syncing space error",
-      spaceId.matrixRoomId,
+      matrixRoomId,
       "no root",
       roomHierarchy,
     );

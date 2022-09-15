@@ -1,6 +1,15 @@
-export { ChannelContextProvider } from "./components/ChannelContextProvider";
-export { SpaceContextProvider } from "./components/SpaceContextProvider";
-export { ZionContextProvider } from "./components/ZionContextProvider";
+export {
+  ChannelContextProvider,
+  useChannelContext,
+} from "./components/ChannelContextProvider";
+export {
+  SpaceContextProvider,
+  useSpaceContext,
+} from "./components/SpaceContextProvider";
+export {
+  ZionContextProvider,
+  useZionContext,
+} from "./components/ZionContextProvider";
 export { useChannelId } from "./hooks/use-channel-id";
 export { useChannelData } from "./hooks/use-channel-data";
 export { useChannelTimeline } from "./hooks/use-channel-timeline";
@@ -18,7 +27,7 @@ export {
   useInvitesForSpace,
   useInviteData,
 } from "./hooks/use-space-data";
-export { useSpaces, useSpacesFromContract } from "./hooks/use-spaces";
+export { useSpacesFromContract } from "./hooks/use-spaces-from-contract";
 export { useSpaceId } from "./hooks/use-space-id";
 export { useSpaceTimeline } from "./hooks/use-space-timeline";
 export { useWeb3Context, WalletStatus, Web3Provider } from "./hooks/use-web3";
@@ -40,6 +49,7 @@ export type {
   SendMessageOptions,
   SpaceChild,
   SpaceData,
+  SpaceItem,
 } from "./types/matrix-types";
 
 export {

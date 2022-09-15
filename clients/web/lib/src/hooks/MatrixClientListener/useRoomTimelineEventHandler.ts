@@ -7,13 +7,8 @@ import { ZionClient } from "../../client/ZionClient";
 export const useRoomTimelineEventHandler = (
   matrixClientRef: MutableRefObject<ZionClient | undefined>,
 ) => {
-  const {
-    createRoom,
-    setPowerLevels,
-    setRoomName,
-    setSpaceUpdateRecievedAt,
-    updateMembership,
-  } = useMatrixStore();
+  const { createRoom, setPowerLevels, setRoomName, updateMembership } =
+    useMatrixStore();
 
   /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
   const handleRoomTimelineEvent = useCallback(
@@ -28,7 +23,7 @@ export const useRoomTimelineEventHandler = (
         console.log(`matrixClientRef.current is undefined`);
         return;
       }
-      console.log("handleRoomTimelineEvent", event.getType());
+      // console.log("handleRoomTimelineEvent", event.getType());
       const content = event.getContent();
       switch (event.getType()) {
         case "m.room.message": {
@@ -74,8 +69,7 @@ export const useRoomTimelineEventHandler = (
             console.error("m.space.child event has no roomId or childId");
             break;
           }
-          console.log("space child", roomId, event);
-          setSpaceUpdateRecievedAt(makeRoomIdentifier(roomId));
+          //console.log("space child", roomId, childId);
           break;
         }
         case "m.space.parent": {
@@ -85,7 +79,7 @@ export const useRoomTimelineEventHandler = (
             console.error("m.space.parent event has no roomId or childId");
             break;
           }
-          setSpaceUpdateRecievedAt(makeRoomIdentifier(roomId));
+          //console.log("space parent", roomId, childId);
           break;
         }
         case "m.room.power_levels": {
@@ -95,23 +89,23 @@ export const useRoomTimelineEventHandler = (
             console.error("m.room.power_levels event has no roomId or content");
             break;
           }
-          console.log("power levels", roomId, content);
+          //console.log("power levels", roomId, content);
           setPowerLevels(makeRoomIdentifier(roomId), content);
           break;
         }
         case "m.room.encrypted": {
           // encrypted events are reparsed after a MatrixEventEvent.Decrypted event
-          console.log("encrypted event for room:", event.getRoomId());
+          //console.log("encrypted event for room:", event.getRoomId());
           break;
         }
         default:
-          console.log(`Unhandled Room.timeline event`, event.getType(), {
-            event: event,
-            roomId: room.roomId,
-            toStartOfTimeline: toStartOfTimeline,
-            removed: removed,
-            data: data,
-          });
+          // console.log(`Unhandled Room.timeline event`, event.getType(), {
+          //   event: event,
+          //   roomId: room.roomId,
+          //   toStartOfTimeline: toStartOfTimeline,
+          //   removed: removed,
+          //   data: data,
+          // });
           break;
       }
     },
@@ -120,7 +114,6 @@ export const useRoomTimelineEventHandler = (
       matrixClientRef,
       setPowerLevels,
       setRoomName,
-      setSpaceUpdateRecievedAt,
       updateMembership,
     ],
   );

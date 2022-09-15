@@ -13,8 +13,8 @@ export const ChannelsIndex = () => {
   }, [navigate]);
 
   const goToRoom = useCallback(
-    (roomId: RoomIdentifier) => {
-      navigate("/rooms/" + roomId.slug);
+    (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
+      navigate("/spaces/" + spaceId.slug + "/channels/" + channelId.slug + "/");
     },
     [navigate],
   );

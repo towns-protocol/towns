@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { Membership } from "../types/matrix-types";
 import {
@@ -25,20 +26,20 @@ import { staticAssertNever } from "../utils/zion-utils";
 export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
   const { client } = useZionContext();
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
-  console.log("use channel timeline!!!", matrixRoom !== undefined);
+  // console.log("use channel timeline!!!", matrixRoom !== undefined);
 
   useEffect(() => {
     if (!client || !matrixRoom) {
-      console.log("!!!! bailing out of useChannelTimeline");
+      // console.log("!!!! bailing out of useChannelTimeline");
       setTimeline((timeline) => (timeline.length > 0 ? [] : timeline));
       return;
     }
     // set the initial state, this effect only runs when the room reference changes, so
     // this should be a-okay
-    console.log(
-      "!!!!initializing timeline",
-      matrixRoom.getLiveTimeline().getEvents().length,
-    );
+    // console.log(
+    //  "!!!!initializing timeline",
+    //  matrixRoom.getLiveTimeline().getEvents().length,
+    //);
     let initialTimeline = matrixRoom.getLiveTimeline().getEvents();
     // for some reason the timeline doesn't filter replacements
     initialTimeline = initialTimeline.reduce(
@@ -49,11 +50,11 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
             (m) => m.getId() === parentEventId,
           );
           if (parentEventIndex !== -1) {
-            console.log(
-              "!!! replacing initial event",
-              parentEventId,
-              m.getId(),
-            );
+            // console.log(
+            //  "!!! replacing initial event",
+            //  parentEventId,
+            //  m.getId(),
+            //);
             // replace parent by edit (inserts and deletes parent)
             messages.splice(parentEventIndex, 1, m);
             return messages;
@@ -70,44 +71,43 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
       eventRoom: MatrixRoom,
       toStartOfTimeline: boolean,
       removed: boolean,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       data: IRoomTimelineData,
     ) => {
       if (eventRoom.roomId !== matrixRoom.roomId) {
         return;
       }
 
-      console.log(
-        "!!!! appending normal event",
-        event.getId(),
-        event.replacingEventId(),
-        removed,
-        toStartOfTimeline,
-      );
+      // console.log(
+      //  "!!!! appending normal event",
+      //  event.getId(),
+      //  event.replacingEventId(),
+      //  removed,
+      //  toStartOfTimeline,
+      //);
 
       const timelineEvent = toEvent(event);
 
       setTimeline((timeline) => {
-        console.log(
-          "!!!! appending normal event2",
-          event.getId(),
-          event.replacingEventId(),
-          removed,
-          toStartOfTimeline,
-        );
+        // console.log(
+        //  "!!!! appending normal event2",
+        //  event.getId(),
+        //  event.replacingEventId(),
+        //  removed,
+        //  toStartOfTimeline,
+        //);
         if (removed) {
-          console.log("!!!! appending removed");
+          // console.log("!!!! appending removed");
           return timeline.filter((e) => e.eventId !== event.getId());
         }
         if (event.isRelation(RelationType.Replace)) {
           const replacingId = event.getWireContent()["m.relates_to"]?.event_id;
           if (replacingId) {
-            console.log("!!!! appending attempting replace");
+            // console.log("!!!! appending attempting replace");
             const eventIndex = timeline.findIndex(
               (value: TimelineEvent) => value.eventId === replacingId,
             );
             if (eventIndex !== -1) {
-              console.log("!!!! appending replacing event", replacingId);
+              // console.log("!!!! appending replacing event", replacingId);
               return [
                 ...timeline.slice(0, eventIndex),
                 timelineEvent,
@@ -117,10 +117,10 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
           }
         }
         if (toStartOfTimeline) {
-          console.log("!!!! appending to start of timeline");
+          // console.log("!!!! appending to start of timeline");
           return [timelineEvent, ...timeline];
         }
-        console.log("!!!! appending to end");
+        // console.log("!!!! appending to end");
         return [...timeline, timelineEvent];
       });
 
@@ -130,18 +130,18 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
       // ALSO - the MatrixEventEvent.Replaced seems to take care of some of this, but not always??
       if (timelineEvent.isLocalPending) {
         event.once(MatrixEventEvent.LocalEventIdReplaced, () => {
-          console.log(
-            "!!!!local event replaced",
-            timelineEvent.eventId,
-            event.getId(),
-            timelineEvent.fallbackContent,
-          );
+          // console.log(
+          //  "!!!!local event replaced",
+          //  timelineEvent.eventId,
+          //  event.getId(),
+          //  timelineEvent.fallbackContent,
+          //);
           setTimeline((timeline) => {
             const index = timeline.findIndex(
               (e) => e.eventId === timelineEvent.eventId,
             );
             if (index === -1) {
-              console.log("!!!!local event not found", timelineEvent.eventId);
+              // console.log("!!!!local event not found", timelineEvent.eventId);
               return timeline;
             }
             return [
@@ -157,7 +157,7 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
       if (event.getRoomId() !== matrixRoom.roomId) {
         return;
       }
-      console.log("!!!! replacing decrypted event", event.getId());
+      // console.log("!!!! replacing decrypted event", event.getId());
       setTimeline((timeline) => {
         const eventIndex = timeline.findIndex(
           (value: TimelineEvent) => value.eventId == event.getId(),
@@ -182,7 +182,7 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
         console.error("redaction event has no redacts field");
         return;
       }
-      console.log("!!!!redacting event", event.event.redacts);
+      // console.log("!!!!redacting event", event.event.redacts);
       setTimeline((timeline) =>
         timeline.filter((e) => e.eventId !== event.event.redacts),
       );
@@ -194,20 +194,20 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
       }
       const replacingId = event.replacingEventId();
       if (replacingId?.startsWith("")) {
-        console.log("ignoring local event replaced");
+        // console.log("ignoring local event replaced");
         // will swap out the id in the LocalEventIdReplaced listener
         return;
       }
-      console.log("!!!! onReplaced event", event.getId(), replacingId);
+      // console.log("!!!! onReplaced event", event.getId(), replacingId);
       setTimeline((timeline) => {
         const eventIndex = timeline.findIndex(
           (value: TimelineEvent) => value.eventId === replacingId,
         );
         if (eventIndex === -1) {
-          console.log("!!!! onReplaced event not found", replacingId);
+          // console.log("!!!! onReplaced event not found", replacingId);
           return timeline;
         }
-        console.log("!!!! onReplaced event found", replacingId);
+        // console.log("!!!! onReplaced event found", replacingId);
         return [
           ...timeline.slice(0, eventIndex),
           toEvent(event),
@@ -222,7 +222,7 @@ event.isRedacted
 event.redact
 */
 
-    console.log("!!! ADDING EVENTS");
+    // console.log("!!! ADDING EVENTS");
     matrixRoom.on(RoomEvent.Timeline, onRoomTimelineEvent);
     matrixRoom.on(RoomEvent.Redaction, onRoomRedaction);
     // cli.on(RoomEvent.TimelineReset, this.onRoomTimelineReset);
@@ -230,7 +230,7 @@ event.redact
     client.on(MatrixEventEvent.Decrypted, onEventDecrypted);
     client.on(MatrixEventEvent.Replaced, onEventReplaced);
     return () => {
-      console.log("!!! REMOVING EVENTS");
+      // console.log("!!! REMOVING EVENTS");
       matrixRoom.removeListener(RoomEvent.Timeline, onRoomTimelineEvent);
       matrixRoom.removeListener(RoomEvent.Redaction, onRoomRedaction);
       client.removeListener(MatrixEventEvent.Decrypted, onEventDecrypted);
@@ -244,7 +244,7 @@ event.redact
 function toEvent(event: MatrixEvent): TimelineEvent {
   const { content, error } = toZionContent(event);
   const fbc = `${event.getType()} ${getFallbackContent(event, content, error)}`;
-  console.log("!!!! to event", event.getId(), fbc);
+  // console.log("!!!! to event", event.getId(), fbc);
   return {
     eventId: event.getId(),
     eventType: event.getType(),

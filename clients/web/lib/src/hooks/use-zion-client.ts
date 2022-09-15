@@ -10,7 +10,6 @@ import {
   PowerLevel,
   RoomIdentifier,
   SendMessageOptions,
-  SpaceChild,
 } from "../types/matrix-types";
 
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -24,8 +23,8 @@ import { useMatrixStore } from "../store/use-matrix-store";
 import { useMatrixWalletSignIn } from "./use-matrix-wallet-sign-in";
 import { useMemo } from "react";
 import { useRegisterPasswordUser } from "./MatrixClient/useRegisterPasswordUser";
-import { useSyncSpace } from "./MatrixClient/useSyncSpace";
 import { useZionContext } from "../components/ZionContextProvider";
+import { MatrixSpaceHierarchy } from "../client/matrix/SyncSpace";
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -79,6 +78,7 @@ interface ZionClientImpl {
     eventId: string,
     reaction: string,
   ) => Promise<void>;
+  sendReadReceipt: (roomId: RoomIdentifier, eventId: string) => Promise<void>;
   setPowerLevel: (
     roomId: RoomIdentifier,
     current: string | PowerLevel,
@@ -86,7 +86,9 @@ interface ZionClientImpl {
   ) => Promise<void>;
   setAvatarUrl: (ravatarUrl: string) => Promise<void>;
   setDisplayName: (displayName: string) => Promise<void>;
-  syncSpace: (spaceId: RoomIdentifier) => Promise<SpaceChild[]>;
+  syncSpace: (
+    spaceId: RoomIdentifier,
+  ) => Promise<MatrixSpaceHierarchy | undefined>;
 }
 
 export function useZionClient(): ZionClientImpl {
@@ -99,7 +101,6 @@ export function useZionClient(): ZionClientImpl {
   const loginWithPassword = useLoginWithPassword();
   const logout = useLogout();
   const registerPasswordUser = useRegisterPasswordUser();
-  const syncSpace = useSyncSpace();
 
   return {
     clientRunning,
@@ -131,8 +132,9 @@ export function useZionClient(): ZionClientImpl {
     sendMessage: useWithCatch(client?.sendMessage),
     sendReaction: useWithCatch(client?.sendReaction),
     sendNotice: useWithCatch(client?.sendNotice),
+    sendReadReceipt: useWithCatch(client?.sendReadReceipt),
     setPowerLevel: useWithCatch(client?.setPowerLevel),
-    syncSpace,
+    syncSpace: useWithCatch(client?.syncSpace),
     setDisplayName: useWithCatch(client?.setDisplayName),
     setAvatarUrl: useWithCatch(client?.setAvatarUrl),
   };

@@ -9,26 +9,32 @@ import {
   RoomIdentifier,
   SpaceChild,
   SpaceData,
+  SpaceHierarchies,
   SpaceHierarchy,
 } from "../types/matrix-types";
-import { useMatrixStore } from "../store/use-matrix-store";
+import { toZionRoom, useMatrixStore } from "../store/use-matrix-store";
 import { useZionClient } from "./use-zion-client";
 import { useRoom } from "./use-room";
-import { useSpaces } from "./use-spaces";
 import { useZionContext } from "../components/ZionContextProvider";
 import { useSpaceContext } from "../components/SpaceContextProvider";
 
 /// returns default space if no space slug is provided
 export function useSpaceData(): SpaceData | undefined {
-  const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName } =
-    useZionContext();
+  const {
+    defaultSpaceId,
+    defaultSpaceAvatarSrc,
+    defaultSpaceName,
+    spaceHierarchies,
+  } = useZionContext();
   const { spaceId } = useSpaceContext();
-  const { spaceHierarchies } = useMatrixStore();
   const { clientRunning } = useZionClient();
   const spaceRoom = useRoom(spaceId);
   const spaceHierarchy = useMemo(
-    () => (spaceId?.slug ? spaceHierarchies[spaceId.slug] : undefined),
-    [spaceId?.slug, spaceHierarchies],
+    () =>
+      spaceId?.matrixRoomId
+        ? spaceHierarchies[spaceId.matrixRoomId]
+        : undefined,
+    [spaceId?.matrixRoomId, spaceHierarchies],
   );
 
   return useMemo(() => {
@@ -72,23 +78,22 @@ export function useSpaceData(): SpaceData | undefined {
   ]);
 }
 
-export const useInvites = () => {
-  const { rooms } = useMatrixStore();
-  const spaces = useSpaces();
-  return useMemo(
-    () =>
-      Object.values(rooms ?? [])
-        .filter((r) => r.membership === Membership.Invite)
-        .map((r) =>
-          formatInvite(
-            r,
-            getParentSpaceId(r.id, spaces),
-            "/placeholders/nft_4.png",
-          ),
-        ),
-    [rooms, spaces],
-  );
-};
+export function useInvites(): InviteData[] {
+  const { invitedToIds, spaceHierarchies, client } = useZionContext();
+  return invitedToIds
+    .map((id) => {
+      const room = client?.getRoom(id);
+      if (!room) {
+        return undefined;
+      }
+      return formatInvite(
+        toZionRoom(room),
+        getParentSpaceId(id, spaceHierarchies),
+        "/placeholders/nft_29.png",
+      );
+    })
+    .filter((x) => x !== undefined) as InviteData[];
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const useInvitesForSpace = (spaceId: RoomIdentifier) => {
@@ -97,16 +102,19 @@ export const useInvitesForSpace = (spaceId: RoomIdentifier) => {
 };
 
 export const useInviteData = (slug: string | undefined) => {
+  const { spaceHierarchies } = useZionContext();
   const { rooms } = useMatrixStore();
   const inviteId = slug ? makeRoomIdentifierFromSlug(slug) : undefined;
   const room = useMemo(
     () => (rooms && inviteId?.slug ? rooms[inviteId.slug] : undefined),
     [rooms, inviteId?.slug],
   );
-  const spaces = useSpaces();
   const parentSpaceId = useMemo(
-    () => getParentSpaceId(inviteId, spaces),
-    [spaces, inviteId],
+    () =>
+      inviteId
+        ? getParentSpaceId(inviteId.matrixRoomId, spaceHierarchies)
+        : undefined,
+    [inviteId, spaceHierarchies],
   );
 
   return useMemo(
@@ -119,16 +127,15 @@ export const useInviteData = (slug: string | undefined) => {
 };
 
 function getParentSpaceId(
-  roomId: RoomIdentifier | undefined,
-  spaces: SpaceData[],
+  roomId: string,
+  spaces: SpaceHierarchies,
 ): RoomIdentifier | undefined {
-  const hasChannel = (channelGroup: ChannelGroup, id: RoomIdentifier) =>
-    channelGroup.channels.some((c) => c.id.slug === id.slug);
-  const hasChannelGroup = (space: SpaceData, id: RoomIdentifier) =>
-    space.channelGroups.some((channelGroup) => hasChannel(channelGroup, id));
-  const parentId = roomId
-    ? spaces.find((space) => hasChannelGroup(space, roomId))?.id
-    : undefined;
+  const hasChild = (space: SpaceHierarchy, id: string) =>
+    space.children.some((child) => child.id.matrixRoomId === id);
+
+  const parentId = Object.values(spaces).find((space) =>
+    hasChild(space, roomId),
+  )?.root.id;
   return parentId;
 }
 
@@ -158,7 +165,6 @@ export function formatRoom(
     id: r.id,
     name: r.name,
     avatarSrc: avatarSrc,
-    pinned: false,
     channelGroups: channelGroups,
     membership: membership,
   };

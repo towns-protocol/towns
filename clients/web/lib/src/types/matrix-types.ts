@@ -26,7 +26,6 @@ export interface InviteData {
   id: RoomIdentifier;
   name: string;
   avatarSrc: string;
-  bannerSrc?: string;
   isSpaceRoom: boolean;
   spaceParentId?: RoomIdentifier;
 }
@@ -49,23 +48,24 @@ export interface ChannelGroup {
   channels: Channel[];
 }
 
-/**
- * representation of a space for the UI
- */
+/// data for top level list of spaces
+export interface SpaceItem {
+  id: RoomIdentifier;
+  name: string;
+  avatarSrc: string;
+}
+
+/// representation of a space for the UI with channels
 export interface SpaceData {
   id: RoomIdentifier;
   name: string;
   avatarSrc: string;
-  bannerSrc?: string;
-  active?: boolean;
-  // should belong to usersettings
-  pinned?: boolean;
   channelGroups: ChannelGroup[];
   membership: string;
 }
 
-export interface SpaceHierarcies {
-  [slug: string]: SpaceHierarchy;
+export interface SpaceHierarchies {
+  [roomId: string]: SpaceHierarchy;
 }
 
 export interface SpaceHierarchy {

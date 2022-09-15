@@ -12,7 +12,7 @@ import { Membership, RoomVisibility } from "../../src/types/matrix-types";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
 import { useInvites } from "../../src/hooks/use-space-data";
-import { useSpaces } from "../../src/hooks/use-spaces";
+import { useZionContext } from "../../src/components/ZionContextProvider";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -33,9 +33,9 @@ describe("userProfileOnAcceptInviteHooks", () => {
     // create a veiw for alice
     const TestUserProfileOnAcceptInvite = () => {
       const myProfile = useMyProfile();
+      const { spaces } = useZionContext();
       const { joinRoom } = useZionClient();
       const invites = useInvites();
-      const spaces = useSpaces();
       const roomId = invites[0]?.id ?? spaces[0]?.id;
       const myMembership = useMyMembership(roomId);
       return (

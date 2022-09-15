@@ -19,6 +19,8 @@ import { Rooms } from "./Rooms";
 import { SidebarNewItemButton } from "./Buttons/SidebarNewItemButton";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import { SidebarItemButton } from "./Buttons/SidebarItemButton";
+import { AppDrawerSpaces } from "./AppDrawerSpaces";
 
 const drawerWidth = 240;
 
@@ -47,11 +49,7 @@ export function AppDrawer(props: Props): JSX.Element {
     setMobileOpen(!mobileOpen);
   }, [mobileOpen]);
 
-  const onClickRoom = (roomId: RoomIdentifier, membership: Membership) => {
-    navigate("/rooms/" + roomId.slug);
-  };
-
-  const onClickSpace = (spaceId: RoomIdentifier, membership: Membership) => {
+  const onClickSpace = (spaceId: RoomIdentifier) => {
     navigate("/spaces/" + spaceId.slug + "/");
   };
 
@@ -71,40 +69,18 @@ export function AppDrawer(props: Props): JSX.Element {
     <div>
       <Toolbar />
       <Divider />
-      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        Spaces
-      </Typography>
-      <Rooms
-        membership={Membership.Join}
-        isSpace={true}
-        onClickRoom={onClickSpace}
-      />
+      <AppDrawerSpaces onClickSpace={onClickSpace} />
       <Divider />
       <SidebarNewItemButton label="Create Space" onClick={onClickCreateSpace} />
       <Divider />
-      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        All Channels
-      </Typography>
       <Rooms
-        membership={Membership.Join}
-        isSpace={false}
-        onClickRoom={onClickRoom}
-      />
-      <Divider />
-      <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-        Invites
-      </Typography>
-      <Rooms
+        title="Invites"
         membership={Membership.Invite}
-        isSpace={false}
-        onClickRoom={onClickRoom}
+        isSpace={true}
+        onClickRoom={onClickSpace}
       />
+      <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
       <Divider />
-      <Button onClick={onWeb3Click} variant="text">
-        <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
-          Web 3
-        </Typography>
-      </Button>
     </div>
   );
 

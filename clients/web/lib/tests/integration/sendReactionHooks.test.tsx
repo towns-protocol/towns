@@ -84,15 +84,19 @@ describe("sendReactionHooks", () => {
       </ZionTestApp>,
     );
     // get our test elements
+    const clientRunning = screen.getByTestId("clientRunning");
     const channelMembership = screen.getByTestId("channelMembership");
     const message0 = screen.getByTestId("message0");
     const message1 = screen.getByTestId("message1");
     const sendReactionButton = screen.getByRole("button", {
       name: "React",
     });
+    // wait for client to be running
+    await waitFor(() => expect(clientRunning).toHaveTextContent("true"));
     // wait for the channel join
-    await waitFor(() =>
-      expect(channelMembership).toHaveTextContent(Membership.Join),
+    await waitFor(
+      () => expect(channelMembership).toHaveTextContent(Membership.Join),
+      { timeout: 10000 },
     );
     // have jane send a message to bob
     await jane.sendMessage(janesChannelId, "hello bob");

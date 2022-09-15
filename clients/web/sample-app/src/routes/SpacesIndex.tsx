@@ -1,26 +1,40 @@
+import { useCallback } from "react";
 import {
   Channel,
   ChannelGroup,
+  Membership,
   RoomIdentifier,
   useMyMembership,
   useSpaceData,
   useSpaceTimeline,
   useZionClient,
+  useZionContext,
 } from "use-zion-client";
 import { List, ListItem, ListItemText } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
 import { SpaceSettings } from "./SpaceSettings";
-import { useCallback, useMemo } from "react";
 import { ChatMessages } from "../components/ChatMessages";
 
 export const SpacesIndex = () => {
-  console.log("SPACES INDEX");
+  // console.log("SPACES INDEX");
   const navigate = useNavigate();
   const space = useSpaceData();
   const membership = useMyMembership(space?.id);
   const timeline = useSpaceTimeline();
-  const { leaveRoom, sendMessage } = useZionClient();
+  const { unreadCounts, mentionCounts } = useZionContext();
+  const { leaveRoom, sendMessage, joinRoom } = useZionClient();
+
+  const getChannelPostfix = useCallback(
+    (roomId: RoomIdentifier) => {
+      const unreadPostfix = unreadCounts[roomId.matrixRoomId] > 0 ? " *" : "";
+      const mentionPostfix =
+        mentionCounts[roomId.matrixRoomId] > 0
+          ? ` (${mentionCounts[roomId.matrixRoomId]})`
+          : "";
+      return `${unreadPostfix}${mentionPostfix}`;
+    },
+    [mentionCounts, unreadCounts],
+  );
 
   const onClickSettings = useCallback(() => {
     if (space?.id.slug) {
@@ -36,19 +50,6 @@ export const SpacesIndex = () => {
     },
     [space?.id.slug, navigate],
   );
-
-  const channelItems = useMemo(() => {
-    if (space) {
-      return space.channelGroups.flatMap((r: ChannelGroup) =>
-        r.channels.map((c: Channel) => (
-          <ListItem button key={c.id.slug} onClick={() => onClickChannel(c.id)}>
-            <ListItemText>{c.label}</ListItemText>
-          </ListItem>
-        )),
-      );
-    }
-    return [];
-  }, [space, onClickChannel]);
 
   const onCreateChannelClick = useCallback(() => {
     navigate("/spaces/" + space?.id.slug + "/channels/new");
@@ -72,29 +73,56 @@ export const SpacesIndex = () => {
     [sendMessage],
   );
 
-  const onClickJoinRoom = useCallback(() => {
-    throw new Error("Not implemented");
-  }, []);
+  const onClickJoinRoom = useCallback(
+    (roomId: RoomIdentifier) => {
+      return joinRoom(roomId);
+    },
+    [joinRoom],
+  );
 
   return space ? (
     <>
-      <div>
-        <button onClick={onClickSettings}>Space settings</button>
-      </div>
-      <div>
-        <button onClick={onCreateChannelClick}>Create a channel</button>
-      </div>
-      <div>
-        <button onClick={onClickInvite}>Invite to space</button>
-      </div>
-      <div>
-        <button onClick={onClickLeaveSpace}>Leave space</button>
-      </div>
-      <div>
-        {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}
-      </div>
-      <h3>Channels:</h3>
-      <List>{channelItems}</List>
+      {membership === Membership.Join && (
+        <>
+          <div>
+            <button onClick={onClickSettings}>Space settings</button>
+          </div>
+          <div>
+            <button onClick={onCreateChannelClick}>Create a channel</button>
+          </div>
+          <div>
+            <button onClick={onClickInvite}>Invite to space</button>
+          </div>
+          <div>
+            <button onClick={onClickLeaveSpace}>Leave space</button>
+          </div>
+          <div>
+            {space?.id ? (
+              <SpaceSettings spaceId={space.id.matrixRoomId} />
+            ) : null}
+          </div>
+          {space && (
+            <>
+              <h3>Channels:</h3>
+              <List>
+                {space.channelGroups.flatMap((r: ChannelGroup) =>
+                  r.channels.map((c: Channel) => (
+                    <ListItem
+                      button
+                      key={c.id.slug}
+                      onClick={() => onClickChannel(c.id)}
+                    >
+                      <ListItemText>
+                        {c.label + getChannelPostfix(c.id)}
+                      </ListItemText>
+                    </ListItem>
+                  )),
+                )}
+              </List>
+            </>
+          )}
+        </>
+      )}
       <h3>Space Messages</h3>
       <ChatMessages
         roomId={space.id}
