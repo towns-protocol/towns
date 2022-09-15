@@ -613,16 +613,21 @@ export class ZionClient {
    ************************************************/
   public async sendReadReceipt(
     roomId: RoomIdentifier,
-    eventId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    eventId: string | undefined = undefined,
   ): Promise<void> {
     const room = this.client.getRoom(roomId.matrixRoomId);
     if (!room) {
       throw new Error(`room with id ${roomId.matrixRoomId} not found`);
     }
-    const event = room.findEventById(eventId);
+    const event = eventId
+      ? room.findEventById(eventId)
+      : room.getLiveTimeline().getEvents().at(-1);
     if (!event) {
       throw new Error(
-        `event with room ${roomId.matrixRoomId} id ${eventId} not found`,
+        `event for room ${roomId.matrixRoomId} eventId: ${
+          eventId ?? "at(-1)"
+        } not found`,
       );
     }
     const result = await this.client.sendReadReceipt(event);
