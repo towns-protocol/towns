@@ -14,7 +14,8 @@ library ZionSpaceController {
     uint256 spaceId,
     address creator,
     mapping(bytes32 => uint256) storage _spaceByNameHash,
-    mapping(uint256 => DataTypes.Space) storage _spaceById
+    mapping(uint256 => DataTypes.Space) storage _spaceById,
+    mapping(string => uint256) storage _spaceIdByNetworkId
   ) external {
     _validateSpaceName(info.spaceName);
 
@@ -32,6 +33,8 @@ library ZionSpaceController {
     _spaceById[spaceId].creator = creator;
     _spaceById[spaceId].owner = creator;
     _spaceById[spaceId].roomId = 0;
+
+    _spaceIdByNetworkId[info.networkId] = spaceId;
   }
 
   function _emitSpaceCreated(

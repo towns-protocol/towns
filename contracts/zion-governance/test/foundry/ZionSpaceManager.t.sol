@@ -54,6 +54,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     assertEq(entitlements.length, 1);
     assertEq(entitlements[0], address(userGrantedEntitlementModule));
     assertEq(ownerAddress, address(this));
+    assertEq(zionSpaceManager.getSpaceIdByNetworkId("matrix-id"), spaceId);
   }
 
   function testCreateSpaceWithTokenEntitlement() public {

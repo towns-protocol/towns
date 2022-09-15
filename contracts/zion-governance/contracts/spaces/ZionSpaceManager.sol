@@ -11,7 +11,6 @@ import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
 import {UserGrantedEntitlementModule} from "./entitlements/UserGrantedEntitlementModule.sol";
 import {ZionSpaceManagerStorage} from "./storage/ZionSpaceManagerStorage.sol";
-
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ZionSpaceController} from "./libraries/ZionSpaceController.sol";
@@ -342,7 +341,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         spaceId,
         _msgSender(),
         _spaceByNameHash,
-        _spaceById
+        _spaceById,
+        _spaceIdByNetworkId
       );
 
       return spaceId;
