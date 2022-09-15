@@ -96,16 +96,21 @@ const SpacesChannelComponent = () => {
                 channelId={channelId}
                 events={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
+                after={
+                  hasUnread ? (
+                    <Box padding centerContent>
+                      <Button
+                        animate={false}
+                        key={channelId.slug + "mark-as-read"}
+                        size="button_sm"
+                        onClick={onMarkAsRead}
+                      >
+                        Click here to Mark as Read (temp)
+                      </Button>
+                    </Box>
+                  ) : undefined
+                }
               />
-              {hasUnread && (
-                <Button
-                  key={channelId.slug + "mark-as-read"}
-                  size="button_lg"
-                  onClick={onMarkAsRead}
-                >
-                  Click here to Mark as Read (temp)
-                </Button>
-              )}
 
               <Box gap paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
