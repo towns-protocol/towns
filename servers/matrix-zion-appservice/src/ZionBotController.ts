@@ -27,13 +27,11 @@ interface SpaceSettings {
 
 export class ZionBotController {
   private appservice: Appservice;
-  private config: IConfig;
   private web3Provider: Web3Provider;
   private spaceSettings: SpaceSettings;
 
   constructor(appservice: Appservice, config: IConfig) {
     this.appservice = appservice;
-    this.config = config;
     this.spaceSettings = {};
     this.web3Provider = new Web3Provider(config);
 
@@ -147,7 +145,7 @@ export class ZionBotController {
           await this.inviteBotToRoom({ roomId, adminId: stateKey });
           this.spaceSettings[roomId] = {
             matrixRoomId: roomId,
-            isTokenRequired: false, // default requirement
+            isTokenRequired: true, // default requirement
           };
         } else if (stateKey === event.sender) {
           const isAccessAllowed = await this.isAccessAllowed({
@@ -168,8 +166,7 @@ export class ZionBotController {
             });
           }
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
+      } catch (e: unknown) {
         LogService.error(`${PRINT_TAG}`, e);
       }
     }
@@ -251,8 +248,7 @@ export class ZionBotController {
           }
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
+    } catch (e: unknown) {
       LogService.error(`${PRINT_TAG}`, e);
     }
   }
@@ -299,46 +295,48 @@ export class ZionBotController {
     roomId: string;
     userId: string;
   }): Promise<boolean> {
+    const { roomId, userId } = args;
+
+    const isTokenRequired = this.spaceSettings[roomId]?.isTokenRequired;
+    if (!isTokenRequired) {
+      return true;
+    }
+
     const roomCreator = await this.getRoomCreator(
       this.appservice.botIntent,
-      args.roomId
+      roomId
     );
     if (
-      args.userId === this.appservice.botUserId ||
-      args.userId === roomCreator // TODO: Remove this when space contract integration is done.
+      userId === this.appservice.botUserId ||
+      userId === roomCreator // TODO: Remove this when space contract integration is done.
     ) {
       return true;
     }
 
-    const isTokenRequired =
-      this.spaceSettings[args.roomId]?.isTokenRequired === true;
-    if (isTokenRequired) {
-      const id = createUserIdFromString(args.userId);
-      if (id) {
-        try {
-          const contract = this.web3Provider.getZionSpaceManagerContract(
-            id.chainId
+    const id = createUserIdFromString(userId);
+    if (id) {
+      try {
+        const contract = this.web3Provider.getZionSpaceManagerContract(
+          id.chainId
+        );
+        if (contract) {
+          // Todo: Optimize getSpaceIdByNetworkId by caching.
+          const spaceId = await contract.read.getSpaceIdByNetworkId(roomId);
+          const isEntitled = await contract.read.isEntitled(
+            spaceId,
+            0,
+            id.accountAddress,
+            EntitlementType.Join
           );
-          if (contract) {
-            const spaces = await contract.read.getSpaces();
-            const isEntitled = await contract.read.isEntitled(
-              0,
-              0,
-              id.accountAddress,
-              EntitlementType.Join,
-            );
-            return isEntitled;
-          }
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
-          LogService.error(`${PRINT_TAG} [Exception] isAllowedAccess`, e);
-          return false;
+          return isEntitled;
         }
+      } catch (e: unknown) {
+        LogService.error(`${PRINT_TAG} [Exception] isAccessAllowed`, e);
       }
     }
 
-    // No token requirement.
-    return !isTokenRequired;
+    // Default: No access allowed without entitlement.
+    return false;
   }
 
   private async banUser(args: {

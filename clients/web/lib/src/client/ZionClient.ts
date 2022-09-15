@@ -311,8 +311,16 @@ export class ZionClient {
       } finally {
         if (receipt?.status === 1) {
           // Successful created the space on-chain.
+          const spaceId =
+            await this.spaceManager.unsigned.getSpaceIdByNetworkId(
+              roomIdentifier.matrixRoomId,
+            );
           console.log(
             "[createWeb3SpaceWithTokenEntitlement] createSpaceWithTokenEntitlement successful",
+            {
+              spaceId,
+              matrixRoomId: roomIdentifier.matrixRoomId,
+            },
           );
         } else {
           // On-chain space creation failed. Abandon this space.

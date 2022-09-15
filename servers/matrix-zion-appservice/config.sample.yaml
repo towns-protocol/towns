@@ -17,7 +17,7 @@ homeserver:
 
 # The prefix to give Ethereum users on the Matrix server
 #
-username_prefix: "@eip155=3a.*"
+username_prefix: "@eip155=3a.*:localhost"
 # Optional. Use a matrix room to issue commands to the bridge
 #
 # matrix_admin_room: "!aBcDeF:matrix.org"
