@@ -114,7 +114,7 @@ export const Message = (props: Props) => {
           </Box>
         )}
         <Stack gap="paragraph">
-          <Stack pointerEvents="auto" fontSize="md" color="gray1" gap="md">
+          <Stack fontSize="md" color="gray1" gap="md">
             {children}
           </Stack>
 

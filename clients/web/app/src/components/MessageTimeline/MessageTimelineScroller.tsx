@@ -7,6 +7,7 @@ import {
   useTimelineReactionsMap,
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
+import { useIsScrolling } from "./hooks/useIsScrolling";
 import { useLazyLoad } from "./hooks/useLazyLoad";
 import { usePersistScrollPosition } from "./hooks/usePersistScrollPosition";
 import { useScrollDownOnNewMessage } from "./hooks/useScrollDownOnNewMessage";
@@ -47,22 +48,32 @@ export const MessageTimelineScroller = (props: Props) => {
   usePersistScrollPosition(containerRef, contentRef);
   useScrollDownOnNewMessage(containerRef, contentRef, filteredEvents);
 
+  const { isScrolling } = useIsScrolling(containerRef.current);
+
   return (
-    <Stack grow scroll ref={containerRef} style={{ overflowAnchor: "none" }}>
-      <Stack grow style={{ minHeight: "min-content" }}>
-        <Stack grow paddingY="md" justifyContent="end" ref={contentRef}>
-          <div ref={intersectionRef} />
-          <MessageTimeline
-            channelId={channelId}
-            spaceId={spaceId}
-            events={filteredEvents}
-            messageRepliesMap={messageRepliesMap}
-            messageReactionsMap={messageReactionsMap}
-          />
-          {props.after}
+    <>
+      <Stack grow scroll ref={containerRef} style={{ overflowAnchor: "none" }}>
+        <Stack grow style={{ minHeight: "min-content" }}>
+          <Stack
+            grow
+            paddingY="md"
+            justifyContent="end"
+            ref={contentRef}
+            pointerEvents={isScrolling ? "none" : "auto"}
+          >
+            <div ref={intersectionRef} />
+            <MessageTimeline
+              channelId={channelId}
+              spaceId={spaceId}
+              events={filteredEvents}
+              messageRepliesMap={messageRepliesMap}
+              messageReactionsMap={messageReactionsMap}
+            />
+            {props.after}
+          </Stack>
+          <div ref={bottomRef} />
         </Stack>
-        <div ref={bottomRef} />
       </Stack>
-    </Stack>
+    </>
   );
 };
