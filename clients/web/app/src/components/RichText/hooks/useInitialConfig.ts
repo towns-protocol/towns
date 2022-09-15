@@ -12,7 +12,7 @@ import {
 import { atoms } from "ui/styles/atoms.css";
 import { $createAnnotationNode, AnnotationNode } from "../nodes/AnnotationNode";
 import { EmojiNode } from "../nodes/EmojiNode";
-import { MentionNode } from "../nodes/MentionNode";
+import { MENTION_TRANSFORMER, MentionNode } from "../nodes/MentionNode";
 
 const theme: EditorThemeClasses = {
   text: {
@@ -51,7 +51,10 @@ export const useInitialConfig = (
     readOnly,
     editorState: () => {
       if (initialValue) {
-        $convertFromMarkdownString(initialValue, TRANSFORMERS);
+        $convertFromMarkdownString(initialValue, [
+          ...TRANSFORMERS,
+          MENTION_TRANSFORMER,
+        ]);
       }
       if (edited) {
         const root = $getRoot();

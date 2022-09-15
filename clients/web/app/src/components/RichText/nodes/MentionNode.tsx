@@ -1,3 +1,4 @@
+import { TextMatchTransformer } from "@lexical/markdown";
 import type { Spread } from "lexical";
 
 import {
@@ -46,6 +47,7 @@ export class MentionNode extends TextNode {
   static clone(node: MentionNode): MentionNode {
     return new MentionNode(node.__mention, node.__text, node.__key);
   }
+
   static importJSON(serializedNode: SerializedMentionNode): MentionNode {
     const node = $createMentionNode(serializedNode.mentionName);
     node.setTextContent(serializedNode.text);
@@ -59,6 +61,10 @@ export class MentionNode extends TextNode {
   constructor(mentionName: string, text?: string, key?: NodeKey) {
     super(text ?? mentionName, key);
     this.__mention = mentionName;
+  }
+
+  getMentionName() {
+    return this.__mention;
   }
 
   exportJSON(): SerializedMentionNode {
@@ -76,6 +82,7 @@ export class MentionNode extends TextNode {
       fontWeight: "strong",
       color: "default",
     });
+    dom.prepend("@");
     return dom;
   }
 
@@ -116,3 +123,20 @@ export function $isMentionNode(
 ): node is MentionNode {
   return node instanceof MentionNode;
 }
+
+export const MENTION_TRANSFORMER: TextMatchTransformer = {
+  export: (node, exportChildren, exportFormat) => {
+    if (!$isMentionNode(node)) {
+      return null;
+    }
+    return `@${node.getMentionName()}`;
+  },
+  importRegExp: /@([a-z0-9_-]+)/i,
+  regExp: /@([a-z0-9_-]+)$/i,
+  replace: (textNode, match) => {
+    const imageNode = $createMentionNode(match[1]);
+    textNode.replace(imageNode);
+  },
+  trigger: "@",
+  type: "text-match",
+} as const;
