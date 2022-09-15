@@ -1,34 +1,18 @@
 import React, { useEffect } from "react";
 import { Outlet, Route, Routes, useNavigate } from "react-router";
 import useEvent from "react-use-event-hook";
+
 import { ZionContextProvider, useMatrixStore } from "use-zion-client";
-import { Highlights } from "@components/Highlights/HomeHighlights";
-import { MembersPage } from "@components/Members/MembersPage";
-import { Playground } from "@components/Playground";
-import { ProposalPage } from "@components/Proposals/ProposalPage";
 import { Box, Heading } from "@ui";
-import { AppLayout } from "AppLayout";
-import { ChannelSettings } from "routes/ChannelSettings";
-import { InvitesIndex } from "routes/InvitesIndex";
-import { MeIndex } from "routes/MeIndex";
-import { Messages } from "routes/Messages";
-import { MessagesNew } from "routes/MessagesNew";
-import { MessagesRead } from "routes/MessagesRead";
-import { Register } from "routes/Register";
-import { SiteHome } from "routes/SiteHome";
-import { SpaceLayout } from "routes/SpaceLayout";
-import { SpaceMentions } from "routes/SpaceMentions";
-import { Spaces } from "routes/Spaces";
-import { SpacesChannel } from "routes/SpacesChannel";
-import { SpacesChannelReplies } from "routes/SpacesChannelThread";
-import { SpacesInvite } from "routes/SpacesInvite";
-import { SpacesNew } from "routes/SpacesNew";
-import { SpacesNewChannel } from "routes/SpacesNewChannel";
-import { SpacesSettings } from "routes/SpacesSettings";
-import { SpaceThreads } from "routes/SpaceThreads";
-import { SidebarLayout } from "SidebarLayout";
-import { FontLoader } from "ui/utils/FontLoader";
 import { useRootTheme } from "hooks/useRootTheme";
+import { FontLoader } from "ui/utils/FontLoader";
+import { AppLayout } from "AppLayout";
+import { SiteHome } from "routes/SiteHome";
+import { Register } from "routes/Register";
+import { SidebarLayout } from "SidebarLayout";
+
+const SpaceRoutes = React.lazy(() => import("routes/SpaceRoutes"));
+const Playground = React.lazy(() => import("@components/Playground"));
 
 FontLoader.init();
 
@@ -70,7 +54,6 @@ const AllRoutes = () => {
   });
   return (
     <Routes>
-      <Route path="/playground" element={<Playground />} />
       <Route element={<AppLayout />}>
         <Route path="/register" element={<Register />} />
         <Route element={<Outlet />}>
@@ -87,53 +70,18 @@ const AllRoutes = () => {
             <Route path="/dao" element={<Heading>DAO</Heading>} />
           </Route>
           {isAuthenticated && (
-            <Route element={<SidebarLayout />}>
-              <Route element={<Spaces />}>
-                <Route element={<SpaceLayout />}>
-                  <Route index element={<Highlights />} />
-                  <Route path="proposals" element={<ProposalPage />} />
-                  <Route path="members" element={<MembersPage />} />
-                </Route>
-              </Route>
-              <Route path="me" element={<MeIndex />} />
-              <Route path="messages" element={<Messages />}>
-                <Route path="new" element={<MessagesNew />} />
-                <Route path=":conversationId" element={<MessagesRead />} />
-              </Route>
-              <Route path="invites/:inviteSlug" element={<Spaces />}>
-                <Route index element={<InvitesIndex />} />
-              </Route>
-              <Route path="spaces/new" element={<SpacesNew />} />
-              <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                <Route element={<SpaceLayout />}>
-                  <Route index element={<Highlights />} />
-                  <Route path="proposals" element={<ProposalPage />} />
-                  <Route path="members" element={<MembersPage />} />
-                </Route>
-                <Route path="threads" element={<SpaceThreads />} />
-                <Route path="mentions" element={<SpaceMentions />} />
-                <Route path="settings" element={<SpacesSettings />} />
-                <Route path="invite" element={<SpacesInvite />} />
-                <Route path="channels/new" element={<SpacesNewChannel />} />
-
-                <Route path="channels/:channelSlug" element={<SpacesChannel />}>
-                  <Route
-                    path="replies/:messageId"
-                    element={<SpacesChannelReplies />}
-                  />
-                </Route>
-                <Route
-                  path="channels/:channelSlug/settings"
-                  element={<ChannelSettings />}
-                />
-              </Route>
+            <Route path="*" element={<SidebarLayout />}>
+              <Route path="*" element={<SpaceRoutes />} />
             </Route>
           )}
         </Route>
       </Route>
+      <Route path="/playground" element={<Playground />} />
     </Routes>
   );
 };
+
+export default App;
 
 const useNavigateOnAuth = (to: string, isAuthenticated: boolean) => {
   const navigate = useNavigate();

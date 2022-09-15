@@ -1,9 +1,11 @@
 import "allotment/dist/style.css";
-import React from "react";
+import React, { Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { MainLayout } from "MainLayout";
-import { App } from "./App";
+import { SiteHomeLayout } from "routes/SiteHome";
+import { Stack } from "@ui";
+const App = React.lazy(() => import("./App"));
 
 const isDev = import.meta.env.DEV;
 
@@ -30,12 +32,20 @@ if (isDev) {
 
 const node = document.getElementById("root");
 
+const LoadingScreen = () => (
+  <Stack absoluteFill centerContent background="inverted">
+    <SiteHomeLayout />
+  </Stack>
+);
+
 if (node) {
   createRoot(node).render(
     <React.StrictMode>
       <BrowserRouter>
         <MainLayout>
-          <App />
+          <Suspense fallback={<LoadingScreen />}>
+            <App />
+          </Suspense>
         </MainLayout>
       </BrowserRouter>
     </React.StrictMode>,

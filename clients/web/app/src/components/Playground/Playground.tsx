@@ -97,3 +97,5 @@ const Container = ({
 export const Comment = (props: TextProps) => (
   <span {...props} className={atoms({ color: "gray2" })} />
 );
+
+export default Playground;

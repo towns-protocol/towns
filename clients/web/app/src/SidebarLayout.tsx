@@ -8,6 +8,7 @@ import {
   useSpaceData,
 } from "use-zion-client";
 import useEvent from "react-use-event-hook";
+import { SuspenseLoader } from "@components/Loaders/SuspenseLoader";
 import {
   MainSideBar,
   MessagesSideBar,
@@ -113,7 +114,9 @@ export const SidebarLayoutContent = () => {
           {/* main container */}
           <Allotment.Pane>
             <Box absoluteFill scroll>
-              <Outlet />
+              <SuspenseLoader>
+                <Outlet />
+              </SuspenseLoader>
             </Box>
           </Allotment.Pane>
         </Allotment>

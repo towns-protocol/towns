@@ -1,83 +1,68 @@
-import { Allotment } from "allotment";
-import React, { useCallback, useEffect } from "react";
-import {
-  Membership,
-  MessageType,
-  useMatrixStore,
-  useMyMembership,
-  useSpaceData,
-  useSpaceTimeline,
-  useZionClient,
-} from "use-zion-client";
-import { MessageTimelineScroller } from "@components/MessageTimeline";
-import { RichTextEditor } from "@components/RichText/RichTextEditor";
-import { Box, Button, Stack } from "@ui";
-import { usePersistPanes } from "hooks/usePersistPanes";
+import React from "react";
+import { Outlet, useMatch, useResolvedPath } from "react-router";
+import { NavLink } from "react-router-dom";
+
+import { RoomIdentifier, useSpaceId } from "use-zion-client";
+import { Box, Button, SizeBox } from "@ui";
+import { Stack } from "ui/components/Stack/Stack";
+import { LiquidContainer } from "./SpacesIndex";
 
 export const SpaceHome = () => {
-  const { onSizesChange } = usePersistPanes(["channel", "right"]);
-  const { sendMessage, joinRoom } = useZionClient();
-  const { userId } = useMatrixStore();
-  const space = useSpaceData();
-  const myMembership = useMyMembership(space?.id);
-  const spaceMessages = useSpaceTimeline();
-
-  const onSend = useCallback(
-    (value: string) => {
-      if (value && space?.id) {
-        sendMessage(space?.id, value);
-      }
-    },
-    [space?.id, sendMessage],
-  );
-
-  const onJoinSpace = useCallback(() => {
-    if (space?.id) {
-      joinRoom(space.id);
-    }
-  }, [joinRoom, space?.id]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (space?.id && myMembership === Membership.Join) {
-        sendMessage(space?.id, "🌚 ¿wen moon? 🌝", {
-          messageType: MessageType.WenMoon,
-        });
-      }
-    }, 7000);
-    return () => clearInterval(interval);
-  }, [sendMessage, space?.id, myMembership]);
-
-  if (!space || !userId) {
+  const spaceId = useSpaceId();
+  if (!spaceId) {
     return null;
   }
-
   return (
-    <Stack horizontal minHeight="100%">
-      <Allotment onChange={onSizesChange}>
-        <Allotment.Pane>
-          {myMembership !== Membership.Join ? (
-            <Button onClick={onJoinSpace}>Join {space.name}</Button>
-          ) : (
-            <Box grow absoluteFill height="100%" overflow="hidden">
-              <MessageTimelineScroller
-                key={space.id.slug}
-                spaceId={space.id}
-                channelId={space.id}
-                events={spaceMessages}
-              />
-              <Box paddingBottom="lg" paddingX="lg">
-                <RichTextEditor
-                  autoFocus
-                  initialValue=""
-                  placeholder={`Send a message to #${space.name}`}
-                  onSend={onSend}
-                />
-              </Box>
-            </Box>
-          )}
-        </Allotment.Pane>
-      </Allotment>
+    <Stack horizontal grow justifyContent="center" basis="1200">
+      <LiquidContainer fullbleed position="relative">
+        <SizeBox grow gap="lg">
+          <Box paddingX="lg" paddingTop="lg">
+            <SpaceNav spaceId={spaceId} />
+          </Box>
+          <Box grow position="relative" paddingX="lg">
+            <Outlet />
+          </Box>
+        </SizeBox>
+      </LiquidContainer>
     </Stack>
   );
 };
+
+export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
+  <Stack horizontal gap="md">
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/`}>
+      Highlights
+    </SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/proposals`}>
+      Proposals
+    </SpaceNavItem>
+    <SpaceNavItem to={`/spaces/${props.spaceId.slug}/members`}>
+      Members
+    </SpaceNavItem>
+  </Stack>
+);
+
+const SpaceNavItem = (props: {
+  children: React.ReactNode;
+  to: string;
+  exact?: boolean;
+}) => {
+  const { to, exact } = props;
+  const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
+
+  const match = useMatch({
+    path: resolved.pathname || "/",
+    end: to === "/" || exact,
+  });
+  return (
+    <Box>
+      <NavLink to={props.to}>
+        <Button size="button_md" tone={match ? "cta1" : "level2"}>
+          {props.children}
+        </Button>
+      </NavLink>
+    </Box>
+  );
+};
+
+export default SpaceHome;

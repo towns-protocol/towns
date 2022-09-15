@@ -34,3 +34,5 @@ export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => {
     </Box>
   );
 };
+
+export default SpacesChannelReplies;

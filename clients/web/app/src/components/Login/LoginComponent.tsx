@@ -208,3 +208,5 @@ export const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
 
   return { registrationStatus };
 };
+
+export default LoginComponent;

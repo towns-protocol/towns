@@ -14,7 +14,7 @@ export const LoginButton = (props: {
   const hasSpinner = useDeferredLoading(props.loading);
 
   return (
-    <AnimatePresence exitBeforeEnter>
+    <AnimatePresence mode="wait">
       <Button minWidth="250" onClick={props.onClick}>
         <FadeIn layout key="metamaks">
           <Icon type="metamask" />

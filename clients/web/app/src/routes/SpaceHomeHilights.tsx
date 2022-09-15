@@ -15,7 +15,7 @@ const colSpanMap = {
   1: 12,
 } as const;
 
-export const Highlights = () => {
+export const HomeHighlights = () => {
   const spaceId = useSpaceId();
 
   const sizeContext = useContext(SizeContext);
@@ -146,3 +146,5 @@ const Placeholder = (props: PlaceholderProps) => {
     </Box>
   );
 };
+
+export default HomeHighlights;

@@ -1,4 +1,7 @@
+import { motion } from "framer-motion";
 import React, { HTMLAttributes, forwardRef } from "react";
+import { Box } from "@ui";
+import { atoms } from "ui/styles/atoms.css";
 
 export const Logo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>(
   (props, ref) => (
@@ -14,6 +17,14 @@ export const Logo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>(
     </svg>
   ),
 );
+
+export const TransitionLogo = () => (
+  <MotionBox layout="position" layoutId="logo">
+    <Logo className={atoms({ height: "x8" })} />
+  </MotionBox>
+);
+
+const MotionBox = motion(Box);
 
 export const MinimalLogo = forwardRef<
   SVGSVGElement,
