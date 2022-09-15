@@ -1,26 +1,27 @@
 import { EmojiData } from "emoji-mart";
-import { get as getEmoji } from "node-emoji";
-import React, { useCallback, useMemo } from "react";
+import React, { Suspense, useCallback } from "react";
+import { emojis } from "@emoji-mart/data";
 import { EmojiPickerButton } from "@components/EmojiPickerButton";
 import { Stack, Text } from "@ui";
 import { MessageReactions } from "hooks/useFixMeMessageThread";
 
-export const Reactions = (props: {
+type Emojis = { [key: string]: typeof emojis[keyof typeof emojis] };
+
+export const getNativeEmojiFromName = (name: string, skinIndex = 0) => {
+  const emoji = (emojis as Emojis)?.[name];
+  const skin = emoji?.skins[skinIndex < emoji.skins.length ? skinIndex : 0];
+  return skin?.native ?? name;
+};
+
+type Props = {
   reactions: MessageReactions;
   userId?: string | null;
   parentId?: string;
   onReaction?: (eventId: string, name: string) => void;
-}) => {
-  const { userId, parentId, reactions, onReaction } = props;
+};
 
-  const onReact = useCallback(
-    (reaction: string) => {
-      if (onReaction && parentId) {
-        onReaction(parentId, reaction);
-      }
-    },
-    [onReaction, parentId],
-  );
+export const Reactions = (props: Props) => {
+  const { userId, parentId, reactions, onReaction } = props;
 
   const onReactionPicker = useCallback(
     (data: EmojiData) => {
@@ -31,32 +32,54 @@ export const Reactions = (props: {
     [onReaction, parentId],
   );
 
-  const map = useMemo(
-    () =>
-      reactions.size
-        ? Array.from(reactions.entries()).map(([reaction, users]) => (
-            <Reaction
-              key={reaction}
-              name={reaction}
-              users={users}
-              isOwn={!!(userId && users.has(userId))}
-              onReact={onReact}
-            />
-          ))
-        : undefined,
-    [onReact, reactions, userId],
-  );
-
-  if (!map?.length) {
-    return <></>;
-  }
-
   return (
     <Stack horizontal gap="xs" height="x3">
-      {map}
+      <Suspense>
+        <ReactionRow
+          userId={userId}
+          parentId={parentId}
+          reactions={reactions}
+          onReaction={onReaction}
+        />
+      </Suspense>
       <EmojiPickerButton size="square_xs" onSelectEmoji={onReactionPicker} />
     </Stack>
   );
+};
+
+const ReactionRow = ({
+  reactions,
+  userId,
+  onReaction,
+  parentId,
+}: {
+  reactions: MessageReactions;
+  userId?: Props["userId"];
+  onReaction: Props["onReaction"];
+  parentId?: Props["parentId"];
+}) => {
+  const onReact = useCallback(
+    (reaction: string) => {
+      if (onReaction && parentId) {
+        onReaction(parentId, reaction);
+      }
+    },
+    [onReaction, parentId],
+  );
+
+  const map = reactions.size
+    ? Array.from(reactions.entries()).map(([reaction, users]) => (
+        <Reaction
+          key={reaction}
+          name={reaction}
+          users={users}
+          isOwn={!!(userId && users.has(userId))}
+          onReact={onReact}
+        />
+      ))
+    : undefined;
+
+  return <>{map}</>;
 };
 
 const Reaction = (props: {
@@ -82,7 +105,7 @@ const Reaction = (props: {
       paddingX="sm"
       onClick={onClick}
     >
-      <Text size="md">{getEmoji(props.name) ?? ""}</Text>
+      <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
       <Text size="sm">{props.users.size}</Text>
     </Stack>
   ) : null;
