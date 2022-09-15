@@ -40,6 +40,7 @@ export function ChatMessages(props: Props): JSX.Element {
   // that's prepended to the timeline, not sure where the bug is
   // issue: https://github.com/HereNotThere/harmony/issues/443
   const canLoadMore =
+    timeline.length > 1 &&
     timeline[0].eventType !== ZTEvent.RoomCreate &&
     timeline[1].eventType !== ZTEvent.RoomCreate;
 
