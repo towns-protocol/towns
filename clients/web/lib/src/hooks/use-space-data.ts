@@ -4,7 +4,6 @@ import {
   ChannelGroup,
   InviteData,
   makeRoomIdentifierFromSlug,
-  Membership,
   Room,
   RoomIdentifier,
   SpaceChild,
