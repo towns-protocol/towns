@@ -30,8 +30,8 @@ import { SiweMessage } from "siwe";
 import { StatusCodes } from "http-status-codes";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
-import { useWeb3Context } from "./use-web3";
 import { useZionContext } from "../components/ZionContextProvider";
+import { useWeb3Context } from "../components/Web3ContextProvider";
 
 export interface NewSession {
   sessionId: string;
@@ -56,8 +56,7 @@ export function useMatrixWalletSignIn() {
   } = useMatrixStore();
   const { homeServerUrl: homeServer } = useZionContext();
   const { setAccessToken } = useCredentialStore();
-  const { accounts, sign } = useWeb3Context();
-  const { chainId } = useWeb3Context();
+  const { accounts, sign, chainId } = useWeb3Context();
 
   const chainIdEip155 = useMemo(
     function () {

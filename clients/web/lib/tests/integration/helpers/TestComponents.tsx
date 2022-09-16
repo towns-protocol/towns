@@ -1,6 +1,4 @@
 import React, { useEffect } from "react";
-import { WalletStatus, useWeb3Context } from "../../../src/hooks/use-web3";
-
 import { LoginStatus } from "../../../src/hooks/login";
 import { RoomIdentifier } from "../../../src/types/matrix-types";
 import { ZionAuth } from "../../../src/client/ZionClientTypes";
@@ -9,6 +7,8 @@ import { useCredentialStore } from "../../../src/store/use-credential-store";
 import { useMatrixStore } from "../../../src/store/use-matrix-store";
 import { useMyMembership } from "../../../src/hooks/use-my-membership";
 import { useZionClient } from "../../../src/hooks/use-zion-client";
+import { useWeb3Context } from "../../../src/components/Web3ContextProvider";
+import { WalletStatus } from "../../../src/types/web3-types";
 
 export const RegisterWallet = () => {
   const { walletStatus } = useWeb3Context();

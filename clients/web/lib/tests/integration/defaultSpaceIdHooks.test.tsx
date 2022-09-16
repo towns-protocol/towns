@@ -3,7 +3,6 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from "react";
-import { useWeb3Context, WalletStatus } from "../../src/hooks/use-web3";
 import { useMatrixStore } from "../../src/store/use-matrix-store";
 import { useZionClient } from "../../src/hooks/use-zion-client";
 import { LoginStatus } from "../../src/hooks/login";
@@ -16,6 +15,8 @@ import { registerAndStartClients } from "./helpers/TestUtils";
 import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
+import { useWeb3Context } from "../../src/components/Web3ContextProvider";
+import { WalletStatus } from "../../src/types/web3-types";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

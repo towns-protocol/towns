@@ -5,8 +5,8 @@ import { useMatrixStore } from "../store/use-matrix-store";
 import { useRoomMembershipEventHandler } from "./MatrixClientListener/useRoomMembershipEventHandler";
 import { useRoomTimelineEventHandler } from "./MatrixClientListener/useRoomTimelineEventHandler";
 import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler";
-import { useWeb3Context } from "./use-web3";
 import { ethers } from "ethers";
+import { useWeb3Context } from "../components/Web3ContextProvider";
 
 export const useZionClientListener = (
   homeServerUrl: string,

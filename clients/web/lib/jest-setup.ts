@@ -6,7 +6,7 @@ import { ZionTestClient } from "./tests/integration/helpers/ZionTestClient";
 import { webcrypto } from "node:crypto";
 import * as Olm from "olm";
 import * as request from "request";
-import { Config, configure } from "@testing-library/dom";
+import { configure } from "@testing-library/dom";
 
 process.env.HOMESERVER = "http://localhost:8008"; // OR "https://node1.hntlabs.com";
 process.env.DISABLE_ENCRYPTION = "false";

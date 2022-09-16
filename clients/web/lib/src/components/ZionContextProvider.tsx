@@ -1,4 +1,3 @@
-import { Web3Provider } from "../hooks/use-web3";
 import React, { createContext, useContext, useMemo } from "react";
 import { useZionClientListener } from "../hooks/use-zion-client-listener";
 import {
@@ -15,6 +14,7 @@ import { useSpaceUnreads } from "../hooks/ZionContext/useSpaceUnreads";
 import { useSpaceMentionCounts } from "../hooks/ZionContext/useSpaceMentionCounts";
 import { useSpaces } from "../hooks/ZionContext/useSpaces";
 import { useSyncSpaceHierarchies } from "../hooks/ZionContext/useSyncSpaceHierarchies";
+import { Web3ContextProvider } from "./Web3ContextProvider";
 
 export interface IZionContext {
   councilNFTAddress: string;
@@ -69,9 +69,9 @@ const DEFAULT_INITIAL_SYNC_LIMIT = 20;
 
 export function ZionContextProvider(props: Props): JSX.Element {
   return (
-    <Web3Provider>
+    <Web3ContextProvider>
       <ContextImpl {...props}></ContextImpl>
-    </Web3Provider>
+    </Web3ContextProvider>
   );
 }
 

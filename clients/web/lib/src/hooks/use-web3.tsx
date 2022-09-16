@@ -1,30 +1,9 @@
-import React, { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createGenericContext } from "../utils/create-generic-context";
 import { ethers } from "ethers";
 import { logger } from "../utils/logger";
+import { WalletStatus } from "../types/web3-types";
 
-export enum WalletStatus {
-  Unknown = "Unknown",
-  RequestUnlock = "RequestUnlock",
-  StillRequestingUnlock = "StillRequestingUnlock",
-  Unlocked = "Unlocked",
-  Error = "Error",
-}
-
-const [useWeb3Context, Web3ContextProvider] = createGenericContext<UseWeb3>();
-
-const Web3Provider = ({ children }: { children: ReactNode }): JSX.Element => {
-  const web3 = useWeb3();
-  return <Web3ContextProvider value={web3}>{children}</Web3ContextProvider>;
-};
-
-export { useWeb3Context, Web3Provider };
-export type RequestAccounts = ReturnType<typeof useWeb3>["requestAccounts"];
-
-export type UseWeb3 = ReturnType<typeof useWeb3>;
-
-function useWeb3() {
+export function useWeb3() {
   const [accounts, setAccounts] = useState<string[]>([]);
   const [chainId, setChainId] = useState<string>();
   const messageId = useRef(0);
