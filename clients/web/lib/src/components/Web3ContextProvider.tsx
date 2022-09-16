@@ -17,10 +17,6 @@ export interface IWeb3Context {
       }
   >;
   sign: (message: string, walletAddress: string) => Promise<string | undefined>;
-  ecRecover: (
-    message: string,
-    signature: string,
-  ) => Promise<string | undefined>;
   accounts: string[];
   chainId: string | undefined;
   walletStatus: WalletStatus;

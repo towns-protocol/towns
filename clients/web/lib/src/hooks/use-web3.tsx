@@ -182,29 +182,6 @@ export function useWeb3() {
     }
   }, [ethereum, getChainId]);
 
-  const ecRecover = useCallback(
-    async (message: string, signature: string): Promise<string | undefined> => {
-      try {
-        const signingWallet = await ethereum.request({
-          jsonrpc: "2.0",
-          id: messageId.current++,
-          method: "personal_ecRecover",
-          params: [message, signature],
-        });
-
-        logger.info(`personal_ecRecover:\n${signingWallet}`);
-        return signingWallet;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        logger.error(
-          `Error requesting personal_ecRecover: ${error.message}.
-       Code: ${error.code}. Data: ${error.data}`,
-        );
-      }
-    },
-    [ethereum],
-  );
-
   const sign = useCallback(
     async (
       message: string,
@@ -236,7 +213,6 @@ export function useWeb3() {
     providerInstalled,
     requestAccounts,
     sign,
-    ecRecover,
     accounts,
     chainId,
     walletStatus,
