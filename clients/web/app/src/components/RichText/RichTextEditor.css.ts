@@ -23,5 +23,5 @@ globalStyle(`${contentEditable} ul`, {
 });
 
 globalStyle(`${contentEditable} a`, {
-  color: vars.color.foreground.accent,
+  color: vars.color.foreground.etherum,
 });

@@ -1,3 +1,5 @@
+import { AutoLinkNode, LinkNode } from "@lexical/link";
+import { ListItemNode, ListNode } from "@lexical/list";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -6,10 +8,15 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { QuoteNode } from "@lexical/rich-text";
 import { clsx } from "clsx";
 import React, { useState } from "react";
 import * as fieldStyles from "ui/components/_internal/Field/Field.css";
 import { useInitialConfig } from "./hooks/useInitialConfig";
+import { AnnotationNode } from "./nodes/AnnotationNode";
+import { EmojiNode } from "./nodes/EmojiNode";
+import { MentionNode } from "./nodes/MentionNode";
+import { AutoLinkMatcherPlugin } from "./plugins/AutoLinkMatcherPlugin";
 import { EmojiReplacePlugin } from "./plugins/EmojiReplacePlugin";
 import { EmojiShortcutPlugin } from "./plugins/EmojiShortcutPlugin";
 import { NewMentionsPlugin } from "./plugins/MentionsPlugin";
@@ -33,11 +40,27 @@ type Props = {
 
 const fieldClassName = clsx([fieldStyles.field, styles.contentEditable]);
 
+const nodes = [
+  AnnotationNode,
+  EmojiNode,
+  AutoLinkNode,
+  LinkNode,
+  ListItemNode,
+  ListNode,
+  MentionNode,
+  QuoteNode,
+];
+
 export const RichTextPreview = (props: {
   content: string;
   edited?: boolean;
 }) => {
-  const initialConfig = useInitialConfig(props.content, true, props.edited);
+  const initialConfig = useInitialConfig(
+    props.content,
+    nodes,
+    true,
+    props.edited,
+  );
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -55,7 +78,7 @@ export const RichTextEditor = (props: Props) => {
     editing: isEditing,
     onSend,
   } = props;
-  const initialConfig = useInitialConfig(props.initialValue, false);
+  const initialConfig = useInitialConfig(props.initialValue, nodes, false);
 
   const [focused, setFocused] = useState(false);
   const onFocusChange = (focus: boolean) => {
@@ -87,6 +110,7 @@ export const RichTextEditor = (props: Props) => {
         onCancel={props.onCancel}
       />
       <AutoFocusPlugin />
+      <AutoLinkMatcherPlugin />
     </LexicalComposer>
   );
 };

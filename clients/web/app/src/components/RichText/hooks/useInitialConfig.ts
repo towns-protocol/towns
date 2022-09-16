@@ -1,18 +1,16 @@
-import { LinkNode } from "@lexical/link";
-import { ListItemNode, ListNode } from "@lexical/list";
 import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
-import { QuoteNode } from "@lexical/rich-text";
 import {
   $createParagraphNode,
   $getRoot,
   $isElementNode,
   $setSelection,
   EditorThemeClasses,
+  Klass,
+  LexicalNode,
 } from "lexical";
 import { atoms } from "ui/styles/atoms.css";
-import { $createAnnotationNode, AnnotationNode } from "../nodes/AnnotationNode";
-import { EmojiNode } from "../nodes/EmojiNode";
-import { MENTION_TRANSFORMER, MentionNode } from "../nodes/MentionNode";
+import { $createAnnotationNode } from "../nodes/AnnotationNode";
+import { MENTION_TRANSFORMER } from "../nodes/MentionNode";
 
 const theme: EditorThemeClasses = {
   text: {
@@ -30,24 +28,17 @@ const initialConfig = {
   namespace: "zion",
   theme,
   onError,
-  nodes: [
-    AnnotationNode,
-    EmojiNode,
-    LinkNode,
-    ListItemNode,
-    ListNode,
-    MentionNode,
-    QuoteNode,
-  ],
 };
 
 export const useInitialConfig = (
   initialValue: string | undefined,
+  nodes: Klass<LexicalNode>[],
   readOnly?: boolean,
   edited?: boolean,
 ) => {
   return {
     ...initialConfig,
+    nodes,
     readOnly,
     editorState: () => {
       if (initialValue) {
@@ -57,21 +48,22 @@ export const useInitialConfig = (
         ]);
       }
       if (edited) {
-        const root = $getRoot();
-        const lastChild = root.getLastChild();
-        const lastElement = $isElementNode(lastChild)
-          ? lastChild
-          : $createParagraphNode();
-        if (!lastChild) {
-          root.append(lastElement);
-        }
-
-        const textNode = $createAnnotationNode(" (edited)");
-
-        lastElement.append(textNode);
+        appendEditedNotation();
       }
-
       $setSelection(null);
     },
   };
 };
+
+function appendEditedNotation() {
+  const root = $getRoot();
+  const lastChild = root.getLastChild();
+  const lastElement = $isElementNode(lastChild)
+    ? lastChild
+    : $createParagraphNode();
+  if (!lastChild) {
+    root.append(lastElement);
+  }
+  const textNode = $createAnnotationNode(" (edited)");
+  lastElement.append(textNode);
+}
