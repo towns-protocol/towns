@@ -17,7 +17,7 @@ export const ActionNavItem = ({
   highlight?: boolean;
 }) => {
   return (
-    <NavItem to={link} id={id}>
+    <NavItem to={link} id={id} highlight={isHighlight}>
       {icon && (
         <Icon
           type={icon}

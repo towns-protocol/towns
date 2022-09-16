@@ -17,6 +17,7 @@ export { LoginStatus, getChainIdEip155 } from "./hooks/login";
 export { useMatrixStore } from "./store/use-matrix-store";
 export { useZionClient } from "./hooks/use-zion-client";
 export { useMember } from "./hooks/use-member";
+export { useSpaceMembers } from "./hooks/use-space-members";
 export { useMyMembership } from "./hooks/use-my-membership";
 export { useMyProfile } from "./hooks/use-my-profile";
 export { usePowerLevels } from "./hooks/use-power-levels";

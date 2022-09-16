@@ -10,12 +10,16 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { QuoteNode } from "@lexical/rich-text";
 import { clsx } from "clsx";
-import React, { useState } from "react";
+import { RoomMember } from "matrix-js-sdk";
+import React, { useMemo, useState } from "react";
+import { useSpaceMembers } from "use-zion-client";
+import { TRANSFORMERS } from "@lexical/markdown";
 import * as fieldStyles from "ui/components/_internal/Field/Field.css";
+import { notUndefined } from "ui/utils/utils";
 import { useInitialConfig } from "./hooks/useInitialConfig";
 import { AnnotationNode } from "./nodes/AnnotationNode";
 import { EmojiNode } from "./nodes/EmojiNode";
-import { MentionNode } from "./nodes/MentionNode";
+import { MentionNode, createMentionTransformer } from "./nodes/MentionNode";
 import { AutoLinkMatcherPlugin } from "./plugins/AutoLinkMatcherPlugin";
 import { EmojiReplacePlugin } from "./plugins/EmojiReplacePlugin";
 import { EmojiShortcutPlugin } from "./plugins/EmojiShortcutPlugin";
@@ -51,26 +55,39 @@ const nodes = [
   QuoteNode,
 ];
 
-export const RichTextPreview = (props: {
-  content: string;
-  edited?: boolean;
-}) => {
-  const initialConfig = useInitialConfig(
-    props.content,
-    nodes,
-    true,
-    props.edited,
-  );
-
-  return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <RichTextPlugin
-        contentEditable={<ContentEditable className={fieldClassName} />}
-        placeholder=""
-      />
-    </LexicalComposer>
-  );
+const useTransformers = (members: RoomMember[]) => {
+  const transformers = useMemo(() => {
+    const names = members.map((m) => m.user?.displayName).filter(notUndefined);
+    return [...TRANSFORMERS, createMentionTransformer(names)];
+  }, [members]);
+  return { transformers };
 };
+
+export const RichTextPreview = React.memo(
+  (props: { content: string; edited?: boolean }) => {
+    // note: unnecessary repetition here, could be optimised by handling above
+    // inside e.g. space context or timeline
+    const members = useSpaceMembers();
+    const { transformers } = useTransformers(members);
+
+    const initialConfig = useInitialConfig(
+      props.content,
+      nodes,
+      transformers,
+      true,
+      props.edited,
+    );
+
+    return (
+      <LexicalComposer initialConfig={initialConfig}>
+        <RichTextPlugin
+          contentEditable={<ContentEditable className={fieldClassName} />}
+          placeholder=""
+        />
+      </LexicalComposer>
+    );
+  },
+);
 
 export const RichTextEditor = (props: Props) => {
   const {
@@ -78,7 +95,16 @@ export const RichTextEditor = (props: Props) => {
     editing: isEditing,
     onSend,
   } = props;
-  const initialConfig = useInitialConfig(props.initialValue, nodes, false);
+
+  const members = useSpaceMembers();
+  const { transformers } = useTransformers(members);
+
+  const initialConfig = useInitialConfig(
+    props.initialValue,
+    nodes,
+    transformers,
+    false,
+  );
 
   const [focused, setFocused] = useState(false);
   const onFocusChange = (focus: boolean) => {
@@ -102,7 +128,7 @@ export const RichTextEditor = (props: Props) => {
       <HistoryPlugin />
       <LinkPlugin />
       <EmojiReplacePlugin />
-      <NewMentionsPlugin />
+      <NewMentionsPlugin members={members} />
       <EmojiShortcutPlugin />
       <SendMarkdownPlugin
         displayButtons={props.displayButtons}

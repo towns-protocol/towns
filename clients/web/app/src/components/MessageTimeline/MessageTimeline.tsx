@@ -113,7 +113,7 @@ const DateDivider = (props: { label: string }) => (
     <Box left right top="md" position="absolute" paddingX="lg">
       <Box borderTop />
     </Box>
-    <Box centerContent top="md" display="block" position="sticky" zIndex="ui">
+    <Box centerContent top="md" display="block" position="sticky">
       <Box centerContent>
         <Box
           border

@@ -1,3 +1,4 @@
+// import { TextMatchTransformer } from "@lexical/markdown";
 import { TextMatchTransformer } from "@lexical/markdown";
 import type { Spread } from "lexical";
 
@@ -79,10 +80,13 @@ export class MentionNode extends TextNode {
   createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
     dom.className = atoms({
-      fontWeight: "strong",
-      color: "default",
+      fontWeight: "normal",
+      color: "etherum",
+      background: "level2",
+      paddingX: "xs",
+      paddingY: "xs",
+      rounded: "xs",
     });
-    dom.prepend("@");
     return dom;
   }
 
@@ -124,19 +128,24 @@ export function $isMentionNode(
   return node instanceof MentionNode;
 }
 
-export const MENTION_TRANSFORMER: TextMatchTransformer = {
-  export: (node, exportChildren, exportFormat) => {
-    if (!$isMentionNode(node)) {
-      return null;
-    }
-    return `@${node.getMentionName()}`;
-  },
-  importRegExp: /@([a-z0-9_-]+)/i,
-  regExp: /@([a-z0-9_-]+)$/i,
-  replace: (textNode, match) => {
-    const imageNode = $createMentionNode(match[1]);
-    textNode.replace(imageNode);
-  },
-  trigger: "@",
-  type: "text-match",
-} as const;
+export const createMentionTransformer = (
+  names: string[],
+): TextMatchTransformer => {
+  const concat = names.join("|");
+  return {
+    export: (node, exportChildren, exportFormat) => {
+      if (!$isMentionNode(node)) {
+        return null;
+      }
+      return `${node.getMentionName()}`;
+    },
+    importRegExp: new RegExp("(@(" + concat + "))", "i"),
+    regExp: /(@[a-z0-9_-]+)$/i,
+    replace: (textNode, match) => {
+      const mentionNode = $createMentionNode(match[1]);
+      textNode.replace(mentionNode);
+    },
+    trigger: "@",
+    type: "text-match",
+  } as const;
+};

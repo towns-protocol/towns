@@ -5,6 +5,7 @@ import {
   RoomIdentifier,
   SpaceData,
   useInvitesForSpace,
+  useZionContext,
 } from "use-zion-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { ChannelNavItem } from "@components/NavItem/ChannelNavItem";
@@ -20,10 +21,19 @@ type Props = {
   space: SpaceData;
 };
 
+const useTotalMentionCount = () => {
+  const { mentionCounts } = useZionContext();
+  return Object.entries(mentionCounts).reduce((total, e) => {
+    return total + (e[1] || 0);
+  }, 0);
+};
+
 export const SpaceSideBar = (props: Props) => {
   const { space } = props;
   const invites = useInvitesForSpace(space.id);
   const navigate = useNavigate();
+
+  const totalMentions = useTotalMentionCount();
 
   const onSettings = useCallback(
     (id: RoomIdentifier) => {
@@ -76,8 +86,9 @@ export const SpaceSideBar = (props: Props) => {
             />
             <ActionNavItem
               icon="at"
+              highlight={totalMentions > 0}
               id="mentions"
-              label="Mentions"
+              label={`Mentions ${totalMentions ? `(${totalMentions})` : ``}`}
               link={`/spaces/${space.id.slug}/mentions`}
             />
           </>

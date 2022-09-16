@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router";
 import { Channel, SpaceData, useZionContext } from "use-zion-client";
-import { Box, ButtonText, Icon, TooltipRenderer } from "@ui";
+import { ButtonText, Icon, TooltipRenderer } from "@ui";
 import { ChannelSettingsCard } from "@components/Cards/ChannelSettingsCard";
 import { NavItem } from "./_NavItem";
 
@@ -13,10 +13,10 @@ type Props = {
 
 export const ChannelNavItem = (props: Props) => {
   const { channelSlug } = useParams();
-  const { unreadCounts, mentionCounts } = useZionContext();
+  const { unreadCounts } = useZionContext();
+
   const { id, space, channel } = props;
   const unreadCount = unreadCounts[channel.id.matrixRoomId];
-  const mentionCount = mentionCounts[channel.id.matrixRoomId]; // austin todo move this into channel data?
 
   const link = `/spaces/${space.id.slug}/channels/${channel.id.slug}/`;
   const isHighlight = channel.id.slug === channelSlug;
@@ -48,12 +48,12 @@ export const ChannelNavItem = (props: Props) => {
               size="square_lg"
             />
             <ButtonText
-              strong={!!isHighlight}
-              color={!!isHighlight || isUnread ? "default" : "gray2"}
+              strong={isHighlight || isUnread}
+              color={isHighlight ? "default" : isUnread ? "gray1" : undefined}
             >
               {channelName}
             </ButtonText>
-            {!!mentionCount && (
+            {/* {!!mentionCount && (
               <Box
                 centerContent
                 shrink={false}
@@ -66,7 +66,7 @@ export const ChannelNavItem = (props: Props) => {
               >
                 {mentionCount}
               </Box>
-            )}
+            )} */}
           </NavItem>
         );
       }}

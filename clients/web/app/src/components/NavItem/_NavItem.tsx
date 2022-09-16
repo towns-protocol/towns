@@ -18,8 +18,10 @@ type NavLinkProps = {
 
 export const NavItem = forwardRef<
   HTMLElement,
-  { id?: string } & NavLinkProps & BoxProps & HTMLAttributes<HTMLDivElement>
->(({ id, to, exact, children, ...props }, ref) => {
+  { id?: string; highlight?: boolean } & NavLinkProps &
+    BoxProps &
+    HTMLAttributes<HTMLDivElement>
+>(({ id, to, exact, highlight: isHighlight, children, ...props }, ref) => {
   const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
 
   const match = useMatch({
@@ -61,8 +63,8 @@ export const NavItem = forwardRef<
             gap="sm"
             minHeight="x6"
             paddingX="sm"
-            fontWeight={match ? "strong" : "normal"}
-            color={match ? "default" : "gray2"}
+            fontWeight={isHighlight || match ? "strong" : "normal"}
+            color={isHighlight || match ? "gray1" : "gray2"}
           >
             {children}
           </Stack>

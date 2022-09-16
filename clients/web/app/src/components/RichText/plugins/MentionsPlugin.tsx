@@ -5,37 +5,47 @@ import {
   useBasicTypeaheadTriggerMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 
+import fuzzysort from "fuzzysort";
 import { $createTextNode, TextNode } from "lexical";
+import { RoomMember } from "matrix-js-sdk";
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import * as ReactDOM from "react-dom";
-import { UserData, fakeUsers } from "data/UserData";
 import { Avatar, Box, Stack, Text } from "@ui";
+import { notUndefined } from "ui/utils/utils";
 import { $createMentionNode } from "../nodes/MentionNode";
 import { LexicalTypeaheadMenuPlugin } from "./LexicalTypeaheadPlugin";
 
 // At most, 5 suggestions are shown in the popup.
 const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
-export const NewMentionsPlugin = () => {
+type Props = {
+  members: RoomMember[];
+};
+
+export const NewMentionsPlugin = (props: Props) => {
   const [editor] = useLexicalComposerContext();
+
   const [queryString, setQueryString] = useState<string | null>(null);
-  const results = useMentionLookupService(queryString);
 
   const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch("/", {
     minLength: 0,
   });
 
-  const options = useMemo(
-    () =>
-      results
-        .map(
-          (result) =>
-            new MentionTypeaheadOption(result.displayName, result.avatarSrc),
-        )
-        .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
-    [results],
-  );
+  const options = props.members
+    .map((m) =>
+      m.user?.displayName
+        ? new MentionTypeaheadOption(m.user?.displayName, m.user?.avatarUrl)
+        : undefined,
+    )
+    .filter(notUndefined);
+
+  const results = fuzzysort
+    .go(queryString || "", options, {
+      key: "name",
+    })
+    .map((r) => r.obj)
+    .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
 
   const onSelectOption = useCallback(
     (
@@ -44,7 +54,7 @@ export const NewMentionsPlugin = () => {
       closeMenu: () => void,
     ) => {
       editor.update(() => {
-        const mentionNode = $createMentionNode(selectedOption.name);
+        const mentionNode = $createMentionNode(`@${selectedOption.name}`);
         const spaceNode = $createTextNode(" ");
 
         if (nodeToReplace) {
@@ -71,12 +81,12 @@ export const NewMentionsPlugin = () => {
   return (
     <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
       triggerFn={checkForMentionMatch}
-      options={options}
+      options={results}
       menuRenderFn={(
         anchorElement,
         { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
       ) =>
-        anchorElement && results.length
+        anchorElement && options.length
           ? ReactDOM.createPortal(
               <Box border position="relative">
                 <Stack
@@ -88,10 +98,10 @@ export const NewMentionsPlugin = () => {
                   minWidth="250"
                   as="ul"
                 >
-                  {options.map((option, i: number) => (
+                  {results.map((option, i: number) => (
                     <MentionsTypeaheadMenuItem
                       index={i}
-                      isLast={options.length - 1 === i}
+                      isLast={results.length - 1 === i}
                       isSelected={selectedIndex === i}
                       key={option.key}
                       option={option}
@@ -162,7 +172,7 @@ const DocumentMentionsRegex = {
   PUNCTUATION,
 };
 
-const CapitalizedNameMentionsRegex = new RegExp(
+export const CapitalizedNameMentionsRegex = new RegExp(
   "(^|[^#])((?:" + DocumentMentionsRegex.NAME + "{" + 1 + ",})$)",
 );
 
@@ -186,7 +196,7 @@ const VALID_JOINS =
 
 const LENGTH_LIMIT = 75;
 
-const AtSignMentionsRegex = new RegExp(
+export const AtSignMentionsRegex = new RegExp(
   "(^|\\s|\\()(" +
     "[" +
     TRIGGERS +
@@ -204,7 +214,7 @@ const AtSignMentionsRegex = new RegExp(
 const ALIAS_LENGTH_LIMIT = 50;
 
 // Regex used to match alias.
-const AtSignMentionsRegexAliasRegex = new RegExp(
+export const AtSignMentionsRegexAliasRegex = new RegExp(
   "(^|\\s|\\()(" +
     "[" +
     TRIGGERS +
@@ -216,49 +226,6 @@ const AtSignMentionsRegexAliasRegex = new RegExp(
     "})" +
     ")$",
 );
-
-const mentionsCache = new Map();
-
-const dummyLookupService = {
-  search(user: string, callback: (results: Array<UserData>) => void): void {
-    setTimeout(() => {
-      const results = fakeUsers
-        .map((u) => u)
-        .filter((mention) =>
-          mention.displayName.toLowerCase().includes(user.toLowerCase()),
-        );
-      callback(results);
-    }, 100);
-  },
-};
-
-function useMentionLookupService(mentionString: string | null) {
-  const [results, setResults] = useState<Array<UserData>>([]);
-
-  useEffect(() => {
-    const cachedResults = mentionsCache.get(mentionString);
-
-    if (mentionString == null) {
-      setResults([]);
-      return;
-    }
-
-    if (cachedResults === null) {
-      return;
-    } else if (cachedResults !== undefined) {
-      setResults(cachedResults);
-      return;
-    }
-
-    mentionsCache.set(mentionString, null);
-    dummyLookupService.search(mentionString, (newResults) => {
-      mentionsCache.set(mentionString, newResults);
-      setResults(newResults);
-    });
-  }, [mentionString]);
-
-  return results;
-}
 
 const checkForCapitalizedNameMentions = (
   text: string,

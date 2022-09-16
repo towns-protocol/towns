@@ -1,4 +1,4 @@
-import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";
+import { $convertFromMarkdownString, Transformer } from "@lexical/markdown";
 import {
   $createParagraphNode,
   $getRoot,
@@ -10,7 +10,6 @@ import {
 } from "lexical";
 import { atoms } from "ui/styles/atoms.css";
 import { $createAnnotationNode } from "../nodes/AnnotationNode";
-import { MENTION_TRANSFORMER } from "../nodes/MentionNode";
 
 const theme: EditorThemeClasses = {
   text: {
@@ -33,6 +32,7 @@ const initialConfig = {
 export const useInitialConfig = (
   initialValue: string | undefined,
   nodes: Klass<LexicalNode>[],
+  transformers: Transformer[],
   readOnly?: boolean,
   edited?: boolean,
 ) => {
@@ -42,10 +42,7 @@ export const useInitialConfig = (
     readOnly,
     editorState: () => {
       if (initialValue) {
-        $convertFromMarkdownString(initialValue, [
-          ...TRANSFORMERS,
-          MENTION_TRANSFORMER,
-        ]);
+        $convertFromMarkdownString(initialValue, transformers);
       }
       if (edited) {
         appendEditedNotation();

@@ -25,7 +25,7 @@
   ],
   "rules": {
     "@typescript-eslint/no-base-to-string": "error",
-    "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
+    "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }],
     "import/no-named-as-default-member": "off",
     "react/display-name": "off",
     "react/jsx-boolean-value": ["warn", "never"],

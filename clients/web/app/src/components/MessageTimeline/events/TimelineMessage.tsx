@@ -26,7 +26,7 @@ type Props = {
   onReaction: (eventId: string, reaction: string) => void;
 };
 
-export const TimelineMessage = (props: Props) => {
+export const TimelineMessage = React.memo((props: Props) => {
   const {
     userId,
     channelId,
@@ -75,4 +75,4 @@ export const TimelineMessage = (props: Props) => {
       )}
     </Message>
   );
-};
+});
