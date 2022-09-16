@@ -71,8 +71,12 @@ export const MessageTimeline = (props: Props) => {
                       />
                     );
                   });
-
-                  return <Stack paddingY="sm">{messagesByUser}</Stack>;
+                  const key = r.events[0]?.eventId;
+                  return (
+                    <Stack paddingY="sm" key={key}>
+                      {messagesByUser}
+                    </Stack>
+                  );
                 }
 
                 case RenderEventType.RoomMember: {
