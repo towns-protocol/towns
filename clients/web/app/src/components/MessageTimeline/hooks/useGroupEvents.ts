@@ -110,12 +110,13 @@ const useHumanDate = () => {
   yesterday.setDate(yesterday.getDate() - 1);
 
   const getHumanDate = (date: Date) => {
-    const str = date.toDateString().replace(/20[0-9]{2}$/, "");
+    const str = date.toDateString();
+
     return today.toDateString() === str
       ? "Today"
       : yesterday.toDateString() === str
       ? "Yesterday"
-      : str;
+      : str.replace(/20[0-9]{2}$/, "");
   };
   return {
     getHumanDate,

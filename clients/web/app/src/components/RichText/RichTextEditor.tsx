@@ -67,7 +67,7 @@ export const RichTextPreview = React.memo(
   (props: { content: string; edited?: boolean }) => {
     // note: unnecessary repetition here, could be optimised by handling above
     // inside e.g. space context or timeline
-    const members = useSpaceMembers();
+    const { members } = useSpaceMembers();
     const { transformers } = useTransformers(members);
 
     const initialConfig = useInitialConfig(
@@ -96,7 +96,7 @@ export const RichTextEditor = (props: Props) => {
     onSend,
   } = props;
 
-  const members = useSpaceMembers();
+  const { members } = useSpaceMembers();
   const { transformers } = useTransformers(members);
 
   const initialConfig = useInitialConfig(

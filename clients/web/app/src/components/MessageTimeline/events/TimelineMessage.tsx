@@ -5,6 +5,7 @@ import {
   RoomIdentifier,
   RoomMessageEvent,
   TimelineEvent,
+  useSpaceMembers,
 } from "use-zion-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
@@ -41,16 +42,24 @@ export const TimelineMessage = React.memo((props: Props) => {
     onReaction,
   } = props;
 
+  const { sender } = eventContent;
+
+  // note: should be memoized
+  const { membersMap } = useSpaceMembers();
+  const user = membersMap.get(sender.id)?.user;
+  const displayName = user?.displayName ?? sender.displayName;
+  const avatarUrl = user?.avatarUrl ?? sender.avatarUrl;
+
   return !event ? null : (
     <Message
       userId={userId}
       timestamp={event.originServerTs}
-      avatar={eventContent.sender.avatarUrl}
+      avatar={avatarUrl}
       channelId={channelId}
       editable={isOwn && !event.isLocalPending}
       eventId={event.eventId}
       minimal={isMinimal}
-      name={`${eventContent.sender.displayName}`}
+      name={displayName}
       paddingY="sm"
       paddingX="lg"
       spaceId={spaceId}
