@@ -21,16 +21,33 @@ interface ISpaceManager {
     DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
   ) external returns (uint256);
 
-  /// @notice Connects the node network id to a space id
-  /// @param spaceId The space id to connect to the network id
-  /// @param networkId The network id to connect to the space id
-  function setNetworkIdToSpaceId(uint256 spaceId, string calldata networkId)
-    external;
-
   /// @notice Sets the default entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
   function registerDefaultEntitlementModule(address entitlementModuleAddress)
     external;
+
+  // @notice Adds or removes an entitlement module from the whitelist and from the space entitlements
+  function whitelistEntitlementModule(
+    uint256 spaceId,
+    address entitlementModuleAddress,
+    bool whitelist
+  ) external;
+
+  /// @notice add an entitlement to an entitlement module
+  function addEntitlement(
+    uint256 spaceId,
+    address entitlementAddress,
+    DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory data
+  ) external;
+
+  /// @notice Removes an entitlement from an entitlement module
+  function removeEntitlement(
+    uint256 spaceId,
+    address entitlementAddress,
+    DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory data
+  ) external;
 
   /// @notice Checks if a user has access to space or room based on the entitlements it holds
   /// @param spaceId The id of the space
@@ -52,14 +69,6 @@ interface ISpaceManager {
     external
     view
     returns (DataTypes.SpaceInfo memory);
-
-  /// @notice whitelist an entitlement module to a space and registers an entitlement to an entitlement module
-  function addEntitlement(
-    uint256 spaceId,
-    address entitlementAddress,
-    DataTypes.EntitlementType[] memory entitlementTypes,
-    bytes memory data
-  ) external;
 
   /// @notice Returns an array of multiple space information objects
   /// @return SpaceInfo[] an array containing the space info

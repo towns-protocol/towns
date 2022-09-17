@@ -25,13 +25,13 @@ library DataTypes {
     string name;
     address creator;
     address owner;
-    uint256 roomId;
+    Channel[] channels;
     mapping(address => bool) hasEntitlement;
     address[] entitlements;
+  }
 
-    // mapping(string => address) entitlements;
-    // string[] entitlementTags;
-    // status Status
+  struct Channel {
+    uint256 channelId;
   }
 
   /// @notice A struct representing minimal info for a space.
@@ -93,13 +93,5 @@ library DataTypes {
     uint256 price;
     string description;
     EntitlementType[] entitlementTypes;
-  }
-
-  /// @notice A struct containing the parameters required for setting an entitlement on an entitlement module.
-  struct SetEntitlementData {
-    uint256 spaceId;
-    uint256 roomId;
-    EntitlementType[] entitlementTypes;
-    bytes entitlementData;
   }
 }

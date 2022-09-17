@@ -2,13 +2,15 @@
 pragma solidity ^0.8.0;
 
 library Errors {
+  error InvalidParameters();
   error NameLengthInvalid();
   error NameContainsInvalidCharacters();
   error SpaceAlreadyRegistered();
   error NotSpaceOwner();
-  error EntitlementAlreadyRegistered();
+  error NotSpaceManager();
+  error EntitlementAlreadyWhitelisted();
   error EntitlementModuleNotSupported();
-  error DefaultEntitlementModuleNotSet();
   error EntitlementNotWhitelisted();
+  error DefaultEntitlementModuleNotSet();
   error SpaceDoesNotExist();
 }

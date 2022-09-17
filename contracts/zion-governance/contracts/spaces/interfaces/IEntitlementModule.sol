@@ -3,20 +3,12 @@ pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
 
-interface ISpaceEntitlementModule {
+interface IEntitlementModule {
   /// @notice The name of the entitlement module
   function name() external view returns (string memory);
 
   /// @notice The description of the entitlement module
   function description() external view returns (string memory);
-
-  /// @notice Sets the entitlements for a space
-  /// @param vars struct containing the spaceId, roomId, entitlementType and data
-  function setEntitlement(DataTypes.SetEntitlementData calldata vars)
-    external
-    returns (bytes memory);
-
-  // function removeEntitlement(DataTypes.RemoveEntitlementData calldata vars)
 
   /// @notice Checks if a user has access to space or room based on the entitlements it holds
   /// @param spaceId The id of the space
@@ -30,4 +22,23 @@ interface ISpaceEntitlementModule {
     address userAddress,
     DataTypes.EntitlementType entitlementType
   ) external view returns (bool);
+
+  /// @notice Sets the entitlements for a space
+  function setEntitlement(
+    uint256 spaceId,
+    uint256 roomId,
+    DataTypes.EntitlementType[] calldata entitlementTypes,
+    bytes calldata entitlementData
+  ) external;
+
+  /// @notice Removes the entitlements for a space
+  function removeEntitlement(
+    uint256 spaceId,
+    uint256 roomId,
+    DataTypes.EntitlementType[] calldata _entitlementTypes,
+    bytes calldata entitlementData
+  ) external;
+
+  // function isBanned()
+  // function ban();
 }

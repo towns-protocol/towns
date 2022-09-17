@@ -1,15 +1,14 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {ISpaceManager} from "./../interfaces/ISpaceManager.sol";
-import {ISpaceEntitlementModule} from "./../interfaces/ISpaceEntitlementModule.sol";
-import {DataTypes} from "./../libraries/DataTypes.sol";
+import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
+import {DataTypes} from "../../libraries/DataTypes.sol";
+import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {SpaceEntitlementModule} from "./SpaceEntitlementModule.sol";
 
-contract PurchasableEntitlementModule is SpaceEntitlementModule {
+contract PurchasableEntitlementModule is EntitlementModuleBase {
   mapping(uint256 => SpacePurchasableEntitlements) purchasableEntitlementsBySpaceId;
 
   struct SpacePurchasableEntitlements {
@@ -38,19 +37,20 @@ contract PurchasableEntitlementModule is SpaceEntitlementModule {
     string memory name_,
     string memory description_,
     address spaceManager_
-  ) SpaceEntitlementModule(name_, description_, spaceManager_) {}
+  ) EntitlementModuleBase(name_, description_, spaceManager_) {}
 
-  function setEntitlement(DataTypes.SetEntitlementData calldata vars)
-    public
-    override
-    returns (bytes memory)
-  {
+  function setEntitlement(
+    uint256 spaceId,
+    uint256,
+    DataTypes.EntitlementType[] calldata entitlementTypes,
+    bytes calldata entitlementData
+  ) external override onlySpaceManager {
     address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      vars.spaceId
+      spaceId
     );
 
     (string memory _description, uint256 value, string memory tag) = abi.decode(
-      vars.entitlementData,
+      entitlementData,
       (string, uint256, string)
     );
 
@@ -63,32 +63,24 @@ contract PurchasableEntitlementModule is SpaceEntitlementModule {
       revert("No value provided");
     }
 
-    if (vars.entitlementTypes.length == 0) {
+    if (entitlementTypes.length == 0) {
       revert("No entitlement types provided");
     }
 
     if (
-      purchasableEntitlementsBySpaceId[vars.spaceId]
-        .entitlementsByTag[tag]
-        .price != 0
+      purchasableEntitlementsBySpaceId[spaceId].entitlementsByTag[tag].price !=
+      0
     ) {
       revert("Entitlement tag already exists");
     }
 
     SpacePurchasableEntitlements
       storage spacePurchasableEntitlements = purchasableEntitlementsBySpaceId[
-        vars.spaceId
+        spaceId
       ];
     spacePurchasableEntitlements.entitlementsByTag[
       tag
-    ] = PurchasableEntitlement(
-      _description,
-      value,
-      vars.entitlementTypes,
-      true
-    );
-
-    return vars.entitlementData;
+    ] = PurchasableEntitlement(_description, value, entitlementTypes, true);
   }
 
   function disablePurchasableEntitlement(uint256 spaceId, string calldata tag)
@@ -109,6 +101,22 @@ contract PurchasableEntitlementModule is SpaceEntitlementModule {
       ];
 
     spacePurchasableEntitlements.entitlementsByTag[tag].isActive = false;
+  }
+
+  function removeEntitlement(
+    uint256 spaceId,
+    uint256,
+    DataTypes.EntitlementType[] calldata,
+    bytes calldata
+  ) external view override onlySpaceManager {
+    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
+      spaceId
+    );
+
+    require(
+      ownerAddress == msg.sender || msg.sender == _spaceManager,
+      "Only the owner can update entitlements"
+    );
   }
 
   function purchaseEntitlement(uint256 spaceId, string calldata tag)

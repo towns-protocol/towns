@@ -4,9 +4,9 @@ import "forge-std/Test.sol";
 import {ZionSpaceManager} from "../../contracts/spaces/ZionSpaceManager.sol";
 import {Zion} from "../../contracts/governance/Zion.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
-import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "../../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {PurchasableEntitlementModule} from "../../contracts/spaces/modules/entitlements/PurchasableEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
-import {PurchasableEntitlementModule} from "../../contracts/spaces/entitlements/PurchasableEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
 import {Constants} from "../../contracts/council/libraries/Constants.sol";
@@ -73,6 +73,12 @@ contract PurchasableEntitlementModuleTest is Test {
     string memory description = "Purchase the entitlement to be a moderator";
     uint256 value = .08 ether;
     string memory tag = "buy-moderator";
+
+    spaceManager.whitelistEntitlementModule(
+      spaceId,
+      address(purchasableEntitlementModule),
+      true
+    );
 
     // Add purchasable entitlement module to space
     spaceManager.addEntitlement(

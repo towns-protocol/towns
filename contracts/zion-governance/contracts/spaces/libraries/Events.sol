@@ -33,6 +33,16 @@ library Events {
   );
 
   /**
+   * @dev Emitted when an entitlement module is removed from a space
+   * @param spaceId The id of the space
+   * @param entitlementAddress The address of the entitlement module
+   */
+  event EntitlementModuleRemoved(
+    uint256 indexed spaceId,
+    address indexed entitlementAddress
+  );
+
+  /**
    * @dev Emitted when the default entitlement module is set on the contract
    * @param entitlementAddress The address of the entitlement module
    */

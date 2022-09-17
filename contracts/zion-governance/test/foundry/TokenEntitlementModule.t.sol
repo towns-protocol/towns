@@ -4,9 +4,9 @@ import "forge-std/Test.sol";
 import {ZionSpaceManager} from "../../contracts/spaces/ZionSpaceManager.sol";
 import {Zion} from "../../contracts/governance/Zion.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
-import {UserGrantedEntitlementModule} from "../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
-import {TokenEntitlementModule} from "../../contracts/spaces/entitlements/TokenEntitlementModule.sol";
+import {TokenEntitlementModule} from "./../../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "./../../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../../contracts/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
 import {Constants} from "../../contracts/council/libraries/Constants.sol";
@@ -88,6 +88,12 @@ contract TokenEntitlementModuleTest is Test {
     uint256[] memory quantities = new uint256[](1);
     quantities[0] = 10;
 
+    spaceManager.whitelistEntitlementModule(
+      spaceId,
+      address(tokenEntitlementModule),
+      true
+    );
+
     // Add token entitlement module to space
     spaceManager.addEntitlement(
       spaceId,
@@ -149,6 +155,12 @@ contract TokenEntitlementModuleTest is Test {
       .EntitlementType
       .Moderator;
     entitlementTypes[0] = entitlementType;
+
+    spaceManager.whitelistEntitlementModule(
+      spaceId,
+      address(tokenEntitlementModule),
+      true
+    );
 
     // Add the token entitlement module to the space
     spaceManager.addEntitlement(

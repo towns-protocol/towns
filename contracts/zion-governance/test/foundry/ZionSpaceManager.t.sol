@@ -3,15 +3,15 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import {ZionSpaceManager} from "./../../contracts/spaces/ZionSpaceManager.sol";
-import {UserGrantedEntitlementModule} from "./../../contracts/spaces/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "./../../contracts/spaces/libraries/DataTypes.sol";
-import {TokenEntitlementModule} from "./../../contracts/spaces/entitlements/TokenEntitlementModule.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
 import "murky/Merkle.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Events} from "./../../contracts/spaces/libraries/Events.sol";
 import {Errors} from "./../../contracts/spaces/libraries/Errors.sol";
+import {TokenEntitlementModule} from "./../../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "./../../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 
 contract ZionSpaceManagerTest is Test, MerkleHelper {
   ZionSpaceManager internal zionSpaceManager;
@@ -141,10 +141,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       DataTypes.CreateSpaceData("test", "initial-network-id")
     );
 
-    zionSpaceManager.setNetworkIdToSpaceId(spaceId, "test-network-id");
-
     uint256 spaceIdByNetworkId = zionSpaceManager.getSpaceIdByNetworkId(
-      "test-network-id"
+      "initial-network-id"
     );
 
     assertEq(spaceIdByNetworkId, spaceId);
@@ -172,7 +170,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
 
     zionSpaceManager.whitelistEntitlementModule(
       spaceId,
-      address(tokenEntitlementModule)
+      address(tokenEntitlementModule),
+      true
     );
 
     address[] memory entitlements = zionSpaceManager.getEntitlementsBySpaceId(
@@ -215,7 +214,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     quantities[0] = 1;
 
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
-    zionSpaceManager.registerEntitlementWithEntitlementModule(
+    zionSpaceManager.addEntitlement(
       spaceId,
       address(tokenEntitlementModule),
       entitlements,
@@ -224,10 +223,11 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
 
     zionSpaceManager.whitelistEntitlementModule(
       spaceId,
-      address(tokenEntitlementModule)
+      address(tokenEntitlementModule),
+      true
     );
 
-    zionSpaceManager.registerEntitlementWithEntitlementModule(
+    zionSpaceManager.addEntitlement(
       spaceId,
       address(tokenEntitlementModule),
       entitlements,
@@ -249,12 +249,11 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       memory entitlementTypes = new DataTypes.EntitlementType[](1);
     entitlementTypes[0] = DataTypes.EntitlementType.Administrator;
 
-    vm.expectRevert(Errors.EntitlementAlreadyRegistered.selector);
-    zionSpaceManager.addEntitlement(
+    vm.expectRevert(Errors.EntitlementAlreadyWhitelisted.selector);
+    zionSpaceManager.whitelistEntitlementModule(
       spaceId,
       address(userGrantedEntitlementModule),
-      entitlementTypes,
-      abi.encode(address(this))
+      true
     );
   }
 }

@@ -6,7 +6,6 @@ import {Errors} from "../libraries/Errors.sol";
 import {Events} from "../libraries/Events.sol";
 import {Constants} from "../libraries/Constants.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {ISpaceEntitlementModule} from "../interfaces/ISpaceEntitlementModule.sol";
 
 library ZionSpaceController {
   function createSpace(
@@ -32,15 +31,9 @@ library ZionSpaceController {
     _spaceById[spaceId].networkId = info.networkId;
     _spaceById[spaceId].creator = creator;
     _spaceById[spaceId].owner = creator;
-    _spaceById[spaceId].roomId = 0;
 
     _spaceIdByNetworkId[info.networkId] = spaceId;
   }
-
-  function _emitSpaceCreated(
-    uint256 spaceId,
-    DataTypes.CreateSpaceData calldata info
-  ) internal {}
 
   /// @notice validates the name of the space
   /// @param name The name of the space

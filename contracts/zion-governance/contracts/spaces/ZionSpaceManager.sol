@@ -3,13 +3,12 @@ pragma solidity ^0.8.0;
 
 import "forge-std/console.sol";
 import {ISpaceManager} from "./interfaces/ISpaceManager.sol";
-import {ISpaceEntitlementModule} from "./interfaces/ISpaceEntitlementModule.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IEntitlementModule} from "./interfaces/IEntitlementModule.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Constants} from "./libraries/Constants.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
-import {UserGrantedEntitlementModule} from "./entitlements/UserGrantedEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "./modules/entitlements/UserGrantedEntitlementModule.sol";
 import {ZionSpaceManagerStorage} from "./storage/ZionSpaceManagerStorage.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -32,6 +31,13 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
 
     // create space Id
     uint256 spaceId = _createSpace(info);
+
+    // whitespace default entitlement module
+    _whitelistEntitlementModule(
+      spaceId,
+      _defaultEntitlementModuleAddress,
+      true
+    );
 
     // add default entitlement module
     DataTypes.EntitlementType[]
@@ -60,6 +66,20 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
   ) external returns (uint256) {
     uint256 spaceId = _createSpace(info);
+
+    // whitespace default entitlement module
+    _whitelistEntitlementModule(
+      spaceId,
+      _defaultEntitlementModuleAddress,
+      true
+    );
+
+    // whitespace token entitlement module
+    _whitelistEntitlementModule(
+      spaceId,
+      entitlement.entitlementModuleAddress,
+      true
+    );
 
     // add default entitlement module
     DataTypes.EntitlementType[]
@@ -94,18 +114,6 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return spaceId;
   }
 
-  /// @inheritdoc ISpaceManager
-  function setNetworkIdToSpaceId(uint256 spaceId, string calldata networkId)
-    external
-  {
-    _validateCallerIsSpaceOwner(spaceId);
-
-    _spaceById[spaceId].networkId = networkId;
-    _spaceIdByNetworkId[networkId] = spaceId;
-
-    emit Events.NetworkIdSet(spaceId, networkId);
-  }
-
   /// *********************************
   /// *****ENTITLEMENT FUNCTIONS*******
   /// *********************************
@@ -119,31 +127,15 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     emit Events.DefaultEntitlementSet(entitlementModule);
   }
 
-  /// @notice whitelist an entitlement module to a space without setting any entitlements
+  /// @inheritdoc ISpaceManager
   function whitelistEntitlementModule(
     uint256 spaceId,
-    address entitlementAddress
-  ) external {
-    _validateCallerIsSpaceOwner(spaceId);
-    _validateEntitlementInterface(entitlementAddress);
-    _whitelistEntitlementModule(spaceId, entitlementAddress);
-  }
-
-  /// @notice registers an entitlement to an entitlement module
-  function registerEntitlementWithEntitlementModule(
-    uint256 spaceId,
     address entitlementAddress,
-    DataTypes.EntitlementType[] calldata entitlementTypes,
-    bytes calldata entitlementData
+    bool whitelist
   ) external {
     _validateCallerIsSpaceOwner(spaceId);
     _validateEntitlementInterface(entitlementAddress);
-    _registerEntitlementWithEntitlementModule(
-      spaceId,
-      entitlementAddress,
-      entitlementTypes,
-      entitlementData
-    );
+    _whitelistEntitlementModule(spaceId, entitlementAddress, whitelist);
   }
 
   /// @inheritdoc ISpaceManager
@@ -151,46 +143,35 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     uint256 spaceId,
     address entitlementModuleAddress,
     DataTypes.EntitlementType[] memory entitlementTypes,
-    bytes memory data
+    bytes calldata entitlementData
   ) public {
     _validateCallerIsSpaceOwner(spaceId);
     _validateEntitlementInterface(entitlementModuleAddress);
-
-    if (_spaceById[spaceId].hasEntitlement[entitlementModuleAddress])
-      revert Errors.EntitlementAlreadyRegistered();
-
-    _addEntitlement(spaceId, entitlementModuleAddress, entitlementTypes, data);
-    emit Events.EntitlementModuleAdded(spaceId, entitlementModuleAddress);
-  }
-
-  function addTokenEntitlement(
-    uint256 spaceId,
-    address entitlementModuleAddress,
-    DataTypes.EntitlementType[] memory entitlementTypes,
-    address tokenAddress,
-    uint256 amount,
-    string memory description
-  ) public {
-    _validateCallerIsSpaceOwner(spaceId);
-    _validateEntitlementInterface(entitlementModuleAddress);
-
-    if (_spaceById[spaceId].hasEntitlement[entitlementModuleAddress])
-      revert Errors.EntitlementAlreadyRegistered();
-
-    address[] memory tokens = new address[](1);
-    uint256[] memory quantities = new uint256[](1);
-
-    tokens[0] = tokenAddress;
-    quantities[0] = amount;
-
     _addEntitlement(
       spaceId,
       entitlementModuleAddress,
       entitlementTypes,
-      abi.encode(description, tokens, quantities)
+      entitlementData
     );
 
     emit Events.EntitlementModuleAdded(spaceId, entitlementModuleAddress);
+  }
+
+  function removeEntitlement(
+    uint256 spaceId,
+    address entitlementModuleAddress,
+    DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory data
+  ) public {
+    _validateCallerIsSpaceOwner(spaceId);
+    _validateEntitlementInterface(entitlementModuleAddress);
+    _removeEntitlement(
+      spaceId,
+      entitlementModuleAddress,
+      entitlementTypes,
+      data
+    );
+    emit Events.EntitlementModuleRemoved(spaceId, entitlementModuleAddress);
   }
 
   /// @inheritdoc ISpaceManager
@@ -208,7 +189,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       if (entitlement == address(0)) continue;
 
       if (
-        ISpaceEntitlementModule(entitlement).isEntitled(
+        IEntitlementModule(entitlement).isEntitled(
           spaceId,
           roomId,
           user,
@@ -296,8 +277,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       DataTypes.EntitlementModuleInfo memory info = DataTypes
         .EntitlementModuleInfo(
           entitlement,
-          ISpaceEntitlementModule(entitlement).name(),
-          ISpaceEntitlementModule(entitlement).description()
+          IEntitlementModule(entitlement).name(),
+          IEntitlementModule(entitlement).description()
         );
 
       entitlementsInfo[i] = info;
@@ -353,12 +334,35 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     uint256 spaceId,
     address entitlementAddress,
     DataTypes.EntitlementType[] memory entitlementTypes,
+    bytes memory entitlementData
+  ) internal {
+    // make sure entitlement module is whitelisted
+    if (!_spaceById[spaceId].hasEntitlement[entitlementAddress])
+      revert Errors.EntitlementNotWhitelisted();
+
+    // add the entitlement to the entitlement module
+    IEntitlementModule(entitlementAddress).setEntitlement(
+      spaceId,
+      0,
+      entitlementTypes,
+      entitlementData
+    );
+  }
+
+  function _removeEntitlement(
+    uint256 spaceId,
+    address entitlementAddress,
+    DataTypes.EntitlementType[] memory entitlementTypes,
     bytes memory data
   ) internal {
-    _whitelistEntitlementModule(spaceId, entitlementAddress);
-    _registerEntitlementWithEntitlementModule(
+    // make sure entitlement module is whitelisted
+    if (!_spaceById[spaceId].hasEntitlement[entitlementAddress])
+      revert Errors.EntitlementNotWhitelisted();
+
+    // add the entitlement to the entitlement module
+    IEntitlementModule(entitlementAddress).removeEntitlement(
       spaceId,
-      entitlementAddress,
+      0,
       entitlementTypes,
       data
     );
@@ -366,34 +370,30 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
 
   function _whitelistEntitlementModule(
     uint256 spaceId,
-    address entitlementAddress
+    address entitlementAddress,
+    bool whitelist
   ) internal {
+    if (whitelist && _spaceById[spaceId].hasEntitlement[entitlementAddress]) {
+      revert Errors.EntitlementAlreadyWhitelisted();
+    }
+
     // set entitlement tag to space entitlement tags
-    _spaceById[spaceId].hasEntitlement[entitlementAddress] = true;
+    _spaceById[spaceId].hasEntitlement[entitlementAddress] = whitelist;
 
     // set entitlement address to space entitlements
-    _spaceById[spaceId].entitlements.push(entitlementAddress);
-  }
-
-  function _registerEntitlementWithEntitlementModule(
-    uint256 spaceId,
-    address entitlementAddress,
-    DataTypes.EntitlementType[] memory entitlementTypes,
-    bytes memory data
-  ) internal {
-    // make sure entitlement module is whitelisted
-    if (_spaceById[spaceId].hasEntitlement[entitlementAddress] != true)
-      revert Errors.EntitlementNotWhitelisted();
-
-    // add the entitlement to the entitlement module
-    ISpaceEntitlementModule(entitlementAddress).setEntitlement(
-      DataTypes.SetEntitlementData(
-        spaceId,
-        _spaceById[spaceId].roomId,
-        entitlementTypes,
-        data
-      )
-    );
+    if (whitelist) {
+      _spaceById[spaceId].entitlements.push(entitlementAddress);
+    } else {
+      uint256 len = _spaceById[spaceId].entitlements.length;
+      for (uint256 i = 0; i < len; i++) {
+        if (_spaceById[spaceId].entitlements[i] == entitlementAddress) {
+          // Remove the entitlement address from the space entitlements
+          _spaceById[spaceId].entitlements[i] = _spaceById[spaceId]
+            .entitlements[len - 1];
+          _spaceById[spaceId].entitlements.pop();
+        }
+      }
+    }
   }
 
   /// @notice validate that the caller is the owner of the space
@@ -414,7 +414,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   {
     if (
       IERC165(entitlementAddress).supportsInterface(
-        type(ISpaceEntitlementModule).interfaceId
+        type(IEntitlementModule).interfaceId
       ) == false
     ) revert Errors.EntitlementModuleNotSupported();
   }

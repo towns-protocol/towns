@@ -1,15 +1,14 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {ISpaceManager} from "./../interfaces/ISpaceManager.sol";
-import {ISpaceEntitlementModule} from "./../interfaces/ISpaceEntitlementModule.sol";
-import {DataTypes} from "./../libraries/DataTypes.sol";
+import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
+import {DataTypes} from "../../libraries/DataTypes.sol";
+import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {SpaceEntitlementModule} from "./SpaceEntitlementModule.sol";
 
-contract TokenEntitlementModule is SpaceEntitlementModule {
+contract TokenEntitlementModule is EntitlementModuleBase {
   struct Entitlement {
     address grantedBy;
     uint256 grantedTime;
@@ -42,15 +41,16 @@ contract TokenEntitlementModule is SpaceEntitlementModule {
     string memory name_,
     string memory description_,
     address spaceManager_
-  ) SpaceEntitlementModule(name_, description_, spaceManager_) {}
+  ) EntitlementModuleBase(name_, description_, spaceManager_) {}
 
-  function setEntitlement(DataTypes.SetEntitlementData calldata vars)
-    public
-    override
-    returns (bytes memory)
-  {
+  function setEntitlement(
+    uint256 spaceId,
+    uint256 roomId,
+    DataTypes.EntitlementType[] calldata entitlementTypes,
+    bytes calldata entitlementData
+  ) public override onlySpaceManager {
     address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      vars.spaceId
+      spaceId
     );
 
     require(
@@ -62,7 +62,7 @@ contract TokenEntitlementModule is SpaceEntitlementModule {
       string memory desc,
       address[] memory tokens,
       uint256[] memory quantities
-    ) = abi.decode(vars.entitlementData, (string, address[], uint256[]));
+    ) = abi.decode(entitlementData, (string, address[], uint256[]));
 
     if (tokens.length == 0) {
       revert("No tokens provided");
@@ -72,10 +72,10 @@ contract TokenEntitlementModule is SpaceEntitlementModule {
       revert("Token and quantity arrays must be the same length");
     }
 
-    if (vars.roomId > 0) {
-      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
-        vars.spaceId
-      ].roomEntitlementsByRoomId[vars.roomId].entitlementsByDescription[desc];
+    if (roomId > 0) {
+      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[spaceId]
+        .roomEntitlementsByRoomId[roomId]
+        .entitlementsByDescription[desc];
 
       for (uint256 i = 0; i < tokens.length; i++) {
         ExternalToken memory externalToken = ExternalToken(
@@ -85,18 +85,17 @@ contract TokenEntitlementModule is SpaceEntitlementModule {
         tokenEntitlement.tokens.push(externalToken);
       }
 
-      for (uint256 i = 0; i < vars.entitlementTypes.length; i++) {
+      for (uint256 i = 0; i < entitlementTypes.length; i++) {
         Entitlement memory entitlement = Entitlement(
           msg.sender,
           block.timestamp,
-          vars.entitlementTypes[i]
+          entitlementTypes[i]
         );
         tokenEntitlement.entitlements.push(entitlement);
       }
     } else {
-      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
-        vars.spaceId
-      ].entitlementsByDescription[desc];
+      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[spaceId]
+        .entitlementsByDescription[desc];
 
       for (uint256 i = 0; i < tokens.length; i++) {
         ExternalToken memory externalToken = ExternalToken(
@@ -106,30 +105,28 @@ contract TokenEntitlementModule is SpaceEntitlementModule {
         tokenEntitlement.tokens.push(externalToken);
       }
 
-      for (uint256 i = 0; i < vars.entitlementTypes.length; i++) {
+      for (uint256 i = 0; i < entitlementTypes.length; i++) {
         Entitlement memory entitlement = Entitlement(
           msg.sender,
           block.timestamp,
-          vars.entitlementTypes[i]
+          entitlementTypes[i]
         );
 
         tokenEntitlement.entitlements.push(entitlement);
 
-        entitlementsBySpaceId[vars.spaceId]
-          .tagsByEntitlementType[vars.entitlementTypes[i]]
+        entitlementsBySpaceId[spaceId]
+          .tagsByEntitlementType[entitlementTypes[i]]
           .push(desc);
       }
     }
-
-    return vars.entitlementData;
   }
 
-  function removeUserEntitlement(
+  function removeEntitlement(
     uint256 spaceId,
     uint256 roomId,
-    string calldata desc,
-    DataTypes.EntitlementType[] memory entitlementTypes
-  ) public {
+    DataTypes.EntitlementType[] calldata entitlementTypes,
+    bytes calldata entitlementData
+  ) external override onlySpaceManager {
     address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
       spaceId
     );
@@ -137,6 +134,12 @@ contract TokenEntitlementModule is SpaceEntitlementModule {
     if (ownerAddress != msg.sender || msg.sender != _spaceManager) {
       revert("Only the owner can update entitlements");
     }
+
+    (
+      string memory desc,
+      address[] memory tokens,
+      uint256[] memory quantities
+    ) = abi.decode(entitlementData, (string, address[], uint256[]));
 
     if (roomId > 0) {
       delete entitlementsBySpaceId[spaceId]

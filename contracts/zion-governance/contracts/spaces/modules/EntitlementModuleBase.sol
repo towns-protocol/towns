@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {ISpaceEntitlementModule} from "../interfaces/ISpaceEntitlementModule.sol";
-import {DataTypes} from "../libraries/DataTypes.sol";
+import {Errors} from "../libraries/Errors.sol";
+import {IEntitlementModule} from "../interfaces/IEntitlementModule.sol";
 
-abstract contract SpaceEntitlementModule is
-  Context,
-  ERC165,
-  ISpaceEntitlementModule
-{
-  /// @notice Entitlement name
+abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
+  address public immutable _spaceManager;
   string private _name;
-
-  /// @notice Entitlement description
   string private _description;
 
-  /// @notice The address of the space manager
-  address public immutable _spaceManager;
+  modifier onlySpaceManager() {
+    if (msg.sender != _spaceManager) {
+      revert Errors.NotSpaceManager();
+    }
+    _;
+  }
 
   constructor(
     string memory name_,
     string memory description_,
     address spaceManager_
   ) {
+    if (spaceManager_ == address(0)) {
+      revert Errors.InvalidParameters();
+    }
+
     _name = name_;
     _description = description_;
     _spaceManager = spaceManager_;
@@ -46,7 +47,7 @@ abstract contract SpaceEntitlementModule is
     returns (bool)
   {
     return
-      interfaceId == type(ISpaceEntitlementModule).interfaceId ||
+      interfaceId == type(IEntitlementModule).interfaceId ||
       super.supportsInterface(interfaceId);
   }
 }
