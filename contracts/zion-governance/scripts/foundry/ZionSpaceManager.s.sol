@@ -48,7 +48,7 @@ contract DeployZionSpaceManager is Script {
     );
     writer = writer.writeStringProperty(
       "usergranted",
-      Helper.toString(abi.encodePacked(address(grantedEntitlementModule)))
+      Helper.toString(abi.encodePacked(address(userGrantedEntitlementModule)))
     );
     writer = writer.writeStringProperty(
       "tokengranted",
