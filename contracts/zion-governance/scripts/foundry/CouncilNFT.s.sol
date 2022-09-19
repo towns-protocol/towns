@@ -4,9 +4,14 @@ import "forge-std/Script.sol";
 import {CouncilNFT} from "../../contracts/council/CouncilNFT.sol";
 import "murky/Merkle.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
+import {Helper} from "./Helper.sol";
+import "solidity-json-writer/contracts/JsonWriter.sol";
 
 contract DeployCouncilNFT is Script {
   using Strings for uint256;
+  using JsonWriter for JsonWriter.Json;
+
+  JsonWriter.Json writer;
 
   uint256 private NFT_PRICE = 0.08 ether;
 
@@ -39,6 +44,21 @@ contract DeployCouncilNFT is Script {
     councilNFT.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
     councilNFT.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
     councilNFT.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
+
+    writer = writer.writeStartObject();
+    writer = writer.writeStringProperty(
+      "councilnft",
+      vm.toString(abi.encodePacked(address(councilNFT)))
+    );
+    writer = writer.writeEndObject();
+
+    string memory path = string.concat(
+      "packages/contract-addresses/",
+      vm.toString(Helper.getChainId()),
+      "/council.json"
+    );
+
+    vm.writeFile(path, writer.value);
 
     vm.stopBroadcast();
   }

@@ -2791,6 +2791,7 @@ __metadata:
     solhint-plugin-prettier: ^0.0.5
     solidity-coverage: ^0.7.21
     solidity-docgen: ^0.6.0-beta.25
+    solidity-json-writer: ^1.1.0
     ts-node: ^10.9.1
     typechain: ^8.1.0
     typescript: ^4.7.4
@@ -29135,6 +29136,13 @@ __metadata:
   peerDependencies:
     hardhat: ^2.8.0
   checksum: 50e7ef4e946f3e1cfadfcbc8c56a461ccadcf26296c882441191aaba6f5538cbca7ddd5791038aae9874db1968fea55a23dd964cc50ddab33aa4f456e7a9dee3
+  languageName: node
+  linkType: hard
+
+"solidity-json-writer@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "solidity-json-writer@npm:1.1.0"
+  checksum: a2ad5d5632965463542d8e8bdd0228297f09051f8454f532c9e40ed5b2ce51e25d593712b9d030abb44d2782ee40625e579d217f8926a50986a9f77b5ce10d4f
   languageName: node
   linkType: hard
 

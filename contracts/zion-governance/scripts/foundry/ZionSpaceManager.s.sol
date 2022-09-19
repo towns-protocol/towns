@@ -6,8 +6,13 @@ import {TokenEntitlementModule} from "./../../contracts/spaces/modules/entitleme
 import {UserGrantedEntitlementModule} from "./../../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {ZionSpaceManager} from "../../contracts/spaces/ZionSpaceManager.sol";
 import {DataTypes} from "./../../contracts/spaces/libraries/DataTypes.sol";
+import {Helper} from "./Helper.sol";
+import "solidity-json-writer/contracts/JsonWriter.sol";
 
 contract DeployZionSpaceManager is Script {
+  using JsonWriter for JsonWriter.Json;
+  JsonWriter.Json writer;
+
   function run() external {
     vm.startBroadcast();
 
@@ -35,6 +40,29 @@ contract DeployZionSpaceManager is Script {
     zionSpaceManager.registerDefaultEntitlementModule(
       address(userGrantedEntitlementModule)
     );
+
+    writer = writer.writeStartObject();
+    writer = writer.writeStringProperty(
+      "spacemanager",
+      Helper.toString(abi.encodePacked(address(zionSpaceManager)))
+    );
+    writer = writer.writeStringProperty(
+      "usergranted",
+      Helper.toString(abi.encodePacked(address(grantedEntitlementModule)))
+    );
+    writer = writer.writeStringProperty(
+      "tokengranted",
+      Helper.toString(abi.encodePacked(address(tokenEntitlementModule)))
+    );
+    writer = writer.writeEndObject();
+
+    string memory path = string.concat(
+      "packages/contract-addresses/",
+      vm.toString(Helper.getChainId()),
+      "/space-manager.json"
+    );
+
+    vm.writeFile(path, writer.value);
 
     vm.stopBroadcast();
   }
