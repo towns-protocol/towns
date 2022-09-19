@@ -1,3 +1,5 @@
+import { allChains } from "wagmi";
+
 export const LoginTypePublicKey = "m.login.publickey";
 export const LoginTypePublicKeyEthereum = "m.login.publickey.ethereum";
 
@@ -102,47 +104,12 @@ export function getParamsPublicKeyEthereum(
   return undefined;
 }
 
-export function getChainIdEip155(chainId: string): number {
-  if (chainId.startsWith("0x")) {
-    return parseInt(chainId, 16);
-  } else {
-    return parseInt(chainId);
-  }
-}
-
-export function getChainHexString(chainId: number): string {
-  return "0x" + chainId.toString(16);
-}
-
 // https://chainlist.org/
 // https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
 export function getChainName(chainId: number): string {
-  switch (chainId) {
-    case 1:
-      return "Ethereum Mainnet";
-    case 2:
-      return "Expanse Mainnet";
-    case 3:
-      return "Ropsten Test Network";
-    case 4:
-      return "Rinkeby Test Network";
-    case 5:
-      return "Goerli Test Network";
-    case 42:
-      return "Kovan Test Network";
-    case 56:
-      return "Binance Smart Chain Mainnet";
-    case 137:
-      return "Polygon Mainnet";
-    case 42161:
-      return "Arbitrum One";
-    case 10:
-      return "Optimism";
-    case 100:
-      return "Gnosis Chain";
-    case 1337:
-      return "Geth private chains";
-    default:
-      return chainId.toString();
+  const chain = allChains.find((x) => x.id === chainId);
+  if (chain) {
+    return chain.name;
   }
+  throw new Error(`ChainId ${chainId} not found`);
 }

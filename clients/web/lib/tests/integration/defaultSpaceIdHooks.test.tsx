@@ -16,7 +16,6 @@ import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
 import { useMyMembership } from "../../src/hooks/use-my-membership";
 import { useWeb3Context } from "../../src/components/Web3ContextProvider";
-import { WalletStatus } from "../../src/types/web3-types";
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -40,7 +39,7 @@ describe("defaultSpaceIdHooks", () => {
     });
     // create a veiw for bob
     const TestDefaultRoom = () => {
-      const { walletStatus } = useWeb3Context();
+      const { isConnected } = useWeb3Context();
       const { loginStatus, loginError } = useMatrixStore();
       const { registerWallet, joinRoom, clientRunning } = useZionClient();
       const defaultSpace = useSpaceData();
@@ -54,7 +53,7 @@ describe("defaultSpaceIdHooks", () => {
       }, [joinRoom]);
       return (
         <>
-          <div data-testid="walletStatus">{walletStatus}</div>
+          <div data-testid="isConnected">{isConnected.toString()}</div>
           <div data-testid="loginStatus">{loginStatus}</div>
           <div data-testid="loginError">{loginError?.message ?? ""}</div>
           <button onClick={onClickRegisterWallet}>Register</button>
@@ -96,7 +95,7 @@ describe("defaultSpaceIdHooks", () => {
       </ZionTestApp>,
     );
     // get our test elements
-    const walletStatus = screen.getByTestId("walletStatus");
+    const isConnected = screen.getByTestId("isConnected");
     const loginStatus = screen.getByTestId("loginStatus");
     const clientRunning = screen.getByTestId("clientRunning");
     const spaceRoomName = screen.getByTestId("spaceRoomName");
@@ -109,9 +108,7 @@ describe("defaultSpaceIdHooks", () => {
     const registerButton = screen.getByRole("button", { name: "Register" });
     const joinButton = screen.getByRole("button", { name: "Join" });
     // wait for our wallet to get unlocked
-    await waitFor(() =>
-      expect(walletStatus).toHaveTextContent(WalletStatus.Unlocked),
-    );
+    await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()));
     // click the register button
     fireEvent.click(registerButton);
     // expect our status to change to logged in

@@ -9,7 +9,6 @@ import {
   PublicKeyEtheremParams,
   RegisterRequest,
   RegistrationAuthentication,
-  getChainIdEip155,
   getChainName,
   getParamsPublicKeyEthereum,
   isLoginFlowPublicKeyEthereum,
@@ -56,26 +55,16 @@ export function useMatrixWalletSignIn() {
   } = useMatrixStore();
   const { homeServerUrl: homeServer } = useZionContext();
   const { setAccessToken } = useCredentialStore();
-  const { accounts, sign, chainId } = useWeb3Context();
+  const { accounts, sign, chain } = useWeb3Context();
 
-  const chainIdEip155 = useMemo(
-    function () {
-      if (chainId) {
-        return getChainIdEip155(chainId);
-      }
-    },
-    [chainId],
-  );
+  const chainIdEip155 = chain?.id;
 
-  const userIdentifier = useMemo(
-    function () {
-      if (accounts && accounts.length > 0 && chainIdEip155) {
-        return createUserIdFromEthereumAddress(accounts[0], chainIdEip155);
-      }
-      return undefined;
-    },
-    [accounts, chainIdEip155],
-  );
+  const userIdentifier = useMemo(() => {
+    if (accounts && accounts.length > 0 && chainIdEip155) {
+      return createUserIdFromEthereumAddress(accounts[0], chainIdEip155);
+    }
+    return undefined;
+  }, [accounts, chainIdEip155]);
 
   const authenticationError = useCallback(
     function (error: AuthenticationError): void {

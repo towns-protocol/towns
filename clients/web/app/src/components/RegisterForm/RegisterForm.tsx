@@ -74,7 +74,7 @@ export const RegisterForm = () => {
     }
   }, [myProfile?.avatarUrl, setValue]);
 
-  const isConnected = walletStatus === WalletStatus.Unlocked;
+  const isConnected = walletStatus === WalletStatus.Connected;
   const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected);
 
   console.log({ registrationStatus });

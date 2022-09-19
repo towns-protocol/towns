@@ -52,6 +52,7 @@
     "throttle-debounce": "^5.0.0",
     "use-zion-client": "workspace:*",
     "vanilla-classnames": "^0.1.0",
+    "wagmi": "^0.6.6",
     "zustand": "^4.1.1"
   },
   "devDependencies": {

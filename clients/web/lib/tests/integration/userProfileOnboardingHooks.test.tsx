@@ -48,7 +48,7 @@ describe("userProfileOnboardingHooks", () => {
     // verify alice userid is rendering
     await waitFor(() =>
       expect(myProfileName).toHaveTextContent(
-        `eip155=3a${chainId}=3a${aliceProvider.wallet.address.toLowerCase()}`,
+        `eip155=3a${chainId}=3a${aliceProvider.wallet.address.toLowerCase()}`, // hmmm....
       ),
     );
   }); // end test

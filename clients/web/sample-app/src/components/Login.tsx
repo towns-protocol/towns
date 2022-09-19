@@ -9,16 +9,21 @@ import {
 } from "@mui/material";
 import {
   LoginStatus,
-  WalletStatus,
   useZionClient,
   useMatrixStore,
   useWeb3Context,
-  createUserIdFromEthereumAddress,
-  getChainIdEip155,
 } from "use-zion-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { makeStyles } from "@mui/styles";
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useEnsAvatar,
+  useEnsName,
+  useNetwork,
+} from "wagmi";
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`;
 const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`;
@@ -29,47 +34,10 @@ export function Login(): JSX.Element {
   const { getIsWalletIdRegistered, loginWithWallet, registerWallet } =
     useZionClient();
   const { loginStatus, loginError } = useMatrixStore();
-  const { accounts, chainId, requestAccounts, walletStatus } = useWeb3Context();
+  const { isConnected } = useWeb3Context();
+  const { disconnect } = useDisconnect();
+
   const [walletRegistered, setWalletRegistered] = useState<boolean>(true);
-
-  const myWalletAddress = useMemo(() => {
-    if (accounts && accounts.length > 0) {
-      return accounts[0];
-    }
-  }, [accounts]);
-
-  const chainIdEip155 = useMemo(
-    function () {
-      if (chainId) {
-        return getChainIdEip155(chainId);
-      }
-    },
-    [chainId],
-  );
-
-  const userIdentifier = useMemo(() => {
-    if (myWalletAddress && chainIdEip155) {
-      return createUserIdFromEthereumAddress(myWalletAddress, chainIdEip155);
-    }
-    return undefined;
-  }, [chainIdEip155, myWalletAddress]);
-
-  const onConnectClick = useCallback(() => {
-    switch (walletStatus) {
-      case WalletStatus.Error:
-      case WalletStatus.Unknown:
-        requestAccounts();
-        break;
-      case WalletStatus.RequestUnlock:
-        setShowError("Connecting wallet");
-        break;
-      case WalletStatus.StillRequestingUnlock:
-        setShowError("Connecting wallet - please unlock your wallet provider");
-        break;
-      default:
-        break;
-    }
-  }, [requestAccounts, walletStatus]);
 
   const onLoginWithWallet = useCallback(
     async function () {
@@ -98,93 +66,54 @@ export function Login(): JSX.Element {
   }, [loginError]);
 
   const registerButton = useMemo(() => {
-    switch (walletStatus) {
-      case WalletStatus.Unlocked:
-        if (loginStatus === LoginStatus.Registering) {
-          return <CircularProgress size={56} />;
-        } else if (loginStatus === LoginStatus.LoggedOut) {
-          return (
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ margin: "10px" }}
-              onClick={onRegisterNewWallet}
-            >
-              Register new wallet
-            </Button>
-          );
-        }
-        break;
-      default:
-        break;
+    if (isConnected) {
+      if (loginStatus === LoginStatus.Registering) {
+        return <CircularProgress size={56} />;
+      } else if (loginStatus === LoginStatus.LoggedOut) {
+        return (
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ margin: "20px" }}
+            onClick={onRegisterNewWallet}
+          >
+            Register new wallet
+          </Button>
+        );
+      } else {
+        return <div>login status: {loginStatus}</div>;
+      }
     }
-  }, [loginStatus, onRegisterNewWallet, walletStatus]);
+    return undefined;
+  }, [isConnected, loginStatus, onRegisterNewWallet]);
 
   const signInButton = useMemo(() => {
-    switch (walletStatus) {
-      case WalletStatus.Error:
-      case WalletStatus.Unknown:
+    if (isConnected) {
+      if (loginStatus === LoginStatus.LoggingIn) {
+        return <CircularProgress size={56} />;
+      } else if (loginStatus === LoginStatus.LoggedOut) {
         return (
           <Button
             variant="contained"
             color="primary"
-            sx={{ margin: "10px" }}
-            onClick={onConnectClick}
+            sx={{ margin: "20px" }}
+            onClick={onLoginWithWallet}
           >
-            Connect Wallet
+            Sign in with wallet
           </Button>
         );
-      case WalletStatus.Unlocked:
-        if (loginStatus === LoginStatus.LoggingIn) {
-          return <CircularProgress size={56} />;
-        } else if (loginStatus === LoginStatus.LoggedOut) {
-          return (
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ margin: "10px" }}
-              onClick={onLoginWithWallet}
-            >
-              Sign in with wallet
-            </Button>
-          );
-        }
-        break;
-      case WalletStatus.RequestUnlock:
-        return (
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ margin: "10px" }}
-            onClick={onConnectClick}
-          >
-            Connecting wallet
-          </Button>
-        );
-      case WalletStatus.StillRequestingUnlock:
-        return (
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ margin: "10px" }}
-            onClick={onConnectClick}
-          >
-            Connecting wallet - please unlock your wallet provider
-          </Button>
-        );
-      default:
-        break;
+      } else {
+        return <div>login status: {loginStatus}</div>;
+      }
     }
-  }, [loginStatus, onConnectClick, onLoginWithWallet, walletStatus]);
+    return undefined;
+  }, [isConnected, loginStatus, onLoginWithWallet]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        if (
-          loginStatus === LoginStatus.LoggedOut &&
-          walletStatus === WalletStatus.Unlocked
-        ) {
+        if (loginStatus === LoginStatus.LoggedOut && isConnected) {
           const isRegistered = await getIsWalletIdRegistered();
           if (!cancelled) {
             setWalletRegistered(isRegistered);
@@ -200,37 +129,32 @@ export function Login(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [getIsWalletIdRegistered, loginStatus, walletStatus]);
+  }, [getIsWalletIdRegistered, loginStatus, isConnected]);
 
   return (
     <div className={styles.container}>
-      <Box sx={{ display: "grid", gridTemplateRows: "repeat(4, 1fr)" }}>
-        <Box sx={{ display: "grid", marginTop: "5px", alignItems: "Center" }}>
-          <Typography variant="h6" component="span">
-            Wallet status: {walletStatus}, Chain Id: {chainId}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "grid", marginTop: "10px", alignItems: "Center" }}>
-          <Typography variant="h6" component="span">
-            Wallet address: {myWalletAddress}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "grid", marginTop: "10px", alignItems: "Center" }}>
-          <Typography variant="h6" component="span">
-            Matrix ID Localpart: {userIdentifier?.matrixUserIdLocalpart}
-          </Typography>
-        </Box>
+      <Box sx={{ display: "grid" }}>
+        <Profile />
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: "repeat(1, 1fr)",
-            margin: "10px",
+            marginTop: "20px",
             alignItems: "Center",
           }}
         >
           {!walletRegistered && registerButton}
           {walletRegistered && signInButton}
         </Box>
+        {isConnected && (
+          <Button
+            variant="outlined"
+            color="primary"
+            sx={{ margin: "20px" }}
+            onClick={() => disconnect()}
+          >
+            Disconnect Wallet
+          </Button>
+        )}
       </Box>
       <Snackbar
         open={showError ? true : false}
@@ -242,6 +166,113 @@ export function Login(): JSX.Element {
         </Alert>
       </Snackbar>
     </div>
+  );
+}
+
+export function Profile() {
+  const onConnnectCb = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (params: { address: any; connector: any; isReconnected: any }) => {
+      console.log(
+        "Login.tsx::onConnected",
+        params.address,
+        params.connector,
+        params.isReconnected,
+      );
+    },
+    [],
+  );
+  const onDisconnectCb = useCallback(() => {
+    console.log("Login.tsx::onDisconnected");
+  }, []);
+  const { address, connector, isConnected } = useAccount({
+    onConnect: onConnnectCb,
+    onDisconnect: onDisconnectCb,
+  });
+  const { chain: activeChain, chains } = useNetwork();
+  const { connect, connectors, error, isLoading, pendingConnector } =
+    useConnect();
+
+  console.log("!!Profile", {
+    address,
+    connector,
+    isConnected,
+    activeChain,
+    chains,
+  });
+
+  if (isConnected) {
+    return (
+      <>
+        {activeChain && (
+          <Box
+            sx={{ display: "grid", marginTop: "15px", alignItems: "Center" }}
+          >
+            <Typography variant="h6" component="span">
+              Chain: <q>{activeChain.name}</q> id: {activeChain.id}
+            </Typography>
+          </Box>
+        )}
+        {activeChain?.id === 1 && <ENSInfo address={address} />}
+        <Box sx={{ display: "grid", marginTop: "20px", alignItems: "Center" }}>
+          <Typography variant="h6" component="span">
+            {`Address: ${address}`}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "grid", marginTop: "20px", alignItems: "Center" }}>
+          <Typography variant="h6" component="span">
+            Status: Connected to {connector?.name}
+          </Typography>
+        </Box>
+      </>
+    );
+  }
+  return (
+    <div>
+      Connect with
+      {connectors.map((connector) => (
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ margin: "10px" }}
+          disabled={!connector.ready}
+          key={connector.id}
+          onClick={() => connect({ connector })}
+        >
+          {connector.name}
+          {!connector.ready && " (unsupported)"}
+          {isLoading &&
+            connector.id === pendingConnector?.id &&
+            " (connecting)"}
+        </Button>
+      ))}
+      {error && <div>{error.message}</div>}
+    </div>
+  );
+}
+
+function ENSInfo(props: { address: string | undefined }): JSX.Element {
+  const { address } = props;
+  const { data: ensAvatar } = useEnsAvatar({ addressOrName: address });
+  const { data: ensName } = useEnsName({ address });
+
+  return (
+    <>
+      {ensAvatar && (
+        <Box sx={{ display: "grid", marginTop: "20px", alignItems: "Center" }}>
+          <Typography variant="h6" component="span">
+            {`ENS Avatar: ${ensAvatar}`}
+          </Typography>
+        </Box>
+      )}
+      {ensName && (
+        <Box sx={{ display: "grid", marginTop: "20px", alignItems: "Center" }}>
+          <Typography variant="h6" component="span">
+            {`ENS Name: ${ensName}`}
+          </Typography>
+        </Box>
+      )}
+    </>
   );
 }
 

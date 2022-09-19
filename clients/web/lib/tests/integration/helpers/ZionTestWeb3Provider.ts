@@ -1,11 +1,14 @@
 import { ethers } from "ethers";
-import { getChainHexString } from "../../../src/hooks/login";
 import { fundWallet } from "./TestUtils";
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
   // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
   public wallet: ethers.Wallet;
+
+  public get isMetaMask() {
+    return true;
+  }
 
   constructor() {
     const networkUrl = process.env.ETHERS_NETWORK!;
@@ -25,13 +28,21 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     method: string;
     params?: unknown[];
   }) {
-    if (method === "eth_accounts") {
+    if (method === "eth_requestAccounts") {
       return [this.wallet.address];
-    } else if (method === "eth_chainId") {
-      const network = await this.getNetwork();
-      return getChainHexString(network.chainId);
+    } else if (method === "eth_accounts") {
+      return [this.wallet.address];
     } else if (method === "personal_sign") {
-      return this.wallet.signMessage((params as string[])[0]);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [message, address] = params as [string, string];
+      if (ethers.utils.isHexString(message)) {
+        // the json rpc provider will hexify the message, so we need to unhexify it
+        const m1 = ethers.utils.arrayify(message);
+        const m2 = ethers.utils.toUtf8String(m1);
+        return this.wallet.signMessage(m2);
+      } else {
+        return this.wallet.signMessage(message);
+      }
     } else {
       return this.send(method, params);
     }

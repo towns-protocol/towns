@@ -19,7 +19,7 @@ import {
   useWeb3Context,
 } from "use-zion-client";
 import { useCallback, useMemo, useState } from "react";
-
+import { chain as ChainType } from "wagmi";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 import { ethers } from "ethers";
 
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-  const { chainId, accounts, getProvider } = useWeb3Context();
+  const { chain, accounts, getProvider } = useWeb3Context();
   const [spaceName, setSpaceName] = useState<string>("");
   const [visibility, setVisibility] = useState<RoomVisibility>(
     RoomVisibility.Private,
@@ -105,7 +105,7 @@ export const CreateSpaceForm = (props: Props) => {
       </Typography>
 
       <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
-        ChainId: {chainId}
+        ChainId: {chain ? chain?.id : "Not connected"}
       </Typography>
       <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
         <Box
@@ -164,7 +164,7 @@ export const CreateSpaceForm = (props: Props) => {
             Create
           </Button>
         </Box>
-        {chainId === "0x539" &&
+        {chain?.id === ChainType.localhost.id &&
           accounts.map((accountId) => (
             <Box
               display="flex"

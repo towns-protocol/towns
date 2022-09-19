@@ -7,6 +7,7 @@ import {
   useWeb3Context,
   useZionClient,
 } from "use-zion-client";
+import { useConnect } from "wagmi";
 import { LoginButton } from "./LoginButton/LoginButton";
 import { ButtonTooltip } from "./LoginButton/Tooltip/ButtonTooltip";
 
@@ -31,11 +32,22 @@ export const LoginComponent = () => {
   const navigate = useNavigate();
   const { loginStatus, loginError } = useMatrixStore();
   const { loginWithWallet, registerWallet } = useZionClient();
-  const { requestAccounts, walletStatus } = useWeb3Context();
+  const { walletStatus } = useWeb3Context();
+
+  const { connect, connectors, error, isLoading, pendingConnector } =
+    useConnect();
+
+  console.log("LoginComponent wagmi info:", {
+    walletStatus,
+    error,
+    isLoading,
+    pendingConnector,
+    loginError,
+  });
 
   const handleConnect = useCallback(() => {
-    requestAccounts();
-  }, [requestAccounts]);
+    connect({ connector: connectors[0] });
+  }, [connect, connectors]);
 
   const handleLogin = useCallback(() => {
     loginWithWallet(loginMsgToSign);
@@ -150,13 +162,10 @@ const getButtonStatus = (
 ) => {
   switch (walletStatus) {
     default:
-    case WalletStatus.Unknown: {
+    case WalletStatus.Disconnected: {
       return ButtonStatus.ConnectRequired;
     }
-    case WalletStatus.Error: {
-      return ButtonStatus.ConnectError;
-    }
-    case WalletStatus.Unlocked: {
+    case WalletStatus.Connected: {
       if (loginStatus === LoginStatus.LoggingIn) {
         return ButtonStatus.LoginProgress;
       } else if (loginStatus === LoginStatus.LoggedOut) {
@@ -165,10 +174,10 @@ const getButtonStatus = (
         return ButtonStatus.LoginSuccess;
       }
     }
-    case WalletStatus.RequestUnlock: {
+    case WalletStatus.Connecting: {
       return ButtonStatus.ConnectUnlock;
     }
-    case WalletStatus.StillRequestingUnlock: {
+    case WalletStatus.Reconnecting: {
       return ButtonStatus.ConnectUnlockTimeout;
     }
   }

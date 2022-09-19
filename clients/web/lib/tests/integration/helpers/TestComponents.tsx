@@ -14,8 +14,9 @@ export const RegisterWallet = () => {
   const { walletStatus } = useWeb3Context();
   const { loginStatus, loginError, userId } = useMatrixStore();
   const { clientRunning, registerWallet } = useZionClient();
+
   useEffect(() => {
-    if (walletStatus == WalletStatus.Unlocked) {
+    if (walletStatus === WalletStatus.Connected) {
       void (async () => {
         await registerWallet("login...");
       })();
@@ -37,7 +38,7 @@ export const LoginWithWallet = () => {
   const { loginStatus, loginError } = useMatrixStore();
   const { clientRunning, loginWithWallet } = useZionClient();
   useEffect(() => {
-    if (walletStatus == WalletStatus.Unlocked) {
+    if (walletStatus === WalletStatus.Connected) {
       void (async () => {
         await loginWithWallet("login...");
       })();
@@ -74,7 +75,7 @@ export const LoginWithAuth = (props: LoginWithAuthProps) => {
   const { clientRunning } = useZionClient();
   const { setAccessToken } = useCredentialStore();
   useEffect(() => {
-    if (walletStatus == WalletStatus.Unlocked) {
+    if (walletStatus === WalletStatus.Connected) {
       setAccessToken(props.auth.accessToken);
       setDeviceId(props.auth.deviceId);
       setLoginStatus(LoginStatus.LoggedIn);
