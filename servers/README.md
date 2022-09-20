@@ -118,7 +118,7 @@ a fork of <https://github.com/matrix-org/dendrite>, and then follow their
 [Contributing to Dendrite](https://github.com/matrix-org/dendrite/blob/main/docs/CONTRIBUTING.md#contributing-to-dendrite)
 process.
 
-General steps to fork a repo <https://docs.github.com/en/get-started/quickstart/fork-a-repo>
+General steps to fork a repo <https://docs.github.com/en/get-started/quickstart/fork-a-repo>.
 
 ## Build and run Dendrite
 
@@ -130,11 +130,18 @@ cd dendrite
 # Generate a Matrix signing key for federation (required)
 ./bin/generate-keys --private-key matrix_key.pem
 
-# Generate a self-signed certificate (optional, but a valid TLS certificate is normally# needed for Matrix federation/clients to work properly!)
+# Generate a self-signed certificate (optional, but a valid TLS certificate is normally
+# needed for Matrix federation/clients to work properly!)
  ./bin/generate-keys --tls-cert server.crt --tls-key server.key
 
-# Copy and modify the config file - you'll need to set a server name and paths to the keys# at the very least, along with setting up the database connection strings.
+# Copy and modify the config file - you'll need to set a server name and paths to the keys
+# at the very least, along with setting up the database connection strings.
 cp dendrite-sample.monolith.yaml dendrite.yaml
+
+# In lieu of configuring the sample monolith config from scratch,
+# you can copy a pre-configured monolith config suitable for local
+# sqlite based deploys.
+cp ../dendrite_local_test/dendrite.yaml dendrite.yaml
 ```
 
 Update the public key authentication section of the yaml file:
