@@ -36,7 +36,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "local-development"
-        }
+        },
       },
       {
         "label": "StartBlockchain",

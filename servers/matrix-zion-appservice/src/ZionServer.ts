@@ -7,7 +7,7 @@ import {
   Logging,
 } from "matrix-appservice-bridge";
 
-import { IConfig } from "./IConfig";
+import { CliOptions, AppserviceConfig } from "./AppserviceConfig";
 import { LOGGER_NAME } from "./global-const";
 import { Main } from "./Main";
 
@@ -32,18 +32,12 @@ interface BridgeConfig {
   defaults: Record<string, unknown>;
 }
 
-interface CliOptions {
-  defaultPort: number;
-  schema: string;
-  registrationPath: string;
-}
-
 export class ZionServer implements CliOpts<ConfigType> {
   private cliOptions: CliOptions;
   private cli: Cli<ConfigType> | null = null;
 
-  constructor(options: CliOptions) {
-    this.cliOptions = options;
+  constructor(cliOptions: CliOptions) {
+    this.cliOptions = cliOptions;
     this.bridgeConfig = {
       defaults: {},
       affectsRegistration: true,
@@ -52,6 +46,8 @@ export class ZionServer implements CliOpts<ConfigType> {
   }
 
   public bridgeConfig: BridgeConfig | undefined;
+
+  public workingDirectory: string | undefined;
 
   public get registrationPath(): string | undefined {
     return this.cliOptions.registrationPath;
@@ -81,18 +77,19 @@ export class ZionServer implements CliOpts<ConfigType> {
     reg: AppServiceRegistration,
     callback: (finalReg: AppServiceRegistration) => void
   ): void => {
-    const config = this.cli?.getConfig() as IConfig | null;
+    const config = this.cli?.getConfig() as AppserviceConfig | null;
     if (!config) {
       throw Error("Config is not available");
     }
-    reg.setId(AppServiceRegistration.generateToken());
+    reg.setId("zion-appservice");
     reg.setHomeserverToken(AppServiceRegistration.generateToken());
     reg.setAppServiceToken(AppServiceRegistration.generateToken());
     reg.setSenderLocalpart("zionbot");
+    reg.setRateLimited(false);
     reg.addRegexPattern(
       "users",
-      `@${config.username_prefix}.*:${config.homeserver.server_name}`,
-      true
+      `@${config.username_prefix}:${config.homeserver.server_name}`,
+      false
     );
     console.log(`${PrintTag} generateRegistration`, reg);
     callback(reg);
@@ -105,15 +102,10 @@ export class ZionServer implements CliOpts<ConfigType> {
   ): Promise<void> => {
     console.log(`${PrintTag} run`, port, rawConfig, registration);
 
-    const config = rawConfig as IConfig | null;
+    const config = rawConfig as AppserviceConfig | null;
     if (!config) {
       throw Error("Config not ready");
     }
-
-    config.web3ProviderKey = process.env.INFURA_API_KEY ?? "";
-    config.councilNFTAddress = process.env.COUNCIL_NFT_ADDRESS ?? "";
-    config.zionSpaceManagerAddress =
-      process.env.ZION_SPACE_MANAGER_ADDRESS ?? "";
 
     Logging.configure(config.logging || {});
     const log = Logging.get(LOGGER_NAME);
@@ -121,6 +113,14 @@ export class ZionServer implements CliOpts<ConfigType> {
     if (!registration) {
       throw Error("registration must be defined");
     }
+
+    /**
+     * matrix-appservice-bridge has very convoluted Cli commandline
+     * processing. Hack it to make it work.
+     */
+    config.councilNFTAddress = this.cliOptions.councilNFTAddress;
+    config.web3ProviderKey = this.cliOptions.web3ProviderKey;
+    config.zionSpaceManagerAddress = this.cliOptions.zionSpaceManagerAddress;
 
     const main = new Main(config, registration);
     try {

@@ -6,11 +6,11 @@ import {
 } from "matrix-bot-sdk";
 import { CreateRoomFunction, CreateUserFunction } from "./appservice-types";
 
+import { BlockchainProviders } from "./BlockchainProviders";
+import { AppserviceConfig, CliOptions } from "./AppserviceConfig";
 import { EntitlementType } from "./contracts/ZionContractTypes";
-import { IConfig } from "./IConfig";
 import { M_UNAUTHORIZED_ACCESS } from "./global-const";
 import { WeakEvent } from "matrix-appservice-bridge";
-import { Web3Provider } from "./Web3Provider";
 import { createUserIdFromString } from "./UserIdentifier";
 
 const PRINT_TAG = "[ZionBotController]";
@@ -27,13 +27,13 @@ interface SpaceSettings {
 
 export class ZionBotController {
   private appservice: Appservice;
-  private web3Provider: Web3Provider;
+  private web3Provider: BlockchainProviders;
   private spaceSettings: SpaceSettings;
 
-  constructor(appservice: Appservice, config: IConfig) {
+  constructor(appservice: Appservice, config: AppserviceConfig) {
     this.appservice = appservice;
     this.spaceSettings = {};
-    this.web3Provider = new Web3Provider(config);
+    this.web3Provider = new BlockchainProviders(config);
 
     appservice.on("room.event", (roomId, event) =>
       this.onRoomEvent(roomId, event)

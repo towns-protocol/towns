@@ -12,7 +12,8 @@ import {
   SimpleRetryJoinStrategy,
 } from "matrix-bot-sdk";
 
-import { IConfig } from "./IConfig";
+import { AppserviceConfig } from "./AppserviceConfig";
+import { DEFAULT_PORT } from "./global-const";
 import { ZionBotController } from "./ZionBotController";
 
 const PrintTag = "[Main]";
@@ -24,7 +25,7 @@ export class Main {
   private storage: IAppserviceStorageProvider = new MemoryStorageProvider();
   private controller: ZionBotController;
 
-  constructor(config: IConfig, registration: AppServiceRegistration) {
+  constructor(config: AppserviceConfig, registration: AppServiceRegistration) {
     const options: IAppserviceOptions = getAppserviceOptions(
       config,
       registration,
@@ -48,14 +49,14 @@ export class Main {
 }
 
 function getAppserviceOptions(
-  config: IConfig,
+  config: AppserviceConfig,
   registration: AppServiceRegistration,
   storage: IAppserviceStorageProvider
 ): IAppserviceOptions {
   const port = getPort(registration.getAppServiceUrl());
   const options: IAppserviceOptions = {
     // Webserver options
-    port: port ?? 9000,
+    port: port ?? DEFAULT_PORT,
     bindAddress: "0.0.0.0",
 
     // This should be the same URL used by the bot.

@@ -7,6 +7,7 @@ source vars.env
 echo "Running from ${TEST_DIR}"
 
 I=$1
+DENDRITE_YAML="${2:-dendrite.yaml}"
 
 SCRIPT_DIR=$PWD
 
@@ -18,7 +19,7 @@ cd ${NODE_DIR}
 ${SCRIPT_DIR}/../dendrite/bin/dendrite-monolith-server \
   --tls-cert server.crt \
   --tls-key server.key \
-  --config dendrite.yaml \
+  --config ${DENDRITE_YAML} \
   --really-enable-open-registration \
   --http-bind-address ":$((8008 + $I))" \
   --https-bind-address ":$((8448 + $I))"

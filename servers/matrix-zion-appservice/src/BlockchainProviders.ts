@@ -1,5 +1,5 @@
 import { CouncilNFT, ZionSpaceManager } from "@harmony/contracts/governance";
-import { IConfig } from "./IConfig";
+import { AppserviceConfig } from "./AppserviceConfig";
 import { ZionContractProvider } from "./contracts/ZionContractProvider";
 import { ethers } from "ethers";
 import { zionCouncilNFTAbi, zionSpaceManagerAbi } from "./contracts/ZionAbis";
@@ -13,11 +13,11 @@ interface Contracts {
   [networkId: number]: ZionContracts;
 }
 
-export class Web3Provider {
+export class BlockchainProviders {
   private contracts: Contracts;
-  private config: IConfig;
+  private config: AppserviceConfig;
 
-  constructor(config: IConfig) {
+  constructor(config: AppserviceConfig) {
     this.contracts = {};
     this.config = config;
   }

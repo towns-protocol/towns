@@ -13,7 +13,7 @@
     "build": "tsc",
     "start": "node ./bin/app.js -c config.yaml -p 6789",
     "dev": "ts-node ./src/app.ts -c config.yaml -p 6789",
-    "register": "ts-node ./src/app.ts -r -f zion-registration.yaml -c config.yaml -u http://localhost:6789",
+    "register": "ts-node ./src/app.ts -r -f zion-appservice.yaml -c config.yaml -u http://localhost:6789",
     "watch": "tsc --watch"
   },
   "dependencies": {

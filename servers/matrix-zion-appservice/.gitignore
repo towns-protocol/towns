@@ -7,8 +7,7 @@ bin/
 # Development-time files
 .vscode/settings.json
 config.yaml
-zion-registration.yaml
-zion-registration.copy.yaml
+zion-appservice.yaml
 debug.log.*
 error.log.*
 *.db

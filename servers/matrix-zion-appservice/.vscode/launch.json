@@ -13,8 +13,12 @@
       "args": [
         "-c",
         "config.yaml",
+        "-u",
+        "http://localhost",
         "-p",
-        "6789"
+        "6789",
+        "-f",
+        "~/.zion/test/node0/zion-appservice.yaml"
       ],
       "outFiles": [
         "${workspaceFolder}/**/*.js"
@@ -35,7 +39,7 @@
       "preLaunchTask": "npm: build",
       "args": [
         "-r",
-        "zion-registration.yaml",
+        "zion-appservice.yaml",
         "-u",
         "http://localhost:6789",
         "-c",

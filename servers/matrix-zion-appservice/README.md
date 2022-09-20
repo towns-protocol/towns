@@ -13,51 +13,22 @@ Easiest way to install cmake on Mac is `brew install cmake`.
 
 The Rust build tools are installed as part of `yarn install`. No need to install separately.
 
-## Build the server and generate the configurations files
+## Option 1: Build, deploy and start the servers from Terminal
+
+On separate terminals:
 
 ```bash
-# Install the dependencies
-cd servers/matrix-zion-appservice
-yarn install
-source $HOME/.cargo/env
 
-# Build the bridge
-yarn build
+# Terminal 1:
+# Start the dendrite server with appservice config in dendrite.withappservice.yaml
+scripts/start-local-dendrite.sh with-appservice
 
-# Make a copy of the config file
-cp config.sample.yaml config.yaml
+# Terminal 2:
+# Dendrite server must be started first.
+scripts/start-local-appservice
 
-# Generate a common registration file to configure both the dendrite server and
-# the bridge
-node ./bin/app.js -r -f zz.yaml -c config.yaml -u http://localhost:6789
-```
-
-## Configure the Dendrite server
-
-```bash
-# Copy the registration file to the dendrite directory.
-cp zion-registration.yaml ../dendrite
-```
-
-Change dendrite.yaml:
-
-```yaml
-# Appservice configuration files to load into this homeserver.
-config_files: ["zion-registration.yaml"]
-```
-
-## Build and run the bridge
-
-First, start the Dendrite server before running the bridge.
-
-### Option 1: Build and run the bridge from commandline
-
-```bash
-# Run the service.
-yarn dev
-
-# Or generate the registration file
-yarn register
+# Terminal 3:
+scripts/start-local-blockchain
 ```
 
 ### Option 2: Build and run the bridge from vscode
