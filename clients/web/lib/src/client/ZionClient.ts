@@ -12,6 +12,7 @@ import {
   User,
   UserEvent,
   IRoomTimelineData,
+  createClient,
 } from "matrix-js-sdk";
 import { ContractReceipt, ContractTransaction } from "ethers";
 import { CouncilNFT, ZionSpaceManager } from "@harmony/contracts/governance";
@@ -34,7 +35,6 @@ import { zionCouncilNFTAbi, zionSpaceManagerAbi } from "./web3/ZionAbis";
 
 import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
-import { createMatrixClient } from "./matrix/CreateClient";
 import { createZionChannel } from "./matrix/CreateChannel";
 import { createZionSpace } from "./matrix/CreateSpace";
 import { editZionMessage } from "./matrix/EditMessage";
@@ -46,6 +46,7 @@ import { setZionPowerLevel } from "./matrix/SetPowerLevels";
 import { syncZionSpace } from "./matrix/SyncSpace";
 import { CustomMemoryStore } from "./store/CustomMatrixStore";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/lib/sync";
+import { IStore } from "matrix-js-sdk/lib/store";
 
 /***
  * Zion Client
@@ -76,8 +77,8 @@ export class ZionClient {
     this.opts = opts;
     this.name = name || "";
     console.log("~~~ new ZionClient ~~~", this.name, this.opts);
-    ({ client: this.client, store: this.store } = createMatrixClient(
-      opts,
+    ({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
+      opts.homeServerUrl,
       this._auth,
     ));
     this.spaceManager = new ZionContractProvider<ZionSpaceManager>(
@@ -104,8 +105,8 @@ export class ZionClient {
     this.stopClient();
     await this.client.logout();
     this._auth = undefined;
-    ({ client: this.client, store: this.store } = createMatrixClient(
-      this.opts,
+    ({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
+      this.opts.homeServerUrl,
       this._auth,
     ));
   }
@@ -161,8 +162,8 @@ export class ZionClient {
     // set auth
     this._auth = auth;
     // new client
-    ({ client: this.client, store: this.store } = createMatrixClient(
-      this.opts,
+    ({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
+      this.opts.homeServerUrl,
       this._auth,
     ));
     // start it up, this begins a sync command
@@ -701,5 +702,36 @@ export class ZionClient {
    *************************************************/
   protected log(message: string, ...optionalParams: unknown[]) {
     console.log(message, ...optionalParams);
+  }
+
+  /************************************************
+   * createMatrixClient
+   * helper, creates a matrix client with appropriate auth
+   *************************************************/
+  private static createMatrixClient(
+    homeServerUrl: string,
+    auth?: ZionAuth,
+  ): { store: CustomMemoryStore; client: MatrixClient } {
+    const store = new CustomMemoryStore();
+    if (auth) {
+      return {
+        store: store,
+        client: createClient({
+          store: store as IStore,
+          baseUrl: homeServerUrl,
+          accessToken: auth.accessToken,
+          userId: auth.userId,
+          deviceId: auth.deviceId,
+        }),
+      };
+    } else {
+      return {
+        store: store,
+        client: createClient({
+          store: store as IStore,
+          baseUrl: homeServerUrl,
+        }),
+      };
+    }
   }
 }
