@@ -41,5 +41,3 @@ cache_hardhat
 artifacts_*
 tsconfig.tsbuildinfo
 broadcast/
-
-packages/contract-addresses/**/*.json
