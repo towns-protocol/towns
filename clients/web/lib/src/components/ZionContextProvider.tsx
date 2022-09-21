@@ -14,6 +14,7 @@ import { useSpaceUnreads } from "../hooks/ZionContext/useSpaceUnreads";
 import { useSpaceMentionCounts } from "../hooks/ZionContext/useSpaceMentionCounts";
 import { useSpaces } from "../hooks/ZionContext/useSpaces";
 import { useSyncSpaceHierarchies } from "../hooks/ZionContext/useSyncSpaceHierarchies";
+import { useFavIconBadge } from "../hooks/ZionContext/useFavIconBadge";
 import { Web3ContextProvider } from "./Web3ContextProvider";
 
 export interface IZionContext {
@@ -57,6 +58,7 @@ interface Props {
   councilNFTAddress: string;
   councilStakingAddress: string;
   disableEncryption?: boolean;
+  enableSpaceRootUnreads?: boolean;
   getSignerFn?: () => ethers.Signer;
   defaultSpaceId?: string;
   defaultSpaceName?: string; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
@@ -85,6 +87,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     councilNFTAddress,
     councilStakingAddress,
     disableEncryption,
+    enableSpaceRootUnreads,
     getSignerFn,
     defaultSpaceId,
     defaultSpaceName,
@@ -118,12 +121,21 @@ const ContextImpl = (props: Props): JSX.Element => {
     spaceIds,
     spaceHierarchies,
     unreadCounts,
+    enableSpaceRootUnreads === true,
   );
 
   const convertedDefaultSpaceId = useMemo(
     () => (defaultSpaceId ? makeRoomIdentifier(defaultSpaceId) : undefined),
     [defaultSpaceId],
   );
+
+  useFavIconBadge(
+    unreadCounts,
+    spaceHierarchies,
+    invitedToIds,
+    enableSpaceRootUnreads === true,
+  );
+
   return (
     <ZionContext.Provider
       value={{

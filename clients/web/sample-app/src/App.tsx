@@ -42,6 +42,7 @@ export function App(): JSX.Element {
             councilNFTAddress={COUNCIL_NFT_ADDRESS}
             councilStakingAddress={COUNCIL_STAKING_ADDRESS}
             disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
+            enableSpaceRootUnreads={true}
           >
             <Routes>
               <Route element={<Main />}>

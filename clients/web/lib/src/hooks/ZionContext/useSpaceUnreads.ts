@@ -7,6 +7,7 @@ export function useSpaceUnreads(
   spaceIds: string[],
   spaceHierarchies: SpaceHierarchies,
   unreadCounts: Record<string, number>,
+  bShowSpaceRootUnreads: boolean,
 ): { spaceUnreads: Record<string, boolean> } {
   const [spaceUnreads, setSpaceUnreads] = useState<Record<string, boolean>>({});
 
@@ -35,7 +36,9 @@ export function useSpaceUnreads(
       if (!space) {
         return;
       }
-      const spaceHasUnread = (unreadCounts[spaceId] ?? 0) > 0;
+      const spaceHasUnread = bShowSpaceRootUnreads
+        ? (unreadCounts[spaceId] ?? 0) > 0
+        : false;
       const childIds =
         spaceHierarchies[spaceId]?.children.map((x) => x.id.matrixRoomId) ?? [];
       const hasUnread =
@@ -46,7 +49,7 @@ export function useSpaceUnreads(
       // console.log("!!!! space has unread", spaceId, hasUnread);
       updateSpaceUnreads(spaceId, hasUnread);
     });
-  }, [client, spaceIds, spaceHierarchies, unreadCounts]);
+  }, [client, spaceIds, spaceHierarchies, unreadCounts, bShowSpaceRootUnreads]);
 
   return { spaceUnreads };
 }

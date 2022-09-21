@@ -112,7 +112,7 @@ export function ChatMessages(props: Props): JSX.Element {
                 onClick={onClickMarkAsRead}
                 sx={buttonStyle}
               >
-                Mark as Read
+                Mark as Read ({unreadCounts[roomId.matrixRoomId]})
               </Typography>
             )}
           </>

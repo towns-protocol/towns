@@ -1,12 +1,12 @@
-import { ZionClient } from "../client/ZionClient";
 import { useCallback, useEffect, useRef } from "react";
+import { ethers } from "ethers";
+import { ZionClient } from "../client/ZionClient";
+import { useWeb3Context } from "../components/Web3ContextProvider";
 import { useCredentialStore } from "../store/use-credential-store";
 import { useMatrixStore } from "../store/use-matrix-store";
 import { useRoomMembershipEventHandler } from "./MatrixClientListener/useRoomMembershipEventHandler";
 import { useRoomTimelineEventHandler } from "./MatrixClientListener/useRoomTimelineEventHandler";
 import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler";
-import { ethers } from "ethers";
-import { useWeb3Context } from "../components/Web3ContextProvider";
 
 export const useZionClientListener = (
   homeServerUrl: string,

@@ -105,7 +105,8 @@ const SpacesChannelComponent = () => {
                         size="button_sm"
                         onClick={onMarkAsRead}
                       >
-                        Click here to Mark as Read (temp)
+                        Click here to Mark as Read (
+                        {unreadCounts[channelId.matrixRoomId]})
                       </Button>
                     </Box>
                   ) : undefined
