@@ -1,0 +1,5 @@
+# Ignoring everything, but the cert and config files
+
+*
+!.gitignore
+!dendrite.yaml
