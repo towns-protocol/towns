@@ -1,8 +1,4 @@
-import {
-  CouncilNFT,
-  CouncilStaking,
-  ZionSpaceManager,
-} from "@harmony/contracts/governance";
+import { CouncilNFT, ZionSpaceManager } from "@harmony/contracts/governance";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -32,7 +28,6 @@ import { MatrixSpaceHierarchy } from "../client/matrix/SyncSpace";
 interface ZionClientImpl {
   clientRunning: boolean;
   councilNFT: ZionContractProvider<CouncilNFT> | undefined;
-  councilStaking: ZionContractProvider<CouncilStaking> | undefined;
   spaceManager: ZionContractProvider<ZionSpaceManager> | undefined;
   createSpace: (
     createInfo: CreateSpaceInfo,
@@ -105,7 +100,6 @@ export function useZionClient(): ZionClientImpl {
   return {
     clientRunning,
     councilNFT: client?.councilNFT,
-    councilStaking: client?.councilStaking,
     spaceManager: client?.spaceManager,
     createChannel: useWithCatch(client?.createChannel),
     createSpace: useWithCatch(client?.createSpace),

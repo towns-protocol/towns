@@ -14,11 +14,7 @@ import {
   IRoomTimelineData,
 } from "matrix-js-sdk";
 import { ContractReceipt, ContractTransaction } from "ethers";
-import {
-  CouncilNFT,
-  CouncilStaking,
-  ZionSpaceManager,
-} from "@harmony/contracts/governance";
+import { CouncilNFT, ZionSpaceManager } from "@harmony/contracts/governance";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -34,11 +30,7 @@ import {
   newRegisterSession,
 } from "../hooks/use-matrix-wallet-sign-in";
 import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
-import {
-  zionCouncilNFTAbi,
-  zionCouncilStakingAbi,
-  zionSpaceManagerAbi,
-} from "./web3/ZionAbis";
+import { zionCouncilNFTAbi, zionSpaceManagerAbi } from "./web3/ZionAbis";
 
 import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
@@ -77,7 +69,6 @@ export class ZionClient {
   }
   public spaceManager: ZionContractProvider<ZionSpaceManager>;
   public councilNFT: ZionContractProvider<CouncilNFT>;
-  public councilStaking: ZionContractProvider<CouncilStaking>;
   private _auth?: ZionAuth;
   private client: MatrixClient;
 
@@ -100,12 +91,6 @@ export class ZionClient {
       opts.getSigner,
       opts.councilNFTAddress,
       zionCouncilNFTAbi(),
-    );
-    this.councilStaking = new ZionContractProvider<CouncilStaking>(
-      opts.getProvider,
-      opts.getSigner,
-      opts.councilStakingAddress,
-      zionCouncilStakingAbi(),
     );
   }
 
