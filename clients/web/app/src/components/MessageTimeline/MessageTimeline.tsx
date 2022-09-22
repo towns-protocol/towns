@@ -6,13 +6,14 @@ import {
   ZTEvent,
   useMatrixStore,
   useZionClient,
+  useZionContext,
 } from "use-zion-client";
 import {
   useTimelineReactionsMap,
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
 
-import { Box, Button, Paragraph, Stack } from "@ui";
+import { Box, Button, Stack } from "@ui";
 import { TimelineGenericEvent } from "./events/TimelineGenericEvent";
 import { TimelineMessage } from "./events/TimelineMessage";
 import { RenderEventType, useGroupEvents } from "./hooks/useGroupEvents";
@@ -57,6 +58,9 @@ export const MessageTimeline = (props: Props) => {
       };
     }
   }, [events]);
+
+  const { unreadCounts } = useZionContext();
+  const hasUnread = (unreadCounts[channelId.matrixRoomId] ?? 0) > 0;
 
   const onMarkAsRead = useCallback(() => {
     if (lastEvent?.event?.eventId) {
@@ -128,19 +132,18 @@ export const MessageTimeline = (props: Props) => {
         );
       })}
 
-      <Box centerContent gap="sm">
-        <Button
-          animate={false}
-          key={channelId.slug + "mark-as-read"}
-          size="button_sm"
-          onClick={onMarkAsRead}
-        >
-          Click here to Mark as Read (temp)
-        </Button>
-        <Paragraph size="sm" color="gray2">
-          {lastEvent?.content.body}
-        </Paragraph>
-      </Box>
+      {hasUnread && (
+        <Box centerContent gap="sm">
+          <Button
+            animate={false}
+            key={channelId.slug + "mark-as-read"}
+            size="button_sm"
+            onClick={onMarkAsRead}
+          >
+            Mark as Read ({unreadCounts[channelId.matrixRoomId]})
+          </Button>
+        </Box>
+      )}
     </TimelineMessageContext.Provider>
   );
 };

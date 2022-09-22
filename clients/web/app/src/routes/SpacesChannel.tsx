@@ -8,7 +8,6 @@ import {
   useChannelTimeline,
   useMyMembership,
   useZionClient,
-  useZionContext,
 } from "use-zion-client";
 import { ChannelHeader } from "@components/ChannelHeader";
 import { MessageTimelineScroller } from "@components/MessageTimeline";
@@ -32,16 +31,13 @@ const SpacesChannelComponent = () => {
   const { messageId } = useParams();
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
-  const { unreadCounts } = useZionContext();
+
   const { joinRoom, sendMessage } = useZionClient();
 
   const { spaceId, channelId, channel } = useChannelData();
 
   const myMembership = useMyMembership(channelId);
   const channelMessages = useChannelTimeline();
-  const hasUnread =
-    channelMessages.length > 0 &&
-    (unreadCounts[channelId.matrixRoomId] ?? 0) > 0;
 
   const onSend = useCallback(
     (value: string) => {

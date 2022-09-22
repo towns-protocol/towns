@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import React, { useRef } from "react";
-import { NavLink } from "react-router-dom";
-import { Channel, RoomIdentifier } from "use-zion-client";
+import { RoomIdentifier } from "use-zion-client";
 import { Reactions } from "@components/Reactions/Reactions";
 import { MessageReplies } from "@components/Replies/MessageReplies";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";

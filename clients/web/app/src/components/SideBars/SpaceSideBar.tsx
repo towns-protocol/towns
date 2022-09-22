@@ -12,7 +12,7 @@ import { ChannelNavGroup } from "@components/NavItem/ChannelNavGroup";
 import { ChannelNavItem } from "@components/NavItem/ChannelNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";
-import { Badge, Box, Stack } from "@ui";
+import { Badge, Stack } from "@ui";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { atoms } from "ui/styles/atoms.css";
 import { SideBar } from "./_SideBar";

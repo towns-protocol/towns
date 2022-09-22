@@ -4,7 +4,7 @@ import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { ProfileCardButton } from "@components/ProfileCardButton/ProfileCardButton";
 import { SideBar } from "@components/SideBars/_SideBar";
-import { Badge, IconButton, Stack } from "@ui";
+import { IconButton, Stack } from "@ui";
 
 type Props = {
   expanded: boolean;
