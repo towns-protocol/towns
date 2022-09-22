@@ -1,9 +1,11 @@
+import { emojis } from "@emoji-mart/data";
 import { EmojiData } from "emoji-mart";
 import React, { Suspense, useCallback } from "react";
-import { emojis } from "@emoji-mart/data";
-import { EmojiPickerButton } from "@components/EmojiPickerButton";
-import { Stack, Text } from "@ui";
+import { useZionContext } from "use-zion-client";
 import { MessageReactions } from "hooks/useFixMeMessageThread";
+import { Box, Stack, Text, TooltipRenderer } from "@ui";
+import { EmojiPickerButton } from "@components/EmojiPickerButton";
+import { ReactionTootip } from "./ReactionTooltip";
 
 type Emojis = { [key: string]: typeof emojis[keyof typeof emojis] };
 
@@ -33,7 +35,7 @@ export const Reactions = (props: Props) => {
   );
 
   return (
-    <Stack horizontal gap="xs" height="x3">
+    <Stack horizontal height="x3" insetX="xxs">
       <Suspense>
         <ReactionRow
           userId={userId}
@@ -88,25 +90,45 @@ const Reaction = (props: {
   onReact: (reaction: string) => void;
   isOwn?: boolean;
 }) => {
+  const { name, users, onReact, isOwn } = props;
+  const { client } = useZionContext();
   const onClick = useCallback(() => {
-    props.onReact(props.name);
-  }, [props]);
+    const userId = client?.getUserId();
+    if (userId) {
+      users?.has(userId);
+      // cancel reaction
+      return;
+    }
 
-  return props.users && props.users.size ? (
-    <Stack
-      horizontal
-      centerContent
-      border={props.isOwn ? "accent" : "none"}
-      cursor="pointer"
-      gap="sm"
-      rounded="lg"
-      background="level3"
-      color="gray1"
-      paddingX="sm"
-      onClick={onClick}
+    onReact(name);
+  }, [client, name, onReact, users]);
+
+  return users && users.size ? (
+    <TooltipRenderer
+      render={<ReactionTootip userIds={users} reaction={name} />}
+      key={name}
+      trigger="hover"
+      placement="vertical"
     >
-      <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
-      <Text size="sm">{props.users.size}</Text>
-    </Stack>
+      {({ triggerProps }) => (
+        <Box paddingX="xs" {...triggerProps} horizontal>
+          <Stack
+            horizontal
+            centerContent
+            position="relative"
+            border={isOwn ? "accent" : "none"}
+            gap="sm"
+            rounded="lg"
+            background="level3"
+            color="gray1"
+            paddingX="sm"
+            onClick={onClick}
+          >
+            <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
+            <Text size="sm">{users.size}</Text>
+          </Stack>
+        </Box>
+      )}
+    </TooltipRenderer>
   ) : null;
 };

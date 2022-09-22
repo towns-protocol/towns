@@ -90,7 +90,7 @@ export const SpaceSideBar = (props: Props) => {
               highlight={totalMentions > 0}
               id="mentions"
               label="Mentions"
-              badge={totalMentions && <Badge value={totalMentions} />}
+              badge={totalMentions > 0 && <Badge value={totalMentions} />}
               link={`/spaces/${space.id.slug}/mentions`}
             />
           </>
