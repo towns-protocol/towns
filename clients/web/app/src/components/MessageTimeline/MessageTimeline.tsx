@@ -1,8 +1,9 @@
-import React, { createContext } from "react";
+import React, { createContext, useCallback, useMemo } from "react";
 import useEvent from "react-use-event-hook";
 import {
   RoomIdentifier,
   TimelineEvent,
+  ZTEvent,
   useMatrixStore,
   useZionClient,
 } from "use-zion-client";
@@ -11,7 +12,7 @@ import {
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
 
-import { Box, Stack } from "@ui";
+import { Box, Button, Paragraph, Stack } from "@ui";
 import { TimelineGenericEvent } from "./events/TimelineGenericEvent";
 import { TimelineMessage } from "./events/TimelineMessage";
 import { RenderEventType, useGroupEvents } from "./hooks/useGroupEvents";
@@ -35,11 +36,33 @@ export const MessageTimeline = (props: Props) => {
   const { userId } = useMatrixStore();
 
   const timelineActions = useTimelineMessageEditing();
-  const { sendReaction } = useZionClient();
+  const { sendReaction, sendReadReceipt } = useZionClient();
   const onReaction = useEvent((eventId: string, reaction: string) => {
     sendReaction(channelId, eventId, reaction);
   });
+
   const dateGroups = useGroupEvents(events);
+
+  const lastEvent = useMemo(() => {
+    const event = events
+      .slice()
+      .reverse()
+      .find((e) => e.content?.kind === ZTEvent.RoomMessage);
+
+    const content = event?.content;
+    if (content?.kind === ZTEvent.RoomMessage) {
+      return {
+        content,
+        event,
+      };
+    }
+  }, [events]);
+
+  const onMarkAsRead = useCallback(() => {
+    if (lastEvent?.event?.eventId) {
+      sendReadReceipt(channelId, lastEvent?.event?.eventId);
+    }
+  }, [channelId, lastEvent?.event?.eventId, sendReadReceipt]);
 
   return (
     <TimelineMessageContext.Provider value={timelineActions}>
@@ -104,6 +127,20 @@ export const MessageTimeline = (props: Props) => {
           </Stack>
         );
       })}
+
+      <Box centerContent gap="sm">
+        <Button
+          animate={false}
+          key={channelId.slug + "mark-as-read"}
+          size="button_sm"
+          onClick={onMarkAsRead}
+        >
+          Click here to Mark as Read (temp)
+        </Button>
+        <Paragraph size="sm" color="gray2">
+          {lastEvent?.content.body}
+        </Paragraph>
+      </Box>
     </TimelineMessageContext.Provider>
   );
 };

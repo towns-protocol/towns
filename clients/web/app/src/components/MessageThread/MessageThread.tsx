@@ -1,12 +1,19 @@
 import React from "react";
 import useEvent from "react-use-event-hook";
-import { useMatrixStore, useZionClient } from "use-zion-client";
+import {
+  useChannelTimeline,
+  useMatrixStore,
+  useZionClient,
+} from "use-zion-client";
 import { useChannelContext } from "use-zion-client/dist/components/ChannelContextProvider";
 import { TimelineMessage } from "@components/MessageTimeline/events/TimelineMessage";
 import { MessageTimeline } from "@components/MessageTimeline/MessageTimeline";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Divider, IconButton, Stack } from "@ui";
-import { useMessageThread } from "hooks/useFixMeMessageThread";
+import {
+  useMessageThread,
+  useTimelineReactionsMap,
+} from "hooks/useFixMeMessageThread";
 import { useSendReply } from "hooks/useSendReply";
 import { getIsRoomMessageContent } from "utils/ztevent_util";
 
@@ -30,6 +37,11 @@ export const MessageThread = (props: Props) => {
   });
 
   const parentMessageContent = getIsRoomMessageContent(parentMessage);
+
+  const channelMessages = useChannelTimeline();
+
+  // could be optimised - only need the segment of the thread
+  const messageReactionsMap = useTimelineReactionsMap(channelMessages);
 
   return (
     <Stack absoluteFill padding gap position="relative">
@@ -55,6 +67,7 @@ export const MessageThread = (props: Props) => {
               events={messages}
               spaceId={spaceId}
               channelId={channelId}
+              messageReactionsMap={messageReactionsMap}
             />
           </Stack>
         </Stack>

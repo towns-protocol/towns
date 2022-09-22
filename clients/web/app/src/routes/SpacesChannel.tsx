@@ -11,8 +11,8 @@ import {
   useZionContext,
 } from "use-zion-client";
 import { ChannelHeader } from "@components/ChannelHeader";
-import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { MessageTimelineScroller } from "@components/MessageTimeline";
+import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Button, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
@@ -33,7 +33,7 @@ const SpacesChannelComponent = () => {
   const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
   const outlet = useOutlet();
   const { unreadCounts } = useZionContext();
-  const { joinRoom, sendMessage, sendReadReceipt } = useZionClient();
+  const { joinRoom, sendMessage } = useZionClient();
 
   const { spaceId, channelId, channel } = useChannelData();
 
@@ -55,13 +55,6 @@ const SpacesChannelComponent = () => {
   const onJoinChannel = useCallback(() => {
     joinRoom(channelId);
   }, [joinRoom, channelId]);
-
-  const onMarkAsRead = useCallback(() => {
-    void sendReadReceipt(
-      channelId,
-      channelMessages[channelMessages.length - 1].eventId,
-    );
-  }, [channelId, channelMessages, sendReadReceipt]);
 
   const hasThreadOpen = !!messageId;
 
@@ -96,21 +89,6 @@ const SpacesChannelComponent = () => {
                 channelId={channelId}
                 events={channelMessages}
                 before={<ChannelHeader name={channel.label} />}
-                after={
-                  hasUnread ? (
-                    <Box padding centerContent>
-                      <Button
-                        animate={false}
-                        key={channelId.slug + "mark-as-read"}
-                        size="button_sm"
-                        onClick={onMarkAsRead}
-                      >
-                        Click here to Mark as Read (
-                        {unreadCounts[channelId.matrixRoomId]})
-                      </Button>
-                    </Box>
-                  ) : undefined
-                }
               />
 
               <Box gap paddingBottom="lg" paddingX="lg">

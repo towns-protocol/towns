@@ -11,6 +11,7 @@ import { NavItem } from "./_NavItem";
 type Props = {
   id: RoomIdentifier;
   name: string;
+  spaceName?: string;
   avatar?: string;
   icon?: IconName;
   active?: boolean;
@@ -81,12 +82,7 @@ export const SpaceNavItem = (props: Props) => {
             />
           )}
 
-          <ButtonText
-            grow
-            truncate
-            color={active ? "default" : "gray1"}
-            strong={active}
-          >
+          <ButtonText grow truncate strong={active}>
             {isInvite
               ? "(Invite) " + name
               : (mentions ?? 0) > 0
@@ -104,11 +100,13 @@ export const SpaceNavItem = (props: Props) => {
             )}
           </Box>
 
-          {settings && (
+          {props.spaceName && settings && (
             <TooltipRenderer
               trigger="click"
               placement="horizontal"
-              render={<SpaceSettingsCard spaceId={id} spaceName={props.name} />}
+              render={
+                <SpaceSettingsCard spaceId={id} spaceName={props.spaceName} />
+              }
               layoutId="settings"
             >
               {({ triggerProps }) => (

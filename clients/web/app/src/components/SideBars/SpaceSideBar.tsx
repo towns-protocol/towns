@@ -8,13 +8,13 @@ import {
   useZionContext,
 } from "use-zion-client";
 import { ActionNavItem } from "@components/NavItem/ActionNavItem";
+import { ChannelNavGroup } from "@components/NavItem/ChannelNavGroup";
 import { ChannelNavItem } from "@components/NavItem/ChannelNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";
 import { Stack } from "@ui";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { atoms } from "ui/styles/atoms.css";
-import { ChannelNavGroup } from "@components/NavItem/ChannelNavGroup";
 import { SideBar } from "./_SideBar";
 
 type Props = {
@@ -63,7 +63,8 @@ export const SpaceSideBar = (props: Props) => {
         {space && (
           <SpaceNavItem
             exact
-            name={"Home" ?? space.name}
+            name="Home"
+            spaceName={space.name}
             icon="home"
             id={space.id}
             settings={space.membership === Membership.Join}
