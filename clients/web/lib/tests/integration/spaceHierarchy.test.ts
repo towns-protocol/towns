@@ -3,7 +3,7 @@ import { RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("spaceHierarchy", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(30000);
   test("create a public space and a public room, have user join space and search for space childs", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);

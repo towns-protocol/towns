@@ -15,7 +15,7 @@ import { ZionTestWeb3Provider } from "use-zion-client/tests/integration/helpers/
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("spaceManagerContractHooks", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(30000);
   test("user can create and list web3 spaces", async () => {
     const provider = new ZionTestWeb3Provider();
     // add funds

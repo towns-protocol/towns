@@ -22,7 +22,7 @@ import { ZTEvent } from "../../src/types/timeline-types";
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("userProfileHooks", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(30000);
   test("user can join a room, see username and avatar info", async () => {
     // create clients
     const { alice } = await registerAndStartClients(["alice"]);

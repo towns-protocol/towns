@@ -5,7 +5,7 @@ import { MessageType, RoomVisibility } from "../../src/types/matrix-types";
 import { registerAndStartClients } from "./helpers/TestUtils";
 
 describe("messageTypes", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(30000);
   test("send a m.wenmoon message to test message types", async () => {
     // create clients
     const { bob, alice } = await registerAndStartClients(["bob", "alice"]);

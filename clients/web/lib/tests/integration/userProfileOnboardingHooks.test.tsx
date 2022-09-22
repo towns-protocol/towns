@@ -13,7 +13,7 @@ import { ZionTestWeb3Provider } from "./helpers/ZionTestWeb3Provider";
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe("userProfileOnboardingHooks", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(30000);
   /// make sure that we load a user profile on launch
   test("user sees own non-null profile on first launch", async () => {
     // create provider

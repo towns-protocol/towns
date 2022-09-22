@@ -15,7 +15,7 @@ import { LoginStatus } from "../../src/hooks/login";
 import { SpaceContextProvider } from "../../src/components/SpaceContextProvider";
 
 describe("spaceHierarchyHooks", () => {
-  jest.setTimeout(10000);
+  jest.setTimeout(30000);
   test("create a space with two users, have alice create a child channel, ensure bob sees it", async () => {
     // create clients
     const { alice, bob } = await registerAndStartClients(["alice", "bob"]);
