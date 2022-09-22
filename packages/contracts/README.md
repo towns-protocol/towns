@@ -5,8 +5,7 @@
 From the root of the repo, run:
 
 ```bash
-yarn build:contracts-governance
-yarn publish:contracts-governance
+./scripts/build-contract-types.sh
 ```
 
 ## How to install this package in a workspace?

@@ -33,7 +33,7 @@ import {
 import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
 import { zionCouncilNFTAbi, zionSpaceManagerAbi } from "./web3/ZionAbis";
 
-import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
+import { DataTypes } from "@harmony/contracts/governance/types/ZionSpaceManager";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
 import { createZionChannel } from "./matrix/CreateChannel";
 import { createZionSpace } from "./matrix/CreateSpace";

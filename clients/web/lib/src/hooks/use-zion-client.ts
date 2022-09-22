@@ -9,7 +9,7 @@ import {
 } from "../types/matrix-types";
 
 /* eslint-disable @typescript-eslint/unbound-method */
-import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
+import { DataTypes } from "@harmony/contracts/governance/types/ZionSpaceManager";
 import { ZionClientEvent } from "../client/ZionClientTypes";
 import { ZionContractProvider } from "client/web3/ZionContractProvider";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";

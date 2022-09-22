@@ -1,7 +1,7 @@
 import { SpaceIdentifier, ZionClientEvent } from "../client/ZionClientTypes";
 import { useEffect, useState } from "react";
 
-import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
+import { DataTypes } from "@harmony/contracts/governance/types/ZionSpaceManager";
 import { useZionClient } from "./use-zion-client";
 import { useZionClientEvent } from "./use-zion-client-event";
 

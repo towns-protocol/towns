@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+import "forge-std/Console.sol";
 
 contract Greeter {
   string private greeting;

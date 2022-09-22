@@ -1,6 +1,6 @@
 import { CreateSpaceInfo, RoomIdentifier } from "types/matrix-types";
 
-import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-governance/contracts/spaces/ZionSpaceManager";
+import { DataTypes } from "@harmony/contracts/governance/types/ZionSpaceManager";
 import { EntitlementType } from "../client/web3/ZionContractTypes";
 import { useCallback } from "react";
 import { useZionClient } from "./use-zion-client";
