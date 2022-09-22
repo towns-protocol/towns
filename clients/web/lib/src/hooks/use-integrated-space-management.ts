@@ -4,7 +4,7 @@ import { DataTypes } from "@harmony/contracts/governance/src/contracts/zion-gove
 import { EntitlementType } from "../client/web3/ZionContractTypes";
 import { useCallback } from "react";
 import { useZionClient } from "./use-zion-client";
-import { useZionContext } from "../components/ZionContextProvider";
+import { getContractAddresses } from "../client/web3/ZionContractAddresses";
 
 /**
  * Combine Matrix space creation and Smart Contract space
@@ -13,17 +13,23 @@ import { useZionContext } from "../components/ZionContextProvider";
 const TAG = "[useIntegratedSpaceManagement]";
 
 export function useIntegratedSpaceManagement() {
-  const { createWeb3SpaceWithTokenEntitlement } = useZionClient();
-  const { tokenEntitlementAddress, councilNFTAddress } = useZionContext();
+  const { createWeb3SpaceWithTokenEntitlement, chainId } = useZionClient();
 
   const createSpaceWithZionTokenEntitlement = useCallback(
     async function (
       createInfo: CreateSpaceInfo,
     ): Promise<RoomIdentifier | undefined> {
+      if (!chainId) {
+        console.error(
+          "createSpaceWithZionTokenEntitlement::chainId is undefined",
+        );
+        return undefined;
+      }
+      const addresses = getContractAddresses(chainId);
       const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct =
         {
-          entitlementModuleAddress: tokenEntitlementAddress,
-          tokenAddress: councilNFTAddress,
+          entitlementModuleAddress: addresses.spaceManager.tokengranted,
+          tokenAddress: addresses.council.councilnft,
           quantity: 1,
           description: "Zion Council NFT",
           entitlementTypes: [EntitlementType.Join],
@@ -42,11 +48,7 @@ export function useIntegratedSpaceManagement() {
 
       return undefined;
     },
-    [
-      councilNFTAddress,
-      createWeb3SpaceWithTokenEntitlement,
-      tokenEntitlementAddress,
-    ],
+    [chainId, createWeb3SpaceWithTokenEntitlement],
   );
 
   return {

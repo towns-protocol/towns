@@ -2,6 +2,7 @@ import { ZionTestClient } from "./ZionTestClient";
 import { ethers } from "ethers";
 import { TestConstants } from "./TestConstants";
 import { EventTimeline } from "matrix-js-sdk";
+import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -13,8 +14,11 @@ export function assert(condition: any, msg?: string): asserts condition {
 export async function registerAndStartClients(
   clientNames: string[],
 ): Promise<Record<string, ZionTestClient>> {
+  // get the chain id for the test network
+  const dummyProvider = new ZionTestWeb3Provider();
+  const chainId = (await dummyProvider.getNetwork()).chainId;
   // create new matrix test clients
-  const clients = clientNames.map((name) => new ZionTestClient(name));
+  const clients = clientNames.map((name) => new ZionTestClient(chainId, name));
   // start them up
   await Promise.all(
     clients.map((client) => client.registerWalletAndStartClient()),

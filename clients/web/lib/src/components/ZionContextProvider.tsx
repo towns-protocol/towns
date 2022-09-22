@@ -18,9 +18,6 @@ import { useFavIconBadge } from "../hooks/ZionContext/useFavIconBadge";
 import { Web3ContextProvider } from "./Web3ContextProvider";
 
 export interface IZionContext {
-  councilNFTAddress: string;
-  tokenEntitlementAddress: string; // TokenEntitlementModule Smart Contract address
-  userEntitlementAddress: string; // UserEntitlementModule Smart Contract address.
   client?: ZionClient;
   unreadCounts: Record<string, number>; // channel or unaggregated space -> count;
   mentionCounts: Record<string, number>; // channel or unaggregated space -> count;
@@ -52,11 +49,6 @@ export function useZionContext(): IZionContext {
 
 interface Props {
   homeServerUrl: string;
-  spaceManagerAddress: string;
-  tokenEntitlementAddress: string;
-  userEntitlementAddress: string;
-  councilNFTAddress: string;
-  councilStakingAddress: string;
   disableEncryption?: boolean;
   enableSpaceRootUnreads?: boolean;
   getSignerFn?: () => ethers.Signer;
@@ -81,11 +73,6 @@ export function ZionContextProvider(props: Props): JSX.Element {
 const ContextImpl = (props: Props): JSX.Element => {
   const {
     homeServerUrl,
-    spaceManagerAddress,
-    tokenEntitlementAddress,
-    userEntitlementAddress,
-    councilNFTAddress,
-    councilStakingAddress,
     disableEncryption,
     enableSpaceRootUnreads,
     getSignerFn,
@@ -96,9 +83,6 @@ const ContextImpl = (props: Props): JSX.Element => {
   } = props;
   const { client } = useZionClientListener(
     homeServerUrl,
-    spaceManagerAddress,
-    councilNFTAddress,
-    councilStakingAddress,
     initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
     disableEncryption,
     getSignerFn,
@@ -139,9 +123,6 @@ const ContextImpl = (props: Props): JSX.Element => {
   return (
     <ZionContext.Provider
       value={{
-        councilNFTAddress,
-        tokenEntitlementAddress,
-        userEntitlementAddress,
         client,
         unreadCounts,
         mentionCounts,

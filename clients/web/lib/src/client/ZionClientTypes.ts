@@ -6,9 +6,6 @@ export interface ZionOpts {
   homeServerUrl: string;
   initialSyncLimit: number;
   disableEncryption?: boolean;
-  spaceManagerAddress: string;
-  councilNFTAddress: string;
-  councilStakingAddress: string;
   getProvider: () => ethers.providers.Provider | undefined;
   getSigner: () => ethers.Signer | undefined;
 }

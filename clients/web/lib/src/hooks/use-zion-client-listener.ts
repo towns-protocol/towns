@@ -10,16 +10,15 @@ import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler"
 
 export const useZionClientListener = (
   homeServerUrl: string,
-  spaceManagerAddress: string,
-  councilNFTAddress: string,
-  councilStakingAddress: string,
   initialSyncLimit: number,
   disableEncryption?: boolean,
   getSignerFn?: () => ethers.Signer,
 ) => {
-  const { getProvider } = useWeb3Context();
+  const { getProvider, chain } = useWeb3Context();
   const { deviceId, isAuthenticated, userId } = useMatrixStore();
   const { accessToken } = useCredentialStore();
+
+  const chainId = chain?.id;
 
   // for historical reasons we only return the client when it's authed and ready
   const clientRef = useRef<ZionClient>();
@@ -33,16 +32,16 @@ export const useZionClientListener = (
   // singleton client for the app
   const clientSingleton = useRef<ZionClient>();
   if (!clientSingleton.current) {
-    clientSingleton.current = new ZionClient({
-      homeServerUrl,
-      initialSyncLimit,
-      disableEncryption,
-      spaceManagerAddress,
-      councilNFTAddress,
-      councilStakingAddress,
-      getProvider,
-      getSigner,
-    });
+    clientSingleton.current = new ZionClient(
+      {
+        homeServerUrl,
+        initialSyncLimit,
+        disableEncryption,
+        getProvider,
+        getSigner,
+      },
+      chainId,
+    );
   }
 
   const handleRoomMembershipEvent = useRoomMembershipEventHandler(clientRef);
@@ -56,6 +55,10 @@ export const useZionClientListener = (
       );
       return;
     }
+    if (!chainId) {
+      console.error("startClient: chainId is undefined");
+      return;
+    }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const client = clientSingleton.current!;
     // make sure we're not re-starting the client
@@ -64,13 +67,10 @@ export const useZionClientListener = (
       return;
     }
     console.log("******* start client *******");
-    await client.startClient(
-      { userId, accessToken, deviceId },
-      {
-        onRoomMembershipEvent: handleRoomMembershipEvent,
-        onRoomTimelineEvent: handleRoomTimelineEvent,
-      },
-    );
+    await client.startClient({ userId, accessToken, deviceId }, chainId, {
+      onRoomMembershipEvent: handleRoomMembershipEvent,
+      onRoomTimelineEvent: handleRoomTimelineEvent,
+    });
     handleSync();
     clientRef.current = client;
     // fetch profile info
@@ -78,6 +78,7 @@ export const useZionClientListener = (
     /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
   }, [
     accessToken,
+    chainId,
     deviceId,
     handleRoomMembershipEvent,
     handleRoomTimelineEvent,

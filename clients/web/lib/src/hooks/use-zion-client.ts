@@ -29,6 +29,7 @@ interface ZionClientImpl {
   clientRunning: boolean;
   councilNFT: ZionContractProvider<CouncilNFT> | undefined;
   spaceManager: ZionContractProvider<ZionSpaceManager> | undefined;
+  chainId: number | undefined;
   createSpace: (
     createInfo: CreateSpaceInfo,
   ) => Promise<RoomIdentifier | undefined>;
@@ -101,6 +102,7 @@ export function useZionClient(): ZionClientImpl {
     clientRunning,
     councilNFT: client?.councilNFT,
     spaceManager: client?.spaceManager,
+    chainId: client?.chainId,
     createChannel: useWithCatch(client?.createChannel),
     createSpace: useWithCatch(client?.createSpace),
     createWeb3Space: useWithCatch(

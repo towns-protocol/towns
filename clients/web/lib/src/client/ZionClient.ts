@@ -14,7 +14,7 @@ import {
   IRoomTimelineData,
   createClient,
 } from "matrix-js-sdk";
-import { ContractReceipt, ContractTransaction } from "ethers";
+import { ContractReceipt, ContractTransaction, ethers } from "ethers";
 import { CouncilNFT, ZionSpaceManager } from "@harmony/contracts/governance";
 import {
   CreateChannelInfo,
@@ -47,6 +47,7 @@ import { syncZionSpace } from "./matrix/SyncSpace";
 import { CustomMemoryStore } from "./store/CustomMatrixStore";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/lib/sync";
 import { IStore } from "matrix-js-sdk/lib/store";
+import { getContractAddresses } from "./web3/ZionContractAddresses";
 
 /***
  * Zion Client
@@ -68,33 +69,33 @@ export class ZionClient {
   public get auth(): ZionAuth | undefined {
     return this._auth;
   }
+  /// chain id at the time the contracts were created
+  /// contracts are recreated when the client is started
+  public get chainId(): number {
+    return this._chainId;
+  }
   public spaceManager: ZionContractProvider<ZionSpaceManager>;
   public councilNFT: ZionContractProvider<CouncilNFT>;
+  private _chainId: number;
   private _auth?: ZionAuth;
   private client: MatrixClient;
 
-  constructor(opts: ZionOpts, name?: string) {
+  constructor(opts: ZionOpts, chainId?: number, name?: string) {
     this.opts = opts;
     this.name = name || "";
+    this._chainId = chainId ?? 0;
     console.log("~~~ new ZionClient ~~~", this.name, this.opts);
     ({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
       opts.homeServerUrl,
       this._auth,
     ));
-    this.spaceManager = new ZionContractProvider<ZionSpaceManager>(
-      opts.getProvider,
-      opts.getSigner,
-      opts.spaceManagerAddress,
-      zionSpaceManagerAbi(),
-    );
-    this.councilNFT = new ZionContractProvider<CouncilNFT>(
-      opts.getProvider,
-      opts.getSigner,
-      opts.councilNFTAddress,
-      zionCouncilNFTAbi(),
-    );
+    ({ spaceManager: this.spaceManager, councilNFT: this.councilNFT } =
+      ZionClient.createContracts(
+        opts.getProvider,
+        opts.getSigner,
+        this._chainId,
+      ));
   }
-
   /************************************************
    * logout
    *************************************************/
@@ -148,7 +149,11 @@ export class ZionClient {
    * startClient
    * start the matrix client, add listeners
    *************************************************/
-  public async startClient(auth: ZionAuth, startOpts?: StartClientOpts) {
+  public async startClient(
+    auth: ZionAuth,
+    chainId: number,
+    startOpts?: StartClientOpts,
+  ) {
     if (this.auth) {
       throw new Error("already authenticated");
     }
@@ -159,8 +164,16 @@ export class ZionClient {
     this.stopClient();
     // log startOpts
     this.log("Starting client", startOpts);
-    // set auth
+    // set auth, chainId
     this._auth = auth;
+    this._chainId = chainId;
+    // new contracts
+    ({ spaceManager: this.spaceManager, councilNFT: this.councilNFT } =
+      ZionClient.createContracts(
+        this.opts.getProvider,
+        this.opts.getSigner,
+        this.chainId,
+      ));
     // new client
     ({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
       this.opts.homeServerUrl,
@@ -733,5 +746,32 @@ export class ZionClient {
         }),
       };
     }
+  }
+
+  /************************************************
+   * createMatrixClient
+   * helper, creates a matrix client with appropriate auth
+   *************************************************/
+  private static createContracts(
+    getProvider: () => ethers.providers.Provider | undefined,
+    getSigner: () => ethers.Signer | undefined,
+    chainId: number,
+  ) {
+    const addresses = getContractAddresses(chainId);
+    console.log("ZionClient::creating contracts", { chainId, addresses });
+    const spaceManager = new ZionContractProvider<ZionSpaceManager>(
+      getProvider,
+      getSigner,
+      addresses.spaceManager.spacemanager,
+      zionSpaceManagerAbi(),
+    );
+    const councilNFT = new ZionContractProvider<CouncilNFT>(
+      getProvider,
+      getSigner,
+      addresses.council.councilnft,
+      zionCouncilNFTAbi(),
+    );
+
+    return { spaceManager, councilNFT };
   }
 }

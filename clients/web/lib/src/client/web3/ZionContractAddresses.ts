@@ -1,0 +1,77 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import MainNet_SpaceManager from "@harmony/contracts/addresses/1/space-manager.json";
+import MainNet_Council from "@harmony/contracts/addresses/1/council.json";
+import Rinkeby_SpaceManager from "@harmony/contracts/addresses/4/space-manager.json";
+import Rinkeby_Council from "@harmony/contracts/addresses/4/council.json";
+import Foundry_SpaceManager from "@harmony/contracts/addresses/31337/space-manager.json";
+import Foundry_Council from "@harmony/contracts/addresses/31337/council.json";
+
+export interface ISpaceManagerAddress {
+  spacemanager: string;
+  usergranted: string;
+  tokengranted: string;
+}
+
+export interface ICouncilAddress {
+  councilnft: string;
+}
+
+export interface IContractAddresses {
+  spaceManager: ISpaceManagerAddress;
+  council: ICouncilAddress;
+}
+
+const emptySMAddresses: ISpaceManagerAddress = {
+  spacemanager: "",
+  usergranted: "",
+  tokengranted: "",
+};
+
+const emptyCouncilAddresses: ICouncilAddress = {
+  councilnft: "",
+};
+
+/// get zion contract addresses for a given network id
+/// aellis 2021-09-09,
+/// map chainId to json
+/// use ?? require for the tests, just like the abis
+export function getContractAddresses(chainId: number): IContractAddresses {
+  switch (chainId) {
+    case 1:
+      return {
+        spaceManager:
+          MainNet_SpaceManager ??
+          require("@harmony/contracts/addresses/1/space-manager.json"),
+        council:
+          MainNet_Council ??
+          require("@harmony/contracts/addresses/1/council.json"),
+      };
+    case 4:
+      return {
+        spaceManager:
+          Rinkeby_SpaceManager ??
+          require("@harmony/contracts/addresses/4/space-manager.json"),
+        council:
+          Rinkeby_Council ??
+          require("@harmony/contracts/addresses/4/council.json"),
+      };
+    case 1337:
+    case 31337:
+      return {
+        spaceManager:
+          Foundry_SpaceManager ??
+          require("@harmony/contracts/addresses/31337/space-manager.json"),
+        council:
+          Foundry_Council ??
+          require("@harmony/contracts/addresses/31337/council.json"),
+      };
+    default:
+      console.error(
+        `Unsupported chainId, please add chainId: ${chainId} info to index.ts`,
+      );
+      return {
+        spaceManager: emptySMAddresses,
+        council: emptyCouncilAddresses,
+      };
+  }
+}

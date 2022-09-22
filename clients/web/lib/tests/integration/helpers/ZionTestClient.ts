@@ -29,21 +29,19 @@ export class ZionTestClient extends ZionClient {
     return this.auth?.userId;
   }
 
-  constructor(name: string) {
+  constructor(chainId: number, name: string) {
     // super
     super(
       {
         homeServerUrl: process.env.HOMESERVER!,
         initialSyncLimit: 20,
         disableEncryption: process.env.DISABLE_ENCRYPTION === "true",
-        spaceManagerAddress: process.env.SPACE_MANAGER_ADDRESS!,
-        councilNFTAddress: process.env.COUNCIL_NFT_ADDRESS!,
-        councilStakingAddress: process.env.COUNCIL_STAKING_ADDRESS!,
         getSigner: () => this.provider.wallet,
         getProvider: () => {
           return this.provider;
         },
       },
+      chainId,
       name,
     );
     // initialize our provider that wraps our wallet and chain communication
@@ -154,7 +152,7 @@ export class ZionTestClient extends ZionClient {
     if (!myAuth) {
       myAuth = await this.registerWallet();
     }
-    return this.startClient(myAuth);
+    return this.startClient(myAuth, this.provider.network.chainId);
   }
 
   /// set the room invite level
