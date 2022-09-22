@@ -21,3 +21,4 @@ export { TextField } from "./TextField/TextField";
 export { RootLayerContext } from "./Tooltip/OverlayPortal";
 export { Tooltip } from "./Tooltip/Tooltip";
 export { TooltipRenderer } from "./Tooltip/TooltipRenderer";
+export { Badge } from "./Badge";

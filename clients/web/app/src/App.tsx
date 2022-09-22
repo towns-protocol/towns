@@ -10,6 +10,7 @@ import { AppLayout } from "AppLayout";
 import { SiteHome } from "routes/SiteHome";
 import { Register } from "routes/Register";
 import { SidebarLayout } from "SidebarLayout";
+import { SpacesNew } from "routes/SpacesNew";
 
 const SpaceRoutes = React.lazy(() => import("routes/SpaceRoutes"));
 const Playground = React.lazy(() => import("@components/Playground"));
@@ -61,9 +62,12 @@ const AllRoutes = () => {
             <Route path="/dao" element={<Heading>DAO</Heading>} />
           </Route>
           {isAuthenticated && (
-            <Route path="*" element={<SidebarLayout />}>
-              <Route path="*" element={<SpaceRoutes />} />
-            </Route>
+            <>
+              <Route path="*" element={<SidebarLayout />}>
+                <Route path="*" element={<SpaceRoutes />} />
+              </Route>
+              <Route path="spaces/new" element={<SpacesNew />} />
+            </>
           )}
         </Route>
       </Route>

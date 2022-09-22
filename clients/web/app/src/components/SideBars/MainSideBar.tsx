@@ -4,7 +4,7 @@ import { ActionNavItem } from "@components/NavItem/ActionNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { ProfileCardButton } from "@components/ProfileCardButton/ProfileCardButton";
 import { SideBar } from "@components/SideBars/_SideBar";
-import { IconButton, Stack } from "@ui";
+import { Badge, IconButton, Stack } from "@ui";
 
 type Props = {
   expanded: boolean;
@@ -13,7 +13,7 @@ type Props = {
 
 export const MainSideBar = (props: Props) => {
   const { expanded: isExpanded } = props;
-  const { spaces, spaceUnreads, spaceMentionCounts } = useZionContext();
+  const { spaces, spaceMentionCounts } = useZionContext();
   const { spaceId } = useSpaceContext();
   const invites = useInvites();
 
@@ -23,12 +23,12 @@ export const MainSideBar = (props: Props) => {
         {spaces.map((s) => (
           <SpaceNavItem
             key={s.id.slug}
-            active={s.id.matrixRoomId === spaceId?.matrixRoomId}
+            exact={false}
+            forceMatch={s.id.matrixRoomId === spaceId?.matrixRoomId}
             id={s.id}
             name={s.name}
             avatar={s.avatarSrc}
             pinned={false}
-            newMessages={spaceUnreads[s.id.matrixRoomId]}
             mentions={spaceMentionCounts[s.id.matrixRoomId]}
           />
         ))}
@@ -42,7 +42,6 @@ export const MainSideBar = (props: Props) => {
           <SpaceNavItem
             isInvite
             key={m.id.slug}
-            active={false}
             id={m.id}
             name={m.name}
             avatar={m.avatarSrc}

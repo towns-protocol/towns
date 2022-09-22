@@ -11,7 +11,6 @@ import { SpaceMentions } from "./SpaceMentions";
 import { SpacesChannel } from "./SpacesChannel";
 import { SpacesChannelReplies } from "./SpacesChannelReplies";
 import { SpacesInvite } from "./SpacesInvite";
-import { SpacesNew } from "./SpacesNew";
 import { SpacesNewChannel } from "./SpacesNewChannel";
 import { SpacesSettings } from "./SpacesSettings";
 import { SpaceThreads } from "./SpaceThreads";
@@ -27,7 +26,7 @@ export const SpaceRoutes = () => (
     <Route path="invites/:inviteSlug">
       <Route index element={<InvitesIndex />} />
     </Route>
-    <Route path="spaces/new" element={<SpacesNew />} />
+
     <Route path="spaces/:spaceSlug">
       <Route element={<SpaceHome />}>
         <Route index element={<HomeHighlights />} />

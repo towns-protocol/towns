@@ -12,7 +12,7 @@ import { ChannelNavGroup } from "@components/NavItem/ChannelNavGroup";
 import { ChannelNavItem } from "@components/NavItem/ChannelNavItem";
 import { SpaceNavItem } from "@components/NavItem/SpaceNavItem";
 import { FadeIn } from "@components/Transitions";
-import { Stack } from "@ui";
+import { Badge, Box, Stack } from "@ui";
 import { useSizeContext } from "ui/hooks/useSizeContext";
 import { atoms } from "ui/styles/atoms.css";
 import { SideBar } from "./_SideBar";
@@ -89,7 +89,8 @@ export const SpaceSideBar = (props: Props) => {
               icon="at"
               highlight={totalMentions > 0}
               id="mentions"
-              label={`Mentions ${totalMentions ? `(${totalMentions})` : ``}`}
+              label="Mentions"
+              badge={totalMentions && <Badge value={totalMentions} />}
               link={`/spaces/${space.id.slug}/mentions`}
             />
           </>
@@ -98,7 +99,6 @@ export const SpaceSideBar = (props: Props) => {
           <SpaceNavItem
             isInvite
             key={m.id.slug}
-            active={false}
             id={m.id}
             name={m.name}
             avatar={m.avatarSrc}

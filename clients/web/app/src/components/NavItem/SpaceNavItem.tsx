@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { RoomIdentifier } from "use-zion-client";
 import { SpaceSettingsCard } from "@components/Cards/SpaceSettingsCard";
 import { SpaceNavTooltip } from "@components/Tooltips/SpaceNavTooltip";
-import { Box, ButtonText, Icon, TooltipRenderer } from "@ui";
+import { Badge, Box, ButtonText, Icon, TooltipRenderer } from "@ui";
 import { Avatar } from "ui/components/Avatar/Avatar";
 import { IconName } from "ui/components/Icon";
 import { useSizeContext } from "ui/hooks/useSizeContext";
@@ -13,8 +13,10 @@ type Props = {
   name: string;
   spaceName?: string;
   avatar?: string;
+  badge?: JSX.Element;
   icon?: IconName;
-  active?: boolean;
+  forceMatch?: boolean;
+  highlight?: boolean;
   pinned?: boolean;
   newMessages?: boolean;
   mentions?: number;
@@ -27,7 +29,9 @@ type Props = {
 export const SpaceNavItem = (props: Props) => {
   const {
     id,
-    active,
+    forceMatch,
+    badge,
+    highlight,
     avatar,
     exact,
     icon,
@@ -67,6 +71,8 @@ export const SpaceNavItem = (props: Props) => {
           id={id.slug}
           to={isInvite ? `/invites/${id.slug}/` : `/spaces/${id.slug}/`}
           exact={exact}
+          forceMatch={forceMatch}
+          highlight={highlight}
           {...triggerProps}
         >
           {avatar && (
@@ -82,12 +88,8 @@ export const SpaceNavItem = (props: Props) => {
             />
           )}
 
-          <ButtonText grow truncate strong={active}>
-            {isInvite
-              ? "(Invite) " + name
-              : (mentions ?? 0) > 0
-              ? name + " (" + mentions + ")"
-              : name}
+          <ButtonText grow truncate>
+            {isInvite ? "(Invite) " + name : name}
           </ButtonText>
 
           <Box shrink display={isSmall ? "none" : undefined} color="gray2">
@@ -95,9 +97,7 @@ export const SpaceNavItem = (props: Props) => {
           </Box>
 
           <Box shrink display={isSmall ? "none" : undefined} color="gray2">
-            {newMessages && (
-              <Icon type="newmessage" size="square_sm" padding="xs" />
-            )}
+            <Badge value={mentions} />
           </Box>
 
           {props.spaceName && settings && (

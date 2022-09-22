@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
   CreateSpaceInfo,
   Membership,
@@ -10,8 +11,8 @@ import { atoms } from "ui/styles/atoms.css";
 import {
   Box,
   Button,
+  Divider,
   Dropdown,
-  Heading,
   Paragraph,
   Stack,
   TextField,
@@ -82,19 +83,24 @@ export const CreateSpaceForm = (props: Props) => {
           defaultValue={visibility}
           onChange={(value) => setVisibility(value as RoomVisibility)}
         />
-
         <Box gap="md">
-          <Heading>Space URL</Heading>
-          <Paragraph>This is what your official URL will look like</Paragraph>
+          <Paragraph strong>Space URL</Paragraph>
+          <Paragraph color="gray1">
+            This is what your official URL will look like
+          </Paragraph>
           <Paragraph strong truncate size="md" display="inline-block">
             zion.xyz/
             <span className={atoms({ color: "gray2" })}>{spaceName}</span>
           </Paragraph>
         </Box>
       </Stack>
-      <Button size="button_lg" onClick={onClickCreateSpace}>
+      <Divider />
+      <Button size="button_md" tone="cta1" onClick={onClickCreateSpace}>
         Create
       </Button>
+      <Box centerContent color="gray2">
+        <NavLink to="/">Cancel</NavLink>
+      </Box>
     </Stack>
   );
 };

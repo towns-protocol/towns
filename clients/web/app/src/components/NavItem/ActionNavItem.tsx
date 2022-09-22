@@ -1,21 +1,17 @@
 import React from "react";
-import { ButtonText } from "@ui";
+import { ButtonText, Stack } from "@ui";
 import { Icon, IconName } from "ui/components/Icon";
 import { NavItem } from "./_NavItem";
 
-export const ActionNavItem = ({
-  icon,
-  id,
-  link,
-  highlight: isHighlight,
-  label,
-}: {
+export const ActionNavItem = (props: {
   id?: string;
+  badge?: React.ReactNode;
   label: string;
   link?: string;
   icon?: IconName;
   highlight?: boolean;
 }) => {
+  const { icon, id, link, highlight: isHighlight, label, badge } = props;
   return (
     <NavItem to={link} id={id} highlight={isHighlight}>
       {icon && (
@@ -28,6 +24,9 @@ export const ActionNavItem = ({
         />
       )}
       <ButtonText>{label}</ButtonText>
+      <Stack horizontal grow justifyContent="end">
+        {badge}
+      </Stack>
     </NavItem>
   );
 };

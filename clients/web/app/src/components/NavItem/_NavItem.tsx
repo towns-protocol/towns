@@ -14,6 +14,8 @@ import * as styles from "./_NavItem.css";
 type NavLinkProps = {
   to?: string;
   exact?: boolean;
+  active?: boolean;
+  forceMatch?: boolean;
 };
 
 export const NavItem = forwardRef<
@@ -21,58 +23,65 @@ export const NavItem = forwardRef<
   { id?: string; highlight?: boolean } & NavLinkProps &
     BoxProps &
     HTMLAttributes<HTMLDivElement>
->(({ id, to, exact, highlight: isHighlight, children, ...props }, ref) => {
-  const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
+>(
+  (
+    { id, to, exact, highlight: isHighlight, forceMatch, children, ...props },
+    ref,
+  ) => {
+    const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
+    console.log({ id, to, resolved });
 
-  const match = useMatch({
-    path: resolved.pathname || "/",
-    end: to === "/" || exact,
-  });
+    const match =
+      useMatch({
+        path: resolved.pathname || "/",
+        end: to === "/" || exact,
+      }) || forceMatch;
 
-  const { activeItem, setActiveItem } = useContext(SidebarContext);
+    const { activeItem, setActiveItem } = useContext(SidebarContext);
 
-  const onMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-    // relays event to custom NavItem implementation (e.g. used by tooltips)
-    props.onMouseEnter && props.onMouseEnter(e);
-    if (setActiveItem && id) {
-      setActiveItem(id);
-    }
-  };
+    const onMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+      // relays event to custom NavItem implementation (e.g. used by tooltips)
+      props.onMouseEnter && props.onMouseEnter(e);
+      if (setActiveItem && id) {
+        setActiveItem(id);
+      }
+    };
 
-  const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    props.onMouseLeave && props.onMouseLeave(e);
-    if (setActiveItem && id && activeItem === id) {
-      setActiveItem(null);
-    }
-  };
+    const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+      props.onMouseLeave && props.onMouseLeave(e);
+      if (setActiveItem && id && activeItem === id) {
+        setActiveItem(null);
+      }
+    };
 
-  const isHovered = activeItem === id;
+    const isHovered = activeItem === id;
 
-  return (
-    <ConditionalNavLink to={to}>
-      <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        <Stack position="relative" paddingX="sm" {...props} ref={ref}>
-          {/* background fill to highlight element */}
-          <NavItemHighlight selected={!!match} hovered={isHovered} />
-          <Stack
-            horizontal
-            grow
-            position="relative"
-            rounded="xs"
-            alignItems="center"
-            gap="sm"
-            minHeight="x6"
-            paddingX="sm"
-            fontWeight={isHighlight || match ? "strong" : "normal"}
-            color={isHighlight || match ? "gray1" : "gray2"}
-          >
-            {children}
+    return (
+      <ConditionalNavLink to={to}>
+        <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+          <Stack position="relative" paddingX="sm" {...props} ref={ref}>
+            {/* background fill to highlight element */}
+            <NavItemHighlight selected={!!match} hovered={isHovered} />
+            <Stack
+              horizontal
+              grow
+              position="relative"
+              rounded="xs"
+              alignItems="center"
+              gap="sm"
+              minHeight="x6"
+              paddingX="sm"
+              fontWeight={match ? "strong" : "normal"}
+              color={isHighlight || match ? "gray1" : "gray2"}
+            >
+              {children}
+            </Stack>
           </Stack>
-        </Stack>
-      </Box>
-    </ConditionalNavLink>
-  );
-});
+        </Box>
+      </ConditionalNavLink>
+    );
+  },
+);
 
 /**
  * Highlights selected or hovered item
