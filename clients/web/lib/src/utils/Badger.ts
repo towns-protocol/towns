@@ -152,7 +152,9 @@ export class Badger {
       return;
     }
     const url = this.canvas.toDataURL("image/png");
-    this.faviconEL.setAttribute("href", url);
+    if (url) {
+      this.faviconEL.setAttribute("href", url);
+    }
   }
 
   _draw() {
