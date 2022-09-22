@@ -23,7 +23,11 @@ export const getMessageBody = (
       ${eventId}
       `;
     case MessageType.Text:
-      return message.content.body;
+      return (
+        message.content.body ??
+        // here for historical reasons TODO: delete
+        message.content["m.body"]
+      );
     default:
       return `${message.content.body}\n*Unsupported message type* **${message.content.msgType}**`;
   }

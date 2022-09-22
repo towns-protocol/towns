@@ -28,8 +28,8 @@ export const editZionMessage = async (props: {
     body: message,
     msgtype: MessageType.Text,
     "m.new_content": {
-      "m.body": message,
-      msgtype: "m.text",
+      body: message,
+      msgtype: MessageType.Text,
     },
     "m.relates_to": {
       rel_type: RelationType.Replace,

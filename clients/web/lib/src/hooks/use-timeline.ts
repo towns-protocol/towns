@@ -42,28 +42,10 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
     //);
     let initialTimeline = matrixRoom.getLiveTimeline().getEvents();
     // for some reason the timeline doesn't filter replacements
-    initialTimeline = initialTimeline.reduce(
-      (messages: MatrixEvent[], m: MatrixEvent) => {
-        if (m.isRelation(RelationType.Replace)) {
-          const parentEventId = m.getWireContent()["m.relates_to"]?.event_id;
-          const parentEventIndex = messages.findIndex(
-            (m) => m.getId() === parentEventId,
-          );
-          if (parentEventIndex !== -1) {
-            // console.log(
-            //  "!!! replacing initial event",
-            //  parentEventId,
-            //  m.getId(),
-            //);
-            // replace parent by edit (inserts and deletes parent)
-            messages.splice(parentEventIndex, 1, m);
-            return messages;
-          }
-        }
-        return [...messages, m];
-      },
-      [] as MatrixEvent[],
+    initialTimeline = initialTimeline.filter(
+      (m) => !m.isRelation(RelationType.Replace),
     );
+
     setTimeline(initialTimeline.map(toEvent));
 
     const onRoomTimelineEvent = (
