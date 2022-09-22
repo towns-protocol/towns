@@ -15,6 +15,7 @@ export { useWeb3Context } from "./components/Web3ContextProvider";
 export { useChannelId } from "./hooks/use-channel-id";
 export { useChannelData } from "./hooks/use-channel-data";
 export { useChannelTimeline } from "./hooks/use-channel-timeline";
+export { toEvent } from "./hooks/use-timeline";
 export { LoginStatus } from "./hooks/login";
 export { useMatrixStore } from "./store/use-matrix-store";
 export { useZionClient } from "./hooks/use-zion-client";

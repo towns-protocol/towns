@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import React, { useRef } from "react";
 import { NavLink } from "react-router-dom";
-import { RoomIdentifier } from "use-zion-client";
+import { Channel, RoomIdentifier } from "use-zion-client";
 import { Reactions } from "@components/Reactions/Reactions";
 import { MessageReplies } from "@components/Replies/MessageReplies";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
@@ -17,7 +17,7 @@ type Props = {
   name: string;
   condensed?: boolean;
   minimal?: boolean;
-  channel?: string;
+  messageSourceAnnotation?: string;
   reactions?: MessageReactions;
   replies?: number;
   timestamp?: number;
@@ -41,7 +41,7 @@ export const Message = (props: Props) => {
     avatarSize = "avatar_md",
     condensed,
     name,
-    channel,
+    messageSourceAnnotation,
     channelId,
     spaceId,
     editable: isEditable,
@@ -96,15 +96,6 @@ export const Message = (props: Props) => {
               {name}
             </Text>
 
-            {/* channel */}
-            {channel && (
-              <NavLink to={channel}>
-                <ButtonText color="default" as="span">
-                  #{channel}
-                </ButtonText>
-              </NavLink>
-            )}
-
             {/* date, alignment tbc depending on context */}
             {date && (
               <Text fontSize="sm" color="gray2" as="span" textAlign="right">
@@ -117,6 +108,13 @@ export const Message = (props: Props) => {
           <Stack fontSize="md" color="gray1" gap="md">
             {children}
           </Stack>
+
+          {/* channel */}
+          {messageSourceAnnotation && (
+            <ButtonText color="gray2" as="span">
+              {messageSourceAnnotation}
+            </ButtonText>
+          )}
 
           {reactions ? (
             <Stack horizontal>

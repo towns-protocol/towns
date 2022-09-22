@@ -52,6 +52,7 @@ export const TimelineMessage = React.memo((props: Props) => {
 
   return !event ? null : (
     <Message
+      id={`event-${event.eventId}`}
       userId={userId}
       timestamp={event.originServerTs}
       avatar={avatarUrl}

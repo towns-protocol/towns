@@ -18,7 +18,7 @@ export default {
       type: "boolean",
       defaultValue: false,
     },
-    channel: {
+    messageSourceAnnotation: {
       type: "string",
       defaultValue: "channelname",
     },

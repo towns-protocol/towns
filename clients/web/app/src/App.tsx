@@ -29,6 +29,7 @@ export const App = () => {
       defaultSpaceId={ZION_SPACE_ID}
       defaultSpaceName={ZION_SPACE_NAME}
       defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
+      initialSyncLimit={100}
     >
       <AllRoutes />
     </ZionContextProvider>

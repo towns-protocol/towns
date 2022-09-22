@@ -17933,6 +17933,7 @@ __metadata:
     siwe: ^1.1.6
     storybook: ^6.5.10
     storybook-dark-mode: ^1.1.0
+    thenby: ^1.3.4
     throttle-debounce: ^5.0.0
     typescript: ^4.7.4
     use-zion-client: "workspace:*"
@@ -31359,6 +31360,13 @@ __metadata:
     promise: ^8.0.0
     qs: ^6.4.0
   checksum: a24a4fc95dd8591966bf3752f024f5cd4d53c2b2c29b23b4e40c3322df6a432d939bc17b589d8e9d760b90e92ab860f6f361a4dfcfe3542019e1615fb51afccc
+  languageName: node
+  linkType: hard
+
+"thenby@npm:^1.3.4":
+  version: 1.3.4
+  resolution: "thenby@npm:1.3.4"
+  checksum: 2d2ef3d67fa851467f328f1373da75a760d6a469d45f667570703894656057a666a1fb488398ce7830606253dba24eb55a063d6ce939e9e872a2b9d2cdd68c2c
   languageName: node
   linkType: hard
 

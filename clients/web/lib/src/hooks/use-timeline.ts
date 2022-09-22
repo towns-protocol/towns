@@ -223,7 +223,7 @@ event.redact
   return timeline;
 }
 
-function toEvent(event: MatrixEvent): TimelineEvent {
+export function toEvent(event: MatrixEvent): TimelineEvent {
   const { content, error } = toZionContent(event);
   const fbc = `${event.getType()} ${getFallbackContent(event, content, error)}`;
   // console.log("!!!! to event", event.getId(), fbc);
