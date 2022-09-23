@@ -1,8 +1,11 @@
 [profile.default]
+solc = "0.8.15" # to use a specific local solc install set the path as `solc = "<path to solc>/solc"`
 src = 'contracts'
 out = 'artifacts_foundry'
 test = "test/foundry"
 libs = ["node_modules", "lib"]
+extra_output_files = ["metadata", "abi"] # ABI to be used to generate golang and other bindings
+
 
 optimizer = true              # Enable or disable the solc optimizer
 optimizer_runs = 999999       # The number of optimizer runs
