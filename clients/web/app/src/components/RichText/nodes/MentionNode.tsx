@@ -80,11 +80,10 @@ export class MentionNode extends TextNode {
   createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
     dom.className = atoms({
-      fontWeight: "normal",
-      color: "etherum",
+      fontWeight: "strong",
       background: "level2",
       paddingX: "xs",
-      paddingY: "xs",
+      paddingY: "xxs",
       rounded: "xs",
     });
     return dom;

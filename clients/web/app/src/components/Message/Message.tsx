@@ -1,9 +1,9 @@
-import { format } from "date-fns";
+import { format, formatDistance } from "date-fns";
 import React, { useRef } from "react";
 import { RoomIdentifier } from "use-zion-client";
 import { Reactions } from "@components/Reactions/Reactions";
 import { MessageReplies } from "@components/Replies/MessageReplies";
-import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
+import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from "@ui";
 import { useHover } from "hooks/useHover";
 import { MessageReactions, useHandleReaction } from "hooks/useReactions";
 import { AvatarAtoms } from "ui/components/Avatar/Avatar.css";
@@ -27,6 +27,7 @@ type Props = {
   spaceId?: RoomIdentifier;
   children?: React.ReactNode;
   onReaction?: ReturnType<typeof useHandleReaction>;
+  relativeDate?: boolean;
   rounded?: BoxProps["rounded"];
   padding?: BoxProps["padding"];
   background?: BoxProps["background"];
@@ -48,6 +49,7 @@ export const Message = (props: Props) => {
     minimal: isMinimal,
     onReaction,
     reactions,
+    relativeDate: isRelativeDate,
     replies,
     timestamp,
     children,
@@ -58,7 +60,13 @@ export const Message = (props: Props) => {
 
   const { isHover, onMouseEnter } = useHover(ref);
 
-  const date = timestamp ? format(timestamp, "h:mm a") : undefined;
+  const date = timestamp
+    ? isRelativeDate
+      ? `${formatDistance(timestamp, Date.now(), {
+          addSuffix: true,
+        })}`
+      : format(timestamp, "h:mm a")
+    : undefined;
 
   return (
     <Stack
@@ -72,11 +80,19 @@ export const Message = (props: Props) => {
     >
       {/* left / avatar gutter */}
       {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-      <Box minWidth="x7">
+      <Box minWidth="x8">
         {!isMinimal ? (
-          <Avatar src={avatar} size={avatarSize} insetY="none" />
+          <Avatar src={avatar} size={avatarSize} insetTop="xxs" />
         ) : (
-          <></>
+          <>
+            {!isRelativeDate && isHover && (
+              <Box paddingTop="xxs" insetBottom="xxs">
+                <Paragraph truncate size="sm" color="gray2">
+                  {date}
+                </Paragraph>
+              </Box>
+            )}
+          </>
         )}
       </Box>
 

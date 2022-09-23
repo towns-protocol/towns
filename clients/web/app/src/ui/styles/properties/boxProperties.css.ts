@@ -159,8 +159,10 @@ export const boxProperties = defineProperties({
     paddingBottom: vars.space,
 
     // padding
-    insetX: vars.insetX,
-    insetY: vars.insetY,
+    insetLeft: vars.insetLeft,
+    insetRight: vars.insetRight,
+    insetTop: vars.insetTop,
+    insetBottom: vars.insetBottom,
 
     // border
     borderLeft: border,
@@ -191,7 +193,9 @@ export const boxProperties = defineProperties({
   shorthands: {
     basis: ["flexBasis"],
     direction: ["flexDirection"],
-    inset: ["insetX", "insetY"],
+    inset: ["insetLeft", "insetRight", "insetTop", "insetBottom"],
+    insetX: ["insetLeft", "insetRight"],
+    insetY: ["insetTop", "insetBottom"],
     paddingX: ["paddingLeft", "paddingRight"],
     paddingY: ["paddingTop", "paddingBottom"],
     padding: ["paddingLeft", "paddingRight", "paddingTop", "paddingBottom"],

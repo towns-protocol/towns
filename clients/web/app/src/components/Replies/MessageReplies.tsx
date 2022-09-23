@@ -23,7 +23,7 @@ export const MessageReplies = (props: {
     <Box
       horizontal
       height="height_md"
-      paddingX="md"
+      paddingX="sm"
       rounded="sm"
       background="level3"
     >
@@ -35,7 +35,7 @@ export const MessageReplies = (props: {
         cursor="pointer"
         onClick={onClick}
       >
-        <Paragraph size="md" color="default">
+        <Paragraph size="md">
           {replyCount}
           {replyCount > 1 ? " replies" : " reply"}
         </Paragraph>

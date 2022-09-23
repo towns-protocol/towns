@@ -16,12 +16,18 @@ import { TimelineMessage } from "./events/TimelineMessage";
 import { RenderEventType, useGroupEvents } from "./hooks/useGroupEvents";
 import { useTimelineMessageEditing } from "./hooks/useTimelineMessageEditing";
 
+export enum MessageTimelineType {
+  Channel = "channel",
+  Thread = "thread",
+}
+
 type Props = {
   events: TimelineEvent[];
   spaceId: RoomIdentifier;
   channelId: RoomIdentifier;
   messageRepliesMap?: MessageRepliesMap;
   messageReactionsMap?: ChannelReactionsMap;
+  type?: MessageTimelineType;
 };
 
 export const TimelineMessageContext = createContext<null | ReturnType<
@@ -29,16 +35,19 @@ export const TimelineMessageContext = createContext<null | ReturnType<
 >>(null);
 
 export const MessageTimeline = (props: Props) => {
-  const { events, messageRepliesMap, messageReactionsMap, channelId, spaceId } =
-    props;
+  const {
+    events,
+    messageRepliesMap,
+    messageReactionsMap,
+    channelId,
+    spaceId,
+    type = MessageTimelineType.Channel,
+  } = props;
   const { userId } = useMatrixStore();
 
   const timelineActions = useTimelineMessageEditing();
-
   const handleReaction = useHandleReaction(channelId);
-
   const { sendReadReceipt } = useZionClient();
-
   const dateGroups = useGroupEvents(events);
 
   const lastEvent = useMemo(() => {
@@ -65,83 +74,82 @@ export const MessageTimeline = (props: Props) => {
     }
   }, [channelId, lastEvent?.event?.eventId, sendReadReceipt]);
 
+  const readMore = hasUnread && (
+    <Box centerContent gap="sm">
+      <Button
+        animate={false}
+        key={channelId.slug + "mark-as-read"}
+        size="button_sm"
+        onClick={onMarkAsRead}
+      >
+        Mark as Read ({unreadCounts[channelId.matrixRoomId]})
+      </Button>
+    </Box>
+  );
+
   return (
     <TimelineMessageContext.Provider value={timelineActions}>
       {dateGroups.map((dateGroup) => {
-        const renderEvents = dateGroup.events;
-        return (
+        const renderEvents = dateGroup.events.map((r, index) => {
+          switch (r.type) {
+            case RenderEventType.UserMessageGroup: {
+              const messagesByUser = r.events.map((e, index) => {
+                const minimal = index > 0;
+                const k = e.eventId as string;
+                const reactions = messageReactionsMap?.get(k);
+                return (
+                  <TimelineMessage
+                    userId={userId}
+                    channelId={channelId}
+                    spaceId={spaceId}
+                    event={e}
+                    eventContent={e.content}
+                    minimal={minimal}
+                    own={e.content.sender.id === userId}
+                    editing={e.eventId === timelineActions.editingMessageId}
+                    replies={messageRepliesMap?.get(e.eventId)}
+                    reactions={reactions}
+                    key={e.eventId}
+                    relativeDate={type === MessageTimelineType.Thread}
+                    onReaction={handleReaction}
+                  />
+                );
+              });
+              const key = r.events[0]?.eventId;
+              return (
+                <Stack paddingY="sm" key={key}>
+                  {messagesByUser}
+                </Stack>
+              );
+            }
+
+            case RenderEventType.RoomMember: {
+              return (
+                <TimelineGenericEvent event={r.event} key={r.event.eventId} />
+              );
+            }
+
+            case RenderEventType.RoomCreate: {
+              return (
+                <TimelineGenericEvent event={r.event} key={r.event.eventId} />
+              );
+            }
+            default: {
+              return null;
+            }
+          }
+        });
+
+        return type === MessageTimelineType.Channel ? (
           <Stack key={dateGroup.date.humanDate} position="relative">
             <DateDivider label={dateGroup.date.humanDate} />
-            {renderEvents.map((r, index) => {
-              switch (r.type) {
-                case RenderEventType.UserMessageGroup: {
-                  const messagesByUser = r.events.map((e, index) => {
-                    const minimal = index > 0;
-                    const k = e.eventId as string;
-                    const reactions = messageReactionsMap?.get(k);
-                    return (
-                      <TimelineMessage
-                        userId={userId}
-                        channelId={channelId}
-                        spaceId={spaceId}
-                        event={e}
-                        eventContent={e.content}
-                        minimal={minimal}
-                        own={e.content.sender.id === userId}
-                        editing={e.eventId === timelineActions.editingMessageId}
-                        replies={messageRepliesMap?.get(e.eventId)}
-                        reactions={reactions}
-                        key={e.eventId}
-                        onReaction={handleReaction}
-                      />
-                    );
-                  });
-                  const key = r.events[0]?.eventId;
-                  return (
-                    <Stack paddingY="sm" key={key}>
-                      {messagesByUser}
-                    </Stack>
-                  );
-                }
-
-                case RenderEventType.RoomMember: {
-                  return (
-                    <TimelineGenericEvent
-                      event={r.event}
-                      key={r.event.eventId}
-                    />
-                  );
-                }
-
-                case RenderEventType.RoomCreate: {
-                  return (
-                    <TimelineGenericEvent
-                      event={r.event}
-                      key={r.event.eventId}
-                    />
-                  );
-                }
-                default: {
-                  return null;
-                }
-              }
-            })}
+            {renderEvents}
           </Stack>
+        ) : (
+          <>{renderEvents}</>
         );
       })}
-
-      {hasUnread && (
-        <Box centerContent gap="sm">
-          <Button
-            animate={false}
-            key={channelId.slug + "mark-as-read"}
-            size="button_sm"
-            onClick={onMarkAsRead}
-          >
-            Mark as Read ({unreadCounts[channelId.matrixRoomId]})
-          </Button>
-        </Box>
-      )}
+      {readMore}
     </TimelineMessageContext.Provider>
   );
 };
@@ -151,7 +159,7 @@ const DateDivider = (props: { label: string }) => (
     <Box left right top="md" position="absolute" paddingX="lg">
       <Box borderTop />
     </Box>
-    <Box centerContent top="md" display="block" position="sticky">
+    <Box centerContent top="md" display="block" position="sticky" zIndex="ui">
       <Box centerContent>
         <Box
           border

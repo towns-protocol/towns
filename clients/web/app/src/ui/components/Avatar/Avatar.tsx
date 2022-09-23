@@ -16,6 +16,10 @@ type Props = {
   onClick?: BoxProps["onClick"];
   insetX?: BoxProps["insetX"];
   insetY?: BoxProps["insetY"];
+  insetTop?: BoxProps["insetTop"];
+  insetBottom?: BoxProps["insetBottom"];
+  insetLeft?: BoxProps["insetLeft"];
+  insetRight?: BoxProps["insetRight"];
   inset?: BoxProps["inset"];
   boxShadow?: BoxProps["boxShadow"];
 } & Omit<AvatarAtoms, "circle">;

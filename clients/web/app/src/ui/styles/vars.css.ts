@@ -19,6 +19,7 @@ const root = createGlobalTheme(":root", {
 
   space: {
     none: "0",
+    xxs: `${baseline * 0.25}px`,
     // 11 occurences
     xs: `${baseline * 0.5}px`,
     // 45 occurences
@@ -140,33 +141,58 @@ const root = createGlobalTheme(":root", {
     },
   } as const,
 
-  insetX: {
-    none: { marginLeft: "0", marginRight: "0" },
+  insetLeft: {
+    none: { marginLeft: "0" },
     xxs: {
       marginLeft: `${baseline * -0.5}px`,
-      marginRight: `${baseline * -0.5}px`,
     },
-    xs: { marginLeft: `${baseline * -1}px`, marginRight: `${baseline * -1}px` },
-    sm: { marginLeft: `${baseline * -2}px`, marginRight: `${baseline * -2}px` },
-    md: { marginLeft: `${baseline * -4}px`, marginRight: `${baseline * -4}px` },
-    lg: { marginLeft: `${baseline * -8}px`, marginRight: `${baseline * -8}px` },
+    xs: { marginLeft: `${baseline * -1}px` },
+    sm: { marginLeft: `${baseline * -2}px` },
+    md: { marginLeft: `${baseline * -4}px` },
+    lg: { marginLeft: `${baseline * -8}px` },
     xl: {
       marginLeft: `${baseline * -16}px`,
+    },
+  } as const,
+
+  insetRight: {
+    none: { marginRight: "0" },
+    xxs: {
+      marginRight: `${baseline * -0.5}px`,
+    },
+    xs: { marginRight: `${baseline * -1}px` },
+    sm: { marginRight: `${baseline * -2}px` },
+    md: { marginRight: `${baseline * -4}px` },
+    lg: { marginRight: `${baseline * -8}px` },
+    xl: {
       marginRight: `${baseline * -16}px`,
     },
   } as const,
-  insetY: {
-    none: { marginTop: "0", marginBottom: "0" },
+
+  insetTop: {
+    none: { marginTop: "0" },
     xxs: {
       marginTop: `${baseline * -0.5}px`,
-      marginBottom: `${baseline * -0.5}px`,
     },
-    xs: { marginTop: `${baseline * -1}px`, marginBottom: `${baseline * -1}px` },
-    sm: { marginTop: `${baseline * -2}px`, marginBottom: `${baseline * -2}px` },
-    md: { marginTop: `${baseline * -4}px`, marginBottom: `${baseline * -4}px` },
-    lg: { marginTop: `${baseline * -8}px`, marginBottom: `${baseline * -8}px` },
+    xs: { marginTop: `${baseline * -1}px` },
+    sm: { marginTop: `${baseline * -2}px` },
+    md: { marginTop: `${baseline * -4}px` },
+    lg: { marginTop: `${baseline * -8}px` },
     xl: {
       marginTop: `${baseline * -16}px`,
+    },
+  } as const,
+
+  insetBottom: {
+    none: { marginBottom: "0" },
+    xxs: {
+      marginBottom: `${baseline * -0.5}px`,
+    },
+    xs: { marginBottom: `${baseline * -1}px` },
+    sm: { marginBottom: `${baseline * -2}px` },
+    md: { marginBottom: `${baseline * -4}px` },
+    lg: { marginBottom: `${baseline * -8}px` },
+    xl: {
       marginBottom: `${baseline * -16}px`,
     },
   } as const,

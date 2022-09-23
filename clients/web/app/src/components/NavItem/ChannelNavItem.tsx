@@ -39,7 +39,7 @@ export const ChannelNavItem = (props: Props) => {
         const isUnread = unreadCount > 0;
 
         return (
-          <NavItem to={link} id={id} {...triggerProps}>
+          <NavItem to={link} id={id} {...triggerProps} exact={false}>
             <Icon
               type="tag"
               padding="line"

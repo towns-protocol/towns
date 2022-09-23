@@ -2,7 +2,10 @@ import React from "react";
 import { useChannelTimeline, useMatrixStore } from "use-zion-client";
 import { useChannelContext } from "use-zion-client/dist/components/ChannelContextProvider";
 import { TimelineMessage } from "@components/MessageTimeline/events/TimelineMessage";
-import { MessageTimeline } from "@components/MessageTimeline/MessageTimeline";
+import {
+  MessageTimeline,
+  MessageTimelineType,
+} from "@components/MessageTimeline/MessageTimeline";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Divider, IconButton, Stack } from "@ui";
 import { useMessageThread } from "hooks/useFixMeMessageThread";
@@ -17,6 +20,7 @@ type Props = {
 export const MessageThread = (props: Props) => {
   const { userId } = useMatrixStore();
   const { channelId, spaceId } = useChannelContext();
+
   const { messageId } = props;
   const { parentMessage, messages } = useMessageThread(messageId);
   const { sendReply } = useSendReply(messageId);
@@ -26,7 +30,6 @@ export const MessageThread = (props: Props) => {
   };
 
   const parentMessageContent = getIsRoomMessageContent(parentMessage);
-
   const channelMessages = useChannelTimeline();
 
   // could be optimised - only need the segment of the thread
@@ -36,10 +39,11 @@ export const MessageThread = (props: Props) => {
 
   return (
     <Stack absoluteFill padding gap position="relative">
-      <MessageWindow onClose={props.onClose}>
-        <Stack scroll grow paddingTop="md">
+      <MessageWindow label="Thread" onClose={props.onClose}>
+        <Stack scroll grow paddingY="md">
           {parentMessage && parentMessageContent && (
             <TimelineMessage
+              relativeDate
               userId={userId}
               channelId={channelId}
               event={parentMessage}
@@ -53,8 +57,9 @@ export const MessageThread = (props: Props) => {
               <Divider space="none" />
             </Box>
           )}
-          <Stack>
+          <Stack paddingTop="sm">
             <MessageTimeline
+              type={MessageTimelineType.Thread}
               events={messages}
               spaceId={spaceId}
               channelId={channelId}
@@ -72,25 +77,22 @@ export const MessageThread = (props: Props) => {
 
 const MessageWindow = (props: {
   children: React.ReactNode;
+  label?: React.ReactNode | string;
   onClose?: () => void;
 }) => {
   return (
-    <Box
-      border
-      rounded="sm"
-      overflow="hidden"
-      maxHeight="100%"
-      paddingBottom="md"
-    >
+    <Box border rounded="sm" overflow="hidden" maxHeight="100%">
       <Stack
         horizontal
-        padding="sm"
+        paddingX="md"
         background="level2"
-        minHeight="x5"
+        minHeight="x6"
         alignItems="center"
         color="gray1"
       >
-        <Box grow />
+        <Box grow color="gray2">
+          {props.label}
+        </Box>
         <Box>
           {props.onClose && <IconButton icon="close" onClick={props.onClose} />}
         </Box>

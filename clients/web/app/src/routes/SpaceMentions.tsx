@@ -198,6 +198,7 @@ const MentionBox = (props: { mention: MentionResult }) => {
       >
         <Message
           padding
+          relativeDate
           key={mention.event.eventId}
           messageSourceAnnotation={`${
             mention.thread ? `Thread in` : ``

@@ -22,6 +22,7 @@ type Props = {
   minimal?: boolean;
   own?: boolean;
   reactions?: MessageReactions;
+  relativeDate?: boolean;
   replies?: number;
   spaceId: RoomIdentifier;
   onReaction: ReturnType<typeof useHandleReaction>;
@@ -37,6 +38,7 @@ export const TimelineMessage = React.memo((props: Props) => {
     minimal: isMinimal,
     own: isOwn,
     reactions,
+    relativeDate: isRelativeDate,
     replies: replyCount,
     spaceId,
     onReaction,
@@ -65,6 +67,7 @@ export const TimelineMessage = React.memo((props: Props) => {
       paddingX="lg"
       spaceId={spaceId}
       reactions={reactions}
+      relativeDate={isRelativeDate}
       replies={replyCount}
       onReaction={onReaction}
     >
