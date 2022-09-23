@@ -18,7 +18,7 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
   struct PurchasableEntitlement {
     string description;
     uint256 price;
-    DataTypes.EntitlementType[] entitlementTypes;
+    uint256 roleId;
     bool isActive;
     //length of time?
   }
@@ -42,7 +42,7 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
   function setEntitlement(
     uint256 spaceId,
     uint256,
-    DataTypes.EntitlementType[] calldata entitlementTypes,
+    uint256 roleId,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
     address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
@@ -63,10 +63,6 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
       revert("No value provided");
     }
 
-    if (entitlementTypes.length == 0) {
-      revert("No entitlement types provided");
-    }
-
     if (
       purchasableEntitlementsBySpaceId[spaceId].entitlementsByTag[tag].price !=
       0
@@ -80,7 +76,7 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
       ];
     spacePurchasableEntitlements.entitlementsByTag[
       tag
-    ] = PurchasableEntitlement(_description, value, entitlementTypes, true);
+    ] = PurchasableEntitlement(_description, value, roleId, true);
   }
 
   function disablePurchasableEntitlement(uint256 spaceId, string calldata tag)
@@ -106,7 +102,7 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
   function removeEntitlement(
     uint256 spaceId,
     uint256,
-    DataTypes.EntitlementType[] calldata,
+    uint256[] calldata,
     bytes calldata
   ) external view override onlySpaceManager {
     address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
@@ -146,8 +142,9 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
     uint256 spaceId,
     uint256 roomId,
     address user,
-    DataTypes.EntitlementType entitlementType
+    DataTypes.Permission memory permission
   ) public view override returns (bool) {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
     string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
       spaceId
     ].userPurchasedEntitlements[user];
@@ -161,14 +158,17 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
           spaceId
         ].entitlementsByTag[entitlementTag];
       if (purchasableEntitlement.isActive) {
-        for (
-          uint256 j = 0;
-          j < purchasableEntitlement.entitlementTypes.length;
-          j++
-        ) {
-          DataTypes.EntitlementType purchasedEntitlementType = purchasableEntitlement
-              .entitlementTypes[j];
-          if (entitlementType == purchasedEntitlementType) {
+        DataTypes.Permission[] memory permissions = spaceManager
+          .getPermissionsBySpaceIdByRoleId(
+            spaceId,
+            purchasableEntitlement.roleId
+          );
+
+        for (uint256 k = 0; k < permissions.length; k++) {
+          if (
+            keccak256(abi.encodePacked(permissions[k].name)) ==
+            keccak256(abi.encodePacked(permission.name))
+          ) {
             return true;
           }
         }
@@ -176,6 +176,64 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
     }
 
     return false;
+  }
+
+  function isTransitivelyEntitled(
+    uint256 spaceId,
+    uint256 roomId,
+    address userAddress,
+    uint256 roleId
+  ) public view override returns (bool) {
+    string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
+      spaceId
+    ].userPurchasedEntitlements[userAddress];
+    if (roomId > 0) {
+      return false;
+    }
+
+    for (uint256 i = 0; i < purchasedEntitlements.length; i++) {
+      string memory entitlementTag = purchasedEntitlements[i];
+      PurchasableEntitlement
+        memory purchasableEntitlement = purchasableEntitlementsBySpaceId[
+          spaceId
+        ].entitlementsByTag[entitlementTag];
+      if (purchasableEntitlement.isActive) {
+        if (purchasableEntitlement.roleId == roleId) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function getUserRoles(
+    uint256 spaceId,
+    uint256,
+    address user
+  ) public view returns (DataTypes.Role[] memory) {
+    string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
+      spaceId
+    ].userPurchasedEntitlements[user];
+    DataTypes.Role[] memory roles = new DataTypes.Role[](
+      purchasedEntitlements.length
+    );
+    //This is buggy atm because we store an array of role Ids per purchase and that makes it hard to know the total size
+    for (uint256 i = 0; i < purchasedEntitlements.length; i++) {
+      string memory entitlementTag = purchasedEntitlements[i];
+      PurchasableEntitlement
+        memory purchasableEntitlement = purchasableEntitlementsBySpaceId[
+          spaceId
+        ].entitlementsByTag[entitlementTag];
+      if (purchasableEntitlement.isActive) {
+        DataTypes.Role memory role = ISpaceManager(_spaceManager)
+          .getRoleBySpaceIdByRoleId(spaceId, purchasableEntitlement.roleId);
+        //Here is the bug it will get overwritten
+        roles[0] = role;
+      }
+    }
+
+    return roles;
   }
 
   function withdrawValue(uint256 spaceId) public returns (uint256) {

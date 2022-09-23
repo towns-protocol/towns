@@ -14,28 +14,41 @@ interface IEntitlementModule {
   /// @param spaceId The id of the space
   /// @param roomId The id of the room
   /// @param userAddress The address of the user
-  /// @param entitlementType The type of entitlement to check
+  /// @param permission The type of permission to check
   /// @return bool representing if the user has access or not
   function isEntitled(
     uint256 spaceId,
     uint256 roomId,
     address userAddress,
-    DataTypes.EntitlementType entitlementType
+    DataTypes.Permission memory permission
+  ) external view returns (bool);
+
+  function isTransitivelyEntitled(
+    uint256 spaceId,
+    uint256 roomId,
+    address userAddress,
+    uint256 roleId
   ) external view returns (bool);
 
   /// @notice Sets the entitlements for a space
   function setEntitlement(
     uint256 spaceId,
     uint256 roomId,
-    DataTypes.EntitlementType[] calldata entitlementTypes,
+    uint256 roleId,
     bytes calldata entitlementData
   ) external;
+
+  function getUserRoles(
+    uint256 spaceId,
+    uint256 roomId,
+    address user
+  ) external view returns (DataTypes.Role[] memory);
 
   /// @notice Removes the entitlements for a space
   function removeEntitlement(
     uint256 spaceId,
     uint256 roomId,
-    DataTypes.EntitlementType[] calldata _entitlementTypes,
+    uint256[] calldata _roleIds,
     bytes calldata entitlementData
   ) external;
 

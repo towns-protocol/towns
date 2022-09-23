@@ -12,7 +12,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   struct Entitlement {
     address grantedBy;
     uint256 grantedTime;
-    DataTypes.EntitlementType entitlementType;
+    uint256 roleId;
   }
 
   struct ExternalToken {
@@ -27,12 +27,15 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
   struct RoomTokenEntitlements {
     mapping(string => TokenEntitlement) entitlementsByDescription;
+    string[] entitlementDescriptions;
   }
 
   struct SpaceTokenEntitlements {
     mapping(string => TokenEntitlement) entitlementsByDescription;
+    string[] entitlementDescriptions;
     mapping(uint256 => RoomTokenEntitlements) roomEntitlementsByRoomId;
-    mapping(DataTypes.EntitlementType => string[]) tagsByEntitlementType;
+    mapping(string => string[]) tagsByPermission;
+    mapping(uint256 => string[]) tagsByRoleId;
   }
 
   mapping(uint256 => SpaceTokenEntitlements) internal entitlementsBySpaceId;
@@ -46,30 +49,28 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   function setEntitlement(
     uint256 spaceId,
     uint256 roomId,
-    DataTypes.EntitlementType[] calldata entitlementTypes,
+    uint256 roleId,
     bytes calldata entitlementData
   ) public override onlySpaceManager {
-    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      spaceId
-    );
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     require(
       ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update entitlements"
     );
 
-    (
-      string memory desc,
-      address[] memory tokens,
-      uint256[] memory quantities
-    ) = abi.decode(entitlementData, (string, address[], uint256[]));
+    (string memory desc, address token, uint256 quantity) = abi.decode(
+      entitlementData,
+      (string, address, uint256)
+    );
 
-    if (tokens.length == 0) {
+    if (token == address(0)) {
       revert("No tokens provided");
     }
 
-    if (tokens.length != quantities.length) {
-      revert("Token and quantity arrays must be the same length");
+    if (quantity == 0) {
+      revert("No quantities provided");
     }
 
     if (roomId > 0) {
@@ -77,54 +78,65 @@ contract TokenEntitlementModule is EntitlementModuleBase {
         .roomEntitlementsByRoomId[roomId]
         .entitlementsByDescription[desc];
 
-      for (uint256 i = 0; i < tokens.length; i++) {
-        ExternalToken memory externalToken = ExternalToken(
-          tokens[i],
-          quantities[i]
-        );
-        tokenEntitlement.tokens.push(externalToken);
-      }
+      ExternalToken memory externalToken = ExternalToken(token, quantity);
+      tokenEntitlement.tokens.push(externalToken);
 
-      for (uint256 i = 0; i < entitlementTypes.length; i++) {
-        Entitlement memory entitlement = Entitlement(
-          msg.sender,
-          block.timestamp,
-          entitlementTypes[i]
-        );
-        tokenEntitlement.entitlements.push(entitlement);
-      }
+      Entitlement memory entitlement = Entitlement(
+        msg.sender,
+        block.timestamp,
+        roleId
+      );
+      tokenEntitlement.entitlements.push(entitlement);
+      // so we can iterate through all the token entitlements for a space
+      entitlementsBySpaceId[spaceId]
+        .roomEntitlementsByRoomId[roomId]
+        .entitlementDescriptions
+        .push(desc);
+      //So we can look up all potential token entitlements for a permission
+      setAllDescByPermissionNames(spaceId, roleId, desc);
     } else {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[spaceId]
         .entitlementsByDescription[desc];
 
-      for (uint256 i = 0; i < tokens.length; i++) {
-        ExternalToken memory externalToken = ExternalToken(
-          tokens[i],
-          quantities[i]
-        );
-        tokenEntitlement.tokens.push(externalToken);
-      }
+      ExternalToken memory externalToken = ExternalToken(token, quantity);
+      tokenEntitlement.tokens.push(externalToken);
 
-      for (uint256 i = 0; i < entitlementTypes.length; i++) {
-        Entitlement memory entitlement = Entitlement(
-          msg.sender,
-          block.timestamp,
-          entitlementTypes[i]
-        );
+      Entitlement memory entitlement = Entitlement(
+        msg.sender,
+        block.timestamp,
+        roleId
+      );
 
-        tokenEntitlement.entitlements.push(entitlement);
+      tokenEntitlement.entitlements.push(entitlement);
+      entitlementsBySpaceId[spaceId].entitlementDescriptions.push(desc);
 
-        entitlementsBySpaceId[spaceId]
-          .tagsByEntitlementType[entitlementTypes[i]]
-          .push(desc);
-      }
+      setAllDescByPermissionNames(spaceId, roleId, desc);
+    }
+  }
+
+  function setAllDescByPermissionNames(
+    uint256 spaceId,
+    uint256 roleId,
+    string memory desc
+  ) internal {
+    DataTypes.Permission[] memory permissions = ISpaceManager(_spaceManager)
+      .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
+
+    for (uint256 j = 0; j < permissions.length; j++) {
+      DataTypes.Permission memory permission = permissions[j];
+      string memory permissionName = permission.name;
+      entitlementsBySpaceId[spaceId].tagsByPermission[permissionName].push(
+        desc
+      );
+      entitlementsBySpaceId[spaceId].tagsByRoleId[roleId].push(desc);
+      //todo Add All Permission for every one
     }
   }
 
   function removeEntitlement(
     uint256 spaceId,
     uint256 roomId,
-    DataTypes.EntitlementType[] calldata entitlementTypes,
+    uint256[] calldata,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
     address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
@@ -135,11 +147,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       revert("Only the owner can update entitlements");
     }
 
-    (
-      string memory desc,
-      address[] memory tokens,
-      uint256[] memory quantities
-    ) = abi.decode(entitlementData, (string, address[], uint256[]));
+    string memory desc = abi.decode(entitlementData, (string));
 
     if (roomId > 0) {
       delete entitlementsBySpaceId[spaceId]
@@ -149,10 +157,11 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       delete entitlementsBySpaceId[spaceId].entitlementsByDescription[desc];
     }
 
-    for (uint256 i = 0; i < entitlementTypes.length; i++) {
-      delete entitlementsBySpaceId[spaceId].tagsByEntitlementType[
-        entitlementTypes[i]
-      ];
+    DataTypes.Role[] memory roles = ISpaceManager(_spaceManager)
+      .getRolesBySpaceId(spaceId);
+
+    for (uint256 i = 0; i < roles.length; i++) {
+      delete entitlementsBySpaceId[spaceId].tagsByRoleId[roles[i].roleId];
     }
   }
 
@@ -160,10 +169,10 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     uint256 spaceId,
     uint256,
     address user,
-    DataTypes.EntitlementType entitlementType
+    DataTypes.Permission memory permission
   ) public view override returns (bool) {
-    string[] memory tags = entitlementsBySpaceId[spaceId].tagsByEntitlementType[
-      entitlementType
+    string[] memory tags = entitlementsBySpaceId[spaceId].tagsByPermission[
+      permission.name
     ];
 
     for (uint256 i = 0; i < tags.length; i++) {
@@ -199,5 +208,58 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     }
 
     return false;
+  }
+
+  function isTransitivelyEntitled(
+    uint256 spaceId,
+    uint256,
+    address userAddress,
+    uint256 roleId
+  ) public view override returns (bool) {
+    string[] memory tags = entitlementsBySpaceId[spaceId].tagsByRoleId[roleId];
+
+    for (uint256 i = 0; i < tags.length; i++) {
+      if (isTokenEntitled(spaceId, userAddress, tags[i])) {
+        return true;
+      }
+    }
+
+    //Alternatively we could call getUserRoles and check if the user has the role
+
+    return false;
+  }
+
+  function getUserRoles(
+    uint256 spaceId,
+    uint256,
+    address user
+  ) public view returns (DataTypes.Role[] memory) {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    //Get all the entitlements for this space
+    string[] memory entitlementDescriptions = entitlementsBySpaceId[spaceId]
+      .entitlementDescriptions;
+
+    //Create an empty array of the max size of all entitlements
+    DataTypes.Role[] memory roles = new DataTypes.Role[](
+      entitlementDescriptions.length
+    );
+    //Iterate through all the entitlements
+    for (uint256 i = 0; i < entitlementDescriptions.length; i++) {
+      string memory desc = entitlementDescriptions[i];
+      //If the user is entitled to a token entitlement
+      if (isTokenEntitled(spaceId, user, desc)) {
+        Entitlement[] memory entitlements = entitlementsBySpaceId[spaceId]
+          .entitlementsByDescription[desc]
+          .entitlements;
+        //Get all the roles for that token entitlement, and add them to the array for this user
+        for (uint256 j = 0; j < entitlements.length; j++) {
+          roles[i] = spaceManager.getRoleBySpaceIdByRoleId(
+            spaceId,
+            entitlements[i].roleId
+          );
+        }
+      }
+    }
+    return roles;
   }
 }

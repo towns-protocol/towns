@@ -19,7 +19,7 @@
         "lint:fix": "solhint --fix contracts/**/*.sol",
         "publish": "yarn publish:local",
         "publish:local": "yarn publish:local:typings & yarn publish:local:abis",
-        "publish:local:abis": "mkdir -p ../../packages/contracts/localhost/abis && cp -a ./artifacts_foundry/CouncilNFT.sol/ ../../packages/contracts/localhost/abis/ & cp -a ./artifacts_foundry/CouncilStaking.sol/ ../../packages/contracts/localhost/abis/ & cp -a ./artifacts_foundry/ZionSpaceManager.sol/ ../../packages/contracts/localhost/abis/",
+        "publish:local:abis": "mkdir -p ../../packages/contracts/localhost/abis && cp -a artifacts_foundry/(CouncilNFT|CouncilStaking|ZionSpaceManager).sol/* ../../packages/contracts/localhost/abis/",
         "publish:local:typings": "cp -a ./dist/ ../../packages/contracts/localhost/typings"
     },
     "dependencies": {

@@ -25,13 +25,22 @@ library DataTypes {
     string name;
     address creator;
     address owner;
-    Channel[] channels;
     mapping(address => bool) hasEntitlement;
-    address[] entitlements;
+    address[] entitlementModules;
+    Channel[] channels;
+    Role[] roles;
   }
 
   struct Channel {
     uint256 channelId;
+    string networkId;
+    string name;
+    address creator;
+  }
+
+  struct Channels {
+    uint256 total;
+    Channel[] channels;
   }
 
   /// @notice A struct representing minimal info for a space.
@@ -48,18 +57,20 @@ library DataTypes {
     address owner;
   }
 
-  /// @notice A struct representing the entitlement types.
-  enum EntitlementType {
-    Administrator,
-    Moderator,
-    Join,
-    Leave,
-    Read,
-    Write,
-    Block,
-    Redact,
-    Add_Channel,
-    Remove_Channel
+  struct Roles {
+    uint256 idCounter;
+    Role[] roles;
+  }
+
+  struct Role {
+    uint256 roleId;
+    string name;
+    bytes8 color;
+    bool isTransitive;
+  }
+
+  struct Permission {
+    string name;
   }
 
   /// @notice A struct representing minimal info for an entitlement module.
@@ -83,7 +94,14 @@ library DataTypes {
     address tokenAddress;
     uint256 quantity;
     string description;
-    EntitlementType[] entitlementTypes;
+    string[] permissions;
+  }
+
+  struct CreateSpaceRoleData {
+    string name;
+    bytes8 color;
+    Permission[] permissions;
+    bool isTransitive;
   }
 
   struct CreateSpacePurchaseableEntitlementData {
@@ -92,6 +110,6 @@ library DataTypes {
     uint256 quantity;
     uint256 price;
     string description;
-    EntitlementType[] entitlementTypes;
+    uint256[] roleIds;
   }
 }

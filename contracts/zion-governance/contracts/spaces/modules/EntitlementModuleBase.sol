@@ -11,9 +11,7 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   string private _description;
 
   modifier onlySpaceManager() {
-    if (msg.sender != _spaceManager) {
-      revert Errors.NotSpaceManager();
-    }
+    if (msg.sender != _spaceManager) revert Errors.NotSpaceManager();
     _;
   }
 

@@ -3,13 +3,13 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {ZionSpaceManager} from "../contracts/spaces/ZionSpaceManager.sol";
 import {Zion} from "../contracts/governance/Zion.sol";
+import {ISpaceManager} from "../contracts/spaces/interfaces/ISpaceManager.sol";
 import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
 import {UserGrantedEntitlementModule} from "../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {PurchasableEntitlementModule} from "../contracts/spaces/modules/entitlements/PurchasableEntitlementModule.sol";
 import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
-import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
-import "murky/Merkle.sol";
 import {Constants} from "../contracts/council/libraries/Constants.sol";
+import "murky/Merkle.sol";
 
 contract PurchasableEntitlementModuleTest is Test {
   ZionSpaceManager internal spaceManager;
@@ -63,12 +63,12 @@ contract PurchasableEntitlementModuleTest is Test {
       spaceName
     );
 
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-    DataTypes.EntitlementType entitlementType = DataTypes
-      .EntitlementType
-      .Moderator;
-    entitlementTypes[0] = entitlementType;
+    DataTypes.Permission memory allPermission = spaceManager
+      .getPermissionFromMap(ISpaceManager.ZionPermission.All_Permissions);
+    // Create roles and add permissions
+    string memory roleName = "Tester";
+    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
+    spaceManager.addPermissionToRole(spaceId, ownerRoleId, allPermission);
 
     string memory description = "Purchase the entitlement to be a moderator";
     uint256 value = .08 ether;
@@ -81,15 +81,15 @@ contract PurchasableEntitlementModuleTest is Test {
     );
 
     // Add purchasable entitlement module to space
-    spaceManager.addEntitlement(
+    spaceManager.addRoleToEntitlementModule(
       spaceId,
       address(purchasableEntitlementModule),
-      entitlementTypes,
+      ownerRoleId,
       abi.encode(description, value, tag)
     );
 
     // verify the purchasable entitlement module is added to the space
-    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
       spaceId
     );
     assertEq(entitlements.length, 2);
@@ -109,7 +109,7 @@ contract PurchasableEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user1,
-      entitlementType
+      allPermission
     );
 
     assertTrue(isEntitled);
@@ -119,7 +119,7 @@ contract PurchasableEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user2,
-      entitlementType
+      allPermission
     );
 
     assertFalse(isRandomEntitled);
@@ -133,7 +133,7 @@ contract PurchasableEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user1,
-      entitlementType
+      allPermission
     );
 
     assertFalse(isStillEntitled);

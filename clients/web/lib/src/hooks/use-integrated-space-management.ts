@@ -1,7 +1,7 @@
 import { CreateSpaceInfo, RoomIdentifier } from "types/matrix-types";
 
 import { DataTypes } from "@harmony/contracts/localhost/typings/types/ZionSpaceManager";
-import { EntitlementType } from "../client/web3/ZionContractTypes";
+import { Permission } from "../client/web3/ZionContractTypes";
 import { useCallback } from "react";
 import { useZionClient } from "./use-zion-client";
 import { getContractAddresses } from "../client/web3/ZionContractAddresses";
@@ -32,7 +32,7 @@ export function useIntegratedSpaceManagement() {
           tokenAddress: addresses.council.councilnft,
           quantity: 1,
           description: "Zion Council NFT",
-          entitlementTypes: [EntitlementType.Join],
+          permissions: [Permission.Join],
         };
 
       try {

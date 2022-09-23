@@ -34,32 +34,44 @@ interface ISpaceManager {
   ) external;
 
   /// @notice add an entitlement to an entitlement module
-  function addEntitlement(
+  function addRoleToEntitlementModule(
     uint256 spaceId,
     address entitlementAddress,
-    DataTypes.EntitlementType[] memory entitlementTypes,
+    uint256 roleId,
     bytes memory data
   ) external;
 
   /// @notice Removes an entitlement from an entitlement module
   function removeEntitlement(
     uint256 spaceId,
-    address entitlementAddress,
-    DataTypes.EntitlementType[] memory entitlementTypes,
+    address entitlementModuleAddress,
+    uint256[] memory roleIds,
     bytes memory data
+  ) external;
+
+  function createRole(
+    uint256 spaceId,
+    string memory name,
+    bytes8 color
+  ) external returns (uint256);
+
+  function addPermissionToRole(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.Permission memory permission
   ) external;
 
   /// @notice Checks if a user has access to space or room based on the entitlements it holds
   /// @param spaceId The id of the space
   /// @param roomId The id of the room
   /// @param user The address of the user
-  /// @param entitlementType The type of entitlement to check
+  /// @param permission The type of permission to check
   /// @return bool representing if the user has access or not
   function isEntitled(
     uint256 spaceId,
     uint256 roomId,
     address user,
-    DataTypes.EntitlementType entitlementType
+    DataTypes.Permission memory permission
   ) external view returns (bool);
 
   /// @notice Get the space information by id.
@@ -76,11 +88,23 @@ interface ISpaceManager {
 
   /// @notice Returns entitlements for a space
   /// @param spaceId The id of the space
-  /// @return entitlements an array of entitlements
-  function getEntitlementsBySpaceId(uint256 spaceId)
+  /// @return entitlementModules an array of entitlements
+  function getEntitlementModulesBySpaceId(uint256 spaceId)
     external
     view
-    returns (address[] memory entitlements);
+    returns (address[] memory entitlementModules);
+
+  /// @notice returns if an entitlement module is whitelisted for a space
+  function isEntitlementModuleWhitelisted(
+    uint256 spaceId,
+    address entitlementModuleAddress
+  ) external view returns (bool);
+
+  /// @notice Returns the entitlement info for a space
+  function getEntitlementsInfoBySpaceId(uint256 spaceId)
+    external
+    view
+    returns (DataTypes.EntitlementModuleInfo[] memory);
 
   /// @notice Returns the space id by network id
   /// @param networkId The network space id
@@ -97,4 +121,38 @@ interface ISpaceManager {
     external
     view
     returns (address ownerAddress);
+
+  function getPermissionsBySpaceIdByRoleId(uint256 spaceId, uint256 roleId)
+    external
+    view
+    returns (DataTypes.Permission[] memory);
+
+  function getPermissionFromMap(ZionPermission zionPermission)
+    external
+    view
+    returns (DataTypes.Permission memory permission);
+
+  function getRolesBySpaceId(uint256 spaceId)
+    external
+    view
+    returns (DataTypes.Role[] memory);
+
+  function getRoleBySpaceIdByRoleId(uint256 spaceId, uint256 roleId)
+    external
+    view
+    returns (DataTypes.Role memory);
+
+  /// @notice A struct representing the Zion specific permissions
+  enum ZionPermission {
+    All_Permissions,
+    Join,
+    Leave,
+    Read,
+    Write,
+    Block,
+    Redact,
+    Add_Channel,
+    Remove_Channel,
+    Grant_Permissions
+  }
 }

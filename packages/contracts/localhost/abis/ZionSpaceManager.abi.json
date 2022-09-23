@@ -1,6 +1,11 @@
 [
   {
     "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
     "name": "DefaultEntitlementModuleNotSet",
     "type": "error"
   },
@@ -51,14 +56,44 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission",
+        "name": "permission",
+        "type": "tuple"
+      }
+    ],
+    "name": "addPermissionToRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
         "internalType": "address",
         "name": "entitlementModuleAddress",
         "type": "address"
       },
       {
-        "internalType": "enum DataTypes.EntitlementType[]",
-        "name": "entitlementTypes",
-        "type": "uint8[]"
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
       },
       {
         "internalType": "bytes",
@@ -66,8 +101,37 @@
         "type": "bytes"
       }
     ],
-    "name": "addEntitlement",
+    "name": "addRoleToEntitlementModule",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes8",
+        "name": "color",
+        "type": "bytes8"
+      }
+    ],
+    "name": "createRole",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -144,9 +208,9 @@
             "type": "string"
           },
           {
-            "internalType": "enum DataTypes.EntitlementType[]",
-            "name": "entitlementTypes",
-            "type": "uint8[]"
+            "internalType": "string[]",
+            "name": "permissions",
+            "type": "string[]"
           }
         ],
         "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",
@@ -173,11 +237,11 @@
         "type": "uint256"
       }
     ],
-    "name": "getEntitlementsBySpaceId",
+    "name": "getEntitlementModulesBySpaceId",
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "entitlements",
+        "name": "entitlementModules",
         "type": "address[]"
       }
     ],
@@ -213,6 +277,150 @@
           }
         ],
         "internalType": "struct DataTypes.EntitlementModuleInfo[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum ISpaceManager.ZionPermission",
+        "name": "zionPermission",
+        "type": "uint8"
+      }
+    ],
+    "name": "getPermissionFromMap",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission",
+        "name": "permission",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPermissionsBySpaceIdByRoleId",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRoleBySpaceIdByRoleId",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes8",
+            "name": "color",
+            "type": "bytes8"
+          },
+          {
+            "internalType": "bool",
+            "name": "isTransitive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DataTypes.Role",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRolesBySpaceId",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes8",
+            "name": "color",
+            "type": "bytes8"
+          },
+          {
+            "internalType": "bool",
+            "name": "isTransitive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DataTypes.Role[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -362,9 +570,16 @@
         "type": "address"
       },
       {
-        "internalType": "enum DataTypes.EntitlementType",
-        "name": "entitlementType",
-        "type": "uint8"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission",
+        "name": "permission",
+        "type": "tuple"
       }
     ],
     "name": "isEntitled",
@@ -441,9 +656,9 @@
         "type": "address"
       },
       {
-        "internalType": "enum DataTypes.EntitlementType[]",
-        "name": "entitlementTypes",
-        "type": "uint8[]"
+        "internalType": "uint256[]",
+        "name": "roleIds",
+        "type": "uint256[]"
       },
       {
         "internalType": "bytes",
@@ -497,6 +712,25 @@
     "name": "whitelistEntitlementModule",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum ISpaceManager.ZionPermission",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "name": "zionPermissionsMap",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]

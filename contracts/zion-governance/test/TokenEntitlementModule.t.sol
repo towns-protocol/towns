@@ -4,6 +4,7 @@ import "forge-std/Test.sol";
 import {ZionSpaceManager} from "../contracts/spaces/ZionSpaceManager.sol";
 import {Zion} from "../contracts/governance/Zion.sol";
 import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
+import {ISpaceManager} from "../contracts/spaces/interfaces/ISpaceManager.sol";
 import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
 import {TokenEntitlementModule} from "./../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {UserGrantedEntitlementModule} from "./../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
@@ -74,19 +75,13 @@ contract TokenEntitlementModuleTest is Test {
       spaceName
     );
 
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-    DataTypes.EntitlementType entitlementType = DataTypes
-      .EntitlementType
-      .Moderator;
-    entitlementTypes[0] = entitlementType;
-
-    // add token entitlement so zion token holders to be mods
-    address[] memory tokens = new address[](1);
-    tokens[0] = address(zion);
-
-    uint256[] memory quantities = new uint256[](1);
-    quantities[0] = 10;
+    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
+      ISpaceManager.ZionPermission.All_Permissions
+    );
+    // Create roles and add permissions
+    string memory roleName = "Tester";
+    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
+    spaceManager.addPermissionToRole(spaceId, ownerRoleId, permission);
 
     spaceManager.whitelistEntitlementModule(
       spaceId,
@@ -95,15 +90,15 @@ contract TokenEntitlementModuleTest is Test {
     );
 
     // Add token entitlement module to space
-    spaceManager.addEntitlement(
+    spaceManager.addRoleToEntitlementModule(
       spaceId,
       address(tokenEntitlementModule),
-      entitlementTypes,
-      abi.encode("ziontoken", tokens, quantities)
+      ownerRoleId,
+      abi.encode("ziontoken", address(zion), 10)
     );
 
     // verify the token entitlement module is added to the space
-    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
       spaceId
     );
     assertEq(entitlements.length, 2);
@@ -116,7 +111,7 @@ contract TokenEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user1,
-      entitlementType
+      permission
     );
 
     assertTrue(isEntitled);
@@ -125,7 +120,7 @@ contract TokenEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user2,
-      entitlementType
+      permission
     );
 
     assertFalse(isRandomEntitled);
@@ -142,19 +137,16 @@ contract TokenEntitlementModuleTest is Test {
     // Transfer token to user1
     councilNFT.mint{value: Constants.MINT_PRICE}(user1);
 
-    // Add token entitlement so zion token holders to be mods
-    address[] memory tokens = new address[](1);
-    tokens[0] = address(councilNFT);
-
-    uint256[] memory quantities = new uint256[](1);
-    quantities[0] = 1;
-
-    DataTypes.EntitlementType[]
-      memory entitlementTypes = new DataTypes.EntitlementType[](1);
-    DataTypes.EntitlementType entitlementType = DataTypes
-      .EntitlementType
-      .Moderator;
-    entitlementTypes[0] = entitlementType;
+    // Create roles and add permissions
+    string memory roleName = "Tester";
+    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
+    spaceManager.addPermissionToRole(
+      spaceId,
+      ownerRoleId,
+      spaceManager.getPermissionFromMap(
+        ISpaceManager.ZionPermission.All_Permissions
+      )
+    );
 
     spaceManager.whitelistEntitlementModule(
       spaceId,
@@ -163,15 +155,15 @@ contract TokenEntitlementModuleTest is Test {
     );
 
     // Add the token entitlement module to the space
-    spaceManager.addEntitlement(
+    spaceManager.addRoleToEntitlementModule(
       spaceId,
       address(tokenEntitlementModule),
-      entitlementTypes,
-      abi.encode("councilnft", tokens, quantities)
+      ownerRoleId,
+      abi.encode("councilnft", address(councilNFT), 1)
     );
 
     // Verify the token entitlement module is added to the space
-    address[] memory entitlements = spaceManager.getEntitlementsBySpaceId(
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
       spaceId
     );
     assertEq(entitlements.length, 2);
@@ -182,7 +174,9 @@ contract TokenEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user1,
-      entitlementType
+      spaceManager.getPermissionFromMap(
+        ISpaceManager.ZionPermission.All_Permissions
+      )
     );
     assertTrue(isEntitled);
 
@@ -191,7 +185,9 @@ contract TokenEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user2,
-      entitlementType
+      spaceManager.getPermissionFromMap(
+        ISpaceManager.ZionPermission.All_Permissions
+      )
     );
     assertFalse(isRandomEntitled);
   }
