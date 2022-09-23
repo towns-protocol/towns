@@ -29,7 +29,6 @@ export const NavItem = forwardRef<
     ref,
   ) => {
     const resolved = useResolvedPath(`/${to === "/" ? "" : to}`);
-    console.log({ id, to, resolved });
 
     const match =
       useMatch({

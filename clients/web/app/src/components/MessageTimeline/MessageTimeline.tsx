@@ -1,5 +1,4 @@
 import React, { createContext, useCallback, useMemo } from "react";
-import useEvent from "react-use-event-hook";
 import {
   RoomIdentifier,
   TimelineEvent,
@@ -8,12 +7,10 @@ import {
   useZionClient,
   useZionContext,
 } from "use-zion-client";
-import {
-  useTimelineReactionsMap,
-  useTimelineRepliesMap,
-} from "hooks/useFixMeMessageThread";
+import { MessageRepliesMap } from "hooks/useFixMeMessageThread";
 
 import { Box, Button, Stack } from "@ui";
+import { ChannelReactionsMap, useHandleReaction } from "hooks/useReactions";
 import { TimelineGenericEvent } from "./events/TimelineGenericEvent";
 import { TimelineMessage } from "./events/TimelineMessage";
 import { RenderEventType, useGroupEvents } from "./hooks/useGroupEvents";
@@ -23,8 +20,8 @@ type Props = {
   events: TimelineEvent[];
   spaceId: RoomIdentifier;
   channelId: RoomIdentifier;
-  messageRepliesMap?: ReturnType<typeof useTimelineRepliesMap>;
-  messageReactionsMap?: ReturnType<typeof useTimelineReactionsMap>;
+  messageRepliesMap?: MessageRepliesMap;
+  messageReactionsMap?: ChannelReactionsMap;
 };
 
 export const TimelineMessageContext = createContext<null | ReturnType<
@@ -37,10 +34,10 @@ export const MessageTimeline = (props: Props) => {
   const { userId } = useMatrixStore();
 
   const timelineActions = useTimelineMessageEditing();
-  const { sendReaction, sendReadReceipt } = useZionClient();
-  const onReaction = useEvent((eventId: string, reaction: string) => {
-    sendReaction(channelId, eventId, reaction);
-  });
+
+  const handleReaction = useHandleReaction(channelId);
+
+  const { sendReadReceipt } = useZionClient();
 
   const dateGroups = useGroupEvents(events);
 
@@ -80,7 +77,8 @@ export const MessageTimeline = (props: Props) => {
                 case RenderEventType.UserMessageGroup: {
                   const messagesByUser = r.events.map((e, index) => {
                     const minimal = index > 0;
-                    const reactions = messageReactionsMap?.get(e.eventId);
+                    const k = e.eventId as string;
+                    const reactions = messageReactionsMap?.get(k);
                     return (
                       <TimelineMessage
                         userId={userId}
@@ -94,7 +92,7 @@ export const MessageTimeline = (props: Props) => {
                         replies={messageRepliesMap?.get(e.eventId)}
                         reactions={reactions}
                         key={e.eventId}
-                        onReaction={onReaction}
+                        onReaction={handleReaction}
                       />
                     );
                   });

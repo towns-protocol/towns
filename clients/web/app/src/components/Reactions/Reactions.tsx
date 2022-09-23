@@ -2,9 +2,10 @@ import { emojis } from "@emoji-mart/data";
 import { EmojiData } from "emoji-mart";
 import React, { Suspense, useCallback } from "react";
 import { useZionContext } from "use-zion-client";
-import { MessageReactions } from "hooks/useFixMeMessageThread";
-import { Box, Stack, Text, TooltipRenderer } from "@ui";
+
 import { EmojiPickerButton } from "@components/EmojiPickerButton";
+import { Box, Stack, Text, TooltipRenderer } from "@ui";
+import { MessageReactions, useHandleReaction } from "hooks/useReactions";
 import { ReactionTootip } from "./ReactionTooltip";
 
 type Emojis = { [key: string]: typeof emojis[keyof typeof emojis] };
@@ -19,7 +20,7 @@ type Props = {
   reactions: MessageReactions;
   userId?: string | null;
   parentId?: string;
-  onReaction?: (eventId: string, name: string) => void;
+  onReaction?: ReturnType<typeof useHandleReaction>;
 };
 
 export const Reactions = (props: Props) => {
@@ -28,7 +29,11 @@ export const Reactions = (props: Props) => {
   const onReactionPicker = useCallback(
     (data: EmojiData) => {
       if (onReaction && parentId && data.id) {
-        onReaction(parentId, data.id);
+        onReaction({
+          type: "add",
+          parentId,
+          reactionName: data.id,
+        });
       }
     },
     [onReaction, parentId],
@@ -61,12 +66,26 @@ const ReactionRow = ({
   parentId?: Props["parentId"];
 }) => {
   const onReact = useCallback(
-    (reaction: string) => {
-      if (onReaction && parentId) {
-        onReaction(parentId, reaction);
+    (reactionName: string, remove: boolean) => {
+      if (onReaction && parentId && userId) {
+        if (remove) {
+          const eventId = reactions.get(reactionName)?.get(userId)?.eventId;
+          if (eventId) {
+            onReaction({
+              type: "redact",
+              eventId,
+            });
+          }
+        } else {
+          onReaction({
+            type: "add",
+            parentId,
+            reactionName,
+          });
+        }
       }
     },
-    [onReaction, parentId],
+    [onReaction, parentId, reactions, userId],
   );
 
   const map = reactions.size
@@ -86,22 +105,21 @@ const ReactionRow = ({
 
 const Reaction = (props: {
   name: string;
-  users?: Set<string>;
-  onReact: (reaction: string) => void;
+  users?: Map<string, { eventId: string } | undefined>;
+  onReact: (reaction: string, remove: boolean) => void;
   isOwn?: boolean;
 }) => {
   const { name, users, onReact, isOwn } = props;
+
   const { client } = useZionContext();
+
   const onClick = useCallback(() => {
     const userId = client?.getUserId();
     if (userId) {
-      users?.has(userId);
-      // cancel reaction
-      return;
+      const remove = !!isOwn;
+      onReact(name, remove);
     }
-
-    onReact(name);
-  }, [client, name, onReact, users]);
+  }, [client, isOwn, name, onReact]);
 
   return users && users.size ? (
     <TooltipRenderer

@@ -7,7 +7,7 @@ import {
   randUser,
   seed,
 } from "@ngneat/falso";
-import { MessageReactions } from "hooks/useFixMeMessageThread";
+import { MessageReactions } from "hooks/useReactions";
 import { fakeUsers } from "./UserData";
 
 seed(`update-${new Date().getDay()}`);
@@ -77,10 +77,10 @@ function getRandomReactions() {
     const e = rand(emojis);
     reactions.set(
       e,
-      new Set(
+      new Map(
         Array(randNumber({ min: 1, max: 245 }))
           .fill(undefined)
-          .map((r) => randUser().id),
+          .map((r) => [randUser().id, { eventId: "" }]),
       ),
     );
   }

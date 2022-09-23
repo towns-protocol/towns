@@ -10,7 +10,7 @@ export const ReactionTootip = ({
   userIds: users,
   reaction,
 }: {
-  userIds: Set<string>;
+  userIds: Map<string, { eventId: string } | undefined>;
   reaction: string;
 }) => {
   const names = useNameSequence(users);
@@ -52,15 +52,19 @@ export const ReactionTootip = ({
 
 const MotionBox = motion(Box);
 
-const useNameSequence = (users: Set<string>) => {
+const useNameSequence = (
+  users: Map<string, { eventId: string } | undefined>,
+) => {
   const { membersMap } = useSpaceMembers();
   const displayName = useMyProfile()?.displayName;
 
   return useMemo(() => {
-    return Array.from(users ?? [])
+    return Array.from(users.keys() ?? [])
       .map((u) => {
         const name = membersMap.get(u)?.name;
-        if (name === displayName) {
+        if (!name) {
+          return undefined;
+        } else if (name === displayName) {
           return "You";
         } else {
           return `${name}`;

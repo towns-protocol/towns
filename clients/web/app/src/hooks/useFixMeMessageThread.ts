@@ -72,45 +72,7 @@ export const useTimelineRepliesMap = (messages: TimelineEvent[]) => {
   );
 };
 
-export type MessageReactions = Map<
-  /* reaction name */
-  string,
-  /* set of user ids */
-  Set<string>
->;
-
-export const useTimelineReactionsMap = (events: TimelineEvent[]) => {
-  return useMemo(
-    () =>
-      events.reduce((reactionsMap, m) => {
-        const content =
-          m.content?.kind === ZTEvent.Reaction ? m.content : undefined;
-
-        const parentId = content && content.targetEventId;
-
-        if (parentId) {
-          const reaction = content.reaction;
-
-          let messageReactions = reactionsMap.get(parentId);
-
-          if (typeof messageReactions === "undefined") {
-            messageReactions = new Map();
-            reactionsMap.set(parentId, messageReactions);
-          }
-
-          let reactions = messageReactions.get(reaction);
-          if (typeof reactions === "undefined") {
-            reactions = new Set();
-            messageReactions.set(reaction, reactions);
-          }
-          reactions.add(content.sender.id);
-        }
-
-        return reactionsMap;
-      }, new Map()),
-    [events],
-  );
-};
+export type MessageRepliesMap = ReturnType<typeof useTimelineRepliesMap>;
 
 const getMessageAsReply = (m: TimelineEvent) => {
   const content = m.content;
@@ -118,7 +80,6 @@ const getMessageAsReply = (m: TimelineEvent) => {
     content?.kind === ZTEvent.RoomMessage
       ? content.content["m.relates_to"]
       : undefined;
-  //?.["rel_type"] === "io.element.thread";
   if (
     relatesTo &&
     relatesTo["m.in_reply_to"] &&

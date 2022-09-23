@@ -23,9 +23,21 @@ const Template: ComponentStory<typeof Reactions> = (props) => (
 export const Default = Template.bind({});
 Default.args = {
   reactions: new Map([
-    ["heart", new Set(["user_a", "user_b"])],
-    ["smile", new Set(["user_a"])],
-    ["eyes", new Set(["user_a", "user_b"])],
+    [
+      "heart",
+      new Map([
+        ["user_a", { eventId: "" }],
+        ["user_b", { eventId: "" }],
+      ]),
+    ],
+    ["smile", new Map([["user_a", { eventId: "" }]])],
+    [
+      "eyes",
+      new Map([
+        ["user_a", { eventId: "" }],
+        ["user_b", { eventId: "" }],
+      ]),
+    ],
   ]),
 };
 
@@ -35,7 +47,7 @@ Multiple.args = { ...Default.args };
 export const Single = Template.bind({});
 Single.args = {
   ...Default.args,
-  reactions: new Map([["smile", new Set(["user_a", "user_b"])]]),
+  reactions: new Map([["smile", new Map([["user_a", { eventId: "" }]])]]),
 };
 
 export const Empty = Template.bind({});

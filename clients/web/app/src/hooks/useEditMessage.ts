@@ -7,12 +7,6 @@ export const useRedactChannelEvent = (channelId?: RoomIdentifier) => {
 
   const redactChannelEvent = useCallback(
     ({ value, parentId }: { value: string; parentId: string }) => {
-      console.log({
-        value,
-        parentId,
-        channelId,
-      });
-
       if (value && parentId && channelId) {
         editMessage(channelId, value, { originalEventId: parentId });
       }

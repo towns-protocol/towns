@@ -4,9 +4,9 @@ import { RoomIdentifier, TimelineEvent, useZionClient } from "use-zion-client";
 import { Stack } from "@ui";
 import {
   useFilterReplies,
-  useTimelineReactionsMap,
   useTimelineRepliesMap,
 } from "hooks/useFixMeMessageThread";
+import { useTimelineReactionsMap } from "hooks/useReactions";
 import { useIsScrolling } from "./hooks/useIsScrolling";
 import { useLazyLoad } from "./hooks/useLazyLoad";
 import { usePersistScrollPosition } from "./hooks/usePersistScrollPosition";

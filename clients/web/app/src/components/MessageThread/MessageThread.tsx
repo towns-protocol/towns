@@ -1,19 +1,12 @@
 import React from "react";
-import useEvent from "react-use-event-hook";
-import {
-  useChannelTimeline,
-  useMatrixStore,
-  useZionClient,
-} from "use-zion-client";
+import { useChannelTimeline, useMatrixStore } from "use-zion-client";
 import { useChannelContext } from "use-zion-client/dist/components/ChannelContextProvider";
 import { TimelineMessage } from "@components/MessageTimeline/events/TimelineMessage";
 import { MessageTimeline } from "@components/MessageTimeline/MessageTimeline";
 import { RichTextEditor } from "@components/RichText/RichTextEditor";
 import { Box, Divider, IconButton, Stack } from "@ui";
-import {
-  useMessageThread,
-  useTimelineReactionsMap,
-} from "hooks/useFixMeMessageThread";
+import { useMessageThread } from "hooks/useFixMeMessageThread";
+import { useHandleReaction, useTimelineReactionsMap } from "hooks/useReactions";
 import { useSendReply } from "hooks/useSendReply";
 import { getIsRoomMessageContent } from "utils/ztevent_util";
 
@@ -31,10 +24,6 @@ export const MessageThread = (props: Props) => {
   const onSend = (value: string) => {
     sendReply(value);
   };
-  const { sendReaction } = useZionClient();
-  const onReaction = useEvent((eventId: string, reaction: string) => {
-    sendReaction(channelId, eventId, reaction);
-  });
 
   const parentMessageContent = getIsRoomMessageContent(parentMessage);
 
@@ -42,6 +31,8 @@ export const MessageThread = (props: Props) => {
 
   // could be optimised - only need the segment of the thread
   const messageReactionsMap = useTimelineReactionsMap(channelMessages);
+
+  const handleReaction = useHandleReaction(channelId);
 
   return (
     <Stack absoluteFill padding gap position="relative">
@@ -54,7 +45,7 @@ export const MessageThread = (props: Props) => {
               event={parentMessage}
               eventContent={parentMessageContent}
               spaceId={spaceId}
-              onReaction={onReaction}
+              onReaction={handleReaction}
             />
           )}
           {!!messages.length && (

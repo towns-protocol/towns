@@ -4,8 +4,8 @@ import { RoomIdentifier } from "use-zion-client";
 import { Reactions } from "@components/Reactions/Reactions";
 import { MessageReplies } from "@components/Replies/MessageReplies";
 import { Avatar, Box, BoxProps, ButtonText, Stack, Text } from "@ui";
-import { MessageReactions } from "hooks/useFixMeMessageThread";
 import { useHover } from "hooks/useHover";
+import { MessageReactions, useHandleReaction } from "hooks/useReactions";
 import { AvatarAtoms } from "ui/components/Avatar/Avatar.css";
 import { MessageContextMenu } from "./MessageContextMenu";
 
@@ -26,7 +26,7 @@ type Props = {
   channelId?: RoomIdentifier;
   spaceId?: RoomIdentifier;
   children?: React.ReactNode;
-  onReaction?: (eventId: string, reaction: string) => void;
+  onReaction?: ReturnType<typeof useHandleReaction>;
   rounded?: BoxProps["rounded"];
   padding?: BoxProps["padding"];
   background?: BoxProps["background"];

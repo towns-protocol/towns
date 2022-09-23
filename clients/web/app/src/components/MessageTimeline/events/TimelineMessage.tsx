@@ -9,7 +9,7 @@ import {
 } from "use-zion-client";
 import { Message } from "@components/Message";
 import { RichTextPreview } from "@components/RichText/RichTextEditor";
-import { MessageReactions } from "hooks/useFixMeMessageThread";
+import { MessageReactions, useHandleReaction } from "hooks/useReactions";
 import { getMessageBody } from "utils/ztevent_util";
 import { TimelineMessageEditor } from "./TimelineMessageEditor";
 
@@ -24,7 +24,7 @@ type Props = {
   reactions?: MessageReactions;
   replies?: number;
   spaceId: RoomIdentifier;
-  onReaction: (eventId: string, reaction: string) => void;
+  onReaction: ReturnType<typeof useHandleReaction>;
 };
 
 export const TimelineMessage = React.memo((props: Props) => {
