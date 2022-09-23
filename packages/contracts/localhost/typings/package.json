@@ -17,7 +17,10 @@
         "format": "prettier --write contracts/**/*.sol",
         "lint": "solhint contracts/**/*.sol",
         "lint:fix": "solhint --fix contracts/**/*.sol",
-        "publish": "cp -a ./dist/ ../../packages/contracts/governance"
+        "publish": "yarn publish:local",
+        "publish:local": "yarn publish:local:typings & yarn publish:local:abis",
+        "publish:local:abis": "mkdir -p ../../packages/contracts/localhost/abis && cp -a ./artifacts_foundry/CouncilNFT.sol/ ../../packages/contracts/localhost/abis/ & cp -a ./artifacts_foundry/CouncilStaking.sol/ ../../packages/contracts/localhost/abis/ & cp -a ./artifacts_foundry/ZionSpaceManager.sol/ ../../packages/contracts/localhost/abis/",
+        "publish:local:typings": "cp -a ./dist/ ../../packages/contracts/localhost/typings"
     },
     "dependencies": {
         "@opengsn/contracts": "^2.2.6",

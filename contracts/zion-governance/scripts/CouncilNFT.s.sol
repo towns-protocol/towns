@@ -53,9 +53,9 @@ contract DeployCouncilNFT is Script {
     writer = writer.writeEndObject();
 
     string memory path = string.concat(
-      "packages/contracts/addresses/",
-      vm.toString(Helper.getChainId()),
-      "/council.json"
+      "packages/contracts/",
+      Helper.getChainName(),
+      "/addresses/council.json"
     );
 
     vm.writeFile(path, writer.value);

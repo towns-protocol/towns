@@ -11,10 +11,11 @@ verbosity = 3                 # The verbosity of tests
 # block_timestamp = 1622400000  # Timestamp for tests (non-zero)
 
 fs_permissions = [{ access = "write", path = "./packages"}]
+extra_output_files = ["metadata", "abi"]
 
 [profile.governance]
 src = 'contracts/zion-governance/contracts'
-test = 'contracts/zion-governance/test/foundry'
+test = 'contracts/zion-governance/test/'
 out = 'contracts/zion-governance/artifacts_foundry'
 gas_reports = ["CouncilNFT", "ZionSpaceManager"]
 ffi = true

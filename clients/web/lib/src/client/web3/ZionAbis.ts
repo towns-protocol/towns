@@ -1,6 +1,6 @@
-import ZionSpaceManagerArtifact from "@harmony/contracts/governance/artifacts/ZionSpaceManager.json";
-import CouncilNFTArtifact from "@harmony/contracts/governance/artifacts/CouncilNFT.json";
-import CouncilStakingArtifact from "@harmony/contracts/governance/artifacts/CouncilStaking.json";
+import ZionSpaceManagerArtifact from "@harmony/contracts/localhost/abis/ZionSpaceManager.json";
+import CouncilNFTArtifact from "@harmony/contracts/localhost/abis/CouncilNFT.json";
+import CouncilStakingArtifact from "@harmony/contracts/localhost/abis/CouncilStaking.json";
 import { ethers } from "ethers";
 
 export function zionSpaceManagerAbi(): ethers.ContractInterface {
@@ -9,8 +9,7 @@ export function zionSpaceManagerAbi(): ethers.ContractInterface {
   }
   // we have an issue in the tests where the import declared above is undefined... this is a hack to get around it
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
-  return require("@harmony/contracts/governance/artifacts/ZionSpaceManager.json")
-    .abi;
+  return require("@harmony/contracts/localhost/abis/ZionSpaceManager.json").abi;
 }
 
 export function zionCouncilNFTAbi(): ethers.ContractInterface {
@@ -19,7 +18,7 @@ export function zionCouncilNFTAbi(): ethers.ContractInterface {
   }
   // we have an issue in the tests where the import declared above is undefined... this is a hack to get around it
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
-  return require("@harmony/contracts/governance/artifacts/CouncilNFT.json").abi;
+  return require("@harmony/contracts/localhost/abis/CouncilNFT.json").abi;
 }
 
 export function zionCouncilStakingAbi(): ethers.ContractInterface {
@@ -28,6 +27,5 @@ export function zionCouncilStakingAbi(): ethers.ContractInterface {
   }
   // we have an issue in the tests where the import declared above is undefined... this is a hack to get around it
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
-  return require("@harmony/contracts/governance/artifacts/CouncilStaking.json")
-    .abi;
+  return require("@harmony/contracts/localhost/abis/CouncilStaking.json").abi;
 }

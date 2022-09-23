@@ -10,6 +10,27 @@ library Helper {
     return id;
   }
 
+  function getChainName() public view returns (string memory) {
+    uint256 id = getChainId();
+    if (id == 1) {
+      return "mainnet";
+    } else if (id == 3) {
+      return "ropsten";
+    } else if (id == 4) {
+      return "rinkeby";
+    } else if (id == 5) {
+      return "goerli";
+    } else if (id == 42) {
+      return "kovan";
+    } else if (id == 1337) {
+      return "localhost";
+    } else if (id == 31337) {
+      return "localhost";
+    } else {
+      return "unknown";
+    }
+  }
+
   function toString(bytes memory data) public pure returns (string memory) {
     bytes memory alphabet = "0123456789abcdef";
 

@@ -57,9 +57,9 @@ contract DeployZionSpaceManager is Script {
     writer = writer.writeEndObject();
 
     string memory path = string.concat(
-      "packages/contracts/addresses/",
-      vm.toString(Helper.getChainId()),
-      "/space-manager.json"
+      "packages/contracts/",
+      Helper.getChainName(),
+      "/addresses/space-manager.json"
     );
 
     vm.writeFile(path, writer.value);

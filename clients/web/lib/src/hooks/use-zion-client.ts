@@ -1,4 +1,7 @@
-import { CouncilNFT, ZionSpaceManager } from "@harmony/contracts/governance";
+import {
+  CouncilNFT,
+  ZionSpaceManager,
+} from "@harmony/contracts/localhost/typings";
 import {
   CreateChannelInfo,
   CreateSpaceInfo,
@@ -9,7 +12,7 @@ import {
 } from "../types/matrix-types";
 
 /* eslint-disable @typescript-eslint/unbound-method */
-import { DataTypes } from "@harmony/contracts/governance/types/ZionSpaceManager";
+import { DataTypes } from "@harmony/contracts/localhost/typings/types/ZionSpaceManager";
 import { ZionClientEvent } from "../client/ZionClientTypes";
 import { ZionContractProvider } from "client/web3/ZionContractProvider";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";

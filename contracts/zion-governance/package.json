@@ -17,9 +17,10 @@
     "format": "prettier --write contracts/**/*.sol",
     "lint": "solhint contracts/**/*.sol",
     "lint:fix": "solhint --fix contracts/**/*.sol",
-    "publish": "yarn publish:typings & yarn publish:artifacts",
-    "publish:typings": "cp -a ./dist/ ../../packages/contracts/governance",
-    "publish:artifacts": "mkdir -p ../../packages/contracts/governance/artifacts && cp -a ./artifacts_foundry/CouncilNFT.sol/CouncilNFT.json ../../packages/contracts/governance/artifacts/CouncilNFT.json & cp -a ./artifacts_foundry/CouncilStaking.sol/CouncilStaking.json ../../packages/contracts/governance/artifacts/CouncilStaking.json & cp -a ./artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.json ../../packages/contracts/governance/artifacts/ZionSpaceManager.json"
+    "publish": "yarn publish:local",
+    "publish:local": "yarn publish:local:typings & yarn publish:local:abis",
+    "publish:local:abis": "mkdir -p ../../packages/contracts/localhost/abis && cp -a ./artifacts_foundry/CouncilNFT.sol/ ../../packages/contracts/localhost/abis/ & cp -a ./artifacts_foundry/CouncilStaking.sol/ ../../packages/contracts/localhost/abis/ & cp -a ./artifacts_foundry/ZionSpaceManager.sol/ ../../packages/contracts/localhost/abis/",
+    "publish:local:typings": "cp -a ./dist/ ../../packages/contracts/localhost/typings"
   },
   "dependencies": {
     "@opengsn/contracts": "^2.2.6",

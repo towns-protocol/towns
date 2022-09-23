@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import MainNet_SpaceManager from "@harmony/contracts/addresses/1/space-manager.json";
-import MainNet_Council from "@harmony/contracts/addresses/1/council.json";
-import Rinkeby_SpaceManager from "@harmony/contracts/addresses/4/space-manager.json";
-import Rinkeby_Council from "@harmony/contracts/addresses/4/council.json";
-import Foundry_SpaceManager from "@harmony/contracts/addresses/31337/space-manager.json";
-import Foundry_Council from "@harmony/contracts/addresses/31337/council.json";
+import MainNet_SpaceManager from "@harmony/contracts/mainnet/addresses/space-manager.json";
+import MainNet_Council from "@harmony/contracts/mainnet/addresses/council.json";
+import Rinkeby_SpaceManager from "@harmony/contracts/rinkeby/addresses/space-manager.json";
+import Rinkeby_Council from "@harmony/contracts/rinkeby/addresses/council.json";
+import Foundry_SpaceManager from "@harmony/contracts/localhost/addresses/space-manager.json";
+import Foundry_Council from "@harmony/contracts/localhost/addresses/council.json";
 
 export interface ISpaceManagerAddress {
   spacemanager: string;
@@ -41,29 +41,29 @@ export function getContractAddresses(chainId: number): IContractAddresses {
       return {
         spaceManager:
           MainNet_SpaceManager ??
-          require("@harmony/contracts/addresses/1/space-manager.json"),
+          require("@harmony/contracts/mainnet/addresses/space-manager.json"),
         council:
           MainNet_Council ??
-          require("@harmony/contracts/addresses/1/council.json"),
+          require("@harmony/contracts/mainnet/addresses/council.json"),
       };
     case 4:
       return {
         spaceManager:
           Rinkeby_SpaceManager ??
-          require("@harmony/contracts/addresses/4/space-manager.json"),
+          require("@harmony/contracts/rinkeby/addresses/space-manager.json"),
         council:
           Rinkeby_Council ??
-          require("@harmony/contracts/addresses/4/council.json"),
+          require("@harmony/contracts/rinkeby/addresses/council.json"),
       };
     case 1337:
     case 31337:
       return {
         spaceManager:
           Foundry_SpaceManager ??
-          require("@harmony/contracts/addresses/31337/space-manager.json"),
+          require("@harmony/contracts/localhost/addresses/space-manager.json"),
         council:
           Foundry_Council ??
-          require("@harmony/contracts/addresses/31337/council.json"),
+          require("@harmony/contracts/localhost/addresses/council.json"),
       };
     default:
       console.error(
