@@ -4,8 +4,6 @@ src = 'contracts'
 out = 'artifacts_foundry'
 test = "test/foundry"
 libs = ["node_modules", "lib"]
-extra_output_files = ["metadata", "abi"] # ABI to be used to generate golang and other bindings
-
 
 optimizer = true              # Enable or disable the solc optimizer
 optimizer_runs = 999999       # The number of optimizer runs
@@ -14,7 +12,7 @@ verbosity = 3                 # The verbosity of tests
 # block_timestamp = 1622400000  # Timestamp for tests (non-zero)
 
 fs_permissions = [{ access = "write", path = "./packages"}]
-extra_output_files = ["metadata", "abi"]
+extra_output_files = ["metadata", "abi"] # ABI to be used to generate golang and other bindings
 
 [profile.governance]
 src = 'contracts/zion-governance/contracts'
