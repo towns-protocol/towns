@@ -156,35 +156,35 @@ jobs:
         working-directory: servers/dendrite
 
   # run Sytest in different variations
-  sytest:
-    timeout-minutes: 20
-    needs: initial-tests-done
-    name: "Sytest (${{ matrix.label }})"
-    runs-on: ubuntu-latest
-    services:
-      # Label used to access the service container
-      postgres:
-        # Docker Hub image
-        image: postgres:14-alpine
-        # Provide the password for postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dendrite
-        ports:
-          # Maps tcp port 5432 on service container to the host
-          - 5432:5432
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      # - uses: actions/checkout@v3
-      # - name: Run Sytest
-      #   run: ./run-sytest.sh
-      #   working-directory: servers/dendrite
+  # sytest:
+  #   timeout-minutes: 20
+  #   needs: initial-tests-done
+  #   name: "Sytest (${{ matrix.label }})"
+  #   runs-on: ubuntu-latest
+  #   services:
+  #     # Label used to access the service container
+  #     postgres:
+  #       # Docker Hub image
+  #       image: postgres:14-alpine
+  #       # Provide the password for postgres
+  #       env:
+  #         POSTGRES_USER: postgres
+  #         POSTGRES_PASSWORD: postgres
+  #         POSTGRES_DB: dendrite
+  #       ports:
+  #         # Maps tcp port 5432 on service container to the host
+  #         - 5432:5432
+  #       # Set health checks to wait until postgres has started
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #   steps:
+  # - uses: actions/checkout@v3
+  # - name: Run Sytest
+  #   run: ./run-sytest.sh
+  #   working-directory: servers/dendrite
 
   integration-tests-done:
     name: Integration tests passed
