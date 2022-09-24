@@ -188,7 +188,7 @@ jobs:
 
   integration-tests-done:
     name: Integration tests passed
-    needs: [initial-tests-done, upgrade_test, sytest]
+    needs: [initial-tests-done, upgrade_test]
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
     steps:
