@@ -1,5 +1,6 @@
 const { vanillaExtractPlugin } = require("@vanilla-extract/vite-plugin");
 const tsconfigPaths = require("vite-tsconfig-paths").default;
+const { mergeConfig } = require("vite");
 
 module.exports = {
   stories: ["../src/**/*.stories.mdx", "../src/**/*.stories.@(js|jsx|ts|tsx)"],
@@ -39,7 +40,8 @@ module.exports = {
     // Trying to work around OOM building sotrybook on render.com
     // https://lightrun.com/answers/storybookjs-storybook-storybook-running-out-of-memory-when-building
     // config.build.sourcemap = false;
-
+    config.build.minify = false;
+    config.build.target = "es2021";
     return config;
   },
 };
