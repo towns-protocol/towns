@@ -66,9 +66,11 @@ export function getContractAddresses(chainId: number): IContractAddresses {
           require("@harmony/contracts/localhost/addresses/council.json"),
       };
     default:
-      console.error(
-        `Unsupported chainId, please add chainId: ${chainId} info to index.ts`,
-      );
+      if (chainId !== 0) {
+        console.error(
+          `Unsupported chainId, please add chainId: ${chainId} info to index.ts`,
+        );
+      }
       return {
         spaceManager: emptySMAddresses,
         council: emptyCouncilAddresses,
