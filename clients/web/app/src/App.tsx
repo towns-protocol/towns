@@ -17,8 +17,8 @@ const Playground = React.lazy(() => import("@components/Playground"));
 
 FontLoader.init();
 
-const MATRIX_HOMESERVER_URL = "https://node1.hntlabs.com";
-const ZION_SPACE_ID = "!V2Gs6CLcXwOokgiq:node1.hntlabs.com";
+const MATRIX_HOMESERVER_URL = "https://node1.zion.xyz";
+const ZION_SPACE_ID = "!V2Gs6CLcXwOokgiq:node1.zion.xyz";
 const ZION_SPACE_NAME = "Zion Preview"; // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = "/placeholders/nft_10.png"; // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 
