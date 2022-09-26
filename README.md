@@ -34,7 +34,7 @@ If you would like to run against a local server and blockchain, first:
 cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
 ```
 
-Then follow setup instructions in [/contracts](contracts/zion-governance)
+Then follow setup instructions in [/contracts/zion-governance](contracts/zion-governance)
 
 Then you can launch everything in VSCode via a vscode/tasks.json that allows all with `CMD+P task ~Start Local Development~`
 
