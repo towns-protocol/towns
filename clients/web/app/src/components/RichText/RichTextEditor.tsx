@@ -1,4 +1,4 @@
-import { CodeHighlightNode, CodeNode } from "@lexical/code";
+import { CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { TRANSFORMERS } from "@lexical/markdown";
