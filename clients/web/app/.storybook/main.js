@@ -38,7 +38,7 @@ module.exports = {
 
     // Trying to work around OOM building sotrybook on render.com
     // https://lightrun.com/answers/storybookjs-storybook-storybook-running-out-of-memory-when-building
-    config.build.sourcemap = false;
+    // config.build.sourcemap = false;
 
     return config;
   },
