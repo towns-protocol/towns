@@ -17432,8 +17432,8 @@ __metadata:
   linkType: hard
 
 "framer-motion@npm:^7.3.6":
-  version: 7.3.6
-  resolution: "framer-motion@npm:7.3.6"
+  version: 7.4.0
+  resolution: "framer-motion@npm:7.4.0"
   dependencies:
     "@emotion/is-prop-valid": ^0.8.2
     "@motionone/dom": 10.13.1
@@ -17448,7 +17448,7 @@ __metadata:
   dependenciesMeta:
     "@emotion/is-prop-valid":
       optional: true
-  checksum: 05d25701a95347db010e743398a01803f53c2b3fc5cb178b162a6c54271f9a02a6c6f674ac4b72710a5f2230afc0ce135c37daf40d5b3cc1de289c02317bf031
+  checksum: 96973d93f8bc3c3e9611ebda2568d0cfae2b36bf7b3c8002e55b29a2e971223b3b0ee0a1c630b8d88652317813f2222a7cba366a83500750eafdffecac364e0b
   languageName: node
   linkType: hard
 
@@ -28278,11 +28278,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.36.0":
-  version: 7.36.0
-  resolution: "react-hook-form@npm:7.36.0"
+  version: 7.36.1
+  resolution: "react-hook-form@npm:7.36.1"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18
-  checksum: f863487416b9f73c3d3c682360b7a01819b8dd14ca5430e49473a64ad723b91747e03c00b942741aae677abeb1ad2eea623887610af41a6b1e4ca8ae13ee8028
+  checksum: d41951685fe7d345997c1ac489ccc1a44d11cfa6021b0a39a449029ba3cd8e5824afe5f6464e8ff6fb7c01d1915627b53ec1e1bfee63a6b722b6855794dc0df9
   languageName: node
   linkType: hard
 
@@ -29743,7 +29743,7 @@ __metadata:
     "@mui/material": ^5.10.1
     "@mui/styles": ^5.9.3
     "@types/node": ^18.7.10
-    "@types/react": ^18.0.17
+    "@types/react": ^18.0.21
     "@types/react-dom": ^18.0.6
     eslint: ^8.22.0
     ethers: 5.7.0
@@ -33357,7 +33357,7 @@ __metadata:
     "@testing-library/user-event": ^14.4.3
     "@types/jest": ^28.1.7
     "@types/node-emoji": ^1.8.1
-    "@types/react": ^18.0.17
+    "@types/react": ^18.0.21
     "@types/request": ^2.48.8
     "@typescript-eslint/eslint-plugin": ^5.36.1
     "@typescript-eslint/parser": ^5.34.0

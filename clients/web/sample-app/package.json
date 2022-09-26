@@ -10,7 +10,7 @@
     "@mui/material": "^5.10.1",
     "@mui/styles": "^5.9.3",
     "@types/node": "^18.7.10",
-    "@types/react": "^18.0.17",
+    "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
     "ethers": "5.7.0",
     "http-status-codes": "^2.2.0",
