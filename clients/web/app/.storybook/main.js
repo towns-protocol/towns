@@ -8,6 +8,19 @@ module.exports = {
   core: {
     builder: "@storybook/builder-vite",
   },
+  webpackFinal: async (config, { configType }) => {
+    // Trying to work around OOM building sotrybook on render.com
+    // split into more chunks
+    config.optimization = {
+      splitChunks: {
+        chunks: "all",
+        minSize: 30 * 1024, // 30KB
+        maxSize: 1024 * 1024, // 1MB
+      },
+    };
+
+    return config;
+  },
   // https://github.com/eirslett/storybook-builder-vite
   async viteFinal(config, { configType }) {
     config.plugins.push(
@@ -22,6 +35,9 @@ module.exports = {
       ...config.define,
       ...(configType.match(/development/i) ? { global: "window" } : {}),
     };
+
+    // Trying to work around OOM building sotrybook on render.com
+    config.build.sourcemap = false;
 
     return config;
   },
