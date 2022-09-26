@@ -1,5 +1,7 @@
+import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
+import { TRANSFORMERS } from "@lexical/markdown";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -8,12 +10,11 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { QuoteNode } from "@lexical/rich-text";
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { clsx } from "clsx";
 import { RoomMember } from "matrix-js-sdk";
 import React, { useMemo, useState } from "react";
 import { useSpaceMembers } from "use-zion-client";
-import { TRANSFORMERS } from "@lexical/markdown";
 import * as fieldStyles from "ui/components/_internal/Field/Field.css";
 import { notUndefined } from "ui/utils/utils";
 import { useInitialConfig } from "./hooks/useInitialConfig";
@@ -45,6 +46,8 @@ type Props = {
 const fieldClassName = clsx([fieldStyles.field, styles.contentEditable]);
 
 const nodes = [
+  CodeNode,
+  HeadingNode,
   AnnotationNode,
   EmojiNode,
   AutoLinkNode,
@@ -124,7 +127,7 @@ export const RichTextEditor = (props: Props) => {
         onFocusChange={onFocusChange}
       />
       <ClearEditorPlugin />
-      <MarkdownShortcutPlugin />
+      <MarkdownShortcutPlugin transformers={transformers} />
       <HistoryPlugin />
       <LinkPlugin />
       <EmojiReplacePlugin />

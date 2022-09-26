@@ -132,6 +132,7 @@ export const createMentionTransformer = (
 ): TextMatchTransformer => {
   const concat = names.join("|");
   return {
+    dependencies: [MentionNode],
     export: (node, exportChildren, exportFormat) => {
       if (!$isMentionNode(node)) {
         return null;
@@ -146,5 +147,5 @@ export const createMentionTransformer = (
     },
     trigger: "@",
     type: "text-match",
-  } as const;
+  };
 };
