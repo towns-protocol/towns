@@ -43,7 +43,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
   const wagmiClient = useRef<any>();
   if (!wagmiClient.current) {
     const { chains, provider, webSocketProvider } = configureChains(
-      [chain.rinkeby, chain.foundry, chain.localhost],
+      [chain.goerli, chain.foundry, chain.localhost],
       [publicProvider()], // todo, add more providers see: https://github.com/HereNotThere/harmony/issues/460
     );
     const client = createClient({

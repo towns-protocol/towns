@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import MainNet_SpaceManager from "@harmony/contracts/mainnet/addresses/space-manager.json";
 import MainNet_Council from "@harmony/contracts/mainnet/addresses/council.json";
-import Rinkeby_SpaceManager from "@harmony/contracts/rinkeby/addresses/space-manager.json";
-import Rinkeby_Council from "@harmony/contracts/rinkeby/addresses/council.json";
+import Goerli_SpaceManager from "@harmony/contracts/goerli/addresses/space-manager.json";
+import Goerli_Council from "@harmony/contracts/goerli/addresses/council.json";
 import Foundry_SpaceManager from "@harmony/contracts/localhost/addresses/space-manager.json";
 import Foundry_Council from "@harmony/contracts/localhost/addresses/council.json";
 
@@ -46,14 +46,14 @@ export function getContractAddresses(chainId: number): IContractAddresses {
           MainNet_Council ??
           require("@harmony/contracts/mainnet/addresses/council.json"),
       };
-    case 4:
+    case 5:
       return {
         spaceManager:
-          Rinkeby_SpaceManager ??
-          require("@harmony/contracts/rinkeby/addresses/space-manager.json"),
+          Goerli_SpaceManager ??
+          require("@harmony/contracts/goerli/addresses/space-manager.json"),
         council:
-          Rinkeby_Council ??
-          require("@harmony/contracts/rinkeby/addresses/council.json"),
+          Goerli_Council ??
+          require("@harmony/contracts/goerli/addresses/council.json"),
       };
     case 1337:
     case 31337:
@@ -68,7 +68,7 @@ export function getContractAddresses(chainId: number): IContractAddresses {
     default:
       if (chainId !== 0) {
         console.error(
-          `Unsupported chainId, please add chainId: ${chainId} info to index.ts`,
+          `Unsupported chainId, please add chainId: ${chainId} info to ZionContractAddresses.ts`,
         );
       }
       return {
