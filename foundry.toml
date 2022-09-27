@@ -1,24 +1,22 @@
 [profile.default]
-solc = "0.8.15" # to use a specific local solc install set the path as `solc = "<path to solc>/solc"`
-src = 'contracts'
-out = 'artifacts_foundry'
-test = "test/foundry"
+solc = "0.8.16"
 libs = ["node_modules", "lib"]
-
-optimizer = true              # Enable or disable the solc optimizer
-optimizer_runs = 999999       # The number of optimizer runs
-verbosity = 3                 # The verbosity of tests
-# bytecode_hash = "none"        # For deterministic code
-# block_timestamp = 1622400000  # Timestamp for tests (non-zero)
-
+verbosity = 3
 fs_permissions = [{ access = "write", path = "./packages"}]
-extra_output_files = ["metadata", "abi"] # ABI to be used to generate golang and other bindings
+extra_output_files = ["metadata", "abi"]
 
 [profile.governance]
 src = 'contracts/zion-governance/contracts'
 test = 'contracts/zion-governance/test/'
 out = 'contracts/zion-governance/artifacts_foundry'
+broadcast = "contracts/zion-governance/broadcast"
 gas_reports = ["CouncilNFT", "ZionSpaceManager"]
 ffi = true
+
+[rpc_endpoints]
+goerli = "${GOERLI_RPC_URL}"
+
+[etherscan]
+goerli = { key = "${ETHERSCAN_API_KEY}" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

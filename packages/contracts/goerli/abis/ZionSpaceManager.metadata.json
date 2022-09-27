@@ -1,0 +1,1030 @@
+{
+  "compiler": {
+    "version": "0.8.16+commit.07a7930e"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "DefaultEntitlementModuleNotSet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementAlreadyWhitelisted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementModuleNotSupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementNotWhitelisted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotSpaceOwner",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission",
+            "name": "permission",
+            "type": "tuple"
+          }
+        ],
+        "name": "addPermissionToRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "entitlementModuleAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "addRoleToEntitlementModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes8",
+            "name": "color",
+            "type": "bytes8"
+          }
+        ],
+        "name": "createRole",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "spaceName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "networkId",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateSpaceData",
+            "name": "info",
+            "type": "tuple"
+          }
+        ],
+        "name": "createSpace",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "spaceName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "networkId",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateSpaceData",
+            "name": "info",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "entitlementModuleAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "tokenAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "internalType": "string[]",
+                "name": "permissions",
+                "type": "string[]"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",
+            "name": "entitlement",
+            "type": "tuple"
+          }
+        ],
+        "name": "createSpaceWithTokenEntitlement",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementModulesBySpaceId",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "entitlementModules",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementsInfoBySpaceId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "entitlementAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "string",
+                "name": "entitlementName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "entitlementDescription",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.EntitlementModuleInfo[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "enum ISpaceManager.ZionPermission",
+            "name": "zionPermission",
+            "type": "uint8"
+          }
+        ],
+        "name": "getPermissionFromMap",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission",
+            "name": "permission",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getPermissionsBySpaceIdByRoleId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getRoleBySpaceIdByRoleId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "bytes8",
+                "name": "color",
+                "type": "bytes8"
+              },
+              {
+                "internalType": "bool",
+                "name": "isTransitive",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct DataTypes.Role",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getRolesBySpaceId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "bytes8",
+                "name": "color",
+                "type": "bytes8"
+              },
+              {
+                "internalType": "bool",
+                "name": "isTransitive",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct DataTypes.Role[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          }
+        ],
+        "name": "getSpaceIdByNetworkId",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getSpaceInfoBySpaceId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "spaceId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "createdAt",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct DataTypes.SpaceInfo",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getSpaceOwnerBySpaceId",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "ownerAddress",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getSpaces",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "spaceId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "createdAt",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct DataTypes.SpaceInfo[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roomId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission",
+            "name": "permission",
+            "type": "tuple"
+          }
+        ],
+        "name": "isEntitled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "entitlementModuleAddress",
+            "type": "address"
+          }
+        ],
+        "name": "isEntitlementModuleWhitelisted",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "entitlementModule",
+            "type": "address"
+          }
+        ],
+        "name": "registerDefaultEntitlementModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "entitlementModuleAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "removeEntitlement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "entitlementAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "whitelist",
+            "type": "bool"
+          }
+        ],
+        "name": "whitelistEntitlementModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "enum ISpaceManager.ZionPermission",
+            "name": "",
+            "type": "uint8"
+          }
+        ],
+        "name": "zionPermissionsMap",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "author": "HNT Labs",
+      "kind": "dev",
+      "methods": {
+        "createSpace((string,string))": {
+          "params": {
+            "info": "The data to create the space."
+          }
+        },
+        "getEntitlementModulesBySpaceId(uint256)": {
+          "params": {
+            "spaceId": "The id of the space"
+          },
+          "returns": {
+            "entitlementModules": "an array of entitlements"
+          }
+        },
+        "getSpaceIdByNetworkId(string)": {
+          "params": {
+            "networkId": "The network space id"
+          },
+          "returns": {
+            "_0": "uint256 Returns the space id"
+          }
+        },
+        "getSpaceInfoBySpaceId(uint256)": {
+          "params": {
+            "_spaceId": "The id of the space"
+          },
+          "returns": {
+            "_0": "SpaceInfo a struct representing the space info"
+          }
+        },
+        "getSpaceOwnerBySpaceId(uint256)": {
+          "params": {
+            "_spaceId": "The space id"
+          },
+          "returns": {
+            "ownerAddress": "The address of the owner of the space"
+          }
+        },
+        "getSpaces()": {
+          "returns": {
+            "_0": "SpaceInfo[] an array containing the space info"
+          }
+        },
+        "isEntitled(uint256,uint256,address,(string))": {
+          "params": {
+            "permission": "The type of permission to check",
+            "roomId": "The id of the room",
+            "spaceId": "The id of the space",
+            "user": "The address of the user"
+          },
+          "returns": {
+            "_0": "bool representing if the user has access or not"
+          }
+        },
+        "owner()": {
+          "details": "Returns the address of the current owner."
+        },
+        "registerDefaultEntitlementModule(address)": {
+          "params": {
+            "entitlementModuleAddress": "The address of the entitlement module"
+          }
+        },
+        "renounceOwnership()": {
+          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+        },
+        "transferOwnership(address)": {
+          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        }
+      },
+      "title": "ZionSpaceManager",
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "addRoleToEntitlementModule(uint256,address,uint256,bytes)": {
+          "notice": "add an entitlement to an entitlement module"
+        },
+        "createSpace((string,string))": {
+          "notice": "Create a new space."
+        },
+        "createSpaceWithTokenEntitlement((string,string),(address,address,uint256,string,string[]))": {
+          "notice": "Create a new space with a token entitlement."
+        },
+        "getEntitlementModulesBySpaceId(uint256)": {
+          "notice": "Returns entitlements for a space"
+        },
+        "getEntitlementsInfoBySpaceId(uint256)": {
+          "notice": "Returns the entitlement info for a space"
+        },
+        "getSpaceIdByNetworkId(string)": {
+          "notice": "Returns the space id by network id"
+        },
+        "getSpaceInfoBySpaceId(uint256)": {
+          "notice": "Get the space information by id."
+        },
+        "getSpaceOwnerBySpaceId(uint256)": {
+          "notice": "Returns the owner of the space by space id"
+        },
+        "getSpaces()": {
+          "notice": "Returns an array of multiple space information objects"
+        },
+        "isEntitled(uint256,uint256,address,(string))": {
+          "notice": "Checks if a user has access to space or room based on the entitlements it holds"
+        },
+        "isEntitlementModuleWhitelisted(uint256,address)": {
+          "notice": "returns if an entitlement module is whitelisted for a space"
+        },
+        "registerDefaultEntitlementModule(address)": {
+          "notice": "Sets the default entitlement for a newly created space"
+        },
+        "removeEntitlement(uint256,address,uint256[],bytes)": {
+          "notice": "Removes an entitlement from an entitlement module"
+        },
+        "zionPermissionsMap(uint8)": {
+          "notice": "Mapping for convenience for finding the string from a defined enum of Zion specific permissions"
+        }
+      },
+      "notice": "This contract manages the spaces and entitlements in the Zion ecosystem.",
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/zion-governance/contracts/spaces/ZionSpaceManager.sol": "ZionSpaceManager"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 10
+    },
+    "remappings": [
+      ":@ensdomains/=node_modules/@ensdomains/",
+      ":@harmony/=node_modules/@harmony/",
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":contract-debug-ui/=node_modules/contract-debug-ui/",
+      ":ds-test/=lib/forge-std/lib/ds-test/src/",
+      ":eth-gas-reporter/=node_modules/eth-gas-reporter/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-console/=node_modules/hardhat-console/",
+      ":hardhat-deploy/=node_modules/hardhat-deploy/",
+      ":hardhat/=node_modules/hardhat/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solidity-json-writer/=node_modules/solidity-json-writer/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/zion-governance/contracts/spaces/ZionSpaceManager.sol": {
+      "keccak256": "0x6f60554a3edb85ce1e023b2f561311e68453e606f331ad5b834cd9b815662da9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f09a57bbab7f88c1b1aa571bf8dfd2d48a2e097d52c9f372128cd98931f0ffc7",
+        "dweb:/ipfs/QmchwKXDhhUQ3Ex5iMu3zqNLrRACjxMD3x21CLJ3XCpAiU"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/interfaces/IEntitlementModule.sol": {
+      "keccak256": "0x6cdfe1b0c8bb11e715a6cfc4094209c18f0ab671a5f28f3137897bcd4ef4fbb8",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c43c22d7ba3a03b4eada491ae4e428cec7b315b474c5ad726fe7f9b27839b111",
+        "dweb:/ipfs/QmRZsT17cGSbkvFrNAJ1htCvW1LDEdiMcJN9z4vTVojXHW"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/interfaces/ISpaceManager.sol": {
+      "keccak256": "0x9562688454f34501006550cf37d5a15cb55fa8ffb81caca678b08205dcfd6f02",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://82c5e2d27809a6b56d811f3f3d31c64f9c0a9b95590e73bb3095e73ccf77cb62",
+        "dweb:/ipfs/QmPfia11STEMqZbcUcQ2YZJffsyrgQJ7zxfExpWhFWhZz8"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/libraries/Constants.sol": {
+      "keccak256": "0x2a6f27ec9f3de51ff89ed016f22ad2734bbf223bee397df2964058fd5403b5c7",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://2d0674f182413ea6c9bc20715b97ef99a9c1686f4e544a1f9e712a91e2e11227",
+        "dweb:/ipfs/QmWPuWgKWR2X1SRg1WouwwDncc2UWMhCijqHEX53xdm2mK"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/libraries/DataTypes.sol": {
+      "keccak256": "0x70d4177c2874a403bdf34a8600fa62a3d7a6f0c2e95f6bbc394e7a94369d69ad",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f88286ff003e64ae991c24e97e31337b7251e53dbf4a8158f950ce0cc0dd3b62",
+        "dweb:/ipfs/QmWqHEZBfKmAfPF3EciRXHeZfrDPgfL4DrBPV76u4jTdYh"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/libraries/Errors.sol": {
+      "keccak256": "0x9942037671b711319571a74146f19e134f1d8e704737db55d52bf2c4fcb6a4c7",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a8d0cb8fe7360937a0082d81f3dbb5858bbf7b65f87acb9c967e5ea5c61e5a0a",
+        "dweb:/ipfs/Qma1AEAhao8cA9JvScsQKfCEWaQiREwqAt9Np7xwwSrmyQ"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/libraries/Events.sol": {
+      "keccak256": "0x2781bccf5985bacb82043b66d5f8339f77425a7327c32ac12b8744a28da71026",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a3022dfe85d6ac6efccab752693e11734eb3e58da9917b6ea4b34627f034a515",
+        "dweb:/ipfs/QmQhPT3QjG7uDAZfQSLM6gp945GnHMAz1tTLtKwJo62hNr"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/libraries/ZionSpaceController.sol": {
+      "keccak256": "0xc70869f3fbb9afaa6407777ac3aa30910dda2d850cdd5b5d816f04b2e412f073",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://3930a6b70e4064187a88ba9f537e11a42a8c103905f71401ffb1070db2de54cd",
+        "dweb:/ipfs/QmfJQg46eNqkUxfhtZuV8k6nQfSsLm1SfJMwt1eW1JaWvZ"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/modules/EntitlementModuleBase.sol": {
+      "keccak256": "0x1c39204becae536d72e01cd9026b137bdcb4758e42d3403b8bb3b164c362d53f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3b8f4c46f62f3352defd184382843795507762a195bd5564fc66cc813a5ea708",
+        "dweb:/ipfs/QmNR6iN3BLaSj5Dw5QxuAyH72F8VHUhCkgekk2PUaxwRxa"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol": {
+      "keccak256": "0xa027e3e89c83342392625bc0a37b65ae46c73cf8828bbbb0fcd0441b53423498",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1d74f827cbebf9d2ad5c58f0e98fefc11098fe8d23e552bbd62fee468944d2fb",
+        "dweb:/ipfs/QmRod9FjALnesrdTcYnQByqmZkYDeDBiZciGaJbwfsZW4G"
+      ]
+    },
+    "contracts/zion-governance/contracts/spaces/storage/ZionSpaceManagerStorage.sol": {
+      "keccak256": "0x020afb102e754456dd2d710c32615976ab5cf0f94398b70eff4090758e7e81cd",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c9a013cfabf41af226c76dc43488174388abd12b373377864fdd6007f42da1df",
+        "dweb:/ipfs/QmZ7vmgWFUJuhXXWy61t4RformZgKRov1nhWBXyU2KKLJW"
+      ]
+    },
+    "node_modules/@openzeppelin/contracts/access/Ownable.sol": {
+      "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
+        "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+      ]
+    },
+    "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": {
+      "keccak256": "0xd04b0f06e0666f29cf7cccc82894de541e19bb30a765b107b1e40bb7fe5f7d7a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://7b652499d098e88d8d878374616bb58434301061cae2253298b3f374044e0ddb",
+        "dweb:/ipfs/QmbhAzctqo5jrSKU6idHdVyqfmzCcDbNUPvmx4GiXxfA6q"
+      ]
+    },
+    "node_modules/@openzeppelin/contracts/utils/Context.sol": {
+      "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+        "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+      ]
+    },
+    "node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol": {
+      "keccak256": "0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://fb0048dee081f6fffa5f74afc3fb328483c2a30504e94a0ddd2a5114d731ec4d",
+        "dweb:/ipfs/QmZptt1nmYoA5SgjwnSgWqgUSDgm4q52Yos3xhnMv3MV43"
+      ]
+    },
+    "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    }
+  },
+  "version": 1
+}
