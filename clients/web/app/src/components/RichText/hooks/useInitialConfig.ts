@@ -33,13 +33,13 @@ export const useInitialConfig = (
   initialValue: string | undefined,
   nodes: Klass<LexicalNode>[],
   transformers: Transformer[],
-  readOnly?: boolean,
+  editable?: boolean,
   edited?: boolean,
 ) => {
   return {
     ...initialConfig,
     nodes,
-    readOnly,
+    editable,
     editorState: () => {
       if (initialValue) {
         $convertFromMarkdownString(initialValue, transformers);

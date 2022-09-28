@@ -32,6 +32,7 @@ export const TimelineMessageEditor = (props: {
   return (
     <Stack gap>
       <RichTextEditor
+        editable
         editing
         displayButtons
         initialValue={initialValue}

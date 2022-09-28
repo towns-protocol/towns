@@ -19,7 +19,7 @@ export const Playground = () => {
   return (
     <Stack absoluteFill padding="lg" gap="lg">
       <Container label="RichText">
-        <RichTextEditor />
+        <RichTextEditor editable />
       </Container>
       <Container label="Headings">
         <Heading level={1}>Heading 1</Heading>

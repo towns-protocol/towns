@@ -69,7 +69,7 @@ export const MessageThread = (props: Props) => {
         </Stack>
       </MessageWindow>
       <Box paddingY="none" style={{ position: "sticky", bottom: 0 }}>
-        <RichTextEditor placeholder="Reply..." onSend={onSend} />
+        <RichTextEditor editable placeholder="Reply..." onSend={onSend} />
       </Box>
     </Stack>
   );

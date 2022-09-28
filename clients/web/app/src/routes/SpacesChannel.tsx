@@ -89,6 +89,7 @@ const SpacesChannelComponent = () => {
 
               <Box gap paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
+                  editable
                   autoFocus={!hasThreadOpen}
                   initialValue=""
                   placeholder={`Send a message to #${channel?.label}`}

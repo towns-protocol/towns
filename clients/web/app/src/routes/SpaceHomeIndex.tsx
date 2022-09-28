@@ -68,6 +68,7 @@ export const SpaceHomeIndex = () => {
               />
               <Box paddingBottom="lg" paddingX="lg">
                 <RichTextEditor
+                  editable
                   autoFocus
                   initialValue=""
                   placeholder={`Send a message to #${space.name}`}

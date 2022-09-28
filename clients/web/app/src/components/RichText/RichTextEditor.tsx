@@ -35,7 +35,7 @@ type Props = {
   onSend?: (value: string) => void;
   onCancel?: () => void;
   autoFocus?: boolean;
-  readOnly?: boolean;
+  editable: boolean;
   editing?: boolean;
   placeholder?: string;
   initialValue?: string;
@@ -77,7 +77,7 @@ export const RichTextPreview = React.memo(
       props.content,
       nodes,
       transformers,
-      true,
+      false,
       props.edited,
     );
 
@@ -106,7 +106,7 @@ export const RichTextEditor = (props: Props) => {
     props.initialValue,
     nodes,
     transformers,
-    false,
+    true,
   );
 
   const [focused, setFocused] = useState(false);
