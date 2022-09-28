@@ -55,10 +55,11 @@ describe("unreadMessageCount", () => {
     // alice should see the room
     await waitFor(() => expect(alice.getRoom(spaceId)).toBeDefined());
     // initially we have 1 unread messages for space and each channel
-    await waitFor(() =>
-      expect(
-        alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count,
-      ).toBe(1),
+    await waitFor(
+      () =>
+        expect(
+          alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count,
+        ).toBeUndefined(), // we don't get notificatinos for invites
     );
     // alice joins the room
     await alice.joinRoom(spaceId);
