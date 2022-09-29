@@ -89,7 +89,14 @@ git subtree pull --prefix servers/dendrite dendrite-fork main
 git push --set-upstream origin some-name
 ```
 
-Create a PR, and merge the latest subtree changes to the harmony repo.
+Create a PR, check that ci passes, then merge the changes into main over the commandline
+
+```bash
+git checkout main
+git pull
+git merge some-name
+git push origin main
+```
 
 ## Pulling changes from dendrite (main) into dendrite-fork
 
