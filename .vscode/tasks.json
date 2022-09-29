@@ -11,6 +11,7 @@
       {
         "label": "~Start Local Dev~",
         "dependsOn": [
+          "YarnInstall",
           "StartDendrite",
           "StartBlockchain",
           "DeployZionGovernance",
@@ -23,10 +24,16 @@
           "kind": "build",
           "isDefault": true
         },
-        // Try start the task on folder open
-        "runOptions": {
-          "runOn": "folderOpen"
-        }
+      },
+      {
+        "label": "YarnInstall",
+        "type": "shell",
+        "command": "yarn",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-clients"
+        },
       },
       {
         "label": "StartDendrite",
@@ -35,7 +42,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-servers"
         },
       },
       {
@@ -45,7 +52,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-servers"
         }
       },
       {
@@ -55,7 +62,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-servers"
         }
       },
       {
@@ -65,7 +72,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-clients"
         }
       },
       {
@@ -75,7 +82,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-clients"
         }
       },
       {
@@ -85,7 +92,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-clients"
         }
       },
       {
@@ -95,7 +102,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-development"
+          "group": "local-servers"
         }
       }
     ]
