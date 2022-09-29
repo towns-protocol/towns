@@ -28,9 +28,7 @@
     "publish:local:gobindings": "go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion  --type zion_space_manager_localhost --out ../../servers/dendrite/zion/zion_space_manager_localhost.go"
   },
   "dependencies": {
-    "@opengsn/contracts": "^2.2.6",
-    "@openzeppelin/contracts": "^4.7.3",
-    "@openzeppelin/contracts-upgradeable": "^4.7.3"
+    "@opengsn/contracts": "^2.2.6"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.6.4",

@@ -6,7 +6,7 @@ import {DataTypes} from "../../libraries/DataTypes.sol";
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ERC165} from "openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 
 contract PurchasableEntitlementModule is EntitlementModuleBase {
   mapping(uint256 => SpacePurchasableEntitlements) purchasableEntitlementsBySpaceId;

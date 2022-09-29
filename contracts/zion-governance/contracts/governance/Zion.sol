@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 contract Zion is ERC20Votes {
   uint256 public vTotalSupply = 1_000_000_000e18;

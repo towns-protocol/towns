@@ -5,7 +5,7 @@ import {DataTypes} from "../libraries/DataTypes.sol";
 import {Errors} from "../libraries/Errors.sol";
 import {Events} from "../libraries/Events.sol";
 import {Constants} from "../libraries/Constants.sol";
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 
 library ZionSpaceController {
   function createSpace(

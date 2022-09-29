@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import "murky/Merkle.sol";
 import "forge-std/Test.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
+import "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
 import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
 

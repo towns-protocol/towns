@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 abstract contract MerkleHelper {
   using Strings for uint256;

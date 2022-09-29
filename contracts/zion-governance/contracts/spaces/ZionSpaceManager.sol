@@ -9,8 +9,8 @@ import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
 import {UserGrantedEntitlementModule} from "./modules/entitlements/UserGrantedEntitlementModule.sol";
 import {ZionSpaceManagerStorage} from "./storage/ZionSpaceManagerStorage.sol";
-import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ZionSpaceController} from "./libraries/ZionSpaceController.sol";
 
 /// @title ZionSpaceManager

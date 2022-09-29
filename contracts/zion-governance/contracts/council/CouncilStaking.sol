@@ -9,9 +9,9 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Errors} from "./libraries/Errors.sol";
 
 // Contracts
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {IERC721} from "@openzeppelin/contracts/interfaces/IERC721.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 
 /// @title CouncilStaking
 /// @author HNT Labs

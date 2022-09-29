@@ -8,7 +8,7 @@ import {DataTypes} from "./../contracts/spaces/libraries/DataTypes.sol";
 import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
 import "murky/Merkle.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import {Events} from "./../contracts/spaces/libraries/Events.sol";
 import {Errors} from "./../contracts/spaces/libraries/Errors.sol";
 import {TokenEntitlementModule} from "./../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
