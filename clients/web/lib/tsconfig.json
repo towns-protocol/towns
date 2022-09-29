@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "lib": ["dom", "esnext"],
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
@@ -16,7 +17,9 @@
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": true,
-    "target": "esnext"
+    "target": "esnext",
+    "esModuleInterop": true
   },
-  "include": ["src/**/*"],
+  "exclude": ["node_modules"],
+  "include": ["src/**/*"]
 }

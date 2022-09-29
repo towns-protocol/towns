@@ -18,15 +18,15 @@
   },
   "dependencies": {
     "@harmony/contracts": "workspace:^",
-    "@types/node": "^17.0.32",
-    "dotenv": "^16.0.1",
-    "ethers": "^5.6.9",
+    "@types/node": "^18.7.23",
+    "dotenv": "^16.0.2",
+    "ethers": "^5.7.1",
     "express": "^4.18.1",
-    "matrix-appservice-bridge": "^5.1.0",
-    "matrix-bot-sdk": "^0.6.1",
-    "typescript": "^4.6.4"
+    "matrix-appservice-bridge": "^6.0.0",
+    "matrix-bot-sdk": "^0.6.2",
+    "typescript": "^4.8.4"
   },
   "devDependencies": {
-    "ts-node": "^10.7.0"
+    "ts-node": "^10.9.1"
   }
 }
