@@ -1,11 +1,16 @@
 import React from "react";
-import { useMatrixStore, useMyProfile } from "use-zion-client";
+import {
+  useMatrixStore,
+  useMyProfile,
+  useServerVersions,
+} from "use-zion-client";
 import { Stack } from "ui/components/Stack/Stack";
 import { LiquidContainer } from "./SpacesIndex";
 
 export const MeIndex = () => {
   const { isAuthenticated, username, userId } = useMatrixStore();
   const myProfile = useMyProfile();
+  const serverVersions = useServerVersions();
   if (!myProfile) {
     return <>&quot;404&quot;</>;
   }
@@ -28,6 +33,10 @@ export const MeIndex = () => {
             </p>
             <p>
               UserId: <strong>{userId}</strong>
+            </p>
+            <p>
+              Release Version:{" "}
+              <strong>{serverVersions?.release_version ?? "??"}</strong>
             </p>
           </Stack>
         </Stack>

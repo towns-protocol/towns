@@ -13,7 +13,10 @@ import {
 
 /* eslint-disable @typescript-eslint/unbound-method */
 import { DataTypes } from "@harmony/contracts/localhost/typings/types/ZionSpaceManager";
-import { ZionClientEvent } from "../client/ZionClientTypes";
+import {
+  IZionServerVersions,
+  ZionClientEvent,
+} from "../client/ZionClientTypes";
 import { ZionContractProvider } from "client/web3/ZionContractProvider";
 import { useJoinRoom } from "./MatrixClient/useJoinRoom";
 import { useLoginWithPassword } from "./MatrixClient/useLoginWithPassword";
@@ -52,6 +55,7 @@ interface ZionClientImpl {
     options: EditMessageOptions,
   ) => Promise<void>;
   getIsWalletIdRegistered: () => Promise<boolean>;
+  getServerVersions: () => Promise<IZionServerVersions | undefined>;
   inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>;
   joinRoom: (roomId: RoomIdentifier) => Promise<void>;
   leaveRoom: (roomId: RoomIdentifier) => Promise<void>;
@@ -118,6 +122,7 @@ export function useZionClient(): ZionClientImpl {
     ),
     editMessage: useWithCatch(client?.editMessage),
     getIsWalletIdRegistered,
+    getServerVersions: useWithCatch(client?.getServerVersions),
     inviteUser: useWithCatch(client?.inviteUser),
     joinRoom,
     leaveRoom: useWithCatch(client?.leave),

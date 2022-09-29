@@ -33,7 +33,12 @@ import {
   NewSession,
   newRegisterSession,
 } from "../hooks/use-matrix-wallet-sign-in";
-import { StartClientOpts, ZionAuth, ZionOpts } from "./ZionClientTypes";
+import {
+  IZionServerVersions,
+  StartClientOpts,
+  ZionAuth,
+  ZionOpts,
+} from "./ZionClientTypes";
 import { zionCouncilNFTAbi, zionSpaceManagerAbi } from "./web3/ZionAbis";
 
 import { DataTypes } from "@harmony/contracts/localhost/typings/types/ZionSpaceManager";
@@ -99,6 +104,15 @@ export class ZionClient {
         this._chainId,
       ));
   }
+
+  /************************************************
+   * getVersion
+   *************************************************/
+  public async getServerVersions() {
+    const version = await this.client.getVersions();
+    return version as IZionServerVersions;
+  }
+
   /************************************************
    * logout
    *************************************************/

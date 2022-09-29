@@ -4,11 +4,13 @@ import {
   createUserIdFromString,
   useMatrixStore,
   useMyProfile,
+  useServerVersions,
 } from "use-zion-client";
 
 export const Me = () => {
   const { userId } = useMatrixStore();
   const myProfile = useMyProfile();
+  const serverVersions = useServerVersions();
   const userIdentifier = useMemo(() => {
     return userId ? createUserIdFromString(userId) : undefined;
   }, [userId]);
@@ -36,6 +38,10 @@ export const Me = () => {
       </p>
       <p>
         Chain ID: <strong>{userIdentifier?.chainId}</strong>
+      </p>
+      <p>
+        Release Version:{" "}
+        <strong>{serverVersions?.release_version ?? "??"}</strong>
       </p>
     </Stack>
   );

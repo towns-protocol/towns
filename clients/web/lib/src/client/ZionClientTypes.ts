@@ -48,3 +48,9 @@ export interface Space {
 export enum ZionClientEvent {
   NewSpace = "ZionClient.NewSpace",
 }
+
+export interface IZionServerVersions {
+  versions: string[];
+  unstable_features: Record<string, boolean>;
+  release_version: string;
+}

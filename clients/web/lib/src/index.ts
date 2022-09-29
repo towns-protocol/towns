@@ -35,6 +35,7 @@ export { useSpacesFromContract } from "./hooks/use-spaces-from-contract";
 export { useSpaceId } from "./hooks/use-space-id";
 export { useSpaceTimeline } from "./hooks/use-space-timeline";
 export { useIntegratedSpaceManagement } from "./hooks/use-integrated-space-management";
+export { useServerVersions } from "./hooks/use-server-versions";
 
 export type {
   Channel,
