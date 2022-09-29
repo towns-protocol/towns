@@ -1,12 +1,7 @@
 import { Allotment, AllotmentHandle } from "allotment";
 import React, { useEffect, useRef } from "react";
-import { Outlet, useMatch, useNavigate } from "react-router";
-import {
-  SpaceContextProvider,
-  useMatrixStore,
-  useMyProfile,
-  useSpaceData,
-} from "use-zion-client";
+import { Outlet, useMatch } from "react-router";
+import { SpaceContextProvider, useSpaceData } from "use-zion-client";
 import useEvent from "react-use-event-hook";
 import { SuspenseLoader } from "@components/Loaders/SuspenseLoader";
 import {
@@ -32,9 +27,6 @@ export const SidebarLayoutContent = () => {
   const messageRoute = useMatch({ path: "/messages", end: false });
   const homeRoute = useMatch({ path: "/home", end: true });
   const space = useSpaceData();
-  const myProfile = useMyProfile();
-  const { userId } = useMatrixStore();
-  const navigate = useNavigate();
   const config = ["spaces", "primary-menu", "secondary-menu", "content"];
   const { onSizesChange, sizes } = usePersistPanes(config);
 
@@ -43,21 +35,6 @@ export const SidebarLayoutContent = () => {
   useEffect(() => {
     allotemntRef.current?.reset();
   }, [isSecondarySidebarActive]);
-
-  useEffect(() => {
-    // cheap and dirty onboarding check
-    if (myProfile != null) {
-      if (
-        myProfile.displayName === userId ||
-        myProfile.displayName === "" ||
-        myProfile.avatarUrl === "" ||
-        myProfile.avatarUrl === null
-      ) {
-        console.log("navigte to register for extra onboarding!!");
-        navigate("/register");
-      }
-    }
-  }, [myProfile, navigate, userId]);
 
   const isSpacesExpanded = sizes[0] > 120;
 
