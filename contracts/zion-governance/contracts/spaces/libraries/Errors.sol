@@ -12,5 +12,7 @@ library Errors {
   error EntitlementModuleNotSupported();
   error EntitlementNotWhitelisted();
   error DefaultEntitlementModuleNotSet();
+  error DefaultPermissionsManagerNotSet();
   error SpaceDoesNotExist();
+  error PermissionAlreadyExists();
 }

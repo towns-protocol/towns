@@ -32,7 +32,7 @@ export function useIntegratedSpaceManagement() {
           tokenAddress: addresses.council.councilnft,
           quantity: 1,
           description: "Zion Council NFT",
-          permissions: [Permission.Join],
+          permissions: [Permission.Read],
         };
 
       try {

@@ -13,13 +13,17 @@ import {Events} from "./../contracts/spaces/libraries/Events.sol";
 import {Errors} from "./../contracts/spaces/libraries/Errors.sol";
 import {TokenEntitlementModule} from "./../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {UserGrantedEntitlementModule} from "./../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {ZionPermissionsRegistry} from "./../contracts/spaces/ZionPermissionsRegistry.sol";
+import {PermissionTypes} from "./../contracts/spaces/libraries/PermissionTypes.sol";
 
 contract ZionSpaceManagerTest is Test, MerkleHelper {
   ZionSpaceManager internal spaceManager;
+  ZionPermissionsRegistry internal permissionsRegistry;
   UserGrantedEntitlementModule internal userGrantedEntitlementModule;
 
   function setUp() public {
-    spaceManager = new ZionSpaceManager();
+    permissionsRegistry = new ZionPermissionsRegistry();
+    spaceManager = new ZionSpaceManager(address(permissionsRegistry));
 
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       "User Granted Entitlement Module",
@@ -79,7 +83,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     );
 
     DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(ISpaceManager.ZionPermission.Join);
+      .getPermissionFromMap(PermissionTypes.Read);
 
     string[] memory permissions = new string[](1);
     permissions[0] = joinPermission.name;
@@ -193,7 +197,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     );
 
     DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(ISpaceManager.ZionPermission.Join);
+      .getPermissionFromMap(PermissionTypes.Read);
     // Create roles and add permissions
     string memory roleName = "Joiner";
     uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
@@ -232,7 +236,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     );
 
     DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(ISpaceManager.ZionPermission.Join);
+      .getPermissionFromMap(PermissionTypes.ZeroPermission);
     // Create roles and add permissions
     string memory roleName = "Joiner";
     uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");

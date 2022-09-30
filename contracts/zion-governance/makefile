@@ -25,6 +25,5 @@ deployLocalCouncilNFT :; make deploy-anvil contract=CouncilNFT
 deployGoerliCouncilNFT :; make deploy-goerli contract=CouncilNFT
 deployGoerliSpaceManager :; make deploy-goerli contract=ZionSpaceManager
 
-
 startLocalWaitlist :; make write-anvil contractAddress=${contractAddress} functionName="startWaitlistMint()"
 

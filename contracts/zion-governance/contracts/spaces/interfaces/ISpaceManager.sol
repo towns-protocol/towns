@@ -127,7 +127,7 @@ interface ISpaceManager {
     view
     returns (DataTypes.Permission[] memory);
 
-  function getPermissionFromMap(ZionPermission zionPermission)
+function getPermissionFromMap(bytes32 permissionType)
     external
     view
     returns (DataTypes.Permission memory permission);
@@ -141,18 +141,4 @@ interface ISpaceManager {
     external
     view
     returns (DataTypes.Role memory);
-
-  /// @notice A struct representing the Zion specific permissions
-  enum ZionPermission {
-    All_Permissions,
-    Join,
-    Leave,
-    Read,
-    Write,
-    Block,
-    Redact,
-    Add_Channel,
-    Remove_Channel,
-    Grant_Permissions
-  }
 }

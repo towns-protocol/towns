@@ -47,4 +47,10 @@ library Events {
    * @param entitlementAddress The address of the entitlement module
    */
   event DefaultEntitlementSet(address indexed entitlementAddress);
+
+  /**
+   * @dev Emitted when the default permission address is set on the contract
+   * @param permissionAddress The address of the permission contract
+   */
+  event DefaultPermissionsManagerSet(address indexed permissionAddress);
 }

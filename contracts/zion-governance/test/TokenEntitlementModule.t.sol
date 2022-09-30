@@ -11,8 +11,11 @@ import {UserGrantedEntitlementModule} from "./../contracts/spaces/modules/entitl
 import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
 import {Constants} from "../contracts/council/libraries/Constants.sol";
+import {ZionPermissionsRegistry} from "../contracts/spaces/ZionPermissionsRegistry.sol";
+import {PermissionTypes} from "../contracts/spaces/libraries/PermissionTypes.sol";
 
 contract TokenEntitlementModuleTest is Test {
+  ZionPermissionsRegistry internal permissionsRegistry;
   ZionSpaceManager internal spaceManager;
   Zion internal zion;
   UserGrantedEntitlementModule internal userGrantedEntitlementModule;
@@ -35,7 +38,8 @@ contract TokenEntitlementModuleTest is Test {
     councilNFT = new CouncilNFT("Zion", "zion", "baseURI", root);
     councilNFT.startPublicMint();
 
-    spaceManager = new ZionSpaceManager();
+    permissionsRegistry = new ZionPermissionsRegistry();
+    spaceManager = new ZionSpaceManager(address(permissionsRegistry));
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       "User Granted Entitlement Module",
       "Allows users to grant other users access to spaces and rooms",
@@ -76,7 +80,7 @@ contract TokenEntitlementModuleTest is Test {
     );
 
     DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      ISpaceManager.ZionPermission.All_Permissions
+      PermissionTypes.Read
     );
     // Create roles and add permissions
     string memory roleName = "Tester";
@@ -143,9 +147,7 @@ contract TokenEntitlementModuleTest is Test {
     spaceManager.addPermissionToRole(
       spaceId,
       ownerRoleId,
-      spaceManager.getPermissionFromMap(
-        ISpaceManager.ZionPermission.All_Permissions
-      )
+      spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
 
     spaceManager.whitelistEntitlementModule(
@@ -174,9 +176,7 @@ contract TokenEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user1,
-      spaceManager.getPermissionFromMap(
-        ISpaceManager.ZionPermission.All_Permissions
-      )
+      spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
     assertTrue(isEntitled);
 
@@ -185,9 +185,7 @@ contract TokenEntitlementModuleTest is Test {
       spaceId,
       roomId,
       user2,
-      spaceManager.getPermissionFromMap(
-        ISpaceManager.ZionPermission.All_Permissions
-      )
+      spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
     assertFalse(isRandomEntitled);
   }

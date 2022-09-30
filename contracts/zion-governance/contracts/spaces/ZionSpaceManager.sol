@@ -12,22 +12,19 @@ import {ZionSpaceManagerStorage} from "./storage/ZionSpaceManagerStorage.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ZionSpaceController} from "./libraries/ZionSpaceController.sol";
+import {ZionPermissionsRegistry} from "./ZionPermissionsRegistry.sol";
 
 /// @title ZionSpaceManager
 /// @author HNT Labs
 /// @notice This contract manages the spaces and entitlements in the Zion ecosystem.
 contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
-  /// @notice Mapping for convenience for finding the string from a defined enum of Zion specific permissions
-  mapping(ZionPermission => DataTypes.Permission) public zionPermissionsMap;
-
   modifier onlySpaceOwner(uint256 spaceId) {
     _validateCallerIsSpaceOwner(spaceId);
     _;
   }
 
-  constructor() {
-    // todo move this to external contract
-    _initializeZionProtocolPermissions();
+  constructor(address defaultPermissionsManagerAddress_) {
+    _defaultPermissionsManagerAddress = defaultPermissionsManagerAddress_;
   }
 
   /// *********************************
@@ -41,6 +38,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   {
     if (_defaultEntitlementModuleAddress == address(0))
       revert Errors.DefaultEntitlementModuleNotSet();
+    if (_defaultPermissionsManagerAddress == address(0))
+      revert Errors.DefaultPermissionsManagerNotSet();
 
     // create space Id
     uint256 spaceId = _createSpace(info);
@@ -53,13 +52,16 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     );
 
     // Create roles and add permissions
+    uint256 ownerRoleId = _createRole(spaceId, "Owner", "#fff");
 
-    uint256 ownerRoleId = _createRole(spaceId, "Administrator", "#fff");
-    _addPermissionToRole(
-      spaceId,
-      ownerRoleId,
-      zionPermissionsMap[ZionPermission.All_Permissions]
-    );
+    // Add permissions to owner role
+    DataTypes.Permission[] memory allPermissions = ZionPermissionsRegistry(
+      _defaultPermissionsManagerAddress
+    ).getAllPermissions();
+
+    for (uint256 i = 0; i < allPermissions.length; i++) {
+      _addPermissionToRole(spaceId, ownerRoleId, allPermissions[i]);
+    }
 
     _addRoleToEntitlementModule(
       spaceId,
@@ -102,11 +104,14 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     //Add the default administrator Role
     string memory ownerRoleName = "Administrator";
     uint256 ownerRoleId = _createRole(spaceId, ownerRoleName, "#fff");
-    _addPermissionToRole(
-      spaceId,
-      ownerRoleId,
-      zionPermissionsMap[ZionPermission.All_Permissions]
-    );
+
+    DataTypes.Permission[] memory allPermissions = ZionPermissionsRegistry(
+      _defaultPermissionsManagerAddress
+    ).getAllPermissions();
+
+    for (uint256 i = 0; i < allPermissions.length; i++) {
+      _addPermissionToRole(spaceId, ownerRoleId, allPermissions[i]);
+    }
 
     // add default entitlement module
     _addRoleToEntitlementModule(
@@ -160,6 +165,14 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   {
     _defaultEntitlementModuleAddress = entitlementModule;
     emit Events.DefaultEntitlementSet(entitlementModule);
+  }
+
+  function registerDefaultPermissionsManager(address permissionsManager)
+    external
+    onlyOwner
+  {
+    _defaultPermissionsManagerAddress = permissionsManager;
+    emit Events.DefaultPermissionsManagerSet(permissionsManager);
   }
 
   /// @inheritdoc ISpaceManager
@@ -285,14 +298,14 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return _rolesBySpaceId[spaceId].roles[roleId];
   }
 
-  /// @inheritdoc ISpaceManager
-  function getPermissionFromMap(ZionPermission zionPermission)
-    external
+  function getPermissionFromMap(bytes32 permissionType)
+    public
     view
-    override
     returns (DataTypes.Permission memory permission)
   {
-    return zionPermissionsMap[zionPermission];
+    return
+      ZionPermissionsRegistry(_defaultPermissionsManagerAddress)
+        .getPermissionByPermissionType(permissionType);
   }
 
   /// @inheritdoc ISpaceManager
@@ -507,32 +520,6 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         }
       }
     }
-  }
-
-  function _initializeZionProtocolPermissions() internal {
-    zionPermissionsMap[ZionPermission.All_Permissions] = DataTypes.Permission(
-      "Zion-All_Permissions"
-    );
-    zionPermissionsMap[ZionPermission.Grant_Permissions] = DataTypes.Permission(
-      "Zion-Grant_Permissions"
-    );
-    zionPermissionsMap[ZionPermission.Join] = DataTypes.Permission("Zion-Join");
-    zionPermissionsMap[ZionPermission.Read] = DataTypes.Permission("Zion-Read");
-    zionPermissionsMap[ZionPermission.Write] = DataTypes.Permission(
-      "Zion-Write"
-    );
-    zionPermissionsMap[ZionPermission.Block] = DataTypes.Permission(
-      "Zion-Block"
-    );
-    zionPermissionsMap[ZionPermission.Redact] = DataTypes.Permission(
-      "Zion-Redact"
-    );
-    zionPermissionsMap[ZionPermission.Add_Channel] = DataTypes.Permission(
-      "Zion-Add_Channel"
-    );
-    zionPermissionsMap[ZionPermission.Remove_Channel] = DataTypes.Permission(
-      "Zion-Remove_Channel"
-    );
   }
 
   /// @notice validate that the caller is the owner of the space

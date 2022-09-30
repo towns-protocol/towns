@@ -5,6 +5,7 @@ import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
 import {ZionSpaceManager} from "../../ZionSpaceManager.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
+import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
 
 contract UserGrantedEntitlementModule is EntitlementModuleBase {
   struct Entitlement {
@@ -56,7 +57,8 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
   ) internal view returns (bool) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
     DataTypes.Permission memory grantPermission = spaceManager
-      .getPermissionFromMap(ISpaceManager.ZionPermission.Grant_Permissions);
+      .getPermissionFromMap(PermissionTypes.ModifyPermissions);
+
     if (
       caller == _spaceManager ||
       spaceManager.getSpaceOwnerBySpaceId(spaceId) == caller ||
@@ -74,8 +76,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     DataTypes.Permission memory permission
   ) public view override returns (bool) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
-    DataTypes.Permission memory allPermission = spaceManager
-      .getPermissionFromMap(ISpaceManager.ZionPermission.All_Permissions);
+
     if (roomId > 0) {
       Entitlement[] memory entitlements = _entitlementsBySpaceIdByRoomIdByUser[
         spaceId
@@ -89,8 +90,6 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
 
         for (uint256 j = 0; j < permissions.length; j++) {
           if (
-            keccak256(abi.encodePacked(permissions[j].name)) ==
-            keccak256(abi.encodePacked(allPermission.name)) ||
             keccak256(abi.encodePacked(permissions[j].name)) ==
             keccak256(abi.encodePacked(permission.name))
           ) {
@@ -111,8 +110,6 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
 
         for (uint256 j = 0; j < permissions.length; j++) {
           if (
-            keccak256(abi.encodePacked(permissions[j].name)) ==
-            keccak256(abi.encodePacked(allPermission.name)) ||
             keccak256(abi.encodePacked(permissions[j].name)) ==
             keccak256(abi.encodePacked(permission.name))
           ) {

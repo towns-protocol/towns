@@ -11,6 +11,9 @@ abstract contract ZionSpaceManagerStorage {
   address internal _defaultEntitlementModuleAddress;
   string internal _defaultEntitlementModuleTag;
 
+  /// @notice variable representing the zion permissions manager address
+  address internal _defaultPermissionsManagerAddress;
+
   // Storage
   /// @notice Mapping representing the space data by name.
   mapping(bytes32 => uint256) internal _spaceByNameHash;

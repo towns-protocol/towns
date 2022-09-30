@@ -7,6 +7,7 @@ import {UserGrantedEntitlementModule} from "./../contracts/spaces/modules/entitl
 import {ZionSpaceManager} from "../contracts/spaces/ZionSpaceManager.sol";
 import {DataTypes} from "./../contracts/spaces/libraries/DataTypes.sol";
 import {Helper} from "./Helper.sol";
+import {ZionPermissionsRegistry} from "../contracts/spaces/ZionPermissionsRegistry.sol";
 import "solidity-json-writer/contracts/JsonWriter.sol";
 
 contract DeployZionSpaceManager is Script {
@@ -16,7 +17,10 @@ contract DeployZionSpaceManager is Script {
   function run() external {
     vm.startBroadcast();
 
-    ZionSpaceManager zionSpaceManager = new ZionSpaceManager();
+    ZionPermissionsRegistry permissionsManager = new ZionPermissionsRegistry();
+    ZionSpaceManager zionSpaceManager = new ZionSpaceManager(
+      address(permissionsManager)
+    );
     console.log("Deploying ZionSpaceManager a: ", address(zionSpaceManager));
 
     UserGrantedEntitlementModule userGrantedEntitlementModule = new UserGrantedEntitlementModule(

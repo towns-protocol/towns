@@ -9,9 +9,12 @@ import {UserGrantedEntitlementModule} from "../contracts/spaces/modules/entitlem
 import {PurchasableEntitlementModule} from "../contracts/spaces/modules/entitlements/PurchasableEntitlementModule.sol";
 import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
 import {Constants} from "../contracts/council/libraries/Constants.sol";
+import {ZionPermissionsRegistry} from "../contracts/spaces/ZionPermissionsRegistry.sol";
+import {PermissionTypes} from "../contracts/spaces/libraries/PermissionTypes.sol";
 import "murky/Merkle.sol";
 
 contract PurchasableEntitlementModuleTest is Test {
+  ZionPermissionsRegistry internal permissionsRegistry;
   ZionSpaceManager internal spaceManager;
   Zion internal zion;
   UserGrantedEntitlementModule internal userGrantedEntitlementModule;
@@ -27,7 +30,8 @@ contract PurchasableEntitlementModuleTest is Test {
     user1 = payable(address(2));
     user2 = address(0x1234);
 
-    spaceManager = new ZionSpaceManager();
+    permissionsRegistry = new ZionPermissionsRegistry();
+    spaceManager = new ZionSpaceManager(address(permissionsRegistry));
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       "User Granted Entitlement Module",
       "Allows users to grant other users access to spaces and rooms",
@@ -64,7 +68,8 @@ contract PurchasableEntitlementModuleTest is Test {
     );
 
     DataTypes.Permission memory allPermission = spaceManager
-      .getPermissionFromMap(ISpaceManager.ZionPermission.All_Permissions);
+      .getPermissionFromMap(PermissionTypes.Read);
+
     // Create roles and add permissions
     string memory roleName = "Tester";
     uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
