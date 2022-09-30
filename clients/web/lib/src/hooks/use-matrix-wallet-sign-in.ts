@@ -152,7 +152,10 @@ export function useMatrixWalletSignIn() {
   const getIsWalletIdRegistered = useCallback(
     async function (): Promise<boolean> {
       if (homeServer && userIdentifier) {
-        const matrixClient = createClient({baseUrl: homeServer, useAuthorizationHeader: true});
+        const matrixClient = createClient({
+          baseUrl: homeServer,
+          useAuthorizationHeader: true,
+        });
         try {
           // isUsernameAvailable returns true if you can register
           // a new account for that id.
@@ -221,7 +224,10 @@ export function useMatrixWalletSignIn() {
           // Signal to the UI that registration is in progress.
           setLoginStatus(LoginStatus.Registering);
 
-          const matrixClient = createClient({baseUrl: homeServer, useAuthorizationHeader: true});
+          const matrixClient = createClient({
+            baseUrl: homeServer,
+            useAuthorizationHeader: true,
+          });
           try {
             const { sessionId, chainIds, error } = await newRegisterSession(
               matrixClient,
@@ -354,7 +360,10 @@ export function useMatrixWalletSignIn() {
           // Signal to the UI that login is in progress.
           setLoginStatus(LoginStatus.LoggingIn);
 
-          const matrixClient = createClient({baseUrl: homeServer, useAuthorizationHeader: true});
+          const matrixClient = createClient({
+            baseUrl: homeServer,
+            useAuthorizationHeader: true,
+          });
           try {
             const isPublicKeySignInSupported =
               await getPublicKeySignInSupported(matrixClient);
