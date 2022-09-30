@@ -8,7 +8,7 @@ import { MeIndex } from "./MeIndex";
 import { SpaceHome } from "./SpaceHome";
 import { HomeHighlights } from "./SpaceHomeHilights";
 import { SpaceMentions } from "./SpaceMentions";
-import { SpacesChannel } from "./SpacesChannel";
+import { SpacesChannel, SpacesChannelRoute } from "./SpacesChannel";
 import { SpacesChannelReplies } from "./SpacesChannelReplies";
 import { SpacesInvite } from "./SpacesInvite";
 import { SpacesNewChannel } from "./SpacesNewChannel";
@@ -41,10 +41,13 @@ export const SpaceRoutes = () => (
       <Route path="channels/:channelSlug" element={<SpacesChannel />}>
         <Route path="replies/:messageId" element={<SpacesChannelReplies />} />
       </Route>
-      <Route
-        path="channels/:channelSlug/settings"
-        element={<ChannelSettings />}
-      />
+
+      <Route element={<SpacesChannelRoute />}>
+        <Route
+          path="channels/:channelSlug/settings"
+          element={<ChannelSettings />}
+        />
+      </Route>
     </Route>
   </Routes>
 );

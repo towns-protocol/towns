@@ -1,6 +1,6 @@
 import { Allotment } from "allotment";
 import React, { useCallback } from "react";
-import { useOutlet, useParams } from "react-router";
+import { Outlet, useOutlet, useParams } from "react-router";
 import {
   ChannelContextProvider,
   Membership,
@@ -16,13 +16,29 @@ import { Box, Button, Stack } from "@ui";
 import { usePersistPanes } from "hooks/usePersistPanes";
 
 export const SpacesChannel = () => {
+  return (
+    <SpaceChannelWrapper>
+      <SpacesChannelComponent />
+    </SpaceChannelWrapper>
+  );
+};
+
+export const SpacesChannelRoute = () => {
+  return (
+    <SpaceChannelWrapper>
+      <Outlet />
+    </SpaceChannelWrapper>
+  );
+};
+
+const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
   const { channelSlug } = useParams();
   if (!channelSlug) {
     return <>SpacesChannel Route expects a channelSlug</>;
   }
   return (
     <ChannelContextProvider channelId={channelSlug}>
-      <SpacesChannelComponent />
+      {props.children}
     </ChannelContextProvider>
   );
 };
