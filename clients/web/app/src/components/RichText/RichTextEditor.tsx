@@ -1,13 +1,15 @@
 import { CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
-import { TRANSFORMERS } from "@lexical/markdown";
+import { CHECK_LIST, TRANSFORMERS } from "@lexical/markdown";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
+import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
@@ -24,6 +26,7 @@ import { MentionNode, createMentionTransformer } from "./nodes/MentionNode";
 import { AutoLinkMatcherPlugin } from "./plugins/AutoLinkMatcherPlugin";
 import { EmojiReplacePlugin } from "./plugins/EmojiReplacePlugin";
 import { EmojiShortcutPlugin } from "./plugins/EmojiShortcutPlugin";
+import ListMaxIndentLevelPlugin from "./plugins/ListMaxIndentLevelPlugin";
 import { NewMentionsPlugin } from "./plugins/MentionsPlugin";
 import { OnFocusPlugin } from "./plugins/OnFocusPlugin";
 import { SendMarkdownPlugin } from "./plugins/SendMarkdownPlugin";
@@ -61,7 +64,7 @@ const nodes = [
 const useTransformers = (members: RoomMember[]) => {
   const transformers = useMemo(() => {
     const names = members.map((m) => m.user?.displayName).filter(notUndefined);
-    return [...TRANSFORMERS, createMentionTransformer(names)];
+    return [CHECK_LIST, ...TRANSFORMERS, createMentionTransformer(names)];
   }, [members]);
   return { transformers };
 };
@@ -133,6 +136,9 @@ export const RichTextEditor = (props: Props) => {
       <EmojiReplacePlugin />
       <NewMentionsPlugin members={members} />
       <EmojiShortcutPlugin />
+      <ListMaxIndentLevelPlugin maxDepth={4} />
+      <ListPlugin />
+      <CheckListPlugin />
       <SendMarkdownPlugin
         displayButtons={props.displayButtons}
         onSend={onSend}

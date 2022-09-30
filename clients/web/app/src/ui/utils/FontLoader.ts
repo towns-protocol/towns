@@ -33,7 +33,7 @@ export const fontSettings = [
       weight: "normal",
       style: "italic",
     },
-    targets: ["em"],
+    targets: [],
     capSize: AkkuratCapSize,
   },
   {

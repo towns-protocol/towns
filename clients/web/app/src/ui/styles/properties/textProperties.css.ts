@@ -10,6 +10,7 @@ export const typeProperties = defineProperties({
     fontSize: vars.fontSize,
     textAlign: vars.textAlign,
     textTransform: vars.textTransform,
+    textDecoration: vars.textDecoration,
     fontStyle: ["normal", "italic"],
   },
   shorthands: {

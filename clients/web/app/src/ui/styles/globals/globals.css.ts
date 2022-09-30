@@ -20,16 +20,18 @@ globalStyle("*", {
   WebkitTapHighlightColor: "transparent",
 });
 
-globalStyle("ul,ol", {
+globalStyle("ul, ol", {
   listStyle: "none",
 });
 
 globalStyle("h1", {
   fontSize: vars.fontSize.h1,
 });
+
 globalStyle("h2", {
   fontSize: vars.fontSize.h2,
 });
+
 globalStyle("h3", {
   fontSize: vars.fontSize.h3,
 });

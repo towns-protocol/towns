@@ -1,8 +1,10 @@
 import { $convertToMarkdownString } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { mergeRegister } from "@lexical/utils";
 import {
   CLEAR_EDITOR_COMMAND,
   COMMAND_PRIORITY_LOW,
+  INSERT_PARAGRAPH_COMMAND,
   KEY_ENTER_COMMAND,
 } from "lexical";
 import React, { useCallback, useEffect } from "react";
@@ -19,19 +21,25 @@ export const SendMarkdownPlugin = (props: {
   const { parseMarkdown } = useParseMarkdown(onSend);
 
   useEffect(() => {
-    return editor.registerCommand(
-      KEY_ENTER_COMMAND,
-      (e: KeyboardEvent, editor) => {
-        if (!e.shiftKey) {
-          parseMarkdown();
-          editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
-          e.preventDefault();
-          e.stopImmediatePropagation();
+    return mergeRegister(
+      editor.registerCommand(
+        KEY_ENTER_COMMAND,
+        (e: KeyboardEvent, editor) => {
+          if (!e.shiftKey) {
+            parseMarkdown();
+            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          } else {
+            editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined);
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+
           return true;
-        }
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
     );
   }, [editor, onSend, parseMarkdown]);
 

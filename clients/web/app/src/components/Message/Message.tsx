@@ -82,7 +82,7 @@ export const Message = (props: Props) => {
       {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
       <Box minWidth="x8">
         {!isMinimal ? (
-          <Avatar src={avatar} size={avatarSize} insetTop="xxs" />
+          <Avatar src={avatar} size={avatarSize} insetY="xxs" />
         ) : (
           <>
             {!isRelativeDate && isHover && (

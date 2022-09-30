@@ -49,14 +49,16 @@ export const Toolbar = () => {
   const onBoldClick = () => {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
   };
+
   const onItalicClick = () => {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
   };
+
   const onStrikeClick = () => {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
   };
   return (
-    <Stack horizontal gap height="x2" color="gray2">
+    <Stack horizontal gap="xs" color="gray2">
       <IconButton icon="bold" active={isBold} onClick={onBoldClick} />
       <IconButton icon="italic" active={isItalic} onClick={onItalicClick} />
       <IconButton

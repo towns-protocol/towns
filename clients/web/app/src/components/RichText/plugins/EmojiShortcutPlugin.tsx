@@ -1,5 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
+  LexicalTypeaheadMenuPlugin,
   QueryMatch,
   TypeaheadOption,
   useBasicTypeaheadTriggerMatch,
@@ -11,7 +12,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { Box, Stack, Text } from "@ui";
 import { $createEmojiNode } from "../nodes/EmojiNode";
-import { LexicalTypeaheadMenuPlugin } from "./LexicalTypeaheadPlugin";
 import { emojis } from "../data/emoji_list";
 
 // At most, 5 suggestions are shown in the popup.
@@ -77,7 +77,7 @@ export const EmojiShortcutPlugin = () => {
       ) =>
         anchorElement && results.length
           ? ReactDOM.createPortal(
-              <Box border position="relative">
+              <Box position="relative">
                 <Stack
                   border
                   style={{ bottom: 0 }}

@@ -9,6 +9,10 @@ import {
   RangeSelection,
 } from "lexical";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  INSERT_ORDERED_LIST_COMMAND,
+  INSERT_UNORDERED_LIST_COMMAND,
+} from "@lexical/list";
 import { Box, IconButton, Stack } from "@ui";
 import { vars } from "ui/styles/vars.css";
 
@@ -83,6 +87,14 @@ export const InlineToolbar = (props: {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
   };
 
+  const onOrderedListClick = () => {
+    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+  };
+
+  const onBulletListClick = () => {
+    editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+  };
+
   const onLinkClick = () => {
     if (isLink) {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
@@ -137,8 +149,18 @@ export const InlineToolbar = (props: {
       <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />
       <IconButton opaque active={isLink} icon="link" onClick={onLinkClick} />
       <Divider />
-      <IconButton opaque active={isLink} icon="numberedlist" />
-      <IconButton opaque active={isLink} icon="bulletedlist" />
+      <IconButton
+        opaque
+        active={isLink}
+        icon="numberedlist"
+        onClick={onOrderedListClick}
+      />
+      <IconButton
+        opaque
+        active={isLink}
+        icon="bulletedlist"
+        onClick={onBulletListClick}
+      />
     </Stack>
   );
 };

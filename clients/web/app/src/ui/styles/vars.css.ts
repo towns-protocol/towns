@@ -234,6 +234,13 @@ const root = createGlobalTheme(":root", {
     justify: "justify",
   } as const,
 
+  textDecoration: {
+    lineThrough: "line-through",
+    overline: "overline",
+    underline: "underline",
+    none: "normal",
+  } as const,
+
   textTransform: {
     uppercase: "uppercase",
     capitalize: "capitalize",

@@ -1,23 +1,15 @@
+import { $isListNode } from "@lexical/list";
 import { $convertFromMarkdownString, Transformer } from "@lexical/markdown";
 import {
   $createParagraphNode,
   $getRoot,
   $isElementNode,
   $setSelection,
-  EditorThemeClasses,
   Klass,
   LexicalNode,
 } from "lexical";
-import { atoms } from "ui/styles/atoms.css";
 import { $createAnnotationNode } from "../nodes/AnnotationNode";
-
-const theme: EditorThemeClasses = {
-  text: {
-    code: atoms({ color: "accent" }),
-    italic: atoms({ fontStyle: "italic" }),
-    bold: atoms({ fontWeight: "strong" }),
-  },
-};
+import { theme } from "../RichTextEditor.theme";
 
 function onError(error: Error) {
   console.error(error);
@@ -43,6 +35,12 @@ export const useInitialConfig = (
     editorState: () => {
       if (initialValue) {
         $convertFromMarkdownString(initialValue, transformers);
+      } else {
+        const root = $getRoot();
+        if (editable && root.getFirstChild() === null) {
+          const defaultParagraph = $createParagraphNode();
+          root.append(defaultParagraph);
+        }
       }
       if (edited) {
         appendEditedNotation();
@@ -55,9 +53,10 @@ export const useInitialConfig = (
 function appendEditedNotation() {
   const root = $getRoot();
   const lastChild = root.getLastChild();
-  const lastElement = $isElementNode(lastChild)
-    ? lastChild
-    : $createParagraphNode();
+  const lastElement =
+    $isElementNode(lastChild) && !$isListNode(lastChild)
+      ? lastChild
+      : $createParagraphNode();
   if (!lastChild) {
     root.append(lastElement);
   }

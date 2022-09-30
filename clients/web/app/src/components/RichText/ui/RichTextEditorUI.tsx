@@ -1,7 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
+  $createTextNode,
   $getSelection,
+  $insertNodes,
   $isRangeSelection,
   COMMAND_PRIORITY_LOW,
   SELECTION_CHANGE_COMMAND,
@@ -24,7 +26,6 @@ import { richTextEditorUI } from "../RichTextEditor.css";
 import { RichTextEditorControls } from "./Controls/RichTextEditorControls";
 import { InlineToolbar } from "./InlineToolbar";
 import { AddLinkModal } from "./LinkModal";
-import { Toolbar } from "./Toolbar/RichTextEditorToolbar";
 
 export const RichTextUI = (props: {
   children: React.ReactNode;
@@ -33,10 +34,6 @@ export const RichTextUI = (props: {
   readOnly?: boolean;
 }) => {
   const [editor] = useLexicalComposerContext();
-  const [isTypeToggled, setTypeToggled] = useState(false);
-  const onToggleType = useCallback(() => {
-    setTypeToggled((s: boolean) => !s);
-  }, []);
 
   const onSelectEmoji = useCallback(
     (data: EmojiData) => {
@@ -159,17 +156,10 @@ export const RichTextUI = (props: {
       minWidth={props.readOnly ? undefined : "200"}
       position="relative"
     >
-      {isTypeToggled && <Toolbar />}
       <Stack horizontal alignItems="center" gap="lg">
         <Box grow>{props.children}</Box>
-        <RichTextEditorControls
-          typeToggled={isTypeToggled}
-          onToggleType={onToggleType}
-          onSelectEmoji={onSelectEmoji}
-        />
-
-        {!isTypeToggled &&
-          rootLayerRef?.current &&
+        <RichTextEditorControls onSelectEmoji={onSelectEmoji} />
+        {rootLayerRef?.current &&
           createPortal(
             <Box
               absoluteFill

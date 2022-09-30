@@ -1,5 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
+  LexicalTypeaheadMenuPlugin,
   QueryMatch,
   TypeaheadOption,
   useBasicTypeaheadTriggerMatch,
@@ -9,15 +10,15 @@ import fuzzysort from "fuzzysort";
 import { $createTextNode, TextNode } from "lexical";
 import { RoomMember } from "matrix-js-sdk";
 import * as React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { Avatar, Box, Stack, Text } from "@ui";
+import { baseline } from "ui/styles/vars.css";
 import { notUndefined } from "ui/utils/utils";
 import { $createMentionNode } from "../nodes/MentionNode";
-import { LexicalTypeaheadMenuPlugin } from "./LexicalTypeaheadPlugin";
 
 // At most, 5 suggestions are shown in the popup.
-const SUGGESTION_LIST_LENGTH_LIMIT = 5;
+const SUGGESTION_LIST_LENGTH_LIMIT = -1;
 
 type Props = {
   members: RoomMember[];
@@ -32,20 +33,27 @@ export const NewMentionsPlugin = (props: Props) => {
     minLength: 0,
   });
 
-  const options = props.members
-    .map((m) =>
-      m.user?.displayName
-        ? new MentionTypeaheadOption(m.user?.displayName, m.user?.avatarUrl)
-        : undefined,
-    )
-    .filter(notUndefined);
+  const options = useMemo(() => {
+    return props.members
+      .map((m) =>
+        m.user?.displayName
+          ? new MentionTypeaheadOption(m.user?.displayName, m.user?.avatarUrl)
+          : undefined,
+      )
+      .filter(notUndefined);
+  }, [props.members]);
 
-  const results = fuzzysort
-    .go(queryString || "", options, {
-      key: "name",
-    })
-    .map((r) => r.obj)
-    .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
+  const results = useMemo(
+    () =>
+      fuzzysort
+        .go(queryString || "", options, {
+          key: "name",
+          all: true,
+        })
+        .map((r) => r.obj)
+        .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
+    [options, queryString],
+  );
 
   const onSelectOption = useCallback(
     (
@@ -91,11 +99,12 @@ export const NewMentionsPlugin = (props: Props) => {
               <Box border position="relative">
                 <Stack
                   border
-                  style={{ bottom: 0 }}
-                  overflow="hidden"
+                  style={{ bottom: baseline * 4 }}
+                  overflow="scroll"
                   position="absolute"
                   rounded="sm"
                   minWidth="250"
+                  maxHeight="200"
                   as="ul"
                 >
                   {results.map((option, i: number) => (
@@ -254,7 +263,6 @@ const checkForAtSignMentions = (
   minMatchLength: number,
 ): QueryMatch | null => {
   let match = AtSignMentionsRegex.exec(text);
-
   if (match === null) {
     match = AtSignMentionsRegexAliasRegex.exec(text);
   }
@@ -276,7 +284,7 @@ const checkForAtSignMentions = (
 };
 
 const getPossibleQueryMatch = (text: string): QueryMatch | null => {
-  const match = checkForAtSignMentions(text, 1);
+  const match = checkForAtSignMentions(text, 0);
   return match === null ? checkForCapitalizedNameMentions(text, 3) : match;
 };
 
