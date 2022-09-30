@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ethers } from "ethers";
 import { registerAndStartClients } from "use-zion-client/tests/integration/helpers/TestUtils";
+import { TestConstants } from "./helpers/TestConstants";
 
 describe("councilNFTContract", () => {
   // usefull for debugging or running against cloud servers
@@ -15,11 +15,7 @@ describe("councilNFTContract", () => {
     const allowListMint = await bob.councilNFT.unsigned.allowlistMint();
     expect(allowListMint).toBeTruthy();
     // re-create one of the funded anvil wallets that we minted to in the deploy script
-    const fundedWallet = new ethers.Wallet(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      process.env.FUNDED_WALLET_PRIVATE_KEY_0!,
-      bob.provider,
-    );
+    const fundedWallet = TestConstants.FUNDED_WALLET_0;
     // get the balance
     const balance = await bob.councilNFT.unsigned.balanceOf(
       fundedWallet.address,
