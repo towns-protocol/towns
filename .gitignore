@@ -41,4 +41,16 @@ cache_hardhat
 artifacts_*
 tsconfig.tsbuildinfo
 broadcast/
+
+*.pem
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Local .terraform directories
+**/.terraform/*
 out/

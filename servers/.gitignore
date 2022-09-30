@@ -18,4 +18,5 @@
 
 # Dendrite debugging
 dendrite/slack-registration.yaml
+dendrite/zion-registration.yaml
 dendrite/zion-appservice.yaml

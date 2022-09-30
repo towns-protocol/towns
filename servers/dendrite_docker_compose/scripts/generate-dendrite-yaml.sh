@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+cat <<-_EOT_
+
 # This is the Dendrite configuration file.
 #
 # The configuration is split up into sections - each Dendrite component has a
@@ -45,8 +49,9 @@ global:
   # sections. For polylith deployments, or monolith deployments using SQLite databases,
   # you must configure the "database" block for each component instead.
   database:
+    connection_string: postgresql://dendrite:itsasecret@host.docker.internal:5432/dendrite?sslmode=disable
     # connection_string: postgresql://dendrite:itsasecret@172.17.0.1:5432/dendrite?sslmode=disable
-    connection_string: postgresql://dendrite:itsasecret@postgres/dendrite?sslmode=disable
+    # TODO: use the one above for AWS, and turn into ENV var later
     max_open_conns: 100
     max_idle_conns: 5
     conn_max_lifetime: -1
@@ -67,7 +72,7 @@ global:
 
   # The server name to delegate server-server communications to, with optional port
   # e.g. localhost:443
-  well_known_server_name: ""
+  well_known_server_name: ''
 
   # Lists of domains that the server will trust as identity servers to verify third
   # party identifiers such as phone numbers and email addresses.
@@ -94,7 +99,7 @@ global:
     # The displayname to be used when sending notices
     display_name: "Server alerts"
     # The mxid of the avatar to use
-    avatar_url: ""
+    avatar_url: ''
     # The roomname to be used when creating messages
     room_name: "Server Alerts"
 
@@ -177,7 +182,7 @@ client_api:
 
   # If set, allows registration by anyone who knows the shared secret, regardless of
   # whether registration is otherwise disabled.
-  registration_shared_secret: ""
+  registration_shared_secret: ''
 
   # Disable password authentication.
   password_authentication_disabled: true # TODO: turn this into an environment variable - or create a separate dendrite.yaml for dev vs prod
@@ -187,24 +192,24 @@ client_api:
     ethereum:
       enabled: true
       version: 1
-      chain_ids: [5, 1337, 31337] # [goerli, localhost-metamask, localhost-hardhat], see: https://chainlist.org/
+      chain_ids: [4, 1337, 31337] # https://chainlist.org/
 
   # Whether to require reCAPTCHA for registration.
   enable_registration_captcha: false
 
   # Settings for ReCAPTCHA.
-  recaptcha_public_key: ""
-  recaptcha_private_key: ""
-  recaptcha_bypass_secret: ""
-  recaptcha_siteverify_api: ""
+  recaptcha_public_key: ''
+  recaptcha_private_key: ''
+  recaptcha_bypass_secret: ''
+  recaptcha_siteverify_api: ''
 
   # TURN server information that this homeserver should send to clients.
   turn:
-    turn_user_lifetime: ""
+    turn_user_lifetime: ''
     turn_uris: []
-    turn_shared_secret: ""
-    turn_username: ""
-    turn_password: ""
+    turn_shared_secret: ''
+    turn_username: ''
+    turn_password: ''
 
   # Settings for rate-limited endpoints. Rate limiting will kick in after the
   # threshold number of "slots" have been taken by requests from a specific
@@ -365,7 +370,7 @@ user_api:
 tracing:
   enabled: false
   jaeger:
-    serviceName: ""
+    serviceName: ''
     disabled: false
     rpc_metrics: false
     tags: []
@@ -384,3 +389,5 @@ logging:
     level: info
     params:
       path: ./logs
+
+_EOT_
