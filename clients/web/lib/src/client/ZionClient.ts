@@ -742,7 +742,7 @@ export class ZionClient {
     homeServerUrl: string,
     auth?: ZionAuth,
   ): { store: CustomMemoryStore; client: MatrixClient } {
-    const store = new CustomMemoryStore();
+    const store = new CustomMemoryStore( { localStorage: global.localStorage } );
     if (auth) {
       return {
         store: store,
@@ -752,6 +752,7 @@ export class ZionClient {
           accessToken: auth.accessToken,
           userId: auth.userId,
           deviceId: auth.deviceId,
+          useAuthorizationHeader: true,
         }),
       };
     } else {
