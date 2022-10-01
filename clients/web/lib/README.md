@@ -19,10 +19,9 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 #from client root
 ./scripts/start-local-dendrite.sh
 ./scripts/start-local-blockchain.sh
-./scripts/deploy-zion-governance-contracts.sh
-cd clients/web/lib
-yarn test
-# OR - run from visual studio code via F5 or the "Jest: current file in 'web/lib/` commmand
+./scripts/deploy-local-zion-governance-contracts.sh
+./scripts/run-integration-tests.sh
+# OR - run a single tests from visual studio code via F5 or the "Jest: current file in 'web/lib/` commmand
 ```
 
 ## Architecture

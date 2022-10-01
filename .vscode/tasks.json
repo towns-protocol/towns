@@ -58,7 +58,7 @@
       {
         "label": "DeployZionGovernance",
         "type": "shell",
-        "command": "sleep 2 && ./scripts/deploy-zion-governance-contracts.sh",
+        "command": "sleep 2 && ./scripts/deploy-local-zion-governance-contracts.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
