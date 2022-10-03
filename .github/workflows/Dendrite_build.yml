@@ -203,6 +203,7 @@ jobs:
       packages: write
       contents: read
     if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
+    # TODO: do we still need the "if" block above?
     needs: [integration-tests-done]
     uses: HereNotThere/harmony/.github/workflows/Dendrite_docker.yml@main
     secrets:
