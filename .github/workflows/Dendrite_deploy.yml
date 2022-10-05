@@ -1,21 +1,20 @@
 name: "Dendrite_deploy"
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       task_definition:
         description: 'Task definition'
+        type: string
         required: true
-        default: 'production-zion-dendrite:5'
       service:
         description: 'Service name to deploy to'
+        type: string
         required: true
-        default: 'production-zion-dendrite-service'
       cluster:
         description: 'Cluster name to deploy to'
+        type: string
         required: true
-        default: 'production-node1-zion-ecs-cluster'
-  # workflow_call: # Another pipeline called us #TODO: make this work with other pipelines
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,8 +38,8 @@ jobs:
 
       - name: Redeploy service
         run: |
-          aws ecs update-service --cluster=${{ github.event.inputs.cluster }} --service=${{ github.event.inputs.service }} --task-definition=${{ github.event.inputs.task_definition }} --force-new-deployment
+          aws ecs update-service --cluster=${{ inputs.cluster }} --service=${{ inputs.service }} --task-definition=${{ inputs.task_definition }} --force-new-deployment
 
       - name: Wait for service to be stable
         run: |
-          aws ecs wait services-stable --cluster=${{ github.event.inputs.cluster }} --services=${{ github.event.inputs.service }}
+          aws ecs wait services-stable --cluster=${{ inputs.cluster }} --services=${{ inputs.service }}
