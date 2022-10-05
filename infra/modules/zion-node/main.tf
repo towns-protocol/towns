@@ -162,4 +162,7 @@ resource "aws_ecs_service" "zion-dendrite-service" {
   cluster         = aws_ecs_cluster.zion-ecs-cluster.id
   task_definition = module.task_definitions.dendrite_task_definition_arn
   desired_count   = 1
+  deployment_minimum_healthy_percent = 0 
+  # TODO: this will create downtime. Is there a better way?
+  deployment_maximum_percent = 200
 }

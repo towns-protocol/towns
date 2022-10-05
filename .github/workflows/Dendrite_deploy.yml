@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       task_definition:
-        description: 'Task Definition'
+        description: 'Task definition'
         required: true
-        default: '' # TODO: add default value here
+        default: 'production-zion-dendrite:5'
       service:
         description: 'Service name to deploy to'
         required: true
-        default: '' # TODO: add default value here
+        default: 'production-zion-dendrite-service'
       cluster:
         description: 'Cluster name to deploy to'
         required: true
-        default: '' # TODO: add default value here
+        default: 'production-node1-zion-ecs-cluster'
   # workflow_call: # Another pipeline called us #TODO: make this work with other pipelines
 
 concurrency:
@@ -31,26 +31,16 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@13d241b293754004c80624b5567555c4a39ffbe3
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # ${{ env.AWS_REGION }} TODO: this should come from the env
+          aws-region: us-east-1
 
-      # TODO: uncomment to start using commit hashed builds
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@97587c9d45a4930bf0e3da8dd2feb2a463cf4a3a
-      #   with:
-      #     task-definition: ${{ env.ECS_TASK_DEFINITION }}
-      #     container-name: ${{ env.CONTAINER_NAME }}
-      #     image: ${{ steps.build-image.outputs.image }}
+      - name: Redeploy service
+        run: |
+          aws ecs update-service --cluster=${{ github.event.inputs.cluster }} --service=${{ github.event.inputs.service }} --task-definition=${{ github.event.inputs.task_definition }} --force-new-deployment
 
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          # task-definition: ${{ steps.task-def.outputs.task-definition }} TODO: uncomment to start using commit hashed builds
-          task-definition: '${{ github.event.inputs.task_definition }}'
-          service: '${{ github.event.inputs.service }}'
-          cluster: '${{ github.event.inputs.cluster }}'
-          wait-for-service-stability: true
+      - name: Wait for service to be stable
+        run: |
+          aws ecs wait services-stable --cluster=${{ github.event.inputs.cluster }} --services=${{ github.event.inputs.service }}
