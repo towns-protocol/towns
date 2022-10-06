@@ -164,7 +164,9 @@ export const CreateSpaceForm = (props: Props) => {
             Create
           </Button>
         </Box>
-        {chain?.id === ChainType.localhost.id &&
+        {(chain?.id === ChainType.localhost.id ||
+          chain?.id === ChainType.foundry.id ||
+          chain?.id === ChainType.hardhat.id) &&
           accounts.map((accountId) => (
             <Box
               display="flex"
