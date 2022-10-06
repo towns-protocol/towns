@@ -27,7 +27,7 @@ export const Dropdown = (props: Props) => {
   );
 
   return (
-    <Field {...fieldProps}>
+    <Field {...fieldProps} background="level2">
       {(overlays, { className, ...inputProps }) => (
         <>
           <Stack

@@ -173,3 +173,13 @@ globalStyle(`${debugClass} p:not(${fontStyles[0].className})`, {
   // implicit paragraphs declared by inner HTML
   boxShadow: "0 0 0 1px #9F09",
 });
+
+globalStyle(`${debugClass} h1:not(${fontStyles[0].className})`, {
+  // implicit paragraphs declared by inner HTML
+  boxShadow: "0 0 0 1px #9F09",
+});
+
+globalStyle(`${debugClass} h2:not(${fontStyles[0].className})`, {
+  // implicit paragraphs declared by inner HTML
+  boxShadow: "0 0 0 1px #9F09",
+});

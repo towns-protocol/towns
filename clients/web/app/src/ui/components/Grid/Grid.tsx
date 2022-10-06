@@ -14,15 +14,21 @@ export const Grid = (props: Props) => {
     columnMinSize,
     columnMaxSize = "1fr",
     children,
+    gap = "md",
     ...boxProps
   } = props;
+
+  const columnGap =
+    typeof gap === "string" ? gap : gap === true ? "md" : "none";
+
+  const rowGap = typeof gap === "string" ? gap : gap === true ? "md" : "none";
 
   return (
     <Box
       display="grid"
       style={{
-        columnGap: vars.space.md,
-        rowGap: vars.space.md,
+        columnGap: vars.space[columnGap],
+        rowGap: vars.space[rowGap],
         gridTemplateColumns: columns
           ? `repeat(${columns}, 1fr)`
           : `repeat(auto-fill,minmax(${columnMinSize}, ${columnMaxSize}))`,

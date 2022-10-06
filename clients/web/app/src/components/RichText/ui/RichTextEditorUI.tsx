@@ -1,9 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
-  $createTextNode,
   $getSelection,
-  $insertNodes,
   $isRangeSelection,
   COMMAND_PRIORITY_LOW,
   SELECTION_CHANGE_COMMAND,

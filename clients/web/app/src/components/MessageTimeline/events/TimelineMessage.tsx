@@ -63,7 +63,7 @@ export const TimelineMessage = React.memo((props: Props) => {
       eventId={event.eventId}
       minimal={isMinimal}
       name={displayName}
-      paddingY="sm"
+      paddingY="md"
       paddingX="lg"
       spaceId={spaceId}
       reactions={reactions}

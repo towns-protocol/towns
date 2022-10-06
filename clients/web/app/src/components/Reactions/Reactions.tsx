@@ -2,7 +2,6 @@ import { emojis } from "@emoji-mart/data";
 import { EmojiData } from "emoji-mart";
 import React, { Suspense, useCallback } from "react";
 import { useZionContext } from "use-zion-client";
-
 import { EmojiPickerButton } from "@components/EmojiPickerButton";
 import { Box, Stack, Text, TooltipRenderer } from "@ui";
 import { MessageReactions, useHandleReaction } from "hooks/useReactions";

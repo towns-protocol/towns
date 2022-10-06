@@ -70,8 +70,8 @@ const AllRoutes = () => {
             </>
           )}
         </Route>
+        <Route path="/playground" element={<Playground />} />
       </Route>
-      <Route path="/playground" element={<Playground />} />
     </Routes>
   );
 };
