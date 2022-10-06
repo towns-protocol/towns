@@ -16,7 +16,7 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 - **yarn 2** `npm install --global yarn` We're using yarn 2, which means that there should only be one node_modules folder and one yarn.lock file at the root of the repository. yarn 2 installation instructions are here <https://yarnpkg.com/getting-started/install>, if you're already using yarn it will automatically upgrade you behind the scenes.
 
-- **CMake** <https://cmake.org/download/>
+- **CMake** <https://cmake.org/download/>, Once cmake is installed, run and go to `Tools > How to Install For Command Line Usage` for instructions on how to add cmake to your path
 
 - **anvil**
 
@@ -29,7 +29,9 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 ## Setup
 
-1. Run `yarn install && yarn prepare` from the root of the repository
+1. Update submodules: `git submodule update --init --recursive`
+
+2. Run `yarn install && yarn prepare` from the root of the repository
 
 ## Running everything locally
 
