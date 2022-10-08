@@ -16,6 +16,7 @@ export function useMyProfile(): MyProfile | undefined {
     }
     const updateProfile = () => {
       setMyProfile({
+        userId: user.userId,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
       });

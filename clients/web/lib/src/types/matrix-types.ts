@@ -12,9 +12,9 @@ export enum Membership {
 }
 
 export interface MyProfile {
+  userId: string;
   displayName: string;
   avatarUrl: string;
-  fetchedAt?: Date;
 }
 
 export interface RoomIdentifier {
