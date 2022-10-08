@@ -5,6 +5,7 @@ import { MatrixEvent, Room, RoomMember } from "matrix-js-sdk";
 export interface ZionOpts {
   homeServerUrl: string;
   initialSyncLimit: number;
+  onboardingOpts?: ZionOnboardingOpts;
   disableEncryption?: boolean;
   getProvider: () => ethers.providers.Provider | undefined;
   getSigner: () => ethers.Signer | undefined;
@@ -29,6 +30,12 @@ export interface StartClientOpts {
     member: RoomMember,
     oldMembership: string | null,
   ) => void;
+}
+
+export interface ZionOnboardingOpts {
+  skipUsername?: boolean;
+  skipAvatar?: boolean;
+  showWelcomeSpash?: boolean;
 }
 
 export interface SpaceIdentifier {

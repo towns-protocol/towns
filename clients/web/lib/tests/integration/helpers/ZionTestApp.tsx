@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useConnect } from "wagmi";
+import { ZionOnboardingOpts } from "../../../src/client/ZionClientTypes";
 import { ZionContextProvider } from "../../../src/components/ZionContextProvider";
 import { ZionTestWeb3Provider } from "./ZionTestWeb3Provider";
 
 interface Props {
   provider: ZionTestWeb3Provider;
+  onboardingOpts?: ZionOnboardingOpts;
   defaultSpaceId?: string;
   defaultSpaceName?: string;
   defaultSpaceAvatarSrc?: string;
@@ -16,6 +18,7 @@ interface Props {
 export const ZionTestApp = (props: Props) => {
   const {
     provider,
+    onboardingOpts: inOnboardingOpts,
     defaultSpaceId,
     defaultSpaceName,
     defaultSpaceAvatarSrc,
@@ -25,6 +28,11 @@ export const ZionTestApp = (props: Props) => {
   // pull environment variables from the process
   const homeServerUrl = process.env.HOMESERVER!;
   const disableEncryption = process.env.DISABLE_ENCRYPTION === "true";
+  const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts
+    ? inOnboardingOpts
+    : {
+        showWelcomeSpash: true,
+      };
   Object.defineProperty(window, "ethereum", {
     value: provider,
     writable: true,
@@ -33,6 +41,7 @@ export const ZionTestApp = (props: Props) => {
   return (
     <ZionContextProvider
       homeServerUrl={homeServerUrl}
+      onboardingOpts={onboardingOpts}
       disableEncryption={disableEncryption}
       getSignerFn={provider ? () => provider.wallet : undefined}
       defaultSpaceId={defaultSpaceId}

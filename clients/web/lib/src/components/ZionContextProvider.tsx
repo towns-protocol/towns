@@ -8,7 +8,10 @@ import {
 } from "../types/matrix-types";
 import { ethers } from "ethers";
 import { ZionClient } from "../client/ZionClient";
+import { ZionOnboardingOpts } from "../client/ZionClientTypes";
 import { useNotificationCounts } from "../hooks/ZionContext/useNotificationCounts";
+import { IOnboardingState } from "../hooks/ZionContext/onboarding/IOnboardingState";
+import { useOnboardingState } from "../hooks/ZionContext/useOnboardingState";
 import { useSpacesIds } from "../hooks/ZionContext/useSpaceIds";
 import { useSpaceUnreads } from "../hooks/ZionContext/useSpaceUnreads";
 import { useSpaceMentionCounts } from "../hooks/ZionContext/useSpaceMentionCounts";
@@ -27,6 +30,7 @@ export interface IZionContext {
   spaceMentionCounts: Record<string, number>; // spaceId -> aggregated mentionCount
   spaces: SpaceItem[];
   spaceHierarchies: SpaceHierarchies;
+  onboardingState: IOnboardingState;
   homeServerUrl?: string;
   disableEncryption?: boolean; // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
   defaultSpaceId?: RoomIdentifier;
@@ -49,6 +53,7 @@ export function useZionContext(): IZionContext {
 
 interface Props {
   homeServerUrl: string;
+  onboardingOpts?: ZionOnboardingOpts;
   disableEncryption?: boolean;
   enableSpaceRootUnreads?: boolean;
   getSignerFn?: () => ethers.Signer;
@@ -73,6 +78,7 @@ export function ZionContextProvider(props: Props): JSX.Element {
 const ContextImpl = (props: Props): JSX.Element => {
   const {
     homeServerUrl,
+    onboardingOpts,
     disableEncryption,
     enableSpaceRootUnreads,
     getSignerFn,
@@ -84,6 +90,7 @@ const ContextImpl = (props: Props): JSX.Element => {
   const { client } = useZionClientListener(
     homeServerUrl,
     initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
+    onboardingOpts,
     disableEncryption,
     getSignerFn,
   );
@@ -113,6 +120,8 @@ const ContextImpl = (props: Props): JSX.Element => {
     [defaultSpaceId],
   );
 
+  const onboardingState = useOnboardingState(client);
+
   useFavIconBadge(
     unreadCounts,
     spaceHierarchies,
@@ -132,6 +141,7 @@ const ContextImpl = (props: Props): JSX.Element => {
         spaceMentionCounts,
         spaces,
         spaceHierarchies,
+        onboardingState,
         homeServerUrl,
         disableEncryption,
         defaultSpaceId: convertedDefaultSpaceId,

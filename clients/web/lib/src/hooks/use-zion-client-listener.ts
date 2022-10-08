@@ -7,10 +7,12 @@ import { useMatrixStore } from "../store/use-matrix-store";
 import { useRoomMembershipEventHandler } from "./MatrixClientListener/useRoomMembershipEventHandler";
 import { useRoomTimelineEventHandler } from "./MatrixClientListener/useRoomTimelineEventHandler";
 import { useSyncEventHandler } from "./MatrixClientListener/useSyncEventHandler";
+import { ZionOnboardingOpts } from "client/ZionClientTypes";
 
 export const useZionClientListener = (
   homeServerUrl: string,
   initialSyncLimit: number,
+  onboardingOpts?: ZionOnboardingOpts,
   disableEncryption?: boolean,
   getSignerFn?: () => ethers.Signer,
 ) => {
@@ -36,6 +38,7 @@ export const useZionClientListener = (
       {
         homeServerUrl,
         initialSyncLimit,
+        onboardingOpts,
         disableEncryption,
         getProvider,
         getSigner,
@@ -73,8 +76,6 @@ export const useZionClientListener = (
     });
     handleSync();
     clientRef.current = client;
-    // fetch profile info
-    await clientRef.current.getProfileInfo(userId);
     /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
   }, [
     accessToken,
