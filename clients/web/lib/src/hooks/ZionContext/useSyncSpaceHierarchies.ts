@@ -131,7 +131,7 @@ export function useSyncSpaceHierarchies(
     client.on(RoomEvent.Timeline, onRoomTimelineEvent);
     return () => {
       // console.log("!!! REMOVING EVENTS");
-      client.removeListener(RoomEvent.Timeline, onRoomTimelineEvent);
+      client.off(RoomEvent.Timeline, onRoomTimelineEvent);
     };
   }, [client, spaceIds]);
   return { spaceHierarchies };

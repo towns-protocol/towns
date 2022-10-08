@@ -21,8 +21,6 @@ import {
 } from "../types/timeline-types";
 import { staticAssertNever } from "../utils/zion-utils";
 
-// this code is dirty and jumbled, but it does what it needs to do, cleanup coming soon.
-
 export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
   const { client } = useZionContext();
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
@@ -146,10 +144,10 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
     client.on(MatrixEventEvent.Decrypted, onEventDecrypted);
     client.on(MatrixEventEvent.Replaced, onEventReplaced);
     return () => {
-      matrixRoom.removeListener(RoomEvent.Timeline, onRoomTimelineEvent);
-      matrixRoom.removeListener(RoomEvent.Redaction, onRoomRedaction);
-      client.removeListener(MatrixEventEvent.Decrypted, onEventDecrypted);
-      client.removeListener(MatrixEventEvent.Replaced, onEventReplaced);
+      matrixRoom.off(RoomEvent.Timeline, onRoomTimelineEvent);
+      matrixRoom.off(RoomEvent.Redaction, onRoomRedaction);
+      client.off(MatrixEventEvent.Decrypted, onEventDecrypted);
+      client.off(MatrixEventEvent.Replaced, onEventReplaced);
     };
   }, [client, matrixRoom]);
 

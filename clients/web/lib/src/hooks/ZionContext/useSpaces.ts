@@ -75,8 +75,8 @@ export function useSpaces(
     client.on(RoomEvent.Name, onRoomEvent);
     client.on(RoomEvent.Timeline, onRoomTimelineEvent);
     return () => {
-      client.removeListener(RoomEvent.Name, onRoomEvent);
-      client.removeListener(RoomEvent.Timeline, onRoomTimelineEvent);
+      client.off(RoomEvent.Name, onRoomEvent);
+      client.off(RoomEvent.Timeline, onRoomTimelineEvent);
     };
   }, [client, spaceIds]);
 

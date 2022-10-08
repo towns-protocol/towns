@@ -11,9 +11,12 @@ export function useMyProfile(): MyProfile | undefined {
   const [myProfile, setMyProfile] = useState<MyProfile>();
 
   useEffect(() => {
+    // preconditions
     if (!user) {
+      setMyProfile(undefined);
       return;
     }
+    // helpers
     const updateProfile = () => {
       setMyProfile({
         userId: user.userId,
@@ -21,12 +24,14 @@ export function useMyProfile(): MyProfile | undefined {
         avatarUrl: user.avatarUrl,
       });
     };
+    // initial state
+    updateProfile();
+    // event listeners
     user.on(UserEvent.DisplayName, updateProfile);
     user.on(UserEvent.AvatarUrl, updateProfile);
-    updateProfile();
     return () => {
-      user.removeListener(UserEvent.DisplayName, updateProfile);
-      user.removeListener(UserEvent.AvatarUrl, updateProfile);
+      user.off(UserEvent.DisplayName, updateProfile);
+      user.off(UserEvent.AvatarUrl, updateProfile);
     };
   }, [user]);
 

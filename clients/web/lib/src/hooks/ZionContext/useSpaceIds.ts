@@ -58,8 +58,8 @@ export function useSpacesIds(client: ZionClient | undefined): {
     client.on(RoomEvent.MyMembership, onNewRoomOrMyMembership);
     client.on(ClientEvent.Room, onNewRoomOrMyMembership);
     return () => {
-      client.removeListener(RoomEvent.MyMembership, onNewRoomOrMyMembership);
-      client.removeListener(ClientEvent.Room, onNewRoomOrMyMembership);
+      client.off(RoomEvent.MyMembership, onNewRoomOrMyMembership);
+      client.off(ClientEvent.Room, onNewRoomOrMyMembership);
     };
   }, [client]);
 

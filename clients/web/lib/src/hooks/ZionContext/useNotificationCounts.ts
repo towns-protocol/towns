@@ -96,7 +96,7 @@ export function useNotificationCounts(client: ZionClient | undefined) {
 
     client.on(ClientEvent.Sync, onSync);
     return () => {
-      client.removeListener(ClientEvent.Sync, onSync);
+      client.off(ClientEvent.Sync, onSync);
     };
   }, [client]);
 

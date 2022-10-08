@@ -697,7 +697,7 @@ export class ZionClient {
    * Some matrix events are only emitted by the client,
    * not through the room object.
    ************************************************/
-  public removeListener(
+  public off(
     event:
       | ClientEvent.Sync
       | ClientEvent.Room
@@ -724,7 +724,7 @@ export class ZionClient {
         ) => void)
       | ((room: MatrixRoom) => void),
   ) {
-    this.client.removeListener(event, callback);
+    this.client.off(event, callback);
   }
 
   /************************************************
