@@ -44,9 +44,10 @@ export function useOnboardingState(client?: ZionClient): IOnboardingState {
         newState,
         isComplete,
       });
-      setState((prev) => (isEqual(prev, newState) ? prev : newState));
       if (isComplete) {
         advanceState();
+      } else {
+        setState((prev) => (isEqual(prev, newState) ? prev : newState));
       }
     };
 
