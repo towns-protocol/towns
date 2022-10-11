@@ -6,7 +6,7 @@ type Props = {
 };
 
 export const RichTextPlaceholder = (props: Props) => (
-  <Box position="absolute" pointerEvents="none" color="gray2">
+  <Box position="absolute" pointerEvents="none" color="gray2" paddingY="md">
     <Paragraph>{props.placeholder}</Paragraph>
   </Box>
 );

@@ -46,7 +46,12 @@ type Props = {
   container?: (props: { children: React.ReactNode }) => JSX.Element;
 };
 
-const fieldClassName = clsx([fieldStyles.field, styles.contentEditable]);
+const fieldClassName = clsx([fieldStyles.field, styles.richText]);
+const inputClassName = clsx([
+  fieldStyles.field,
+  styles.richText,
+  styles.contentEditable,
+]);
 
 const nodes = [
   CodeNode,
@@ -121,7 +126,7 @@ export const RichTextEditor = (props: Props) => {
     <LexicalComposer initialConfig={initialConfig}>
       <RichTextUI focused={focused} editing={isEditing}>
         <RichTextPlugin
-          contentEditable={<ContentEditable className={fieldClassName} />}
+          contentEditable={<ContentEditable className={inputClassName} />}
           placeholder={<RichTextPlaceholder placeholder={placeholder} />}
         />
       </RichTextUI>

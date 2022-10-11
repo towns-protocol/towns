@@ -20,7 +20,6 @@ import { BaseEmoji, EmojiData } from "emoji-mart";
 import { createPortal } from "react-dom";
 import { Box, RootLayerContext, Stack } from "@ui";
 import { $createEmojiNode } from "../nodes/EmojiNode";
-import { richTextEditorUI } from "../RichTextEditor.css";
 import { RichTextEditorControls } from "./Controls/RichTextEditorControls";
 import { InlineToolbar } from "./InlineToolbar";
 import { AddLinkModal } from "./LinkModal";
@@ -148,13 +147,12 @@ export const RichTextUI = (props: {
   return (
     <Stack
       gap
-      className={richTextEditorUI}
       rounded="sm"
       background={props.focused || props.editing ? "level3" : "level2"}
       minWidth={props.readOnly ? undefined : "200"}
       position="relative"
     >
-      <Stack horizontal alignItems="center" gap="lg">
+      <Stack horizontal alignItems="center" gap="lg" paddingX="md">
         <Box grow>{props.children}</Box>
         <RichTextEditorControls onSelectEmoji={onSelectEmoji} />
         {rootLayerRef?.current &&

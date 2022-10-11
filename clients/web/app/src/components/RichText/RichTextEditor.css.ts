@@ -2,14 +2,14 @@ import { globalStyle, style } from "@vanilla-extract/css";
 import { atoms } from "ui/styles/atoms.css";
 import { vars } from "ui/styles/vars.css";
 
-export const contentEditable = style({
-  outline: "none",
-});
+export const richText = style({});
 
-export const richTextEditorUI = atoms({
-  paddingX: "md",
-  paddingY: "md",
-});
+export const contentEditable = style([
+  atoms({ paddingY: "md" }),
+  {
+    outline: "none",
+  },
+]);
 
 export const root = style({});
 
@@ -131,33 +131,30 @@ export const listitemUnchecked = style([
   },
 ]);
 
-globalStyle(`${contentEditable} ${paragraph} + ${paragraph}`, {
+globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
   marginTop: vars.space.md,
 });
 
-globalStyle(
-  `${contentEditable} ${listitemCheckedShared}${nestedListItem}:before`,
-  {
-    display: "none",
-  },
-);
+globalStyle(`${richText} ${listitemCheckedShared}${nestedListItem}:before`, {
+  display: "none",
+});
 
 globalStyle(
   `
-  ${contentEditable} ${paragraph} + ${ul},
-  ${contentEditable} ${paragraph} + ${ol},
-  ${contentEditable} ${ul} + *,
-  ${contentEditable} ${ol} + *
+  ${richText} ${paragraph} + ${ul},
+  ${richText} ${paragraph} + ${ol},
+  ${richText} ${ul} + *,
+  ${richText} ${ol} + *
   `,
   {
     marginTop: vars.space.md,
   },
 );
 
-globalStyle(`${contentEditable} ${ul}:first-of-type li:first-child`, {
+globalStyle(`${richText} ${ul}:first-of-type li:first-child`, {
   marginTop: 0,
 });
 
-globalStyle(`${contentEditable} ${ul}:first-of-type li:last-child`, {
+globalStyle(`${richText} ${ul}:first-of-type li:last-child`, {
   marginBottom: 0,
 });
