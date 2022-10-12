@@ -30,20 +30,3 @@ export function invariant(cond: any, message: string): asserts cond {
 export function staticAssertNever(x: never): never {
   throw new Error("Unexpected object: ", x);
 }
-
-/// quick and dirty way to ensure simple arrays are equal, if you need
-/// more functionality, use a library like lodash
-export function arraysAreEqual<T extends string | number>(
-  array1: T[],
-  array2: T[],
-) {
-  if (array1.length !== array2.length) {
-    return false;
-  }
-  for (let i = 0; i < array1.length; i++) {
-    if (array1[i] !== array2[i]) {
-      return false;
-    }
-  }
-  return true;
-}

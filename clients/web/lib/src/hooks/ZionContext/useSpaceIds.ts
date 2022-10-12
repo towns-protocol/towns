@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ZionClient } from "../../client/ZionClient";
 import { Membership } from "../../types/matrix-types";
 import { ClientEvent, Room as MatrixRoom, RoomEvent } from "matrix-js-sdk";
-import { arraysAreEqual } from "../../utils/zion-utils";
+import { isEqual } from "lodash";
 
 export function useSpacesIds(client: ZionClient | undefined): {
   spaceIds: string[];
@@ -32,14 +32,14 @@ export function useSpacesIds(client: ZionClient | undefined): {
         .map((r) => r.roomId);
 
       setSpaceIds((prev) => {
-        if (arraysAreEqual(prev, newSpaceIds)) {
+        if (isEqual(prev, newSpaceIds)) {
           return prev;
         }
         return newSpaceIds;
       });
 
       setInvitedToIds((prev) => {
-        if (arraysAreEqual(prev, newInviteIds)) {
+        if (isEqual(prev, newInviteIds)) {
           return prev;
         }
         return newInviteIds;
