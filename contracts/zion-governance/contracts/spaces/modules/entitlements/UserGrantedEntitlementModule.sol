@@ -47,8 +47,9 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     }
   }
 
-  /// @notice Checks if a user has access to add a new entitlement by checking if the user is the owner of the space or is entitled to
-  ///         grant permissions or is transitively allowed to grant this role or is the zion space manager
+  /// @notice Checks if a user has access to add a new entitlement by checking if the user is the owner of 
+  ///         the space or is entitled to grant permissions or is transitively allowed to grant this role or 
+  ///         is the zion space manager
   /// @param spaceId The id of the space
   function _isPermittedToSetEntitlement(
     uint256 spaceId,

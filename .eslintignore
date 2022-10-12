@@ -6,6 +6,8 @@ storybook-static
 servers/
 contracts/lib/
 
+infra/
+
 vite.config.ts
 
 .yarn/*

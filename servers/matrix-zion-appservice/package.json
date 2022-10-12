@@ -9,7 +9,6 @@
     "/bin"
   ],
   "scripts": {
-    "install": "./install.sh",
     "build": "tsc",
     "start": "node ./bin/app.js -c config.yaml -p 6789",
     "dev": "ts-node ./src/app.ts -c config.yaml -p 6789",
@@ -18,15 +17,15 @@
   },
   "dependencies": {
     "@harmony/contracts": "workspace:^",
-    "@types/node": "^18.7.23",
     "dotenv": "^16.0.2",
     "ethers": "^5.7.1",
     "express": "^4.18.1",
     "matrix-appservice-bridge": "^6.0.0",
-    "matrix-bot-sdk": "^0.6.2",
-    "typescript": "^4.8.4"
+    "matrix-bot-sdk": "^0.6.2"
   },
   "devDependencies": {
-    "ts-node": "^10.9.1"
+    "@types/node": "^18.7.23",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
   }
 }

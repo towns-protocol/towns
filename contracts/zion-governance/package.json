@@ -39,6 +39,7 @@
     "@types/chai": "^4.3.3",
     "@types/node": "^18.7.23",
     "eslint": "^8.24.0",
+    "eslint-plugin-node": "^11.1.0",
     "ethers": "^5.7.1",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.32",
