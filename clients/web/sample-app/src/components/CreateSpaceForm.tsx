@@ -19,7 +19,7 @@ import {
   useWeb3Context,
 } from "use-zion-client";
 import { useCallback, useMemo, useState } from "react";
-import { chain as ChainType } from "wagmi";
+import { chain as ChainType, useBalance } from "wagmi";
 import { useAsyncButtonCallback } from "../hooks/use-async-button-callback";
 import { ethers } from "ethers";
 
@@ -49,24 +49,23 @@ export const CreateSpaceForm = (props: Props) => {
     [],
   );
 
-  const onClickFundWallet = useCallback(
-    (account: string) => {
+  const onClickFundLocalHostWallet = useCallback(
+    (accountId: string) => {
       const afunc = async () => {
-        const provider = getProvider();
-        if (!provider) {
-          throw new Error("No provider");
-        }
-        // anvil default funded address #1
         const privateKey =
-          "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+          "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"; // anvil default funded address #1
+        const provider = getProvider();
+        const chainId = (await provider?.getNetwork())?.chainId;
         const wallet = new ethers.Wallet(privateKey, provider);
         const amount = 0.1;
         const tx = {
           from: wallet.address,
-          to: account,
+          to: accountId,
           value: ethers.utils.parseEther(amount.toString()),
           gasLimit: 1000000,
+          chainId: chainId,
         };
+        console.log("tx", tx);
         const result = await wallet.sendTransaction(tx);
         console.log(result);
       };
@@ -97,7 +96,7 @@ export const CreateSpaceForm = (props: Props) => {
       alignItems="center"
       justifyContent="center"
       sx={{
-        p: (theme: Theme) => theme.spacing(8),
+        p: (theme: Theme) => theme.spacing(1),
       }}
     >
       <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
@@ -107,7 +106,7 @@ export const CreateSpaceForm = (props: Props) => {
       <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
         ChainId: {chain ? chain?.id : "Not connected"}
       </Typography>
-      <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
+      <Box display="grid">
         <Box
           display="grid"
           alignItems="center"
@@ -168,28 +167,59 @@ export const CreateSpaceForm = (props: Props) => {
           chain?.id === ChainType.foundry.id ||
           chain?.id === ChainType.hardhat.id) &&
           accounts.map((accountId) => (
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
+            <AccountDisplay
+              accountId={accountId}
+              onClickFundWallet={onClickFundLocalHostWallet}
               key={accountId}
-            >
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => onClickFundWallet(accountId)}
-                disabled={false}
-              >
-                Fund Wallet (debug) ({accountId})
-              </Button>
-            </Box>
+            />
           ))}
       </Box>
     </Box>
   );
 };
 
+const AccountDisplay = (props: {
+  accountId: string;
+  onClickFundWallet: (accountId: string) => void;
+}) => {
+  const { accountId, onClickFundWallet } = props;
+  const balance = useBalance({ addressOrName: accountId, watch: true });
+  return (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      marginTop="20px"
+      padding="10px"
+      border="1px dashed grey"
+    >
+      <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+        (DEBUG)
+      </Typography>
+      <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+        Account: {accountId}
+      </Typography>
+      <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+        balance:{" "}
+        {balance.isLoading
+          ? "loading..."
+          : balance.isError
+          ? "Error: " + balance.error ?? "??"
+          : balance.data?.formatted + " : " + balance.data?.symbol}
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => onClickFundWallet(accountId)}
+        disabled={false}
+      >
+        Fund Wallet ({accountId})
+      </Button>
+    </Box>
+  );
+};
+
 const spacingStyle = {
-  padding: (theme: Theme) => theme.spacing(2),
+  padding: (theme: Theme) => theme.spacing(1),
   gap: (theme: Theme) => theme.spacing(1),
 };

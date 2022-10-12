@@ -56,9 +56,15 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 
 ## Tips and Tricks
 
+### Watch
+
 If you're iterating on the sample app, use the following to automatically rebuild your typescript. These changes should get picked up by the running app
 
 ```bash
 cd clients/web/lib
 yarn watch
 ```
+
+### Fund your local wallet
+
+If you're on metamask, make sure the localhost network is set to chain id `31337` Metamask returns the chain id in it's own settings, not the id returned by the network itself (why!!! :))
