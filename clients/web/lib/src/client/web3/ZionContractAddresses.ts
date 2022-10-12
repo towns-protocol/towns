@@ -34,36 +34,23 @@ const emptyCouncilAddresses: ICouncilAddress = {
 /// get zion contract addresses for a given network id
 /// aellis 2021-09-09,
 /// map chainId to json
-/// use ?? require for the tests, just like the abis
 export function getContractAddresses(chainId: number): IContractAddresses {
   switch (chainId) {
     case 1:
       return {
-        spaceManager:
-          MainNet_SpaceManager ??
-          require("@harmony/contracts/mainnet/addresses/space-manager.json"),
-        council:
-          MainNet_Council ??
-          require("@harmony/contracts/mainnet/addresses/council.json"),
+        spaceManager: MainNet_SpaceManager,
+        council: MainNet_Council,
       };
     case 5:
       return {
-        spaceManager:
-          Goerli_SpaceManager ??
-          require("@harmony/contracts/goerli/addresses/space-manager.json"),
-        council:
-          Goerli_Council ??
-          require("@harmony/contracts/goerli/addresses/council.json"),
+        spaceManager: Goerli_SpaceManager,
+        council: Goerli_Council,
       };
     case 1337:
     case 31337:
       return {
-        spaceManager:
-          Foundry_SpaceManager ??
-          require("@harmony/contracts/localhost/addresses/space-manager.json"),
-        council:
-          Foundry_Council ??
-          require("@harmony/contracts/localhost/addresses/council.json"),
+        spaceManager: Foundry_SpaceManager,
+        council: Foundry_Council,
       };
     default:
       if (chainId !== 0) {
