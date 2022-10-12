@@ -4,7 +4,7 @@ import { DataTypes } from "@harmony/contracts/localhost/typings/types/ZionSpaceM
 import { Permission } from "../client/web3/ZionContractTypes";
 import { useCallback } from "react";
 import { useZionClient } from "./use-zion-client";
-import { getContractAddresses } from "../client/web3/ZionContractAddresses";
+import { getContractInfo } from "../client/web3/ZionContracts";
 
 /**
  * Combine Matrix space creation and Smart Contract space
@@ -25,11 +25,12 @@ export function useIntegratedSpaceManagement() {
         );
         return undefined;
       }
-      const addresses = getContractAddresses(chainId);
+      const contractInfo = getContractInfo(chainId);
       const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct =
         {
-          entitlementModuleAddress: addresses.spaceManager.tokengranted,
-          tokenAddress: addresses.council.councilnft,
+          entitlementModuleAddress:
+            contractInfo.spaceManager.addresses.tokengranted,
+          tokenAddress: contractInfo.council.addresses.councilnft,
           quantity: 1,
           description: "Zion Council NFT",
           permissions: [Permission.Read],

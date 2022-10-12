@@ -39,7 +39,6 @@ import {
   ZionAuth,
   ZionOpts,
 } from "./ZionClientTypes";
-import { zionCouncilNFTAbi, zionSpaceManagerAbi } from "./web3/ZionAbis";
 
 import { DataTypes } from "@harmony/contracts/localhost/typings/types/ZionSpaceManager";
 import { ZionContractProvider } from "./web3/ZionContractProvider";
@@ -55,7 +54,7 @@ import { syncZionSpace } from "./matrix/SyncSpace";
 import { CustomMemoryStore } from "./store/CustomMatrixStore";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/lib/sync";
 import { IStore } from "matrix-js-sdk/lib/store";
-import { getContractAddresses } from "./web3/ZionContractAddresses";
+import { getContractInfo } from "./web3/ZionContracts";
 
 /***
  * Zion Client
@@ -775,19 +774,19 @@ export class ZionClient {
     getSigner: () => ethers.Signer | undefined,
     chainId: number,
   ) {
-    const addresses = getContractAddresses(chainId);
-    console.log("ZionClient::creating contracts", { chainId, addresses });
+    const contractInfo = getContractInfo(chainId);
+    console.log("ZionClient::creating contracts", { chainId, contractInfo });
     const spaceManager = new ZionContractProvider<ZionSpaceManager>(
       getProvider,
       getSigner,
-      addresses.spaceManager.spacemanager,
-      zionSpaceManagerAbi(),
+      contractInfo.spaceManager.addresses.spacemanager,
+      contractInfo.spaceManager.abi,
     );
     const councilNFT = new ZionContractProvider<CouncilNFT>(
       getProvider,
       getSigner,
-      addresses.council.councilnft,
-      zionCouncilNFTAbi(),
+      contractInfo.council.addresses.councilnft,
+      contractInfo.council.abi,
     );
 
     return { spaceManager, councilNFT };
