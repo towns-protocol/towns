@@ -16180,7 +16180,7 @@ __metadata:
     http-status-codes: ^2.2.0
     lexical: ^0.5.0
     lodash: ^4.17.11
-    matrix-js-sdk: ^19.7.0
+    matrix-js-sdk: 19.6.0
     pino: ^8.6.1
     react: ^18.2.0
     react-dom: ^18.2.0
@@ -20460,9 +20460,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@npm:^19.7.0":
-  version: 19.7.0
-  resolution: "matrix-js-sdk@npm:19.7.0"
+"matrix-js-sdk@npm:19.6.0":
+  version: 19.6.0
+  resolution: "matrix-js-sdk@npm:19.6.0"
   dependencies:
     "@babel/runtime": ^7.12.5
     another-json: ^0.2.0
@@ -20475,7 +20475,7 @@ __metadata:
     qs: ^6.9.6
     request: ^2.88.2
     unhomoglyph: ^1.0.6
-  checksum: c3b5b5109924a420081f89686945ddd96b5eddeefcb2fccf356b64ff1633c9bf264e488cc221e4fe4e06ac39cb65b80eeb59fa8639e3ec81a9495d1dbbe7659a
+  checksum: 3733237f7684826eb6cf718ed37ff162e51be2def9ca25f98e2953d177b381fe8acfc610c4868ee0216971512dba13da27181e3f5e03ea2fa177cf1c81bbb91e
   languageName: node
   linkType: hard
 
@@ -26174,7 +26174,7 @@ __metadata:
     ethers: 5.7.1
     http-status-codes: ^2.2.0
     lodash: ^4.17.11
-    matrix-js-sdk: ^19.7.0
+    matrix-js-sdk: 19.6.0
     pino: ^8.6.1
     react: ^18.2.0
     react-dom: ^18.2.0
@@ -29637,7 +29637,7 @@ __metadata:
     jest: ^29.1.1
     jest-environment-jsdom: ^29.1.1
     lodash: ^4.17.11
-    matrix-js-sdk: ^19.7.0
+    matrix-js-sdk: 19.6.0
     node-emoji: ^1.11.0
     pino: ^8.6.1
     react: ^18.2.0
