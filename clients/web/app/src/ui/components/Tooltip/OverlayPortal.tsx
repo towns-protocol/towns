@@ -1,5 +1,5 @@
-import React, { createContext } from "react";
+import React, { createContext } from 'react'
 
 export const RootLayerContext = createContext<{
-  rootLayerRef?: React.RefObject<HTMLElement | null>;
-}>({});
+    rootLayerRef?: React.RefObject<HTMLElement | null>
+}>({})

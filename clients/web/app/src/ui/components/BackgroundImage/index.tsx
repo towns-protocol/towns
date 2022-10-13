@@ -1,1 +1,1 @@
-export { BackgroundImage } from "./BackgroundImage";
+export { BackgroundImage } from './BackgroundImage'

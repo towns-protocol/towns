@@ -1,4 +1,4 @@
-import { DependencyList, useCallback } from "react";
+import { DependencyList, useCallback } from 'react'
 
 /**
  * useAsyncButtonCallback
@@ -8,22 +8,19 @@ import { DependencyList, useCallback } from "react";
  * @param callback - the function to call
  * @param deps - the dependencies to use for the callback
  */
-export const useAsyncButtonCallback = (
-  callback: () => Promise<void>,
-  deps: DependencyList,
-) => {
-  deps.concat(callback);
-  return useCallback(
-    async (event: React.MouseEvent<HTMLButtonElement>) => {
-      const button = event.currentTarget;
-      try {
-        button.disabled = true;
-        return await callback();
-      } finally {
-        button.disabled = false;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deps],
-  );
-};
+export const useAsyncButtonCallback = (callback: () => Promise<void>, deps: DependencyList) => {
+    deps.concat(callback)
+    return useCallback(
+        async (event: React.MouseEvent<HTMLButtonElement>) => {
+            const button = event.currentTarget
+            try {
+                button.disabled = true
+                return await callback()
+            } finally {
+                button.disabled = false
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [deps],
+    )
+}

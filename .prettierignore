@@ -10,3 +10,7 @@ contracts/lib/
 .yarn/*
 .vscode
 yarn.lock
+
+packages/contracts
+
+package.json

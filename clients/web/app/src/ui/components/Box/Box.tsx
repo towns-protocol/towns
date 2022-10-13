@@ -1,169 +1,148 @@
-import { clsx } from "clsx";
-import React, {
-  AllHTMLAttributes,
-  createElement,
-  forwardRef,
-  useMemo,
-} from "react";
-import { scrollContainerClass } from "ui/styles/globals/scrollcontainer.css";
-import {
-  AtomNames,
-  Atoms,
-  atoms,
-  boxClass,
-  containerWithGapClass,
-} from "ui/styles/atoms.css";
-import { debugClass } from "ui/styles/globals/debug.css";
-import { vars } from "ui/styles/vars.css";
+import { clsx } from 'clsx'
+import React, { AllHTMLAttributes, createElement, forwardRef, useMemo } from 'react'
+import { scrollContainerClass } from 'ui/styles/globals/scrollcontainer.css'
+import { AtomNames, Atoms, atoms, boxClass, containerWithGapClass } from 'ui/styles/atoms.css'
+import { debugClass } from 'ui/styles/globals/debug.css'
+import { vars } from 'ui/styles/vars.css'
 
 const shorthands = {
-  border: [{ border: "default" }, { border: "none" }],
-  borderLeft: [{ borderLeft: "default" }, { borderLeft: "none" }],
-  borderRight: [{ borderRight: "default" }, { borderRight: "none" }],
-  borderTop: [{ borderTop: "default" }, { borderTop: "none" }],
-  borderBottom: [{ borderBottom: "default" }, { borderBottom: "none" }],
-  top: [{ top: "none" }, { top: "auto" }],
-  bottom: [{ bottom: "none" }, { bottom: "auto" }],
-  left: [{ left: "none" }, { left: "auto" }],
-  right: [{ right: "none" }, { right: "auto" }],
-  grow: [{ flexGrow: "x1" }, { flexGrow: "x0" }],
-  shrink: [{ flexShrink: "x1" }, { flexShrink: "x0" }],
-  padding: [{ padding: "md" }, { padding: "none" }],
-  gap: [{ gap: "md" }, { gap: "none" }],
-  horizontal: [{ flexDirection: "row" }, { flexDirection: "column" }],
-  centerContent: [{ justifyContent: "center", alignItems: "center" }],
-  absoluteFill: [{ position: "absoluteFill" }, {}],
-} as const;
+    border: [{ border: 'default' }, { border: 'none' }],
+    borderLeft: [{ borderLeft: 'default' }, { borderLeft: 'none' }],
+    borderRight: [{ borderRight: 'default' }, { borderRight: 'none' }],
+    borderTop: [{ borderTop: 'default' }, { borderTop: 'none' }],
+    borderBottom: [{ borderBottom: 'default' }, { borderBottom: 'none' }],
+    top: [{ top: 'none' }, { top: 'auto' }],
+    bottom: [{ bottom: 'none' }, { bottom: 'auto' }],
+    left: [{ left: 'none' }, { left: 'auto' }],
+    right: [{ right: 'none' }, { right: 'auto' }],
+    grow: [{ flexGrow: 'x1' }, { flexGrow: 'x0' }],
+    shrink: [{ flexShrink: 'x1' }, { flexShrink: 'x0' }],
+    padding: [{ padding: 'md' }, { padding: 'none' }],
+    gap: [{ gap: 'md' }, { gap: 'none' }],
+    horizontal: [{ flexDirection: 'row' }, { flexDirection: 'column' }],
+    centerContent: [{ justifyContent: 'center', alignItems: 'center' }],
+    absoluteFill: [{ position: 'absoluteFill' }, {}],
+} as const
 
-const shorhandAttributes = new Set(Object.keys(shorthands));
+const shorhandAttributes = new Set(Object.keys(shorthands))
 
 const defaultAtoms: Atoms = {
-  display: "flex",
-  direction: "column",
-} as const;
+    display: 'flex',
+    direction: 'column',
+} as const
 
 type BaseProps = {
-  children?: React.ReactNode;
-  className?: string;
-  debug?: boolean;
-  scroll?: boolean;
-  style?: React.CSSProperties;
-};
+    children?: React.ReactNode
+    className?: string
+    debug?: boolean
+    scroll?: boolean
+    style?: React.CSSProperties
+}
 
 /**
  * All inherited HTML attributes except the ones colliding with atom props
  * (e.g. width, height, size)
  */
-type HTMLProps = Omit<AllHTMLAttributes<HTMLElement>, AtomNames>;
+type HTMLProps = Omit<AllHTMLAttributes<HTMLElement>, AtomNames>
 
-type ShorthandAttrs = keyof typeof shorthands;
+type ShorthandAttrs = keyof typeof shorthands
 
 /**
  * List of attributes allowing either a value or a shorthand
  * e.g atom: <Box padding='md' />  shorthand: <Box padding />
  */
-type HybridShorthandAttrs = Extract<ShorthandAttrs, AtomNames>;
+type HybridShorthandAttrs = Extract<ShorthandAttrs, AtomNames>
 
 /**
  * List of props that are exclusively related to shorthands
  * e.g. <Box horizontal />
  */
 type ExclusiveShorthandProps = {
-  [K in Exclude<ShorthandAttrs, HybridShorthandAttrs>]?: boolean;
-};
+    [K in Exclude<ShorthandAttrs, HybridShorthandAttrs>]?: boolean
+}
 
 // list of atoms without shorthands
-type AtomPropsExcludingShorthands = Omit<Atoms, ShorthandAttrs>;
+type AtomPropsExcludingShorthands = Omit<Atoms, ShorthandAttrs>
 
 // Specific type for atom Props allowing shorthands
 type AtomsAllowingShorthands = {
-  [K in HybridShorthandAttrs]?: boolean | Atoms[K];
-};
+    [K in HybridShorthandAttrs]?: boolean | Atoms[K]
+}
 
 type Props = HTMLProps &
-  BaseProps &
-  Omit<ExclusiveShorthandProps, HybridShorthandAttrs> &
-  AtomPropsExcludingShorthands &
-  AtomsAllowingShorthands;
+    BaseProps &
+    Omit<ExclusiveShorthandProps, HybridShorthandAttrs> &
+    AtomPropsExcludingShorthands &
+    AtomsAllowingShorthands
 
-export type BoxProps = Props;
+export type BoxProps = Props
 
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
-  const {
-    as = "div",
-    className,
-    children,
-    debug,
-    scroll,
-    ...restProps
-  } = props;
+    const { as = 'div', className, children, debug, scroll, ...restProps } = props
 
-  const atomShorthands = useMemo(() => {
-    return (Object.entries(shorthands) as Entries<typeof shorthands>).reduce(
-      (keep, [s, v]) => {
-        if (typeof props[s] === "boolean") {
-          const shorthand = props[s] ? v[0] : v[1];
-          keep = { ...keep, ...shorthand };
+    const atomShorthands = useMemo(() => {
+        return (Object.entries(shorthands) as Entries<typeof shorthands>).reduce((keep, [s, v]) => {
+            if (typeof props[s] === 'boolean') {
+                const shorthand = props[s] ? v[0] : v[1]
+                keep = { ...keep, ...shorthand }
+            }
+            return keep
+        }, {})
+    }, [props])
+
+    /**
+     * separate out the atoms from the rest of the props
+     */
+    const { atomProps, nativeProps } = useMemo(() => {
+        const nativeProps: Record<string, unknown> = {}
+        const atomProps = (
+            Object.keys(restProps) as Array<keyof AtomPropsExcludingShorthands>
+        ).reduce((atomProps: Record<string, unknown>, k) => {
+            if (atoms.properties.has(k) && typeof k !== 'undefined') {
+                atomProps[k] = restProps[k]
+            } else {
+                // do not forward shorthands to component props
+                if (!shorhandAttributes.has(k)) {
+                    nativeProps[k] = restProps[k]
+                }
+            }
+            return atomProps
+        }, {} as Atoms)
+
+        return {
+            nativeProps,
+            atomProps,
         }
-        return keep;
-      },
-      {},
-    );
-  }, [props]);
+    }, [restProps])
 
-  /**
-   * separate out the atoms from the rest of the props
-   */
-  const { atomProps, nativeProps } = useMemo(() => {
-    const nativeProps: Record<string, unknown> = {};
-    const atomProps = (
-      Object.keys(restProps) as Array<keyof AtomPropsExcludingShorthands>
-    ).reduce((atomProps: Record<string, unknown>, k) => {
-      if (atoms.properties.has(k) && typeof k !== "undefined") {
-        atomProps[k] = restProps[k];
-      } else {
-        // do not forward shorthands to component props
-        if (!shorhandAttributes.has(k)) {
-          nativeProps[k] = restProps[k];
-        }
-      }
-      return atomProps;
-    }, {} as Atoms);
+    const generatedClassNames = clsx([
+        boxClass,
+        atoms({
+            ...defaultAtoms,
+            ...atomProps,
+            ...atomShorthands,
+        }),
+        {
+            [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
+            [scrollContainerClass]: scroll,
+            [debugClass]: debug,
+        },
+        className,
+    ])
 
-    return {
-      nativeProps,
-      atomProps,
-    };
-  }, [restProps]);
-
-  const generatedClassNames = clsx([
-    boxClass,
-    atoms({
-      ...defaultAtoms,
-      ...atomProps,
-      ...atomShorthands,
-    }),
-    {
-      [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
-      [scrollContainerClass]: scroll,
-      [debugClass]: debug,
-    },
-    className,
-  ]);
-
-  return createElement(
-    as,
-    {
-      className: generatedClassNames,
-      style: props.style,
-      ...nativeProps,
-      ref,
-    },
-    children,
-  );
-});
+    return createElement(
+        as,
+        {
+            className: generatedClassNames,
+            style: props.style,
+            ...nativeProps,
+            ref,
+        },
+        children,
+    )
+})
 
 // https://stackoverflow.com/questions/60141960/typescript-key-value-relation-preserving-object-entries-type
 type Entries<T> = {
-  [K in keyof T]: [K, T[K]];
-}[keyof T][];
+    [K in keyof T]: [K, T[K]]
+}[keyof T][]

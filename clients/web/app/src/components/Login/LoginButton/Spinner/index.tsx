@@ -1,1 +1,1 @@
-export { ButtonSpinner as Spinner } from "./ButtonSpinner";
+export { ButtonSpinner as Spinner } from './ButtonSpinner'

@@ -1,188 +1,168 @@
-import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $isAtNodeEnd } from "@lexical/selection";
+import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link'
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
+import { $isAtNodeEnd } from '@lexical/selection'
 import {
-  $getSelection,
-  $isRangeSelection,
-  $isTextNode,
-  FORMAT_TEXT_COMMAND,
-  RangeSelection,
-} from "lexical";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  INSERT_ORDERED_LIST_COMMAND,
-  INSERT_UNORDERED_LIST_COMMAND,
-} from "@lexical/list";
-import { Box, IconButton, Stack } from "@ui";
-import { vars } from "ui/styles/vars.css";
+    $getSelection,
+    $isRangeSelection,
+    $isTextNode,
+    FORMAT_TEXT_COMMAND,
+    RangeSelection,
+} from 'lexical'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list'
+import { Box, IconButton, Stack } from '@ui'
+import { vars } from 'ui/styles/vars.css'
 
 export const InlineToolbar = (props: {
-  onAddLinkClick: () => void;
-  onClose: () => void;
-  position:
-    | undefined
-    | {
-        top: number;
-        left: number;
-      };
+    onAddLinkClick: () => void
+    onClose: () => void
+    position:
+        | undefined
+        | {
+              top: number
+              left: number
+          }
 }) => {
-  const [editor] = useLexicalComposerContext();
-  const [isText, setIsText] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isBold, setIsBold] = useState(false);
-  const [isLink, setIsLink] = useState(false);
+    const [editor] = useLexicalComposerContext()
+    const [isText, setIsText] = useState(false)
+    const [isItalic, setIsItalic] = useState(false)
+    const [isBold, setIsBold] = useState(false)
+    const [isLink, setIsLink] = useState(false)
 
-  const updateToolbar = useCallback(() => {
-    editor.getEditorState().read(() => {
-      const selection = $getSelection();
-      const nativeSelection = window.getSelection();
-      const rootElement = editor.getRootElement();
+    const updateToolbar = useCallback(() => {
+        editor.getEditorState().read(() => {
+            const selection = $getSelection()
+            const nativeSelection = window.getSelection()
+            const rootElement = editor.getRootElement()
 
-      if (
-        nativeSelection !== null &&
-        (!$isRangeSelection(selection) ||
-          rootElement === null ||
-          !rootElement.contains(nativeSelection.anchorNode))
-      ) {
-        setIsText(false);
-        return;
-      }
+            if (
+                nativeSelection !== null &&
+                (!$isRangeSelection(selection) ||
+                    rootElement === null ||
+                    !rootElement.contains(nativeSelection.anchorNode))
+            ) {
+                setIsText(false)
+                return
+            }
 
-      if (!$isRangeSelection(selection)) {
-        return;
-      }
+            if (!$isRangeSelection(selection)) {
+                return
+            }
 
-      const node = getSelectedNode(selection);
+            const node = getSelectedNode(selection)
 
-      setIsBold(selection.hasFormat("bold"));
-      setIsItalic(selection.hasFormat("italic"));
+            setIsBold(selection.hasFormat('bold'))
+            setIsItalic(selection.hasFormat('italic'))
 
-      // Update links
-      const parent = node.getParent();
+            // Update links
+            const parent = node.getParent()
 
-      if ($isLinkNode(parent) || $isLinkNode(node)) {
-        setIsLink(true);
-      } else {
-        setIsLink(false);
-      }
+            if ($isLinkNode(parent) || $isLinkNode(node)) {
+                setIsLink(true)
+            } else {
+                setIsLink(false)
+            }
 
-      if (selection.getTextContent() !== "") {
-        setIsText($isTextNode(node));
-      } else {
-        setIsText(false);
-      }
-    });
-  }, [editor]);
+            if (selection.getTextContent() !== '') {
+                setIsText($isTextNode(node))
+            } else {
+                setIsText(false)
+            }
+        })
+    }, [editor])
 
-  useEffect(() => {
-    return editor.registerUpdateListener(() => {
-      updateToolbar();
-    });
-  }, [editor, updateToolbar]);
+    useEffect(() => {
+        return editor.registerUpdateListener(() => {
+            updateToolbar()
+        })
+    }, [editor, updateToolbar])
 
-  const onBoldClick = () => {
-    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-  };
-  const onItalicClick = () => {
-    editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-  };
-
-  const onOrderedListClick = () => {
-    editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
-  };
-
-  const onBulletListClick = () => {
-    editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
-  };
-
-  const onLinkClick = () => {
-    if (isLink) {
-      editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-    } else {
-      props.onAddLinkClick();
+    const onBoldClick = () => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')
     }
-  };
+    const onItalicClick = () => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
+    }
 
-  const tooltipRef = useRef<HTMLDivElement>(null);
+    const onOrderedListClick = () => {
+        editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
+    }
 
-  useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      if (e.target && tooltipRef.current) {
-        const isWithinBounds = tooltipRef.current.contains(
-          e.target as HTMLElement,
-        );
-        if (!isWithinBounds) {
-          props.onClose();
+    const onBulletListClick = () => {
+        editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+    }
+
+    const onLinkClick = () => {
+        if (isLink) {
+            editor.dispatchCommand(TOGGLE_LINK_COMMAND, null)
+        } else {
+            props.onAddLinkClick()
         }
-      }
-    };
-    window.addEventListener("mousedown", onClick);
-    return () => {
-      window.removeEventListener("mousedown", onClick);
-    };
-  }, [props]);
+    }
 
-  return !isText || !props.position ? null : (
-    <Stack
-      horizontal
-      border
-      gap="sm"
-      pointerEvents="auto"
-      position="absolute"
-      style={{
-        ...props.position,
-        transform: `translateY(calc(-100% - ${vars.space.sm})) translateX(-50%)`,
-      }}
-      background="level2"
-      rounded="sm"
-      padding="sm"
-      width="auto"
-      color="gray2"
-      ref={tooltipRef}
-    >
-      <IconButton
-        opaque
-        active={isItalic}
-        icon="italic"
-        onMouseDown={onItalicClick}
-      />
-      <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />
-      <IconButton opaque active={isLink} icon="link" onClick={onLinkClick} />
-      <Divider />
-      <IconButton
-        opaque
-        active={isLink}
-        icon="numberedlist"
-        onClick={onOrderedListClick}
-      />
-      <IconButton
-        opaque
-        active={isLink}
-        icon="bulletedlist"
-        onClick={onBulletListClick}
-      />
-    </Stack>
-  );
-};
+    const tooltipRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const onClick = (e: MouseEvent) => {
+            if (e.target && tooltipRef.current) {
+                const isWithinBounds = tooltipRef.current.contains(e.target as HTMLElement)
+                if (!isWithinBounds) {
+                    props.onClose()
+                }
+            }
+        }
+        window.addEventListener('mousedown', onClick)
+        return () => {
+            window.removeEventListener('mousedown', onClick)
+        }
+    }, [props])
+
+    return !isText || !props.position ? null : (
+        <Stack
+            horizontal
+            border
+            gap="sm"
+            pointerEvents="auto"
+            position="absolute"
+            style={{
+                ...props.position,
+                transform: `translateY(calc(-100% - ${vars.space.sm})) translateX(-50%)`,
+            }}
+            background="level2"
+            rounded="sm"
+            padding="sm"
+            width="auto"
+            color="gray2"
+            ref={tooltipRef}
+        >
+            <IconButton opaque active={isItalic} icon="italic" onMouseDown={onItalicClick} />
+            <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />
+            <IconButton opaque active={isLink} icon="link" onClick={onLinkClick} />
+            <Divider />
+            <IconButton opaque active={isLink} icon="numberedlist" onClick={onOrderedListClick} />
+            <IconButton opaque active={isLink} icon="bulletedlist" onClick={onBulletListClick} />
+        </Stack>
+    )
+}
 
 const Divider = () => (
-  <Box paddingX="none">
-    <Box borderLeft grow />
-  </Box>
-);
+    <Box paddingX="none">
+        <Box borderLeft grow />
+    </Box>
+)
 
 const getSelectedNode = (selection: RangeSelection) => {
-  const anchor = selection.anchor;
-  const focus = selection.focus;
-  const anchorNode = selection.anchor.getNode();
-  const focusNode = selection.focus.getNode();
-  if (anchorNode === focusNode) {
-    return anchorNode;
-  }
-  const isBackward = selection.isBackward();
-  if (isBackward) {
-    return $isAtNodeEnd(focus) ? anchorNode : focusNode;
-  } else {
-    return $isAtNodeEnd(anchor) ? focusNode : anchorNode;
-  }
-};
+    const anchor = selection.anchor
+    const focus = selection.focus
+    const anchorNode = selection.anchor.getNode()
+    const focusNode = selection.focus.getNode()
+    if (anchorNode === focusNode) {
+        return anchorNode
+    }
+    const isBackward = selection.isBackward()
+    if (isBackward) {
+        return $isAtNodeEnd(focus) ? anchorNode : focusNode
+    } else {
+        return $isAtNodeEnd(anchor) ? focusNode : anchorNode
+    }
+}

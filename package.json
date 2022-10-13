@@ -8,7 +8,9 @@
     "build:contracts-governance": "yarn workspace @harmony/zion-governance build",
     "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
     "prepare": "husky install",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "prettier:check": "prettier --check .",
+    "prettier:fix": "prettier --write ."
   },
   "workspaces": [
     "clients/web/app",

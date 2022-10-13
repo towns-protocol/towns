@@ -1,243 +1,223 @@
-import { motion } from "framer-motion";
-import React, { useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
-import useEvent from "react-use-event-hook";
+import { motion } from 'framer-motion'
+import React, { useCallback, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router'
+import useEvent from 'react-use-event-hook'
 import {
-  LoginStatus,
-  WalletStatus,
-  useMatrixStore,
-  useMyProfile,
-  useWeb3Context,
-  useZionClient,
-} from "use-zion-client";
-import { vars } from "ui/styles/vars.css";
+    LoginStatus,
+    WalletStatus,
+    useMatrixStore,
+    useMyProfile,
+    useWeb3Context,
+    useZionClient,
+} from 'use-zion-client'
+import { vars } from 'ui/styles/vars.css'
+import { Avatar, Box, Button, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
 import {
-  Avatar,
-  Box,
-  Button,
-  Icon,
-  RadioSelect,
-  Stack,
-  Text,
-  TextField,
-} from "@ui";
-import {
-  registerWalletMsgToSign,
-  useCheckRegistrationStatusWhen,
-} from "@components/Login/LoginComponent";
+    registerWalletMsgToSign,
+    useCheckRegistrationStatusWhen,
+} from '@components/Login/LoginComponent'
 
 const placeholders = {
-  names: [
-    "ben.eth",
-    "benrbn.eth",
-    "selashtalk.eth",
-    "lupi.eth",
-    "genius.eth",
-    "hello.eth",
-    "1345.eth",
-    "jimmicricket.eth",
-    "looper.eth",
-  ],
-  nfts: Array(20)
-    .fill(0)
-    .map((_, index) => `/placeholders/nft_${index + 1}.png`),
-};
+    names: [
+        'ben.eth',
+        'benrbn.eth',
+        'selashtalk.eth',
+        'lupi.eth',
+        'genius.eth',
+        'hello.eth',
+        '1345.eth',
+        'jimmicricket.eth',
+        'looper.eth',
+    ],
+    nfts: Array(20)
+        .fill(0)
+        .map((_, index) => `/placeholders/nft_${index + 1}.png`),
+}
 
 export const RegisterForm = () => {
-  const { accounts, walletStatus } = useWeb3Context();
-  const { registerWallet, setDisplayName, setAvatarUrl } = useZionClient();
-  const navigate = useNavigate();
-  const { loginStatus } = useMatrixStore();
-  const myProfile = useMyProfile();
+    const { accounts, walletStatus } = useWeb3Context()
+    const { registerWallet, setDisplayName, setAvatarUrl } = useZionClient()
+    const navigate = useNavigate()
+    const { loginStatus } = useMatrixStore()
+    const myProfile = useMyProfile()
 
-  const { setValue, resetField, register, handleSubmit, watch, formState } =
-    useForm({
-      defaultValues: {
-        walletAddress: accounts[0],
-        ens: undefined,
-        displayName: myProfile?.displayName ?? "",
-        nft: "",
-      },
-    });
+    const { setValue, resetField, register, handleSubmit, watch, formState } = useForm({
+        defaultValues: {
+            walletAddress: accounts[0],
+            ens: undefined,
+            displayName: myProfile?.displayName ?? '',
+            nft: '',
+        },
+    })
 
-  useEffect(() => {
-    const displayName = myProfile?.displayName;
-    if (displayName) {
-      setValue("displayName", displayName);
-    }
-  }, [myProfile?.displayName, setValue]);
-  useEffect(() => {
-    const avatarUrl = myProfile?.avatarUrl;
-    if (avatarUrl) {
-      setValue("nft", avatarUrl);
-    }
-  }, [myProfile?.avatarUrl, setValue]);
-
-  const isConnected = walletStatus === WalletStatus.Connected;
-  const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected);
-
-  console.log({ registrationStatus });
-  console.log(
-    "loaded onboarding",
-    isConnected,
-    registrationStatus,
-    loginStatus,
-    myProfile,
-  );
-  useEffect(() => {
-    if (!isConnected) {
-      console.log("navigate away");
-      navigate("/");
-    } else {
-      console.log("STAY");
-    }
-  }, [isConnected, navigate, registrationStatus]);
-
-  const onSubmit = useCallback(
-    (data: { displayName: string; nft: string }) => {
-      (async () => {
-        try {
-          if (!isConnected) {
-            console.error("Wallet not connected, shouldn't be on this page");
-            navigate("/");
-            return;
-          }
-          if (loginStatus === LoginStatus.LoggedOut) {
-            await registerWallet(registerWalletMsgToSign);
-          }
-          if (data.displayName !== myProfile?.displayName) {
-            await setDisplayName(data.displayName);
-          }
-          if (data.nft !== myProfile?.avatarUrl) {
-            await setAvatarUrl(data.nft);
-          }
-        } catch (e: unknown) {
-          console.warn(e);
+    useEffect(() => {
+        const displayName = myProfile?.displayName
+        if (displayName) {
+            setValue('displayName', displayName)
         }
-        console.log("navigate away 2");
-        navigate("/");
-      })();
-    },
-    [
-      isConnected,
-      loginStatus,
-      myProfile?.avatarUrl,
-      myProfile?.displayName,
-      navigate,
-      registerWallet,
-      setAvatarUrl,
-      setDisplayName,
-    ],
-  );
-  const [fieldENS, fieldDisplayName, fieldNFT] = watch([
-    "ens",
-    "displayName",
-    "nft",
-  ]);
+    }, [myProfile?.displayName, setValue])
+    useEffect(() => {
+        const avatarUrl = myProfile?.avatarUrl
+        if (avatarUrl) {
+            setValue('nft', avatarUrl)
+        }
+    }, [myProfile?.avatarUrl, setValue])
 
-  const isENS = placeholders.names.includes(fieldDisplayName);
+    const isConnected = walletStatus === WalletStatus.Connected
+    const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected)
 
-  const resetENSField = useEvent(() => {
-    resetField("ens", undefined);
-  });
+    console.log({ registrationStatus })
+    console.log('loaded onboarding', isConnected, registrationStatus, loginStatus, myProfile)
+    useEffect(() => {
+        if (!isConnected) {
+            console.log('navigate away')
+            navigate('/')
+        } else {
+            console.log('STAY')
+        }
+    }, [isConnected, navigate, registrationStatus])
 
-  useEffect(() => {
-    if (!isENS) {
-      resetENSField();
-    }
-  }, [isENS, resetENSField]);
+    const onSubmit = useCallback(
+        (data: { displayName: string; nft: string }) => {
+            ;(async () => {
+                try {
+                    if (!isConnected) {
+                        console.error("Wallet not connected, shouldn't be on this page")
+                        navigate('/')
+                        return
+                    }
+                    if (loginStatus === LoginStatus.LoggedOut) {
+                        await registerWallet(registerWalletMsgToSign)
+                    }
+                    if (data.displayName !== myProfile?.displayName) {
+                        await setDisplayName(data.displayName)
+                    }
+                    if (data.nft !== myProfile?.avatarUrl) {
+                        await setAvatarUrl(data.nft)
+                    }
+                } catch (e: unknown) {
+                    console.warn(e)
+                }
+                console.log('navigate away 2')
+                navigate('/')
+            })()
+        },
+        [
+            isConnected,
+            loginStatus,
+            myProfile?.avatarUrl,
+            myProfile?.displayName,
+            navigate,
+            registerWallet,
+            setAvatarUrl,
+            setDisplayName,
+        ],
+    )
+    const [fieldENS, fieldDisplayName, fieldNFT] = watch(['ens', 'displayName', 'nft'])
 
-  useEffect(() => {
-    if (fieldENS) {
-      setValue("displayName", fieldENS, { shouldValidate: true });
-    }
-  }, [fieldENS, setValue]);
+    const isENS = placeholders.names.includes(fieldDisplayName)
 
-  return (
-    <Stack
-      gap="lg"
-      minWidth="600"
-      as="form"
-      autoCorrect="off"
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      <TextField
-        autoFocus
-        readOnly
-        background="level2"
-        label="Connected Wallet"
-        secondaryLabel="(required)"
-        description="Your wallet is your identity. It will be associated with your Zion account. You will have the option to switch wallets later."
-        placeholder="0x00"
-        after={<Icon type="wallet" />}
-        {...register("walletAddress")}
-      />
+    const resetENSField = useEvent(() => {
+        resetField('ens', undefined)
+    })
 
-      <Stack gap="sm">
-        <TextField
-          autoFocus
-          autoCorrect="off"
-          background="level2"
-          tone={formState.errors.displayName ? "negative" : undefined}
-          inputColor={isENS ? "etherum" : undefined}
-          label="Display Name"
-          secondaryLabel="(required)"
-          description="This is how others will see you"
-          placeholder="Enter a display name"
-          autoComplete="off"
-          after={isENS && <Icon type="verified" />}
-          {...register("displayName", { required: true })}
-        />
+    useEffect(() => {
+        if (!isENS) {
+            resetENSField()
+        }
+    }, [isENS, resetENSField])
 
-        {!!placeholders.names?.length && (
-          <Box padding border rounded="sm">
-            <RadioSelect
-              label="(Optional) Set an ENS as your username:"
-              renderLabel={(label) => (
-                <Text size="lg" color="gray2">
-                  {label}
-                </Text>
-              )}
-              columns={2}
-              options={placeholders.names.map((value) => ({
-                value,
-                label: value,
-              }))}
-              applyChildProps={() => register("ens", { required: false })}
+    useEffect(() => {
+        if (fieldENS) {
+            setValue('displayName', fieldENS, { shouldValidate: true })
+        }
+    }, [fieldENS, setValue])
+
+    return (
+        <Stack
+            gap="lg"
+            minWidth="600"
+            as="form"
+            autoCorrect="off"
+            onSubmit={handleSubmit(onSubmit)}
+        >
+            <TextField
+                autoFocus
+                readOnly
+                background="level2"
+                label="Connected Wallet"
+                secondaryLabel="(required)"
+                description="Your wallet is your identity. It will be associated with your Zion account. You will have the option to switch wallets later."
+                placeholder="0x00"
+                after={<Icon type="wallet" />}
+                {...register('walletAddress')}
             />
-          </Box>
-        )}
-      </Stack>
 
-      {!!placeholders.nfts.length && (
-        <RadioSelect
-          columns="60px"
-          description="You will be able to change this per space later."
-          label="NFT profile picture"
-          render={(value, selected) => (
-            <MotionBox
-              rounded="full"
-              border="strong"
-              animate={{
-                opacity: !!fieldNFT && !selected ? 0.5 : 1,
-                borderColor: !selected
-                  ? `rgba(255,255,255,0)`
-                  : vars.color.foreground.default,
-              }}
-            >
-              <Avatar src={value} size="avatar_lg" />
-            </MotionBox>
-          )}
-          options={placeholders.nfts.map((value) => ({ value, label: value }))}
-          applyChildProps={() => register("nft", { required: false })}
-        />
-      )}
-      <Button type="submit" tone="cta1">
-        Next
-      </Button>
-    </Stack>
-  );
-};
+            <Stack gap="sm">
+                <TextField
+                    autoFocus
+                    autoCorrect="off"
+                    background="level2"
+                    tone={formState.errors.displayName ? 'negative' : undefined}
+                    inputColor={isENS ? 'etherum' : undefined}
+                    label="Display Name"
+                    secondaryLabel="(required)"
+                    description="This is how others will see you"
+                    placeholder="Enter a display name"
+                    autoComplete="off"
+                    after={isENS && <Icon type="verified" />}
+                    {...register('displayName', { required: true })}
+                />
 
-const MotionBox = motion(Box);
+                {!!placeholders.names?.length && (
+                    <Box padding border rounded="sm">
+                        <RadioSelect
+                            label="(Optional) Set an ENS as your username:"
+                            renderLabel={(label) => (
+                                <Text size="lg" color="gray2">
+                                    {label}
+                                </Text>
+                            )}
+                            columns={2}
+                            options={placeholders.names.map((value) => ({
+                                value,
+                                label: value,
+                            }))}
+                            applyChildProps={() => register('ens', { required: false })}
+                        />
+                    </Box>
+                )}
+            </Stack>
+
+            {!!placeholders.nfts.length && (
+                <RadioSelect
+                    columns="60px"
+                    description="You will be able to change this per space later."
+                    label="NFT profile picture"
+                    render={(value, selected) => (
+                        <MotionBox
+                            rounded="full"
+                            border="strong"
+                            animate={{
+                                opacity: !!fieldNFT && !selected ? 0.5 : 1,
+                                borderColor: !selected
+                                    ? `rgba(255,255,255,0)`
+                                    : vars.color.foreground.default,
+                            }}
+                        >
+                            <Avatar src={value} size="avatar_lg" />
+                        </MotionBox>
+                    )}
+                    options={placeholders.nfts.map((value) => ({ value, label: value }))}
+                    applyChildProps={() => register('nft', { required: false })}
+                />
+            )}
+            <Button type="submit" tone="cta1">
+                Next
+            </Button>
+        </Stack>
+    )
+}
+
+const MotionBox = motion(Box)

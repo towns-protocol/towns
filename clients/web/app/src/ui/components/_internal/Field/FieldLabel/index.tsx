@@ -1,1 +1,1 @@
-export { FieldLabel } from "./FieldLabel";
+export { FieldLabel } from './FieldLabel'

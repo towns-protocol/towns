@@ -1,126 +1,118 @@
-import { Allotment } from "allotment";
-import React, { useCallback } from "react";
-import { Outlet, useOutlet, useParams } from "react-router";
+import { Allotment } from 'allotment'
+import React, { useCallback } from 'react'
+import { Outlet, useOutlet, useParams } from 'react-router'
 import {
-  ChannelContextProvider,
-  Membership,
-  useChannelData,
-  useChannelTimeline,
-  useMyMembership,
-  useZionClient,
-} from "use-zion-client";
-import { ChannelHeader } from "@components/ChannelHeader";
-import { MessageTimelineScroller } from "@components/MessageTimeline";
-import { RichTextEditor } from "@components/RichText/RichTextEditor";
-import { Box, Button, Stack } from "@ui";
-import { usePersistPanes } from "hooks/usePersistPanes";
+    ChannelContextProvider,
+    Membership,
+    useChannelData,
+    useChannelTimeline,
+    useMyMembership,
+    useZionClient,
+} from 'use-zion-client'
+import { ChannelHeader } from '@components/ChannelHeader'
+import { MessageTimelineScroller } from '@components/MessageTimeline'
+import { RichTextEditor } from '@components/RichText/RichTextEditor'
+import { Box, Button, Stack } from '@ui'
+import { usePersistPanes } from 'hooks/usePersistPanes'
 
 export const SpacesChannel = () => {
-  return (
-    <SpaceChannelWrapper>
-      <SpacesChannelComponent />
-    </SpaceChannelWrapper>
-  );
-};
+    return (
+        <SpaceChannelWrapper>
+            <SpacesChannelComponent />
+        </SpaceChannelWrapper>
+    )
+}
 
 export const SpacesChannelRoute = () => {
-  return (
-    <SpaceChannelWrapper>
-      <Outlet />
-    </SpaceChannelWrapper>
-  );
-};
+    return (
+        <SpaceChannelWrapper>
+            <Outlet />
+        </SpaceChannelWrapper>
+    )
+}
 
 const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
-  const { channelSlug } = useParams();
-  if (!channelSlug) {
-    return <>SpacesChannel Route expects a channelSlug</>;
-  }
-  return (
-    <ChannelContextProvider channelId={channelSlug}>
-      {props.children}
-    </ChannelContextProvider>
-  );
-};
+    const { channelSlug } = useParams()
+    if (!channelSlug) {
+        return <>SpacesChannel Route expects a channelSlug</>
+    }
+    return <ChannelContextProvider channelId={channelSlug}>{props.children}</ChannelContextProvider>
+}
 
 const SpacesChannelComponent = () => {
-  const { messageId } = useParams();
-  const { sizes, onSizesChange } = usePersistPanes(["channel", "right"]);
-  const outlet = useOutlet();
+    const { messageId } = useParams()
+    const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
+    const outlet = useOutlet()
 
-  const { joinRoom, sendMessage } = useZionClient();
+    const { joinRoom, sendMessage } = useZionClient()
 
-  const { spaceId, channelId, channel } = useChannelData();
+    const { spaceId, channelId, channel } = useChannelData()
 
-  const myMembership = useMyMembership(channelId);
-  const channelMessages = useChannelTimeline();
+    const myMembership = useMyMembership(channelId)
+    const channelMessages = useChannelTimeline()
 
-  const onSend = useCallback(
-    (value: string) => {
-      if (value && channelId) {
-        sendMessage(channelId, value);
-      }
-    },
-    [channelId, sendMessage],
-  );
+    const onSend = useCallback(
+        (value: string) => {
+            if (value && channelId) {
+                sendMessage(channelId, value)
+            }
+        },
+        [channelId, sendMessage],
+    )
 
-  const onJoinChannel = useCallback(() => {
-    joinRoom(channelId);
-  }, [joinRoom, channelId]);
+    const onJoinChannel = useCallback(() => {
+        joinRoom(channelId)
+    }, [joinRoom, channelId])
 
-  const hasThreadOpen = !!messageId;
+    const hasThreadOpen = !!messageId
 
-  if (!channel) {
+    if (!channel) {
+        return (
+            <div>
+                404 Channel {spaceId.matrixRoomId} / {channelId.matrixRoomId} not found
+            </div>
+        )
+    }
+
     return (
-      <div>
-        404 Channel {spaceId.matrixRoomId} / {channelId.matrixRoomId} not found
-      </div>
-    );
-  }
+        <Stack horizontal minHeight="100%">
+            <Allotment onChange={onSizesChange}>
+                <Allotment.Pane minSize={550}>
+                    {myMembership !== Membership.Join ? (
+                        <Box absoluteFill centerContent>
+                            <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>
+                                Join #{channel.label}
+                            </Button>
+                        </Box>
+                    ) : (
+                        <Box grow absoluteFill height="100%">
+                            <MessageTimelineScroller
+                                hideThreads
+                                key={channelId.slug}
+                                spaceId={spaceId}
+                                channelId={channelId}
+                                events={channelMessages}
+                                before={<ChannelHeader name={channel.label} />}
+                            />
 
-  return (
-    <Stack horizontal minHeight="100%">
-      <Allotment onChange={onSizesChange}>
-        <Allotment.Pane minSize={550}>
-          {myMembership !== Membership.Join ? (
-            <Box absoluteFill centerContent>
-              <Button
-                key={channelId.slug}
-                size="button_lg"
-                onClick={onJoinChannel}
-              >
-                Join #{channel.label}
-              </Button>
-            </Box>
-          ) : (
-            <Box grow absoluteFill height="100%">
-              <MessageTimelineScroller
-                hideThreads
-                key={channelId.slug}
-                spaceId={spaceId}
-                channelId={channelId}
-                events={channelMessages}
-                before={<ChannelHeader name={channel.label} />}
-              />
-
-              <Box gap paddingBottom="lg" paddingX="lg">
-                <RichTextEditor
-                  editable
-                  autoFocus={!hasThreadOpen}
-                  initialValue=""
-                  placeholder={`Send a message to #${channel?.label}`}
-                  onSend={onSend}
-                />
-              </Box>
-            </Box>
-          )}
-        </Allotment.Pane>
-        {outlet && (
-          <Allotment.Pane minSize={300} preferredSize={sizes[1] || 840}>
-            {outlet}
-          </Allotment.Pane>
-        )}
-      </Allotment>
-    </Stack>
-  );
-};
+                            <Box gap paddingBottom="lg" paddingX="lg">
+                                <RichTextEditor
+                                    editable
+                                    autoFocus={!hasThreadOpen}
+                                    initialValue=""
+                                    placeholder={`Send a message to #${channel?.label}`}
+                                    onSend={onSend}
+                                />
+                            </Box>
+                        </Box>
+                    )}
+                </Allotment.Pane>
+                {outlet && (
+                    <Allotment.Pane minSize={300} preferredSize={sizes[1] || 840}>
+                        {outlet}
+                    </Allotment.Pane>
+                )}
+            </Allotment>
+        </Stack>
+    )
+}

@@ -1,44 +1,44 @@
-import React, { createContext, useEffect, useState } from "react";
-import { BoxProps, SizeBox } from "@ui";
+import React, { createContext, useEffect, useState } from 'react'
+import { BoxProps, SizeBox } from '@ui'
 
-type Props = BoxProps;
+type Props = BoxProps
 
 export const SidebarContext = createContext<{
-  isInteracting: boolean;
-  activeItem?: string | null;
-  setActiveItem?: (key: string | null) => void;
+    isInteracting: boolean
+    activeItem?: string | null
+    setActiveItem?: (key: string | null) => void
 }>({
-  isInteracting: false,
-});
+    isInteracting: false,
+})
 
 export const SideBar = (props: Props) => {
-  const [activeItem, setActiveItem] = useState<string | null>();
+    const [activeItem, setActiveItem] = useState<string | null>()
 
-  const isInteracting = typeof activeItem === "string";
+    const isInteracting = typeof activeItem === 'string'
 
-  useEffect(() => {
-    const onLeave = () => {
-      setActiveItem(null);
-    };
-    if (isInteracting) {
-      window.addEventListener("scroll", onLeave);
-      window.addEventListener("blur", onLeave);
-    }
-    return () => {
-      window.removeEventListener("scroll", onLeave);
-      window.removeEventListener("blur", onLeave);
-    };
-  }, [isInteracting]);
+    useEffect(() => {
+        const onLeave = () => {
+            setActiveItem(null)
+        }
+        if (isInteracting) {
+            window.addEventListener('scroll', onLeave)
+            window.addEventListener('blur', onLeave)
+        }
+        return () => {
+            window.removeEventListener('scroll', onLeave)
+            window.removeEventListener('blur', onLeave)
+        }
+    }, [isInteracting])
 
-  return (
-    <SidebarContext.Provider
-      value={{
-        isInteracting,
-        activeItem,
-        setActiveItem,
-      }}
-    >
-      <SizeBox grow scroll overflowX="hidden" {...props} absoluteFill />
-    </SidebarContext.Provider>
-  );
-};
+    return (
+        <SidebarContext.Provider
+            value={{
+                isInteracting,
+                activeItem,
+                setActiveItem,
+            }}
+        >
+            <SizeBox grow scroll overflowX="hidden" {...props} absoluteFill />
+        </SidebarContext.Provider>
+    )
+}

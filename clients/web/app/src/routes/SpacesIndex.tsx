@@ -1,18 +1,12 @@
-import React, { ComponentProps, forwardRef } from "react";
-import { Message } from "@components/Message";
-import { Box, BoxProps } from "@ui";
+import React, { ComponentProps, forwardRef } from 'react'
+import { Message } from '@components/Message'
+import { Box, BoxProps } from '@ui'
 
-export const LiquidContainer = forwardRef<
-  HTMLElement,
-  { fullbleed?: boolean } & BoxProps
->(({ fullbleed, ...props }, ref) => (
-  <Box
-    maxWidth={(!fullbleed && "1200") || "100%"}
-    width="100%"
-    {...props}
-    ref={ref}
-  />
-));
+export const LiquidContainer = forwardRef<HTMLElement, { fullbleed?: boolean } & BoxProps>(
+    ({ fullbleed, ...props }, ref) => (
+        <Box maxWidth={(!fullbleed && '1200') || '100%'} width="100%" {...props} ref={ref} />
+    ),
+)
 
 /*
 const FakeSpaceMessages = () => (
@@ -77,8 +71,8 @@ const FakeSpaceMessages = () => (
 );
 */
 export const RoundedMessage = (props: ComponentProps<typeof Message>) => (
-  <Message rounded="sm" padding="paragraph" background="default" {...props} />
-);
+    <Message rounded="sm" padding="paragraph" background="default" {...props} />
+)
 
 /*
 const QuotedMessage = (props: {

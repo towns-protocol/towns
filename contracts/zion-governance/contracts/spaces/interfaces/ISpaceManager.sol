@@ -127,7 +127,7 @@ interface ISpaceManager {
     view
     returns (DataTypes.Permission[] memory);
 
-function getPermissionFromMap(bytes32 permissionType)
+  function getPermissionFromMap(bytes32 permissionType)
     external
     view
     returns (DataTypes.Permission memory permission);

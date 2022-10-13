@@ -1,24 +1,24 @@
 {
-  "root": true,
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 8,
-    "project": ["./tsconfig.eslint.json"],
-    "sourceType": "module"
-  },
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
-    "plugin:prettier/recommended",
-    "plugin:react-hooks/recommended"
-  ],
-  "plugins": ["@typescript-eslint", "prettier"],
-  "rules": {
-    "@typescript-eslint/no-floating-promises": "error",
-    "@typescript-eslint/no-base-to-string": "error"
-  },
-  "globals": {
-    "React": "writable"
-  }
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 8,
+        "project": ["./tsconfig.eslint.json"],
+        "sourceType": "module"
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "plugin:prettier/recommended",
+        "plugin:react-hooks/recommended"
+    ],
+    "plugins": ["@typescript-eslint", "prettier"],
+    "rules": {
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/no-base-to-string": "error"
+    },
+    "globals": {
+        "React": "writable"
+    }
 }

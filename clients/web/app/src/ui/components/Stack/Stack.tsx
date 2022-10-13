@@ -1,19 +1,17 @@
-import React, { forwardRef } from "react";
-import { Box } from "@ui";
-import { BoxProps } from "../Box/Box";
+import React, { forwardRef } from 'react'
+import { Box } from '@ui'
+import { BoxProps } from '../Box/Box'
 
 export type StackProps = {
-  horizontal?: boolean;
-  direction?: BoxProps["direction"];
-  gap?: BoxProps["gap"];
-} & BoxProps;
+    horizontal?: boolean
+    direction?: BoxProps['direction']
+    gap?: BoxProps['gap']
+} & BoxProps
 
-export const Stack = forwardRef<HTMLElement, StackProps>(
-  ({ horizontal, ...boxProps }, ref) => (
+export const Stack = forwardRef<HTMLElement, StackProps>(({ horizontal, ...boxProps }, ref) => (
     <Box
-      ref={ref}
-      direction={boxProps.direction ?? (horizontal ? "row" : "column")}
-      {...boxProps}
+        ref={ref}
+        direction={boxProps.direction ?? (horizontal ? 'row' : 'column')}
+        {...boxProps}
     />
-  ),
-);
+))

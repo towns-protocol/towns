@@ -1,32 +1,32 @@
-import { ComponentMeta, ComponentStory } from "@storybook/react";
-import React from "react";
-import { StoryContainer } from "stories/StoryUtils";
-import { Avatar } from "./Avatar";
+import { ComponentMeta, ComponentStory } from '@storybook/react'
+import React from 'react'
+import { StoryContainer } from 'stories/StoryUtils'
+import { Avatar } from './Avatar'
 
 export default {
-  title: "@ui/Avatar",
-  component: Avatar,
-  argTypes: {
-    size: {
-      defaultValue: "avatar_lg",
-      control: "select",
+    title: '@ui/Avatar',
+    component: Avatar,
+    argTypes: {
+        size: {
+            defaultValue: 'avatar_lg',
+            control: 'select',
+        },
+        src: {
+            defaultValue: '/placeholders/nft_1.png',
+        },
     },
-    src: {
-      defaultValue: "/placeholders/nft_1.png",
+    parameters: {
+        docs: {
+            page: null,
+        },
     },
-  },
-  parameters: {
-    docs: {
-      page: null,
-    },
-  },
-} as ComponentMeta<typeof Avatar>;
+} as ComponentMeta<typeof Avatar>
 
 const Template: ComponentStory<typeof Avatar> = (args) => (
-  <StoryContainer>
-    <Avatar {...args} />
-  </StoryContainer>
-);
+    <StoryContainer>
+        <Avatar {...args} />
+    </StoryContainer>
+)
 
-export const Default = Template.bind({});
-Default.args = {};
+export const Default = Template.bind({})
+Default.args = {}

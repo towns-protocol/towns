@@ -1,12 +1,12 @@
-import { style } from "@vanilla-extract/css";
-import { createSprinkles } from "@vanilla-extract/sprinkles";
-import { vars } from "ui/styles/vars.css";
-import { iconProperties } from "./iconProperties.css";
+import { style } from '@vanilla-extract/css'
+import { createSprinkles } from '@vanilla-extract/sprinkles'
+import { vars } from 'ui/styles/vars.css'
+import { iconProperties } from './iconProperties.css'
 
-export const iconAtoms = createSprinkles(iconProperties);
+export const iconAtoms = createSprinkles(iconProperties)
 
 export const iconBaseStyle = style({
-  borderRadius: vars.borderRadius.sm,
-});
+    borderRadius: vars.borderRadius.sm,
+})
 
-export type IconAtoms = Parameters<typeof iconAtoms>[0];
+export type IconAtoms = Parameters<typeof iconAtoms>[0]

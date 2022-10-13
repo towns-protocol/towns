@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-escape */
-const isBrowser = typeof window !== "undefined";
+const isBrowser = typeof window !== 'undefined'
 
 if (isBrowser) {
-  const naughtyFish = `
+    const naughtyFish = `
                                               /,,,,
                                     ,-*"^^^'/  ,"'
                                ,m^.   ,-"^   ,"
@@ -26,10 +26,10 @@ if (isBrowser) {
                                                                 %     ,~
                                                                   w  ,"
                                                                    ""
-`;
+`
 
-  console.log(naughtyFish);
-  console.log(`Are you being a naughty fish?`);
+    console.log(naughtyFish)
+    console.log(`Are you being a naughty fish?`)
 }
 
-export {};
+export {}

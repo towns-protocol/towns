@@ -1,12 +1,12 @@
-import React, { Suspense } from "react";
-import { Box } from "@ui";
+import React, { Suspense } from 'react'
+import { Box } from '@ui'
 
 type Props = {
-  children?: React.ReactNode;
-};
+    children?: React.ReactNode
+}
 
 export const SuspenseLoader = (props: Props) => (
-  <Suspense fallback={<Fallback />}>{props.children}</Suspense>
-);
+    <Suspense fallback={<Fallback />}>{props.children}</Suspense>
+)
 
-const Fallback = () => <Box absoluteFill centerContent />;
+const Fallback = () => <Box absoluteFill centerContent />

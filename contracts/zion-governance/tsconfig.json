@@ -1,21 +1,16 @@
 {
-  "extends": "../tsconfig.contracts.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "composite": true
-  },
-  "exclude": [
-    "./node_modules",
-    "./dist",
-    "./config",
-    "./scripts",
-    "./tmp.ts",
-    "../../node_modules"
-  ],
-  "include": [
-    "index.ts",
-    "./types/**/*.ts",
-    "./types/factories/**/*.ts",
-    "./package.json"
-  ]
+    "extends": "../tsconfig.contracts.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "composite": true
+    },
+    "exclude": [
+        "./node_modules",
+        "./dist",
+        "./config",
+        "./scripts",
+        "./tmp.ts",
+        "../../node_modules"
+    ],
+    "include": ["index.ts", "./types/**/*.ts", "./types/factories/**/*.ts", "./package.json"]
 }

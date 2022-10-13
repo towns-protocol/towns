@@ -1,24 +1,22 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react'
 
 export const useTimelineMessageEditing = () => {
-  const [editingMessageId, setEditingMessageId] = useState<string>();
+    const [editingMessageId, setEditingMessageId] = useState<string>()
 
-  const onSelectEditingMessage = useCallback(
-    (messageId: string) => {
-      setEditingMessageId(() =>
-        editingMessageId === messageId ? undefined : messageId,
-      );
-    },
-    [editingMessageId],
-  );
+    const onSelectEditingMessage = useCallback(
+        (messageId: string) => {
+            setEditingMessageId(() => (editingMessageId === messageId ? undefined : messageId))
+        },
+        [editingMessageId],
+    )
 
-  const onCancelEditingMessage = useCallback(() => {
-    setEditingMessageId(undefined);
-  }, []);
+    const onCancelEditingMessage = useCallback(() => {
+        setEditingMessageId(undefined)
+    }, [])
 
-  return {
-    editingMessageId,
-    onSelectEditingMessage,
-    onCancelEditingMessage,
-  };
-};
+    return {
+        editingMessageId,
+        onSelectEditingMessage,
+        onCancelEditingMessage,
+    }
+}

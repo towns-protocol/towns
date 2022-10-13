@@ -1,67 +1,67 @@
-import { EditorThemeClasses } from "lexical";
-import { atoms } from "ui/styles/atoms.css";
+import { EditorThemeClasses } from 'lexical'
+import { atoms } from 'ui/styles/atoms.css'
 import {
-  listitem,
-  listitemChecked,
-  listitemUnchecked,
-  nestedListItem,
-  ol,
-  ol1,
-  ol2,
-  ol3,
-  ol4,
-  paragraph,
-  root,
-  ul,
-  ul1,
-  ul2,
-  ul3,
-  ul4,
-} from "./RichTextEditor.css";
-
-export const theme: EditorThemeClasses = {
-  paragraph,
-  root,
-  code: atoms({
-    color: "accent",
-  }),
-  bold: atoms({
-    fontWeight: "strong",
-  }),
-  link: atoms({
-    color: "etherum",
-  }),
-  list: {
-    ul: ul,
-    ol: ol,
     listitem,
     listitemChecked,
     listitemUnchecked,
-    nested: {
-      listitem: nestedListItem,
-    },
-    olDepth: [ol1, ol2, ol3, ol4],
-    ulDepth: [ul1, ul2, ul3, ul4],
-  },
-  text: {
-    bold: atoms({
-      fontWeight: "strong",
-    }),
+    nestedListItem,
+    ol,
+    ol1,
+    ol2,
+    ol3,
+    ol4,
+    paragraph,
+    root,
+    ul,
+    ul1,
+    ul2,
+    ul3,
+    ul4,
+} from './RichTextEditor.css'
+
+export const theme: EditorThemeClasses = {
+    paragraph,
+    root,
     code: atoms({
-      color: "accent",
+        color: 'accent',
     }),
-    italic: atoms({
-      fontStyle: "italic",
+    bold: atoms({
+        fontWeight: 'strong',
     }),
-    strikethrough: atoms({
-      textDecoration: "lineThrough",
+    link: atoms({
+        color: 'etherum',
     }),
-    underline: atoms({
-      textDecoration: "underline",
-    }),
-  },
-  // ...codeHighlight,
-};
+    list: {
+        ul: ul,
+        ol: ol,
+        listitem,
+        listitemChecked,
+        listitemUnchecked,
+        nested: {
+            listitem: nestedListItem,
+        },
+        olDepth: [ol1, ol2, ol3, ol4],
+        ulDepth: [ul1, ul2, ul3, ul4],
+    },
+    text: {
+        bold: atoms({
+            fontWeight: 'strong',
+        }),
+        code: atoms({
+            color: 'accent',
+        }),
+        italic: atoms({
+            fontStyle: 'italic',
+        }),
+        strikethrough: atoms({
+            textDecoration: 'lineThrough',
+        }),
+        underline: atoms({
+            textDecoration: 'underline',
+        }),
+    },
+    // ...codeHighlight,
+}
 
 // TODO: keep for later...
 

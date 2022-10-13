@@ -1,43 +1,37 @@
-import React from "react";
-import { Box, Paragraph } from "..";
-import { BoxProps } from "../Box/Box";
-import { ParagraphProps } from "../Text/Paragraph";
+import React from 'react'
+import { Box, Paragraph } from '..'
+import { BoxProps } from '../Box/Box'
+import { ParagraphProps } from '../Text/Paragraph'
 
 export const Divider = ({
-  label,
-  fontSize = "sm",
-  align = "center",
-  space = "none",
+    label,
+    fontSize = 'sm',
+    align = 'center',
+    space = 'none',
 }: {
-  label?: string | React.ReactNode;
-  fontSize?: ParagraphProps["size"];
-  align?: "left" | "center" | "right";
-  space?: BoxProps["paddingY"];
+    label?: string | React.ReactNode
+    fontSize?: ParagraphProps['size']
+    align?: 'left' | 'center' | 'right'
+    space?: BoxProps['paddingY']
 }) =>
-  !label ? (
-    <Box
-      gap="md"
-      direction="row"
-      alignItems="center"
-      width="100%"
-      paddingY={space}
-    >
-      <Box borderBottom grow />
-    </Box>
-  ) : (
-    <Box gap="sm" direction="row" alignItems="center" paddingY={space}>
-      {align !== "left" && <Box borderBottom grow />}
-
-      {typeof label !== "string" ? (
-        label
-      ) : (
-        <Box>
-          <Paragraph color="gray2" size={fontSize}>
-            {label}
-          </Paragraph>
+    !label ? (
+        <Box gap="md" direction="row" alignItems="center" width="100%" paddingY={space}>
+            <Box borderBottom grow />
         </Box>
-      )}
+    ) : (
+        <Box gap="sm" direction="row" alignItems="center" paddingY={space}>
+            {align !== 'left' && <Box borderBottom grow />}
 
-      {align !== "right" && <Box borderBottom grow />}
-    </Box>
-  );
+            {typeof label !== 'string' ? (
+                label
+            ) : (
+                <Box>
+                    <Paragraph color="gray2" size={fontSize}>
+                        {label}
+                    </Paragraph>
+                </Box>
+            )}
+
+            {align !== 'right' && <Box borderBottom grow />}
+        </Box>
+    )

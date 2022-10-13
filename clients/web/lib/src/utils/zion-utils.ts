@@ -1,32 +1,32 @@
 export function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export async function sleepUntil<T, R>(
-  thisObject: T,
-  condition: (x: T) => R,
-  timeoutMs = 2000,
-  checkEveryMs = 100,
+    thisObject: T,
+    condition: (x: T) => R,
+    timeoutMs = 2000,
+    checkEveryMs = 100,
 ): Promise<R | undefined> {
-  let currentMs = 0;
+    let currentMs = 0
 
-  while (currentMs <= timeoutMs) {
-    const result = condition(thisObject);
-    if (result) {
-      return result;
+    while (currentMs <= timeoutMs) {
+        const result = condition(thisObject)
+        if (result) {
+            return result
+        }
+        await sleep(checkEveryMs)
+        currentMs += checkEveryMs
     }
-    await sleep(checkEveryMs);
-    currentMs += checkEveryMs;
-  }
 
-  return undefined;
+    return undefined
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function invariant(cond: any, message: string): asserts cond {
-  if (!cond) throw new Error(message);
+    if (!cond) throw new Error(message)
 }
 
 export function staticAssertNever(x: never): never {
-  throw new Error("Unexpected object: ", x);
+    throw new Error('Unexpected object: ', x)
 }

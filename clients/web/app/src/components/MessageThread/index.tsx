@@ -1,1 +1,1 @@
-export { MessageThread } from "./MessageThread";
+export { MessageThread } from './MessageThread'

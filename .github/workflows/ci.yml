@@ -1,35 +1,35 @@
 name: Continuous Integration
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+    push:
+        branches:
+            - main
+    pull_request:
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    check:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.11.0
-        with:
-          access_token: ${{ github.token }}
+            - name: Cancel previous runs
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            node_modules
-          key: yarn-lock-${{ hashFiles('yarn.lock') }}
+            - name: Cache node modules
+              uses: actions/cache@v3
+              env:
+                  cache-name: cache-node-modules
+              with:
+                  path: |
+                      node_modules
+                  key: yarn-lock-${{ hashFiles('yarn.lock') }}
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-          cache: "yarn"
-      - run: yarn install --immutable
-      - run: yarn lint
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18'
+                  cache: 'yarn'
+            - run: yarn install --immutable
+            - run: yarn lint

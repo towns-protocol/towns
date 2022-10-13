@@ -1,1 +1,1 @@
-export * from "./EmojiPickerButton";
+export * from './EmojiPickerButton'

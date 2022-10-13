@@ -1,228 +1,227 @@
-name: "Dendrite_build"
+name: 'Dendrite_build'
 
 on:
-  push:
-    paths:
-      - servers/**
-    branches:
-      - main
-  pull_request:
-    paths:
-      - servers/**
-  release:
-    types: [published]
+    push:
+        paths:
+            - servers/**
+        branches:
+            - main
+    pull_request:
+        paths:
+            - servers/**
+    release:
+        types: [published]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  # Run golangci-lint
-  lint:
-    timeout-minutes: 5
-    name: Linting
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          working-directory: servers/dendrite
+    # Run golangci-lint
+    lint:
+        timeout-minutes: 5
+        name: Linting
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Install Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: 1.19
+            - name: golangci-lint
+              uses: golangci/golangci-lint-action@v3
+              with:
+                  working-directory: servers/dendrite
 
-  # run go test with different go versions
-  test:
-    timeout-minutes: 5
-    name: Unit tests (Go ${{ matrix.go }})
-    runs-on: ubuntu-latest
-    # Service containers to run with `container-job`
-    services:
-      # Label used to access the service container
-      postgres:
-        # Docker Hub image
-        image: postgres:14-alpine
-        # Provide the password for postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dendrite
-        ports:
-          # Maps tcp port 5432 on service container to the host
-          - 5432:5432
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    strategy:
-      fail-fast: false
-      matrix:
-        go: ["1.19"]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ matrix.go }}
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/servers/dendrite/.cache/go-build
-            ~/servers/dendrite/go/pkg/mod
-          key: ${{ runner.os }}-go${{ matrix.go }}-test-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go${{ matrix.go }}-test-
-      - run: go test ./...
-        working-directory: servers/dendrite
-        env:
-          POSTGRES_HOST: localhost
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dendrite
+    # run go test with different go versions
+    test:
+        timeout-minutes: 5
+        name: Unit tests (Go ${{ matrix.go }})
+        runs-on: ubuntu-latest
+        # Service containers to run with `container-job`
+        services:
+            # Label used to access the service container
+            postgres:
+                # Docker Hub image
+                image: postgres:14-alpine
+                # Provide the password for postgres
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: dendrite
+                ports:
+                    # Maps tcp port 5432 on service container to the host
+                    - 5432:5432
+                # Set health checks to wait until postgres has started
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+        strategy:
+            fail-fast: false
+            matrix:
+                go: ['1.19']
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: ${{ matrix.go }}
+            - uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/servers/dendrite/.cache/go-build
+                      ~/servers/dendrite/go/pkg/mod
+                  key: ${{ runner.os }}-go${{ matrix.go }}-test-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go${{ matrix.go }}-test-
+            - run: go test ./...
+              working-directory: servers/dendrite
+              env:
+                  POSTGRES_HOST: localhost
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: dendrite
 
-  # build Dendrite for linux with different architectures and go versions
-  build:
-    name: Build for Linux
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        go: ["1.19"]
-        goos: ["linux"]
-        goarch: ["amd64"]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup go
-        uses: actions/setup-go@v3
+    # build Dendrite for linux with different architectures and go versions
+    build:
+        name: Build for Linux
+        timeout-minutes: 10
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                go: ['1.19']
+                goos: ['linux']
+                goarch: ['amd64']
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: ${{ matrix.go }}
+            - uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/servers/dendrite/.cache/go-build
+                      ~/servers/dendrite/go/pkg/mod
+                  key: ${{ runner.os }}-go${{ matrix.go }}-${{ matrix.goarch }}-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go${{ matrix.go }}-${{ matrix.goarch }}-
+            - env:
+                  GOOS: ${{ matrix.goos }}
+                  GOARCH: ${{ matrix.goarch }}
+                  CGO_ENABLED: 1
+              run: go build -trimpath -v -o "bin/" ./cmd/...
+              working-directory: servers/dendrite
+
+    # Dummy step to gate other tests on without repeating the whole list
+    initial-tests-done:
+        name: Initial tests passed
+        needs: [lint, test, build]
+        runs-on: ubuntu-latest
+        if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
+        steps:
+            - name: Check initial tests passed
+              uses: re-actors/alls-green@release/v1
+              with:
+                  jobs: ${{ toJSON(needs) }}
+
+    # run database upgrade tests
+    upgrade_test:
+        name: Upgrade tests
+        timeout-minutes: 20
+        needs: initial-tests-done
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.19'
+            - uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/servers/dendrite/.cache/go-build
+                      ~/servers/dendrite/go/pkg/mod
+                  key: ${{ runner.os }}-go-upgrade-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go-upgrade
+            - name: Build upgrade-tests
+              run: go build ./cmd/dendrite-upgrade-tests
+              working-directory: servers/dendrite
+            - name: Test upgrade
+              run: ./dendrite-upgrade-tests --head .
+              working-directory: servers/dendrite
+
+    # run Sytest in different variations
+    # sytest:
+    #   timeout-minutes: 20
+    #   needs: initial-tests-done
+    #   name: "Sytest (${{ matrix.label }})"
+    #   runs-on: ubuntu-latest
+    #   services:
+    #     # Label used to access the service container
+    #     postgres:
+    #       # Docker Hub image
+    #       image: postgres:14-alpine
+    #       # Provide the password for postgres
+    #       env:
+    #         POSTGRES_USER: postgres
+    #         POSTGRES_PASSWORD: postgres
+    #         POSTGRES_DB: dendrite
+    #       ports:
+    #         # Maps tcp port 5432 on service container to the host
+    #         - 5432:5432
+    #       # Set health checks to wait until postgres has started
+    #       options: >-
+    #         --health-cmd pg_isready
+    #         --health-interval 10s
+    #         --health-timeout 5s
+    #         --health-retries 5
+    #   steps:
+    # - uses: actions/checkout@v3
+    # - name: Run Sytest
+    #   run: ./run-sytest.sh
+    #   working-directory: servers/dendrite
+
+    integration-tests-done:
+        name: Integration tests passed
+        needs: [initial-tests-done, upgrade_test]
+        runs-on: ubuntu-latest
+        if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
+        steps:
+            - name: Check integration tests passed
+              uses: re-actors/alls-green@release/v1
+              with:
+                  jobs: ${{ toJSON(needs) }}
+
+    update-docker-images:
+        name: Update Docker images
+        permissions:
+            packages: write
+            contents: read
+        if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
+        # TODO: do we still need the "if" block above?
+        needs: [integration-tests-done]
+        uses: HereNotThere/harmony/.github/workflows/Dendrite_docker.yml@main
+        secrets:
+            DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+            DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    deploy-to-ecs:
+        name: Deploy to ECS
+        permissions:
+            packages: write
+            contents: read
+        # TODO: do we still need the "if" block below?
+        if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
+        # TODO: get rid of references to main after adding multi env support
+        needs: [update-docker-images]
+        uses: HereNotThere/harmony/.github/workflows/Dendrite_deploy.yml@main
+        # TODO: get rid of hardcoded references to production after adding multi env support
         with:
-          go-version: ${{ matrix.go }}
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/servers/dendrite/.cache/go-build
-            ~/servers/dendrite/go/pkg/mod
-          key: ${{ runner.os }}-go${{ matrix.go }}-${{ matrix.goarch }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go${{ matrix.go }}-${{ matrix.goarch }}-
-      - env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 1
-        run: go build -trimpath -v -o "bin/" ./cmd/...
-        working-directory: servers/dendrite
-
-  # Dummy step to gate other tests on without repeating the whole list
-  initial-tests-done:
-    name: Initial tests passed
-    needs: [lint, test, build]
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
-    steps:
-      - name: Check initial tests passed
-        uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
-
-  # run database upgrade tests
-  upgrade_test:
-    name: Upgrade tests
-    timeout-minutes: 20
-    needs: initial-tests-done
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup go
-        uses: actions/setup-go@v3
-        with:
-          go-version: "1.19"
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/servers/dendrite/.cache/go-build
-            ~/servers/dendrite/go/pkg/mod
-          key: ${{ runner.os }}-go-upgrade-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-upgrade
-      - name: Build upgrade-tests
-        run: go build ./cmd/dendrite-upgrade-tests
-        working-directory: servers/dendrite
-      - name: Test upgrade
-        run: ./dendrite-upgrade-tests --head .
-        working-directory: servers/dendrite
-
-  # run Sytest in different variations
-  # sytest:
-  #   timeout-minutes: 20
-  #   needs: initial-tests-done
-  #   name: "Sytest (${{ matrix.label }})"
-  #   runs-on: ubuntu-latest
-  #   services:
-  #     # Label used to access the service container
-  #     postgres:
-  #       # Docker Hub image
-  #       image: postgres:14-alpine
-  #       # Provide the password for postgres
-  #       env:
-  #         POSTGRES_USER: postgres
-  #         POSTGRES_PASSWORD: postgres
-  #         POSTGRES_DB: dendrite
-  #       ports:
-  #         # Maps tcp port 5432 on service container to the host
-  #         - 5432:5432
-  #       # Set health checks to wait until postgres has started
-  #       options: >-
-  #         --health-cmd pg_isready
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-  #   steps:
-  # - uses: actions/checkout@v3
-  # - name: Run Sytest
-  #   run: ./run-sytest.sh
-  #   working-directory: servers/dendrite
-
-  integration-tests-done:
-    name: Integration tests passed
-    needs: [initial-tests-done, upgrade_test]
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
-    steps:
-      - name: Check integration tests passed
-        uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
-
-  update-docker-images:
-    name: Update Docker images
-    permissions:
-      packages: write
-      contents: read
-    if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
-    # TODO: do we still need the "if" block above?
-    needs: [integration-tests-done]
-    uses: HereNotThere/harmony/.github/workflows/Dendrite_docker.yml@main
-    secrets:
-      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-      DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-  deploy-to-ecs:
-    name: Deploy to ECS
-    permissions:
-      packages: write
-      contents: read
-    # TODO: do we still need the "if" block below?
-    if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
-    # TODO: get rid of references to main after adding multi env support
-    needs: [update-docker-images]
-    uses: HereNotThere/harmony/.github/workflows/Dendrite_deploy.yml@main
-    # TODO: get rid of hardcoded references to production after adding multi env support
-    with:
-      task_definition: production-zion-dendrite:5
-      service: production-zion-dendrite-service
-      cluster: production-node1-zion-ecs-cluster
-
+            task_definition: production-zion-dendrite:5
+            service: production-zion-dendrite-service
+            cluster: production-node1-zion-ecs-cluster

@@ -1,25 +1,25 @@
 {
-  "compilerOptions": {
-    "lib": ["dom", "esnext"],
-    "allowJs": false,
-    "allowSyntheticDefaultImports": true,
-    "alwaysStrict": true,
-    "baseUrl": "./src",
-    "declaration": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "jsx": "react",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "resolveJsonModule": true,
-    "rootDir": "src",
-    "skipLibCheck": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "target": "esnext",
-    "esModuleInterop": true
-  },
-  "exclude": ["node_modules"],
-  "include": ["src/**/*"]
+    "compilerOptions": {
+        "lib": ["dom", "esnext"],
+        "allowJs": false,
+        "allowSyntheticDefaultImports": true,
+        "alwaysStrict": true,
+        "baseUrl": "./src",
+        "declaration": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "jsx": "react",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "outDir": "./dist",
+        "resolveJsonModule": true,
+        "rootDir": "src",
+        "skipLibCheck": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "target": "esnext",
+        "esModuleInterop": true
+    },
+    "exclude": ["node_modules"],
+    "include": ["src/**/*"]
 }

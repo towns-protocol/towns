@@ -1,11 +1,11 @@
-import React from "react";
-import { Outlet } from "react-router";
-import { Stack } from "@ui";
+import React from 'react'
+import { Outlet } from 'react-router'
+import { Stack } from '@ui'
 
 export const AppLayout = () => {
-  return (
-    <Stack grow color="default" minHeight="100vh">
-      <Outlet />
-    </Stack>
-  );
-};
+    return (
+        <Stack grow color="default" minHeight="100vh">
+            <Outlet />
+        </Stack>
+    )
+}

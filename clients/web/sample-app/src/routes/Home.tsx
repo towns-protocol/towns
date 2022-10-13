@@ -1,5 +1,5 @@
-import { Me } from "../components/Me";
+import { Me } from '../components/Me'
 
 export const Home = () => {
-  return <Me />;
-};
+    return <Me />
+}

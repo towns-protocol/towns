@@ -1,25 +1,25 @@
-import { ComponentMeta, ComponentStory } from "@storybook/react";
-import React from "react";
-import { Heading } from "ui/components/Text/Heading";
+import { ComponentMeta, ComponentStory } from '@storybook/react'
+import React from 'react'
+import { Heading } from 'ui/components/Text/Heading'
 
 export default {
-  title: "@ui/Heading",
-  component: Heading,
-  argTypes: {
-    level: {
-      defaultValue: 1,
-      control: { type: "range", min: 1, max: 6, step: 1 },
+    title: '@ui/Heading',
+    component: Heading,
+    argTypes: {
+        level: {
+            defaultValue: 1,
+            control: { type: 'range', min: 1, max: 6, step: 1 },
+        },
+        children: {
+            control: 'text',
+            defaultValue: 'Certainly the default value of the text',
+        },
     },
-    children: {
-      control: "text",
-      defaultValue: "Certainly the default value of the text",
-    },
-  },
-} as ComponentMeta<typeof Heading>;
+} as ComponentMeta<typeof Heading>
 
 const HeadingTemplate: ComponentStory<typeof Heading> = (args) => {
-  return <Heading {...args}>{args.children}</Heading>;
-};
+    return <Heading {...args}>{args.children}</Heading>
+}
 
-export const HeadingStory = HeadingTemplate.bind({});
-HeadingStory.storyName = "Heading";
+export const HeadingStory = HeadingTemplate.bind({})
+HeadingStory.storyName = 'Heading'

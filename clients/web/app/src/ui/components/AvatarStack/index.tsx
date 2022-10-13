@@ -1,1 +1,1 @@
-export { AvatarStack } from "./AvatarStack";
+export { AvatarStack } from './AvatarStack'
