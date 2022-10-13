@@ -1,4 +1,10 @@
-# Introduction
+# Deprecated - do not use
+
+Archive. Appservice approach does not meet our needs. New approach for gating is
+to have Dendrite call the Zion smart contract directly. Keeping sources in this directory
+for future reference.
+
+## Introduction
 
 This is a bridge between Matrix server and the Web3 blockchains. The Matrix
 server is configured to forward messages to the bridge. The bridge can then apply
