@@ -18,9 +18,19 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
+      - name: Cache node modules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            node_modules
+          restore-keys: |
+            yarn-lock-${{ hashFiles('yarn.lock') }}
+
       - uses: actions/setup-node@v3
         with:
           node-version: "18"
           cache: "yarn"
-      - run: yarn install
+      - run: yarn install --immutable
       - run: yarn lint
