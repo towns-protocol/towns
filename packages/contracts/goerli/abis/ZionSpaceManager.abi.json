@@ -1,12 +1,23 @@
 [
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "defaultPermissionsManagerAddress_",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
   {
     "inputs": [],
     "name": "DefaultEntitlementModuleNotSet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "DefaultPermissionsManagerNotSet",
     "type": "error"
   },
   {
@@ -26,7 +37,17 @@
   },
   {
     "inputs": [],
+    "name": "NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotSpaceOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SpaceAlreadyRegistered",
     "type": "error"
   },
   {
@@ -51,9 +72,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
         "internalType": "uint256",
@@ -81,9 +102,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
       },
       {
         "internalType": "address",
@@ -109,19 +135,73 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "components": [
+          {
+            "internalType": "string",
+            "name": "channelName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "metadata",
+                "type": "string"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  }
+                ],
+                "internalType": "struct DataTypes.Permission[]",
+                "name": "permissions",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateRoleData[]",
+            "name": "roles",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct DataTypes.CreateChannelData",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "name": "createChannel",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
         "internalType": "string",
         "name": "name",
         "type": "string"
-      },
-      {
-        "internalType": "bytes8",
-        "name": "color",
-        "type": "bytes8"
       }
     ],
     "name": "createRole",
@@ -232,9 +312,33 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
+      }
+    ],
+    "name": "getChannelIdByNetworkId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
       }
     ],
     "name": "getEntitlementModulesBySpaceId",
@@ -251,9 +355,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       }
     ],
     "name": "getEntitlementsInfoBySpaceId",
@@ -287,9 +391,9 @@
   {
     "inputs": [
       {
-        "internalType": "enum ISpaceManager.ZionPermission",
-        "name": "zionPermission",
-        "type": "uint8"
+        "internalType": "bytes32",
+        "name": "permissionType",
+        "type": "bytes32"
       }
     ],
     "name": "getPermissionFromMap",
@@ -313,9 +417,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
         "internalType": "uint256",
@@ -344,9 +448,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
         "internalType": "uint256",
@@ -369,11 +473,6 @@
             "type": "string"
           },
           {
-            "internalType": "bytes8",
-            "name": "color",
-            "type": "bytes8"
-          },
-          {
             "internalType": "bool",
             "name": "isTransitive",
             "type": "bool"
@@ -390,9 +489,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       }
     ],
     "name": "getRolesBySpaceId",
@@ -408,11 +507,6 @@
             "internalType": "string",
             "name": "name",
             "type": "string"
-          },
-          {
-            "internalType": "bytes8",
-            "name": "color",
-            "type": "bytes8"
           },
           {
             "internalType": "bool",
@@ -450,9 +544,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_spaceId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
       }
     ],
     "name": "getSpaceInfoBySpaceId",
@@ -496,9 +590,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_spaceId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
       }
     ],
     "name": "getSpaceOwnerBySpaceId",
@@ -555,14 +649,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
-        "internalType": "uint256",
-        "name": "roomId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
       },
       {
         "internalType": "address",
@@ -596,9 +690,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
         "internalType": "address",
@@ -633,22 +727,14 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "entitlementModule",
-        "type": "address"
-      }
-    ],
-    "name": "registerDefaultEntitlementModule",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
       },
       {
         "internalType": "address",
@@ -682,6 +768,32 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "entitlementModule",
+        "type": "address"
+      }
+    ],
+    "name": "setDefaultEntitlementModule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "permissionsManager",
+        "type": "address"
+      }
+    ],
+    "name": "setDefaultPermissionsManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "newOwner",
         "type": "address"
       }
@@ -694,9 +806,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "string",
         "name": "spaceId",
-        "type": "uint256"
+        "type": "string"
       },
       {
         "internalType": "address",
@@ -712,25 +824,6 @@
     "name": "whitelistEntitlementModule",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "enum ISpaceManager.ZionPermission",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "name": "zionPermissionsMap",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

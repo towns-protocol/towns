@@ -18,7 +18,7 @@
         "lint": "solhint contracts/**/*.sol",
         "lint:fix": "solhint --fix contracts/**/*.sol",
         "publish": "yarn publish:local",
-        "publish:goerli": "yarn publish:goerli:typings && yarn publish:goerli:abis ",
+        "publish:goerli": "yarn publish:goerli:typings && yarn publish:goerli:abis && yarn publish:goerli:gobindings",
         "publish:goerli:abis": "mkdir -p ../../packages/contracts/goerli/abis && cp -a artifacts_foundry/(CouncilNFT|CouncilStaking|ZionSpaceManager).sol/* ../../packages/contracts/goerli/abis/",
         "publish:goerli:typings": "cp -a ./dist/ ../../packages/contracts/goerli/typings",
         "publish:goerli:gobindings": "mkdir -p ../../servers/dendrite/zion_goerli && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion_goerli  --type zion_space_manager_goerli --out ../../servers/dendrite/zion_goerli/zion_space_manager_goerli.go",

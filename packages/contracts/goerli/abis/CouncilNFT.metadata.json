@@ -719,21 +719,16 @@
     },
     "optimizer": {
       "enabled": true,
-      "runs": 10
+      "runs": 200
     },
     "remappings": [
-      ":@ensdomains/=node_modules/@ensdomains/",
       ":@harmony/=node_modules/@harmony/",
       ":@opengsn/=node_modules/@opengsn/",
       ":@openzeppelin/=node_modules/@openzeppelin/",
-      ":contract-debug-ui/=node_modules/contract-debug-ui/",
-      ":ds-test/=lib/forge-std/lib/ds-test/src/",
-      ":eth-gas-reporter/=node_modules/eth-gas-reporter/",
+      ":ds-test/=lib/solmate/lib/ds-test/src/",
       ":forge-std/=lib/forge-std/src/",
-      ":hardhat-console/=node_modules/hardhat-console/",
-      ":hardhat-deploy/=node_modules/hardhat-deploy/",
-      ":hardhat/=node_modules/hardhat/",
       ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":solidity-json-writer/=node_modules/solidity-json-writer/",
       ":solmate/=lib/solmate/src/"
