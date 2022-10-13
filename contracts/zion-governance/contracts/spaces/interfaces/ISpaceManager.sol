@@ -23,19 +23,20 @@ interface ISpaceManager {
 
   /// @notice Sets the default entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
-  function registerDefaultEntitlementModule(address entitlementModuleAddress)
+  function setDefaultEntitlementModule(address entitlementModuleAddress)
     external;
 
   // @notice Adds or removes an entitlement module from the whitelist and from the space entitlements
   function whitelistEntitlementModule(
-    uint256 spaceId,
+    string calldata spaceId,
     address entitlementModuleAddress,
     bool whitelist
   ) external;
 
   /// @notice add an entitlement to an entitlement module
   function addRoleToEntitlementModule(
-    uint256 spaceId,
+    string calldata spaceId,
+    string calldata channelId,
     address entitlementAddress,
     uint256 roleId,
     bytes memory data
@@ -43,41 +44,40 @@ interface ISpaceManager {
 
   /// @notice Removes an entitlement from an entitlement module
   function removeEntitlement(
-    uint256 spaceId,
+    string calldata spaceId,
+    string calldata channelId,
     address entitlementModuleAddress,
     uint256[] memory roleIds,
     bytes memory data
   ) external;
 
-  function createRole(
-    uint256 spaceId,
-    string memory name,
-    bytes8 color
-  ) external returns (uint256);
+  function createRole(string calldata spaceId, string calldata name)
+    external
+    returns (uint256);
 
   function addPermissionToRole(
-    uint256 spaceId,
+    string calldata spaceId,
     uint256 roleId,
     DataTypes.Permission memory permission
   ) external;
 
-  /// @notice Checks if a user has access to space or room based on the entitlements it holds
+  /// @notice Checks if a user has access to space or channel based on the entitlements it holds
   /// @param spaceId The id of the space
-  /// @param roomId The id of the room
+  /// @param channelId The id of the channel
   /// @param user The address of the user
   /// @param permission The type of permission to check
   /// @return bool representing if the user has access or not
   function isEntitled(
-    uint256 spaceId,
-    uint256 roomId,
+    string calldata spaceId,
+    string calldata channelId,
     address user,
     DataTypes.Permission memory permission
   ) external view returns (bool);
 
   /// @notice Get the space information by id.
-  /// @param _spaceId The id of the space
+  /// @param spaceId The id of the space
   /// @return SpaceInfo a struct representing the space info
-  function getSpaceInfoBySpaceId(uint256 _spaceId)
+  function getSpaceInfoBySpaceId(string calldata spaceId)
     external
     view
     returns (DataTypes.SpaceInfo memory);
@@ -89,55 +89,57 @@ interface ISpaceManager {
   /// @notice Returns entitlements for a space
   /// @param spaceId The id of the space
   /// @return entitlementModules an array of entitlements
-  function getEntitlementModulesBySpaceId(uint256 spaceId)
+  function getEntitlementModulesBySpaceId(string calldata spaceId)
     external
     view
     returns (address[] memory entitlementModules);
 
   /// @notice returns if an entitlement module is whitelisted for a space
   function isEntitlementModuleWhitelisted(
-    uint256 spaceId,
+    string calldata spaceId,
     address entitlementModuleAddress
   ) external view returns (bool);
 
   /// @notice Returns the entitlement info for a space
-  function getEntitlementsInfoBySpaceId(uint256 spaceId)
+  function getEntitlementsInfoBySpaceId(string calldata spaceId)
     external
     view
     returns (DataTypes.EntitlementModuleInfo[] memory);
 
-  /// @notice Returns the space id by network id
-  /// @param networkId The network space id
-  /// @return uint256 Returns the space id
   function getSpaceIdByNetworkId(string calldata networkId)
     external
     view
     returns (uint256);
 
+  function getChannelIdByNetworkId(
+    string calldata spaceId,
+    string calldata channelId
+  ) external view returns (uint256);
+
   /// @notice Returns the owner of the space by space id
-  /// @param _spaceId The space id
+  /// @param spaceId The space id
   /// @return ownerAddress The address of the owner of the space
-  function getSpaceOwnerBySpaceId(uint256 _spaceId)
+  function getSpaceOwnerBySpaceId(string calldata spaceId)
     external
     view
     returns (address ownerAddress);
 
-  function getPermissionsBySpaceIdByRoleId(uint256 spaceId, uint256 roleId)
-    external
-    view
-    returns (DataTypes.Permission[] memory);
+  function getPermissionsBySpaceIdByRoleId(
+    string calldata spaceId,
+    uint256 roleId
+  ) external view returns (DataTypes.Permission[] memory);
 
   function getPermissionFromMap(bytes32 permissionType)
     external
     view
     returns (DataTypes.Permission memory permission);
 
-  function getRolesBySpaceId(uint256 spaceId)
+  function getRolesBySpaceId(string calldata spaceId)
     external
     view
     returns (DataTypes.Role[] memory);
 
-  function getRoleBySpaceIdByRoleId(uint256 spaceId, uint256 roleId)
+  function getRoleBySpaceIdByRoleId(string calldata spaceId, uint256 roleId)
     external
     view
     returns (DataTypes.Role memory);

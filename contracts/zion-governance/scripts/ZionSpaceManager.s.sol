@@ -41,7 +41,7 @@ contract DeployZionSpaceManager is Script {
     );
     console.log("Token Entitlement Address", address(tokenEntitlementModule));
 
-    zionSpaceManager.registerDefaultEntitlementModule(
+    zionSpaceManager.setDefaultEntitlementModule(
       address(userGrantedEntitlementModule)
     );
 

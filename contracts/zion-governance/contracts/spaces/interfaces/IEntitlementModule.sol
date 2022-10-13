@@ -10,47 +10,40 @@ interface IEntitlementModule {
   /// @notice The description of the entitlement module
   function description() external view returns (string memory);
 
-  /// @notice Checks if a user has access to space or room based on the entitlements it holds
+  /// @notice Checks if a user has access to space or channel based on the entitlements it holds
   /// @param spaceId The id of the space
-  /// @param roomId The id of the room
+  /// @param channelId The id of the channel
   /// @param userAddress The address of the user
   /// @param permission The type of permission to check
   /// @return bool representing if the user has access or not
   function isEntitled(
-    uint256 spaceId,
-    uint256 roomId,
+    string calldata spaceId,
+    string calldata channelId,
     address userAddress,
     DataTypes.Permission memory permission
   ) external view returns (bool);
 
-  function isTransitivelyEntitled(
-    uint256 spaceId,
-    uint256 roomId,
-    address userAddress,
-    uint256 roleId
-  ) external view returns (bool);
-
   /// @notice Sets the entitlements for a space
   function setEntitlement(
-    uint256 spaceId,
-    uint256 roomId,
+    string calldata spaceId,
+    string calldata channelId,
     uint256 roleId,
     bytes calldata entitlementData
   ) external;
 
-  function getUserRoles(
-    uint256 spaceId,
-    uint256 roomId,
-    address user
-  ) external view returns (DataTypes.Role[] memory);
-
   /// @notice Removes the entitlements for a space
   function removeEntitlement(
-    uint256 spaceId,
-    uint256 roomId,
+    string calldata spaceId,
+    string calldata channelId,
     uint256[] calldata _roleIds,
     bytes calldata entitlementData
   ) external;
+
+  function getUserRoles(
+    string calldata spaceId,
+    string calldata channelId,
+    address user
+  ) external view returns (DataTypes.Role[] memory);
 
   // function isBanned()
   // function ban();

@@ -52,18 +52,17 @@ contract TokenEntitlementModuleTest is Test {
       address(spaceManager)
     );
 
-    spaceManager.registerDefaultEntitlementModule(
+    spaceManager.setDefaultEntitlementModule(
       address(userGrantedEntitlementModule)
     );
   }
 
   function createTestSpaceWithUserGrantedEntitlementModule(
-    string memory spaceName
+    string memory spaceName,
+    string memory networkId
   ) private returns (uint256) {
     return
-      spaceManager.createSpace(
-        DataTypes.CreateSpaceData(spaceName, "matrix-id")
-      );
+      spaceManager.createSpace(DataTypes.CreateSpaceData(spaceName, networkId));
   }
 
   function transferZionToken(address _to, uint256 quantity) private {
@@ -72,30 +71,30 @@ contract TokenEntitlementModuleTest is Test {
 
   function testERC20TokenEntitlement() public {
     string memory spaceName = "test-space";
-    uint256 roomId = 0;
+    string memory networkId = "test-network-id";
+    string memory roomId = "";
 
     // create a space with the default user granted entitlement module
-    uint256 spaceId = createTestSpaceWithUserGrantedEntitlementModule(
-      spaceName
-    );
+    createTestSpaceWithUserGrantedEntitlementModule(spaceName, networkId);
 
     DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
       PermissionTypes.Read
     );
     // Create roles and add permissions
     string memory roleName = "Tester";
-    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
-    spaceManager.addPermissionToRole(spaceId, ownerRoleId, permission);
+    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
+    spaceManager.addPermissionToRole(networkId, ownerRoleId, permission);
 
     spaceManager.whitelistEntitlementModule(
-      spaceId,
+      networkId,
       address(tokenEntitlementModule),
       true
     );
 
     // Add token entitlement module to space
     spaceManager.addRoleToEntitlementModule(
-      spaceId,
+      networkId,
+      roomId,
       address(tokenEntitlementModule),
       ownerRoleId,
       abi.encode("ziontoken", address(zion), 10)
@@ -103,7 +102,7 @@ contract TokenEntitlementModuleTest is Test {
 
     // verify the token entitlement module is added to the space
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
-      spaceId
+      networkId
     );
     assertEq(entitlements.length, 2);
     assertEq(entitlements[1], address(tokenEntitlementModule));
@@ -112,7 +111,7 @@ contract TokenEntitlementModuleTest is Test {
     transferZionToken(user1, 100);
 
     bool isEntitled = spaceManager.isEntitled(
-      spaceId,
+      networkId,
       roomId,
       user1,
       permission
@@ -121,7 +120,7 @@ contract TokenEntitlementModuleTest is Test {
     assertTrue(isEntitled);
 
     bool isRandomEntitled = spaceManager.isEntitled(
-      spaceId,
+      networkId,
       roomId,
       user2,
       permission
@@ -133,32 +132,33 @@ contract TokenEntitlementModuleTest is Test {
   function testERC721TokenEntitlement() public {
     // Create a space with the user granted entitlement module
     string memory spaceName = "test-space";
-    uint256 roomId = 0;
-    uint256 spaceId = createTestSpaceWithUserGrantedEntitlementModule(
-      spaceName
-    );
+    string memory networkId = "test-network-id";
+    string memory roomId = "";
+
+    createTestSpaceWithUserGrantedEntitlementModule(spaceName, networkId);
 
     // Transfer token to user1
     councilNFT.mint{value: Constants.MINT_PRICE}(user1);
 
     // Create roles and add permissions
     string memory roleName = "Tester";
-    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
+    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
     spaceManager.addPermissionToRole(
-      spaceId,
+      networkId,
       ownerRoleId,
       spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
 
     spaceManager.whitelistEntitlementModule(
-      spaceId,
+      networkId,
       address(tokenEntitlementModule),
       true
     );
 
     // Add the token entitlement module to the space
     spaceManager.addRoleToEntitlementModule(
-      spaceId,
+      networkId,
+      roomId,
       address(tokenEntitlementModule),
       ownerRoleId,
       abi.encode("councilnft", address(councilNFT), 1)
@@ -166,14 +166,14 @@ contract TokenEntitlementModuleTest is Test {
 
     // Verify the token entitlement module is added to the space
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
-      spaceId
+      networkId
     );
     assertEq(entitlements.length, 2);
     assertEq(entitlements[1], address(tokenEntitlementModule));
 
     // Verify user1 is a moderator
     bool isEntitled = spaceManager.isEntitled(
-      spaceId,
+      networkId,
       roomId,
       user1,
       spaceManager.getPermissionFromMap(PermissionTypes.Read)
@@ -182,7 +182,7 @@ contract TokenEntitlementModuleTest is Test {
 
     // Verify user2 is not a moderator
     bool isRandomEntitled = spaceManager.isEntitled(
-      spaceId,
+      networkId,
       roomId,
       user2,
       spaceManager.getPermissionFromMap(PermissionTypes.Read)

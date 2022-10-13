@@ -31,26 +31,28 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       address(spaceManager)
     );
 
-    spaceManager.registerDefaultEntitlementModule(
+    spaceManager.setDefaultEntitlementModule(
       address(userGrantedEntitlementModule)
     );
   }
 
   function testCreateSpaceWithUserGrantedEntitlement() public {
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
     uint256 spaceId = spaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", "matrix-id")
+      DataTypes.CreateSpaceData("test", networkId)
     );
 
     DataTypes.SpaceInfo memory info = spaceManager.getSpaceInfoBySpaceId(
-      spaceId
+      networkId
     );
 
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
-      spaceId
+      networkId
     );
 
     DataTypes.SpaceInfo[] memory spaces = spaceManager.getSpaces();
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(networkId);
 
     assertEq(spaces.length, 1);
     assertEq(spaces[0].name, "test");
@@ -59,7 +61,6 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     assertEq(entitlements.length, 1);
     assertEq(entitlements[0], address(userGrantedEntitlementModule));
     assertEq(ownerAddress, address(this));
-    assertEq(spaceManager.getSpaceIdByNetworkId("matrix-id"), spaceId);
   }
 
   function testCreateSpaceWithTokenEntitlement() public {
@@ -82,15 +83,17 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       address(spaceManager)
     );
 
-    DataTypes.Permission memory joinPermission = spaceManager
+    DataTypes.Permission memory readPermission = spaceManager
       .getPermissionFromMap(PermissionTypes.Read);
 
     string[] memory permissions = new string[](1);
-    permissions[0] = joinPermission.name;
+    permissions[0] = readPermission.name;
 
     vm.prank(address(receiver));
-    uint256 spaceId = spaceManager.createSpaceWithTokenEntitlement(
-      DataTypes.CreateSpaceData("test", "matrix-id"),
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpaceWithTokenEntitlement(
+      DataTypes.CreateSpaceData("test", networkId),
       DataTypes.CreateSpaceTokenEntitlementData(
         address(tokenEntitlementModule),
         address(nft),
@@ -101,13 +104,13 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     );
 
     address[] memory entitlementModules = spaceManager
-      .getEntitlementModulesBySpaceId(spaceId);
+      .getEntitlementModulesBySpaceId(networkId);
 
     bool isUserGrantEntitled = spaceManager.isEntitled(
-      spaceId,
-      0,
+      networkId,
+      "",
       address(receiver),
-      joinPermission
+      readPermission
     );
 
     assertTrue(isUserGrantEntitled);
@@ -120,10 +123,10 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     vm.stopPrank();
 
     bool isTokenEntitled = spaceManager.isEntitled(
-      spaceId,
-      1,
+      networkId,
+      "",
       address(receiver),
-      joinPermission
+      readPermission
     );
 
     assertTrue(isTokenEntitled);
@@ -145,38 +148,38 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     assertEq(spaceIdByNetworkId, spaceId);
   }
 
-  function testRegisterDefaultEntitlementModule() public {
+  function testSetDefaultEntitlementModule() public {
     vm.expectEmit(true, false, false, false);
     emit Events.DefaultEntitlementSet(address(userGrantedEntitlementModule));
 
-    spaceManager.registerDefaultEntitlementModule(
+    spaceManager.setDefaultEntitlementModule(
       address(userGrantedEntitlementModule)
     );
   }
 
   function testWhitelistEntitlementModule() public {
-    uint256 spaceId = spaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", "initial-network-id")
-    );
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
     TokenEntitlementModule tokenEntitlementModule = new TokenEntitlementModule(
       "Token Entitlement Module",
       "Allows users to grant other users access to spaces and rooms based on tokens they hold",
       address(spaceManager)
     );
     spaceManager.whitelistEntitlementModule(
-      spaceId,
+      networkId,
       address(tokenEntitlementModule),
       true
     );
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
-      spaceId
+      networkId
     );
     assertEq(entitlements.length, 2);
     assertEq(entitlements[0], address(userGrantedEntitlementModule));
     assertEq(entitlements[1], address(tokenEntitlementModule));
     assertTrue(
       spaceManager.isEntitlementModuleWhitelisted(
-        spaceId,
+        networkId,
         address(tokenEntitlementModule)
       )
     );
@@ -186,9 +189,9 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     //deploy the nft
     CouncilNFT nft = new CouncilNFT("Zion", "zion", "baseUri", "");
 
-    uint256 spaceId = spaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", "initial-network-id")
-    );
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
 
     TokenEntitlementModule tokenEntitlementModule = new TokenEntitlementModule(
       "Token Entitlement Module",
@@ -200,51 +203,53 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       .getPermissionFromMap(PermissionTypes.Read);
     // Create roles and add permissions
     string memory roleName = "Joiner";
-    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
-    spaceManager.addPermissionToRole(spaceId, ownerRoleId, joinPermission);
+    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
+    spaceManager.addPermissionToRole(networkId, ownerRoleId, joinPermission);
 
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     spaceManager.addRoleToEntitlementModule(
-      spaceId,
+      networkId,
+      "",
       address(tokenEntitlementModule),
       ownerRoleId,
       abi.encode("sample description", address(nft), 1)
     );
 
     spaceManager.whitelistEntitlementModule(
-      spaceId,
+      networkId,
       address(tokenEntitlementModule),
       true
     );
 
     spaceManager.addRoleToEntitlementModule(
-      spaceId,
+      networkId,
+      "",
       address(tokenEntitlementModule),
       ownerRoleId,
       abi.encode("sample description", address(nft), 1)
     );
 
     address[] memory entitlementsBySpaceId = spaceManager
-      .getEntitlementModulesBySpaceId(spaceId);
+      .getEntitlementModulesBySpaceId(networkId);
 
     assertEq(entitlementsBySpaceId.length, 2);
   }
 
   function testAddingEntitlementModuleThatIsAlreadyWhitelist() public {
-    uint256 spaceId = spaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", "matrix-id")
-    );
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
 
     DataTypes.Permission memory joinPermission = spaceManager
       .getPermissionFromMap(PermissionTypes.ZeroPermission);
     // Create roles and add permissions
     string memory roleName = "Joiner";
-    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
-    spaceManager.addPermissionToRole(spaceId, ownerRoleId, joinPermission);
+    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
+    spaceManager.addPermissionToRole(networkId, ownerRoleId, joinPermission);
 
     vm.expectRevert(Errors.EntitlementAlreadyWhitelisted.selector);
     spaceManager.whitelistEntitlementModule(
-      spaceId,
+      networkId,
       address(userGrantedEntitlementModule),
       true
     );

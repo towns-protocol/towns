@@ -15,4 +15,5 @@ library Errors {
   error DefaultPermissionsManagerNotSet();
   error SpaceDoesNotExist();
   error PermissionAlreadyExists();
+  error NotAllowed();
 }

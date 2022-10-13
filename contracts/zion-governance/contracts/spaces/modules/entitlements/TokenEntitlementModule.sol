@@ -47,12 +47,18 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   ) EntitlementModuleBase(name_, description_, spaceManager_) {}
 
   function setEntitlement(
-    uint256 spaceId,
-    uint256 roomId,
+    string memory spaceId,
+    string memory channelId,
     uint256 roleId,
     bytes calldata entitlementData
   ) public override onlySpaceManager {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    uint256 _channelId = spaceManager.getChannelIdByNetworkId(
+      spaceId,
+      channelId
+    );
     address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     require(
@@ -73,10 +79,10 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       revert("No quantities provided");
     }
 
-    if (roomId > 0) {
-      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[spaceId]
-        .roomEntitlementsByRoomId[roomId]
-        .entitlementsByDescription[desc];
+    if (bytes(channelId).length > 0) {
+      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
+        _spaceId
+      ].roomEntitlementsByRoomId[_channelId].entitlementsByDescription[desc];
 
       ExternalToken memory externalToken = ExternalToken(token, quantity);
       tokenEntitlement.tokens.push(externalToken);
@@ -88,15 +94,16 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       );
       tokenEntitlement.entitlements.push(entitlement);
       // so we can iterate through all the token entitlements for a space
-      entitlementsBySpaceId[spaceId]
-        .roomEntitlementsByRoomId[roomId]
+      entitlementsBySpaceId[_spaceId]
+        .roomEntitlementsByRoomId[_channelId]
         .entitlementDescriptions
         .push(desc);
       //So we can look up all potential token entitlements for a permission
       setAllDescByPermissionNames(spaceId, roleId, desc);
     } else {
-      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[spaceId]
-        .entitlementsByDescription[desc];
+      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
+        _spaceId
+      ].entitlementsByDescription[desc];
 
       ExternalToken memory externalToken = ExternalToken(token, quantity);
       tokenEntitlement.tokens.push(externalToken);
@@ -108,40 +115,49 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       );
 
       tokenEntitlement.entitlements.push(entitlement);
-      entitlementsBySpaceId[spaceId].entitlementDescriptions.push(desc);
+      entitlementsBySpaceId[_spaceId].entitlementDescriptions.push(desc);
 
       setAllDescByPermissionNames(spaceId, roleId, desc);
     }
   }
 
   function setAllDescByPermissionNames(
-    uint256 spaceId,
+    string memory spaceId,
     uint256 roleId,
     string memory desc
   ) internal {
     DataTypes.Permission[] memory permissions = ISpaceManager(_spaceManager)
       .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
 
+    uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
+      spaceId
+    );
+
     for (uint256 j = 0; j < permissions.length; j++) {
       DataTypes.Permission memory permission = permissions[j];
       string memory permissionName = permission.name;
-      entitlementsBySpaceId[spaceId].tagsByPermission[permissionName].push(
+      entitlementsBySpaceId[_spaceId].tagsByPermission[permissionName].push(
         desc
       );
-      entitlementsBySpaceId[spaceId].tagsByRoleId[roleId].push(desc);
+      entitlementsBySpaceId[_spaceId].tagsByRoleId[roleId].push(desc);
       //todo Add All Permission for every one
     }
   }
 
   function removeEntitlement(
-    uint256 spaceId,
-    uint256 roomId,
+    string calldata spaceId,
+    string calldata channelId,
     uint256[] calldata,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
-    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      spaceId
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    uint256 _channelId = spaceManager.getChannelIdByNetworkId(
+      spaceId,
+      channelId
     );
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     if (ownerAddress != msg.sender || msg.sender != _spaceManager) {
       revert("Only the owner can update entitlements");
@@ -149,34 +165,38 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
     string memory desc = abi.decode(entitlementData, (string));
 
-    if (roomId > 0) {
-      delete entitlementsBySpaceId[spaceId]
-        .roomEntitlementsByRoomId[roomId]
+    if (bytes(channelId).length > 0) {
+      delete entitlementsBySpaceId[_spaceId]
+        .roomEntitlementsByRoomId[_channelId]
         .entitlementsByDescription[desc];
     } else {
-      delete entitlementsBySpaceId[spaceId].entitlementsByDescription[desc];
+      delete entitlementsBySpaceId[_spaceId].entitlementsByDescription[desc];
     }
 
     DataTypes.Role[] memory roles = ISpaceManager(_spaceManager)
       .getRolesBySpaceId(spaceId);
 
     for (uint256 i = 0; i < roles.length; i++) {
-      delete entitlementsBySpaceId[spaceId].tagsByRoleId[roles[i].roleId];
+      delete entitlementsBySpaceId[_spaceId].tagsByRoleId[roles[i].roleId];
     }
   }
 
   function isEntitled(
-    uint256 spaceId,
-    uint256,
+    string calldata spaceId,
+    string calldata channelId,
     address user,
     DataTypes.Permission memory permission
   ) public view override returns (bool) {
-    string[] memory tags = entitlementsBySpaceId[spaceId].tagsByPermission[
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+
+    string[] memory tags = entitlementsBySpaceId[_spaceId].tagsByPermission[
       permission.name
     ];
 
     for (uint256 i = 0; i < tags.length; i++) {
-      if (isTokenEntitled(spaceId, user, tags[i])) {
+      if (isTokenEntitled(spaceId, channelId, user, tags[i])) {
         return true;
       }
     }
@@ -185,11 +205,16 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   }
 
   function isTokenEntitled(
-    uint256 spaceId,
+    string calldata spaceId,
+    string calldata,
     address user,
     string memory desc
   ) public view returns (bool) {
-    ExternalToken[] memory tokens = entitlementsBySpaceId[spaceId]
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+
+    ExternalToken[] memory tokens = entitlementsBySpaceId[_spaceId]
       .entitlementsByDescription[desc]
       .tokens;
 
@@ -210,33 +235,17 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     return false;
   }
 
-  function isTransitivelyEntitled(
-    uint256 spaceId,
-    uint256,
-    address userAddress,
-    uint256 roleId
-  ) public view override returns (bool) {
-    string[] memory tags = entitlementsBySpaceId[spaceId].tagsByRoleId[roleId];
-
-    for (uint256 i = 0; i < tags.length; i++) {
-      if (isTokenEntitled(spaceId, userAddress, tags[i])) {
-        return true;
-      }
-    }
-
-    //Alternatively we could call getUserRoles and check if the user has the role
-
-    return false;
-  }
-
   function getUserRoles(
-    uint256 spaceId,
-    uint256,
+    string calldata spaceId,
+    string calldata channelId,
     address user
   ) public view returns (DataTypes.Role[] memory) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+
     //Get all the entitlements for this space
-    string[] memory entitlementDescriptions = entitlementsBySpaceId[spaceId]
+    string[] memory entitlementDescriptions = entitlementsBySpaceId[_spaceId]
       .entitlementDescriptions;
 
     //Create an empty array of the max size of all entitlements
@@ -247,8 +256,8 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     for (uint256 i = 0; i < entitlementDescriptions.length; i++) {
       string memory desc = entitlementDescriptions[i];
       //If the user is entitled to a token entitlement
-      if (isTokenEntitled(spaceId, user, desc)) {
-        Entitlement[] memory entitlements = entitlementsBySpaceId[spaceId]
+      if (isTokenEntitled(spaceId, channelId, user, desc)) {
+        Entitlement[] memory entitlements = entitlementsBySpaceId[_spaceId]
           .entitlementsByDescription[desc]
           .entitlements;
         //Get all the roles for that token entitlement, and add them to the array for this user

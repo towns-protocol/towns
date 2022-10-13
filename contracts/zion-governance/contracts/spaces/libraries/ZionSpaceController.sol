@@ -12,27 +12,23 @@ library ZionSpaceController {
     DataTypes.CreateSpaceData calldata info,
     uint256 spaceId,
     address creator,
-    mapping(bytes32 => uint256) storage _spaceByNameHash,
-    mapping(uint256 => DataTypes.Space) storage _spaceById,
-    mapping(string => uint256) storage _spaceIdByNetworkId
+    mapping(bytes32 => uint256) storage _spaceIdByHash,
+    mapping(uint256 => DataTypes.Space) storage _spaceById
   ) external {
     _validateSpaceName(info.spaceName);
 
-    bytes32 spaceNameHash = keccak256(abi.encodePacked(info.spaceName));
+    bytes32 networkHash = keccak256(bytes(info.networkId));
 
-    if (_spaceByNameHash[spaceNameHash] != 0)
+    if (_spaceIdByHash[networkHash] != 0)
       revert Errors.SpaceAlreadyRegistered();
 
-    _spaceByNameHash[spaceNameHash] = spaceId;
-
+    _spaceIdByHash[networkHash] = spaceId;
     _spaceById[spaceId].spaceId = spaceId;
     _spaceById[spaceId].createdAt = block.timestamp;
     _spaceById[spaceId].name = info.spaceName;
     _spaceById[spaceId].networkId = info.networkId;
     _spaceById[spaceId].creator = creator;
     _spaceById[spaceId].owner = creator;
-
-    _spaceIdByNetworkId[info.networkId] = spaceId;
   }
 
   /// @notice validates the name of the space

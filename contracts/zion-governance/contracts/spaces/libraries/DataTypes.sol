@@ -1,23 +1,23 @@
-//SPDX-License-Identifier: Apache-2.0
+//SPDX-License-Identifier: Apache-20
 pragma solidity ^0.8.0;
 
 /**
  * @title DataTypes
  * @author HNT Labs
  *
- * @notice A standard library of data types used throughout the Zion Space Manager.
+ * @notice A standard library of data types used throughout the Zion Space Manager
  */
 library DataTypes {
-  /// @notice A struct representing a space.
-  /// @param spaceId The unique identifier of the space.
-  /// @param createdAt The timestamp of when the space was created.
-  /// @param networkSpaceId The unique identifier of the space on the matrix network.
-  /// @param name The name of the space.
-  /// @param creator The address of the creator of the space.
-  /// @param owner The address of the owner of the space.
-  /// @param rooms An array of rooms in the space.
-  /// @param entitlement An array of space entitlements.
-  /// @param entitlementTags An array of space entitlement tags.
+  /// @notice A struct representing a space
+  /// @param spaceId The unique identifier of the space
+  /// @param createdAt The timestamp of when the space was created
+  /// @param networkSpaceId The unique identifier of the space on the matrix network
+  /// @param name The name of the space
+  /// @param creator The address of the creator of the space
+  /// @param owner The address of the owner of the space
+  /// @param rooms An array of rooms in the space
+  /// @param entitlement An array of space entitlements
+  /// @param entitlementTags An array of space entitlement tags
   struct Space {
     uint256 spaceId;
     uint256 createdAt;
@@ -25,6 +25,7 @@ library DataTypes {
     string name;
     address creator;
     address owner;
+    uint256 ownerRoleId;
     mapping(address => bool) hasEntitlement;
     address[] entitlementModules;
     Channel[] channels;
@@ -39,16 +40,16 @@ library DataTypes {
   }
 
   struct Channels {
-    uint256 total;
+    uint256 idCounter;
     Channel[] channels;
   }
 
-  /// @notice A struct representing minimal info for a space.
-  /// @param spaceId The unique identifier of the space.
-  /// @param createdAt The timestamp of when the space was created.
-  /// @param name The name of the space.
-  /// @param creator The address of the creator of the space.
-  /// @param owner The address of the owner of the space.
+  /// @notice A struct representing minimal info for a space
+  /// @param spaceId The unique identifier of the space
+  /// @param createdAt The timestamp of when the space was created
+  /// @param name The name of the space
+  /// @param creator The address of the creator of the space
+  /// @param owner The address of the owner of the space
   struct SpaceInfo {
     uint256 spaceId;
     uint256 createdAt;
@@ -65,7 +66,6 @@ library DataTypes {
   struct Role {
     uint256 roleId;
     string name;
-    bytes8 color;
     bool isTransitive;
   }
 
@@ -73,35 +73,47 @@ library DataTypes {
     string name;
   }
 
-  /// @notice A struct representing minimal info for an entitlement module.
+  /// @notice A struct representing minimal info for an entitlement module
   struct EntitlementModuleInfo {
     address entitlementAddress;
     string entitlementName;
     string entitlementDescription;
   }
 
-  /// @notice A struct containing the parameters required for creating a space.
-  /// @param spaceName The name of the space.
-  /// @param networkId The network id of the space.
+  /// *********************************
+  /// **************DTO****************
+  /// *********************************
+
+  /// @notice A struct containing the parameters for creating a role
+  struct CreateRoleData {
+    string name;
+    string metadata;
+    Permission[] permissions;
+  }
+
+  /// @notice A struct containing the parameters for creating a channel
+  struct CreateChannelData {
+    string channelName;
+    string networkId;
+    string spaceId;
+    CreateRoleData[] roles;
+  }
+
+  /// @notice A struct containing the parameters required for creating a space
+  /// @param spaceName The name of the space
+  /// @param networkId The network id of the space
   struct CreateSpaceData {
     string spaceName;
     string networkId;
   }
 
-  /// @notice A struct containing the parameters required for creating a space with a  token entitlement.
+  /// @notice A struct containing the parameters required for creating a space with a  token entitlement
   struct CreateSpaceTokenEntitlementData {
     address entitlementModuleAddress;
     address tokenAddress;
     uint256 quantity;
     string description;
     string[] permissions;
-  }
-
-  struct CreateSpaceRoleData {
-    string name;
-    bytes8 color;
-    Permission[] permissions;
-    bool isTransitive;
   }
 
   struct CreateSpacePurchaseableEntitlementData {

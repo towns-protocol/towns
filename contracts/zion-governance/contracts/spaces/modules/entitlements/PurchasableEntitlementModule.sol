@@ -40,14 +40,15 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
   ) EntitlementModuleBase(name_, description_, spaceManager_) {}
 
   function setEntitlement(
-    uint256 spaceId,
-    uint256,
+    string calldata spaceId,
+    string calldata,
     uint256 roleId,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
-    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      spaceId
-    );
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     (string memory _description, uint256 value, string memory tag) = abi.decode(
       entitlementData,
@@ -64,7 +65,7 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
     }
 
     if (
-      purchasableEntitlementsBySpaceId[spaceId].entitlementsByTag[tag].price !=
+      purchasableEntitlementsBySpaceId[_spaceId].entitlementsByTag[tag].price !=
       0
     ) {
       revert("Entitlement tag already exists");
@@ -72,19 +73,21 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
 
     SpacePurchasableEntitlements
       storage spacePurchasableEntitlements = purchasableEntitlementsBySpaceId[
-        spaceId
+        _spaceId
       ];
     spacePurchasableEntitlements.entitlementsByTag[
       tag
     ] = PurchasableEntitlement(_description, value, roleId, true);
   }
 
-  function disablePurchasableEntitlement(uint256 spaceId, string calldata tag)
-    public
-  {
-    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      spaceId
-    );
+  function disablePurchasableEntitlement(
+    string calldata spaceId,
+    string calldata tag
+  ) public {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     require(
       ownerAddress == msg.sender || msg.sender == _spaceManager,
@@ -93,21 +96,21 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
 
     SpacePurchasableEntitlements
       storage spacePurchasableEntitlements = purchasableEntitlementsBySpaceId[
-        spaceId
+        _spaceId
       ];
 
     spacePurchasableEntitlements.entitlementsByTag[tag].isActive = false;
   }
 
   function removeEntitlement(
-    uint256 spaceId,
-    uint256,
+    string calldata spaceId,
+    string calldata,
     uint256[] calldata,
     bytes calldata
   ) external view override onlySpaceManager {
-    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      spaceId
-    );
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     require(
       ownerAddress == msg.sender || msg.sender == _spaceManager,
@@ -139,23 +142,28 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
   }
 
   function isEntitled(
-    uint256 spaceId,
-    uint256 roomId,
+    string calldata spaceId,
+    string calldata channelId,
     address user,
     DataTypes.Permission memory permission
   ) public view override returns (bool) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+
     string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
-      spaceId
+      _spaceId
     ].userPurchasedEntitlements[user];
-    if (roomId > 0) {
+
+    if (bytes(channelId).length > 0) {
       return false;
     }
+
     for (uint256 i = 0; i < purchasedEntitlements.length; i++) {
       string memory entitlementTag = purchasedEntitlements[i];
       PurchasableEntitlement
         memory purchasableEntitlement = purchasableEntitlementsBySpaceId[
-          spaceId
+          _spaceId
         ].entitlementsByTag[entitlementTag];
       if (purchasableEntitlement.isActive) {
         DataTypes.Permission[] memory permissions = spaceManager
@@ -180,14 +188,14 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
 
   function isTransitivelyEntitled(
     uint256 spaceId,
-    uint256 roomId,
+    uint256 channelId,
     address userAddress,
     uint256 roleId
-  ) public view override returns (bool) {
+  ) public view returns (bool) {
     string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
       spaceId
     ].userPurchasedEntitlements[userAddress];
-    if (roomId > 0) {
+    if (channelId > 0) {
       return false;
     }
 
@@ -208,12 +216,16 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
   }
 
   function getUserRoles(
-    uint256 spaceId,
-    uint256,
+    string calldata spaceId,
+    string calldata,
     address user
   ) public view returns (DataTypes.Role[] memory) {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+
     string[] memory purchasedEntitlements = purchasedEntitlementsBySpaceId[
-      spaceId
+      _spaceId
     ].userPurchasedEntitlements[user];
     DataTypes.Role[] memory roles = new DataTypes.Role[](
       purchasedEntitlements.length
@@ -223,7 +235,7 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
       string memory entitlementTag = purchasedEntitlements[i];
       PurchasableEntitlement
         memory purchasableEntitlement = purchasableEntitlementsBySpaceId[
-          spaceId
+          _spaceId
         ].entitlementsByTag[entitlementTag];
       if (purchasableEntitlement.isActive) {
         DataTypes.Role memory role = ISpaceManager(_spaceManager)
@@ -236,20 +248,21 @@ contract PurchasableEntitlementModule is EntitlementModuleBase {
     return roles;
   }
 
-  function withdrawValue(uint256 spaceId) public returns (uint256) {
-    address ownerAddress = ISpaceManager(_spaceManager).getSpaceOwnerBySpaceId(
-      spaceId
-    );
+  function withdrawValue(string calldata spaceId) public returns (uint256) {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     require(
       ownerAddress == msg.sender || msg.sender == _spaceManager,
       "Only the owner can update entitlements"
     );
 
-    require(valueBySpaceId[spaceId] > 0, "No value to withdraw");
+    require(valueBySpaceId[_spaceId] > 0, "No value to withdraw");
 
-    uint256 balance = valueBySpaceId[spaceId];
-    valueBySpaceId[spaceId] = 0;
+    uint256 balance = valueBySpaceId[_spaceId];
+    valueBySpaceId[_spaceId] = 0;
 
     address payable receiver = payable(msg.sender);
     (bool transferTx, ) = receiver.call{value: balance}("");

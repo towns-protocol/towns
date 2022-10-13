@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import {ERC165} from "openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 import {Errors} from "../libraries/Errors.sol";
 import {IEntitlementModule} from "../interfaces/IEntitlementModule.sol";
+import {ISpaceManager} from "../interfaces/ISpaceManager.sol";
+import {DataTypes} from "../libraries/DataTypes.sol";
+import {PermissionTypes} from "../libraries/PermissionTypes.sol";
 
 abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   address public immutable _spaceManager;
@@ -13,6 +16,26 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   modifier onlySpaceManager() {
     if (msg.sender != _spaceManager) revert Errors.NotSpaceManager();
     _;
+  }
+
+  modifier onlyAllowed(
+    string memory spaceId,
+    string memory channelId,
+    address caller
+  ) {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    DataTypes.Permission memory grantPermission = spaceManager
+      .getPermissionFromMap(PermissionTypes.ModifyPermissions);
+
+    if (
+      caller == _spaceManager ||
+      spaceManager.getSpaceOwnerBySpaceId(spaceId) == caller ||
+      spaceManager.isEntitled(spaceId, channelId, caller, grantPermission)
+    ) {
+      _;
+    } else {
+      revert Errors.NotAllowed();
+    }
   }
 
   constructor(

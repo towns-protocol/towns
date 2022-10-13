@@ -9,14 +9,21 @@ abstract contract ZionSpaceManagerStorage {
 
   /// @notice variable representing the default entitlement module address and tag
   address internal _defaultEntitlementModuleAddress;
-  string internal _defaultEntitlementModuleTag;
 
   /// @notice variable representing the zion permissions manager address
   address internal _defaultPermissionsManagerAddress;
 
   // Storage
-  /// @notice Mapping representing the space data by name.
-  mapping(bytes32 => uint256) internal _spaceByNameHash;
+  /// @notice Mapping representing the space id by network hash
+  mapping(bytes32 => uint256) internal _spaceIdByHash;
+
+  /// @notice Mapping representing the channel id by space id by network hash
+  mapping(uint256 => mapping(bytes32 => uint256))
+    internal _channelIdBySpaceIdByHash;
+
+  /// @notice Mapping representing the channel data by spaceId by channel hash
+  mapping(uint256 => mapping(uint256 => DataTypes.Channel))
+    internal _channelBySpaceIdByChannelId;
 
   /// @notice mapping representing the space data by id
   mapping(uint256 => DataTypes.Space) internal _spaceById;
@@ -37,7 +44,4 @@ abstract contract ZionSpaceManagerStorage {
   /// @notice mapping representing the role data by space id by channel id
   mapping(uint256 => mapping(uint256 => DataTypes.Role[]))
     internal _rolesBySpaceIdByChannelId;
-
-  /// @notice Mapping representing the space id by network id
-  mapping(string => uint256) internal _spaceIdByNetworkId;
 }

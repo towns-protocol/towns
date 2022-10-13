@@ -44,27 +44,16 @@ contract PurchasableEntitlementModuleTest is Test {
       address(spaceManager)
     );
 
-    spaceManager.registerDefaultEntitlementModule(
+    spaceManager.setDefaultEntitlementModule(
       address(userGrantedEntitlementModule)
     );
   }
 
-  function createTestSpaceWithUserGrantedEntitlementModule(
-    string memory spaceName
-  ) private returns (uint256) {
-    return
-      spaceManager.createSpace(
-        DataTypes.CreateSpaceData(spaceName, "network-id")
-      );
-  }
-
   function testPurchaseEntitlement() public {
-    string memory spaceName = "test-space";
-    uint256 roomId = 0;
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
 
-    // create a space with the default user granted entitlement module
-    uint256 spaceId = createTestSpaceWithUserGrantedEntitlementModule(
-      spaceName
+    uint256 spaceId = spaceManager.createSpace(
+      DataTypes.CreateSpaceData("test", networkId)
     );
 
     DataTypes.Permission memory allPermission = spaceManager
@@ -72,22 +61,23 @@ contract PurchasableEntitlementModuleTest is Test {
 
     // Create roles and add permissions
     string memory roleName = "Tester";
-    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
-    spaceManager.addPermissionToRole(spaceId, ownerRoleId, allPermission);
+    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
+    spaceManager.addPermissionToRole(networkId, ownerRoleId, allPermission);
 
     string memory description = "Purchase the entitlement to be a moderator";
     uint256 value = .08 ether;
     string memory tag = "buy-moderator";
 
     spaceManager.whitelistEntitlementModule(
-      spaceId,
+      networkId,
       address(purchasableEntitlementModule),
       true
     );
 
     // Add purchasable entitlement module to space
     spaceManager.addRoleToEntitlementModule(
-      spaceId,
+      networkId,
+      "",
       address(purchasableEntitlementModule),
       ownerRoleId,
       abi.encode(description, value, tag)
@@ -95,7 +85,7 @@ contract PurchasableEntitlementModuleTest is Test {
 
     // verify the purchasable entitlement module is added to the space
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
-      spaceId
+      networkId
     );
     assertEq(entitlements.length, 2);
     assertEq(entitlements[1], address(purchasableEntitlementModule));
@@ -111,8 +101,8 @@ contract PurchasableEntitlementModuleTest is Test {
 
     // verify the user tht has the entitelment is entitled
     bool isEntitled = spaceManager.isEntitled(
-      spaceId,
-      roomId,
+      networkId,
+      "",
       user1,
       allPermission
     );
@@ -121,8 +111,8 @@ contract PurchasableEntitlementModuleTest is Test {
 
     // verify the random user isnt entitled
     bool isRandomEntitled = spaceManager.isEntitled(
-      spaceId,
-      roomId,
+      networkId,
+      "",
       user2,
       allPermission
     );
@@ -131,19 +121,19 @@ contract PurchasableEntitlementModuleTest is Test {
 
     //disable the entitlement and verify the user is now no longer entitled
     purchasableEntitlementModule.disablePurchasableEntitlement(
-      spaceId,
+      networkId,
       "buy-moderator"
     );
     bool isStillEntitled = spaceManager.isEntitled(
-      spaceId,
-      roomId,
+      networkId,
+      "",
       user1,
       allPermission
     );
 
     assertFalse(isStillEntitled);
 
-    uint256 balance = purchasableEntitlementModule.withdrawValue(spaceId);
+    uint256 balance = purchasableEntitlementModule.withdrawValue(networkId);
     assertEq(balance, .08 ether);
     assertGt(address(this).balance, .07 ether);
   }

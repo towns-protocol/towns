@@ -28,7 +28,7 @@ library Events {
    * @param entitlementAddress The address of the entitlement module
    */
   event EntitlementModuleAdded(
-    uint256 indexed spaceId,
+    string indexed spaceId,
     address indexed entitlementAddress
   );
 
@@ -38,7 +38,7 @@ library Events {
    * @param entitlementAddress The address of the entitlement module
    */
   event EntitlementModuleRemoved(
-    uint256 indexed spaceId,
+    string indexed spaceId,
     address indexed entitlementAddress
   );
 

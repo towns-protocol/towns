@@ -21,11 +21,11 @@
     "publish:goerli": "yarn publish:goerli:typings && yarn publish:goerli:abis ",
     "publish:goerli:abis": "mkdir -p ../../packages/contracts/goerli/abis && cp -a artifacts_foundry/(CouncilNFT|CouncilStaking|ZionSpaceManager).sol/* ../../packages/contracts/goerli/abis/",
     "publish:goerli:typings": "cp -a ./dist/ ../../packages/contracts/goerli/typings",
-    "publish:goerli:gobindings": "go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion  --type zion_space_manager_localhost --out ../../servers/dendrite/zion/zion_space_manager_localhost.go",
+    "publish:goerli:gobindings": "mkdir -p ../../servers/dendrite/zion_goerli && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion_goerli  --type zion_space_manager_goerli --out ../../servers/dendrite/zion_goerli/zion_space_manager_goerli.go",
     "publish:local": "yarn publish:local:typings && yarn publish:local:abis && yarn publish:local:gobindings",
     "publish:local:abis": "mkdir -p ../../packages/contracts/localhost/abis && cp -a artifacts_foundry/(CouncilNFT|CouncilStaking|ZionSpaceManager).sol/* ../../packages/contracts/localhost/abis/",
     "publish:local:typings": "cp -a ./dist/ ../../packages/contracts/localhost/typings",
-    "publish:local:gobindings": "go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion  --type zion_space_manager_localhost --out ../../servers/dendrite/zion/zion_space_manager_localhost.go"
+    "publish:local:gobindings": "mkdir -p ../../servers/dendrite/zion_localhost && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi artifacts_foundry/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion_localhost  --type zion_space_manager_localhost --out ../../servers/dendrite/zion_localhost/zion_space_manager_localhost.go"
   },
   "dependencies": {
     "@opengsn/contracts": "^2.2.6"
