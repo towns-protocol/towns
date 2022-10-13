@@ -20,16 +20,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        uses: borales/actions-yarn@v3.0.0
-        with:
-          cmd: install # will run `yarn install` command
-
-      - name: Lint
-        uses: borales/actions-yarn@v3.0.0
-        with:
-          cmd: lint # will run `yarn lint` command
-     
+          node-version: "18"
+          cache: "yarn"
+      - run: yarn install
+      - run: yarn lint
