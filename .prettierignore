@@ -4,18 +4,18 @@ docs
 storybook-static
 .storybook
 
-servers/
-contracts/lib/
+servers/*
+contracts/lib/*
 
-broadcast
-cache
-lib
-out 
+broadcast/*
+cache/*
+lib/*
+out/*
 
 .yarn/*
 .vscode
 yarn.lock
 
-packages/contracts
+packages/contracts/*
 
 package.json
