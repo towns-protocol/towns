@@ -7,6 +7,11 @@ storybook-static
 servers/
 contracts/lib/
 
+broadcast
+cache
+lib
+out 
+
 .yarn/*
 .vscode
 yarn.lock
