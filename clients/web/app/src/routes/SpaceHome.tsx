@@ -1,22 +1,29 @@
-import React, { useCallback } from 'react'
-import { Outlet, useMatch, useResolvedPath } from 'react-router'
-import { NavLink } from 'react-router-dom'
+import React, { useCallback, useEffect } from 'react'
 
-import {
-    Membership,
-    RoomIdentifier,
-    SpaceData,
-    useSpaceData,
-    useSpaceId,
-    useZionClient,
-} from 'use-zion-client'
-import { Box, Button, Paragraph, SizeBox } from '@ui'
-import { Stack } from 'ui/components/Stack/Stack'
+import { useNavigate } from 'react-router'
+import { Membership, SpaceData, useSpaceData, useSpaceId, useZionClient } from 'use-zion-client'
+import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
+import { Box, Button, Paragraph, Stack } from '@ui'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
     const spaceId = useSpaceId()
     const space = useSpaceData()
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        const channels = space?.channelGroups.flatMap((g) => g.channels)
+
+        const firstChannelId = channels?.at(0)?.id
+        if (firstChannelId && space?.membership === Membership.Join) {
+            const timeout = setTimeout(() => {
+                navigate(`/spaces/${spaceId?.slug}/channels/${firstChannelId.slug}/`)
+            }, 1000)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [navigate, space?.channelGroups, space?.membership, spaceId?.slug])
 
     if (!spaceId || !space) {
         return null
@@ -25,47 +32,17 @@ export const SpaceHome = () => {
     return (
         <Stack horizontal grow justifyContent="center" basis="1200">
             <LiquidContainer fullbleed position="relative">
-                {space.membership === Membership.Join ? (
-                    <SizeBox grow gap="lg">
-                        <Box paddingX="lg" paddingTop="lg">
-                            <SpaceNav spaceId={spaceId} />
-                        </Box>
-                        <Box grow position="relative" paddingX="lg">
-                            <Outlet />
-                        </Box>
-                    </SizeBox>
-                ) : (
+                {!space.membership || Math.random() > 0 ? (
+                    <Box absoluteFill padding grow overflow="hidden">
+                        <TimelineShimmer />
+                    </Box>
+                ) : space.membership !== Membership.Join ? (
                     <JoinSpace space={space} />
+                ) : (
+                    <>Redirect...</>
                 )}
             </LiquidContainer>
         </Stack>
-    )
-}
-
-export const SpaceNav = (props: { spaceId: RoomIdentifier }) => (
-    <Stack horizontal gap="md">
-        <SpaceNavItem to={`/spaces/${props.spaceId.slug}/`}>Highlights</SpaceNavItem>
-        <SpaceNavItem to={`/spaces/${props.spaceId.slug}/proposals`}>Proposals</SpaceNavItem>
-        <SpaceNavItem to={`/spaces/${props.spaceId.slug}/members`}>Members</SpaceNavItem>
-    </Stack>
-)
-
-const SpaceNavItem = (props: { children: React.ReactNode; to: string; exact?: boolean }) => {
-    const { to, exact } = props
-    const resolved = useResolvedPath(`/${to === '/' ? '' : to}`)
-
-    const match = useMatch({
-        path: resolved.pathname || '/',
-        end: to === '/' || exact,
-    })
-    return (
-        <Box>
-            <NavLink to={props.to}>
-                <Button size="button_md" tone={match ? 'cta1' : 'level2'}>
-                    {props.children}
-                </Button>
-            </NavLink>
-        </Box>
     )
 }
 

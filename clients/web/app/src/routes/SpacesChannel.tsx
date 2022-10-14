@@ -14,6 +14,7 @@ import { MessageTimelineScroller } from '@components/MessageTimeline'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Button, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
+import { TimelineShimmer } from '@components/Shimmer'
 
 export const SpacesChannel = () => {
     return (
@@ -66,19 +67,13 @@ const SpacesChannelComponent = () => {
 
     const hasThreadOpen = !!messageId
 
-    if (!channel) {
-        return (
-            <div>
-                404 Channel {spaceId.matrixRoomId} / {channelId.matrixRoomId} not found
-            </div>
-        )
-    }
-
     return (
         <Stack horizontal minHeight="100%">
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
-                    {myMembership !== Membership.Join ? (
+                    {!channel ? (
+                        <TimelineShimmer />
+                    ) : myMembership !== Membership.Join ? (
                         <Box absoluteFill centerContent>
                             <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>
                                 Join #{channel.label}

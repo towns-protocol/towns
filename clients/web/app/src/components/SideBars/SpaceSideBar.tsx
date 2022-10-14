@@ -15,6 +15,7 @@ import { FadeIn } from '@components/Transitions'
 import { Badge, Stack } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { atoms } from 'ui/styles/atoms.css'
+import { ChannelsShimmer } from '../Shimmer/ChannelsShimmer'
 import { SideBar } from './_SideBar'
 
 type Props = {
@@ -42,6 +43,8 @@ export const SpaceSideBar = (props: Props) => {
         [navigate],
     )
 
+    const isReady = !!space?.channelGroups?.length
+
     return (
         <SideBar>
             <Stack position="relative" background="level1" gap="md">
@@ -60,7 +63,7 @@ export const SpaceSideBar = (props: Props) => {
                 </FadeIn>
             </Stack>
             <Stack paddingY="md">
-                {space && (
+                {isReady && (
                     <SpaceNavItem
                         exact
                         name="Home"
@@ -71,7 +74,7 @@ export const SpaceSideBar = (props: Props) => {
                         onSettings={onSettings}
                     />
                 )}
-                {space?.membership === Membership.Join && (
+                {isReady && space?.membership === Membership.Join && (
                     <>
                         <ActionNavItem
                             icon="threads"
@@ -89,17 +92,18 @@ export const SpaceSideBar = (props: Props) => {
                         />
                     </>
                 )}
-                {invites.map((m, index) => (
-                    <SpaceNavItem
-                        isInvite
-                        key={m.id.slug}
-                        id={m.id}
-                        name={m.name}
-                        avatar={m.avatarSrc}
-                        pinned={false}
-                    />
-                ))}
-                {space && (
+                {isReady &&
+                    invites.map((m, index) => (
+                        <SpaceNavItem
+                            isInvite
+                            key={m.id.slug}
+                            id={m.id}
+                            name={m.name}
+                            avatar={m.avatarSrc}
+                            pinned={false}
+                        />
+                    ))}
+                {isReady ? (
                     <>
                         <ChannelList space={space} />
                         <ActionNavItem
@@ -109,6 +113,8 @@ export const SpaceSideBar = (props: Props) => {
                             link={`/spaces/${space.id.slug}/channels/new`}
                         />
                     </>
+                ) : (
+                    <ChannelsShimmer />
                 )}
             </Stack>
         </SideBar>

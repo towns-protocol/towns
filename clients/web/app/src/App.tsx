@@ -1,16 +1,15 @@
-import React, { useEffect } from 'react'
-import { Outlet, Route, Routes, useNavigate } from 'react-router'
-import useEvent from 'react-use-event-hook'
+import React from 'react'
+import { Outlet, Route, Routes } from 'react-router'
 
 import { ZionContextProvider, useMatrixStore } from 'use-zion-client'
 import { Box, Heading } from '@ui'
-import { useRootTheme } from 'hooks/useRootTheme'
-import { FontLoader } from 'ui/utils/FontLoader'
 import { AppLayout } from 'AppLayout'
-import { SiteHome } from 'routes/SiteHome'
+import { useRootTheme } from 'hooks/useRootTheme'
 import { Register } from 'routes/Register'
-import { SidebarLayout } from 'SidebarLayout'
+import { SiteHome } from 'routes/SiteHome'
 import { SpacesNew } from 'routes/SpacesNew'
+import { SidebarLayout } from 'SidebarLayout'
+import { FontLoader } from 'ui/utils/FontLoader'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -39,7 +38,7 @@ export const App = () => {
 
 const AllRoutes = () => {
     const { isAuthenticated } = useMatrixStore()
-    useNavigateOnAuth('/', isAuthenticated)
+
     useRootTheme({
         ammendHTMLBody: true,
         useDefaultOSTheme: false,
@@ -77,13 +76,3 @@ const AllRoutes = () => {
 }
 
 export default App
-
-const useNavigateOnAuth = (to: string, isAuthenticated: boolean) => {
-    const navigate = useNavigate()
-    const stableNavigate = useEvent(() => navigate(to))
-    useEffect(() => {
-        if (isAuthenticated) {
-            stableNavigate()
-        }
-    }, [isAuthenticated, stableNavigate])
-}
