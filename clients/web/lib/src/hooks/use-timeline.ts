@@ -16,6 +16,7 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { enrichPowerLevels } from '../client/matrix/PowerLevels'
 import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../types/timeline-types'
 import { staticAssertNever } from '../utils/zion-utils'
+import { RoomMessageEvent } from '../types/timeline-types'
 
 export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
     const { client } = useZionContext()
@@ -45,9 +46,11 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
                 if (eventIndex === -1) {
                     return timeline
                 }
+                const event = timeline[eventIndex]
+
                 return [
                     ...timeline.slice(0, eventIndex),
-                    timelineEvent,
+                    toReplacedMessageEvent(event, timelineEvent),
                     ...timeline.slice(eventIndex + 1),
                 ]
             })
@@ -357,6 +360,28 @@ function toZionContent(event: MatrixEvent): {
             return {
                 error: `${describe()} unhandled`,
             }
+    }
+}
+
+function toReplacedMessageEvent(prev: TimelineEvent, event: TimelineEvent) {
+    if (
+        event?.content?.kind !== ZTEvent.RoomMessage ||
+        prev?.content?.kind !== ZTEvent.RoomMessage ||
+        !event.content
+    ) {
+        return event
+    }
+
+    // a newly replaced timeline event retain the `content.inReplyTo` which subsequently
+    // detaches it from the thread (until refresh). The following creates a new
+    // event with the `inReplyTo` copied from the original event
+    return {
+        ...event,
+        originalServerTs: prev.originServerTs,
+        content: {
+            ...event.content,
+            inReplyTo: prev.content.inReplyTo,
+        },
     }
 }
 

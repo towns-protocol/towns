@@ -9,8 +9,7 @@ export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
                 ? events
                 : events.filter(
                       (e: TimelineEvent) =>
-                          e.content?.kind !== ZTEvent.RoomMessage ||
-                          !e.content?.content['m.relates_to']?.['m.in_reply_to'],
+                          e.content?.kind !== ZTEvent.RoomMessage || !e.content.inReplyTo,
                   ),
         [bypass, events],
     )
@@ -30,8 +29,7 @@ export const useMessageThread = (messageId: string, channelMessages: TimelineEve
     }, [channelMessages, messageId])
 
     const messages = channelMessages.reduce((messages, m) => {
-        const reply = getMessageAsReply(m)
-        const parentId = reply && reply['m.relates_to'].event_id
+        const parentId = m.content?.kind === ZTEvent.RoomMessage && m.content.inReplyTo
         if (parentId === messageId && !messages.some((s) => s.eventId === m.eventId)) {
             messages.push(m)
             return messages
@@ -58,22 +56,19 @@ export const useTimelineRepliesMap = (events: TimelineEvent[]) => {
 
 export const getTimelineThreadsMap = (events: TimelineEvent[]) =>
     events.reduce<Map<string, ThreadStats>>((threads, m) => {
-        const reply = getMessageAsReply(m)
-
-        const parentId = reply && reply['m.relates_to'].event_id
-        if (reply && parentId) {
+        const parentId = m.content?.kind === ZTEvent.RoomMessage && m.content.inReplyTo
+        if (parentId) {
             const entry = threads.get(parentId) ?? {
                 replyCount: 0,
                 userIds: new Set(),
-                latestTs: reply.originServerTs,
+                latestTs: m.originServerTs,
                 parentId,
             }
             entry.replyCount++
 
-            const content =
-                reply?.content?.kind === ZTEvent.RoomMessage ? reply?.content : undefined
+            const content = m?.content?.kind === ZTEvent.RoomMessage ? m?.content : undefined
 
-            entry.latestTs = Math.max(entry.latestTs, reply.originServerTs)
+            entry.latestTs = Math.max(entry.latestTs, m.originServerTs)
 
             if (content) {
                 entry.userIds.add(content?.sender.id)
@@ -135,14 +130,5 @@ export const useScanChannelThreads = (channels: Channel[], userId: string | null
 
     return {
         threads,
-    }
-}
-
-const getMessageAsReply = (m: TimelineEvent) => {
-    const content = m.content
-    const relatesTo =
-        content?.kind === ZTEvent.RoomMessage ? content.content['m.relates_to'] : undefined
-    if (relatesTo && relatesTo['m.in_reply_to'] && relatesTo.rel_type === 'io.element.thread') {
-        return { ...m, 'm.relates_to': { ...relatesTo } } as const
     }
 }
