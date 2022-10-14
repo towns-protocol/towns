@@ -1,15 +1,20 @@
 {
-    "parserOptions": {
-        "project": "./tsconfig.json"
-    },
-    "extends": [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:prettier/recommended",
-        "plugin:react-hooks/recommended"
-    ],
     "plugins": ["@typescript-eslint", "prettier"],
-    "rules": {
-        "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
-        "@typescript-eslint/no-base-to-string": "error"
-    }
+    "overrides": [
+        {
+            "files": ["*.ts", "*.tsx"],
+            "extends": [
+                "plugin:@typescript-eslint/recommended",
+                "plugin:prettier/recommended",
+                "plugin:react-hooks/recommended"
+            ],
+            "rules": {
+                "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
+                "@typescript-eslint/no-base-to-string": "error"
+            },
+            "parserOptions": {
+                "project": "./tsconfig.json"
+            }
+        }
+    ]
 }
