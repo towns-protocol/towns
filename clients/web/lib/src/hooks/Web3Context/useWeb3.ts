@@ -40,7 +40,7 @@ export function useWeb3(): IWeb3Context {
             return new ethers.providers.Web3Provider(window.ethereum)
         }
         return undefined
-    }, [])
+    }, []) // note, important for this to have 0 deps, it's passed to the client singleton
 
     return {
         getProvider: getProviderCB,

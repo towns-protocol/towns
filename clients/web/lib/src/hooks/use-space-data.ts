@@ -3,7 +3,6 @@ import {
     Channel,
     ChannelGroup,
     InviteData,
-    makeRoomIdentifierFromSlug,
     Room,
     RoomIdentifier,
     SpaceChild,
@@ -11,7 +10,7 @@ import {
     SpaceHierarchies,
     SpaceHierarchy,
 } from '../types/matrix-types'
-import { toZionRoom, useMatrixStore } from '../store/use-matrix-store'
+import { toZionRoom } from '../store/use-matrix-store'
 import { useZionClient } from './use-zion-client'
 import { useRoom } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -28,7 +27,6 @@ export function useSpaceData(): SpaceData | undefined {
         () => (spaceId?.matrixRoomId ? spaceHierarchies[spaceId.matrixRoomId] : undefined),
         [spaceId?.matrixRoomId, spaceHierarchies],
     )
-
     return useMemo(() => {
         if (spaceRoom || spaceHierarchy) {
             return formatSpace(
@@ -47,7 +45,8 @@ export function useSpaceData(): SpaceData | undefined {
             const defaultSpaceRoom: Room = {
                 id: defaultSpaceId,
                 name: defaultSpaceName ?? 'Default Space',
-                members: {},
+                members: [],
+                membersMap: {},
                 membership: '',
                 isSpaceRoom: true,
             }
@@ -94,22 +93,10 @@ export const useInvitesForSpace = (spaceId: RoomIdentifier) => {
 }
 
 export const useInviteData = (slug: string | undefined) => {
-    const { spaceHierarchies } = useZionContext()
-    const { rooms } = useMatrixStore()
-    const inviteId = slug ? makeRoomIdentifierFromSlug(slug) : undefined
-    const room = useMemo(
-        () => (rooms && inviteId?.slug ? rooms[inviteId.slug] : undefined),
-        [rooms, inviteId?.slug],
-    )
-    const parentSpaceId = useMemo(
-        () => (inviteId ? getParentSpaceId(inviteId.matrixRoomId, spaceHierarchies) : undefined),
-        [inviteId, spaceHierarchies],
-    )
-
-    return useMemo(
-        () => (room ? formatInvite(room, parentSpaceId, '/placeholder/nft_4.png') : undefined),
-        [parentSpaceId, room],
-    )
+    const invites = useInvites()
+    return invites.find((invite) => {
+        invite.id.slug === slug
+    })
 }
 
 function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): RoomIdentifier | undefined {

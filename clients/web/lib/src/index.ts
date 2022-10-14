@@ -1,40 +1,47 @@
+export type { Space, SpaceIdentifier } from './client/ZionClientTypes'
+
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { SpaceContextProvider, useSpaceContext } from './components/SpaceContextProvider'
 export { ZionContextProvider, useZionContext } from './components/ZionContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
 
-export { useChannelId } from './hooks/use-channel-id'
-export { useChannelData } from './hooks/use-channel-data'
-export { useChannelTimeline } from './hooks/use-channel-timeline'
-export { toEvent } from './hooks/use-timeline'
 export { LoginStatus } from './hooks/login'
-export { useMatrixStore } from './store/use-matrix-store'
-export { useZionClient } from './hooks/use-zion-client'
+export { useChannelData } from './hooks/use-channel-data'
+export { useChannelId } from './hooks/use-channel-id'
+export { useChannelMembers } from './hooks/use-channel-members'
+export { useChannelTimeline } from './hooks/use-channel-timeline'
+export { useIntegratedSpaceManagement } from './hooks/use-integrated-space-management'
 export { useMember } from './hooks/use-member'
-export { useSpaceMembers } from './hooks/use-space-members'
+export { useMembers } from './hooks/use-members'
+export { useMembership } from './hooks/use-membership'
 export { useMyMembership } from './hooks/use-my-membership'
 export { useMyProfile } from './hooks/use-my-profile'
+export { useMyUserId } from './hooks/use-my-user-id'
 export { usePowerLevels } from './hooks/use-power-levels'
 export { useRoom } from './hooks/use-room'
-export { useSpaceData, useInvites, useInvitesForSpace, useInviteData } from './hooks/use-space-data'
-export { useSpacesFromContract } from './hooks/use-spaces-from-contract'
-export { useSpaceId } from './hooks/use-space-id'
-export { useSpaceTimeline } from './hooks/use-space-timeline'
-export { useIntegratedSpaceManagement } from './hooks/use-integrated-space-management'
 export { useServerVersions } from './hooks/use-server-versions'
+export { useSpaceData, useInvites, useInvitesForSpace, useInviteData } from './hooks/use-space-data'
+export { useSpaceId } from './hooks/use-space-id'
+export { useSpaceMembers } from './hooks/use-space-members'
+export { useSpaceTimeline } from './hooks/use-space-timeline'
+export { useSpacesFromContract } from './hooks/use-spaces-from-contract'
+export { toEvent } from './hooks/use-timeline'
+export { useUser } from './hooks/use-user'
+export { useZionClient } from './hooks/use-zion-client'
+
+export { useMatrixStore } from './store/use-matrix-store'
 
 export type {
     Channel,
     ChannelGroup,
     CreateChannelInfo,
     CreateSpaceInfo,
-    Member,
-    Members,
     PowerLevel,
     PowerLevels,
     PowerLevelDefinition,
     Room,
     RoomIdentifier,
+    RoomMember,
     Rooms,
     SendMessageOptions,
     SpaceChild,
@@ -69,8 +76,6 @@ export type {
 export { ZTEvent } from './types/timeline-types'
 
 export { WalletStatus } from './types/web3-types'
-
-export type { Space, SpaceIdentifier } from './client/ZionClientTypes'
 
 export type { UserIdentifier } from './types/user-identifier'
 

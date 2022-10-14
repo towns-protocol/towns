@@ -14,9 +14,8 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { clsx } from 'clsx'
-import { RoomMember } from 'matrix-js-sdk'
 import React, { useMemo, useState } from 'react'
-import { useSpaceMembers } from 'use-zion-client'
+import { RoomMember, useSpaceMembers } from 'use-zion-client'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useInitialConfig } from './hooks/useInitialConfig'
@@ -64,7 +63,7 @@ const nodes = [
 
 const useTransformers = (members: RoomMember[]) => {
     const transformers = useMemo(() => {
-        const names = members.map((m) => m.user?.displayName).filter(notUndefined)
+        const names = members.map((m) => m.name).filter(notUndefined)
         return [CHECK_LIST, ...TRANSFORMERS, createMentionTransformer(names)]
     }, [members])
     return { transformers }

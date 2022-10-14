@@ -111,12 +111,10 @@ describe('defaultSpaceIdHooks', () => {
         fireEvent.click(registerButton)
         // expect our status to change to logged in
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
-        // expect our default room to sync, even though we haven't joined it
-        await waitFor(() => expect(spaceRoomName).toHaveTextContent('janes space (fake default)'))
-        // expect our default space to sync, even though we haven't joined it
-        await waitFor(() => expect(spaceName).toHaveTextContent('janes space (fake default)'))
         // wait for the client to boot up, this is async
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
+        // expect our default space to sync, even though we haven't joined it
+        await waitFor(() => expect(spaceName).toHaveTextContent('janes space (fake default)'))
         // expect our room membership to be empty
         expect(roomMembership).toHaveTextContent('')
         expect(spaceMembership).toHaveTextContent('')

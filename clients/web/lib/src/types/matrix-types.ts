@@ -9,12 +9,9 @@ export enum Membership {
     Join = 'join',
     Invite = 'invite',
     Leave = 'leave',
-}
-
-export interface MyProfile {
-    userId: string
-    displayName: string
-    avatarUrl: string
+    Ban = 'ban',
+    Knock = 'knock',
+    None = '',
 }
 
 export interface RoomIdentifier {
@@ -89,7 +86,8 @@ export interface Room {
     id: RoomIdentifier
     name: string
     membership: string
-    members: Members
+    members: RoomMember[]
+    membersMap: { [userId: string]: RoomMember }
     inviter?: string
     isSpaceRoom: boolean
 }
@@ -98,15 +96,20 @@ export interface Rooms {
     [slug: string]: Room
 }
 
-export interface Member {
+export interface User {
+    userId: string
+    displayName: string
+    avatarUrl?: string
+    presence?: string
+    lastPresenceTs: number
+    currentlyActive: boolean
+}
+
+export interface RoomMember {
     userId: string
     name: string
     membership: Membership
     avatarUrl?: string
-}
-
-export interface Members {
-    [userId: string]: Member
 }
 
 export interface CreateSpaceInfo {

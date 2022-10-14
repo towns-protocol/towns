@@ -29,7 +29,6 @@ export function useOnboardingState(client?: ZionClient): IOnboardingState {
         console.log(`=== useOnboardingState step: ${stepIndex}`)
         // initial condidtions
         if (!client || !userId) {
-            console.log('OnboardingState client or userId is undefined')
             setState(initialState)
             setStepIndex(0)
             return

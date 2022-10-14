@@ -37,7 +37,7 @@ describe('spaceHierarchy', () => {
 
         // can she join it?
         const alice_roomInfo = await alice.joinRoom(roomId)
-        expect(alice_roomInfo.roomId).toEqual(roomId.matrixRoomId)
+        expect(alice_roomInfo.id.matrixRoomId).toEqual(roomId.matrixRoomId)
     })
     test('create a private space and a public room, have user join space and search for space childs', async () => {
         // create clients
@@ -75,6 +75,6 @@ describe('spaceHierarchy', () => {
 
         // can she join it?
         const alice_roomInfo = await alice.joinRoom(roomId)
-        expect(alice_roomInfo.roomId).toEqual(roomId.matrixRoomId)
+        expect(alice_roomInfo.id.matrixRoomId).toEqual(roomId.matrixRoomId)
     })
 })

@@ -13,12 +13,15 @@ export function assert(condition: any, msg?: string): asserts condition {
 
 export async function registerAndStartClients(
     clientNames: string[],
+    props?: { disableEncryption?: boolean },
 ): Promise<Record<string, ZionTestClient>> {
     // get the chain id for the test network
     const dummyProvider = new ZionTestWeb3Provider()
     const chainId = (await dummyProvider.getNetwork()).chainId
     // create new matrix test clients
-    const clients = clientNames.map((name) => new ZionTestClient(chainId, name))
+    const clients = clientNames.map(
+        (name) => new ZionTestClient(chainId, name, props?.disableEncryption),
+    )
     // start them up
     await Promise.all(clients.map((client) => client.registerWalletAndStartClient()))
     // return a dictionary of clients

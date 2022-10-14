@@ -52,7 +52,7 @@ const useNameSequence = (users: Map<string, { eventId: string } | undefined>) =>
     return useMemo(() => {
         return Array.from(users.keys() ?? [])
             .map((u) => {
-                const name = membersMap.get(u)?.name
+                const name = membersMap[u]?.name
                 if (!name) {
                     return undefined
                 } else if (name === displayName) {

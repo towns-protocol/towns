@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from 'react'
-import { Membership } from '../types/matrix-types'
+import { Membership, RoomIdentifier } from '../types/matrix-types'
 import {
+    ClientEvent,
     HistoryVisibility,
     IRoomTimelineData,
     JoinRule,
@@ -16,16 +17,14 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { enrichPowerLevels } from '../client/matrix/PowerLevels'
 import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../types/timeline-types'
 import { staticAssertNever } from '../utils/zion-utils'
-import { RoomMessageEvent } from '../types/timeline-types'
 
-export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
+export function useTimeline(roomId?: RoomIdentifier): TimelineEvent[] {
     const { client } = useZionContext()
     const [timeline, setTimeline] = useState<TimelineEvent[]>([])
 
     useEffect(() => {
         // check preconditions
-        if (!client || !matrixRoom) {
-            setTimeline((timeline) => (timeline.length > 0 ? [] : timeline))
+        if (!client || !roomId) {
             return
         }
         // helpers
@@ -56,12 +55,17 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
             })
         }
 
+        const initTimeline = () => {
         // initial state
-        let initialTimeline = matrixRoom.getLiveTimeline().getEvents()
+            let initialTimeline = client.getRoom(roomId.matrixRoomId)?.getLiveTimeline().getEvents()
         // for some reason the timeline doesn't filter replacements
-        initialTimeline = initialTimeline.filter((m) => !m.isRelation(RelationType.Replace))
+            initialTimeline =
+                initialTimeline?.filter((m) => !m.isRelation(RelationType.Replace)) ?? []
 
         setTimeline(initialTimeline.map(toEvent))
+        }
+
+        initTimeline()
 
         const onRoomTimelineEvent = (
             event: MatrixEvent,
@@ -70,7 +74,7 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
             removed: boolean,
             data: IRoomTimelineData,
         ) => {
-            if (eventRoom.roomId !== matrixRoom.roomId) {
+            if (eventRoom.roomId !== roomId.matrixRoomId) {
                 return
             }
 
@@ -96,14 +100,14 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
         }
 
         const onEventDecrypted = (event: MatrixEvent) => {
-            if (event.getRoomId() !== matrixRoom.roomId) {
+            if (event.getRoomId() !== roomId.matrixRoomId) {
                 return
             }
             replaceEvent(event.getId(), toEvent(event))
         }
 
         const onRoomRedaction = (event: MatrixEvent, eventRoom: MatrixRoom) => {
-            if (eventRoom.roomId !== matrixRoom.roomId) {
+            if (eventRoom.roomId !== roomId.matrixRoomId) {
                 return
             }
             if (!event.event.redacts) {
@@ -114,7 +118,7 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
         }
 
         const onEventReplaced = (event: MatrixEvent) => {
-            if (event.getRoomId() !== matrixRoom.roomId) {
+            if (event.getRoomId() !== roomId.matrixRoomId) {
                 return
             }
             const replacingId = event.replacingEventId()
@@ -129,19 +133,28 @@ export function useTimeline(matrixRoom?: MatrixRoom): TimelineEvent[] {
             replaceEvent(replacingId, toEvent(event))
         }
 
-        matrixRoom.on(RoomEvent.Timeline, onRoomTimelineEvent)
-        matrixRoom.on(RoomEvent.Redaction, onRoomRedaction)
+        const onRoomEvent = (room: MatrixRoom) => {
+            if (room.roomId === roomId.matrixRoomId) {
+                initTimeline()
+            }
+        }
+
+        client.on(ClientEvent.Room, onRoomEvent)
+        client.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        client.on(RoomEvent.Redaction, onRoomRedaction)
         // cli.on(RoomEvent.TimelineReset, this.onRoomTimelineReset);
         // cli.on(RoomEvent.RedactionCancelled, this.onRoomRedaction);
         client.on(MatrixEventEvent.Decrypted, onEventDecrypted)
         client.on(MatrixEventEvent.Replaced, onEventReplaced)
         return () => {
-            matrixRoom.off(RoomEvent.Timeline, onRoomTimelineEvent)
-            matrixRoom.off(RoomEvent.Redaction, onRoomRedaction)
+            client.on(ClientEvent.Room, onRoomEvent)
+            client.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            client.off(RoomEvent.Redaction, onRoomRedaction)
             client.off(MatrixEventEvent.Decrypted, onEventDecrypted)
             client.off(MatrixEventEvent.Replaced, onEventReplaced)
+            setTimeline([])
         }
-    }, [client, matrixRoom])
+    }, [client, roomId])
 
     return timeline
 }

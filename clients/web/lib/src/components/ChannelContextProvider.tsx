@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useMemo } from 'react'
 import { makeRoomIdentifierFromSlug, RoomIdentifier } from '../types/matrix-types'
-import { Room as MatrixRoom } from 'matrix-js-sdk'
 import { useSpaceId } from '../hooks/use-space-id'
-import { useZionContext } from './ZionContextProvider'
+import { useTimeline } from '../hooks/use-timeline'
+import { TimelineEvent } from 'types/timeline-types'
 
 export interface IChannelContext {
     channelId: RoomIdentifier
     spaceId: RoomIdentifier
-    channelRoom?: MatrixRoom
+    channelTimeline: TimelineEvent[]
 }
 
 export const ChannelContext = createContext<IChannelContext | undefined>(undefined)
@@ -30,7 +30,6 @@ interface Props {
 
 export function ChannelContextProvider(props: Props): JSX.Element {
     console.log('~~~~~ Channel Context ~~~~~~', props.channelId)
-    const { client } = useZionContext()
     const spaceId = useSpaceId()
     if (!spaceId) {
         throw new Error('ChannelContextProvider: no spaceId')
@@ -43,15 +42,15 @@ export function ChannelContextProvider(props: Props): JSX.Element {
         return props.channelId
     }, [props.channelId])
 
-    const channelRoom = client?.getRoom(channelId)
+    const channelTimeline = useTimeline(channelId)
 
     const channelContext: IChannelContext = useMemo(
         () => ({
             channelId: channelId,
             spaceId: spaceId,
-            channelRoom: channelRoom,
+            channelTimeline: channelTimeline,
         }),
-        [channelId, spaceId, channelRoom],
+        [channelId, spaceId, channelTimeline],
     )
     return (
         <ChannelContext.Provider value={channelContext}>{props.children}</ChannelContext.Provider>

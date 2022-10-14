@@ -29,13 +29,13 @@ export class ZionTestClient extends ZionClient {
         return this.auth?.userId
     }
 
-    constructor(chainId: number, name: string) {
+    constructor(chainId: number, name: string, disableEncryption?: boolean) {
         // super
         super(
             {
                 homeServerUrl: process.env.HOMESERVER!,
                 initialSyncLimit: 20,
-                disableEncryption: process.env.DISABLE_ENCRYPTION === 'true',
+                disableEncryption: disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
                 getSigner: () => this.provider.wallet,
                 getProvider: () => {
                     return this.provider

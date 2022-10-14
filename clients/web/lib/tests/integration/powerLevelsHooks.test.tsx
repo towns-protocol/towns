@@ -54,7 +54,9 @@ describe('powerLevelsHooks', () => {
                 <>
                     <div data-testid="loginStatus">{loginStatus}</div>
                     <div data-testid="loginError">{loginError?.message ?? ''}</div>
-                    <div data-testid="spaceChildLevel">{spaceChildLevel?.value ?? -1}</div>
+                    <div data-testid="spaceChildLevel">
+                        {'_' + (spaceChildLevel?.value.toString() ?? 'none') + '_'}
+                    </div>
                     <button onClick={updateSpaceChildLevel}>PowerDown</button>
                 </>
             )
@@ -71,7 +73,7 @@ describe('powerLevelsHooks', () => {
         const powerDownButton = screen.getByRole('button', { name: 'PowerDown' })
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // expect the initial power levels to be set to 50
-        await waitFor(() => expect(spaceChildLevel).toHaveTextContent('50'))
+        await waitFor(() => expect(spaceChildLevel).toHaveTextContent('_50_'))
         // expect that alice can't make a space child
         await expect(
             alice.createChannel({
@@ -83,7 +85,7 @@ describe('powerLevelsHooks', () => {
         // set update the power level to 0
         fireEvent.click(powerDownButton)
         // expect the power level to change
-        await waitFor(() => expect(spaceChildLevel).toHaveTextContent('0')) // note to self, this doesn't work
+        await waitFor(() => expect(spaceChildLevel).toHaveTextContent('_0_'))
         // expect alice to see the power level change
         await waitFor(() => expect(alice.getPowerLevel(roomId, 'm.space.child')?.value).toEqual(0))
         // expect that alice can make a space child

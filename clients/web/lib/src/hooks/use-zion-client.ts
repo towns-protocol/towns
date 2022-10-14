@@ -4,6 +4,7 @@ import {
     CreateSpaceInfo,
     EditMessageOptions,
     PowerLevel,
+    Room,
     RoomIdentifier,
     SendMessageOptions,
 } from '../types/matrix-types'
@@ -12,7 +13,6 @@ import {
 import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
 import { IZionServerVersions, ZionClientEvent } from '../client/ZionClientTypes'
 import { ZionContractProvider } from 'client/web3/ZionContractProvider'
-import { useJoinRoom } from './MatrixClient/useJoinRoom'
 import { useLoginWithPassword } from './MatrixClient/useLoginWithPassword'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
@@ -45,7 +45,7 @@ interface ZionClientImpl {
     getIsWalletIdRegistered: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
-    joinRoom: (roomId: RoomIdentifier) => Promise<void>
+    joinRoom: (roomId: RoomIdentifier) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier) => Promise<void>
     logout: () => Promise<void>
     loginWithPassword: (username: string, password: string) => Promise<void>
@@ -75,9 +75,7 @@ interface ZionClientImpl {
 export function useZionClient(): ZionClientImpl {
     const { getIsWalletIdRegistered, loginWithWallet, registerWallet } = useMatrixWalletSignIn()
     const { client } = useZionContext()
-
     const clientRunning = useMemo(() => client !== undefined, [client])
-    const joinRoom = useJoinRoom()
     const loginWithPassword = useLoginWithPassword()
     const logout = useLogout()
     const registerPasswordUser = useRegisterPasswordUser()
@@ -98,7 +96,7 @@ export function useZionClient(): ZionClientImpl {
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
-        joinRoom,
+        joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
         loginWithPassword,
         loginWithWallet,

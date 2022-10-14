@@ -23,7 +23,7 @@ export const MessageThreadButton = (props: { threadStats: ThreadStats; eventId: 
             <Box shrink centerContent horizontal gap="sm" cursor="pointer" onClick={onClick}>
                 <Stack horizontal gap="xs">
                     {Array.from(threadStats.userIds)
-                        .map((u) => membersMap.get(u)?.user?.avatarUrl)
+                        .map((u) => membersMap[u]?.name)
                         .filter(notUndefined)
                         .map((u) => (
                             <Avatar src={u} key={u} size="avatar_sm" />

@@ -12,6 +12,7 @@ interface Props {
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
     initialSyncLimit?: number
+    disableEncryption?: boolean
     children: JSX.Element
 }
 
@@ -23,11 +24,12 @@ export const ZionTestApp = (props: Props) => {
         defaultSpaceName,
         defaultSpaceAvatarSrc,
         initialSyncLimit,
+        disableEncryption: inDisableEncryption,
         children,
     } = props
     // pull environment variables from the process
     const homeServerUrl = process.env.HOMESERVER!
-    const disableEncryption = process.env.DISABLE_ENCRYPTION === 'true'
+    const disableEncryption = inDisableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true'
     const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts
         ? inOnboardingOpts
         : {

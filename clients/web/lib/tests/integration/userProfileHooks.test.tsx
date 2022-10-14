@@ -46,7 +46,7 @@ describe('userProfileHooks', () => {
         const TestUserProfile = () => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
             const myProfile = useMyProfile()
-            const alicesMemberInfo = useMember(alice.matrixUserId!, alicesSpaceId)
+            const alicesMemberInfo = useMember(alicesSpaceId, alice.matrixUserId)
             const timeline = useChannelTimeline()
             const roomMessages = timeline.filter((x) => x.eventType === ZTEvent.RoomMessage)
             const onClickSetProfileInfo = useCallback(() => {

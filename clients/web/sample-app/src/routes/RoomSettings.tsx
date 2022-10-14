@@ -1,7 +1,14 @@
 import { Divider, TextField } from '@mui/material'
 import { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
-import { PowerLevel, useZionClient, usePowerLevels, useRoom, useZionContext } from 'use-zion-client'
+import {
+    PowerLevel,
+    useZionClient,
+    usePowerLevels,
+    useRoom,
+    useZionContext,
+    makeRoomIdentifier,
+} from 'use-zion-client'
 
 export const RoomSettings = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -9,7 +16,7 @@ export const RoomSettings = () => {
     const { setPowerLevel } = useZionClient()
     // if we have a room id, use it, otherwise pull up the space id
     const targetId = channelSlug || spaceSlug
-    const room = useRoom(targetId)
+    const room = useRoom(targetId ? makeRoomIdentifier(targetId) : undefined)
     const matrixRoom = targetId ? client?.getRoom(targetId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 

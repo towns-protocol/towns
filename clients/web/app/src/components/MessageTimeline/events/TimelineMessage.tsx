@@ -45,8 +45,8 @@ export const TimelineMessage = React.memo((props: Props) => {
 
     // note: should be memoized
     const { membersMap } = useSpaceMembers()
-    const user = membersMap.get(sender.id)?.user
-    const displayName = user?.displayName ?? sender.displayName
+    const user = membersMap[sender.id]
+    const displayName = user?.name ?? sender.displayName
     const avatarUrl = user?.avatarUrl ?? sender.avatarUrl
 
     return !event ? null : (

@@ -8,10 +8,10 @@ import {
 
 import fuzzysort from 'fuzzysort'
 import { $createTextNode, TextNode } from 'lexical'
-import { RoomMember } from 'matrix-js-sdk'
 import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
+import { RoomMember } from 'use-zion-client'
 import { Avatar, Box, Stack, Text } from '@ui'
 import { baseline } from 'ui/styles/vars.css'
 import { notUndefined } from 'ui/utils/utils'
@@ -35,11 +35,7 @@ export const NewMentionsPlugin = (props: Props) => {
 
     const options = useMemo(() => {
         return props.members
-            .map((m) =>
-                m.user?.displayName
-                    ? new MentionTypeaheadOption(m.user?.displayName, m.user?.avatarUrl)
-                    : undefined,
-            )
+            .map((m) => (m.name ? new MentionTypeaheadOption(m.name, m.avatarUrl) : undefined))
             .filter(notUndefined)
     }, [props.members])
 

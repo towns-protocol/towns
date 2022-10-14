@@ -1,6 +1,5 @@
 import { Button, Theme } from '@mui/material'
 import {
-    Membership,
     RoomIdentifier,
     createUserIdFromString,
     getShortUsername,
@@ -15,12 +14,13 @@ import CssBaseline from '@mui/material/CssBaseline'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
 import { Logout } from './Logout'
-import { Rooms } from './Rooms'
+import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { SidebarItemButton } from './Buttons/SidebarItemButton'
 import { AppDrawerSpaces } from './AppDrawerSpaces'
+import { InviteData } from 'use-zion-client/dist/types/matrix-types'
 
 const drawerWidth = 240
 
@@ -53,6 +53,14 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/spaces/' + spaceId.slug + '/')
     }
 
+    const onClickInvite = (invite: InviteData) => {
+        if (invite.spaceParentId) {
+            navigate('/spaces/' + invite.spaceParentId.slug + '/invites/' + invite.id.slug)
+        } else {
+            navigate('/spaces/' + invite.id.slug)
+        }
+    }
+
     const onClickCreateSpace = () => {
         navigate('/spaces/new')
     }
@@ -73,12 +81,7 @@ export function AppDrawer(props: Props): JSX.Element {
             <Divider />
             <SidebarNewItemButton label="Create Space" onClick={onClickCreateSpace} />
             <Divider />
-            <Rooms
-                title="Invites"
-                membership={Membership.Invite}
-                isSpace={true}
-                onClickRoom={onClickSpace}
-            />
+            <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
             <Divider />
         </div>

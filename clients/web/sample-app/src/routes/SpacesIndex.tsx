@@ -74,8 +74,8 @@ export const SpacesIndex = () => {
     )
 
     const onClickJoinRoom = useCallback(
-        (roomId: RoomIdentifier) => {
-            return joinRoom(roomId)
+        async (roomId: RoomIdentifier) => {
+            await joinRoom(roomId)
         },
         [joinRoom],
     )

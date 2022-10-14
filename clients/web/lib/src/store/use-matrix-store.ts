@@ -1,13 +1,5 @@
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import {
-    makeRoomIdentifier,
-    Members,
-    Membership,
-    Room,
-    RoomIdentifier,
-    Rooms,
-    SpaceChild,
-} from '../types/matrix-types'
+import { makeRoomIdentifier, Membership, Room, RoomMember, SpaceChild } from '../types/matrix-types'
 import createStore, { SetState } from 'zustand'
 
 import { Room as MatrixRoom } from 'matrix-js-sdk'
@@ -15,7 +7,6 @@ import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { ZionClientEvent } from 'client/ZionClientTypes'
 
 export type MatrixStoreStates = {
-    createRoom: (roomId: RoomIdentifier, isSpace: boolean) => void
     isAuthenticated: boolean
     deviceId: string | null
     setDeviceId: (deviceId: string | undefined) => void
@@ -23,24 +14,10 @@ export type MatrixStoreStates = {
     setLoginStatus: (loginStatus: LoginStatus) => void
     loginError: AuthenticationError | null
     setLoginError: (error: AuthenticationError | undefined) => void
-    powerLevels: { [roomId: string]: Record<string, unknown> }
-    setPowerLevels: (roomId: RoomIdentifier, powerLevels: Record<string, unknown>) => void
-    rooms: Rooms | null
-    joinRoom: (roomId: RoomIdentifier, userId: string, isMyRoomMembership: boolean) => void
-    leaveRoom: (roomId: RoomIdentifier, userId: string, isMyRoomMembership: boolean) => void
-    setRoom: (room: MatrixRoom) => void
-    setAllRooms: (rooms: MatrixRoom[]) => void
-    setRoomName: (roomId: RoomIdentifier, roomName: string) => void
     userId: string | null
     setUserId: (userId: string | undefined) => void
     username: string | null
     setUsername: (username: string | undefined) => void
-    updateMembership: (
-        roomId: RoomIdentifier,
-        userId: string,
-        membership: Membership,
-        isMyRoomMembership: boolean,
-    ) => void
     zionClientEvents: { [event in ZionClientEvent]?: number }
     triggerZionClientEvent: (event: ZionClientEvent) => void
 }
@@ -55,7 +32,6 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
                       isAuthenticated: false,
                       deviceId: null,
                       loginStatus,
-                      rooms: null,
                       userId: null,
                       username: null,
                   })
@@ -74,78 +50,15 @@ export const useMatrixStore = createStore<MatrixStoreStates>(
             set({ loginError: error ?? null }),
         deviceId: null,
         setDeviceId: (deviceId: string | undefined) => set({ deviceId: deviceId ?? null }),
-        rooms: null,
-        powerLevels: {},
-        setPowerLevels: (roomId: RoomIdentifier, powerLevels: Record<string, unknown>) =>
-            set((state: MatrixStoreStates) => setPowerLevels(state, roomId, powerLevels)),
-
-        createRoom: (roomId: RoomIdentifier, isSpace: boolean) =>
-            set((state: MatrixStoreStates) => createRoom(state, roomId, isSpace)),
-        setRoom: (room: MatrixRoom) => set((state: MatrixStoreStates) => setRoom(state, room)),
-        setAllRooms: (rooms: MatrixRoom[]) =>
-            set((state: MatrixStoreStates) => setAllRooms(state, rooms)),
-        setRoomName: (roomId: RoomIdentifier, roomName: string) =>
-            set((state: MatrixStoreStates) => setRoomName(state, roomId, roomName)),
-        joinRoom: (roomId: RoomIdentifier, userId: string, isMyRoomMembership: boolean) =>
-            set((state: MatrixStoreStates) => joinRoom(state, roomId, userId, isMyRoomMembership)),
-        leaveRoom: (roomId: RoomIdentifier, userId: string, isMyRoomMembership: boolean) =>
-            set((state: MatrixStoreStates) => leaveRoom(state, roomId, userId, isMyRoomMembership)),
         userId: null,
         setUserId: (userId: string | undefined) => set({ userId: userId ?? null }),
         username: null,
         setUsername: (username: string | undefined) => set({ username: username ?? null }),
-        updateMembership: (
-            roomId: RoomIdentifier,
-            userId: string,
-            membership: Membership,
-            isMyRoomMembership: boolean,
-        ) =>
-            set((state: MatrixStoreStates) =>
-                updateMembership(state, roomId, userId, membership, isMyRoomMembership),
-            ),
         zionClientEvents: {},
         triggerZionClientEvent: (event: ZionClientEvent) =>
             set((state: MatrixStoreStates) => triggerZionClientEvent(state, event)),
     }),
 )
-
-function createRoom(state: MatrixStoreStates, roomId: RoomIdentifier, isSpace: boolean) {
-    const changedRooms = { ...state.rooms }
-    if (changedRooms[roomId.slug] != null) {
-        return { rooms: changedRooms }
-    }
-    const newRoom: Room = {
-        id: roomId,
-        name: '',
-        membership: '',
-        members: {},
-        isSpaceRoom: isSpace,
-    }
-    changedRooms[roomId.slug] = newRoom
-    return { rooms: changedRooms }
-}
-
-function setPowerLevels(
-    state: MatrixStoreStates,
-    roomId: RoomIdentifier,
-    powerLevels: Record<string, unknown>,
-) {
-    const changedPowerLevels = { ...state.powerLevels }
-    changedPowerLevels[roomId.slug] = powerLevels
-    return { powerLevels: changedPowerLevels }
-}
-
-function setRoom(state: MatrixStoreStates, room: MatrixRoom) {
-    const changedRooms = { ...state.rooms }
-    const changedRoom: Room = toZionRoom(room)
-    changedRooms[changedRoom.id.slug] = changedRoom
-    console.log(`setRoom changedRooms`, {
-        roomId: changedRoom.id.matrixRoomId,
-        name: changedRoom.name,
-        membership: changedRoom.membership,
-    })
-    return { rooms: changedRooms }
-}
 
 function triggerZionClientEvent(state: MatrixStoreStates, event: ZionClientEvent) {
     const changed = { ...state.zionClientEvents }
@@ -153,129 +66,35 @@ function triggerZionClientEvent(state: MatrixStoreStates, event: ZionClientEvent
     return { zionClientEvents: changed }
 }
 
-function setAllRooms(state: MatrixStoreStates, matrixRooms: MatrixRoom[]) {
-    const changedRooms = { ...state.rooms }
-    for (const r of matrixRooms) {
-        const changedRoom = toZionRoom(r)
-        changedRooms[changedRoom.id.slug] = changedRoom
-    }
-    return { rooms: changedRooms }
-}
-
-function setRoomName(state: MatrixStoreStates, roomId: RoomIdentifier, newName: string) {
-    const room = state.rooms?.[roomId.slug]
-    if (room && room.name !== newName) {
-        const changedRoom = { ...room }
-        changedRoom.name = newName
-        const changedRooms = { ...state.rooms }
-        changedRooms[roomId.slug] = changedRoom
-        //console.log(`setRoomName ${JSON.stringify(changedRoom)}`);
-        return { rooms: changedRooms }
-    }
-    console.log(`setRoomName no op`)
-    return state
-}
-
-function updateMembership(
-    state: MatrixStoreStates,
-    roomId: RoomIdentifier,
-    userId: string,
-    membership: Membership,
-    isMyRoomMembership: boolean,
-) {
-    const room = state.rooms?.[roomId.slug]
-    if (room) {
-        if (room.members[userId] == null || room.members[userId].membership !== membership) {
-            const changedRooms = { ...state.rooms }
-            const changedRoom = { ...room }
-            if (isMyRoomMembership) {
-                changedRoom.membership = membership
-            }
-            const changedMember = { ...changedRoom.members[userId] }
-            changedMember.membership = membership
-            changedRoom.members[userId] = changedMember
-            changedRooms[roomId.slug] = changedRoom
-            console.log(`updateMembership ${JSON.stringify(changedRoom)}`)
-            return { rooms: changedRooms }
-        }
-    }
-    console.log(`updateMembership no op`)
-    return state
-}
-
-function leaveRoom(
-    state: MatrixStoreStates,
-    roomId: RoomIdentifier,
-    userId: string,
-    isMyRoomMembership: boolean,
-) {
-    const room = state.rooms?.[roomId.slug]
-    if (room) {
-        const member = room.members[userId]
-        if (member && member.membership !== Membership.Leave) {
-            const changedRooms = { ...state.rooms }
-            const changedRoom = { ...room }
-            const changedMember = { ...changedRoom.members[userId] }
-            changedMember.membership = Membership.Leave
-            if (isMyRoomMembership) {
-                changedRoom.membership = Membership.Leave
-            }
-            changedRoom.members[userId] = changedMember
-            changedRooms[roomId.slug] = changedRoom
-            return { rooms: changedRooms }
-        }
-    }
-    console.log(`leaveRoom no op`)
-    return state
-}
-
-function joinRoom(
-    state: MatrixStoreStates,
-    roomId: RoomIdentifier,
-    userId: string,
-    isMyRoomMembership: boolean,
-) {
-    const room = state.rooms?.[roomId.slug]
-    if (room) {
-        const member = room.members[userId]
-        if (member && member.membership !== Membership.Join) {
-            const changedRooms = { ...state.rooms }
-            const changedRoom = { ...room }
-            const changedMember = { ...changedRoom.members[userId] }
-            changedMember.membership = Membership.Join
-            if (isMyRoomMembership) {
-                changedRoom.membership = Membership.Join
-            }
-            changedRoom.members[userId] = changedMember
-            changedRooms[roomId.slug] = changedRoom
-            return { rooms: changedRooms }
-        }
-    }
-    console.log(`joinRoom no op`)
-    return state
-}
-
 export function toZionRoom(r: MatrixRoom): Room {
+    const { members, membersMap } = toZionMembers(r)
     return {
         id: makeRoomIdentifier(r.roomId),
         name: r.name,
-        membership: r.getMyMembership(),
+        membership: r.getMyMembership() as Membership,
         inviter: r.getMyMembership() === Membership.Invite ? r.guessDMUserId() : undefined,
-        members: toZionMembers(r),
+        members: members,
+        membersMap: membersMap,
         isSpaceRoom: r.isSpaceRoom(),
     }
 }
 
-function toZionMembers(r: MatrixRoom): Members {
-    return r.getMembersWithMembership(Membership.Join).reduce((result, x) => {
-        result[x.userId] = {
-            userId: x.userId,
-            name: x.name,
-            membership: Membership.Join,
-            avatarUrl: x.getMxcAvatarUrl() ?? undefined,
-        }
+function toZionMembers(r: MatrixRoom): {
+    members: RoomMember[]
+    membersMap: { [userId: string]: RoomMember }
+} {
+    const members: RoomMember[] = r.getMembersWithMembership(Membership.Join).map((x) => ({
+        userId: x.userId,
+        name: x.name,
+        membership: Membership.Join,
+        avatarUrl: x.getMxcAvatarUrl() ?? undefined,
+    }))
+
+    const membersMap = members.reduce((result, x) => {
+        result[x.userId] = x
         return result
-    }, {} as Members)
+    }, {} as { [userId: string]: RoomMember })
+    return { members, membersMap }
 }
 
 export function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {

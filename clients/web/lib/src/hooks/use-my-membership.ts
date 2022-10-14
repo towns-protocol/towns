@@ -1,10 +1,9 @@
-import { useMemo } from 'react'
-import { RoomIdentifier } from '../types/matrix-types'
-import { useRoom } from './use-room'
+import { useZionContext } from '../components/ZionContextProvider'
+import { Membership, RoomIdentifier } from '../types/matrix-types'
+import { useMembership } from './use-membership'
 
-export function useMyMembership(inRoomId: RoomIdentifier | string | undefined): string {
-    const room = useRoom(inRoomId)
-    return useMemo(() => {
-        return room?.membership ?? ''
-    }, [room?.membership])
+export function useMyMembership(inRoomId?: RoomIdentifier): Membership {
+    const { client } = useZionContext()
+    const userId = client?.getUserId()
+    return useMembership(inRoomId, userId)
 }
