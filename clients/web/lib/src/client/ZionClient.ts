@@ -177,6 +177,8 @@ export class ZionClient {
             this.opts.homeServerUrl,
             this._auth,
         ))
+        // adjust params for our use case
+        this.client.setMaxListeners(0) // no limit
         // start it up, this begins a sync command
         if (!this.opts.disableEncryption) {
             await this.client.initCrypto()
