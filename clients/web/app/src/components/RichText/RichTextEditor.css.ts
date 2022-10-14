@@ -16,9 +16,9 @@ export const root = style({})
 export const paragraph = style({})
 
 export const ul = style({
-    margin: 0,
+    margin: `${vars.space.xs} 0`,
     padding: 0,
-    listStylePosition: 'inside',
+    listStylePosition: 'outside',
 })
 
 export const ol = style({
@@ -28,7 +28,7 @@ export const ol = style({
 })
 
 export const listitem = style({
-    margin: `${vars.space.xs} ${vars.space.md}`,
+    margin: `${vars.space.none} ${vars.space.none}`,
 })
 
 export const ol1 = style({
@@ -59,14 +59,6 @@ export const ul4 = style({
 
 export const nestedListItem = style({
     listStyleType: 'none',
-    selectors: {
-        ['&:before']: {
-            display: 'none',
-        },
-        ['&:after']: {
-            display: 'none',
-        },
-    },
 })
 
 const listitemCheckedShared = style({
@@ -127,16 +119,23 @@ export const listitemChecked = style([
 export const listitemUnchecked = style([
     listitemCheckedShared,
     {
-        margin: `${vars.space.xs} ${vars.space.md}`,
+        margin: `${vars.space.xs} 0`,
     },
 ])
 
-globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
-    marginTop: vars.space.md,
+globalStyle(`${richText} ul ul, ${richText} ul ol`, {
+    marginLeft: vars.space.md,
+})
+globalStyle(`${richText} ol ul, ${richText} ol ol`, {
+    marginLeft: vars.space.md,
 })
 
-globalStyle(`${richText} ${listitemCheckedShared}${nestedListItem}:before`, {
-    display: 'none',
+globalStyle(`${richText} ul > ${listitem}:not(${listitemCheckedShared}) `, {
+    marginLeft: vars.space.md,
+})
+
+globalStyle(`${richText} ${paragraph} + ${paragraph}`, {
+    marginTop: vars.space.md,
 })
 
 globalStyle(

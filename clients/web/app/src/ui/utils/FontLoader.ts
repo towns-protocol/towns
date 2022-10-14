@@ -22,7 +22,7 @@ export const fontSettings = [
             weight: 'normal',
             style: 'normal',
         },
-        targets: ['p', 'h3', 'h4', 'h5', 'h6'],
+        targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],
         capSize: AkkuratCapSize,
     },
     {
@@ -44,7 +44,7 @@ export const fontSettings = [
             weight: '600',
             style: 'normal',
         },
-        targets: ['p', 'h3', 'h4', 'h5', 'h6'],
+        targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],
         capSize: AkkuratCapSize,
     },
     {

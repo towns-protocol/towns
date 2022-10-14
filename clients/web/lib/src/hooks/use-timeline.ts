@@ -56,13 +56,13 @@ export function useTimeline(roomId?: RoomIdentifier): TimelineEvent[] {
         }
 
         const initTimeline = () => {
-        // initial state
+            // initial state
             let initialTimeline = client.getRoom(roomId.matrixRoomId)?.getLiveTimeline().getEvents()
-        // for some reason the timeline doesn't filter replacements
+            // for some reason the timeline doesn't filter replacements
             initialTimeline =
                 initialTimeline?.filter((m) => !m.isRelation(RelationType.Replace)) ?? []
 
-        setTimeline(initialTimeline.map(toEvent))
+            setTimeline(initialTimeline.map(toEvent))
         }
 
         initTimeline()

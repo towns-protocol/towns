@@ -21,6 +21,7 @@ import { TextProps } from 'ui/components/Text/Text'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
+import { richText } from '@components/RichText/RichTextEditor.css'
 
 const A3 = Array(3)
     .fill(undefined)
@@ -53,7 +54,7 @@ export const Playground = () => {
                 <Heading level={3}>Heading 3</Heading>
             </Container>
             <Container label="Text Content">
-                <Box debug>
+                <Box debug className={richText}>
                     <h2>Heading</h2>
                     <Paragraph>Paragraph</Paragraph>
                     <p>
@@ -69,6 +70,33 @@ export const Playground = () => {
                         SHA 256 returns a zero confirmation transaction! Although Bitcoin Cash did a
                         minimum dapp, Waves cost many instant gas.
                     </p>
+                    <ul>
+                        <li>Message 1</li>
+                        <li>Message 2</li>
+                        <li>Message 3</li>
+                    </ul>
+                    <ul>
+                        <li>
+                            For few peer-to-peer network! Tezos rejoins a node because Binance Coin
+                            sharded a cryptocurrency.
+                        </li>
+                        <li>Message 2</li>
+                        <li>
+                            For few peer-to-peer network! Tezos rejoins a node because Binance Coin
+                            sharded a cryptocurrency.
+                        </li>
+                    </ul>
+                    <ol>
+                        <li>first</li>
+                        <li>
+                            <ol>
+                                <li>second 1</li>
+                                <li>second 2</li>
+                                <li>second 3</li>
+                            </ol>
+                        </li>
+                        <li>third</li>
+                    </ol>
                 </Box>
             </Container>
             <Container label="Background (layer)">
