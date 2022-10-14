@@ -11,6 +11,7 @@ import { vars } from 'ui/styles/vars.css'
 
 export const avatarBaseStyle = style({
     backgroundSize: 'cover',
+    backgroundColor: vars.color.background.level2,
     borderRadius: vars.borderRadius.xs,
 })
 

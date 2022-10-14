@@ -6,21 +6,23 @@ import { Message } from '@components/Message'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { MessageReactions, useHandleReaction } from 'hooks/useReactions'
 import { getMessageBody } from 'utils/ztevent_util'
+import { ThreadStats } from 'hooks/useFixMeMessageThread'
+import { MessageProps } from '@components/Message/Message'
 import { TimelineMessageEditor } from './TimelineMessageEditor'
 
 type Props = {
     userId: string | null
     channelId: RoomIdentifier
+    displayContext?: MessageProps['displayContext']
     editing?: boolean
     event: TimelineEvent
     eventContent: RoomMessageEvent
-    minimal?: boolean
     own?: boolean
     reactions?: MessageReactions
     relativeDate?: boolean
-    replies?: number
+    replies?: ThreadStats
     spaceId: RoomIdentifier
-    onReaction: ReturnType<typeof useHandleReaction>
+    onReaction: ReturnType<typeof useHandleReaction> | null
 }
 
 export const TimelineMessage = React.memo((props: Props) => {
@@ -30,7 +32,7 @@ export const TimelineMessage = React.memo((props: Props) => {
         editing: isEditing,
         event,
         eventContent,
-        minimal: isMinimal,
+        displayContext,
         own: isOwn,
         reactions,
         relativeDate: isRelativeDate,
@@ -56,9 +58,10 @@ export const TimelineMessage = React.memo((props: Props) => {
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}
-            minimal={isMinimal}
+            displayContext={displayContext}
             name={displayName}
-            paddingY="md"
+            paddingY={displayContext === 'tail' ? 'sm' : 'md'}
+            paddingBottom={displayContext === 'head' ? 'sm' : undefined}
             paddingX="lg"
             spaceId={spaceId}
             reactions={reactions}

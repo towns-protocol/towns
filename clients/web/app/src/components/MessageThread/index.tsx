@@ -1,1 +1,1 @@
-export { MessageThread } from './MessageThread'
+export { WindowedMessageThread as MessageThread } from './WindowedMessageThread'

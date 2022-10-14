@@ -1,31 +1,44 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useChannelData } from 'use-zion-client'
-import { MessageThread } from '@components/MessageThread'
+import { ZTEvent, useChannelTimeline } from 'use-zion-client'
 import { Box } from '@ui'
+import { MessageThread } from '@components/MessageThread'
 
-export const SpacesChannelReplies = (props: { children?: React.ReactNode }) => {
+export const SpacesChannelReplies = (props: {
+    children?: React.ReactNode
+    parentRoute?: string
+}) => {
+    const { parentRoute = '..' } = props
     const { messageId } = useParams()
-    const { spaceId, channelId } = useChannelData()
     const navigate = useNavigate()
 
     const handleClose = useCallback(() => {
-        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}`)
-    }, [channelId.slug, navigate, spaceId.slug])
+        // navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}`);
+        navigate(parentRoute)
+    }, [navigate, parentRoute])
 
     const isValid = !!messageId
+    const timeline = useChannelTimeline()
+    const channelMessages = useMemo(
+        () => timeline.filter((m) => m.content?.kind === ZTEvent.RoomMessage),
+        [timeline],
+    )
 
     return (
         <Box grow absoluteFill height="100%" overflow="hidden">
             {isValid ? (
                 <>
                     <Box grow padding="lg">
-                        <MessageThread
-                            key={messageId}
-                            messageId={messageId}
-                            onClose={handleClose}
-                        />
+                        <Box absoluteFill padding gap position="relative">
+                            <MessageThread
+                                key={messageId}
+                                messageId={messageId}
+                                channelMessages={channelMessages}
+                                onClose={handleClose}
+                            />
+                        </Box>
                     </Box>
+
                     <Box paddingBottom="lg" paddingX="lg" />
                 </>
             ) : (

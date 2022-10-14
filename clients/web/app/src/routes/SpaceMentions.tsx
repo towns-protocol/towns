@@ -1,28 +1,51 @@
 import { RelationType } from 'matrix-js-sdk'
 import React from 'react'
 import { Outlet } from 'react-router'
+import { NavLink } from 'react-router-dom'
 import { firstBy } from 'thenby'
 import {
     Channel,
     TimelineEvent,
     ZTEvent,
     toEvent,
-    useMatrixStore,
     useMyProfile,
     useSpaceData,
     useSpaceId,
     useZionContext,
 } from 'use-zion-client'
-import { NavLink } from 'react-router-dom'
 import { Box, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/Message'
 import { getIsRoomMessageContent, getMessageBody, getParentEvent } from 'utils/ztevent_util'
+
+type Result = MentionResult | ReactionResult
+
+type MentionResult = {
+    unread: boolean
+    type: 'mention'
+    channel: Channel
+    timestamp: number
+    event: TimelineEvent
+    thread?: TimelineEvent
+}
+
+type ReactionResult = {
+    unread: boolean
+    type: 'reaction'
+    channel: Channel
+    timestamp: number
+    reaction: {
+        reaction: string
+        sender: string
+    }
+    event: TimelineEvent
+    parentEvent?: TimelineEvent
+}
+
 export const SpaceMentions = () => {
     const profile = useMyProfile()
 
     const { mentionCounts } = useZionContext()
-    const { userId } = useMatrixStore()
     const { client } = useZionContext()
 
     const data = useSpaceData()
@@ -34,30 +57,6 @@ export const SpaceMentions = () => {
     }
 
     const { channelGroups } = data
-
-    type MentionResult = {
-        unread: boolean
-        type: 'mention'
-        channel: Channel
-        timestamp: number
-        event: TimelineEvent
-        thread?: TimelineEvent
-    }
-
-    type ReactionResult = {
-        unread: boolean
-        type: 'reaction'
-        channel: Channel
-        timestamp: number
-        reaction: {
-            reaction: string
-            sender: string
-        }
-        event: TimelineEvent
-        parentEvent?: TimelineEvent
-    }
-
-    type Result = MentionResult | ReactionResult
 
     const result = [] as Result[]
 
@@ -101,34 +100,37 @@ export const SpaceMentions = () => {
                         unreadMentions--
                     }
                 }
-            } else if (content?.kind === ZTEvent.Reaction) {
-                if (hasUnreadMentions) {
-                    // unread mentions only counts for unread messages
-                    unreadMentions--
-                }
-
-                const parentEvent: TimelineEvent | undefined = redactedTimeline.find(
-                    (e) =>
-                        e.eventId === content.targetEventId &&
-                        e.content?.kind === ZTEvent.RoomMessage &&
-                        e.content.sender.id === userId,
-                )
-
-                if (parentEvent) {
-                    result.push({
-                        type: 'reaction',
-                        unread: false,
-                        parentEvent,
-                        channel,
-                        event,
-                        reaction: {
-                            sender: content.sender.displayName,
-                            reaction: content.reaction,
-                        },
-                        timestamp: event.originServerTs,
-                    })
-                }
             }
+            /*
+      else if (content?.kind === ZTEvent.Reaction) {
+        if (hasUnreadMentions) {
+          // unread mentions only counts for unread messages
+          unreadMentions--;
+        }
+
+        const parentEvent: TimelineEvent | undefined = redactedTimeline.find(
+          (e) =>
+            e.eventId === content.targetEventId &&
+            e.content?.kind === ZTEvent.RoomMessage &&
+            e.content.sender.id === userId,
+        );
+
+        if (parentEvent) {
+          result.push({
+            type: "reaction",
+            unread: false,
+            parentEvent,
+            channel,
+            event,
+            reaction: {
+              sender: content.sender.displayName,
+              reaction: content.reaction,
+            },
+            timestamp: event.originServerTs,
+          });
+        }
+      }
+      */
         })
     })
 
@@ -139,22 +141,15 @@ export const SpaceMentions = () => {
             <Stack grow gap>
                 <Stack padding="md" gap="md">
                     {result.map((m, index, mentions) => {
-                        return m.type === 'mention' && <MentionBox mention={m} />
+                        return (
+                            m.type === 'mention' && <MentionBox mention={m} key={m.event.eventId} />
+                        )
                     })}
                 </Stack>
             </Stack>
             <Outlet />
         </Stack>
     )
-}
-
-type MentionResult = {
-    unread: boolean
-    type: 'mention'
-    channel: Channel
-    timestamp: number
-    event: TimelineEvent
-    thread?: TimelineEvent
 }
 
 const MentionBox = (props: { mention: MentionResult }) => {

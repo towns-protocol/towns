@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { TimelineEvent, ZTEvent, useChannelTimeline } from 'use-zion-client'
+import { firstBy } from 'thenby'
+import { Channel, TimelineEvent, ZTEvent, toEvent, useZionContext } from 'use-zion-client'
 
 export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
     const filteredEvents = useMemo(
@@ -23,14 +24,7 @@ export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
  * there's a few ways of doing this, by enabling `experimentalThreadSupport` in
  * the client or building a proper reducer looking up parent events recursively
  **/
-export const useMessageThread = (messageId: string) => {
-    const timeline = useChannelTimeline()
-
-    const channelMessages = useMemo(
-        () => timeline.filter((m) => m.content?.kind === ZTEvent.RoomMessage),
-        [timeline],
-    )
-
+export const useMessageThread = (messageId: string, channelMessages: TimelineEvent[]) => {
     const parentMessage = useMemo(() => {
         return channelMessages?.find((m) => m.eventId === messageId)
     }, [channelMessages, messageId])
@@ -39,9 +33,10 @@ export const useMessageThread = (messageId: string) => {
         const reply = getMessageAsReply(m)
         const parentId = reply && reply['m.relates_to'].event_id
         if (parentId === messageId && !messages.some((s) => s.eventId === m.eventId)) {
-            return [...messages, m]
+            messages.push(m)
+            return messages
         }
-        return messages
+        return messages.sort(firstBy((s) => s.originServerTs))
     }, [] as TimelineEvent[])
 
     return {
@@ -50,26 +45,98 @@ export const useMessageThread = (messageId: string) => {
     }
 }
 
-/**
- * Collect messages with replies
- * FIXME: rough implementation
- **/
-export const useTimelineRepliesMap = (messages: TimelineEvent[]) => {
-    return useMemo(
-        () =>
-            messages.reduce((threads, m) => {
-                const reply = getMessageAsReply(m)
-                const parentId = reply && reply['m.relates_to'].event_id
-                if (parentId) {
-                    threads.set(parentId, (threads.get(parentId) ?? 0) + 1)
-                }
-                return threads
-            }, new Map() as Map<string, number>),
-        [messages],
-    )
+export type ThreadStats = {
+    replyCount: number
+    userIds: Set<string>
+    latestTs: number
+    parentId: string
 }
 
+export const useTimelineRepliesMap = (events: TimelineEvent[]) => {
+    return useMemo(() => getTimelineThreadsMap(events), [events])
+}
+
+export const getTimelineThreadsMap = (events: TimelineEvent[]) =>
+    events.reduce<Map<string, ThreadStats>>((threads, m) => {
+        const reply = getMessageAsReply(m)
+
+        const parentId = reply && reply['m.relates_to'].event_id
+        if (reply && parentId) {
+            const entry = threads.get(parentId) ?? {
+                replyCount: 0,
+                userIds: new Set(),
+                latestTs: reply.originServerTs,
+                parentId,
+            }
+            entry.replyCount++
+
+            const content =
+                reply?.content?.kind === ZTEvent.RoomMessage ? reply?.content : undefined
+
+            entry.latestTs = Math.max(entry.latestTs, reply.originServerTs)
+
+            if (content) {
+                entry.userIds.add(content?.sender.id)
+            }
+            threads.set(parentId, entry)
+        }
+        return threads
+    }, new Map())
+
 export type MessageRepliesMap = ReturnType<typeof useTimelineRepliesMap>
+
+type ThreadResult = {
+    type: 'thread'
+    unread: boolean
+    thread: ThreadStats
+    channel: Channel
+    timestamp: number
+}
+
+export const useScanChannelThreads = (channels: Channel[], userId: string | null) => {
+    const { client } = useZionContext()
+
+    if (userId === null) {
+        return { threads: [] }
+    }
+
+    const channelTimelineMap = new Map<string, TimelineEvent[]>()
+    const threads = [] as ThreadResult[]
+
+    channels.forEach((channel) => {
+        const timeline = client?.getRoom(channel.id)?.timeline
+
+        if (!timeline?.length || !userId) return
+
+        let redactedTimeline: TimelineEvent[]
+
+        // could be optimised - only need the segment of the thread
+        if (channelTimelineMap.has(channel.id.matrixRoomId)) {
+            redactedTimeline = channelTimelineMap.get(channel.id.matrixRoomId) ?? []
+        } else {
+            redactedTimeline = timeline.filter((e) => !e.isRedacted()).map(toEvent)
+            channelTimelineMap.set(channel.id.matrixRoomId, redactedTimeline)
+        }
+
+        const channelThreads = Array.from(getTimelineThreadsMap(redactedTimeline).entries())
+            .filter(([_parentId, thread]) => thread.userIds.has(userId))
+            .map(([_parentId, thread]) => ({
+                type: 'thread' as const,
+                unread: false,
+                thread,
+                channel,
+                timestamp: thread.latestTs,
+            }))
+
+        threads.push(...channelThreads)
+    })
+
+    threads.sort(firstBy<ThreadResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1))
+
+    return {
+        threads,
+    }
+}
 
 const getMessageAsReply = (m: TimelineEvent) => {
     const content = m.content

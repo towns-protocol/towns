@@ -93,8 +93,7 @@ export const MessageTimeline = (props: Props) => {
                 const renderEvents = dateGroup.events.map((r, index) => {
                     switch (r.type) {
                         case RenderEventType.UserMessageGroup: {
-                            const messagesByUser = r.events.map((e, index) => {
-                                const minimal = index > 0
+                            const messagesByUser = r.events.map((e, index, events) => {
                                 const k = e.eventId as string
                                 const reactions = messageReactionsMap?.get(k)
                                 return (
@@ -104,7 +103,13 @@ export const MessageTimeline = (props: Props) => {
                                         spaceId={spaceId}
                                         event={e}
                                         eventContent={e.content}
-                                        minimal={minimal}
+                                        displayContext={
+                                            index > 0
+                                                ? 'tail'
+                                                : events.length > 1
+                                                ? 'head'
+                                                : 'single'
+                                        }
                                         own={e.content.sender.id === userId}
                                         editing={e.eventId === timelineActions.editingMessageId}
                                         replies={messageRepliesMap?.get(e.eventId)}

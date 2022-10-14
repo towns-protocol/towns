@@ -13,7 +13,7 @@ export const ActionNavItem = (props: {
 }) => {
     const { icon, id, link, highlight: isHighlight, label, badge } = props
     return (
-        <NavItem to={link} id={id} highlight={isHighlight}>
+        <NavItem to={link} id={id} highlight={isHighlight} exact={false}>
             {icon && (
                 <Icon
                     type={icon}

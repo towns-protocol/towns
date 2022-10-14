@@ -142,7 +142,7 @@ export const RichTextUI = (props: {
         <Stack
             gap
             rounded="sm"
-            background={props.focused || props.editing ? 'level3' : 'level2'}
+            background="level3"
             minWidth={props.readOnly ? undefined : '200'}
             position="relative"
         >

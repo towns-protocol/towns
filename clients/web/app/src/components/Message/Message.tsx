@@ -2,8 +2,9 @@ import { format, formatDistance } from 'date-fns'
 import React, { useRef } from 'react'
 import { RoomIdentifier } from 'use-zion-client'
 import { Reactions } from '@components/Reactions/Reactions'
-import { MessageReplies } from '@components/Replies/MessageReplies'
+import { MessageThreadButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
+import { ThreadStats } from 'hooks/useFixMeMessageThread'
 import { useHover } from 'hooks/useHover'
 import { MessageReactions, useHandleReaction } from 'hooks/useReactions'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
@@ -14,24 +15,26 @@ type Props = {
     avatar?: string
     avatarSize?: AvatarAtoms['size']
     name: string
-    condensed?: boolean
-    minimal?: boolean
+    displayContext?: 'single' | 'head' | 'tail'
     messageSourceAnnotation?: string
     reactions?: MessageReactions
-    replies?: number
+    replies?: ThreadStats
     timestamp?: number
     editing?: boolean
     editable?: boolean
     eventId?: string
+    listView?: boolean
     channelId?: RoomIdentifier
     spaceId?: RoomIdentifier
     children?: React.ReactNode
-    onReaction?: ReturnType<typeof useHandleReaction>
+    onReaction?: ReturnType<typeof useHandleReaction> | null
     relativeDate?: boolean
     rounded?: BoxProps['rounded']
     padding?: BoxProps['padding']
     background?: BoxProps['background']
 } & BoxProps
+
+export type MessageProps = Props
 
 export const Message = (props: Props) => {
     const {
@@ -39,14 +42,14 @@ export const Message = (props: Props) => {
         eventId,
         avatar,
         avatarSize = 'avatar_md',
-        condensed,
         name,
         messageSourceAnnotation,
         channelId,
         spaceId,
         editable: isEditable,
         editing: isEditing,
-        minimal: isMinimal,
+        listView: isListView,
+        displayContext = 'single',
         onReaction,
         reactions,
         relativeDate: isRelativeDate,
@@ -81,7 +84,7 @@ export const Message = (props: Props) => {
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
             <Box minWidth="x8">
-                {!isMinimal ? (
+                {displayContext !== 'tail' ? (
                     <Avatar src={avatar} size={avatarSize} insetY="xxs" />
                 ) : (
                     <>
@@ -97,10 +100,10 @@ export const Message = (props: Props) => {
             </Box>
 
             {/* right / main content */}
-            <Stack grow gap={condensed ? 'paragraph' : 'md'} position="relative">
+            <Stack grow gap="md" position="relative">
                 {/* name & date top row */}
-                {!isMinimal && (
-                    <Box horizontal gap="sm" alignItems="center" height="height_sm">
+                {displayContext !== 'tail' && (
+                    <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
                         {/* display name */}
                         <Text
                             truncate
@@ -110,16 +113,22 @@ export const Message = (props: Props) => {
                         >
                             {name}
                         </Text>
-
                         {/* date, alignment tbc depending on context */}
                         {date && (
-                            <Text fontSize="sm" color="gray2" as="span" textAlign="right">
+                            <Text
+                                grow
+                                shrink={false}
+                                fontSize="sm"
+                                color="gray2"
+                                as="span"
+                                textAlign={isListView ? 'right' : 'left'}
+                            >
                                 {date}
                             </Text>
                         )}
-                    </Box>
+                    </Stack>
                 )}
-                <Stack gap="paragraph">
+                <Stack gap="md">
                     <Stack fontSize="md" color="gray1" gap="md">
                         {children}
                     </Stack>
@@ -131,7 +140,7 @@ export const Message = (props: Props) => {
                         </ButtonText>
                     )}
 
-                    {reactions ? (
+                    {reactions && onReaction ? (
                         <Stack horizontal>
                             <Reactions
                                 userId={userId}
@@ -144,14 +153,14 @@ export const Message = (props: Props) => {
 
                     {replies && eventId && (
                         <Stack horizontal>
-                            <MessageReplies eventId={eventId} replyCount={replies} />
+                            <MessageThreadButton eventId={eventId} threadStats={replies} />
                         </Stack>
                     )}
                 </Stack>
                 {spaceId && channelId && eventId && isHover && !isEditing && (
                     <MessageContextMenu
-                        canReact
                         canReply
+                        canReact={!!onReaction}
                         channelId={channelId}
                         spaceId={spaceId}
                         eventId={eventId}

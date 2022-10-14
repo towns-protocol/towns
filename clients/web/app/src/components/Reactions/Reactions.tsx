@@ -133,10 +133,10 @@ const Reaction = (props: {
                         horizontal
                         centerContent
                         position="relative"
-                        border={isOwn ? 'accent' : 'none'}
+                        border={isOwn ? 'accent' : 'default'}
                         gap="sm"
                         rounded="lg"
-                        background="level3"
+                        background="level2"
                         color="gray1"
                         paddingX="sm"
                         onClick={onClick}

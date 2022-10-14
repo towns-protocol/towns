@@ -28,7 +28,7 @@ type Props = (ParagraphProps | LabelProps) & {
     display?: BoxProps['display']
 } & TextSprinkles
 
-export type TextProps = Props & Pick<BoxProps, 'grow'>
+export type TextProps = Props & Pick<BoxProps, 'grow' | 'shrink'>
 
 export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
     const {

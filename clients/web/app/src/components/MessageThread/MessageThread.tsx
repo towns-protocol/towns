@@ -1,98 +1,73 @@
 import React from 'react'
-import { useChannelTimeline, useMatrixStore } from 'use-zion-client'
-import { useChannelContext } from 'use-zion-client/dist/components/ChannelContextProvider'
+import { RoomIdentifier, useChannelTimeline } from 'use-zion-client'
+import { MessageTimeline, MessageTimelineType } from '@components/MessageTimeline'
 import { TimelineMessage } from '@components/MessageTimeline/events/TimelineMessage'
-import { MessageTimeline, MessageTimelineType } from '@components/MessageTimeline/MessageTimeline'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Divider, IconButton, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { useHandleReaction, useTimelineReactionsMap } from 'hooks/useReactions'
 import { useSendReply } from 'hooks/useSendReply'
 import { getIsRoomMessageContent } from 'utils/ztevent_util'
 
-type Props = {
-    messageId: string
-    onClose?: () => void
-}
-export const MessageThread = (props: Props) => {
-    const { userId } = useMatrixStore()
-    const { channelId, spaceId } = useChannelContext()
+export const MessageThread = (props: {
+    userId: string
+    channelLabel: string
+    parentId: string
+    channelId: RoomIdentifier
+    spaceId: RoomIdentifier
+}) => {
+    const { userId, parentId, spaceId, channelId, channelLabel } = props
 
-    const { messageId } = props
-    const { parentMessage, messages } = useMessageThread(messageId)
-    const { sendReply } = useSendReply(messageId)
-
-    const onSend = (value: string) => {
-        sendReply(value)
-    }
-
-    const parentMessageContent = getIsRoomMessageContent(parentMessage)
     const channelMessages = useChannelTimeline()
 
-    // could be optimised - only need the segment of the thread
+    const { parentMessage, messages } = useMessageThread(parentId, channelMessages)
+
+    const parentMessageContent = getIsRoomMessageContent(parentMessage)
+    const handleReaction = useHandleReaction(channelId)
     const messageReactionsMap = useTimelineReactionsMap(channelMessages)
 
-    const handleReaction = useHandleReaction(channelId)
+    const { sendReply } = useSendReply(parentId)
+
+    const onSend = (value: string) => {
+        sendReply(value, channelId)
+    }
 
     return (
-        <Stack absoluteFill padding gap position="relative">
-            <MessageWindow label="Thread" onClose={props.onClose}>
-                <Stack scroll grow paddingY="md">
-                    {parentMessage && parentMessageContent && (
-                        <TimelineMessage
-                            relativeDate
-                            userId={userId}
-                            channelId={channelId}
-                            event={parentMessage}
-                            eventContent={parentMessageContent}
-                            spaceId={spaceId}
-                            onReaction={handleReaction}
-                        />
-                    )}
-                    {!!messages.length && (
-                        <Box paddingX="md" paddingTop="md">
-                            <Divider space="none" />
-                        </Box>
-                    )}
-                    <Stack paddingTop="sm">
-                        <MessageTimeline
-                            type={MessageTimelineType.Thread}
-                            events={messages}
-                            spaceId={spaceId}
-                            channelId={channelId}
-                            messageReactionsMap={messageReactionsMap}
-                        />
-                    </Stack>
-                </Stack>
-            </MessageWindow>
-            <Box paddingY="none" style={{ position: 'sticky', bottom: 0 }}>
-                <RichTextEditor editable placeholder="Reply..." onSend={onSend} />
+        <Stack gap padding>
+            <Box>
+                <Paragraph color="gray2">#{channelLabel.toLocaleLowerCase()}</Paragraph>
             </Box>
-        </Stack>
-    )
-}
+            <Stack scroll grow border rounded="sm" background="level1">
+                {parentMessage && parentMessageContent && (
+                    <TimelineMessage
+                        relativeDate
+                        userId={userId}
+                        channelId={channelId}
+                        event={parentMessage}
+                        eventContent={parentMessageContent}
+                        spaceId={spaceId}
+                        onReaction={handleReaction}
+                    />
+                )}
 
-const MessageWindow = (props: {
-    children: React.ReactNode
-    label?: React.ReactNode | string
-    onClose?: () => void
-}) => {
-    return (
-        <Box border rounded="sm" overflow="hidden" maxHeight="100%">
-            <Stack
-                horizontal
-                paddingX="md"
-                background="level2"
-                minHeight="x6"
-                alignItems="center"
-                color="gray1"
-            >
-                <Box grow color="gray2">
-                    {props.label}
-                </Box>
-                <Box>{props.onClose && <IconButton icon="close" onClick={props.onClose} />}</Box>
+                <Stack borderTop>
+                    <MessageTimeline
+                        type={MessageTimelineType.Thread}
+                        events={messages}
+                        spaceId={spaceId}
+                        channelId={channelId}
+                        messageReactionsMap={messageReactionsMap}
+                    />
+                    <Box padding>
+                        <RichTextEditor
+                            editable
+                            autoFocus={false}
+                            placeholder="Reply..."
+                            onSend={onSend}
+                        />
+                    </Box>
+                </Stack>
             </Stack>
-            <Box scroll>{props.children}</Box>
-        </Box>
+        </Stack>
     )
 }

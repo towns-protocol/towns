@@ -88,10 +88,3 @@ Reactions.args = {
     ...Default.args,
     replies: undefined,
 }
-
-export const Condensed = Template.bind({})
-Condensed.args = {
-    ...Default.args,
-    condensed: true,
-    replies: undefined,
-}
