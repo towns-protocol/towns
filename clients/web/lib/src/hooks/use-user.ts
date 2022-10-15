@@ -1,11 +1,11 @@
-import { MatrixEvent, UserEvent } from 'matrix-js-sdk'
+import { MatrixEvent, UserEvent, User as MatrixUser } from 'matrix-js-sdk'
 import { useEffect, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { User } from '../types/matrix-types'
 
 export function useUser(userId?: string): User | undefined {
     const { client } = useZionContext()
-    const [user, setUser] = useState<User | undefined>()
+    const [user, setUser] = useState<User>()
 
     useEffect(() => {
         if (!userId) {
@@ -16,7 +16,7 @@ export function useUser(userId?: string): User | undefined {
             return
         }
 
-        const onUserUpdated = (event: MatrixEvent | undefined, theUser: User) => {
+        const onUserUpdated = (event: MatrixEvent | undefined, theUser: MatrixUser) => {
             setUser({
                 userId: theUser.userId,
                 displayName: theUser.displayName,
@@ -26,6 +26,8 @@ export function useUser(userId?: string): User | undefined {
                 currentlyActive: theUser.currentlyActive,
             })
         }
+
+        onUserUpdated(undefined, matrixUser)
 
         matrixUser.on(UserEvent.DisplayName, onUserUpdated)
         matrixUser.on(UserEvent.AvatarUrl, onUserUpdated)
