@@ -1,0 +1,19 @@
+export declare enum Err {
+    UNKNOWN = 1,
+    BAD_STREAM_ID = 2,
+    BAD_STREAM_CREATION_PARAMS = 3,
+    STREAM_ALREADY_EXISTS = 4,
+    INTERNAL_ERROR_SWITCH = 5,
+    BAD_EVENT_ID = 6,
+    BAD_EVENT_SIGNATURE = 7,
+    BAD_HASH_FORMAT = 8,
+    BAD_PREV_EVENTS = 9,
+    NO_EVENT_SPECIFIED = 10,
+    BAD_EVENT = 11,
+    USER_CANT_POST = 12,
+    STREAM_NOT_FOUND = 13,
+    STREAM_BAD_HASHES = 14,
+    STREAM_EMPTY = 15,
+    STREAM_BAD_EVENT = 16
+}
+//# sourceMappingURL=err.d.ts.map

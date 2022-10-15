@@ -1,0 +1,40 @@
+{
+    "name": "@zion/server",
+    "private": true,
+    "packageManager": "yarn@3.2.3",
+    "scripts": {
+        "build": "tsc --build",
+        "dev": "nodemon src/index.ts",
+        "test": "tsc --build && jest",
+        "test-all": "yarn run -T test-all",
+        "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:80/json-rpc jest -t \".*-remote\""
+    },
+    "dependencies": {
+        "@ethereumjs/util": "^8.0.0",
+        "@types/lodash": "^4.14.186",
+        "@zion/core": "workspace:^",
+        "body-parser": "^1.20.0",
+        "debug": "^4.3.4",
+        "dotenv": "^16.0.3",
+        "ethers": "^5.7.1",
+        "express": "^4.18.1",
+        "ioredis": "^5.2.3",
+        "json-rpc-2.0": "^1.4.1",
+        "lodash": "^4.17.21",
+        "nanoid": "3.3.4",
+        "supports-color": "^9.2.3"
+    },
+    "devDependencies": {
+        "@types/body-parser": "^1.19.2",
+        "@types/debug": "^4.1.7",
+        "@types/express": "^4.17.13",
+        "@types/jest": "^29.1.0",
+        "@types/node": "^18.7.23",
+        "@zion/client": "workspace:^",
+        "jest": "^29.1.1",
+        "nodemon": "^2.0.19",
+        "ts-jest": "^29.0.3",
+        "ts-node": "^10.9.1",
+        "typescript": "^4.8.4"
+    }
+}

@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Err = void 0;
+var Err;
+(function (Err) {
+    Err[Err["UNKNOWN"] = 1] = "UNKNOWN";
+    Err[Err["BAD_STREAM_ID"] = 2] = "BAD_STREAM_ID";
+    Err[Err["BAD_STREAM_CREATION_PARAMS"] = 3] = "BAD_STREAM_CREATION_PARAMS";
+    Err[Err["STREAM_ALREADY_EXISTS"] = 4] = "STREAM_ALREADY_EXISTS";
+    Err[Err["INTERNAL_ERROR_SWITCH"] = 5] = "INTERNAL_ERROR_SWITCH";
+    Err[Err["BAD_EVENT_ID"] = 6] = "BAD_EVENT_ID";
+    Err[Err["BAD_EVENT_SIGNATURE"] = 7] = "BAD_EVENT_SIGNATURE";
+    Err[Err["BAD_HASH_FORMAT"] = 8] = "BAD_HASH_FORMAT";
+    Err[Err["BAD_PREV_EVENTS"] = 9] = "BAD_PREV_EVENTS";
+    Err[Err["NO_EVENT_SPECIFIED"] = 10] = "NO_EVENT_SPECIFIED";
+    Err[Err["BAD_EVENT"] = 11] = "BAD_EVENT";
+    Err[Err["USER_CANT_POST"] = 12] = "USER_CANT_POST";
+    Err[Err["STREAM_NOT_FOUND"] = 13] = "STREAM_NOT_FOUND";
+    Err[Err["STREAM_BAD_HASHES"] = 14] = "STREAM_BAD_HASHES";
+    Err[Err["STREAM_EMPTY"] = 15] = "STREAM_EMPTY";
+    Err[Err["STREAM_BAD_EVENT"] = 16] = "STREAM_BAD_EVENT";
+})(Err = exports.Err || (exports.Err = {}));

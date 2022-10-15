@@ -1,0 +1,1 @@
+{"version":3,"file":"dumbActionGuard.d.ts","sourceRoot":"","sources":["../src/dumbActionGuard.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,WAAW,EAAE,MAAM,YAAY,CAAA;AAKhD,qBAAa,eAAgB,YAAW,WAAW;IACzC,SAAS,CAAC,KAAK,EAAE,MAAM,EAAE,MAAM,EAAE,MAAM,EAAE,MAAM,CAAC,EAAE,MAAM,GAAG,OAAO,CAAC,OAAO,CAAC;CAIpF"}

@@ -31,7 +31,7 @@
         "crypto": "npm:crypto-browserify@3.12.0",
         "ethers": "^5.7.1",
         "http-status-codes": "^2.2.0",
-        "lodash": "^4.17.11",
+        "lodash": "^4.17.21",
         "matrix-js-sdk": "19.6.0",
         "path": "npm:path-browserify@1.0.1",
         "pino": "^8.6.1",

@@ -13,7 +13,8 @@
         "prettier:fix": "prettier --write .",
         "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "syncpack:check": "syncpack list-mismatches",
-        "syncpack:fix": "syncpack fix-mismatches && syncpack format"
+        "syncpack:fix": "syncpack fix-mismatches && syncpack format",
+        "test-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test"
     },
     "devDependencies": {
         "@types/node": "^18.7.23",
@@ -59,6 +60,7 @@
         "workspace": false
     },
     "workspaces": [
+        "casablanca/packages/*",
         "clients/web/app",
         "clients/web/lib",
         "clients/web/sample-app",
