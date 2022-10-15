@@ -17,5 +17,3 @@ out/*
 yarn.lock
 
 packages/contracts/*
-
-package.json

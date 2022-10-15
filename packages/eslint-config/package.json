@@ -1,7 +1,7 @@
 {
-  "name": "@harmony/eslint-config",
-  "version": "1.0.0",
-  "private": true,
-  "main": "typescript.js",
-  "license": "MIT"
+    "name": "@harmony/eslint-config",
+    "version": "1.0.0",
+    "private": true,
+    "main": "typescript.js",
+    "license": "MIT"
 }

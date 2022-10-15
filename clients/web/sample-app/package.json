@@ -1,60 +1,60 @@
 {
-  "name": "sample-app",
-  "version": "0.0.0",
-  "private": true,
-  "dependencies": {
-    "@emotion/react": "^11.10.4",
-    "@emotion/styled": "^11.10.4",
-    "@harmony/contracts": "workspace:^",
-    "@mui/icons-material": "^5.10.6",
-    "@mui/material": "^5.10.7",
-    "@mui/styles": "^5.10.7",
-    "@types/node": "^18.7.23",
-    "@types/react": "^18.0.21",
-    "@types/react-dom": "^18.0.6",
-    "crypto": "npm:crypto-browserify@3.12.0",
-    "ethers": "5.7.1",
-    "http-status-codes": "^2.2.0",
-    "lodash": "^4.17.11",
-    "matrix-js-sdk": "19.6.0",
-    "path": "npm:path-browserify@1.0.1",
-    "pino": "^8.6.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.4.1",
-    "react-scripts": "^5.0.1",
-    "siwe": "^1.1.6",
-    "stream": "npm:stream-browserify@3.0.0",
-    "typescript": "^4.8.4",
-    "use-zion-client": "*",
-    "wagmi": "^0.6.7",
-    "zustand": "^4.1.1"
-  },
-  "scripts": {
-    "start": "PORT=3001 react-app-rewired start",
-    "build": "react-app-rewired build",
-    "lint": "eslint .",
-    "lint:fix": "yarn lint --fix"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      "last 1 chrome version",
-      "last 1 firefox version"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version"
-    ]
-  },
-  "devDependencies": {
-    "@babel/core": "^7.19.3",
-    "eslint": "^8.24.0",
-    "react-app-rewired": "^2.2.1",
-    "url": "^0.11.0"
-  }
+    "name": "sample-app",
+    "version": "0.0.0",
+    "private": true,
+    "dependencies": {
+        "@emotion/react": "^11.10.4",
+        "@emotion/styled": "^11.10.4",
+        "@harmony/contracts": "workspace:^",
+        "@mui/icons-material": "^5.10.6",
+        "@mui/material": "^5.10.7",
+        "@mui/styles": "^5.10.7",
+        "@types/node": "^18.7.23",
+        "@types/react": "^18.0.21",
+        "@types/react-dom": "^18.0.6",
+        "crypto": "npm:crypto-browserify@3.12.0",
+        "ethers": "5.7.1",
+        "http-status-codes": "^2.2.0",
+        "lodash": "^4.17.11",
+        "matrix-js-sdk": "19.6.0",
+        "path": "npm:path-browserify@1.0.1",
+        "pino": "^8.6.1",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.4.1",
+        "react-scripts": "^5.0.1",
+        "siwe": "^1.1.6",
+        "stream": "npm:stream-browserify@3.0.0",
+        "typescript": "^4.8.4",
+        "use-zion-client": "*",
+        "wagmi": "^0.6.7",
+        "zustand": "^4.1.1"
+    },
+    "scripts": {
+        "start": "PORT=3001 react-app-rewired start",
+        "build": "react-app-rewired build",
+        "lint": "eslint .",
+        "lint:fix": "yarn lint --fix"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app"
+        ]
+    },
+    "browserslist": {
+        "production": [
+            "last 1 chrome version",
+            "last 1 firefox version"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version"
+        ]
+    },
+    "devDependencies": {
+        "@babel/core": "^7.19.3",
+        "eslint": "^8.24.0",
+        "react-app-rewired": "^2.2.1",
+        "url": "^0.11.0"
+    }
 }
