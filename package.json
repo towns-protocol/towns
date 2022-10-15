@@ -55,7 +55,8 @@
             "main",
             "types",
             "scripts"
-        ]
+        ],
+        "workspace": false
     },
     "workspaces": [
         "clients/web/app",
