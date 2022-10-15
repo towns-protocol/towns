@@ -1,10 +1,10 @@
 {
     "name": "governance-ui",
-    "private": true,
     "version": "0.0.0",
+    "private": true,
     "scripts": {
-        "dev": "vite",
         "build": "tsc && vite build",
+        "dev": "vite",
         "preview": "vite preview"
     },
     "dependencies": {

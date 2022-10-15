@@ -2,6 +2,22 @@
     "name": "sample-app",
     "version": "0.0.0",
     "private": true,
+    "scripts": {
+        "build": "react-app-rewired build",
+        "lint": "eslint .",
+        "lint:fix": "yarn lint --fix",
+        "start": "PORT=3001 react-app-rewired start"
+    },
+    "browserslist": {
+        "production": [
+            "last 1 chrome version",
+            "last 1 firefox version"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version"
+        ]
+    },
     "dependencies": {
         "@emotion/react": "^11.10.4",
         "@emotion/styled": "^11.10.4",
@@ -30,31 +46,15 @@
         "wagmi": "^0.6.7",
         "zustand": "^4.1.1"
     },
-    "scripts": {
-        "start": "PORT=3001 react-app-rewired start",
-        "build": "react-app-rewired build",
-        "lint": "eslint .",
-        "lint:fix": "yarn lint --fix"
-    },
-    "eslintConfig": {
-        "extends": [
-            "react-app"
-        ]
-    },
-    "browserslist": {
-        "production": [
-            "last 1 chrome version",
-            "last 1 firefox version"
-        ],
-        "development": [
-            "last 1 chrome version",
-            "last 1 firefox version"
-        ]
-    },
     "devDependencies": {
         "@babel/core": "^7.19.3",
         "eslint": "^8.24.0",
         "react-app-rewired": "^2.2.1",
         "url": "^0.11.0"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app"
+        ]
     }
 }

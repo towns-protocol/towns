@@ -1,16 +1,16 @@
 {
     "name": "harmonyweb",
-    "private": true,
     "version": "0.0.0",
+    "private": true,
     "scripts": {
-        "dev": "vite",
         "build": "tsc && vite build",
-        "preview": "vite preview",
-        "storybook": "NODE_OPTIONS='--openssl-legacy-provider' start-storybook -p 3001 --no-manager-cache",
+        "coverage": "vitest run --coverage",
+        "dev": "vite",
         "lint": "eslint . --cache",
         "lint:fix": "yarn lint --fix",
-        "test": "vitest",
-        "coverage": "vitest run --coverage"
+        "preview": "vite preview",
+        "storybook": "NODE_OPTIONS='--openssl-legacy-provider' start-storybook -p 3001 --no-manager-cache",
+        "test": "vitest"
     },
     "dependencies": {
         "@emoji-mart/data": "^1.0.6",
