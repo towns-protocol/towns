@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
-import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
+import {CouncilNFT} from "../src/council/CouncilNFT.sol";
 
 contract NFTTest is Test, MerkleHelper {
   using stdStorage for StdStorage;

@@ -113,7 +113,8 @@ contract NodeManager is
   uint256[] public nodes;
 
   /**
-   * @dev Functon invoked in the implementation of the UUPSUpgradeable @openzeplin library. Make sure all variables are properly intialized here
+   * @dev Functon invoked in the implementation of the UUPSUpgradeable @openzeplin library.
+   * Make sure all variables are properly intialized here
    */
   function initialize() public virtual initializer {
     __UUPSUpgradeable_init();
@@ -152,7 +153,8 @@ contract NodeManager is
   }
 
   /**
-   * @notice Check that the upgrade is being performed by the contract owner, and that it isn't being downgraded to a prior version
+   * @notice Check that the upgrade is being performed by the contract owner
+   * and that it isn't being downgraded to a prior version
    */
   function _authorizeUpgrade(address newImplementation)
     internal
@@ -367,6 +369,7 @@ contract NodeManager is
     delete nodeHashToNode[nodeHash];
 
     //slither-disable-next-line reentrancy-eth
+    /* solhint-disable-next-line avoid-low-level-calls */
     (bool success, ) = owner.call{gas: 21000, value: balance}("");
     require(success, "Failed to transfer balance to owner");
     emit NodeUnregistered(nodeHash);

@@ -14,8 +14,10 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     uint256 roleId;
   }
 
-  mapping(uint256 => mapping(address => Entitlement[])) _entitlementsBySpaceIdbyUser;
-  mapping(uint256 => mapping(uint256 => mapping(address => Entitlement[]))) _entitlementsBySpaceIdByRoomIdByUser;
+  mapping(uint256 => mapping(address => Entitlement[]))
+    internal _entitlementsBySpaceIdbyUser;
+  mapping(uint256 => mapping(uint256 => mapping(address => Entitlement[])))
+    internal _entitlementsBySpaceIdByRoomIdByUser;
 
   constructor(
     string memory name_,

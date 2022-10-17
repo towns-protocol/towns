@@ -15,6 +15,13 @@ library Events {
     string spaceName
   );
 
+  event CreateRole(
+    uint256 indexed spaceId,
+    uint256 indexed roleId,
+    address indexed creator,
+    string roleName
+  );
+
   /**
    * @dev Emitted when a network id is set on a space
    * @param spaceId The id of the space

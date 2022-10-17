@@ -7,13 +7,6 @@ abstract contract ZionSpaceManagerStorage {
   /// @notice variable representing the current total amount of spaces in the contract
   uint256 internal _spacesCounter;
 
-  /// @notice variable representing the default entitlement module address and tag
-  address internal _defaultEntitlementModuleAddress;
-
-  /// @notice variable representing the zion permissions manager address
-  address internal _defaultPermissionsManagerAddress;
-
-  // Storage
   /// @notice Mapping representing the space id by network hash
   mapping(bytes32 => uint256) internal _spaceIdByHash;
 

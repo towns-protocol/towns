@@ -9,7 +9,7 @@ contract ClaimPool {
   address private zionTokenAddress;
   IERC20 private zionToken;
 
-  mapping(address => bool) claimedAddresses;
+  mapping(address => bool) internal claimedAddresses;
 
   uint256 private constant ONE_TIME_CLAIM_AMOUNT = 500;
   uint256 private constant UNRESTRICTED_CLAIM_AMOUNT = 5;
@@ -20,7 +20,7 @@ contract ClaimPool {
     zionToken = IERC20(_zionTokenAddress);
   }
 
-  function getZionTokenBalance() public view returns (uint256) {
+  function getZionTokenBalance() public pure returns (uint256) {
     return 17;
   }
 

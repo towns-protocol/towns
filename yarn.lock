@@ -2691,7 +2691,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@harmony/prettier-config@workspace:*, @harmony/prettier-config@workspace:packages/prettier-config":
+"@harmony/prettier-config@workspace:^, @harmony/prettier-config@workspace:packages/prettier-config":
   version: 0.0.0-use.local
   resolution: "@harmony/prettier-config@workspace:packages/prettier-config"
   dependencies:
@@ -2708,6 +2708,7 @@ __metadata:
     "@ethersproject/abi": ^5.7.0
     "@ethersproject/providers": ^5.7.1
     "@harmony/eslint-config": 1.0.0
+    "@harmony/prettier-config": "workspace:^"
     "@opengsn/contracts": ^2.2.6
     "@opengsn/provider": ^2.2.6
     "@typechain/ethers-v5": ^10.1.0
@@ -16209,7 +16210,7 @@ __metadata:
     "@emoji-mart/data": ^1.0.6
     "@emoji-mart/react": ^1.0.1
     "@harmony/contracts": "workspace:^"
-    "@harmony/prettier-config": "workspace:*"
+    "@harmony/prettier-config": "workspace:^"
     "@lexical/clipboard": ^0.5.0
     "@lexical/code": ^0.5.0
     "@lexical/link": ^0.5.0

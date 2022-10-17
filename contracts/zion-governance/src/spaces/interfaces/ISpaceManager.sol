@@ -51,10 +51,12 @@ interface ISpaceManager {
     bytes memory data
   ) external;
 
+  /// @notice Create a role on a new space Id
   function createRole(string calldata spaceId, string calldata name)
     external
     returns (uint256);
 
+  /// @notice Adds a permission to a role
   function addPermissionToRole(
     string calldata spaceId,
     uint256 roleId,

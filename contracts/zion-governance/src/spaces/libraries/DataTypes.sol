@@ -28,12 +28,12 @@ library DataTypes {
     uint256 ownerRoleId;
     mapping(address => bool) hasEntitlement;
     address[] entitlementModules;
-    Channel[] channels;
     Role[] roles;
   }
 
   struct Channel {
     uint256 channelId;
+    uint256 createdAt;
     string networkId;
     string name;
     address creator;
@@ -52,10 +52,19 @@ library DataTypes {
   /// @param owner The address of the owner of the space
   struct SpaceInfo {
     uint256 spaceId;
+    string networkId;
     uint256 createdAt;
     string name;
     address creator;
     address owner;
+  }
+
+  struct ChannelInfo {
+    uint256 channelId;
+    string networkId;
+    uint256 createdAt;
+    string name;
+    address creator;
   }
 
   struct Roles {
@@ -66,7 +75,6 @@ library DataTypes {
   struct Role {
     uint256 roleId;
     string name;
-    bool isTransitive;
   }
 
   struct Permission {
@@ -93,10 +101,9 @@ library DataTypes {
 
   /// @notice A struct containing the parameters for creating a channel
   struct CreateChannelData {
+    string spaceNetworkId;
     string channelName;
-    string networkId;
-    string spaceId;
-    CreateRoleData[] roles;
+    string channelNetworkId;
   }
 
   /// @notice A struct containing the parameters required for creating a space
@@ -104,7 +111,7 @@ library DataTypes {
   /// @param networkId The network id of the space
   struct CreateSpaceData {
     string spaceName;
-    string networkId;
+    string spaceNetworkId;
   }
 
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement

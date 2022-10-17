@@ -1,18 +1,18 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
-import {ZionSpaceManager} from "../contracts/spaces/ZionSpaceManager.sol";
-import {Zion} from "../contracts/governance/Zion.sol";
-import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
-import {ISpaceManager} from "../contracts/spaces/interfaces/ISpaceManager.sol";
-import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
-import {TokenEntitlementModule} from "./../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
-import {UserGrantedEntitlementModule} from "./../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
-import {DataTypes} from "../contracts/spaces/libraries/DataTypes.sol";
+import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
+import {Zion} from "../src/governance/Zion.sol";
+import {CouncilNFT} from "../src/council/CouncilNFT.sol";
+import {ISpaceManager} from "../src/spaces/interfaces/ISpaceManager.sol";
+import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
+import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
-import {Constants} from "../contracts/council/libraries/Constants.sol";
-import {ZionPermissionsRegistry} from "../contracts/spaces/ZionPermissionsRegistry.sol";
-import {PermissionTypes} from "../contracts/spaces/libraries/PermissionTypes.sol";
+import {Constants} from "../src/council/libraries/Constants.sol";
+import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
+import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
 
 contract TokenEntitlementModuleTest is Test {
   ZionPermissionsRegistry internal permissionsRegistry;
@@ -82,8 +82,8 @@ contract TokenEntitlementModuleTest is Test {
     );
     // Create roles and add permissions
     string memory roleName = "Tester";
-    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
-    spaceManager.addPermissionToRole(networkId, ownerRoleId, permission);
+    uint256 testerRoleId = spaceManager.createRole(networkId, roleName);
+    spaceManager.addPermissionToRole(networkId, testerRoleId, permission);
 
     spaceManager.whitelistEntitlementModule(
       networkId,
@@ -96,7 +96,7 @@ contract TokenEntitlementModuleTest is Test {
       networkId,
       roomId,
       address(tokenEntitlementModule),
-      ownerRoleId,
+      testerRoleId,
       abi.encode("ziontoken", address(zion), 10)
     );
 

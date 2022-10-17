@@ -6,6 +6,7 @@ library Errors {
   error NameLengthInvalid();
   error NameContainsInvalidCharacters();
   error SpaceAlreadyRegistered();
+  error ChannelAlreadyRegistered();
   error NotSpaceOwner();
   error NotSpaceManager();
   error EntitlementAlreadyWhitelisted();

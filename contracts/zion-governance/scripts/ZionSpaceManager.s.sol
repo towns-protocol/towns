@@ -2,12 +2,12 @@
 pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
 
-import {TokenEntitlementModule} from "./../contracts/spaces/modules/entitlements/TokenEntitlementModule.sol";
-import {UserGrantedEntitlementModule} from "./../contracts/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
-import {ZionSpaceManager} from "../contracts/spaces/ZionSpaceManager.sol";
-import {DataTypes} from "./../contracts/spaces/libraries/DataTypes.sol";
+import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
+import {DataTypes} from "./../src/spaces/libraries/DataTypes.sol";
 import {Helper} from "./Helper.sol";
-import {ZionPermissionsRegistry} from "../contracts/spaces/ZionPermissionsRegistry.sol";
+import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import "solidity-json-writer/contracts/JsonWriter.sol";
 
 contract DeployZionSpaceManager is Script {

@@ -58,7 +58,7 @@
     },
     "devDependencies": {
         "@babel/core": "^7.19.3",
-        "@harmony/prettier-config": "workspace:*",
+        "@harmony/prettier-config": "workspace:^",
         "@mdx-js/react": "1.6.22",
         "@storybook/addon-actions": "^6.5.12",
         "@storybook/addon-docs": "^6.5.12",

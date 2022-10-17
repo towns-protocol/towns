@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
-import {CouncilNFT} from "../contracts/council/CouncilNFT.sol";
+import {CouncilNFT} from "../src/council/CouncilNFT.sol";
 import "murky/Merkle.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {Helper} from "./Helper.sol";

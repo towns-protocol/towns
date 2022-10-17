@@ -121,6 +121,7 @@ contract CouncilNFT is ERC721, Ownable {
   /// @param payee the address that will receive the withdrawn ether
   function withdrawPayments(address payable payee) external onlyOwner {
     uint256 balance = address(this).balance;
+    /* solhint-disable-next-line avoid-low-level-calls */
     (bool transferTx, ) = payee.call{value: balance}("");
     if (!transferTx) {
       revert Errors.WithdrawTransfer();

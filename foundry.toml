@@ -6,9 +6,9 @@ fs_permissions = [{ access = "write", path = "./packages"}]
 extra_output_files = ["metadata", "abi"]
 
 [profile.governance]
-src = 'contracts/zion-governance/contracts'
-test = 'contracts/zion-governance/test/'
-out = 'contracts/zion-governance/artifacts_foundry'
+src = 'contracts/zion-governance/src'
+test = 'contracts/zion-governance/test'
+out = 'contracts/zion-governance/out'
 broadcast = "contracts/zion-governance/broadcast"
 gas_reports = ["CouncilNFT", "ZionSpaceManager"]
 ffi = true
