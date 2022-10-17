@@ -46,7 +46,6 @@ const AllRoutes = () => {
     return (
         <Routes>
             <Route element={<AppLayout />}>
-                <Route path="/register" element={<Register />} />
                 <Route element={<Outlet />}>
                     <Route path="*" element={<SiteHome />} />
                     <Route
@@ -62,6 +61,7 @@ const AllRoutes = () => {
                     </Route>
                     {isAuthenticated && (
                         <>
+                            <Route path="/register" element={<Register />} />
                             <Route path="*" element={<SidebarLayout />}>
                                 <Route path="*" element={<SpaceRoutes />} />
                             </Route>

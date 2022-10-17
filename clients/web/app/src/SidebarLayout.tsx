@@ -1,20 +1,28 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
-import { SpaceContextProvider, useSpaceData } from 'use-zion-client'
+import { SpaceContextProvider, useSpaceData, useZionContext } from 'use-zion-client'
 import useEvent from 'react-use-event-hook'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { atoms } from 'ui/styles/atoms.css'
+import { Register } from 'routes/Register'
 
 export const SidebarLayout = () => {
     const spaceRoute = useMatch({ path: '/spaces/:spaceSlug', end: false })
+    const needsOnboarding = useNeedsOnboarding()
     return (
-        <SpaceContextProvider spaceId={spaceRoute?.params.spaceSlug}>
-            <SidebarLayoutContent />
-        </SpaceContextProvider>
+        <>
+            {needsOnboarding ? (
+                <Register />
+            ) : (
+                <SpaceContextProvider spaceId={spaceRoute?.params.spaceSlug}>
+                    <SidebarLayoutContent />
+                </SpaceContextProvider>
+            )}
+        </>
     )
 }
 
@@ -85,4 +93,14 @@ export const SidebarLayoutContent = () => {
             </Box>
         </Stack>
     )
+}
+
+function useNeedsOnboarding(): boolean {
+    const { onboardingState } = useZionContext()
+    switch (onboardingState.kind) {
+        case 'user-profile':
+            return onboardingState.bNeedsDisplayName
+        default:
+            return false
+    }
 }

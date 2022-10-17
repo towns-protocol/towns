@@ -26,7 +26,6 @@ export enum ButtonStatus {
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
-const REDIRECT_SIGNUP = true
 
 export const LoginComponent = () => {
     const navigate = useNavigate()
@@ -53,12 +52,8 @@ export const LoginComponent = () => {
     }, [loginWithWallet])
 
     const handleRegister = useCallback(() => {
-        if (REDIRECT_SIGNUP) {
-            navigate('/register')
-        } else {
-            registerWallet(registerWalletMsgToSign)
-        }
-    }, [navigate, registerWallet])
+        registerWallet(registerWalletMsgToSign)
+    }, [registerWallet])
 
     // retrieve the connection and login status synchronously
     const _preliminaryStatus = getButtonStatus(walletStatus, loginStatus)

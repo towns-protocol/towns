@@ -13,10 +13,7 @@ import {
 } from 'use-zion-client'
 import { vars } from 'ui/styles/vars.css'
 import { Avatar, Box, Button, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
-import {
-    registerWalletMsgToSign,
-    useCheckRegistrationStatusWhen,
-} from '@components/Login/LoginComponent'
+import { registerWalletMsgToSign } from '@components/Login/LoginComponent'
 
 const placeholders = {
     names: [
@@ -47,7 +44,7 @@ export const RegisterForm = () => {
             walletAddress: accounts[0],
             ens: undefined,
             displayName: myProfile?.displayName ?? '',
-            nft: '',
+            nft: myProfile?.avatarUrl ?? '',
         },
     })
 
@@ -65,18 +62,12 @@ export const RegisterForm = () => {
     }, [myProfile?.avatarUrl, setValue])
 
     const isConnected = walletStatus === WalletStatus.Connected
-    const { registrationStatus } = useCheckRegistrationStatusWhen(isConnected)
 
-    console.log({ registrationStatus })
-    console.log('loaded onboarding', isConnected, registrationStatus, loginStatus, myProfile)
-    useEffect(() => {
-        if (!isConnected) {
-            console.log('navigate away')
-            navigate('/')
-        } else {
-            console.log('STAY')
-        }
-    }, [isConnected, navigate, registrationStatus])
+    console.log('loaded onboarding', {
+        isConnected,
+        loginStatus,
+        myProfile,
+    })
 
     const onSubmit = useCallback(
         (data: { displayName: string; nft: string }) => {
@@ -93,7 +84,7 @@ export const RegisterForm = () => {
                     if (data.displayName !== myProfile?.displayName) {
                         await setDisplayName(data.displayName)
                     }
-                    if (data.nft !== myProfile?.avatarUrl) {
+                    if (data.nft !== myProfile?.avatarUrl && data.nft !== '') {
                         await setAvatarUrl(data.nft)
                     }
                 } catch (e: unknown) {
