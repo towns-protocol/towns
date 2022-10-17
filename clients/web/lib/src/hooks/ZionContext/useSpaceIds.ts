@@ -17,6 +17,8 @@ export function useSpacesIds(client: ZionClient | undefined): {
             return
         }
         console.log('USE SPACE IDS::starting effect')
+        // local data
+        let _invitedToIds: string[] = []
         // wrap up state interaction
         const updateSpaceAndInviteIds = () => {
             const newSpaceIds = client
@@ -28,6 +30,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
                 .getRooms()
                 .filter((r) => r.getMyMembership() === Membership.Invite)
                 .map((r) => r.roomId)
+            _invitedToIds = newInviteIds.slice()
 
             setSpaceIds((prev) => {
                 if (isEqual(prev, newSpaceIds)) {
@@ -47,10 +50,13 @@ export function useSpacesIds(client: ZionClient | undefined): {
         updateSpaceAndInviteIds()
         // listen for the appropriate events
         const onNewRoomOrMyMembership = (room: MatrixRoom) => {
-            if (!room.isSpaceRoom() && room.getMyMembership() !== Membership.Invite) {
-                return
+            if (
+                room.isSpaceRoom() ||
+                room.getMyMembership() === Membership.Invite ||
+                _invitedToIds.indexOf(room.roomId) >= 0
+            ) {
+                updateSpaceAndInviteIds()
             }
-            updateSpaceAndInviteIds()
         }
         // for some stupid reason the matrix client stores the room after sending membership events
         client.on(RoomEvent.MyMembership, onNewRoomOrMyMembership)

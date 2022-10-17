@@ -55,7 +55,7 @@ export function AppDrawer(props: Props): JSX.Element {
 
     const onClickInvite = (invite: InviteData) => {
         if (invite.spaceParentId) {
-            navigate('/spaces/' + invite.spaceParentId.slug + '/invites/' + invite.id.slug)
+            navigate('/spaces/' + invite.spaceParentId.slug + '/channels/' + invite.id.slug)
         } else {
             navigate('/spaces/' + invite.id.slug)
         }
