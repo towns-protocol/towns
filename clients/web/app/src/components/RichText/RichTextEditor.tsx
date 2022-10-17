@@ -15,7 +15,7 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { clsx } from 'clsx'
 import React, { useMemo, useState } from 'react'
-import { RoomMember, useSpaceMembers } from 'use-zion-client'
+import { Channel, RoomMember, useSpaceData, useSpaceMembers } from 'use-zion-client'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useInitialConfig } from './hooks/useInitialConfig'
@@ -32,6 +32,9 @@ import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
 import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
 import { RichTextUI } from './ui/RichTextEditorUI'
+import { ChannelMentionNode } from './nodes/ChannelMentionNode'
+import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
+import { ChannelMentionPlugin } from './plugins/ChannelMentionPlugin'
 
 type Props = {
     onSend?: (value: string) => void
@@ -58,22 +61,40 @@ const nodes = [
     ListItemNode,
     ListNode,
     MentionNode,
+    ChannelMentionNode,
+    ChannelLinkNode,
     QuoteNode,
 ]
-
-const useTransformers = (members: RoomMember[]) => {
+interface IUseTransformers {
+    members: RoomMember[]
+    channels: Channel[]
+}
+const useTransformers = ({ members, channels }: IUseTransformers) => {
     const transformers = useMemo(() => {
         const names = members.map((m) => m.name).filter(notUndefined)
-        return [CHECK_LIST, ...TRANSFORMERS, createMentionTransformer(names)]
-    }, [members])
+        const channelHashtags = channels.filter(notUndefined)
+        return [
+            CHECK_LIST,
+            ...TRANSFORMERS,
+            createMentionTransformer(names),
+            createChannelLinkTransformer(channelHashtags),
+        ]
+    }, [members, channels])
     return { transformers }
+}
+
+const useFlattenedSpaceChannels = (): Channel[] => {
+    const spaceData = useSpaceData()
+    return spaceData ? spaceData?.channelGroups.flatMap((cg) => cg.channels) : []
 }
 
 export const RichTextPreview = React.memo((props: { content: string; edited?: boolean }) => {
     // note: unnecessary repetition here, could be optimised by handling above
     // inside e.g. space context or timeline
     const { members } = useSpaceMembers()
-    const { transformers } = useTransformers(members)
+    const channels = useFlattenedSpaceChannels()
+
+    const { transformers } = useTransformers({ members, channels })
 
     const initialConfig = useInitialConfig(props.content, nodes, transformers, false, props.edited)
 
@@ -91,8 +112,8 @@ export const RichTextEditor = (props: Props) => {
     const { placeholder = 'Write something ...', editing: isEditing, onSend } = props
 
     const { members } = useSpaceMembers()
-    const { transformers } = useTransformers(members)
-
+    const channels = useFlattenedSpaceChannels()
+    const { transformers } = useTransformers({ members, channels })
     const initialConfig = useInitialConfig(props.initialValue, nodes, transformers, true)
 
     const [focused, setFocused] = useState(false)
@@ -126,6 +147,7 @@ export const RichTextEditor = (props: Props) => {
             />
             <AutoFocusPlugin />
             <AutoLinkMatcherPlugin />
+            <ChannelMentionPlugin channels={channels} />
         </LexicalComposer>
     )
 }
