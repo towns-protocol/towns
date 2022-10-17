@@ -255,3 +255,66 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     );
   }
 }
+
+contract ZionSpaceManagerNegativeTest is Test {
+  ZionSpaceManager internal spaceManager;
+  UserGrantedEntitlementModule internal userGrantedEntitlementModule;
+
+  function setUp() public {
+    spaceManager = new ZionSpaceManager();
+
+    userGrantedEntitlementModule = new UserGrantedEntitlementModule(
+      "User Granted Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms",
+      address(spaceManager)
+    );
+  }
+
+  function testCreatingSpaceWithoutDefaultEntitlementModule() public {
+    vm.expectRevert(Errors.DefaultEntitlementModuleNotSet.selector);
+    spaceManager.createSpace(
+      DataTypes.CreateSpaceData("test", "matrix-id")
+    );
+  }
+
+  function testSpaceOwnerModifier() public {
+    address notSpaceOwner = address(1);
+    spaceManager.registerDefaultEntitlementModule(
+      address(userGrantedEntitlementModule)
+    );
+    uint256 spaceId = spaceManager.createSpace(
+      DataTypes.CreateSpaceData("test", "matrix-id")
+    );
+    TokenEntitlementModule tokenEntitlementModule = new TokenEntitlementModule(
+      "Token Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+      address(spaceManager)
+    );
+
+    vm.prank(notSpaceOwner);
+    vm.expectRevert(Errors.NotSpaceOwner.selector);
+    spaceManager.whitelistEntitlementModule(
+      spaceId,
+      address(tokenEntitlementModule),
+      true
+    );
+
+    string memory roleName = "Joiner";
+    DataTypes.Permission memory joinPermission = spaceManager
+      .getPermissionFromMap(ISpaceManager.ZionPermission.Join);
+    uint256 ownerRoleId = spaceManager.createRole(spaceId, roleName, "#fff");
+
+    vm.prank(notSpaceOwner);
+    vm.expectRevert(Errors.NotSpaceOwner.selector);
+    spaceManager.addPermissionToRole(spaceId, ownerRoleId, joinPermission);
+
+    vm.prank(notSpaceOwner);
+    vm.expectRevert(Errors.NotSpaceOwner.selector);
+    spaceManager.addRoleToEntitlementModule(
+      spaceId,
+      address(tokenEntitlementModule),
+      ownerRoleId,
+      abi.encode("sample description", address(1), 1)
+    );
+  }
+}
