@@ -26,6 +26,17 @@
         },
       },
       {
+        "label": "Start Anvil, Deploy Zion Governance",
+        "dependsOn": [
+          "StartBlockchain",
+          "DeployZionGovernance",
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": false
+        },
+      },
+      {
         "label": "YarnInstall",
         "type": "shell",
         "command": "yarn",

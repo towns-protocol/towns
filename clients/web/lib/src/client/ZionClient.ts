@@ -17,7 +17,7 @@ import {
     RoomState,
     RoomMember,
 } from 'matrix-js-sdk'
-import { ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { CouncilNFT, ZionSpaceManager } from '@harmony/contracts/localhost/typings'
 import {
     CreateChannelInfo,
@@ -238,6 +238,11 @@ export class ZionClient {
             try {
                 transaction = await this.spaceManager.signed.createSpace(spaceInfo)
                 receipt = await transaction.wait()
+            } catch (err) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+                const revertData: BytesLike = (err as any).error.error.error.data
+                const decodedError = this.spaceManager.signed.interface.parseError(revertData)
+                console.error(decodedError)
             } finally {
                 if (receipt?.status === 1) {
                     // Successful created the space on-chain.
@@ -279,6 +284,11 @@ export class ZionClient {
                     tokenEntitlement,
                 )
                 receipt = await transaction.wait()
+            } catch (err) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+                const revertData: BytesLike = (err as any).error.error.error.data
+                const decodedError = this.spaceManager.signed.interface.parseError(revertData)
+                console.error(decodedError)
             } finally {
                 if (receipt?.status === 1) {
                     // Successful created the space on-chain.
