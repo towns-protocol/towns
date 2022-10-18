@@ -68,3 +68,21 @@ yarn watch
 ### Fund your local wallet
 
 If you're on metamask, make sure the localhost network is set to chain id `31337` Metamask returns the chain id in it's own settings, not the id returned by the network itself (why!!! :))
+
+### MITM yourself
+
+You can use [mitmweb](https://mitmproxy.org/) to watch the calls to your local server
+
+Run:
+
+```
+brew install mitmproxy
+mitmweb -p 8009 --mode reverse:http://localhost:8008/
+
+```
+
+Then change all instances of http://localhost:8008/ in your app to http://localhost:8009/
+
+- for the sample app, change clients/web/sample-app/env.local
+- for the tests, change clients/web/lib/jest-setup.ts
+- for the app, change the app url in clients/web/app/src/App.tsk
