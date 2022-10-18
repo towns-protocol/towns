@@ -7,6 +7,7 @@ import { webcrypto } from 'node:crypto'
 import Olm from '@matrix-org/olm'
 import request from 'request'
 import { configure } from '@testing-library/dom'
+import 'jest-canvas-mock'
 
 process.env.HOMESERVER = 'http://localhost:8008' // OR "https://node1.zion.xyz";
 process.env.DISABLE_ENCRYPTION = 'false'
