@@ -312,7 +312,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/zion-governance/contracts/council/CouncilStaking.sol": "CouncilStaking"
+      "contracts/zion-governance/src/council/CouncilStaking.sol": "CouncilStaking"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -337,7 +337,7 @@
     ]
   },
   "sources": {
-    "contracts/zion-governance/contracts/council/CouncilStaking.sol": {
+    "contracts/zion-governance/src/council/CouncilStaking.sol": {
       "keccak256": "0xcce063a8c28bd2396d5b918e073b0a768db3da40bac9aec76add99c2af6d6ea2",
       "license": "Apache-2.0",
       "urls": [
@@ -345,7 +345,7 @@
         "dweb:/ipfs/QmPPK6ND6YzMSRtpemnfVjtdAXveVgXQmJjbjLv8dyFsT1"
       ]
     },
-    "contracts/zion-governance/contracts/council/libraries/DataTypes.sol": {
+    "contracts/zion-governance/src/council/libraries/DataTypes.sol": {
       "keccak256": "0xcb9554125a2c90a4c9f4d2c747b25616de295284b29301dd40ffa3bc160bd2ca",
       "license": "Apache-2.0",
       "urls": [
@@ -353,7 +353,7 @@
         "dweb:/ipfs/QmNrTVJg1S864R7eyzuefLbGNBVpWE6TKqz7ZeLn757Vid"
       ]
     },
-    "contracts/zion-governance/contracts/council/libraries/Errors.sol": {
+    "contracts/zion-governance/src/council/libraries/Errors.sol": {
       "keccak256": "0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f",
       "license": "Apache-2.0",
       "urls": [
@@ -361,7 +361,7 @@
         "dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna"
       ]
     },
-    "contracts/zion-governance/contracts/council/libraries/Events.sol": {
+    "contracts/zion-governance/src/council/libraries/Events.sol": {
       "keccak256": "0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a",
       "license": "Apache-2.0",
       "urls": [

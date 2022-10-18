@@ -9,6 +9,16 @@ export declare namespace DataTypes {
     type PermissionStructOutput = [string] & {
         name: string;
     };
+    type CreateChannelDataStruct = {
+        spaceNetworkId: PromiseOrValue<string>;
+        channelName: PromiseOrValue<string>;
+        channelNetworkId: PromiseOrValue<string>;
+    };
+    type CreateChannelDataStructOutput = [string, string, string] & {
+        spaceNetworkId: string;
+        channelName: string;
+        channelNetworkId: string;
+    };
     type CreateRoleDataStruct = {
         name: PromiseOrValue<string>;
         metadata: PromiseOrValue<string>;
@@ -23,30 +33,13 @@ export declare namespace DataTypes {
         metadata: string;
         permissions: DataTypes.PermissionStructOutput[];
     };
-    type CreateChannelDataStruct = {
-        channelName: PromiseOrValue<string>;
-        networkId: PromiseOrValue<string>;
-        spaceId: PromiseOrValue<string>;
-        roles: DataTypes.CreateRoleDataStruct[];
-    };
-    type CreateChannelDataStructOutput = [
-        string,
-        string,
-        string,
-        DataTypes.CreateRoleDataStructOutput[]
-    ] & {
-        channelName: string;
-        networkId: string;
-        spaceId: string;
-        roles: DataTypes.CreateRoleDataStructOutput[];
-    };
     type CreateSpaceDataStruct = {
         spaceName: PromiseOrValue<string>;
-        networkId: PromiseOrValue<string>;
+        spaceNetworkId: PromiseOrValue<string>;
     };
     type CreateSpaceDataStructOutput = [string, string] & {
         spaceName: string;
-        networkId: string;
+        spaceNetworkId: string;
     };
     type CreateSpaceTokenEntitlementDataStruct = {
         entitlementModuleAddress: PromiseOrValue<string>;
@@ -68,6 +61,57 @@ export declare namespace DataTypes {
         description: string;
         permissions: string[];
     };
+    type ChannelInfoStruct = {
+        channelId: PromiseOrValue<BigNumberish>;
+        networkId: PromiseOrValue<string>;
+        createdAt: PromiseOrValue<BigNumberish>;
+        name: PromiseOrValue<string>;
+        creator: PromiseOrValue<string>;
+    };
+    type ChannelInfoStructOutput = [
+        BigNumber,
+        string,
+        BigNumber,
+        string,
+        string
+    ] & {
+        channelId: BigNumber;
+        networkId: string;
+        createdAt: BigNumber;
+        name: string;
+        creator: string;
+    };
+    type ChannelStruct = {
+        channelId: PromiseOrValue<BigNumberish>;
+        createdAt: PromiseOrValue<BigNumberish>;
+        networkId: PromiseOrValue<string>;
+        name: PromiseOrValue<string>;
+        creator: PromiseOrValue<string>;
+    };
+    type ChannelStructOutput = [
+        BigNumber,
+        BigNumber,
+        string,
+        string,
+        string
+    ] & {
+        channelId: BigNumber;
+        createdAt: BigNumber;
+        networkId: string;
+        name: string;
+        creator: string;
+    };
+    type ChannelsStruct = {
+        idCounter: PromiseOrValue<BigNumberish>;
+        channels: DataTypes.ChannelStruct[];
+    };
+    type ChannelsStructOutput = [
+        BigNumber,
+        DataTypes.ChannelStructOutput[]
+    ] & {
+        idCounter: BigNumber;
+        channels: DataTypes.ChannelStructOutput[];
+    };
     type EntitlementModuleInfoStruct = {
         entitlementAddress: PromiseOrValue<string>;
         entitlementName: PromiseOrValue<string>;
@@ -81,15 +125,14 @@ export declare namespace DataTypes {
     type RoleStruct = {
         roleId: PromiseOrValue<BigNumberish>;
         name: PromiseOrValue<string>;
-        isTransitive: PromiseOrValue<boolean>;
     };
-    type RoleStructOutput = [BigNumber, string, boolean] & {
+    type RoleStructOutput = [BigNumber, string] & {
         roleId: BigNumber;
         name: string;
-        isTransitive: boolean;
     };
     type SpaceInfoStruct = {
         spaceId: PromiseOrValue<BigNumberish>;
+        networkId: PromiseOrValue<string>;
         createdAt: PromiseOrValue<BigNumberish>;
         name: PromiseOrValue<string>;
         creator: PromiseOrValue<string>;
@@ -97,12 +140,14 @@ export declare namespace DataTypes {
     };
     type SpaceInfoStructOutput = [
         BigNumber,
+        string,
         BigNumber,
         string,
         string,
         string
     ] & {
         spaceId: BigNumber;
+        networkId: string;
         createdAt: BigNumber;
         name: string;
         creator: string;
@@ -113,11 +158,13 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     functions: {
         "addPermissionToRole(string,uint256,(string))": FunctionFragment;
         "addRoleToEntitlementModule(string,string,address,uint256,bytes)": FunctionFragment;
-        "createChannel((string,string,string,(string,string,(string)[])[]))": FunctionFragment;
+        "createChannel((string,string,string),(string,string,(string)[]))": FunctionFragment;
         "createRole(string,string)": FunctionFragment;
         "createSpace((string,string))": FunctionFragment;
         "createSpaceWithTokenEntitlement((string,string),(address,address,uint256,string,string[]))": FunctionFragment;
         "getChannelIdByNetworkId(string,string)": FunctionFragment;
+        "getChannelInfoByChannelId(string,string)": FunctionFragment;
+        "getChannelsBySpaceId(string)": FunctionFragment;
         "getEntitlementModulesBySpaceId(string)": FunctionFragment;
         "getEntitlementsInfoBySpaceId(string)": FunctionFragment;
         "getPermissionFromMap(bytes32)": FunctionFragment;
@@ -134,11 +181,10 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
         "removeEntitlement(string,string,address,uint256[],bytes)": FunctionFragment;
         "renounceOwnership()": FunctionFragment;
         "setDefaultEntitlementModule(address)": FunctionFragment;
-        "setDefaultPermissionsManager(address)": FunctionFragment;
         "transferOwnership(address)": FunctionFragment;
         "whitelistEntitlementModule(string,address,bool)": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "addPermissionToRole" | "addRoleToEntitlementModule" | "createChannel" | "createRole" | "createSpace" | "createSpaceWithTokenEntitlement" | "getChannelIdByNetworkId" | "getEntitlementModulesBySpaceId" | "getEntitlementsInfoBySpaceId" | "getPermissionFromMap" | "getPermissionsBySpaceIdByRoleId" | "getRoleBySpaceIdByRoleId" | "getRolesBySpaceId" | "getSpaceIdByNetworkId" | "getSpaceInfoBySpaceId" | "getSpaceOwnerBySpaceId" | "getSpaces" | "isEntitled" | "isEntitlementModuleWhitelisted" | "owner" | "removeEntitlement" | "renounceOwnership" | "setDefaultEntitlementModule" | "setDefaultPermissionsManager" | "transferOwnership" | "whitelistEntitlementModule"): FunctionFragment;
+    getFunction(nameOrSignatureOrTopic: "addPermissionToRole" | "addRoleToEntitlementModule" | "createChannel" | "createRole" | "createSpace" | "createSpaceWithTokenEntitlement" | "getChannelIdByNetworkId" | "getChannelInfoByChannelId" | "getChannelsBySpaceId" | "getEntitlementModulesBySpaceId" | "getEntitlementsInfoBySpaceId" | "getPermissionFromMap" | "getPermissionsBySpaceIdByRoleId" | "getRoleBySpaceIdByRoleId" | "getRolesBySpaceId" | "getSpaceIdByNetworkId" | "getSpaceInfoBySpaceId" | "getSpaceOwnerBySpaceId" | "getSpaces" | "isEntitled" | "isEntitlementModuleWhitelisted" | "owner" | "removeEntitlement" | "renounceOwnership" | "setDefaultEntitlementModule" | "transferOwnership" | "whitelistEntitlementModule"): FunctionFragment;
     encodeFunctionData(functionFragment: "addPermissionToRole", values: [
         PromiseOrValue<string>,
         PromiseOrValue<BigNumberish>,
@@ -151,7 +197,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
         PromiseOrValue<BigNumberish>,
         PromiseOrValue<BytesLike>
     ]): string;
-    encodeFunctionData(functionFragment: "createChannel", values: [DataTypes.CreateChannelDataStruct]): string;
+    encodeFunctionData(functionFragment: "createChannel", values: [DataTypes.CreateChannelDataStruct, DataTypes.CreateRoleDataStruct]): string;
     encodeFunctionData(functionFragment: "createRole", values: [PromiseOrValue<string>, PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "createSpace", values: [DataTypes.CreateSpaceDataStruct]): string;
     encodeFunctionData(functionFragment: "createSpaceWithTokenEntitlement", values: [
@@ -159,6 +205,8 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
         DataTypes.CreateSpaceTokenEntitlementDataStruct
     ]): string;
     encodeFunctionData(functionFragment: "getChannelIdByNetworkId", values: [PromiseOrValue<string>, PromiseOrValue<string>]): string;
+    encodeFunctionData(functionFragment: "getChannelInfoByChannelId", values: [PromiseOrValue<string>, PromiseOrValue<string>]): string;
+    encodeFunctionData(functionFragment: "getChannelsBySpaceId", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "getEntitlementModulesBySpaceId", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "getEntitlementsInfoBySpaceId", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "getPermissionFromMap", values: [PromiseOrValue<BytesLike>]): string;
@@ -186,7 +234,6 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     ]): string;
     encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
     encodeFunctionData(functionFragment: "setDefaultEntitlementModule", values: [PromiseOrValue<string>]): string;
-    encodeFunctionData(functionFragment: "setDefaultPermissionsManager", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "transferOwnership", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "whitelistEntitlementModule", values: [
         PromiseOrValue<string>,
@@ -200,6 +247,8 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "createSpace", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "createSpaceWithTokenEntitlement", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getChannelIdByNetworkId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getChannelInfoByChannelId", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "getChannelsBySpaceId", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getEntitlementModulesBySpaceId", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getEntitlementsInfoBySpaceId", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "getPermissionFromMap", data: BytesLike): Result;
@@ -216,7 +265,6 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     decodeFunctionResult(functionFragment: "removeEntitlement", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "renounceOwnership", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "setDefaultEntitlementModule", data: BytesLike): Result;
-    decodeFunctionResult(functionFragment: "setDefaultPermissionsManager", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "transferOwnership", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "whitelistEntitlementModule", data: BytesLike): Result;
     events: {
@@ -254,7 +302,7 @@ export interface ZionSpaceManager extends BaseContract {
         addRoleToEntitlementModule(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, roleId: PromiseOrValue<BigNumberish>, entitlementData: PromiseOrValue<BytesLike>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
-        createChannel(data: DataTypes.CreateChannelDataStruct, overrides?: Overrides & {
+        createChannel(data: DataTypes.CreateChannelDataStruct, role: DataTypes.CreateRoleDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
         createRole(spaceId: PromiseOrValue<string>, name: PromiseOrValue<string>, overrides?: Overrides & {
@@ -267,6 +315,8 @@ export interface ZionSpaceManager extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
         getChannelIdByNetworkId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber]>;
+        getChannelInfoByChannelId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[DataTypes.ChannelInfoStructOutput]>;
+        getChannelsBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[DataTypes.ChannelsStructOutput]>;
         getEntitlementModulesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[string[]] & {
             entitlementModules: string[];
         }>;
@@ -281,7 +331,7 @@ export interface ZionSpaceManager extends BaseContract {
         getRolesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[DataTypes.RoleStructOutput[]]>;
         getSpaceIdByNetworkId(networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber]>;
         getSpaceInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[DataTypes.SpaceInfoStructOutput]>;
-        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[string] & {
+        getSpaceOwnerBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[string] & {
             ownerAddress: string;
         }>;
         getSpaces(overrides?: CallOverrides): Promise<[DataTypes.SpaceInfoStructOutput[]]>;
@@ -297,9 +347,6 @@ export interface ZionSpaceManager extends BaseContract {
         setDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
-        setDefaultPermissionsManager(permissionsManager: PromiseOrValue<string>, overrides?: Overrides & {
-            from?: PromiseOrValue<string>;
-        }): Promise<ContractTransaction>;
         transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
@@ -313,7 +360,7 @@ export interface ZionSpaceManager extends BaseContract {
     addRoleToEntitlementModule(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, roleId: PromiseOrValue<BigNumberish>, entitlementData: PromiseOrValue<BytesLike>, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
-    createChannel(data: DataTypes.CreateChannelDataStruct, overrides?: Overrides & {
+    createChannel(data: DataTypes.CreateChannelDataStruct, role: DataTypes.CreateRoleDataStruct, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     createRole(spaceId: PromiseOrValue<string>, name: PromiseOrValue<string>, overrides?: Overrides & {
@@ -326,6 +373,8 @@ export interface ZionSpaceManager extends BaseContract {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     getChannelIdByNetworkId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+    getChannelInfoByChannelId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.ChannelInfoStructOutput>;
+    getChannelsBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.ChannelsStructOutput>;
     getEntitlementModulesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<string[]>;
     getEntitlementsInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.EntitlementModuleInfoStructOutput[]>;
     getPermissionFromMap(permissionType: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<DataTypes.PermissionStructOutput>;
@@ -334,7 +383,7 @@ export interface ZionSpaceManager extends BaseContract {
     getRolesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.RoleStructOutput[]>;
     getSpaceIdByNetworkId(networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
     getSpaceInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput>;
-    getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<string>;
+    getSpaceOwnerBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<string>;
     getSpaces(overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput[]>;
     isEntitled(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, user: PromiseOrValue<string>, permission: DataTypes.PermissionStruct, overrides?: CallOverrides): Promise<boolean>;
     isEntitlementModuleWhitelisted(spaceId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
@@ -348,9 +397,6 @@ export interface ZionSpaceManager extends BaseContract {
     setDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
-    setDefaultPermissionsManager(permissionsManager: PromiseOrValue<string>, overrides?: Overrides & {
-        from?: PromiseOrValue<string>;
-    }): Promise<ContractTransaction>;
     transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
@@ -360,11 +406,13 @@ export interface ZionSpaceManager extends BaseContract {
     callStatic: {
         addPermissionToRole(spaceId: PromiseOrValue<string>, roleId: PromiseOrValue<BigNumberish>, permission: DataTypes.PermissionStruct, overrides?: CallOverrides): Promise<void>;
         addRoleToEntitlementModule(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, roleId: PromiseOrValue<BigNumberish>, entitlementData: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<void>;
-        createChannel(data: DataTypes.CreateChannelDataStruct, overrides?: CallOverrides): Promise<void>;
+        createChannel(data: DataTypes.CreateChannelDataStruct, role: DataTypes.CreateRoleDataStruct, overrides?: CallOverrides): Promise<BigNumber>;
         createRole(spaceId: PromiseOrValue<string>, name: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         createSpace(info: DataTypes.CreateSpaceDataStruct, overrides?: CallOverrides): Promise<BigNumber>;
         createSpaceWithTokenEntitlement(info: DataTypes.CreateSpaceDataStruct, entitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct, overrides?: CallOverrides): Promise<BigNumber>;
         getChannelIdByNetworkId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        getChannelInfoByChannelId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.ChannelInfoStructOutput>;
+        getChannelsBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.ChannelsStructOutput>;
         getEntitlementModulesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<string[]>;
         getEntitlementsInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.EntitlementModuleInfoStructOutput[]>;
         getPermissionFromMap(permissionType: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<DataTypes.PermissionStructOutput>;
@@ -373,7 +421,7 @@ export interface ZionSpaceManager extends BaseContract {
         getRolesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.RoleStructOutput[]>;
         getSpaceIdByNetworkId(networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getSpaceInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput>;
-        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<string>;
+        getSpaceOwnerBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<string>;
         getSpaces(overrides?: CallOverrides): Promise<DataTypes.SpaceInfoStructOutput[]>;
         isEntitled(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, user: PromiseOrValue<string>, permission: DataTypes.PermissionStruct, overrides?: CallOverrides): Promise<boolean>;
         isEntitlementModuleWhitelisted(spaceId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
@@ -381,7 +429,6 @@ export interface ZionSpaceManager extends BaseContract {
         removeEntitlement(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, roleIds: PromiseOrValue<BigNumberish>[], data: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<void>;
         renounceOwnership(overrides?: CallOverrides): Promise<void>;
         setDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
-        setDefaultPermissionsManager(permissionsManager: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
         transferOwnership(newOwner: PromiseOrValue<string>, overrides?: CallOverrides): Promise<void>;
         whitelistEntitlementModule(spaceId: PromiseOrValue<string>, entitlementAddress: PromiseOrValue<string>, whitelist: PromiseOrValue<boolean>, overrides?: CallOverrides): Promise<void>;
     };
@@ -396,7 +443,7 @@ export interface ZionSpaceManager extends BaseContract {
         addRoleToEntitlementModule(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, roleId: PromiseOrValue<BigNumberish>, entitlementData: PromiseOrValue<BytesLike>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
-        createChannel(data: DataTypes.CreateChannelDataStruct, overrides?: Overrides & {
+        createChannel(data: DataTypes.CreateChannelDataStruct, role: DataTypes.CreateRoleDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
         createRole(spaceId: PromiseOrValue<string>, name: PromiseOrValue<string>, overrides?: Overrides & {
@@ -409,6 +456,8 @@ export interface ZionSpaceManager extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
         getChannelIdByNetworkId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        getChannelInfoByChannelId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        getChannelsBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getEntitlementModulesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getEntitlementsInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getPermissionFromMap(permissionType: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<BigNumber>;
@@ -417,7 +466,7 @@ export interface ZionSpaceManager extends BaseContract {
         getRolesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getSpaceIdByNetworkId(networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getSpaceInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
-        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
+        getSpaceOwnerBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         getSpaces(overrides?: CallOverrides): Promise<BigNumber>;
         isEntitled(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, user: PromiseOrValue<string>, permission: DataTypes.PermissionStruct, overrides?: CallOverrides): Promise<BigNumber>;
         isEntitlementModuleWhitelisted(spaceId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
@@ -429,9 +478,6 @@ export interface ZionSpaceManager extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
         setDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, overrides?: Overrides & {
-            from?: PromiseOrValue<string>;
-        }): Promise<BigNumber>;
-        setDefaultPermissionsManager(permissionsManager: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<BigNumber>;
         transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {
@@ -448,7 +494,7 @@ export interface ZionSpaceManager extends BaseContract {
         addRoleToEntitlementModule(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, roleId: PromiseOrValue<BigNumberish>, entitlementData: PromiseOrValue<BytesLike>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
-        createChannel(data: DataTypes.CreateChannelDataStruct, overrides?: Overrides & {
+        createChannel(data: DataTypes.CreateChannelDataStruct, role: DataTypes.CreateRoleDataStruct, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
         createRole(spaceId: PromiseOrValue<string>, name: PromiseOrValue<string>, overrides?: Overrides & {
@@ -461,6 +507,8 @@ export interface ZionSpaceManager extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
         getChannelIdByNetworkId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getChannelInfoByChannelId(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getChannelsBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getEntitlementModulesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getEntitlementsInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getPermissionFromMap(permissionType: PromiseOrValue<BytesLike>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -469,7 +517,7 @@ export interface ZionSpaceManager extends BaseContract {
         getRolesBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getSpaceIdByNetworkId(networkId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getSpaceInfoBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-        getSpaceOwnerBySpaceId(_spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getSpaceOwnerBySpaceId(spaceId: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         getSpaces(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         isEntitled(spaceId: PromiseOrValue<string>, channelId: PromiseOrValue<string>, user: PromiseOrValue<string>, permission: DataTypes.PermissionStruct, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         isEntitlementModuleWhitelisted(spaceId: PromiseOrValue<string>, entitlementModuleAddress: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -481,9 +529,6 @@ export interface ZionSpaceManager extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
         setDefaultEntitlementModule(entitlementModule: PromiseOrValue<string>, overrides?: Overrides & {
-            from?: PromiseOrValue<string>;
-        }): Promise<PopulatedTransaction>;
-        setDefaultPermissionsManager(permissionsManager: PromiseOrValue<string>, overrides?: Overrides & {
             from?: PromiseOrValue<string>;
         }): Promise<PopulatedTransaction>;
         transferOwnership(newOwner: PromiseOrValue<string>, overrides?: Overrides & {

@@ -230,7 +230,7 @@ export class ZionClient {
         if (roomIdentifier) {
             const spaceInfo: DataTypes.CreateSpaceDataStruct = {
                 spaceName: createSpaceInfo.name,
-                networkId: roomIdentifier.matrixRoomId,
+                spaceNetworkId: roomIdentifier.matrixRoomId,
             }
 
             let transaction: ContractTransaction | undefined = undefined
@@ -273,7 +273,7 @@ export class ZionClient {
         if (roomIdentifier) {
             const spaceInfo: DataTypes.CreateSpaceDataStruct = {
                 spaceName: createSpaceInfo.name,
-                networkId: roomIdentifier.matrixRoomId,
+                spaceNetworkId: roomIdentifier.matrixRoomId,
             }
 
             let transaction: ContractTransaction | undefined = undefined
