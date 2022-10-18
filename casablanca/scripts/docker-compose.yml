@@ -1,0 +1,10 @@
+volumes:
+    data:
+
+services:
+    redis:
+        image: redis:latest
+        volumes:
+            - data:/data
+        ports:
+            - 55000:6379
