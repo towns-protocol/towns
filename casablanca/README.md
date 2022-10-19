@@ -15,6 +15,6 @@ Start Redis:
 
     casablanca/scripts/launch_redis.sh
 
-Run all Casablanca test:
+Run all Casablanca tests:
 
     yarn workspace harmony run test-csb
