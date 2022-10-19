@@ -63,7 +63,9 @@ export function useOnboardingState(client?: ZionClient): IOnboardingState {
         const step = new ONBOARDING_STEPS[stepIndex](client, userId)
         // start or advance
         if (step.shouldExecute()) {
-            setState(step.state)
+            const state = step.state
+            console.log(`=== useOnboardingState state:`, state)
+            setState(state)
             step.on(OnboardingStepEvent.StateUpdate, onStateUpdate)
             step.on(OnboardingStepEvent.Error, onError)
             step.start()
