@@ -28,15 +28,15 @@ export class ZionServer implements ZionServiceInterface {
         return this.wallet.address
     }
 
-    createUser(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {
+    async createUser(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {
         return createUser(this, params)
     }
 
-    createSpace(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {
+    async createSpace(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {
         return createSpace(this, params)
     }
 
-    createChannel(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {
+    async createChannel(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {
         return createChannel(this, params)
     }
 
