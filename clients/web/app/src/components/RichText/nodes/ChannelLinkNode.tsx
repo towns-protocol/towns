@@ -29,7 +29,7 @@ const ChannelLink = ({ channel }: { channel: Channel }) => {
                 rounded: 'xs',
             })}
         >
-            #{channel.label}
+            #{channel.label?.toLowerCase()}
         </NavLink>
     )
 }
