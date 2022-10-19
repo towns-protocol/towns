@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
 import {
     LoginStatus,
     WalletStatus,
@@ -28,7 +27,6 @@ const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service
 export const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
 
 export const LoginComponent = () => {
-    const navigate = useNavigate()
     const { loginStatus, loginError } = useMatrixStore()
     const { loginWithWallet, registerWallet } = useZionClient()
     const { walletStatus } = useWeb3Context()

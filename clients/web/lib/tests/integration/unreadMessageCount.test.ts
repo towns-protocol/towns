@@ -58,7 +58,7 @@ describe('unreadMessageCount', () => {
             () =>
                 expect(
                     alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count,
-                ).toBeUndefined(), // we don't get notificatinos for invites
+                ).toBeUndefined(), // we don't get notifications for invites
         )
         // alice joins the room
         await alice.joinRoom(spaceId)
