@@ -11,7 +11,7 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import { Wallet } from 'ethers'
-import { RedisEventStore } from './redisEventStore'
+import { RedisEventStore } from './storage/redisEventStore'
 import { addEvent } from './workflows/addEvent'
 import { createChannel } from './workflows/createChannel'
 import { createSpace } from './workflows/createSpace'

@@ -6,7 +6,7 @@ import express from 'express'
 import { JSONRPCServer } from 'json-rpc-2.0'
 import { AddressInfo } from 'net'
 import { DumbActionGuard } from './dumbActionGuard'
-import { RedisEventStore } from './redisEventStore'
+import { RedisEventStore } from './storage/redisEventStore'
 import { ZionServer } from './server'
 
 const log_rpc = debug('zion:rpc')

@@ -1,1 +1,0 @@
-{"version":3,"file":"zionRpcClient.d.ts","sourceRoot":"","sources":["../src/zionRpcClient.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,oBAAoB,EAAwB,MAAM,YAAY,CAAA;AAGvE,OAAO,EAAE,aAAa,EAAE,MAAM,cAAc,CAAA;AAqC5C,oBAAY,aAAa,GAAG,oBAAoB,GAAG;IAC/C,SAAS,EAAE,aAAa,CAAA;IACxB,eAAe,EAAE,eAAe,CAAA;CACnC,CAAA;AACD,eAAO,MAAM,iBAAiB,SAAU,MAAM,KAAG,aAsBhD,CAAA"}
