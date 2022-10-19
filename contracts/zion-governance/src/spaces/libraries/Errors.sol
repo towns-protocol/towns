@@ -15,6 +15,7 @@ library Errors {
   error DefaultEntitlementModuleNotSet();
   error DefaultPermissionsManagerNotSet();
   error SpaceDoesNotExist();
+  error ChannelDoesNotExist();
   error PermissionAlreadyExists();
   error NotAllowed();
 }

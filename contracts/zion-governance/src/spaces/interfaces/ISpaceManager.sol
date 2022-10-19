@@ -63,6 +63,16 @@ interface ISpaceManager {
     DataTypes.Permission memory permission
   ) external;
 
+  /// @notice Removes a permission from a role
+  function removePermissionFromRole(
+    string calldata spaceId,
+    uint256 roleId,
+    DataTypes.Permission memory permission
+  ) external;
+
+  /// @notice Removes a role from a space, along with the permissions
+  function removeRole(string calldata spaceId, uint256 roleId) external;
+
   /// @notice Checks if a user has access to space or channel based on the entitlements it holds
   /// @param spaceId The id of the space
   /// @param channelId The id of the channel
@@ -84,9 +94,21 @@ interface ISpaceManager {
     view
     returns (DataTypes.SpaceInfo memory);
 
+  /// @notice Get the channel info by channel id
+  function getChannelInfoByChannelId(
+    string calldata spaceId,
+    string calldata channelId
+  ) external view returns (DataTypes.ChannelInfo memory);
+
   /// @notice Returns an array of multiple space information objects
   /// @return SpaceInfo[] an array containing the space info
   function getSpaces() external view returns (DataTypes.SpaceInfo[] memory);
+
+  /// @notice Returns an array of channels by space id
+  function getChannelsBySpaceId(string memory spaceId)
+    external
+    view
+    returns (DataTypes.Channels memory);
 
   /// @notice Returns entitlements for a space
   /// @param spaceId The id of the space
@@ -96,7 +118,7 @@ interface ISpaceManager {
     view
     returns (address[] memory entitlementModules);
 
-  /// @notice returns if an entitlement module is whitelisted for a space
+  /// @notice Returns if an entitlement module is whitelisted for a space
   function isEntitlementModuleWhitelisted(
     string calldata spaceId,
     address entitlementModuleAddress
@@ -108,11 +130,13 @@ interface ISpaceManager {
     view
     returns (DataTypes.EntitlementModuleInfo[] memory);
 
+  /// @notice Returns the space id by network id
   function getSpaceIdByNetworkId(string calldata networkId)
     external
     view
     returns (uint256);
 
+  /// @notice Returns the channel id by network id
   function getChannelIdByNetworkId(
     string calldata spaceId,
     string calldata channelId
@@ -126,21 +150,25 @@ interface ISpaceManager {
     view
     returns (address ownerAddress);
 
+  /// @notice Returns the permissions for a role in a space
   function getPermissionsBySpaceIdByRoleId(
     string calldata spaceId,
     uint256 roleId
   ) external view returns (DataTypes.Permission[] memory);
 
+  /// @notice Returns the permission from the registry
   function getPermissionFromMap(bytes32 permissionType)
     external
     view
     returns (DataTypes.Permission memory permission);
 
+  /// @notice Returns the roles of a space
   function getRolesBySpaceId(string calldata spaceId)
     external
     view
     returns (DataTypes.Role[] memory);
 
+  /// @notice Returns the role of a space by id
   function getRoleBySpaceIdByRoleId(string calldata spaceId, uint256 roleId)
     external
     view

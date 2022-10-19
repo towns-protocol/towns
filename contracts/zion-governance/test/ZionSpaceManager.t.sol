@@ -287,6 +287,113 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       true
     );
   }
+
+  function testRemoveRole() public {
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
+
+    // Create roles and add permissions
+    string memory roleName = "Reader";
+    uint256 readerRoleId = spaceManager.createRole(networkId, roleName);
+
+    spaceManager.addPermissionToRole(
+      networkId,
+      readerRoleId,
+      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+    );
+
+    spaceManager.removeRole(networkId, readerRoleId);
+
+    vm.expectRevert(stdError.indexOOBError);
+    DataTypes.Role memory role = spaceManager.getRoleBySpaceIdByRoleId(
+      networkId,
+      readerRoleId
+    );
+
+    DataTypes.Permission[] memory permissions = spaceManager
+      .getPermissionsBySpaceIdByRoleId(networkId, readerRoleId);
+
+    assertEq(role.name, "");
+    assertEq(permissions.length, 0);
+  }
+
+  function testRemovePermissionFromRole() public {
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
+
+    uint256 roleId = spaceManager.createRole(networkId, "TestRole");
+
+    spaceManager.addPermissionToRole(
+      networkId,
+      roleId,
+      DataTypes.Permission("TestPermission")
+    );
+
+    spaceManager.addPermissionToRole(
+      networkId,
+      roleId,
+      DataTypes.Permission("TestPermission2")
+    );
+
+    DataTypes.Permission[] memory permissions = spaceManager
+      .getPermissionsBySpaceIdByRoleId(networkId, roleId);
+
+    assertEq(permissions.length, 2);
+
+    spaceManager.removePermissionFromRole(
+      networkId,
+      roleId,
+      DataTypes.Permission("TestPermission")
+    );
+
+    permissions = spaceManager.getPermissionsBySpaceIdByRoleId(
+      networkId,
+      roleId
+    );
+
+    assertEq(permissions.length, 1);
+    assertEq(permissions[0].name, "TestPermission2");
+  }
+
+  function testDisableSpace() public {
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
+
+    spaceManager.setSpaceAccess(networkId, true);
+
+    DataTypes.SpaceInfo memory space = spaceManager.getSpaceInfoBySpaceId(
+      networkId
+    );
+
+    assertEq(space.name, "test");
+    assertEq(space.networkId, networkId);
+    assertEq(space.disabled, true);
+  }
+
+  function testDisableChannel() public {
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+    string memory channelNetworkId = "!7evmpuHDDgkady9u:localhost:channel";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
+
+    DataTypes.CreateRoleData memory role;
+    spaceManager.createChannel(
+      DataTypes.CreateChannelData(networkId, "channel-name", channelNetworkId),
+      role
+    );
+
+    spaceManager.setChannelAccess(networkId, channelNetworkId, true);
+
+    DataTypes.ChannelInfo memory channel = spaceManager
+      .getChannelInfoByChannelId(networkId, channelNetworkId);
+
+    assertEq(channel.name, "channel-name");
+    assertEq(channel.networkId, channelNetworkId);
+    assertEq(channel.disabled, true);
+  }
 }
 
 contract ZionSpaceManagerNegativeTest is Test {

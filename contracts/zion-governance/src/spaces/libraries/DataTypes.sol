@@ -26,6 +26,7 @@ library DataTypes {
     address creator;
     address owner;
     uint256 ownerRoleId;
+    bool disabled;
     mapping(address => bool) hasEntitlement;
     address[] entitlementModules;
     Role[] roles;
@@ -37,6 +38,7 @@ library DataTypes {
     string networkId;
     string name;
     address creator;
+    bool disabled;
   }
 
   struct Channels {
@@ -57,6 +59,7 @@ library DataTypes {
     string name;
     address creator;
     address owner;
+    bool disabled;
   }
 
   struct ChannelInfo {
@@ -65,6 +68,7 @@ library DataTypes {
     uint256 createdAt;
     string name;
     address creator;
+    bool disabled;
   }
 
   struct Roles {

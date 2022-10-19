@@ -178,6 +178,39 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   /// *********************************
   /// *****EXTERNAL FUNCTIONS**********
   /// *********************************
+  function setSpaceAccess(string memory spaceNetworkId, bool disabled)
+    external
+    onlyAllowed(spaceNetworkId, "", "ModifySpacePermissions")
+  {
+    uint256 spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
+    if (spaceId == 0) revert Errors.SpaceDoesNotExist();
+
+    _spaceById[spaceId].disabled = disabled;
+  }
+
+  function setChannelAccess(
+    string calldata spaceNetworkId,
+    string calldata channelNetworkId,
+    bool disabled
+  )
+    external
+    onlyAllowed(spaceNetworkId, channelNetworkId, "ModifyPermissions")
+  {
+    _validateSpaceExists(spaceNetworkId);
+    uint256 _channelId = _getChannelIdByNetworkId(
+      spaceNetworkId,
+      channelNetworkId
+    );
+    if (_channelId == 0) revert Errors.ChannelDoesNotExist();
+
+    uint256 spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
+    uint256 channelId = _getChannelIdByNetworkId(
+      spaceNetworkId,
+      channelNetworkId
+    );
+
+    _channelBySpaceIdByChannelId[spaceId][channelId].disabled = disabled;
+  }
 
   /// @inheritdoc ISpaceManager
   function setDefaultEntitlementModule(address entitlementModule)
@@ -212,6 +245,14 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
+  function removeRole(string calldata spaceId, uint256 roleId)
+    external
+    onlyAllowed(spaceId, "", "ModifyPermissions")
+  {
+    _removeRole(_getSpaceIdByNetworkId(spaceId), roleId);
+  }
+
+  /// @inheritdoc ISpaceManager
   function addPermissionToRole(
     string calldata spaceId,
     uint256 roleId,
@@ -221,14 +262,34 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
+  function removePermissionFromRole(
+    string calldata spaceId,
+    uint256 roleId,
+    DataTypes.Permission calldata permission
+  ) external onlyAllowed(spaceId, "", "ModifyPermissions") {
+    _removePermissionFromRole(
+      _getSpaceIdByNetworkId(spaceId),
+      roleId,
+      permission
+    );
+  }
+
+  /// @inheritdoc ISpaceManager
   function addRoleToEntitlementModule(
     string calldata spaceId,
     string calldata channelId,
     address entitlementModuleAddress,
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlyAllowed(spaceId, "", "ModifyPermissions") {
+  ) external onlyAllowed(spaceId, channelId, "ModifyPermissions") {
+    _validateSpaceExists(spaceId);
+
+    if (bytes(channelId).length > 0) {
+      _validateChannelExists(spaceId, channelId);
+    }
+
     _validateEntitlementInterface(entitlementModuleAddress);
+
     _addRoleToEntitlementModule(
       spaceId,
       channelId,
@@ -248,8 +309,14 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     uint256[] calldata roleIds,
     bytes calldata data
   ) external onlyAllowed(spaceId, channelId, "ModifyPermissions") {
+    _validateSpaceExists(spaceId);
+
+    if (bytes(channelId).length > 0) {
+      _validateChannelExists(spaceId, channelId);
+    }
+
     _validateEntitlementInterface(entitlementModuleAddress);
-    _removeEntitlement(
+    _removeRoleFromEntitlementModule(
       spaceId,
       channelId,
       entitlementModuleAddress,
@@ -300,6 +367,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return _rolesBySpaceId[_getSpaceIdByNetworkId(spaceId)].roles[roleId];
   }
 
+  /// @inheritdoc ISpaceManager
   function getPermissionFromMap(bytes32 permissionType)
     public
     view
@@ -325,10 +393,12 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         _spaceById[_spaceId].createdAt,
         _spaceById[_spaceId].name,
         _spaceById[_spaceId].creator,
-        _spaceById[_spaceId].owner
+        _spaceById[_spaceId].owner,
+        _spaceById[_spaceId].disabled
       );
   }
 
+  /// @inheritdoc ISpaceManager
   function getChannelInfoByChannelId(
     string calldata spaceId,
     string calldata channelId
@@ -342,7 +412,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         _channelBySpaceIdByChannelId[_spaceId][_channelId].networkId,
         _channelBySpaceIdByChannelId[_spaceId][_channelId].createdAt,
         _channelBySpaceIdByChannelId[_spaceId][_channelId].name,
-        _channelBySpaceIdByChannelId[_spaceId][_channelId].creator
+        _channelBySpaceIdByChannelId[_spaceId][_channelId].creator,
+        _channelBySpaceIdByChannelId[_spaceId][_channelId].disabled
       );
   }
 
@@ -360,7 +431,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         space.createdAt,
         space.name,
         space.creator,
-        space.owner
+        space.owner,
+        space.disabled
       );
       unchecked {
         ++i;
@@ -369,6 +441,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return spaces;
   }
 
+  /// @inheritdoc ISpaceManager
   function getChannelsBySpaceId(string memory spaceId)
     external
     view
@@ -442,6 +515,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return _spaceById[_getSpaceIdByNetworkId(spaceId)].owner;
   }
 
+  /// @inheritdoc ISpaceManager
   function getSpaceIdByNetworkId(string calldata networkId)
     external
     view
@@ -450,6 +524,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return _getSpaceIdByNetworkId(networkId);
   }
 
+  /// @inheritdoc ISpaceManager
   function getChannelIdByNetworkId(
     string calldata spaceId,
     string calldata channelId
@@ -475,11 +550,20 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       .length;
 
     for (uint256 i = 0; i < entitlementModulesLen; i++) {
-      if (_spaceById[_spaceId].entitlementModules[i] == address(0)) continue;
+      address entitlement = _spaceById[_spaceId].entitlementModules[i];
 
       if (
-        IEntitlementModule(_spaceById[_spaceId].entitlementModules[i])
-          .isEntitled(spaceId, channelId, user, permission)
+        entitlement == address(0) ||
+        !_spaceById[_spaceId].hasEntitlement[entitlement]
+      ) continue;
+
+      if (
+        IEntitlementModule(entitlement).isEntitled(
+          spaceId,
+          channelId,
+          user,
+          permission
+        )
       ) {
         entitled = true;
         break;
@@ -498,8 +582,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   function _getChannelIdByNetworkId(
-    string calldata spaceId,
-    string calldata channelId
+    string memory spaceId,
+    string memory channelId
   ) internal view returns (uint256) {
     return
       _channelIdBySpaceIdByHash[_getSpaceIdByNetworkId(spaceId)][
@@ -594,6 +678,49 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     _permissionsBySpaceIdByRoleId[spaceId][roleId].push(permission);
   }
 
+  function _removePermissionFromRole(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.Permission memory permission
+  ) internal {
+    DataTypes.Permission[] storage permissions = _permissionsBySpaceIdByRoleId[
+      spaceId
+    ][roleId];
+
+    uint256 permissionLen = permissions.length;
+
+    for (uint256 i = 0; i < permissionLen; i++) {
+      if (_stringEquals(permission.name, permissions[i].name)) {
+        permissions[i] = permissions[permissionLen - 1];
+        permissions.pop();
+        break;
+      }
+    }
+  }
+
+  function _removeRole(uint256 spaceId, uint256 roleId) internal {
+    DataTypes.Role[] storage roles = _rolesBySpaceId[spaceId].roles;
+
+    uint256 roleLen = roles.length;
+
+    for (uint256 i = 0; i < roleLen; i++) {
+      if (roleId == roles[i].roleId) {
+        DataTypes.Permission[]
+          memory permissions = _permissionsBySpaceIdByRoleId[spaceId][roleId];
+
+        uint256 permissionLen = permissions.length;
+
+        for (uint256 j = 0; j < permissionLen; j++) {
+          _removePermissionFromRole(spaceId, roleId, permissions[j]);
+        }
+
+        roles[i] = roles[roleLen - 1];
+        roles.pop();
+        break;
+      }
+    }
+  }
+
   function _addRoleToEntitlementModule(
     string memory spaceId,
     string memory channelId,
@@ -616,12 +743,12 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     );
   }
 
-  function _removeEntitlement(
+  function _removeRoleFromEntitlementModule(
     string calldata spaceId,
     string calldata channelId,
     address entitlementAddress,
     uint256[] memory roleIds,
-    bytes memory data
+    bytes memory entitlementData
   ) internal {
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
 
@@ -634,7 +761,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       spaceId,
       channelId,
       roleIds,
-      data
+      entitlementData
     );
   }
 
@@ -673,9 +800,35 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   /// ****************************
   /// ****VALIDATION FUNCTIONS****
   /// ****************************
+  function _stringEquals(string memory s1, string memory s2)
+    internal
+    pure
+    returns (bool)
+  {
+    bytes memory b1 = bytes(s1);
+    bytes memory b2 = bytes(s2);
+    uint256 l1 = b1.length;
+    if (l1 != b2.length) return false;
+    for (uint256 i = 0; i < l1; i++) {
+      if (b1[i] != b2[i]) return false;
+    }
+    return true;
+  }
+
   function _validateSpaceExists(string memory spaceId) internal view {
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
     if (_spaceId == 0) revert Errors.SpaceDoesNotExist();
+    if (_spaceById[_spaceId].disabled) revert Errors.SpaceDoesNotExist();
+  }
+
+  function _validateChannelExists(
+    string memory spaceId,
+    string memory channelId
+  ) internal view {
+    _validateSpaceExists(spaceId);
+
+    uint256 _channelId = _getChannelIdByNetworkId(spaceId, channelId);
+    if (_channelId == 0) revert Errors.ChannelDoesNotExist();
   }
 
   function _validateIsAllowed(
