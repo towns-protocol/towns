@@ -78,7 +78,7 @@ contract TokenEntitlementModuleTest is Test {
     createTestSpaceWithUserGrantedEntitlementModule(spaceName, networkId);
 
     DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      PermissionTypes.Read
+      PermissionTypes.Ban
     );
     // Create roles and add permissions
     string memory roleName = "Tester";
@@ -134,6 +134,9 @@ contract TokenEntitlementModuleTest is Test {
     string memory spaceName = "test-space";
     string memory networkId = "test-network-id";
     string memory roomId = "";
+    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
+      PermissionTypes.Ban
+    );
 
     createTestSpaceWithUserGrantedEntitlementModule(spaceName, networkId);
 
@@ -141,13 +144,10 @@ contract TokenEntitlementModuleTest is Test {
     councilNFT.mint{value: Constants.MINT_PRICE}(user1);
 
     // Create roles and add permissions
+
     string memory roleName = "Tester";
     uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
-    spaceManager.addPermissionToRole(
-      networkId,
-      ownerRoleId,
-      spaceManager.getPermissionFromMap(PermissionTypes.Read)
-    );
+    spaceManager.addPermissionToRole(networkId, ownerRoleId, permission);
 
     spaceManager.whitelistEntitlementModule(
       networkId,
@@ -176,7 +176,7 @@ contract TokenEntitlementModuleTest is Test {
       networkId,
       roomId,
       user1,
-      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+      permission
     );
     assertTrue(isEntitled);
 
@@ -185,7 +185,7 @@ contract TokenEntitlementModuleTest is Test {
       networkId,
       roomId,
       user2,
-      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+      permission
     );
     assertFalse(isRandomEntitled);
   }

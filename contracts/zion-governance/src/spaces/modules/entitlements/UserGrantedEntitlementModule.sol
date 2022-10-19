@@ -6,6 +6,7 @@ import {ZionSpaceManager} from "../../ZionSpaceManager.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
+import {Constants} from "../../libraries/Constants.sol";
 
 contract UserGrantedEntitlementModule is EntitlementModuleBase {
   struct Entitlement {
@@ -65,43 +66,60 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     );
 
     if (_channelId > 0) {
-      Entitlement[] memory entitlements = _entitlementsBySpaceIdByRoomIdByUser[
-        _spaceId
-      ][_channelId][user];
+      Entitlement[]
+        memory everyoneEntitlements = _entitlementsBySpaceIdByRoomIdByUser[
+          _spaceId
+        ][_channelId][Constants.EVERYONE_ADDRESS];
 
-      for (uint256 i = 0; i < entitlements.length; i++) {
-        uint256 roleId = entitlements[i].roleId;
+      Entitlement[]
+        memory userEntitlements = _entitlementsBySpaceIdByRoomIdByUser[
+          _spaceId
+        ][_channelId][user];
 
-        DataTypes.Permission[] memory permissions = spaceManager
-          .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
+      Entitlement[] memory allEntitlements = concatArrays(
+        everyoneEntitlements,
+        userEntitlements
+      );
 
-        for (uint256 j = 0; j < permissions.length; j++) {
-          if (
-            keccak256(abi.encodePacked(permissions[j].name)) ==
-            keccak256(abi.encodePacked(permission.name))
-          ) {
-            return true;
-          }
-        }
-      }
+      return
+        _checkEntitlementsHavePermission(spaceId, allEntitlements, permission);
     } else {
-      Entitlement[] memory entitlements = _entitlementsBySpaceIdbyUser[
+      Entitlement[] memory everyoneEntitlements = _entitlementsBySpaceIdbyUser[
+        _spaceId
+      ][Constants.EVERYONE_ADDRESS];
+
+      Entitlement[] memory userEntitlements = _entitlementsBySpaceIdbyUser[
         _spaceId
       ][user];
 
-      for (uint256 i = 0; i < entitlements.length; i++) {
-        uint256 roleId = entitlements[i].roleId;
+      Entitlement[] memory allEntitlements = concatArrays(
+        everyoneEntitlements,
+        userEntitlements
+      );
 
-        DataTypes.Permission[] memory permissions = spaceManager
-          .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
+      return
+        _checkEntitlementsHavePermission(spaceId, allEntitlements, permission);
+    }
+  }
 
-        for (uint256 j = 0; j < permissions.length; j++) {
-          if (
-            keccak256(abi.encodePacked(permissions[j].name)) ==
-            keccak256(abi.encodePacked(permission.name))
-          ) {
-            return true;
-          }
+  function _checkEntitlementsHavePermission(
+    string calldata spaceId,
+    Entitlement[] memory allEntitlements,
+    DataTypes.Permission memory permission
+  ) internal view returns (bool) {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    for (uint256 k = 0; k < allEntitlements.length; k++) {
+      uint256 roleId = allEntitlements[k].roleId;
+
+      DataTypes.Permission[] memory permissions = spaceManager
+        .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
+
+      for (uint256 p = 0; p < permissions.length; p++) {
+        if (
+          keccak256(abi.encodePacked(permissions[p].name)) ==
+          keccak256(abi.encodePacked(permission.name))
+        ) {
+          return true;
         }
       }
     }
@@ -193,5 +211,22 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
       }
     }
     return roles;
+  }
+
+  function concatArrays(Entitlement[] memory a, Entitlement[] memory b)
+    internal
+    pure
+    returns (Entitlement[] memory)
+  {
+    Entitlement[] memory c = new Entitlement[](a.length + b.length);
+    uint256 i = 0;
+    for (; i < a.length; i++) {
+      c[i] = a[i];
+    }
+    uint256 j = 0;
+    while (j < b.length) {
+      c[i++] = b[j++];
+    }
+    return c;
   }
 }

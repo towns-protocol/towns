@@ -13,6 +13,7 @@ import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
 import {ZionPermissionsRegistry} from "./ZionPermissionsRegistry.sol";
+import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 
 /// @title ZionSpaceManager
 /// @author HNT Labs
@@ -52,15 +53,11 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     // whitespace default entitlement module
     _whitelistEntitlementModule(spaceId, DEFAULT_ENTITLEMENT_MODULE, true);
 
-    // Create roles and add permissions
-    uint256 ownerRoleId = _createOwnerRole(spaceId);
-    _addRoleToEntitlementModule(
-      info.spaceNetworkId,
-      "",
-      DEFAULT_ENTITLEMENT_MODULE,
-      ownerRoleId,
-      abi.encode(_msgSender())
-    );
+    // Create owner role with all permissions
+    _createOwnerRoleEntitlement(spaceId, info.spaceNetworkId, _msgSender());
+
+    // Create everyone role with read permission
+    _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
 
     emit Events.CreateSpace(
       spaceId,
@@ -91,36 +88,32 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       true
     );
 
-    // Add the default Owner Role
-    uint256 ownerRoleId = _createOwnerRole(spaceId);
-    uint256 permissionLen = entitlement.permissions.length;
+    // Create owner role with all permissions
+    _createOwnerRoleEntitlement(spaceId, info.spaceNetworkId, _msgSender());
 
+    // Create everyone role with read permission
+    _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
+
+    // create the additional role being gated by the token
+    uint256 permissionLen = entitlement.permissions.length;
+    uint256 additionalRoleId = _createRole(spaceId, entitlement.roleName);
     // Add the extra permissions passed to the same owner role
     if (permissionLen > 0) {
       for (uint256 i = 0; i < permissionLen; i++) {
         _addPermissionToRole(
           spaceId,
-          ownerRoleId,
+          additionalRoleId,
           DataTypes.Permission(entitlement.permissions[i])
         );
       }
     }
 
-    // add role to the default entitlement module
-    _addRoleToEntitlementModule(
-      info.spaceNetworkId,
-      "",
-      DEFAULT_ENTITLEMENT_MODULE,
-      ownerRoleId,
-      abi.encode(_msgSender())
-    );
-
-    // add role to te token entitlement module
+    // add additional role to the token entitlement module
     _addRoleToEntitlementModule(
       info.spaceNetworkId,
       "",
       entitlement.entitlementModuleAddress,
-      ownerRoleId,
+      additionalRoleId,
       abi.encode(
         entitlement.description,
         entitlement.tokenAddress,
@@ -637,6 +630,42 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
 
       return channelId;
     }
+  }
+
+  function _createOwnerRoleEntitlement(
+    uint256 spaceId,
+    string memory networkId,
+    address msgSender
+  ) internal returns (uint256) {
+    uint256 ownerRoleId = _createOwnerRole(spaceId);
+    _addRoleToEntitlementModule(
+      networkId,
+      "",
+      DEFAULT_ENTITLEMENT_MODULE,
+      ownerRoleId,
+      abi.encode(msgSender)
+    );
+    return ownerRoleId;
+  }
+
+  function _createEveryoneRoleEntitlement(
+    uint256 spaceId,
+    string memory networkId
+  ) internal returns (uint256) {
+    uint256 everyoneRoleId = _createRole(spaceId, "Everyone");
+    DataTypes.Permission memory readPermission = getPermissionFromMap(
+      PermissionTypes.Read
+    );
+    _addPermissionToRole(spaceId, everyoneRoleId, readPermission);
+
+    _addRoleToEntitlementModule(
+      networkId,
+      "",
+      DEFAULT_ENTITLEMENT_MODULE,
+      everyoneRoleId,
+      abi.encode(Constants.EVERYONE_ADDRESS)
+    );
+    return everyoneRoleId;
   }
 
   function _createRole(uint256 spaceId, string memory name)

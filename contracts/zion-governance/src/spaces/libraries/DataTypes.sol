@@ -125,6 +125,7 @@ library DataTypes {
     uint256 quantity;
     string description;
     string[] permissions;
+    string roleName;
   }
 
   struct CreateSpacePurchaseableEntitlementData {

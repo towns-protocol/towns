@@ -61,6 +61,28 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     assertEq(entitlements.length, 1);
     assertEq(entitlements[0], address(userGrantedEntitlementModule));
     assertEq(ownerAddress, address(this));
+
+    DataTypes.Permission memory readPermission = spaceManager
+      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory writePermission = spaceManager
+      .getPermissionFromMap(PermissionTypes.Write);
+
+    bool isEveryoneReadEntitled = spaceManager.isEntitled(
+      networkId,
+      "",
+      address(5),
+      readPermission
+    );
+
+    assertEq(isEveryoneReadEntitled, true);
+
+    bool isEveryoneWriteEntitled = spaceManager.isEntitled(
+      networkId,
+      "",
+      address(5),
+      writePermission
+    );
+    assertEq(isEveryoneWriteEntitled, false);
   }
 
   function testCreateChannel() public {
@@ -132,7 +154,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
         address(nft),
         1,
         "Council NFT",
-        permissions
+        permissions,
+        "TokenHolder"
       )
     );
 
