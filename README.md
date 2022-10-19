@@ -41,9 +41,9 @@ If you would like to run the sample-app against a local server and blockchain (r
 cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
 ```
 
-Open VScode in the root of this directory. Launch via .vscode/tasks.json with:
+Open VScode in the root of this directory: `code .`
 
-`CMD+P task ~Start Local Development~`
+Launch local server via .vscode/tasks.json: `CMD+P task ~Start Local Development~`
 
 This workflow
 
