@@ -242,12 +242,12 @@ contract NFTTest is Test, MerkleHelper {
 
 /// a contract that can be used to test the erc721 received function
 contract Receiver is IERC721Receiver {
-  function onERC721Received(
-    address,
-    address,
-    uint256,
-    bytes calldata
-  ) external pure override returns (bytes4) {
+  function onERC721Received(address, address, uint256, bytes calldata)
+    external
+    pure
+    override
+    returns (bytes4)
+  {
     return this.onERC721Received.selector;
   }
 }

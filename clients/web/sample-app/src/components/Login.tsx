@@ -225,7 +225,7 @@ export function Profile() {
     )
 }
 
-function ENSInfo(props: { address: string | undefined }): JSX.Element {
+function ENSInfo(props: { address: `0x${string}` | undefined }): JSX.Element {
     const { address } = props
     const { data: ensAvatar } = useEnsAvatar({ addressOrName: address })
     const { data: ensName } = useEnsName({ address })
