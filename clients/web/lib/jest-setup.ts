@@ -35,6 +35,10 @@ beforeAll(async () => {
 afterEach(() => {
     // stop all test clients
     return ZionTestClient.cleanup()
+}, 5000)
+
+afterAll(() => {
+    // clear storage
     global.localStorage.clear()
     global.sessionStorage.clear()
-}, 5000)
+})
