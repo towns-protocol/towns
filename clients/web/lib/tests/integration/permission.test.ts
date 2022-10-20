@@ -95,6 +95,6 @@ describe.skip('permissions', () => {
         // Failed due to this bug: https://linear.app/hnt-labs/issue/HNT-205/createspacewithtokenentitlement-should-not-add-the-everyone-role-by
         expect(error).not.toBeInstanceOf(NoThrownError)
         // Forbidden exception because the user does not have Read permission
-        expect(error.data).toHaveProperty('errorcode', MAXTRIX_ERROR.M_FORBIDDEN)
+        expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
     }) // end test
 }) // end describe
