@@ -49,7 +49,7 @@ export const ChannelNavItem = (props: Props) => {
                         />
                         <ButtonText
                             strong={isHighlight || isUnread}
-                            color={isHighlight ? 'default' : isUnread ? 'gray1' : undefined}
+                            color={isHighlight || isUnread ? 'default' : undefined}
                         >
                             {channelName}
                         </ButtonText>
