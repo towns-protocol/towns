@@ -20,7 +20,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
     let zionApp: ZionApp
 
     beforeAll(async () => {
-        zionApp = startZionApp(0)
+        zionApp = startZionApp(0, 'redis')
     })
 
     afterAll(async () => {

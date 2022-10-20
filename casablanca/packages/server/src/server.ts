@@ -11,7 +11,7 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import { Wallet } from 'ethers'
-import { RedisEventStore } from './storage/redisEventStore'
+import { EventStore } from './storage/eventStore'
 import { addEvent } from './workflows/addEvent'
 import { createChannel } from './workflows/createChannel'
 import { createSpace } from './workflows/createSpace'
@@ -20,7 +20,7 @@ import { createUser } from './workflows/createUser'
 export class ZionServer implements ZionServiceInterface {
     constructor(
         readonly wallet: Wallet,
-        readonly store: RedisEventStore,
+        readonly store: EventStore,
         readonly actionGuard: ActionGuard,
     ) {}
 
@@ -49,6 +49,8 @@ export class ZionServer implements ZionServiceInterface {
     }
 
     async syncStreams(params: SyncStreamsParams): Promise<SyncStreamsResult> {
-        return { streams: await this.store.readNewEvents(params.syncPositions, params.timeoutMs) }
+        return {
+            streams: await this.store.readNewEvents(params.syncPositions, params.timeoutMs || 0),
+        }
     }
 }

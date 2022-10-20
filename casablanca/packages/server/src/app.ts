@@ -6,8 +6,8 @@ import express from 'express'
 import { JSONRPCServer } from 'json-rpc-2.0'
 import { AddressInfo } from 'net'
 import { DumbActionGuard } from './dumbActionGuard'
-import { RedisEventStore } from './storage/redisEventStore'
 import { ZionServer } from './server'
+import { initStorage } from './storage/storage'
 
 const log_rpc = debug('zion:rpc')
 const log_http = debug('zion:http')
@@ -54,9 +54,9 @@ export const makeExpressApp = (server: JSONRPCServer) => {
     return app
 }
 
-export const startZionApp = (port: number) => {
+export const startZionApp = (port: number, storageType: string) => {
     const wallet = Wallet.createRandom() // TODO: use config
-    const store = new RedisEventStore()
+    const store = initStorage(storageType)
     const zionServer = new ZionServer(wallet, store, new DumbActionGuard())
     const express = makeExpressApp(makeJSONRPCServer(zionServer))
     const appServer = express.listen(port)

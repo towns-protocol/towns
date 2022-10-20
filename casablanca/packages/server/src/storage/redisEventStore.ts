@@ -10,6 +10,7 @@ import debug from 'debug'
 import Redis from 'ioredis'
 import _ from 'lodash'
 import { config } from '../config'
+import { EventStore } from './eventStore'
 
 const log = debug('zion:RedisEventStore')
 
@@ -18,7 +19,7 @@ export const createRedis = () => new Redis(config.redisUrl)
 const REDIS_STREAM_PREFIX = 'es:'
 
 // TODO: change throws to throwWithCode
-export class RedisEventStore {
+export class RedisEventStore implements EventStore {
     private redis: Redis
     private redisPoolInUse: Redis[] = []
     private redisPoolAvailable: Redis[] = []
