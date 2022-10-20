@@ -16,6 +16,7 @@ import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaceMentionCounts } from '../hooks/ZionContext/useSpaceMentionCounts'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
+import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useFavIconBadge } from '../hooks/ZionContext/useFavIconBadge'
 import { Web3ContextProvider } from './Web3ContextProvider'
@@ -36,6 +37,7 @@ export interface IZionContext {
     defaultSpaceId?: RoomIdentifier
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
+    syncError?: string
 }
 
 export const ZionContext = createContext<IZionContext | undefined>(undefined)
@@ -113,6 +115,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     )
 
     const onboardingState = useOnboardingState(client)
+    const syncError = useSyncErrorHandler(client)
 
     useFavIconBadge(unreadCounts, spaceHierarchies, invitedToIds, enableSpaceRootUnreads === true)
 
@@ -134,6 +137,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 defaultSpaceId: convertedDefaultSpaceId,
                 defaultSpaceName,
                 defaultSpaceAvatarSrc,
+                syncError,
             }}
         >
             {props.children}

@@ -5,6 +5,7 @@ import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { ZionOnboardingOpts } from 'client/ZionClientTypes'
+import { LoginStatus } from './login'
 
 export const useZionClientListener = (
     homeServerUrl: string,
@@ -14,8 +15,8 @@ export const useZionClientListener = (
     getSignerFn?: () => ethers.Signer,
 ) => {
     const { getProvider, chain } = useWeb3Context()
-    const { deviceId, isAuthenticated, userId } = useMatrixStore()
-    const { accessToken } = useCredentialStore()
+    const { deviceId, isAuthenticated, userId, setLoginStatus } = useMatrixStore()
+    const { accessToken, setAccessToken } = useCredentialStore()
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
     const chainId = chain?.id
@@ -54,15 +55,30 @@ export const useZionClientListener = (
         const client = clientSingleton.current!
         // make sure we're not re-starting the client
         if (client.auth?.accessToken === accessToken) {
-            console.warn('startClient: called again with same access token')
+            if (client.chainId != chainId) {
+                console.warn("ChainId changed, we're not handling this yet")
+            } else {
+                console.warn('startClient: called again with same access token')
+            }
             return
         }
         console.log('******* start client *******')
-        await client.startClient({ userId, accessToken, deviceId }, chainId)
-        setClientRef(client)
-        console.log('******* client started *******')
+        try {
+            await client.startClient({ userId, accessToken, deviceId }, chainId)
+            setClientRef(client)
+            console.log('******* client started *******')
+        } catch (e) {
+            console.log('******* client encountered exception *******', e)
+            try {
+                await client.logout()
+            } catch (e) {
+                console.log('error while logging out', e)
+            }
+            setLoginStatus(LoginStatus.LoggedOut)
+            setAccessToken('')
+        }
         /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-    }, [accessToken, chainId, deviceId, userId])
+    }, [accessToken, chainId, deviceId, setAccessToken, setLoginStatus, userId])
 
     useEffect(() => {
         if (isAuthenticated) {

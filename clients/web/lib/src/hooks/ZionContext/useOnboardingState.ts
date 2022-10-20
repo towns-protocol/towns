@@ -26,13 +26,13 @@ export function useOnboardingState(client?: ZionClient): IOnboardingState {
     const userId = client?.getUserId()
     // step queue machinery:
     useEffect(() => {
-        console.log(`=== useOnboardingState step: ${stepIndex}`)
         // initial condidtions
         if (!client || !userId) {
             setState(initialState)
             setStepIndex(0)
             return
         }
+        console.log(`=== useOnboardingState step: ${stepIndex}`)
         // helpers
         const advanceState = () => {
             setStepIndex((prev) => prev + 1)

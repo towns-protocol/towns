@@ -16,6 +16,7 @@ import {
     RoomStateEvent,
     RoomState,
     RoomMember,
+    MatrixError,
 } from 'matrix-js-sdk'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { CouncilNFT, ZionSpaceManager } from '@harmony/contracts/localhost/typings'
@@ -115,8 +116,20 @@ export class ZionClient {
             throw new Error('not authenticated')
         }
         this.stopClient()
-        await this.client.logout()
-        await this.client.clearStores()
+        try {
+            await this.client.logout()
+        } catch (error) {
+            this.log("caught error while trying to logout, but we're going to ignore it", error)
+        }
+        try {
+            await this.client.clearStores()
+        } catch (error) {
+            this.log(
+                "caught error while trying to clearStores, but we're going to ignore it",
+                error,
+            )
+        }
+
         this._auth = undefined
         ;({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
             this.opts.homeServerUrl,
@@ -245,7 +258,8 @@ export class ZionClient {
                         resolve(state)
                     } else {
                         this.log('Unhandled sync event:', state, prevState, res)
-                        reject(new Error(state as string))
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                        reject((res as any).error as MatrixError)
                     }
                 },
             )
