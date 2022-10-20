@@ -6,8 +6,8 @@ export interface ZionOpts {
     initialSyncLimit: number
     onboardingOpts?: ZionOnboardingOpts
     disableEncryption?: boolean
-    getProvider: () => ethers.providers.Provider | undefined
-    getSigner: () => ethers.Signer | undefined
+    web3Provider?: ethers.providers.Provider
+    web3Signer?: ethers.Signer
 }
 
 export interface ZionAuth {

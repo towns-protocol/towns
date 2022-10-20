@@ -45,7 +45,7 @@ export const ZionTestApp = (props: Props) => {
             homeServerUrl={homeServerUrl}
             onboardingOpts={onboardingOpts}
             disableEncryption={disableEncryption}
-            getSignerFn={provider ? () => provider.wallet : undefined}
+            signer={provider.wallet}
             defaultSpaceId={defaultSpaceId}
             defaultSpaceName={defaultSpaceName}
             defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}

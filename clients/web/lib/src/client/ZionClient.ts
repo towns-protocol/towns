@@ -91,7 +91,7 @@ export class ZionClient {
             this._auth,
         ))
         ;({ spaceManager: this.spaceManager, councilNFT: this.councilNFT } =
-            ZionClient.createContracts(opts.getProvider, opts.getSigner, this._chainId))
+            ZionClient.createContracts(opts.web3Provider, opts.web3Signer, this._chainId))
     }
 
     /************************************************
@@ -229,7 +229,7 @@ export class ZionClient {
         this._chainId = chainId
         // new contracts
         ;({ spaceManager: this.spaceManager, councilNFT: this.councilNFT } =
-            ZionClient.createContracts(this.opts.getProvider, this.opts.getSigner, this.chainId))
+            ZionClient.createContracts(this.opts.web3Provider, this.opts.web3Signer, this.chainId))
         // new client
         ;({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
             this.opts.homeServerUrl,
@@ -757,21 +757,21 @@ export class ZionClient {
      * helper, creates a matrix client with appropriate auth
      *************************************************/
     private static createContracts(
-        getProvider: () => ethers.providers.Provider | undefined,
-        getSigner: () => ethers.Signer | undefined,
+        provider: ethers.providers.Provider | undefined,
+        signer: ethers.Signer | undefined,
         chainId: number,
     ) {
         const contractInfo = getContractInfo(chainId)
         console.log('ZionClient::creating contracts', { chainId, contractInfo })
         const spaceManager = new ZionContractProvider<ZionSpaceManager>(
-            getProvider,
-            getSigner,
+            provider,
+            signer,
             contractInfo.spaceManager.addresses.spacemanager,
             contractInfo.spaceManager.abi,
         )
         const councilNFT = new ZionContractProvider<CouncilNFT>(
-            getProvider,
-            getSigner,
+            provider,
+            signer,
             contractInfo.council.addresses.councilnft,
             contractInfo.council.abi,
         )

@@ -38,24 +38,23 @@ export class ZionTestClient extends ZionClient {
         chainId: number,
         name: string,
         disableEncryption?: boolean,
-        provider?: ZionTestWeb3Provider,
+        inProvider?: ZionTestWeb3Provider,
     ) {
+        const provider = inProvider ?? new ZionTestWeb3Provider()
         // super
         super(
             {
                 homeServerUrl: process.env.HOMESERVER!,
                 initialSyncLimit: 20,
                 disableEncryption: disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
-                getSigner: () => this.provider.wallet,
-                getProvider: () => {
-                    return this.provider
-                },
+                web3Signer: provider.wallet,
+                web3Provider: provider,
             },
             chainId,
             name,
         )
         // initialize our provider that wraps our wallet and chain communication
-        this.provider = provider ?? new ZionTestWeb3Provider()
+        this.provider = provider
         this.userIdentifier = createUserIdFromEthereumAddress(
             this.provider.wallet.address,
             this.chainId,

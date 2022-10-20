@@ -28,7 +28,7 @@ interface Props {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-    const { chain, accounts, getProvider } = useWeb3Context()
+    const { chain, accounts, provider } = useWeb3Context()
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
     const { createSpaceWithZionTokenEntitlement } = useIntegratedSpaceManagement()
@@ -45,7 +45,6 @@ export const CreateSpaceForm = (props: Props) => {
             const afunc = async () => {
                 const privateKey =
                     '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // anvil default funded address #1
-                const provider = getProvider()
                 const chainId = (await provider?.getNetwork())?.chainId
                 const wallet = new ethers.Wallet(privateKey, provider)
                 const amount = 0.1
@@ -62,7 +61,7 @@ export const CreateSpaceForm = (props: Props) => {
             }
             void afunc()
         },
-        [getProvider],
+        [provider],
     )
 
     const onChangeVisibility = useCallback((event: SelectChangeEvent) => {

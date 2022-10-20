@@ -7,7 +7,7 @@ import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
 import { WalletStatus } from '../types/web3-types'
 
 export interface IWeb3Context {
-    getProvider: () => ethers.providers.Web3Provider | undefined
+    provider?: ethers.providers.Web3Provider
     sign: (message: string, walletAddress: string) => Promise<string | undefined>
     accounts: string[]
     chain?: Chain & {

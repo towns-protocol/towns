@@ -58,7 +58,7 @@ interface Props {
     onboardingOpts?: ZionOnboardingOpts
     disableEncryption?: boolean
     enableSpaceRootUnreads?: boolean
-    getSignerFn?: () => ethers.Signer
+    signer?: ethers.Signer // only used for testing, when the signer is a local in memory wallet
     defaultSpaceId?: string
     defaultSpaceName?: string // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
     defaultSpaceAvatarSrc?: string // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
@@ -83,18 +83,19 @@ const ContextImpl = (props: Props): JSX.Element => {
         onboardingOpts,
         disableEncryption,
         enableSpaceRootUnreads,
-        getSignerFn,
+        signer,
         defaultSpaceId,
         defaultSpaceName,
         defaultSpaceAvatarSrc,
         initialSyncLimit,
     } = props
+
     const { client } = useZionClientListener(
         homeServerUrl,
         initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
         onboardingOpts,
         disableEncryption,
-        getSignerFn,
+        signer,
     )
     const { unreadCounts, mentionCounts } = useNotificationCounts(client)
     const { spaceIds, invitedToIds } = useSpacesIds(client)

@@ -12,21 +12,14 @@ export const useZionClientListener = (
     initialSyncLimit: number,
     onboardingOpts?: ZionOnboardingOpts,
     disableEncryption?: boolean,
-    getSignerFn?: () => ethers.Signer,
+    signer?: ethers.Signer,
 ) => {
-    const { getProvider, chain } = useWeb3Context()
+    const { provider, chain } = useWeb3Context()
     const { deviceId, isAuthenticated, userId, setLoginStatus } = useMatrixStore()
     const { accessToken, setAccessToken } = useCredentialStore()
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
     const chainId = chain?.id
-
-    const getSigner = useCallback(() => {
-        if (getSignerFn) {
-            return getSignerFn()
-        }
-        return getProvider()?.getSigner()
-    }, [getProvider, getSignerFn])
 
     if (!clientSingleton.current) {
         clientSingleton.current = new ZionClient(
@@ -35,8 +28,8 @@ export const useZionClientListener = (
                 initialSyncLimit,
                 onboardingOpts,
                 disableEncryption,
-                getProvider,
-                getSigner,
+                web3Provider: provider,
+                web3Signer: signer ?? provider?.getSigner(),
             },
             chainId,
         )

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { ethers } from 'ethers'
 import { useAccount, useNetwork, useSignMessage } from 'wagmi'
 import { IWeb3Context } from '../../components/Web3ContextProvider'
@@ -9,6 +9,16 @@ export function useWeb3(): IWeb3Context {
     const { address, connector, isConnected, status } = useAccount()
     const { chain: activeChain, chains } = useNetwork()
     const { signMessageAsync } = useSignMessage()
+
+    const provider = useRef<ethers.providers.Web3Provider>()
+
+    /// aellis 10.19.2022 note, we use wagmi for nearly everything,
+    /// but we use the window.ethereum object for instanciating the contracts
+    /// in the zion client
+    if (!provider.current && typeof window !== 'undefined' && window?.ethereum) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        provider.current = new ethers.providers.Web3Provider(window.ethereum)
+    }
 
     console.log('use web3', {
         connector,
@@ -30,20 +40,8 @@ export function useWeb3(): IWeb3Context {
         [signMessageAsync],
     )
 
-    const getProviderCB = useCallback(() => {
-        // AELLIS 8/17/21, i couldn't figure out how to get the provider from wagmi to play nice
-        // with the provider from ethers (weird because wagmi uses ethers under the hood)
-        // just grabbing the window.ethereum like a caveman for now, it should be the same
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-        if (typeof window !== 'undefined' && window?.ethereum) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            return new ethers.providers.Web3Provider(window.ethereum)
-        }
-        return undefined
-    }, []) // note, important for this to have 0 deps, it's passed to the client singleton
-
     return {
-        getProvider: getProviderCB,
+        provider: provider.current,
         sign: sign,
         accounts: address ? [address] : [],
         chain: activeChain,
