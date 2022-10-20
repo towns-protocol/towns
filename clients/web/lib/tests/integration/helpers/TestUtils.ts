@@ -1,8 +1,16 @@
-import { ZionTestClient } from './ZionTestClient'
-import { ethers } from 'ethers'
-import { TestConstants } from './TestConstants'
+import {
+    CreateSpaceInfo,
+    RoomIdentifier,
+    RoomVisibility,
+} from 'use-zion-client/src/types/matrix-types'
+
+import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
 import { EventTimeline } from 'matrix-js-sdk'
+import { TestConstants } from './TestConstants'
+import { ZionTestClient } from './ZionTestClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
+import { ethers, Wallet } from 'ethers'
+import { getContractInfo } from 'use-zion-client/src/client/web3/ZionContracts'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -29,6 +37,24 @@ export async function registerAndStartClients(
         records[client.name] = client
         return records
     }, {})
+}
+
+export async function registerLoginAndStartClient(
+    name: string,
+    wallet: Wallet,
+    props?: { disableEncryption?: boolean },
+): Promise<ZionTestClient> {
+    const dummyProvider = new ZionTestWeb3Provider(wallet)
+    const chainId = (await dummyProvider.getNetwork()).chainId
+    const client = new ZionTestClient(chainId, name, props?.disableEncryption, dummyProvider)
+
+    if (await client.isUserRegistered()) {
+        await client.loginWalletAndStartClient()
+    } else {
+        await client.registerWalletAndStartClient()
+    }
+
+    return client
 }
 
 export async function registerAndStartClient(
@@ -68,4 +94,35 @@ export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
     }
     const result = await fundedWallet.sendTransaction(tx)
     return result
+}
+
+export async function createSpaceWithTokenEntitlement(
+    client: ZionTestClient,
+    permissions: string[],
+    creaetSpaceInfo?: CreateSpaceInfo,
+): Promise<RoomIdentifier | undefined> {
+    const contractInfo = getContractInfo(1337)
+
+    if (!creaetSpaceInfo) {
+        creaetSpaceInfo = {
+            name: client.makeUniqueName(),
+            visibility: RoomVisibility.Private,
+        }
+    }
+
+    const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
+        entitlementModuleAddress: contractInfo.spaceManager.addresses.tokengranted,
+        tokenAddress: contractInfo.council.addresses.councilnft,
+        quantity: 1,
+        description: 'Zion Council NFT',
+        permissions,
+        roleName: 'Member',
+    }
+
+    const roomId = await client.createWeb3SpaceWithTokenEntitlement(
+        creaetSpaceInfo,
+        tokenEntitlement,
+    )
+
+    return roomId
 }

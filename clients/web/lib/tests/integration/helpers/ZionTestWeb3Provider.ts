@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, Wallet } from 'ethers'
 import { fundWallet } from './TestUtils'
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
@@ -10,10 +10,10 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
         return true
     }
 
-    constructor(wallet?: ethers.Wallet) {
+    constructor(wallet?: Wallet) {
         const networkUrl = process.env.ETHERS_NETWORK!
         super(networkUrl)
-        this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
+        this.wallet = wallet ?? ethers.Wallet.createRandom().connect(this)
         console.log('initializing web3 provider with wallet', this.wallet.address)
     }
 

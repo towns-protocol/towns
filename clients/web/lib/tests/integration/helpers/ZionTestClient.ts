@@ -1,18 +1,23 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ZionClient } from '../../../src/client/ZionClient'
 import {
+    AuthenticationData,
     LoginTypePublicKey,
     LoginTypePublicKeyEthereum,
     RegisterRequest,
 } from '../../../src/hooks/login'
-import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'
-import { createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
+
 import { RoomIdentifier } from '../../../src/types/matrix-types'
+import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
-import { makeUniqueName } from './TestUtils'
+import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'
+import { createUserIdFromEthereumAddress, UserIdentifier } from '../../../src/types/user-identifier'
 import { ethers } from 'ethers'
+import { makeUniqueName } from './TestUtils'
+import { ZionAuth } from '../../../src/client/ZionClientTypes'
 
 export class ZionTestClient extends ZionClient {
+    private userIdentifier: UserIdentifier
+
     static allClients: ZionTestClient[] = []
     static async cleanup() {
         console.log(
@@ -29,7 +34,12 @@ export class ZionTestClient extends ZionClient {
         return this.auth?.userId
     }
 
-    constructor(chainId: number, name: string, disableEncryption?: boolean) {
+    constructor(
+        chainId: number,
+        name: string,
+        disableEncryption?: boolean,
+        provider?: ZionTestWeb3Provider,
+    ) {
         // super
         super(
             {
@@ -45,7 +55,12 @@ export class ZionTestClient extends ZionClient {
             name,
         )
         // initialize our provider that wraps our wallet and chain communication
-        this.provider = new ZionTestWeb3Provider()
+        this.provider = provider ?? new ZionTestWeb3Provider()
+        this.userIdentifier = createUserIdFromEthereumAddress(
+            this.provider.wallet.address,
+            this.chainId,
+        )
+
         // add ourselves to the list of all clients
         ZionTestClient.allClients.push(this)
     }
@@ -92,22 +107,14 @@ export class ZionTestClient extends ZionClient {
             throw error
         }
 
-        const network = await this.provider.getNetwork()
-        const chainId = network.chainId
-
-        const userIdentifier = createUserIdFromEthereumAddress(
-            this.provider.wallet.address,
-            chainId,
-        )
-
         // make sure the server supports our chainId
-        if (!chainIds.find((x) => x == chainId)) {
-            throw new Error(`ChainId ${chainId} not found`)
+        if (!chainIds.find((x) => x == this.chainId)) {
+            throw new Error(`ChainId ${this.chainId} not found`)
         }
 
         const messageToSign = createMessageToSign({
-            walletAddress: userIdentifier.accountAddress,
-            chainId: userIdentifier.chainId,
+            walletAddress: this.userIdentifier.accountAddress,
+            chainId: this.chainId,
             homeServer: this.opts.homeServerUrl,
             origin,
             statement: 'this is a test registration',
@@ -124,10 +131,10 @@ export class ZionTestClient extends ZionClient {
                     session: sessionId,
                     message: messageToSign,
                     signature,
-                    user_id: userIdentifier.matrixUserIdLocalpart,
+                    user_id: this.userIdentifier.matrixUserIdLocalpart,
                 },
             },
-            username: userIdentifier.matrixUserIdLocalpart,
+            username: this.userIdentifier.matrixUserIdLocalpart,
         }
 
         // register the user
@@ -135,7 +142,7 @@ export class ZionTestClient extends ZionClient {
 
         this.log(
             'registered, matrixUserIdLocalpart: ',
-            userIdentifier.matrixUserIdLocalpart,
+            this.userIdentifier.matrixUserIdLocalpart,
             'userId: ',
             auth.userId,
         )
@@ -151,9 +158,52 @@ export class ZionTestClient extends ZionClient {
         return this.startClient(myAuth, this.provider.network.chainId)
     }
 
+    /// login to the matrix server with wallet account
+    public async loginWallet(): Promise<ZionAuth> {
+        const { sessionId, chainIds } = await this.newLoginSession()
+
+        // make sure the server supports our chainId
+        if (!chainIds.find((x) => x == this.chainId)) {
+            throw new Error(`ChainId ${this.chainId} not found`)
+        }
+
+        const messageToSign = createMessageToSign({
+            walletAddress: this.userIdentifier.accountAddress,
+            chainId: this.userIdentifier.chainId,
+            homeServer: this.opts.homeServerUrl,
+            origin,
+            statement: 'this is a test login',
+        })
+
+        const signature = await this.provider.wallet.signMessage(messageToSign)
+
+        // Send the signed message and auth data to the server.
+        const authRequest: AuthenticationData = {
+            type: LoginTypePublicKeyEthereum,
+            session: sessionId,
+            message: messageToSign,
+            signature,
+            user_id: this.userIdentifier.matrixUserIdLocalpart,
+        }
+
+        return await this.login(authRequest)
+    }
+
+    public async loginWalletAndStartClient(): Promise<void> {
+        let myAuth = this.auth
+        if (!myAuth) {
+            myAuth = await this.loginWallet()
+        }
+        return this.startClient(myAuth, this.provider.network.chainId)
+    }
+
     /// set the room invite level
     public async setRoomInviteLevel(roomId: RoomIdentifier, level: number) {
         const response = await this.setPowerLevel(roomId, 'invite', level)
         console.log('setRoomInviteLevel', response)
+    }
+
+    public async isUserRegistered(): Promise<boolean> {
+        return await super.isUserRegistered(this.userIdentifier.matrixUserIdLocalpart)
     }
 }

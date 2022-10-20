@@ -28,8 +28,8 @@ import {
     RoomIdentifier,
     SendMessageOptions,
 } from '../types/matrix-types'
-import { LoginTypePublicKey, RegisterRequest } from '../hooks/login'
-import { NewSession, newRegisterSession } from '../hooks/use-matrix-wallet-sign-in'
+import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
+import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'
 import { IZionServerVersions, ZionAuth, ZionOpts } from './ZionClientTypes'
 
 import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
@@ -101,6 +101,12 @@ export class ZionClient {
         return version as IZionServerVersions
     }
 
+    public async isUserRegistered(username: string): Promise<boolean> {
+        const isAvailable = await this.client.isUsernameAvailable(username)
+        // If the username is available, then it is not yet registered.
+        return isAvailable === false
+    }
+
     /************************************************
      * logout
      *************************************************/
@@ -149,6 +155,45 @@ export class ZionClient {
         return {
             accessToken: access_token,
             deviceId: device_id,
+            userId: user_id,
+        }
+    }
+
+    /************************************************
+     * newLoginSession
+     * set up a new login session.
+     ************************************************/
+    public async newLoginSession(): Promise<NewSession> {
+        if (this.auth) {
+            throw new Error('already logged in')
+        }
+        return await newLoginSession(this.client)
+    }
+
+    /************************************************
+     * login
+     * set up a login request, will fail if
+     * our wallet is NOT registered
+     ************************************************/
+    public async login(auth: AuthenticationData): Promise<ZionAuth> {
+        if (this.auth) {
+            throw new Error('already logged in')
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const { access_token, device_id, user_id } = await this.client.login(LoginTypePublicKey, {
+            auth,
+        })
+        if (!access_token || !device_id || !user_id) {
+            throw new Error('failed to login')
+        }
+
+        return {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            accessToken: access_token,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            deviceId: device_id,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             userId: user_id,
         }
     }
