@@ -5,7 +5,7 @@ library PermissionTypes {
   bytes32 public constant Read = keccak256("Read");
   bytes32 public constant Write = keccak256("Write");
   bytes32 public constant Invite = keccak256("Invite");
-  bytes32 public constant ZeroPermission = keccak256("ZeroPermission");
+  // bytes32 public constant ZeroPermission = keccak256("ZeroPermission");
   bytes32 public constant Redact = keccak256("Redact");
   bytes32 public constant Ban = keccak256("Ban");
   bytes32 public constant Ping = keccak256("Ping");

@@ -26,10 +26,6 @@ contract ZionPermissionsRegistry is Ownable {
       DataTypes.Permission({name: "Invite"})
     );
     _setPermission(
-      PermissionTypes.ZeroPermission,
-      DataTypes.Permission({name: "ZeroPermission"})
-    );
-    _setPermission(
       PermissionTypes.Redact,
       DataTypes.Permission({name: "Redact"})
     );

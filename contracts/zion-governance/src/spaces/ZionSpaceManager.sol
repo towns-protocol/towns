@@ -8,9 +8,8 @@ import {Constants} from "./libraries/Constants.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
 import {UserGrantedEntitlementModule} from "./modules/entitlements/UserGrantedEntitlementModule.sol";
-import {ZionSpaceManagerStorage} from "./storage/ZionSpaceManagerStorage.sol";
+import {ZionEntitlementManager} from "./ZionEntitlementManager.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
-import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
 import {ZionPermissionsRegistry} from "./ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "./libraries/PermissionTypes.sol";
@@ -18,10 +17,7 @@ import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 /// @title ZionSpaceManager
 /// @author HNT Labs
 /// @notice This contract manages the spaces and entitlements in the Zion ecosystem.
-contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
-  address internal immutable PERMISSION_REGISTRY;
-  address internal DEFAULT_ENTITLEMENT_MODULE;
-
+contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   modifier onlyAllowed(
     string memory spaceId,
     string memory channelId,
@@ -31,10 +27,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     _;
   }
 
-  constructor(address permissionRegistry) {
-    if (permissionRegistry == address(0)) revert Errors.InvalidParameters();
-    PERMISSION_REGISTRY = permissionRegistry;
-  }
+  constructor(address permissionRegistry)
+    ZionEntitlementManager(permissionRegistry)
+  {}
 
   /// *********************************
   /// *****SPACE OWNER FUNCTIONS*****
@@ -99,12 +94,15 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     uint256 additionalRoleId = _createRole(spaceId, entitlement.roleName);
     // Add the extra permissions passed to the same owner role
     if (permissionLen > 0) {
-      for (uint256 i = 0; i < permissionLen; i++) {
+      for (uint256 i = 0; i < permissionLen; ) {
         _addPermissionToRole(
           spaceId,
           additionalRoleId,
           DataTypes.Permission(entitlement.permissions[i])
         );
+        unchecked {
+          ++i;
+        }
       }
     }
 
@@ -155,7 +153,6 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
 
     // create role with permissions
     uint256 roleId = _createRole(spaceId, role.name);
-
     uint256 permissionLen = role.permissions.length;
 
     for (uint256 j = 0; j < permissionLen; ) {
@@ -528,6 +525,24 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   /// ****************************
   /// *****INTERNAL FUNCTIONS*****
   /// ****************************
+  function _getSpaceIdByNetworkId(string memory networkId)
+    internal
+    view
+    returns (uint256)
+  {
+    return _spaceIdByHash[keccak256(bytes(networkId))];
+  }
+
+  function _getChannelIdByNetworkId(
+    string memory spaceId,
+    string memory channelId
+  ) internal view returns (uint256) {
+    return
+      _channelIdBySpaceIdByHash[_getSpaceIdByNetworkId(spaceId)][
+        keccak256(bytes(channelId))
+      ];
+  }
+
   function _isEntitled(
     string memory spaceId,
     string memory channelId,
@@ -564,24 +579,6 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     }
 
     return entitled;
-  }
-
-  function _getSpaceIdByNetworkId(string memory networkId)
-    internal
-    view
-    returns (uint256)
-  {
-    return _spaceIdByHash[keccak256(bytes(networkId))];
-  }
-
-  function _getChannelIdByNetworkId(
-    string memory spaceId,
-    string memory channelId
-  ) internal view returns (uint256) {
-    return
-      _channelIdBySpaceIdByHash[_getSpaceIdByNetworkId(spaceId)][
-        keccak256(bytes(channelId))
-      ];
   }
 
   function _createSpace(DataTypes.CreateSpaceData calldata info)
@@ -648,202 +645,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return ownerRoleId;
   }
 
-  function _createEveryoneRoleEntitlement(
-    uint256 spaceId,
-    string memory networkId
-  ) internal returns (uint256) {
-    uint256 everyoneRoleId = _createRole(spaceId, "Everyone");
-    DataTypes.Permission memory readPermission = getPermissionFromMap(
-      PermissionTypes.Read
-    );
-    _addPermissionToRole(spaceId, everyoneRoleId, readPermission);
-
-    _addRoleToEntitlementModule(
-      networkId,
-      "",
-      DEFAULT_ENTITLEMENT_MODULE,
-      everyoneRoleId,
-      abi.encode(Constants.EVERYONE_ADDRESS)
-    );
-    return everyoneRoleId;
-  }
-
-  function _createRole(uint256 spaceId, string memory name)
-    internal
-    returns (uint256)
-  {
-    uint256 roleId = _rolesBySpaceId[spaceId].idCounter++;
-    _rolesBySpaceId[spaceId].roles.push(DataTypes.Role(roleId, name));
-
-    emit Events.CreateRole(spaceId, roleId, _msgSender(), name);
-
-    return roleId;
-  }
-
-  function _createOwnerRole(uint256 spaceId) internal returns (uint256) {
-    uint256 ownerRoleId = _createRole(spaceId, "Owner");
-    _spaceById[spaceId].ownerRoleId = ownerRoleId;
-
-    DataTypes.Permission[] memory allPermissions = ZionPermissionsRegistry(
-      PERMISSION_REGISTRY
-    ).getAllPermissions();
-    uint256 permissionLen = allPermissions.length;
-
-    for (uint256 i = 0; i < permissionLen; ) {
-      _addPermissionToRole(spaceId, ownerRoleId, allPermissions[i]);
-      unchecked {
-        ++i;
-      }
-    }
-
-    return ownerRoleId;
-  }
-
-  function _addPermissionToRole(
-    uint256 spaceId,
-    uint256 roleId,
-    DataTypes.Permission memory permission
-  ) internal {
-    _permissionsBySpaceIdByRoleId[spaceId][roleId].push(permission);
-  }
-
-  function _removePermissionFromRole(
-    uint256 spaceId,
-    uint256 roleId,
-    DataTypes.Permission memory permission
-  ) internal {
-    DataTypes.Permission[] storage permissions = _permissionsBySpaceIdByRoleId[
-      spaceId
-    ][roleId];
-
-    uint256 permissionLen = permissions.length;
-
-    for (uint256 i = 0; i < permissionLen; i++) {
-      if (_stringEquals(permission.name, permissions[i].name)) {
-        permissions[i] = permissions[permissionLen - 1];
-        permissions.pop();
-        break;
-      }
-    }
-  }
-
-  function _removeRole(uint256 spaceId, uint256 roleId) internal {
-    DataTypes.Role[] storage roles = _rolesBySpaceId[spaceId].roles;
-
-    uint256 roleLen = roles.length;
-
-    for (uint256 i = 0; i < roleLen; i++) {
-      if (roleId == roles[i].roleId) {
-        DataTypes.Permission[]
-          memory permissions = _permissionsBySpaceIdByRoleId[spaceId][roleId];
-
-        uint256 permissionLen = permissions.length;
-
-        for (uint256 j = 0; j < permissionLen; j++) {
-          _removePermissionFromRole(spaceId, roleId, permissions[j]);
-        }
-
-        roles[i] = roles[roleLen - 1];
-        roles.pop();
-        break;
-      }
-    }
-  }
-
-  function _addRoleToEntitlementModule(
-    string memory spaceId,
-    string memory channelId,
-    address entitlementAddress,
-    uint256 roleId,
-    bytes memory entitlementData
-  ) internal {
-    uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
-
-    // make sure entitlement module is whitelisted
-    if (!_spaceById[_spaceId].hasEntitlement[entitlementAddress])
-      revert Errors.EntitlementNotWhitelisted();
-
-    // add the entitlement to the entitlement module
-    IEntitlementModule(entitlementAddress).setEntitlement(
-      spaceId,
-      channelId,
-      roleId,
-      entitlementData
-    );
-  }
-
-  function _removeRoleFromEntitlementModule(
-    string calldata spaceId,
-    string calldata channelId,
-    address entitlementAddress,
-    uint256[] memory roleIds,
-    bytes memory entitlementData
-  ) internal {
-    uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
-
-    // make sure entitlement module is whitelisted
-    if (!_spaceById[_spaceId].hasEntitlement[entitlementAddress])
-      revert Errors.EntitlementNotWhitelisted();
-
-    // add the entitlement to the entitlement module
-    IEntitlementModule(entitlementAddress).removeEntitlement(
-      spaceId,
-      channelId,
-      roleIds,
-      entitlementData
-    );
-  }
-
-  function _whitelistEntitlementModule(
-    uint256 spaceId,
-    address entitlementAddress,
-    bool whitelist
-  ) internal {
-    if (whitelist && _spaceById[spaceId].hasEntitlement[entitlementAddress]) {
-      revert Errors.EntitlementAlreadyWhitelisted();
-    }
-
-    // set entitlement tag to space entitlement tags
-    _spaceById[spaceId].hasEntitlement[entitlementAddress] = whitelist;
-
-    // set entitlement address to space entitlements
-    if (whitelist) {
-      _spaceById[spaceId].entitlementModules.push(entitlementAddress);
-    } else {
-      uint256 len = _spaceById[spaceId].entitlementModules.length;
-      for (uint256 i = 0; i < len; ) {
-        if (_spaceById[spaceId].entitlementModules[i] == entitlementAddress) {
-          // Remove the entitlement address from the space entitlements
-          _spaceById[spaceId].entitlementModules[i] = _spaceById[spaceId]
-            .entitlementModules[len - 1];
-          _spaceById[spaceId].entitlementModules.pop();
-        }
-
-        unchecked {
-          ++i;
-        }
-      }
-    }
-  }
-
   /// ****************************
   /// ****VALIDATION FUNCTIONS****
   /// ****************************
-  function _stringEquals(string memory s1, string memory s2)
-    internal
-    pure
-    returns (bool)
-  {
-    bytes memory b1 = bytes(s1);
-    bytes memory b2 = bytes(s2);
-    uint256 l1 = b1.length;
-    if (l1 != b2.length) return false;
-    for (uint256 i = 0; i < l1; i++) {
-      if (b1[i] != b2[i]) return false;
-    }
-    return true;
-  }
-
   function _validateSpaceExists(string memory spaceId) internal view {
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
     if (_spaceId == 0) revert Errors.SpaceDoesNotExist();

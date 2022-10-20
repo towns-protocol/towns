@@ -4,6 +4,9 @@ libs = ["node_modules", "lib"]
 verbosity = 3
 fs_permissions = [{ access = "write", path = "./packages"}]
 extra_output_files = ["metadata", "abi"]
+gas_reports = ["*"]
+optimizer = true
+optimizer_runs = 20000
 
 [profile.governance]
 src = 'contracts/zion-governance/src'

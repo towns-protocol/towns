@@ -297,7 +297,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
 
     DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.ZeroPermission);
+      .getPermissionFromMap(PermissionTypes.Read);
     // Create roles and add permissions
     string memory roleName = "Joiner";
     uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
