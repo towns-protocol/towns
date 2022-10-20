@@ -63,20 +63,7 @@ describe('signInFromGlobalStorageHooks', () => {
         const isConnected = screen.getByTestId('isConnected')
         const loginStatus = screen.getByTestId('loginStatus')
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn), {
-            timeout: 10000,
-        })
-
-        render(
-            <ZionTestApp provider={alice.provider}>
-                <TestComponent />
-            </ZionTestApp>,
-        )
-
-        await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn), {
-            timeout: 10000,
-        })
+        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
     }) // end test
 
     test('test reading prior auth objects and logged in state from localStorage', async () => {
