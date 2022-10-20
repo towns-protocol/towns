@@ -12,6 +12,11 @@
   },
   {
     "inputs": [],
+    "name": "ChannelDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "DefaultEntitlementModuleNotSet",
     "type": "error"
   },
@@ -297,6 +302,11 @@
             "internalType": "string[]",
             "name": "permissions",
             "type": "string[]"
+          },
+          {
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
           }
         ],
         "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",
@@ -380,6 +390,11 @@
             "internalType": "address",
             "name": "creator",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.ChannelInfo",
@@ -433,6 +448,11 @@
                 "internalType": "address",
                 "name": "creator",
                 "type": "address"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
               }
             ],
             "internalType": "struct DataTypes.Channel[]",
@@ -687,6 +707,11 @@
             "internalType": "address",
             "name": "owner",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.SpaceInfo",
@@ -751,6 +776,11 @@
             "internalType": "address",
             "name": "owner",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.SpaceInfo[]",
@@ -873,8 +903,79 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission",
+        "name": "permission",
+        "type": "tuple"
+      }
+    ],
+    "name": "removePermissionFromRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "removeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setChannelAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -888,6 +989,24 @@
       }
     ],
     "name": "setDefaultEntitlementModule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setSpaceAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

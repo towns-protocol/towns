@@ -304,6 +304,411 @@
     "transferOwnership(address)": "f2fde38b",
     "withdrawToken(uint256)": "50baa622"
   },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.16+commit.07a7930e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract IERC721\",\"name\":\"_councilNFT\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"NoPointsToClaim\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoStakedTokens\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotTokenOwner\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"claimPoints\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"councilNFT\",\"outputs\":[{\"internalType\":\"contract IERC721\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_staker\",\"type\":\"address\"}],\"name\":\"getAvailablePoints\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"getStakedTokensByAddress\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"staker\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"internalType\":\"struct DataTypes.StakedToken[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"getStakerAddressByTokenId\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_staker\",\"type\":\"address\"}],\"name\":\"getStakerByAddress\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"amountStaked\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"staker\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"internalType\":\"struct DataTypes.StakedToken[]\",\"name\":\"stakedTokens\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"timeOfLastUpdate\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"unclaimedPoints\",\"type\":\"uint256\"}],\"internalType\":\"struct DataTypes.Staker\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"stakeToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"HNT Labs\",\"kind\":\"dev\",\"methods\":{\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"}},\"title\":\"CouncilStaking\",\"version\":1},\"userdoc\":{\"errors\":{\"NoPointsToClaim()\":[{\"notice\":\"thrown when no there are not points to claim by user\"}],\"NoStakedTokens()\":[{\"notice\":\"thrown when no tokens are staked by user\"}],\"NotTokenOwner()\":[{\"notice\":\"thrown when a token is not owned by the user\"}]},\"kind\":\"user\",\"methods\":{\"claimPoints()\":{\"notice\":\"Claim accrued points\"}},\"notice\":\"This is the staking contract for the council NFT\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/zion-governance/src/council/CouncilStaking.sol\":\"CouncilStaking\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@harmony/=node_modules/@harmony/\",\":@opengsn/=node_modules/@opengsn/\",\":@openzeppelin/=node_modules/@openzeppelin/\",\":ds-test/=lib/solmate/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":solidity-json-writer/=node_modules/solidity-json-writer/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"contracts/zion-governance/src/council/CouncilStaking.sol\":{\"keccak256\":\"0xcce063a8c28bd2396d5b918e073b0a768db3da40bac9aec76add99c2af6d6ea2\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://0941da1e7936171c309c0e1400468f9f055a74aa42aa67b9c5e57dbaad40940f\",\"dweb:/ipfs/QmPPK6ND6YzMSRtpemnfVjtdAXveVgXQmJjbjLv8dyFsT1\"]},\"contracts/zion-governance/src/council/libraries/DataTypes.sol\":{\"keccak256\":\"0xcb9554125a2c90a4c9f4d2c747b25616de295284b29301dd40ffa3bc160bd2ca\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://7d9931e10fc62cb6bc3ccbda1275001c7d43f382a352b3fe314ec142e7975ffd\",\"dweb:/ipfs/QmNrTVJg1S864R7eyzuefLbGNBVpWE6TKqz7ZeLn757Vid\"]},\"contracts/zion-governance/src/council/libraries/Errors.sol\":{\"keccak256\":\"0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://52f1e12630eb8a29450653ab64602fcf99fd568fb2157e8ff36b1a0d01976af6\",\"dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna\"]},\"contracts/zion-governance/src/council/libraries/Events.sol\":{\"keccak256\":\"0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://92a00bb216d56259162c1657c8ea73b875ea62a335635604b5d5cb1c75228c00\",\"dweb:/ipfs/QmeW6FVzmsvN4xnVhepDoBvZETNVbFkN2vLxQa9jHeWBjZ\"]},\"lib/forge-std/src/console.sol\":{\"keccak256\":\"0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70\",\"dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec\"]},\"lib/openzeppelin-contracts/contracts/access/Ownable.sol\":{\"keccak256\":\"0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2\",\"dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y\"]},\"lib/openzeppelin-contracts/contracts/interfaces/IERC721.sol\":{\"keccak256\":\"0xaf297d12d8d4a57fe01a70f0ef38908f208e3faedc577056d0b728fa2f3ccf0c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://fbfaf37123958822a2720a4ea29651be00edab787540b770f73d3e025d286ff8\",\"dweb:/ipfs/QmbzgWeTm8hJVUqWrNAwFjshqbYVyeGpQA8D1huzxQdmw6\"]},\"lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol\":{\"keccak256\":\"0x6e3ba605a09b2cf6ab80fa9e4159b1e9f0f49bd8927032c3251a099e96ed54bc\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://05bb933ff14dd2a81c37c1d7b4992df8034107ca5edd60cf8e5a20dc566d3b72\",\"dweb:/ipfs/QmbDdZDWqkRdLtG6AFutDNzF9d2vyVFDJmVSbnVKQ6nPHH\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0xed6a749c5373af398105ce6ee3ac4763aa450ea7285d268c85d9eeca809cdb1f\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://20a97f891d06f0fe91560ea1a142aaa26fdd22bed1b51606b7d48f670deeb50f\",\"dweb:/ipfs/QmTbCtZKChpaX5H2iRiTDMcSz29GSLCpTCDgJpcMR4wg8x\"]},\"lib/openzeppelin-contracts/contracts/utils/Context.sol\":{\"keccak256\":\"0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92\",\"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.16+commit.07a7930e"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "contract IERC721",
+              "name": "_councilNFT",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "NoPointsToClaim"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "NoStakedTokens"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "NotTokenOwner"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "OwnershipTransferred",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "claimPoints"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "councilNFT",
+          "outputs": [
+            {
+              "internalType": "contract IERC721",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_staker",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getAvailablePoints",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_user",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getStakedTokensByAddress",
+          "outputs": [
+            {
+              "internalType": "struct DataTypes.StakedToken[]",
+              "name": "",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "staker",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "tokenId",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getStakerAddressByTokenId",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_staker",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getStakerByAddress",
+          "outputs": [
+            {
+              "internalType": "struct DataTypes.Staker",
+              "name": "",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "uint256",
+                  "name": "amountStaked",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "struct DataTypes.StakedToken[]",
+                  "name": "stakedTokens",
+                  "type": "tuple[]",
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "staker",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "tokenId",
+                      "type": "uint256"
+                    }
+                  ]
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "timeOfLastUpdate",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "unclaimedPoints",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "renounceOwnership"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "stakeToken"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "totalSupply",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferOwnership"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "_tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawToken"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "owner()": {
+            "details": "Returns the address of the current owner."
+          },
+          "renounceOwnership()": {
+            "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+          },
+          "transferOwnership(address)": {
+            "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "claimPoints()": {
+            "notice": "Claim accrued points"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@harmony/=node_modules/@harmony/",
+        ":@opengsn/=node_modules/@opengsn/",
+        ":@openzeppelin/=node_modules/@openzeppelin/",
+        ":ds-test/=lib/solmate/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":murky/=lib/murky/src/",
+        ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":solidity-json-writer/=node_modules/solidity-json-writer/",
+        ":solmate/=lib/solmate/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "contracts/zion-governance/src/council/CouncilStaking.sol": "CouncilStaking"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/zion-governance/src/council/CouncilStaking.sol": {
+        "keccak256": "0xcce063a8c28bd2396d5b918e073b0a768db3da40bac9aec76add99c2af6d6ea2",
+        "urls": [
+          "bzz-raw://0941da1e7936171c309c0e1400468f9f055a74aa42aa67b9c5e57dbaad40940f",
+          "dweb:/ipfs/QmPPK6ND6YzMSRtpemnfVjtdAXveVgXQmJjbjLv8dyFsT1"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/zion-governance/src/council/libraries/DataTypes.sol": {
+        "keccak256": "0xcb9554125a2c90a4c9f4d2c747b25616de295284b29301dd40ffa3bc160bd2ca",
+        "urls": [
+          "bzz-raw://7d9931e10fc62cb6bc3ccbda1275001c7d43f382a352b3fe314ec142e7975ffd",
+          "dweb:/ipfs/QmNrTVJg1S864R7eyzuefLbGNBVpWE6TKqz7ZeLn757Vid"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/zion-governance/src/council/libraries/Errors.sol": {
+        "keccak256": "0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f",
+        "urls": [
+          "bzz-raw://52f1e12630eb8a29450653ab64602fcf99fd568fb2157e8ff36b1a0d01976af6",
+          "dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/zion-governance/src/council/libraries/Events.sol": {
+        "keccak256": "0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a",
+        "urls": [
+          "bzz-raw://92a00bb216d56259162c1657c8ea73b875ea62a335635604b5d5cb1c75228c00",
+          "dweb:/ipfs/QmeW6FVzmsvN4xnVhepDoBvZETNVbFkN2vLxQa9jHeWBjZ"
+        ],
+        "license": "Apache-2.0"
+      },
+      "lib/forge-std/src/console.sol": {
+        "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
+        "urls": [
+          "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
+          "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+        "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+        "urls": [
+          "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
+          "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/interfaces/IERC721.sol": {
+        "keccak256": "0xaf297d12d8d4a57fe01a70f0ef38908f208e3faedc577056d0b728fa2f3ccf0c",
+        "urls": [
+          "bzz-raw://fbfaf37123958822a2720a4ea29651be00edab787540b770f73d3e025d286ff8",
+          "dweb:/ipfs/QmbzgWeTm8hJVUqWrNAwFjshqbYVyeGpQA8D1huzxQdmw6"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
+        "keccak256": "0x6e3ba605a09b2cf6ab80fa9e4159b1e9f0f49bd8927032c3251a099e96ed54bc",
+        "urls": [
+          "bzz-raw://05bb933ff14dd2a81c37c1d7b4992df8034107ca5edd60cf8e5a20dc566d3b72",
+          "dweb:/ipfs/QmbDdZDWqkRdLtG6AFutDNzF9d2vyVFDJmVSbnVKQ6nPHH"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+        "keccak256": "0xed6a749c5373af398105ce6ee3ac4763aa450ea7285d268c85d9eeca809cdb1f",
+        "urls": [
+          "bzz-raw://20a97f891d06f0fe91560ea1a142aaa26fdd22bed1b51606b7d48f670deeb50f",
+          "dweb:/ipfs/QmTbCtZKChpaX5H2iRiTDMcSz29GSLCpTCDgJpcMR4wg8x"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+        "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+        "urls": [
+          "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+          "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+        "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+        "urls": [
+          "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+          "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
   "ast": {
     "absolutePath": "contracts/zion-governance/src/council/CouncilStaking.sol",
     "id": 893,
@@ -321,16 +726,16 @@
         984
       ],
       "IERC721": [
-        48331
+        49398
       ],
       "Ownable": [
-        42932
+        43999
       ],
       "ReentrancyGuard": [
-        46639
+        47706
       ],
       "console": [
-        31039
+        32106
       ]
     },
     "nodeType": "SourceUnit",
@@ -355,7 +760,7 @@
         "file": "forge-std/console.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 893,
-        "sourceUnit": 31040,
+        "sourceUnit": 32107,
         "symbolAliases": [
           {
             "foreign": {
@@ -363,7 +768,7 @@
               "name": "console",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 31039,
+              "referencedDeclaration": 32106,
               "src": "71:7:1",
               "typeDescriptions": {}
             },
@@ -455,7 +860,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 893,
-        "sourceUnit": 42933,
+        "sourceUnit": 44000,
         "symbolAliases": [
           {
             "foreign": {
@@ -463,7 +868,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 42932,
+              "referencedDeclaration": 43999,
               "src": "288:7:1",
               "typeDescriptions": {}
             },
@@ -480,7 +885,7 @@
         "file": "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 893,
-        "sourceUnit": 46640,
+        "sourceUnit": 47707,
         "symbolAliases": [
           {
             "foreign": {
@@ -488,7 +893,7 @@
               "name": "ReentrancyGuard",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 46639,
+              "referencedDeclaration": 47706,
               "src": "365:15:1",
               "typeDescriptions": {}
             },
@@ -505,7 +910,7 @@
         "file": "openzeppelin-contracts/contracts/interfaces/IERC721.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 893,
-        "sourceUnit": 46586,
+        "sourceUnit": 47653,
         "symbolAliases": [
           {
             "foreign": {
@@ -513,7 +918,7 @@
               "name": "IERC721",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 48331,
+              "referencedDeclaration": 49398,
               "src": "460:7:1",
               "typeDescriptions": {}
             },
@@ -540,7 +945,7 @@
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_IERC721_$48331",
+              "typeIdentifier": "t_contract$_IERC721_$49398",
               "typeString": "contract IERC721"
             },
             "typeName": {
@@ -553,13 +958,13 @@
                   "698:7:1"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 48331,
+                "referencedDeclaration": 49398,
                 "src": "698:7:1"
               },
-              "referencedDeclaration": 48331,
+              "referencedDeclaration": 49398,
               "src": "698:7:1",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_IERC721_$48331",
+                "typeIdentifier": "t_contract$_IERC721_$49398",
                 "typeString": "contract IERC721"
               }
             },
@@ -589,7 +994,7 @@
                       "referencedDeclaration": 353,
                       "src": "777:10:1",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_IERC721_$48331",
+                        "typeIdentifier": "t_contract$_IERC721_$49398",
                         "typeString": "contract IERC721"
                       }
                     },
@@ -603,13 +1008,13 @@
                       "referencedDeclaration": 356,
                       "src": "790:11:1",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_IERC721_$48331",
+                        "typeIdentifier": "t_contract$_IERC721_$49398",
                         "typeString": "contract IERC721"
                       }
                     },
                     "src": "777:24:1",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_IERC721_$48331",
+                      "typeIdentifier": "t_contract$_IERC721_$49398",
                       "typeString": "contract IERC721"
                     }
                   },
@@ -640,7 +1045,7 @@
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_contract$_IERC721_$48331",
+                    "typeIdentifier": "t_contract$_IERC721_$49398",
                     "typeString": "contract IERC721"
                   },
                   "typeName": {
@@ -653,13 +1058,13 @@
                         "750:7:1"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 48331,
+                      "referencedDeclaration": 49398,
                       "src": "750:7:1"
                     },
-                    "referencedDeclaration": 48331,
+                    "referencedDeclaration": 49398,
                     "src": "750:7:1",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_IERC721_$48331",
+                      "typeIdentifier": "t_contract$_IERC721_$49398",
                       "typeString": "contract IERC721"
                     }
                   },
@@ -1218,7 +1623,7 @@
                           "referencedDeclaration": 353,
                           "src": "1401:10:1",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_IERC721_$48331",
+                            "typeIdentifier": "t_contract$_IERC721_$49398",
                             "typeString": "contract IERC721"
                           }
                         },
@@ -1230,7 +1635,7 @@
                         "memberLocation": "1412:7:1",
                         "memberName": "ownerOf",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 48264,
+                        "referencedDeclaration": 49331,
                         "src": "1401:18:1",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_external_view$_t_uint256_$returns$_t_address_$",
@@ -1467,7 +1872,7 @@
                         "referencedDeclaration": 353,
                         "src": "1553:10:1",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_IERC721_$48331",
+                          "typeIdentifier": "t_contract$_IERC721_$49398",
                           "typeString": "contract IERC721"
                         }
                       },
@@ -1479,7 +1884,7 @@
                       "memberLocation": "1564:12:1",
                       "memberName": "transferFrom",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 48296,
+                      "referencedDeclaration": 49363,
                       "src": "1553:23:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_address_$_t_uint256_$returns$__$",
@@ -2209,7 +2614,7 @@
                     "1061:12:1"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 46615,
+                  "referencedDeclaration": 47682,
                   "src": "1061:12:1"
                 },
                 "nodeType": "ModifierInvocation",
@@ -4161,7 +4566,7 @@
                         "referencedDeclaration": 353,
                         "src": "3961:10:1",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_IERC721_$48331",
+                          "typeIdentifier": "t_contract$_IERC721_$49398",
                           "typeString": "contract IERC721"
                         }
                       },
@@ -4173,7 +4578,7 @@
                       "memberLocation": "3972:12:1",
                       "memberName": "transferFrom",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 48296,
+                      "referencedDeclaration": 49363,
                       "src": "3961:23:1",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$_t_address_$_t_uint256_$returns$__$",
@@ -4463,7 +4868,7 @@
                     "2396:12:1"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 46615,
+                  "referencedDeclaration": 47682,
                   "src": "2396:12:1"
                 },
                 "nodeType": "ModifierInvocation",
@@ -7278,7 +7683,7 @@
                 "669:7:1"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 42932,
+              "referencedDeclaration": 43999,
               "src": "669:7:1"
             },
             "id": 348,
@@ -7293,7 +7698,7 @@
                 "678:15:1"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 46639,
+              "referencedDeclaration": 47706,
               "src": "678:15:1"
             },
             "id": 350,
@@ -7313,9 +7718,9 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
           892,
-          46639,
-          42932,
-          48935
+          47706,
+          43999,
+          50002
         ],
         "name": "CouncilStaking",
         "nameLocation": "651:14:1",

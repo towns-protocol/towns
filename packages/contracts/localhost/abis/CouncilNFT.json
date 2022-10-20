@@ -640,6 +640,778 @@
     "waitlistMint()": "aebb096c",
     "withdrawPayments(address)": "31b3eb94"
   },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.16+commit.07a7930e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_baseURI\",\"type\":\"string\"},{\"internalType\":\"bytes32\",\"name\":\"_root\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"AlreadyMinted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MaxSupply\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MintPriceNotPaid\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NonExistentTokenURI\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"WithdrawTransfer\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"ApprovalForAll\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"allowlistMint\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"alreadyMinted\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"baseURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"currentTokenId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"getApproved\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isApprovedForAll\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"allowance\",\"type\":\"uint256\"},{\"internalType\":\"bytes32[]\",\"name\":\"proof\",\"type\":\"bytes32[]\"}],\"name\":\"privateMint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"publicMint\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"safeTransferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"approved\",\"type\":\"bool\"}],\"name\":\"setApprovalForAll\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"startPublicMint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"startWaitlistMint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"tokenURI\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"waitlistMint\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address payable\",\"name\":\"payee\",\"type\":\"address\"}],\"name\":\"withdrawPayments\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"HNT Labs\",\"kind\":\"dev\",\"methods\":{\"mint(address)\":{\"params\":{\"recipient\":\"the address that will receive the minted NFT\"},\"returns\":{\"_0\":\"tokenId token id of the minted NFT\"}},\"owner()\":{\"details\":\"Returns the address of the current owner.\"},\"privateMint(address,uint256,bytes32[])\":{\"params\":{\"allowance\":\"of 1 means user is on the allowlist, @allowance of 0 means user is on the waitlist\",\"proof\":\"the generated merkle proof that this user is on the allowlist or waitlist\",\"recipient\":\"the address that will receive the minted NFT\"},\"returns\":{\"_0\":\"tokenId token id of the minted NFT\"}},\"renounceOwnership()\":{\"details\":\"Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner.\"},\"tokenURI(uint256)\":{\"params\":{\"tokenId\":\"the id of the token to get the tokenURI for\"},\"returns\":{\"_0\":\"the tokenURI for the given tokenId\"}},\"transferOwnership(address)\":{\"details\":\"Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner.\"},\"withdrawPayments(address)\":{\"params\":{\"payee\":\"the address that will receive the withdrawn ether\"}}},\"title\":\"CouncilNFT\",\"version\":1},\"userdoc\":{\"errors\":{\"AlreadyMinted()\":[{\"notice\":\"thrown when user tries to mint more than 1 token with same wallet\"}],\"MaxSupply()\":[{\"notice\":\"thrown when the max supply is reached\"}],\"MintPriceNotPaid()\":[{\"notice\":\"thrown when an incorrect amount of ETH is sent to mint\"}],\"NonExistentTokenURI()\":[{\"notice\":\"thrown when a token is not minted\"}],\"WithdrawTransfer()\":[{\"notice\":\"thrown when the withdraw payment transaction fails\"}]},\"kind\":\"user\",\"methods\":{\"alreadyMinted(address)\":{\"notice\":\"mapping to track which  users have already minted an nft\"},\"baseURI()\":{\"notice\":\"the base uri for the nft metadata including image uri\"},\"currentTokenId()\":{\"notice\":\"the counter token id for the next mint\"},\"mint(address)\":{\"notice\":\"the secondary minting method used only when public minting is active\"},\"privateMint(address,uint256,bytes32[])\":{\"notice\":\"the primary minting method for the allowlist and waitlist minting periods\"},\"startPublicMint()\":{\"notice\":\"starts the public minting period\"},\"startWaitlistMint()\":{\"notice\":\"starts the waitlist minting period\"},\"tokenURI(uint256)\":{\"notice\":\"Get the tokenURI for the given tokenId\"},\"withdrawPayments(address)\":{\"notice\":\"withdraw the balance from the contract\"}},\"notice\":\"This is the main NFT contract for the council of Zion\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/zion-governance/src/council/CouncilNFT.sol\":\"CouncilNFT\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@harmony/=node_modules/@harmony/\",\":@opengsn/=node_modules/@opengsn/\",\":@openzeppelin/=node_modules/@openzeppelin/\",\":ds-test/=lib/solmate/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":solidity-json-writer/=node_modules/solidity-json-writer/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"contracts/zion-governance/src/council/CouncilNFT.sol\":{\"keccak256\":\"0xe187965c85a1a553bdf399ddefc18374f3a100f9030e1a726b9de10184b3f854\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b593f9d9fc0a9de93ebbc6d071f57706bf005031deefac330eb5e9f6977f253d\",\"dweb:/ipfs/Qme9J6mdv8r5p65Kiesb2yCr7acPwXrK6RhuX5EGdC3ubd\"]},\"contracts/zion-governance/src/council/libraries/Constants.sol\":{\"keccak256\":\"0xd28a3be0f0d3732c1813f73019fabafdd2decc262340dc4dc5fcc47f2b40c19b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://0a6dd6f360bb06f796972c0ec2df97746ea32f7b8659b40b2179c022070fd4d9\",\"dweb:/ipfs/QmcNAL4eRBDV7cm689EcAmHyr1BcSoUp8txSByZp572FjR\"]},\"contracts/zion-governance/src/council/libraries/Errors.sol\":{\"keccak256\":\"0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://52f1e12630eb8a29450653ab64602fcf99fd568fb2157e8ff36b1a0d01976af6\",\"dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna\"]},\"contracts/zion-governance/src/council/libraries/Events.sol\":{\"keccak256\":\"0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://92a00bb216d56259162c1657c8ea73b875ea62a335635604b5d5cb1c75228c00\",\"dweb:/ipfs/QmeW6FVzmsvN4xnVhepDoBvZETNVbFkN2vLxQa9jHeWBjZ\"]},\"lib/openzeppelin-contracts/contracts/access/Ownable.sol\":{\"keccak256\":\"0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2\",\"dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y\"]},\"lib/openzeppelin-contracts/contracts/utils/Context.sol\":{\"keccak256\":\"0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92\",\"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3\"]},\"lib/openzeppelin-contracts/contracts/utils/Strings.sol\":{\"keccak256\":\"0xaf159a8b1923ad2a26d516089bceca9bdeaeacd04be50983ea00ba63070f08a3\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6f2cf1c531122bc7ca96b8c8db6a60deae60441e5223065e792553d4849b5638\",\"dweb:/ipfs/QmPBdJmBBABMDCfyDjCbdxgiqRavgiSL88SYPGibgbPas9\"]},\"lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol\":{\"keccak256\":\"0x596ed72a251d391b814a4aa19d7acb02ebdcc92ba27d3fff74a6f0c158b12ab7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d5f49013d50b1011c842f76e96f3c3f146ca7cb15084c8805575e0e0e1a5c700\",\"dweb:/ipfs/QmQ3n5qiuioUA74heD6ZddNkYg1kYihjQBNcy9zgwYXKgM\"]},\"lib/solmate/src/tokens/ERC721.sol\":{\"keccak256\":\"0x04af19f16f00ba65ae168d6d10da5210dc18da6bcec6974dccf984ba388aa22d\",\"license\":\"AGPL-3.0-only\",\"urls\":[\"bzz-raw://098e69f22b67da6927e03203c12ebfda5b0490518f6d9cce7853001ac5ad8403\",\"dweb:/ipfs/QmYyzfurQe88PsVjRNfutV3gS7Vi68f7zgtVZVtLfd4ViK\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.16+commit.07a7930e"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "_name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "_symbol",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "_baseURI",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_root",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "AlreadyMinted"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "MaxSupply"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "MintPriceNotPaid"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "NonExistentTokenURI"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "WithdrawTransfer"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Approval",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ApprovalForAll",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "OwnershipTransferred",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "Transfer",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "allowlistMint",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "alreadyMinted",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "spender",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "approve"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "balanceOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "baseURI",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "currentTokenId",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "getApproved",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "isApprovedForAll",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "mint",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "name",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "ownerOf",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "recipient",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "allowance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32[]",
+              "name": "proof",
+              "type": "bytes32[]"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function",
+          "name": "privateMint",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "publicMint",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "renounceOwnership"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "safeTransferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "safeTransferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setApprovalForAll"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "startPublicMint"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "startWaitlistMint"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "symbol",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "tokenURI",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferFrom"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferOwnership"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "waitlistMint",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address payable",
+              "name": "payee",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "withdrawPayments"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "mint(address)": {
+            "params": {
+              "recipient": "the address that will receive the minted NFT"
+            },
+            "returns": {
+              "_0": "tokenId token id of the minted NFT"
+            }
+          },
+          "owner()": {
+            "details": "Returns the address of the current owner."
+          },
+          "privateMint(address,uint256,bytes32[])": {
+            "params": {
+              "allowance": "of 1 means user is on the allowlist, @allowance of 0 means user is on the waitlist",
+              "proof": "the generated merkle proof that this user is on the allowlist or waitlist",
+              "recipient": "the address that will receive the minted NFT"
+            },
+            "returns": {
+              "_0": "tokenId token id of the minted NFT"
+            }
+          },
+          "renounceOwnership()": {
+            "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+          },
+          "tokenURI(uint256)": {
+            "params": {
+              "tokenId": "the id of the token to get the tokenURI for"
+            },
+            "returns": {
+              "_0": "the tokenURI for the given tokenId"
+            }
+          },
+          "transferOwnership(address)": {
+            "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+          },
+          "withdrawPayments(address)": {
+            "params": {
+              "payee": "the address that will receive the withdrawn ether"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "alreadyMinted(address)": {
+            "notice": "mapping to track which  users have already minted an nft"
+          },
+          "baseURI()": {
+            "notice": "the base uri for the nft metadata including image uri"
+          },
+          "currentTokenId()": {
+            "notice": "the counter token id for the next mint"
+          },
+          "mint(address)": {
+            "notice": "the secondary minting method used only when public minting is active"
+          },
+          "privateMint(address,uint256,bytes32[])": {
+            "notice": "the primary minting method for the allowlist and waitlist minting periods"
+          },
+          "startPublicMint()": {
+            "notice": "starts the public minting period"
+          },
+          "startWaitlistMint()": {
+            "notice": "starts the waitlist minting period"
+          },
+          "tokenURI(uint256)": {
+            "notice": "Get the tokenURI for the given tokenId"
+          },
+          "withdrawPayments(address)": {
+            "notice": "withdraw the balance from the contract"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":@harmony/=node_modules/@harmony/",
+        ":@opengsn/=node_modules/@opengsn/",
+        ":@openzeppelin/=node_modules/@openzeppelin/",
+        ":ds-test/=lib/solmate/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":murky/=lib/murky/src/",
+        ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":solidity-json-writer/=node_modules/solidity-json-writer/",
+        ":solmate/=lib/solmate/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "contracts/zion-governance/src/council/CouncilNFT.sol": "CouncilNFT"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/zion-governance/src/council/CouncilNFT.sol": {
+        "keccak256": "0xe187965c85a1a553bdf399ddefc18374f3a100f9030e1a726b9de10184b3f854",
+        "urls": [
+          "bzz-raw://b593f9d9fc0a9de93ebbc6d071f57706bf005031deefac330eb5e9f6977f253d",
+          "dweb:/ipfs/Qme9J6mdv8r5p65Kiesb2yCr7acPwXrK6RhuX5EGdC3ubd"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/zion-governance/src/council/libraries/Constants.sol": {
+        "keccak256": "0xd28a3be0f0d3732c1813f73019fabafdd2decc262340dc4dc5fcc47f2b40c19b",
+        "urls": [
+          "bzz-raw://0a6dd6f360bb06f796972c0ec2df97746ea32f7b8659b40b2179c022070fd4d9",
+          "dweb:/ipfs/QmcNAL4eRBDV7cm689EcAmHyr1BcSoUp8txSByZp572FjR"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/zion-governance/src/council/libraries/Errors.sol": {
+        "keccak256": "0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f",
+        "urls": [
+          "bzz-raw://52f1e12630eb8a29450653ab64602fcf99fd568fb2157e8ff36b1a0d01976af6",
+          "dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/zion-governance/src/council/libraries/Events.sol": {
+        "keccak256": "0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a",
+        "urls": [
+          "bzz-raw://92a00bb216d56259162c1657c8ea73b875ea62a335635604b5d5cb1c75228c00",
+          "dweb:/ipfs/QmeW6FVzmsvN4xnVhepDoBvZETNVbFkN2vLxQa9jHeWBjZ"
+        ],
+        "license": "Apache-2.0"
+      },
+      "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+        "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+        "urls": [
+          "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
+          "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+        "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+        "urls": [
+          "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+          "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/Strings.sol": {
+        "keccak256": "0xaf159a8b1923ad2a26d516089bceca9bdeaeacd04be50983ea00ba63070f08a3",
+        "urls": [
+          "bzz-raw://6f2cf1c531122bc7ca96b8c8db6a60deae60441e5223065e792553d4849b5638",
+          "dweb:/ipfs/QmPBdJmBBABMDCfyDjCbdxgiqRavgiSL88SYPGibgbPas9"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol": {
+        "keccak256": "0x596ed72a251d391b814a4aa19d7acb02ebdcc92ba27d3fff74a6f0c158b12ab7",
+        "urls": [
+          "bzz-raw://d5f49013d50b1011c842f76e96f3c3f146ca7cb15084c8805575e0e0e1a5c700",
+          "dweb:/ipfs/QmQ3n5qiuioUA74heD6ZddNkYg1kYihjQBNcy9zgwYXKgM"
+        ],
+        "license": "MIT"
+      },
+      "lib/solmate/src/tokens/ERC721.sol": {
+        "keccak256": "0x04af19f16f00ba65ae168d6d10da5210dc18da6bcec6974dccf984ba388aa22d",
+        "urls": [
+          "bzz-raw://098e69f22b67da6927e03203c12ebfda5b0490518f6d9cce7853001ac5ad8403",
+          "dweb:/ipfs/QmYyzfurQe88PsVjRNfutV3gS7Vi68f7zgtVZVtLfd4ViK"
+        ],
+        "license": "AGPL-3.0-only"
+      }
+    },
+    "version": 1
+  },
   "ast": {
     "absolutePath": "contracts/zion-governance/src/council/CouncilNFT.sol",
     "id": 330,
@@ -651,10 +1423,10 @@
         329
       ],
       "ERC721": [
-        55219
+        56286
       ],
       "ERC721TokenReceiver": [
-        55239
+        56306
       ],
       "Errors": [
         955
@@ -663,13 +1435,13 @@
         984
       ],
       "MerkleProof": [
-        50312
+        51379
       ],
       "Ownable": [
-        42932
+        43999
       ],
       "Strings": [
-        49235
+        50302
       ]
     },
     "nodeType": "SourceUnit",
@@ -694,7 +1466,7 @@
         "file": "solmate/tokens/ERC721.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 330,
-        "sourceUnit": 55240,
+        "sourceUnit": 56307,
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -706,7 +1478,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 330,
-        "sourceUnit": 42933,
+        "sourceUnit": 44000,
         "symbolAliases": [
           {
             "foreign": {
@@ -714,7 +1486,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 42932,
+              "referencedDeclaration": 43999,
               "src": "107:7:0",
               "typeDescriptions": {}
             },
@@ -731,7 +1503,7 @@
         "file": "openzeppelin-contracts/contracts/utils/Strings.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 330,
-        "sourceUnit": 49236,
+        "sourceUnit": 50303,
         "symbolAliases": [
           {
             "foreign": {
@@ -739,7 +1511,7 @@
               "name": "Strings",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 49235,
+              "referencedDeclaration": 50302,
               "src": "184:7:0",
               "typeDescriptions": {}
             },
@@ -831,7 +1603,7 @@
         "file": "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 330,
-        "sourceUnit": 50313,
+        "sourceUnit": 51380,
         "symbolAliases": [
           {
             "foreign": {
@@ -839,7 +1611,7 @@
               "name": "MerkleProof",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 50312,
+              "referencedDeclaration": 51379,
               "src": "407:11:0",
               "typeDescriptions": {}
             },
@@ -865,7 +1637,7 @@
                 "663:7:0"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 49235,
+              "referencedDeclaration": 50302,
               "src": "663:7:0"
             },
             "typeName": {
@@ -1300,7 +2072,7 @@
                     "1347:6:0"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 55219,
+                  "referencedDeclaration": 56286,
                   "src": "1347:6:0"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1923,10 +2695,10 @@
                             "name": "MerkleProof",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 50312,
+                            "referencedDeclaration": 51379,
                             "src": "2304:11:0",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_type$_t_contract$_MerkleProof_$50312_$",
+                              "typeIdentifier": "t_type$_t_contract$_MerkleProof_$51379_$",
                               "typeString": "type(library MerkleProof)"
                             }
                           },
@@ -1938,7 +2710,7 @@
                           "memberLocation": "2316:6:0",
                           "memberName": "verify",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 49834,
+                          "referencedDeclaration": 50901,
                           "src": "2304:18:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_pure$_t_array$_t_bytes32_$dyn_memory_ptr_$_t_bytes32_$_t_bytes32_$returns$_t_bool_$",
@@ -3061,10 +3833,10 @@
                       "name": "_safeMint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        55176,
-                        55218
+                        56243,
+                        56285
                       ],
-                      "referencedDeclaration": 55176,
+                      "referencedDeclaration": 56243,
                       "src": "3352:9:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$",
@@ -3312,7 +4084,7 @@
                         "name": "ownerOf",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 54744,
+                        "referencedDeclaration": 55811,
                         "src": "3737:7:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_internal_view$_t_uint256_$returns$_t_address_$",
@@ -3740,7 +4512,7 @@
               ]
             },
             "baseFunctions": [
-              54713
+              55780
             ],
             "documentation": {
               "id": 213,
@@ -4207,7 +4979,7 @@
                     "4127:9:0"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 42851,
+                  "referencedDeclaration": 43918,
                   "src": "4127:9:0"
                 },
                 "nodeType": "ModifierInvocation",
@@ -4434,7 +5206,7 @@
                     "4461:9:0"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 42851,
+                  "referencedDeclaration": 43918,
                   "src": "4461:9:0"
                 },
                 "nodeType": "ModifierInvocation",
@@ -4632,7 +5404,7 @@
                     "4637:9:0"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 42851,
+                  "referencedDeclaration": 43918,
                   "src": "4637:9:0"
                 },
                 "nodeType": "ModifierInvocation",
@@ -4669,7 +5441,7 @@
                 "637:6:0"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 55219,
+              "referencedDeclaration": 56286,
               "src": "637:6:0"
             },
             "id": 17,
@@ -4684,7 +5456,7 @@
                 "645:7:0"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 42932,
+              "referencedDeclaration": 43999,
               "src": "645:7:0"
             },
             "id": 19,
@@ -4704,9 +5476,9 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
           329,
-          42932,
-          48935,
-          55219
+          43999,
+          50002,
+          56286
         ],
         "name": "CouncilNFT",
         "nameLocation": "623:10:0",

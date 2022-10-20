@@ -28,6 +28,7 @@ export function useIntegratedSpaceManagement() {
                 quantity: 1,
                 description: 'Zion Council NFT',
                 permissions: [Permission.Read],
+                roleName: 'Member',
             }
 
             try {
