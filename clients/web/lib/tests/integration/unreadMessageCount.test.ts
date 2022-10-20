@@ -5,7 +5,8 @@ import { IUnreadNotificationCounts } from '../../src/client/store/CustomMatrixSt
 import { RoomVisibility } from '../../src/types/matrix-types'
 import { registerAndStartClients } from './helpers/TestUtils'
 
-describe('unreadMessageCount', () => {
+// skipped until https://linear.app/hnt-labs/issue/HNT-214/fix-broken-unread-notifications-tests
+describe.skip('unreadMessageCount', () => {
     // usefull for debugging or running against cloud servers
     jest.setTimeout(30 * 1000)
     // test:
