@@ -38,11 +38,7 @@ export class ChannelMentionNode extends TextNode {
     createDOM(config: EditorConfig): HTMLElement {
         const element = super.createDOM(config)
         element.className = atoms({
-            fontWeight: 'strong',
-            background: 'level2',
-            paddingX: 'xs',
-            paddingY: 'xxs',
-            rounded: 'xs',
+            color: 'etherum',
         })
         return element
     }

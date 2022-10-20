@@ -39,9 +39,9 @@ export const fontSettings = [
     {
         fontFamily: FontFamily.BodyFont,
         styles: { ...AkkuratStyles },
-        src: "url('/fonts/AkkuratLLWeb-Bold.woff2')",
+        src: "url('/fonts/AkkuratLLWeb-Black.woff2')",
         fontDescription: {
-            weight: '600',
+            weight: '900',
             style: 'normal',
         },
         targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],

@@ -22,11 +22,7 @@ const ChannelLink = ({ channel }: { channel: Channel }) => {
         <NavLink
             to={`/${PATHS.SPACES}/${spaceSlug}/${PATHS.CHANNELS}/${channelSlug}`}
             className={atoms({
-                fontWeight: 'strong',
-                background: 'level2',
-                paddingX: 'xs',
-                paddingY: 'xxs',
-                rounded: 'xs',
+                color: 'etherum',
             })}
         >
             #{channel.label?.toLowerCase()}

@@ -19,7 +19,7 @@ export const MainSideBar = (props: Props) => {
 
     return (
         <SideBar paddingY="sm">
-            <Stack grow>
+            <Stack grow gap="sm">
                 {spaces.map((s) => (
                     <SpaceNavItem
                         key={s.id.slug}

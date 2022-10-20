@@ -145,6 +145,7 @@ export const truncateTextStyle = style({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    marginTop: '-0.26em',
 })
 
 /**

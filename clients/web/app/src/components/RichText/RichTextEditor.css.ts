@@ -5,7 +5,9 @@ import { vars } from 'ui/styles/vars.css'
 export const richText = style({})
 
 export const contentEditable = style([
-    atoms({ paddingY: 'md' }),
+    atoms({
+        paddingY: 'md',
+    }),
     {
         outline: 'none',
     },
@@ -95,7 +97,7 @@ const listitemCheckedShared = style({
 export const listitemChecked = style([
     listitemCheckedShared,
     {
-        margin: `${vars.space.xs} ${vars.space.md}`,
+        margin: `${vars.space.xs} 0`,
         textDecoration: 'line-through',
         selectors: {
             ['&:after']: {

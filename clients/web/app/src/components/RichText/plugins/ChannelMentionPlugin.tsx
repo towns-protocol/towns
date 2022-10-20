@@ -150,8 +150,8 @@ const MentionsTypeaheadMenuItem = (props: {
             onMouseEnter={onMouseEnter}
             onClick={onClick}
         >
-            <Box justifyContent="center">
-                <Text truncate># {option.channel.label}</Text>
+            <Box justifyContent="center" padding="sm">
+                <Text truncate># {option.channel.label.toLowerCase()}</Text>
             </Box>
         </Stack>
     )

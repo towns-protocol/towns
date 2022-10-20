@@ -145,6 +145,8 @@ export const RichTextUI = (props: {
             background="level3"
             minWidth={props.readOnly ? undefined : '200'}
             position="relative"
+            minHeight="x6"
+            justifyContent="center"
         >
             <Stack horizontal alignItems="center" gap="lg" paddingX="md">
                 <Box grow>{props.children}</Box>

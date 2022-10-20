@@ -62,7 +62,7 @@ export const SpaceSideBar = (props: Props) => {
                     />
                 </FadeIn>
             </Stack>
-            <Stack paddingY="md">
+            <Stack paddingY="md" gap="sm">
                 {isReady && (
                     <SpaceNavItem
                         exact
@@ -129,7 +129,7 @@ const ChannelList = (props: { space: SpaceData }) => {
     return (
         <>
             {space.channelGroups.map((group) => (
-                <Stack key={group.label} display={isSmall ? 'none' : undefined}>
+                <Stack gap="sm" key={group.label} display={isSmall ? 'none' : 'flex'}>
                     <ChannelNavGroup>{group.label}</ChannelNavGroup>
                     {group.channels.map((channel) => {
                         const key = `${group.label}/${channel.id.slug}`
