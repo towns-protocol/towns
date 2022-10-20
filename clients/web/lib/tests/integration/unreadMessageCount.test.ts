@@ -71,6 +71,10 @@ describe.skip('unreadMessageCount', () => {
         await waitFor(() => expect(alice.getRoom(channel_2)?.getMyMembership()).toBe('join'))
         // bob sends a message to the room
         await bob.sendMessage(channel_1, 'Hello Alice!')
+
+        // BUG https://linear.app/hnt-labs/issue/HNT-211/in-tests-sending-a-message-from-one-client-doesnt-immediately-update
+        // alice should see the message, but it takes a moment for the client to sync
+        await new Promise((resolve) => setTimeout(resolve, 5000))
         // check our counts
         await waitFor(() =>
             expect(alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count).toBe(1),
