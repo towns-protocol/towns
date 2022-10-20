@@ -13,7 +13,7 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     constructor(wallet?: Wallet) {
         const networkUrl = process.env.ETHERS_NETWORK!
         super(networkUrl)
-        this.wallet = wallet ?? ethers.Wallet.createRandom().connect(this)
+        this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
         console.log('initializing web3 provider with wallet', this.wallet.address)
     }
 
