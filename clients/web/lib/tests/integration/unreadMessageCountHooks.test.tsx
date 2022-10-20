@@ -21,8 +21,7 @@ import { sleep } from '../../src/utils/zion-utils'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-// skipped until https://linear.app/hnt-labs/issue/HNT-214/fix-broken-unread-notifications-tests
-describe.skip('unreadMessageCountHooks', () => {
+describe('unreadMessageCountHooks', () => {
     jest.setTimeout(60000)
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
