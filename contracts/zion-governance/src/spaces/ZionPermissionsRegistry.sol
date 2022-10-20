@@ -36,8 +36,8 @@ contract ZionPermissionsRegistry is Ownable {
       DataTypes.Permission({name: "PinMessage"})
     );
     _setPermission(
-      PermissionTypes.ModifyPermissions,
-      DataTypes.Permission({name: "ModifyPermissions"})
+      PermissionTypes.ModifyChannelPermissions,
+      DataTypes.Permission({name: "ModifyChannelPermissions"})
     );
     _setPermission(
       PermissionTypes.ModifyProfile,

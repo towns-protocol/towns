@@ -9,7 +9,8 @@ library PermissionTypes {
   bytes32 public constant Ban = keccak256("Ban");
   bytes32 public constant Ping = keccak256("Ping");
   bytes32 public constant PinMessage = keccak256("PinMessage");
-  bytes32 public constant ModifyPermissions = keccak256("ModifyPermissions");
+  bytes32 public constant ModifyChannelPermissions =
+    keccak256("ModifyChannelPermissions");
   bytes32 public constant ModifyProfile = keccak256("ModifyProfile");
   bytes32 public constant Owner = keccak256("Owner");
   bytes32 public constant AddRemoveChannels = keccak256("AddRemoveChannels");

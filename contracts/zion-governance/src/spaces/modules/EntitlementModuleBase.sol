@@ -25,7 +25,7 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   ) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
     DataTypes.Permission memory grantPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.ModifyPermissions);
+      .getPermissionFromMap(PermissionTypes.ModifyChannelPermissions);
 
     if (
       caller == _spaceManager ||

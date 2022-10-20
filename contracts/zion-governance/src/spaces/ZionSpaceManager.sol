@@ -184,7 +184,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     bool disabled
   )
     external
-    onlyAllowed(spaceNetworkId, channelNetworkId, "ModifyPermissions")
+    onlyAllowed(spaceNetworkId, channelNetworkId, "ModifyChannelPermissions")
   {
     _validateSpaceExists(spaceNetworkId);
     uint256 _channelId = _getChannelIdByNetworkId(
@@ -228,7 +228,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   /// @inheritdoc ISpaceManager
   function createRole(string calldata spaceId, string calldata name)
     external
-    onlyAllowed(spaceId, "", "ModifyPermissions")
+    onlyAllowed(spaceId, "", "ModifyChannelPermissions")
     returns (uint256)
   {
     return _createRole(_getSpaceIdByNetworkId(spaceId), name);
@@ -237,7 +237,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   /// @inheritdoc ISpaceManager
   function removeRole(string calldata spaceId, uint256 roleId)
     external
-    onlyAllowed(spaceId, "", "ModifyPermissions")
+    onlyAllowed(spaceId, "", "ModifyChannelPermissions")
   {
     _removeRole(_getSpaceIdByNetworkId(spaceId), roleId);
   }
@@ -247,7 +247,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     string calldata spaceId,
     uint256 roleId,
     DataTypes.Permission calldata permission
-  ) external onlyAllowed(spaceId, "", "ModifyPermissions") {
+  ) external onlyAllowed(spaceId, "", "ModifyChannelPermissions") {
     _addPermissionToRole(_getSpaceIdByNetworkId(spaceId), roleId, permission);
   }
 
@@ -256,7 +256,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     string calldata spaceId,
     uint256 roleId,
     DataTypes.Permission calldata permission
-  ) external onlyAllowed(spaceId, "", "ModifyPermissions") {
+  ) external onlyAllowed(spaceId, "", "ModifyChannelPermissions") {
     _removePermissionFromRole(
       _getSpaceIdByNetworkId(spaceId),
       roleId,
@@ -271,7 +271,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     address entitlementModuleAddress,
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlyAllowed(spaceId, channelId, "ModifyPermissions") {
+  ) external onlyAllowed(spaceId, channelId, "ModifyChannelPermissions") {
     _validateSpaceExists(spaceId);
 
     if (bytes(channelId).length > 0) {
@@ -298,7 +298,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     address entitlementModuleAddress,
     uint256[] calldata roleIds,
     bytes calldata data
-  ) external onlyAllowed(spaceId, channelId, "ModifyPermissions") {
+  ) external onlyAllowed(spaceId, channelId, "ModifyChannelPermissions") {
     _validateSpaceExists(spaceId);
 
     if (bytes(channelId).length > 0) {
