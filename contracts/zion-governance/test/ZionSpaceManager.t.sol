@@ -36,6 +36,24 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     );
   }
 
+  function testGetEntitlementsInfoBySpaceId() public {
+    string memory spaceNetworkId = "!7evmpuHDDgkady9u:localhost";
+
+    spaceManager.createSpace(DataTypes.CreateSpaceData("test", spaceNetworkId));
+
+    DataTypes.EntitlementModuleInfo[] memory entitlementsInfo = spaceManager
+      .getEntitlementsInfoBySpaceId(spaceNetworkId);
+
+    assertEq(entitlementsInfo.length, 1);
+
+    assertEq(entitlementsInfo[0].name, "User Granted Entitlement Module");
+    assertEq(
+      entitlementsInfo[0].description,
+      "Allows users to grant other users access to spaces and rooms"
+    );
+    assertEq(entitlementsInfo[0].addr, address(userGrantedEntitlementModule));
+  }
+
   function testCreateSpaceWithUserGrantedEntitlement() public {
     string memory networkId = "!7evmpuHDDgkady9u:localhost";
 
@@ -93,7 +111,15 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       DataTypes.CreateSpaceData("space-name", spaceNetwork)
     );
 
-    DataTypes.CreateRoleData memory role;
+    DataTypes.Permission[] memory permissions = new DataTypes.Permission[](2);
+    permissions[0] = spaceManager.getPermissionFromMap(PermissionTypes.Read);
+    permissions[1] = spaceManager.getPermissionFromMap(PermissionTypes.Write);
+
+    DataTypes.CreateRoleData memory role = DataTypes.CreateRoleData({
+      name: "role-name",
+      metadata: "",
+      permissions: permissions
+    });
 
     uint256 channelId = spaceManager.createChannel(
       DataTypes.CreateChannelData(spaceNetwork, "channel-name", channelNetwork),
@@ -326,6 +352,10 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
 
+    DataTypes.Role[] memory roles = spaceManager.getRolesBySpaceId(networkId);
+
+    assertEq(roles.length, 3);
+
     spaceManager.removeRole(networkId, readerRoleId);
 
     vm.expectRevert(stdError.indexOOBError);
@@ -406,6 +436,28 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     spaceManager.createChannel(
       DataTypes.CreateChannelData(networkId, "channel-name", channelNetworkId),
       role
+    );
+
+    uint256 roleId = spaceManager.createRole(networkId, "TestRole");
+    spaceManager.addPermissionToRole(
+      networkId,
+      roleId,
+      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+    );
+
+    DataTypes.Role memory testRole = spaceManager.getRoleBySpaceIdByRoleId(
+      networkId,
+      roleId
+    );
+
+    assertEq(testRole.name, "TestRole");
+
+    spaceManager.addRoleToEntitlementModule(
+      networkId,
+      channelNetworkId,
+      address(userGrantedEntitlementModule),
+      roleId,
+      abi.encode(address(2))
     );
 
     spaceManager.setChannelAccess(networkId, channelNetworkId, true);

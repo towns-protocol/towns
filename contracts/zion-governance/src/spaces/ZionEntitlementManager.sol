@@ -8,8 +8,8 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ZionPermissionsRegistry} from "./ZionPermissionsRegistry.sol";
-import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 import {Constants} from "./libraries/Constants.sol";
+import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 
 abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
   address internal immutable PERMISSION_REGISTRY;
@@ -51,6 +51,22 @@ abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
     return ownerRoleId;
   }
 
+  function _createOwnerRoleEntitlement(
+    uint256 spaceId,
+    string memory networkId,
+    address msgSender
+  ) internal returns (uint256) {
+    uint256 ownerRoleId = _createOwnerRole(spaceId);
+    _addRoleToEntitlementModule(
+      networkId,
+      "",
+      DEFAULT_ENTITLEMENT_MODULE,
+      ownerRoleId,
+      abi.encode(msgSender)
+    );
+    return ownerRoleId;
+  }
+
   function _createEveryoneRoleEntitlement(
     uint256 spaceId,
     string memory networkId
@@ -59,7 +75,6 @@ abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
     DataTypes.Permission memory readPermission = ZionPermissionsRegistry(
       PERMISSION_REGISTRY
     ).getPermissionByPermissionType(PermissionTypes.Read);
-
     _addPermissionToRole(spaceId, everyoneRoleId, readPermission);
 
     _addRoleToEntitlementModule(

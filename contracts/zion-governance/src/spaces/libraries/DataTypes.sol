@@ -87,9 +87,9 @@ library DataTypes {
 
   /// @notice A struct representing minimal info for an entitlement module
   struct EntitlementModuleInfo {
-    address entitlementAddress;
-    string entitlementName;
-    string entitlementDescription;
+    address addr;
+    string name;
+    string description;
   }
 
   /// *********************************

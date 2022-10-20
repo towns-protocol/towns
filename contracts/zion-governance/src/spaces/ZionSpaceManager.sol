@@ -560,10 +560,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     for (uint256 i = 0; i < entitlementModulesLen; i++) {
       address entitlement = _spaceById[_spaceId].entitlementModules[i];
 
-      if (
-        entitlement == address(0) ||
-        !_spaceById[_spaceId].hasEntitlement[entitlement]
-      ) continue;
+      if (entitlement == address(0)) continue;
 
       if (
         IEntitlementModule(entitlement).isEntitled(
@@ -627,22 +624,6 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
 
       return channelId;
     }
-  }
-
-  function _createOwnerRoleEntitlement(
-    uint256 spaceId,
-    string memory networkId,
-    address msgSender
-  ) internal returns (uint256) {
-    uint256 ownerRoleId = _createOwnerRole(spaceId);
-    _addRoleToEntitlementModule(
-      networkId,
-      "",
-      DEFAULT_ENTITLEMENT_MODULE,
-      ownerRoleId,
-      abi.encode(msgSender)
-    );
-    return ownerRoleId;
   }
 
   /// ****************************
