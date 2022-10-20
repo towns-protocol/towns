@@ -32,12 +32,12 @@ export const SpaceHome = () => {
     return (
         <Stack horizontal grow justifyContent="center" basis="1200">
             <LiquidContainer fullbleed position="relative">
-                {!space.membership || Math.random() > 0 ? (
+                {space.membership !== Membership.Join ? (
+                    <JoinSpace space={space} />
+                ) : !space.membership || Math.random() > 0 ? (
                     <Box absoluteFill padding grow overflow="hidden">
                         <TimelineShimmer />
                     </Box>
-                ) : space.membership !== Membership.Join ? (
-                    <JoinSpace space={space} />
                 ) : (
                     <>Redirect...</>
                 )}
