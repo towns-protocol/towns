@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/extend-expect'
 import { request as matrixRequest } from 'matrix-js-sdk'
+import { TestConstants } from './tests/integration/helpers/TestConstants'
 import { ZionTestClient } from './tests/integration/helpers/ZionTestClient'
 import { webcrypto } from 'node:crypto'
 import Olm from '@matrix-org/olm'
@@ -14,6 +15,9 @@ process.env.DISABLE_ENCRYPTION = 'false'
 process.env.ETHERS_NETWORK = 'http://localhost:8545' // OR "rinkeby"
 process.env.FUNDED_WALLET_PRIVATE_KEY_0 =
     '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // we need a wallet with assets to fund our test clients
+
+// initialize the static wallets
+TestConstants.init()
 
 beforeAll(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
