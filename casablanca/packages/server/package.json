@@ -2,6 +2,9 @@
     "name": "@zion/server",
     "private": true,
     "packageManager": "yarn@3.2.3",
+    "engines": {
+        "node": ">=18"
+    },
     "scripts": {
         "build": "tsc --build",
         "dev": "nodemon src/index.ts",
