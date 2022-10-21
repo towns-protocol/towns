@@ -10,7 +10,7 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 ## Prerequisites
 
-- **Node v16.x.x**, I recommend using nvm to install node: <https://github.com/nvm-sh/nvm>, then you can run `nvm use` to switch to the node version specified in .nvmrc, or `nvm alias default 16.10` to set the default version across all of your terminals
+- **Node v18.x.x**, I recommend using nvm to install node: <https://github.com/nvm-sh/nvm>, then you can run `nvm use` to switch to the node version specified in .nvmrc, or `nvm alias default 18` to set the default version across all of your terminals
 
 - **golang** <https://go.dev/>
 
