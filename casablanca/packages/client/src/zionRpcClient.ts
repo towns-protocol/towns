@@ -1,5 +1,4 @@
 import { ZionServiceInterface, ZionServicePrototype } from '@zion/core'
-import axios from 'axios'
 import debug from 'debug'
 import { JSONRPCClient } from 'json-rpc-2.0'
 
@@ -10,32 +9,32 @@ const log = debug('zion:rpc_client')
 const makeJsonRpcClient = (url: string, controller?: AbortController): JSONRPCClient => {
     log('makeJsonRpcClient', url)
     const client = new JSONRPCClient(async (jsonRPCRequest) => {
-        // log(
-        //   'Sending JSON-RPC request:\n',
-        //   inspect(jsonRPCRequest, { depth: null, colors: true, compact: false }),
-        // )
-        log('Sending JSON-RPC request:')
-        log(jsonRPCRequest)
+        if (!jsonRPCRequest) {
+            log('JSON-RPC request is empty')
+
+            throw new Error('JSON-RPC request is empty')
+        }
+        const body = JSON.stringify(jsonRPCRequest)
 
         try {
-            const response = await axios.post(url, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify(jsonRPCRequest),
+                body,
                 signal: controller?.signal,
             })
-            log('Received JSON-RPC response:', response.status, response.data.constructor.name)
-            log(response.data)
 
             if (response.status === 200) {
-                client.receive(response.data)
+                const data = await response.json()
+                log('Received JSON-RPC response:', response.status, data)
+                client.receive(data)
             } else if (jsonRPCRequest.id !== undefined) {
                 throw new Error(response.statusText)
             }
         } catch (e) {
-            log('Received JSON-RPC error:', e)
+            log('Received JSON-RPC fetch error:', e)
             throw new Error('Received JSON-RPC error:' + url + ' : ' + e)
         }
     })

@@ -6462,7 +6462,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/body-parser@npm:*, @types/body-parser@npm:^1.19.0, @types/body-parser@npm:^1.19.2":
+"@types/body-parser@npm:*, @types/body-parser@npm:^1.19.0":
   version: 1.19.2
   resolution: "@types/body-parser@npm:1.19.2"
   dependencies:
@@ -8189,7 +8189,6 @@ __metadata:
   resolution: "@zion/server@workspace:casablanca/packages/server"
   dependencies:
     "@ethereumjs/util": ^8.0.1
-    "@types/body-parser": ^1.19.2
     "@types/debug": ^4.1.7
     "@types/express": ^4.17.14
     "@types/jest": ^29.2.0
@@ -8197,7 +8196,6 @@ __metadata:
     "@types/node": ^18.11.3
     "@zion/client": "workspace:^"
     "@zion/core": "workspace:^"
-    body-parser: ^1.20.1
     debug: ^4.3.4
     dotenv: ^16.0.3
     ethers: ^5.7.2
@@ -9799,7 +9797,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"body-parser@npm:1.20.1, body-parser@npm:^1.16.0, body-parser@npm:^1.19.0, body-parser@npm:^1.20.1":
+"body-parser@npm:1.20.1, body-parser@npm:^1.16.0, body-parser@npm:^1.19.0":
   version: 1.20.1
   resolution: "body-parser@npm:1.20.1"
   dependencies:

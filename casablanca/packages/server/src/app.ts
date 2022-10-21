@@ -1,5 +1,4 @@
 import { ZionServiceInterface, ZionServicePrototype } from '@zion/core'
-import bodyParser from 'body-parser'
 import debug from 'debug'
 import { Wallet } from 'ethers'
 import express from 'express'
@@ -13,7 +12,11 @@ const log_rpc = debug('zion:rpc')
 const log_http = debug('zion:http')
 
 export const makeJSONRPCServer = (zionServer: ZionServiceInterface): JSONRPCServer => {
-    const server = new JSONRPCServer({ errorListener: () => {} })
+    const server = new JSONRPCServer({
+        errorListener: (message: string, data: unknown) => {
+            log_http('JSONRPCServer errorListener', message, data)
+        },
+    })
     // Iterate through all methods on the service and add them to the JSONRPCServer with zion_ prefix
     Object.getOwnPropertyNames(ZionServicePrototype.prototype).forEach((method: string) => {
         if (method === 'constructor') {
@@ -36,12 +39,13 @@ export const makeJSONRPCServer = (zionServer: ZionServiceInterface): JSONRPCServ
 
 export const makeExpressApp = (server: JSONRPCServer) => {
     const app = express()
-    app.use(bodyParser.json())
+    app.use(express.urlencoded({ extended: true }))
+    app.use(express.json({ strict: true }))
 
     app.post('/json-rpc', async (request, response) => {
-        const jsonRPCRequest = request.body.body
+        const jsonRPCRequest = request.body
         log_http('Received JSON-RPC request:', jsonRPCRequest)
-        const jsonRPCResponse = await server.receiveJSON(jsonRPCRequest)
+        const jsonRPCResponse = await server.receive(jsonRPCRequest)
         log_http('Sending JSON-RPC response:', jsonRPCResponse)
         if (jsonRPCResponse) {
             response.json(jsonRPCResponse)
