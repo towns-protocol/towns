@@ -61,7 +61,9 @@ export const startZionApp = (port: number, storageType: string) => {
     const express = makeExpressApp(makeJSONRPCServer(zionServer))
     const appServer = express.listen(port)
     const addr = appServer.address() as AddressInfo
-    const url = `http://[${addr.address}]:${addr.port}/json-rpc`
+    const host = addr.address === '::' ? 'localhost' : addr.address
+    const url = `http://${host}:${addr.port}/json-rpc`
+    log_http('appServer ', appServer.address())
     return {
         wallet,
         express,

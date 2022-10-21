@@ -17,22 +17,26 @@ const makeJsonRpcClient = (url: string, controller?: AbortController): JSONRPCCl
         log('Sending JSON-RPC request:')
         log(jsonRPCRequest)
 
-        const response = await axios.post(url, {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-            },
-            body: JSON.stringify(jsonRPCRequest),
-            signal: controller?.signal,
-        })
+        try {
+            const response = await axios.post(url, {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify(jsonRPCRequest),
+                signal: controller?.signal,
+            })
+            log('Received JSON-RPC response:', response.status, response.data.constructor.name)
+            log(response.data)
 
-        log('Received JSON-RPC response:', response.status, response.data.constructor.name)
-        log(response.data)
-
-        if (response.status === 200) {
-            client.receive(response.data)
-        } else if (jsonRPCRequest.id !== undefined) {
-            throw new Error(response.statusText)
+            if (response.status === 200) {
+                client.receive(response.data)
+            } else if (jsonRPCRequest.id !== undefined) {
+                throw new Error(response.statusText)
+            }
+        } catch (e) {
+            log('Received JSON-RPC error:', e)
+            throw new Error('Received JSON-RPC error:' + url + ' : ' + e)
         }
     })
     return client
