@@ -21,6 +21,12 @@ interface ISpaceManager {
     DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
   ) external returns (uint256);
 
+  /// @notice Create a channel within a space
+  function createChannel(
+    DataTypes.CreateChannelData memory data,
+    DataTypes.CreateRoleData memory role
+  ) external returns (uint256);
+
   /// @notice Sets the default entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
   function setDefaultEntitlementModule(address entitlementModuleAddress)

@@ -5,7 +5,6 @@ import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
 import {Zion} from "../src/governance/Zion.sol";
 import {CouncilNFT} from "../src/council/CouncilNFT.sol";
 import {ISpaceManager} from "../src/spaces/interfaces/ISpaceManager.sol";
-import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
 import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";

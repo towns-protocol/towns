@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
+import "forge-std/console.sol";
+
 import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
 import {ZionSpaceManager} from "../../ZionSpaceManager.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
@@ -31,7 +33,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     string memory channelId,
     uint256 roleId,
     bytes calldata entitlementData
-  ) external override onlyAllowed(spaceId, channelId, msg.sender) {
+  ) external override onlySpaceManager {
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );
@@ -108,6 +110,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     DataTypes.Permission memory permission
   ) internal view returns (bool) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+
     for (uint256 k = 0; k < allEntitlements.length; k++) {
       uint256 roleId = allEntitlements[k].roleId;
 
@@ -131,39 +134,54 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     string calldata channelId,
     uint256[] calldata _roleIds,
     bytes calldata entitlementData
-  ) external override onlyAllowed(spaceId, channelId, msg.sender) {
-    // ISpaceManager spaceManager = ISpaceManager(_spaceManager);
-    // uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
-    // uint256 _roomId = spaceManager.getChannelIdByNetworkId(spaceId, channelId);
-    // address user = abi.decode(entitlementData, (address));
-    // for (uint256 i = 0; i < _roleIds.length; i++) {
-    //   if (bytes(channelId).length > 0) {
-    //     uint256 entitlementLen = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][
-    //       _roomId
-    //     ][user].length;
-    //     for (uint256 j = 0; j < entitlementLen; j++) {
-    //       if (
-    //         _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_roomId][user][j]
-    //           .roleId == _roleIds[i]
-    //       ) {
-    //         delete _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_roomId][
-    //           user
-    //         ][j];
-    //       }
-    //     }
-    //   } else {
-    //     uint256 entitlementLen = _entitlementsBySpaceIdbyUser[_spaceId][user]
-    //       .length;
-    //     for (uint256 j = 0; j < entitlementLen; j++) {
-    //       if (
-    //         _entitlementsBySpaceIdbyUser[_spaceId][user][j].roleId ==
-    //         _roleIds[i]
-    //       ) {
-    //         delete _entitlementsBySpaceIdbyUser[_spaceId][user][j];
-    //       }
-    //     }
-    //   }
-    // }
+  ) external override onlySpaceManager {
+    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    uint256 _channelId = spaceManager.getChannelIdByNetworkId(
+      spaceId,
+      channelId
+    );
+    address user = abi.decode(entitlementData, (address));
+
+    for (uint256 i = 0; i < _roleIds.length; i++) {
+      if (_channelId > 0) {
+        uint256 entitlementLen = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][
+          _channelId
+        ][user].length;
+
+        for (uint256 j = 0; j < entitlementLen; j++) {
+          if (
+            _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][j]
+              .roleId == _roleIds[i]
+          ) {
+            _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][
+              j
+            ] = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][
+              user
+            ][entitlementLen - 1];
+          }
+        }
+
+        _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user].pop();
+      } else {
+        uint256 entitlementLen = _entitlementsBySpaceIdbyUser[_spaceId][user]
+          .length;
+        for (uint256 j = 0; j < entitlementLen; j++) {
+          if (
+            _entitlementsBySpaceIdbyUser[_spaceId][user][j].roleId ==
+            _roleIds[i]
+          ) {
+            _entitlementsBySpaceIdbyUser[_spaceId][user][
+              j
+            ] = _entitlementsBySpaceIdbyUser[_spaceId][user][
+              entitlementLen - 1
+            ];
+          }
+        }
+
+        _entitlementsBySpaceIdbyUser[_spaceId][user].pop();
+      }
+    }
   }
 
   function getUserRoles(

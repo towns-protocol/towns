@@ -18,26 +18,6 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
     _;
   }
 
-  modifier onlyAllowed(
-    string memory spaceId,
-    string memory channelId,
-    address caller
-  ) {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
-    DataTypes.Permission memory grantPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.ModifyChannelPermissions);
-
-    if (
-      caller == _spaceManager ||
-      spaceManager.getSpaceOwnerBySpaceId(spaceId) == caller ||
-      spaceManager.isEntitled(spaceId, channelId, caller, grantPermission)
-    ) {
-      _;
-    } else {
-      revert Errors.NotAllowed();
-    }
-  }
-
   constructor(
     string memory name_,
     string memory description_,

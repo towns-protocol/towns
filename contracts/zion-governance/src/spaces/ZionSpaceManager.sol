@@ -92,7 +92,8 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     // create the additional role being gated by the token
     uint256 permissionLen = entitlement.permissions.length;
     uint256 additionalRoleId = _createRole(spaceId, entitlement.roleName);
-    // Add the extra permissions passed to the same owner role
+
+    // Add the extra permissions passed to the new role
     if (permissionLen > 0) {
       for (uint256 i = 0; i < permissionLen; ) {
         _addPermissionToRole(
@@ -129,6 +130,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     return spaceId;
   }
 
+  /// @inheritdoc ISpaceManager
   function createChannel(
     DataTypes.CreateChannelData memory data,
     DataTypes.CreateRoleData memory role
