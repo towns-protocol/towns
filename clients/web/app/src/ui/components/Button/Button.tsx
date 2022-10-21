@@ -24,6 +24,7 @@ type Props = {
 export const Button = ({
     animate = true,
     size = 'button_md',
+    rounded,
     disabled,
     tone = 'level3',
     icon,
@@ -36,7 +37,7 @@ export const Button = ({
         layout={animate}
         as="button"
         cursor={disabled ? 'default' : 'pointer'}
-        className={buttonStyle({ size })}
+        className={buttonStyle({ size, rounded })}
         justifyContent="center"
         alignItems="center"
         background={tone}

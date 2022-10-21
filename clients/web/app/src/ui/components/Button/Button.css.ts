@@ -19,7 +19,20 @@ export const buttonStyle = recipe({
         size: 'button_md',
     },
     variants: {
+        rounded: {
+            md: {
+                borderRadius: vars.borderRadius.md,
+            },
+        },
         size: {
+            button_xs: {
+                fontSize: vars.fontSize.sm,
+                height: vars.dims.button.button_xs,
+                fontVariationSettings: vars.fontVariationSettings.normal,
+                paddingLeft: vars.space.md,
+                paddingRight: vars.space.md,
+                gap: vars.space.sm,
+            },
             button_sm: {
                 fontSize: vars.fontSize.sm,
                 height: vars.dims.button.button_sm,

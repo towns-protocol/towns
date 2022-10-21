@@ -77,6 +77,7 @@ export const boxProperties = defineProperties({
             'none',
             'contents',
         ],
+        visibility: ['visible', 'hidden'],
 
         pointerEvents: ['all', 'auto', 'none'],
 

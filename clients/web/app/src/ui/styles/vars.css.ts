@@ -109,7 +109,9 @@ const root = createGlobalTheme(':root', {
             '200': `200px`,
             '250': `250px`,
             '300': `300px`,
+            '350': `350px`,
             '400': `400px`,
+            '420': `420px`,
             '500': `500px`,
             '600': `600px`,
             '700': `700px`,
@@ -131,6 +133,7 @@ const root = createGlobalTheme(':root', {
             input_lg: `${baseline * 6}px`,
         },
         button: {
+            button_xs: `${baseline * 3}px`,
             button_sm: `${baseline * 4}px`,
             button_md: `${baseline * 6}px`,
             button_lg: `${baseline * 8}px`,

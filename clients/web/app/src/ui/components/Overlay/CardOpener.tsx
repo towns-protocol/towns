@@ -18,6 +18,7 @@ type Props = {
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
     trigger?: typeof Trigger[keyof typeof Trigger]
+    onClose?: () => void
 }
 
 type TriggerProps = {
@@ -44,7 +45,7 @@ const createBounds = () => ({
 })
 
 export const CardOpener = (props: Props) => {
-    const { children, render, trigger = Trigger.click, placement = 'above' } = props
+    const { children, render, trigger = Trigger.click, placement = 'above', onClose } = props
 
     const { rootLayerRef } = useContext(RootLayerContext)
     const root = rootLayerRef?.current ?? document.body
@@ -127,6 +128,13 @@ export const CardOpener = (props: Props) => {
             window.removeEventListener('contextmenu', onGlobalClick)
         }
     }, [active, trigger])
+
+    useEffect(() => {
+        if (!active) {
+            onClose?.()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [active])
 
     const onClick = useCallback(
         (e: React.MouseEvent) => {
