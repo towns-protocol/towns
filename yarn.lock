@@ -7988,7 +7988,7 @@ __metadata:
     jest: ^29.2.1
     json-rpc-2.0: ^1.4.1
     lodash: ^4.17.21
-    nanoid: 4.0.0
+    nanoid: 3
     ts-jest: ^29.0.3
     typed-emitter: ^2.1.0
     typescript: ^4.8.4
@@ -8017,7 +8017,7 @@ __metadata:
     jest: ^29.2.1
     json-rpc-2.0: ^1.4.1
     lodash: ^4.17.21
-    nanoid: 4.0.0
+    nanoid: 3
     nodemon: ^2.0.20
     supports-color: ^9.2.3
     ts-jest: ^29.0.3
@@ -21660,16 +21660,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:4.0.0":
-  version: 4.0.0
-  resolution: "nanoid@npm:4.0.0"
-  bin:
-    nanoid: bin/nanoid.js
-  checksum: 7d5946df5c6d383694195b781ae7b5067c149d164ec71e910d6b06676309c3459b68af570b944fb5ecd5065d19df464f05700d141d70bb712ff8ca06642fd8df
-  languageName: node
-  linkType: hard
-
-"nanoid@npm:^3.3.1, nanoid@npm:^3.3.4":
+"nanoid@npm:3, nanoid@npm:^3.3.1, nanoid@npm:^3.3.4":
   version: 3.3.4
   resolution: "nanoid@npm:3.3.4"
   bin:
