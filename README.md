@@ -10,6 +10,8 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 ## Prerequisites
 
+- **Docker Desktop** we use docker to run postgresql, redis, etc for local development. Note, you may have to restart your computer after installing to grant it the right permissions <https://www.docker.com/products/docker-desktop/>
+
 - **Node v18.x.x**, I recommend using nvm to install node: <https://github.com/nvm-sh/nvm>, then you can run `nvm use` to switch to the node version specified in .nvmrc, or `nvm alias default 18` to set the default version across all of your terminals
 
 - **golang** <https://go.dev/>
