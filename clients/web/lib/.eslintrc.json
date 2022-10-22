@@ -16,7 +16,18 @@
     "plugins": ["@typescript-eslint", "prettier"],
     "rules": {
         "@typescript-eslint/no-floating-promises": "error",
-        "@typescript-eslint/no-base-to-string": "error"
+        "@typescript-eslint/no-base-to-string": "error",
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": [
+                    {
+                        "group": ["@harmony/contracts"],
+                        "message": "Please use import { Foo } from client/web3/shims/... instead"
+                    }
+                ]
+            }
+        ]
     },
     "globals": {
         "React": "writable"

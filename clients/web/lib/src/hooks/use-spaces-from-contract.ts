@@ -1,9 +1,9 @@
 import { SpaceIdentifier, ZionClientEvent } from '../client/ZionClientTypes'
 import { useEffect, useState } from 'react'
 
-import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
+import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
 
 export const useSpacesFromContract = (): SpaceIdentifier[] => {
     const { spaceManager } = useZionClient()
@@ -15,7 +15,7 @@ export const useSpacesFromContract = (): SpaceIdentifier[] => {
             return
         }
         void (async () => {
-            const spaces = await spaceManager.unsigned.getSpaces()
+            const spaces = await spaceManager.getSpaces()
             if (spaces) {
                 setSpaceIdentifiers(
                     spaces.map((x: DataTypes.SpaceInfoStructOutput) => {

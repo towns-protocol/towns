@@ -18,8 +18,7 @@ import {
     RoomMember,
     MatrixError,
 } from 'matrix-js-sdk'
-import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { CouncilNFT, ZionSpaceManager } from '@harmony/contracts/localhost/typings'
+import { BytesLike, ContractReceipt, ContractTransaction } from 'ethers'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -33,8 +32,6 @@ import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hook
 import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'
 import { IZionServerVersions, ZionAuth, ZionOpts } from './ZionClientTypes'
 
-import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
-import { ZionContractProvider } from './web3/ZionContractProvider'
 import { createZionChannel } from './matrix/CreateChannel'
 import { createZionSpace } from './matrix/CreateSpace'
 import { editZionMessage } from './matrix/EditMessage'
@@ -48,7 +45,8 @@ import { CustomMemoryStore } from './store/CustomMatrixStore'
 import { toZionRoom } from '../store/use-matrix-store'
 import { ISyncStateData, SyncState } from 'matrix-js-sdk/lib/sync'
 import { IStore } from 'matrix-js-sdk/lib/store'
-import { getContractInfo } from './web3/ZionContracts'
+import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerShim'
+import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
 
 /***
  * Zion Client
@@ -75,8 +73,8 @@ export class ZionClient {
     public get chainId(): number {
         return this._chainId
     }
-    public spaceManager: ZionContractProvider<ZionSpaceManager>
-    public councilNFT: ZionContractProvider<CouncilNFT>
+    public spaceManager: ZionSpaceManagerShim
+    public councilNFT: CouncilNFTShim
     private _chainId: number
     private _auth?: ZionAuth
     private client: MatrixClient
@@ -90,8 +88,17 @@ export class ZionClient {
             opts.homeServerUrl,
             this._auth,
         ))
-        ;({ spaceManager: this.spaceManager, councilNFT: this.councilNFT } =
-            ZionClient.createContracts(opts.web3Provider, opts.web3Signer, this._chainId))
+
+        this.spaceManager = new ZionSpaceManagerShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
+        this.councilNFT = new CouncilNFTShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
     }
 
     /************************************************
@@ -228,8 +235,16 @@ export class ZionClient {
         this._auth = auth
         this._chainId = chainId
         // new contracts
-        ;({ spaceManager: this.spaceManager, councilNFT: this.councilNFT } =
-            ZionClient.createContracts(this.opts.web3Provider, this.opts.web3Signer, this.chainId))
+        this.spaceManager = new ZionSpaceManagerShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
+        this.councilNFT = new CouncilNFTShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
         // new client
         ;({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
             this.opts.homeServerUrl,
@@ -295,7 +310,7 @@ export class ZionClient {
             let transaction: ContractTransaction | undefined = undefined
             let receipt: ContractReceipt | undefined = undefined
             try {
-                transaction = await this.spaceManager.signed.createSpace(spaceInfo)
+                transaction = await this.spaceManager.createSpace(spaceInfo)
                 receipt = await transaction.wait()
             } catch (err) {
                 console.log('[createWeb3Space] error', err)
@@ -339,7 +354,7 @@ export class ZionClient {
             let transaction: ContractTransaction | undefined = undefined
             let receipt: ContractReceipt | undefined = undefined
             try {
-                transaction = await this.spaceManager.signed.createSpaceWithTokenEntitlement(
+                transaction = await this.spaceManager.createSpaceWithTokenEntitlement(
                     spaceInfo,
                     tokenEntitlement,
                 )
@@ -774,32 +789,5 @@ export class ZionClient {
                 }),
             }
         }
-    }
-
-    /************************************************
-     * createMatrixClient
-     * helper, creates a matrix client with appropriate auth
-     *************************************************/
-    private static createContracts(
-        provider: ethers.providers.Provider | undefined,
-        signer: ethers.Signer | undefined,
-        chainId: number,
-    ) {
-        const contractInfo = getContractInfo(chainId)
-        console.log('ZionClient::creating contracts', { chainId, contractInfo })
-        const spaceManager = new ZionContractProvider<ZionSpaceManager>(
-            provider,
-            signer,
-            contractInfo.spaceManager.addresses.spacemanager,
-            contractInfo.spaceManager.abi,
-        )
-        const councilNFT = new ZionContractProvider<CouncilNFT>(
-            provider,
-            signer,
-            contractInfo.council.addresses.councilnft,
-            contractInfo.council.abi,
-        )
-
-        return { spaceManager, councilNFT }
     }
 }

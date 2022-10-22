@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import Goerli_ZionSpaceManagerArtifact from '@harmony/contracts/goerli/abis/ZionSpaceManager.json'
@@ -29,8 +30,6 @@ export interface IZionContractsInfo {
 }
 
 /// get zion contract addresses for a given network id
-/// aellis 2021-09-09,
-/// map chainId to json
 export function getContractInfo(chainId: number): IZionContractsInfo {
     switch (chainId) {
         case 5:

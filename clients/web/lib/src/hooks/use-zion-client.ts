@@ -1,4 +1,3 @@
-import { CouncilNFT, ZionSpaceManager } from '@harmony/contracts/localhost/typings'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -10,9 +9,7 @@ import {
 } from '../types/matrix-types'
 
 /* eslint-disable @typescript-eslint/unbound-method */
-import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
 import { IZionServerVersions, ZionClientEvent } from '../client/ZionClientTypes'
-import { ZionContractProvider } from 'client/web3/ZionContractProvider'
 import { useLoginWithPassword } from './MatrixClient/useLoginWithPassword'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
@@ -21,14 +18,16 @@ import { useMemo } from 'react'
 import { useRegisterPasswordUser } from './MatrixClient/useRegisterPasswordUser'
 import { useZionContext } from '../components/ZionContextProvider'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
+import { CouncilNFTShim } from 'client/web3/shims/CouncilNFTShim'
+import { DataTypes, ZionSpaceManagerShim } from 'client/web3/shims/ZionSpaceManagerShim'
 
 /**
  * Matrix client API to interact with the Matrix server.
  */
 interface ZionClientImpl {
     clientRunning: boolean
-    councilNFT: ZionContractProvider<CouncilNFT> | undefined
-    spaceManager: ZionContractProvider<ZionSpaceManager> | undefined
+    councilNFT: CouncilNFTShim | undefined
+    spaceManager: ZionSpaceManagerShim | undefined
     chainId: number | undefined
     createSpace: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
     createWeb3Space: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>

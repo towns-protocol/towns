@@ -4,13 +4,13 @@ import {
     RoomVisibility,
 } from 'use-zion-client/src/types/matrix-types'
 
-import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
 import { EventTimeline } from 'matrix-js-sdk'
 import { TestConstants } from './TestConstants'
 import { ZionTestClient } from './ZionTestClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers, Wallet } from 'ethers'
 import { getContractInfo } from 'use-zion-client/src/client/web3/ZionContracts'
+import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {

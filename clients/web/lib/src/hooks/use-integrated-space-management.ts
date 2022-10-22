@@ -1,10 +1,10 @@
 import { CreateSpaceInfo, RoomIdentifier } from 'types/matrix-types'
 
-import { DataTypes } from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
 import { Permission } from '../client/web3/ZionContractTypes'
 import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
 import { getContractInfo } from '../client/web3/ZionContracts'
+import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
 
 /**
  * Combine Matrix space creation and Smart Contract space

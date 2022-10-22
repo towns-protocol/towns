@@ -22,7 +22,7 @@ describe('spaceManagerContract', () => {
         // log our our transaction result.
         console.log('roomId', roomId)
         // fetch the spaces
-        const spaces = await bob.spaceManager.unsigned.getSpaces()
+        const spaces = await bob.spaceManager.getSpaces()
         // expect a lower case name for the space
         expect(spaces.find((s) => s.name === spaceName.toLowerCase())).toBeDefined()
     }) // end test
@@ -52,7 +52,7 @@ describe('spaceManagerContract', () => {
         // log our our transaction result.
         console.log('roomId', roomId)
         // fetch the spaces
-        const spaces = await bob.spaceManager.unsigned.getSpaces()
+        const spaces = await bob.spaceManager.getSpaces()
         // expect a lower case name for the space
         expect(spaces.find((s) => s.name === spaceName.toLowerCase())).toBeDefined()
     })
