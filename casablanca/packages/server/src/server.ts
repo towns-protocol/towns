@@ -6,6 +6,7 @@ import {
     CreateEventStreamResult,
     GetEventStreamParams,
     GetEventStreamResult,
+    SignerContext,
     SyncStreamsParams,
     SyncStreamsResult,
     ZionServiceInterface,
@@ -19,13 +20,13 @@ import { createUser } from './workflows/createUser'
 
 export class ZionServer implements ZionServiceInterface {
     constructor(
-        readonly wallet: Wallet,
+        readonly signerContext: SignerContext,
         readonly store: EventStore,
         readonly actionGuard: ActionGuard,
     ) {}
 
     get address(): string {
-        return this.wallet.address
+        return this.signerContext.creatorAddress
     }
 
     async createUser(params: CreateEventStreamParams): Promise<CreateEventStreamResult> {

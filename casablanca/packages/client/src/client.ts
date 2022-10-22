@@ -4,6 +4,7 @@ import {
     isSpaceStreamId,
     makeEvent,
     makeUserStreamId,
+    SignerContext,
     StreamAndCookie,
     StreamEvents,
     StreamKind,
@@ -66,21 +67,21 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
 }
 
 export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
-    readonly wallet: Wallet
+    readonly signerContext: SignerContext
     readonly rpcClient: ZionServiceInterface
     userStreamId?: string
     readonly streams: { [streamId: string]: Stream } = {}
     stopSyncResolve?: (value: string) => void
 
-    constructor(wallet: Wallet, rpcClient: ZionServiceInterface) {
+    constructor(signerContext: SignerContext, rpcClient: ZionServiceInterface) {
         super()
-        this.wallet = wallet
+        this.signerContext = signerContext
         this.rpcClient = rpcClient
         logCall('new Client', this.address)
     }
 
     get address(): string {
-        return this.wallet.address
+        return this.signerContext.creatorAddress
     }
 
     stream(streamId: string): Stream {
@@ -115,7 +116,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
         const events = [
             makeEvent(
-                this.wallet,
+                this.signerContext,
                 {
                     kind: 'inception',
                     streamId,
@@ -147,7 +148,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
 
         const inceptionEvent = makeEvent(
-            this.wallet,
+            this.signerContext,
             {
                 kind: 'inception',
                 streamId: spaceId,
@@ -156,7 +157,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             [],
         )
         const joinEvent = makeEvent(
-            this.wallet,
+            this.signerContext,
             {
                 kind: 'join',
                 userId: this.address,
@@ -175,7 +176,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
 
         const inceptionEvent = makeEvent(
-            this.wallet,
+            this.signerContext,
             {
                 kind: 'inception',
                 streamId: channelId,
@@ -184,7 +185,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             [],
         )
         const joinEvent = makeEvent(
-            this.wallet,
+            this.signerContext,
             {
                 kind: 'join',
                 userId: this.address,
@@ -290,7 +291,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         assert(stream !== undefined, 'unknown stream ' + streamId)
 
         const event = makeEvent(
-            this.wallet,
+            this.signerContext,
             {
                 kind: 'message',
                 text,

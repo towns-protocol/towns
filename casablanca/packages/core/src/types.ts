@@ -159,7 +159,8 @@ export interface FullEvent {
 
     /**
      * Signature in the form 0x1234
-     * For the event to be valid, signature must match event.creatorAddress.
+     * For the event to be valid, signature must match base.creatorAddress or
+     * be signed by base.delegateSig.
      */
     signature: string
 
@@ -184,9 +185,25 @@ export interface BaseEvent {
      * Checksummed according to EIP-55.
      * Creator address can be recovered from the signature, but having
      * it explicitly in the event makes it easier to work with the event.
-     * For the event to be valid, creatorAddress must match the signature.
+     * For the event to be valid:
+     * If delegateSig is present, creatorAddress must match delegateSig.
+     * If delegateSig is not present, creatorAddress must match event signature.
      */
     creatorAddress: string
+
+    /**
+     * Signature that signs public key of the keypair that is used to sign the event.
+     * If present, creatorAddress must match delegateSig and
+     * FullEvent.signature's public key must be signed by delegateSig.
+     *
+     * delegateSig is used to delegate signing authority to another address.
+     * Specifically, it is used to delegate signing authority to a Zion-managed
+     * keypair from the user's wallet.
+     *
+     * Server nodes sign node-produced events with their own keypair and do not
+     * need to use delegateSig.
+     */
+    delegageSig?: string
 
     /** Salt ensures that similar messages are not hashed to the same value. nanoid may be used. */
     salt: string

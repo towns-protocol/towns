@@ -1,10 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
 import {
     Err,
+    makeDelegateSig,
     makeEvent,
     makeEvents,
     makeSpaceStreamId,
     makeUserStreamId,
+    SignerContext,
     StreamKind,
     ZionServiceInterface,
 } from '@zion/core'
@@ -12,7 +14,7 @@ import debug from 'debug'
 import { Wallet } from 'ethers'
 import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
-import { makeEvent_test, makeTestParams } from './util.test'
+import { makeEvent_test, makeRandomUserContext, makeTestParams } from './util.test'
 
 describe('BasicRpcTest', () => {
     let zionApp: ZionApp
@@ -25,10 +27,10 @@ describe('BasicRpcTest', () => {
         await zionApp.stop()
     })
 
-    let bobsWallet: Wallet
+    let bobsContext: SignerContext
 
     beforeEach(async () => {
-        bobsWallet = Wallet.createRandom()
+        bobsContext = await makeRandomUserContext()
     })
 
     const testParams = () => makeTestParams(() => zionApp)
@@ -41,7 +43,7 @@ describe('BasicRpcTest', () => {
                 bob.createUser({
                     events: [
                         makeEvent(
-                            bobsWallet,
+                            bobsContext,
                             {
                                 kind: 'inception',
                                 streamId: 'foo',
@@ -70,10 +72,10 @@ describe('BasicRpcTest', () => {
             await bob.createUser({
                 events: [
                     makeEvent(
-                        bobsWallet,
+                        bobsContext,
                         {
                             kind: 'inception',
-                            streamId: makeUserStreamId(bobsWallet.address),
+                            streamId: makeUserStreamId(bobsContext.creatorAddress),
                             data: { streamKind: StreamKind.User },
                         },
                         [],
@@ -86,7 +88,7 @@ describe('BasicRpcTest', () => {
             const spaceId = makeSpaceStreamId('bobs-space-' + nanoid())
             await bob.createSpace({
                 events: makeEvents(
-                    bobsWallet,
+                    bobsContext,
                     [
                         {
                             kind: 'inception',
@@ -95,7 +97,7 @@ describe('BasicRpcTest', () => {
                         },
                         {
                             kind: 'join',
-                            userId: bobsWallet.address,
+                            userId: bobsContext.creatorAddress,
                         },
                     ],
                     [],
@@ -105,7 +107,7 @@ describe('BasicRpcTest', () => {
 
             const channelId = makeSpaceStreamId('bobs-channel-' + nanoid())
             const channelEvents = makeEvents(
-                bobsWallet,
+                bobsContext,
                 [
                     {
                         kind: 'inception',
@@ -114,7 +116,7 @@ describe('BasicRpcTest', () => {
                     },
                     {
                         kind: 'join',
-                        userId: bobsWallet.address,
+                        userId: bobsContext.creatorAddress,
                     },
                 ],
                 [],
@@ -126,7 +128,7 @@ describe('BasicRpcTest', () => {
             log('Bob fails to create channel with badly chained initial events, hash empty')
             const channelId2 = makeSpaceStreamId('bobs-channel2-' + nanoid())
             const channelEvent2_0 = makeEvent(
-                bobsWallet,
+                bobsContext,
                 {
                     kind: 'inception',
                     streamId: channelId2,
@@ -135,10 +137,10 @@ describe('BasicRpcTest', () => {
                 [],
             )
             const channelEvent2_1 = makeEvent_test(
-                bobsWallet,
+                bobsContext,
                 {
                     kind: 'join',
-                    userId: bobsWallet.address,
+                    userId: bobsContext.creatorAddress,
                 },
                 [],
             )
@@ -150,10 +152,10 @@ describe('BasicRpcTest', () => {
 
             log('Bob fails to create channel with badly chained initial events, wrong hash value')
             const channelEvent2_2 = makeEvent(
-                bobsWallet,
+                bobsContext,
                 {
                     kind: 'join',
-                    userId: bobsWallet.address,
+                    userId: bobsContext.creatorAddress,
                 },
                 [channelEvent2_1.hash],
             )
@@ -164,9 +166,11 @@ describe('BasicRpcTest', () => {
             ).rejects.toThrow(expect.objectContaining({ code: Err.BAD_PREV_EVENTS }))
 
             log('Bob adds event with correct hash')
-            const messageEvent = makeEvent(bobsWallet, { kind: 'message', text: 'Hello, world!' }, [
-                channelEvents[1].hash,
-            ])
+            const messageEvent = makeEvent(
+                bobsContext,
+                { kind: 'message', text: 'Hello, world!' },
+                [channelEvents[1].hash],
+            )
             await bob.addEvent({
                 streamId: channelId,
                 event: messageEvent,
@@ -177,7 +181,7 @@ describe('BasicRpcTest', () => {
                 bob.addEvent({
                     streamId: channelId,
                     event: makeEvent_test(
-                        bobsWallet,
+                        bobsContext,
                         { kind: 'message', text: 'Hello, world!' },
                         [],
                     ),
@@ -188,7 +192,7 @@ describe('BasicRpcTest', () => {
             await expect(
                 bob.addEvent({
                     streamId: channelId,
-                    event: makeEvent(bobsWallet, { kind: 'message', text: 'Hello, world!' }, [
+                    event: makeEvent(bobsContext, { kind: 'message', text: 'Hello, world!' }, [
                         channelEvent2_0.hash,
                     ]),
                 }),

@@ -15,4 +15,6 @@ export enum Err {
     STREAM_BAD_HASHES = 14,
     STREAM_EMPTY = 15,
     STREAM_BAD_EVENT = 16,
+    BAD_DELEGATE_SIG = 17,
+    BAD_PUBLIC_KEY = 18,
 }

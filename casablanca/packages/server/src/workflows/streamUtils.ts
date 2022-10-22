@@ -92,7 +92,7 @@ export const addJoinedEventToUserStream = async (
     const { events } = await server.store.getEventStream(userStreamId)
     await server.store.addEvents(userStreamId, [
         makeEvent(
-            server.wallet,
+            server.signerContext,
             {
                 kind: 'user-joined',
                 streamId,

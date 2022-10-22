@@ -61,7 +61,11 @@ export const makeExpressApp = (server: JSONRPCServer) => {
 export const startZionApp = (port: number, storageType: string) => {
     const wallet = Wallet.createRandom() // TODO: use config
     const store = initStorage(storageType)
-    const zionServer = new ZionServer(wallet, store, new DumbActionGuard())
+    const zionServer = new ZionServer(
+        { wallet, creatorAddress: wallet.address },
+        store,
+        new DumbActionGuard(),
+    )
     const express = makeExpressApp(makeJSONRPCServer(zionServer))
     const appServer = express.listen(port)
     const addr = appServer.address() as AddressInfo

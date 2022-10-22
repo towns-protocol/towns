@@ -90,7 +90,7 @@ const addJoinAndFriendsEvent = async (
         case 'join':
             // TODO: hash
             derivedEvent = makeEvent(
-                server.wallet,
+                server.signerContext,
                 { kind: 'user-joined', streamId, eventRef },
                 prevHashes,
             )
@@ -98,7 +98,7 @@ const addJoinAndFriendsEvent = async (
 
         case 'invite':
             derivedEvent = makeEvent(
-                server.wallet,
+                server.signerContext,
                 { kind: 'user-invited', streamId, inviterId: creatorAddress, eventRef },
                 prevHashes,
             )
@@ -106,7 +106,7 @@ const addJoinAndFriendsEvent = async (
 
         case 'leave':
             derivedEvent = makeEvent(
-                server.wallet,
+                server.signerContext,
                 { kind: 'user-left', streamId, eventRef },
                 prevHashes,
             )

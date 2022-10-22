@@ -27,7 +27,7 @@ export const createChannel = async (
     const spaceStream = await server.store.getEventStream(spaceId)
     await server.store.addEvents(spaceId, [
         makeEvent(
-            server.wallet,
+            server.signerContext,
             {
                 kind: 'channel-created',
                 channelId,

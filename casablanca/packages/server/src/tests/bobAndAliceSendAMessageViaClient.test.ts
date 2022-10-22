@@ -5,12 +5,14 @@ import {
     makeChannelStreamId,
     makeSpaceStreamId,
     MessagePayload,
+    SignerContext,
     StreamKind,
 } from '@zion/core'
 import debug from 'debug'
 import { Wallet } from 'ethers'
 import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
+import { makeRandomUserContext } from './util.test'
 
 const log = debug('test')
 
@@ -25,17 +27,17 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         await zionApp.stop()
     })
 
-    let bobsWallet: Wallet
-    let alicesWallet: Wallet
+    let bobsContext: SignerContext
+    let alicesContext: SignerContext
 
     beforeEach(async () => {
-        bobsWallet = Wallet.createRandom()
-        alicesWallet = Wallet.createRandom()
+        bobsContext = await makeRandomUserContext()
+        alicesContext = await makeRandomUserContext()
     })
 
     const bobCanReconnect = async () => {
         const rpcClient = makeZionRpcClient(zionApp.url)
-        const bobsClient = new Client(bobsWallet, rpcClient)
+        const bobsClient = new Client(bobsContext, rpcClient)
 
         let resolve: (value: string) => void
         let reject: (reason: any) => void
@@ -96,7 +98,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
     test('bobTalksToHimself', async () => {
         const rpcClient = makeZionRpcClient(zionApp.url)
-        const bobsClient = new Client(bobsWallet, rpcClient)
+        const bobsClient = new Client(bobsContext, rpcClient)
 
         let resolve: (value: string) => void
         let reject: (reason: any) => void

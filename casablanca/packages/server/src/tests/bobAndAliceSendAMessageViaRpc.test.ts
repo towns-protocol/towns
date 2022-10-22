@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, test } from '@jest/globals'
 import {
+    makeDelegateSig,
     makeEvent,
     makeEvents,
     makeSpaceStreamId,
     makeUserStreamId,
+    SignerContext,
     StreamKind,
     SyncStreamsResult,
     ZionServiceInterface,
@@ -12,7 +14,7 @@ import debug from 'debug'
 import { Wallet } from 'ethers'
 import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
-import { makeEvent_test, makeTestParams } from './util.test'
+import { makeEvent_test, makeRandomUserContext, makeTestParams } from './util.test'
 
 const log = debug('test:bobAndAliceSendAMessage')
 
@@ -27,12 +29,12 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
         await zionApp.stop()
     })
 
-    let bobsWallet: Wallet
-    let alicesWallet: Wallet
+    let bobsContext: SignerContext
+    let alicesContext: SignerContext
 
     beforeEach(async () => {
-        bobsWallet = Wallet.createRandom()
-        alicesWallet = Wallet.createRandom()
+        bobsContext = await makeRandomUserContext()
+        alicesContext = await makeRandomUserContext()
     })
 
     const testParams = () => makeTestParams(() => zionApp)
@@ -46,10 +48,10 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             await bob.createUser({
                 events: [
                     makeEvent(
-                        bobsWallet,
+                        bobsContext,
                         {
                             kind: 'inception',
-                            streamId: makeUserStreamId(bobsWallet.address),
+                            streamId: makeUserStreamId(bobsContext.creatorAddress),
                             data: { streamKind: StreamKind.User },
                         },
                         [],
@@ -62,7 +64,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             const spaceId = makeSpaceStreamId('bobs-space-' + nanoid())
             await bob.createSpace({
                 events: makeEvents(
-                    bobsWallet,
+                    bobsContext,
                     [
                         {
                             kind: 'inception',
@@ -71,7 +73,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                         },
                         {
                             kind: 'join',
-                            userId: bobsWallet.address,
+                            userId: bobsContext.creatorAddress,
                         },
                     ],
                     [],
@@ -81,7 +83,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
 
             const channelId = makeSpaceStreamId('bobs-channel-' + nanoid())
             const channelEvents = makeEvents(
-                bobsWallet,
+                bobsContext,
                 [
                     {
                         kind: 'inception',
@@ -90,7 +92,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                     },
                     {
                         kind: 'join',
-                        userId: bobsWallet.address,
+                        userId: bobsContext.creatorAddress,
                     },
                 ],
                 [],
@@ -124,7 +126,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
 
             // Bob succesdfully posts a message
             log('bobTalksToHimself Bob posts a message')
-            const event = makeEvent(bobsWallet, { kind: 'message', text: 'Hello, world!' }, [
+            const event = makeEvent(bobsContext, { kind: 'message', text: 'Hello, world!' }, [
                 channelEvents[1].hash,
             ])
             await bob.addEvent({
@@ -142,7 +144,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
 
             log("bobTalksToHimself Bob can't post event without previous event hashes")
             const badEvent = makeEvent_test(
-                bobsWallet,
+                bobsContext,
                 { kind: 'message', text: 'Hello, world!' },
                 [],
             )
@@ -166,10 +168,10 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             await bob.createUser({
                 events: [
                     makeEvent(
-                        bobsWallet,
+                        bobsContext,
                         {
                             kind: 'inception',
-                            streamId: makeUserStreamId(bobsWallet.address),
+                            streamId: makeUserStreamId(bobsContext.creatorAddress),
                             data: { streamKind: StreamKind.User },
                         },
                         [],
@@ -180,10 +182,10 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             await alice.createUser({
                 events: [
                     makeEvent(
-                        alicesWallet,
+                        alicesContext,
                         {
                             kind: 'inception',
-                            streamId: makeUserStreamId(alicesWallet.address),
+                            streamId: makeUserStreamId(alicesContext.creatorAddress),
                             data: { streamKind: StreamKind.User },
                         },
                         [],
@@ -195,7 +197,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             const spaceId = makeSpaceStreamId('bobs-space-' + nanoid())
             await bob.createSpace({
                 events: makeEvents(
-                    bobsWallet,
+                    bobsContext,
                     [
                         {
                             kind: 'inception',
@@ -204,7 +206,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                         },
                         {
                             kind: 'join',
-                            userId: bobsWallet.address,
+                            userId: bobsContext.creatorAddress,
                         },
                     ],
                     [],
@@ -213,7 +215,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
 
             const channelId = makeSpaceStreamId('bobs-channel-' + nanoid())
             const channelEvents = makeEvents(
-                bobsWallet,
+                bobsContext,
                 [
                     {
                         kind: 'inception',
@@ -222,7 +224,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                     },
                     {
                         kind: 'join',
-                        userId: bobsWallet.address,
+                        userId: bobsContext.creatorAddress,
                     },
                 ],
                 [],
@@ -233,9 +235,11 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             let lastChannelHash = channelEvents[1].hash
 
             // Bob succesdfully posts a message
-            const firstMessage = makeEvent(bobsWallet, { kind: 'message', text: 'Hello, world!' }, [
-                lastChannelHash,
-            ])
+            const firstMessage = makeEvent(
+                bobsContext,
+                { kind: 'message', text: 'Hello, world!' },
+                [lastChannelHash],
+            )
             lastChannelHash = firstMessage.hash
             await bob.addEvent({
                 streamId: channelId,
@@ -246,14 +250,14 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             await expect(
                 alice.addEvent({
                     streamId: channelId,
-                    event: makeEvent(alicesWallet, { kind: 'message', text: 'Hello, world!' }, [
+                    event: makeEvent(alicesContext, { kind: 'message', text: 'Hello, world!' }, [
                         lastChannelHash,
                     ]),
                 }),
             ).rejects.toThrow()
 
             // Alice syncs her user stream waiting for invite
-            const aliceStreamId = makeUserStreamId(alicesWallet.address)
+            const aliceStreamId = makeUserStreamId(alicesContext.creatorAddress)
             const userAlice = await alice.getEventStream({
                 streamId: aliceStreamId,
             })
@@ -279,8 +283,8 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             // There are two different events: one is to the channel itself
             // and the other is to the user stream of the invitee to notify invitee.
             const inviteEventInChannel = makeEvent(
-                bobsWallet,
-                { kind: 'invite', userId: alicesWallet.address },
+                bobsContext,
+                { kind: 'invite', userId: alicesContext.creatorAddress },
                 [lastChannelHash],
             )
             lastChannelHash = inviteEventInChannel.hash
@@ -300,7 +304,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                             payload: expect.objectContaining({
                                 kind: 'user-invited',
                                 streamId: channelId,
-                                inviterId: bobsWallet.address,
+                                inviterId: bobsContext.creatorAddress,
                             }),
                         }),
                     }),
@@ -328,8 +332,8 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
 
             // Alice joins the channel
             const joinEventInChannel = makeEvent(
-                alicesWallet,
-                { kind: 'join', userId: alicesWallet.address },
+                alicesContext,
+                { kind: 'join', userId: alicesContext.creatorAddress },
                 [lastChannelHash],
             )
             lastChannelHash = joinEventInChannel.hash
@@ -393,7 +397,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             // Bob posts another message
             await bob.addEvent({
                 streamId: channelId,
-                event: makeEvent(bobsWallet, { kind: 'message', text: 'Hello, Alice!' }, [
+                event: makeEvent(bobsContext, { kind: 'message', text: 'Hello, Alice!' }, [
                     lastChannelHash,
                 ]),
             })
