@@ -1,6 +1,21 @@
 name: 'Dendrite_deploy'
 
 on:
+    workflow_dispatch:
+        inputs:
+            task_definition:
+                description: 'Task definition'
+                required: true
+                default: 'production-zion-dendrite:5'
+            service:
+                description: 'Service name to deploy to'
+                required: true
+                default: 'production-zion-dendrite-service'
+            cluster:
+                description: 'Cluster name to deploy to'
+                required: true
+                default: 'production-node1-zion-ecs-cluster'
+
     workflow_call:
         inputs:
             task_definition:

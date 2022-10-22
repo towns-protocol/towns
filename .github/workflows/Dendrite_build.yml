@@ -196,32 +196,3 @@ jobs:
               uses: re-actors/alls-green@release/v1
               with:
                   jobs: ${{ toJSON(needs) }}
-
-    update-docker-images:
-        name: Update Docker images
-        permissions:
-            packages: write
-            contents: read
-        if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
-        # TODO: do we still need the "if" block above?
-        needs: [integration-tests-done]
-        uses: HereNotThere/harmony/.github/workflows/Dendrite_docker.yml@main
-        secrets:
-            DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-            DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-    deploy-to-ecs:
-        name: Deploy to ECS
-        permissions:
-            packages: write
-            contents: read
-        # TODO: do we still need the "if" block below?
-        if: github.repository == 'HereNotThere/harmony' && github.ref_name == 'main'
-        # TODO: get rid of references to main after adding multi env support
-        needs: [update-docker-images]
-        uses: HereNotThere/harmony/.github/workflows/Dendrite_deploy.yml@main
-        # TODO: get rid of hardcoded references to production after adding multi env support
-        with:
-            task_definition: production-zion-dendrite:5
-            service: production-zion-dendrite-service
-            cluster: production-node1-zion-ecs-cluster
