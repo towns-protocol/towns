@@ -401,6 +401,30 @@ export class ZionClient {
     }
 
     /************************************************
+     * isEntitled
+     *************************************************/
+    public async isEntitled(
+        spaceId: string,
+        channelId: string,
+        user: string,
+        permission: DataTypes.PermissionStruct,
+    ): Promise<boolean> {
+        const isEntitled: boolean = await this.spaceManager.unsigned.isEntitled(
+            spaceId,
+            channelId,
+            user,
+            permission,
+        )
+        console.log('[isEntitled] is user entitlted for channel and space for permission', {
+            user: user,
+            spaceId: spaceId,
+            channelId: channelId,
+            permission: permission.name,
+        })
+        return isEntitled
+    }
+
+    /************************************************
      * inviteUser
      *************************************************/
     public async inviteUser(roomId: RoomIdentifier, userId: string) {

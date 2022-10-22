@@ -37,7 +37,118 @@ describe.skip('permissions', () => {
     //describe.only('permissions', () => {
     jest.setTimeout(30 * 1000)
 
-    test.skip('Read permission is granted', async () => {
+    test('Inviter is not allowed due to missing Invite permission', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice } = await registerAndStartClients(['alice'])
+        const { einstein } = await registerAndStartClients(['einstein'])
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement
+        const roomId = await createSpaceWithTokenEntitlement(bob, [Permission.Read])
+
+        /** Act */
+        // invite users to join the space.
+        try {
+            if (roomId && einstein.matrixUserId) {
+                // TODO: add an assertion on inviteUser by typing return value
+                await alice.inviteUser(roomId, einstein.matrixUserId)
+            }
+        } catch (e) {
+            /** Assert */
+            expect((e as Error).message).toContain('Inviter not allowed')
+            return
+        }
+        expect(true).toEqual(false)
+    }) // end test
+
+    test('Invitee is not allowed to write to token gated space without token', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice } = await registerAndStartClients(['alice'])
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement to write
+        const roomId = await createSpaceWithTokenEntitlement(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        const isEntitledRead = await alice.isEntitled(
+            roomId?.matrixRoomId as string,
+            '',
+            alice.provider.wallet.address,
+            { name: Permission.Read },
+        )
+        const isEntitledWrite = await alice.isEntitled(
+            roomId?.matrixRoomId as string,
+            '',
+            alice.provider.wallet.address,
+            { name: Permission.Write },
+        )
+        /** Act */
+        // invite user to join the space by first checking if they can read.
+        try {
+            if (roomId && alice.matrixUserId) {
+                // Default Read added invariably allows all invitees regardless of token gating
+                // Will be fixed here: https://linear.app/hnt-labs/issue/HNT-205/createspacewithtokenentitlement-should-not-add-the-everyone-role-by
+                isEntitledRead && (await bob.inviteUser(roomId, alice.matrixUserId))
+            }
+        } catch (e) {
+            /** Assert */
+            expect(true).toEqual(false)
+        }
+        expect(isEntitledRead).toBe(true)
+        // alice can't write because she doesn't have token entitlement
+        expect(isEntitledWrite).toBe(false)
+    }) // end test
+
+    test('Invitee is allowed to write to token gated space with token', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const alice = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement to write
+        // TODO: allow for adjusted default Everyone permission, to remove
+        // default Read which invariably allows all invitees regardless of
+        // token gating
+        const roomId = await createSpaceWithTokenEntitlement(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        const isEntitledRead = await alice.isEntitled(
+            roomId?.matrixRoomId as string,
+            '',
+            alice.provider.wallet.address,
+            { name: Permission.Read },
+        )
+        const isEntitledWrite = await alice.isEntitled(
+            roomId?.matrixRoomId as string,
+            '',
+            alice.provider.wallet.address,
+            { name: Permission.Write },
+        )
+        /** Act */
+        // invite user to join the space by first checking if they can read.
+        if (roomId && alice.matrixUserId) {
+            isEntitledRead && (await bob.inviteUser(roomId, alice.matrixUserId))
+        }
+        /** Assert */
+        expect(isEntitledRead).toBe(true)
+        // alice can write because she has token entitlement
+        expect(isEntitledWrite).toBe(true)
+    }) // end test
+
+    test('Read permission is granted', async () => {
         /** Arrange */
 
         // create all the users for the test

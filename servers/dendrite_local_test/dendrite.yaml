@@ -180,6 +180,7 @@ client_api:
       enabled: true
       version: 1
       chain_ids: [5, 1337, 31337] # [goerli, localhost-metamask, localhost-hardhat], see: https://chainlist.org/
+      enable_authz: false
 
   # Whether to require reCAPTCHA for registration.
   enable_registration_captcha: false
@@ -348,3 +349,4 @@ logging:
     level: info
     params:
       path: ./logs
+
