@@ -6,5 +6,8 @@ const config: Config.InitialOptions = {
     setupFilesAfterEnv: ['<rootDir>/jest-setup.ts'],
     testEnvironment: 'jsdom',
     testEnvironmentOptions: { browsers: ['chrome', 'firefox', 'safari'] },
+    moduleNameMapper: {
+        '\\.(wasm\\?url)$': require.resolve('./tests/mocks/file-mock.js'),
+    },
 }
 export default config

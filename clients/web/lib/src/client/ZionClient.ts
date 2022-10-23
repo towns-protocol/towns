@@ -47,6 +47,7 @@ import { ISyncStateData, SyncState } from 'matrix-js-sdk/lib/sync'
 import { IStore } from 'matrix-js-sdk/lib/store'
 import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerShim'
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
+import { loadOlm } from './loadOlm'
 
 /***
  * Zion Client
@@ -254,6 +255,7 @@ export class ZionClient {
         this.client.setMaxListeners(0) // no limit
         // start it up, this begins a sync command
         if (!this.opts.disableEncryption) {
+            await loadOlm()
             await this.client.initCrypto()
             // disable log...
             this.client.setGlobalErrorOnUnknownDevices(false)

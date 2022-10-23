@@ -25,9 +25,9 @@ export function App(): JSX.Element {
             <ThemeProvider theme={theme}>
                 <Container maxWidth="md">
                     <ZionContextProvider
+                        disableEncryption
                         homeServerUrl={MATRIX_HOMESERVER_URL}
                         onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
-                        disableEncryption={true} // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
                         enableSpaceRootUnreads={true}
                     >
                         <Routes>
