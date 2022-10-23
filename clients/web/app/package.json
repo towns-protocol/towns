@@ -109,6 +109,7 @@
         "vite-plugin-checker": "^0.5.1",
         "vite-plugin-eslint": "^1.8.1",
         "vite-tsconfig-paths": "^3.5.2",
-        "vitest": "^0.24.3"
+        "vitest": "^0.24.3",
+        "vitest-canvas-mock": "^0.2.0"
     }
 }

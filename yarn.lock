@@ -16608,6 +16608,7 @@ __metadata:
     vite-plugin-eslint: ^1.8.1
     vite-tsconfig-paths: ^3.5.2
     vitest: ^0.24.3
+    vitest-canvas-mock: ^0.2.0
     wagmi: ^0.7.5
     zustand: ^4.1.2
   languageName: unknown
@@ -30400,6 +30401,17 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 982696ad134577dd9915c4c3548ad36ddcf5dc6d341058548a670a13d860e4cdaaf2b320a59221f178018df089d148b9980e9a344316bef12b698a1c1abc7390
+  languageName: node
+  linkType: hard
+
+"vitest-canvas-mock@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "vitest-canvas-mock@npm:0.2.0"
+  dependencies:
+    jest-canvas-mock: ^2.4.0
+  peerDependencies:
+    vitest: "*"
+  checksum: cbc660c8a417c212d9fdb814b8f8cd0978e1748947b0fc69bf3f6178ad35bc5053f217dde01f732726c83daba85eb1463b5f61a1c48b2b45d4fd68333b7622b7
   languageName: node
   linkType: hard
 

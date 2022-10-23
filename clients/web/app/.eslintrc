@@ -11,6 +11,7 @@
     "project": "./tsconfig.json",
     "allowImportExportEverywhere": true
   },
+  "ignorePatterns": ["vitest.setup.ts"],
   "plugins": ["@typescript-eslint", "import", "react", "jest"],
   "extends": [
     "eslint:recommended",
