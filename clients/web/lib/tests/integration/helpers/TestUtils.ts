@@ -101,7 +101,7 @@ export async function createSpaceWithTokenEntitlement(
     permissions: string[],
     creaetSpaceInfo?: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
-    const contractInfo = getContractInfo(1337)
+    const contractInfo = getContractInfo(client.chainId)
 
     if (!creaetSpaceInfo) {
         creaetSpaceInfo = {

@@ -7,11 +7,14 @@ import {
     LoginTypePublicKey,
     LoginTypePublicKeyEthereum,
     PublicKeyEtheremParams,
+    PublicKeyEtheremParamsV2,
     RegisterRequest,
     RegistrationAuthentication,
     getChainName,
     getParamsPublicKeyEthereum,
     isLoginFlowPublicKeyEthereum,
+    isPublicKeyEtheremParams,
+    isPublicKeyEtheremParamsV2,
 } from './login'
 import { MatrixClient, MatrixError, createClient, IAuthData } from 'matrix-js-sdk'
 import { createUserIdFromEthereumAddress, getUsernameFromId } from '../types/user-identifier'
@@ -576,12 +579,28 @@ export async function newRegisterSession(
     return newSessionError('Unauthorized')
 }
 
-function newSessionSuccess(sessionId: string, params: PublicKeyEtheremParams): NewSession {
-    return {
-        sessionId,
-        chainIds: params.chain_ids,
-        version: params.version,
+function newSessionSuccess(
+    sessionId: string,
+    params: PublicKeyEtheremParams | PublicKeyEtheremParamsV2,
+): NewSession {
+    /**
+     * Workaround until latest Dendrite is deployed in the cloud.
+     * https://linear.app/hnt-labs/issue/HNT-172/cloud-deployment-changes-to-enable-authz-check-on-dendrite
+     */
+    if (isPublicKeyEtheremParamsV2(params)) {
+        return {
+            sessionId,
+            chainIds: [params.chain_id],
+            version: params.version,
+        }
+    } else if (isPublicKeyEtheremParams(params)) {
+        return {
+            sessionId,
+            chainIds: params.chain_ids,
+            version: params.version,
+        }
     }
+    throw new Error('Unable to parse params')
 }
 
 function newSessionError(error: string): NewSession {

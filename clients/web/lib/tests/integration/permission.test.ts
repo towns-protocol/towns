@@ -25,11 +25,9 @@ import { TestConstants } from './helpers/TestConstants'
  *    public_key_authentication:
         ethereum:
             ...
+            chain_id: 31337
+            networkUrl: "http://127.0.0.1:8545"
             enable_authz: true
- * 
- * Add .env file to the local dendrite server project:
- * GOERLI_ENDPOINT="https://goerli.infura.io/v3/your_goerli_api_key"
- * LOCALHOST_ENDPOINT="http://127.0.0.1:8545"
  * 
  * */
 
@@ -41,9 +39,7 @@ describe.skip('permissions', () => {
         /** Arrange */
 
         // create all the users for the test
-        const { alice } = await registerAndStartClients(['alice'])
-        const { einstein } = await registerAndStartClients(['einstein'])
-        const { bob } = await registerAndStartClients(['bob'])
+        const { alice, bob, einstein } = await registerAndStartClients(['alice', 'bob', 'einstein'])
         await bob.fundWallet()
 
         // create a space with token entitlement
@@ -68,8 +64,7 @@ describe.skip('permissions', () => {
         /** Arrange */
 
         // create all the users for the test
-        const { alice } = await registerAndStartClients(['alice'])
-        const { bob } = await registerAndStartClients(['bob'])
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await bob.fundWallet()
 
         // create a space with token entitlement to write
@@ -77,6 +72,7 @@ describe.skip('permissions', () => {
             Permission.Read,
             Permission.Write,
         ])
+
         const isEntitledRead = await alice.isEntitled(
             roomId?.matrixRoomId as string,
             '',

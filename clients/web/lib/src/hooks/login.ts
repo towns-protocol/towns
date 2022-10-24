@@ -25,6 +25,11 @@ export interface PublicKeyEtheremParams {
     chain_ids: number[]
 }
 
+export interface PublicKeyEtheremParamsV2 {
+    version: number
+    chain_id: number
+}
+
 export interface LoginFlows {
     flows: LoginFlow[]
 }
@@ -112,4 +117,22 @@ export function getChainName(chainId: number): string {
         return chain.name
     }
     throw new Error(`ChainId ${chainId} not found`)
+}
+
+export function isPublicKeyEtheremParams(
+    params: PublicKeyEtheremParams | PublicKeyEtheremParamsV2,
+): params is PublicKeyEtheremParams {
+    return (
+        (params as PublicKeyEtheremParams).version !== undefined &&
+        (params as PublicKeyEtheremParams).chain_ids !== undefined
+    )
+}
+
+export function isPublicKeyEtheremParamsV2(
+    params: PublicKeyEtheremParams | PublicKeyEtheremParamsV2,
+): params is PublicKeyEtheremParamsV2 {
+    return (
+        (params as PublicKeyEtheremParamsV2).version !== undefined &&
+        (params as PublicKeyEtheremParamsV2).chain_id !== undefined
+    )
 }
