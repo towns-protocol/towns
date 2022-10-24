@@ -100,11 +100,15 @@ export function isLoginFlowPublicKeyEthereum(o: any): o is UserInteractive {
 export function getParamsPublicKeyEthereum(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     p: any,
-): PublicKeyEtheremParams | undefined {
+): PublicKeyEtheremParams | PublicKeyEtheremParamsV2 | undefined {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const params = p[LoginTypePublicKeyEthereum]
     if (params !== undefined) {
-        return params as PublicKeyEtheremParams
+        if (isPublicKeyEtheremParamsV2(params)) {
+            return params
+        } else if (isPublicKeyEtheremParams(params)) {
+            return params
+        }
     }
     return undefined
 }
@@ -119,18 +123,14 @@ export function getChainName(chainId: number): string {
     throw new Error(`ChainId ${chainId} not found`)
 }
 
-export function isPublicKeyEtheremParams(
-    params: PublicKeyEtheremParams | PublicKeyEtheremParamsV2,
-): params is PublicKeyEtheremParams {
+export function isPublicKeyEtheremParams(params: unknown): params is PublicKeyEtheremParams {
     return (
         (params as PublicKeyEtheremParams).version !== undefined &&
         (params as PublicKeyEtheremParams).chain_ids !== undefined
     )
 }
 
-export function isPublicKeyEtheremParamsV2(
-    params: PublicKeyEtheremParams | PublicKeyEtheremParamsV2,
-): params is PublicKeyEtheremParamsV2 {
+export function isPublicKeyEtheremParamsV2(params: unknown): params is PublicKeyEtheremParamsV2 {
     return (
         (params as PublicKeyEtheremParamsV2).version !== undefined &&
         (params as PublicKeyEtheremParamsV2).chain_id !== undefined
