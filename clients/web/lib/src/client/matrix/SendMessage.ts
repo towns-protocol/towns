@@ -1,5 +1,10 @@
 import { MatrixClient } from 'matrix-js-sdk'
-import { MessageType, RoomIdentifier, SendMessageOptions } from '../../types/matrix-types'
+import {
+    MessageContent,
+    MessageType,
+    RoomIdentifier,
+    SendMessageOptions,
+} from '../../types/matrix-types'
 
 /** treat message as a reply to parentId if specified */
 export async function sendZionMessage(props: {
@@ -9,10 +14,20 @@ export async function sendZionMessage(props: {
     options: SendMessageOptions
 }): Promise<void> {
     const { matrixClient, roomId, message, options } = props
-    const content = {
+
+    let content: MessageContent = {
         body: `${message}`,
         msgtype: options.messageType ?? MessageType.Text,
     }
+
+    if (options.messageType === MessageType.Image) {
+        content = {
+            ...content,
+            url: options.url,
+            info: options.info,
+        }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const cb = function (err: any, res: any) {
         if (err) {

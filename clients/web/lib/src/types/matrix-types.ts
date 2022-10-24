@@ -1,4 +1,4 @@
-import { HistoryVisibility } from 'matrix-js-sdk'
+import { HistoryVisibility, IContent } from 'matrix-js-sdk'
 
 export enum RoomVisibility {
     Private = 'private',
@@ -125,16 +125,46 @@ export interface CreateChannelInfo {
 }
 
 /// use to send different types of messages, e.g. text, emoji, image, etc.
-/// currently unsupported: Emote = "m.emote", Notice = "m.notice", Image = "m.image", File = "m.file", Audio = "m.audio", Location = "m.location", Video = "m.video",
+/// currently unsupported: Emote = "m.emote", Notice = "m.notice", File = "m.file", Audio = "m.audio", Location = "m.location", Video = "m.video",
 export enum MessageType {
     Text = 'm.text',
     WenMoon = 'm.wenmoon',
+    Image = 'm.Image',
 }
 
-export interface SendMessageOptions {
+interface SendMessageOptionsBase {
     threadId?: string
-    messageType?: MessageType
+    messageType?: MessageType.Text | MessageType.WenMoon
 }
+
+// ImageInfo from matrix-js-sdk (node_modules/matrix-js-sdk/src/@types/partials.ts) is incomplete against matrix spec (https://spec.matrix.org/v1.3/client-server-api/#mimage)
+// and missing key `url` props so rolling our own
+interface SendImageMessageOptions {
+    threadId?: string
+    messageType: MessageType.Image
+    url: string
+    // file: EncryptedFile // TBD if this will be needed
+    info?: {
+        size?: number
+        mimetype?: string
+        // thumbnail_file: EncryptedFile
+        thumbnail_url?: string
+        thumbnail_info?: {
+            w?: number
+            h?: number
+            size?: number
+            mimetype?: string
+        }
+        w?: number
+        h?: number
+    }
+}
+
+export type SendMessageOptions = SendMessageOptionsBase | SendImageMessageOptions
+
+export type ImageMessageContent = IContent & SendImageMessageOptions
+
+export type MessageContent = IContent | ImageMessageContent
 
 export interface EditMessageOptions {
     originalEventId: string

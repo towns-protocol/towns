@@ -47,6 +47,7 @@ export type {
     SpaceChild,
     SpaceData,
     SpaceItem,
+    MessageContent,
 } from './types/matrix-types'
 
 export {
