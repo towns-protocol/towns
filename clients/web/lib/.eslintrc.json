@@ -17,6 +17,13 @@
     "rules": {
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-base-to-string": "error",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
         "no-restricted-imports": [
             "error",
             {
