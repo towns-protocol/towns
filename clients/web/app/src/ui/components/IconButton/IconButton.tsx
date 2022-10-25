@@ -12,16 +12,24 @@ type Props = {
 } & Omit<BoxProps, 'size'>
 
 export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
-    const { size = 'square_sm', active: isActive, opaque: isOpaque, ...boxProps } = props
+    const {
+        size = 'square_sm',
+        active: isActive,
+        opaque: isOpaque,
+        background,
+        ...boxProps
+    } = props
     return (
         <Box
             ref={ref}
             className={styles.iconButton}
             {...boxProps}
-            background={{
-                default: !isOpaque ? undefined : isActive ? 'level3' : 'level2',
-                hover: 'level3',
-            }}
+            background={
+                background ?? {
+                    default: !isOpaque ? undefined : isActive ? 'level3' : 'level2',
+                    hover: 'level3',
+                }
+            }
             padding="xs"
             rounded="xs"
             color={isActive ? 'default' : 'gray2'}

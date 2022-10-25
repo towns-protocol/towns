@@ -36,6 +36,7 @@ export type {
     ChannelGroup,
     CreateChannelInfo,
     CreateSpaceInfo,
+    ImageMessageContent,
     PowerLevel,
     PowerLevels,
     PowerLevelDefinition,

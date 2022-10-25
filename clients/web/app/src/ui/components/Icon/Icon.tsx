@@ -195,6 +195,25 @@ const LinkIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const LinkOut = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M8.46451 6.05029C7.91223 6.05029 7.46451 6.498 7.46451 7.05029C7.46451 7.60257 7.91223 8.05029 8.46451 8.05029L14.5356 8.05029L6.34317 16.2427C5.95265 16.6332 5.95265 17.2664 6.34317 17.6569C6.7337 18.0474 7.36686 18.0474 7.75739 17.6569L15.9498 9.4645L15.9498 15.5356C15.9498 16.0879 16.3975 16.5356 16.9498 16.5356C17.5021 16.5356 17.9498 16.0879 17.9498 15.5356L17.9498 7.05029C17.9498 6.78507 17.8444 6.53072 17.6569 6.34318C17.4694 6.15564 17.215 6.05029 16.9498 6.05029L8.46451 6.05029Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const GifIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -639,6 +658,7 @@ const iconMap = {
     invite: InviteIcon,
     italic: ItalicIcon,
     link: LinkIcon,
+    linkOut: LinkOut,
     lock: LockIcon,
     logout: LogoutIcon,
     message: MessageIcon,

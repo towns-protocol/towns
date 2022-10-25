@@ -1,13 +1,20 @@
 import { RelationType } from 'matrix-js-sdk'
 import React from 'react'
 
-import { RoomIdentifier, RoomMessageEvent, TimelineEvent, useSpaceMembers } from 'use-zion-client'
+import {
+    MessageType,
+    RoomIdentifier,
+    RoomMessageEvent,
+    TimelineEvent,
+    useSpaceMembers,
+} from 'use-zion-client'
 import { Message } from '@components/Message'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { MessageReactions, useHandleReaction } from 'hooks/useReactions'
 import { getMessageBody } from 'utils/ztevent_util'
 import { ThreadStats } from 'hooks/useFixMeMessageThread'
 import { MessageProps } from '@components/Message/Message'
+import { MessageImage } from '@components/MessageImage/MessageImage'
 import { TimelineMessageEditor } from './TimelineMessageEditor'
 
 type Props = {
@@ -75,6 +82,8 @@ export const TimelineMessage = React.memo((props: Props) => {
                     eventId={event.eventId}
                     channelId={channelId}
                 />
+            ) : eventContent.msgType === MessageType.Image ? (
+                <MessageImage content={eventContent.content} />
             ) : (
                 <RichTextPreview
                     content={getMessageBody(event.eventId, eventContent)}
