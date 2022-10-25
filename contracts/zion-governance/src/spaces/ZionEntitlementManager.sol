@@ -13,7 +13,9 @@ import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 
 abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
   address internal immutable PERMISSION_REGISTRY;
-  address internal DEFAULT_ENTITLEMENT_MODULE;
+  address internal DEFAULT_USER_ENTITLEMENT_MODULE;
+  address internal DEFAULT_TOKEN_ENTITLEMENT_MODULE;
+  address internal SPACE_NFT;
 
   constructor(address permissionRegistry) {
     if (permissionRegistry == address(0)) revert Errors.InvalidParameters();
@@ -51,22 +53,6 @@ abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
     return ownerRoleId;
   }
 
-  function _createOwnerRoleEntitlement(
-    uint256 spaceId,
-    string memory networkId,
-    address msgSender
-  ) internal returns (uint256) {
-    uint256 ownerRoleId = _createOwnerRole(spaceId);
-    _addRoleToEntitlementModule(
-      networkId,
-      "",
-      DEFAULT_ENTITLEMENT_MODULE,
-      ownerRoleId,
-      abi.encode(msgSender)
-    );
-    return ownerRoleId;
-  }
-
   function _createEveryoneRoleEntitlement(
     uint256 spaceId,
     string memory networkId
@@ -80,7 +66,7 @@ abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
     _addRoleToEntitlementModule(
       networkId,
       "",
-      DEFAULT_ENTITLEMENT_MODULE,
+      DEFAULT_USER_ENTITLEMENT_MODULE,
       everyoneRoleId,
       abi.encode(Constants.EVERYONE_ADDRESS)
     );

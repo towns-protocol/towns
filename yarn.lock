@@ -2866,10 +2866,8 @@ __metadata:
 "@harmony/prettier-config@workspace:^, @harmony/prettier-config@workspace:packages/prettier-config":
   version: 0.0.0-use.local
   resolution: "@harmony/prettier-config@workspace:packages/prettier-config"
-  dependencies:
-    prettier: ^2.7.1
   peerDependencies:
-    eslint: ^8.25.0
+    prettier: ^2.7.1
   languageName: unknown
   linkType: soft
 

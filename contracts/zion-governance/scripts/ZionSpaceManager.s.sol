@@ -8,6 +8,7 @@ import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
 import {DataTypes} from "./../src/spaces/libraries/DataTypes.sol";
 import {Helper} from "./Helper.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
+import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
 import "solidity-json-writer/contracts/JsonWriter.sol";
 
 contract DeployZionSpaceManager is Script {
@@ -41,9 +42,20 @@ contract DeployZionSpaceManager is Script {
     );
     console.log("Token Entitlement Address", address(tokenEntitlementModule));
 
-    zionSpaceManager.setDefaultEntitlementModule(
+    ZionSpace zionSpaceNFT = new ZionSpace(
+      "Zion Space",
+      "ZSNFT",
+      address(zionSpaceManager)
+    );
+    console.log("Zion Space Address", address(zionSpaceNFT));
+
+    zionSpaceManager.setDefaultUserEntitlementModule(
       address(userGrantedEntitlementModule)
     );
+    zionSpaceManager.setDefaultTokenEntitlementModule(
+      address(tokenEntitlementModule)
+    );
+    zionSpaceManager.setSpaceNFT(address(zionSpaceNFT));
 
     writer = writer.writeStartObject();
     writer = writer.writeStringProperty(

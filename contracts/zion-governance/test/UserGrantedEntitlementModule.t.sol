@@ -10,11 +10,15 @@ import "murky/Merkle.sol";
 import {Constants} from "../src/council/libraries/Constants.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
+import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
+import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
 
 contract UserGrantedEntitlemtModuleTest is Test {
-  ZionPermissionsRegistry internal _permissionsRegistry;
   ZionSpaceManager internal _spaceManager;
+  ZionPermissionsRegistry internal _permissionsRegistry;
   UserGrantedEntitlementModule internal _userGranted;
+  TokenEntitlementModule internal tokenEntitlementModule;
+  ZionSpace internal zionSpaceNFT;
 
   function setUp() public {
     _permissionsRegistry = new ZionPermissionsRegistry();
@@ -26,7 +30,19 @@ contract UserGrantedEntitlemtModuleTest is Test {
       address(_spaceManager)
     );
 
-    _spaceManager.setDefaultEntitlementModule(address(_userGranted));
+    tokenEntitlementModule = new TokenEntitlementModule(
+      "Token Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+      address(_spaceManager)
+    );
+
+    zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(_spaceManager));
+
+    _spaceManager.setDefaultUserEntitlementModule(address(_userGranted));
+    _spaceManager.setDefaultTokenEntitlementModule(
+      address(tokenEntitlementModule)
+    );
+    _spaceManager.setSpaceNFT(address(zionSpaceNFT));
   }
 
   function testEntitlementWithChannel() public {
@@ -40,15 +56,8 @@ contract UserGrantedEntitlemtModuleTest is Test {
       DataTypes.CreateSpaceData(spaceName, spaceNetworkId)
     );
 
-    DataTypes.CreateRoleData memory role;
-
     _spaceManager.createChannel(
-      DataTypes.CreateChannelData(
-        spaceNetworkId,
-        channelName,
-        channelNetworkId
-      ),
-      role
+      DataTypes.CreateChannelData(spaceNetworkId, channelName, channelNetworkId)
     );
 
     address[] memory entitlements = _spaceManager

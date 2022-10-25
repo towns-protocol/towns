@@ -56,6 +56,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "SpaceNFTNotSet",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -160,35 +165,6 @@
         "internalType": "struct DataTypes.CreateChannelData",
         "name": "data",
         "type": "tuple"
-      },
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "metadata",
-            "type": "string"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct DataTypes.Permission[]",
-            "name": "permissions",
-            "type": "tuple[]"
-          }
-        ],
-        "internalType": "struct DataTypes.CreateRoleData",
-        "name": "role",
-        "type": "tuple"
       }
     ],
     "name": "createChannel",
@@ -280,11 +256,6 @@
         "components": [
           {
             "internalType": "address",
-            "name": "entitlementModuleAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
             "name": "tokenAddress",
             "type": "address"
           },
@@ -297,6 +268,16 @@
             "internalType": "string",
             "name": "description",
             "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "isSingleToken",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
           },
           {
             "internalType": "string[]",
@@ -501,17 +482,17 @@
         "components": [
           {
             "internalType": "address",
-            "name": "entitlementAddress",
+            "name": "addr",
             "type": "address"
           },
           {
             "internalType": "string",
-            "name": "entitlementName",
+            "name": "name",
             "type": "string"
           },
           {
             "internalType": "string",
-            "name": "entitlementDescription",
+            "name": "description",
             "type": "string"
           }
         ],
@@ -988,7 +969,20 @@
         "type": "address"
       }
     ],
-    "name": "setDefaultEntitlementModule",
+    "name": "setDefaultTokenEntitlementModule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "entitlementModule",
+        "type": "address"
+      }
+    ],
+    "name": "setDefaultUserEntitlementModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1007,6 +1001,19 @@
       }
     ],
     "name": "setSpaceAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spaceNFTAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setSpaceNFT",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -49,7 +49,6 @@ export declare namespace DataTypes {
         networkId: string;
     };
     type CreateSpaceTokenEntitlementDataStruct = {
-        entitlementModuleAddress: PromiseOrValue<string>;
         tokenAddress: PromiseOrValue<string>;
         quantity: PromiseOrValue<BigNumberish>;
         description: PromiseOrValue<string>;

@@ -35,11 +35,12 @@ describe('spaceManagerContract', () => {
         const spaceName = bob.makeUniqueName()
         const contractInfo = getContractInfo(bob.chainId)
         const tokenEntitlement = {
-            entitlementModuleAddress: contractInfo.spaceManager.addresses.tokengranted,
             tokenAddress: contractInfo.council.addresses.councilnft,
             quantity: 1,
             description: 'Zion Council NFT',
             permissions: [Permission.Read],
+            isSingleToken: false,
+            tokenId: 0,
             roleName: 'Council Member',
         }
         const roomId = await bob.createWeb3SpaceWithTokenEntitlement(

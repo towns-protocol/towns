@@ -18,6 +18,8 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   struct ExternalToken {
     address contractAddress;
     uint256 quantity;
+    bool isSingleToken;
+    uint256 tokenId;
   }
 
   struct TokenEntitlement {
@@ -66,33 +68,18 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       "Only the owner can update entitlements"
     );
 
-    (string memory desc, address token, uint256 quantity) = abi.decode(
+    (string memory desc, , , , ) = abi.decode(
       entitlementData,
-      (string, address, uint256)
+      (string, address, uint256, bool, uint256)
     );
-
-    if (token == address(0)) {
-      revert("No tokens provided");
-    }
-
-    if (quantity == 0) {
-      revert("No quantities provided");
-    }
 
     if (bytes(channelId).length > 0) {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         _spaceId
       ].roomEntitlementsByRoomId[_channelId].entitlementsByDescription[desc];
 
-      ExternalToken memory externalToken = ExternalToken(token, quantity);
-      tokenEntitlement.tokens.push(externalToken);
+      _addNewTokenEntitlement(tokenEntitlement, entitlementData, roleId);
 
-      Entitlement memory entitlement = Entitlement(
-        msg.sender,
-        block.timestamp,
-        roleId
-      );
-      tokenEntitlement.entitlements.push(entitlement);
       // so we can iterate through all the token entitlements for a space
       entitlementsBySpaceId[_spaceId]
         .roomEntitlementsByRoomId[_channelId]
@@ -104,21 +91,48 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         _spaceId
       ].entitlementsByDescription[desc];
-
-      ExternalToken memory externalToken = ExternalToken(token, quantity);
-      tokenEntitlement.tokens.push(externalToken);
-
-      Entitlement memory entitlement = Entitlement(
-        msg.sender,
-        block.timestamp,
-        roleId
-      );
-
-      tokenEntitlement.entitlements.push(entitlement);
+      _addNewTokenEntitlement(tokenEntitlement, entitlementData, roleId);
       entitlementsBySpaceId[_spaceId].entitlementDescriptions.push(desc);
 
       setAllDescByPermissionNames(spaceId, roleId, desc);
     }
+  }
+
+  function _addNewTokenEntitlement(
+    TokenEntitlement storage tokenEntitlement,
+    bytes calldata entitlementData,
+    uint256 roleId
+  ) internal {
+    (
+      ,
+      address token,
+      uint256 quantity,
+      bool isSingleToken,
+      uint256 tokenId
+    ) = abi.decode(entitlementData, (string, address, uint256, bool, uint256));
+
+    if (token == address(0)) {
+      revert("No tokens provided");
+    }
+
+    if (quantity == 0) {
+      revert("No quantities provided");
+    }
+
+    ExternalToken memory externalToken = ExternalToken(
+      token,
+      quantity,
+      isSingleToken,
+      tokenId
+    );
+    tokenEntitlement.tokens.push(externalToken);
+
+    Entitlement memory entitlement = Entitlement(
+      msg.sender,
+      block.timestamp,
+      roleId
+    );
+    tokenEntitlement.entitlements.push(entitlement);
   }
 
   function setAllDescByPermissionNames(
@@ -220,14 +234,42 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
     for (uint256 i = 0; i < tokens.length; i++) {
       uint256 quantity = tokens[i].quantity;
+      uint256 tokenId = tokens[i].tokenId;
+      bool isSingleToken = tokens[i].isSingleToken;
+
       if (quantity > 0) {
         address contractAddress = tokens[i].contractAddress;
-
-        if (
-          IERC721(contractAddress).balanceOf(user) >= quantity ||
-          IERC20(contractAddress).balanceOf(user) >= quantity
-        ) {
-          return true;
+        //If a tokenId is set, check that specific token
+        if (isSingleToken) {
+          try IERC721(contractAddress).ownerOf(tokenId) returns (
+            address owner
+          ) {
+            if (owner == user) {
+              return true;
+            }
+          } catch {
+            return false;
+          }
+          //Otherwise check if the address has more than the quantity required
+        } else {
+          try IERC721(contractAddress).balanceOf(user) returns (
+            uint256 balance
+          ) {
+            if (balance >= quantity) {
+              return true;
+            }
+          } catch {
+            return false;
+          }
+          try IERC20(contractAddress).balanceOf(user) returns (
+            uint256 balance
+          ) {
+            if (balance >= quantity) {
+              return true;
+            }
+          } catch {
+            return false;
+          }
         }
       }
     }

@@ -23,9 +23,10 @@ export function useIntegratedSpaceManagement() {
             }
             const contractInfo = getContractInfo(chainId)
             const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
-                entitlementModuleAddress: contractInfo.spaceManager.addresses.tokengranted,
                 tokenAddress: contractInfo.council.addresses.councilnft,
                 quantity: 1,
+                isSingleToken: false,
+                tokenId: 0,
                 description: 'Zion Council NFT',
                 permissions: [Permission.Read],
                 roleName: 'Member',

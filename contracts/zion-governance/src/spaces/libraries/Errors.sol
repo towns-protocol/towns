@@ -13,6 +13,7 @@ library Errors {
   error EntitlementModuleNotSupported();
   error EntitlementNotWhitelisted();
   error DefaultEntitlementModuleNotSet();
+  error SpaceNFTNotSet();
   error DefaultPermissionsManagerNotSet();
   error SpaceDoesNotExist();
   error ChannelDoesNotExist();

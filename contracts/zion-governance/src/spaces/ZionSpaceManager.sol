@@ -13,6 +13,7 @@ import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
 import {ZionPermissionsRegistry} from "./ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "./libraries/PermissionTypes.sol";
+import {ISpace} from "./interfaces/ISpace.sol";
 
 /// @title ZionSpaceManager
 /// @author HNT Labs
@@ -45,11 +46,25 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     // create space Id
     uint256 spaceId = _createSpace(info);
 
+    // mint space nft
+    ISpace(SPACE_NFT).mintBySpaceId(spaceId, _msgSender());
+
     // whitespace default entitlement module
-    _whitelistEntitlementModule(spaceId, DEFAULT_ENTITLEMENT_MODULE, true);
+    _whitelistEntitlementModule(spaceId, DEFAULT_USER_ENTITLEMENT_MODULE, true);
+
+    // whitespace default token entitlement module
+    _whitelistEntitlementModule(
+      spaceId,
+      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
+      true
+    );
 
     // Create owner role with all permissions
-    _createOwnerRoleEntitlement(spaceId, info.spaceNetworkId, _msgSender());
+    uint256 ownerRoleId = _createOwnerRoleEntitlement(
+      spaceId,
+      info.spaceNetworkId
+    );
+    _spaceById[spaceId].ownerRoleId = ownerRoleId;
 
     // Create everyone role with read permission
     _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
@@ -74,17 +89,17 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     uint256 spaceId = _createSpace(info);
 
     // whitespace default entitlement module
-    _whitelistEntitlementModule(spaceId, DEFAULT_ENTITLEMENT_MODULE, true);
+    _whitelistEntitlementModule(spaceId, DEFAULT_USER_ENTITLEMENT_MODULE, true);
 
     // whitespace token entitlement module
     _whitelistEntitlementModule(
       spaceId,
-      entitlement.entitlementModuleAddress,
+      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
       true
     );
 
     // Create owner role with all permissions
-    _createOwnerRoleEntitlement(spaceId, info.spaceNetworkId, _msgSender());
+    _createOwnerRoleEntitlement(spaceId, info.spaceNetworkId);
 
     // Create everyone role with read permission
     _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
@@ -111,12 +126,14 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     _addRoleToEntitlementModule(
       info.spaceNetworkId,
       "",
-      entitlement.entitlementModuleAddress,
+      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
       additionalRoleId,
       abi.encode(
         entitlement.description,
         entitlement.tokenAddress,
-        entitlement.quantity
+        entitlement.quantity,
+        entitlement.isSingleToken,
+        entitlement.tokenId
       )
     );
 
@@ -131,10 +148,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function createChannel(
-    DataTypes.CreateChannelData memory data,
-    DataTypes.CreateRoleData memory role
-  )
+  function createChannel(DataTypes.CreateChannelData memory data)
     external
     onlyAllowed(data.spaceNetworkId, "", "AddRemoveChannels")
     returns (uint256)
@@ -144,25 +158,21 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     uint256 spaceId = _getSpaceIdByNetworkId(data.spaceNetworkId);
     uint256 channelId = _createChannel(spaceId, data);
 
+    (
+      string memory description,
+      address tokenAddress,
+      uint256 quantity,
+      uint256 tokenId
+    ) = _getOwnerNFTInformation(spaceId);
+
     // add owner role to channel's default entitlement module
     _addRoleToEntitlementModule(
       data.spaceNetworkId,
       data.channelNetworkId,
-      DEFAULT_ENTITLEMENT_MODULE,
+      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
       _spaceById[spaceId].ownerRoleId,
-      abi.encode(_msgSender())
+      abi.encode(description, tokenAddress, quantity, tokenId)
     );
-
-    // create role with permissions
-    uint256 roleId = _createRole(spaceId, role.name);
-    uint256 permissionLen = role.permissions.length;
-
-    for (uint256 j = 0; j < permissionLen; ) {
-      _addPermissionToRole(spaceId, roleId, role.permissions[j]);
-      unchecked {
-        ++j;
-      }
-    }
 
     return channelId;
   }
@@ -205,12 +215,27 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function setDefaultEntitlementModule(address entitlementModule)
+  function setDefaultUserEntitlementModule(address entitlementModule)
     external
     onlyOwner
   {
-    DEFAULT_ENTITLEMENT_MODULE = entitlementModule;
+    DEFAULT_USER_ENTITLEMENT_MODULE = entitlementModule;
     emit Events.DefaultEntitlementSet(entitlementModule);
+  }
+
+  /// @inheritdoc ISpaceManager
+  function setDefaultTokenEntitlementModule(address entitlementModule)
+    external
+    onlyOwner
+  {
+    DEFAULT_TOKEN_ENTITLEMENT_MODULE = entitlementModule;
+    emit Events.DefaultEntitlementSet(entitlementModule);
+  }
+
+  /// @inheritdoc ISpaceManager
+  function setSpaceNFT(address spaceNFTAddress) external onlyOwner {
+    SPACE_NFT = spaceNFTAddress;
+    emit Events.SpaceNFTAddressSet(spaceNFTAddress);
   }
 
   /// @inheritdoc ISpaceManager
@@ -628,6 +653,42 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     }
   }
 
+  function _createOwnerRoleEntitlement(uint256 spaceId, string memory networkId)
+    internal
+    returns (uint256)
+  {
+    (
+      string memory description,
+      address tokenAddress,
+      uint256 quantity,
+      uint256 tokenId
+    ) = _getOwnerNFTInformation(spaceId);
+
+    uint256 ownerRoleId = _createOwnerRole(spaceId);
+    _addRoleToEntitlementModule(
+      networkId,
+      "",
+      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
+      ownerRoleId,
+      abi.encode(description, tokenAddress, quantity, true, tokenId)
+    );
+
+    return ownerRoleId;
+  }
+
+  function _getOwnerNFTInformation(uint256 spaceId)
+    internal
+    view
+    returns (
+      string memory description,
+      address tokenAddress,
+      uint256 quantity,
+      uint256 tokenId
+    )
+  {
+    return ("Space Owner NFT", SPACE_NFT, 1, spaceId);
+  }
+
   /// ****************************
   /// ****VALIDATION FUNCTIONS****
   /// ****************************
@@ -672,8 +733,11 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   function _validateSpaceDefaults() internal view {
     if (PERMISSION_REGISTRY == address(0))
       revert Errors.DefaultPermissionsManagerNotSet();
-    if (DEFAULT_ENTITLEMENT_MODULE == address(0))
+    if (DEFAULT_USER_ENTITLEMENT_MODULE == address(0))
       revert Errors.DefaultEntitlementModuleNotSet();
+    if (DEFAULT_TOKEN_ENTITLEMENT_MODULE == address(0))
+      revert Errors.DefaultEntitlementModuleNotSet();
+    if (SPACE_NFT == address(0)) revert Errors.SpaceNFTNotSet();
   }
 
   /// @notice validates that the entitlement module implements the correct interface

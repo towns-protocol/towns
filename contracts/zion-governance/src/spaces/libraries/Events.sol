@@ -60,4 +60,10 @@ library Events {
    * @param permissionAddress The address of the permission contract
    */
   event DefaultPermissionsManagerSet(address indexed permissionAddress);
+
+  /**
+   * @dev Emitted when the space nft address is set on the contract
+   * @param spaceNFTAddress The address of the space nft
+   */
+  event SpaceNFTAddressSet(address indexed spaceNFTAddress);
 }

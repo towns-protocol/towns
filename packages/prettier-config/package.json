@@ -3,10 +3,7 @@
     "version": "1.0.0",
     "license": "MIT",
     "main": "config.js",
-    "devDependencies": {
-        "prettier": "^2.7.1"
-    },
     "peerDependencies": {
-        "eslint": "^8.25.0"
+        "prettier": "^2.7.1"
     }
 }

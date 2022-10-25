@@ -120,10 +120,11 @@ library DataTypes {
 
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement
   struct CreateSpaceTokenEntitlementData {
-    address entitlementModuleAddress;
     address tokenAddress;
     uint256 quantity;
     string description;
+    bool isSingleToken;
+    uint256 tokenId;
     string[] permissions;
     string roleName;
   }

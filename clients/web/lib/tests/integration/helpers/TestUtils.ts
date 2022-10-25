@@ -111,10 +111,11 @@ export async function createSpaceWithTokenEntitlement(
     }
 
     const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
-        entitlementModuleAddress: contractInfo.spaceManager.addresses.tokengranted,
         tokenAddress: contractInfo.council.addresses.councilnft,
         quantity: 1,
         description: 'Zion Council NFT',
+        isSingleToken: false,
+        tokenId: 0,
         permissions,
         roleName: 'Member',
     }

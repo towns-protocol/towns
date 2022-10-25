@@ -22,15 +22,23 @@ interface ISpaceManager {
   ) external returns (uint256);
 
   /// @notice Create a channel within a space
-  function createChannel(
-    DataTypes.CreateChannelData memory data,
-    DataTypes.CreateRoleData memory role
-  ) external returns (uint256);
+  function createChannel(DataTypes.CreateChannelData memory data)
+    external
+    returns (uint256);
 
   /// @notice Sets the default entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
-  function setDefaultEntitlementModule(address entitlementModuleAddress)
+  function setDefaultUserEntitlementModule(address entitlementModuleAddress)
     external;
+
+  /// @notice Sets the default token entitlement for a newly created space
+  /// @param entitlementModuleAddress The address of the entitlement module
+  function setDefaultTokenEntitlementModule(address entitlementModuleAddress)
+    external;
+
+  /// @notice Sets the address for the space nft
+  /// @param spaceNFTAddress The address of the zion space nft
+  function setSpaceNFT(address spaceNFTAddress) external;
 
   // @notice Adds or removes an entitlement module from the whitelist and from the space entitlements
   function whitelistEntitlementModule(

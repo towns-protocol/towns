@@ -12,6 +12,7 @@ import "murky/Merkle.sol";
 import {Constants} from "../src/council/libraries/Constants.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
+import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
 
 contract TokenEntitlementModuleTest is Test {
   ZionPermissionsRegistry internal permissionsRegistry;
@@ -20,6 +21,7 @@ contract TokenEntitlementModuleTest is Test {
   UserGrantedEntitlementModule internal userGrantedEntitlementModule;
   TokenEntitlementModule internal tokenEntitlementModule;
   CouncilNFT internal councilNFT;
+  ZionSpace internal zionSpaceNFT;
 
   address user1;
   address user2;
@@ -51,15 +53,21 @@ contract TokenEntitlementModuleTest is Test {
       address(spaceManager)
     );
 
-    spaceManager.setDefaultEntitlementModule(
+    zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(spaceManager));
+
+    spaceManager.setDefaultUserEntitlementModule(
       address(userGrantedEntitlementModule)
     );
+    spaceManager.setDefaultTokenEntitlementModule(
+      address(tokenEntitlementModule)
+    );
+    spaceManager.setSpaceNFT(address(zionSpaceNFT));
   }
 
-  function createTestSpaceWithUserGrantedEntitlementModule(
-    string memory spaceName,
-    string memory networkId
-  ) private returns (uint256) {
+  function createTestSpace(string memory spaceName, string memory networkId)
+    private
+    returns (uint256)
+  {
     return
       spaceManager.createSpace(DataTypes.CreateSpaceData(spaceName, networkId));
   }
@@ -74,7 +82,7 @@ contract TokenEntitlementModuleTest is Test {
     string memory roomId = "";
 
     // create a space with the default user granted entitlement module
-    createTestSpaceWithUserGrantedEntitlementModule(spaceName, networkId);
+    createTestSpace(spaceName, networkId);
 
     DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
       PermissionTypes.Ban
@@ -84,19 +92,13 @@ contract TokenEntitlementModuleTest is Test {
     uint256 testerRoleId = spaceManager.createRole(networkId, roleName);
     spaceManager.addPermissionToRole(networkId, testerRoleId, permission);
 
-    spaceManager.whitelistEntitlementModule(
-      networkId,
-      address(tokenEntitlementModule),
-      true
-    );
-
     // Add token entitlement module to space
     spaceManager.addRoleToEntitlementModule(
       networkId,
       roomId,
       address(tokenEntitlementModule),
       testerRoleId,
-      abi.encode("ziontoken", address(zion), 10)
+      abi.encode("ziontoken", address(zion), 10, false, 0)
     );
 
     // verify the token entitlement module is added to the space
@@ -137,7 +139,7 @@ contract TokenEntitlementModuleTest is Test {
       PermissionTypes.Ban
     );
 
-    createTestSpaceWithUserGrantedEntitlementModule(spaceName, networkId);
+    createTestSpace(spaceName, networkId);
 
     // Transfer token to user1
     councilNFT.mint{value: Constants.MINT_PRICE}(user1);
@@ -145,22 +147,16 @@ contract TokenEntitlementModuleTest is Test {
     // Create roles and add permissions
 
     string memory roleName = "Tester";
-    uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
-    spaceManager.addPermissionToRole(networkId, ownerRoleId, permission);
-
-    spaceManager.whitelistEntitlementModule(
-      networkId,
-      address(tokenEntitlementModule),
-      true
-    );
+    uint256 roleId = spaceManager.createRole(networkId, roleName);
+    spaceManager.addPermissionToRole(networkId, roleId, permission);
 
     // Add the token entitlement module to the space
     spaceManager.addRoleToEntitlementModule(
       networkId,
       roomId,
       address(tokenEntitlementModule),
-      ownerRoleId,
-      abi.encode("councilnft", address(councilNFT), 1)
+      roleId,
+      abi.encode("councilnft", address(councilNFT), 1, false, 0)
     );
 
     // Verify the token entitlement module is added to the space
