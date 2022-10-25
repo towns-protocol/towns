@@ -1,6 +1,12 @@
 #!/bin/bash -ue
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
+echo 
+echo "Rebuilding..."
+echo
+yarn run --top-level csb:clean
+yarn run --top-level csb:build
+
 ./launch_redis.sh
 
 echo 

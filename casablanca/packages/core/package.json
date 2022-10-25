@@ -6,8 +6,7 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc --build",
-        "test": "tsc --build && jest",
-        "test-all": "yarn run -T test-all"
+        "test": "tsc --build && jest"
     },
     "dependencies": {
         "@ethereumjs/util": "^8.0.1",

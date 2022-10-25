@@ -5,8 +5,7 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc --build",
-        "dev": "ts-node src/index.ts",
-        "test-all": "yarn run -T test-all"
+        "dev": "ts-node src/index.ts"
     },
     "dependencies": {
         "@zion/core": "workspace:^",

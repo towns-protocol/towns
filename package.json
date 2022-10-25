@@ -5,9 +5,10 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
-        "build-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
         "build:contracts-governance": "yarn workspace @harmony/zion-governance build",
-        "clean-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
+        "csb:build": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
+        "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
+        "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
         "lint": "yarn workspaces foreach -p run lint",
         "postinstall": "husky install",
         "prepare": "husky install",
@@ -16,7 +17,7 @@
         "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
-        "test-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)"
+        "test-csb": "yarn csb:test"
     },
     "devDependencies": {
         "@types/node": "^18.11.3",

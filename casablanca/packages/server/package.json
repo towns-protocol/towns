@@ -6,7 +6,6 @@
         "build": "tsc --build",
         "dev": "nodemon src/index.ts",
         "test": "tsc --build && jest --testTimeout 10000",
-        "test-all": "yarn run -T test-all",
         "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:80/json-rpc jest -t \".*-remote\""
     },
     "dependencies": {

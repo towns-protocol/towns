@@ -45,5 +45,5 @@ jobs:
             - run: yarn lint
             - run: yarn prettier:check
             - run: yarn syncpack:check
-            - run: yarn build-csb
-            - run: yarn test-csb
+            - run: yarn csb:build
+            - run: yarn csb:test
