@@ -9,7 +9,6 @@ import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/Token
 import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
-import {Constants} from "../src/council/libraries/Constants.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
@@ -142,7 +141,7 @@ contract TokenEntitlementModuleTest is Test {
     createTestSpace(spaceName, networkId);
 
     // Transfer token to user1
-    councilNFT.mint{value: Constants.MINT_PRICE}(user1);
+    councilNFT.mint{value: councilNFT.MINT_PRICE()}(user1);
 
     // Create roles and add permissions
 

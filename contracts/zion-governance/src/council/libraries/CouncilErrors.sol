@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-library Errors {
+library CouncilErrors {
   /// @notice thrown when an incorrect amount of ETH is sent to mint
   error MintPriceNotPaid();
 

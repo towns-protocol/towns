@@ -7,7 +7,6 @@ import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
 import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
 import "murky/Merkle.sol";
-import {Constants} from "../src/council/libraries/Constants.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";

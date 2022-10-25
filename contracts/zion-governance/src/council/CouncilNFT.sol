@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import "solmate/tokens/ERC721.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
-import {Errors} from "./libraries/Errors.sol";
-import {Events} from "./libraries/Events.sol";
-import {Constants} from "./libraries/Constants.sol";
+import {CouncilErrors} from "./libraries/CouncilErrors.sol";
+import {CouncilEvents} from "./libraries/CouncilEvents.sol";
 import {MerkleProof} from "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol";
 
 /**
@@ -17,6 +16,12 @@ import {MerkleProof} from "openzeppelin-contracts/contracts/utils/cryptography/M
  */
 contract CouncilNFT is ERC721, Ownable {
   using Strings for uint256;
+
+  /// @notice the total supply of the collection
+  uint256 public constant TOTAL_SUPPLY = 2500;
+
+  /// @notice the mint price for an individual nft
+  uint256 public constant MINT_PRICE = 0.08 ether;
 
   /// @notice the base uri for the nft metadata including image uri
   string public baseURI;
@@ -56,7 +61,7 @@ contract CouncilNFT is ERC721, Ownable {
     uint256 allowance,
     bytes32[] calldata proof
   ) public payable returns (uint256) {
-    if (alreadyMinted[recipient]) revert Errors.AlreadyMinted();
+    if (alreadyMinted[recipient]) revert CouncilErrors.AlreadyMinted();
 
     if (allowlistMint == true) {
       require(allowance == 1, "Not allowed to mint yet");
@@ -86,15 +91,15 @@ contract CouncilNFT is ERC721, Ownable {
   /// @notice Verify that there are still more NFTs to mint
   /// @notice Mint the NFT to the user
   function mintTo(address recipient) private returns (uint256) {
-    if (msg.value != Constants.MINT_PRICE) revert Errors.MintPriceNotPaid();
+    if (msg.value != MINT_PRICE) revert CouncilErrors.MintPriceNotPaid();
 
     uint256 newItemId = ++currentTokenId;
-    if (newItemId > Constants.TOTAL_SUPPLY) revert Errors.MaxSupply();
+    if (newItemId > TOTAL_SUPPLY) revert CouncilErrors.MaxSupply();
 
     alreadyMinted[recipient] = true;
     _safeMint(recipient, newItemId);
 
-    emit Events.Minted(recipient);
+    emit CouncilEvents.Minted(recipient);
     return newItemId;
   }
 
@@ -109,7 +114,7 @@ contract CouncilNFT is ERC721, Ownable {
     returns (string memory)
   {
     if (ownerOf(tokenId) == address(0)) {
-      revert Errors.NonExistentTokenURI();
+      revert CouncilErrors.NonExistentTokenURI();
     }
     return
       bytes(baseURI).length > 0
@@ -124,7 +129,7 @@ contract CouncilNFT is ERC721, Ownable {
     /* solhint-disable-next-line avoid-low-level-calls */
     (bool transferTx, ) = payee.call{value: balance}("");
     if (!transferTx) {
-      revert Errors.WithdrawTransfer();
+      revert CouncilErrors.WithdrawTransfer();
     }
   }
 

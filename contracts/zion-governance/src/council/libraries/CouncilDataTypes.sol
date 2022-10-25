@@ -1,15 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-library DataTypes {
-  /// @notice An enum containing the different states the protocol can be in, limiting certain actions.
-  /// @param Unpaused The fully unpaused state
-  /// @param Paused The fully paused state
-  enum ContractState {
-    Unpaused,
-    Paused
-  }
-
+library CouncilDataTypes {
   /// @notice A struct containing a staked token
   struct StakedToken {
     // wallet address of user

@@ -1,12 +1,10 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {console} from "forge-std/console.sol";
-
 // Libs
-import {Events} from "./libraries/Events.sol";
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Errors} from "./libraries/Errors.sol";
+import {CouncilEvents} from "./libraries/CouncilEvents.sol";
+import {CouncilDataTypes} from "./libraries/CouncilDataTypes.sol";
+import {CouncilErrors} from "./libraries/CouncilErrors.sol";
 
 // Contracts
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
@@ -26,7 +24,7 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   uint256 public totalSupply;
   uint256 private pointsPerHour = 100000;
 
-  mapping(address => DataTypes.Staker) internal _stakerByAddress;
+  mapping(address => CouncilDataTypes.Staker) internal _stakerByAddress;
   mapping(uint256 => address) internal _stakerAddressByTokenId;
 
   function stakeToken(uint256 _tokenId) external nonReentrant {
@@ -38,16 +36,14 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
 
     // Wallet must own the token being staked
     if (councilNFT.ownerOf(_tokenId) != msg.sender)
-      revert Errors.NotTokenOwner();
+      revert CouncilErrors.NotTokenOwner();
 
     // Transfer the token from the wallet to the staking contract
     councilNFT.transferFrom(msg.sender, address(this), _tokenId);
 
     // Create instance of StakedToken
-    DataTypes.StakedToken memory stakedToken = DataTypes.StakedToken(
-      msg.sender,
-      _tokenId
-    );
+    CouncilDataTypes.StakedToken memory stakedToken = CouncilDataTypes
+      .StakedToken(msg.sender, _tokenId);
 
     // Add the token to the stakedTokens array
     _stakerByAddress[msg.sender].stakedTokens.push(stakedToken);
@@ -65,17 +61,17 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
     totalSupply++;
 
     // Emit staked event
-    emit Events.Staked(msg.sender, _tokenId);
+    emit CouncilEvents.Staked(msg.sender, _tokenId);
   }
 
   function withdrawToken(uint256 _tokenId) external nonReentrant {
     // Make sure the user has at least one token staked before withdrawing
     if (_stakerByAddress[msg.sender].amountStaked == 0)
-      revert Errors.NoStakedTokens();
+      revert CouncilErrors.NoStakedTokens();
 
     // Wallet must own the token being withdrawn
     if (_stakerAddressByTokenId[_tokenId] != msg.sender)
-      revert Errors.NotTokenOwner();
+      revert CouncilErrors.NotTokenOwner();
 
     // Update the points for this user, as the amount of points decreases with less tokens
     uint256 points = _calculatePoints(msg.sender);
@@ -118,19 +114,19 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
     totalSupply--;
 
     // Emit unstaked event
-    emit Events.Withdraw(msg.sender, _tokenId);
+    emit CouncilEvents.Withdraw(msg.sender, _tokenId);
   }
 
   /// @notice Claim accrued points
   function claimPoints() external {
     uint256 points = _calculatePoints(msg.sender) +
       _stakerByAddress[msg.sender].unclaimedPoints;
-    if (points == 0) revert Errors.NoPointsToClaim();
+    if (points == 0) revert CouncilErrors.NoPointsToClaim();
 
     _stakerByAddress[msg.sender].timeOfLastUpdate = block.timestamp;
     _stakerByAddress[msg.sender].unclaimedPoints = 0;
 
-    emit Events.PointsClaimed(msg.sender, points);
+    emit CouncilEvents.PointsClaimed(msg.sender, points);
   }
 
   //
@@ -140,7 +136,7 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   function getStakerByAddress(address _staker)
     external
     view
-    returns (DataTypes.Staker memory)
+    returns (CouncilDataTypes.Staker memory)
   {
     return _stakerByAddress[_staker];
   }
@@ -156,13 +152,13 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   function getStakedTokensByAddress(address _user)
     public
     view
-    returns (DataTypes.StakedToken[] memory)
+    returns (CouncilDataTypes.StakedToken[] memory)
   {
     // Check if user has staked
     if (_stakerByAddress[msg.sender].amountStaked > 0) {
       // Returns all the tokens in the stakedToken Array for this user are not -1
-      DataTypes.StakedToken[]
-        memory _stakedTokens = new DataTypes.StakedToken[](
+      CouncilDataTypes.StakedToken[]
+        memory _stakedTokens = new CouncilDataTypes.StakedToken[](
           _stakerByAddress[_user].amountStaked
         );
       uint256 _index = 0;
@@ -180,7 +176,7 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
 
       return _stakedTokens;
     } else {
-      return new DataTypes.StakedToken[](0);
+      return new CouncilDataTypes.StakedToken[](0);
     }
   }
 

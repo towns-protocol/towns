@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import "./../src/council/CouncilNFT.sol";
 import {MerkleHelper} from "./utils/MerkleHelper.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import "./../src/council/libraries/Errors.sol";
-import {DataTypes} from "../src/council/libraries/DataTypes.sol";
+import "./../src/council/libraries/CouncilErrors.sol";
+import {CouncilDataTypes} from "../src/council/libraries/CouncilDataTypes.sol";
 import {CouncilStaking} from "./../src/council/CouncilStaking.sol";
 import "murky/Merkle.sol";
 
@@ -44,7 +44,7 @@ contract CouncilStakingTest is Test, MerkleHelper {
     vm.prank(allowlist1);
     vm.expectEmit(true, true, false, false);
 
-    emit Events.Staked(allowlist1, tokenId);
+    emit CouncilEvents.Staked(allowlist1, tokenId);
     staking.stakeToken(tokenId);
 
     assertEq(staking.getStakerAddressByTokenId(tokenId), allowlist1);
@@ -52,7 +52,7 @@ contract CouncilStakingTest is Test, MerkleHelper {
   }
 
   function testNotTokenOwner() public {
-    vm.expectRevert(Errors.NotTokenOwner.selector);
+    vm.expectRevert(CouncilErrors.NotTokenOwner.selector);
     vm.prank(allowlist2);
     staking.stakeToken(tokenId);
   }
@@ -68,7 +68,9 @@ contract CouncilStakingTest is Test, MerkleHelper {
 
     assertEq(staking.getStakerAddressByTokenId(tokenId), address(0));
 
-    DataTypes.Staker memory staker = staking.getStakerByAddress(allowlist1);
+    CouncilDataTypes.Staker memory staker = staking.getStakerByAddress(
+      allowlist1
+    );
 
     assertEq(staker.amountStaked, 0);
   }
@@ -85,7 +87,7 @@ contract CouncilStakingTest is Test, MerkleHelper {
     vm.expectEmit(true, true, false, false);
     vm.prank(allowlist1);
     staking.claimPoints();
-    emit Events.PointsClaimed(allowlist1, points);
+    emit CouncilEvents.PointsClaimed(allowlist1, points);
 
     assertEq(staking.getAvailablePoints(allowlist1), 0);
   }
@@ -94,7 +96,7 @@ contract CouncilStakingTest is Test, MerkleHelper {
     vm.prank(allowlist1);
     staking.stakeToken(tokenId);
 
-    vm.expectRevert(Errors.NoPointsToClaim.selector);
+    vm.expectRevert(CouncilErrors.NoPointsToClaim.selector);
     vm.prank(allowlist1);
     staking.claimPoints();
 
@@ -120,7 +122,7 @@ contract CouncilStakingTest is Test, MerkleHelper {
     staking.stakeToken(tokenId);
 
     vm.prank(allowlist1);
-    DataTypes.StakedToken[] memory _stakedTokens = staking
+    CouncilDataTypes.StakedToken[] memory _stakedTokens = staking
       .getStakedTokensByAddress(allowlist1);
 
     for (uint256 i = 0; i < _stakedTokens.length; i++) {
