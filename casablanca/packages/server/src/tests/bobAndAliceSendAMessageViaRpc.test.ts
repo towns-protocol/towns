@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, test } from '@jest/globals'
 import {
-    makeDelegateSig,
     makeEvent,
     makeEvents,
     makeSpaceStreamId,
@@ -11,7 +10,6 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import debug from 'debug'
-import { Wallet } from 'ethers'
 import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
 import { makeEvent_test, makeRandomUserContext, makeTestParams } from './util.test'
@@ -22,11 +20,15 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
     let zionApp: ZionApp
 
     beforeAll(async () => {
+        log('beforeAll', 'starting app')
         zionApp = startZionApp(0, 'redis')
+        log('beforeAll', 'app started')
     })
 
     afterAll(async () => {
+        log('afterAll', 'stopping app')
         await zionApp.stop()
+        log('afterAll', 'app stopped')
     })
 
     let bobsContext: SignerContext
@@ -38,6 +40,13 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
     })
 
     const testParams = () => makeTestParams(() => zionApp)
+
+    const stopIfClient = (service: ZionServiceInterface): void => {
+        if (service.hasOwnProperty('rpcClient')) {
+            log('Stopping client')
+            ;(service as any).close()
+        }
+    }
 
     test.each(testParams())(
         'bobTalksToHimself-%s',
@@ -155,13 +164,17 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                 }),
             ).rejects.toThrow()
 
-            log('bobTalksToHimself done')
+            log('stopping client')
+            stopIfClient(bob)
+            log('bobTalksToHimself', method, 'done')
         },
     )
 
     test.each(testParams())(
         'bobAndAliceSendAMessage-%s',
         async (method: string, makeService: () => ZionServiceInterface) => {
+            log('bobAndAliceSendAMessage', method, 'start')
+
             const bob = makeService()
             const alice = makeService()
             // Create accounts for Bob and Alice
@@ -415,6 +428,11 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                     }),
                 ]),
             )
+
+            log('stopping clients')
+            stopIfClient(bob)
+            stopIfClient(alice)
+            log('bobAndAliceSendAMessage', method, 'done')
         },
     )
 })

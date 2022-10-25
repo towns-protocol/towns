@@ -9,4 +9,4 @@ const app = startZionApp(config.port, config.storageType) // TODO - figure out h
 console.log('Server address:', app.wallet.address)
 
 console.log('Listening:')
-console.log(app.appServer.address())
+console.log(app.httpServer.address())

@@ -14,7 +14,7 @@
         "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
-        "test-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test"
+        "test-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)"
     },
     "devDependencies": {
         "@types/node": "^18.11.3",

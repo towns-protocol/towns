@@ -7,6 +7,7 @@ import { AddressInfo } from 'net'
 import { DumbActionGuard } from './dumbActionGuard'
 import { ZionServer } from './server'
 import { initStorage } from './storage/storage'
+import * as http from 'http'
 
 const log_rpc = debug('zion:rpc')
 const log_http = debug('zion:http')
@@ -67,20 +68,29 @@ export const startZionApp = (port: number, storageType: string) => {
         new DumbActionGuard(),
     )
     const express = makeExpressApp(makeJSONRPCServer(zionServer))
-    const appServer = express.listen(port)
-    const addr = appServer.address() as AddressInfo
+    const httpServer = http.createServer(express)
+    httpServer.listen(port)
+    const addr = httpServer.address() as AddressInfo
     const host = addr.address === '::' ? 'localhost' : addr.address
     const url = `http://${host}:${addr.port}/json-rpc`
-    log_http('appServer ', appServer.address())
+    log_http('httpServer ', httpServer.address())
     return {
         wallet,
         express,
-        appServer,
+        httpServer,
         zionServer,
         url,
         stop: async (): Promise<void> => {
-            appServer.close()
+            const p = new Promise<void>((resolve) => {
+                httpServer.close(() => {
+                    log_http('httpServer closed')
+                    resolve()
+                })
+            })
+            await p
+            log_http('httpServer close callback done')
             await store.close()
+            log_http('storage close done')
         },
     }
 }

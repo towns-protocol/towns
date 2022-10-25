@@ -1,6 +1,7 @@
 import { ZionServiceInterface, ZionServicePrototype } from '@zion/core'
 import debug from 'debug'
 import { JSONRPCClient } from 'json-rpc-2.0'
+import axios from 'axios'
 
 const log = debug('zion:rpc_client')
 
@@ -9,33 +10,20 @@ const log = debug('zion:rpc_client')
 const makeJsonRpcClient = (url: string, controller?: AbortController): JSONRPCClient => {
     log('makeJsonRpcClient', url)
     const client = new JSONRPCClient(async (jsonRPCRequest) => {
-        if (!jsonRPCRequest) {
-            log('JSON-RPC request is empty')
+        log('Sending JSON-RPC request:')
+        log(jsonRPCRequest)
 
-            throw new Error('JSON-RPC request is empty')
-        }
-        const body = JSON.stringify(jsonRPCRequest)
+        const response = await axios.post(url, jsonRPCRequest, {
+            signal: controller?.signal,
+        })
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                },
-                body,
-                signal: controller?.signal,
-            })
+        log('Received JSON-RPC response:', response.status)
+        log(response.data)
 
-            if (response.status === 200) {
-                const data = await response.json()
-                log('Received JSON-RPC response:', response.status, data)
-                client.receive(data)
-            } else if (jsonRPCRequest.id !== undefined) {
-                throw new Error(response.statusText)
-            }
-        } catch (e) {
-            log('Received JSON-RPC fetch error:', e)
-            throw new Error('Received JSON-RPC error:' + url + ' : ' + e)
+        if (response.status === 200) {
+            client.receive(response.data)
+        } else if (response.status !== 204 || jsonRPCRequest.id !== undefined) {
+            throw new Error(response.statusText)
         }
     })
     return client
@@ -44,6 +32,8 @@ const makeJsonRpcClient = (url: string, controller?: AbortController): JSONRPCCl
 export type ZionRpcClient = ZionServiceInterface & {
     rpcClient: JSONRPCClient
     abortController: AbortController
+
+    close(): Promise<void>
 }
 export const makeZionRpcClient = (url?: string): ZionRpcClient => {
     log('makeZionRpcClient', url)
@@ -66,5 +56,12 @@ export const makeZionRpcClient = (url?: string): ZionRpcClient => {
             return rpcClient.request('zion_' + prop, ...a)
         }
     })
+
+    ss.close = async (): Promise<void> => {
+        log('closing client')
+        rpcClient.rejectAllPendingRequests('Client closed')
+        abortController.abort()
+        log('client closed')
+    }
     return ss as ZionRpcClient
 }
