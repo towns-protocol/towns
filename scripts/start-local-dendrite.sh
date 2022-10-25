@@ -11,6 +11,8 @@ pushd ${LOCAL_TEST_DIR}
 ./deploy.sh
 popd
 
+docker rm -f dendrite-test-postgres
+
 docker run \
     --name dendrite-test-postgres \
     -p 127.0.0.1:5432:5432 \
@@ -20,7 +22,7 @@ docker run \
     -d postgres
 
 # Wait for postgres to be ready
-until docker exec -t dendrite-test-postgres psql -U dendrite -c '\l'; do
+until docker exec -it dendrite-test-postgres psql -U dendrite -c '\l'; do
   sleep 1
 done
 echo >&2 "$(date +%Y%m%dt%H%M%S) Postgres is up"
