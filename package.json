@@ -5,7 +5,9 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
+        "build-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
         "build:contracts-governance": "yarn workspace @harmony/zion-governance build",
+        "clean-csb": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
         "lint": "yarn workspaces foreach -p run lint",
         "postinstall": "husky install",
         "prepare": "husky install",

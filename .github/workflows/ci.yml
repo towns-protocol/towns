@@ -9,6 +9,16 @@ jobs:
     check:
         runs-on: ubuntu-latest
         timeout-minutes: 10
+        services:
+            redis:
+                image: redis:latest
+                options: >-
+                    --health-cmd "redis-cli ping"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 55000:6379
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
@@ -35,3 +45,5 @@ jobs:
             - run: yarn lint
             - run: yarn prettier:check
             - run: yarn syncpack:check
+            - run: yarn build-csb
+            - run: yarn test-csb
