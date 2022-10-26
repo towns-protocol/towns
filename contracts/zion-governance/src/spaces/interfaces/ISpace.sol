@@ -6,5 +6,5 @@ interface ISpace {
   function mintBySpaceId(uint256 spaceId, address spaceOwner) external;
 
   /// @notice Returns the owner of the space by space id
-  function getOwnerBySpaceId(uint256 spaceId) external returns (address);
+  function getOwnerBySpaceId(uint256 spaceId) external view returns (address);
 }

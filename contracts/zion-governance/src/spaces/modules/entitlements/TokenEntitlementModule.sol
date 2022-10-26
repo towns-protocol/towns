@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
+import {IRoleManager} from "../../interfaces/IRoleManager.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
@@ -35,8 +36,9 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   constructor(
     string memory name_,
     string memory description_,
-    address spaceManager_
-  ) EntitlementModuleBase(name_, description_, spaceManager_) {}
+    address spaceManager_,
+    address roleManager_
+  ) EntitlementModuleBase(name_, description_, spaceManager_, roleManager_) {}
 
   function setEntitlement(
     string memory spaceId,
@@ -124,12 +126,12 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     uint256 roleId,
     string memory desc
   ) internal {
-    DataTypes.Permission[] memory permissions = ISpaceManager(_spaceManager)
-      .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
-
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );
+
+    DataTypes.Permission[] memory permissions = IRoleManager(_roleManager)
+      .getPermissionsBySpaceIdByRoleId(_spaceId, roleId);
 
     for (uint256 j = 0; j < permissions.length; j++) {
       DataTypes.Permission memory permission = permissions[j];
@@ -171,8 +173,8 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       delete entitlementsBySpaceId[_spaceId].entitlementsByTag[tag];
     }
 
-    DataTypes.Role[] memory roles = ISpaceManager(_spaceManager)
-      .getRolesBySpaceId(spaceId);
+    DataTypes.Role[] memory roles = IRoleManager(_roleManager)
+      .getRolesBySpaceId(_spaceId);
 
     for (uint256 i = 0; i < roles.length; i++) {
       delete entitlementsBySpaceId[_spaceId].tagsByRoleId[roles[i].roleId];
@@ -306,7 +308,11 @@ contract TokenEntitlementModule is EntitlementModuleBase {
           .entitlementsByTag[tag]
           .roleId;
         //Get all the roles for that token entitlement, and add them to the array for this user
-        roles[i] = spaceManager.getRoleBySpaceIdByRoleId(spaceId, roleId);
+
+        roles[i] = IRoleManager(_roleManager).getRoleBySpaceIdByRoleId(
+          _spaceId,
+          roleId
+        );
       }
     }
     return roles;

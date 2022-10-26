@@ -12,20 +12,17 @@ import "murky/Merkle.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
+import {BaseSetup} from "./BaseSetup.sol";
 
-contract TokenEntitlementModuleTest is Test {
-  ZionPermissionsRegistry internal permissionsRegistry;
-  ZionSpaceManager internal spaceManager;
+contract TokenEntitlementModuleTest is BaseSetup {
   Zion internal zion;
-  UserGrantedEntitlementModule internal userGrantedEntitlementModule;
-  TokenEntitlementModule internal tokenEntitlementModule;
   CouncilNFT internal councilNFT;
-  ZionSpace internal zionSpaceNFT;
 
   address user1;
   address user2;
 
-  function setUp() public {
+  function setUp() public virtual override {
+    BaseSetup.setUp();
     zion = new Zion();
 
     user1 = address(2);
@@ -37,30 +34,6 @@ contract TokenEntitlementModuleTest is Test {
 
     councilNFT = new CouncilNFT("Zion", "zion", "baseURI", root);
     councilNFT.startPublicMint();
-
-    permissionsRegistry = new ZionPermissionsRegistry();
-    spaceManager = new ZionSpaceManager(address(permissionsRegistry));
-    userGrantedEntitlementModule = new UserGrantedEntitlementModule(
-      "User Granted Entitlement Module",
-      "Allows users to grant other users access to spaces and rooms",
-      address(spaceManager)
-    );
-
-    tokenEntitlementModule = new TokenEntitlementModule(
-      "Token Entitlement Module",
-      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
-      address(spaceManager)
-    );
-
-    zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(spaceManager));
-
-    spaceManager.setDefaultUserEntitlementModule(
-      address(userGrantedEntitlementModule)
-    );
-    spaceManager.setDefaultTokenEntitlementModule(
-      address(tokenEntitlementModule)
-    );
-    spaceManager.setSpaceNFT(address(zionSpaceNFT));
   }
 
   function createTestSpace(string memory spaceName, string memory networkId)

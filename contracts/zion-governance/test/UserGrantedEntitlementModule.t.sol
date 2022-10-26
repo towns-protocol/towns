@@ -11,37 +11,12 @@ import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
 import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
+import {BaseSetup} from "./BaseSetup.sol";
 
-contract UserGrantedEntitlemtModuleTest is Test {
-  ZionSpaceManager internal _spaceManager;
-  ZionPermissionsRegistry internal _permissionsRegistry;
-  UserGrantedEntitlementModule internal _userGranted;
-  TokenEntitlementModule internal tokenEntitlementModule;
-  ZionSpace internal zionSpaceNFT;
-
-  function setUp() public {
-    _permissionsRegistry = new ZionPermissionsRegistry();
-    _spaceManager = new ZionSpaceManager(address(_permissionsRegistry));
-
-    _userGranted = new UserGrantedEntitlementModule(
-      "User Granted Entitlement Module",
-      "Allows users to grant other users access to spaces and rooms",
-      address(_spaceManager)
-    );
-
-    tokenEntitlementModule = new TokenEntitlementModule(
-      "Token Entitlement Module",
-      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
-      address(_spaceManager)
-    );
-
-    zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(_spaceManager));
-
-    _spaceManager.setDefaultUserEntitlementModule(address(_userGranted));
-    _spaceManager.setDefaultTokenEntitlementModule(
-      address(tokenEntitlementModule)
-    );
-    _spaceManager.setSpaceNFT(address(zionSpaceNFT));
+contract UserGrantedEntitlemtModuleTest is BaseSetup {
+  function setUp() public virtual override {
+    BaseSetup.setUp();
   }
 
   function testEntitlementWithChannel() public {
@@ -51,45 +26,46 @@ contract UserGrantedEntitlemtModuleTest is Test {
     string memory channelName = "test-channel";
     string memory channelNetworkId = "test-channel-network-id";
 
-    _spaceManager.createSpace(
+    spaceManager.createSpace(
       DataTypes.CreateSpaceData(spaceName, spaceNetworkId)
     );
 
-    _spaceManager.createChannel(
+    spaceManager.createChannel(
       DataTypes.CreateChannelData(spaceNetworkId, channelName, channelNetworkId)
     );
 
-    address[] memory entitlements = _spaceManager
-      .getEntitlementModulesBySpaceId(spaceNetworkId);
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
+      spaceNetworkId
+    );
 
-    assertEq(address(entitlements[0]), address(_userGranted));
+    assertEq(address(entitlements[0]), address(userGrantedEntitlementModule));
 
-    DataTypes.Permission memory permission = _spaceManager.getPermissionFromMap(
+    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
       PermissionTypes.Write
     );
 
     assertTrue(
-      _spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
     );
 
     assertFalse(
-      _spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
     );
 
-    uint256 roleId = _spaceManager.createRole(spaceNetworkId, "test-role");
+    uint256 roleId = spaceManager.createRole(spaceNetworkId, "test-role");
 
-    _spaceManager.addPermissionToRole(spaceNetworkId, roleId, permission);
+    spaceManager.addPermissionToRole(spaceNetworkId, roleId, permission);
 
-    _spaceManager.addRoleToEntitlementModule(
+    spaceManager.addRoleToEntitlementModule(
       spaceNetworkId,
       channelNetworkId,
-      address(_userGranted),
+      address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(0))
     );
 
     assertTrue(
-      _spaceManager.isEntitled(
+      spaceManager.isEntitled(
         spaceNetworkId,
         channelNetworkId,
         address(0),
@@ -100,16 +76,16 @@ contract UserGrantedEntitlemtModuleTest is Test {
     uint256[] memory roles = new uint256[](1);
     roles[0] = roleId;
 
-    _spaceManager.removeEntitlement(
+    spaceManager.removeEntitlement(
       spaceNetworkId,
       channelNetworkId,
-      address(_userGranted),
+      address(userGrantedEntitlementModule),
       roles,
       abi.encode(address(0))
     );
 
     assertFalse(
-      _spaceManager.isEntitled(
+      spaceManager.isEntitled(
         spaceNetworkId,
         channelNetworkId,
         address(0),
@@ -122,56 +98,57 @@ contract UserGrantedEntitlemtModuleTest is Test {
     string memory spaceName = "test-space";
     string memory spaceNetworkId = "test-network-id";
 
-    _spaceManager.createSpace(
+    spaceManager.createSpace(
       DataTypes.CreateSpaceData(spaceName, spaceNetworkId)
     );
 
-    address[] memory entitlements = _spaceManager
-      .getEntitlementModulesBySpaceId(spaceNetworkId);
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
+      spaceNetworkId
+    );
 
-    assertEq(address(entitlements[0]), address(_userGranted));
+    assertEq(address(entitlements[0]), address(userGrantedEntitlementModule));
 
-    DataTypes.Permission memory permission = _spaceManager.getPermissionFromMap(
+    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
       PermissionTypes.Write
     );
 
     assertTrue(
-      _spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
     );
 
     assertFalse(
-      _spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
     );
 
-    uint256 roleId = _spaceManager.createRole(spaceNetworkId, "test-role");
+    uint256 roleId = spaceManager.createRole(spaceNetworkId, "test-role");
 
-    _spaceManager.addPermissionToRole(spaceNetworkId, roleId, permission);
+    spaceManager.addPermissionToRole(spaceNetworkId, roleId, permission);
 
-    _spaceManager.addRoleToEntitlementModule(
+    spaceManager.addRoleToEntitlementModule(
       spaceNetworkId,
       "",
-      address(_userGranted),
+      address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(0))
     );
 
     assertTrue(
-      _spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
     );
 
     uint256[] memory roles = new uint256[](1);
     roles[0] = roleId;
 
-    _spaceManager.removeEntitlement(
+    spaceManager.removeEntitlement(
       spaceNetworkId,
       "",
-      address(_userGranted),
+      address(userGrantedEntitlementModule),
       roles,
       abi.encode(address(0))
     );
 
     assertFalse(
-      _spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
     );
   }
 }

@@ -14,41 +14,14 @@ import {Errors} from "./../src/spaces/libraries/Errors.sol";
 import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {ZionPermissionsRegistry} from "./../src/spaces/ZionPermissionsRegistry.sol";
+import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
 import {PermissionTypes} from "./../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
+import {BaseSetup} from "./BaseSetup.sol";
 
-contract ZionSpaceManagerTest is Test, MerkleHelper {
-  ZionSpaceManager internal spaceManager;
-  ZionPermissionsRegistry internal permissionsRegistry;
-  UserGrantedEntitlementModule internal userGrantedEntitlementModule;
-  TokenEntitlementModule internal tokenEntitlementModule;
-  ZionSpace internal zionSpaceNFT;
-
-  function setUp() public {
-    permissionsRegistry = new ZionPermissionsRegistry();
-    spaceManager = new ZionSpaceManager(address(permissionsRegistry));
-
-    userGrantedEntitlementModule = new UserGrantedEntitlementModule(
-      "User Granted Entitlement Module",
-      "Allows users to grant other users access to spaces and rooms",
-      address(spaceManager)
-    );
-
-    tokenEntitlementModule = new TokenEntitlementModule(
-      "Token Entitlement Module",
-      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
-      address(spaceManager)
-    );
-
-    zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(spaceManager));
-
-    spaceManager.setDefaultUserEntitlementModule(
-      address(userGrantedEntitlementModule)
-    );
-    spaceManager.setDefaultTokenEntitlementModule(
-      address(tokenEntitlementModule)
-    );
-    spaceManager.setSpaceNFT(address(zionSpaceNFT));
+contract ZionSpaceManagerTest is BaseSetup, MerkleHelper {
+  function setUp() public virtual override {
+    BaseSetup.setUp();
   }
 
   function testGetEntitlementsInfoBySpaceId() public {
@@ -275,7 +248,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     TokenEntitlementModule newTokenEntitlementModule = new TokenEntitlementModule(
         "New Token Entitlement Module",
         "Allows users to grant other users access to spaces and rooms based on tokens they hold",
-        address(spaceManager)
+        address(spaceManager),
+        address(roleManager)
       );
 
     spaceManager.whitelistEntitlementModule(
@@ -316,7 +290,25 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     TokenEntitlementModule newTokenEntitlementModule = new TokenEntitlementModule(
         "New Token Entitlement Module",
         "Allows users to grant other users access to spaces and rooms based on tokens they hold",
-        address(spaceManager)
+        address(spaceManager),
+        address(roleManager)
+      );
+
+    DataTypes.ExternalToken memory councilNFT = DataTypes.ExternalToken(
+      address(nft),
+      1,
+      false,
+      0
+    );
+
+    DataTypes.ExternalToken[]
+      memory externalTokens = new DataTypes.ExternalToken[](1);
+    externalTokens[0] = councilNFT;
+
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
+        "Council NFT Gate",
+        externalTokens
       );
 
     DataTypes.ExternalToken memory councilNFT = DataTypes.ExternalToken(
@@ -401,23 +393,19 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
 
-    DataTypes.Role[] memory roles = spaceManager.getRolesBySpaceId(networkId);
+    DataTypes.Role[] memory roles = roleManager.getRolesBySpaceId(
+      spaceManager.getSpaceIdByNetworkId(networkId)
+    );
 
     assertEq(roles.length, 3);
 
     spaceManager.removeRole(networkId, readerRoleId);
 
-    vm.expectRevert(stdError.indexOOBError);
-    DataTypes.Role memory role = spaceManager.getRoleBySpaceIdByRoleId(
-      networkId,
-      readerRoleId
+    roles = roleManager.getRolesBySpaceId(
+      spaceManager.getSpaceIdByNetworkId(networkId)
     );
 
-    DataTypes.Permission[] memory permissions = spaceManager
-      .getPermissionsBySpaceIdByRoleId(networkId, readerRoleId);
-
-    assertEq(role.name, "");
-    assertEq(permissions.length, 0);
+    assertEq(roles.length, 2);
   }
 
   function testRemovePermissionFromRole() public {
@@ -439,8 +427,11 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       DataTypes.Permission("TestPermission2")
     );
 
-    DataTypes.Permission[] memory permissions = spaceManager
-      .getPermissionsBySpaceIdByRoleId(networkId, roleId);
+    DataTypes.Permission[] memory permissions = roleManager
+      .getPermissionsBySpaceIdByRoleId(
+        spaceManager.getSpaceIdByNetworkId(networkId),
+        roleId
+      );
 
     assertEq(permissions.length, 2);
 
@@ -450,8 +441,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       DataTypes.Permission("TestPermission")
     );
 
-    permissions = spaceManager.getPermissionsBySpaceIdByRoleId(
-      networkId,
+    permissions = roleManager.getPermissionsBySpaceIdByRoleId(
+      spaceManager.getSpaceIdByNetworkId(networkId),
       roleId
     );
 
@@ -492,8 +483,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       spaceManager.getPermissionFromMap(PermissionTypes.Read)
     );
 
-    DataTypes.Role memory testRole = spaceManager.getRoleBySpaceIdByRoleId(
-      networkId,
+    DataTypes.Role memory testRole = roleManager.getRoleBySpaceIdByRoleId(
+      spaceManager.getSpaceIdByNetworkId(networkId),
       roleId
     );
 
@@ -523,7 +514,8 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       "User Granted Entitlement Module",
       "Allows users to grant other users access to spaces and rooms",
-      address(spaceManager)
+      address(spaceManager),
+      address(roleManager)
     );
     spaceManager.createSpace(DataTypes.CreateSpaceData("test", networkId));
 

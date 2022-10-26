@@ -10,6 +10,7 @@ import {PermissionTypes} from "../libraries/PermissionTypes.sol";
 
 abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   address public immutable _spaceManager;
+  address public immutable _roleManager;
   string private _name;
   string private _description;
 
@@ -21,7 +22,8 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   constructor(
     string memory name_,
     string memory description_,
-    address spaceManager_
+    address spaceManager_,
+    address roleManager_
   ) {
     if (spaceManager_ == address(0)) {
       revert Errors.InvalidParameters();
@@ -30,6 +32,7 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
     _name = name_;
     _description = description_;
     _spaceManager = spaceManager_;
+    _roleManager = roleManager_;
   }
 
   function name() external view returns (string memory) {

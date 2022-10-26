@@ -156,30 +156,11 @@ interface ISpaceManager {
   /// @return ownerAddress The address of the owner of the space
   function getSpaceOwnerBySpaceId(string calldata spaceId)
     external
-    view
     returns (address ownerAddress);
-
-  /// @notice Returns the permissions for a role in a space
-  function getPermissionsBySpaceIdByRoleId(
-    string calldata spaceId,
-    uint256 roleId
-  ) external view returns (DataTypes.Permission[] memory);
 
   /// @notice Returns the permission from the registry
   function getPermissionFromMap(bytes32 permissionType)
     external
     view
     returns (DataTypes.Permission memory permission);
-
-  /// @notice Returns the roles of a space
-  function getRolesBySpaceId(string calldata spaceId)
-    external
-    view
-    returns (DataTypes.Role[] memory);
-
-  /// @notice Returns the role of a space by id
-  function getRoleBySpaceIdByRoleId(string calldata spaceId, uint256 roleId)
-    external
-    view
-    returns (DataTypes.Role memory);
 }

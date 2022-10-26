@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/console.sol";
 
 import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
+import {IRoleManager} from "../../interfaces/IRoleManager.sol";
 import {ZionSpaceManager} from "../../ZionSpaceManager.sol";
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
@@ -25,8 +26,9 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
   constructor(
     string memory name_,
     string memory description_,
-    address spaceManager_
-  ) EntitlementModuleBase(name_, description_, spaceManager_) {}
+    address spaceManager_,
+    address roleManager_
+  ) EntitlementModuleBase(name_, description_, spaceManager_, roleManager_) {}
 
   function setEntitlement(
     string memory spaceId,
@@ -84,7 +86,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
       );
 
       return
-        _checkEntitlementsHavePermission(spaceId, allEntitlements, permission);
+        _checkEntitlementsHavePermission(_spaceId, allEntitlements, permission);
     } else {
       Entitlement[] memory everyoneEntitlements = _entitlementsBySpaceIdbyUser[
         _spaceId
@@ -100,21 +102,19 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
       );
 
       return
-        _checkEntitlementsHavePermission(spaceId, allEntitlements, permission);
+        _checkEntitlementsHavePermission(_spaceId, allEntitlements, permission);
     }
   }
 
   function _checkEntitlementsHavePermission(
-    string calldata spaceId,
+    uint256 spaceId,
     Entitlement[] memory allEntitlements,
     DataTypes.Permission memory permission
   ) internal view returns (bool) {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
-
     for (uint256 k = 0; k < allEntitlements.length; k++) {
       uint256 roleId = allEntitlements[k].roleId;
 
-      DataTypes.Permission[] memory permissions = spaceManager
+      DataTypes.Permission[] memory permissions = IRoleManager(_roleManager)
         .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
 
       for (uint256 p = 0; p < permissions.length; p++) {
@@ -190,6 +190,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     address user
   ) public view returns (DataTypes.Role[] memory) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    IRoleManager roleManager = IRoleManager(_roleManager);
 
     uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
     uint256 _channelId = spaceManager.getChannelIdByNetworkId(
@@ -211,8 +212,8 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
 
       //Iterate through each of them and get the Role out and add it to the array
       for (uint256 i = 0; i < entitlements.length; i++) {
-        roles[i] = spaceManager.getRoleBySpaceIdByRoleId(
-          spaceId,
+        roles[i] = roleManager.getRoleBySpaceIdByRoleId(
+          _spaceId,
           entitlements[i].roleId
         );
       }
@@ -222,8 +223,8 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
       ][user];
 
       for (uint256 i = 0; i < userEntitlements.length; i++) {
-        roles[i] = spaceManager.getRoleBySpaceIdByRoleId(
-          spaceId,
+        roles[i] = roleManager.getRoleBySpaceIdByRoleId(
+          _spaceId,
           userEntitlements[i].roleId
         );
       }
