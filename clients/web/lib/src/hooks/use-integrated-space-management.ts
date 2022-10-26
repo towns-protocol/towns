@@ -22,16 +22,22 @@ export function useIntegratedSpaceManagement() {
                 return undefined
             }
             const contractInfo = getContractInfo(chainId)
-            const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
-                tokenAddress: contractInfo.council.addresses.councilnft,
+
+            const externalToken: DataTypes.ExternalTokenStruct = {
+                contractAddress: contractInfo.council.addresses.councilnft,
                 quantity: 1,
                 isSingleToken: false,
                 tokenId: 0,
-                description: 'Zion Council NFT',
+            }
+            const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
+                tag: 'Council NFT Gate',
+                tokens: [externalToken],
+            }
+            const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
                 permissions: [Permission.Read],
                 roleName: 'Member',
+                externalTokenEntitlement: externalTokenEntitlement,
             }
-
             try {
                 const roomId = await createWeb3SpaceWithTokenEntitlement(
                     createInfo,

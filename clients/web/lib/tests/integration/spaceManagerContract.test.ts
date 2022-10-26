@@ -3,6 +3,7 @@ import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
 import { registerAndStartClients } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { getContractInfo } from '../../src/client/web3/ZionContracts'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 
 describe('spaceManagerContract', () => {
     // usefull for debugging or running against cloud servers
@@ -34,14 +35,21 @@ describe('spaceManagerContract', () => {
         // create a space
         const spaceName = bob.makeUniqueName()
         const contractInfo = getContractInfo(bob.chainId)
-        const tokenEntitlement = {
-            tokenAddress: contractInfo.council.addresses.councilnft,
+
+        const externalToken: DataTypes.ExternalTokenStruct = {
+            contractAddress: contractInfo.council.addresses.councilnft,
             quantity: 1,
-            description: 'Zion Council NFT',
-            permissions: [Permission.Read],
             isSingleToken: false,
             tokenId: 0,
-            roleName: 'Council Member',
+        }
+        const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
+            tag: 'Council NFT Gate',
+            tokens: [externalToken],
+        }
+        const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
+            permissions: [Permission.Read],
+            roleName: 'Member',
+            externalTokenEntitlement: externalTokenEntitlement,
         }
         const roomId = await bob.createWeb3SpaceWithTokenEntitlement(
             {

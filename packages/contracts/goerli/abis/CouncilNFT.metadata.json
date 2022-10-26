@@ -710,7 +710,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/zion-governance/contracts/council/CouncilNFT.sol": "CouncilNFT"
+      "contracts/zion-governance/src/council/CouncilNFT.sol": "CouncilNFT"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -719,7 +719,7 @@
     },
     "optimizer": {
       "enabled": true,
-      "runs": 200
+      "runs": 20000
     },
     "remappings": [
       ":@harmony/=node_modules/@harmony/",
@@ -735,15 +735,15 @@
     ]
   },
   "sources": {
-    "contracts/zion-governance/contracts/council/CouncilNFT.sol": {
-      "keccak256": "0xc0c38c0d1b739167b6d5346acc580a300c7c5ce79b3c79c31b1d8313a057015b",
+    "contracts/zion-governance/src/council/CouncilNFT.sol": {
+      "keccak256": "0xe187965c85a1a553bdf399ddefc18374f3a100f9030e1a726b9de10184b3f854",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://42db164dd4827465127197ecbb1e43d0924fcc466c8ca8d3c3e1f77bc0ae173f",
-        "dweb:/ipfs/Qmerb8RcvUyTmM7qXmRjffKT54Agqw5H7phMEkK7L1ZuXu"
+        "bzz-raw://b593f9d9fc0a9de93ebbc6d071f57706bf005031deefac330eb5e9f6977f253d",
+        "dweb:/ipfs/Qme9J6mdv8r5p65Kiesb2yCr7acPwXrK6RhuX5EGdC3ubd"
       ]
     },
-    "contracts/zion-governance/contracts/council/libraries/Constants.sol": {
+    "contracts/zion-governance/src/council/libraries/Constants.sol": {
       "keccak256": "0xd28a3be0f0d3732c1813f73019fabafdd2decc262340dc4dc5fcc47f2b40c19b",
       "license": "Apache-2.0",
       "urls": [
@@ -751,7 +751,7 @@
         "dweb:/ipfs/QmcNAL4eRBDV7cm689EcAmHyr1BcSoUp8txSByZp572FjR"
       ]
     },
-    "contracts/zion-governance/contracts/council/libraries/Errors.sol": {
+    "contracts/zion-governance/src/council/libraries/Errors.sol": {
       "keccak256": "0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f",
       "license": "Apache-2.0",
       "urls": [
@@ -759,7 +759,7 @@
         "dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna"
       ]
     },
-    "contracts/zion-governance/contracts/council/libraries/Events.sol": {
+    "contracts/zion-governance/src/council/libraries/Events.sol": {
       "keccak256": "0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a",
       "license": "Apache-2.0",
       "urls": [

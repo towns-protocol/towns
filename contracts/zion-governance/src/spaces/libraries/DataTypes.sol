@@ -92,6 +92,17 @@ library DataTypes {
     string description;
   }
 
+  struct ExternalToken {
+    address contractAddress;
+    uint256 quantity;
+    bool isSingleToken;
+    uint256 tokenId;
+  }
+
+  struct ExternalTokenEntitlement {
+    string tag;
+    ExternalToken[] tokens;
+  }
   /// *********************************
   /// **************DTO****************
   /// *********************************
@@ -120,21 +131,8 @@ library DataTypes {
 
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement
   struct CreateSpaceTokenEntitlementData {
-    address tokenAddress;
-    uint256 quantity;
-    string description;
-    bool isSingleToken;
-    uint256 tokenId;
     string[] permissions;
     string roleName;
-  }
-
-  struct CreateSpacePurchaseableEntitlementData {
-    address entitlementModuleAddress;
-    address tokenAddress;
-    uint256 quantity;
-    uint256 price;
-    string description;
-    uint256[] roleIds;
+    ExternalTokenEntitlement externalTokenEntitlement;
   }
 }

@@ -255,31 +255,6 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "tokenAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "quantity",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "description",
-            "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "isSingleToken",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          },
-          {
             "internalType": "string[]",
             "name": "permissions",
             "type": "string[]"
@@ -288,6 +263,45 @@
             "internalType": "string",
             "name": "roleName",
             "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "quantity",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "isSingleToken",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct DataTypes.ExternalToken[]",
+                "name": "tokens",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalTokenEntitlement",
+            "name": "externalTokenEntitlement",
+            "type": "tuple"
           }
         ],
         "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",

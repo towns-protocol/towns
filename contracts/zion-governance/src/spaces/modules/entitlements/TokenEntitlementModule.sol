@@ -9,32 +9,22 @@ import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
 import {ERC165} from "openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 
 contract TokenEntitlementModule is EntitlementModuleBase {
-  struct Entitlement {
+  struct TokenEntitlement {
+    string tag;
+    uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
-    uint256 roleId;
-  }
-
-  struct ExternalToken {
-    address contractAddress;
-    uint256 quantity;
-    bool isSingleToken;
-    uint256 tokenId;
-  }
-
-  struct TokenEntitlement {
-    ExternalToken[] tokens;
-    Entitlement[] entitlements;
+    DataTypes.ExternalToken[] tokens;
   }
 
   struct RoomTokenEntitlements {
-    mapping(string => TokenEntitlement) entitlementsByDescription;
-    string[] entitlementDescriptions;
+    mapping(string => TokenEntitlement) entitlementsByTag;
+    string[] entitlementTags;
   }
 
   struct SpaceTokenEntitlements {
-    mapping(string => TokenEntitlement) entitlementsByDescription;
-    string[] entitlementDescriptions;
+    mapping(string => TokenEntitlement) entitlementsByTag;
+    string[] entitlementTags;
     mapping(uint256 => RoomTokenEntitlements) roomEntitlementsByRoomId;
     mapping(string => string[]) tagsByPermission;
     mapping(uint256 => string[]) tagsByRoleId;
@@ -68,33 +58,32 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       "Only the owner can update entitlements"
     );
 
-    (string memory desc, , , , ) = abi.decode(
-      entitlementData,
-      (string, address, uint256, bool, uint256)
-    );
+    DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement = abi
+      .decode(entitlementData, (DataTypes.ExternalTokenEntitlement));
+    string memory tag = externalTokenEntitlement.tag;
 
     if (bytes(channelId).length > 0) {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         _spaceId
-      ].roomEntitlementsByRoomId[_channelId].entitlementsByDescription[desc];
+      ].roomEntitlementsByRoomId[_channelId].entitlementsByTag[tag];
 
       _addNewTokenEntitlement(tokenEntitlement, entitlementData, roleId);
 
       // so we can iterate through all the token entitlements for a space
       entitlementsBySpaceId[_spaceId]
         .roomEntitlementsByRoomId[_channelId]
-        .entitlementDescriptions
-        .push(desc);
+        .entitlementTags
+        .push(tag);
       //So we can look up all potential token entitlements for a permission
-      setAllDescByPermissionNames(spaceId, roleId, desc);
+      setAllDescByPermissionNames(spaceId, roleId, tag);
     } else {
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         _spaceId
-      ].entitlementsByDescription[desc];
+      ].entitlementsByTag[tag];
       _addNewTokenEntitlement(tokenEntitlement, entitlementData, roleId);
-      entitlementsBySpaceId[_spaceId].entitlementDescriptions.push(desc);
+      entitlementsBySpaceId[_spaceId].entitlementTags.push(tag);
 
-      setAllDescByPermissionNames(spaceId, roleId, desc);
+      setAllDescByPermissionNames(spaceId, roleId, tag);
     }
   }
 
@@ -103,36 +92,31 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     bytes calldata entitlementData,
     uint256 roleId
   ) internal {
-    (
-      ,
-      address token,
-      uint256 quantity,
-      bool isSingleToken,
-      uint256 tokenId
-    ) = abi.decode(entitlementData, (string, address, uint256, bool, uint256));
+    DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement = abi
+      .decode(entitlementData, (DataTypes.ExternalTokenEntitlement));
 
-    if (token == address(0)) {
-      revert("No tokens provided");
+    //Adds all the tokens passed in to gate this role with an AND
+    if (externalTokenEntitlement.tokens.length == 0) {
+      revert("No tokens set");
+    }
+    DataTypes.ExternalToken[] memory externalTokens = externalTokenEntitlement
+      .tokens;
+    for (uint256 i = 0; i < externalTokens.length; i++) {
+      if (externalTokens[i].contractAddress == address(0)) {
+        revert("No tokens provided");
+      }
+
+      if (externalTokens[i].quantity == 0) {
+        revert("No quantities provided");
+      }
+      DataTypes.ExternalToken memory token = externalTokens[i];
+      tokenEntitlement.tokens.push(token);
     }
 
-    if (quantity == 0) {
-      revert("No quantities provided");
-    }
-
-    ExternalToken memory externalToken = ExternalToken(
-      token,
-      quantity,
-      isSingleToken,
-      tokenId
-    );
-    tokenEntitlement.tokens.push(externalToken);
-
-    Entitlement memory entitlement = Entitlement(
-      msg.sender,
-      block.timestamp,
-      roleId
-    );
-    tokenEntitlement.entitlements.push(entitlement);
+    tokenEntitlement.grantedBy = msg.sender;
+    tokenEntitlement.grantedTime = block.timestamp;
+    tokenEntitlement.roleId = roleId;
+    tokenEntitlement.tag = externalTokenEntitlement.tag;
   }
 
   function setAllDescByPermissionNames(
@@ -177,14 +161,14 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       revert("Only the owner can update entitlements");
     }
 
-    string memory desc = abi.decode(entitlementData, (string));
+    string memory tag = abi.decode(entitlementData, (string));
 
     if (bytes(channelId).length > 0) {
       delete entitlementsBySpaceId[_spaceId]
         .roomEntitlementsByRoomId[_channelId]
-        .entitlementsByDescription[desc];
+        .entitlementsByTag[tag];
     } else {
-      delete entitlementsBySpaceId[_spaceId].entitlementsByDescription[desc];
+      delete entitlementsBySpaceId[_spaceId].entitlementsByTag[tag];
     }
 
     DataTypes.Role[] memory roles = ISpaceManager(_spaceManager)
@@ -222,58 +206,77 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     string calldata spaceId,
     string calldata,
     address user,
-    string memory desc
+    string memory tag
   ) public view returns (bool) {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
 
     uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
 
-    ExternalToken[] memory tokens = entitlementsBySpaceId[_spaceId]
-      .entitlementsByDescription[desc]
+    DataTypes.ExternalToken[] memory tokens = entitlementsBySpaceId[_spaceId]
+      .entitlementsByTag[tag]
       .tokens;
 
+    bool entitled = false;
+    //Check each token for a given entitlement, if any are false, the whole thing is false
     for (uint256 i = 0; i < tokens.length; i++) {
       uint256 quantity = tokens[i].quantity;
       uint256 tokenId = tokens[i].tokenId;
       bool isSingleToken = tokens[i].isSingleToken;
 
-      if (quantity > 0) {
-        address contractAddress = tokens[i].contractAddress;
-        //If a tokenId is set, check that specific token
-        if (isSingleToken) {
-          try IERC721(contractAddress).ownerOf(tokenId) returns (
-            address owner
-          ) {
-            if (owner == user) {
-              return true;
-            }
-          } catch {
-            return false;
-          }
-          //Otherwise check if the address has more than the quantity required
-        } else {
-          try IERC721(contractAddress).balanceOf(user) returns (
-            uint256 balance
-          ) {
-            if (balance >= quantity) {
-              return true;
-            }
-          } catch {
-            return false;
-          }
-          try IERC20(contractAddress).balanceOf(user) returns (
-            uint256 balance
-          ) {
-            if (balance >= quantity) {
-              return true;
-            }
-          } catch {
-            return false;
-          }
-        }
+      address contractAddress = tokens[i].contractAddress;
+
+      if (
+        _isERC721Entitled(
+          contractAddress,
+          user,
+          quantity,
+          isSingleToken,
+          tokenId
+        ) || _isERC20Entitled(contractAddress, user, quantity)
+      ) {
+        entitled = true;
+      } else {
+        entitled = false;
+        break;
       }
     }
 
+    return entitled;
+  }
+
+  function _isERC721Entitled(
+    address contractAddress,
+    address user,
+    uint256 quantity,
+    bool isSingleToken,
+    uint256 tokenId
+  ) internal view returns (bool) {
+    if (isSingleToken) {
+      try IERC721(contractAddress).ownerOf(tokenId) returns (address owner) {
+        if (owner == user) {
+          return true;
+        }
+      } catch {}
+    } else {
+      try IERC721(contractAddress).balanceOf(user) returns (uint256 balance) {
+        if (balance >= quantity) {
+          return true;
+        }
+      } catch {}
+    }
+    return false;
+  }
+
+  function _isERC20Entitled(
+    address contractAddress,
+    address user,
+    uint256 quantity
+  ) internal view returns (bool) {
+    try IERC20(contractAddress).balanceOf(user) returns (uint256 balance) {
+      if (balance >= quantity) {
+        return true;
+      }
+    } catch {}
     return false;
   }
 
@@ -287,28 +290,23 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
 
     //Get all the entitlements for this space
-    string[] memory entitlementDescriptions = entitlementsBySpaceId[_spaceId]
-      .entitlementDescriptions;
+    string[] memory entitlementTags = entitlementsBySpaceId[_spaceId]
+      .entitlementTags;
 
     //Create an empty array of the max size of all entitlements
     DataTypes.Role[] memory roles = new DataTypes.Role[](
-      entitlementDescriptions.length
+      entitlementTags.length
     );
     //Iterate through all the entitlements
-    for (uint256 i = 0; i < entitlementDescriptions.length; i++) {
-      string memory desc = entitlementDescriptions[i];
+    for (uint256 i = 0; i < entitlementTags.length; i++) {
+      string memory tag = entitlementTags[i];
       //If the user is entitled to a token entitlement
-      if (isTokenEntitled(spaceId, channelId, user, desc)) {
-        Entitlement[] memory entitlements = entitlementsBySpaceId[_spaceId]
-          .entitlementsByDescription[desc]
-          .entitlements;
+      if (isTokenEntitled(spaceId, channelId, user, tag)) {
+        uint256 roleId = entitlementsBySpaceId[_spaceId]
+          .entitlementsByTag[tag]
+          .roleId;
         //Get all the roles for that token entitlement, and add them to the array for this user
-        for (uint256 j = 0; j < entitlements.length; j++) {
-          roles[i] = spaceManager.getRoleBySpaceIdByRoleId(
-            spaceId,
-            entitlements[i].roleId
-          );
-        }
+        roles[i] = spaceManager.getRoleBySpaceIdByRoleId(spaceId, roleId);
       }
     }
     return roles;

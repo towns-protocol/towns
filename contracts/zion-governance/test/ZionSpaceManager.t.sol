@@ -148,6 +148,35 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     assertEq(channels.channels[0].name, "channel-name");
   }
 
+  function getTestNFTEntitlement(address nftAddress)
+    internal
+    pure
+    returns (DataTypes.ExternalTokenEntitlement memory)
+  {
+    address tokenAddress = address(nftAddress);
+    uint256 quantity = 1;
+    bool isSingleToken = false;
+    uint256 tokenId = 0;
+
+    DataTypes.ExternalToken memory externalToken = DataTypes.ExternalToken(
+      tokenAddress,
+      quantity,
+      isSingleToken,
+      tokenId
+    );
+
+    DataTypes.ExternalToken[]
+      memory externalTokens = new DataTypes.ExternalToken[](1);
+    externalTokens[0] = externalToken;
+
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
+        "Test Token Gate",
+        externalTokens
+      );
+    return externalTokenEntitlement;
+  }
+
   function testCreateSpaceWithTokenEntitlement() public {
     //initialize the test data
     _initPositionsAllowances();
@@ -171,22 +200,13 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     vm.prank(address(receiver));
     string memory networkId = "!7evmpuHDDgkady9u:localhost";
 
-    address tokenAddress = address(nft);
-    uint256 quantity = 1;
-    bool isSingleToken = false;
-    string memory description = "Council NFT";
-    uint256 tokenId = 0;
-
+    string memory roleName = "TestTokenHolder";
     spaceManager.createSpaceWithTokenEntitlement(
       DataTypes.CreateSpaceData("test", networkId),
       DataTypes.CreateSpaceTokenEntitlementData(
-        tokenAddress,
-        quantity,
-        description,
-        isSingleToken,
-        tokenId,
         permissions,
-        "TokenHolder"
+        roleName,
+        getTestNFTEntitlement(address(nft))
       )
     );
 
@@ -299,13 +319,30 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
         address(spaceManager)
       );
 
+    DataTypes.ExternalToken memory councilNFT = DataTypes.ExternalToken(
+      address(nft),
+      1,
+      false,
+      0
+    );
+
+    DataTypes.ExternalToken[]
+      memory externalTokens = new DataTypes.ExternalToken[](1);
+    externalTokens[0] = councilNFT;
+
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
+        "Council NFT Gate",
+        externalTokens
+      );
+
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     spaceManager.addRoleToEntitlementModule(
       networkId,
       "",
       address(newTokenEntitlementModule),
       roleId,
-      abi.encode("sample description", address(nft), 1, false, 0)
+      abi.encode(externalTokenEntitlement)
     );
 
     spaceManager.whitelistEntitlementModule(
@@ -319,7 +356,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       "",
       address(newTokenEntitlementModule),
       roleId,
-      abi.encode("sample description", address(nft), 1, false, 0)
+      abi.encode(externalTokenEntitlement)
     );
 
     address[] memory entitlementsBySpaceId = spaceManager
@@ -506,6 +543,13 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
     vm.expectRevert(Errors.NotAllowed.selector);
     spaceManager.addPermissionToRole(networkId, ownerRoleId, joinPermission);
 
+    DataTypes.ExternalToken memory testTokenGate = DataTypes.ExternalToken(
+      address(1),
+      1,
+      false,
+      0
+    );
+
     vm.prank(notSpaceOwner);
     vm.expectRevert(Errors.NotAllowed.selector);
     spaceManager.addRoleToEntitlementModule(
@@ -513,7 +557,7 @@ contract ZionSpaceManagerTest is Test, MerkleHelper {
       "",
       address(tokenEntitlementModule),
       ownerRoleId,
-      abi.encode("sample description", address(1), 1, false, 0)
+      abi.encode(testTokenGate)
     );
   }
 }

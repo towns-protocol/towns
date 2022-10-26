@@ -27,31 +27,47 @@ export declare namespace DataTypes {
         spaceName: string;
         spaceNetworkId: string;
     };
-    type CreateSpaceTokenEntitlementDataStruct = {
-        tokenAddress: PromiseOrValue<string>;
+    type ExternalTokenStruct = {
+        contractAddress: PromiseOrValue<string>;
         quantity: PromiseOrValue<BigNumberish>;
-        description: PromiseOrValue<string>;
         isSingleToken: PromiseOrValue<boolean>;
         tokenId: PromiseOrValue<BigNumberish>;
-        permissions: PromiseOrValue<string>[];
-        roleName: PromiseOrValue<string>;
     };
-    type CreateSpaceTokenEntitlementDataStructOutput = [
+    type ExternalTokenStructOutput = [
         string,
         BigNumber,
-        string,
         boolean,
-        BigNumber,
-        string[],
-        string
+        BigNumber
     ] & {
-        tokenAddress: string;
+        contractAddress: string;
         quantity: BigNumber;
-        description: string;
         isSingleToken: boolean;
         tokenId: BigNumber;
+    };
+    type ExternalTokenEntitlementStruct = {
+        tag: PromiseOrValue<string>;
+        tokens: DataTypes.ExternalTokenStruct[];
+    };
+    type ExternalTokenEntitlementStructOutput = [
+        string,
+        DataTypes.ExternalTokenStructOutput[]
+    ] & {
+        tag: string;
+        tokens: DataTypes.ExternalTokenStructOutput[];
+    };
+    type CreateSpaceTokenEntitlementDataStruct = {
+        permissions: PromiseOrValue<string>[];
+        roleName: PromiseOrValue<string>;
+        externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct;
+    };
+    type CreateSpaceTokenEntitlementDataStructOutput = [
+        string[],
+        string,
+        DataTypes.ExternalTokenEntitlementStructOutput
+    ] & {
         permissions: string[];
         roleName: string;
+        externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStructOutput;
     };
     type ChannelInfoStruct = {
         channelId: PromiseOrValue<BigNumberish>;
@@ -162,7 +178,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
         "createChannel((string,string,string))": FunctionFragment;
         "createRole(string,string)": FunctionFragment;
         "createSpace((string,string))": FunctionFragment;
-        "createSpaceWithTokenEntitlement((string,string),(address,uint256,string,bool,uint256,string[],string))": FunctionFragment;
+        "createSpaceWithTokenEntitlement((string,string),(string[],string,(string,(address,uint256,bool,uint256)[])))": FunctionFragment;
         "getChannelIdByNetworkId(string,string)": FunctionFragment;
         "getChannelInfoByChannelId(string,string)": FunctionFragment;
         "getChannelsBySpaceId(string)": FunctionFragment;

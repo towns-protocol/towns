@@ -261,31 +261,6 @@
           {
             "components": [
               {
-                "internalType": "address",
-                "name": "tokenAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "quantity",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "description",
-                "type": "string"
-              },
-              {
-                "internalType": "bool",
-                "name": "isSingleToken",
-                "type": "bool"
-              },
-              {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-              },
-              {
                 "internalType": "string[]",
                 "name": "permissions",
                 "type": "string[]"
@@ -294,6 +269,45 @@
                 "internalType": "string",
                 "name": "roleName",
                 "type": "string"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "tag",
+                    "type": "string"
+                  },
+                  {
+                    "components": [
+                      {
+                        "internalType": "address",
+                        "name": "contractAddress",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "quantity",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "bool",
+                        "name": "isSingleToken",
+                        "type": "bool"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "tokenId",
+                        "type": "uint256"
+                      }
+                    ],
+                    "internalType": "struct DataTypes.ExternalToken[]",
+                    "name": "tokens",
+                    "type": "tuple[]"
+                  }
+                ],
+                "internalType": "struct DataTypes.ExternalTokenEntitlement",
+                "name": "externalTokenEntitlement",
+                "type": "tuple"
               }
             ],
             "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",
@@ -1156,7 +1170,7 @@
         "createSpace((string,string))": {
           "notice": "Create a new space."
         },
-        "createSpaceWithTokenEntitlement((string,string),(address,uint256,string,bool,uint256,string[],string))": {
+        "createSpaceWithTokenEntitlement((string,string),(string[],string,(string,(address,uint256,bool,uint256)[])))": {
           "notice": "Create a new space with a token entitlement."
         },
         "getChannelIdByNetworkId(string,string)": {
@@ -1274,11 +1288,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x52ebbf3aa7f2bc0780815d0ef90146b48a9b6d41084cea81f9dd86e95c9ce73d",
+      "keccak256": "0xa2f4cb4af10a50eb4444e9f919abd03ca544cb0f6a4bbeef597fbc7e9ea957cb",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://30fb31f177393eda98700f7a2e1bc3b4d7a1705bfc534850ce2419dca8e3b952",
-        "dweb:/ipfs/QmShhqNcHctdEgN3q1wCDC3a7WdF3KgRQJWrNNBHLqoKGk"
+        "bzz-raw://431c115fdab56fe38a9e9fe044bc09a26ef3003d681a098d026ef0a135d4e4f8",
+        "dweb:/ipfs/QmaRqoCKCAc9ARJwqCk78V4H8WUi7PeKrDznTWptvT4GF2"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -1298,11 +1312,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0x480d44d247a3024e88d5e4f2f8b6eba8da0416333007c170f3fa492533b41ba9",
+      "keccak256": "0x5d61268e3883243261263263c2126c17c03597a5175e06de6447a0e8485d7b29",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://df1508bced56a055b1d91e0071a31029404efeacdfd4a325820982f3655c5c22",
-        "dweb:/ipfs/QmTb7Ct4j3senXbWXBP4mjZ3MmgYPGLrknQMYA2FxtfVb6"
+        "bzz-raw://f78b86c1f45e844fa93214d4d4d435c3f642d3c8b4270d731b18863255dcbf0a",
+        "dweb:/ipfs/QmQccLrGrZUZmA5h52T7KhYETJG7BqRBxtrbG9b12386BE"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Constants.sol": {
@@ -1322,11 +1336,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0x894bb248da584fc9dce2388f68d4c24329c00926f3104c20a9367373ecbfc06b",
+      "keccak256": "0xe12b93c00c4ae43753421e95bb20ebdec8841ba9edb6a99c549bd9edf465f2c2",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://ae688954230370b4e557768e158002a86784d0767321d2ea9bb5cac6c2df3af2",
-        "dweb:/ipfs/QmXHgeUjjGDcKq1XEcHowbHFrn2XrYCEpgQoMod8LZ7nuj"
+        "bzz-raw://fb732ef66dd55bfac519c21134b4726c5d38c5ac0dd9364dcbad258a63ed42a3",
+        "dweb:/ipfs/QmQvwubQPxhGSMwjaBCm1orb5yMSsGqHwkhuYZKfQqbbLb"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Errors.sol": {
@@ -1353,36 +1367,12 @@
         "dweb:/ipfs/QmR2Jsvy7KFGqttabBMAiS9SBQN52zh9CiQVTX2XxsJU6A"
       ]
     },
-    "contracts/zion-governance/src/spaces/modules/EntitlementModuleBase.sol": {
-      "keccak256": "0x147018e6542c919ad783948a6dbca9c073b582319273f518a31354799001fab9",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://f45195582a94a48a59dedd8dbc108308b0734a2bb93ac87fbd909a48f61f01a7",
-        "dweb:/ipfs/QmSGp7Hi1YEJMi79mQGZT3yCLEF59HBTnJvHqX3AaYsgqS"
-      ]
-    },
-    "contracts/zion-governance/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol": {
-      "keccak256": "0x812177233573a1e9576a6eaddc3096be5bf0a5f311e18fca39785cdaa8727525",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://6966d9b4b67c74f7f478c46817f056fdf29a8165c163720fb4ffd590ca98826b",
-        "dweb:/ipfs/QmXUzKECYJDxknZthEeZCbMjdiGUTHpMXUa5Cyf12Zbm7F"
-      ]
-    },
     "contracts/zion-governance/src/spaces/storage/ZionSpaceManagerStorage.sol": {
       "keccak256": "0x67d6796bc2ad3e38366c88189cf888628de047f2fc932fb2c606ebeb3a13d07c",
       "license": "Apache-2.0",
       "urls": [
         "bzz-raw://ad35749cb7e718ae32f263370c2fb220c29ce3e453c3b012ab7ded97b69873ec",
         "dweb:/ipfs/QmWj8be3KJHufQi8MYsBm5mysEa2yxVS3Zx4RAFdWjyGjU"
-      ]
-    },
-    "lib/forge-std/src/console.sol": {
-      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
-        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
@@ -1407,14 +1397,6 @@
       "urls": [
         "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
         "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {
-      "keccak256": "0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://fb0048dee081f6fffa5f74afc3fb328483c2a30504e94a0ddd2a5114d731ec4d",
-        "dweb:/ipfs/QmZptt1nmYoA5SgjwnSgWqgUSDgm4q52Yos3xhnMv3MV43"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {

@@ -11,10 +11,7 @@ import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/l
 
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import Goerli_ZionSpaceManagerArtifact from '@harmony/contracts/goerli/abis/ZionSpaceManager.json'
-import {
-    ZionSpaceManager as Goerli_ZionSpaceManager,
-    DataTypes as Goerli_DataTypes,
-} from '@harmony/contracts/goerli/typings/types/ZionSpaceManager'
+import { ZionSpaceManager as Goerli_ZionSpaceManager } from '@harmony/contracts/goerli/typings/types/ZionSpaceManager'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
@@ -65,56 +62,16 @@ export class ZionSpaceManagerShim extends BaseContractShim<
     async createSpace(
         info: Localhost_DataTypes.CreateSpaceDataStruct,
     ): Promise<ContractTransaction> {
-        if (this.isLocalhost) {
-            return this.localhost_signed.createSpace(info)
-        } else if (this.isGoerli) {
-            return this.goerli_signed.createSpace({
-                spaceName: info.spaceName,
-                networkId: info.spaceNetworkId,
-            })
-        } else {
-            throw new Error('unsupported network')
-        }
+        return this.signed.createSpace(info)
     }
 
     async createSpaceWithTokenEntitlement(
         info: Localhost_DataTypes.CreateSpaceDataStruct,
         entitlement: Localhost_DataTypes.CreateSpaceTokenEntitlementDataStruct,
     ): Promise<ContractTransaction> {
-        if (this.isLocalhost) {
-            return this.localhost_signed.createSpaceWithTokenEntitlement(info, entitlement)
-        } else if (this.isGoerli) {
-            return this.goerli_signed.createSpaceWithTokenEntitlement(
-                {
-                    spaceName: info.spaceName,
-                    networkId: info.spaceNetworkId,
-                },
-                entitlement,
-            )
-        } else {
-            throw new Error('unsupported network')
-        }
+        return this.signed.createSpaceWithTokenEntitlement(info, entitlement)
     }
     async getSpaces(): Promise<Localhost_DataTypes.SpaceInfoStructOutput[]> {
-        if (this.isLocalhost) {
-            return this.localhost_unsigned.getSpaces()
-        } else if (this.isGoerli) {
-            const result = await this.goerli_unsigned.getSpaces()
-            const mapped: Localhost_DataTypes.SpaceInfoStructOutput[] = result.map(
-                (x: Goerli_DataTypes.SpaceInfoStructOutput) =>
-                    ({
-                        spaceId: x.spaceId,
-                        networkId: '',
-                        createdAt: x.createdAt,
-                        name: x.name,
-                        creator: x.creator,
-                        owner: x.owner,
-                        disabled: false,
-                    } as Localhost_DataTypes.SpaceInfoStructOutput),
-            )
-            return mapped
-        } else {
-            throw new Error('unsupported network')
-        }
+        return this.unsigned.getSpaces()
     }
 }

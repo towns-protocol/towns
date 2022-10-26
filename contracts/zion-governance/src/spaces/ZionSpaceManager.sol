@@ -7,7 +7,6 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Constants} from "./libraries/Constants.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
-import {UserGrantedEntitlementModule} from "./modules/entitlements/UserGrantedEntitlementModule.sol";
 import {ZionEntitlementManager} from "./ZionEntitlementManager.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
@@ -122,19 +121,16 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
       }
     }
 
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = entitlement.externalTokenEntitlement;
+
     // add additional role to the token entitlement module
     _addRoleToEntitlementModule(
       info.spaceNetworkId,
       "",
       DEFAULT_TOKEN_ENTITLEMENT_MODULE,
       additionalRoleId,
-      abi.encode(
-        entitlement.description,
-        entitlement.tokenAddress,
-        entitlement.quantity,
-        entitlement.isSingleToken,
-        entitlement.tokenId
-      )
+      abi.encode(externalTokenEntitlement)
     );
 
     emit Events.CreateSpace(
@@ -158,12 +154,18 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     uint256 spaceId = _getSpaceIdByNetworkId(data.spaceNetworkId);
     uint256 channelId = _createChannel(spaceId, data);
 
-    (
-      string memory description,
-      address tokenAddress,
-      uint256 quantity,
-      uint256 tokenId
-    ) = _getOwnerNFTInformation(spaceId);
+    DataTypes.ExternalToken memory spaceNFTInfo = _getOwnerNFTInformation(
+      spaceId
+    );
+    DataTypes.ExternalToken[]
+      memory externalTokens = new DataTypes.ExternalToken[](1);
+    externalTokens[0] = spaceNFTInfo;
+
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
+        "Space Owner NFT Gate",
+        externalTokens
+      );
 
     // add owner role to channel's default entitlement module
     _addRoleToEntitlementModule(
@@ -171,7 +173,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
       data.channelNetworkId,
       DEFAULT_TOKEN_ENTITLEMENT_MODULE,
       _spaceById[spaceId].ownerRoleId,
-      abi.encode(description, tokenAddress, quantity, tokenId)
+      abi.encode(externalTokenEntitlement)
     );
 
     return channelId;
@@ -657,12 +659,18 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     internal
     returns (uint256)
   {
-    (
-      string memory description,
-      address tokenAddress,
-      uint256 quantity,
-      uint256 tokenId
-    ) = _getOwnerNFTInformation(spaceId);
+    DataTypes.ExternalToken memory spaceNFTInfo = _getOwnerNFTInformation(
+      spaceId
+    );
+
+    DataTypes.ExternalToken[]
+      memory externalTokens = new DataTypes.ExternalToken[](1);
+    externalTokens[0] = spaceNFTInfo;
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
+        "Space Owner NFT Gate",
+        externalTokens
+      );
 
     uint256 ownerRoleId = _createOwnerRole(spaceId);
     _addRoleToEntitlementModule(
@@ -670,7 +678,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
       "",
       DEFAULT_TOKEN_ENTITLEMENT_MODULE,
       ownerRoleId,
-      abi.encode(description, tokenAddress, quantity, true, tokenId)
+      abi.encode(externalTokenEntitlement)
     );
 
     return ownerRoleId;
@@ -679,14 +687,15 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   function _getOwnerNFTInformation(uint256 spaceId)
     internal
     view
-    returns (
-      string memory description,
-      address tokenAddress,
-      uint256 quantity,
-      uint256 tokenId
-    )
+    returns (DataTypes.ExternalToken memory)
   {
-    return ("Space Owner NFT", SPACE_NFT, 1, spaceId);
+    DataTypes.ExternalToken memory tokenInfo = DataTypes.ExternalToken(
+      SPACE_NFT,
+      1,
+      true,
+      spaceId
+    );
+    return tokenInfo;
   }
 
   /// ****************************

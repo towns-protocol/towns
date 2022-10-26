@@ -99,29 +99,34 @@ export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
 export async function createSpaceWithTokenEntitlement(
     client: ZionTestClient,
     permissions: string[],
-    creaetSpaceInfo?: CreateSpaceInfo,
+    createSpaceInfo?: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
     const contractInfo = getContractInfo(client.chainId)
 
-    if (!creaetSpaceInfo) {
-        creaetSpaceInfo = {
+    if (!createSpaceInfo) {
+        createSpaceInfo = {
             name: client.makeUniqueName(),
             visibility: RoomVisibility.Private,
         }
     }
 
-    const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
-        tokenAddress: contractInfo.council.addresses.councilnft,
+    const externalToken: DataTypes.ExternalTokenStruct = {
+        contractAddress: contractInfo.council.addresses.councilnft,
         quantity: 1,
-        description: 'Zion Council NFT',
         isSingleToken: false,
         tokenId: 0,
-        permissions,
-        roleName: 'Member',
     }
-
+    const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
+        tag: 'Council NFT Gate',
+        tokens: [externalToken],
+    }
+    const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
+        permissions: permissions,
+        roleName: 'Member',
+        externalTokenEntitlement: externalTokenEntitlement,
+    }
     const roomId = await client.createWeb3SpaceWithTokenEntitlement(
-        creaetSpaceInfo,
+        createSpaceInfo,
         tokenEntitlement,
     )
 

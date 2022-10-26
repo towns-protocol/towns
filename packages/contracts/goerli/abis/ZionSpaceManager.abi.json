@@ -3,12 +3,17 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "defaultPermissionsManagerAddress_",
+        "name": "permissionRegistry",
         "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "ChannelDoesNotExist",
+    "type": "error"
   },
   {
     "inputs": [],
@@ -37,17 +42,22 @@
   },
   {
     "inputs": [],
+    "name": "InvalidParameters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotAllowed",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotSpaceOwner",
+    "name": "SpaceDoesNotExist",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "SpaceAlreadyRegistered",
+    "name": "SpaceNFTNotSet",
     "type": "error"
   },
   {
@@ -138,47 +148,18 @@
         "components": [
           {
             "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
             "name": "channelName",
             "type": "string"
           },
           {
             "internalType": "string",
-            "name": "networkId",
+            "name": "channelNetworkId",
             "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "spaceId",
-            "type": "string"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "metadata",
-                "type": "string"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "string",
-                    "name": "name",
-                    "type": "string"
-                  }
-                ],
-                "internalType": "struct DataTypes.Permission[]",
-                "name": "permissions",
-                "type": "tuple[]"
-              }
-            ],
-            "internalType": "struct DataTypes.CreateRoleData[]",
-            "name": "roles",
-            "type": "tuple[]"
           }
         ],
         "internalType": "struct DataTypes.CreateChannelData",
@@ -187,7 +168,13 @@
       }
     ],
     "name": "createChannel",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -226,7 +213,7 @@
           },
           {
             "internalType": "string",
-            "name": "networkId",
+            "name": "spaceNetworkId",
             "type": "string"
           }
         ],
@@ -257,7 +244,7 @@
           },
           {
             "internalType": "string",
-            "name": "networkId",
+            "name": "spaceNetworkId",
             "type": "string"
           }
         ],
@@ -268,29 +255,53 @@
       {
         "components": [
           {
-            "internalType": "address",
-            "name": "entitlementModuleAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "tokenAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "quantity",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "description",
-            "type": "string"
-          },
-          {
             "internalType": "string[]",
             "name": "permissions",
             "type": "string[]"
+          },
+          {
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "quantity",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "isSingleToken",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct DataTypes.ExternalToken[]",
+                "name": "tokens",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalTokenEntitlement",
+            "name": "externalTokenEntitlement",
+            "type": "tuple"
           }
         ],
         "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",
@@ -339,6 +350,125 @@
         "internalType": "string",
         "name": "spaceId",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
+      }
+    ],
+    "name": "getChannelInfoByChannelId",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "channelId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "createdAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DataTypes.ChannelInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
+      }
+    ],
+    "name": "getChannelsBySpaceId",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "idCounter",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "channelId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "createdAt",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "networkId",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct DataTypes.Channel[]",
+            "name": "channels",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct DataTypes.Channels",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
       }
     ],
     "name": "getEntitlementModulesBySpaceId",
@@ -366,17 +496,17 @@
         "components": [
           {
             "internalType": "address",
-            "name": "entitlementAddress",
+            "name": "addr",
             "type": "address"
           },
           {
             "internalType": "string",
-            "name": "entitlementName",
+            "name": "name",
             "type": "string"
           },
           {
             "internalType": "string",
-            "name": "entitlementDescription",
+            "name": "description",
             "type": "string"
           }
         ],
@@ -471,11 +601,6 @@
             "internalType": "string",
             "name": "name",
             "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "isTransitive",
-            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.Role",
@@ -507,11 +632,6 @@
             "internalType": "string",
             "name": "name",
             "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "isTransitive",
-            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.Role[]",
@@ -559,6 +679,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          },
+          {
             "internalType": "uint256",
             "name": "createdAt",
             "type": "uint256"
@@ -577,6 +702,11 @@
             "internalType": "address",
             "name": "owner",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.SpaceInfo",
@@ -618,6 +748,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          },
+          {
             "internalType": "uint256",
             "name": "createdAt",
             "type": "uint256"
@@ -636,6 +771,11 @@
             "internalType": "address",
             "name": "owner",
             "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
           }
         ],
         "internalType": "struct DataTypes.SpaceInfo[]",
@@ -758,8 +898,79 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission",
+        "name": "permission",
+        "type": "tuple"
+      }
+    ],
+    "name": "removePermissionFromRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "removeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setChannelAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -772,7 +983,7 @@
         "type": "address"
       }
     ],
-    "name": "setDefaultEntitlementModule",
+    "name": "setDefaultTokenEntitlementModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -781,11 +992,42 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "permissionsManager",
+        "name": "entitlementModule",
         "type": "address"
       }
     ],
-    "name": "setDefaultPermissionsManager",
+    "name": "setDefaultUserEntitlementModule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setSpaceAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "spaceNFTAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setSpaceNFT",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -4,11 +4,6 @@ pragma solidity ^0.8.0;
 import {DataTypes} from "../libraries/DataTypes.sol";
 
 interface ISpaceManager {
-  // function createSpace(
-  //   DataTypes.CreateSpaceData calldata info,
-  //   DataTypes.CreateSpacePurchaseableEntitlementData calldata entitlement
-  // ) external returns (uint256);
-
   /// @notice Create a new space.
   /// @param info The data to create the space.
   function createSpace(DataTypes.CreateSpaceData calldata info)
