@@ -2,7 +2,8 @@ import React, { useContext } from 'react'
 import { Grid } from '@giphy/react-components'
 import { IGif } from '@giphy/js-types'
 import { ImageMessageContent, MessageType, useChannelId, useZionClient } from 'use-zion-client'
-import { useParams } from 'react-router'
+import { useParams, useResolvedPath } from 'react-router'
+import { PATHS } from 'routes'
 import { Box } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { themes } from 'ui/styles/themes'
@@ -24,6 +25,7 @@ const Loader = () => {
 }
 
 export const GiphyPicker = () => {
+    const isInReplyThread = useResolvedPath('.').pathname.includes(PATHS.REPLIES)
     const { theme } = useStore()
     const { fetchGifs, query, isFetching } = useGiphySearchContext()
     const { sendMessage } = useZionClient()
@@ -54,7 +56,7 @@ export const GiphyPicker = () => {
         const downsized = gifData.images.downsized
         const ogImage = gifData.images.original
         const messageContent: ImageMessageContent = {
-            threadId: threadId,
+            threadId: isInReplyThread ? threadId : undefined,
             url: ogImage.url,
             messageType: MessageType.Image,
             info: {
