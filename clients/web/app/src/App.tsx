@@ -1,7 +1,7 @@
 import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 
-import { ZionContextProvider, useMatrixStore } from 'use-zion-client'
+import { WalletStatus, ZionContextProvider, useMatrixStore, useWeb3Context } from 'use-zion-client'
 import { Box, Heading } from '@ui'
 import { AppLayout } from 'AppLayout'
 import { useRootTheme } from 'hooks/useRootTheme'
@@ -39,6 +39,8 @@ export const App = () => {
 
 const AllRoutes = () => {
     const { isAuthenticated } = useMatrixStore()
+    const { walletStatus } = useWeb3Context()
+    const isAuthed = isAuthenticated && walletStatus !== WalletStatus.Disconnected
 
     useRootTheme({
         ammendHTMLBody: true,
@@ -60,7 +62,7 @@ const AllRoutes = () => {
                         <Route path="/protocol" element={<Heading>PROTOCOL</Heading>} />
                         <Route path="/dao" element={<Heading>DAO</Heading>} />
                     </Route>
-                    {isAuthenticated && (
+                    {isAuthed && (
                         <>
                             <Route path="/register" element={<Register />} />
                             <Route path="*" element={<SidebarLayout />}>

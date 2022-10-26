@@ -1,21 +1,17 @@
 import { Login } from './Login'
 import { LoginUsernamePassword } from './LoginUsernamePassword'
-import { useMatrixStore } from 'use-zion-client'
+import { useMatrixStore, useWeb3Context, WalletStatus } from 'use-zion-client'
 import { Outlet } from 'react-router-dom'
 
 const debugWithPassword = false
 
 export function Main(): JSX.Element {
     const { isAuthenticated } = useMatrixStore()
+    const { walletStatus } = useWeb3Context()
+    const isAuthed = isAuthenticated && walletStatus !== WalletStatus.Disconnected
     return (
         <div>
-            {isAuthenticated ? (
-                <Outlet />
-            ) : debugWithPassword ? (
-                <LoginUsernamePassword />
-            ) : (
-                <Login />
-            )}
+            {isAuthed ? <Outlet /> : debugWithPassword ? <LoginUsernamePassword /> : <Login />}
         </div>
     )
 }
