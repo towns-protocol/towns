@@ -2,7 +2,7 @@ import type { BaseContract, BigNumber, BigNumberish, BytesLike, CallOverrides, C
 import type { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from "./common";
-export declare namespace DataTypes {
+export declare namespace CouncilDataTypes {
     type StakedTokenStruct = {
         staker: PromiseOrValue<string>;
         tokenId: PromiseOrValue<BigNumberish>;
@@ -13,18 +13,18 @@ export declare namespace DataTypes {
     };
     type StakerStruct = {
         amountStaked: PromiseOrValue<BigNumberish>;
-        stakedTokens: DataTypes.StakedTokenStruct[];
+        stakedTokens: CouncilDataTypes.StakedTokenStruct[];
         timeOfLastUpdate: PromiseOrValue<BigNumberish>;
         unclaimedPoints: PromiseOrValue<BigNumberish>;
     };
     type StakerStructOutput = [
         BigNumber,
-        DataTypes.StakedTokenStructOutput[],
+        CouncilDataTypes.StakedTokenStructOutput[],
         BigNumber,
         BigNumber
     ] & {
         amountStaked: BigNumber;
-        stakedTokens: DataTypes.StakedTokenStructOutput[];
+        stakedTokens: CouncilDataTypes.StakedTokenStructOutput[];
         timeOfLastUpdate: BigNumber;
         unclaimedPoints: BigNumber;
     };
@@ -103,9 +103,9 @@ export interface CouncilStaking extends BaseContract {
         }): Promise<ContractTransaction>;
         councilNFT(overrides?: CallOverrides): Promise<[string]>;
         getAvailablePoints(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[BigNumber]>;
-        getStakedTokensByAddress(_user: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[DataTypes.StakedTokenStructOutput[]]>;
+        getStakedTokensByAddress(_user: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[CouncilDataTypes.StakedTokenStructOutput[]]>;
         getStakerAddressByTokenId(_tokenId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<[string]>;
-        getStakerByAddress(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[DataTypes.StakerStructOutput]>;
+        getStakerByAddress(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[CouncilDataTypes.StakerStructOutput]>;
         owner(overrides?: CallOverrides): Promise<[string]>;
         renounceOwnership(overrides?: Overrides & {
             from?: PromiseOrValue<string>;
@@ -126,9 +126,9 @@ export interface CouncilStaking extends BaseContract {
     }): Promise<ContractTransaction>;
     councilNFT(overrides?: CallOverrides): Promise<string>;
     getAvailablePoints(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
-    getStakedTokensByAddress(_user: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.StakedTokenStructOutput[]>;
+    getStakedTokensByAddress(_user: PromiseOrValue<string>, overrides?: CallOverrides): Promise<CouncilDataTypes.StakedTokenStructOutput[]>;
     getStakerAddressByTokenId(_tokenId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string>;
-    getStakerByAddress(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.StakerStructOutput>;
+    getStakerByAddress(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<CouncilDataTypes.StakerStructOutput>;
     owner(overrides?: CallOverrides): Promise<string>;
     renounceOwnership(overrides?: Overrides & {
         from?: PromiseOrValue<string>;
@@ -147,9 +147,9 @@ export interface CouncilStaking extends BaseContract {
         claimPoints(overrides?: CallOverrides): Promise<void>;
         councilNFT(overrides?: CallOverrides): Promise<string>;
         getAvailablePoints(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
-        getStakedTokensByAddress(_user: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.StakedTokenStructOutput[]>;
+        getStakedTokensByAddress(_user: PromiseOrValue<string>, overrides?: CallOverrides): Promise<CouncilDataTypes.StakedTokenStructOutput[]>;
         getStakerAddressByTokenId(_tokenId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<string>;
-        getStakerByAddress(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<DataTypes.StakerStructOutput>;
+        getStakerByAddress(_staker: PromiseOrValue<string>, overrides?: CallOverrides): Promise<CouncilDataTypes.StakerStructOutput>;
         owner(overrides?: CallOverrides): Promise<string>;
         renounceOwnership(overrides?: CallOverrides): Promise<void>;
         stakeToken(_tokenId: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<void>;

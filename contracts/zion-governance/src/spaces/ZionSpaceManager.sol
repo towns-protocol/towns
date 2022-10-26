@@ -43,51 +43,15 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   /// *********************************
 
   /// @inheritdoc ISpaceManager
-  function createSpace(DataTypes.CreateSpaceData calldata info)
-    external
-    returns (uint256 spaceId)
-  {
-    _validateSpaceDefaults();
-
-    // create space Id
-    spaceId = _createSpace(info);
-
-    // mint space nft
-    ISpace(SPACE_NFT).mintBySpaceId(spaceId, _msgSender());
-
-    // whitespace default entitlement module
-    _whitelistEntitlementModule(spaceId, DEFAULT_USER_ENTITLEMENT_MODULE, true);
-
-    // whitespace default token entitlement module
-    _whitelistEntitlementModule(
-      spaceId,
-      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
-      true
-    );
-
-    // Create owner role with all permissions
-    uint256 ownerRoleId = _createOwnerRoleEntitlement(
-      spaceId,
-      info.spaceNetworkId
-    );
-    _spaceById[spaceId].ownerRoleId = ownerRoleId;
-
-    // Create everyone role with read permission
-    _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
-
-    emit Events.CreateSpace(info.spaceNetworkId, _msgSender());
-
-    return spaceId;
-  }
-
-  /// @inheritdoc ISpaceManager
-  function createSpaceWithTokenEntitlement(
+  function createSpace(
     DataTypes.CreateSpaceData calldata info,
-    DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
-  ) external returns (uint256 spaceId) {
+    DataTypes.CreateSpaceEntitlementData calldata entitlementData,
+    DataTypes.Permission[] calldata everyonePermissions
+  ) external returns (uint256) {
     _validateSpaceDefaults();
 
-    spaceId = _createSpace(info);
+    //create the space with the metadata passed in
+    uint256 spaceId = _createSpace(info);
 
     // mint space nft
     ISpace(SPACE_NFT).mintBySpaceId(spaceId, _msgSender());
@@ -107,43 +71,80 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       spaceId,
       info.spaceNetworkId
     );
+    //save this for convenience to use when creating a channel
     _spaceById[spaceId].ownerRoleId = ownerRoleId;
 
-    // Create everyone role with read permission
-    _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
-
-    // create the additional role being gated by the token
-    uint256 permissionLen = entitlement.permissions.length;
-    uint256 additionalRoleId = roleManager.createRole(
+    // Create everyone role with the permissions passed in
+    _createEveryoneRoleEntitlement(
       spaceId,
-      entitlement.roleName
+      info.spaceNetworkId,
+      everyonePermissions
     );
 
-    // Add the extra permissions passed to the new role
+    uint256 permissionLen = entitlementData.permissions.length;
+    // If there is another role to create then create it
     if (permissionLen > 0) {
+      // create the additional role being gated by the token or for specified users
+      uint256 additionalRoleId = roleManager.createRole(
+        spaceId,
+        entitlementData.roleName
+      );
+
+      //Add all the permissions for this role to it
       for (uint256 i = 0; i < permissionLen; ) {
         roleManager.addPermissionToRole(
           spaceId,
           additionalRoleId,
-          DataTypes.Permission(entitlement.permissions[i])
+          entitlementData.permissions[i]
         );
         unchecked {
           ++i;
         }
       }
+      //Iterate through the external tokens for this role and add them all to the token entitlement module
+      if (entitlementData.externalTokenEntitlements.length > 0) {
+        for (
+          uint256 i = 0;
+          i < entitlementData.externalTokenEntitlements.length;
+
+        ) {
+          DataTypes.ExternalTokenEntitlement
+            memory externalTokenEntitlement = entitlementData
+              .externalTokenEntitlements[i];
+          externalTokenEntitlement.tag = entitlementData
+            .externalTokenEntitlements[i]
+            .tag;
+
+          // add additional role to the token entitlement module
+          _addRoleToEntitlementModule(
+            info.spaceNetworkId,
+            "",
+            DEFAULT_TOKEN_ENTITLEMENT_MODULE,
+            additionalRoleId,
+            abi.encode(externalTokenEntitlement)
+          );
+          unchecked {
+            ++i;
+          }
+        }
+      }
+      //Iterate through the specified users for this role and add them all to the user entitlement module
+      if (entitlementData.users.length > 0) {
+        for (uint256 i = 0; i < entitlementData.users.length; ) {
+          // add additional role to the user entitlement module
+          _addRoleToEntitlementModule(
+            info.spaceNetworkId,
+            "",
+            DEFAULT_USER_ENTITLEMENT_MODULE,
+            additionalRoleId,
+            abi.encode(address(entitlementData.users[i]))
+          );
+          unchecked {
+            ++i;
+          }
+        }
+      }
     }
-
-    DataTypes.ExternalTokenEntitlement
-      memory externalTokenEntitlement = entitlement.externalTokenEntitlement;
-
-    // add additional role to the token entitlement module
-    _addRoleToEntitlementModule(
-      info.spaceNetworkId,
-      "",
-      DEFAULT_TOKEN_ENTITLEMENT_MODULE,
-      additionalRoleId,
-      abi.encode(externalTokenEntitlement)
-    );
 
     emit Events.CreateSpace(info.spaceNetworkId, _msgSender());
 
@@ -750,8 +751,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         externalTokens
       );
 
-    ownerRoleId = roleManager.createOwnerRole(spaceId);
-
+    uint256 newOwnerRoleId = roleManager.createOwnerRole(spaceId);
     _addRoleToEntitlementModule(
       networkId,
       "",
@@ -760,19 +760,19 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       abi.encode(externalTokenEntitlement)
     );
 
-    return ownerRoleId;
+    return newOwnerRoleId;
   }
 
   function _createEveryoneRoleEntitlement(
     uint256 spaceId,
-    string memory networkId
+    string memory networkId,
+    DataTypes.Permission[] memory permissions
   ) internal returns (uint256 everyoneRoleId) {
     everyoneRoleId = roleManager.createRole(spaceId, "Everyone");
 
-    DataTypes.Permission memory readPermission = IPermissionRegistry(
-      PERMISSION_REGISTRY
-    ).getPermissionByPermissionType(PermissionTypes.Read);
-    roleManager.addPermissionToRole(spaceId, everyoneRoleId, readPermission);
+    for (uint256 i = 0; i < permissions.length; i++) {
+      roleManager.addPermissionToRole(spaceId, everyoneRoleId, permissions[i]);
+    }
 
     _addRoleToEntitlementModule(
       networkId,

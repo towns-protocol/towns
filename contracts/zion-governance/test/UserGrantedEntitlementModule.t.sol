@@ -13,8 +13,9 @@ import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
 import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
 import {BaseSetup} from "./BaseSetup.sol";
+import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
 
-contract UserGrantedEntitlemtModuleTest is BaseSetup {
+contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
   function setUp() public virtual override {
     BaseSetup.setUp();
   }
@@ -26,9 +27,7 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup {
     string memory channelName = "test-channel";
     string memory channelNetworkId = "test-channel-network-id";
 
-    spaceManager.createSpace(
-      DataTypes.CreateSpaceData(spaceName, spaceNetworkId)
-    );
+    createSimpleSpace(spaceName, spaceNetworkId, spaceManager);
 
     spaceManager.createChannel(
       DataTypes.CreateChannelData(spaceNetworkId, channelName, channelNetworkId)
@@ -98,26 +97,30 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup {
     string memory spaceName = "test-space";
     string memory spaceNetworkId = "test-network-id";
 
-    spaceManager.createSpace(
-      DataTypes.CreateSpaceData(spaceName, spaceNetworkId)
-    );
+    createSimpleSpace(spaceName, spaceNetworkId, spaceManager);
 
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
       spaceNetworkId
     );
 
-    assertEq(address(entitlements[0]), address(userGrantedEntitlementModule));
+    assertEq(
+      address(entitlements[0]),
+      address(userGrantedEntitlementModule),
+      "First entitlement module should be user granted"
+    );
 
     DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
       PermissionTypes.Write
     );
 
     assertTrue(
-      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission),
+      "User should be entitled to write"
     );
 
     assertFalse(
-      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission),
+      "Zero User should not be entitled to write"
     );
 
     uint256 roleId = spaceManager.createRole(spaceNetworkId, "test-role");

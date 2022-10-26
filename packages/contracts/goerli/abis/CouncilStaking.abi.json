@@ -106,7 +106,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct DataTypes.StakedToken[]",
+        "internalType": "struct CouncilDataTypes.StakedToken[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -163,7 +163,7 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct DataTypes.StakedToken[]",
+            "internalType": "struct CouncilDataTypes.StakedToken[]",
             "name": "stakedTokens",
             "type": "tuple[]"
           },
@@ -178,7 +178,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct DataTypes.Staker",
+        "internalType": "struct CouncilDataTypes.Staker",
         "name": "",
         "type": "tuple"
       }

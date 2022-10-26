@@ -13,7 +13,7 @@ import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
 const TAG = '[useIntegratedSpaceManagement]'
 
 export function useIntegratedSpaceManagement() {
-    const { createWeb3SpaceWithTokenEntitlement, chainId } = useZionClient()
+    const { createWeb3Space, chainId } = useZionClient()
 
     const createSpaceWithZionTokenEntitlement = useCallback(
         async function (createInfo: CreateSpaceInfo): Promise<RoomIdentifier | undefined> {
@@ -33,15 +33,22 @@ export function useIntegratedSpaceManagement() {
                 tag: 'Council NFT Gate',
                 tokens: [externalToken],
             }
-            const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
-                permissions: [Permission.Read],
+
+            const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+
+            const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
+                permissions: [readPermission],
                 roleName: 'Member',
-                externalTokenEntitlement: externalTokenEntitlement,
+                externalTokenEntitlements: [externalTokenEntitlement],
+                users: [],
             }
+
+            const everyonePermissions: DataTypes.PermissionStruct[] = []
             try {
-                const roomId = await createWeb3SpaceWithTokenEntitlement(
+                const roomId = await createWeb3Space(
                     createInfo,
                     tokenEntitlement,
+                    everyonePermissions,
                 )
 
                 return roomId
@@ -51,7 +58,7 @@ export function useIntegratedSpaceManagement() {
 
             return undefined
         },
-        [chainId, createWeb3SpaceWithTokenEntitlement],
+        [chainId, createWeb3Space],
     )
 
     return {

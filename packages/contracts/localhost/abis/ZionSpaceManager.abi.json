@@ -3,7 +3,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "permissionRegistry",
+        "name": "_permissionRegistry",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_roleManager",
         "type": "address"
       }
     ],
@@ -113,12 +118,12 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceId",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
@@ -171,7 +176,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "channelId",
         "type": "uint256"
       }
     ],
@@ -182,7 +187,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceId",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {
@@ -195,38 +200,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "spaceName",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "spaceNetworkId",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.CreateSpaceData",
-        "name": "info",
-        "type": "tuple"
-      }
-    ],
-    "name": "createSpace",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
+        "name": "roleId",
         "type": "uint256"
       }
     ],
@@ -255,14 +229,21 @@
       {
         "components": [
           {
-            "internalType": "string[]",
-            "name": "permissions",
-            "type": "string[]"
-          },
-          {
             "internalType": "string",
             "name": "roleName",
             "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission[]",
+            "name": "permissions",
+            "type": "tuple[]"
           },
           {
             "components": [
@@ -299,17 +280,34 @@
                 "type": "tuple[]"
               }
             ],
-            "internalType": "struct DataTypes.ExternalTokenEntitlement",
-            "name": "externalTokenEntitlement",
-            "type": "tuple"
+            "internalType": "struct DataTypes.ExternalTokenEntitlement[]",
+            "name": "externalTokenEntitlements",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "users",
+            "type": "address[]"
           }
         ],
-        "internalType": "struct DataTypes.CreateSpaceTokenEntitlementData",
-        "name": "entitlement",
+        "internalType": "struct DataTypes.CreateSpaceEntitlementData",
+        "name": "entitlementData",
         "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission[]",
+        "name": "everyonePermissions",
+        "type": "tuple[]"
       }
     ],
-    "name": "createSpaceWithTokenEntitlement",
+    "name": "createSpace",
     "outputs": [
       {
         "internalType": "uint256",
@@ -475,7 +473,7 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "entitlementModules",
+        "name": "",
         "type": "address[]"
       }
     ],
@@ -537,106 +535,8 @@
           }
         ],
         "internalType": "struct DataTypes.Permission",
-        "name": "permission",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "spaceId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getPermissionsBySpaceIdByRoleId",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.Permission[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "spaceId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getRoleBySpaceIdByRoleId",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.Role",
         "name": "",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "spaceId",
-        "type": "string"
-      }
-    ],
-    "name": "getRolesBySpaceId",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.Role[]",
-        "name": "",
-        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -729,7 +629,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "ownerAddress",
+        "name": "",
         "type": "address"
       }
     ],
@@ -868,12 +768,12 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceId",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
@@ -901,7 +801,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceId",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {
@@ -931,7 +831,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceId",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {
@@ -1049,7 +949,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceId",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {

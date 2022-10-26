@@ -30,10 +30,11 @@ interface ZionClientImpl {
     spaceManager: ZionSpaceManagerShim | undefined
     chainId: number | undefined
     createSpace: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
-    createWeb3Space: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
-    createWeb3SpaceWithTokenEntitlement: (
+    createBasicWeb3Space: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
+    createWeb3Space: (
         createInfo: CreateSpaceInfo,
-        tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct,
+        tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct,
+        everyonePermissions: DataTypes.PermissionStruct[],
     ) => Promise<RoomIdentifier | undefined>
     createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
     editMessage: (
@@ -86,11 +87,8 @@ export function useZionClient(): ZionClientImpl {
         chainId: client?.chainId,
         createChannel: useWithCatch(client?.createChannel),
         createSpace: useWithCatch(client?.createSpace),
+        createBasicWeb3Space: useWithCatch(client?.createBasicWeb3Space, ZionClientEvent.NewSpace),
         createWeb3Space: useWithCatch(client?.createWeb3Space, ZionClientEvent.NewSpace),
-        createWeb3SpaceWithTokenEntitlement: useWithCatch(
-            client?.createWeb3SpaceWithTokenEntitlement,
-            ZionClientEvent.NewSpace,
-        ),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),

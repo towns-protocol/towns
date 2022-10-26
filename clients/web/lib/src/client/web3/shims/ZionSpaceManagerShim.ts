@@ -61,15 +61,10 @@ export class ZionSpaceManagerShim extends BaseContractShim<
 
     async createSpace(
         info: Localhost_DataTypes.CreateSpaceDataStruct,
+        entitlementData: Localhost_DataTypes.CreateSpaceEntitlementDataStruct,
+        everyonePermissions: Localhost_DataTypes.PermissionStruct[],
     ): Promise<ContractTransaction> {
-        return this.signed.createSpace(info)
-    }
-
-    async createSpaceWithTokenEntitlement(
-        info: Localhost_DataTypes.CreateSpaceDataStruct,
-        entitlement: Localhost_DataTypes.CreateSpaceTokenEntitlementDataStruct,
-    ): Promise<ContractTransaction> {
-        return this.signed.createSpaceWithTokenEntitlement(info, entitlement)
+        return this.signed.createSpace(info, entitlementData, everyonePermissions)
     }
     async getSpaces(): Promise<Localhost_DataTypes.SpaceInfoStructOutput[]> {
         return this.unsigned.getSpaces()

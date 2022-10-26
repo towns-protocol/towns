@@ -12,9 +12,10 @@ import "murky/Merkle.sol";
 import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
+import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
 import {BaseSetup} from "./BaseSetup.sol";
 
-contract TokenEntitlementModuleTest is BaseSetup {
+contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
   Zion internal zion;
   CouncilNFT internal councilNFT;
 
@@ -36,14 +37,6 @@ contract TokenEntitlementModuleTest is BaseSetup {
     councilNFT.startPublicMint();
   }
 
-  function createTestSpace(string memory spaceName, string memory networkId)
-    private
-    returns (uint256)
-  {
-    return
-      spaceManager.createSpace(DataTypes.CreateSpaceData(spaceName, networkId));
-  }
-
   function transferZionToken(address _to, uint256 quantity) private {
     zion.transfer(_to, quantity);
   }
@@ -53,7 +46,7 @@ contract TokenEntitlementModuleTest is BaseSetup {
     string memory networkId = "test-network-id";
     string memory roomId = "";
     // create a space with the default user granted entitlement module
-    createTestSpace(spaceName, networkId);
+    createSimpleSpace(spaceName, networkId, spaceManager);
 
     DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
       PermissionTypes.Ban
@@ -129,7 +122,7 @@ contract TokenEntitlementModuleTest is BaseSetup {
       PermissionTypes.Ban
     );
 
-    createTestSpace(spaceName, networkId);
+    createSimpleSpace(spaceName, networkId, spaceManager);
 
     // Create roles and add permissions
     string memory roleName = "Tester";
@@ -201,7 +194,7 @@ contract TokenEntitlementModuleTest is BaseSetup {
       PermissionTypes.Ban
     );
 
-    createTestSpace(spaceName, networkId);
+    createSimpleSpace(spaceName, networkId, spaceManager);
 
     // Create roles and add permissions
 

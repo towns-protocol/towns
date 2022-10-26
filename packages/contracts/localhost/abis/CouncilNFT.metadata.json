@@ -152,6 +152,32 @@
       },
       {
         "inputs": [],
+        "name": "MINT_PRICE",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOTAL_SUPPLY",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "allowlistMint",
         "outputs": [
           {
@@ -676,6 +702,12 @@
       },
       "kind": "user",
       "methods": {
+        "MINT_PRICE()": {
+          "notice": "the mint price for an individual nft"
+        },
+        "TOTAL_SUPPLY()": {
+          "notice": "the total supply of the collection"
+        },
         "alreadyMinted(address)": {
           "notice": "mapping to track which  users have already minted an nft"
         },
@@ -736,35 +768,27 @@
   },
   "sources": {
     "contracts/zion-governance/src/council/CouncilNFT.sol": {
-      "keccak256": "0xe187965c85a1a553bdf399ddefc18374f3a100f9030e1a726b9de10184b3f854",
+      "keccak256": "0x149fcec41ae04c02504dc760c947f4a436385156b3c66af2b9954911feaf5d2c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b593f9d9fc0a9de93ebbc6d071f57706bf005031deefac330eb5e9f6977f253d",
-        "dweb:/ipfs/Qme9J6mdv8r5p65Kiesb2yCr7acPwXrK6RhuX5EGdC3ubd"
+        "bzz-raw://3196ee62b968875a47315279e6f6c90f77b64c7477c0608a286eca5450fbfd71",
+        "dweb:/ipfs/QmPo2xANXAa2E4qGHJPiH33S6rfeT5uSGtPWTms41jvXXn"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/Constants.sol": {
-      "keccak256": "0xd28a3be0f0d3732c1813f73019fabafdd2decc262340dc4dc5fcc47f2b40c19b",
+    "contracts/zion-governance/src/council/libraries/CouncilErrors.sol": {
+      "keccak256": "0x5e7ef03bdac9b2acca7cc67467765787e5387c533fb99807d761d639d78a1949",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0a6dd6f360bb06f796972c0ec2df97746ea32f7b8659b40b2179c022070fd4d9",
-        "dweb:/ipfs/QmcNAL4eRBDV7cm689EcAmHyr1BcSoUp8txSByZp572FjR"
+        "bzz-raw://a8afb26af4a9b7cb160ac10f822f591efdfcf74423ff58289264f1205cb8f578",
+        "dweb:/ipfs/QmXYwWyy2bJSps8nUeLBss7wCY4zUJzDotaqh4tZUMu6jc"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/Errors.sol": {
-      "keccak256": "0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f",
+    "contracts/zion-governance/src/council/libraries/CouncilEvents.sol": {
+      "keccak256": "0x8aaeb1b2e207af77f4a2991319bd40355d55a4dafad0291c63d9a2767cbbc4ca",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://52f1e12630eb8a29450653ab64602fcf99fd568fb2157e8ff36b1a0d01976af6",
-        "dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna"
-      ]
-    },
-    "contracts/zion-governance/src/council/libraries/Events.sol": {
-      "keccak256": "0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://92a00bb216d56259162c1657c8ea73b875ea62a335635604b5d5cb1c75228c00",
-        "dweb:/ipfs/QmeW6FVzmsvN4xnVhepDoBvZETNVbFkN2vLxQa9jHeWBjZ"
+        "bzz-raw://1cfaad4621e80c43319ce12c07acdf75693a8fb28d17cd97ddfd1f8936b09e97",
+        "dweb:/ipfs/QmXwNeZDJ2zhjjoPGtyTaKrLagCf3D4RVx543PWHwtnxpB"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

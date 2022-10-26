@@ -130,9 +130,11 @@ library DataTypes {
   }
 
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement
-  struct CreateSpaceTokenEntitlementData {
-    string[] permissions;
+  struct CreateSpaceEntitlementData {
+    //The role and permissions to create for the associated users or token entitlements
     string roleName;
-    ExternalTokenEntitlement externalTokenEntitlement;
+    Permission[] permissions;
+    ExternalTokenEntitlement[] externalTokenEntitlements;
+    address[] users;
   }
 }

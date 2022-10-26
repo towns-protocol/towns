@@ -4,16 +4,14 @@ pragma solidity ^0.8.0;
 import {DataTypes} from "../libraries/DataTypes.sol";
 
 interface ISpaceManager {
-  /// @notice Create a new space.
-  /// @param info The data to create the space.
-  function createSpace(DataTypes.CreateSpaceData calldata info)
-    external
-    returns (uint256);
-
-  /// @notice Create a new space with a token entitlement.
-  function createSpaceWithTokenEntitlement(
+  /// @notice Create a new space
+  /// @param info The metadata for the space, name etc
+  /// @param entitlementData Data to create additional role gated by tokens or specific users
+  /// @param everyonePermissions The permissions to grant to the Everyone role
+  function createSpace(
     DataTypes.CreateSpaceData calldata info,
-    DataTypes.CreateSpaceTokenEntitlementData calldata entitlement
+    DataTypes.CreateSpaceEntitlementData calldata entitlementData,
+    DataTypes.Permission[] calldata everyonePermissions
   ) external returns (uint256);
 
   /// @notice Create a channel within a space

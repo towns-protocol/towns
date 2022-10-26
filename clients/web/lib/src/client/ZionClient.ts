@@ -294,54 +294,29 @@ export class ZionClient {
     }
 
     /************************************************
+     * createBasicWeb3Space
+     *************************************************/
+    public async createBasicWeb3Space(
+        createSpaceInfo: CreateSpaceInfo,
+    ): Promise<RoomIdentifier | undefined> {
+        const emptyPermissions: DataTypes.PermissionStruct[] = []
+        const emptyExternalTokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct = {
+            roleName: '',
+            permissions: emptyPermissions,
+            externalTokenEntitlements: emptyExternalTokenEntitlements,
+            users: [],
+        }
+        return this.createWeb3Space(createSpaceInfo, spaceEntitlementData, emptyPermissions)
+    }
+
+    /************************************************
      * createWeb3Space
      *************************************************/
     public async createWeb3Space(
         createSpaceInfo: CreateSpaceInfo,
-    ): Promise<RoomIdentifier | undefined> {
-        let roomIdentifier: RoomIdentifier | undefined = await this.createSpace(createSpaceInfo)
-
-        console.log('[createWeb3Space] Matrix createSpace', roomIdentifier)
-
-        if (roomIdentifier) {
-            const spaceInfo: DataTypes.CreateSpaceDataStruct = {
-                spaceName: createSpaceInfo.name,
-                spaceNetworkId: roomIdentifier.matrixRoomId,
-            }
-
-            let transaction: ContractTransaction | undefined = undefined
-            let receipt: ContractReceipt | undefined = undefined
-            try {
-                transaction = await this.spaceManager.createSpace(spaceInfo)
-                receipt = await transaction.wait()
-            } catch (err) {
-                console.log('[createWeb3Space] error', err)
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                const revertData: BytesLike = (err as any).error?.error?.error?.data
-                const decodedError = this.spaceManager.signed.interface.parseError(revertData)
-                console.error(decodedError)
-            } finally {
-                if (receipt?.status === 1) {
-                    // Successful created the space on-chain.
-                    console.log('[createWeb3Space] createSpace successful')
-                } else {
-                    console.log('[createWeb3Space] createSpace failed')
-                    // On-chain space creation failed. Abandon this space.
-                    await this.leave(roomIdentifier)
-                    roomIdentifier = undefined
-                }
-            }
-        }
-
-        return roomIdentifier
-    }
-
-    /************************************************
-     * createWeb3SpaceWithTokenEntitlement
-     *************************************************/
-    public async createWeb3SpaceWithTokenEntitlement(
-        createSpaceInfo: CreateSpaceInfo,
-        tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct,
+        spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
+        everyonePermissions: DataTypes.PermissionStruct[],
     ): Promise<RoomIdentifier | undefined> {
         let roomIdentifier: RoomIdentifier | undefined = await this.createSpace(createSpaceInfo)
 
@@ -356,9 +331,10 @@ export class ZionClient {
             let transaction: ContractTransaction | undefined = undefined
             let receipt: ContractReceipt | undefined = undefined
             try {
-                transaction = await this.spaceManager.createSpaceWithTokenEntitlement(
+                transaction = await this.spaceManager.createSpace(
                     spaceInfo,
-                    tokenEntitlement,
+                    spaceEntitlementData,
+                    everyonePermissions,
                 )
                 receipt = await transaction.wait()
             } catch (err) {

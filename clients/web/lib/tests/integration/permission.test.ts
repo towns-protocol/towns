@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MAXTRIX_ERROR, NoThrownError, getError, MatrixError } from './helpers/ErrorUtils'
 import {
-    createSpaceWithTokenEntitlement,
+    createSpace,
     registerAndStartClients,
     registerLoginAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
@@ -9,6 +9,7 @@ import {
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
 import { Room } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
+import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 
 /** 
  * Todo: permission feature development, skip this suite in our CI.
@@ -43,7 +44,9 @@ describe.skip('permissions', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement
-        const roomId = await createSpaceWithTokenEntitlement(bob, [Permission.Read])
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const roomId = await createSpace(bob, [readPermission])
 
         /** Act */
         // invite users to join the space.
@@ -67,11 +70,10 @@ describe.skip('permissions', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await bob.fundWallet()
 
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
         // create a space with token entitlement to write
-        const roomId = await createSpaceWithTokenEntitlement(bob, [
-            Permission.Read,
-            Permission.Write,
-        ])
+        const roomId = await createSpace(bob, [readPermission, writePermission])
 
         const isEntitledRead = await alice.isEntitled(
             roomId?.matrixRoomId as string,
@@ -117,10 +119,11 @@ describe.skip('permissions', () => {
         // TODO: allow for adjusted default Everyone permission, to remove
         // default Read which invariably allows all invitees regardless of
         // token gating
-        const roomId = await createSpaceWithTokenEntitlement(bob, [
-            Permission.Read,
-            Permission.Write,
-        ])
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+
+        const roomId = await createSpace(bob, [readPermission, writePermission])
         const isEntitledRead = await alice.isEntitled(
             roomId?.matrixRoomId as string,
             '',
@@ -155,8 +158,9 @@ describe.skip('permissions', () => {
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         // create a space with token entitlement
-        const roomId = await createSpaceWithTokenEntitlement(bob, [Permission.Read])
+        const roomId = await createSpace(bob, [readPermission])
 
         // invite users to join the space.
         if (roomId) {
@@ -182,8 +186,9 @@ describe.skip('permissions', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await bob.fundWallet()
 
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         // create a space with token entitlement
-        const roomId = await createSpaceWithTokenEntitlement(bob, [Permission.Read])
+        const roomId = await createSpace(bob, [readPermission])
 
         // invite users to join the space.
         if (roomId) {

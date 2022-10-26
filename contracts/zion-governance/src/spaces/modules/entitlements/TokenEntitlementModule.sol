@@ -308,7 +308,6 @@ contract TokenEntitlementModule is EntitlementModuleBase {
           .entitlementsByTag[tag]
           .roleId;
         //Get all the roles for that token entitlement, and add them to the array for this user
-
         roles[i] = IRoleManager(_roleManager).getRoleBySpaceIdByRoleId(
           _spaceId,
           roleId

@@ -4,6 +4,8 @@ import type { Listener, Provider } from "@ethersproject/providers";
 import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent, PromiseOrValue } from "./common";
 export interface CouncilNFTInterface extends utils.Interface {
     functions: {
+        "MINT_PRICE()": FunctionFragment;
+        "TOTAL_SUPPLY()": FunctionFragment;
         "allowlistMint()": FunctionFragment;
         "alreadyMinted(address)": FunctionFragment;
         "approve(address,uint256)": FunctionFragment;
@@ -32,7 +34,9 @@ export interface CouncilNFTInterface extends utils.Interface {
         "waitlistMint()": FunctionFragment;
         "withdrawPayments(address)": FunctionFragment;
     };
-    getFunction(nameOrSignatureOrTopic: "allowlistMint" | "alreadyMinted" | "approve" | "balanceOf" | "baseURI" | "currentTokenId" | "getApproved" | "isApprovedForAll" | "mint" | "name" | "owner" | "ownerOf" | "privateMint" | "publicMint" | "renounceOwnership" | "safeTransferFrom(address,address,uint256)" | "safeTransferFrom(address,address,uint256,bytes)" | "setApprovalForAll" | "startPublicMint" | "startWaitlistMint" | "supportsInterface" | "symbol" | "tokenURI" | "transferFrom" | "transferOwnership" | "waitlistMint" | "withdrawPayments"): FunctionFragment;
+    getFunction(nameOrSignatureOrTopic: "MINT_PRICE" | "TOTAL_SUPPLY" | "allowlistMint" | "alreadyMinted" | "approve" | "balanceOf" | "baseURI" | "currentTokenId" | "getApproved" | "isApprovedForAll" | "mint" | "name" | "owner" | "ownerOf" | "privateMint" | "publicMint" | "renounceOwnership" | "safeTransferFrom(address,address,uint256)" | "safeTransferFrom(address,address,uint256,bytes)" | "setApprovalForAll" | "startPublicMint" | "startWaitlistMint" | "supportsInterface" | "symbol" | "tokenURI" | "transferFrom" | "transferOwnership" | "waitlistMint" | "withdrawPayments"): FunctionFragment;
+    encodeFunctionData(functionFragment: "MINT_PRICE", values?: undefined): string;
+    encodeFunctionData(functionFragment: "TOTAL_SUPPLY", values?: undefined): string;
     encodeFunctionData(functionFragment: "allowlistMint", values?: undefined): string;
     encodeFunctionData(functionFragment: "alreadyMinted", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "approve", values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]): string;
@@ -77,6 +81,8 @@ export interface CouncilNFTInterface extends utils.Interface {
     encodeFunctionData(functionFragment: "transferOwnership", values: [PromiseOrValue<string>]): string;
     encodeFunctionData(functionFragment: "waitlistMint", values?: undefined): string;
     encodeFunctionData(functionFragment: "withdrawPayments", values: [PromiseOrValue<string>]): string;
+    decodeFunctionResult(functionFragment: "MINT_PRICE", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "TOTAL_SUPPLY", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "allowlistMint", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "alreadyMinted", data: BytesLike): Result;
     decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
@@ -172,6 +178,8 @@ export interface CouncilNFT extends BaseContract {
     once: OnEvent<this>;
     removeListener: OnEvent<this>;
     functions: {
+        MINT_PRICE(overrides?: CallOverrides): Promise<[BigNumber]>;
+        TOTAL_SUPPLY(overrides?: CallOverrides): Promise<[BigNumber]>;
         allowlistMint(overrides?: CallOverrides): Promise<[boolean]>;
         alreadyMinted(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<[boolean]>;
         approve(spender: PromiseOrValue<string>, id: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
@@ -226,6 +234,8 @@ export interface CouncilNFT extends BaseContract {
             from?: PromiseOrValue<string>;
         }): Promise<ContractTransaction>;
     };
+    MINT_PRICE(overrides?: CallOverrides): Promise<BigNumber>;
+    TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
     allowlistMint(overrides?: CallOverrides): Promise<boolean>;
     alreadyMinted(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
     approve(spender: PromiseOrValue<string>, id: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
@@ -278,6 +288,8 @@ export interface CouncilNFT extends BaseContract {
         from?: PromiseOrValue<string>;
     }): Promise<ContractTransaction>;
     callStatic: {
+        MINT_PRICE(overrides?: CallOverrides): Promise<BigNumber>;
+        TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
         allowlistMint(overrides?: CallOverrides): Promise<boolean>;
         alreadyMinted(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<boolean>;
         approve(spender: PromiseOrValue<string>, id: PromiseOrValue<BigNumberish>, overrides?: CallOverrides): Promise<void>;
@@ -317,6 +329,8 @@ export interface CouncilNFT extends BaseContract {
         Transfer(from?: PromiseOrValue<string> | null, to?: PromiseOrValue<string> | null, id?: PromiseOrValue<BigNumberish> | null): TransferEventFilter;
     };
     estimateGas: {
+        MINT_PRICE(overrides?: CallOverrides): Promise<BigNumber>;
+        TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
         allowlistMint(overrides?: CallOverrides): Promise<BigNumber>;
         alreadyMinted(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<BigNumber>;
         approve(spender: PromiseOrValue<string>, id: PromiseOrValue<BigNumberish>, overrides?: Overrides & {
@@ -370,6 +384,8 @@ export interface CouncilNFT extends BaseContract {
         }): Promise<BigNumber>;
     };
     populateTransaction: {
+        MINT_PRICE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        TOTAL_SUPPLY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         allowlistMint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
         alreadyMinted(arg0: PromiseOrValue<string>, overrides?: CallOverrides): Promise<PopulatedTransaction>;
         approve(spender: PromiseOrValue<string>, id: PromiseOrValue<BigNumberish>, overrides?: Overrides & {

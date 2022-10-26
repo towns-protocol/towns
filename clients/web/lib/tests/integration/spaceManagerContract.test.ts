@@ -15,8 +15,9 @@ describe('spaceManagerContract', () => {
         // put some money in bob's account
         await bob.fundWallet()
         // create a space
+
         const spaceName = bob.makeUniqueName()
-        const roomId = await bob.createWeb3Space({
+        const roomId = await bob.createBasicWeb3Space({
             name: spaceName,
             visibility: RoomVisibility.Private,
         })
@@ -46,17 +47,21 @@ describe('spaceManagerContract', () => {
             tag: 'Council NFT Gate',
             tokens: [externalToken],
         }
-        const tokenEntitlement: DataTypes.CreateSpaceTokenEntitlementDataStruct = {
-            permissions: [Permission.Read],
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
+            permissions: [readPermission],
             roleName: 'Member',
-            externalTokenEntitlement: externalTokenEntitlement,
+            externalTokenEntitlements: [externalTokenEntitlement],
+            users: [],
         }
-        const roomId = await bob.createWeb3SpaceWithTokenEntitlement(
+        const everyonePermissions: DataTypes.PermissionStruct[] = []
+        const roomId = await bob.createWeb3Space(
             {
                 name: spaceName,
                 visibility: RoomVisibility.Private,
             },
             tokenEntitlement,
+            everyonePermissions,
         )
         // log our our transaction result.
         console.log('roomId', roomId)

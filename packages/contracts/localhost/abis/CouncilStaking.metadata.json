@@ -112,7 +112,7 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct DataTypes.StakedToken[]",
+            "internalType": "struct CouncilDataTypes.StakedToken[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -169,7 +169,7 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct DataTypes.StakedToken[]",
+                "internalType": "struct CouncilDataTypes.StakedToken[]",
                 "name": "stakedTokens",
                 "type": "tuple[]"
               },
@@ -184,7 +184,7 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct DataTypes.Staker",
+            "internalType": "struct CouncilDataTypes.Staker",
             "name": "",
             "type": "tuple"
           }
@@ -338,43 +338,35 @@
   },
   "sources": {
     "contracts/zion-governance/src/council/CouncilStaking.sol": {
-      "keccak256": "0xcce063a8c28bd2396d5b918e073b0a768db3da40bac9aec76add99c2af6d6ea2",
+      "keccak256": "0x9ba971d9770dfbb67ffecdd696d7da9e44178d090f0407f231fc4519c596a75d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0941da1e7936171c309c0e1400468f9f055a74aa42aa67b9c5e57dbaad40940f",
-        "dweb:/ipfs/QmPPK6ND6YzMSRtpemnfVjtdAXveVgXQmJjbjLv8dyFsT1"
+        "bzz-raw://d80e9bd8bbdfc8aa306908625cfb28c844daac07fcfa86d45204e4a79ac30148",
+        "dweb:/ipfs/QmZWSnaJQkdEy94uZHjpMwp4bAUBLuG8j83xhv7tff2zh4"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/DataTypes.sol": {
-      "keccak256": "0xcb9554125a2c90a4c9f4d2c747b25616de295284b29301dd40ffa3bc160bd2ca",
+    "contracts/zion-governance/src/council/libraries/CouncilDataTypes.sol": {
+      "keccak256": "0xb56faf3d9aa03a8f6fbf6d048dbbd3ab4c0b4e6a5ed8952f5051db12940814a2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7d9931e10fc62cb6bc3ccbda1275001c7d43f382a352b3fe314ec142e7975ffd",
-        "dweb:/ipfs/QmNrTVJg1S864R7eyzuefLbGNBVpWE6TKqz7ZeLn757Vid"
+        "bzz-raw://b02ca5bd98053dc514447f7cebbc6ada03bc572a11a4ba680790173c1163f457",
+        "dweb:/ipfs/QmcU1YayjuNSNDDuaFVUEihgCJJyz2nbL6YiYVUGfWqsKu"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/Errors.sol": {
-      "keccak256": "0x22691fed8c00c27e6baef8e747cb846a578bd699ec6978d04486c81677a24c2f",
+    "contracts/zion-governance/src/council/libraries/CouncilErrors.sol": {
+      "keccak256": "0x5e7ef03bdac9b2acca7cc67467765787e5387c533fb99807d761d639d78a1949",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://52f1e12630eb8a29450653ab64602fcf99fd568fb2157e8ff36b1a0d01976af6",
-        "dweb:/ipfs/QmfY7LeGEZdthVY2sbhNxrbLbXPDHPybJfT146p9yuRFna"
+        "bzz-raw://a8afb26af4a9b7cb160ac10f822f591efdfcf74423ff58289264f1205cb8f578",
+        "dweb:/ipfs/QmXYwWyy2bJSps8nUeLBss7wCY4zUJzDotaqh4tZUMu6jc"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/Events.sol": {
-      "keccak256": "0x373a86836994cde1f186668690f51ace6d5fc645bf9effa6ce0633cf0732659a",
+    "contracts/zion-governance/src/council/libraries/CouncilEvents.sol": {
+      "keccak256": "0x8aaeb1b2e207af77f4a2991319bd40355d55a4dafad0291c63d9a2767cbbc4ca",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://92a00bb216d56259162c1657c8ea73b875ea62a335635604b5d5cb1c75228c00",
-        "dweb:/ipfs/QmeW6FVzmsvN4xnVhepDoBvZETNVbFkN2vLxQa9jHeWBjZ"
-      ]
-    },
-    "lib/forge-std/src/console.sol": {
-      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
-        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
+        "bzz-raw://1cfaad4621e80c43319ce12c07acdf75693a8fb28d17cd97ddfd1f8936b09e97",
+        "dweb:/ipfs/QmXwNeZDJ2zhjjoPGtyTaKrLagCf3D4RVx543PWHwtnxpB"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

@@ -27,18 +27,18 @@ describe('spaceManagerContractHooks', () => {
         // create a veiw for alice
         const TestComponent = () => {
             // basic space
-            const { createWeb3Space } = useZionClient()
+            const { createBasicWeb3Space } = useZionClient()
             //
             const { createSpaceWithZionTokenEntitlement } = useIntegratedSpaceManagement()
             // spaces
             const spaces = useSpacesFromContract()
             // callback to create a space
             const onClickCreateSpace = useCallback(() => {
-                void createWeb3Space({
+                void createBasicWeb3Space({
                     name: spaceName,
                     visibility: RoomVisibility.Public,
                 })
-            }, [createWeb3Space])
+            }, [createBasicWeb3Space])
             // callback to create a space with zion token entitlement
             const onClickCreateSpaceWithZionTokenEntitlement = useCallback(() => {
                 void createSpaceWithZionTokenEntitlement({
