@@ -21,7 +21,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   modifier onlyAllowed(
     string memory spaceId,
     string memory channelId,
-    string memory permission
+    bytes32 permission
   ) {
     _validateIsAllowed(spaceId, channelId, permission);
     _;
@@ -68,12 +68,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     // Create everyone role with read permission
     _createEveryoneRoleEntitlement(spaceId, info.spaceNetworkId);
 
-    emit Events.CreateSpace(
-      spaceId,
-      _msgSender(),
-      _msgSender(),
-      info.spaceName
-    );
+    emit Events.CreateSpace(info.spaceNetworkId, _msgSender());
 
     return spaceId;
   }
@@ -133,12 +128,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
       abi.encode(externalTokenEntitlement)
     );
 
-    emit Events.CreateSpace(
-      spaceId,
-      _msgSender(),
-      _msgSender(),
-      info.spaceName
-    );
+    emit Events.CreateSpace(info.spaceNetworkId, _msgSender());
 
     return spaceId;
   }
@@ -146,7 +136,7 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   /// @inheritdoc ISpaceManager
   function createChannel(DataTypes.CreateChannelData memory data)
     external
-    onlyAllowed(data.spaceNetworkId, "", "AddRemoveChannels")
+    onlyAllowed(data.spaceNetworkId, "", PermissionTypes.AddRemoveChannels)
     returns (uint256)
   {
     _validateSpaceExists(data.spaceNetworkId);
@@ -176,6 +166,12 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
       abi.encode(externalTokenEntitlement)
     );
 
+    emit Events.CreateChannel(
+      data.spaceNetworkId,
+      data.channelNetworkId,
+      _msgSender()
+    );
+
     return channelId;
   }
 
@@ -184,12 +180,14 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   /// *********************************
   function setSpaceAccess(string memory spaceNetworkId, bool disabled)
     external
-    onlyAllowed(spaceNetworkId, "", "ModifySpacePermissions")
+    onlyAllowed(spaceNetworkId, "", PermissionTypes.ModifySpacePermissions)
   {
     uint256 spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
     if (spaceId == 0) revert Errors.SpaceDoesNotExist();
 
     _spaceById[spaceId].disabled = disabled;
+
+    emit Events.SetSpaceAccess(spaceNetworkId, _msgSender(), disabled);
   }
 
   function setChannelAccess(
@@ -198,14 +196,14 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     bool disabled
   )
     external
-    onlyAllowed(spaceNetworkId, channelNetworkId, "ModifyChannelPermissions")
+    onlyAllowed(
+      spaceNetworkId,
+      channelNetworkId,
+      PermissionTypes.ModifyChannelPermissions
+    )
   {
     _validateSpaceExists(spaceNetworkId);
-    uint256 _channelId = _getChannelIdByNetworkId(
-      spaceNetworkId,
-      channelNetworkId
-    );
-    if (_channelId == 0) revert Errors.ChannelDoesNotExist();
+    _validateChannelExists(spaceNetworkId, channelNetworkId);
 
     uint256 spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
     uint256 channelId = _getChannelIdByNetworkId(
@@ -214,6 +212,13 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     );
 
     _channelBySpaceIdByChannelId[spaceId][channelId].disabled = disabled;
+
+    emit Events.SetChannelAccess(
+      spaceNetworkId,
+      channelNetworkId,
+      _msgSender(),
+      disabled
+    );
   }
 
   /// @inheritdoc ISpaceManager
@@ -245,10 +250,16 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     string calldata spaceId,
     address entitlementAddress,
     bool whitelist
-  ) external onlyAllowed(spaceId, "", "ModifySpacePermissions") {
+  ) external onlyAllowed(spaceId, "", PermissionTypes.ModifySpacePermissions) {
     _validateEntitlementInterface(entitlementAddress);
     _whitelistEntitlementModule(
       _getSpaceIdByNetworkId(spaceId),
+      entitlementAddress,
+      whitelist
+    );
+
+    emit Events.WhitelistEntitlementModule(
+      spaceId,
       entitlementAddress,
       whitelist
     );
@@ -257,18 +268,27 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
   /// @inheritdoc ISpaceManager
   function createRole(string calldata spaceId, string calldata name)
     external
-    onlyAllowed(spaceId, "", "ModifyChannelPermissions")
+    onlyAllowed(spaceId, "", PermissionTypes.ModifySpacePermissions)
     returns (uint256)
   {
-    return _createRole(_getSpaceIdByNetworkId(spaceId), name);
+    uint256 roleId = _createRole(_getSpaceIdByNetworkId(spaceId), name);
+
+    emit Events.CreateRole(spaceId, roleId, name, _msgSender());
+
+    return roleId;
   }
 
   /// @inheritdoc ISpaceManager
   function removeRole(string calldata spaceId, uint256 roleId)
     external
-    onlyAllowed(spaceId, "", "ModifyChannelPermissions")
+    onlyAllowed(spaceId, "", PermissionTypes.ModifySpacePermissions)
   {
+    if (roleId == _spaceById[_getSpaceIdByNetworkId(spaceId)].ownerRoleId)
+      revert Errors.InvalidParameters();
+
     _removeRole(_getSpaceIdByNetworkId(spaceId), roleId);
+
+    emit Events.RemoveRole(spaceId, roleId, _msgSender());
   }
 
   /// @inheritdoc ISpaceManager
@@ -276,8 +296,17 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     string calldata spaceId,
     uint256 roleId,
     DataTypes.Permission calldata permission
-  ) external onlyAllowed(spaceId, "", "ModifyChannelPermissions") {
+  ) external onlyAllowed(spaceId, "", PermissionTypes.ModifySpacePermissions) {
+    if (
+      keccak256(abi.encode(permission)) ==
+      keccak256(abi.encode(getPermissionFromMap(PermissionTypes.Owner)))
+    ) {
+      revert Errors.InvalidParameters();
+    }
+
     _addPermissionToRole(_getSpaceIdByNetworkId(spaceId), roleId, permission);
+
+    emit Events.UpdateRole(spaceId, roleId, _msgSender());
   }
 
   /// @inheritdoc ISpaceManager
@@ -285,12 +314,21 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     string calldata spaceId,
     uint256 roleId,
     DataTypes.Permission calldata permission
-  ) external onlyAllowed(spaceId, "", "ModifyChannelPermissions") {
+  ) external onlyAllowed(spaceId, "", PermissionTypes.ModifySpacePermissions) {
+    if (
+      keccak256(abi.encode(permission)) ==
+      keccak256(abi.encode(getPermissionFromMap(PermissionTypes.Owner)))
+    ) {
+      revert Errors.InvalidParameters();
+    }
+
     _removePermissionFromRole(
       _getSpaceIdByNetworkId(spaceId),
       roleId,
       permission
     );
+
+    emit Events.UpdateRole(spaceId, roleId, _msgSender());
   }
 
   /// @inheritdoc ISpaceManager
@@ -300,7 +338,10 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     address entitlementModuleAddress,
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlyAllowed(spaceId, channelId, "ModifyChannelPermissions") {
+  )
+    external
+    onlyAllowed(spaceId, channelId, PermissionTypes.ModifyChannelPermissions)
+  {
     _validateSpaceExists(spaceId);
 
     if (bytes(channelId).length > 0) {
@@ -327,7 +368,10 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     address entitlementModuleAddress,
     uint256[] calldata roleIds,
     bytes calldata data
-  ) external onlyAllowed(spaceId, channelId, "ModifyChannelPermissions") {
+  )
+    external
+    onlyAllowed(spaceId, channelId, PermissionTypes.ModifyChannelPermissions)
+  {
     _validateSpaceExists(spaceId);
 
     if (bytes(channelId).length > 0) {
@@ -711,26 +755,25 @@ contract ZionSpaceManager is ZionEntitlementManager, ISpaceManager {
     string memory spaceId,
     string memory channelId
   ) internal view {
-    _validateSpaceExists(spaceId);
-
     uint256 _channelId = _getChannelIdByNetworkId(spaceId, channelId);
     if (_channelId == 0) revert Errors.ChannelDoesNotExist();
   }
 
   function _validateIsAllowed(
-    string memory spaceId,
-    string memory channelId,
-    string memory permission
+    string memory spaceNetworkId,
+    string memory channelNetworkId,
+    bytes32 permission
   ) internal view {
     if (
       // check if the caller is the space manager contract itself, was getting erros when calling internal functions
       _msgSender() == address(this) ||
-      _msgSender() == _spaceById[_getSpaceIdByNetworkId(spaceId)].owner ||
+      _msgSender() ==
+      _spaceById[_getSpaceIdByNetworkId(spaceNetworkId)].owner ||
       _isEntitled(
-        spaceId,
-        channelId,
+        spaceNetworkId,
+        channelNetworkId,
         _msgSender(),
-        DataTypes.Permission(permission)
+        getPermissionFromMap(permission)
       )
     ) {
       return;

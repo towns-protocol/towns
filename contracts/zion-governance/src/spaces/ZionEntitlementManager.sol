@@ -29,8 +29,6 @@ abstract contract ZionEntitlementManager is Ownable, ZionSpaceManagerStorage {
     uint256 roleId = _rolesBySpaceId[spaceId].idCounter++;
     _rolesBySpaceId[spaceId].roles.push(DataTypes.Role(roleId, name));
 
-    emit Events.CreateRole(spaceId, roleId, _msgSender(), name);
-
     return roleId;
   }
 
