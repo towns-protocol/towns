@@ -19,6 +19,19 @@ jobs:
                     --health-retries 5
                 ports:
                     - 55000:6379
+            postgres:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5432 on service container to the host
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
@@ -46,4 +59,9 @@ jobs:
             - run: yarn prettier:check
             - run: yarn syncpack:check
             - run: yarn csb:build
+            - run: psql -h localhost -p 5432 -U postgres -f scripts/sql/create_db.sql
+              working-directory: casablanca
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
             - run: yarn csb:test

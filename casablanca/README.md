@@ -11,9 +11,9 @@ Run tests on the running node:
 
 # Running Casablanca Tests
 
-Start Redis:
+Start Redis & Postgres:
 
-    casablanca/scripts/launch_redis.sh
+    casablanca/scripts/launch_storage.sh
 
 Run all Casablanca tests:
 

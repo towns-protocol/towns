@@ -8,3 +8,19 @@ services:
             - data:/data
         ports:
             - 55000:6379
+    postgres:
+        image: postgres:latest
+        restart: always
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+        logging:
+            options:
+                max-size: 10m
+                max-file: '3'
+        ports:
+            - '5432:5432'
+        volumes:
+            - data:/var/lib/postgresql/data
+            # copy the sql script to create tables
+            - ./sql/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql

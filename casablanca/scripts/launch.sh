@@ -7,7 +7,7 @@ echo
 yarn run --top-level csb:clean
 yarn run --top-level csb:build
 
-./launch_redis.sh
+./launch_storage.sh
 
 echo 
 echo "To test instance run tests with:"
