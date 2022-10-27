@@ -4,26 +4,39 @@ import { useAccount, useNetwork, useSignMessage } from 'wagmi'
 import { IWeb3Context } from '../../components/Web3ContextProvider'
 import { WalletStatus } from 'types/web3-types'
 
+interface IWeb3ProviderWrapper {
+    provider: ethers.providers.Web3Provider
+    chainId?: number
+}
+
 /// web3 grabs some of the wagmi data for convience, please feel free to use wagmi directly
 export function useWeb3(): IWeb3Context {
     const { address, connector, isConnected, status } = useAccount()
     const { chain: activeChain, chains } = useNetwork()
     const { signMessageAsync } = useSignMessage()
 
-    const provider = useRef<ethers.providers.Web3Provider>()
+    const provider = useRef<IWeb3ProviderWrapper>()
 
     /// aellis 10.19.2022 note, we use wagmi for nearly everything,
     /// but we use the window.ethereum object for instanciating the contracts
     /// in the zion client
-    if (!provider.current && typeof window !== 'undefined' && window?.ethereum) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        provider.current = new ethers.providers.Web3Provider(window.ethereum)
+    if (
+        (!provider.current || provider.current.chainId != activeChain?.id) &&
+        typeof window !== 'undefined' &&
+        window?.ethereum
+    ) {
+        provider.current = {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            provider: new ethers.providers.Web3Provider(window.ethereum),
+            chainId: activeChain?.id,
+        }
     }
 
     console.log('use web3', {
         connector,
         address,
         activeChain,
+        chains,
         rpc: activeChain?.rpcUrls,
         def: activeChain?.rpcUrls?.default,
         status,
@@ -41,7 +54,7 @@ export function useWeb3(): IWeb3Context {
     )
 
     return {
-        provider: provider.current,
+        provider: provider.current?.provider,
         sign: sign,
         accounts: address ? [address] : [],
         chain: activeChain,
