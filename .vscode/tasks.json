@@ -13,6 +13,7 @@
         "dependsOn": [
           "YarnInstall",
           "StartDendrite",
+          "StartCasablanca",
           "StartBlockchain",
           "DeployZionGovernance",
           "WatchSharedLib",
@@ -50,6 +51,16 @@
         "label": "StartDendrite",
         "type": "shell",
         "command": "./scripts/start-local-dendrite.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        },
+      },
+      {
+        "label": "StartCasablanca",
+        "type": "shell",
+        "command": "sleep 3 && ./scripts/start-local-casablanca.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
