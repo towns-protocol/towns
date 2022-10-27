@@ -128,6 +128,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
           }
         }
       }
+
       //Iterate through the specified users for this role and add them all to the user entitlement module
       if (entitlementData.users.length > 0) {
         for (uint256 i = 0; i < entitlementData.users.length; ) {

@@ -20,9 +20,9 @@ contract DeployZionEntitlements is Script {
 
   function run() public {
     spaceManager = ZionSpaceManager(0xb194C2E006aEeC94BC8bAa39B8578992134deF80);
-    roleManager = ZionRoleManager(0x07e71c115aE5F2929E13940148015284242c3f07);
+    roleManager = ZionRoleManager(0xf941F1f08E0EA9A747E7Eef53C57dc13425aA8af);
     permissionsRegistry = ZionPermissionsRegistry(
-      0xf941F1f08E0EA9A747E7Eef53C57dc13425aA8af
+      0x07e71c115aE5F2929E13940148015284242c3f07
     );
 
     vm.startBroadcast();
