@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
 import { Membership } from '../../types/matrix-types'
 import { ClientEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 
 export function useSpacesIds(client: ZionClient | undefined): {
     spaceIds: string[]

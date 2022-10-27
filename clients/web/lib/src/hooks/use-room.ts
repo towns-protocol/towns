@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { toZionRoom } from '../store/use-matrix-store'
 import { useZionContext } from '../components/ZionContextProvider'
 import { RoomIdentifier, Room } from '../types/matrix-types'
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 
 export function useRoom(roomId?: RoomIdentifier): Room | undefined {
     const { client } = useZionContext()

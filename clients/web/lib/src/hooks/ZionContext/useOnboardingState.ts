@@ -6,7 +6,7 @@ import { OnboardingStep_Done } from './onboarding/OnboardingStep_Done'
 import { OnboardingStep_LoadProfile } from './onboarding/OnboardingStep_LoadProfile'
 import { OnboardingStep_UserProfile } from './onboarding/OnboardingStep_UserProfile'
 import { OnboardingStep_WelcomeSplash } from './onboarding/OnboardingStep_WelcomeSplash'
-import { isEqual } from 'lodash'
+import isEqual from 'lodash/isEqual'
 
 const ONBOARDING_STEPS = [
     OnboardingStep_LoadProfile,

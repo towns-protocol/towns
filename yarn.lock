@@ -13809,6 +13809,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-lodash@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "eslint-plugin-lodash@npm:7.4.0"
+  dependencies:
+    lodash: ^4.17.21
+  peerDependencies:
+    eslint: ">=2"
+  checksum: 7557cded64dd0e1042b420214e65ba9d6c5cb6c83c40e471db1f7d33e63584d1260c9ca9a4fded4ca7a2fe2ac2a9cdc303e072105096fa99b583101c6e7ada13
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-markdown@npm:^3.0.0":
   version: 3.0.0
   resolution: "eslint-plugin-markdown@npm:3.0.0"
@@ -30137,6 +30148,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.40.1
     "@typescript-eslint/parser": ^5.40.1
     eslint: ^8.25.0
+    eslint-plugin-lodash: ^7.4.0
     eslint-plugin-react-hooks: ^4.6.0
     ethers: ^5.7.2
     http-status-codes: ^2.2.0
