@@ -10,6 +10,7 @@ import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
 import { Room } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
+import { RoleIdentifier } from '../../src/types/web3-types'
 
 /** 
  * Todo: permission feature development, skip this suite in our CI.
@@ -34,7 +35,97 @@ import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 
 describe.skip('permissions', () => {
     //describe.only('permissions', () => {
-    jest.setTimeout(30 * 1000)
+    jest.setTimeout(300 * 1000)
+
+    test('Space owner is allowed create new role', async () => {
+        /** Arrange */
+
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const roomId = await createSpace(alice, [readPermission])
+        /** Act */
+        // create new role in space
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            roomId?.matrixRoomId as string,
+            'newRole1',
+        )
+
+        /** Assert */
+        expect(roleIdentifier).toBeDefined()
+    })
+
+    test('Space member not allowed to create new role without permission', async () => {
+        /** Arrange */
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const roomId = await createSpace(bob, [readPermission])
+        /** Act */
+        // create new role in space
+        const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
+            roomId?.matrixRoomId as string,
+            'newRole1',
+        )
+
+        /** Assert */
+        expect(roleIdentifier).not.toBeDefined()
+    })
+
+    test('Space member allowed to create new role with permission', async () => {
+        /** Arrange */
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const modifySpacePermission: DataTypes.PermissionStruct = {
+            name: Permission.ModifySpacePermissions,
+        }
+        const roomId = await createSpace(bob, [readPermission, modifySpacePermission])
+        /** Act */
+        // create new role in space
+        const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
+            roomId?.matrixRoomId as string,
+            'newRole1',
+        )
+
+        /** Assert */
+        expect(roleIdentifier).toBeDefined()
+    })
+
+    test('Space owner is allowed create multiple roles', async () => {
+        /** Arrange */
+
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const roomId = await createSpace(alice, [readPermission])
+        /** Act */
+        // create new role in space
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            roomId?.matrixRoomId as string,
+            'newRole1',
+        )
+        const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
+            roomId?.matrixRoomId as string,
+            'newRole1',
+        )
+        /** Assert */
+        expect(roleIdentifier?.roleId).toBeDefined()
+        expect(roleIdentifier2?.roleId).toBeDefined()
+        expect(roleIdentifier2?.roleId).not.toEqual(roleIdentifier?.roleId)
+    })
 
     test('Inviter is not allowed due to missing Invite permission', async () => {
         /** Arrange */
@@ -89,17 +180,11 @@ describe.skip('permissions', () => {
         )
         /** Act */
         // invite user to join the space by first checking if they can read.
-        try {
-            if (roomId && alice.matrixUserId) {
-                // Default Read added invariably allows all invitees regardless of token gating
-                // Will be fixed here: https://linear.app/hnt-labs/issue/HNT-205/createspacewithtokenentitlement-should-not-add-the-everyone-role-by
-                isEntitledRead && (await bob.inviteUser(roomId, alice.matrixUserId))
-            }
-        } catch (e) {
-            /** Assert */
-            expect(true).toEqual(false)
+        if (roomId && alice.matrixUserId) {
+            !isEntitledRead && (await bob.inviteUser(roomId, alice.matrixUserId))
         }
-        expect(isEntitledRead).toBe(true)
+        /** Assert */
+        expect(isEntitledRead).toBe(false)
         // alice can't write because she doesn't have token entitlement
         expect(isEntitledWrite).toBe(false)
     }) // end test
@@ -108,7 +193,7 @@ describe.skip('permissions', () => {
         /** Arrange */
 
         // create all the users for the test
-        const alice = await registerLoginAndStartClient(
+        const tokenGrantedUser = await registerLoginAndStartClient(
             'tokenGrantedUser',
             TestConstants.FUNDED_WALLET_0,
         )
@@ -124,22 +209,22 @@ describe.skip('permissions', () => {
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
 
         const roomId = await createSpace(bob, [readPermission, writePermission])
-        const isEntitledRead = await alice.isEntitled(
+        const isEntitledRead = await tokenGrantedUser.isEntitled(
             roomId?.matrixRoomId as string,
             '',
-            alice.provider.wallet.address,
+            tokenGrantedUser.provider.wallet.address,
             { name: Permission.Read },
         )
-        const isEntitledWrite = await alice.isEntitled(
+        const isEntitledWrite = await tokenGrantedUser.isEntitled(
             roomId?.matrixRoomId as string,
             '',
-            alice.provider.wallet.address,
+            tokenGrantedUser.provider.wallet.address,
             { name: Permission.Write },
         )
         /** Act */
         // invite user to join the space by first checking if they can read.
-        if (roomId && alice.matrixUserId) {
-            isEntitledRead && (await bob.inviteUser(roomId, alice.matrixUserId))
+        if (roomId && tokenGrantedUser.matrixUserId) {
+            isEntitledRead && (await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId))
         }
         /** Assert */
         expect(isEntitledRead).toBe(true)
@@ -167,7 +252,6 @@ describe.skip('permissions', () => {
             tokenGrantedUser.matrixUserId &&
                 (await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId))
         }
-
         /** Act */
         let actualJoin: Room | undefined
         if (roomId) {

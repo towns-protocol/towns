@@ -18,7 +18,7 @@ import {
     RoomMember,
     MatrixError,
 } from 'matrix-js-sdk'
-import { BytesLike, ContractReceipt, ContractTransaction } from 'ethers'
+import { BigNumber, BytesLike, ContractReceipt, ContractTransaction } from 'ethers'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -28,6 +28,7 @@ import {
     RoomIdentifier,
     SendMessageOptions,
 } from '../types/matrix-types'
+import { RoleIdentifier } from '../types/web3-types'
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'
 import { IZionServerVersions, ZionAuth, ZionOpts } from './ZionClientTypes'
@@ -415,6 +416,40 @@ export class ZionClient {
             permission: permission.name,
         })
         return isEntitled
+    }
+
+    /************************************************
+     * createRole
+     *************************************************/
+    public async createRole(
+        spaceNetworkId: string,
+        name: string,
+    ): Promise<RoleIdentifier | undefined> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let roleIdentifier: RoleIdentifier | undefined = undefined
+        let roleId: string | undefined = undefined
+        let roleName: string | undefined = undefined
+        try {
+            transaction = await this.spaceManager.signed.createRole(spaceNetworkId, name)
+            receipt = await transaction.wait()
+        } catch (err) {
+            console.log('[createRole] error', err)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+            const revertData: BytesLike = (err as any).error?.error?.error?.data
+            const decodedError = this.spaceManager.signed.interface.parseError(revertData)
+            console.error(decodedError)
+        } finally {
+            if (receipt?.status === 1) {
+                // Successful created the role on-chain.
+                console.log('[createRole] createRole successful', receipt?.logs[0].topics[2])
+                roleId = BigNumber.from(receipt?.logs[0].topics[2]).toString()
+                // John: how can we best decode this 32 byte hex string to a human readable string ?
+                roleName = receipt?.logs[0].topics[3]
+                roleIdentifier = { roleId, name: roleName, spaceNetworkId }
+            }
+        }
+        return roleIdentifier
     }
 
     /************************************************
