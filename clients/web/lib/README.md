@@ -18,6 +18,7 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 ```bash
 #from client root
 ./scripts/start-local-dendrite.sh
+./scripts/start-local-casablanca.sh
 ./scripts/start-local-blockchain.sh
 ./scripts/deploy-local-zion-governance-contracts.sh
 ./scripts/run-integration-tests.sh
