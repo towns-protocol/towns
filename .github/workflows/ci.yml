@@ -25,8 +25,8 @@ jobs:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
                 ports:
-                    # Maps tcp port 5432 on service container to the host
-                    - 5432:5432
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
                 options: >-
                     --health-cmd pg_isready
                     --health-interval 10s
@@ -59,7 +59,7 @@ jobs:
             - run: yarn prettier:check
             - run: yarn syncpack:check
             - run: yarn csb:build
-            - run: psql -h localhost -p 5432 -U postgres -f scripts/sql/create_db.sql
+            - run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
               env:
                   POSTGRES_PASSWORD: postgres

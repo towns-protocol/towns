@@ -20,7 +20,7 @@ export const createPGPool = () =>
     new Pool({
         user: 'postgres',
         database: 'casablanca',
-        port: 5432,
+        port: 5433,
         password: 'postgres',
     })
 

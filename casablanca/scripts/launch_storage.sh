@@ -5,4 +5,4 @@ echo
 echo "Launching Redis..."
 echo 
 
-docker compose up --detach --wait
+docker compose --project-name casablanca up --detach --wait
