@@ -1,7 +1,7 @@
 import { CodeNode } from '@lexical/code'
 import { AutoLinkNode, LinkNode } from '@lexical/link'
 import { ListItemNode, ListNode } from '@lexical/list'
-import { CHECK_LIST, TRANSFORMERS } from '@lexical/markdown'
+import { CHECK_LIST, HEADING, TRANSFORMERS } from '@lexical/markdown'
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin'
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin'
 import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin'
@@ -16,6 +16,7 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { clsx } from 'clsx'
 import React, { useMemo, useState } from 'react'
 import { Channel, RoomMember, useSpaceData, useSpaceMembers } from 'use-zion-client'
+import isEqual from 'lodash/isEqual'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useInitialConfig } from './hooks/useInitialConfig'
@@ -69,13 +70,17 @@ interface IUseTransformers {
     members: RoomMember[]
     channels: Channel[]
 }
+
+// either we filter out, or selectively import if this filter list gets too large
+const filteredDefaultTransforms = TRANSFORMERS.filter((t) => !isEqual(t, HEADING))
+
 const useTransformers = ({ members, channels }: IUseTransformers) => {
     const transformers = useMemo(() => {
         const names = members.map((m) => m.name).filter(notUndefined)
         const channelHashtags = channels.filter(notUndefined)
         return [
             CHECK_LIST,
-            ...TRANSFORMERS,
+            ...filteredDefaultTransforms,
             createMentionTransformer(names),
             createChannelLinkTransformer(channelHashtags),
         ]

@@ -23,7 +23,14 @@ export const theme: EditorThemeClasses = {
     paragraph,
     root,
     code: atoms({
-        color: 'accent',
+        padding: 'md',
+        display: 'block',
+        borderRadius: 'xs',
+        background: 'level3',
+    }),
+    quote: atoms({
+        paddingLeft: 'sm',
+        borderLeft: 'quote',
     }),
     bold: atoms({
         fontWeight: 'strong',
