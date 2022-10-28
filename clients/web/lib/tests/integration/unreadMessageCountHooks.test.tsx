@@ -18,6 +18,7 @@ import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { sleep } from '../../src/utils/zion-utils'
+import { act } from 'react-dom/test-utils'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -45,81 +46,85 @@ describe('unreadMessageCountHooks', () => {
         for (let i = 0; i < 20; i++) {
             await jane.sendMessage(janesSpaceId, 'hi ' + i.toString())
         }
-        // create a veiw for bob
-        const TestComponent = () => {
-            const { joinRoom, sendMessage, sendReadReceipt } = useZionClient()
-            const { unreadCounts, spaceUnreads } = useZionContext()
-            const unreadCount = unreadCounts[janesChannelId.matrixRoomId]
-            const spaceUnreadCount = unreadCounts[janesSpaceId.matrixRoomId]
-            const spaceHasUnread = spaceUnreads[janesSpaceId.matrixRoomId]
-            const mySpaceMembership = useMyMembership(janesSpaceId)
-            const myChannelMembership = useMyMembership(janesChannelId)
-            const spaceTimeline = useSpaceTimeline()
-            const timeline = useChannelTimeline()
-            const messages = timeline.filter((x) => x.eventType === ZTEvent.RoomMessage)
-            // handle join
-            const onClickJoinSpace = useCallback(() => {
-                void joinRoom(janesSpaceId)
-            }, [joinRoom])
-            // handle join
-            const onClickJoinChannel = useCallback(() => {
-                void joinRoom(janesChannelId)
-            }, [joinRoom])
-            // send message
-            const onClickSendMessage = useCallback(() => {
-                void sendMessage(janesChannelId, 'hello jane')
-            }, [sendMessage])
-            // send read receipt
-            const onMarkAsRead = useCallback(() => {
-                if (spaceUnreadCount > 0) {
-                    // this one is pretty weird, seems like every 10th run the server laggs
-                    // and we receive a few space messages after we join the channel
-                    // and end up with some space unread counts
-                    void sendReadReceipt(janesSpaceId, spaceTimeline.at(-1)!.eventId)
+
+        act(() => {
+            // create a veiw for bob
+            const TestComponent = () => {
+                const { joinRoom, sendMessage, sendReadReceipt } = useZionClient()
+                const { unreadCounts, spaceUnreads } = useZionContext()
+                const unreadCount = unreadCounts[janesChannelId.matrixRoomId]
+                const spaceUnreadCount = unreadCounts[janesSpaceId.matrixRoomId]
+                const spaceHasUnread = spaceUnreads[janesSpaceId.matrixRoomId]
+                const mySpaceMembership = useMyMembership(janesSpaceId)
+                const myChannelMembership = useMyMembership(janesChannelId)
+                const spaceTimeline = useSpaceTimeline()
+                const timeline = useChannelTimeline()
+                const messages = timeline.filter((x) => x.eventType === ZTEvent.RoomMessage)
+                // handle join
+                const onClickJoinSpace = useCallback(() => {
+                    void joinRoom(janesSpaceId)
+                }, [joinRoom])
+                // handle join
+                const onClickJoinChannel = useCallback(() => {
+                    void joinRoom(janesChannelId)
+                }, [joinRoom])
+                // send message
+                const onClickSendMessage = useCallback(() => {
+                    void sendMessage(janesChannelId, 'hello jane')
+                }, [sendMessage])
+                // send read receipt
+                const onMarkAsRead = useCallback(() => {
+                    if (spaceUnreadCount > 0) {
+                        // this one is pretty weird, seems like every 10th run the server laggs
+                        // and we receive a few space messages after we join the channel
+                        // and end up with some space unread counts
+                        void sendReadReceipt(janesSpaceId, spaceTimeline.at(-1)!.eventId)
+                    }
+                    if (unreadCount > 0) {
+                        void sendReadReceipt(janesChannelId, messages.at(-1)!.eventId)
+                    }
+                }, [messages, sendReadReceipt, spaceTimeline, spaceUnreadCount, unreadCount])
+                // format for easy reading
+                function formatMessage(e: TimelineEvent) {
+                    return `${e.fallbackContent} eventId: ${e.eventId}`
                 }
-                if (unreadCount > 0) {
-                    void sendReadReceipt(janesChannelId, messages.at(-1)!.eventId)
-                }
-            }, [messages, sendReadReceipt, spaceTimeline, spaceUnreadCount, unreadCount])
-            // format for easy reading
-            function formatMessage(e: TimelineEvent) {
-                return `${e.fallbackContent} eventId: ${e.eventId}`
+                return (
+                    <>
+                        <RegisterWallet />
+                        <div data-testid="spaceMembership"> {mySpaceMembership} </div>
+                        <div data-testid="channelMembership"> {myChannelMembership} </div>
+                        <button onClick={onClickJoinSpace}>join space</button>
+                        <button onClick={onClickJoinChannel}>join channel</button>
+                        <button onClick={onMarkAsRead}>mark as read</button>
+                        <button onClick={onClickSendMessage}>Send Message</button>
+                        <div data-testid="spaceUnreadCount"> {spaceUnreadCount} </div>
+                        <div data-testid="spaceHasUnread">
+                            {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
+                        </div>
+                        <div data-testid="unreadCount">
+                            {unreadCount === undefined ? 'undefined' : unreadCount.toString()}
+                        </div>
+                        <div data-testid="lastMessage">
+                            {messages.length > 0 ? formatMessage(messages.at(-1)!) : 'empty'}
+                        </div>
+                        <div id="allMessages">
+                            {timeline.map((event) => formatMessage(event)).join('\n')}
+                        </div>
+                    </>
+                )
             }
-            return (
-                <>
-                    <RegisterWallet />
-                    <div data-testid="spaceMembership"> {mySpaceMembership} </div>
-                    <div data-testid="channelMembership"> {myChannelMembership} </div>
-                    <button onClick={onClickJoinSpace}>join space</button>
-                    <button onClick={onClickJoinChannel}>join channel</button>
-                    <button onClick={onMarkAsRead}>mark as read</button>
-                    <button onClick={onClickSendMessage}>Send Message</button>
-                    <div data-testid="spaceUnreadCount"> {spaceUnreadCount} </div>
-                    <div data-testid="spaceHasUnread">
-                        {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
-                    </div>
-                    <div data-testid="unreadCount">
-                        {unreadCount === undefined ? 'undefined' : unreadCount.toString()}
-                    </div>
-                    <div data-testid="lastMessage">
-                        {messages.length > 0 ? formatMessage(messages.at(-1)!) : 'empty'}
-                    </div>
-                    <div id="allMessages">
-                        {timeline.map((event) => formatMessage(event)).join('\n')}
-                    </div>
-                </>
+            // render it
+            render(
+                <ZionTestApp provider={bobProvider}>
+                    <SpaceContextProvider spaceId={janesSpaceId}>
+                        <ChannelContextProvider channelId={janesChannelId}>
+                            <TestComponent />
+                        </ChannelContextProvider>
+                    </SpaceContextProvider>
+                </ZionTestApp>,
             )
-        }
-        // render it
-        render(
-            <ZionTestApp provider={bobProvider}>
-                <SpaceContextProvider spaceId={janesSpaceId}>
-                    <ChannelContextProvider channelId={janesChannelId}>
-                        <TestComponent />
-                    </ChannelContextProvider>
-                </SpaceContextProvider>
-            </ZionTestApp>,
-        )
+        })
+
         // get our test elements
         const bobId = screen.getByTestId('userId')
         const clientRunning = screen.getByTestId('clientRunning')
