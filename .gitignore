@@ -58,4 +58,4 @@ broadcast/
 # Local .terraform directories
 **/.terraform/*
 out/
-turbo-lint.log
+turbo-*.log

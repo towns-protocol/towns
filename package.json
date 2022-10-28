@@ -5,11 +5,13 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
+        "lint": "turbo lint",
+        "build": "yarn csb:build",
+        "test": "yarn csb:test",
         "build:contracts-governance": "yarn workspace @harmony/zion-governance build",
         "csb:build": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
         "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
         "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
-        "lint": "yarn workspaces foreach -p run lint",
         "postinstall": "husky install",
         "prepare": "husky install",
         "prettier:check": "prettier --check .",
@@ -31,6 +33,7 @@
         "prettier": "^2.7.1",
         "syncpack": "^8.2.4",
         "ts-node": "^10.9.1",
+        "turbo": "1.6.1",
         "typescript": "^4.8.4"
     },
     "husky": {

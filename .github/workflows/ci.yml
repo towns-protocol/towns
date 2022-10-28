@@ -41,6 +41,11 @@ jobs:
               with:
                   access_token: ${{ github.token }}
 
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                version: nightly
+
             - name: Cache node modules
               uses: actions/cache@v3
               env:
@@ -54,14 +59,27 @@ jobs:
               with:
                   node-version: '18'
                   cache: 'yarn'
-            - run: yarn install --immutable
-            - run: yarn lint
-            - run: yarn prettier:check
-            - run: yarn syncpack:check
-            - run: yarn csb:build
+
+            - name: Install dependencies
+              run: yarn install --immutable
+
+            - name: Syncpack
+              run: yarn syncpack:check
+
+            - name: Lint
+              run: yarn lint
+
+            - name: Build
+              run: yarn build
+            
+            - name: Start local blockchain
+              run: ./scripts/start-local-blockchain.sh &
+
             - run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
-            - run: yarn csb:test
+
+            - name: Test
+              run: yarn test
