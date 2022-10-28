@@ -1,18 +1,15 @@
-volumes:
-    data:
-
 services:
     redis:
         image: redis:latest
         volumes:
-            - data:/data
+            - redis-data:/data
         ports:
             - 55000:6379
     postgres:
         image: postgres:latest
         restart: always
         environment:
-            - PGDATA=/var/lib/postgresql/data/casablanca-e/
+            - PGDATA=/var/lib/postgresql/data
             - POSTGRES_USER=postgres
             - POSTGRES_PASSWORD=postgres
         logging:
@@ -22,6 +19,10 @@ services:
         ports:
             - '5433:5432'
         volumes:
-            - data:/var/lib/postgresql/data/casablanca-d/
+            - postgres-data:/var/lib/postgresql/data
             # copy the sql script to create tables
             - ./sql/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
+
+volumes:
+    redis-data: {}
+    postgres-data: {}
