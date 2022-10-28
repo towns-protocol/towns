@@ -44,7 +44,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                version: nightly
+                  version: nightly
 
             - name: Cache node modules
               uses: actions/cache@v3
@@ -71,7 +71,7 @@ jobs:
 
             - name: Build
               run: yarn build
-            
+
             - name: Start local blockchain
               run: ./scripts/start-local-blockchain.sh &
 
