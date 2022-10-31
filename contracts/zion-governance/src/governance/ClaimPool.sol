@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/Console.sol";
+import "forge-std/console.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract ClaimPool {
