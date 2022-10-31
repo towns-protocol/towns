@@ -9,9 +9,12 @@ export const buttonStyle = recipe({
         transition: 'box-shadow 1s',
 
         selectors: {
-            '&:hover': {
+            '&:hover:enabled': {
                 transition: 'box-shadow 320ms',
                 boxShadow: `0 0 0px 1px ${vars.color.tone.cta1}`,
+            },
+            '&:disabled': {
+                opacity: 0.5,
             },
         },
     },

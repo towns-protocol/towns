@@ -10,13 +10,14 @@ import { SiteHome } from 'routes/SiteHome'
 import { SpacesNew } from 'routes/SpacesNew'
 import { SidebarLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
+import { PATHS } from 'routes'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
 
 FontLoader.init()
 
-const MATRIX_HOMESERVER_URL = 'https://node1.zion.xyz'
+const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL
 const ZION_SPACE_ID = '!PXXlmYR9kl1kCgGG:node1.zion.xyz'
 const ZION_SPACE_NAME = 'Zion Preview' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
@@ -64,7 +65,7 @@ const AllRoutes = () => {
                     </Route>
                     {isAuthed && (
                         <>
-                            <Route path="/register" element={<Register />} />
+                            <Route path={`/${PATHS.PREFERENCES}`} element={<Register isEdit />} />
                             <Route path="*" element={<SidebarLayout />}>
                                 <Route path="*" element={<SpaceRoutes />} />
                             </Route>

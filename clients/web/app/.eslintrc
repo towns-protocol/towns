@@ -12,7 +12,13 @@
     "allowImportExportEverywhere": true
   },
   "ignorePatterns": ["vitest.setup.ts"],
-  "plugins": ["@typescript-eslint", "import", "react", "jest"],
+  "plugins": [
+    "@typescript-eslint",
+    "import",
+    "react",
+    "jest",
+    "testing-library"
+  ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -22,7 +28,8 @@
     "plugin:import/warnings",
     "plugin:import/typescript",
     "plugin:prettier/recommended",
-    "prettier"
+    "prettier",
+    "plugin:testing-library/react"
   ],
   "rules": {
     "@typescript-eslint/no-base-to-string": "error",

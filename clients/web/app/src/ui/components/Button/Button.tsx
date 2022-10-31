@@ -43,6 +43,7 @@ export const Button = ({
         background={tone}
         variants={buttonVariants}
         whileHover="hover"
+        disabled={disabled}
         onClick={onClick}
         {...inputProps}
     >

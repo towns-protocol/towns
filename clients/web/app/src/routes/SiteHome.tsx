@@ -4,6 +4,7 @@ import { NavLink } from 'react-router-dom'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { FadeIn } from '@components/Transitions'
 import { Stack, Text } from '@ui'
+import { PATHS } from 'routes'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
 
@@ -21,7 +22,7 @@ export const SiteHome = () => (
  */
 export const SiteHomeLayout = (props: { children?: React.ReactNode }) => (
     <Stack centerContent grow height="100%" gap="lg">
-        <NavLink to="/register">
+        <NavLink to={`/${PATHS.REGISTER}`}>
             <TransitionLogo />
         </NavLink>
         <FadeIn>

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
@@ -12,7 +12,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { vars } from 'ui/styles/vars.css'
-import { Avatar, Box, Button, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
+import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
 import { registerWalletMsgToSign } from '@components/Login/LoginComponent'
 
 const placeholders = {
@@ -32,34 +32,34 @@ const placeholders = {
         .map((_, index) => `/placeholders/nft_${index + 1}.png`),
 }
 
-export const RegisterForm = () => {
+export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     const { accounts, walletStatus } = useWeb3Context()
     const { registerWallet, setDisplayName, setAvatarUrl } = useZionClient()
     const navigate = useNavigate()
     const { loginStatus } = useMatrixStore()
     const myProfile = useMyProfile()
 
-    const { setValue, resetField, register, handleSubmit, watch, formState } = useForm({
-        defaultValues: {
+    const defaultValues = useMemo(
+        () => ({
             walletAddress: accounts[0],
             ens: undefined,
             displayName: myProfile?.displayName ?? '',
             nft: myProfile?.avatarUrl ?? '',
-        },
+        }),
+        [accounts, myProfile],
+    )
+
+    const { setValue, resetField, register, handleSubmit, watch, formState, reset } = useForm({
+        defaultValues,
+        mode: 'onChange',
     })
 
     useEffect(() => {
-        const displayName = myProfile?.displayName
-        if (displayName) {
-            setValue('displayName', displayName)
-        }
-    }, [myProfile?.displayName, setValue])
-    useEffect(() => {
-        const avatarUrl = myProfile?.avatarUrl
-        if (avatarUrl) {
-            setValue('nft', avatarUrl)
-        }
-    }, [myProfile?.avatarUrl, setValue])
+        if (!isEdit) return
+        reset(defaultValues)
+    }, [reset, defaultValues, isEdit])
+
+    const { errors, isValid } = formState
 
     const isConnected = walletStatus === WalletStatus.Connected
 
@@ -150,7 +150,7 @@ export const RegisterForm = () => {
                     autoFocus
                     autoCorrect="off"
                     background="level2"
-                    tone={formState.errors.displayName ? 'negative' : undefined}
+                    tone={errors?.displayName ? 'negative' : undefined}
                     inputColor={isENS ? 'etherum' : undefined}
                     label="Display Name"
                     secondaryLabel="(required)"
@@ -158,7 +158,8 @@ export const RegisterForm = () => {
                     placeholder="Enter a display name"
                     autoComplete="off"
                     after={isENS && <Icon type="verified" />}
-                    {...register('displayName', { required: true })}
+                    message={<ErrorMessage errors={errors} fieldName="displayName" />}
+                    {...register('displayName', { required: 'Please enter a display name' })}
                 />
 
                 {!!placeholders.names?.length && (
@@ -188,6 +189,7 @@ export const RegisterForm = () => {
                     label="NFT profile picture"
                     render={(value, selected) => (
                         <MotionBox
+                            data-testid="avatar-radio"
                             rounded="full"
                             border="strong"
                             animate={{
@@ -204,7 +206,7 @@ export const RegisterForm = () => {
                     applyChildProps={() => register('nft', { required: false })}
                 />
             )}
-            <Button type="submit" tone="cta1">
+            <Button type="submit" tone="cta1" disabled={!isValid}>
                 Next
             </Button>
         </Stack>

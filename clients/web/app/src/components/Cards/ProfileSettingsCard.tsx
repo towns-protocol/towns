@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { useZionClient } from 'use-zion-client'
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from '@ui'
 import { useStore } from 'store/store'
+import { PATHS } from 'routes'
 import { MenuItem } from './SpaceSettingsCard'
 
 type Props = {
@@ -31,7 +32,7 @@ export const ProfileSettingsCard = (props: Props) => {
     }, [navigate])
 
     const onSetupClick = useCallback(() => {
-        navigate('/register')
+        navigate(`/${PATHS.PREFERENCES}`)
     }, [navigate])
 
     const { logout } = useZionClient()
