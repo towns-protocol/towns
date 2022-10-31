@@ -19,7 +19,15 @@ jobs:
                     --health-retries 5
                 ports:
                     - 55000:6379
-            postgres:
+
+            anvil:
+              image: ghcr.io/foundry-rs/foundry:latest
+              ports:
+                - 8545:8545
+              options: >-
+                --entrypoint anvil
+
+            postgres-casablanca:
                 image: postgres:latest
                 env:
                     POSTGRES_USER: postgres
@@ -32,36 +40,49 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
+            
+            postgres-dendrite:
+              image: postgres:14
+              env:
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+              ports:
+                  - 5432:5432
+              options: >-
+                  --health-cmd pg_isready
+                  --health-interval 10s
+                  --health-timeout 5s
+                  --health-retries 5
+
         steps:
+
             - name: Checkout code
               uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
 
             - name: Cancel previous runs
               uses: styfle/cancel-workflow-action@0.11.0
               with:
                   access_token: ${{ github.token }}
-
+            
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: nightly
-
-            - name: Cache node modules
-              uses: actions/cache@v3
-              env:
-                  cache-name: cache-node-modules
-              with:
-                  path: |
-                      node_modules
-                  key: yarn-lock-${{ hashFiles('yarn.lock') }}
 
             - uses: actions/setup-node@v3
               with:
                   node-version: '18'
                   cache: 'yarn'
 
-            - name: Install dependencies
+            - name: Install node dependencies
               run: yarn install --immutable
+
+            # TODO: this script has confusing relative pathing
+            # - name: Install forge dependencies
+            #   run: ./scripts/install-deps.sh
 
             - name: Syncpack
               run: yarn syncpack:check
@@ -72,10 +93,11 @@ jobs:
             - name: Build
               run: yarn build
 
-            - name: Start local blockchain
-              run: ./scripts/start-local-blockchain.sh &
-
-            - run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+            # - name: Publish:local smart contracts
+            #   run: yarn publish:local
+          
+            - name: Casablanca create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
               env:
                   POSTGRES_PASSWORD: postgres

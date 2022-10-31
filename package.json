@@ -8,7 +8,7 @@
         "lint": "turbo lint",
         "build": "yarn csb:build",
         "test": "yarn csb:test",
-        "build:contracts-governance": "yarn workspace @harmony/zion-governance build",
+        "publish:local": "turbo publish:local",
         "csb:build": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
         "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
         "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
@@ -18,8 +18,7 @@
         "prettier:fix": "prettier --write .",
         "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "syncpack:check": "syncpack list-mismatches",
-        "syncpack:fix": "syncpack fix-mismatches && syncpack format",
-        "test-csb": "yarn csb:test"
+        "syncpack:fix": "syncpack fix-mismatches && syncpack format"
     },
     "devDependencies": {
         "@types/node": "^18.11.3",
@@ -34,7 +33,8 @@
         "syncpack": "^8.2.4",
         "ts-node": "^10.9.1",
         "turbo": "1.6.1",
-        "typescript": "^4.8.4"
+        "typescript": "^4.8.4",
+        "wait-on": "^6.0.0"
     },
     "husky": {
         "hooks": {

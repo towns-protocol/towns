@@ -5,7 +5,7 @@
     "scripts": {
         "build": "tsc --build",
         "dev": "nodemon src/index.ts",
-        "test": "tsc --build && jest --testTimeout 10000",
+        "test": "jest --testTimeout 20000",
         "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:80/json-rpc jest -t \".*-remote\""
     },
     "dependencies": {
