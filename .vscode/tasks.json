@@ -17,6 +17,8 @@
           "StartBlockchain",
           "DeployZionGovernance",
           "WatchSharedLib",
+          "WatchCasablancaClient",
+          "WatchCasablancaCore",
           "StartApp",
           "StartSampleApp"
         ],
@@ -64,7 +66,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-servers"
+          "group": "casablanca"
         },
       },
       {
@@ -95,6 +97,26 @@
         "problemMatcher": [],
         "presentation": {
           "group": "local-clients"
+        }
+      },
+      {
+        "label": "WatchCasablancaClient",
+        "type": "shell",
+        "command": "cd casablanca/packages/client && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "casablanca"
+        }
+      },
+      {
+        "label": "WatchCasablancaCore",
+        "type": "shell",
+        "command": "cd casablanca/packages/core && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "casablanca"
         }
       },
       {

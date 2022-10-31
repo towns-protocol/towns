@@ -5,7 +5,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc --build",
-        "dev": "ts-node src/index.ts"
+        "dev": "ts-node src/index.ts",
+        "watch": "tsc --watch"
     },
     "dependencies": {
         "@zion/core": "workspace:^",

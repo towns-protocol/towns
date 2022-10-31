@@ -6,7 +6,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc --build",
-        "test": "tsc --build && jest"
+        "test": "tsc --build && jest",
+        "watch": "tsc --watch"
     },
     "dependencies": {
         "@ethereumjs/util": "^8.0.1",
