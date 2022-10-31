@@ -15,18 +15,18 @@ import {
 
 export const createZionChannel = async (props: {
     matrixClient: MatrixClient
-    homeServer: string
     createInfo: CreateChannelInfo
     disableEncryption?: boolean
 }): Promise<RoomIdentifier> => {
-    const { matrixClient, homeServer, createInfo, disableEncryption } = props
+    const { matrixClient, createInfo, disableEncryption } = props
+    const homeServerUrl = matrixClient.baseUrl
     // initial state
     const options: ICreateRoomOpts = {
         //room_alias_name: "my_room_alias3",
         visibility: createInfo.visibility as unknown as Visibility,
         name: createInfo.name,
         is_direct: false,
-        initial_state: makeInitialState(homeServer, createInfo, disableEncryption),
+        initial_state: makeInitialState(homeServerUrl, createInfo, disableEncryption),
         room_version: '10',
     }
     // create the room
@@ -42,7 +42,7 @@ export const createZionChannel = async (props: {
                 createInfo.parentSpaceId.matrixRoomId,
                 'm.space.child',
                 {
-                    via: [homeServer],
+                    via: [homeServerUrl],
                 },
                 response.room_id,
             )
@@ -58,7 +58,7 @@ export const createZionChannel = async (props: {
 }
 
 function makeInitialState(
-    homeServer: string,
+    homeServerUrl: string,
     createInfo: CreateChannelInfo,
     bDisableEncryption?: boolean,
     bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
@@ -91,7 +91,7 @@ function makeInitialState(
             state_key: createInfo.parentSpaceId.matrixRoomId,
             content: {
                 canonical: true,
-                via: [homeServer],
+                via: [homeServerUrl],
             },
         })
     }

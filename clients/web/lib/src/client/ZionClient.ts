@@ -391,7 +391,6 @@ export class ZionClient {
     public async createChannel(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
         return createZionChannel({
             matrixClient: this.matrixClient,
-            homeServer: this.opts.homeServerUrl,
             createInfo: createInfo,
             disableEncryption: this.opts.disableEncryption,
         })
