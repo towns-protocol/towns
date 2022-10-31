@@ -60,7 +60,7 @@ import { loadOlm } from './loadOlm'
  * - go to the blockchain when creating a space
  * - go to the blockchain when updating power levels
  * - etc
- * the zion client will wrap the underlying matrix client and
+ * the zion client will wrap the underlying matrix and casablanca clients and
  * ensure correct zion protocol business logic
  */
 export class ZionClient {
@@ -79,14 +79,14 @@ export class ZionClient {
     public councilNFT: CouncilNFTShim
     private _chainId: number
     private _auth?: ZionAuth
-    private client: MatrixClient
+    private matrixClient: MatrixClient
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
         this.opts = opts
         this.name = name || ''
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        ;({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
+        ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
             opts.homeServerUrl,
             this._auth,
         ))
@@ -107,12 +107,12 @@ export class ZionClient {
      * getVersion
      *************************************************/
     public async getServerVersions() {
-        const version = await this.client.getVersions()
+        const version = await this.matrixClient.getVersions()
         return version as IZionServerVersions
     }
 
     public async isUserRegistered(username: string): Promise<boolean> {
-        const isAvailable = await this.client.isUsernameAvailable(username)
+        const isAvailable = await this.matrixClient.isUsernameAvailable(username)
         // If the username is available, then it is not yet registered.
         return isAvailable === false
     }
@@ -126,12 +126,12 @@ export class ZionClient {
         }
         this.stopClient()
         try {
-            await this.client.logout()
+            await this.matrixClient.logout()
         } catch (error) {
             this.log("caught error while trying to logout, but we're going to ignore it", error)
         }
         try {
-            await this.client.clearStores()
+            await this.matrixClient.clearStores()
         } catch (error) {
             this.log(
                 "caught error while trying to clearStores, but we're going to ignore it",
@@ -140,7 +140,7 @@ export class ZionClient {
         }
 
         this._auth = undefined
-        ;({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
+        ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
             this.opts.homeServerUrl,
             this._auth,
         ))
@@ -155,19 +155,19 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already registered')
         }
-        return await newRegisterSession(this.client, walletAddress)
+        return await newRegisterSession(this.matrixClient, walletAddress)
     }
 
     /************************************************
      * register
      * register wallet with matrix, if successful will
-     * return params that allow you to call start client
+     * return params that allow you to call start matrixClient
      *************************************************/
     public async register(request: RegisterRequest): Promise<ZionAuth> {
         if (this.auth) {
             throw new Error('already registered')
         }
-        const { access_token, device_id, user_id } = await this.client.registerRequest(
+        const { access_token, device_id, user_id } = await this.matrixClient.registerRequest(
             request,
             LoginTypePublicKey,
         )
@@ -189,7 +189,7 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already logged in')
         }
-        return await newLoginSession(this.client)
+        return await newLoginSession(this.matrixClient)
     }
 
     /************************************************
@@ -203,9 +203,12 @@ export class ZionClient {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const { access_token, device_id, user_id } = await this.client.login(LoginTypePublicKey, {
-            auth,
-        })
+        const { access_token, device_id, user_id } = await this.matrixClient.login(
+            LoginTypePublicKey,
+            {
+                auth,
+            },
+        )
         if (!access_token || !device_id || !user_id) {
             throw new Error('failed to login')
         }
@@ -222,17 +225,17 @@ export class ZionClient {
 
     /************************************************
      * startClient
-     * start the matrix client, add listeners
+     * start the matrix matrixClient, add listeners
      *************************************************/
     public async startClient(auth: ZionAuth, chainId: number) {
         if (this.auth) {
             throw new Error('already authenticated')
         }
-        if (this.client.clientRunning) {
-            throw new Error('client already running')
+        if (this.matrixClient.clientRunning) {
+            throw new Error('matrixClient already running')
         }
         // log startOpts
-        this.log('Starting client')
+        this.log('Starting matrixClient')
         // set auth, chainId
         this._auth = auth
         this._chainId = chainId
@@ -247,32 +250,32 @@ export class ZionClient {
             this.opts.web3Signer,
             this.chainId,
         )
-        // new client
-        ;({ client: this.client, store: this.store } = ZionClient.createMatrixClient(
+        // new matrixClient
+        ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
             this.opts.homeServerUrl,
             this._auth,
         ))
         // adjust params for our use case
-        this.client.setMaxListeners(0) // no limit
+        this.matrixClient.setMaxListeners(0) // no limit
         // start it up, this begins a sync command
         if (!this.opts.disableEncryption) {
             await loadOlm()
-            await this.client.initCrypto()
+            await this.matrixClient.initCrypto()
             // disable log...
-            this.client.setGlobalErrorOnUnknownDevices(false)
+            this.matrixClient.setGlobalErrorOnUnknownDevices(false)
         }
-        // start client
-        await this.client.startClient({
+        // start matrixClient
+        await this.matrixClient.startClient({
             pendingEventOrdering: PendingEventOrdering.Chronological,
             initialSyncLimit: this.opts.initialSyncLimit,
         })
         // wait for the sync to complete
         const initialSync = new Promise<string>((resolve, reject) => {
-            this.client.once(
+            this.matrixClient.once(
                 ClientEvent.Sync,
                 (state: SyncState, prevState: unknown, res: unknown) => {
                     if (state === SyncState.Prepared) {
-                        this.log('initial sync complete', this.client.getRooms())
+                        this.log('initial sync complete', this.matrixClient.getRooms())
                         resolve(state)
                     } else {
                         this.log('Unhandled sync event:', state, prevState, res)
@@ -289,9 +292,9 @@ export class ZionClient {
      * stopClient
      *************************************************/
     public stopClient() {
-        this.client.stopClient()
-        this.client.removeAllListeners()
-        this.log('Stopped client')
+        this.matrixClient.stopClient()
+        this.matrixClient.removeAllListeners()
+        this.log('Stopped matrixClient')
     }
 
     /************************************************
@@ -376,7 +379,7 @@ export class ZionClient {
      *************************************************/
     public async createSpace(createSpaceInfo: CreateSpaceInfo): Promise<RoomIdentifier> {
         return createZionSpace({
-            matrixClient: this.client,
+            matrixClient: this.matrixClient,
             createSpaceInfo,
             disableEncryption: this.opts.disableEncryption,
         })
@@ -387,7 +390,7 @@ export class ZionClient {
      *************************************************/
     public async createChannel(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
         return createZionChannel({
-            matrixClient: this.client,
+            matrixClient: this.matrixClient,
             homeServer: this.opts.homeServerUrl,
             createInfo: createInfo,
             disableEncryption: this.opts.disableEncryption,
@@ -456,7 +459,7 @@ export class ZionClient {
      * inviteUser
      *************************************************/
     public async inviteUser(roomId: RoomIdentifier, userId: string) {
-        return inviteZionUser({ matrixClient: this.client, userId, roomId })
+        return inviteZionUser({ matrixClient: this.matrixClient, userId, roomId })
     }
 
     /************************************************
@@ -464,7 +467,7 @@ export class ZionClient {
      * ************************************************/
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async leave(roomId: RoomIdentifier): Promise<void> {
-        await this.client.leave(roomId.matrixRoomId)
+        await this.matrixClient.leave(roomId.matrixRoomId)
     }
 
     /************************************************
@@ -473,7 +476,7 @@ export class ZionClient {
      * identified by a room id, this function handls joining both
      *************************************************/
     public async joinRoom(roomId: RoomIdentifier) {
-        const matrixRoom = await joinZionRoom({ matrixClient: this.client, roomId })
+        const matrixRoom = await joinZionRoom({ matrixClient: this.matrixClient, roomId })
         return toZionRoom(matrixRoom)
     }
 
@@ -486,7 +489,7 @@ export class ZionClient {
         options: SendMessageOptions = {},
     ) {
         return await sendZionMessage({
-            matrixClient: this.client,
+            matrixClient: this.matrixClient,
             roomId,
             message,
             options,
@@ -498,13 +501,17 @@ export class ZionClient {
         eventId: string,
         reaction: string,
     ): Promise<void> {
-        const newEventId = await this.client.sendEvent(roomId.matrixRoomId, EventType.Reaction, {
-            'm.relates_to': {
-                rel_type: RelationType.Annotation,
-                event_id: eventId,
-                key: reaction,
+        const newEventId = await this.matrixClient.sendEvent(
+            roomId.matrixRoomId,
+            EventType.Reaction,
+            {
+                'm.relates_to': {
+                    rel_type: RelationType.Annotation,
+                    event_id: eventId,
+                    key: reaction,
+                },
             },
-        })
+        )
         console.log('sendReaction', newEventId)
     }
 
@@ -513,7 +520,7 @@ export class ZionClient {
      *************************************************/
     public async editMessage(roomId: RoomIdentifier, message: string, options: EditMessageOptions) {
         return await editZionMessage({
-            matrixClient: this.client,
+            matrixClient: this.matrixClient,
             roomId,
             message,
             options,
@@ -524,7 +531,7 @@ export class ZionClient {
      * redactEvent
      *************************************************/
     public async redactEvent(roomId: RoomIdentifier, eventId: string, reason?: string) {
-        const resp = await this.client.redactEvent(roomId.matrixRoomId, eventId, undefined, {
+        const resp = await this.matrixClient.redactEvent(roomId.matrixRoomId, eventId, undefined, {
             reason,
         })
         console.log('event redacted', roomId.matrixRoomId, eventId, resp)
@@ -533,7 +540,7 @@ export class ZionClient {
      * sendNotice
      *************************************************/
     public async sendNotice(roomId: RoomIdentifier, message: string): Promise<void> {
-        await this.client.sendNotice(roomId.matrixRoomId, message)
+        await this.matrixClient.sendNotice(roomId.matrixRoomId, message)
     }
 
     /************************************************
@@ -543,7 +550,7 @@ export class ZionClient {
         if (!this.auth) {
             throw new Error('not authenticated')
         }
-        return syncZionSpace(this.client, spaceId, this.auth.userId)
+        return syncZionSpace(this.matrixClient, spaceId, this.auth.userId)
     }
 
     /************************************************
@@ -556,7 +563,7 @@ export class ZionClient {
      * getPowerLevels
      ************************************************/
     public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
-        const room = this.client.getRoom(roomId.matrixRoomId)
+        const room = this.matrixClient.getRoom(roomId.matrixRoomId)
         if (!room) {
             throw new Error(`Room ${roomId.matrixRoomId} not found`)
         }
@@ -573,7 +580,7 @@ export class ZionClient {
         if (!current) {
             throw new Error(`Power level ${key as string} not found`)
         }
-        const response = await setZionPowerLevel(this.client, roomId, current, newValue)
+        const response = await setZionPowerLevel(this.matrixClient, roomId, current, newValue)
         this.log(
             `updted power level ${current.definition.key} for room[${roomId.matrixRoomId}] from ${current.value} to ${newValue}`,
             response,
@@ -584,7 +591,7 @@ export class ZionClient {
      * isRoomEncrypted
      ************************************************/
     public isRoomEncrypted(roomId: RoomIdentifier): boolean {
-        return this.client.isRoomEncrypted(roomId.matrixRoomId)
+        return this.matrixClient.isRoomEncrypted(roomId.matrixRoomId)
     }
 
     /************************************************
@@ -592,9 +599,9 @@ export class ZionClient {
      ************************************************/
     public getRoom(roomId: RoomIdentifier | string): MatrixRoom | undefined {
         if (typeof roomId === 'string') {
-            return this.client.getRoom(roomId) ?? undefined
+            return this.matrixClient.getRoom(roomId) ?? undefined
         } else {
-            return this.client.getRoom(roomId.matrixRoomId) ?? undefined
+            return this.matrixClient.getRoom(roomId.matrixRoomId) ?? undefined
         }
     }
 
@@ -602,14 +609,14 @@ export class ZionClient {
      * getRooms
      ************************************************/
     public getRooms(): MatrixRoom[] {
-        return this.client.getRooms()
+        return this.matrixClient.getRooms()
     }
 
     /************************************************
      * getUser
      ************************************************/
     public getUser(userId: string): User | null {
-        return this.client.getUser(userId)
+        return this.matrixClient.getUser(userId)
     }
 
     /************************************************
@@ -618,8 +625,8 @@ export class ZionClient {
     public async getProfileInfo(
         userId: string,
     ): Promise<{ avatar_url?: string; displayname?: string }> {
-        const info = await this.client.getProfileInfo(userId)
-        const user = this.client.getUser(userId)
+        const info = await this.matrixClient.getProfileInfo(userId)
+        const user = this.matrixClient.getUser(userId)
         if (user) {
             if (info.displayname) {
                 user.setDisplayName(info.displayname)
@@ -643,25 +650,25 @@ export class ZionClient {
      * setDisplayName
      ************************************************/
     public async setDisplayName(name: string): Promise<void> {
-        await this.client.setDisplayName(name)
+        await this.matrixClient.setDisplayName(name)
     }
 
     /************************************************
      * avatarUrl
      ************************************************/
     public async setAvatarUrl(url: string): Promise<void> {
-        await this.client.setAvatarUrl(url)
+        await this.matrixClient.setAvatarUrl(url)
     }
 
     /************************************************
      * scrollback
      ************************************************/
     public async scrollback(roomId: RoomIdentifier, limit?: number): Promise<void> {
-        const room = this.client.getRoom(roomId.matrixRoomId)
+        const room = this.matrixClient.getRoom(roomId.matrixRoomId)
         if (!room) {
             throw new Error('room not found')
         }
-        await this.client.scrollback(room, limit)
+        await this.matrixClient.scrollback(room, limit)
     }
 
     /************************************************
@@ -673,7 +680,7 @@ export class ZionClient {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         eventId: string | undefined = undefined,
     ): Promise<void> {
-        const room = this.client.getRoom(roomId.matrixRoomId)
+        const room = this.matrixClient.getRoom(roomId.matrixRoomId)
         if (!room) {
             throw new Error(`room with id ${roomId.matrixRoomId} not found`)
         }
@@ -685,13 +692,13 @@ export class ZionClient {
                 `event for room ${roomId.matrixRoomId} eventId: ${eventId ?? 'at(-1)'} not found`,
             )
         }
-        const result = await this.client.sendReadReceipt(event)
+        const result = await this.matrixClient.sendReadReceipt(event)
         this.log('read receipt sent', result)
     }
 
     /************************************************
      * on
-     * Some matrix events are only emitted by the client,
+     * Some matrix events are only emitted by the matrixClient,
      * not through the room object.
      ************************************************/
     public on(
@@ -725,11 +732,11 @@ export class ZionClient {
             | ((event: MatrixEvent, member: RoomMember, oldMembership: string | null) => void)
             | ((event: MatrixEvent, roomState: RoomState, theMember: RoomMember) => void),
     ) {
-        this.client.on(event, callback)
+        this.matrixClient.on(event, callback)
     }
     /************************************************
      * off
-     * Some matrix events are only emitted by the client,
+     * Some matrix events are only emitted by the matrixClient,
      * not through the room object.
      ************************************************/
     public off(
@@ -762,7 +769,7 @@ export class ZionClient {
             | ((event: MatrixEvent, member: RoomMember, oldMembership: string | null) => void)
             | ((event: MatrixEvent, roomState: RoomState, theMember: RoomMember) => void),
     ) {
-        this.client.off(event, callback)
+        this.matrixClient.off(event, callback)
     }
 
     /************************************************
@@ -774,17 +781,17 @@ export class ZionClient {
 
     /************************************************
      * createMatrixClient
-     * helper, creates a matrix client with appropriate auth
+     * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
     private static createMatrixClient(
         homeServerUrl: string,
         auth?: ZionAuth,
-    ): { store: CustomMemoryStore; client: MatrixClient } {
+    ): { store: CustomMemoryStore; matrixClient: MatrixClient } {
         const store = new CustomMemoryStore({ localStorage: global.localStorage })
         if (auth) {
             return {
                 store: store,
-                client: createClient({
+                matrixClient: createClient({
                     store: store as IStore,
                     baseUrl: homeServerUrl,
                     accessToken: auth.accessToken,
@@ -796,7 +803,7 @@ export class ZionClient {
         } else {
             return {
                 store: store,
-                client: createClient({
+                matrixClient: createClient({
                     store: store as IStore,
                     baseUrl: homeServerUrl,
                 }),
