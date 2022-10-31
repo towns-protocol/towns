@@ -82,7 +82,7 @@
       {
         "label": "DeployZionGovernance",
         "type": "shell",
-        "command": "sleep 2 && ./scripts/deploy-local-zion-governance-contracts.sh",
+        "command": "./scripts/wait-for-anvil.sh && ./scripts/deploy-local-zion-governance-contracts.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -102,7 +102,7 @@
       {
         "label": "WatchCasablancaClient",
         "type": "shell",
-        "command": "cd casablanca/packages/client && yarn watch",
+        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/packages/client && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -112,7 +112,7 @@
       {
         "label": "WatchCasablancaCore",
         "type": "shell",
-        "command": "cd casablanca/packages/core && yarn watch",
+        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/packages/core && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

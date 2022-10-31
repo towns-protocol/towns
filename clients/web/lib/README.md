@@ -62,7 +62,14 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 If you're iterating on the sample app, use the following to automatically rebuild your typescript. These changes should get picked up by the running app
 
 ```bash
+# these are all handled by the vscode task '~ Start Local Dev ~'
 cd clients/web/lib
+yarn watch
+
+cd casablanca/packages/client
+yarn watch
+
+cd casablanca/packages/core
 yarn watch
 ```
 
