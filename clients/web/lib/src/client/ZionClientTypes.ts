@@ -2,7 +2,7 @@
 import { BigNumberish, ethers } from 'ethers'
 
 export interface ZionOpts {
-    homeServerUrl: string
+    matrixServerUrl: string
     initialSyncLimit: number
     onboardingOpts?: ZionOnboardingOpts
     disableEncryption?: boolean

@@ -44,7 +44,7 @@ export class ZionTestClient extends ZionClient {
         // super
         super(
             {
-                homeServerUrl: process.env.HOMESERVER!,
+                matrixServerUrl: process.env.HOMESERVER!,
                 initialSyncLimit: 20,
                 disableEncryption: disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
                 web3Signer: provider.wallet,
@@ -95,7 +95,7 @@ export class ZionTestClient extends ZionClient {
     /// a.ellis, would be nice if this used the same code as the web client
     public async registerWallet() {
         // set up some hacky origin varible, no idea how the other code gets this
-        const origin = this.opts.homeServerUrl
+        const origin = this.opts.matrixServerUrl
 
         // create a registration request, this reaches out to our server and sets up a session
         // and passes back info on about the server
@@ -114,7 +114,7 @@ export class ZionTestClient extends ZionClient {
         const messageToSign = createMessageToSign({
             walletAddress: this.userIdentifier.accountAddress,
             chainId: this.chainId,
-            homeServer: this.opts.homeServerUrl,
+            homeServer: this.opts.matrixServerUrl,
             origin,
             statement: 'this is a test registration',
         })
@@ -169,7 +169,7 @@ export class ZionTestClient extends ZionClient {
         const messageToSign = createMessageToSign({
             walletAddress: this.userIdentifier.accountAddress,
             chainId: this.userIdentifier.chainId,
-            homeServer: this.opts.homeServerUrl,
+            homeServer: this.opts.matrixServerUrl,
             origin,
             statement: 'this is a test login',
         })

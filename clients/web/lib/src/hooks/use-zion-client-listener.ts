@@ -8,7 +8,7 @@ import { ZionOnboardingOpts } from 'client/ZionClientTypes'
 import { LoginStatus } from './login'
 
 export const useZionClientListener = (
-    homeServerUrl: string,
+    matrixServerUrl: string,
     initialSyncLimit: number,
     onboardingOpts?: ZionOnboardingOpts,
     disableEncryption?: boolean,
@@ -24,7 +24,7 @@ export const useZionClientListener = (
     if (!clientSingleton.current) {
         clientSingleton.current = new ZionClient(
             {
-                homeServerUrl,
+                matrixServerUrl,
                 initialSyncLimit,
                 onboardingOpts,
                 disableEncryption,

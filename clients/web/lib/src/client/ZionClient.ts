@@ -87,7 +87,7 @@ export class ZionClient {
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
-            opts.homeServerUrl,
+            opts.matrixServerUrl,
             this._auth,
         ))
 
@@ -141,7 +141,7 @@ export class ZionClient {
 
         this._auth = undefined
         ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
-            this.opts.homeServerUrl,
+            this.opts.matrixServerUrl,
             this._auth,
         ))
     }
@@ -252,7 +252,7 @@ export class ZionClient {
         )
         // new matrixClient
         ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
-            this.opts.homeServerUrl,
+            this.opts.matrixServerUrl,
             this._auth,
         ))
         // adjust params for our use case
@@ -783,7 +783,7 @@ export class ZionClient {
      * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
     private static createMatrixClient(
-        homeServerUrl: string,
+        baseUrl: string,
         auth?: ZionAuth,
     ): { store: CustomMemoryStore; matrixClient: MatrixClient } {
         const store = new CustomMemoryStore({ localStorage: global.localStorage })
@@ -792,7 +792,7 @@ export class ZionClient {
                 store: store,
                 matrixClient: createClient({
                     store: store as IStore,
-                    baseUrl: homeServerUrl,
+                    baseUrl: baseUrl,
                     accessToken: auth.accessToken,
                     userId: auth.userId,
                     deviceId: auth.deviceId,
@@ -804,7 +804,7 @@ export class ZionClient {
                 store: store,
                 matrixClient: createClient({
                     store: store as IStore,
-                    baseUrl: homeServerUrl,
+                    baseUrl: baseUrl,
                 }),
             }
         }
