@@ -12,7 +12,9 @@ import debug from 'debug'
 import { Wallet } from 'ethers'
 import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
-import { makeRandomUserContext } from './util.test'
+import { makeDonePromise, makeRandomUserContext, makeTestClient } from './util.test'
+import 'jest-extended'
+import { setTimeout } from 'timers/promises'
 
 const log = debug('test')
 
@@ -27,42 +29,47 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         await zionApp.stop()
     })
 
-    let bobsContext: SignerContext
-    let alicesContext: SignerContext
+    let bobsClient: Client
+    let alicesClient: Client
 
     beforeEach(async () => {
-        bobsContext = await makeRandomUserContext()
-        alicesContext = await makeRandomUserContext()
+        bobsClient = await makeTestClient(zionApp.url)
+        alicesClient = await makeTestClient(zionApp.url)
+    })
+
+    afterEach(async () => {
+        await bobsClient.stop()
+        await alicesClient.stop()
+    })
+
+    test('clientsCanBeClosedNoSync', async () => {})
+
+    test('clientsCanBeClosedAfterSync', async () => {
+        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
+        await expect(alicesClient.createNewUser()).resolves.toBeUndefined()
+        bobsClient.startSync(3000)
+        alicesClient.startSync(3000)
     })
 
     const bobCanReconnect = async () => {
-        const rpcClient = makeZionRpcClient(zionApp.url)
-        const bobsClient = new Client(bobsContext, rpcClient)
+        const bobsAnotherClient = await makeTestClient(zionApp.url, bobsClient.signerContext)
 
-        let resolve: (value: string) => void
-        let reject: (reason: any) => void
-        const done = new Promise<string>((res, rej) => {
-            resolve = res
-            reject = rej
-        })
+        const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, message: FullEvent): void => {
             log('channelNewMessage', channelId)
             log(message)
-            try {
+            done.runAndDone(() => {
                 const payload = message.base.payload as MessagePayload
                 expect(payload.text).toBe('Hello, again!')
-                resolve('done')
-            } catch (e) {
-                reject(e)
-            }
+            })
         }
 
         const onStreamInitialized = (streamId: string, streamKind: StreamKind) => {
             log('streamInitialized', streamId, streamKind)
-            try {
+            done.run(() => {
                 if (streamKind === StreamKind.Channel) {
-                    const channel = bobsClient.stream(streamId)
+                    const channel = bobsAnotherClient.stream(streamId)
                     log('channel content')
                     log(channel.rollup)
 
@@ -77,51 +84,38 @@ describe('BobAndAliceSendAMessageViaClient', () => {
                     )
 
                     channel.on('channelNewMessage', onChannelNewMessage)
-                    bobsClient.sendMessage(streamId, 'Hello, again!')
+                    bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
                 }
-            } catch (e) {
-                reject(e)
-            }
+            })
         }
-        bobsClient.on('streamInitialized', onStreamInitialized)
+        bobsAnotherClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsClient.loadExistingUser()).resolves.toBeUndefined()
+        await expect(bobsAnotherClient.loadExistingUser()).resolves.toBeUndefined()
 
-        bobsClient.startSync(1000)
+        bobsAnotherClient.startSync(1000)
 
-        await expect(done).resolves.toBe('done')
+        await done.expectToSucceed()
 
-        await bobsClient.stopSync()
+        await bobsAnotherClient.stopSync()
 
         return 'done'
     }
 
     test('bobTalksToHimself', async () => {
-        const rpcClient = makeZionRpcClient(zionApp.url)
-        const bobsClient = new Client(bobsContext, rpcClient)
-
-        let resolve: (value: string) => void
-        let reject: (reason: any) => void
-        const done = new Promise<string>((res, rej) => {
-            resolve = res
-            reject = rej
-        })
+        const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, message: FullEvent): void => {
             log('channelNewMessage', channelId)
             log(message)
-            try {
+            done.runAndDone(() => {
                 const payload = message.base.payload as MessagePayload
                 expect(payload.text).toBe('Hello, world!')
-                resolve('done')
-            } catch (e) {
-                reject(e)
-            }
+            })
         }
 
         const onStreamInitialized = (streamId: string, streamKind: StreamKind) => {
             log('streamInitialized', streamId, streamKind)
-            try {
+            done.run(() => {
                 if (streamKind === StreamKind.Channel) {
                     const channel = bobsClient.stream(streamId)
                     log('channel content')
@@ -130,9 +124,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsClient.sendMessage(streamId, 'Hello, world!')
                 }
-            } catch (e) {
-                reject(e)
-            }
+            })
         }
         bobsClient.on('streamInitialized', onStreamInitialized)
 
@@ -147,7 +139,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             bobsClient.createChannel(makeChannelStreamId('bobs-channel-' + nanoid()), bobsSpaceId),
         ).resolves.toBeUndefined()
 
-        await expect(done).resolves.toBe('done')
+        await done.expectToSucceed()
 
         await bobsClient.stopSync()
 
@@ -156,5 +148,115 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         await expect(bobCanReconnect()).resolves.toBe('done')
 
         log('pass2 done')
+    })
+
+    test('bobAndAliceConverse', async () => {
+        log('bobAndAliceConverse')
+
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
+        bobsClient.startSync(1000)
+
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + nanoid())
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + nanoid())
+        await expect(bobsClient.createChannel(bobsChannelId, bobsSpaceId)).resolves.toBeUndefined()
+
+        // Alice gest created.
+        await expect(alicesClient.createNewUser()).resolves.toBeUndefined()
+        alicesClient.startSync(1000)
+
+        // Bob can send a message.
+        const bobSelfHello = makeDonePromise()
+        bobsClient.once('channelNewMessage', (channelId: string, message: FullEvent): void => {
+            const payload = message.base.payload as MessagePayload
+            log('channelNewMessage', 'Bob Initial Message', channelId, payload.text)
+            bobSelfHello.runAndDone(() => {
+                // TODO: why 'Hello, world from Bob!' can be received here?
+                expect(channelId).toBe(bobsChannelId)
+                expect(payload.text).toBe('Hello, world from Bob!')
+            })
+        })
+
+        await expect(
+            bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
+        ).resolves.toBeUndefined()
+        await bobSelfHello.expectToSucceed()
+
+        // Alice can't sent a message to Bob's channel.
+        // TODO: why is this not failing?
+        //await expect(alicesClient.sendMessage(bobsChannelId, 'Hello, world from Alice!')).rejects.toThrow()
+
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinChannel(streamId)).resolves.toBeUndefined()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.signerContext.creatorAddress)
+
+        await aliceJoined.expectToSucceed()
+
+        const aliceGetsMessage = makeDonePromise()
+        const bobGetsMessage = makeDonePromise()
+        const conversation = [
+            'Hello, Alice!',
+            'Hello, Bob!',
+            'Weather nice?',
+            'Sun and rain!',
+            'Coffee or tea?',
+            'Both!',
+        ]
+
+        alicesClient.on('channelNewMessage', (channelId: string, message: FullEvent): void => {
+            const payload = message.base.payload as MessagePayload
+            log('channelNewMessage', 'Alice', channelId, payload.text)
+            aliceGetsMessage.run(() => {
+                expect(channelId).toBe(bobsChannelId)
+                // @ts-ignore
+                expect(payload.text).toBeOneOf(conversation)
+                if (payload.text === 'Hello, Alice!') {
+                    alicesClient.sendMessage(channelId, 'Hello, Bob!')
+                } else if (payload.text === 'Weather nice?') {
+                    alicesClient.sendMessage(channelId, 'Sun and rain!')
+                } else if (payload.text === 'Coffee or tea?') {
+                    alicesClient.sendMessage(channelId, 'Both!')
+                    aliceGetsMessage.done()
+                }
+            })
+        })
+
+        bobsClient.on('channelNewMessage', (channelId: string, message: FullEvent): void => {
+            const payload = message.base.payload as MessagePayload
+            log('channelNewMessage', 'Bob', channelId, payload.text)
+            bobGetsMessage.run(() => {
+                expect(channelId).toBe(bobsChannelId)
+                // @ts-ignore
+                expect(payload.text).toBeOneOf(conversation)
+                if (payload.text === 'Hello, Bob!') {
+                    bobsClient.sendMessage(channelId, 'Weather nice?')
+                } else if (payload.text === 'Sun and rain!') {
+                    bobsClient.sendMessage(channelId, 'Coffee or tea?')
+                } else if (payload.text === 'Both!') {
+                    bobGetsMessage.done()
+                }
+            })
+        })
+
+        await expect(
+            bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!'),
+        ).resolves.toBeUndefined()
+
+        log('Waiting for Alice to get messages...')
+        await aliceGetsMessage.expectToSucceed()
+        log('Waiting for Bob to get messages...')
+        await bobGetsMessage.expectToSucceed()
+        log('bobAndAliceConverse All done!')
     })
 })

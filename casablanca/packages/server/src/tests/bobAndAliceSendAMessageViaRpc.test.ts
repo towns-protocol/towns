@@ -171,9 +171,9 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
     )
 
     test.each(testParams())(
-        'bobAndAliceSendAMessage-%s',
+        'bobAndAliceConverse-%s',
         async (method: string, makeService: () => ZionServiceInterface) => {
-            log('bobAndAliceSendAMessage', method, 'start')
+            log('bobAndAliceConverse', method, 'start')
 
             const bob = makeService()
             const alice = makeService()
@@ -432,7 +432,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             log('stopping clients')
             stopIfClient(bob)
             stopIfClient(alice)
-            log('bobAndAliceSendAMessage', method, 'done')
+            log('bobAndAliceConverse', method, 'done')
         },
     )
 })

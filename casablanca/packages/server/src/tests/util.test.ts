@@ -1,5 +1,5 @@
 import { ecsign, stripHexPrefix, toRpcSig } from '@ethereumjs/util'
-import { makeZionRpcClient } from '@zion/client'
+import { Client, makeZionRpcClient } from '@zion/client'
 import {
     BaseEvent,
     FullEvent,
@@ -60,4 +60,80 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
         creatorAddress: primaryWallet.address,
         delegateSig: await makeDelegateSig(primaryWallet, wallet),
     }
+}
+
+export const makeTestClient = async (url: string, context?: SignerContext): Promise<Client> => {
+    if (context === undefined) {
+        context = await makeRandomUserContext()
+    }
+    return new Client(context, makeZionRpcClient(url))
+}
+
+class DonePromise {
+    promise: Promise<string>
+    // @ts-ignore: Promise body is executed immediately, so vars are assigned before constructor returns
+    resolve: (value: string) => void
+    // @ts-ignore: Promise body is executed immediately, so vars are assigned before constructor returns
+    reject: (reason: any) => void
+
+    constructor() {
+        this.promise = new Promise((resolve, reject) => {
+            this.resolve = resolve
+            this.reject = reject
+        })
+    }
+
+    done(): void {
+        this.resolve('done')
+    }
+
+    async wait(): Promise<string> {
+        return this.promise
+    }
+
+    async expectToSucceed(): Promise<void> {
+        await expect(this.promise).resolves.toBe('done')
+    }
+
+    async expectToFail(): Promise<void> {
+        await expect(this.promise).rejects.toThrow()
+    }
+
+    run(fn: () => void): void {
+        try {
+            fn()
+        } catch (err) {
+            this.reject(err)
+        }
+    }
+
+    async runAsync(fn: () => Promise<any>): Promise<void> {
+        try {
+            await fn()
+        } catch (err) {
+            this.reject(err)
+        }
+    }
+
+    runAndDone(fn: () => void): void {
+        try {
+            fn()
+            this.done()
+        } catch (err) {
+            this.reject(err)
+        }
+    }
+
+    async runAndDoneAsync(fn: () => Promise<any>): Promise<void> {
+        try {
+            await fn()
+            this.done()
+        } catch (err) {
+            this.reject(err)
+        }
+    }
+}
+
+export const makeDonePromise = (): DonePromise => {
+    return new DonePromise()
 }
