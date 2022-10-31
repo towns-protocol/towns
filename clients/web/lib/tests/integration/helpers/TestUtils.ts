@@ -57,19 +57,6 @@ export async function registerLoginAndStartClient(
     return client
 }
 
-export async function registerAndStartClient(
-    name: string,
-    wallet: ethers.Wallet,
-    props?: { disableEncryption?: boolean },
-): Promise<ZionTestClient> {
-    // get the chain id for the test network
-    const dummyProvider = new ZionTestWeb3Provider(wallet)
-    const chainId = (await dummyProvider.getNetwork()).chainId
-    const client = new ZionTestClient(chainId, name, props?.disableEncryption)
-    await client.registerWalletAndStartClient()
-    return client
-}
-
 export function makeUniqueName(prefix: string): string {
     return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 4095).toString(16)}`
 }
