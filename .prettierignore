@@ -8,6 +8,7 @@ servers/*
 contracts/lib/*
 contracts/**/out/*
 contracts/**/types/*
+contracts/docgen/*
 
 broadcast/*
 cache/*

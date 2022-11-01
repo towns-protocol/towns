@@ -21,11 +21,11 @@ jobs:
                     - 55000:6379
 
             anvil:
-              image: ghcr.io/foundry-rs/foundry:latest
-              ports:
-                - 8545:8545
-              options: >-
-                --entrypoint anvil
+                image: ghcr.io/foundry-rs/foundry:latest
+                ports:
+                    - 8545:8545
+                options: >-
+                    --entrypoint anvil
 
             postgres-casablanca:
                 image: postgres:latest
@@ -40,22 +40,21 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
-            
+
             postgres-dendrite:
-              image: postgres:14
-              env:
-                  POSTGRES_USER: postgres
-                  POSTGRES_PASSWORD: postgres
-              ports:
-                  - 5432:5432
-              options: >-
-                  --health-cmd pg_isready
-                  --health-interval 10s
-                  --health-timeout 5s
-                  --health-retries 5
+                image: postgres:14
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
 
         steps:
-
             - name: Checkout code
               uses: actions/checkout@v3
 
@@ -66,7 +65,7 @@ jobs:
               uses: styfle/cancel-workflow-action@0.11.0
               with:
                   access_token: ${{ github.token }}
-            
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
@@ -95,7 +94,7 @@ jobs:
 
             # - name: Publish:local smart contracts
             #   run: yarn publish:local
-          
+
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
