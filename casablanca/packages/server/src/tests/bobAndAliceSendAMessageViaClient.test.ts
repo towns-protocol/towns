@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from '@jest/g
 import { Client, makeZionRpcClient } from '@zion/client'
 import {
     FullEvent,
+    genId,
     makeChannelStreamId,
     makeSpaceStreamId,
     MessagePayload,
@@ -9,32 +10,40 @@ import {
     StreamKind,
 } from '@zion/core'
 import debug from 'debug'
-import { Wallet } from 'ethers'
-import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
-import { makeDonePromise, makeRandomUserContext, makeTestClient } from './util.test'
+import { makeDonePromise, makeTestClient } from './util.test'
 import 'jest-extended'
-import { setTimeout } from 'timers/promises'
+import { config } from '../config'
 
 const log = debug('test')
 
+const testSuffix = config.testRemoteUrl === undefined ? '-viaClient' : '-remote'
+
 describe('BobAndAliceSendAMessageViaClient', () => {
     let zionApp: ZionApp
+    let url: string
 
     beforeAll(async () => {
-        zionApp = startZionApp(0, 'redis')
+        if (config.testRemoteUrl === undefined) {
+            zionApp = startZionApp(0, 'redis')
+            url = zionApp.url
+        } else {
+            url = config.testRemoteUrl
+        }
     })
 
     afterAll(async () => {
-        await zionApp.stop()
+        if (zionApp !== undefined) {
+            await zionApp.stop()
+        }
     })
 
     let bobsClient: Client
     let alicesClient: Client
 
     beforeEach(async () => {
-        bobsClient = await makeTestClient(zionApp.url)
-        alicesClient = await makeTestClient(zionApp.url)
+        bobsClient = await makeTestClient(url)
+        alicesClient = await makeTestClient(url)
     })
 
     afterEach(async () => {
@@ -42,9 +51,9 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         await alicesClient.stop()
     })
 
-    test('clientsCanBeClosedNoSync', async () => {})
+    test('clientsCanBeClosedNoSync' + testSuffix, async () => {})
 
-    test('clientsCanBeClosedAfterSync', async () => {
+    test('clientsCanBeClosedAfterSync' + testSuffix, async () => {
         await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
         await expect(alicesClient.createNewUser()).resolves.toBeUndefined()
         bobsClient.startSync(3000)
@@ -52,7 +61,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
     })
 
     const bobCanReconnect = async () => {
-        const bobsAnotherClient = await makeTestClient(zionApp.url, bobsClient.signerContext)
+        const bobsAnotherClient = await makeTestClient(url, bobsClient.signerContext)
 
         const done = makeDonePromise()
 
@@ -101,7 +110,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         return 'done'
     }
 
-    test('bobTalksToHimself', async () => {
+    test('bobTalksToHimself' + testSuffix, async () => {
         const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, message: FullEvent): void => {
@@ -132,11 +141,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         bobsClient.startSync(1000)
 
-        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + nanoid())
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
 
         await expect(
-            bobsClient.createChannel(makeChannelStreamId('bobs-channel-' + nanoid()), bobsSpaceId),
+            bobsClient.createChannel(makeChannelStreamId('bobs-channel-' + genId()), bobsSpaceId),
         ).resolves.toBeUndefined()
 
         await done.expectToSucceed()
@@ -150,17 +159,17 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         log('pass2 done')
     })
 
-    test('bobAndAliceConverse', async () => {
+    test('bobAndAliceConverse' + testSuffix, async () => {
         log('bobAndAliceConverse')
 
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
         bobsClient.startSync(1000)
 
-        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + nanoid())
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
 
-        const bobsChannelId = makeChannelStreamId('bobs-channel-' + nanoid())
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(bobsChannelId, bobsSpaceId)).resolves.toBeUndefined()
 
         // Alice gest created.

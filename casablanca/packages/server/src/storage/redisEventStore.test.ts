@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
-import { FullEvent, StreamKind, StreamsAndCookies, SyncPos } from '@zion/core'
+import { FullEvent, genId, StreamKind, StreamsAndCookies, SyncPos } from '@zion/core'
 import debug from 'debug'
-import { nanoid } from 'nanoid'
 import { setTimeout } from 'timers/promises'
 import { RedisEventStore } from './redisEventStore'
 
@@ -81,7 +80,7 @@ describe('RedisEventStore', () => {
     const makeStream = async (
         initialEvents: FullEvent[] = DEFAULT_INITIAL_EVENTS,
     ): Promise<SyncPos> => {
-        const streamId = 'stream-' + nanoid()
+        const streamId = 'stream-' + genId()
 
         await expect(store.streamExists(streamId)).resolves.toBe(false)
         const cookie = await store.createEventStream(streamId, initialEvents)

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
 import {
     Err,
-    makeDelegateSig,
+    genId,
     makeEvent,
     makeEvents,
     makeSpaceStreamId,
@@ -11,8 +11,6 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import debug from 'debug'
-import { Wallet } from 'ethers'
-import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
 import { makeEvent_test, makeRandomUserContext, makeTestParams } from './util.test'
 
@@ -85,7 +83,7 @@ describe('BasicRpcTest', () => {
             log('Bob created user, about to create space')
 
             // Bob creates space and channel
-            const spaceId = makeSpaceStreamId('bobs-space-' + nanoid())
+            const spaceId = makeSpaceStreamId('bobs-space-' + genId())
             await bob.createSpace({
                 events: makeEvents(
                     bobsContext,
@@ -105,7 +103,7 @@ describe('BasicRpcTest', () => {
             })
             log('Bob created space, about to create channel')
 
-            const channelId = makeSpaceStreamId('bobs-channel-' + nanoid())
+            const channelId = makeSpaceStreamId('bobs-channel-' + genId())
             const channelEvents = makeEvents(
                 bobsContext,
                 [
@@ -126,7 +124,7 @@ describe('BasicRpcTest', () => {
             })
 
             log('Bob fails to create channel with badly chained initial events, hash empty')
-            const channelId2 = makeSpaceStreamId('bobs-channel2-' + nanoid())
+            const channelId2 = makeSpaceStreamId('bobs-channel2-' + genId())
             const channelEvent2_0 = makeEvent(
                 bobsContext,
                 {

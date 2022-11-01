@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, test } from '@jest/globals'
 import {
+    genId,
     makeEvent,
     makeEvents,
     makeSpaceStreamId,
@@ -10,7 +11,6 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import debug from 'debug'
-import { nanoid } from 'nanoid'
 import { startZionApp, ZionApp } from '../app'
 import { makeEvent_test, makeRandomUserContext, makeTestParams } from './util.test'
 
@@ -70,7 +70,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             log('bobTalksToHimself Bob created user, about to create space')
 
             // Bob creates space and channel
-            const spaceId = makeSpaceStreamId('bobs-space-' + nanoid())
+            const spaceId = makeSpaceStreamId('bobs-space-' + genId())
             await bob.createSpace({
                 events: makeEvents(
                     bobsContext,
@@ -90,7 +90,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             })
             log('bobTalksToHimself Bob created space, about to create channel')
 
-            const channelId = makeSpaceStreamId('bobs-channel-' + nanoid())
+            const channelId = makeSpaceStreamId('bobs-channel-' + genId())
             const channelEvents = makeEvents(
                 bobsContext,
                 [
@@ -207,7 +207,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             })
 
             // Bob creates space and channel
-            const spaceId = makeSpaceStreamId('bobs-space-' + nanoid())
+            const spaceId = makeSpaceStreamId('bobs-space-' + genId())
             await bob.createSpace({
                 events: makeEvents(
                     bobsContext,
@@ -226,7 +226,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
                 ),
             })
 
-            const channelId = makeSpaceStreamId('bobs-channel-' + nanoid())
+            const channelId = makeSpaceStreamId('bobs-channel-' + genId())
             const channelEvents = makeEvents(
                 bobsContext,
                 [

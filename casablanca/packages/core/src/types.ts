@@ -4,34 +4,6 @@ export enum StreamKind {
     Channel = 'channel',
 }
 
-// Stream kind is set in inception payload explicitely as StreamKind in data.streamKind field.
-// Stream ids are prefixed with the kind of the stream to make it easier to
-// reason about data in logs, tests, etc.
-export enum SteamPrefix {
-    User = 'zuser-',
-    Space = 'zspace-',
-    Channel = 'zchannel-',
-}
-
-export const allowedStreamPrefixes = (): string[] => Object.values(SteamPrefix)
-
-export const makeStreamId = (prefix: SteamPrefix, identity: string): string => prefix + identity
-
-export const makeUserStreamId = (identity: string): string =>
-    makeStreamId(SteamPrefix.User, identity)
-export const makeSpaceStreamId = (identity: string): string =>
-    makeStreamId(SteamPrefix.Space, identity)
-export const makeChannelStreamId = (identity: string): string =>
-    makeStreamId(SteamPrefix.Channel, identity)
-
-export const isUserStreamId = (streamId: string): boolean => streamId.startsWith(SteamPrefix.User)
-export const isSpaceStreamId = (streamId: string): boolean => streamId.startsWith(SteamPrefix.Space)
-export const isChannelStreamId = (streamId: string): boolean =>
-    streamId.startsWith(SteamPrefix.Channel)
-
-export const isValidStreamId = (streamId: string): boolean =>
-    allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
-
 export interface EventRef {
     streamId: string
     hash: string
@@ -205,7 +177,7 @@ export interface BaseEvent {
      */
     delegageSig?: string
 
-    /** Salt ensures that similar messages are not hashed to the same value. nanoid may be used. */
+    /** Salt ensures that similar messages are not hashed to the same value. genId() from id.ts may be used. */
     salt: string
 
     /** Hashes of the preceding leaf events in the stream. Empty array for the inception event. */

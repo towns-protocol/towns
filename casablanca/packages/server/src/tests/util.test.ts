@@ -3,6 +3,7 @@ import { Client, makeZionRpcClient } from '@zion/client'
 import {
     BaseEvent,
     FullEvent,
+    genId,
     hashEvent,
     makeDelegateSig,
     Payload,
@@ -10,7 +11,6 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import { Wallet } from 'ethers'
-import { nanoid } from 'nanoid'
 import { ZionApp } from '../app'
 import { config } from '../config'
 
@@ -21,7 +21,7 @@ export const makeEvent_test = (
 ): FullEvent => {
     const event: BaseEvent = {
         creatorAddress: context.creatorAddress,
-        salt: nanoid(),
+        salt: genId(),
         prevEvents: prevEvents,
         payload: payload,
     }

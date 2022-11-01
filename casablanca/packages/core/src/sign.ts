@@ -9,10 +9,11 @@ import {
     toRpcSig,
 } from '@ethereumjs/util'
 import { Wallet } from 'ethers'
-import { nanoid } from 'nanoid'
 import { check } from './check'
 import { Err } from './err'
+import { genId } from './id'
 import { BaseEvent, EventRef, FullEvent, Payload } from './types'
+import { Buffer } from 'buffer'
 
 export interface SignerContext {
     wallet: Wallet
@@ -72,7 +73,7 @@ export const makeEvent = (
 
     const event: BaseEvent = {
         creatorAddress: context.creatorAddress,
-        salt: nanoid(),
+        salt: genId(),
         prevEvents: prevEvents,
         payload: payload,
     }
