@@ -8,7 +8,7 @@ on:
 jobs:
     check:
         runs-on: ubuntu-latest
-        timeout-minutes: 10
+        timeout-minutes: 15
         services:
             redis:
                 image: redis:latest
@@ -92,8 +92,12 @@ jobs:
             - name: Build
               run: yarn build
 
-            # - name: Publish:local smart contracts
-            #   run: yarn publish:local
+            - name: Publish:local smart contracts
+              run: yarn publish:local
+
+            # TODO: fix the deploy script and make sure it can connect to 
+            # - name: Deploy local zion governance contracts
+            #   run: ./scripts/deploy-local-zion-governance-contracts.sh
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -101,6 +105,9 @@ jobs:
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
+
+            - name: Start dendrite
+              run: ./servers/dendrite_local_test/run_single.sh 0 &
 
             - name: Test
               run: yarn test

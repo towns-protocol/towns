@@ -6,8 +6,8 @@
     "packageManager": "yarn@3.2.2",
     "scripts": {
         "lint": "turbo lint",
-        "build": "yarn csb:build",
-        "test": "yarn csb:test",
+        "build": "turbo build",
+        "test": "turbo test --scope=\"!use-zion-client\"",
         "publish:local": "turbo publish:local",
         "csb:build": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
         "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
