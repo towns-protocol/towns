@@ -7,6 +7,7 @@
     "scripts": {
         "build": "tsc --build",
         "test": "tsc --build && jest",
+        "test-jsdom": "tsc --build && jest --config jest.config.jsdom.ts",
         "watch": "tsc --watch"
     },
     "dependencies": {
