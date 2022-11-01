@@ -147,7 +147,7 @@ export function useTimeline(roomId?: RoomIdentifier): TimelineEvent[] {
         client.on(MatrixEventEvent.Decrypted, onEventDecrypted)
         client.on(MatrixEventEvent.Replaced, onEventReplaced)
         return () => {
-            client.on(ClientEvent.Room, onRoomEvent)
+            client.off(ClientEvent.Room, onRoomEvent)
             client.off(RoomEvent.Timeline, onRoomTimelineEvent)
             client.off(RoomEvent.Redaction, onRoomRedaction)
             client.off(MatrixEventEvent.Decrypted, onEventDecrypted)
