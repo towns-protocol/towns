@@ -1,78 +1,44 @@
-import React, { createContext, useCallback, useMemo } from 'react'
-import {
-    RoomIdentifier,
-    TimelineEvent,
-    ZTEvent,
-    useMatrixStore,
-    useZionClient,
-    useZionContext,
-} from 'use-zion-client'
-import { MessageRepliesMap } from 'hooks/useFixMeMessageThread'
-
+import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import { useZionContext } from 'use-zion-client'
 import { Box, Button, Stack } from '@ui'
-import { ChannelReactionsMap, useHandleReaction } from 'hooks/useReactions'
-import { TimelineGenericEvent } from './events/TimelineGenericEvent'
-import { TimelineMessage } from './events/TimelineMessage'
-import { RenderEventType, useGroupEvents } from './hooks/useGroupEvents'
+import { DateDivider } from './events/DateDivider'
+import { useGroupEvents } from './hooks/useGroupEvents'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
-
-export enum MessageTimelineType {
-    Channel = 'channel',
-    Thread = 'thread',
-}
-
-type Props = {
-    events: TimelineEvent[]
-    spaceId: RoomIdentifier
-    channelId: RoomIdentifier
-    messageRepliesMap?: MessageRepliesMap
-    messageReactionsMap?: ChannelReactionsMap
-    type?: MessageTimelineType
-}
+import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
+import { MessageTimelineItem } from './events/TimelineItem'
 
 export const TimelineMessageContext = createContext<null | ReturnType<
     typeof useTimelineMessageEditing
 >>(null)
 
-export const MessageTimeline = (props: Props) => {
-    const {
-        events,
-        messageRepliesMap,
-        messageReactionsMap,
-        channelId,
-        spaceId,
-        type = MessageTimelineType.Channel,
-    } = props
-    const { userId } = useMatrixStore()
+export const MessageTimeline = () => {
+    const { unreadCounts } = useZionContext()
 
-    const timelineActions = useTimelineMessageEditing()
-    const handleReaction = useHandleReaction(channelId)
-    const { sendReadReceipt } = useZionClient()
-    const dateGroups = useGroupEvents(events)
+    const timelineContext = useContext(MessageTimelineContext)
+    const channelId = timelineContext?.channelId
+    const events = useMemo(() => {
+        return timelineContext?.events ?? []
+    }, [timelineContext?.events])
 
     const lastEvent = useMemo(() => {
-        const event = events
-            .slice()
-            .reverse()
-            .find((e) => e.content?.kind === ZTEvent.RoomMessage)
-
-        const content = event?.content
-        if (content?.kind === ZTEvent.RoomMessage) {
-            return {
-                content,
-                event,
-            }
-        }
+        return events?.at(events?.length - 1)?.eventId
     }, [events])
 
-    const { unreadCounts } = useZionContext()
-    const hasUnread = (unreadCounts[channelId.matrixRoomId] ?? 0) > 0
-
     const onMarkAsRead = useCallback(() => {
-        if (lastEvent?.event?.eventId) {
-            sendReadReceipt(channelId, lastEvent?.event?.eventId)
+        if (channelId && lastEvent) {
+            timelineContext?.sendReadReceipt(channelId, lastEvent)
         }
-    }, [channelId, lastEvent?.event?.eventId, sendReadReceipt])
+    }, [channelId, lastEvent, timelineContext])
+
+    const dateGroups = useGroupEvents(events)
+
+    if (!timelineContext || !channelId) {
+        return <></>
+    }
+
+    const { type } = timelineContext
+
+    const hasUnread = (unreadCounts[channelId.matrixRoomId] ?? 0) > 0
 
     const readMore = hasUnread && (
         <Box centerContent gap="sm">
@@ -88,53 +54,10 @@ export const MessageTimeline = (props: Props) => {
     )
 
     return (
-        <TimelineMessageContext.Provider value={timelineActions}>
+        <>
             {dateGroups.map((dateGroup) => {
                 const renderEvents = dateGroup.events.map((r, index) => {
-                    switch (r.type) {
-                        case RenderEventType.UserMessageGroup: {
-                            const messagesByUser = r.events.map((e, index, events) => {
-                                const k = e.eventId as string
-                                const reactions = messageReactionsMap?.get(k)
-                                return (
-                                    <TimelineMessage
-                                        userId={userId}
-                                        channelId={channelId}
-                                        spaceId={spaceId}
-                                        event={e}
-                                        eventContent={e.content}
-                                        displayContext={
-                                            index > 0
-                                                ? 'tail'
-                                                : events.length > 1
-                                                ? 'head'
-                                                : 'single'
-                                        }
-                                        own={e.content.sender.id === userId}
-                                        editing={e.eventId === timelineActions.editingMessageId}
-                                        replies={messageRepliesMap?.get(e.eventId)}
-                                        reactions={reactions}
-                                        key={e.eventId}
-                                        relativeDate={type === MessageTimelineType.Thread}
-                                        onReaction={handleReaction}
-                                    />
-                                )
-                            })
-                            const key = r.events[0]?.eventId
-                            return <Stack key={key}>{messagesByUser}</Stack>
-                        }
-
-                        case RenderEventType.RoomMember: {
-                            return <TimelineGenericEvent event={r.event} key={r.event.eventId} />
-                        }
-
-                        case RenderEventType.RoomCreate: {
-                            return <TimelineGenericEvent event={r.event} key={r.event.eventId} />
-                        }
-                        default: {
-                            return null
-                        }
-                    }
+                    return <MessageTimelineItem itemData={r} key={r.key} />
                 })
 
                 return type === MessageTimelineType.Channel ? (
@@ -147,29 +70,6 @@ export const MessageTimeline = (props: Props) => {
                 )
             })}
             {readMore}
-        </TimelineMessageContext.Provider>
+        </>
     )
 }
-
-const DateDivider = (props: { label: string }) => (
-    <>
-        <Box left right top="md" position="absolute" paddingX="lg">
-            <Box borderTop />
-        </Box>
-        <Box centerContent top="md" display="block" position="sticky" zIndex="ui">
-            <Box centerContent>
-                <Box
-                    border
-                    paddingY="sm"
-                    paddingX="md"
-                    rounded="md"
-                    background="default"
-                    color="gray2"
-                    fontSize="sm"
-                >
-                    {props.label}
-                </Box>
-            </Box>
-        </Box>
-    </>
-)

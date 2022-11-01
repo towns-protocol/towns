@@ -15,6 +15,7 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Button, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { TimelineShimmer } from '@components/Shimmer'
+import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 
 export const SpacesChannel = () => {
     return (
@@ -81,14 +82,17 @@ const SpacesChannelComponent = () => {
                         </Box>
                     ) : (
                         <Box grow absoluteFill height="100%">
-                            <MessageTimelineScroller
-                                hideThreads
+                            <MessageTimelineWrapper
                                 key={channelId.slug}
                                 spaceId={spaceId}
                                 channelId={channelId}
                                 events={channelMessages}
-                                before={<ChannelHeader name={channel.label} />}
-                            />
+                            >
+                                <MessageTimelineScroller
+                                    hideThreads
+                                    before={<ChannelHeader name={channel.label} />}
+                                />
+                            </MessageTimelineWrapper>
 
                             <Box gap paddingBottom="lg" paddingX="lg">
                                 <RichTextEditor

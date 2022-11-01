@@ -1,60 +1,54 @@
 import { RelationType } from 'matrix-js-sdk'
-import React from 'react'
+import React, { useContext } from 'react'
 
-import {
-    MessageType,
-    RoomIdentifier,
-    RoomMessageEvent,
-    TimelineEvent,
-    useSpaceMembers,
-} from 'use-zion-client'
+import { MessageType, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
 import { Message } from '@components/Message'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
-import { MessageReactions, useHandleReaction } from 'hooks/useReactions'
-import { getMessageBody } from 'utils/ztevent_util'
-import { ThreadStats } from 'hooks/useFixMeMessageThread'
 import { MessageProps } from '@components/Message/Message'
 import { MessageImage } from '@components/MessageImage/MessageImage'
+import { RichTextPreview } from '@components/RichText/RichTextEditor'
+import { getMessageBody } from 'utils/ztevent_util'
+import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
 import { TimelineMessageEditor } from './TimelineMessageEditor'
 
 type Props = {
-    userId: string | null
-    channelId: RoomIdentifier
     displayContext?: MessageProps['displayContext']
-    editing?: boolean
     event: TimelineEvent
     eventContent: RoomMessageEvent
-    own?: boolean
-    reactions?: MessageReactions
-    relativeDate?: boolean
-    replies?: ThreadStats
-    spaceId: RoomIdentifier
-    onReaction: ReturnType<typeof useHandleReaction> | null
 }
 
 export const TimelineMessage = React.memo((props: Props) => {
-    const {
-        userId,
-        channelId,
-        editing: isEditing,
-        event,
-        eventContent,
-        displayContext,
-        own: isOwn,
-        reactions,
-        relativeDate: isRelativeDate,
-        replies: replyCount,
-        spaceId,
-        onReaction,
-    } = props
-
+    const { event, eventContent, displayContext } = props
     const { sender } = eventContent
 
-    // note: should be memoized
-    const { membersMap } = useSpaceMembers()
+    const timelineContext = useContext(MessageTimelineContext)
+
+    if (!timelineContext) {
+        return <></>
+    }
+
+    const {
+        membersMap,
+        userId,
+        channelId,
+        spaceId,
+        handleReaction,
+        type,
+        messageRepliesMap,
+        messageReactionsMap,
+        timelineActions,
+    } = timelineContext
+
     const user = membersMap[sender.id]
     const displayName = user?.name ?? sender.displayName
     const avatarUrl = user?.avatarUrl ?? sender.avatarUrl
+
+    const isOwn = event.content
+
+    const isEditing = event.eventId === timelineActions.editingMessageId
+    const isRelativeDate = type === MessageTimelineType.Thread
+
+    const replyCount = messageRepliesMap?.get(event.eventId)
+    const reactions = messageReactionsMap.get(event.eventId)
 
     return !event ? null : (
         <Message
@@ -74,7 +68,7 @@ export const TimelineMessage = React.memo((props: Props) => {
             reactions={reactions}
             relativeDate={isRelativeDate}
             replies={replyCount}
-            onReaction={onReaction}
+            onReaction={handleReaction}
         >
             {isEditing ? (
                 <TimelineMessageEditor

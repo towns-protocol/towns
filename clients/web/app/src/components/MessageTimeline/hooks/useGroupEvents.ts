@@ -22,16 +22,19 @@ type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
 
 export interface MessageRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessageGroup
+    key: string
     events: ZRoomMessageEvent[]
 }
 
 export interface RoomMemberRenderEvent extends BaseEvent {
     type: RenderEventType.RoomMember
+    key: string
     event: Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
 }
 
 export interface RoomCreateRenderEvent extends BaseEvent {
     type: RenderEventType.RoomCreate
+    key: string
     event: Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
 }
 
@@ -87,6 +90,7 @@ export const useGroupEvents = (events: TimelineEvent[]): DateGroup[] => {
                 } else {
                     renderEvents.push({
                         type: RenderEventType.UserMessageGroup,
+                        key: event.eventId,
                         events: [event],
                     })
                 }
