@@ -170,7 +170,8 @@ client_api:
     ethereum:
       enabled: true
       version: 1
-      chain_ids: [5, 1337]
+      chain_id: 31337
+      networkUrl: "http://127.0.0.1:8545"
 ```
 
 ## Build and run the server

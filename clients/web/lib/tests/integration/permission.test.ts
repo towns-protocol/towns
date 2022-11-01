@@ -288,7 +288,6 @@ describe.skip('permissions', () => {
 
         /** Assert */
         // check that the returned error wasn't that no error was thrown.
-        // Failed due to this bug: https://linear.app/hnt-labs/issue/HNT-205/createspacewithtokenentitlement-should-not-add-the-everyone-role-by
         expect(error).not.toBeInstanceOf(NoThrownError)
         // Forbidden exception because the user does not have Read permission
         expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
