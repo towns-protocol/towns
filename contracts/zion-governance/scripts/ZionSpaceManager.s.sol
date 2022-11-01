@@ -15,6 +15,7 @@ contract DeployZionSpaceManager is Script {
   ZionPermissionsRegistry internal permissionsRegistry;
   UserGrantedEntitlementModule internal userGrantedEntitlementModule;
   TokenEntitlementModule internal tokenEntitlementModule;
+  ZionSpace internal zionSpaceNFT;
 
   function run() external {
     vm.startBroadcast();
@@ -29,6 +30,30 @@ contract DeployZionSpaceManager is Script {
 
     roleManager.setSpaceManager(address(spaceManager));
 
+    userGrantedEntitlementModule = new UserGrantedEntitlementModule(
+      "User Granted Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms",
+      address(spaceManager),
+      address(roleManager)
+    );
+
+    tokenEntitlementModule = new TokenEntitlementModule(
+      "Token Entitlement Module",
+      "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+      address(spaceManager),
+      address(roleManager)
+    );
+
+    zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(spaceManager));
+
+    spaceManager.setDefaultUserEntitlementModule(
+      address(userGrantedEntitlementModule)
+    );
+    spaceManager.setDefaultTokenEntitlementModule(
+      address(tokenEntitlementModule)
+    );
+    spaceManager.setSpaceNFT(address(zionSpaceNFT));
+
     vm.stopBroadcast();
 
     console.log("Deployed ZionSpaceManager: ", address(spaceManager));
@@ -37,5 +62,14 @@ contract DeployZionSpaceManager is Script {
       address(permissionsRegistry)
     );
     console.log("Deployed ZionRoleManager: ", address(roleManager));
+
+    console.log(
+      "User Granted Entitlement Address",
+      address(userGrantedEntitlementModule)
+    );
+
+    console.log("Token Entitlement Address", address(tokenEntitlementModule));
+
+    console.log("Zion Space Address", address(zionSpaceNFT));
   }
 }

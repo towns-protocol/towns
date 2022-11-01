@@ -105,9 +105,6 @@ contract NodeManager is
 
   /**
    * @notice Map of nodeHash to Node
-   * @return owner Address of addresses allowed to make changes to the Nodes status
-   * @return fqdn Fully Qualified Domain Name the Node may be publically reached at
-   * @return nodeHash Hash of the nodes public key
    */
   mapping(uint256 => Node) public nodeHashToNode;
   uint256[] public nodes;

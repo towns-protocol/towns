@@ -1,5 +1,5 @@
 [profile.default]
-solc = "0.8.16"
+solc = "0.8.17"
 libs = ["node_modules", "lib"]
 verbosity = 3
 fs_permissions = [{ access = "write", path = "./packages"}]

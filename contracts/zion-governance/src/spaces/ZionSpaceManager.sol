@@ -7,7 +7,7 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Constants} from "./libraries/Constants.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Events} from "./libraries/Events.sol";
-import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
 import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 import {IPermissionRegistry} from "./interfaces/IPermissionRegistry.sol";

@@ -6,7 +6,7 @@ import {Errors} from "../libraries/Errors.sol";
 import {Events} from "../libraries/Events.sol";
 import {Constants} from "../libraries/Constants.sol";
 import {Utils} from "../libraries/Utils.sol";
-import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 library CreationLogic {
   function createSpace(

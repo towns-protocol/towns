@@ -1,0 +1,4 @@
+zion-governance/scripts
+zion-governance/test
+zion-governance/utils
+docgen

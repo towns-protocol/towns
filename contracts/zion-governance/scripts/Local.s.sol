@@ -34,8 +34,6 @@ contract DeployLocal is Script {
       address(roleManager)
     );
 
-    console.log("Deploying ZionSpaceManager a: ", address(spaceManager));
-
     roleManager.setSpaceManager(address(spaceManager));
 
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
@@ -45,22 +43,14 @@ contract DeployLocal is Script {
       address(roleManager)
     );
 
-    console.log(
-      "User Granted Entitlement Address",
-      address(userGrantedEntitlementModule)
-    );
-
     tokenEntitlementModule = new TokenEntitlementModule(
       "Token Entitlement Module",
       "Allows users to grant other users access to spaces and rooms based on tokens they hold",
       address(spaceManager),
       address(roleManager)
     );
-    console.log("Token Entitlement Address", address(tokenEntitlementModule));
 
     zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(spaceManager));
-
-    console.log("Zion Space Address", address(zionSpaceNFT));
 
     spaceManager.setDefaultUserEntitlementModule(
       address(userGrantedEntitlementModule)
@@ -71,6 +61,22 @@ contract DeployLocal is Script {
     spaceManager.setSpaceNFT(address(zionSpaceNFT));
 
     vm.stopBroadcast();
+
+    console.log("Deployed ZionSpaceManager: ", address(spaceManager));
+    console.log(
+      "Deployed ZionPermissionsRegistry: ",
+      address(permissionsRegistry)
+    );
+    console.log("Deployed ZionRoleManager: ", address(roleManager));
+
+    console.log(
+      "User Granted Entitlement Address",
+      address(userGrantedEntitlementModule)
+    );
+
+    console.log("Token Entitlement Address", address(tokenEntitlementModule));
+
+    console.log("Zion Space Address", address(zionSpaceNFT));
 
     writer = writer.writeStartObject();
     writer = writer.writeStringProperty(
