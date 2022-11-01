@@ -1,0 +1,10 @@
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+env.json
+# this is genereated from serverless-offline and local invokes
+.build

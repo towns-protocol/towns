@@ -74,6 +74,7 @@
         "clients/governance-ui",
         "clients/contract-debug-ui",
         "contracts/zion-governance",
-        "packages/*"
+        "packages/*",
+        "servers/unfurl"
     ]
 }
