@@ -1,7 +1,8 @@
+import React from 'react'
+import { WalletStatus, useMatrixStore, useWeb3Context } from 'use-zion-client'
+import { Outlet } from 'react-router-dom'
 import { Login } from './Login'
 import { LoginUsernamePassword } from './LoginUsernamePassword'
-import { useMatrixStore, useWeb3Context, WalletStatus } from 'use-zion-client'
-import { Outlet } from 'react-router-dom'
 
 const debugWithPassword = false
 

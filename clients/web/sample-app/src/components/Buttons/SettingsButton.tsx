@@ -1,3 +1,4 @@
+import React from 'react'
 import { IconButton, Theme, Tooltip } from '@mui/material'
 
 import Settings from '@mui/icons-material/Settings'
@@ -14,10 +15,10 @@ export function SettingsButton(props: Props): JSX.Element {
                 edge="start"
                 color="inherit"
                 aria-label="invite"
-                onClick={() => props.onClick()}
                 sx={{
                     pr: (theme: Theme) => theme.spacing(1),
                 }}
+                onClick={() => props.onClick()}
             >
                 <Settings />
             </IconButton>

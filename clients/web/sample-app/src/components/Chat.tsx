@@ -1,13 +1,13 @@
 import { Box, Grid, Theme, Typography } from '@mui/material'
-import { RoomIdentifier, useZionClient, useChannelData, useChannelTimeline } from 'use-zion-client'
-import { useCallback, useEffect, useState } from 'react'
+import { RoomIdentifier, useChannelData, useChannelTimeline, useZionClient } from 'use-zion-client'
+import React, { useCallback, useEffect, useState } from 'react'
 
+import { useNavigate } from 'react-router-dom'
 import { ChatMessages } from './ChatMessages'
 import { InviteButton } from './Buttons/InviteButton'
 import { InviteForm } from './InviteForm'
 import { LeaveRoomButton } from './Buttons/LeaveRoomButton'
 import { SettingsButton } from './Buttons/SettingsButton'
-import { useNavigate } from 'react-router-dom'
 
 interface Props {
     roomId: RoomIdentifier

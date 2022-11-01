@@ -1,6 +1,6 @@
 import { Box, Button, Theme, Typography } from '@mui/material'
 
-import { useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { RoomIdentifier } from 'use-zion-client'
 
 interface Props {

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Box, Button, IconButton, Theme, Typography } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 
@@ -21,17 +22,17 @@ export const SidebarNewItemButton = (props: Props) => {
                 edge="start"
                 color="inherit"
                 aria-label="menu"
-                onClick={props.onClick}
                 sx={{
                     pr: (theme: Theme) => theme.spacing(1),
                 }}
+                onClick={props.onClick}
             >
                 <AddIcon />
             </IconButton>
             <Button onClick={props.onClick}>
                 <Typography
-                    variant="body1"
                     noWrap
+                    variant="body1"
                     component="div"
                     sx={{
                         pr: (theme: Theme) => theme.spacing(1),

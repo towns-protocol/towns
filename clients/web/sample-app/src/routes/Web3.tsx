@@ -1,3 +1,4 @@
+import React from 'react'
 import { Web3Spaces } from '../components/Web3Spaces'
 
 export function Web3() {

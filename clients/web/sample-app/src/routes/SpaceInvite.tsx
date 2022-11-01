@@ -1,8 +1,8 @@
+import React, { useCallback } from 'react'
 import { RoomIdentifier, useSpaceData, useZionClient } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
 
 import { InviteForm } from '../components/InviteForm'
-import { useCallback } from 'react'
 
 export function SpaceInvite() {
     const space = useSpaceData()
@@ -23,9 +23,9 @@ export function SpaceInvite() {
 
     return space ? (
         <InviteForm
+            isSpace
             roomId={space.id}
             roomName={space.name}
-            isSpace={true}
             sendInvite={onClickSendInvite}
             onClickCancel={onClickCancel}
         />

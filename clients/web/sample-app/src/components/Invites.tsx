@@ -1,3 +1,4 @@
+import React from 'react'
 import { List, ListItem, ListItemText, Typography } from '@mui/material'
 import { useInvites } from 'use-zion-client'
 import { Theme } from '@mui/system'
@@ -14,7 +15,7 @@ export function Invites(props: Props): JSX.Element {
 
     return invites.length > 0 ? (
         <>
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 {props.title}
             </Typography>
             <List>

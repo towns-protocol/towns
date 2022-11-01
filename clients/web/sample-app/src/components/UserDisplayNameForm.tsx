@@ -1,6 +1,6 @@
 import { Box, Button, TextField, Theme, Typography } from '@mui/material'
 import { useZionClient } from 'use-zion-client'
-import { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
@@ -29,7 +29,7 @@ export function UserDisplayNameForm(): JSX.Element {
                 p: (theme: Theme) => theme.spacing(8),
             }}
         >
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 Edit DisplayName
             </Typography>
             <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
@@ -39,7 +39,7 @@ export function UserDisplayNameForm(): JSX.Element {
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="10px"
                 >
-                    <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                         Display name:
                     </Typography>
                     <TextField
@@ -49,13 +49,13 @@ export function UserDisplayNameForm(): JSX.Element {
                         onChange={onChange}
                     />
                 </Box>
-                <Box></Box>
+                <Box />
                 <Box display="flex" flexDirection="column" alignItems="center">
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={onClickSave}
                         disabled={disableButton}
+                        onClick={onClickSave}
                     >
                         Save
                     </Button>

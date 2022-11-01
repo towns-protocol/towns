@@ -1,3 +1,4 @@
+import React from 'react'
 import { Box, Theme, Typography } from '@mui/material'
 
 interface Props {
@@ -15,7 +16,7 @@ export function LargeToast(props: Props): JSX.Element {
                 p: (theme: Theme) => theme.spacing(8),
             }}
         >
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 {props.message}
             </Typography>
         </Box>

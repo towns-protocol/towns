@@ -1,3 +1,4 @@
+import React from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import { ChannelContextProvider } from 'use-zion-client'
 

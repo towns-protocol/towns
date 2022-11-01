@@ -1,5 +1,5 @@
 import { Box, Button, TextField, Theme, Typography } from '@mui/material'
-import { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { RoomIdentifier } from 'use-zion-client'
 
 interface Props {
@@ -37,7 +37,7 @@ export function InviteForm(props: Props): JSX.Element {
                 p: (theme: Theme) => theme.spacing(8),
             }}
         >
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 {header}
             </Typography>
             <Box display="grid" gridTemplateRows="repeat(3, 1fr)">
@@ -47,14 +47,14 @@ export function InviteForm(props: Props): JSX.Element {
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="10px"
                 >
-                    <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                         Invitee user ID:
                     </Typography>
                     <TextField
+                        fullWidth
                         id="filled-basic"
                         label="@userId:homeServer"
                         variant="filled"
-                        fullWidth={true}
                         onChange={onChangeUserId}
                     />
                 </Box>
@@ -64,8 +64,8 @@ export function InviteForm(props: Props): JSX.Element {
                         <Button
                             variant="contained"
                             color="primary"
-                            onClick={onClickInvite}
                             disabled={disableInviteButton}
+                            onClick={onClickInvite}
                         >
                             Invite
                         </Button>

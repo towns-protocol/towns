@@ -1,5 +1,5 @@
 import { Stack } from '@mui/material'
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 import {
     createUserIdFromString,
     useMatrixStore,

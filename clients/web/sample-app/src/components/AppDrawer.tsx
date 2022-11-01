@@ -6,21 +6,21 @@ import {
     useMatrixStore,
 } from 'use-zion-client'
 import { Outlet, useNavigate } from 'react-router-dom'
-import { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import CssBaseline from '@mui/material/CssBaseline'
 import Divider from '@mui/material/Divider'
 import Drawer from '@mui/material/Drawer'
+import Toolbar from '@mui/material/Toolbar'
+import Typography from '@mui/material/Typography'
+import { InviteData } from 'use-zion-client/dist/types/matrix-types'
 import { Logout } from './Logout'
 import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
 import { SidebarItemButton } from './Buttons/SidebarItemButton'
 import { AppDrawerSpaces } from './AppDrawerSpaces'
-import { InviteData } from 'use-zion-client/dist/types/matrix-types'
 
 const drawerWidth = 240
 
@@ -100,10 +100,10 @@ export function AppDrawer(props: Props): JSX.Element {
                 }}
             >
                 <Box display="flex" flexDirection="row" alignItems="center">
-                    <Button onClick={onHomeClick} variant="text">
+                    <Button variant="text" onClick={onHomeClick}>
                         <Typography
-                            variant="h6"
                             noWrap
+                            variant="h6"
                             component="div"
                             sx={spacingStyle}
                             color="white"
@@ -113,7 +113,7 @@ export function AppDrawer(props: Props): JSX.Element {
                     </Button>
                     <Box display="flex" flexDirection="row" flexGrow={1} />
                     <Box sx={spacingStyle} alignItems="right">
-                        <Button onClick={onHomeClick} variant="text">
+                        <Button variant="text" onClick={onHomeClick}>
                             <Typography color="white">{myWalletAddress}</Typography>
                         </Button>
                     </Box>
@@ -132,7 +132,6 @@ export function AppDrawer(props: Props): JSX.Element {
                     container={container}
                     variant="temporary"
                     open={mobileOpen}
-                    onClose={handleDrawerToggle}
                     ModalProps={{
                         keepMounted: true, // Better open performance on mobile.
                     }}
@@ -143,10 +142,12 @@ export function AppDrawer(props: Props): JSX.Element {
                             width: drawerWidth,
                         },
                     }}
+                    onClose={handleDrawerToggle}
                 >
                     {drawer}
                 </Drawer>
                 <Drawer
+                    open
                     variant="permanent"
                     sx={{
                         display: { xs: 'none', sm: 'block' },
@@ -155,7 +156,6 @@ export function AppDrawer(props: Props): JSX.Element {
                             width: drawerWidth,
                         },
                     }}
-                    open
                 >
                     {drawer}
                 </Drawer>

@@ -1,13 +1,13 @@
+import React, { useCallback } from 'react'
 import { Divider, TextField } from '@mui/material'
-import { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import {
     PowerLevel,
-    useZionClient,
+    makeRoomIdentifier,
     usePowerLevels,
     useRoom,
+    useZionClient,
     useZionContext,
-    makeRoomIdentifier,
 } from 'use-zion-client'
 
 export const RoomSettings = () => {
@@ -48,7 +48,11 @@ export const RoomSettings = () => {
             <h4>Power Levels</h4>
             <ul>
                 {powerLevels.levels.map((level) => (
-                    <PowerLevelView level={level} onLevelChanged={onLevelChanged} />
+                    <PowerLevelView
+                        key={level.definition.key}
+                        level={level}
+                        onLevelChanged={onLevelChanged}
+                    />
                 ))}
             </ul>
         </>

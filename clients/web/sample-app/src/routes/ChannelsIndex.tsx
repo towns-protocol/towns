@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { RoomIdentifier, useChannelId, useMyMembership } from 'use-zion-client'
 import { Chat } from '../components/Chat'
@@ -23,8 +23,8 @@ export const ChannelsIndex = () => {
         <Chat
             roomId={channelId}
             membership={membership}
-            onClickLeaveRoom={onClickLeaveRoom}
             goToRoom={goToRoom}
+            onClickLeaveRoom={onClickLeaveRoom}
         />
     )
 }

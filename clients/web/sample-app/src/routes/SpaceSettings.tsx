@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useSpaceData, useZionClient } from 'use-zion-client'
 import { useStore } from '../store/store'
 
@@ -48,19 +48,19 @@ export function SpaceSettings(props: Props): JSX.Element {
             <fieldset>
                 <legend>Space access</legend>
                 <input
+                    readOnly
                     type="radio"
                     value="true"
                     name="requireToken"
                     checked={requireToken}
-                    readOnly
                 />{' '}
                 Require token
                 <input
+                    readOnly
                     type="radio"
                     value="false"
                     name="requireToken"
                     checked={!requireToken}
-                    readOnly
                 />{' '}
                 No tokens required
             </fieldset>

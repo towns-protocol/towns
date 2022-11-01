@@ -3,7 +3,7 @@ import { RoomIdentifier, useZionContext } from 'use-zion-client'
 
 import { Theme } from '@mui/system'
 import { SpaceItem } from 'use-zion-client/dist/types/matrix-types'
-import { useCallback } from 'react'
+import React, { useCallback } from 'react'
 
 interface Props {
     onClickSpace: (id: RoomIdentifier) => void
@@ -25,7 +25,7 @@ export function AppDrawerSpaces(props: Props): JSX.Element {
     )
     return (
         <>
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 Spaces
             </Typography>
             <List>

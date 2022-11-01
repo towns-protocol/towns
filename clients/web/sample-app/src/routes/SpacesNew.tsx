@@ -1,3 +1,4 @@
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Membership, RoomIdentifier } from 'use-zion-client'
 import { CreateSpaceForm } from '../components/CreateSpaceForm'

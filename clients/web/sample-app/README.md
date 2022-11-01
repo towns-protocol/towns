@@ -36,7 +36,7 @@ cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
 cd clients/web/lib
 yarn watch
 cd clients/web/sample-app
-yarn start
+yarn dev
 ```
 
 ## Logging in

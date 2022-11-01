@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Membership, RoomIdentifier, useSpaceId } from 'use-zion-client'
 import { CreateChannelForm } from '../components/CreateChannelForm'

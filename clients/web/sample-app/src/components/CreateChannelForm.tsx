@@ -17,7 +17,7 @@ import {
     RoomVisibility,
     useZionClient,
 } from 'use-zion-client'
-import { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
@@ -64,7 +64,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
                 p: (theme: Theme) => theme.spacing(8),
             }}
         >
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 CREATE CHANNEL
             </Typography>
             <Box display="grid" gridTemplateRows="repeat(5, 1fr)">
@@ -74,7 +74,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="10px"
                 >
-                    <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                         Channel name:
                     </Typography>
                     <TextField
@@ -90,12 +90,12 @@ export function CreateChannelForm(props: Props): JSX.Element {
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="20px"
                 >
-                    <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                         Visibility:
                     </Typography>
                     <Box minWidth="120px">
                         <FormControl fullWidth>
-                            <InputLabel id="visibility-select-label"></InputLabel>
+                            <InputLabel id="visibility-select-label" />
                             <Select
                                 labelId="visibility-select-label"
                                 id="visibility-select"
@@ -108,13 +108,13 @@ export function CreateChannelForm(props: Props): JSX.Element {
                         </FormControl>
                     </Box>
                 </Box>
-                <Box></Box>
+                <Box />
                 <Box display="flex" flexDirection="column" alignItems="center">
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={onClickCreateChannel}
                         disabled={disableCreateButton}
+                        onClick={onClickCreateChannel}
                     >
                         Create
                     </Button>

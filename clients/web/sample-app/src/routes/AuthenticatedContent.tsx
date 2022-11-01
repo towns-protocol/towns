@@ -1,3 +1,4 @@
+import React from 'react'
 import { SpaceContextProvider, useZionContext } from 'use-zion-client'
 import { useMatch } from 'react-router-dom'
 import { AppDrawer } from '../components/AppDrawer'
@@ -23,7 +24,7 @@ export function AuthenticatedContent(): JSX.Element {
                 return <UserDisplayNameForm />
             } else {
                 console.error('Unknown onboarding step', onboardingState)
-                return <div>Oops, we don't have UI for this step in the sample app</div>
+                return <div>Oops, we don&apos;t have UI for this step in the sample app</div>
             }
         case 'done':
             return (

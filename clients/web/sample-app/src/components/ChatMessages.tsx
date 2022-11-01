@@ -3,11 +3,11 @@ import {
     Membership,
     RoomIdentifier,
     TimelineEvent,
+    ZTEvent,
     useZionClient,
     useZionContext,
-    ZTEvent,
 } from 'use-zion-client'
-import { useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 
 import { AcceptInvitation } from './AcceptInvitation'
 
@@ -76,15 +76,15 @@ export function ChatMessages(props: Props): JSX.Element {
                                 display="block"
                                 variant="body1"
                                 component="button"
-                                onClick={onClickLoadMore}
                                 sx={buttonStyle}
+                                onClick={onClickLoadMore}
                             >
                                 Load More
                             </Typography>
                         )}
                         {timeline.map((m: TimelineEvent, index: number) => (
                             <Typography
-                                key={index}
+                                key={m.eventId}
                                 display="block"
                                 variant="body1"
                                 component="span"
@@ -99,8 +99,8 @@ export function ChatMessages(props: Props): JSX.Element {
                                 display="block"
                                 variant="body1"
                                 component="button"
-                                onClick={onClickMarkAsRead}
                                 sx={buttonStyle}
+                                onClick={onClickMarkAsRead}
                             >
                                 Mark as Read ({unreadCounts[roomId.matrixRoomId]})
                             </Typography>
@@ -124,13 +124,13 @@ export function ChatMessages(props: Props): JSX.Element {
                     <Divider />
                     <Box sx={messageStyle}>
                         <TextField
+                            fullWidth
                             id="filled-basic"
                             label="Type message here"
                             variant="filled"
-                            fullWidth={true}
+                            value={currentMessage}
                             onChange={onTextChanged}
                             onKeyDown={onKeyDown}
-                            value={currentMessage}
                         />
                     </Box>
                 </>
@@ -148,7 +148,7 @@ const NoMessages = () => (
 const MissingMembershipInfo = (props: { onJoinRoom: () => void }) => (
     <>
         <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-            We don't have membership information for this room
+            We don&apost have membership information for this room
         </Typography>
         <Button variant="contained" onClick={props.onJoinRoom}>
             Join Room

@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Snackbar, TextField, Theme, Typography } from '@mui/material'
-import { useZionClient, useMatrixStore } from 'use-zion-client'
-import { useCallback, useEffect, useState } from 'react'
+import { useMatrixStore, useZionClient } from 'use-zion-client'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
 
@@ -106,7 +106,7 @@ export function LoginUsernamePassword(): JSX.Element {
                 autoHideDuration={5000}
                 onClose={onCloseAlert}
             >
-                <Alert onClose={onCloseAlert} severity="error">
+                <Alert severity="error" onClose={onCloseAlert}>
                     {showError}
                 </Alert>
             </Snackbar>

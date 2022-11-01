@@ -1,6 +1,6 @@
 import { Alert, Box, Button, CircularProgress, Snackbar, Theme, Typography } from '@mui/material'
-import { LoginStatus, useZionClient, useMatrixStore, useWeb3Context } from 'use-zion-client'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { LoginStatus, useMatrixStore, useWeb3Context, useZionClient } from 'use-zion-client'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
 import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName, useNetwork } from 'wagmi'
@@ -140,7 +140,7 @@ export function Login(): JSX.Element {
                 autoHideDuration={5000}
                 onClose={onCloseAlert}
             >
-                <Alert onClose={onCloseAlert} severity="error">
+                <Alert severity="error" onClose={onCloseAlert}>
                     {showError}
                 </Alert>
             </Snackbar>

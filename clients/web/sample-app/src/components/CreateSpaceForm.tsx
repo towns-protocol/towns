@@ -18,10 +18,10 @@ import {
     useIntegratedSpaceManagement,
     useWeb3Context,
 } from 'use-zion-client'
-import { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { chain as ChainType, useBalance } from 'wagmi'
-import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 import { ethers } from 'ethers'
+import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 interface Props {
     onClick: (roomId: RoomIdentifier, membership: Membership) => void
@@ -89,11 +89,11 @@ export const CreateSpaceForm = (props: Props) => {
                 p: (theme: Theme) => theme.spacing(1),
             }}
         >
-            <Typography variant="h6" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
                 CREATE SPACE
             </Typography>
 
-            <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 ChainId: {chain ? chain?.id : 'Not connected'}
             </Typography>
             <Box display="grid">
@@ -103,7 +103,7 @@ export const CreateSpaceForm = (props: Props) => {
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="10px"
                 >
-                    <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                         Space name:
                     </Typography>
                     <TextField
@@ -119,12 +119,12 @@ export const CreateSpaceForm = (props: Props) => {
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="20px"
                 >
-                    <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                         Visibility:
                     </Typography>
                     <Box minWidth="120px">
                         <FormControl fullWidth>
-                            <InputLabel id="visibility-select-label"></InputLabel>
+                            <InputLabel id="visibility-select-label" />
                             <Select
                                 labelId="visibility-select-label"
                                 id="visibility-select"
@@ -142,13 +142,13 @@ export const CreateSpaceForm = (props: Props) => {
                     alignItems="center"
                     gridTemplateColumns="repeat(2, 1fr)"
                     marginTop="20px"
-                ></Box>
+                />
                 <Box display="flex" flexDirection="column" alignItems="center">
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={onClickCreateSpace}
                         disabled={disableCreateButton}
+                        onClick={onClickCreateSpace}
                     >
                         Create
                     </Button>
@@ -159,8 +159,8 @@ export const CreateSpaceForm = (props: Props) => {
                     accounts.map((accountId) => (
                         <AccountDisplay
                             accountId={accountId}
-                            onClickFundWallet={onClickFundLocalHostWallet}
                             key={accountId}
+                            onClickFundWallet={onClickFundLocalHostWallet}
                         />
                     ))}
             </Box>
@@ -183,13 +183,13 @@ const AccountDisplay = (props: {
             padding="10px"
             border="1px dashed grey"
         >
-            <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 (DEBUG)
             </Typography>
-            <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 Account: {accountId}
             </Typography>
-            <Typography variant="body1" noWrap component="div" sx={spacingStyle}>
+            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 balance:{' '}
                 {balance.isLoading
                     ? 'loading...'
@@ -200,8 +200,8 @@ const AccountDisplay = (props: {
             <Button
                 variant="contained"
                 color="primary"
-                onClick={() => onClickFundWallet(accountId)}
                 disabled={false}
+                onClick={() => onClickFundWallet(accountId)}
             >
                 Fund Wallet ({accountId})
             </Button>
