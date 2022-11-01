@@ -95,7 +95,7 @@ jobs:
             - name: Publish:local smart contracts
               run: yarn publish:local
 
-            # TODO: fix the deploy script and make sure it can connect to 
+            # TODO: fix the deploy script and make sure it can connect to
             # - name: Deploy local zion governance contracts
             #   run: ./scripts/deploy-local-zion-governance-contracts.sh
 

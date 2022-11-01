@@ -5,20 +5,20 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
-        "lint": "turbo lint",
         "build": "turbo build",
-        "test": "turbo test --scope=\"!use-zion-client\"",
-        "publish:local": "turbo publish:local",
         "csb:build": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
         "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
         "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
+        "lint": "turbo lint",
         "postinstall": "husky install",
         "prepare": "husky install",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
+        "publish:local": "turbo publish:local",
         "syncpack:check": "syncpack list-mismatches",
-        "syncpack:fix": "syncpack fix-mismatches && syncpack format"
+        "syncpack:fix": "syncpack fix-mismatches && syncpack format",
+        "test": "turbo test --scope=\"!use-zion-client\""
     },
     "devDependencies": {
         "@types/node": "^18.11.3",
