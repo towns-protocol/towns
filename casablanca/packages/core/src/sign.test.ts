@@ -17,6 +17,11 @@ describe('sign', () => {
         '0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56b',
     ]
 
+    test('i-need-buffer', () => {
+        const buffer = Buffer.from('hello world', 'ascii')
+        expect(buffer).toBeInstanceOf(Uint8Array)
+    })
+
     test('compare-ethereumjs-metamask-ethers', async () => {
         const privateKeyBuffer = Buffer.from(privateKey, 'hex')
 

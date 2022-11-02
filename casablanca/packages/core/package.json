@@ -6,8 +6,9 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc --build",
-        "test": "tsc --build && jest",
+        "test": "tsc --build && jest && jest --config jest.config.jsdom.ts",
         "test-jsdom": "tsc --build && jest --config jest.config.jsdom.ts",
+        "test-node": "tsc --build && jest",
         "watch": "tsc --watch"
     },
     "dependencies": {
