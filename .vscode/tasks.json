@@ -132,7 +132,7 @@
       {
         "label": "StartSampleApp",
         "type": "shell",
-        "command": "cd clients/web/sample-app && yarn start",
+        "command": "cd clients/web/sample-app && yarn dev",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
