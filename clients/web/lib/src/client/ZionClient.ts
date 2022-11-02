@@ -77,9 +77,9 @@ export class ZionClient {
     }
     public spaceManager: ZionSpaceManagerShim
     public councilNFT: CouncilNFTShim
+    public matrixClient: MatrixClient
     private _chainId: number
     private _auth?: ZionAuth
-    private matrixClient: MatrixClient
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
         this.opts = opts

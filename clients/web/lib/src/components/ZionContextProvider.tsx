@@ -1,11 +1,4 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { useZionClientListener } from '../hooks/use-zion-client-listener'
-import {
-    makeRoomIdentifier,
-    RoomIdentifier,
-    SpaceHierarchies,
-    SpaceItem,
-} from '../types/matrix-types'
 import { ethers } from 'ethers'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOnboardingOpts } from '../client/ZionClientTypes'
@@ -19,6 +12,15 @@ import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useFavIconBadge } from '../hooks/ZionContext/useFavIconBadge'
+import { useZionClientListener } from '../hooks/use-zion-client-listener'
+import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
+import {
+    makeRoomIdentifier,
+    RoomIdentifier,
+    SpaceHierarchies,
+    SpaceItem,
+} from '../types/matrix-types'
+import { TimelineEvent } from '../types/timeline-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
 
 export interface IZionContext {
@@ -31,6 +33,7 @@ export interface IZionContext {
     spaceMentionCounts: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
+    timelines: Record<string, TimelineEvent[]>
     onboardingState: IOnboardingState
     homeServerUrl?: string
     disableEncryption?: boolean // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
@@ -115,6 +118,7 @@ const ContextImpl = (props: Props): JSX.Element => {
         [defaultSpaceId],
     )
 
+    const timelines = useMatrixTimelines(client?.matrixClient)
     const onboardingState = useOnboardingState(client)
     const syncError = useSyncErrorHandler(client)
 
@@ -132,6 +136,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceMentionCounts,
                 spaces,
                 spaceHierarchies,
+                timelines,
                 onboardingState,
                 homeServerUrl,
                 disableEncryption,

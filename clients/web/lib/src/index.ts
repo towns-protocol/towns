@@ -25,7 +25,7 @@ export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
 export { useSpacesFromContract } from './hooks/use-spaces-from-contract'
-export { toEvent } from './hooks/use-timeline'
+export { toEvent } from './hooks/ZionContext/useMatrixTimelines' // todo this doesn't need to be exposed  https://linear.app/hnt-labs/issue/HNT-44/client-update-usefixmemessagethread-implementation
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
 
