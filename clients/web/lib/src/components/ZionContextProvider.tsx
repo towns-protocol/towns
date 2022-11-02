@@ -16,17 +16,20 @@ import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
 import {
     makeRoomIdentifier,
+    Room,
     RoomIdentifier,
     SpaceHierarchies,
     SpaceItem,
 } from '../types/matrix-types'
 import { TimelineEvent } from '../types/timeline-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
+import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 
 export interface IZionContext {
     client?: ZionClient
     unreadCounts: Record<string, number> // channel or unaggregated space -> count;
     mentionCounts: Record<string, number> // channel or unaggregated space -> count;
+    rooms: Record<string, Room | undefined>
     invitedToIds: string[] // ordered list of invites (spaces and channels)
     spaceIds: string[] // ordered list of space ids
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
@@ -118,6 +121,7 @@ const ContextImpl = (props: Props): JSX.Element => {
         [defaultSpaceId],
     )
 
+    const rooms = useMatrixRooms(client?.matrixClient)
     const timelines = useMatrixTimelines(client?.matrixClient)
     const onboardingState = useOnboardingState(client)
     const syncError = useSyncErrorHandler(client)
@@ -130,6 +134,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 client,
                 unreadCounts,
                 mentionCounts,
+                rooms,
                 invitedToIds,
                 spaceIds,
                 spaceUnreads,
