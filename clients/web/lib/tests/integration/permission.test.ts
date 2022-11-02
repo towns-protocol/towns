@@ -6,11 +6,13 @@ import {
     registerLoginAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
+import { waitFor } from '@testing-library/dom'
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
-import { Room } from 'use-zion-client/src/types/matrix-types'
+import { Room, RoomIdentifier } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { RoleIdentifier } from '../../src/types/web3-types'
+import { MatrixEvent } from 'matrix-js-sdk'
 
 /** 
  * Todo: permission feature development, skip this suite in our CI.
@@ -33,8 +35,169 @@ import { RoleIdentifier } from '../../src/types/web3-types'
  * 
  * */
 
-describe.skip('permissions', () => {
-    //describe.only('permissions', () => {
+describe.skip('write messages', () => {
+    //describe.only('write messages', () => {
+    jest.setTimeout(3000 * 1000)
+
+    test('Channel member cant write messages without permission', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement to write
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+
+        const roomId = await createSpace(bob, [readPermission, writePermission], [readPermission])
+
+        /** Act */
+
+        // invite user to join the space by first checking if they can read.
+        await bob.inviteUser(roomId as RoomIdentifier, alice.matrixUserId as string)
+        await alice.joinRoom(roomId as RoomIdentifier)
+
+        // bob sends a message to the room
+        await bob.sendMessage(roomId as RoomIdentifier, 'Hello tokenGrantedUser!')
+
+        // user sends a message to the room
+        const consoleErrorSpy = jest.spyOn(global.console, 'error')
+
+        /** Assert */
+        try {
+            await alice.sendMessage(roomId as RoomIdentifier, 'Hello Bob!')
+        } catch (e) {
+            expect((e as Error).message).toContain('Unauthorised')
+        }
+        expect(consoleErrorSpy).toHaveBeenCalled()
+
+        await waitFor(
+            () =>
+                expect(
+                    alice
+                        .getRoom(roomId as RoomIdentifier)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .find(
+                            (event: MatrixEvent) =>
+                                event.getContent()?.body === 'Hello tokenGrantedUser!',
+                        ),
+                ).toBeDefined(),
+            { timeout: 10000 },
+        )
+
+        // bob should not receive the message
+        await waitFor(
+            () =>
+                expect(
+                    bob
+                        .getRoom(roomId as RoomIdentifier)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .find((event: MatrixEvent) => event.getContent()?.body === 'Hello Bob!'),
+                ).toBeUndefined(),
+            { timeout: 10000 },
+        )
+    })
+
+    test('Channel member can sync messages', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement to write
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+
+        const roomId = await createSpace(bob, [readPermission, writePermission])
+
+        /** Act */
+
+        // invite user to join the space by first checking if they can read.
+        await bob.inviteUser(roomId as RoomIdentifier, tokenGrantedUser.matrixUserId as string)
+        await tokenGrantedUser.joinRoom(roomId as RoomIdentifier)
+        // bob send 25 messages (20 is our default initialSyncLimit)
+        for (let i = 0; i < 25; i++) {
+            await bob.sendMessage(roomId as RoomIdentifier, `message ${i}`)
+        }
+
+        /** Assert */
+
+        // user should expect an invite to the room
+        await waitFor(() =>
+            expect(tokenGrantedUser.getRoom(roomId as RoomIdentifier)).toBeDefined(),
+        )
+
+        // call scrollback
+        await tokenGrantedUser.scrollback(roomId as RoomIdentifier, 30)
+
+        // we should get more events
+        await waitFor(() =>
+            expect(
+                tokenGrantedUser
+                    .getRoom(roomId as RoomIdentifier)
+                    ?.getLiveTimeline()
+                    .getEvents().length,
+            ).toBeGreaterThan(20),
+        )
+    })
+
+    test('Channel member can write messages', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement to write
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+
+        const roomId = await createSpace(bob, [readPermission, writePermission])
+
+        /** Act */
+        // invite user to join the space by first checking if they can read.
+        await bob.inviteUser(roomId as RoomIdentifier, tokenGrantedUser.matrixUserId as string)
+        await tokenGrantedUser.joinRoom(roomId as RoomIdentifier)
+
+        // bob sends a message to the room
+        await bob.sendMessage(roomId as RoomIdentifier, 'Hello tokenGrantedUser!')
+
+        // user sends a message to the room
+        await tokenGrantedUser.sendMessage(roomId as RoomIdentifier, 'Hello Bob!')
+
+        await bob.scrollback(roomId as RoomIdentifier, 30)
+        await tokenGrantedUser.scrollback(roomId as RoomIdentifier, 30)
+
+        /** Assert */
+
+        await waitFor(
+            () =>
+                expect(
+                    bob
+                        .getRoom(roomId as RoomIdentifier)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .find((event: MatrixEvent) => event.getContent()?.body === 'Hello Bob!'),
+                ).toBeDefined(),
+            { timeout: 10000 },
+        )
+    })
+})
+
+describe.skip('create role', () => {
+    //describe.only('create role', () => {
     jest.setTimeout(300 * 1000)
 
     test('Space owner is allowed create new role', async () => {
@@ -126,6 +289,11 @@ describe.skip('permissions', () => {
         expect(roleIdentifier2?.roleId).toBeDefined()
         expect(roleIdentifier2?.roleId).not.toEqual(roleIdentifier?.roleId)
     })
+})
+
+describe.skip('space invite', () => {
+    //describe.only('space invite', () => {
+    jest.setTimeout(300 * 1000)
 
     test('Inviter is not allowed due to missing Invite permission', async () => {
         /** Arrange */

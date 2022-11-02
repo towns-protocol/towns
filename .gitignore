@@ -59,3 +59,7 @@ broadcast/
 **/.terraform/*
 out/
 turbo-*.log
+
+# Local dendrite contract addresses
+servers/dendrite/zion/**/localhost/addresses/*.json
+servers/dendrite/dendrite.*yaml

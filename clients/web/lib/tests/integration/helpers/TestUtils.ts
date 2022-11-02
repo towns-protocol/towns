@@ -86,6 +86,7 @@ export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
 export async function createSpace(
     client: ZionTestClient,
     permissions: DataTypes.PermissionStruct[],
+    everyonePermissions: DataTypes.PermissionStruct[] = [],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
     const contractInfo = getContractInfo(client.chainId)
@@ -114,8 +115,6 @@ export async function createSpace(
         externalTokenEntitlements: [externalTokenEntitlement],
         users: [],
     }
-
-    const everyonePermissions: DataTypes.PermissionStruct[] = []
 
     const roomId = await client.createWeb3Space(
         createSpaceInfo,
