@@ -130,6 +130,7 @@ export enum MessageType {
     Text = 'm.text',
     WenMoon = 'm.wenmoon',
     Image = 'm.Image',
+    ZionText = 'm.ZionText',
 }
 
 interface SendMessageOptionsBase {
@@ -160,11 +161,24 @@ interface SendImageMessageOptions {
     }
 }
 
-export type SendMessageOptions = SendMessageOptionsBase | SendImageMessageOptions
+interface SendZionTextMessageOptions {
+    threadId?: string
+    messageType: MessageType.ZionText
+    attachments?: {
+        url?: string
+    }[]
+}
 
-export type ImageMessageContent = IContent & SendImageMessageOptions
+export type SendMessageOptions =
+    | SendMessageOptionsBase
+    | SendImageMessageOptions
+    | SendZionTextMessageOptions
 
-export type MessageContent = IContent | ImageMessageContent
+export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
+
+export type ZionTextMessageContent = IContent & Omit<SendZionTextMessageOptions, 'messageType'>
+
+export type MessageContent = IContent | ImageMessageContent | ZionTextMessageContent
 
 export interface EditMessageOptions {
     originalEventId: string

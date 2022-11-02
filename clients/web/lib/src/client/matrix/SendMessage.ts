@@ -4,7 +4,36 @@ import {
     MessageType,
     RoomIdentifier,
     SendMessageOptions,
+    ImageMessageContent,
+    ZionTextMessageContent,
 } from '../../types/matrix-types'
+
+function getMessageContent(message: string, options: SendMessageOptions): MessageContent {
+    const defaultContent: MessageContent = {
+        body: `${message}`,
+        msgtype: options.messageType ?? MessageType.Text,
+    }
+
+    switch (options.messageType) {
+        case MessageType.Image: {
+            const content: ImageMessageContent = {
+                ...defaultContent,
+                url: options.url,
+                info: options.info,
+            }
+            return content
+        }
+        case MessageType.ZionText: {
+            const content: ZionTextMessageContent = {
+                ...defaultContent,
+                ...(options.attachments ? { attachments: options.attachments } : {}),
+            }
+            return content
+        }
+        default:
+            return defaultContent
+    }
+}
 
 /** treat message as a reply to parentId if specified */
 export async function sendZionMessage(props: {
@@ -15,18 +44,7 @@ export async function sendZionMessage(props: {
 }): Promise<void> {
     const { matrixClient, roomId, message, options } = props
 
-    let content: MessageContent = {
-        body: `${message}`,
-        msgtype: options.messageType ?? MessageType.Text,
-    }
-
-    if (options.messageType === MessageType.Image) {
-        content = {
-            ...content,
-            url: options.url,
-            info: options.info,
-        }
-    }
+    const content = getMessageContent(message, options)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const cb = function (err: any, res: any) {
