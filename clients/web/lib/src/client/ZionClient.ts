@@ -255,8 +255,6 @@ export class ZionClient {
             this.opts.matrixServerUrl,
             this._auth,
         ))
-        // adjust params for our use case
-        this.matrixClient.setMaxListeners(0) // no limit
         // start it up, this begins a sync command
         if (!this.opts.disableEncryption) {
             await loadOlm()
