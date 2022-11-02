@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
 import { FullEvent, genId, StreamKind, StreamsAndCookies, SyncPos } from '@zion/core'
 import debug from 'debug'
 import { PGEventStore } from './pgEventStore'
+import { setTimeout } from 'timers/promises'
 
 const log = debug('test:PGEventStore')
 
@@ -119,51 +120,78 @@ describe('PGEventStore', () => {
         expect(ret3[syncPos2.streamId]).toEqual(undefined)
     })
 
-    // test('readNewEventsAsyncImmediate', async () => {
-    //     const syncPos = await makeStream()
+    test('readNewEventsAsyncImmediate', async () => {
+        const syncPos = await makeStream()
 
-    //     // Empty read
-    //     const ret2 = await store.readNewEvents([syncPos], 1)
-    //     expect(ret2).toEqual({})
+        // Empty read
+        const ret2 = await store.readNewEvents([syncPos], 1)
+        expect(ret2).toEqual({})
 
-    //     // Read with new events
-    //     await store.addEvents(syncPos.streamId, MORE_EVENTS)
-    //     const ret3 = await store.readNewEvents([syncPos], 1)
-    //     expect(ret3[syncPos.streamId].events).toEqual(MORE_EVENTS)
-    // })
+        // Read with new events
+        await store.addEvents(syncPos.streamId, MORE_EVENTS)
+        const ret3 = await store.readNewEvents([syncPos], 1)
+        expect(ret3[syncPos.streamId].events).toEqual(MORE_EVENTS)
+    })
 
-    // test('readNewEventsAsyncWait', async () => {
-    //     const syncPos = await makeStream()
+    test('readNewEventsAsyncWait', async () => {
+        const syncPos = await makeStream()
 
-    //     let readResult: StreamsAndCookies | null = null
-    //     store.readNewEvents([syncPos], 2000).then((res) => (readResult = res))
-    //     expect(readResult).toEqual(null)
+        // Empty read
+        let readResult: StreamsAndCookies | null = null
+        const ret2 = store.readNewEvents([syncPos], 2000).then((res) => {
+            readResult = res
+            return 'done'
+        })
+        await setTimeout(200)
 
-    //     await store.addEvents(syncPos.streamId, MORE_EVENTS)
+        expect(readResult).toEqual(null)
 
-    //     await setTimeout(100)
-    //     log('readNewEventsAsyncWait', 'readResult', readResult)
-    //     expect(readResult).not.toBeNull()
-    //     expect(readResult![syncPos.streamId].events).toEqual(MORE_EVENTS)
-    // })
+        await store.addEvents(syncPos.streamId, MORE_EVENTS)
+        await setTimeout(100)
+        log('readNewEventsAsyncWait', 'readResult', readResult)
+        expect(readResult).not.toBeNull()
+        expect(readResult![syncPos.streamId].events[0]).toEqual(MORE_EVENTS[0])
+    })
 
-    // test('readNewEventsAsyncMultiWait', async () => {
-    //     const s0 = await makeStream()
-    //     const s1 = await makeStream()
-    //     const s2 = await makeStream()
+    test('readNewEventsAsyncMultiWait', async () => {
+        const s0 = await makeStream()
+        const s1 = await makeStream()
+        const s2 = await makeStream()
 
-    //     let readResult: StreamsAndCookies | null = null
-    //     const readPromise = store.readNewEvents([s0, s1, s2], 2000).then((res) => {
-    //         readResult = res
-    //         return 'done'
-    //     })
-    //     expect(readResult).toBeNull()
+        let readResult: StreamsAndCookies | null = null
+        const readPromise = store.readNewEvents([s0, s1, s2], 2000).then((res) => {
+            readResult = res
+            return 'done'
+        })
+        await setTimeout(500)
 
-    //     await store.addEvents(s2.streamId, MORE_EVENTS)
+        expect(readResult).toBeNull()
 
-    //     await expect(readPromise).resolves.toBe('done')
-    //     log('readNewEventsAsyncWait', 'readResult', readResult)
-    //     expect(readResult).not.toBeNull()
-    //     expect(readResult![s2.streamId].events).toEqual(MORE_EVENTS)
-    // })
+        await store.addEvents(s2.streamId, MORE_EVENTS)
+        await setTimeout(100)
+
+        await expect(readPromise).resolves.toBe('done')
+        log('readNewEventsAsyncMultiWait', 'readResult', readResult)
+        expect(readResult).not.toBeNull()
+        expect(readResult![s2.streamId].events[0]).toEqual(MORE_EVENTS[0])
+    })
+
+    test('readNewEventsAsyncWaitTimeout', async () => {
+        const syncPos = await makeStream()
+
+        // Empty read
+        let readResult: StreamsAndCookies | null = null
+        const ret2 = store.readNewEvents([syncPos], 100).then((res) => {
+            readResult = res
+            return 'done'
+        })
+
+        expect(readResult).toEqual(null)
+
+        await setTimeout(200)
+
+        log('readNewEventsAsyncWaitTimeout', 'readResult', readResult)
+        expect(readResult).not.toBeNull()
+        expect(readResult).toEqual({})
+    })
 })

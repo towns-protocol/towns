@@ -7,11 +7,14 @@ import {
     throwWithCode,
 } from '@zion/core'
 import debug from 'debug'
-import _, { delay } from 'lodash'
+import _, { delay, Function, isObject } from 'lodash'
 // import { config } from '../config'
 import { EventStore } from './eventStore'
-import { Pool } from 'pg'
+import { Pool, PoolClient } from 'pg'
 import format, { string } from 'pg-format'
+import { time } from 'console'
+import { channel } from 'diagnostics_channel'
+import { setTimeout as setTimeoutWithPromise } from 'timers/promises'
 
 const log = debug('zion:PGEventStore')
 
@@ -24,7 +27,7 @@ export const createPGPool = () =>
         password: 'postgres',
     })
 
-const PG_EVENT_TABLE_NAME_PREFIX = 'event_stream_'
+const PG_EVENT_TABLE_NAME_PREFIX = 'es_'
 
 // TODO: change throws to throwWithCode
 export class PGEventStore implements EventStore {
@@ -60,12 +63,17 @@ export class PGEventStore implements EventStore {
                     throw new Error('Stream does not exist')
                 }
                 // TODO - figure out a better way to create table as this uses the existing PK seq which is shared
-                const create_query = format(
-                    'CREATE TABLE %I (LIKE event_stream_sample INCLUDING ALL)',
+                let create_query = format(
+                    'CREATE TABLE %I (LIKE es_sample INCLUDING ALL);',
+                    table_name,
+                )
+                create_query += format(
+                    'CREATE TRIGGER new_event_trigger AFTER INSERT ON %I FOR EACH ROW EXECUTE PROCEDURE notify_newevent();',
                     table_name,
                 )
                 await this.pool.query(create_query)
-                return this.pool.query(insert_query)
+                log('addEvents', 'table created:', table_name)
+                return await this.pool.query(insert_query)
             } else {
                 throw err
             }
@@ -124,7 +132,6 @@ export class PGEventStore implements EventStore {
         }
     }
 
-    // TODO - revisit timeousMs and see if we need BLOCK with postgres
     async readNewEvents(args: SyncPos[], timeousMs: number = 0): Promise<StreamsAndCookies> {
         if (args.length <= 0) {
             throw new Error('args must not be empty')
@@ -153,6 +160,71 @@ export class PGEventStore implements EventStore {
                 }
             }),
         )
+        if (Object.keys(output).length == 0 && timeousMs > 0) {
+            log('readNewEvents: starting long poll')
+            output = await this.pgLongPoll(streamIds, cookies, timeousMs)
+        }
         return output as StreamsAndCookies
+    }
+
+    private getChannelName(streamId: string): string {
+        return 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX + streamId
+    }
+
+    private extractStreamId(channel_name: string): string {
+        let substr = 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX
+        return channel_name.substring(channel_name.indexOf(substr) + substr.length)
+    }
+
+    private async pgListen(streamIds: string[], client: PoolClient): Promise<string[]> {
+        let query_string = ''
+        streamIds.forEach((streamId) => {
+            // TODO - limit the size of this query
+            query_string += format('LISTEN %I;', this.getChannelName(streamId))
+        })
+        return new Promise<string[]>(async (resolve, reject) => {
+            const ret = await client.query(query_string)
+            // TODO - handle client error
+            client.on('notification', async function (data) {
+                log('pgListen', 'notification received', data)
+                resolve([data.channel, data.payload ? data.payload : ''])
+            })
+        })
+    }
+
+    private async pgLongPoll(
+        streamIds: string[],
+        cookies: string[],
+        timeousMs: number = 0,
+    ): Promise<StreamsAndCookies> {
+        const client = await this.pool.connect()
+        const ac = new AbortController()
+        let result = await Promise.race([
+            this.pgListen(streamIds, client),
+            setTimeoutWithPromise(timeousMs, undefined, { signal: ac.signal }),
+        ])
+
+        let out = Object()
+        if (result === undefined) {
+            // Timeout of timeousMs seconds occurred
+            out = {}
+            log('pgLongPoll', 'timeout occurred')
+        } else {
+            // cancel the timeout
+            ac.abort()
+            let streamId = this.extractStreamId(result[0])
+            let index = streamIds.indexOf(streamId)
+            let cookie = cookies[index]
+            let row = JSON.parse(result[1])
+            out[streamId] = {
+                events: [JSON.parse(row.data)],
+                syncCookie: row.event_id,
+                originalSyncCookie: cookie,
+            }
+        }
+        // unlisten to all channels before releasing the client back to the pool
+        await client.query('UNLISTEN *')
+        client.release()
+        return out
     }
 }
