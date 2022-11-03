@@ -14,16 +14,20 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { clsx } from 'clsx'
-import React, { useMemo, useState } from 'react'
-import { Channel, RoomMember, useSpaceData, useSpaceMembers } from 'use-zion-client'
 import isEqual from 'lodash/isEqual'
+import React, { useMemo, useState } from 'react'
+import { Channel, RoomMember, useSpaceMembers } from 'use-zion-client'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
+import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
+import { ChannelMentionNode } from './nodes/ChannelMentionNode'
 import { EmojiNode } from './nodes/EmojiNode'
 import { MentionNode, createMentionTransformer } from './nodes/MentionNode'
 import { AutoLinkMatcherPlugin } from './plugins/AutoLinkMatcherPlugin'
+import { ChannelMentionPlugin } from './plugins/ChannelMentionPlugin'
 import { EmojiReplacePlugin } from './plugins/EmojiReplacePlugin'
 import { EmojiShortcutPlugin } from './plugins/EmojiShortcutPlugin'
 import ListMaxIndentLevelPlugin from './plugins/ListMaxIndentLevelPlugin'
@@ -33,9 +37,6 @@ import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
 import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
 import { RichTextUI } from './ui/RichTextEditorUI'
-import { ChannelMentionNode } from './nodes/ChannelMentionNode'
-import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
-import { ChannelMentionPlugin } from './plugins/ChannelMentionPlugin'
 
 type Props = {
     onSend?: (value: string) => void
@@ -88,30 +89,37 @@ const useTransformers = ({ members, channels }: IUseTransformers) => {
     return { transformers }
 }
 
-const useFlattenedSpaceChannels = (): Channel[] => {
-    const spaceData = useSpaceData()
-    return spaceData ? spaceData?.channelGroups.flatMap((cg) => cg.channels) : []
-}
+export const RichTextPreview = React.memo(
+    (props: {
+        content: string
+        edited?: boolean
+        members?: RoomMember[]
+        channels?: Channel[]
+    }) => {
+        const { channels = [], members = [] } = props
+        // note: unnecessary repetition here, could be optimised by handling above
+        // inside e.g. space context or timeline
 
-export const RichTextPreview = React.memo((props: { content: string; edited?: boolean }) => {
-    // note: unnecessary repetition here, could be optimised by handling above
-    // inside e.g. space context or timeline
-    const { members } = useSpaceMembers()
-    const channels = useFlattenedSpaceChannels()
+        const { transformers } = useTransformers({ members, channels })
 
-    const { transformers } = useTransformers({ members, channels })
+        const initialConfig = useInitialConfig(
+            props.content,
+            nodes,
+            transformers,
+            false,
+            props.edited,
+        )
 
-    const initialConfig = useInitialConfig(props.content, nodes, transformers, false, props.edited)
-
-    return (
-        <LexicalComposer initialConfig={initialConfig}>
-            <RichTextPlugin
-                contentEditable={<ContentEditable className={fieldClassName} />}
-                placeholder=""
-            />
-        </LexicalComposer>
-    )
-})
+        return (
+            <LexicalComposer initialConfig={initialConfig}>
+                <RichTextPlugin
+                    contentEditable={<ContentEditable className={fieldClassName} />}
+                    placeholder=""
+                />
+            </LexicalComposer>
+        )
+    },
+)
 
 export const RichTextPreviewPlain = React.memo((props: { content: string; edited?: boolean }) => {
     // note: unnecessary repetition here, could be optimised by handling above
@@ -133,7 +141,7 @@ export const RichTextEditor = (props: Props) => {
     const { placeholder = 'Write something ...', editing: isEditing, onSend } = props
 
     const { members } = useSpaceMembers()
-    const channels = useFlattenedSpaceChannels()
+    const channels = useSpaceChannels()
     const { transformers } = useTransformers({ members, channels })
     const initialConfig = useInitialConfig(props.initialValue, nodes, transformers, true)
 

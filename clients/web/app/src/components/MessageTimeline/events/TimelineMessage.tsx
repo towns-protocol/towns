@@ -27,7 +27,9 @@ export const TimelineMessage = React.memo((props: Props) => {
     }
 
     const {
+        channels,
         membersMap,
+        members,
         userId,
         channelId,
         spaceId,
@@ -86,6 +88,8 @@ export const TimelineMessage = React.memo((props: Props) => {
             ) : (
                 <RichTextPreview
                     content={getMessageBody(event.eventId, eventContent)}
+                    members={members}
+                    channels={channels}
                     edited={eventContent.content['m.relates_to']?.rel_type === RelationType.Replace}
                 />
             )}

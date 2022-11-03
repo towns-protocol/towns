@@ -1,5 +1,6 @@
 import React, { createContext, useMemo } from 'react'
 import {
+    Channel,
     RoomIdentifier,
     TimelineEvent,
     useMatrixStore,
@@ -8,6 +9,7 @@ import {
 } from 'use-zion-client'
 import { useTimelineRepliesMap } from 'hooks/useFixMeMessageThread'
 import { useHandleReaction, useTimelineReactionsMap } from 'hooks/useReactions'
+import { useSpaceChannels as useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 
 export enum MessageTimelineType {
@@ -19,6 +21,7 @@ export const MessageTimelineContext = createContext<{
     userId: string
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
+    channels: Channel[]
     events: TimelineEvent[]
     type: MessageTimelineType
     messageRepliesMap: ReturnType<typeof useTimelineRepliesMap>
@@ -27,6 +30,7 @@ export const MessageTimelineContext = createContext<{
     handleReaction: ReturnType<typeof useHandleReaction>
     sendReadReceipt: ReturnType<typeof useZionClient>['sendReadReceipt']
     membersMap: ReturnType<typeof useSpaceMembers>['membersMap']
+    members: ReturnType<typeof useSpaceMembers>['members']
 } | null>(null)
 
 export const MessageTimelineWrapper = (props: {
@@ -40,11 +44,12 @@ export const MessageTimelineWrapper = (props: {
     const { userId } = useMatrixStore()
 
     const { sendReadReceipt } = useZionClient()
+    const channels = useSpaceChannels()
     const messageRepliesMap = useTimelineRepliesMap(events)
     const messageReactionsMap = useTimelineReactionsMap(events)
     const timelineActions = useTimelineMessageEditing()
     const handleReaction = useHandleReaction(channelId)
-    const { membersMap } = useSpaceMembers()
+    const { membersMap, members } = useSpaceMembers()
 
     const value = useMemo(() => {
         if (!userId) {
@@ -53,6 +58,7 @@ export const MessageTimelineWrapper = (props: {
         return {
             userId,
             spaceId,
+            channels,
             channelId,
             events,
             messageRepliesMap,
@@ -61,20 +67,23 @@ export const MessageTimelineWrapper = (props: {
             handleReaction,
             sendReadReceipt,
             type,
+            members,
             membersMap,
         }
     }, [
-        membersMap,
+        userId,
+        spaceId,
+        channels,
         channelId,
         events,
-        handleReaction,
-        messageReactionsMap,
         messageRepliesMap,
-        sendReadReceipt,
-        spaceId,
+        messageReactionsMap,
         timelineActions,
+        handleReaction,
+        sendReadReceipt,
         type,
-        userId,
+        members,
+        membersMap,
     ])
     return (
         <MessageTimelineContext.Provider value={value}>
