@@ -49,6 +49,7 @@ export type {
     SpaceData,
     SpaceItem,
     MessageContent,
+    ZionTextMessageContent,
 } from './types/matrix-types'
 
 export {
