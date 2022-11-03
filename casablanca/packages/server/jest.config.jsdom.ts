@@ -5,7 +5,10 @@ const esModules = ['nanoid'].join('|')
 const config: Config.InitialOptions = {
     preset: 'ts-jest',
     testEnvironment: './../../jest.env.ts',
-    testEnvironmentOptions: { browsers: ['chrome', 'firefox', 'safari'] },
+    testEnvironmentOptions: {
+        browsers: ['chrome', 'firefox', 'safari'],
+        url: 'http://localhost:7104',
+    },
     verbose: true,
     modulePathIgnorePatterns: ['/dist/'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],

@@ -56,6 +56,9 @@ export const makeExpressApp = (server: JSONRPCServer) => {
             response.sendStatus(204)
         }
     })
+    app.get('/status', (request, response) => {
+        response.send('OK')
+    })
     return app
 }
 

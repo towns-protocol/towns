@@ -111,3 +111,12 @@ jobs:
 
             - name: Test
               run: yarn test
+
+            - name: Run Casablanca node
+              run: yarn csb:start &
+
+            - name: Wait for Casablanca node to be up
+              run: yarn csb:wait
+
+            - name: Test Casablanca node
+              run: yarn csb:test-remote

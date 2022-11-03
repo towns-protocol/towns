@@ -5,8 +5,10 @@
     "scripts": {
         "build": "tsc --build",
         "dev": "nodemon src/index.ts",
+        "start": "ts-node src/index.ts",
         "test": "jest --testTimeout 20000",
-        "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:80/json-rpc jest --config jest.config.jsdom.ts -t \".*-remote\""
+        "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:7104/json-rpc jest --config jest.config.jsdom.ts -t \".*-remote\"",
+        "wait": "timeout 60 bash -c 'while [[ \"$(curl http://localhost:7104/status)\" != \"OK\" ]]; do sleep 1; done' || false"
     },
     "dependencies": {
         "@ethereumjs/util": "^8.0.1",
