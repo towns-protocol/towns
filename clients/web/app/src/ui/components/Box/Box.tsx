@@ -142,6 +142,8 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
     )
 })
 
+Box.displayName = 'Box'
+
 // https://stackoverflow.com/questions/60141960/typescript-key-value-relation-preserving-object-entries-type
 type Entries<T> = {
     [K in keyof T]: [K, T[K]]

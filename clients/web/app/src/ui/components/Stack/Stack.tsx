@@ -15,3 +15,5 @@ export const Stack = forwardRef<HTMLElement, StackProps>(({ horizontal, ...boxPr
         {...boxProps}
     />
 ))
+
+Stack.displayName = 'Stack'

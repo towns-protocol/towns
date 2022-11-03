@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { ZTEvent, useChannelTimeline } from 'use-zion-client'
 import { Box } from '@ui'
-import { MessageThread } from '@components/MessageThread'
+import { WindowedMessageThread } from '@components/MessageThread'
 
 export const SpacesChannelReplies = (props: {
     children?: React.ReactNode
@@ -25,12 +25,12 @@ export const SpacesChannelReplies = (props: {
     )
 
     return (
-        <Box grow absoluteFill height="100%" overflow="hidden">
+        <Box grow height="100%" overflow="hidden">
             {isValid ? (
                 <>
                     <Box grow padding="lg">
-                        <Box absoluteFill padding gap position="relative">
-                            <MessageThread
+                        <Box absoluteFill padding gap paddingBottom="lg" position="relative">
+                            <WindowedMessageThread
                                 key={messageId}
                                 messageId={messageId}
                                 channelMessages={channelMessages}

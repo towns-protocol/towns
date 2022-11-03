@@ -113,6 +113,22 @@ export const RichTextPreview = React.memo((props: { content: string; edited?: bo
     )
 })
 
+export const RichTextPreviewPlain = React.memo((props: { content: string; edited?: boolean }) => {
+    // note: unnecessary repetition here, could be optimised by handling above
+    // inside e.g. space context or timeline
+
+    const initialConfig = useInitialConfig(props.content, nodes, [], false, props.edited)
+
+    return (
+        <LexicalComposer initialConfig={initialConfig}>
+            <RichTextPlugin
+                contentEditable={<ContentEditable className={fieldClassName} />}
+                placeholder=""
+            />
+        </LexicalComposer>
+    )
+})
+
 export const RichTextEditor = (props: Props) => {
     const { placeholder = 'Write something ...', editing: isEditing, onSend } = props
 

@@ -2,11 +2,11 @@ import React from 'react'
 import { TimelineEvent, ZTEvent, useChannelTimeline } from 'use-zion-client'
 import { useChannelContext } from 'use-zion-client/dist/components/ChannelContextProvider'
 import { TimelineMessage } from '@components/MessageTimeline/events/TimelineMessage'
-import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import {
     MessageTimelineType,
     MessageTimelineWrapper,
 } from '@components/MessageTimeline/MessageTimelineContext'
+import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Divider, IconButton, Stack } from '@ui'
 import { useMessageThread } from 'hooks/useFixMeMessageThread'
@@ -45,7 +45,7 @@ export const WindowedMessageThread = (props: Props) => {
             events={messages}
         >
             <MessageWindow label="Thread" onClose={props.onClose}>
-                <Stack scroll grow paddingY="md">
+                <Stack grow paddingY="md" overflow="hidden">
                     {parentMessage && parentMessageContent && (
                         <TimelineMessage
                             event={parentMessage}
@@ -57,8 +57,8 @@ export const WindowedMessageThread = (props: Props) => {
                             <Divider space="none" />
                         </Box>
                     )}
-                    <Stack paddingTop="sm">
-                        <MessageTimeline />
+                    <Stack paddingTop="sm" overflow="hidden">
+                        <MessageTimelineVirtual />
                     </Stack>
                 </Stack>
             </MessageWindow>
@@ -89,7 +89,7 @@ const MessageWindow = (props: {
                 </Box>
                 <Box>{props.onClose && <IconButton icon="close" onClick={props.onClose} />}</Box>
             </Stack>
-            <Box scroll>{props.children}</Box>
+            {props.children}
         </Box>
     )
 }

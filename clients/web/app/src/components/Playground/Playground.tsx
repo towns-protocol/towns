@@ -22,6 +22,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { richText } from '@components/RichText/RichTextEditor.css'
+import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
     .fill(undefined)
@@ -132,7 +133,7 @@ export const Playground = () => {
             <Container label="Text Color">
                 <Grid grow columns={2} gap="none">
                     {Object.keys(vars.color.foreground).map((c) => (
-                        <>
+                        <Stack key={c}>
                             <Box
                                 borderBottom
                                 padding
@@ -145,7 +146,7 @@ export const Playground = () => {
                             <Box borderBottom justifyContent="center">
                                 {c}
                             </Box>
-                        </>
+                        </Stack>
                     ))}
                 </Grid>
             </Container>
@@ -291,26 +292,38 @@ export const Playground = () => {
                     </Stack>
                 </Grid>
             </Container>
+            <Container darkOnly label="VList" padding="none">
+                <Stack>
+                    <VListExample />
+                </Stack>
+            </Container>
         </Stack>
     )
 }
 
-const Container = ({ label, children, ...boxProps }: { label: string } & BoxProps) => (
+const Container = ({
+    label,
+    children,
+    darkOnly,
+    ...boxProps
+}: { label: string; darkOnly?: boolean } & BoxProps) => (
     <Stack horizontal>
-        {[darkClass, lightClass].map((c) => (
-            <Stack grow padding key={c} className={c} background="default" color="default">
-                <Stack border grow rounded="xs">
-                    <Box padding background="level2">
-                        <Paragraph size="lg" color="gray2">
-                            {label}
-                        </Paragraph>
-                    </Box>
-                    <Stack padding gap {...boxProps}>
-                        {children}
+        {[darkClass, lightClass]
+            .filter((c) => !darkOnly || c === darkClass)
+            .map((c) => (
+                <Stack grow padding key={c} className={c} background="default" color="default">
+                    <Stack border grow rounded="xs">
+                        <Box padding background="level2">
+                            <Paragraph size="lg" color="gray2">
+                                {label}
+                            </Paragraph>
+                        </Box>
+                        <Stack padding gap {...boxProps}>
+                            {children}
+                        </Stack>
                     </Stack>
                 </Stack>
-            </Stack>
-        ))}
+            ))}
     </Stack>
 )
 

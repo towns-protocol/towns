@@ -1,9 +1,10 @@
 import { Allotment } from 'allotment'
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Outlet, useOutlet, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
+    RoomIdentifier,
     useChannelData,
     useChannelTimeline,
     useMyMembership,
@@ -16,6 +17,7 @@ import { Box, Button, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { TimelineShimmer } from '@components/Shimmer'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
+import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
 
 export const SpacesChannel = () => {
     return (
@@ -40,7 +42,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
     }
     return <ChannelContextProvider channelId={channelSlug}>{props.children}</ChannelContextProvider>
 }
-
+const USE_VLIST = true
 const SpacesChannelComponent = () => {
     const { messageId } = useParams()
     const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
@@ -68,11 +70,18 @@ const SpacesChannelComponent = () => {
 
     const hasThreadOpen = !!messageId
 
+    // FIXME: timeline content is set one frame after the channelId is updated
+    // resulting in the odd state. this needs to be fixed in side of lib separately
+    const [deferredChannelId, setDeferredChannelId] = useState<RoomIdentifier>()
+    useEffect(() => {
+        setDeferredChannelId(channel?.id)
+    }, [channel?.id])
+
     return (
         <Stack horizontal minHeight="100%">
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
-                    {!channel ? (
+                    {!channel || !deferredChannelId ? (
                         <TimelineShimmer />
                     ) : myMembership !== Membership.Join ? (
                         <Box absoluteFill centerContent>
@@ -81,17 +90,21 @@ const SpacesChannelComponent = () => {
                             </Button>
                         </Box>
                     ) : (
-                        <Box grow absoluteFill height="100%">
+                        <Box grow absoluteFill height="100%" justifyContent="end">
                             <MessageTimelineWrapper
-                                key={channelId.slug}
+                                key={deferredChannelId.slug}
                                 spaceId={spaceId}
-                                channelId={channelId}
+                                channelId={deferredChannelId}
                                 events={channelMessages}
                             >
-                                <MessageTimelineScroller
-                                    hideThreads
-                                    before={<ChannelHeader name={channel.label} />}
-                                />
+                                {!USE_VLIST ? (
+                                    <MessageTimelineScroller
+                                        hideThreads
+                                        before={<ChannelHeader name={channel.label} />}
+                                    />
+                                ) : (
+                                    <MessageTimelineVirtual />
+                                )}
                             </MessageTimelineWrapper>
 
                             <Box gap paddingBottom="lg" paddingX="lg">
