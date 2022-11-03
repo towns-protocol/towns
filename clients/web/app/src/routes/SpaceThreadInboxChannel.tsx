@@ -10,7 +10,8 @@ export const SpaceThreadInboxChannel = () => {
         .find((c) => c.id.matrixRoomId === channelId)
 
     if (!channel) {
-        throw new Error(`channel with id ${channelId} isn't accessible`)
+        console.log(`channel with id ${channelId} isn't accessible`)
+        return <></>
     }
 
     return (
