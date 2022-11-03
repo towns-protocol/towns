@@ -6,7 +6,7 @@
         "build": "tsc --build",
         "dev": "nodemon src/index.ts",
         "test": "jest --testTimeout 20000",
-        "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:80/json-rpc jest -t \".*-remote\""
+        "test-remote": "tsc --build && TEST_REMOTE_URL=http://localhost:80/json-rpc jest --config jest.config.jsdom.ts -t \".*-remote\""
     },
     "dependencies": {
         "@ethereumjs/util": "^8.0.1",
