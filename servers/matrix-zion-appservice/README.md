@@ -27,7 +27,7 @@ On separate terminals:
 
 # Terminal 1:
 # Start the dendrite server with appservice config in dendrite.withappservice.yaml
-scripts/start-local-dendrite.sh with-appservice
+scripts/start-local-dendrite.sh --with-appservice
 
 # Terminal 2:
 # Dendrite server must be started first.
