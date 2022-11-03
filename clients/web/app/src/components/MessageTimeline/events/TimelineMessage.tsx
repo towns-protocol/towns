@@ -47,7 +47,12 @@ export const TimelineMessage = React.memo((props: Props) => {
     const isEditing = event.eventId === timelineActions.editingMessageId
     const isRelativeDate = type === MessageTimelineType.Thread
 
-    const replyCount = messageRepliesMap?.get(event.eventId)
+    // hide replies in threads
+    const replyCount =
+        timelineContext.type === MessageTimelineType.Channel
+            ? messageRepliesMap?.get(event.eventId)
+            : undefined
+
     const reactions = messageReactionsMap.get(event.eventId)
 
     return !event ? null : (

@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { useZionContext } from 'use-zion-client'
 import { Box, Button, Stack } from '@ui'
+import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { DateDivider } from './events/DateDivider'
 import { useGroupEvents } from './hooks/useGroupEvents'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
@@ -20,6 +21,11 @@ export const MessageTimeline = () => {
         return timelineContext?.events ?? []
     }, [timelineContext?.events])
 
+    const { filteredEvents } = useFilterReplies(
+        events,
+        timelineContext?.type === MessageTimelineType.Thread,
+    )
+
     const lastEvent = useMemo(() => {
         return events?.at(events?.length - 1)?.eventId
     }, [events])
@@ -30,7 +36,7 @@ export const MessageTimeline = () => {
         }
     }, [channelId, lastEvent, timelineContext])
 
-    const dateGroups = useGroupEvents(events)
+    const dateGroups = useGroupEvents(filteredEvents)
 
     if (!timelineContext || !channelId) {
         return <></>
@@ -56,7 +62,7 @@ export const MessageTimeline = () => {
     return (
         <>
             {dateGroups.map((dateGroup) => {
-                const renderEvents = dateGroup.events.map((r, index) => {
+                const renderEvents = dateGroup.events.map((r) => {
                     return <MessageTimelineItem itemData={r} key={r.key} />
                 })
 
