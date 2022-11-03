@@ -17,7 +17,6 @@
             "@ui": ["ui/components"]
         },
         "resolveJsonModule": true,
-        "rootDir": "src",
         "skipLibCheck": true,
         "strict": true,
         "strictNullChecks": true,

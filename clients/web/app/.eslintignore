@@ -10,3 +10,4 @@ yarn.lock
 
 vite.config.ts
 vitest.config.ts
+mocks
