@@ -36,16 +36,30 @@ const LoadingScreen = () => (
     </Stack>
 )
 
+const Main = () => (
+    <React.StrictMode>
+        <BrowserRouter>
+            <MainLayout>
+                <Suspense fallback={<LoadingScreen />}>
+                    <App />
+                </Suspense>
+            </MainLayout>
+        </BrowserRouter>
+    </React.StrictMode>
+)
+
 if (node) {
-    createRoot(node).render(
-        <React.StrictMode>
-            <BrowserRouter>
-                <MainLayout>
-                    <Suspense fallback={<LoadingScreen />}>
-                        <App />
-                    </Suspense>
-                </MainLayout>
-            </BrowserRouter>
-        </React.StrictMode>,
-    )
+    if (isDev) {
+        import(`../mocks/browser`)
+            .then(({ worker }) => {
+                worker.start({
+                    onUnhandledRequest: 'bypass',
+                })
+            })
+            .then(() => {
+                createRoot(node).render(<Main />)
+            })
+    } else {
+        createRoot(node).render(<Main />)
+    }
 }

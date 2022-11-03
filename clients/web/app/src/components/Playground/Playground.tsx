@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import axios, { AxiosResponse } from 'axios'
 import {
     Avatar,
     Box,
@@ -22,6 +23,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { richText } from '@components/RichText/RichTextEditor.css'
+import { isDev } from 'utils'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -29,8 +31,17 @@ const A3 = Array(3)
     .map((_, i) => i)
 
 export const Playground = () => {
+    const [mockData, setMockData] = useState<AxiosResponse | null>(null)
+    useEffect(() => {
+        if (isDev) {
+            axios.get('/mock-endpoint').then(setMockData)
+        }
+    }, [])
     return (
         <Stack position="relative">
+            <Container label="Mock Data">
+                <p>{mockData?.data.name}</p>
+            </Container>
             <Container label="Paragraph">
                 <Grid columns={2}>
                     <Stack>
