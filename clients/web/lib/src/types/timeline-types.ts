@@ -157,4 +157,13 @@ export interface TimelineEvent {
     content?: TimelineEvent_OneOf
     fallbackContent: string
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server
+    threadParentId?: string
+    reactionParentId?: string
+}
+
+export type ThreadStats = {
+    replyCount: number
+    userIds: Set<string>
+    latestTs: number
+    parentId: string
 }

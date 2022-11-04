@@ -60,7 +60,7 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                         matrixRoomId: '',
                     },
                     events: [],
-                    messageRepliesMap: new Map(),
+                    messageRepliesMap: {},
                     messageReactionsMap: new Map(),
                     timelineActions: {
                         editingMessageId: '',

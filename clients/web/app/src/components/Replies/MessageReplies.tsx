@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react'
-import { useChannelId, useSpaceId, useSpaceMembers } from 'use-zion-client'
+import { ThreadStats, useChannelId, useSpaceId, useSpaceMembers } from 'use-zion-client'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { Avatar, Box, Paragraph, Stack } from '@ui'
-import { ThreadStats } from 'hooks/useFixMeMessageThread'
 import { notUndefined } from 'ui/utils/utils'
 
 export const MessageThreadButton = (props: { threadStats: ThreadStats; eventId: string }) => {

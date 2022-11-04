@@ -54,14 +54,10 @@ export const LoginWithWallet = () => {
     )
 }
 
-interface RegisterAndJoinSpaceProps {
-    spaceId: RoomIdentifier
-    channelId: RoomIdentifier
-}
-
 interface LoginWithAuthProps {
     auth: ZionAuth
 }
+
 export const LoginWithAuth = (props: LoginWithAuthProps) => {
     const { walletStatus } = useWeb3Context()
     const { loginStatus, loginError, setDeviceId, setUserId, setLoginStatus, setUsername } =
@@ -88,6 +84,11 @@ export const LoginWithAuth = (props: LoginWithAuthProps) => {
     )
 }
 
+interface RegisterAndJoinSpaceProps {
+    spaceId: RoomIdentifier
+    channelId: RoomIdentifier
+}
+
 export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     const { spaceId, channelId } = props
     const { clientRunning, joinRoom } = useZionClient()
@@ -106,6 +107,28 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
             <RegisterWallet />
             <div data-testid="spaceMembership"> {mySpaceMembership} </div>
             <div data-testid="channelMembership"> {myChannelMembership} </div>
+        </>
+    )
+}
+
+export const RegisterAndJoin = (props: { roomIds: RoomIdentifier[] }) => {
+    const { roomIds } = props
+    const { clientRunning, joinRoom } = useZionClient()
+    const [joinComplete, setJoinComplete] = React.useState(false)
+    useEffect(() => {
+        if (clientRunning) {
+            void (async () => {
+                for (const roomId of roomIds) {
+                    await joinRoom(roomId)
+                }
+                setJoinComplete(true)
+            })()
+        }
+    }, [clientRunning, joinRoom, roomIds])
+    return (
+        <>
+            <RegisterWallet />
+            <div data-testid="joinComplete">{joinComplete ? 'true' : 'false'}</div>
         </>
     )
 }

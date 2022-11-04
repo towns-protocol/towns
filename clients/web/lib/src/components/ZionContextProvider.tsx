@@ -12,8 +12,9 @@ import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useFavIconBadge } from '../hooks/ZionContext/useFavIconBadge'
-import { useZionClientListener } from '../hooks/use-zion-client-listener'
+import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
+import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import {
     makeRoomIdentifier,
     Room,
@@ -22,7 +23,6 @@ import {
     SpaceItem,
 } from '../types/matrix-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
-import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 
 export interface IZionContext {
     client?: ZionClient

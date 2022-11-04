@@ -10,6 +10,7 @@ export { useChannelData } from './hooks/use-channel-data'
 export { useChannelId } from './hooks/use-channel-id'
 export { useChannelMembers } from './hooks/use-channel-members'
 export { useChannelTimeline } from './hooks/use-channel-timeline'
+export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
 export { useIntegratedSpaceManagement } from './hooks/use-integrated-space-management'
 export { useMember } from './hooks/use-member'
 export { useMembers } from './hooks/use-members'
@@ -25,10 +26,12 @@ export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
 export { useSpacesFromContract } from './hooks/use-spaces-from-contract'
+export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
 export { toEvent } from './hooks/ZionContext/useMatrixTimelines' // todo this doesn't need to be exposed  https://linear.app/hnt-labs/issue/HNT-44/client-update-usefixmemessagethread-implementation
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
 
+export { useTimelineStore } from './store/use-timeline-store'
 export { useMatrixStore } from './store/use-matrix-store'
 
 export type {
@@ -74,6 +77,7 @@ export type {
     RoomPowerLevelsEvent,
     SpaceChildEvent,
     SpaceParentEvent,
+    ThreadStats,
 } from './types/timeline-types'
 
 export { ZTEvent } from './types/timeline-types'

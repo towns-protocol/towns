@@ -53,7 +53,7 @@ export const TimelineMessage = React.memo((props: Props) => {
     // hide replies in threads
     const replyCount =
         timelineContext.type === MessageTimelineType.Channel
-            ? messageRepliesMap?.get(event.eventId)
+            ? messageRepliesMap?.[event.eventId]
             : undefined
 
     const reactions = messageReactionsMap.get(event.eventId)

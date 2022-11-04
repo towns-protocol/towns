@@ -5,9 +5,9 @@ import {
     TimelineEvent,
     useMatrixStore,
     useSpaceMembers,
+    useTimelineThreadStats,
     useZionClient,
 } from 'use-zion-client'
-import { useTimelineRepliesMap } from 'hooks/useFixMeMessageThread'
 import { useHandleReaction, useTimelineReactionsMap } from 'hooks/useReactions'
 import { useSpaceChannels as useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
@@ -24,7 +24,7 @@ export const MessageTimelineContext = createContext<{
     channels: Channel[]
     events: TimelineEvent[]
     type: MessageTimelineType
-    messageRepliesMap: ReturnType<typeof useTimelineRepliesMap>
+    messageRepliesMap: ReturnType<typeof useTimelineThreadStats>
     messageReactionsMap: ReturnType<typeof useTimelineReactionsMap>
     timelineActions: ReturnType<typeof useTimelineMessageEditing>
     handleReaction: ReturnType<typeof useHandleReaction>
@@ -45,7 +45,7 @@ export const MessageTimelineWrapper = (props: {
 
     const { sendReadReceipt } = useZionClient()
     const channels = useSpaceChannels()
-    const messageRepliesMap = useTimelineRepliesMap(events)
+    const messageRepliesMap = useTimelineThreadStats(channelId)
     const messageReactionsMap = useTimelineReactionsMap(events)
     const timelineActions = useTimelineMessageEditing()
     const handleReaction = useHandleReaction(channelId)
