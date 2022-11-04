@@ -107,15 +107,45 @@ To sync the upstream dendrite main repo, follow the general steps at
 <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork>.
 
 If the merge conflicts are difficult to resolve, the cleanest way is to clone
-dendrite-fork outside of the harmony repo and do it with simple git commands. See
-[Syncing a fork branch from the command line](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork#syncing-a-fork-branch-from-the-command-line)
+dendrite-fork outside of the harmony repo and do it with simple git commands.
 
-Then do the usual merge conflict resolution, commit and push the branch to
-the remote dendrite fork.
+```bash
+# branch1: dendrite-upstream
+git checkout main
+git checkout -b pr/dendrite-upstream
+# force the branch to point to the upstream HEAD
+# https://stackoverflow.com/questions/25518883/git-how-to-force-pull-from-an-upstream-remote-and-ignore-commits-in-your-local
+git reset --hard upstream/main
 
-Go to <https://github.com/HereNotThere/dendrite>. Make sure to change the
+# branch2: dendrite-fork
+git checkout main
+git checkout -b pr/dendrite-fork
+# merge the upstream into the fork
+git merge pr/dendrite-upstream
+
+# resolve the conflict(s)
+
+# build, lint, run test to make sure everything works.
+# broken out into individual steps so you can run them separately and debug if needed.
+# or run ./build/scripts/build-test-lint.sh 
+go clean -modcache
+go mod tidy
+./build.sh
+golangci-lint run
+go test ./…
+
+# add and commit the changes.
+git add .
+git commit -S -m "sync upstream changes"
+git push --set-upstream origin pr/dendrite-fork
+
+```
+
+Create a PR at <https://github.com/HereNotThere/dendrite>. Make sure to change the
 base repository from matrix-org/dendrite to `HereNotThere/dendrite`.
-Submit a PR to merge.
+
+When merging to main, choose **Create a merge commit** to preserve the commit
+history.
 
 ## Pushing changes to dendrite main
 
