@@ -7,6 +7,7 @@ import { MessageProps } from '@components/Message/Message'
 import { MessageImage } from '@components/MessageImage/MessageImage'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody } from 'utils/ztevent_util'
+import { MessageZionText } from '@components/MessageZionText/MessageZionText'
 import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
 import { TimelineMessageEditor } from './TimelineMessageEditor'
 
@@ -85,6 +86,8 @@ export const TimelineMessage = React.memo((props: Props) => {
                 />
             ) : eventContent.msgType === MessageType.Image ? (
                 <MessageImage content={eventContent.content} />
+            ) : eventContent.msgType === MessageType.ZionText ? (
+                <MessageZionText eventContent={eventContent} event={event} />
             ) : (
                 <RichTextPreview
                     content={getMessageBody(event.eventId, eventContent)}

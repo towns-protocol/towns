@@ -17,6 +17,7 @@ import { Box, Button, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { TimelineShimmer } from '@components/Shimmer'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
+import { contentWithUrlsAttached } from '@components/RichText/utils/textParsers'
 import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
 
 export const SpacesChannel = () => {
@@ -58,7 +59,7 @@ const SpacesChannelComponent = () => {
     const onSend = useCallback(
         (value: string) => {
             if (value && channelId) {
-                sendMessage(channelId, value)
+                sendMessage(channelId, value, contentWithUrlsAttached(value))
             }
         },
         [channelId, sendMessage],

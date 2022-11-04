@@ -127,4 +127,27 @@ describe('#TimelineItem', () => {
             />,
         )
     })
+
+    test('it should render unfurled content in <MessageZionText>', async () => {
+        render(
+            <Wrapper
+                events={[
+                    {
+                        body: 'do you like dogs? check out [www.dogs.com](https://www.dogs.com/)',
+                        msgType: MessageType.ZionText,
+                        attachments: [
+                            {
+                                url: 'http://example.com',
+                            },
+                        ],
+                    },
+                ]}
+            />,
+        )
+        await screen.findByText(/do you like dogs/)
+        const link = screen.getByRole('link')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        expect(link).toHaveAttribute('href', 'https://www.dogs.com/')
+    })
 })

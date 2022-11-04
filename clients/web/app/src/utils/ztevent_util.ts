@@ -19,6 +19,7 @@ export const getMessageBody = (eventId: string, message: RoomMessageEvent): stri
             return `${message.content.body} 
       ${eventId}
       `
+        case MessageType.ZionText:
         case MessageType.Text:
             return (
                 message.content.body ??
