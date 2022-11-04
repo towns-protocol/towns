@@ -6,6 +6,7 @@
     "main": "index.js",
     "types": "index.d.ts",
     "scripts": {
+        "clean": "make clean",
         "setup": "make clean && make build",
         "sync": "make update",
         "test": "make test",
