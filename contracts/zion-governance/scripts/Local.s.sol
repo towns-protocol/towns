@@ -91,6 +91,10 @@ contract DeployLocal is Script {
       "tokengranted",
       Helper.toString(abi.encodePacked(address(tokenEntitlementModule)))
     );
+    writer = writer.writeStringProperty(
+      "rolemanager",
+      Helper.toString(abi.encodePacked(address(roleManager)))
+    );
     writer = writer.writeEndObject();
 
     string memory path = string.concat(
