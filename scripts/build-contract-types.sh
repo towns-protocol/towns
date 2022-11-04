@@ -1,6 +1,16 @@
 #!/bin/bash
-yarn workspace @harmony/zion-governance clean
 
-yarn workspace @harmony/zion-governance build
+DEFAULTPARAM="localhost"
+read -p "Enter a chain folder name or press enter: (default: localhost)" CHAIN
 
-yarn workspace @harmony/zion-governance publish
+forge clean
+forge build
+
+# Create typings using typechain
+yarn typechain --target=ethers-v5 "out/**/?(CouncilNFT|CouncilStaking|ZionSpaceManager|ZionRoleManager).json" --out-dir "packages/contracts/${CHAIN:-$DEFAULTPARAM}/typings"
+
+# Move abis to the packages folder
+mkdir -p "packages/contracts/${CHAIN:-$DEFAULTPARAM}/abis" && cp -a out/{CouncilNFT,CouncilStaking,ZionSpaceManager,ZionRoleManager}.sol/* "packages/contracts/${CHAIN:-$DEFAULTPARAM}/abis"
+
+# Move typings to the dendrite folder
+mkdir -p "servers/dendrite/zion_${CHAIN:-$DEFAULTPARAM}" && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg "zion_${CHAIN:-$DEFAULTPARAM}"  --type "zion_space_manager_${CHAIN:-$DEFAULTPARAM}" --out "servers/dendrite/zion/contracts/zion_${CHAIN:-$DEFAULTPARAM}/zion_space_manager_${CHAIN:-$DEFAULTPARAM}.go"

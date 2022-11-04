@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.16+commit.07a7930e"
+    "version": "0.8.17+commit.8df45f5f"
   },
   "language": "Solidity",
   "output": {
@@ -751,7 +751,7 @@
     },
     "optimizer": {
       "enabled": true,
-      "runs": 20000
+      "runs": 1000000
     },
     "remappings": [
       ":@harmony/=node_modules/@harmony/",

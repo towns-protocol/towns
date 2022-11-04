@@ -107,6 +107,13 @@ library DataTypes {
   /// **************DTO****************
   /// *********************************
 
+  /// @notice A struct containing the parameters for setting an existing role id to an entitlement module
+  struct CreateRoleEntitlementData {
+    uint256 roleId;
+    address entitlementModule;
+    bytes entitlementData;
+  }
+
   /// @notice A struct containing the parameters for creating a role
   struct CreateRoleData {
     string name;

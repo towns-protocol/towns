@@ -19,10 +19,19 @@ import {PermissionTypes} from "./../src/spaces/libraries/PermissionTypes.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
 import {BaseSetup} from "./BaseSetup.sol";
 import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
+import {Constants} from "./../src/spaces/libraries/Constants.sol";
 
 contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
   function setUp() public virtual override {
     BaseSetup.setUp();
+  }
+
+  function compareStringsbyBytes(string memory s1, string memory s2)
+    public
+    pure
+    returns (bool)
+  {
+    return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
   }
 
   function testGetEntitlementsInfoBySpaceId() public {
@@ -136,15 +145,48 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     string memory spaceNetwork = "!space:localhost";
     string memory channelNetwork = "!channel:localhost";
 
-    createSimpleSpace("space-name", spaceNetwork, spaceManager);
-
-    DataTypes.Permission[] memory permissions = new DataTypes.Permission[](2);
+    DataTypes.Permission[] memory permissions = new DataTypes.Permission[](1);
     permissions[0] = spaceManager.getPermissionFromMap(PermissionTypes.Read);
-    permissions[1] = spaceManager.getPermissionFromMap(PermissionTypes.Write);
+
+    uint spaceId = createSimpleSpaceWithEveryonePermissions(
+      "space-name",
+      spaceNetwork,
+      permissions,
+      spaceManager
+    );
+
+    // get all roles
+    DataTypes.Role[] memory existingSpaceRoles = roleManager.getRolesBySpaceId(
+      spaceId
+    );
+
+    DataTypes.CreateRoleEntitlementData[]
+      memory roles = new DataTypes.CreateRoleEntitlementData[](1);
+
+    // get the space owner role
+    for (uint256 i = 0; i < existingSpaceRoles.length; i++) {
+      if (compareStringsbyBytes(existingSpaceRoles[i].name, "Everyone")) {
+        roles[0] = DataTypes.CreateRoleEntitlementData({
+          roleId: existingSpaceRoles[i].roleId,
+          entitlementModule: address(userGrantedEntitlementModule),
+          entitlementData: abi.encode(Constants.EVERYONE_ADDRESS)
+        });
+      }
+    }
 
     uint256 channelId = spaceManager.createChannel(
-      DataTypes.CreateChannelData(spaceNetwork, "channel-name", channelNetwork)
+      DataTypes.CreateChannelData(spaceNetwork, "channel-name", channelNetwork),
+      roles
     );
+
+    bool isEveryoneReadEntitled = spaceManager.isEntitled(
+      spaceNetwork,
+      channelNetwork,
+      address(8),
+      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+    );
+
+    console.log(isEveryoneReadEntitled);
 
     DataTypes.ChannelInfo memory info = spaceManager.getChannelInfoByChannelId(
       spaceNetwork,
@@ -496,7 +538,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     createSimpleSpace("test", networkId, spaceManager);
 
     spaceManager.createChannel(
-      DataTypes.CreateChannelData(networkId, "channel-name", channelNetworkId)
+      DataTypes.CreateChannelData(networkId, "channel-name", channelNetworkId),
+      new DataTypes.CreateRoleEntitlementData[](0)
     );
 
     uint256 roleId = spaceManager.createRole(networkId, "TestRole");

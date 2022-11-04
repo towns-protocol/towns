@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.16+commit.07a7930e"
+    "version": "0.8.17+commit.8df45f5f"
   },
   "language": "Solidity",
   "output": {
@@ -59,6 +59,11 @@
       {
         "inputs": [],
         "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleDoesNotExist",
         "type": "error"
       },
       {
@@ -176,6 +181,28 @@
             "internalType": "struct DataTypes.CreateChannelData",
             "name": "data",
             "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "address",
+                "name": "entitlementModule",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "entitlementData",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateRoleEntitlementData[]",
+            "name": "roles",
+            "type": "tuple[]"
           }
         ],
         "name": "createChannel",
@@ -1063,7 +1090,7 @@
         "addRoleToEntitlementModule(string,string,address,uint256,bytes)": {
           "notice": "add an entitlement to an entitlement module"
         },
-        "createChannel((string,string,string))": {
+        "createChannel((string,string,string),(uint256,address,bytes)[])": {
           "notice": "Create a channel within a space"
         },
         "createRole(string,string)": {
@@ -1145,7 +1172,7 @@
     },
     "optimizer": {
       "enabled": true,
-      "runs": 20000
+      "runs": 1000000
     },
     "remappings": [
       ":@harmony/=node_modules/@harmony/",
@@ -1162,11 +1189,11 @@
   },
   "sources": {
     "contracts/zion-governance/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0xf6abb7805b4fae06e5cbcc56618cf415ea86ca5b5cdf5a2c6f96a8a0b3b79319",
+      "keccak256": "0x25ae4029c2a8c419383a746886d8e0f9572a8352c67ab7e9397e4578d6ee82e8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://44862815de861c02a4d53a5a017f81c21e3217ec69e5a8fb584ad72b2b872473",
-        "dweb:/ipfs/QmY6kRDxuF8QKCERBj7qQPapqdHYSLzu9x5euVKxPvqTGz"
+        "bzz-raw://d341cadfc2ca7c5cc00128858a933beebb961e798531547506ab6bab8b38e93a",
+        "dweb:/ipfs/QmNYzxv2j7yXf9k9mMqkLP3zTyHxdhFBRQ8X4JWdeBYac3"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -1202,11 +1229,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0xeaa3ffc87a0975e293fecd4076d80da3cc8ad4fc9868a915d58dbe49b953ca0f",
+      "keccak256": "0x3e152c325d610c894d817436b289e25fb65900648434a98ab1e568e855003c64",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ba757d07a168ef689cb8e6f5ff5fab32c87627f2789debb2d2756363a7ca9bd3",
-        "dweb:/ipfs/QmZphRoii778dNwJLrXzJHAgh6HvchsoQddN4sfZA8c6E2"
+        "bzz-raw://802aaf3223d15833da2c1ce8c060034ea02662893b78c400572e549459e8b0d4",
+        "dweb:/ipfs/QmSdBtMafoQiGYpKw4PbiLgNpUP8YxssLi752iLGPMtSVZ"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Constants.sol": {
@@ -1218,27 +1245,27 @@
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/CreationLogic.sol": {
-      "keccak256": "0xfd2b80110ac82271ac1e935a8724a25b05fee57aa9447d1d49aed7d1ede0ef38",
+      "keccak256": "0x52486e9201ff7728c4e8132b6fc8fa6367b3b3098f937e4ecaa890a15149e7be",
       "license": "UNLICENSED",
       "urls": [
-        "bzz-raw://3373eb6a1518eab7e6776dfe0aa1429e9809acf0e8519bc448c23995c9ce1aea",
-        "dweb:/ipfs/QmZEC9k5vsS1NDQqzJQ9uRumsz1Ns8jgwUKSwR2hQGRh4m"
+        "bzz-raw://b1ba35197ae571ff8c74ea45559a7df6d8bc1d6d72468fa94de7c6f5eb153f7c",
+        "dweb:/ipfs/QmPcuaYkQutbb57zagPTPD38SiDHxD3qm7EqwLYnzMumKb"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0xd2c71f100774d938958bec0b455760cdee20cce252997c706d04baa2ef9ddfdb",
+      "keccak256": "0xd9ac0adf2cd6d25426c62ef3570cbacb371d6f1442e4e1f9e6684ec599db2ddf",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://0eb7b6af0bd25a29ed994c6796b068070781121da6a628cf40cff2fdad3c56b2",
-        "dweb:/ipfs/Qmbxcyenu7BTuycpt8uTDHY8Abv67g96jWDFYnbxk5UGwQ"
+        "bzz-raw://24670be8e6ff6551adf3bff246b45c47a48981706a5ec9942747918c6cd5a424",
+        "dweb:/ipfs/QmdtnxdK1mJcgABusYwCzhJ8ohZ3gv76osA6Z4DNZfcDCF"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Errors.sol": {
-      "keccak256": "0xc226f9ada2cce56506bccb3c9d8a77e7412b4af1fac6d34c01ae0b1cf2b621cd",
+      "keccak256": "0x26072b2e7ea794e9ea7aeb90847245b3cd0524e7663c32cb639e9dc4bc128e62",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8e701cabfe53909d58cedc3639cd1fd9848519975ab7c325f8b89eaaa7edb4d0",
-        "dweb:/ipfs/Qme6MRCnnE2qFDySU7GekEJP3jFoXg2cRy5YMvy4xQK7kX"
+        "bzz-raw://fdd1e560acc4faca9afb74db6731c47cff5017417a256c02f198577969768af7",
+        "dweb:/ipfs/Qmc8oHNjkACzBRw33DdHvxQq4mE5hJXE2RwNJgn2YYNouv"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Events.sol": {
@@ -1273,20 +1300,20 @@
         "dweb:/ipfs/QmbinA6B9vWszjdECwyY7pT8owJ4h3GSgnhZeJG1vj8Gnn"
       ]
     },
+    "lib/forge-std/src/console.sol": {
+      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
+        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
+      ]
+    },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
       "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
       "license": "MIT",
       "urls": [
         "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
         "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/interfaces/IERC165.sol": {
-      "keccak256": "0xd04b0f06e0666f29cf7cccc82894de541e19bb30a765b107b1e40bb7fe5f7d7a",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://7b652499d098e88d8d878374616bb58434301061cae2253298b3f374044e0ddb",
-        "dweb:/ipfs/QmbhAzctqo5jrSKU6idHdVyqfmzCcDbNUPvmx4GiXxfA6q"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Context.sol": {

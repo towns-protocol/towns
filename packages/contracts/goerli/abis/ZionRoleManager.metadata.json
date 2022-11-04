@@ -1,0 +1,476 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "permissionRegistry",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidParameters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotSpaceManager",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission",
+            "name": "permission",
+            "type": "tuple"
+          }
+        ],
+        "name": "addPermissionToRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "createOwnerRole",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "name": "createRole",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getPermissionsBySpaceIdByRoleId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getRoleBySpaceIdByRoleId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Role",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getRolesBySpaceId",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Role[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission",
+            "name": "permission",
+            "type": "tuple"
+          }
+        ],
+        "name": "removePermissionFromRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "spaceManager",
+            "type": "address"
+          }
+        ],
+        "name": "setSpaceManager",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "owner()": {
+          "details": "Returns the address of the current owner."
+        },
+        "renounceOwnership()": {
+          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+        },
+        "transferOwnership(address)": {
+          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/zion-governance/src/spaces/ZionRoleManager.sol": "ZionRoleManager"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 1000000
+    },
+    "remappings": [
+      ":@harmony/=node_modules/@harmony/",
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":ds-test/=lib/solmate/lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solidity-json-writer/=node_modules/solidity-json-writer/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/zion-governance/src/spaces/ZionPermissionsRegistry.sol": {
+      "keccak256": "0x59483a9520481a831cf36d5a5656eb9cdc9bbeaa7965ebc5d580bb4029bc184c",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b876eea82441fb995c1e13c98a86420b828f61c9118b95192ebc7ce4d572b0e6",
+        "dweb:/ipfs/QmbPjWjpeLQnPZPc8MVMTfc5zqXGtGxxy7eG6PW29ZYNLj"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/ZionRoleManager.sol": {
+      "keccak256": "0x93075950dc7cc0e3b00cf504218f37f793e8b8630196259579c055e0ff7ee7fd",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b0a25a914b8e73416ca202f1db9d9952f9815af8b474ad9d5b27fd37287ff4f0",
+        "dweb:/ipfs/QmTJJ4qgxzP9tK2ao2pPTDKk1kkLvoBmceLBNnmbCDDU7Z"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
+      "keccak256": "0x8d10e6a7de93d6417ceed10f772d8b8f18c3fa565561573e5bacece6d32d138a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://9c38797d7875e2a2201501f51d6a0976225d1004b043a34af1e21af50d9fd8f0",
+        "dweb:/ipfs/QmbMhZ9ASvJoZezwt2ykGdmcNX54VspbJDusmSNGgDTkop"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/Constants.sol": {
+      "keccak256": "0xd4f2b16156d8d9f9e0cdcd4ad0835b94a67b49beabe22967eda7c069a7268407",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://077701214ca4757cac2887f47c347ec75a9f3b4026785df11b95a0bc8b1e2ecc",
+        "dweb:/ipfs/Qmd8uKoJU8EAhUhYc1MpDHBUaHHtxGGBr9V9ahVp4cUxPv"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/CreationLogic.sol": {
+      "keccak256": "0x52486e9201ff7728c4e8132b6fc8fa6367b3b3098f937e4ecaa890a15149e7be",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://b1ba35197ae571ff8c74ea45559a7df6d8bc1d6d72468fa94de7c6f5eb153f7c",
+        "dweb:/ipfs/QmPcuaYkQutbb57zagPTPD38SiDHxD3qm7EqwLYnzMumKb"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
+      "keccak256": "0xd9ac0adf2cd6d25426c62ef3570cbacb371d6f1442e4e1f9e6684ec599db2ddf",
+      "license": "Apache-20",
+      "urls": [
+        "bzz-raw://24670be8e6ff6551adf3bff246b45c47a48981706a5ec9942747918c6cd5a424",
+        "dweb:/ipfs/QmdtnxdK1mJcgABusYwCzhJ8ohZ3gv76osA6Z4DNZfcDCF"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/Errors.sol": {
+      "keccak256": "0x26072b2e7ea794e9ea7aeb90847245b3cd0524e7663c32cb639e9dc4bc128e62",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://fdd1e560acc4faca9afb74db6731c47cff5017417a256c02f198577969768af7",
+        "dweb:/ipfs/Qmc8oHNjkACzBRw33DdHvxQq4mE5hJXE2RwNJgn2YYNouv"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/Events.sol": {
+      "keccak256": "0xf2672cea93eae66554e9ee207271c27205099d4b2f98d7485693780ec4f628e3",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c066b1040ad26e2ff5e5d66e5e7953f706104d449038a79548ec80bfb4d5571e",
+        "dweb:/ipfs/QmTiFb674cbZboVEVMUaPStDmuVyEHGFp8wLR9VvmztqrG"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/PermissionTypes.sol": {
+      "keccak256": "0xf2b4fa33252ee1f20f93ef3a36c76256c5194e46a217b7630160ca95ca6d569c",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://781f4af73155e4642927a0077660ae6e7334b801321d276d681fb671ec7a8d86",
+        "dweb:/ipfs/QmR2Jsvy7KFGqttabBMAiS9SBQN52zh9CiQVTX2XxsJU6A"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/libraries/Utils.sol": {
+      "keccak256": "0x4b9a6788c9dd8c2a367b6922d931825180e937f1ce8f9762dc47e4d82df620d0",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://4d4f486b4983f479f41949b84d4448adcfbb22ca173657ae4bdf61bdf634821e",
+        "dweb:/ipfs/QmSUuYCBNQHwQSPGWncZvUdAvvvApdEVQPG3YTD6NcDetc"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/storage/ZionRoleStorage.sol": {
+      "keccak256": "0xf3b9d11f976864e314dfaa33d34794f90507d1fa640ca541f5c57d100f28d559",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://837b597e2d176a22801db3ec677900906e1eb2cb2259c871c91c39d384361b3d",
+        "dweb:/ipfs/QmVHbBhkJ5a2a6iX6acx8zUACAB25mS23APEpNAWtiayLj"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+      "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
+        "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+      "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+        "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    }
+  },
+  "version": 1
+}

@@ -12,6 +12,7 @@ import {Constants} from "./libraries/Constants.sol";
 import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
 import {Utils} from "./libraries/Utils.sol";
+import {ISpaceManager} from "./interfaces/ISpaceManager.sol";
 
 contract ZionRoleManager is Ownable, ZionRoleStorage {
   address internal immutable PERMISSION_REGISTRY;
@@ -66,6 +67,8 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     uint256 roleId,
     DataTypes.Permission memory permission
   ) public onlySpaceManager {
+    _validateOwnerPermission(permission);
+
     CreationLogic.setPermission(
       spaceId,
       roleId,
@@ -79,6 +82,8 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     uint256 roleId,
     DataTypes.Permission memory permission
   ) public onlySpaceManager {
+    _validateOwnerPermission(permission);
+
     DataTypes.Permission[] storage permissions = _permissionsBySpaceIdByRoleId[
       spaceId
     ][roleId];
@@ -153,5 +158,23 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     returns (DataTypes.Role memory)
   {
     return _rolesBySpaceId[spaceId].roles[roleId];
+  }
+
+  function _validateOwnerPermission(DataTypes.Permission memory permission)
+    internal
+    view
+  {
+    if (
+      keccak256(abi.encode(permission)) ==
+      keccak256(
+        abi.encode(
+          ISpaceManager(SPACE_MANAGER).getPermissionFromMap(
+            PermissionTypes.Owner
+          )
+        )
+      )
+    ) {
+      revert Errors.InvalidParameters();
+    }
   }
 }

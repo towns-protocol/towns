@@ -99,6 +99,13 @@ contract DeployLocal is Script {
       "/addresses/space-manager.json"
     );
 
+    string memory goPath = string.concat(
+      "servers/dendrite/zion/contracts/zion_",
+      Helper.getChainName(),
+      "/space-manager.json"
+    );
+
     vm.writeFile(path, writer.value);
+    vm.writeFile(goPath, writer.value);
   }
 }

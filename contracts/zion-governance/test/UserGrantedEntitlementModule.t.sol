@@ -30,7 +30,12 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
     createSimpleSpace(spaceName, spaceNetworkId, spaceManager);
 
     spaceManager.createChannel(
-      DataTypes.CreateChannelData(spaceNetworkId, channelName, channelNetworkId)
+      DataTypes.CreateChannelData(
+        spaceNetworkId,
+        channelName,
+        channelNetworkId
+      ),
+      new DataTypes.CreateRoleEntitlementData[](0)
     );
 
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(

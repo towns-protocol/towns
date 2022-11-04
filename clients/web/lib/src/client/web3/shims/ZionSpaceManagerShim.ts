@@ -6,12 +6,12 @@ import Localhost_ZionSpaceManagerArtifact from '@harmony/contracts/localhost/abi
 import type {
     ZionSpaceManager as Localhost_ZionSpaceManager,
     DataTypes as Localhost_DataTypes,
-} from '@harmony/contracts/localhost/typings/types/ZionSpaceManager'
-import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/localhost/typings/types/common'
+} from '@harmony/contracts/localhost/typings/ZionSpaceManager'
+import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/localhost/typings/common'
 
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import Goerli_ZionSpaceManagerArtifact from '@harmony/contracts/goerli/abis/ZionSpaceManager.json'
-import { ZionSpaceManager as Goerli_ZionSpaceManager } from '@harmony/contracts/goerli/typings/types/ZionSpaceManager'
+import { ZionSpaceManager as Goerli_ZionSpaceManager } from '@harmony/contracts/goerli/typings/ZionSpaceManager'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

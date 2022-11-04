@@ -2,22 +2,14 @@
 solc = "0.8.17"
 libs = ["node_modules", "lib"]
 verbosity = 3
-fs_permissions = [{ access = "write", path = "./packages"}]
+fs_permissions = [{ access = "write", path = "./packages"}, { access = "write", path = "./servers/dendrite"}]
 extra_output_files = ["metadata", "abi"]
 gas_reports = ["*"]
 optimizer = true
 optimizer_runs = 1000000
 
-[profile.governance]
-src = 'contracts/zion-governance/src'
-test = 'contracts/zion-governance/test'
-out = 'contracts/zion-governance/out'
-broadcast = "contracts/zion-governance/broadcast"
-gas_reports = ["CouncilNFT", "ZionSpaceManager"]
-ffi = true
-
 [rpc_endpoints]
-goerli = "${GOERLI_RPC_URL}"
+goerli = "https://eth-goerli.g.alchemy.com/v2/Sc1gVeBmMXEGDgS6_mMP-gbewns4h1EN"
 
 [etherscan]
 goerli = { key = "${ETHERSCAN_API_KEY}" }

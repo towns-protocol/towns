@@ -19,4 +19,5 @@ library Errors {
   error ChannelDoesNotExist();
   error PermissionAlreadyExists();
   error NotAllowed();
+  error RoleDoesNotExist();
 }

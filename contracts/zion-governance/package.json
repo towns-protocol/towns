@@ -6,27 +6,13 @@
     "main": "index.js",
     "types": "index.d.ts",
     "scripts": {
-        "build": "yarn install:dependencies && yarn build:forge && yarn build:types",
-        "build:forge": "FOUNDRY_PROFILE=governance forge build",
-        "build:types": "typechain --target=ethers-v5 'out/**/?(CouncilNFT|CouncilStaking|ZionSpaceManager).json' --out-dir types && tsc --build",
-        "clean": "yarn clean:forge & yarn clean:types",
-        "clean:forge": "FOUNDRY_PROFILE=governance forge clean",
-        "clean:types": "rm -rf dist && rm -rf types",
-        "format": "prettier --write src/**/*.sol",
-        "install:dependencies": "../../scripts/install-deps.sh",
-        "lint": "solhint src/**/*.sol",
-        "lint:fix": "solhint --fix src/**/*.sol",
-        "publish": "yarn publish:local",
-        "publish:goerli": "yarn publish:goerli:typings && yarn publish:goerli:abis && yarn publish:goerli:gobindings",
-        "publish:goerli:abis": "mkdir -p ../../packages/contracts/goerli/abis && cp -a out/(CouncilNFT|CouncilStaking|ZionSpaceManager).sol/* ../../packages/contracts/goerli/abis/",
-        "publish:goerli:gobindings": "mkdir -p ../../servers/dendrite/zion_goerli && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi out/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion_goerli  --type zion_space_manager_goerli --out ../../servers/dendrite/zion/contracts/goerli/zion_goerli/zion_space_manager_goerli.go",
-        "publish:goerli:typings": "cp -a ./dist/ ../../packages/contracts/goerli/typings",
-        "publish:local": "yarn publish:local:typings && yarn publish:local:abis && yarn publish:local:gobindings",
-        "publish:local:abis": "mkdir -p ../../packages/contracts/localhost/abis && cp -a out/(CouncilNFT|CouncilStaking|ZionSpaceManager).sol/* ../../packages/contracts/localhost/abis/",
-        "publish:local:gobindings": "mkdir -p ../../servers/dendrite/zion_localhost && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25  --abi out/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg zion_localhost  --type zion_space_manager_localhost --out ../../servers/dendrite/zion/contracts/localhost/zion_localhost/zion_space_manager_localhost.go",
-        "publish:local:typings": "cp -a ./dist/ ../../packages/contracts/localhost/typings",
-        "start": "yarn clean && yarn build",
-        "test:forge": "FOUNDRY_PROFILE=governance forge test"
+        "setup": "make clean && make build",
+        "sync": "make update",
+        "test": "make test",
+        "snapshot": "make snapshot",
+        "format": "make format",
+        "lint": "make lint",
+        "all": "make all"
     },
     "dependencies": {
         "@opengsn/contracts": "^2.2.6"
@@ -37,21 +23,16 @@
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",
         "@opengsn/provider": "^2.2.6",
-        "@typechain/ethers-v5": "^10.1.0",
         "@types/chai": "^4.3.3",
         "@types/node": "^18.11.3",
         "eslint": "^8.25.0",
         "eslint-plugin-node": "^11.1.0",
         "ethers": "^5.7.2",
-        "keccak256": "^1.0.6",
-        "merkletreejs": "^0.2.32",
         "prettier": "^2.7.1",
         "prettier-plugin-solidity": "^1.0.0-beta.24",
         "solhint": "^3.3.7",
         "solhint-plugin-prettier": "^0.0.5",
         "solidity-coverage": "^0.8.2",
-        "solidity-json-writer": "^1.1.0",
-        "typechain": "^8.1.0",
-        "typescript": "^4.8.4"
+        "solidity-json-writer": "^1.1.0"
     }
 }

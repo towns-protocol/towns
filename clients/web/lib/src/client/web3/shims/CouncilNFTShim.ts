@@ -2,12 +2,12 @@
 
 import Goerli_CouncilNFTArtifact from '@harmony/contracts/goerli/abis/CouncilNFT.json'
 import Goerli_CouncilAddresses from '@harmony/contracts/goerli/addresses/council.json'
-import { CouncilNFT as Goerli_CouncilNFT } from '@harmony/contracts/goerli/typings/types/CouncilNFT'
+import { CouncilNFT as Goerli_CouncilNFT } from '@harmony/contracts/goerli/typings/CouncilNFT'
 
 import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
 import Localhost_CouncilNFTArtifact from '@harmony/contracts/localhost/abis/CouncilNFT.json'
-import { CouncilNFT as Localhost_CouncilNFT } from '@harmony/contracts/localhost/typings/types/CouncilNFT'
-import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/localhost/typings/types/common'
+import { CouncilNFT as Localhost_CouncilNFT } from '@harmony/contracts/localhost/typings/CouncilNFT'
+import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/localhost/typings/common'
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

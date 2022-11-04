@@ -57,6 +57,11 @@
   },
   {
     "inputs": [],
+    "name": "RoleDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "SpaceDoesNotExist",
     "type": "error"
   },
@@ -170,6 +175,28 @@
         "internalType": "struct DataTypes.CreateChannelData",
         "name": "data",
         "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "entitlementModule",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct DataTypes.CreateRoleEntitlementData[]",
+        "name": "roles",
+        "type": "tuple[]"
       }
     ],
     "name": "createChannel",

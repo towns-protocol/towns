@@ -1,5 +1,25 @@
 -include .env
 
+.PHONY: all test clean deploy-anvil
+
+all: clean install update build
+
+clean  :; forge clean
+
+install:; forge install
+
+update:; forge update
+
+build:; forge build
+
+test :; forge test
+
+snapshot :; forge snapshot
+
+format :; yarn prettier --write src/**/*.sol
+
+lint :; yarn solhint src/**/*.sol
+
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
 # Contract deployment scripts
