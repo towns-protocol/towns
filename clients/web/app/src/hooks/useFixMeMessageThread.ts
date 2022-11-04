@@ -52,7 +52,7 @@ type ThreadResult = {
 }
 
 export const useScanChannelThreads = (channels: Channel[], userId: string | null) => {
-    const { threadsStats } = useTimelineStore()
+    const threadsStats = useTimelineStore((state) => state.threadsStats)
 
     if (userId === null) {
         return { threads: [] }
