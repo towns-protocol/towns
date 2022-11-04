@@ -9,6 +9,7 @@ import { MessageTimelineItem } from './TimelineItem'
 
 vi.mock('use-zion-client', async () => {
     return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...((await vi.importActual('use-zion-client')) as any),
         useSpaceMembers: () => ({ members: [] }),
         useSpaceData: () => ({ channelGroups: [] }),
