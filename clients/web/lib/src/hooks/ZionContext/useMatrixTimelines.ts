@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Membership } from '../../types/matrix-types'
 import {
     ClientEvent,
@@ -16,10 +16,10 @@ import {
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
+import { useTimelineStore } from '../../store/use-timeline-store'
 
-export function useMatrixTimelines(client?: MatrixClient): Record<string, TimelineEvent[]> {
-    const [timelines, setTimelines] = useState<Record<string, TimelineEvent[]>>({})
-
+export function useMatrixTimelines(client?: MatrixClient) {
+    const { setTimelines } = useTimelineStore()
     useEffect(() => {
         // check preconditions
         if (!client) {
@@ -84,7 +84,7 @@ export function useMatrixTimelines(client?: MatrixClient): Record<string, Timeli
                     acc[room.roomId] = toTimelineEvents(room)
                     return acc
                 }, {} as Record<string, TimelineEvent[]>)
-            setTimelines(timelines)
+            setTimelines(() => timelines)
         }
 
         initTimelines()
@@ -171,11 +171,9 @@ export function useMatrixTimelines(client?: MatrixClient): Record<string, Timeli
             client.off(RoomEvent.Redaction, onRoomRedaction)
             client.off(MatrixEventEvent.Decrypted, onEventDecrypted)
             client.off(MatrixEventEvent.Replaced, onEventReplaced)
-            setTimelines({})
+            setTimelines(() => ({}))
         }
-    }, [client])
-
-    return timelines
+    }, [client, setTimelines])
 }
 
 export function toEvent(event: MatrixEvent): TimelineEvent {

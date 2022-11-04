@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { RoomIdentifier } from '../types/matrix-types'
-import { useZionContext } from '../components/ZionContextProvider'
 import { TimelineEvent } from '../types/timeline-types'
+import { useTimelineStore } from '../store/use-timeline-store'
 
 export function useTimeline(roomId?: RoomIdentifier): TimelineEvent[] {
-    const { timelines } = useZionContext()
+    const { timelines } = useTimelineStore()
     const timeline = useMemo(
         () => (roomId ? timelines[roomId.matrixRoomId] ?? [] : []),
         [roomId, timelines],

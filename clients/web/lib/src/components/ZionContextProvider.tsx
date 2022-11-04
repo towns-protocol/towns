@@ -21,7 +21,6 @@ import {
     SpaceHierarchies,
     SpaceItem,
 } from '../types/matrix-types'
-import { TimelineEvent } from '../types/timeline-types'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 
@@ -36,7 +35,6 @@ export interface IZionContext {
     spaceMentionCounts: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
-    timelines: Record<string, TimelineEvent[]>
     onboardingState: IOnboardingState
     homeServerUrl?: string
     disableEncryption?: boolean // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
@@ -122,7 +120,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     )
 
     const rooms = useMatrixRooms(client?.matrixClient)
-    const timelines = useMatrixTimelines(client?.matrixClient)
+    useMatrixTimelines(client?.matrixClient)
     const onboardingState = useOnboardingState(client)
     const syncError = useSyncErrorHandler(client)
 
@@ -141,7 +139,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceMentionCounts,
                 spaces,
                 spaceHierarchies,
-                timelines,
                 onboardingState,
                 homeServerUrl,
                 disableEncryption,
