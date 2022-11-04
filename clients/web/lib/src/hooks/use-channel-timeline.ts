@@ -1,7 +1,8 @@
 import { useChannelContext } from '../components/ChannelContextProvider'
 import { TimelineEvent } from '../types/timeline-types'
+import { useTimeline } from './use-timeline'
 
 export function useChannelTimeline(): TimelineEvent[] {
-    const { channelTimeline } = useChannelContext()
-    return channelTimeline
+    const { channelId } = useChannelContext()
+    return useTimeline(channelId)
 }

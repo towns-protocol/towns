@@ -1,13 +1,10 @@
 import React, { createContext, useContext, useMemo } from 'react'
 import { makeRoomIdentifierFromSlug, RoomIdentifier } from '../types/matrix-types'
 import { useSpaceId } from '../hooks/use-space-id'
-import { useTimeline } from '../hooks/use-timeline'
-import { TimelineEvent } from 'types/timeline-types'
 
 export interface IChannelContext {
     channelId: RoomIdentifier
     spaceId: RoomIdentifier
-    channelTimeline: TimelineEvent[]
 }
 
 export const ChannelContext = createContext<IChannelContext | undefined>(undefined)
@@ -42,15 +39,12 @@ export function ChannelContextProvider(props: Props): JSX.Element {
         return props.channelId
     }, [props.channelId])
 
-    const channelTimeline = useTimeline(channelId)
-
     const channelContext: IChannelContext = useMemo(
         () => ({
             channelId: channelId,
             spaceId: spaceId,
-            channelTimeline: channelTimeline,
         }),
-        [channelId, spaceId, channelTimeline],
+        [channelId, spaceId],
     )
     return (
         <ChannelContext.Provider value={channelContext}>{props.children}</ChannelContext.Provider>
