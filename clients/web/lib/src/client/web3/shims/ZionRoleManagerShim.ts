@@ -9,7 +9,7 @@ import type { ZionRoleManager as Localhost_ZionRoleManager } from '@harmony/cont
 import Localhost_ZionRoleManagerArtifact from '@harmony/contracts/localhost/abis/ZionRoleManager.json'
 import { ethers } from 'ethers'
 
-export class ZionSpaceManagerShim extends BaseContractShim<
+export class ZionRoleManagerShim extends BaseContractShim<
     Localhost_ZionRoleManager,
     Goerli_ZionRoleManager
 > {
