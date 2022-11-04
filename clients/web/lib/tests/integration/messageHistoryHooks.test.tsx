@@ -17,7 +17,7 @@ import { act } from 'react-dom/test-utils'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe.skip('messageHistoryHooks', () => {
+describe('messageHistoryHooks', () => {
     jest.setTimeout(60000)
     test('user can join a room, see messages, and send messages', async () => {
         // create client
