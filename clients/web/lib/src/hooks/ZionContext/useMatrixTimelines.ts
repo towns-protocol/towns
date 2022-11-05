@@ -24,106 +24,80 @@ import { staticAssertNever } from '../../utils/zion-utils'
 import { useTimelineStore } from '../../store/use-timeline-store'
 
 export function useMatrixTimelines(client?: MatrixClient) {
-    const { setTimelines, setThreadStats } = useTimelineStore()
+    const setState = useTimelineStore((s) => s.setState)
     useEffect(() => {
         // check preconditions
         if (!client) {
             return
         }
-        // thread stats helpers
-        const removeThreadStats = (roomId: string, timelineEvent: TimelineEvent) => {
-            const parentId = timelineEvent.threadParentId
-            if (parentId) {
-                setThreadStats((threadStats) => {
-                    if (!threadStats[roomId]?.[parentId]) {
-                        return threadStats
-                    }
-                    const updated = toRemovedThreadStats(
-                        timelineEvent,
-                        parentId,
-                        threadStats[roomId] ?? {},
-                    )
-                    return { ...threadStats, [roomId]: updated }
-                })
-            }
-        }
-        const addThreadStats = (roomId: string, timelineEvent: TimelineEvent) => {
-            const parentId = timelineEvent.threadParentId
-            if (parentId) {
-                setThreadStats((threadStats) => ({
-                    ...threadStats,
-                    [roomId]: {
-                        ...threadStats[roomId],
-                        [parentId]: toUpdatedThreadStats(
-                            timelineEvent,
-                            parentId,
-                            threadStats[roomId]?.[parentId],
-                        ),
-                    },
-                }))
-            }
-        }
 
         // timeline helpers
-        const removeEvent = (roomId: string, eventId: string, timelineEvent?: TimelineEvent) => {
-            setTimelines((timelines) => ({
-                ...timelines,
-                [roomId]: timelines[roomId]?.filter((event) => event.eventId !== eventId) ?? [],
-            }))
-            if (timelineEvent) {
-                removeThreadStats(roomId, timelineEvent)
-            }
+        const removeEvent = (roomId: string, eventId: string) => {
+            setState((state) => {
+                const eventIndex = state.timelines[roomId]?.findIndex((e) => e.eventId == eventId)
+                if ((eventIndex ?? -1) < 0) {
+                    return state
+                }
+                const event = state.timelines[roomId][eventIndex]
+                return {
+                    timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
+                    threadsStats: removeThreadStat(roomId, event, state.threadsStats),
+                }
+            })
         }
         const appendEvent = (roomId: string, timelineEvent: TimelineEvent) => {
-            setTimelines((timelines) => ({
-                ...timelines,
-                [roomId]: [...(timelines[roomId] ?? []), timelineEvent],
+            setState((state) => ({
+                timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
+                threadsStats: addThreadStats(roomId, timelineEvent, state.threadsStats),
             }))
-            addThreadStats(roomId, timelineEvent)
         }
         const prependEvent = (roomId: string, timelineEvent: TimelineEvent) => {
-            setTimelines((timelines) => ({
-                ...timelines,
-                [roomId]: [timelineEvent, ...(timelines[roomId] ?? [])],
+            setState((state) => ({
+                timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
+                threadsStats: addThreadStats(roomId, timelineEvent, state.threadsStats),
             }))
-            addThreadStats(roomId, timelineEvent)
         }
+
         const replaceEvent = (
             roomId: string,
             replacingId: string,
             timelineEvent: TimelineEvent,
         ) => {
-            setTimelines((timelines) => {
-                const timeline = timelines[roomId] ?? []
+            setState((state) => {
+                const timeline = state.timelines[roomId] ?? []
                 const eventIndex = timeline.findIndex(
                     (value: TimelineEvent) => value.eventId === replacingId,
                 )
                 if (eventIndex === -1) {
-                    return timelines
+                    return state
                 }
-                const event = timeline[eventIndex]
-                const newEvent = toReplacedMessageEvent(event, timelineEvent)
-                removeThreadStats(roomId, event)
-                addThreadStats(roomId, newEvent)
+                const oldEvent = timeline[eventIndex]
+                const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
+
                 return {
-                    ...timelines,
-                    [roomId]: [
-                        ...timeline.slice(0, eventIndex),
+                    timelines: replaceTimelineEvent(
+                        roomId,
+                        timelineEvent,
+                        eventIndex,
+                        timeline,
+                        state.timelines,
+                    ),
+                    threadsStats: addThreadStats(
+                        roomId,
                         newEvent,
-                        ...timeline.slice(eventIndex + 1),
-                    ],
+                        removeThreadStat(roomId, oldEvent, state.threadsStats),
+                    ),
                 }
             })
         }
         const initRoomTimeline = (room: MatrixRoom) => {
             const timelineEvents = toTimelineEvents(room)
-            setTimelines((timelines) => ({
-                ...timelines,
-                [room.roomId]: timelineEvents,
-            }))
-            setThreadStats((threadStats) => ({
-                ...threadStats,
-                [room.roomId]: toThreadStats(timelineEvents),
+            setState((state) => ({
+                timelines: { ...state.timelines, [room.roomId]: timelineEvents },
+                threadsStats: {
+                    ...state.threadsStats,
+                    [room.roomId]: toThreadStats(timelineEvents),
+                },
             }))
         }
 
@@ -135,16 +109,17 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     acc[room.roomId] = toTimelineEvents(room)
                     return acc
                 }, {} as Record<string, TimelineEvent[]>)
-            setTimelines(() => timelines)
-
-            const threadStats = Object.entries(timelines).reduce(
+            const threadsStats = Object.entries(timelines).reduce(
                 (acc: Record<string, Record<string, ThreadStats>>, kv) => {
                     acc[kv[0]] = toThreadStats(kv[1])
                     return acc
                 },
                 {} as Record<string, Record<string, ThreadStats>>,
             )
-            setThreadStats(() => threadStats)
+            setState(() => ({
+                timelines,
+                threadsStats,
+            }))
         }
 
         initStateData()
@@ -160,7 +135,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             const roomId = eventRoom.roomId
             const timelineEvent = toEvent(event)
             if (removed) {
-                removeEvent(roomId, timelineEvent.eventId, timelineEvent)
+                removeEvent(roomId, timelineEvent.eventId)
             } else if (event.isRelation(RelationType.Replace)) {
                 const replacingId = event.getWireContent()['m.relates_to']?.event_id
                 if (replacingId) {
@@ -192,12 +167,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 console.error('redaction event has no redacts field')
                 return
             }
-            const ogEvent = client.getRoom(eventRoom.roomId)?.findEventById(event.event.redacts)
-            removeEvent(
-                eventRoom.roomId,
-                event.event.redacts,
-                ogEvent ? toEvent(ogEvent) : undefined,
-            )
+            removeEvent(eventRoom.roomId, event.event.redacts)
         }
 
         const onEventReplaced = (event: MatrixEvent) => {
@@ -236,10 +206,12 @@ export function useMatrixTimelines(client?: MatrixClient) {
             client.off(RoomEvent.Redaction, onRoomRedaction)
             client.off(MatrixEventEvent.Decrypted, onEventDecrypted)
             client.off(MatrixEventEvent.Replaced, onEventReplaced)
-            setTimelines(() => ({}))
-            setThreadStats(() => ({}))
+            setState(() => ({
+                timelines: {},
+                threadsStats: {},
+            }))
         }
-    }, [client, setThreadStats, setTimelines])
+    }, [client, setState])
 }
 
 export function toEvent(event: MatrixEvent): TimelineEvent {
@@ -569,25 +541,105 @@ function toUpdatedThreadStats(event: TimelineEvent, parentId: string, entry?: Th
     }
     return updated
 }
-function toRemovedThreadStats(
-    event: TimelineEvent,
-    parentId: string,
-    roomStats: Record<string, ThreadStats>,
+
+function removeThreadStat(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    threadsStats: Record<string, Record<string, ThreadStats>>,
 ) {
-    const updated = { ...roomStats }
+    const parentId = timelineEvent.threadParentId
+    if (!parentId) {
+        return threadsStats
+    }
+
+    if (!threadsStats[roomId]?.[parentId]) {
+        return threadsStats
+    }
+    const updated = { ...threadsStats[roomId] }
     const entry = updated[parentId]
     if (entry) {
         entry.replyCount--
         if (entry.replyCount === 0) {
             delete updated[parentId]
         } else {
-            const senderId = getMessageSenderId(event)
+            const senderId = getMessageSenderId(timelineEvent)
             if (senderId) {
                 entry.userIds.delete(senderId)
             }
         }
     }
-    return updated
+    return { ...threadsStats, [roomId]: updated }
+}
+
+function addThreadStats(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    threadsStats: Record<string, Record<string, ThreadStats>>,
+) {
+    const parentId = timelineEvent.threadParentId
+    if (!parentId) {
+        return threadsStats
+    }
+    return {
+        ...threadsStats,
+        [roomId]: {
+            ...threadsStats[roomId],
+            [parentId]: toUpdatedThreadStats(
+                timelineEvent,
+                parentId,
+                threadsStats[roomId]?.[parentId],
+            ),
+        },
+    }
+}
+
+function removeTimelineEvent(
+    roomId: string,
+    eventIndex: number,
+    timelines: Record<string, TimelineEvent[]>,
+): Record<string, TimelineEvent[]> {
+    return {
+        ...timelines,
+        [roomId]: [
+            ...timelines[roomId].slice(0, eventIndex),
+            ...timelines[roomId].slice(eventIndex + 1),
+        ],
+    }
+}
+
+function appendTimelineEvent(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    timelines: Record<string, TimelineEvent[]>,
+) {
+    return {
+        ...timelines,
+        [roomId]: [...(timelines[roomId] ?? []), timelineEvent],
+    }
+}
+
+function prependTimelineEvent(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    timelines: Record<string, TimelineEvent[]>,
+) {
+    return {
+        ...timelines,
+        [roomId]: [timelineEvent, ...(timelines[roomId] ?? [])],
+    }
+}
+
+function replaceTimelineEvent(
+    roomId: string,
+    newEvent: TimelineEvent,
+    eventIndex: number,
+    timeline: TimelineEvent[],
+    timelines: Record<string, TimelineEvent[]>,
+) {
+    return {
+        ...timelines,
+        [roomId]: [...timeline.slice(0, eventIndex), newEvent, ...timeline.slice(eventIndex + 1)],
+    }
 }
 
 function getMessageSenderId(event: TimelineEvent): string | undefined {

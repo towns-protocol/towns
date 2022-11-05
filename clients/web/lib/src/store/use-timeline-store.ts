@@ -7,18 +7,17 @@ type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
 
 export type TimelineStoreStates = {
     timelines: TimelinesMap
-    setTimelines: (fn: (prevState: TimelinesMap) => TimelinesMap) => void
     threadsStats: ThreadStatsMap
-    setThreadStats: (fn: (prevState: ThreadStatsMap) => ThreadStatsMap) => void
 }
 
-export const useTimelineStore = create<TimelineStoreStates>((set) => ({
+export type TimelineStoreInterface = TimelineStoreStates & {
+    setState: (fn: (prev: TimelineStoreStates) => TimelineStoreStates) => void
+}
+
+export const useTimelineStore = create<TimelineStoreInterface>((set) => ({
     timelines: {},
-    setTimelines: (fn: (prevState: TimelinesMap) => TimelinesMap) => {
-        set((state) => ({ timelines: fn(state.timelines) }))
-    },
     threadsStats: {},
-    setThreadStats: (fn: (prevState: ThreadStatsMap) => ThreadStatsMap) => {
-        set((state) => ({ threadsStats: fn(state.threadsStats) }))
+    setState: (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => {
+        set((state) => fn(state))
     },
 }))
