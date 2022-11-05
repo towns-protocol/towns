@@ -2,9 +2,11 @@ import { RoomIdentifier } from '../types/matrix-types'
 import { ThreadStats } from '../types/timeline-types'
 import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
 
+const EMPTY_THREAD_STATS: Record<string, ThreadStats> = {}
+
 export function useTimelineThreadStats(roomId?: RoomIdentifier): Record<string, ThreadStats> {
     const threadStats = useTimelineStore((state: TimelineStoreStates) =>
-        roomId ? state.threadsStats[roomId.matrixRoomId] ?? {} : {},
+        roomId ? state.threadsStats[roomId.matrixRoomId] : undefined,
     )
-    return threadStats
+    return threadStats ?? EMPTY_THREAD_STATS
 }
