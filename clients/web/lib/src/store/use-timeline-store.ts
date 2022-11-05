@@ -2,8 +2,8 @@ import create from 'zustand'
 
 import { ThreadStats, TimelineEvent } from '../types/timeline-types'
 
-type TimelinesMap = Record<string, TimelineEvent[]>
-type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
+export type TimelinesMap = Record<string, TimelineEvent[]>
+export type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
 
 export type TimelineStoreStates = {
     timelines: TimelinesMap

@@ -21,7 +21,7 @@ import {
     ZTEvent,
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
-import { useTimelineStore } from '../../store/use-timeline-store'
+import { ThreadStatsMap, TimelinesMap, useTimelineStore } from '../../store/use-timeline-store'
 
 export function useMatrixTimelines(client?: MatrixClient) {
     const setState = useTimelineStore((s) => s.setState)
@@ -103,19 +103,14 @@ export function useMatrixTimelines(client?: MatrixClient) {
 
         const initStateData = () => {
             // initial state, for some reason the timeline doesn't filter replacements
-            const timelines = client
-                .getRooms()
-                .reduce((acc: Record<string, TimelineEvent[]>, room: MatrixRoom) => {
-                    acc[room.roomId] = toTimelineEvents(room)
-                    return acc
-                }, {} as Record<string, TimelineEvent[]>)
-            const threadsStats = Object.entries(timelines).reduce(
-                (acc: Record<string, Record<string, ThreadStats>>, kv) => {
-                    acc[kv[0]] = toThreadStats(kv[1])
-                    return acc
-                },
-                {} as Record<string, Record<string, ThreadStats>>,
-            )
+            const timelines = client.getRooms().reduce((acc: TimelinesMap, room: MatrixRoom) => {
+                acc[room.roomId] = toTimelineEvents(room)
+                return acc
+            }, {} as TimelinesMap)
+            const threadsStats = Object.entries(timelines).reduce((acc: ThreadStatsMap, kv) => {
+                acc[kv[0]] = toThreadStats(kv[1])
+                return acc
+            }, {} as ThreadStatsMap)
             setState(() => ({
                 timelines,
                 threadsStats,
@@ -529,7 +524,7 @@ function toThreadStats(timeline: TimelineEvent[]) {
 function addThreadStats(
     roomId: string,
     timelineEvent: TimelineEvent,
-    threadsStats: Record<string, Record<string, ThreadStats>>,
+    threadsStats: ThreadStatsMap,
 ) {
     const parentId = timelineEvent.threadParentId
     if (!parentId) {
@@ -563,7 +558,7 @@ function addThreadStat(event: TimelineEvent, parentId: string, entry?: ThreadSta
 function removeThreadStat(
     roomId: string,
     timelineEvent: TimelineEvent,
-    threadsStats: Record<string, Record<string, ThreadStats>>,
+    threadsStats: ThreadStatsMap,
 ) {
     const parentId = timelineEvent.threadParentId
     if (!parentId) {
@@ -592,8 +587,8 @@ function removeThreadStat(
 function removeTimelineEvent(
     roomId: string,
     eventIndex: number,
-    timelines: Record<string, TimelineEvent[]>,
-): Record<string, TimelineEvent[]> {
+    timelines: TimelinesMap,
+): TimelinesMap {
     return {
         ...timelines,
         [roomId]: [
@@ -606,7 +601,7 @@ function removeTimelineEvent(
 function appendTimelineEvent(
     roomId: string,
     timelineEvent: TimelineEvent,
-    timelines: Record<string, TimelineEvent[]>,
+    timelines: TimelinesMap,
 ) {
     return {
         ...timelines,
@@ -617,7 +612,7 @@ function appendTimelineEvent(
 function prependTimelineEvent(
     roomId: string,
     timelineEvent: TimelineEvent,
-    timelines: Record<string, TimelineEvent[]>,
+    timelines: TimelinesMap,
 ) {
     return {
         ...timelines,
@@ -630,7 +625,7 @@ function replaceTimelineEvent(
     newEvent: TimelineEvent,
     eventIndex: number,
     timeline: TimelineEvent[],
-    timelines: Record<string, TimelineEvent[]>,
+    timelines: TimelinesMap,
 ) {
     return {
         ...timelines,
