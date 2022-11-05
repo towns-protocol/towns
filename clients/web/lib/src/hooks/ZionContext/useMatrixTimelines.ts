@@ -520,13 +520,31 @@ function toThreadStats(timeline: TimelineEvent[]) {
         const content = m?.content?.kind === ZTEvent.RoomMessage ? m?.content : undefined
         const parentId = content?.inReplyTo
         if (parentId) {
-            threads[parentId] = toUpdatedThreadStats(m, parentId, threads[parentId])
+            threads[parentId] = addThreadStat(m, parentId, threads[parentId])
         }
         return threads
     }, {})
 }
 
-function toUpdatedThreadStats(event: TimelineEvent, parentId: string, entry?: ThreadStats) {
+function addThreadStats(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    threadsStats: Record<string, Record<string, ThreadStats>>,
+) {
+    const parentId = timelineEvent.threadParentId
+    if (!parentId) {
+        return threadsStats
+    }
+    return {
+        ...threadsStats,
+        [roomId]: {
+            ...threadsStats[roomId],
+            [parentId]: addThreadStat(timelineEvent, parentId, threadsStats[roomId]?.[parentId]),
+        },
+    }
+}
+
+function addThreadStat(event: TimelineEvent, parentId: string, entry?: ThreadStats) {
     const updated = entry ?? {
         replyCount: 0,
         userIds: new Set(),
@@ -569,28 +587,6 @@ function removeThreadStat(
         }
     }
     return { ...threadsStats, [roomId]: updated }
-}
-
-function addThreadStats(
-    roomId: string,
-    timelineEvent: TimelineEvent,
-    threadsStats: Record<string, Record<string, ThreadStats>>,
-) {
-    const parentId = timelineEvent.threadParentId
-    if (!parentId) {
-        return threadsStats
-    }
-    return {
-        ...threadsStats,
-        [roomId]: {
-            ...threadsStats[roomId],
-            [parentId]: toUpdatedThreadStats(
-                timelineEvent,
-                parentId,
-                threadsStats[roomId]?.[parentId],
-            ),
-        },
-    }
 }
 
 function removeTimelineEvent(
