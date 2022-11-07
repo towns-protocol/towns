@@ -15,13 +15,19 @@ import {
 } from 'matrix-js-sdk'
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import {
+    MessageReactions,
     ThreadStats,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
-import { ThreadStatsMap, TimelinesMap, useTimelineStore } from '../../store/use-timeline-store'
+import {
+    ReactionsMap,
+    ThreadStatsMap,
+    TimelinesMap,
+    useTimelineStore,
+} from '../../store/use-timeline-store'
 
 export function useMatrixTimelines(client?: MatrixClient) {
     const setState = useTimelineStore((s) => s.setState)
@@ -42,6 +48,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 return {
                     timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
                     threadsStats: removeThreadStat(roomId, event, state.threadsStats),
+                    reactions: removeReaction(roomId, event, state.reactions),
                 }
             })
         }
@@ -49,12 +56,14 @@ export function useMatrixTimelines(client?: MatrixClient) {
             setState((state) => ({
                 timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
                 threadsStats: addThreadStats(roomId, timelineEvent, state.threadsStats),
+                reactions: addReactions(roomId, timelineEvent, state.reactions),
             }))
         }
         const prependEvent = (roomId: string, timelineEvent: TimelineEvent) => {
             setState((state) => ({
                 timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
                 threadsStats: addThreadStats(roomId, timelineEvent, state.threadsStats),
+                reactions: addReactions(roomId, timelineEvent, state.reactions),
             }))
         }
 
@@ -87,16 +96,26 @@ export function useMatrixTimelines(client?: MatrixClient) {
                         newEvent,
                         removeThreadStat(roomId, oldEvent, state.threadsStats),
                     ),
+                    reactions: addReactions(
+                        roomId,
+                        newEvent,
+                        removeReaction(roomId, oldEvent, state.reactions),
+                    ),
                 }
             })
         }
         const initRoomTimeline = (room: MatrixRoom) => {
             const timelineEvents = toTimelineEvents(room)
+            const aggregated = toStatsAndReactions(timelineEvents)
             setState((state) => ({
                 timelines: { ...state.timelines, [room.roomId]: timelineEvents },
                 threadsStats: {
                     ...state.threadsStats,
-                    [room.roomId]: toThreadStats(timelineEvents),
+                    [room.roomId]: aggregated.threadStats,
+                },
+                reactions: {
+                    ...state.reactions,
+                    [room.roomId]: aggregated.reactions,
                 },
             }))
         }
@@ -107,13 +126,21 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 acc[room.roomId] = toTimelineEvents(room)
                 return acc
             }, {} as TimelinesMap)
-            const threadsStats = Object.entries(timelines).reduce((acc: ThreadStatsMap, kv) => {
-                acc[kv[0]] = toThreadStats(kv[1])
-                return acc
-            }, {} as ThreadStatsMap)
+
+            const { threadsStats, reactions } = Object.entries(timelines).reduce(
+                (acc, kv) => {
+                    const channelId = kv[0]
+                    const aggregated = toStatsAndReactions(kv[1])
+                    acc.threadsStats[channelId] = aggregated.threadStats
+                    acc.reactions[channelId] = aggregated.reactions
+                    return acc
+                },
+                { threadsStats: {} as ThreadStatsMap, reactions: {} as ReactionsMap },
+            )
             setState(() => ({
                 timelines,
                 threadsStats,
+                reactions,
             }))
         }
 
@@ -204,6 +231,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             setState(() => ({
                 timelines: {},
                 threadsStats: {},
+                reactions: {},
             }))
         }
     }, [client, setState])
@@ -510,15 +538,32 @@ function toTimelineEvents(room: MatrixRoom) {
     ).map(toEvent)
 }
 
-function toThreadStats(timeline: TimelineEvent[]) {
-    return timeline.reduce<Record<string, ThreadStats>>((threads, m) => {
-        const content = m?.content?.kind === ZTEvent.RoomMessage ? m?.content : undefined
-        const parentId = content?.inReplyTo
-        if (parentId) {
-            threads[parentId] = addThreadStat(m, parentId, threads[parentId])
-        }
-        return threads
-    }, {})
+function toStatsAndReactions(timeline: TimelineEvent[]) {
+    return timeline.reduce<{
+        threadStats: Record<string, ThreadStats>
+        reactions: Record<string, MessageReactions>
+    }>(
+        (acc, m) => {
+            if (m.threadParentId) {
+                acc.threadStats[m.threadParentId] = addThreadStat(
+                    m,
+                    m.threadParentId,
+                    acc.threadStats[m.threadParentId],
+                )
+            }
+            if (m.reactionParentId) {
+                acc.reactions[m.reactionParentId] = addReaction(
+                    m,
+                    acc.reactions[m.reactionParentId],
+                )
+            }
+            return acc
+        },
+        {
+            threadStats: {} as Record<string, ThreadStats>,
+            reactions: {} as Record<string, MessageReactions>,
+        },
+    )
 }
 
 function addThreadStats(
@@ -564,7 +609,6 @@ function removeThreadStat(
     if (!parentId) {
         return threadsStats
     }
-
     if (!threadsStats[roomId]?.[parentId]) {
         return threadsStats
     }
@@ -582,6 +626,70 @@ function removeThreadStat(
         }
     }
     return { ...threadsStats, [roomId]: updated }
+}
+
+// todo, this should be addReactions, addReaction takes a single reaction
+
+function addReactions(roomId: string, event: TimelineEvent, reactions: ReactionsMap): ReactionsMap {
+    const parentId = event.reactionParentId
+    if (!parentId) {
+        return reactions
+    }
+    return {
+        ...reactions,
+        [roomId]: {
+            ...reactions[roomId],
+            [parentId]: addReaction(event, reactions[roomId]?.[parentId]),
+        },
+    }
+}
+
+function addReaction(event: TimelineEvent, entry?: MessageReactions): MessageReactions {
+    const content = event.content?.kind === ZTEvent.Reaction ? event.content : undefined
+    if (!content) {
+        return entry ?? {}
+    }
+    const reactionName = content.reaction
+    const senderId = content.sender.id
+    return {
+        ...entry,
+        [reactionName]: {
+            ...entry?.[reactionName],
+            [senderId]: { eventId: event.eventId },
+        },
+    }
+}
+
+function removeReaction(
+    roomId: string,
+    event: TimelineEvent,
+    reactions: ReactionsMap,
+): ReactionsMap {
+    const parentId = event.reactionParentId
+    if (!parentId) {
+        return reactions
+    }
+    if (!reactions[roomId]?.[parentId]) {
+        return reactions
+    }
+    const content = event.content?.kind === ZTEvent.Reaction ? event.content : undefined
+    if (!content) {
+        return reactions
+    }
+    const reactionName = content.reaction
+    const senderId = content.sender.id
+    const updated = { ...reactions[roomId] }
+    const entry = updated[parentId]
+    if (entry) {
+        const reactions = entry[reactionName]
+        if (reactions) {
+            delete reactions[senderId]
+        }
+        if (Object.keys(reactions).length === 0) {
+            delete entry[reactionName]
+        }
+    }
+    return { ...reactions, [roomId]: updated }
 }
 
 function removeTimelineEvent(

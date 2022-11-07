@@ -161,9 +161,12 @@ export interface TimelineEvent {
     reactionParentId?: string
 }
 
-export type ThreadStats = {
+export interface ThreadStats {
     replyCount: number
     userIds: Set<string>
     latestTs: number
     parentId: string
 }
+
+/// MessageReactions: { reactionName: { userId: { eventId: string } } }
+export type MessageReactions = Record<string, Record<string, { eventId: string }>>

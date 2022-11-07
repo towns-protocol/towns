@@ -9,6 +9,7 @@ export { LoginStatus } from './hooks/login'
 export { useChannelData } from './hooks/use-channel-data'
 export { useChannelId } from './hooks/use-channel-id'
 export { useChannelMembers } from './hooks/use-channel-members'
+export { useChannelReactions } from './hooks/use-channel-reactions'
 export { useChannelTimeline } from './hooks/use-channel-timeline'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
 export { useIntegratedSpaceManagement } from './hooks/use-integrated-space-management'
@@ -26,6 +27,7 @@ export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
 export { useSpacesFromContract } from './hooks/use-spaces-from-contract'
+export { useTimelineReactions } from './hooks/use-timeline-reactions'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
 export { toEvent } from './hooks/ZionContext/useMatrixTimelines' // todo this doesn't need to be exposed  https://linear.app/hnt-labs/issue/HNT-44/client-update-usefixmemessagethread-implementation
 export { useUser } from './hooks/use-user'
@@ -64,6 +66,7 @@ export {
 } from './types/matrix-types'
 
 export type {
+    MessageReactions,
     TimelineEvent,
     TimelineEvent_OneOf,
     RoomCanonicalAliasEvent,

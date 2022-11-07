@@ -1,10 +1,10 @@
 import { emojis } from '@emoji-mart/data'
 import { EmojiData } from 'emoji-mart'
 import React, { Suspense, useCallback } from 'react'
-import { useZionContext } from 'use-zion-client'
+import { MessageReactions, useZionContext } from 'use-zion-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, Stack, Text, TooltipRenderer } from '@ui'
-import { MessageReactions, useHandleReaction } from 'hooks/useReactions'
+import { useHandleReaction } from 'hooks/useReactions'
 import { ReactionTootip } from './ReactionTooltip'
 
 type Emojis = { [key: string]: typeof emojis[keyof typeof emojis] }
@@ -64,11 +64,12 @@ const ReactionRow = ({
     onReaction: Props['onReaction']
     parentId?: Props['parentId']
 }) => {
+    console.log('Reactions ROW', reactions)
     const onReact = useCallback(
         (reactionName: string, remove: boolean) => {
             if (onReaction && parentId && userId) {
                 if (remove) {
-                    const eventId = reactions.get(reactionName)?.get(userId)?.eventId
+                    const eventId = reactions[reactionName]?.[userId]?.eventId
                     if (eventId) {
                         onReaction({
                             type: 'redact',
@@ -87,24 +88,26 @@ const ReactionRow = ({
         [onReaction, parentId, reactions, userId],
     )
 
-    const map = reactions.size
-        ? Array.from(reactions.entries()).map(([reaction, users]) => (
+    const entries = Object.entries<Record<string, { eventId: string }>>(reactions)
+    console.log('Eentries', entries)
+    const map = entries.length
+        ? entries.map(([reaction, users]) => (
               <Reaction
                   key={reaction}
                   name={reaction}
                   users={users}
-                  isOwn={!!(userId && users.has(userId))}
+                  isOwn={!!(userId && users[userId])}
                   onReact={onReact}
               />
           ))
         : undefined
-
+    console.log('map', map)
     return <>{map}</>
 }
 
 const Reaction = (props: {
     name: string
-    users?: Map<string, { eventId: string } | undefined>
+    users?: Record<string, { eventId: string }>
     onReact: (reaction: string, remove: boolean) => void
     isOwn?: boolean
 }) => {
@@ -120,7 +123,7 @@ const Reaction = (props: {
         }
     }, [client, isOwn, name, onReact])
 
-    return users && users.size ? (
+    return users && Object.keys(users).length ? (
         <TooltipRenderer
             render={<ReactionTootip userIds={users} reaction={name} />}
             key={name}
@@ -142,7 +145,7 @@ const Reaction = (props: {
                         onClick={onClick}
                     >
                         <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
-                        <Text size="sm">{users.size}</Text>
+                        <Text size="sm">{Object.keys(users).length}</Text>
                     </Stack>
                 </Box>
             )}

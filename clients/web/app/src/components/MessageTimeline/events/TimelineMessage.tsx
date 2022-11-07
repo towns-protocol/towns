@@ -56,7 +56,7 @@ export const TimelineMessage = React.memo((props: Props) => {
             ? messageRepliesMap?.[event.eventId]
             : undefined
 
-    const reactions = messageReactionsMap.get(event.eventId)
+    const reactions = messageReactionsMap[event.eventId]
 
     return !event ? null : (
         <Message

@@ -61,7 +61,7 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                     },
                     events: [],
                     messageRepliesMap: {},
-                    messageReactionsMap: new Map(),
+                    messageReactionsMap: {},
                     timelineActions: {
                         editingMessageId: '',
                         onSelectEditingMessage: () => null,

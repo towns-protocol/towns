@@ -12,6 +12,7 @@ import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { useChannelReactions } from '../../src/hooks/use-channel-reactions'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useChannelId } from '../../src/hooks/use-channel-id'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
@@ -41,6 +42,7 @@ describe('sendReactionHooks', () => {
             const { sendReaction } = useZionClient()
             const channelId = useChannelId()
             const timeline = useChannelTimeline()
+            const reactions = useChannelReactions()
             const messages = timeline.filter(
                 (x) => x.eventType === ZTEvent.RoomMessage || x.eventType === ZTEvent.Reaction,
             )
@@ -48,9 +50,15 @@ describe('sendReactionHooks', () => {
                 void sendReaction(channelId, messages[0].eventId, '👍')
             }, [channelId, messages, sendReaction])
             // todo redact reaction
-            function formatMessage(e: TimelineEvent) {
-                return `${e.fallbackContent} eventId: ${e.eventId}`
-            }
+            const formatMessage = useCallback(
+                (e: TimelineEvent) => {
+                    const reactionTxt = reactions[e.eventId]
+                        ? ` reactions: (${Object.keys(reactions[e.eventId]).join(',')})`
+                        : ''
+                    return `${e.fallbackContent} eventId: ${e.eventId}` + reactionTxt
+                },
+                [reactions],
+            )
             return (
                 <>
                     <RegisterAndJoinSpace spaceId={janesSpaceId} channelId={janesChannelId} />
@@ -100,6 +108,8 @@ describe('sendReactionHooks', () => {
         fireEvent.click(sendReactionButton)
         // expect it to render as well
         await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.Reaction))
+        // expect the reaction to show in the message
+        await waitFor(() => expect(message0).toHaveTextContent('reactions: (👍)'))
         // expect jane to recieve the message
         await waitFor(() =>
             expect(

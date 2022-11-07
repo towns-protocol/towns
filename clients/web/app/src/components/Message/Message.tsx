@@ -1,11 +1,11 @@
 import { format, formatDistance } from 'date-fns'
 import React, { useRef } from 'react'
-import { RoomIdentifier, ThreadStats } from 'use-zion-client'
+import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Reactions } from '@components/Reactions/Reactions'
 import { MessageThreadButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
-import { MessageReactions, useHandleReaction } from 'hooks/useReactions'
+import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
 import { MessageContextMenu } from './MessageContextMenu'
 
