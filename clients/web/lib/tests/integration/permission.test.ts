@@ -200,6 +200,87 @@ describe.skip('create role', () => {
     //describe.only('create role', () => {
     jest.setTimeout(300 * 1000)
 
+    test('Space owner is allowed to disable space access', async () => {
+        /** Arrange */
+
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const roomId = await createSpace(alice, [{ name: Permission.Read }])
+        const spaceNetworkId: string | undefined = roomId?.matrixRoomId
+        /** Act */
+        // set space access off, disabling space in ZionSpaceManager
+        const success: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId as string,
+            true,
+        )
+
+        const spaceInfo: DataTypes.SpaceInfoStruct = await alice.getSpaceInfoBySpaceId(
+            spaceNetworkId as string,
+        )
+
+        /** Assert */
+        expect(success).toEqual(true)
+        expect(spaceInfo.disabled).toEqual(true)
+        expect(spaceInfo.networkId).toEqual(spaceNetworkId)
+    })
+
+    test('Space owner is allowed to re-enable disabled space access', async () => {
+        /** Arrange */
+
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const roomId = await createSpace(alice, [{ name: Permission.Read }])
+        const spaceNetworkId: string | undefined = roomId?.matrixRoomId
+        /** Act */
+        // set space access off, disabling space in ZionSpaceManager
+        const disabled: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId as string,
+            true,
+        )
+        // set space access on, re-enabling space in ZionSpaceManager
+        const enabled: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId as string,
+            false,
+        )
+        const spaceInfo: DataTypes.SpaceInfoStruct = await alice.getSpaceInfoBySpaceId(
+            spaceNetworkId as string,
+        )
+
+        /** Assert */
+        expect(disabled).toEqual(true)
+        expect(enabled).toEqual(true)
+        expect(spaceInfo.disabled).toEqual(false)
+        expect(spaceInfo.networkId).toEqual(spaceNetworkId)
+    })
+
+    test('Space member is not allowed to disable space access', async () => {
+        /** Arrange */
+
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        await alice.fundWallet()
+        await bob.fundWallet()
+
+        const roomId = await createSpace(alice, [{ name: Permission.Read }])
+        const spaceNetworkId: string | undefined = roomId?.matrixRoomId
+        /** Act */
+        // set space access off, disabling space in ZionSpaceManager
+        const success: boolean | undefined = await bob.setSpaceAccess(
+            spaceNetworkId as string,
+            true,
+        )
+
+        const spaceInfo: DataTypes.SpaceInfoStruct = await alice.getSpaceInfoBySpaceId(
+            spaceNetworkId as string,
+        )
+
+        /** Assert */
+        expect(success).toEqual(false)
+        expect(spaceInfo.disabled).toEqual(false)
+        expect(spaceInfo.networkId).toEqual(spaceNetworkId)
+    })
+
     test('Space owner is allowed create new role', async () => {
         /** Arrange */
 

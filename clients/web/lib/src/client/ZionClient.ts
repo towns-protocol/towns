@@ -419,6 +419,13 @@ export class ZionClient {
     }
 
     /************************************************
+     * getSpaceInfoBySpaceId
+     *************************************************/
+    public async getSpaceInfoBySpaceId(spaceNetworkId: string): Promise<DataTypes.SpaceInfoStruct> {
+        return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceNetworkId)
+    }
+
+    /************************************************
      * createRole
      *************************************************/
     public async createRole(
@@ -450,6 +457,34 @@ export class ZionClient {
             }
         }
         return roleIdentifier
+    }
+
+    /************************************************
+     * setSpaceAccess
+     *************************************************/
+    public async setSpaceAccess(spaceNetworkId: string, disabled: boolean): Promise<boolean> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let success = false
+        try {
+            transaction = await this.spaceManager.signed.setSpaceAccess(spaceNetworkId, disabled)
+            receipt = await transaction.wait()
+        } catch (err) {
+            console.log('[setSpaceAccess] error', err)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+            const revertData: BytesLike | undefined = (err as any).error?.error?.data
+            const decodedError = revertData
+                ? this.spaceManager.signed.interface.parseError(revertData)
+                : undefined
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+            console.error(decodedError ? decodedError : (err as any).error?.error?.message)
+        } finally {
+            if (receipt?.status === 1) {
+                console.log('[setSpaceAccess] successful')
+                success = true
+            }
+        }
+        return success
     }
 
     /************************************************
