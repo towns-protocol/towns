@@ -24364,6 +24364,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-error-boundary@npm:^3.1.4":
+  version: 3.1.4
+  resolution: "react-error-boundary@npm:3.1.4"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+  peerDependencies:
+    react: ">=16.13.1"
+  checksum: f36270a5d775a25c8920f854c0d91649ceea417b15b5bc51e270a959b0476647bb79abb4da3be7dd9a4597b029214e8fe43ea914a7f16fa7543c91f784977f1b
+  languageName: node
+  linkType: hard
+
 "react-error-overlay@npm:^6.0.11":
   version: 6.0.11
   resolution: "react-error-overlay@npm:6.0.11"
@@ -25665,6 +25676,7 @@ __metadata:
     react: ^18.2.0
     react-app-rewired: ^2.2.1
     react-dom: ^18.2.0
+    react-error-boundary: ^3.1.4
     react-router-dom: ^6.4.2
     rollup-plugin-node-polyfills: ^0.2.1
     rollup-plugin-polyfill-node: ^0.11.0
