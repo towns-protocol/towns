@@ -4,4 +4,4 @@ yarn clean
 source .env.localhost
 make deployLocalSpaceManager
 make deployLocalCouncilNFT
-cp -r ../../packages/contracts/localhost/addresses/ ../../servers/dendrite/zion/contracts/localhost/addresses/
+cp -r ../../packages/contracts/localhost/addresses/ ../../servers/dendrite/zion/contracts/zion_localhost/
