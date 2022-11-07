@@ -64,7 +64,6 @@ const ReactionRow = ({
     onReaction: Props['onReaction']
     parentId?: Props['parentId']
 }) => {
-    console.log('Reactions ROW', reactions)
     const onReact = useCallback(
         (reactionName: string, remove: boolean) => {
             if (onReaction && parentId && userId) {
@@ -89,7 +88,6 @@ const ReactionRow = ({
     )
 
     const entries = Object.entries<Record<string, { eventId: string }>>(reactions)
-    console.log('Eentries', entries)
     const map = entries.length
         ? entries.map(([reaction, users]) => (
               <Reaction
@@ -101,7 +99,6 @@ const ReactionRow = ({
               />
           ))
         : undefined
-    console.log('map', map)
     return <>{map}</>
 }
 
