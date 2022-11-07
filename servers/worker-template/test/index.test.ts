@@ -1,6 +1,6 @@
 import { worker } from '../src/index'
 
-test('GET /', async () => {
+test.skip('GET /', async () => {
 	const result = await worker.fetch(
 		new Request('http://falcon', { method: 'GET' }),
 		{},

@@ -83,7 +83,6 @@
         "clients/contract-debug-ui",
         "contracts/zion-governance",
         "packages/*",
-        "servers/unfurl",
         "servers/worker-template"
     ]
 }

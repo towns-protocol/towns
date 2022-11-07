@@ -5,6 +5,7 @@ This template is meant to be used with [Wrangler](https://github.com/cloudflare/
 If you are not already familiar with the Wrangler, install and configure it to work with your [Cloudflare account](https://dash.cloudflare.com). Documentation can be found [here](https://developers.cloudflare.com/workers/tooling/wrangler/).
 
 ## Dependencies
+
 - Wrangler 1.17 or newer
 - Node 16.13.0 or newer
 - Cloudlflare API Key
@@ -18,6 +19,10 @@ wrangler generate my-ts-project https://github.com/cloudflare/worker-typescript-
 ```
 
 ### Testing
+
+! TESTS ARE DISABLED FOR THIS TEMPLATE !
+
+Otherwise you can add a `"test": "yarn test"` script in your package.json
 
 This template comes with jest tests utilizing [Miniflare](https://github.com/cloudflare/miniflare) which simply test that the request handler can handle each request method. `yarn test` will run your tests.
 
