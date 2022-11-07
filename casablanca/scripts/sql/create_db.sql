@@ -2,7 +2,7 @@ CREATE DATABASE casablanca;
 \c casablanca;
 
 CREATE TABLE IF NOT EXISTS es_sample (
-  event_id BIGSERIAL,
+  seq_num BIGSERIAL,
   data TEXT NOT NULL
 );
 

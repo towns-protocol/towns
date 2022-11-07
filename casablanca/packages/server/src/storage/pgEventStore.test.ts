@@ -150,7 +150,7 @@ describe('PGEventStore', () => {
         await setTimeout(100)
         log('readNewEventsAsyncWait', 'readResult', readResult)
         expect(readResult).not.toBeNull()
-        expect(readResult![syncPos.streamId].events[0]).toEqual(MORE_EVENTS[0])
+        expect(readResult![syncPos.streamId].events).toEqual(MORE_EVENTS)
     })
 
     test('readNewEventsAsyncMultiWait', async () => {
@@ -173,7 +173,7 @@ describe('PGEventStore', () => {
         await expect(readPromise).resolves.toBe('done')
         log('readNewEventsAsyncMultiWait', 'readResult', readResult)
         expect(readResult).not.toBeNull()
-        expect(readResult![s2.streamId].events[0]).toEqual(MORE_EVENTS[0])
+        expect(readResult![s2.streamId].events).toEqual(MORE_EVENTS)
     })
 
     test('readNewEventsAsyncWaitTimeout', async () => {
