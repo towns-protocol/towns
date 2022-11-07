@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BigNumberish, ethers } from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 
 export interface ZionOpts {
     matrixServerUrl: string
@@ -23,9 +23,14 @@ export interface ZionOnboardingOpts {
 }
 
 export interface SpaceIdentifier {
-    name: string
-    id: BigNumberish
     key: string
+    spaceId: BigNumber
+    networkId: string
+    createdAt: BigNumber
+    name: string
+    creator: string
+    owner: string
+    disabled: boolean
 }
 
 export interface Space {

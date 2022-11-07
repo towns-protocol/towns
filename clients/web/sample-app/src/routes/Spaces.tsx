@@ -1,12 +1,20 @@
 import { ArrowRight } from '@mui/icons-material'
-import { Box, Divider, Link, Theme } from '@mui/material'
+import { Box, Button, Divider, Link, Theme, Typography } from '@mui/material'
 import React, { useCallback } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router-dom'
-import { useSpaceData } from 'use-zion-client'
+import {
+    RoomIdentifier,
+    useSpaceContext,
+    useSpaceData,
+    useSpaceFromContract,
+    useZionClient,
+} from 'use-zion-client'
 
 export const Spaces = () => {
     const { channelSlug } = useParams()
+    const { joinRoom } = useZionClient()
     const navigate = useNavigate()
+    const { spaceId } = useSpaceContext()
     const space = useSpaceData()
 
     const onClickSpace = useCallback(() => {
@@ -15,6 +23,14 @@ export const Spaces = () => {
         }
         navigate(`/spaces/${space.id.slug}`)
     }, [navigate, space])
+
+    const onClickJoinSpace = useCallback(async () => {
+        if (spaceId) {
+            await joinRoom(spaceId)
+        } else {
+            console.error('No spaceId')
+        }
+    }, [joinRoom, spaceId])
 
     // console.log("SPACE CONTENT", space?.id.matrixRoomId, channelSlug);
     if (space && channelSlug) {
@@ -46,7 +62,53 @@ export const Spaces = () => {
                 <Outlet />
             </>
         )
+    } else if (spaceId) {
+        return (
+            <>
+                <h1>Unknown space Id</h1>
+                <h3>id: {spaceId.matrixRoomId}</h3>
+                <Divider />
+                <MissingSpaceInfo spaceId={spaceId} onJoinRoom={onClickJoinSpace} />
+            </>
+        )
     } else {
-        return <>Space not found!</>
+        return <>No Space id!</>
     }
+}
+
+const MissingSpaceInfo = (props: { spaceId: RoomIdentifier; onJoinRoom: () => void }) => {
+    const spaceOnChainInfo = useSpaceFromContract(props.spaceId)
+    return spaceOnChainInfo ? (
+        <>
+            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+                onchain spaceName: {spaceOnChainInfo.name}
+            </Typography>
+            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+                onchain space owner: {spaceOnChainInfo.owner}
+            </Typography>
+            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+                onchain space creator: {spaceOnChainInfo.creator}
+            </Typography>
+            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+                <>onchain space createdAt: {spaceOnChainInfo.createdAt.toString()}</>
+            </Typography>
+            <Button variant="contained" onClick={props.onJoinRoom}>
+                Join Room
+            </Button>
+        </>
+    ) : (
+        <>
+            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+                We don&apos;t have any information for this room, would you like to attempt to join?
+            </Typography>
+            <Button variant="contained" onClick={props.onJoinRoom}>
+                Join Room
+            </Button>
+        </>
+    )
+}
+
+const messageStyle = {
+    padding: (theme: Theme) => theme.spacing(1),
+    gap: (theme: Theme) => theme.spacing(1),
 }

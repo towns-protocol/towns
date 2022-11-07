@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
 import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
+import { RoomIdentifier } from 'types/matrix-types'
 
-export const useSpacesFromContract = (): SpaceIdentifier[] => {
+export function useSpacesFromContract(): SpaceIdentifier[] {
     const { spaceManager } = useZionClient()
     const [spaceIdentifiers, setSpaceIdentifiers] = useState<SpaceIdentifier[]>([])
     const onNewSpace = useZionClientEvent(ZionClientEvent.NewSpace)
@@ -20,9 +21,14 @@ export const useSpacesFromContract = (): SpaceIdentifier[] => {
                 setSpaceIdentifiers(
                     spaces.map((x: DataTypes.SpaceInfoStructOutput) => {
                         return {
-                            id: x.spaceId,
                             key: x.spaceId.toString(),
+                            spaceId: x.spaceId,
+                            createdAt: x.createdAt,
                             name: x.name,
+                            networkId: x.networkId,
+                            creator: x.creator,
+                            owner: x.owner,
+                            disabled: x.disabled,
                         }
                     }),
                 )
@@ -31,4 +37,9 @@ export const useSpacesFromContract = (): SpaceIdentifier[] => {
     }, [spaceManager, onNewSpace])
 
     return spaceIdentifiers
+}
+
+export function useSpaceFromContract(spaceId: RoomIdentifier): SpaceIdentifier | undefined {
+    const spaces = useSpacesFromContract()
+    return spaces.find((x) => x.networkId === spaceId.matrixRoomId)
 }

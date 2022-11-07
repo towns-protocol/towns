@@ -131,6 +131,6 @@ export const SpacesIndex = () => {
             />
         </>
     ) : (
-        <h1> Space not found</h1>
+        <h1>Space not found</h1>
     )
 }

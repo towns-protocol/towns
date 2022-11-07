@@ -148,7 +148,7 @@ const NoMessages = () => (
 const MissingMembershipInfo = (props: { onJoinRoom: () => void }) => (
     <>
         <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-            We don&apost have membership information for this room
+            We don&apos;t have membership information for this room
         </Typography>
         <Button variant="contained" onClick={props.onJoinRoom}>
             Join Room
