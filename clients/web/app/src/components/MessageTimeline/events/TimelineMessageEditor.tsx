@@ -3,7 +3,7 @@ import { RoomIdentifier } from 'use-zion-client'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Stack } from '@ui'
 import { useRedactChannelEvent } from 'hooks/useEditMessage'
-import { TimelineMessageContext } from '../MessageTimeline'
+import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 
 export const TimelineMessageEditor = (props: {
     eventId: string
@@ -11,23 +11,20 @@ export const TimelineMessageEditor = (props: {
     initialValue: string
 }) => {
     const { initialValue, channelId, eventId } = props
-    const { onCancelEditingMessage } = useContext(TimelineMessageContext) ?? {}
+    const { timelineActions } = useContext(MessageTimelineContext) ?? {}
     const { redactChannelEvent } = useRedactChannelEvent(channelId)
 
     const onSend = useCallback(
         (value: string) => {
-            redactChannelEvent({
-                parentId: eventId,
-                value,
-            })
-            onCancelEditingMessage?.()
+            redactChannelEvent({ parentId: eventId, value })
+            timelineActions?.onCancelEditingMessage?.()
         },
-        [onCancelEditingMessage, eventId, redactChannelEvent],
+        [redactChannelEvent, eventId, timelineActions],
     )
 
     const onCancel = useCallback(() => {
-        onCancelEditingMessage?.()
-    }, [onCancelEditingMessage])
+        timelineActions?.onCancelEditingMessage?.()
+    }, [timelineActions])
 
     return (
         <Stack gap>

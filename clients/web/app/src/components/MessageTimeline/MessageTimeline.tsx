@@ -1,16 +1,12 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, { useCallback, useContext, useMemo } from 'react'
 import { useZionContext } from 'use-zion-client'
 import { Box, Button, Stack } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { DateDivider } from './events/DateDivider'
 import { useGroupEvents } from './hooks/useGroupEvents'
-import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
+
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { MessageTimelineItem } from './events/TimelineItem'
-
-export const TimelineMessageContext = createContext<null | ReturnType<
-    typeof useTimelineMessageEditing
->>(null)
 
 export const MessageTimeline = () => {
     const { unreadCounts } = useZionContext()

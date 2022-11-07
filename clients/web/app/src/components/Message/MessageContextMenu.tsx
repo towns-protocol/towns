@@ -3,10 +3,10 @@ import React, { useCallback, useContext } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { motion } from 'framer-motion'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
-import { TimelineMessageContext } from '@components/MessageTimeline'
 import { IconButton, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { vars } from 'ui/styles/vars.css'
+import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 
 type Props = {
     eventId: string
@@ -27,7 +27,7 @@ export const MessageContextMenu = (props: Props) => {
     const { eventId, channelId, spaceId } = props
 
     const { sendReaction } = useZionClient()
-    const timelineContext = useContext(TimelineMessageContext)
+    const timelineContext = useContext(MessageTimelineContext)
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
 
@@ -37,7 +37,7 @@ export const MessageContextMenu = (props: Props) => {
 
     const onEditClick = useCallback(() => {
         console.log('edit', eventId)
-        timelineContext?.onSelectEditingMessage(eventId)
+        timelineContext?.timelineActions.onSelectEditingMessage(eventId)
     }, [eventId, timelineContext])
 
     const onSelectEmoji = useCallback(

@@ -25,7 +25,13 @@ export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
  **/
 export const useMessageThread = (messageId: string, channelMessages: TimelineEvent[]) => {
     const parentMessage = useMemo(() => {
-        return channelMessages?.find((m) => m.eventId === messageId)
+        return channelMessages?.find(
+            (m) =>
+                m.eventId === messageId ||
+                (m.content?.kind === ZTEvent.RoomMessage &&
+                    m.content.content['m.relates_to']?.['rel_type'] === 'm.replace' &&
+                    m.content.content['m.relates_to']?.event_id === messageId),
+        )
     }, [channelMessages, messageId])
 
     const messages = channelMessages.reduce((messages, m) => {

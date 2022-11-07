@@ -1,7 +1,7 @@
 import { RelationType } from 'matrix-js-sdk'
 import React, { useContext } from 'react'
 
-import { MessageType, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
+import { MessageType, RoomMessageEvent, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { Message } from '@components/Message'
 import { MessageProps } from '@components/Message/Message'
 import { MessageImage } from '@components/MessageImage/MessageImage'
@@ -45,7 +45,7 @@ export const TimelineMessage = React.memo((props: Props) => {
     const displayName = user?.name ?? sender.displayName
     const avatarUrl = user?.avatarUrl ?? sender.avatarUrl
 
-    const isOwn = event.content
+    const isOwn = event.content?.kind == ZTEvent.RoomMessage && event.content.sender.id === userId
 
     const isEditing = event.eventId === timelineActions.editingMessageId
     const isRelativeDate = type === MessageTimelineType.Thread
