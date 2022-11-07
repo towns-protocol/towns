@@ -14,6 +14,7 @@ export const createSpace = async (
     { events }: CreateSpaceParams,
 ): Promise<CreateSpaceResult> => {
     const streamId = await checkStreamCreationParams(server, events, StreamKind.Space, 'join')
+    const syncCookie = await server.store.createEventStream(streamId, events)
 
     await addJoinedEventToUserStream(
         server,
@@ -21,6 +22,5 @@ export const createSpace = async (
         events[1] as TypedFullEvent<JoinStreamPayload>,
     )
 
-    const syncCookie = await server.store.createEventStream(streamId, events)
     return { syncCookie }
 }

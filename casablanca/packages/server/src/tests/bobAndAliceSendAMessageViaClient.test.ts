@@ -25,7 +25,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
     beforeAll(async () => {
         if (config.testRemoteUrl === undefined) {
-            zionApp = startZionApp(0, 'redis')
+            zionApp = startZionApp(0, 'postgres')
             url = zionApp.url
         } else {
             url = config.testRemoteUrl
