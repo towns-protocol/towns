@@ -86,7 +86,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 return {
                     timelines: replaceTimelineEvent(
                         roomId,
-                        timelineEvent,
+                        newEvent,
                         eventIndex,
                         timeline,
                         state.timelines,
