@@ -49,7 +49,7 @@ export const TimelineShimmer = () => {
                         })}
                 </Stack>
                 <Stack grow bottom left padding="lg" position="absolute" width="100%">
-                    <Box grow className={shimmerClass} height="x7" rounded="sm" />
+                    <Box grow className={shimmerClass} height="x6" rounded="sm" />
                 </Stack>
             </Stack>
         </Box>

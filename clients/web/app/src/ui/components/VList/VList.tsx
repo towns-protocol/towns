@@ -155,7 +155,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
      */
     useLayoutEffect(() => {
         DEBUG_VLIST && console.log(`%c::virtual layout`, `color:#9c9;`)
-        const intersection = viewport[1] - (viewport[1] - viewport[0]) * 0.5
+
         referenceItem.current.proximity = Number.MAX_SAFE_INTEGER
 
         const rendered = list.filter((l, index, arr) => {
@@ -166,7 +166,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             }
 
             const y = item.y
-            const proximity = Math.abs(y - intersection)
+            const proximity = Math.abs(y - viewport[0])
 
             if (
                 correction === 0 &&
