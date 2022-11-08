@@ -13,7 +13,6 @@ export const SpacesChannelReplies = (props: {
     const navigate = useNavigate()
 
     const handleClose = useCallback(() => {
-        // navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}`);
         navigate(parentRoute)
     }, [navigate, parentRoute])
 

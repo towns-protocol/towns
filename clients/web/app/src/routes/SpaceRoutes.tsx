@@ -48,13 +48,12 @@ export const SpaceRoutes = () => (
                     />
                 </Route>
             </Route>
-            <Route path="threads-grouped" element={<SpaceThreads />} />
             <Route path="mentions" element={<SpaceMentions />} />
             <Route path="settings" element={<SpacesSettings />} />
             <Route path="invite" element={<SpacesInvite />} />
             <Route path="channels/new" element={<SpacesNewChannel />} />
             <Route path="channels/:channelSlug" element={<SpacesChannel />}>
-                <Route path="replies/:messageId" element={<SpacesChannelReplies />} />
+                <Route path="replies/?:messageId" element={<SpacesChannelReplies />} />
             </Route>
             <Route element={<SpacesChannelRoute />}>
                 <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />

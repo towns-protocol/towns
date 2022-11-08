@@ -1,6 +1,6 @@
 import { Allotment } from 'allotment'
-import React from 'react'
-import { useOutlet, useParams } from 'react-router'
+import React, { useEffect } from 'react'
+import { generatePath, useNavigate, useOutlet, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
 import {
     Channel,
@@ -33,6 +33,23 @@ export const SpaceThreadsInbox = () => {
     }, [] as Channel[])
 
     const { threads } = useScanChannelThreads(channels, userId)
+
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        if (!outlet && threads[0] && spaceId) {
+            const threadId = threads[0].thread.parentId
+            const channelId = threads[0].channel.id
+
+            navigate(
+                generatePath('/spaces/:spaceId/threads/:channelId/:threadId/', {
+                    spaceId: spaceId.slug,
+                    channelId: channelId.slug,
+                    threadId,
+                }),
+            )
+        }
+    }, [navigate, outlet, spaceId, threads])
 
     return (
         <Stack horizontal minHeight="100%">
