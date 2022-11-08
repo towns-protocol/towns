@@ -1,7 +1,7 @@
 import { CodeNode } from '@lexical/code'
 import { AutoLinkNode, LinkNode } from '@lexical/link'
 import { ListItemNode, ListNode } from '@lexical/list'
-import { CHECK_LIST, HEADING, TRANSFORMERS } from '@lexical/markdown'
+import { CHECK_LIST, HEADING, LINK, TRANSFORMERS } from '@lexical/markdown'
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin'
 import { CheckListPlugin } from '@lexical/react/LexicalCheckListPlugin'
 import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin'
@@ -38,6 +38,7 @@ import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
 import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
 import { RichTextUI } from './ui/RichTextEditorUI'
+import { BLANK_LINK } from './transformers/LinkTransformer'
 
 type Props = {
     onSend?: (value: string) => void
@@ -75,6 +76,8 @@ interface IUseTransformers {
 
 // either we filter out, or selectively import if this filter list gets too large
 const filteredDefaultTransforms = TRANSFORMERS.filter((t) => !isEqual(t, HEADING))
+    // map all links to custom, with target="_blank"
+    .map((t) => (isEqual(t, LINK) ? BLANK_LINK : t))
 
 const useTransformers = ({ members, channels }: IUseTransformers) => {
     const transformers = useMemo(() => {
