@@ -3,10 +3,14 @@
 /* eslint-disable */
 export type { CouncilNFT } from "./CouncilNFT";
 export type { CouncilStaking } from "./CouncilStaking";
+export type { TokenEntitlementModule } from "./TokenEntitlementModule";
+export type { UserGrantedEntitlementModule } from "./UserGrantedEntitlementModule";
 export type { ZionRoleManager } from "./ZionRoleManager";
 export type { ZionSpaceManager } from "./ZionSpaceManager";
 export * as factories from "./factories";
 export { CouncilNFT__factory } from "./factories/CouncilNFT__factory";
 export { CouncilStaking__factory } from "./factories/CouncilStaking__factory";
+export { TokenEntitlementModule__factory } from "./factories/TokenEntitlementModule__factory";
+export { UserGrantedEntitlementModule__factory } from "./factories/UserGrantedEntitlementModule__factory";
 export { ZionRoleManager__factory } from "./factories/ZionRoleManager__factory";
 export { ZionSpaceManager__factory } from "./factories/ZionSpaceManager__factory";

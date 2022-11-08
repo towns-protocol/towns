@@ -1189,11 +1189,11 @@
   },
   "sources": {
     "contracts/zion-governance/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x25ae4029c2a8c419383a746886d8e0f9572a8352c67ab7e9397e4578d6ee82e8",
+      "keccak256": "0x36676fd7a6978d5ec5a8b68b3850949583783ad931f2f7b1fcd1a6eb2ddbdefb",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d341cadfc2ca7c5cc00128858a933beebb961e798531547506ab6bab8b38e93a",
-        "dweb:/ipfs/QmNYzxv2j7yXf9k9mMqkLP3zTyHxdhFBRQ8X4JWdeBYac3"
+        "bzz-raw://5d6f0ecf4fc520a9c577d2cae8543bcaf9a4ec9bdb4fec4fca90268d48f0de89",
+        "dweb:/ipfs/QmcHMFu6mcetbHNKrn1ThzFh8rktSpm5Q8wwnynLkSKfqN"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -1298,14 +1298,6 @@
       "urls": [
         "bzz-raw://51a9210bff60d223544ec266273490bb329a3db16a8c22e60b6ff6cb11858d6b",
         "dweb:/ipfs/QmbinA6B9vWszjdECwyY7pT8owJ4h3GSgnhZeJG1vj8Gnn"
-      ]
-    },
-    "lib/forge-std/src/console.sol": {
-      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
-        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

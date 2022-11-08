@@ -8,8 +8,23 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "name_",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description_",
+            "type": "string"
+          },
+          {
             "internalType": "address",
-            "name": "permissionRegistry",
+            "name": "spaceManager_",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "roleManager_",
             "type": "address"
           }
         ],
@@ -27,173 +42,63 @@
         "type": "error"
       },
       {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "previousOwner",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "spaceId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct DataTypes.Permission",
-            "name": "permission",
-            "type": "tuple"
-          }
-        ],
-        "name": "addPermissionToRole",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "spaceId",
-            "type": "uint256"
-          }
-        ],
-        "name": "createOwnerRole",
+        "inputs": [],
+        "name": "_roleManager",
         "outputs": [
           {
-            "internalType": "uint256",
+            "internalType": "address",
             "name": "",
-            "type": "uint256"
+            "type": "address"
           }
         ],
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
       },
       {
-        "inputs": [
+        "inputs": [],
+        "name": "_spaceManager",
+        "outputs": [
           {
-            "internalType": "uint256",
-            "name": "spaceId",
-            "type": "uint256"
-          },
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "description",
+        "outputs": [
           {
             "internalType": "string",
-            "name": "name",
+            "name": "",
             "type": "string"
           }
         ],
-        "name": "createRole",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "spaceId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "name": "getPermissionsBySpaceIdByRoleId",
-        "outputs": [
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct DataTypes.Permission[]",
-            "name": "",
-            "type": "tuple[]"
-          }
-        ],
         "stateMutability": "view",
         "type": "function"
       },
       {
         "inputs": [
           {
-            "internalType": "uint256",
+            "internalType": "string",
             "name": "spaceId",
-            "type": "uint256"
+            "type": "string"
           },
           {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "name": "getRoleBySpaceIdByRoleId",
-        "outputs": [
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
           {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "roleId",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct DataTypes.Role",
-            "name": "",
-            "type": "tuple"
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "spaceId",
-            "type": "uint256"
-          }
-        ],
-        "name": "getRolesBySpaceId",
+        "name": "getUserRoles",
         "outputs": [
           {
             "components": [
@@ -217,29 +122,21 @@
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "owner",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [
           {
-            "internalType": "uint256",
+            "internalType": "string",
             "name": "spaceId",
-            "type": "uint256"
+            "type": "string"
           },
           {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
           },
           {
             "components": [
@@ -254,7 +151,54 @@
             "type": "tuple"
           }
         ],
-        "name": "removePermissionFromRole",
+        "name": "isEntitled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "_roleIds",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "removeEntitlement",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -262,24 +206,27 @@
       {
         "inputs": [
           {
-            "internalType": "uint256",
+            "internalType": "string",
             "name": "spaceId",
-            "type": "uint256"
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
           },
           {
             "internalType": "uint256",
             "name": "roleId",
             "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
           }
         ],
-        "name": "removeRole",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "renounceOwnership",
+        "name": "setEntitlement",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -287,54 +234,54 @@
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "spaceManager",
-            "type": "address"
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
           }
         ],
-        "name": "setSpaceManager",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
+        "name": "supportsInterface",
+        "outputs": [
           {
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
           }
         ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "view",
         "type": "function"
       }
     ],
     "devdoc": {
       "kind": "dev",
       "methods": {
-        "owner()": {
-          "details": "Returns the address of the current owner."
-        },
-        "renounceOwnership()": {
-          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
-        },
-        "transferOwnership(address)": {
-          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        "supportsInterface(bytes4)": {
+          "details": "See {IERC165-supportsInterface}."
         }
       },
       "version": 1
     },
     "userdoc": {
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "description()": {
+          "notice": "The description of the entitlement module"
+        },
+        "name()": {
+          "notice": "The name of the entitlement module"
+        },
+        "removeEntitlement(string,string,uint256[],bytes)": {
+          "notice": "Removes the entitlements for a space"
+        },
+        "setEntitlement(string,string,uint256,bytes)": {
+          "notice": "Sets the entitlements for a space"
+        }
+      },
       "version": 1
     }
   },
   "settings": {
     "compilationTarget": {
-      "contracts/zion-governance/src/spaces/ZionRoleManager.sol": "ZionRoleManager"
+      "contracts/zion-governance/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol": "UserGrantedEntitlementModule"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -359,20 +306,12 @@
     ]
   },
   "sources": {
-    "contracts/zion-governance/src/spaces/ZionPermissionsRegistry.sol": {
-      "keccak256": "0x59483a9520481a831cf36d5a5656eb9cdc9bbeaa7965ebc5d580bb4029bc184c",
+    "contracts/zion-governance/src/spaces/ZionSpaceManager.sol": {
+      "keccak256": "0x36676fd7a6978d5ec5a8b68b3850949583783ad931f2f7b1fcd1a6eb2ddbdefb",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b876eea82441fb995c1e13c98a86420b828f61c9118b95192ebc7ce4d572b0e6",
-        "dweb:/ipfs/QmbPjWjpeLQnPZPc8MVMTfc5zqXGtGxxy7eG6PW29ZYNLj"
-      ]
-    },
-    "contracts/zion-governance/src/spaces/ZionRoleManager.sol": {
-      "keccak256": "0xfd51907ad6391e4dda67be504898a6503d7d1913973593dac0f8ebdabef69dfa",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://c8f5d7a8fecba89296b037f4153d105ce7ac935e00ab4e778ef2c90f0e0bbab7",
-        "dweb:/ipfs/QmUooP3g1FDWH8DoWNLXM6TsN6WYZpSz28tar6as9uSnNC"
+        "bzz-raw://5d6f0ecf4fc520a9c577d2cae8543bcaf9a4ec9bdb4fec4fca90268d48f0de89",
+        "dweb:/ipfs/QmcHMFu6mcetbHNKrn1ThzFh8rktSpm5Q8wwnynLkSKfqN"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -381,6 +320,30 @@
       "urls": [
         "bzz-raw://9c38797d7875e2a2201501f51d6a0976225d1004b043a34af1e21af50d9fd8f0",
         "dweb:/ipfs/QmbMhZ9ASvJoZezwt2ykGdmcNX54VspbJDusmSNGgDTkop"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/interfaces/IPermissionRegistry.sol": {
+      "keccak256": "0x45b83cec5d9b71bc5055c3958fc9cdaf622aca4f0bba6e66ab590603da933a17",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b0d3bd9dca5d087fd01bcb3ae62d4b77d29fe6288a6e9b7a2e36e010b19445ac",
+        "dweb:/ipfs/QmSQAcizX6ETKjsDje7vf1AaVoVN1K5WKnVN7DVzfY5jf1"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/interfaces/IRoleManager.sol": {
+      "keccak256": "0x3e2100c84c2c6e974945d25ea72403676740440ab8b062a64dde2cdaba5ef174",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f01d5a80b43ca6efe29a4ce5b376de4c0ee62549909763381c5254a12d22bd44",
+        "dweb:/ipfs/QmT5CMu1eGtnoBapH7uLHXe9CUWrXZUMrYhjKFfQ95VfGa"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/interfaces/ISpace.sol": {
+      "keccak256": "0xab4d7dbd54d76f47d47081bbae155e541dbcc37b84a138bb107b75a22216e802",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1963ae4b50e8fae99bbac7af0ba8a4fabeb8bd03308584aa13abcb0ef182ffe5",
+        "dweb:/ipfs/QmadohGm8bMK3AmUarR3x1jPnBTUJ6ym9CnDdd9ojF9p7F"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
@@ -447,12 +410,28 @@
         "dweb:/ipfs/QmSUuYCBNQHwQSPGWncZvUdAvvvApdEVQPG3YTD6NcDetc"
       ]
     },
-    "contracts/zion-governance/src/spaces/storage/ZionRoleStorage.sol": {
-      "keccak256": "0xf3b9d11f976864e314dfaa33d34794f90507d1fa640ca541f5c57d100f28d559",
+    "contracts/zion-governance/src/spaces/modules/EntitlementModuleBase.sol": {
+      "keccak256": "0xc18d8b89fc73f89c7a068fdf8ac6673aca5ce081d14e5efc77c55cc9446ad566",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://837b597e2d176a22801db3ec677900906e1eb2cb2259c871c91c39d384361b3d",
-        "dweb:/ipfs/QmVHbBhkJ5a2a6iX6acx8zUACAB25mS23APEpNAWtiayLj"
+        "bzz-raw://ea01b54080093c040f3b8b263a0545d84d57c660dce150f6e3597b35bdcdbe48",
+        "dweb:/ipfs/QmfVR4A55nC1yBvevJNce6rJrB6ex2ktRP1VpqDKqmQxfH"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol": {
+      "keccak256": "0x001d4ee9bfe1df0d554b66b7ffdb82fea996024aca3978afd2c1bd13e1e66a57",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e4e6456f38632d6d61809644565857c29998cbfcae27485286031cd199f34010",
+        "dweb:/ipfs/QmZi7D211ph7LAQ4NbNJ2BYeGeHRcFQVy3utzwfE3C67pP"
+      ]
+    },
+    "contracts/zion-governance/src/spaces/storage/ZionSpaceManagerStorage.sol": {
+      "keccak256": "0xd776a38811d83201224b71844fdde810519c2ae85d03e86d703b6074ce78e622",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://51a9210bff60d223544ec266273490bb329a3db16a8c22e60b6ff6cb11858d6b",
+        "dweb:/ipfs/QmbinA6B9vWszjdECwyY7pT8owJ4h3GSgnhZeJG1vj8Gnn"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
@@ -469,6 +448,14 @@
       "urls": [
         "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
         "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {
+      "keccak256": "0xd10975de010d89fd1c78dc5e8a9a7e7f496198085c151648f20cba166b32582b",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://fb0048dee081f6fffa5f74afc3fb328483c2a30504e94a0ddd2a5114d731ec4d",
+        "dweb:/ipfs/QmZptt1nmYoA5SgjwnSgWqgUSDgm4q52Yos3xhnMv3MV43"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {

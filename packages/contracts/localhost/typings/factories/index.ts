@@ -3,5 +3,7 @@
 /* eslint-disable */
 export { CouncilNFT__factory } from "./CouncilNFT__factory";
 export { CouncilStaking__factory } from "./CouncilStaking__factory";
+export { TokenEntitlementModule__factory } from "./TokenEntitlementModule__factory";
+export { UserGrantedEntitlementModule__factory } from "./UserGrantedEntitlementModule__factory";
 export { ZionRoleManager__factory } from "./ZionRoleManager__factory";
 export { ZionSpaceManager__factory } from "./ZionSpaceManager__factory";
