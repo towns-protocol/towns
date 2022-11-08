@@ -1520,7 +1520,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cloudflare/workers-types@npm:^3.14.1":
+"@cloudflare/workers-types@npm:^3.18.0":
   version: 3.18.0
   resolution: "@cloudflare/workers-types@npm:3.18.0"
   checksum: 9a54a4fbd12eed19495cf6774cd48b0e97aaee093d40d2ae8e7a11c58937b8ad5173588efca5e138c373c6d6730faf96f2385eee203dab3fdb91565885efb0cd
@@ -8388,7 +8388,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:^3.2.7":
+"debug@npm:^3.1.0, debug@npm:^3.2.7":
   version: 3.2.7
   resolution: "debug@npm:3.2.7"
   dependencies:
@@ -8714,6 +8714,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dom-serializer@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "dom-serializer@npm:2.0.0"
+  dependencies:
+    domelementtype: ^2.3.0
+    domhandler: ^5.0.2
+    entities: ^4.2.0
+  checksum: cd1810544fd8cdfbd51fa2c0c1128ec3a13ba92f14e61b7650b5de421b88205fd2e3f0cc6ace82f13334114addb90ed1c2f23074a51770a8e9c1273acbc7f3e6
+  languageName: node
+  linkType: hard
+
 "dom-walk@npm:^0.1.0":
   version: 0.1.2
   resolution: "dom-walk@npm:0.1.2"
@@ -8728,6 +8739,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"domelementtype@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "domelementtype@npm:2.3.0"
+  checksum: ee837a318ff702622f383409d1f5b25dd1024b692ef64d3096ff702e26339f8e345820f29a68bcdcea8cfee3531776b3382651232fbeae95612d6f0a75efb4f6
+  languageName: node
+  linkType: hard
+
 "domexception@npm:^4.0.0":
   version: 4.0.0
   resolution: "domexception@npm:4.0.0"
@@ -8737,10 +8755,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"domhandler@npm:^5.0.1, domhandler@npm:^5.0.2":
+  version: 5.0.3
+  resolution: "domhandler@npm:5.0.3"
+  dependencies:
+    domelementtype: ^2.3.0
+  checksum: 0f58f4a6af63e6f3a4320aa446d28b5790a009018707bce2859dcb1d21144c7876482b5188395a188dfa974238c019e0a1e610d2fc269a12b2c192ea2b0b131c
+  languageName: node
+  linkType: hard
+
 "dompurify@npm:^2.2.2":
   version: 2.4.0
   resolution: "dompurify@npm:2.4.0"
   checksum: c93ea73cf8e3ba044588450198563e56ce6902e36d0e16e3699df2fa59e82c4fdd11d4ad04ef5024569ce96a35b46f29d0bbea522516add33cd39a7f56a8a675
+  languageName: node
+  linkType: hard
+
+"domutils@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "domutils@npm:3.0.1"
+  dependencies:
+    dom-serializer: ^2.0.0
+    domelementtype: ^2.3.0
+    domhandler: ^5.0.1
+  checksum: 23aa7a840572d395220e173cb6263b0d028596e3950100520870a125af33ff819e6f609e1606d6f7d73bd9e7feb03bb404286e57a39063b5384c62b724d987b3
   languageName: node
   linkType: hard
 
@@ -8926,7 +8964,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"entities@npm:^4.4.0":
+"entities@npm:^4.2.0, entities@npm:^4.3.0, entities@npm:^4.4.0":
   version: 4.4.0
   resolution: "entities@npm:4.4.0"
   checksum: 84d250329f4b56b40fa93ed067b194db21e8815e4eb9b59f43a086f0ecd342814f6bc483de8a77da5d64e0f626033192b1b4f1792232a7ea6b970ebe0f3187c2
@@ -12129,7 +12167,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"he@npm:1.2.0":
+"he@npm:1.2.0, he@npm:^1.2.0":
   version: 1.2.0
   resolution: "he@npm:1.2.0"
   bin:
@@ -12199,6 +12237,18 @@ __metadata:
   version: 0.4.1
   resolution: "html-rewriter-wasm@npm:0.4.1"
   checksum: e97f76e0f9e2bfb187ffae1c93da4da20a82469e270f96d8d5d8b7f410cdfcce5b3ecb917558cc865fd50b6a2d71a4e8504a66b4ae1b9c6a5e9182a1c6f01ce4
+  languageName: node
+  linkType: hard
+
+"htmlparser2@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "htmlparser2@npm:8.0.1"
+  dependencies:
+    domelementtype: ^2.3.0
+    domhandler: ^5.0.2
+    domutils: ^3.0.1
+    entities: ^4.3.0
+  checksum: 06d5c71e8313597722bc429ae2a7a8333d77bd3ab07ccb916628384b37332027b047f8619448d8f4a3312b6609c6ea3302a4e77435d859e9e686999e6699ca39
   languageName: node
   linkType: hard
 
@@ -13268,7 +13318,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-environment-miniflare@npm:^2.6.0":
+"jest-environment-miniflare@npm:^2.11.0":
   version: 2.11.0
   resolution: "jest-environment-miniflare@npm:2.11.0"
   dependencies:
@@ -15212,7 +15262,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"miniflare@npm:^2.6.0":
+"miniflare@npm:^2.11.0":
   version: 2.11.0
   resolution: "miniflare@npm:2.11.0"
   dependencies:
@@ -20236,6 +20286,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"unfurl-worker@workspace:servers/unfurl-worker":
+  version: 0.0.0-use.local
+  resolution: "unfurl-worker@workspace:servers/unfurl-worker"
+  dependencies:
+    "@cloudflare/workers-types": ^3.18.0
+    "@types/jest": ^29.2.0
+    "@typescript-eslint/eslint-plugin": ^5.40.1
+    "@typescript-eslint/parser": ^5.40.1
+    eslint: ^8.25.0
+    jest: ^29.2.1
+    jest-environment-miniflare: ^2.11.0
+    miniflare: ^2.11.0
+    ts-jest: ^29.0.3
+    typescript: ^4.8.4
+    unfurl.js: "https://github.com/HereNotThere/unfurl"
+    wrangler: ^2.0.24
+  languageName: unknown
+  linkType: soft
+
+"unfurl.js@https://github.com/HereNotThere/unfurl":
+  version: 5.1.0
+  resolution: "unfurl.js@https://github.com/HereNotThere/unfurl.git#commit=165d1886f8c3e33d165f9f0165c698ff91e9b315"
+  dependencies:
+    debug: ^3.1.0
+    he: ^1.2.0
+    htmlparser2: ^8.0.1
+    iconv-lite: ^0.4.24
+    node-fetch: ^2.6.7
+  checksum: 9c4f805a0b8c42a8fc609bb7dd15c9f663dd776a7b41153c1980b3be21df4fdc90fc14df756f70f0a3d548df9f606f82d05b3b1fa427888c44be54879bda2075
+  languageName: node
+  linkType: hard
+
 "unhomoglyph@npm:^1.0.6":
   version: 1.0.6
   resolution: "unhomoglyph@npm:1.0.6"
@@ -21760,7 +21842,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "worker-typescript-template@workspace:servers/worker-template"
   dependencies:
-    "@cloudflare/workers-types": ^3.14.1
+    "@cloudflare/workers-types": ^3.18.0
     "@types/jest": ^29.2.0
     "@typescript-eslint/eslint-plugin": ^5.40.1
     "@typescript-eslint/parser": ^5.40.1
@@ -21768,8 +21850,8 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     eslint-config-typescript: ^3.0.0
     jest: ^29.2.1
-    jest-environment-miniflare: ^2.6.0
-    miniflare: ^2.6.0
+    jest-environment-miniflare: ^2.11.0
+    miniflare: ^2.11.0
     prettier: ^2.7.1
     ts-jest: ^29.0.3
     typescript: ^4.8.4

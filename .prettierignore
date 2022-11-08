@@ -6,6 +6,7 @@ storybook-static
 
 servers/*
 !servers/worker-template
+!servers/unfurl-worker
 contracts/lib/*
 contracts/**/out/*
 contracts/**/types/*
