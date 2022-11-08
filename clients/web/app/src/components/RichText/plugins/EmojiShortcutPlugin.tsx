@@ -10,9 +10,9 @@ import { $createTextNode, TextNode } from 'lexical'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
-import { Box, Stack, Text } from '@ui'
-import { $createEmojiNode } from '../nodes/EmojiNode'
+import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { emojis } from '../data/emoji_list'
+import { $createEmojiNode } from '../nodes/EmojiNode'
 
 // At most, 5 suggestions are shown in the popup.
 const SUGGESTION_LIST_LENGTH_LIMIT = 5
@@ -77,34 +77,26 @@ export const EmojiShortcutPlugin = () => {
             ) =>
                 anchorElement.current && results.length
                     ? ReactDOM.createPortal(
-                          <Box position="relative">
-                              <Stack
-                                  border
-                                  style={{ bottom: 0 }}
-                                  overflow="hidden"
-                                  position="absolute"
-                                  rounded="sm"
-                                  minWidth="250"
-                                  as="ul"
-                              >
-                                  {options.map((option, i: number) => (
-                                      <EmojiTypeaheadMenuItem
-                                          index={i}
-                                          isLast={options.length - 1 === i}
-                                          isSelected={selectedIndex === i}
-                                          key={option.key}
-                                          option={option}
-                                          onClick={() => {
-                                              setHighlightedIndex(i)
-                                              selectOptionAndCleanUp(option)
-                                          }}
-                                          onMouseEnter={() => {
-                                              setHighlightedIndex(i)
-                                          }}
-                                      />
-                                  ))}
-                              </Stack>
-                          </Box>,
+                          <TypeaheadMenu>
+                              {options.map((option, i: number) => (
+                                  <TypeaheadMenuItem
+                                      index={i}
+                                      isLast={options.length - 1 === i}
+                                      isSelected={selectedIndex === i}
+                                      key={option.key}
+                                      option={option}
+                                      Icon={<Text fontSize="lg">{option.picture}</Text>}
+                                      name={`:${option.name}:`}
+                                      onClick={() => {
+                                          setHighlightedIndex(i)
+                                          selectOptionAndCleanUp(option)
+                                      }}
+                                      onMouseEnter={() => {
+                                          setHighlightedIndex(i)
+                                      }}
+                                  />
+                              ))}
+                          </TypeaheadMenu>,
                           anchorElement.current,
                       )
                     : null
@@ -112,39 +104,6 @@ export const EmojiShortcutPlugin = () => {
             onQueryChange={setQueryString}
             onSelectOption={onSelectOption}
         />
-    )
-}
-
-const EmojiTypeaheadMenuItem = (props: {
-    index: number
-    isSelected: boolean
-    isLast?: boolean
-    onClick: () => void
-    onMouseEnter: () => void
-    option: EmojiTypeaheadOption
-}) => {
-    const { index, isLast, isSelected, onClick, onMouseEnter, option } = props
-
-    return (
-        <Stack
-            horizontal
-            gap
-            padding
-            as="li"
-            background={isSelected ? 'level4' : 'level2'}
-            borderBottom={isLast ? undefined : 'default'}
-            key={option.key}
-            tabIndex={-1}
-            ref={option.setRefElement}
-            role="option"
-            aria-selected={isSelected}
-            id={'typeahead-item-' + index}
-            onMouseEnter={onMouseEnter}
-            onClick={onClick}
-        >
-            <Text fontSize="lg">{option.picture}</Text>
-            <Text truncate>:{option.name}:</Text>
-        </Stack>
     )
 }
 

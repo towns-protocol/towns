@@ -12,13 +12,12 @@ import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
 import { RoomMember } from 'use-zion-client'
-import { Avatar, Box, Stack, Text } from '@ui'
-import { baseline } from 'ui/styles/vars.css'
 import { notUndefined } from 'ui/utils/utils'
+import { Avatar, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { $createMentionNode } from '../nodes/MentionNode'
 
 // At most, 5 suggestions are shown in the popup.
-const SUGGESTION_LIST_LENGTH_LIMIT = -1
+const SUGGESTION_LIST_LENGTH_LIMIT = 10
 
 type Props = {
     members: RoomMember[]
@@ -92,35 +91,32 @@ export const NewMentionsPlugin = (props: Props) => {
             ) =>
                 anchorElement.current && options.length
                     ? ReactDOM.createPortal(
-                          <Box border position="relative">
-                              <Stack
-                                  border
-                                  style={{ bottom: baseline * 4 }}
-                                  overflow="scroll"
-                                  position="absolute"
-                                  rounded="sm"
-                                  minWidth="250"
-                                  maxHeight="200"
-                                  as="ul"
-                              >
-                                  {results.map((option, i: number) => (
-                                      <MentionsTypeaheadMenuItem
-                                          index={i}
-                                          isLast={results.length - 1 === i}
-                                          isSelected={selectedIndex === i}
-                                          key={option.key}
-                                          option={option}
-                                          onClick={() => {
-                                              setHighlightedIndex(i)
-                                              selectOptionAndCleanUp(option)
-                                          }}
-                                          onMouseEnter={() => {
-                                              setHighlightedIndex(i)
-                                          }}
-                                      />
-                                  ))}
-                              </Stack>
-                          </Box>,
+                          <TypeaheadMenu>
+                              {results.map((option, i, arr) => (
+                                  <TypeaheadMenuItem
+                                      index={i}
+                                      isLast={arr.length - 1 === i}
+                                      isSelected={selectedIndex === i}
+                                      key={option.key}
+                                      option={option}
+                                      name={option.name}
+                                      Icon={
+                                          option.picture ? (
+                                              <Avatar size="avatar_sm" src={option.picture} />
+                                          ) : (
+                                              <></>
+                                          )
+                                      }
+                                      onClick={() => {
+                                          setHighlightedIndex(i)
+                                          selectOptionAndCleanUp(option)
+                                      }}
+                                      onMouseEnter={() => {
+                                          setHighlightedIndex(i)
+                                      }}
+                                  />
+                              ))}
+                          </TypeaheadMenu>,
                           anchorElement.current,
                       )
                     : null
@@ -128,43 +124,6 @@ export const NewMentionsPlugin = (props: Props) => {
             onQueryChange={setQueryString}
             onSelectOption={onSelectOption}
         />
-    )
-}
-
-const MentionsTypeaheadMenuItem = (props: {
-    index: number
-    isSelected: boolean
-    isLast?: boolean
-    onClick: () => void
-    onMouseEnter: () => void
-    option: MentionTypeaheadOption
-}) => {
-    const { index, isLast, isSelected, onClick, onMouseEnter, option } = props
-
-    return (
-        <Stack
-            horizontal
-            gap
-            padding="sm"
-            as="li"
-            background={isSelected ? 'level4' : 'level2'}
-            borderBottom={isLast ? undefined : 'default'}
-            key={option.key}
-            tabIndex={-1}
-            ref={option.setRefElement}
-            role="option"
-            aria-selected={isSelected}
-            id={'typeahead-item-' + index}
-            onMouseEnter={onMouseEnter}
-            onClick={onClick}
-        >
-            <Box width="x3">
-                {option.picture && <Avatar size="avatar_sm" src={option.picture} />}
-            </Box>
-            <Box justifyContent="center">
-                <Text truncate>{option.name}</Text>
-            </Box>
-        </Stack>
     )
 }
 
