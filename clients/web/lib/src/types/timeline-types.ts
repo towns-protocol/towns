@@ -166,6 +166,7 @@ export interface ThreadStats {
     userIds: Set<string>
     latestTs: number
     parentId: string
+    parent?: RoomMessageEvent
 }
 
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }

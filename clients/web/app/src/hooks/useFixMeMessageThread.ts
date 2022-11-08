@@ -71,7 +71,7 @@ export const useScanChannelThreads = (channels: Channel[], userId: string | null
             threadsStats[channel.id.matrixRoomId] || {}
 
         const channelThreads = Object.values(channelThreadStats)
-            .filter((thread) => thread.userIds.has(userId))
+            .filter((thread) => thread.userIds.has(userId) || thread.parent?.sender.id === userId)
             .map((thread) => ({
                 type: 'thread' as const,
                 unread: false,

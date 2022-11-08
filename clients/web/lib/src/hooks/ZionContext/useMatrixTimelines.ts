@@ -16,6 +16,7 @@ import {
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import {
     MessageReactions,
+    RoomMessageEvent,
     ThreadStats,
     TimelineEvent,
     TimelineEvent_OneOf,
@@ -55,14 +56,24 @@ export function useMatrixTimelines(client?: MatrixClient) {
         const appendEvent = (roomId: string, timelineEvent: TimelineEvent) => {
             setState((state) => ({
                 timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
-                threadsStats: addThreadStats(roomId, timelineEvent, state.threadsStats),
+                threadsStats: addThreadStats(
+                    roomId,
+                    timelineEvent,
+                    state.threadsStats,
+                    state.timelines[roomId],
+                ),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
             }))
         }
         const prependEvent = (roomId: string, timelineEvent: TimelineEvent) => {
             setState((state) => ({
                 timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
-                threadsStats: addThreadStats(roomId, timelineEvent, state.threadsStats),
+                threadsStats: addThreadStats(
+                    roomId,
+                    timelineEvent,
+                    state.threadsStats,
+                    state.timelines[roomId],
+                ),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
             }))
         }
@@ -95,6 +106,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                         roomId,
                         newEvent,
                         removeThreadStat(roomId, oldEvent, state.threadsStats),
+                        state.timelines[roomId],
                     ),
                     reactions: addReactions(
                         roomId,
@@ -549,6 +561,7 @@ function toStatsAndReactions(timeline: TimelineEvent[]) {
                     m,
                     m.threadParentId,
                     acc.threadStats[m.threadParentId],
+                    timeline,
                 )
             }
             if (m.reactionParentId) {
@@ -570,6 +583,7 @@ function addThreadStats(
     roomId: string,
     timelineEvent: TimelineEvent,
     threadsStats: ThreadStatsMap,
+    timeline: TimelineEvent[] | undefined,
 ) {
     const parentId = timelineEvent.threadParentId
     if (!parentId) {
@@ -579,16 +593,27 @@ function addThreadStats(
         ...threadsStats,
         [roomId]: {
             ...threadsStats[roomId],
-            [parentId]: addThreadStat(timelineEvent, parentId, threadsStats[roomId]?.[parentId]),
+            [parentId]: addThreadStat(
+                timelineEvent,
+                parentId,
+                threadsStats[roomId]?.[parentId],
+                timeline,
+            ),
         },
     }
 }
 
-function addThreadStat(event: TimelineEvent, parentId: string, entry?: ThreadStats) {
+function addThreadStat(
+    event: TimelineEvent,
+    parentId: string,
+    entry: ThreadStats | undefined,
+    timeline: TimelineEvent[] | undefined,
+) {
     const updated = entry ?? {
         replyCount: 0,
         userIds: new Set(),
         latestTs: event.originServerTs,
+        parent: getRoomMessageContent(timeline?.find((t) => t.eventId == parentId)), // one time lookup of the parent message for the first reply
         parentId,
     }
     updated.replyCount++
@@ -741,8 +766,12 @@ function replaceTimelineEvent(
     }
 }
 
+function getRoomMessageContent(event?: TimelineEvent): RoomMessageEvent | undefined {
+    return event?.content?.kind === ZTEvent.RoomMessage ? event.content : undefined
+}
+
 function getMessageSenderId(event: TimelineEvent): string | undefined {
-    return event.content?.kind === ZTEvent.RoomMessage ? event.content.sender.id : undefined
+    return getRoomMessageContent(event)?.sender.id
 }
 
 function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
