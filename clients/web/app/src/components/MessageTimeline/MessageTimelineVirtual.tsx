@@ -1,8 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
-import { MessageType, useZionContext } from 'use-zion-client'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import { MessageType, useMyUserId, useZionContext } from 'use-zion-client'
 import { Box, Stack, VList } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
+import { VListCtrl } from 'ui/components/VList/VList'
 import { notUndefined } from 'ui/utils/utils'
+import { getIsRoomMessageContent } from 'utils/ztevent_util'
 import { MessageTimelineItem } from './events/TimelineItem'
 import { RenderEventType, useGroupEvents } from './hooks/useGroupEvents'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
@@ -14,9 +16,11 @@ export const TimelineMessageContext = createContext<null | ReturnType<
 
 export const MessageTimelineVirtual = () => {
     const { unreadCounts } = useZionContext()
+
     const timelineContext = useContext(MessageTimelineContext)
 
     const channelId = timelineContext?.channelId
+
     const rawEvents = useMemo(() => {
         return timelineContext?.events ?? []
     }, [timelineContext?.events])
@@ -26,16 +30,20 @@ export const MessageTimelineVirtual = () => {
         timelineContext?.type === MessageTimelineType.Thread,
     )
 
+    // mark channel as unread after a short time (FIXME)
+
     const lastEvent = useMemo(() => {
-        return events?.at(events?.length - 1)?.eventId
+        return events?.at(events?.length - 1)
     }, [events])
 
+    const lastEventId = lastEvent?.eventId
+
     const onMarkAsRead = useCallback(() => {
-        if (channelId && lastEvent) {
-            console.log(`mark as unread ${channelId.slug} ${lastEvent}`)
-            timelineContext?.sendReadReceipt(channelId, lastEvent)
+        if (channelId && lastEventId) {
+            console.log(`mark as unread ${channelId.slug} ${lastEventId}`)
+            timelineContext?.sendReadReceipt(channelId, lastEventId)
         }
-    }, [channelId, lastEvent, timelineContext])
+    }, [channelId, lastEventId, timelineContext])
 
     const hasUnread = (unreadCounts[channelId?.matrixRoomId ?? ''] ?? 0) > 0
 
@@ -50,7 +58,9 @@ export const MessageTimelineVirtual = () => {
 
     const dateGroups = useGroupEvents(events)
 
-    const guesstimateItemHeight = useCallback((r: typeof ungroupedEvents[0]) => {
+    // estimate height of blocks before they get rendered
+
+    const estimateItemHeight = useCallback((r: typeof ungroupedEvents[0]) => {
         if (r.type === 'message') {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight = item.content.msgType === MessageType.Image ? 400 : 150
@@ -61,9 +71,25 @@ export const MessageTimelineVirtual = () => {
         return 0
     }, [])
 
+    // scroll into view
+
+    const vListCtrlRef = useRef<VListCtrl>()
+    const userId = useMyUserId()
+
+    useEffect(() => {
+        if (getIsRoomMessageContent(lastEvent)?.sender.id === userId && lastEvent?.isLocalPending) {
+            setTimeout(() => {
+                vListCtrlRef.current?.scrolldown()
+            }, 50)
+        }
+    }, [lastEvent, userId])
+
     if (!timelineContext || !channelId) {
         return <></>
     }
+
+    // group and filter events
+
     const groupByDate = timelineContext.type === MessageTimelineType.Channel
 
     const ungroupedEvents = dateGroups
@@ -89,7 +115,8 @@ export const MessageTimelineVirtual = () => {
     return (
         <VList
             debug={false}
-            itemHeight={guesstimateItemHeight}
+            ctrlRef={vListCtrlRef}
+            itemHeight={estimateItemHeight}
             list={ungroupedEvents}
             renderItem={(r) =>
                 r.type === 'group' ? (

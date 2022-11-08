@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useScrollIntoView, useViewport as useViewport } from './hooks/hooks'
+import React, {
+    MutableRefObject,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
+import { useScrollIntoView, useViewport } from './hooks/hooks'
 import * as styles from './VList.css'
 import { useDebugView } from './VListDebugView'
 import { VListItem, useItemHeight } from './VListItem'
@@ -8,6 +16,10 @@ const DEBUG_VLIST = false
 const DEFAULT_VIEW_MARGIN = 800
 const PADDING = 16
 
+export type VListCtrl = {
+    scrolldown: () => void
+}
+
 interface Props<T> {
     list: T[]
     renderItem: (data: T) => JSX.Element
@@ -15,6 +27,7 @@ interface Props<T> {
     viewMargin?: number
     debug?: boolean
     bottomAligned?: boolean
+    ctrlRef?: MutableRefObject<VListCtrl | undefined>
 }
 
 // todo: store keyId:{}
@@ -116,8 +129,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
 
             referenceItem.current.y = updatedReferenceItem
 
-            if (!fitsWithingViewport) {
-                // setCorrection((c) => Math.round(c - newCorrection))
+            if (!fitsWithingViewport && newCorrection) {
                 scrollContainerRef.current?.scrollBy(0, newCorrection)
             }
 
@@ -233,6 +245,20 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             }
         }
     }, [hasScrolledIntoView, hasSettled, listHeight])
+
+    useEffect(() => {
+        if (!props.ctrlRef) {
+            return
+        }
+        props.ctrlRef.current = {
+            scrolldown: () => {
+                scrollContainerRef.current?.scrollTo({
+                    top: scrollContainerRef.current.scrollHeight,
+                    // behavior: 'smooth',
+                })
+            },
+        }
+    }, [props.ctrlRef])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - debug
 

@@ -20,7 +20,7 @@ export const useViewport = (scrollContainer: HTMLElement | null, hasScrolledInto
     useEffect(() => {
         if (scrollContainer) {
             onScroll()
-            scrollContainer.addEventListener('scroll', onScroll)
+            scrollContainer.addEventListener('scroll', onScroll, { passive: true })
             return () => {
                 scrollContainer.removeEventListener('scroll', onScroll)
             }
