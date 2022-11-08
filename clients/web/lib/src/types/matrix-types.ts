@@ -1,4 +1,5 @@
 import { HistoryVisibility, IContent } from 'matrix-js-sdk'
+import { ThreadStats } from './timeline-types'
 
 export enum RoomVisibility {
     Private = 'private',
@@ -110,6 +111,14 @@ export interface RoomMember {
     name: string
     membership: Membership
     avatarUrl?: string
+}
+
+export interface ThreadResult {
+    type: 'thread'
+    unread: boolean
+    thread: ThreadStats
+    channel: Channel
+    timestamp: number
 }
 
 export interface CreateSpaceInfo {

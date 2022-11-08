@@ -6,7 +6,7 @@ import React, { useCallback } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility, ThreadResult } from '../../src/types/matrix-types'
 import { act } from 'react-dom/test-utils'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -14,6 +14,7 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { RegisterAndJoin } from './helpers/TestComponents'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useChannelThreadStats } from '../../src/hooks/use-channel-thread-stats'
+import { useSpaceThreadRoots } from '../../src/hooks/use-space-thread-roots'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { ThreadStats, TimelineEvent } from '../../src/types/timeline-types'
 
@@ -31,12 +32,11 @@ describe('sendThreadedMessageHooks', () => {
         // - jane replies to janes's message in channel_1 creating channel_1.thread
         // - jane replies to bobs's message in channel_2 creating channel_2.thread
         // - bob sees thread stats on chanel_1.message_1
-
-        // todo...
         // - bob renders the thread list
         // -- bob should see the channel_2.thread in his thread list
+
+        // todo...
         // -- bob should see unread markers in channels and threads
-        // -- unread markers should all be isFollowing=true execept for channel_1.thread
         // - bob marks the thread markers as read one by one
 
         // create clients
@@ -50,12 +50,12 @@ describe('sendThreadedMessageHooks', () => {
         })
         // create channels
         const channel_1 = await jane.createChannel({
-            name: 'janes channel',
+            name: 'channel_1',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
         })
         const channel_2 = await jane.createChannel({
-            name: 'janes channel',
+            name: 'channel_2',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
         })
@@ -64,8 +64,9 @@ describe('sendThreadedMessageHooks', () => {
         act(() => {
             const TestChannelComponent = () => {
                 const { sendMessage } = useZionClient()
+                const threadRoots = useSpaceThreadRoots()
                 const channelTimeline = useChannelTimeline()
-                const threadStats = useChannelThreadStats()
+                const channelThreadStats = useChannelThreadStats()
 
                 const sendInitialMessages = useCallback(() => {
                     const foo = async () => {
@@ -75,13 +76,19 @@ describe('sendThreadedMessageHooks', () => {
                     void foo()
                 }, [sendMessage])
 
+                const formatThreadRoot = (t: ThreadResult) => {
+                    return `channel: (${t.channel.label}) replyCount: (${
+                        t.thread.replyCount
+                    }) parentId: (${t.thread.parentId} message: (${t.thread.parent?.body ?? ''})`
+                }
+
                 const formatMessage = useCallback(
                     (e: TimelineEvent) => {
-                        const replyCount = threadStats[e.eventId]?.replyCount
+                        const replyCount = channelThreadStats[e.eventId]?.replyCount
                         const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
                         return `${e.fallbackContent} ${replyCountStr}`
                     },
-                    [threadStats],
+                    [channelThreadStats],
                 )
                 const formatThreadStats = (k: string, v: ThreadStats) => {
                     return `${k} (replyCount:${v.replyCount} userIds:${[...v.userIds].join(',')})`
@@ -91,11 +98,14 @@ describe('sendThreadedMessageHooks', () => {
                     <>
                         <RegisterAndJoin roomIds={[spaceId, channel_1, channel_2]} />
                         <button onClick={sendInitialMessages}>sendInitialMessages</button>
+                        <div data-testid="threadRoots">
+                            {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
+                        </div>
                         <div data-testid="channelMessages">
                             {channelTimeline.map((event) => formatMessage(event)).join('\n')}
                         </div>
-                        <div data-testid="threadStats">
-                            {Object.entries(threadStats)
+                        <div data-testid="channelThreadStats">
+                            {Object.entries(channelThreadStats)
                                 .map((kv) => formatThreadStats(kv[0], kv[1]))
                                 .join('\n')}
                         </div>
@@ -115,6 +125,7 @@ describe('sendThreadedMessageHooks', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         const joinComplete = screen.getByTestId('joinComplete')
         const channelMessages = screen.getByTestId('channelMessages')
+        const threadRoots = screen.getByTestId('threadRoots')
         const sendInitialMessages = screen.getByRole('button', {
             name: 'sendInitialMessages',
         })
@@ -172,6 +183,16 @@ describe('sendThreadedMessageHooks', () => {
                 threadId: channel_2_message_1.getId(),
             })
         })
+        // -- bob should see the channel_2.thread in his thread list
+        await waitFor(() =>
+            expect(threadRoots).toHaveTextContent(
+                `channel: (channel_2) replyCount: (1) parentId: (${channel_2_message_1.getId()}`,
+            ),
+        )
+        // -- bob should not see the channel_1.thread in his thread list
+        await waitFor(() => expect(threadRoots).not.toHaveTextContent(`channel: (channel_1)`))
         // todo...
+        // -- bob should see unread markers in channels and threads
+        // - bob marks the thread markers as read one by one
     })
 })

@@ -3,18 +3,17 @@ import React, { useEffect } from 'react'
 import { generatePath, useNavigate, useOutlet, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
 import {
-    Channel,
     ChannelContextProvider,
     RoomIdentifier,
     useChannelTimeline,
     useMatrixStore,
-    useSpaceData,
     useSpaceId,
+    useSpaceThreadRoots,
 } from 'use-zion-client'
 import { Message } from '@components/Message'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Box, Stack } from '@ui'
-import { useMessageThread, useScanChannelThreads } from 'hooks/useFixMeMessageThread'
+import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 
@@ -23,16 +22,8 @@ export const SpaceThreadsInbox = () => {
     const { sizes, onSizesChange } = usePersistPanes(['thread-inbox', 'thread-inbox-replies'])
     const { userId } = useMatrixStore()
     const spaceId = useSpaceId()
-    const data = useSpaceData()
-    const channelGroups = data?.channelGroups ?? []
+    const threads = useSpaceThreadRoots()
     const { messageId } = useParams()
-
-    // flatmap channels
-    const channels = channelGroups.reduce((channels, group) => {
-        return [...channels, ...group.channels]
-    }, [] as Channel[])
-
-    const { threads } = useScanChannelThreads(channels, userId)
 
     const navigate = useNavigate()
 

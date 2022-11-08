@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { firstBy } from 'thenby'
-import { Channel, ThreadStats, TimelineEvent, ZTEvent, useTimelineStore } from 'use-zion-client'
+import { TimelineEvent, ZTEvent } from 'use-zion-client'
 
 export const useFilterReplies = (events: TimelineEvent[], bypass = false) => {
     const filteredEvents = useMemo(
@@ -46,46 +46,5 @@ export const useMessageThread = (messageId: string, channelMessages: TimelineEve
     return {
         parentMessage,
         messages,
-    }
-}
-
-type ThreadResult = {
-    type: 'thread'
-    unread: boolean
-    thread: ThreadStats
-    channel: Channel
-    timestamp: number
-}
-
-export const useScanChannelThreads = (channels: Channel[], userId: string | null) => {
-    const threadsStats = useTimelineStore((state) => state.threadsStats)
-
-    if (userId === null) {
-        return { threads: [] }
-    }
-
-    const threads = [] as ThreadResult[]
-
-    channels.forEach((channel) => {
-        const channelThreadStats: Record<string, ThreadStats> =
-            threadsStats[channel.id.matrixRoomId] || {}
-
-        const channelThreads = Object.values(channelThreadStats)
-            .filter((thread) => thread.userIds.has(userId) || thread.parent?.sender.id === userId)
-            .map((thread) => ({
-                type: 'thread' as const,
-                unread: false,
-                thread,
-                channel,
-                timestamp: thread.latestTs,
-            }))
-
-        threads.push(...channelThreads)
-    })
-
-    threads.sort(firstBy<ThreadResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1))
-
-    return {
-        threads,
     }
 }

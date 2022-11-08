@@ -26,6 +26,7 @@ export { useSpaceData, useInvites, useInvitesForSpace, useInviteData } from './h
 export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
+export { useSpaceThreadRoots } from './hooks/use-space-thread-roots'
 export { useSpacesFromContract, useSpaceFromContract } from './hooks/use-spaces-from-contract'
 export { useTimelineReactions } from './hooks/use-timeline-reactions'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
@@ -53,6 +54,7 @@ export type {
     SpaceChild,
     SpaceData,
     SpaceItem,
+    ThreadResult,
     MessageContent,
     ZionTextMessageContent,
 } from './types/matrix-types'
