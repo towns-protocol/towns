@@ -75,7 +75,7 @@ export const EmojiShortcutPlugin = () => {
                 anchorElement,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
             ) =>
-                anchorElement && results.length
+                anchorElement.current && results.length
                     ? ReactDOM.createPortal(
                           <Box position="relative">
                               <Stack
@@ -105,7 +105,7 @@ export const EmojiShortcutPlugin = () => {
                                   ))}
                               </Stack>
                           </Box>,
-                          anchorElement,
+                          anchorElement.current,
                       )
                     : null
             }

@@ -90,7 +90,7 @@ export const NewMentionsPlugin = (props: Props) => {
                 anchorElement,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
             ) =>
-                anchorElement && options.length
+                anchorElement.current && options.length
                     ? ReactDOM.createPortal(
                           <Box border position="relative">
                               <Stack
@@ -121,7 +121,7 @@ export const NewMentionsPlugin = (props: Props) => {
                                   ))}
                               </Stack>
                           </Box>,
-                          anchorElement,
+                          anchorElement.current,
                       )
                     : null
             }

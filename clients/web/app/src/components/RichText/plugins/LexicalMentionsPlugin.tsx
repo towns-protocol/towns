@@ -280,7 +280,7 @@ export default function NewMentionsPlugin(): JSX.Element | null {
                 anchorElement,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
             ) =>
-                anchorElement && results.length
+                anchorElement.current && results.length
                     ? ReactDOM.createPortal(
                           <ul>
                               {options.map((option, i: number) => (
@@ -299,7 +299,7 @@ export default function NewMentionsPlugin(): JSX.Element | null {
                                   />
                               ))}
                           </ul>,
-                          anchorElement,
+                          anchorElement.current,
                       )
                     : null
             }

@@ -13,6 +13,7 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin'
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { HeadingNode, QuoteNode } from '@lexical/rich-text'
+import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
 import React, { useMemo, useState } from 'react'
@@ -113,6 +114,7 @@ export const RichTextPreview = React.memo(
         return (
             <LexicalComposer initialConfig={initialConfig}>
                 <RichTextPlugin
+                    ErrorBoundary={LexicalErrorBoundary}
                     contentEditable={<ContentEditable className={fieldClassName} />}
                     placeholder=""
                 />
@@ -132,6 +134,7 @@ export const RichTextPreviewPlain = React.memo((props: { content: string; edited
             <RichTextPlugin
                 contentEditable={<ContentEditable className={fieldClassName} />}
                 placeholder=""
+                ErrorBoundary={LexicalErrorBoundary}
             />
         </LexicalComposer>
     )
@@ -156,6 +159,7 @@ export const RichTextEditor = (props: Props) => {
                 <RichTextPlugin
                     contentEditable={<ContentEditable className={inputClassName} />}
                     placeholder={<RichTextPlaceholder placeholder={placeholder} />}
+                    ErrorBoundary={LexicalErrorBoundary}
                 />
             </RichTextUI>
             <OnFocusPlugin autoFocus={props.autoFocus} onFocusChange={onFocusChange} />
