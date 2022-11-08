@@ -46,7 +46,7 @@ contract ClaimPool {
       claimedAddresses[msg.sender] = true;
 
       address payable claimer = payable(msg.sender);
-      uint256 claimAmount = ONE_TIME_CLAIM_AMOUNT * 10**18;
+      uint256 claimAmount = ONE_TIME_CLAIM_AMOUNT * 10 ** 18;
 
       zionToken.transfer(claimer, claimAmount);
 
@@ -60,7 +60,7 @@ contract ClaimPool {
     claimedAddresses[msg.sender] = true;
 
     address payable claimer = payable(msg.sender);
-    uint256 claimAmount = UNRESTRICTED_CLAIM_AMOUNT * 10**18;
+    uint256 claimAmount = UNRESTRICTED_CLAIM_AMOUNT * 10 ** 18;
 
     zionToken.transfer(claimer, claimAmount);
 

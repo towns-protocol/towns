@@ -222,9 +222,10 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   /// *********************************
   /// *****EXTERNAL FUNCTIONS**********
   /// *********************************
-  function setSpaceAccess(string memory spaceNetworkId, bool disabled)
-    external
-  {
+  function setSpaceAccess(
+    string memory spaceNetworkId,
+    bool disabled
+  ) external {
     _validateIsAllowed(
       spaceNetworkId,
       "",
@@ -270,19 +271,17 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function setDefaultUserEntitlementModule(address entitlementModule)
-    external
-    onlyOwner
-  {
+  function setDefaultUserEntitlementModule(
+    address entitlementModule
+  ) external onlyOwner {
     DEFAULT_USER_ENTITLEMENT_MODULE = entitlementModule;
     emit Events.DefaultEntitlementSet(entitlementModule);
   }
 
   /// @inheritdoc ISpaceManager
-  function setDefaultTokenEntitlementModule(address entitlementModule)
-    external
-    onlyOwner
-  {
+  function setDefaultTokenEntitlementModule(
+    address entitlementModule
+  ) external onlyOwner {
     DEFAULT_TOKEN_ENTITLEMENT_MODULE = entitlementModule;
     emit Events.DefaultEntitlementSet(entitlementModule);
   }
@@ -319,10 +318,10 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function createRole(string calldata spaceNetworkId, string calldata name)
-    external
-    returns (uint256 roleId)
-  {
+  function createRole(
+    string calldata spaceNetworkId,
+    string calldata name
+  ) external returns (uint256 roleId) {
     _validateIsAllowed(
       spaceNetworkId,
       "",
@@ -478,11 +477,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function getPermissionFromMap(bytes32 permissionType)
-    public
-    view
-    returns (DataTypes.Permission memory)
-  {
+  function getPermissionFromMap(
+    bytes32 permissionType
+  ) public view returns (DataTypes.Permission memory) {
     return
       IPermissionRegistry(PERMISSION_REGISTRY).getPermissionByPermissionType(
         permissionType
@@ -490,11 +487,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function getSpaceInfoBySpaceId(string calldata spaceId)
-    external
-    view
-    returns (DataTypes.SpaceInfo memory)
-  {
+  function getSpaceInfoBySpaceId(
+    string calldata spaceId
+  ) external view returns (DataTypes.SpaceInfo memory) {
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
 
     return
@@ -553,20 +548,16 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function getChannelsBySpaceId(string memory spaceId)
-    external
-    view
-    returns (DataTypes.Channels memory)
-  {
+  function getChannelsBySpaceId(
+    string memory spaceId
+  ) external view returns (DataTypes.Channels memory) {
     return _channelsBySpaceId[_getSpaceIdByNetworkId(spaceId)];
   }
 
   /// @inheritdoc ISpaceManager
-  function getEntitlementModulesBySpaceId(string calldata spaceId)
-    public
-    view
-    returns (address[] memory)
-  {
+  function getEntitlementModulesBySpaceId(
+    string calldata spaceId
+  ) public view returns (address[] memory) {
     return _spaceById[_getSpaceIdByNetworkId(spaceId)].entitlementModules;
   }
 
@@ -582,11 +573,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function getEntitlementsInfoBySpaceId(string calldata spaceId)
-    public
-    view
-    returns (DataTypes.EntitlementModuleInfo[] memory)
-  {
+  function getEntitlementsInfoBySpaceId(
+    string calldata spaceId
+  ) public view returns (DataTypes.EntitlementModuleInfo[] memory) {
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
 
     DataTypes.EntitlementModuleInfo[]
@@ -617,20 +606,16 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
-  function getSpaceOwnerBySpaceId(string calldata spaceId)
-    external
-    view
-    returns (address)
-  {
+  function getSpaceOwnerBySpaceId(
+    string calldata spaceId
+  ) external view returns (address) {
     return ISpace(SPACE_NFT).getOwnerBySpaceId(_getSpaceIdByNetworkId(spaceId));
   }
 
   /// @inheritdoc ISpaceManager
-  function getSpaceIdByNetworkId(string calldata networkId)
-    external
-    view
-    returns (uint256)
-  {
+  function getSpaceIdByNetworkId(
+    string calldata networkId
+  ) external view returns (uint256) {
     return _getSpaceIdByNetworkId(networkId);
   }
 
@@ -645,11 +630,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   /// ****************************
   /// *****INTERNAL FUNCTIONS*****
   /// ****************************
-  function _getSpaceIdByNetworkId(string memory networkId)
-    internal
-    view
-    returns (uint256)
-  {
+  function _getSpaceIdByNetworkId(
+    string memory networkId
+  ) internal view returns (uint256) {
     return _spaceIdByHash[keccak256(bytes(networkId))];
   }
 
@@ -698,10 +681,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     return entitled;
   }
 
-  function _createSpace(DataTypes.CreateSpaceData calldata info)
-    internal
-    returns (uint256 spaceId)
-  {
+  function _createSpace(
+    DataTypes.CreateSpaceData calldata info
+  ) internal returns (uint256 spaceId) {
     unchecked {
       // create space Id
       spaceId = ++_spacesCounter;
@@ -742,10 +724,10 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     }
   }
 
-  function _createOwnerRoleEntitlement(uint256 spaceId, string memory networkId)
-    internal
-    returns (uint256 ownerRoleId)
-  {
+  function _createOwnerRoleEntitlement(
+    uint256 spaceId,
+    string memory networkId
+  ) internal returns (uint256 ownerRoleId) {
     DataTypes.ExternalToken memory spaceNFTInfo = _getOwnerNFTInformation(
       spaceId
     );
@@ -856,11 +838,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     );
   }
 
-  function _getOwnerNFTInformation(uint256 spaceId)
-    internal
-    view
-    returns (DataTypes.ExternalToken memory)
-  {
+  function _getOwnerNFTInformation(
+    uint256 spaceId
+  ) internal view returns (DataTypes.ExternalToken memory) {
     DataTypes.ExternalToken memory tokenInfo = DataTypes.ExternalToken(
       SPACE_NFT,
       1,
@@ -919,10 +899,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
 
   /// @notice validates that the entitlement module implements the correct interface
   /// @param entitlementAddress the address of the entitlement module
-  function _validateEntitlementInterface(address entitlementAddress)
-    internal
-    view
-  {
+  function _validateEntitlementInterface(
+    address entitlementAddress
+  ) internal view {
     if (
       IERC165(entitlementAddress).supportsInterface(
         type(IEntitlementModule).interfaceId

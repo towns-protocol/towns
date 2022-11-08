@@ -6,14 +6,14 @@
     "main": "index.js",
     "types": "index.d.ts",
     "scripts": {
+        "all": "make all",
         "clean": "make clean",
-        "setup": "make clean && make build",
-        "sync": "make update",
-        "test": "make test",
-        "snapshot": "make snapshot",
         "format": "make format",
         "lint": "make lint",
-        "all": "make all"
+        "setup": "make clean && make build",
+        "snapshot": "make snapshot",
+        "sync": "make update",
+        "test": "make test"
     },
     "dependencies": {
         "@opengsn/contracts": "^2.2.6"

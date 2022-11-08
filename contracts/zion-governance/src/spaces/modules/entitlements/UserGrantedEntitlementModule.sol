@@ -230,11 +230,10 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     return roles;
   }
 
-  function concatArrays(Entitlement[] memory a, Entitlement[] memory b)
-    internal
-    pure
-    returns (Entitlement[] memory)
-  {
+  function concatArrays(
+    Entitlement[] memory a,
+    Entitlement[] memory b
+  ) internal pure returns (Entitlement[] memory) {
     Entitlement[] memory c = new Entitlement[](a.length + b.length);
     uint256 i = 0;
     for (; i < a.length; i++) {

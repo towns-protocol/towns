@@ -63,11 +63,9 @@ abstract contract SpaceTestUtils {
     return data;
   }
 
-  function getTestNFTEntitlement(address nftAddress)
-    internal
-    pure
-    returns (DataTypes.ExternalTokenEntitlement memory)
-  {
+  function getTestNFTEntitlement(
+    address nftAddress
+  ) internal pure returns (DataTypes.ExternalTokenEntitlement memory) {
     address tokenAddress = address(nftAddress);
     uint256 quantity = 1;
     bool isSingleToken = false;

@@ -55,7 +55,7 @@ contract ClaimPoolGSN is BaseRelayRecipient {
       claimedAddresses[_msgSender()] = true;
 
       address payable claimer = payable(_msgSender());
-      uint256 claimAmount = ONE_TIME_CLAIM_AMOUNT * 10**18;
+      uint256 claimAmount = ONE_TIME_CLAIM_AMOUNT * 10 ** 18;
 
       zionToken.transfer(claimer, claimAmount);
 
@@ -69,7 +69,7 @@ contract ClaimPoolGSN is BaseRelayRecipient {
     claimedAddresses[_msgSender()] = true;
 
     address payable claimer = payable(_msgSender());
-    uint256 claimAmount = UNRESTRICTED_CLAIM_AMOUNT * 10**18;
+    uint256 claimAmount = UNRESTRICTED_CLAIM_AMOUNT * 10 ** 18;
 
     zionToken.transfer(claimer, claimAmount);
 

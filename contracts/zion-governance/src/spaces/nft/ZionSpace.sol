@@ -8,9 +8,11 @@ import {ISpaceManager} from "../interfaces/ISpaceManager.sol";
 contract ZionSpace is ERC721, ISpace {
   address internal _manager;
 
-  constructor(string memory name_, string memory symbol_, address spaceManager_)
-    ERC721(name_, symbol_)
-  {
+  constructor(
+    string memory name_,
+    string memory symbol_,
+    address spaceManager_
+  ) ERC721(name_, symbol_) {
     _manager = spaceManager_;
   }
 
@@ -19,10 +21,10 @@ contract ZionSpace is ERC721, ISpace {
     _;
   }
 
-  function mintBySpaceId(uint256 spaceId, address spaceOwner)
-    external
-    onlySpaceManager
-  {
+  function mintBySpaceId(
+    uint256 spaceId,
+    address spaceOwner
+  ) external onlySpaceManager {
     _mint(spaceOwner, spaceId);
   }
 

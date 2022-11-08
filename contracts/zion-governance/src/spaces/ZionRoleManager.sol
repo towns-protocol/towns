@@ -32,19 +32,16 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     SPACE_MANAGER = spaceManager;
   }
 
-  function createRole(uint256 spaceId, string memory name)
-    public
-    onlySpaceManager
-    returns (uint256)
-  {
+  function createRole(
+    uint256 spaceId,
+    string memory name
+  ) public onlySpaceManager returns (uint256) {
     return CreationLogic.createRole(spaceId, name, _rolesBySpaceId);
   }
 
-  function createOwnerRole(uint256 spaceId)
-    external
-    onlySpaceManager
-    returns (uint256)
-  {
+  function createOwnerRole(
+    uint256 spaceId
+  ) external onlySpaceManager returns (uint256) {
     uint256 ownerRoleId = createRole(spaceId, "Owner");
 
     DataTypes.Permission[] memory allPermissions = ZionPermissionsRegistry(
@@ -103,10 +100,10 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     }
   }
 
-  function removeRole(uint256 spaceId, uint256 roleId)
-    external
-    onlySpaceManager
-  {
+  function removeRole(
+    uint256 spaceId,
+    uint256 roleId
+  ) external onlySpaceManager {
     DataTypes.Role[] storage roles = _rolesBySpaceId[spaceId].roles;
 
     uint256 roleLen = roles.length;
@@ -136,34 +133,29 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     }
   }
 
-  function getPermissionsBySpaceIdByRoleId(uint256 spaceId, uint256 roleId)
-    public
-    view
-    returns (DataTypes.Permission[] memory)
-  {
+  function getPermissionsBySpaceIdByRoleId(
+    uint256 spaceId,
+    uint256 roleId
+  ) public view returns (DataTypes.Permission[] memory) {
     return _permissionsBySpaceIdByRoleId[spaceId][roleId];
   }
 
-  function getRolesBySpaceId(uint256 spaceId)
-    public
-    view
-    returns (DataTypes.Role[] memory)
-  {
+  function getRolesBySpaceId(
+    uint256 spaceId
+  ) public view returns (DataTypes.Role[] memory) {
     return _rolesBySpaceId[spaceId].roles;
   }
 
-  function getRoleBySpaceIdByRoleId(uint256 spaceId, uint256 roleId)
-    public
-    view
-    returns (DataTypes.Role memory)
-  {
+  function getRoleBySpaceIdByRoleId(
+    uint256 spaceId,
+    uint256 roleId
+  ) public view returns (DataTypes.Role memory) {
     return _rolesBySpaceId[spaceId].roles[roleId];
   }
 
-  function _validateOwnerPermission(DataTypes.Permission memory permission)
-    internal
-    view
-  {
+  function _validateOwnerPermission(
+    DataTypes.Permission memory permission
+  ) internal view {
     if (
       keccak256(abi.encode(permission)) ==
       keccak256(

@@ -77,11 +77,9 @@ contract ZionPermissionsRegistry is Ownable {
     return _permissions;
   }
 
-  function getPermissionByPermissionType(bytes32 permissionType)
-    external
-    view
-    returns (DataTypes.Permission memory)
-  {
+  function getPermissionByPermissionType(
+    bytes32 permissionType
+  ) external view returns (DataTypes.Permission memory) {
     return _permissionByPermissionHash[permissionType];
   }
 

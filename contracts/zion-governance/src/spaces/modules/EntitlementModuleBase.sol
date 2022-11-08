@@ -43,13 +43,9 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
     return _description;
   }
 
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC165) returns (bool) {
     return
       interfaceId == type(IEntitlementModule).interfaceId ||
       super.supportsInterface(interfaceId);

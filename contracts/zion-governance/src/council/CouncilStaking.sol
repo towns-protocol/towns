@@ -133,27 +133,21 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   // View
   //
 
-  function getStakerByAddress(address _staker)
-    external
-    view
-    returns (CouncilDataTypes.Staker memory)
-  {
+  function getStakerByAddress(
+    address _staker
+  ) external view returns (CouncilDataTypes.Staker memory) {
     return _stakerByAddress[_staker];
   }
 
-  function getStakerAddressByTokenId(uint256 _tokenId)
-    external
-    view
-    returns (address)
-  {
+  function getStakerAddressByTokenId(
+    uint256 _tokenId
+  ) external view returns (address) {
     return _stakerAddressByTokenId[_tokenId];
   }
 
-  function getStakedTokensByAddress(address _user)
-    public
-    view
-    returns (CouncilDataTypes.StakedToken[] memory)
-  {
+  function getStakedTokensByAddress(
+    address _user
+  ) public view returns (CouncilDataTypes.StakedToken[] memory) {
     // Check if user has staked
     if (_stakerByAddress[msg.sender].amountStaked > 0) {
       // Returns all the tokens in the stakedToken Array for this user are not -1
@@ -190,11 +184,9 @@ contract CouncilStaking is Ownable, ReentrancyGuard {
   // Internal
   //
 
-  function _calculatePoints(address _staker)
-    internal
-    view
-    returns (uint256 _rewards)
-  {
+  function _calculatePoints(
+    address _staker
+  ) internal view returns (uint256 _rewards) {
     return (((
       ((block.timestamp - _stakerByAddress[_staker].timeOfLastUpdate) *
         _stakerByAddress[_staker].amountStaked)

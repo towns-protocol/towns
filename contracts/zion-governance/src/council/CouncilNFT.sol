@@ -106,13 +106,9 @@ contract CouncilNFT is ERC721, Ownable {
   /// @notice Get the tokenURI for the given tokenId
   /// @param tokenId the id of the token to get the tokenURI for
   /// @return the tokenURI for the given tokenId
-  function tokenURI(uint256 tokenId)
-    public
-    view
-    virtual
-    override
-    returns (string memory)
-  {
+  function tokenURI(
+    uint256 tokenId
+  ) public view virtual override returns (string memory) {
     if (ownerOf(tokenId) == address(0)) {
       revert CouncilErrors.NonExistentTokenURI();
     }

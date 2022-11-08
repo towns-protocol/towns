@@ -11,10 +11,11 @@ contract Zion is ERC20Votes {
     _mint(msg.sender, vTotalSupply);
   }
 
-  function _afterTokenTransfer(address from, address to, uint256 amount)
-    internal
-    override(ERC20Votes)
-  {
+  function _afterTokenTransfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal override(ERC20Votes) {
     super._afterTokenTransfer(from, to, amount);
   }
 
@@ -22,10 +23,10 @@ contract Zion is ERC20Votes {
     super._mint(to, amount);
   }
 
-  function _burn(address account, uint256 amount)
-    internal
-    override(ERC20Votes)
-  {
+  function _burn(
+    address account,
+    uint256 amount
+  ) internal override(ERC20Votes) {
     super._burn(account, amount);
   }
 }

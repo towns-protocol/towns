@@ -5,11 +5,10 @@ import {Constants} from "../libraries/Constants.sol";
 import {Errors} from "../libraries/Errors.sol";
 
 library Utils {
-  function stringEquals(string memory s1, string memory s2)
-    internal
-    pure
-    returns (bool)
-  {
+  function stringEquals(
+    string memory s1,
+    string memory s2
+  ) internal pure returns (bool) {
     bytes memory b1 = bytes(s1);
     bytes memory b2 = bytes(s2);
     uint256 l1 = b1.length;

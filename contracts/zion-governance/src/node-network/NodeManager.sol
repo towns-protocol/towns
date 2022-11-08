@@ -126,13 +126,9 @@ contract NodeManager is
   /**
    * @notice Override supportsInterface to return true for AccessControlUpgradable and IERC1822ProxiableUpgradeable
    */
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(AccessControlUpgradeable)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(AccessControlUpgradeable) returns (bool) {
     if (super.supportsInterface(interfaceId)) {
       return true;
     } else if (type(IERC1822ProxiableUpgradeable).interfaceId == interfaceId) {
@@ -153,13 +149,9 @@ contract NodeManager is
    * @notice Check that the upgrade is being performed by the contract owner
    * and that it isn't being downgraded to a prior version
    */
-  function _authorizeUpgrade(address newImplementation)
-    internal
-    view
-    virtual
-    override
-    onlyOwner
-  {
+  function _authorizeUpgrade(
+    address newImplementation
+  ) internal view virtual override onlyOwner {
     NodeManager newContract = NodeManager(newImplementation);
     uint16 newVersion = newContract.getContractVersion();
     require(deployedContractVersion < newVersion, "Downgrade not allowed");
@@ -177,11 +169,10 @@ contract NodeManager is
    * @param  nodeHash Sha256 hash of the Nodes public key
    * @param fqdn Fully Quailified Domain Name that the Node will be publically reachable at via HTTPS, using the keypair matching the nodeHashs
    */
-  function registerNode(uint256 nodeHash, string calldata fqdn)
-    external
-    payable
-    nonReentrant
-  {
+  function registerNode(
+    uint256 nodeHash,
+    string calldata fqdn
+  ) external payable nonReentrant {
     require(msg.value >= NODE_STAKE, "Must transfer at least NODE_STAKE");
     require(bytes(fqdn).length < 255, "fqdn length must be less than 255");
     require(FQDNRegex.matches((fqdn)), "fqdn must match regex");
