@@ -27,7 +27,7 @@ export const getMessageBody = (eventId: string, message: RoomMessageEvent): stri
                 message.content['m.body']
             )
         default:
-            return `${message.content.body}\n*Unsupported message type* **${message.content.msgType}**`
+            return `${message.content.body}\n*Unsupported message type* **${message.msgType}**`
     }
 }
 
