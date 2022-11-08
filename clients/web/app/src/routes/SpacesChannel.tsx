@@ -93,9 +93,9 @@ const SpacesChannelComponent = () => {
                     ) : (
                         <Box grow absoluteFill height="100%" justifyContent="end">
                             <MessageTimelineWrapper
-                                key={deferredChannelId.slug}
+                                key={channelId.slug}
                                 spaceId={spaceId}
-                                channelId={deferredChannelId}
+                                channelId={channelId}
                                 events={channelMessages}
                             >
                                 {!USE_VLIST ? (

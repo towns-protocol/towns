@@ -226,7 +226,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         if (!hasSettled && hasScrolledIntoView && listHeight) {
             const timeout = setTimeout(() => {
                 setHasSettled(true)
-                scrollContainerRef.current?.scrollBy(0, Number.MAX_SAFE_INTEGER)
+                scrollContainerRef.current?.scrollBy(0, 10 ** 8)
             }, 250)
             return () => {
                 clearTimeout(timeout)

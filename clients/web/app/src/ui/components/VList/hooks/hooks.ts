@@ -7,10 +7,7 @@ const DEBUG_VLIST = true
  * Keeps viewrport updated
  */
 export const useViewport = (scrollContainer: HTMLElement | null, hasScrolledIntoView: boolean) => {
-    const [viewport, setScrollFrame] = useState<[number, number]>([
-        Number.MAX_SAFE_INTEGER,
-        Number.MAX_SAFE_INTEGER - 1000,
-    ])
+    const [viewport, setScrollFrame] = useState<[number, number]>([10 ** 8, 10 ** 8 - 1000])
 
     const onScroll = useCallback(() => {
         if (scrollContainer && hasScrolledIntoView) {
@@ -61,9 +58,9 @@ export const useScrollIntoView = (scrollContainer: HTMLElement | null, listHeigh
         }
         const timeout = setTimeout(() => {
             DEBUG_VLIST && console.log(`%cuseScrollIntoView`, `color:red;`)
-            scrollContainer.scrollTo(0, Number.MAX_SAFE_INTEGER)
+            scrollContainer.scrollTo(0, 10 ** 8)
             setHasScrolledIntoView(true)
-            scrollContainer.scrollTo(0, Number.MAX_SAFE_INTEGER)
+            scrollContainer.scrollTo(0, 10 ** 8)
         }, SAFE_REDRAW_DELAY)
 
         return () => {
