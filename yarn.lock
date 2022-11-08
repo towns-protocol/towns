@@ -11604,6 +11604,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"get-urls@https://github.com/HereNotThere/get-urls":
+  version: 11.0.0
+  resolution: "get-urls@https://github.com/HereNotThere/get-urls.git#commit=10caffd3752d64d85f646508d5e59bc6daee1716"
+  dependencies:
+    normalize-url: ^8.0.0
+    re2: ^1.17.7
+    url-regex-safe: ^3.0.0
+  dependenciesMeta:
+    re2:
+      optional: true
+  checksum: a0a2327552f9569fdbffbe8cb9fbec240cc5cf2b972da15266720db81d6384dc604f31ed3fd60f5062d17e49c2bc1d9dd8ae4e68e02b1dd3998376a795c00822
+  languageName: node
+  linkType: hard
+
 "getpass@npm:^0.1.1":
   version: 0.1.7
   resolution: "getpass@npm:0.1.7"
@@ -12033,6 +12047,7 @@ __metadata:
     ethers: ^5.7.2
     framer-motion: ^7.6.1
     fuzzysort: ^2.0.1
+    get-urls: "https://github.com/HereNotThere/get-urls"
     http-status-codes: ^2.2.0
     jsdom: ^20.0.1
     lexical: ^0.6.0
@@ -12569,6 +12584,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"install-artifact-from-github@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "install-artifact-from-github@npm:1.3.1"
+  bin:
+    install-from-cache: bin/install-from-cache.js
+    save-to-github-cache: bin/save-to-github-cache.js
+  checksum: 9d33af5d021f0ec9ee28d55a95a63bd956a75940c4bb39c3107a5c4c583d61c079751deb15e7cceebcca2f8a4e6ba2e4cdc91ea9487589a9225047e9a1524d03
+  languageName: node
+  linkType: hard
+
 "internal-slot@npm:^1.0.3":
   version: 1.0.3
   resolution: "internal-slot@npm:1.0.3"
@@ -12608,6 +12633,13 @@ __metadata:
     redis-parser: ^3.0.0
     standard-as-callback: ^2.1.0
   checksum: 2cb7f0f4217e6774accad3620af1b7114722721c1d1824be2c9f0c2a77ab9629f2e0848d18b1a7208bc37796ae1207cb3e0898fce61900cfe797da0382724ad1
+  languageName: node
+  linkType: hard
+
+"ip-regex@npm:4.3.0":
+  version: 4.3.0
+  resolution: "ip-regex@npm:4.3.0"
+  checksum: 7ff904b891221b1847f3fdf3dbb3e6a8660dc39bc283f79eb7ed88f5338e1a3d1104b779bc83759159be266249c59c2160e779ee39446d79d4ed0890dfd06f08
   languageName: node
   linkType: hard
 
@@ -15686,7 +15718,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.14.0":
+"nan@npm:^2.14.0, nan@npm:^2.16.0":
   version: 2.17.0
   resolution: "nan@npm:2.17.0"
   dependencies:
@@ -15825,7 +15857,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp@npm:latest":
+"node-gyp@npm:^9.0.0, node-gyp@npm:latest":
   version: 9.3.0
   resolution: "node-gyp@npm:9.3.0"
   dependencies:
@@ -15958,6 +15990,13 @@ __metadata:
   version: 6.1.0
   resolution: "normalize-url@npm:6.1.0"
   checksum: 4a4944631173e7d521d6b80e4c85ccaeceb2870f315584fa30121f505a6dfd86439c5e3fdd8cd9e0e291290c41d0c3599f0cb12ab356722ed242584c30348e50
+  languageName: node
+  linkType: hard
+
+"normalize-url@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "normalize-url@npm:8.0.0"
+  checksum: 24c20b75ebfd526d8453084692720b49d111c63c0911f1b7447427829597841eef5a8ba3f6bb93d6654007b991c1f5cd85da2c907800e439e2e2ec6c2abd0fc0
   languageName: node
   linkType: hard
 
@@ -17271,16 +17310,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-app-rewired@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "react-app-rewired@npm:2.2.1"
+"re2@npm:^1.17.7":
+  version: 1.17.7
+  resolution: "re2@npm:1.17.7"
   dependencies:
-    semver: ^5.6.0
-  peerDependencies:
-    react-scripts: ">=2.1.3"
-  bin:
-    react-app-rewired: bin/index.js
-  checksum: 0b330c2b46413dc5fbb68e68c07704830397b1cfc8335f65d8f856bfbb6c4d8259fad049fc2a117c18794f321e726b844649266f42ff4c3fa044f00be48c1850
+    install-artifact-from-github: ^1.3.1
+    nan: ^2.16.0
+    node-gyp: ^9.0.0
+  checksum: a53efcf1fd77ee9071206e9600791602f95818a471f9313aee931c6417bae4462e8441487ddf78be707ab3faa6cf9956e8deb5a3048c73ba4c024b16a05e5655
   languageName: node
   linkType: hard
 
@@ -18242,7 +18279,6 @@ __metadata:
     node-stdlib-browser: ^1.2.0
     pino: ^8.7.0
     react: ^18.2.0
-    react-app-rewired: ^2.2.1
     react-dom: ^18.2.0
     react-error-boundary: ^3.1.4
     react-router-dom: ^6.4.2
@@ -18411,7 +18447,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^5.5.0, semver@npm:^5.5.1, semver@npm:^5.6.0, semver@npm:^5.7.0, semver@npm:^5.7.1":
+"semver@npm:^5.5.0, semver@npm:^5.5.1, semver@npm:^5.7.0, semver@npm:^5.7.1":
   version: 5.7.1
   resolution: "semver@npm:5.7.1"
   bin:
@@ -19710,6 +19746,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tlds@npm:^1.228.0":
+  version: 1.233.0
+  resolution: "tlds@npm:1.233.0"
+  bin:
+    tlds: bin.js
+  checksum: 4ab5f0b0696ad380d22ca7b40c0bfc0e87564d29f5835efecd7bd57183b5e074fe893029f540b3c195d8e86e96021dc87111754b89bc951143896fd072be5330
+  languageName: node
+  linkType: hard
+
 "tmp@npm:^0.0.33":
   version: 0.0.33
   resolution: "tmp@npm:0.0.33"
@@ -20512,6 +20557,21 @@ __metadata:
     querystringify: ^2.1.1
     requires-port: ^1.0.0
   checksum: fbdba6b1d83336aca2216bbdc38ba658d9cfb8fc7f665eb8b17852de638ff7d1a162c198a8e4ed66001ddbf6c9888d41e4798912c62b4fd777a31657989f7bdf
+  languageName: node
+  linkType: hard
+
+"url-regex-safe@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "url-regex-safe@npm:3.0.0"
+  dependencies:
+    ip-regex: 4.3.0
+    tlds: ^1.228.0
+  peerDependencies:
+    re2: ^1.17.2
+  peerDependenciesMeta:
+    re2:
+      optional: true
+  checksum: 85b45f7436dcdffe3c8caca45a3dedc478dffe308e13637dfec1ad99545ac3b69edb20ba27d33edfca7b1cbc2ad5066e6443518fb363d4f54541bf0d9c1382c8
   languageName: node
   linkType: hard
 
