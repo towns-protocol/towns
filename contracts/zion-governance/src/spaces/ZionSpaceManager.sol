@@ -15,6 +15,7 @@ import {ISpace} from "./interfaces/ISpace.sol";
 import {IRoleManager} from "./interfaces/IRoleManager.sol";
 import {ZionSpaceManagerStorage} from "./storage/ZionSpaceManagerStorage.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Utils} from "./libraries/Utils.sol";
 
 /// @title ZionSpaceManager
 /// @author HNT Labs
@@ -50,6 +51,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   ) external returns (uint256) {
     _validateSpaceDefaults();
 
+    Utils.validateName(info.spaceName);
+
     //create the space with the metadata passed in
     uint256 spaceId = _createSpace(info);
 
@@ -83,6 +86,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     );
 
     uint256 permissionLen = entitlementData.permissions.length;
+
     // If there is another role to create then create it
     if (permissionLen > 0) {
       // create the additional role being gated by the token or for specified users
@@ -155,7 +159,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
 
   /// @inheritdoc ISpaceManager
   function createChannel(
-    DataTypes.CreateChannelData memory data,
+    DataTypes.CreateChannelData calldata data,
     DataTypes.CreateRoleEntitlementData[] memory roles
   ) external returns (uint256 channelId) {
     _validateIsAllowed(
@@ -164,6 +168,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       PermissionTypes.AddRemoveChannels
     );
     _validateSpaceExists(data.spaceNetworkId);
+    Utils.validateName(data.channelName);
 
     uint256 spaceId = _getSpaceIdByNetworkId(data.spaceNetworkId);
     channelId = _createChannel(spaceId, data);
@@ -204,6 +209,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
           roles[i].roleId,
           roles[i].entitlementData
         );
+
         unchecked {
           ++i;
         }
@@ -434,7 +440,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     string calldata spaceNetworkId,
     string calldata channelNetworkId,
     address entitlementModuleAddress,
-    uint256[] calldata roleIds,
+    uint256 roleId,
     bytes calldata data
   ) external {
     _validateSpaceExists(spaceNetworkId);
@@ -453,7 +459,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       spaceNetworkId,
       channelNetworkId,
       entitlementModuleAddress,
-      roleIds,
+      roleId,
       data
     );
     emit Events.EntitlementModuleRemoved(
@@ -474,16 +480,6 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     DataTypes.Permission calldata permission
   ) external view returns (bool) {
     return _isEntitled(spaceId, channelId, user, permission);
-  }
-
-  /// @inheritdoc ISpaceManager
-  function getPermissionFromMap(
-    bytes32 permissionType
-  ) public view returns (DataTypes.Permission memory) {
-    return
-      IPermissionRegistry(PERMISSION_REGISTRY).getPermissionByPermissionType(
-        permissionType
-      );
   }
 
   /// @inheritdoc ISpaceManager
@@ -798,7 +794,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     string calldata spaceId,
     string calldata channelId,
     address entitlementAddress,
-    uint256[] memory roleIds,
+    uint256 roleId,
     bytes memory entitlementData
   ) internal {
     uint256 _spaceId = _spaceIdByHash[keccak256(bytes(spaceId))];
@@ -811,7 +807,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     IEntitlementModule(entitlementAddress).removeEntitlement(
       spaceId,
       channelId,
-      roleIds,
+      roleId,
       entitlementData
     );
   }
@@ -878,7 +874,9 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         spaceNetworkId,
         channelNetworkId,
         _msgSender(),
-        getPermissionFromMap(permission)
+        IPermissionRegistry(PERMISSION_REGISTRY).getPermissionByPermissionType(
+          permission
+        )
       )
     ) {
       return;

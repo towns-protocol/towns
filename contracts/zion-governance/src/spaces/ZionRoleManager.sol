@@ -7,12 +7,12 @@ import {Errors} from "./libraries/Errors.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ZionPermissionsRegistry} from "./ZionPermissionsRegistry.sol";
 import {Constants} from "./libraries/Constants.sol";
 import {PermissionTypes} from "./libraries/PermissionTypes.sol";
 import {CreationLogic} from "./libraries/CreationLogic.sol";
 import {Utils} from "./libraries/Utils.sol";
 import {ISpaceManager} from "./interfaces/ISpaceManager.sol";
+import {IPermissionRegistry} from "./interfaces/IPermissionRegistry.sol";
 
 contract ZionRoleManager is Ownable, ZionRoleStorage {
   address internal immutable PERMISSION_REGISTRY;
@@ -44,7 +44,7 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
   ) external onlySpaceManager returns (uint256) {
     uint256 ownerRoleId = createRole(spaceId, "Owner");
 
-    DataTypes.Permission[] memory allPermissions = ZionPermissionsRegistry(
+    DataTypes.Permission[] memory allPermissions = IPermissionRegistry(
       PERMISSION_REGISTRY
     ).getAllPermissions();
     uint256 permissionLen = allPermissions.length;
@@ -149,8 +149,19 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
   function getRoleBySpaceIdByRoleId(
     uint256 spaceId,
     uint256 roleId
-  ) public view returns (DataTypes.Role memory) {
-    return _rolesBySpaceId[spaceId].roles[roleId];
+  ) public view returns (DataTypes.Role memory role) {
+    DataTypes.Role[] memory roles = _rolesBySpaceId[spaceId].roles;
+    uint256 roleLen = roles.length;
+
+    for (uint256 i = 0; i < roleLen; ) {
+      if (roleId == roles[i].roleId) {
+        return roles[i];
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function _validateOwnerPermission(
@@ -160,9 +171,8 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
       keccak256(abi.encode(permission)) ==
       keccak256(
         abi.encode(
-          ISpaceManager(SPACE_MANAGER).getPermissionFromMap(
-            PermissionTypes.Owner
-          )
+          IPermissionRegistry(PERMISSION_REGISTRY)
+            .getPermissionByPermissionType(PermissionTypes.Owner)
         )
       )
     ) {

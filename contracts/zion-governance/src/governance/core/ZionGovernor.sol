@@ -50,9 +50,7 @@ contract ZionGovernor is
     return super.votingPeriod();
   }
 
-  function quorum(
-    uint256 blockNumber
-  )
+  function quorum(uint256 blockNumber)
     public
     view
     override(IGovernor, GovernorVotesQuorumFraction)
@@ -61,9 +59,7 @@ contract ZionGovernor is
     return super.quorum(blockNumber);
   }
 
-  function state(
-    uint256 proposalId
-  )
+  function state(uint256 proposalId)
     public
     view
     override(Governor, GovernorTimelockControl)
@@ -118,9 +114,12 @@ contract ZionGovernor is
     return super._executor();
   }
 
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public view override(Governor, GovernorTimelockControl) returns (bool) {
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(Governor, GovernorTimelockControl)
+    returns (bool)
+  {
     return super.supportsInterface(interfaceId);
   }
 }

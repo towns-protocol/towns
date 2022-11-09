@@ -3,10 +3,6 @@ pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {Errors} from "../libraries/Errors.sol";
-import {Events} from "../libraries/Events.sol";
-import {Constants} from "../libraries/Constants.sol";
-import {Utils} from "../libraries/Utils.sol";
-import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 library CreationLogic {
   function createSpace(
@@ -16,8 +12,6 @@ library CreationLogic {
     mapping(bytes32 => uint256) storage _spaceIdByHash,
     mapping(uint256 => DataTypes.Space) storage _spaceById
   ) external {
-    Utils.validateName(info.spaceName);
-
     bytes32 networkHash = keccak256(bytes(info.spaceNetworkId));
 
     if (_spaceIdByHash[networkHash] != 0)
@@ -43,8 +37,6 @@ library CreationLogic {
     mapping(uint256 => mapping(uint256 => DataTypes.Channel))
       storage _channelBySpaceIdByChannelId
   ) external {
-    Utils.validateName(info.channelName);
-
     bytes32 networkHash = keccak256(bytes(info.channelNetworkId));
 
     if (_channelIdBySpaceIdByHash[spaceId][networkHash] != 0) {

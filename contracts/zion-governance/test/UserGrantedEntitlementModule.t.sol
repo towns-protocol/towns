@@ -44,9 +44,8 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
 
     assertEq(address(entitlements[0]), address(userGrantedEntitlementModule));
 
-    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      PermissionTypes.Write
-    );
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Write);
 
     assertTrue(
       spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
@@ -77,14 +76,11 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
       )
     );
 
-    uint256[] memory roles = new uint256[](1);
-    roles[0] = roleId;
-
     spaceManager.removeEntitlement(
       spaceNetworkId,
       channelNetworkId,
       address(userGrantedEntitlementModule),
-      roles,
+      roleId,
       abi.encode(address(0))
     );
 
@@ -114,9 +110,8 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
       "First entitlement module should be user granted"
     );
 
-    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      PermissionTypes.Write
-    );
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Write);
 
     assertTrue(
       spaceManager.isEntitled(spaceNetworkId, "", address(this), permission),
@@ -144,14 +139,11 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
       spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
     );
 
-    uint256[] memory roles = new uint256[](1);
-    roles[0] = roleId;
-
     spaceManager.removeEntitlement(
       spaceNetworkId,
       "",
       address(userGrantedEntitlementModule),
-      roles,
+      roleId,
       abi.encode(address(0))
     );
 

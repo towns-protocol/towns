@@ -8,12 +8,12 @@ import {ISpaceManager} from "../src/spaces/interfaces/ISpaceManager.sol";
 import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
 import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
-import "murky/Merkle.sol";
-import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
 import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
+import {IPermissionRegistry} from "../src/spaces/interfaces/IPermissionRegistry.sol";
 import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
 import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
 import {BaseSetup} from "./BaseSetup.sol";
+import "murky/Merkle.sol";
 
 contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
   Zion internal zion;
@@ -48,9 +48,8 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
     // create a space with the default user granted entitlement module
     createSimpleSpace(spaceName, networkId, spaceManager);
 
-    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      PermissionTypes.Ban
-    );
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Ban);
     // Create roles and add permissions
     string memory roleName = "Tester";
     uint256 testerRoleId = spaceManager.createRole(networkId, roleName);
@@ -118,9 +117,8 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
     string memory spaceName = "test-space";
     string memory networkId = "test-network-id";
     string memory roomId = "";
-    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      PermissionTypes.Ban
-    );
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Ban);
 
     createSimpleSpace(spaceName, networkId, spaceManager);
 
@@ -190,9 +188,8 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
     string memory spaceName = "test-space";
     string memory networkId = "test-network-id";
     string memory roomId = "";
-    DataTypes.Permission memory permission = spaceManager.getPermissionFromMap(
-      PermissionTypes.Ban
-    );
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Ban);
 
     createSimpleSpace(spaceName, networkId, spaceManager);
 

@@ -10,8 +10,4 @@ contract ZionRoleStorage {
   /// @notice mapping representing the permission data by space id by role id
   mapping(uint256 => mapping(uint256 => DataTypes.Permission[]))
     internal _permissionsBySpaceIdByRoleId;
-
-  /// @notice mapping representing the role data by space id by channel id
-  mapping(uint256 => mapping(uint256 => DataTypes.Role[]))
-    internal _rolesBySpaceIdByChannelId;
 }

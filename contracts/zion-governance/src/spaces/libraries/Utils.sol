@@ -40,7 +40,8 @@ library Utils {
           (byteName[i] > "9" && byteName[i] < "a")) &&
         byteName[i] != "." &&
         byteName[i] != "-" &&
-        byteName[i] != "_"
+        byteName[i] != "_" &&
+        byteName[i] != " "
       ) revert Errors.NameContainsInvalidCharacters();
       unchecked {
         ++i;

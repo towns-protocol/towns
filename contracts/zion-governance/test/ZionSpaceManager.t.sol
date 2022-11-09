@@ -79,8 +79,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
       "The owner address should be the test contract"
     );
 
-    DataTypes.Permission memory readPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory readPermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Read);
 
     bool isEveryoneReadEntitled = spaceManager.isEntitled(
       networkId,
@@ -98,8 +98,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
   function testCreateSpaceWithEveryonePermissions() public {
     string memory networkId = "!7evmpuHDDgkady9u:localhost";
-    DataTypes.Permission memory readPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory readPermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Read);
     DataTypes.Permission[] memory permissions = new DataTypes.Permission[](1);
     permissions[0] = readPermission;
 
@@ -124,8 +124,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     assertEq(isEveryoneReadEntitled, true, "Everyone should be read entitled");
 
-    DataTypes.Permission memory writePermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Write);
+    DataTypes.Permission memory writePermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Write);
     bool isEveryoneWriteEntitled = spaceManager.isEntitled(
       networkId,
       "",
@@ -145,7 +145,9 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     string memory channelNetwork = "!channel:localhost";
 
     DataTypes.Permission[] memory permissions = new DataTypes.Permission[](1);
-    permissions[0] = spaceManager.getPermissionFromMap(PermissionTypes.Read);
+    permissions[0] = permissionsRegistry.getPermissionByPermissionType(
+      PermissionTypes.Read
+    );
 
     uint spaceId = createSimpleSpaceWithEveryonePermissions(
       "space-name",
@@ -182,7 +184,7 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
       spaceNetwork,
       channelNetwork,
       address(8),
-      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+      permissionsRegistry.getPermissionByPermissionType(PermissionTypes.Read)
     );
 
     console.log(isEveryoneReadEntitled);
@@ -219,8 +221,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     //Generate the data to create a space
     //Permissinos
-    DataTypes.Permission memory readPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory readPermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Read);
     DataTypes.Permission[] memory permissions = new DataTypes.Permission[](1);
     permissions[0] = readPermission;
 
@@ -361,8 +363,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     createSimpleSpace("test", networkId, spaceManager);
 
-    DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory joinPermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Read);
     // Create roles and add permissions
     string memory roleName = "Joiner";
     uint256 roleId = spaceManager.createRole(networkId, roleName);
@@ -427,8 +429,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     createSimpleSpace("test", networkId, spaceManager);
 
-    DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory joinPermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Read);
     // Create roles and add permissions
     string memory roleName = "Joiner";
     uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
@@ -454,7 +456,7 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     spaceManager.addPermissionToRole(
       networkId,
       readerRoleId,
-      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+      permissionsRegistry.getPermissionByPermissionType(PermissionTypes.Read)
     );
 
     DataTypes.Role[] memory roles = roleManager.getRolesBySpaceId(
@@ -545,7 +547,7 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     spaceManager.addPermissionToRole(
       networkId,
       roleId,
-      spaceManager.getPermissionFromMap(PermissionTypes.Read)
+      permissionsRegistry.getPermissionByPermissionType(PermissionTypes.Read)
     );
 
     DataTypes.Role memory testRole = roleManager.getRoleBySpaceIdByRoleId(
@@ -593,8 +595,8 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     );
 
     string memory roleName = "Joiner";
-    DataTypes.Permission memory joinPermission = spaceManager
-      .getPermissionFromMap(PermissionTypes.Read);
+    DataTypes.Permission memory joinPermission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Read);
     uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
     vm.prank(notSpaceOwner);
     vm.expectRevert(Errors.NotAllowed.selector);

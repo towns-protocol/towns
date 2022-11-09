@@ -35,7 +35,7 @@ interface IEntitlementModule {
   function removeEntitlement(
     string calldata spaceId,
     string calldata channelId,
-    uint256[] calldata _roleIds,
+    uint256 roleId,
     bytes calldata entitlementData
   ) external;
 
@@ -44,7 +44,4 @@ interface IEntitlementModule {
     string calldata channelId,
     address user
   ) external view returns (DataTypes.Role[] memory);
-
-  // function isBanned()
-  // function ban();
 }

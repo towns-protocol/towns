@@ -16,10 +16,21 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     uint256 roleId;
   }
 
+  // spaceId => user => entitlement
   mapping(uint256 => mapping(address => Entitlement[]))
     internal _entitlementsBySpaceIdbyUser;
+
+  // spaceId => channel => user => entitlement
   mapping(uint256 => mapping(uint256 => mapping(address => Entitlement[])))
     internal _entitlementsBySpaceIdByRoomIdByUser;
+
+  // spaceId => roleId => user[]
+  mapping(uint256 => mapping(uint256 => address[]))
+    internal _entitlementDataBySpaceIdByUser;
+
+  // spaceId => channelId => roleId => user[]
+  mapping(uint256 => mapping(uint256 => mapping(uint256 => address[])))
+    internal _entitlementDataBySpaceIdByRoomIdByUser;
 
   constructor(
     string memory name_,
@@ -27,6 +38,27 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     address spaceManager_,
     address roleManager_
   ) EntitlementModuleBase(name_, description_, spaceManager_, roleManager_) {}
+
+  function getEntitlementData(
+    string memory spaceId,
+    string memory channelId,
+    uint256 roleId
+  ) internal view returns (address[] memory) {
+    uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
+      spaceId
+    );
+
+    if (bytes(channelId).length == 0) {
+      return _entitlementDataBySpaceIdByUser[_spaceId][roleId];
+    } else {
+      uint256 _channelId = ISpaceManager(_spaceManager).getChannelIdByNetworkId(
+        spaceId,
+        channelId
+      );
+      return
+        _entitlementDataBySpaceIdByRoomIdByUser[_spaceId][_channelId][roleId];
+    }
+  }
 
   function setEntitlement(
     string memory spaceId,
@@ -42,11 +74,15 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
       channelId
     );
     address user = abi.decode(entitlementData, (address));
+
     if (bytes(channelId).length > 0) {
+      _entitlementDataBySpaceIdByRoomIdByUser[_spaceId][_channelId][roleId]
+        .push(user);
       _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user].push(
         Entitlement(user, block.timestamp, roleId)
       );
     } else {
+      _entitlementDataBySpaceIdByUser[_spaceId][roleId].push(user);
       _entitlementsBySpaceIdbyUser[_spaceId][user].push(
         Entitlement(user, block.timestamp, roleId)
       );
@@ -130,7 +166,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
   function removeEntitlement(
     string calldata spaceId,
     string calldata channelId,
-    uint256[] calldata _roleIds,
+    uint256 roleId,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
@@ -141,44 +177,75 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     );
     address user = abi.decode(entitlementData, (address));
 
-    for (uint256 i = 0; i < _roleIds.length; i++) {
-      if (_channelId > 0) {
-        uint256 entitlementLen = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][
-          _channelId
-        ][user].length;
+    if (_channelId > 0) {
+      uint256 entitlementLen = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][
+        _channelId
+      ][user].length;
+      uint256 entitlementDataLen = _entitlementDataBySpaceIdByRoomIdByUser[
+        _spaceId
+      ][_channelId][roleId].length;
 
-        for (uint256 j = 0; j < entitlementLen; j++) {
-          if (
-            _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][j]
-              .roleId == _roleIds[i]
-          ) {
-            _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][
-              j
-            ] = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][
-              user
-            ][entitlementLen - 1];
-          }
+      for (uint256 i = 0; i < entitlementLen; i++) {
+        if (
+          _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][i]
+            .roleId == roleId
+        ) {
+          _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][
+            i
+          ] = _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user][
+            entitlementLen - 1
+          ];
+          break;
         }
-
-        _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user].pop();
-      } else {
-        uint256 entitlementLen = _entitlementsBySpaceIdbyUser[_spaceId][user]
-          .length;
-        for (uint256 j = 0; j < entitlementLen; j++) {
-          if (
-            _entitlementsBySpaceIdbyUser[_spaceId][user][j].roleId ==
-            _roleIds[i]
-          ) {
-            _entitlementsBySpaceIdbyUser[_spaceId][user][
-              j
-            ] = _entitlementsBySpaceIdbyUser[_spaceId][user][
-              entitlementLen - 1
-            ];
-          }
-        }
-
-        _entitlementsBySpaceIdbyUser[_spaceId][user].pop();
       }
+
+      for (uint i = 0; i < entitlementDataLen; i++) {
+        if (
+          _entitlementDataBySpaceIdByRoomIdByUser[_spaceId][_channelId][roleId][
+            i
+          ] == user
+        ) {
+          _entitlementDataBySpaceIdByRoomIdByUser[_spaceId][_channelId][roleId][
+            i
+          ] = _entitlementDataBySpaceIdByRoomIdByUser[_spaceId][_channelId][
+            roleId
+          ][entitlementDataLen - 1];
+          break;
+        }
+      }
+
+      _entitlementDataBySpaceIdByRoomIdByUser[_spaceId][_channelId][roleId]
+        .pop();
+      _entitlementsBySpaceIdByRoomIdByUser[_spaceId][_channelId][user].pop();
+    } else {
+      uint256 entitlementLen = _entitlementsBySpaceIdbyUser[_spaceId][user]
+        .length;
+      uint256 entitlementDataLen = _entitlementDataBySpaceIdByUser[_spaceId][
+        roleId
+      ].length;
+
+      for (uint256 j = 0; j < entitlementLen; j++) {
+        if (_entitlementsBySpaceIdbyUser[_spaceId][user][j].roleId == roleId) {
+          _entitlementsBySpaceIdbyUser[_spaceId][user][
+            j
+          ] = _entitlementsBySpaceIdbyUser[_spaceId][user][entitlementLen - 1];
+          break;
+        }
+      }
+
+      for (uint256 k = 0; k < entitlementDataLen; k++) {
+        if (_entitlementDataBySpaceIdByUser[_spaceId][roleId][k] == user) {
+          _entitlementDataBySpaceIdByUser[_spaceId][roleId][
+            k
+          ] = _entitlementDataBySpaceIdByUser[_spaceId][roleId][
+            entitlementDataLen - 1
+          ];
+          break;
+        }
+      }
+
+      _entitlementDataBySpaceIdByUser[_spaceId][roleId].pop();
+      _entitlementsBySpaceIdbyUser[_spaceId][user].pop();
     }
   }
 
@@ -230,10 +297,11 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     return roles;
   }
 
-  function concatArrays(
-    Entitlement[] memory a,
-    Entitlement[] memory b
-  ) internal pure returns (Entitlement[] memory) {
+  function concatArrays(Entitlement[] memory a, Entitlement[] memory b)
+    internal
+    pure
+    returns (Entitlement[] memory)
+  {
     Entitlement[] memory c = new Entitlement[](a.length + b.length);
     uint256 i = 0;
     for (; i < a.length; i++) {

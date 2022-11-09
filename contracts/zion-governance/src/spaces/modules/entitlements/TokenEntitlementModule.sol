@@ -33,12 +33,43 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
   mapping(uint256 => SpaceTokenEntitlements) internal entitlementsBySpaceId;
 
+  // spaceId => channelId => roleId => entitlement
+  mapping(uint256 => mapping(uint256 => mapping(uint256 => bytes)))
+    internal _entitlementDataBySpaceIdByChannelIdByRoleId;
+
+  // spaceId => roleId => entitlement
+  mapping(uint256 => mapping(uint256 => bytes))
+    internal _entitlementDataBySpaceIdByRoleId;
+
   constructor(
     string memory name_,
     string memory description_,
     address spaceManager_,
     address roleManager_
   ) EntitlementModuleBase(name_, description_, spaceManager_, roleManager_) {}
+
+  function getEntitlementData(
+    string calldata spaceId,
+    string calldata channelId,
+    uint256 roleId
+  ) internal view returns (bytes memory) {
+    uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
+      spaceId
+    );
+
+    if (bytes(channelId).length == 0) {
+      return _entitlementDataBySpaceIdByRoleId[_spaceId][roleId];
+    } else {
+      uint256 _channelId = ISpaceManager(_spaceManager).getChannelIdByNetworkId(
+        spaceId,
+        channelId
+      );
+      return
+        _entitlementDataBySpaceIdByChannelIdByRoleId[_spaceId][_channelId][
+          roleId
+        ];
+    }
+  }
 
   function setEntitlement(
     string memory spaceId,
@@ -62,9 +93,15 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
     DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement = abi
       .decode(entitlementData, (DataTypes.ExternalTokenEntitlement));
+
     string memory tag = externalTokenEntitlement.tag;
 
     if (bytes(channelId).length > 0) {
+      // save entitlement data by channel
+      _entitlementDataBySpaceIdByChannelIdByRoleId[_spaceId][_channelId][
+        roleId
+      ] = entitlementData;
+
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         _spaceId
       ].roomEntitlementsByRoomId[_channelId].entitlementsByTag[tag];
@@ -79,6 +116,9 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       //So we can look up all potential token entitlements for a permission
       setAllDescByPermissionNames(spaceId, roleId, tag);
     } else {
+      // save entitlement data by space
+      _entitlementDataBySpaceIdByRoleId[_spaceId][roleId] = entitlementData;
+
       TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
         _spaceId
       ].entitlementsByTag[tag];
@@ -101,6 +141,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     if (externalTokenEntitlement.tokens.length == 0) {
       revert("No tokens set");
     }
+
     DataTypes.ExternalToken[] memory externalTokens = externalTokenEntitlement
       .tokens;
     for (uint256 i = 0; i < externalTokens.length; i++) {
@@ -140,23 +181,19 @@ contract TokenEntitlementModule is EntitlementModuleBase {
         desc
       );
       entitlementsBySpaceId[_spaceId].tagsByRoleId[roleId].push(desc);
-      //todo Add All Permission for every one
     }
   }
 
   function removeEntitlement(
     string calldata spaceId,
     string calldata channelId,
-    uint256[] calldata,
+    uint256 roleId,
     bytes calldata entitlementData
-  ) external override onlySpaceManager {
+  ) external onlySpaceManager {
     ISpaceManager spaceManager = ISpaceManager(_spaceManager);
 
     uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
-    uint256 _channelId = spaceManager.getChannelIdByNetworkId(
-      spaceId,
-      channelId
-    );
+
     address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
     if (ownerAddress != msg.sender || msg.sender != _spaceManager) {
@@ -166,10 +203,18 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     string memory tag = abi.decode(entitlementData, (string));
 
     if (bytes(channelId).length > 0) {
+      uint256 _channelId = spaceManager.getChannelIdByNetworkId(
+        spaceId,
+        channelId
+      );
+      delete _entitlementDataBySpaceIdByChannelIdByRoleId[_spaceId][_channelId][
+        roleId
+      ];
       delete entitlementsBySpaceId[_spaceId]
         .roomEntitlementsByRoomId[_channelId]
         .entitlementsByTag[tag];
     } else {
+      delete _entitlementDataBySpaceIdByRoleId[_spaceId][roleId];
       delete entitlementsBySpaceId[_spaceId].entitlementsByTag[tag];
     }
 
