@@ -29,6 +29,7 @@ export const App = () => {
                     enableSpaceRootUnreads
                     homeServerUrl={MATRIX_HOMESERVER_URL}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
+                    initialSyncLimit={100}
                 >
                     <Routes>
                         <Route element={<Main />}>
