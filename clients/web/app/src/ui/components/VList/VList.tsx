@@ -22,7 +22,7 @@ export type VListCtrl = {
 
 interface Props<T> {
     list: T[]
-    renderItem: (data: T) => JSX.Element
+    renderItem: (data: T, index: number, items: T[]) => JSX.Element
     itemHeight?: number | ((data: T) => number)
     viewMargin?: number
     debug?: boolean
@@ -298,14 +298,14 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                         } as React.CSSProperties
                     }
                 >
-                    {renderedItems.map((item) => (
+                    {renderedItems.map((item, index, arr) => (
                         <VListItem
                             cache={cachesRef}
                             id={`${item.id}`}
                             key={item.id}
                             onUpdate={onItemUpdate}
                         >
-                            {props.renderItem(item)}
+                            {props.renderItem(item, index, arr)}
                         </VListItem>
                     ))}
                 </div>

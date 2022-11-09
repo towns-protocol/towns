@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { MessageType, useMyUserId, useZionContext } from 'use-zion-client'
-import { Box, Stack, VList } from '@ui'
+import { Box, Divider, Stack, VList } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { VListCtrl } from 'ui/components/VList/VList'
 import { notUndefined } from 'ui/utils/utils'
@@ -118,15 +118,27 @@ export const MessageTimelineVirtual = () => {
             ctrlRef={vListCtrlRef}
             itemHeight={estimateItemHeight}
             list={ungroupedEvents}
-            renderItem={(r) =>
-                r.type === 'group' ? (
-                    <Stack position="relative" style={{ height: 32, boxShadow: '0 0 1px #f000' }}>
+            renderItem={(r, i, l) => {
+                const isThreadOrigin =
+                    timelineContext?.type === MessageTimelineType.Thread && i == 0 && l.length > 1
+
+                return r.type === 'group' ? (
+                    <Stack position="relative" style={{ boxShadow: '0 0 1px #f000' }} height="x4">
                         <DateDivider label={r.item.date} />
                     </Stack>
                 ) : (
-                    <MessageTimelineItem itemData={r.item} />
+                    <>
+                        <MessageTimelineItem itemData={r.item} />
+                        {isThreadOrigin ? (
+                            <Box paddingX="md" paddingY="md">
+                                <Divider space="none" />
+                            </Box>
+                        ) : (
+                            <></>
+                        )}
+                    </>
                 )
-            }
+            }}
         />
     )
 }

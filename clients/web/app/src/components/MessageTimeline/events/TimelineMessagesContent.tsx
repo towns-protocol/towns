@@ -12,6 +12,7 @@ type Props = {
 
 export const TimelineMessageContent = (props: Props) => {
     const { eventContent, event, members, channels } = props
+
     switch (eventContent.msgType) {
         case MessageType.Image: {
             return <MessageImage content={eventContent.content} />

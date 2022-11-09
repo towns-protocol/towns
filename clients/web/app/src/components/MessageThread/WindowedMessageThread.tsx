@@ -1,17 +1,15 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { TimelineEvent, ZTEvent, useChannelTimeline } from 'use-zion-client'
 import { useChannelContext } from 'use-zion-client/dist/components/ChannelContextProvider'
-import { TimelineMessage } from '@components/MessageTimeline/events/TimelineMessage'
 import {
     MessageTimelineType,
     MessageTimelineWrapper,
 } from '@components/MessageTimeline/MessageTimelineContext'
 import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Divider, IconButton, Stack } from '@ui'
+import { Box, IconButton, Stack } from '@ui'
 import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { useSendReply } from 'hooks/useSendReply'
-import { getIsRoomMessageContent } from 'utils/ztevent_util'
 
 type Props = {
     messageId: string
@@ -29,40 +27,29 @@ export const WindowedMessageThread = (props: Props) => {
         messageId,
         channelMessages.filter((m) => m.content?.kind === ZTEvent.RoomMessage),
     )
+
+    const messagesWithParent = useMemo(() => {
+        return parentMessage ? [parentMessage, ...messages] : messages
+    }, [messages, parentMessage])
+
     const { sendReply } = useSendReply(messageId)
 
     const onSend = (value: string) => {
         sendReply(value, channelId)
     }
 
-    const parentMessageContent = getIsRoomMessageContent(parentMessage)
+    // const parentMessageContent = getIsRoomMessageContent(parentMessage)
 
     return (
         <MessageTimelineWrapper
             spaceId={spaceId}
             channelId={channelId}
             type={MessageTimelineType.Thread}
-            events={messages}
+            events={messagesWithParent}
         >
             <MessageWindow label="Thread" onClose={props.onClose}>
-                <Stack grow paddingY="md" overflow="hidden">
-                    {parentMessage && parentMessageContent && (
-                        <TimelineMessage
-                            event={parentMessage}
-                            eventContent={parentMessageContent}
-                            key={`${parentMessage.eventId}+${
-                                parentMessage.updatedServerTs ?? parentMessage.originServerTs
-                            }`}
-                        />
-                    )}
-                    {!!messages.length && (
-                        <Box paddingX="md" paddingTop="md">
-                            <Divider space="none" />
-                        </Box>
-                    )}
-                    <Stack paddingTop="sm" overflow="hidden">
-                        <MessageTimelineVirtual />
-                    </Stack>
+                <Stack grow overflow="hidden">
+                    <MessageTimelineVirtual />
                 </Stack>
             </MessageWindow>
             <Box paddingY="none" style={{ position: 'sticky', bottom: 0 }}>

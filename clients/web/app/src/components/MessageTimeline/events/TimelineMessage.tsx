@@ -58,6 +58,7 @@ export const TimelineMessage = React.memo((props: Props) => {
         <Message
             id={`event-${event.eventId}`}
             userId={userId}
+            canReply={type !== MessageTimelineType.Thread}
             timestamp={event.originServerTs}
             avatar={avatarUrl}
             channelId={channelId}

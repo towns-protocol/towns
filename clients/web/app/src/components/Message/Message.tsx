@@ -18,6 +18,7 @@ type Props = {
     messageSourceAnnotation?: string
     reactions?: MessageReactions
     replies?: ThreadStats
+    canReply?: boolean
     timestamp?: number
     editing?: boolean
     editable?: boolean
@@ -158,7 +159,7 @@ export const Message = (props: Props) => {
                 </Stack>
                 {spaceId && channelId && eventId && isHover && !isEditing && (
                     <MessageContextMenu
-                        canReply
+                        canReply={props.canReply}
                         canReact={!!onReaction}
                         channelId={channelId}
                         spaceId={spaceId}
