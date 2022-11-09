@@ -93,6 +93,35 @@
             "type": "string"
           },
           {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementData",
+        "outputs": [
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -397,11 +426,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/modules/entitlements/TokenEntitlementModule.sol": {
-      "keccak256": "0x2c59a351ff5a7d3241773bdf82d1d93149fd80077891b5dcc4fbb45785dd2565",
+      "keccak256": "0xe0cf668ce6e6698fe2358a04ae38757a796dfd34eb26b3cbec7c7ff3ddf0d161",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0ab159d261eb6adef7df1d1e55cf406a961f927f5afcffacc95ac58242a61ebc",
-        "dweb:/ipfs/QmcAQpuLdB2HSnzxbG1grrXKrrkdiwi6g1gjkFhLg7ixZi"
+        "bzz-raw://c7f185a2fac6311bd7c2789f3a7b5d2cad228a763a7d940700b801dae419e2eb",
+        "dweb:/ipfs/QmaNLwUd1WKt3iVMqRMkojdxPQKKuHkyoSwdFPN3zSXBhG"
       ]
     },
     "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": {

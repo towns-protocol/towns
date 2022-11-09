@@ -52,7 +52,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     string calldata spaceId,
     string calldata channelId,
     uint256 roleId
-  ) internal view returns (bytes memory) {
+  ) public view returns (bytes memory) {
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );

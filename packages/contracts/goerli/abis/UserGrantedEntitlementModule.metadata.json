@@ -93,6 +93,35 @@
             "type": "string"
           },
           {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementData",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -419,11 +448,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol": {
-      "keccak256": "0xf8b8b60cb7329db39c706e27304c818b5ea2d26a6af0315180401d484ebfaba7",
+      "keccak256": "0x1a9c7d8cd064d3af94167f2f9ac3271d1dd8ca8f9c0bb057f141d304b76aa4ad",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://fa838db2fd4a7513259617065021b1e6c0992f7263f2ef46b524bc0b271fd1d8",
-        "dweb:/ipfs/QmR8hia31snwy87PZVxLdWWA9jQiBYdaajpCmqG32Ugg7y"
+        "bzz-raw://5ab1a15ea07742711ecaa07dcfd84b6889b53c7e8dbf9d6385ba5e2cef3ca8d8",
+        "dweb:/ipfs/Qmany2QtHHhuig8uXvfD1FzyLa9z6vCTuW6YPPvUqr2amY"
       ]
     },
     "contracts/zion-governance/src/spaces/storage/ZionSpaceManagerStorage.sol": {

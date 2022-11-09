@@ -43,7 +43,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     string memory spaceId,
     string memory channelId,
     uint256 roleId
-  ) internal view returns (address[] memory) {
+  ) public view returns (address[] memory) {
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );

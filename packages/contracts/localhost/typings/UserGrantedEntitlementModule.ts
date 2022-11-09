@@ -44,6 +44,7 @@ export interface UserGrantedEntitlementModuleInterface extends utils.Interface {
     "_roleManager()": FunctionFragment;
     "_spaceManager()": FunctionFragment;
     "description()": FunctionFragment;
+    "getEntitlementData(string,string,uint256)": FunctionFragment;
     "getUserRoles(string,string,address)": FunctionFragment;
     "isEntitled(string,string,address,(string))": FunctionFragment;
     "name()": FunctionFragment;
@@ -57,6 +58,7 @@ export interface UserGrantedEntitlementModuleInterface extends utils.Interface {
       | "_roleManager"
       | "_spaceManager"
       | "description"
+      | "getEntitlementData"
       | "getUserRoles"
       | "isEntitled"
       | "name"
@@ -76,6 +78,14 @@ export interface UserGrantedEntitlementModuleInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "description",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getEntitlementData",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "getUserRoles",
@@ -128,6 +138,10 @@ export interface UserGrantedEntitlementModuleInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "description",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getEntitlementData",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -185,6 +199,13 @@ export interface UserGrantedEntitlementModule extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<[string]>;
 
+    getEntitlementData(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
+
     getUserRoles(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
@@ -230,6 +251,13 @@ export interface UserGrantedEntitlementModule extends BaseContract {
 
   description(overrides?: CallOverrides): Promise<string>;
 
+  getEntitlementData(
+    spaceId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<string>,
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
+
   getUserRoles(
     spaceId: PromiseOrValue<string>,
     channelId: PromiseOrValue<string>,
@@ -274,6 +302,13 @@ export interface UserGrantedEntitlementModule extends BaseContract {
     _spaceManager(overrides?: CallOverrides): Promise<string>;
 
     description(overrides?: CallOverrides): Promise<string>;
+
+    getEntitlementData(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     getUserRoles(
       spaceId: PromiseOrValue<string>,
@@ -323,6 +358,13 @@ export interface UserGrantedEntitlementModule extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getEntitlementData(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getUserRoles(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
@@ -368,6 +410,13 @@ export interface UserGrantedEntitlementModule extends BaseContract {
     _spaceManager(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getEntitlementData(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getUserRoles(
       spaceId: PromiseOrValue<string>,
