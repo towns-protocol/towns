@@ -3,19 +3,23 @@ import React, { useEffect } from 'react'
 import { generatePath, useNavigate, useOutlet, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
 import {
+    Channel,
     ChannelContextProvider,
     RoomIdentifier,
+    RoomMember,
     useChannelTimeline,
     useMatrixStore,
     useSpaceId,
+    useSpaceMembers,
     useSpaceThreadRoots,
 } from 'use-zion-client'
 import { Message } from '@components/Message'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
+import { TimelineMessageContent } from '@components/MessageTimeline/events/TimelineMessagesContent'
 import { Box, Stack } from '@ui'
 import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { usePersistPanes } from 'hooks/usePersistPanes'
-import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { getIsRoomMessageContent } from 'utils/ztevent_util'
 
 export const SpaceThreadsInbox = () => {
     const outlet = useOutlet()
@@ -23,6 +27,8 @@ export const SpaceThreadsInbox = () => {
     const { userId } = useMatrixStore()
     const spaceId = useSpaceId()
     const threads = useSpaceThreadRoots()
+    const channels = useSpaceChannels()
+    const { members } = useSpaceMembers()
     const { messageId } = useParams()
 
     const navigate = useNavigate()
@@ -59,6 +65,8 @@ export const SpaceThreadsInbox = () => {
                                             spaceId={spaceId}
                                             channelId={channel.id}
                                             parentId={thread.parentId}
+                                            channels={channels}
+                                            members={members}
                                         />
                                     </ChannelContextProvider>
                                 )
@@ -83,8 +91,10 @@ const InboxEntry = (props: {
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
     parentId: string
+    channels: Channel[]
+    members: RoomMember[]
 }) => {
-    const { spaceId, channelId, parentId, selected: isSelected } = props
+    const { spaceId, channelId, parentId, selected: isSelected, channels, members } = props
     const channelMessages = useChannelTimeline()
 
     const { parentMessage, messages } = useMessageThread(parentId, channelMessages)
@@ -109,9 +119,11 @@ const InboxEntry = (props: {
                     name={parentMessageContent?.sender.displayName ?? ''}
                 >
                     {parentMessage && parentMessageContent && (
-                        <RichTextPreview
-                            content={getMessageBody(parentMessage.eventId, parentMessageContent)}
-                            edited={false}
+                        <TimelineMessageContent
+                            event={parentMessage}
+                            eventContent={parentMessageContent}
+                            members={members}
+                            channels={channels}
                         />
                     )}
                     <Box color="etherum" fontWeight="strong">

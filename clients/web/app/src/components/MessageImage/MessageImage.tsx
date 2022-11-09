@@ -1,9 +1,9 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { MessageContent } from 'use-zion-client'
 import { assignInlineVars } from '@vanilla-extract/dynamic'
+import React, { useMemo, useRef } from 'react'
+import { MessageContent } from 'use-zion-client'
 import { Box, IconButton } from '@ui'
-import { vars } from 'ui/styles/vars.css'
 import { useSize } from 'ui/hooks/useSize'
+import { vars } from 'ui/styles/vars.css'
 import { buttonStyle, containerStyle } from './MessageImage.css'
 
 // shrinks image dimensions if too large for container

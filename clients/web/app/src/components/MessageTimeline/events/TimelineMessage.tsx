@@ -1,15 +1,11 @@
-import { RelationType } from 'matrix-js-sdk'
 import React, { useContext } from 'react'
 
-import { MessageType, RoomMessageEvent, TimelineEvent, ZTEvent } from 'use-zion-client'
+import { RoomMessageEvent, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { Message } from '@components/Message'
 import { MessageProps } from '@components/Message/Message'
-import { MessageImage } from '@components/MessageImage/MessageImage'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
-import { getMessageBody } from 'utils/ztevent_util'
-import { MessageZionText } from '@components/MessageZionText/MessageZionText'
 import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
 import { TimelineMessageEditor } from './TimelineMessageEditor'
+import { TimelineMessageContent } from './TimelineMessagesContent'
 
 type Props = {
     displayContext?: MessageProps['displayContext']
@@ -84,12 +80,10 @@ export const TimelineMessage = React.memo((props: Props) => {
                     eventId={event.eventId}
                     channelId={channelId}
                 />
-            ) : eventContent.msgType === MessageType.Image ? (
-                <MessageImage content={eventContent.content} />
             ) : (
-                <MessageZionText
-                    eventContent={eventContent}
+                <TimelineMessageContent
                     event={event}
+                    eventContent={eventContent}
                     members={members}
                     channels={channels}
                 />

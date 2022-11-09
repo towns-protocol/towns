@@ -10,7 +10,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { useHandleReaction } from 'hooks/useReactions'
-import { useSpaceChannels as useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 
 export enum MessageTimelineType {
