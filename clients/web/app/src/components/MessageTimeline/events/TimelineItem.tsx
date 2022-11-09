@@ -15,7 +15,7 @@ export const MessageTimelineItem = (props: { itemData: RenderEvent }) => {
                         event={e}
                         eventContent={e.content}
                         displayContext={index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single'}
-                        key={e.eventId}
+                        key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}`}
                     />
                 )
             })

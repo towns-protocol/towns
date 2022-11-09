@@ -50,6 +50,9 @@ export const WindowedMessageThread = (props: Props) => {
                         <TimelineMessage
                             event={parentMessage}
                             eventContent={parentMessageContent}
+                            key={`${parentMessage.eventId}+${
+                                parentMessage.updatedServerTs ?? parentMessage.originServerTs
+                            }`}
                         />
                     )}
                     {!!messages.length && (

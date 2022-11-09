@@ -154,6 +154,7 @@ export interface TimelineEvent {
     eventId: string
     eventType: MatrixEventType | string
     originServerTs: number
+    updatedServerTs?: number
     content?: TimelineEvent_OneOf
     fallbackContent: string
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server

@@ -257,11 +257,39 @@ export function toEvent(event: MatrixEvent): TimelineEvent {
         eventId: event.getId(),
         eventType: event.getType(),
         originServerTs: event.getTs(),
+        updatedServerTs: event.replacingEvent()?.getTs(),
         content: content,
         fallbackContent: fbc,
         isLocalPending: event.getId().startsWith('~'),
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
+    }
+}
+
+function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): TimelineEvent {
+    if (
+        next.content?.kind !== ZTEvent.RoomMessage ||
+        prev.content?.kind !== ZTEvent.RoomMessage ||
+        !next.content
+    ) {
+        return next
+    }
+    // when we replace an event, we copy the content up to the root event
+    // so we keep the prev id, but use the next content
+    const eventId = prev.eventId.startsWith('$') ? prev.eventId : next.eventId
+    return {
+        eventId: eventId,
+        eventType: next.eventType,
+        originServerTs: prev.originServerTs,
+        updatedServerTs: next.originServerTs,
+        content: {
+            ...next.content,
+            inReplyTo: prev.content.inReplyTo,
+        },
+        fallbackContent: next.fallbackContent,
+        isLocalPending: eventId.startsWith('~'),
+        threadParentId: prev.threadParentId,
+        reactionParentId: prev.reactionParentId,
     }
 }
 
@@ -468,27 +496,6 @@ function toZionContent(event: MatrixEvent): {
     }
 }
 
-function toReplacedMessageEvent(prev: TimelineEvent, event: TimelineEvent) {
-    if (
-        event?.content?.kind !== ZTEvent.RoomMessage ||
-        prev?.content?.kind !== ZTEvent.RoomMessage ||
-        !event.content
-    ) {
-        return event
-    }
-    // a newly replaced timeline event retain the `content.inReplyTo` which subsequently
-    // detaches it from the thread (until refresh). The following creates a new
-    // event with the `inReplyTo` copied from the original event
-    return {
-        ...event,
-        originalServerTs: prev.originServerTs,
-        content: {
-            ...event.content,
-            inReplyTo: prev.content.inReplyTo,
-        },
-    }
-}
-
 function getFallbackContent(
     event: MatrixEvent,
     content?: TimelineEvent_OneOf,
@@ -613,7 +620,7 @@ function addThreadStat(
         replyCount: 0,
         userIds: new Set(),
         latestTs: event.originServerTs,
-        parent: getRoomMessageContent(timeline?.find((t) => t.eventId == parentId)), // one time lookup of the parent message for the first reply
+        parent: getRoomMessageContent(timeline?.find((t) => t.eventId === parentId)), // one time lookup of the parent message for the first reply
         parentId,
     }
     updated.replyCount++
