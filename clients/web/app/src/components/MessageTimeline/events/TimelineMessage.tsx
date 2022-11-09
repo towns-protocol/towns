@@ -86,14 +86,12 @@ export const TimelineMessage = React.memo((props: Props) => {
                 />
             ) : eventContent.msgType === MessageType.Image ? (
                 <MessageImage content={eventContent.content} />
-            ) : eventContent.msgType === MessageType.ZionText ? (
-                <MessageZionText eventContent={eventContent} event={event} />
             ) : (
-                <RichTextPreview
-                    content={getMessageBody(event.eventId, eventContent)}
+                <MessageZionText
+                    eventContent={eventContent}
+                    event={event}
                     members={members}
                     channels={channels}
-                    edited={eventContent.content['m.relates_to']?.rel_type === RelationType.Replace}
                 />
             )}
         </Message>

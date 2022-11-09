@@ -128,7 +128,7 @@ describe('#TimelineItem', () => {
         )
     })
 
-    test('it should render unfurled content in <MessageZionText>', async () => {
+    test.skip('it should render unfurled content in <MessageZionText>', async () => {
         render(
             <Wrapper
                 events={[

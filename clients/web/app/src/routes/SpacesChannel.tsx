@@ -59,7 +59,7 @@ const SpacesChannelComponent = () => {
     const onSend = useCallback(
         (value: string) => {
             if (value && channelId) {
-                sendMessage(channelId, value, contentWithUrlsAttached(value))
+                sendMessage(channelId, value)
             }
         },
         [channelId, sendMessage],
