@@ -13,7 +13,7 @@ import { useDebugView } from './VListDebugView'
 import { VListItem, useItemHeight } from './VListItem'
 
 const DEBUG_VLIST = false
-const DEFAULT_VIEW_MARGIN = 800
+const DEFAULT_VIEW_MARGIN = 400
 const PADDING = 16
 
 export type VListCtrl = {
@@ -70,10 +70,10 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         if (listHeight < viewport[1] - viewport[0]) {
             // use more undebounced renders to avoid flicker for small
             // (bottom aligned) lists
-            setForceRedrawKey(Date.now())
+            setForceRedrawKey((k) => ++k)
         }
         debounceRef.current = setTimeout(() => {
-            setForceRedrawKey(Date.now())
+            setForceRedrawKey((k) => ++k)
             debounceRef.current = undefined
         })
     }, [listHeight, viewport])
@@ -125,7 +125,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             typeof updatedReferenceItem !== 'undefined' &&
             typeof referenceItem.current.y === 'number'
         ) {
-            newCorrection = Math.floor(updatedReferenceItem - referenceItem.current.y)
+            newCorrection = updatedReferenceItem - referenceItem.current.y
 
             referenceItem.current.y = updatedReferenceItem
 
@@ -239,7 +239,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             const timeout = setTimeout(() => {
                 setHasSettled(true)
                 scrollContainerRef.current?.scrollBy(0, 10 ** 8)
-            }, 250)
+            }, 60)
             return () => {
                 clearTimeout(timeout)
             }
@@ -293,7 +293,6 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                     style={
                         {
                             pointerEvents: isScrolling ? 'none' : 'auto',
-                            opacity: hasSettled ? 1 : 0,
                             height: listHeight + correction,
                             ['--correction']: `${correction}px`,
                         } as React.CSSProperties

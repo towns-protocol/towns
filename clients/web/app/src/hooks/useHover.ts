@@ -1,5 +1,5 @@
 import { MutableRefObject, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { throttle } from 'throttle-debounce'
+import { throttle } from 'lodash'
 import { RootLayerContext } from '@ui'
 
 /**
@@ -7,32 +7,46 @@ import { RootLayerContext } from '@ui'
  * account child elements and modal container
  */
 export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
-    const [isHover, setIsHover] = useState(false)
+    const [isHoverEvent, setIsHoverEvent] = useState(false)
+    const [isHoverVerified, setIsHoverVerified] = useState(false)
 
     const onMouseEnter = useCallback(() => {
-        setIsHover(true)
+        setIsHoverEvent(true)
     }, [])
 
     const { rootLayerRef } = useContext(RootLayerContext)
     const prevRef = useRef({ clientX: 0, clientY: 0 })
 
     useEffect(() => {
-        if (!isHover) {
+        // first check, if the event hasn't been triggered there's no need to go further
+        if (!isHoverEvent) {
             return
         }
 
-        const onMouseMove = throttle(50, (e: MouseEvent) => {
-            const { clientX, clientY } = e ?? prevRef.current
-            prevRef.current.clientX = clientX
-            prevRef.current.clientY = clientY
-            const el = document.elementFromPoint(clientX, clientY)
-            if (!ref.current?.contains(el) && !rootLayerRef?.current?.contains(el)) {
-                setIsHover(false)
-            }
-        })
+        // once the event has been triggered we await a mouse-move then check if
+        // the container element is hovered
+        const onMouseMove = throttle(
+            (e: MouseEvent) => {
+                console.log('checking')
+                const { clientX, clientY } = e ?? prevRef.current
+                prevRef.current.clientX = clientX
+                prevRef.current.clientY = clientY
+                const el = document.elementFromPoint(clientX, clientY)
+                if (!ref.current?.contains(el) && !rootLayerRef?.current?.contains(el)) {
+                    setIsHoverEvent(false)
+                } else {
+                    setIsHoverVerified(true)
+                }
+            },
+            50,
+            {
+                leading: false,
+                trailing: true,
+            },
+        )
 
         const onBlur = () => {
-            setIsHover(false)
+            setIsHoverEvent(false)
         }
 
         window.addEventListener('mousemove', onMouseMove)
@@ -47,7 +61,19 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
             window.removeEventListener('click', onMouseMove)
             window.removeEventListener('blur', onBlur)
         }
-    }, [isHover, ref, rootLayerRef])
+    }, [isHoverVerified, isHoverEvent, ref, rootLayerRef])
 
-    return { isHover, onMouseEnter }
+    useEffect(() => {
+        if (!isHoverEvent) {
+            setIsHoverVerified(false)
+        }
+    }, [isHoverEvent])
+
+    useEffect(() => {
+        if (!isHoverVerified) {
+            setIsHoverEvent(false)
+        }
+    }, [isHoverVerified])
+
+    return { isHover: isHoverVerified, onMouseEnter }
 }

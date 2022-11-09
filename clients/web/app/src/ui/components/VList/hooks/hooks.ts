@@ -45,7 +45,7 @@ export const useViewport = (scrollContainer: HTMLElement | null, hasScrolledInto
     return { viewport, isScrolling }
 }
 
-const SAFE_REDRAW_DELAY = 100
+const SAFE_REDRAW_DELAY = 0
 
 /**
  * Scrolls to bottom at first renderer
@@ -58,7 +58,6 @@ export const useScrollIntoView = (scrollContainer: HTMLElement | null, listHeigh
         }
         const timeout = setTimeout(() => {
             DEBUG_VLIST && console.log(`%cuseScrollIntoView`, `color:red;`)
-            scrollContainer.scrollTo(0, 10 ** 8)
             setHasScrolledIntoView(true)
             scrollContainer.scrollTo(0, 10 ** 8)
         }, SAFE_REDRAW_DELAY)

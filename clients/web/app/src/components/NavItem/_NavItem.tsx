@@ -47,9 +47,9 @@ export const NavItem = forwardRef<
     return (
         <ConditionalNavLink to={to}>
             <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-                <Stack position="relative" paddingX="sm" {...props} ref={ref}>
+                <Stack position="relative" paddingX="sm" paddingY="xs" {...props} ref={ref}>
                     {/* background fill to highlight element */}
-                    <NavItemHighlight selected={!!match} hovered={isHovered} />
+                    <NavItemHighlight selected={!!match} hovered={isHovered} paddingY="xs" />
                     <Stack
                         horizontal
                         grow
@@ -76,10 +76,10 @@ export const NavItem = forwardRef<
 type HighlightProps = {
     selected: boolean
     hovered: boolean
-}
+} & BoxProps
 
 const NavItemHighlight = (props: HighlightProps) => {
-    const { selected: isSelected } = props
+    const { selected: isSelected, hovered: isHovered, ...boxProps } = props
 
     // if one item is hovered (current or sibling)
     const { isInteracting } = useContext(SidebarContext)
@@ -101,12 +101,17 @@ const NavItemHighlight = (props: HighlightProps) => {
         : styles.highlightTransitionOut
 
     return (
-        <Box absoluteFill paddingX="sm">
+        <Box absoluteFill paddingX="sm" {...boxProps}>
             <Box
                 grow
                 className={clsx([
                     transition,
-                    isHighlight ? styles.highlightActive : styles.highlightInactive,
+                    isHovered
+                        ? styles.hoveredActive
+                        : isHighlight
+                        ? styles.highlightActive
+                        : styles.highlightInactive,
+
                     // add scale effect for first hover + selected item
                     isProminentInteraction && styles.highlightSelectedInactive,
                 ])}

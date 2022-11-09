@@ -1,13 +1,6 @@
-import useResizeObserver from '@react-hook/resize-observer'
 import { clsx } from 'clsx'
-import React, {
-    MutableRefObject,
-    RefObject,
-    useCallback,
-    useLayoutEffect,
-    useRef,
-    useState,
-} from 'react'
+import React, { MutableRefObject, useCallback, useLayoutEffect, useRef } from 'react'
+import { useSize } from 'ui/hooks/useSize'
 import { atoms } from 'ui/styles/atoms.css'
 import { ItemCacheMap, ItemSize } from './VList'
 import * as styles from './VList.css'
@@ -45,6 +38,7 @@ export const VListItem = (props: Props) => {
             className={clsx([
                 styles.vItem,
                 atoms({
+                    visibility: cacheItem?.isMeasured ? undefined : 'hidden',
                     background: props.highlight ? `level3` : undefined,
                     rounded: 'xs',
                 }),
@@ -56,35 +50,6 @@ export const VListItem = (props: Props) => {
             {props.children}
         </div>
     )
-}
-
-const useSize = (target: RefObject<HTMLDivElement>) => {
-    const [size, setSize] = useState<{ width: number; height: number } | undefined>()
-    useLayoutEffect(() => {
-        const entry = target.current
-        if (entry) {
-            setSize(() => {
-                const bounds = entry.getBoundingClientRect()
-                const width = bounds?.width
-                const height = bounds?.height
-                return {
-                    width,
-                    height,
-                }
-            })
-        }
-    }, [target])
-
-    useResizeObserver(target, (entry) => {
-        setSize((s) => {
-            const { width, height } = entry.contentRect
-            return {
-                width: width,
-                height: height,
-            }
-        })
-    })
-    return size
 }
 
 export const useItemHeight = <T extends { id: string }>(

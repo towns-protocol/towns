@@ -2,21 +2,22 @@ import { style } from '@vanilla-extract/css'
 import { atoms } from 'ui/styles/atoms.css'
 
 export const highlightInactive = atoms({
-    rounded: 'md',
+    rounded: 'sm',
 })
 
-export const highlightSelectedInactive = style({
-    transform: `scale(0.95)`,
-})
+export const highlightSelectedInactive = style({})
 
 export const highlightActive = atoms({
-    rounded: 'xs',
+    rounded: 'sm',
     background: 'level2',
 })
 
-export const highlightTransitionSwift = style({
-    transition: `border-radius 320ms ease-out`,
+export const hoveredActive = atoms({
+    rounded: 'sm',
+    background: 'level2',
 })
+
+export const highlightTransitionSwift = style({})
 
 export const highlightTransitionOut = style({
     transition: `all 320ms ease`,

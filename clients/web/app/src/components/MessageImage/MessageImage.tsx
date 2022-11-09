@@ -1,8 +1,9 @@
-import React, { useLayoutEffect, useRef, useState } from 'react'
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { MessageContent } from 'use-zion-client'
 import { assignInlineVars } from '@vanilla-extract/dynamic'
 import { Box, IconButton } from '@ui'
 import { vars } from 'ui/styles/vars.css'
+import { useSize } from 'ui/hooks/useSize'
 import { buttonStyle, containerStyle } from './MessageImage.css'
 
 // shrinks image dimensions if too large for container
@@ -38,38 +39,32 @@ function getRestrictedImageDimensions({
     }
 }
 
+const DEFAULT_WIDTH = 500
+
 export const MessageImage = ({ content }: { content: MessageContent }) => {
     const MAX_WIDTH = 500
     const MAX_HEIGHT = 400
     const url = content?.info?.thumbnail_url
     const thumbnailInfo = content?.info?.thumbnail_info
     const ref = useRef<HTMLDivElement>(null)
+
+    const { width: containerWidth } = useSize(ref) ?? {}
+
     const onClick = () => {
         window.open(url, '_blank', 'noopener,noreferrer')
     }
 
-    const [{ width, height }, setDimensions] = useState({ width: 0, height: 0 })
-
-    useLayoutEffect(() => {
-        const checkSize = () => {
-            if (!thumbnailInfo.w) {
-                return
-            }
-            const containerWidth = (ref.current && ref.current.getBoundingClientRect().width) || 0
-            setDimensions(
-                getRestrictedImageDimensions({
-                    maxWidth: containerWidth > MAX_WIDTH ? containerWidth : MAX_WIDTH,
-                    maxHeight: MAX_HEIGHT,
-                    imageWidth: thumbnailInfo.w,
-                    imageHeight: thumbnailInfo.h,
-                }),
-            )
-        }
-
-        checkSize()
-        window.addEventListener('resize', checkSize)
-        return () => window.removeEventListener('resize', checkSize)
-    }, [thumbnailInfo])
+    const { width, height } = useMemo(() => {
+        return getRestrictedImageDimensions({
+            maxWidth:
+                (containerWidth ?? DEFAULT_WIDTH) > MAX_WIDTH
+                    ? containerWidth ?? DEFAULT_WIDTH
+                    : MAX_WIDTH,
+            maxHeight: MAX_HEIGHT,
+            imageWidth: thumbnailInfo.w,
+            imageHeight: thumbnailInfo.h,
+        })
+    }, [containerWidth, thumbnailInfo.h, thumbnailInfo.w])
 
     return (
         <Box maxWidth={`${MAX_WIDTH}`} maxHeight={`${MAX_HEIGHT}`} ref={ref}>
