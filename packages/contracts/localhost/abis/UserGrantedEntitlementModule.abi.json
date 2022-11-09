@@ -182,9 +182,9 @@
         "type": "string"
       },
       {
-        "internalType": "uint256[]",
-        "name": "_roleIds",
-        "type": "uint256[]"
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
       },
       {
         "internalType": "bytes",

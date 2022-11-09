@@ -188,9 +188,9 @@
             "type": "string"
           },
           {
-            "internalType": "uint256[]",
-            "name": "_roleIds",
-            "type": "uint256[]"
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
           },
           {
             "internalType": "bytes",
@@ -269,7 +269,7 @@
         "name()": {
           "notice": "The name of the entitlement module"
         },
-        "removeEntitlement(string,string,uint256[],bytes)": {
+        "removeEntitlement(string,string,uint256,bytes)": {
           "notice": "Removes the entitlements for a space"
         },
         "setEntitlement(string,string,uint256,bytes)": {
@@ -307,35 +307,35 @@
   },
   "sources": {
     "contracts/zion-governance/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x36676fd7a6978d5ec5a8b68b3850949583783ad931f2f7b1fcd1a6eb2ddbdefb",
+      "keccak256": "0x0b2c4b4e5a36bdf32aa70aad254a51905d11ccadcf08e284bb040295aeacfa08",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://5d6f0ecf4fc520a9c577d2cae8543bcaf9a4ec9bdb4fec4fca90268d48f0de89",
-        "dweb:/ipfs/QmcHMFu6mcetbHNKrn1ThzFh8rktSpm5Q8wwnynLkSKfqN"
+        "bzz-raw://704c4f9992f7df12a4ae64528c39f20187ff8f59971dfc0757b091a1b05bab99",
+        "dweb:/ipfs/QmTtcrNjcAgPuVWwhc6ZKAQqtq9cqVp5urS1veTaPurr59"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
-      "keccak256": "0x8d10e6a7de93d6417ceed10f772d8b8f18c3fa565561573e5bacece6d32d138a",
+      "keccak256": "0xf76f459670eafa97724b77b5314ff2584b1d59e5f95092bdd0d1634204dce208",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9c38797d7875e2a2201501f51d6a0976225d1004b043a34af1e21af50d9fd8f0",
-        "dweb:/ipfs/QmbMhZ9ASvJoZezwt2ykGdmcNX54VspbJDusmSNGgDTkop"
+        "bzz-raw://a2af821242fd5e6ac6470a1f9614945bd7996666de23e235d4bff67a43dc1ffc",
+        "dweb:/ipfs/QmcZXEL1gSmjgCdX7RUN8USzVQ1sfK1rSjYdB87SkwC8rP"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IPermissionRegistry.sol": {
-      "keccak256": "0x45b83cec5d9b71bc5055c3958fc9cdaf622aca4f0bba6e66ab590603da933a17",
+      "keccak256": "0xf999931f0b7bcc7b908d332e5dff937550e3be071552046f49de86f82a03933c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b0d3bd9dca5d087fd01bcb3ae62d4b77d29fe6288a6e9b7a2e36e010b19445ac",
-        "dweb:/ipfs/QmSQAcizX6ETKjsDje7vf1AaVoVN1K5WKnVN7DVzfY5jf1"
+        "bzz-raw://f5c1c16b55f3758b96f86613c604c9b0dbd526bc81b9c7d2910a352ff1d13301",
+        "dweb:/ipfs/QmVY2ZsZh3MkJzz8rMFcubT3gUvFicN2pqAQdqZXLJXVz7"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IRoleManager.sol": {
-      "keccak256": "0x3e2100c84c2c6e974945d25ea72403676740440ab8b062a64dde2cdaba5ef174",
+      "keccak256": "0x4ebccb9b92180a6d56d9a372897ad05f5417dafb12f40cf51512a2267f8ef3ad",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f01d5a80b43ca6efe29a4ce5b376de4c0ee62549909763381c5254a12d22bd44",
-        "dweb:/ipfs/QmT5CMu1eGtnoBapH7uLHXe9CUWrXZUMrYhjKFfQ95VfGa"
+        "bzz-raw://ea4c3db495f1127438f8c45c46a22891224088e75982d529608cad7b55c27083",
+        "dweb:/ipfs/QmamV3fg9HaBhVDbjjNmqAQquCLHxS5ieAvPSkULQGazth"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpace.sol": {
@@ -347,11 +347,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0x3e152c325d610c894d817436b289e25fb65900648434a98ab1e568e855003c64",
+      "keccak256": "0x7b2ba69ebf5aedde5cf1ace2233c1e1e30dc1c0049bf875703abf4243e2973e6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://802aaf3223d15833da2c1ce8c060034ea02662893b78c400572e549459e8b0d4",
-        "dweb:/ipfs/QmSdBtMafoQiGYpKw4PbiLgNpUP8YxssLi752iLGPMtSVZ"
+        "bzz-raw://591364e621b77809d1941d43be39eb82f4f23513571a93c0bc8bdd2089ed885c",
+        "dweb:/ipfs/QmX7PpxV8oHpDFM6xTZ918LAZtjKVYus811bgN4DEy62YZ"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Constants.sol": {
@@ -363,11 +363,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/CreationLogic.sol": {
-      "keccak256": "0x52486e9201ff7728c4e8132b6fc8fa6367b3b3098f937e4ecaa890a15149e7be",
+      "keccak256": "0x32f0b1036a16f73e99865febcfc6495d4523c649877ff28537af2f7ecadc5883",
       "license": "UNLICENSED",
       "urls": [
-        "bzz-raw://b1ba35197ae571ff8c74ea45559a7df6d8bc1d6d72468fa94de7c6f5eb153f7c",
-        "dweb:/ipfs/QmPcuaYkQutbb57zagPTPD38SiDHxD3qm7EqwLYnzMumKb"
+        "bzz-raw://528901c6fd4ca5807e4fa883f6298e9dbc31b045a5fad2f59421b9f276bc1740",
+        "dweb:/ipfs/QmQ65fcZfV2T3zjhaZeiAWR5AyVNNudz4a94eFp877LHdY"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
@@ -403,27 +403,27 @@
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Utils.sol": {
-      "keccak256": "0x4b9a6788c9dd8c2a367b6922d931825180e937f1ce8f9762dc47e4d82df620d0",
+      "keccak256": "0xa80bbef58a9e472109f1228b577ccb77d14f10a31a73f5bbc5ad852d490a7639",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4d4f486b4983f479f41949b84d4448adcfbb22ca173657ae4bdf61bdf634821e",
-        "dweb:/ipfs/QmSUuYCBNQHwQSPGWncZvUdAvvvApdEVQPG3YTD6NcDetc"
+        "bzz-raw://062ba1b53957a4cfffbecbbb5a8f918d883553f518683e61471ccb1b697ddaf0",
+        "dweb:/ipfs/QmQTJP2j6M4Hm8GcakRaCy75xNCz7AMh4W3Sd1n69RCKF2"
       ]
     },
     "contracts/zion-governance/src/spaces/modules/EntitlementModuleBase.sol": {
-      "keccak256": "0xc18d8b89fc73f89c7a068fdf8ac6673aca5ce081d14e5efc77c55cc9446ad566",
+      "keccak256": "0x3c9a4f77e8cf2851f370116a9525c23ca6b5043bda9367b4c8fb4a79e51724a2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ea01b54080093c040f3b8b263a0545d84d57c660dce150f6e3597b35bdcdbe48",
-        "dweb:/ipfs/QmfVR4A55nC1yBvevJNce6rJrB6ex2ktRP1VpqDKqmQxfH"
+        "bzz-raw://a64a083b32fdd99af939ea9d2c843181e08ccce6039f5a7c2a9066a9bdafc44a",
+        "dweb:/ipfs/QmWdg6ppcxu64cGKdULVAachZRpUtrE6TuoVeh7dEN8YgG"
       ]
     },
     "contracts/zion-governance/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol": {
-      "keccak256": "0x001d4ee9bfe1df0d554b66b7ffdb82fea996024aca3978afd2c1bd13e1e66a57",
+      "keccak256": "0xf8b8b60cb7329db39c706e27304c818b5ea2d26a6af0315180401d484ebfaba7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e4e6456f38632d6d61809644565857c29998cbfcae27485286031cd199f34010",
-        "dweb:/ipfs/QmZi7D211ph7LAQ4NbNJ2BYeGeHRcFQVy3utzwfE3C67pP"
+        "bzz-raw://fa838db2fd4a7513259617065021b1e6c0992f7263f2ef46b524bc0b271fd1d8",
+        "dweb:/ipfs/QmR8hia31snwy87PZVxLdWWA9jQiBYdaajpCmqG32Ugg7y"
       ]
     },
     "contracts/zion-governance/src/spaces/storage/ZionSpaceManagerStorage.sol": {

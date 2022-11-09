@@ -222,9 +222,9 @@
             "type": "string"
           },
           {
-            "internalType": "uint256[]",
-            "name": "",
-            "type": "uint256[]"
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
           },
           {
             "internalType": "bytes",
@@ -303,6 +303,9 @@
         "name()": {
           "notice": "The name of the entitlement module"
         },
+        "removeEntitlement(string,string,uint256,bytes)": {
+          "notice": "Removes the entitlements for a space"
+        },
         "setEntitlement(string,string,uint256,bytes)": {
           "notice": "Sets the entitlements for a space"
         }
@@ -338,27 +341,27 @@
   },
   "sources": {
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
-      "keccak256": "0x8d10e6a7de93d6417ceed10f772d8b8f18c3fa565561573e5bacece6d32d138a",
+      "keccak256": "0xf76f459670eafa97724b77b5314ff2584b1d59e5f95092bdd0d1634204dce208",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9c38797d7875e2a2201501f51d6a0976225d1004b043a34af1e21af50d9fd8f0",
-        "dweb:/ipfs/QmbMhZ9ASvJoZezwt2ykGdmcNX54VspbJDusmSNGgDTkop"
+        "bzz-raw://a2af821242fd5e6ac6470a1f9614945bd7996666de23e235d4bff67a43dc1ffc",
+        "dweb:/ipfs/QmcZXEL1gSmjgCdX7RUN8USzVQ1sfK1rSjYdB87SkwC8rP"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IRoleManager.sol": {
-      "keccak256": "0x3e2100c84c2c6e974945d25ea72403676740440ab8b062a64dde2cdaba5ef174",
+      "keccak256": "0x4ebccb9b92180a6d56d9a372897ad05f5417dafb12f40cf51512a2267f8ef3ad",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f01d5a80b43ca6efe29a4ce5b376de4c0ee62549909763381c5254a12d22bd44",
-        "dweb:/ipfs/QmT5CMu1eGtnoBapH7uLHXe9CUWrXZUMrYhjKFfQ95VfGa"
+        "bzz-raw://ea4c3db495f1127438f8c45c46a22891224088e75982d529608cad7b55c27083",
+        "dweb:/ipfs/QmamV3fg9HaBhVDbjjNmqAQquCLHxS5ieAvPSkULQGazth"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0x3e152c325d610c894d817436b289e25fb65900648434a98ab1e568e855003c64",
+      "keccak256": "0x7b2ba69ebf5aedde5cf1ace2233c1e1e30dc1c0049bf875703abf4243e2973e6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://802aaf3223d15833da2c1ce8c060034ea02662893b78c400572e549459e8b0d4",
-        "dweb:/ipfs/QmSdBtMafoQiGYpKw4PbiLgNpUP8YxssLi752iLGPMtSVZ"
+        "bzz-raw://591364e621b77809d1941d43be39eb82f4f23513571a93c0bc8bdd2089ed885c",
+        "dweb:/ipfs/QmX7PpxV8oHpDFM6xTZ918LAZtjKVYus811bgN4DEy62YZ"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
@@ -386,19 +389,19 @@
       ]
     },
     "contracts/zion-governance/src/spaces/modules/EntitlementModuleBase.sol": {
-      "keccak256": "0xc18d8b89fc73f89c7a068fdf8ac6673aca5ce081d14e5efc77c55cc9446ad566",
+      "keccak256": "0x3c9a4f77e8cf2851f370116a9525c23ca6b5043bda9367b4c8fb4a79e51724a2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ea01b54080093c040f3b8b263a0545d84d57c660dce150f6e3597b35bdcdbe48",
-        "dweb:/ipfs/QmfVR4A55nC1yBvevJNce6rJrB6ex2ktRP1VpqDKqmQxfH"
+        "bzz-raw://a64a083b32fdd99af939ea9d2c843181e08ccce6039f5a7c2a9066a9bdafc44a",
+        "dweb:/ipfs/QmWdg6ppcxu64cGKdULVAachZRpUtrE6TuoVeh7dEN8YgG"
       ]
     },
     "contracts/zion-governance/src/spaces/modules/entitlements/TokenEntitlementModule.sol": {
-      "keccak256": "0x87be02fd4beaddddaf1ce12479e4d2a4bf11a1b7f00a4c95ced244ad05e40bf7",
+      "keccak256": "0x2c59a351ff5a7d3241773bdf82d1d93149fd80077891b5dcc4fbb45785dd2565",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://31b1f5ecb6b0b358146afce25b98139fd6e6ddd0aea31fd764261370951dba62",
-        "dweb:/ipfs/QmQzkZyEFaz32pR1gTNKf9WPn44ECZ3cZBppsEgNaxmhX9"
+        "bzz-raw://0ab159d261eb6adef7df1d1e55cf406a961f927f5afcffacc95ac58242a61ebc",
+        "dweb:/ipfs/QmcAQpuLdB2HSnzxbG1grrXKrrkdiwi6g1gjkFhLg7ixZi"
       ]
     },
     "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": {

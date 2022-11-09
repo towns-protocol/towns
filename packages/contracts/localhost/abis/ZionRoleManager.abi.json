@@ -172,7 +172,7 @@
           }
         ],
         "internalType": "struct DataTypes.Role",
-        "name": "",
+        "name": "role",
         "type": "tuple"
       }
     ],

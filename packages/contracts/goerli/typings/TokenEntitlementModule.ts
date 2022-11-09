@@ -48,7 +48,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     "isEntitled(string,string,address,(string))": FunctionFragment;
     "isTokenEntitled(string,string,address,string)": FunctionFragment;
     "name()": FunctionFragment;
-    "removeEntitlement(string,string,uint256[],bytes)": FunctionFragment;
+    "removeEntitlement(string,string,uint256,bytes)": FunctionFragment;
     "setEntitlement(string,string,uint256,bytes)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
   };
@@ -111,7 +111,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>[],
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>
     ]
   ): string;
@@ -228,7 +228,7 @@ export interface TokenEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -281,7 +281,7 @@ export interface TokenEntitlementModule extends BaseContract {
   removeEntitlement(
     spaceId: PromiseOrValue<string>,
     channelId: PromiseOrValue<string>,
-    arg2: PromiseOrValue<BigNumberish>[],
+    roleId: PromiseOrValue<BigNumberish>,
     entitlementData: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -334,7 +334,7 @@ export interface TokenEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -390,7 +390,7 @@ export interface TokenEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -444,7 +444,7 @@ export interface TokenEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      arg2: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

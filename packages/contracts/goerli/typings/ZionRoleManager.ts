@@ -243,7 +243,9 @@ export interface ZionRoleManager extends BaseContract {
       spaceId: PromiseOrValue<BigNumberish>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[DataTypes.RoleStructOutput]>;
+    ): Promise<
+      [DataTypes.RoleStructOutput] & { role: DataTypes.RoleStructOutput }
+    >;
 
     getRolesBySpaceId(
       spaceId: PromiseOrValue<BigNumberish>,

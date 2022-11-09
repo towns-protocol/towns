@@ -338,11 +338,11 @@
   },
   "sources": {
     "contracts/zion-governance/src/council/CouncilStaking.sol": {
-      "keccak256": "0x9ba971d9770dfbb67ffecdd696d7da9e44178d090f0407f231fc4519c596a75d",
+      "keccak256": "0xfc8a6deb7279a3f6f1bcc267abceba36558fff083381f8f8177ab55a31808c88",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d80e9bd8bbdfc8aa306908625cfb28c844daac07fcfa86d45204e4a79ac30148",
-        "dweb:/ipfs/QmZWSnaJQkdEy94uZHjpMwp4bAUBLuG8j83xhv7tff2zh4"
+        "bzz-raw://3dfd083256309932697a1d982778c904f98561ca347706dca998fb74b293c518",
+        "dweb:/ipfs/QmNqQq1m3Umz4h8sN8WpzheJwYB2rFZcZeUmU8yiFb4Ts5"
       ]
     },
     "contracts/zion-governance/src/council/libraries/CouncilDataTypes.sol": {

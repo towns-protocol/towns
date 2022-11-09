@@ -52,6 +52,16 @@
   },
   {
     "inputs": [],
+    "name": "NameContainsInvalidCharacters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NameLengthInvalid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotAllowed",
     "type": "error"
   },
@@ -546,32 +556,6 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "permissionType",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getPermissionFromMap",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.Permission",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
         "name": "networkId",
         "type": "string"
@@ -809,9 +793,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256[]",
-        "name": "roleIds",
-        "type": "uint256[]"
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
       },
       {
         "internalType": "bytes",

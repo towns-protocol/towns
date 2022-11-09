@@ -47,7 +47,7 @@ export interface UserGrantedEntitlementModuleInterface extends utils.Interface {
     "getUserRoles(string,string,address)": FunctionFragment;
     "isEntitled(string,string,address,(string))": FunctionFragment;
     "name()": FunctionFragment;
-    "removeEntitlement(string,string,uint256[],bytes)": FunctionFragment;
+    "removeEntitlement(string,string,uint256,bytes)": FunctionFragment;
     "setEntitlement(string,string,uint256,bytes)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
   };
@@ -100,7 +100,7 @@ export interface UserGrantedEntitlementModuleInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>[],
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>
     ]
   ): string;
@@ -205,7 +205,7 @@ export interface UserGrantedEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      _roleIds: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -250,7 +250,7 @@ export interface UserGrantedEntitlementModule extends BaseContract {
   removeEntitlement(
     spaceId: PromiseOrValue<string>,
     channelId: PromiseOrValue<string>,
-    _roleIds: PromiseOrValue<BigNumberish>[],
+    roleId: PromiseOrValue<BigNumberish>,
     entitlementData: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -295,7 +295,7 @@ export interface UserGrantedEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      _roleIds: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -343,7 +343,7 @@ export interface UserGrantedEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      _roleIds: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -389,7 +389,7 @@ export interface UserGrantedEntitlementModule extends BaseContract {
     removeEntitlement(
       spaceId: PromiseOrValue<string>,
       channelId: PromiseOrValue<string>,
-      _roleIds: PromiseOrValue<BigNumberish>[],
+      roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

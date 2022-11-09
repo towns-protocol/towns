@@ -768,11 +768,11 @@
   },
   "sources": {
     "contracts/zion-governance/src/council/CouncilNFT.sol": {
-      "keccak256": "0x149fcec41ae04c02504dc760c947f4a436385156b3c66af2b9954911feaf5d2c",
+      "keccak256": "0x41115345c1b873b0438e71ce22d026be4ef65fa1d1a09101ecb49d7cc23229fd",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3196ee62b968875a47315279e6f6c90f77b64c7477c0608a286eca5450fbfd71",
-        "dweb:/ipfs/QmPo2xANXAa2E4qGHJPiH33S6rfeT5uSGtPWTms41jvXXn"
+        "bzz-raw://a6e63498b1fd063d5b22746347b3160dc097f0d1d1e6e88fe660bbfad2b50ea0",
+        "dweb:/ipfs/QmckANMuB9M2rjGPpxHkoFNynym5htzUVnSgXM6VLBewPf"
       ]
     },
     "contracts/zion-governance/src/council/libraries/CouncilErrors.sol": {
