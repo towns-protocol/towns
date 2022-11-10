@@ -6,7 +6,7 @@ import { VListCtrl } from 'ui/components/VList/VList'
 import { notUndefined } from 'ui/utils/utils'
 import { getIsRoomMessageContent } from 'utils/ztevent_util'
 import { MessageTimelineItem } from './events/TimelineItem'
-import { RenderEventType, useGroupEvents } from './hooks/useGroupEvents'
+import { MessageRenderEvent, RenderEventType, useGroupEvents } from './hooks/useGroupEvents'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 
@@ -14,7 +14,11 @@ export const TimelineMessageContext = createContext<null | ReturnType<
     typeof useTimelineMessageEditing
 >>(null)
 
-export const MessageTimelineVirtual = () => {
+type Props = {
+    header?: JSX.Element
+}
+
+export const MessageTimelineVirtual = (props: Props) => {
     const { unreadCounts } = useZionContext()
 
     const timelineContext = useContext(MessageTimelineContext)
@@ -58,9 +62,10 @@ export const MessageTimelineVirtual = () => {
 
     const dateGroups = useGroupEvents(events)
 
-    // estimate height of blocks before they get rendered
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //                                    estimate height of blocks before they get rendered
 
-    const estimateItemHeight = useCallback((r: typeof ungroupedEvents[0]) => {
+    const estimateItemHeight = useCallback((r: typeof listItems[0]) => {
         if (r.type === 'message') {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight = item.content.msgType === MessageType.Image ? 400 : 150
@@ -71,7 +76,8 @@ export const MessageTimelineVirtual = () => {
         return 0
     }, [])
 
-    // scroll into view
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //                                                                      scroll into view
 
     const vListCtrlRef = useRef<VListCtrl>()
     const userId = useMyUserId()
@@ -84,59 +90,70 @@ export const MessageTimelineVirtual = () => {
         }
     }, [lastEvent, userId])
 
-    if (!timelineContext || !channelId) {
-        return <></>
-    }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //                                                               group and filter events
 
-    // group and filter events
+    const listItems = useMemo(() => {
+        type ListItem =
+            | { id: string; type: 'divider' }
+            | { id: string; type: 'header' }
+            | { id: string; type: 'group'; date: string }
+            | { id: string; type: 'message'; item: MessageRenderEvent }
 
-    const groupByDate = timelineContext.type === MessageTimelineType.Channel
+        const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
-    const ungroupedEvents = dateGroups
-        .flatMap((f) => {
+        const flatGroups = dateGroups.flatMap((f, index) => {
             return [
                 {
-                    type: 'group' as const,
+                    type: 'group',
                     date: f.date.humanDate,
                     key: f.date.humanDate,
-                },
+                } as const,
                 ...f.events,
             ]
         })
-        .map((e) => {
-            return e.type === 'group' && groupByDate
-                ? ({ id: e.key, type: 'group', item: e } as const)
-                : e.type === RenderEventType.UserMessageGroup
-                ? ({ id: e.key, type: 'message', item: e } as const)
-                : undefined
-        })
-        .filter(notUndefined)
+
+        const isThreadOrigin =
+            timelineContext?.type === MessageTimelineType.Thread && flatGroups.length > 1
+
+        const listItems: ListItem[] = flatGroups
+            .map((e) => {
+                return e.type === 'group' && groupByDate
+                    ? ({ id: e.key, type: 'group', date: e.date } as const)
+                    : e.type === RenderEventType.UserMessageGroup
+                    ? ({ id: e.key, type: 'message', item: e } as const)
+                    : undefined
+            })
+            .filter(notUndefined)
+
+        if (timelineContext?.type === MessageTimelineType.Channel) {
+            listItems.unshift({ id: 'header', type: 'header' } as const)
+        } else if (isThreadOrigin) {
+            listItems.splice(1, 0, { id: 'divider', type: 'divider' } as const)
+        }
+
+        return listItems
+    }, [dateGroups, timelineContext?.type])
 
     return (
         <VList
             debug={false}
             ctrlRef={vListCtrlRef}
             itemHeight={estimateItemHeight}
-            list={ungroupedEvents}
+            list={listItems}
             renderItem={(r, i, l) => {
-                const isThreadOrigin =
-                    timelineContext?.type === MessageTimelineType.Thread && i == 0 && l.length > 1
-
-                return r.type === 'group' ? (
+                return r.type === 'header' ? (
+                    <>{props.header}</>
+                ) : r.type === 'group' ? (
                     <Stack position="relative" style={{ boxShadow: '0 0 1px #f000' }} height="x4">
-                        <DateDivider label={r.item.date} />
+                        <DateDivider label={r.date} />
                     </Stack>
+                ) : r.type === 'divider' ? (
+                    <Box paddingX="md" paddingY="md">
+                        <Divider space="none" />
+                    </Box>
                 ) : (
-                    <>
-                        <MessageTimelineItem itemData={r.item} />
-                        {isThreadOrigin ? (
-                            <Box paddingX="md" paddingY="md">
-                                <Divider space="none" />
-                            </Box>
-                        ) : (
-                            <></>
-                        )}
-                    </>
+                    <MessageTimelineItem itemData={r.item} />
                 )
             }}
         />

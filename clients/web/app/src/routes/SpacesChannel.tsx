@@ -13,11 +13,12 @@ import {
 import { ChannelHeader } from '@components/ChannelHeader'
 import { MessageTimelineScroller } from '@components/MessageTimeline'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Button, Stack } from '@ui'
+import { Box, Button, Paragraph, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { TimelineShimmer } from '@components/Shimmer'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
+import { Heading } from '../ui/components/Text/Heading'
 
 export const SpacesChannel = () => {
     return (
@@ -98,12 +99,11 @@ const SpacesChannelComponent = () => {
                                 events={channelMessages}
                             >
                                 {!USE_VLIST ? (
-                                    <MessageTimelineScroller
-                                        hideThreads
-                                        before={<ChannelHeader name={channel.label} />}
-                                    />
+                                    <MessageTimelineScroller hideThreads />
                                 ) : (
-                                    <MessageTimelineVirtual />
+                                    <MessageTimelineVirtual
+                                        header={<ChannelHeader name={channel.label} />}
+                                    />
                                 )}
                             </MessageTimelineWrapper>
 
