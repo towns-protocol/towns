@@ -8,9 +8,11 @@
         "dev": "npx wrangler dev",
         "dev:local": "npx wrangler dev --local",
         "lint": "eslint .",
-        "publish": "npx wrangler publish"
+        "publish": "npx wrangler publish",
+        "test": "jest"
     },
     "dependencies": {
+        "image-size": "^1.0.2",
         "unfurl.js": "https://github.com/HereNotThere/unfurl"
     },
     "devDependencies": {
