@@ -35,6 +35,92 @@ import { MatrixEvent } from 'matrix-js-sdk'
  * 
  * */
 
+describe.skip('disable channel', () => {
+    //describe.only('disable channel', () => {
+    jest.setTimeout(3000 * 1000)
+    test('Channel member cant sync disabled room messages', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with token entitlement to write
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+
+        const roomId = await createSpace(bob, [readPermission, writePermission])
+
+        // invite user to join the space by first checking if they can read.
+        await bob.inviteUser(roomId as RoomIdentifier, tokenGrantedUser.matrixUserId as string)
+        await tokenGrantedUser.joinRoom(roomId as RoomIdentifier)
+
+        /** Act */
+
+        // set space access off, disabling space in ZionSpaceManager
+        await bob.setSpaceAccess(roomId?.matrixRoomId as string, true)
+
+        /** Assert */
+
+        // scrollback, which calls message sync under the hood, should reject upon performing a
+        // leave since the space is disabled
+        await expect(tokenGrantedUser.scrollback(roomId as RoomIdentifier, 30)).rejects.toThrow(
+            'You cannot remain in a disabled server',
+        )
+        // give dendrite time to federate leave event
+        await new Promise((r) => setTimeout(r, 2000))
+        // can't rejoin the room after it's disabled without a re-invite
+        await expect(tokenGrantedUser.joinRoom(roomId as RoomIdentifier)).rejects.toThrow(
+            'Unauthorised',
+        )
+    })
+
+    test('Channel member needs to rejoin server that was re-enabled', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+        const roomId = await createSpace(bob, [readPermission, writePermission])
+
+        /** Act */
+
+        await bob.inviteUser(roomId as RoomIdentifier, tokenGrantedUser.matrixUserId as string)
+        await tokenGrantedUser.joinRoom(roomId as RoomIdentifier)
+
+        // set space access off, disabling space in ZionSpaceManager
+        await bob.setSpaceAccess(roomId?.matrixRoomId as string, true)
+
+        try {
+            await tokenGrantedUser.scrollback(roomId as RoomIdentifier, 30)
+        } catch (e) {
+            // we want to suppress error since user should leave the disabled room
+            // by way of a rejection on the promise
+            console.log(e)
+        }
+
+        await bob.setSpaceAccess(roomId?.matrixRoomId as string, false)
+
+        /** Assert */
+
+        await new Promise((r) => setTimeout(r, 5000))
+        await expect(tokenGrantedUser.joinRoom(roomId as RoomIdentifier)).rejects.toThrow()
+        // space owner needs to re-invite user after re-enabling the space
+        await bob.inviteUser(roomId as RoomIdentifier, tokenGrantedUser.matrixUserId as string)
+        await expect(tokenGrantedUser.joinRoom(roomId as RoomIdentifier)).resolves.toBeDefined()
+    })
+})
+
 describe.skip('write messages', () => {
     //describe.only('write messages', () => {
     jest.setTimeout(3000 * 1000)
