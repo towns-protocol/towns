@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react'
 import { TimelineEvent, ZTEvent, useChannelTimeline } from 'use-zion-client'
 import { useChannelContext } from 'use-zion-client/dist/components/ChannelContextProvider'
+import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import {
     MessageTimelineType,
     MessageTimelineWrapper,
 } from '@components/MessageTimeline/MessageTimelineContext'
-import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, IconButton, Stack } from '@ui'
 import { useMessageThread } from 'hooks/useFixMeMessageThread'
@@ -49,7 +49,7 @@ export const WindowedMessageThread = (props: Props) => {
         >
             <MessageWindow label="Thread" onClose={props.onClose}>
                 <Stack grow overflow="hidden">
-                    <MessageTimelineVirtual />
+                    <MessageTimeline />
                 </Stack>
             </MessageWindow>
             <Box paddingY="none" style={{ position: 'sticky', bottom: 0 }}>

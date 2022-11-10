@@ -45,7 +45,7 @@ export const useViewport = (scrollContainer: HTMLElement | null, hasScrolledInto
     return { viewport, isScrolling }
 }
 
-const SAFE_REDRAW_DELAY = 0
+const SAFE_REDRAW_DELAY = 32
 
 /**
  * Scrolls to bottom at first renderer

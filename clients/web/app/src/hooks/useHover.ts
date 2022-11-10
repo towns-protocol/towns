@@ -27,7 +27,6 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
         // the container element is hovered
         const onMouseMove = throttle(
             (e: MouseEvent) => {
-                console.log('checking')
                 const { clientX, clientY } = e ?? prevRef.current
                 prevRef.current.clientX = clientX
                 prevRef.current.clientY = clientY

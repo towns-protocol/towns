@@ -3,12 +3,12 @@ import React, { useCallback, useContext, useRef } from 'react'
 import { useZionClient } from 'use-zion-client'
 import { Stack } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
-import { useIsScrolling } from './hooks/useIsScrolling'
-import { useLazyLoad } from './hooks/useLazyLoad'
-import { usePersistScrollPosition } from './hooks/usePersistScrollPosition'
-import { useScrollDownOnNewMessage } from './hooks/useScrollDownOnNewMessage'
-import { MessageTimeline } from './MessageTimeline'
-import { MessageTimelineContext } from './MessageTimelineContext'
+import { useIsScrolling } from '../hooks/useIsScrolling'
+import { useLazyLoad } from '../hooks/useLazyLoad'
+import { usePersistScrollPosition } from '../hooks/usePersistScrollPosition'
+import { useScrollDownOnNewMessage } from '../hooks/useScrollDownOnNewMessage'
+import { ObsoleteMessageTimeline } from './ObsoleteMessageTimeline'
+import { MessageTimelineContext } from '../MessageTimelineContext'
 
 interface Props {
     hideThreads?: boolean
@@ -16,7 +16,7 @@ interface Props {
     after?: JSX.Element
 }
 
-export const MessageTimelineScroller = (props: Props) => {
+export const ObsoleteMessageTimelineScroller = (props: Props) => {
     const { hideThreads } = props
 
     const timelineContext = useContext(MessageTimelineContext)
@@ -60,7 +60,7 @@ export const MessageTimelineScroller = (props: Props) => {
                         pointerEvents={isScrolling ? 'none' : 'auto'}
                     >
                         <div ref={intersectionRef} />
-                        <MessageTimeline />
+                        <ObsoleteMessageTimeline />
                         {props.after}
                     </Stack>
                     <div ref={bottomRef} />

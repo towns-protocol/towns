@@ -18,7 +18,7 @@ export const SpaceHome = () => {
         if (firstChannelId && space?.membership === Membership.Join) {
             const timeout = setTimeout(() => {
                 navigate(`/spaces/${spaceId?.slug}/channels/${firstChannelId.slug}/`)
-            }, 1000)
+            }, 500)
             return () => {
                 clearTimeout(timeout)
             }
@@ -34,12 +34,10 @@ export const SpaceHome = () => {
             <LiquidContainer fullbleed position="relative">
                 {space.membership !== Membership.Join ? (
                     <JoinSpace space={space} />
-                ) : !space.membership || Math.random() > 0 ? (
+                ) : (
                     <Box absoluteFill padding grow overflow="hidden">
                         <TimelineShimmer />
                     </Box>
-                ) : (
-                    <>Redirect...</>
                 )}
             </LiquidContainer>
         </Stack>

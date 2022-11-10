@@ -1,24 +1,22 @@
 import { Allotment } from 'allotment'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback } from 'react'
 import { Outlet, useOutlet, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
-    RoomIdentifier,
     useChannelData,
     useChannelTimeline,
     useMyMembership,
     useZionClient,
 } from 'use-zion-client'
 import { ChannelHeader } from '@components/ChannelHeader'
-import { MessageTimelineScroller } from '@components/MessageTimeline'
-import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Button, Paragraph, Stack } from '@ui'
-import { usePersistPanes } from 'hooks/usePersistPanes'
-import { TimelineShimmer } from '@components/Shimmer'
+import { ObsoleteMessageTimelineScroller } from '@components/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { MessageTimelineVirtual } from '@components/MessageTimeline/MessageTimelineVirtual'
-import { Heading } from '../ui/components/Text/Heading'
+import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
+import { RichTextEditor } from '@components/RichText/RichTextEditor'
+import { TimelineShimmer } from '@components/Shimmer'
+import { Box, Button, Stack } from '@ui'
+import { usePersistPanes } from 'hooks/usePersistPanes'
 
 export const SpacesChannel = () => {
     return (
@@ -71,18 +69,11 @@ const SpacesChannelComponent = () => {
 
     const hasThreadOpen = !!messageId
 
-    // FIXME: timeline content is set one frame after the channelId is updated
-    // resulting in the odd state. this needs to be fixed in side of lib separately
-    const [deferredChannelId, setDeferredChannelId] = useState<RoomIdentifier>()
-    useEffect(() => {
-        setDeferredChannelId(channel?.id)
-    }, [channel?.id])
-
     return (
         <Stack horizontal minHeight="100%">
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
-                    {!channel || !deferredChannelId ? (
+                    {!channel || !channelId ? (
                         <TimelineShimmer />
                     ) : myMembership !== Membership.Join ? (
                         <Box absoluteFill centerContent>
@@ -99,9 +90,9 @@ const SpacesChannelComponent = () => {
                                 events={channelMessages}
                             >
                                 {!USE_VLIST ? (
-                                    <MessageTimelineScroller hideThreads />
+                                    <ObsoleteMessageTimelineScroller hideThreads />
                                 ) : (
-                                    <MessageTimelineVirtual
+                                    <MessageTimeline
                                         header={<ChannelHeader name={channel.label} />}
                                     />
                                 )}
