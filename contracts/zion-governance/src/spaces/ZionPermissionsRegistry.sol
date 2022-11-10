@@ -55,6 +55,10 @@ contract ZionPermissionsRegistry is Ownable {
       PermissionTypes.ModifyChannelDefaults,
       DataTypes.Permission({name: "ModifyChannelDefaults"})
     );
+    _setPermission(
+      PermissionTypes.Owner,
+      DataTypes.Permission({name: "Owner"})
+    );
   }
 
   function addPermission(

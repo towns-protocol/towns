@@ -187,13 +187,12 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
       permissionsRegistry.getPermissionByPermissionType(PermissionTypes.Read)
     );
 
-    console.log(isEveryoneReadEntitled);
-
     DataTypes.ChannelInfo memory info = spaceManager.getChannelInfoByChannelId(
       spaceNetwork,
       channelNetwork
     );
 
+    assertTrue(isEveryoneReadEntitled);
     assertEq(info.channelId, channelId);
     assertEq(info.name, "channel-name");
     assertEq(info.networkId, channelNetwork);
@@ -331,8 +330,10 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     TokenEntitlementModule newTokenEntitlementModule = new TokenEntitlementModule(
         "New Token Entitlement Module",
         "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+        "NewTokenEntitlementModule",
         address(spaceManager),
-        address(roleManager)
+        address(roleManager),
+        address(permissionsRegistry)
       );
 
     spaceManager.whitelistEntitlementModule(
@@ -373,8 +374,10 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     TokenEntitlementModule newTokenEntitlementModule = new TokenEntitlementModule(
         "New Token Entitlement Module",
         "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+        "NewTokenEntitlementModule",
         address(spaceManager),
-        address(roleManager)
+        address(roleManager),
+        address(permissionsRegistry)
       );
 
     DataTypes.ExternalToken memory councilNFTGate = DataTypes.ExternalToken(
@@ -581,8 +584,10 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
       "User Granted Entitlement Module",
       "Allows users to grant other users access to spaces and rooms",
+      "UserGrantedEntitlementModule",
       address(spaceManager),
-      address(roleManager)
+      address(roleManager),
+      address(permissionsRegistry)
     );
     createSimpleSpace("test", networkId, spaceManager);
 

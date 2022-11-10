@@ -1,13 +1,18 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
-import {IRoleManager} from "../../interfaces/IRoleManager.sol";
-import {DataTypes} from "../../libraries/DataTypes.sol";
-import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/interfaces/IERC721.sol";
-import {ERC165} from "openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
+
+import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
+import {IRoleManager} from "../../interfaces/IRoleManager.sol";
+import {IPermissionRegistry} from "../../interfaces/IPermissionRegistry.sol";
+
+import {DataTypes} from "../../libraries/DataTypes.sol";
+import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
+import {Errors} from "../../libraries/Errors.sol";
+
+import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 
 contract TokenEntitlementModule is EntitlementModuleBase {
   struct TokenEntitlement {
@@ -44,15 +49,39 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   constructor(
     string memory name_,
     string memory description_,
+    string memory moduleType_,
     address spaceManager_,
-    address roleManager_
-  ) EntitlementModuleBase(name_, description_, spaceManager_, roleManager_) {}
+    address roleManager_,
+    address permissionRegistry_
+  )
+    EntitlementModuleBase(
+      name_,
+      description_,
+      moduleType_,
+      spaceManager_,
+      roleManager_,
+      permissionRegistry_
+    )
+  {}
 
   function getEntitlementData(
     string calldata spaceId,
     string calldata channelId,
     uint256 roleId
   ) public view returns (bytes memory) {
+    if (
+      !isEntitled(
+        spaceId,
+        channelId,
+        msg.sender,
+        IPermissionRegistry(_permisionRegistry).getPermissionByPermissionType(
+          PermissionTypes.Read
+        )
+      )
+    ) {
+      revert Errors.NotAllowed();
+    }
+
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );

@@ -37,17 +37,21 @@ contract DeployLocal is Script {
     roleManager.setSpaceManager(address(spaceManager));
 
     userGrantedEntitlementModule = new UserGrantedEntitlementModule(
-      "User Granted Entitlement Module",
+      "User Granted",
       "Allows users to grant other users access to spaces and rooms",
+      "UserGrantedEntitlementModule",
       address(spaceManager),
-      address(roleManager)
+      address(roleManager),
+      address(permissionsRegistry)
     );
 
     tokenEntitlementModule = new TokenEntitlementModule(
-      "Token Entitlement Module",
+      "Token",
       "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+      "TokenEntitlementModule",
       address(spaceManager),
-      address(roleManager)
+      address(roleManager),
+      address(permissionsRegistry)
     );
 
     zionSpaceNFT = new ZionSpace("Zion Space", "ZSNFT", address(spaceManager));

@@ -4,15 +4,15 @@ pragma solidity ^0.8.0;
 import {ERC165} from "openzeppelin-contracts/contracts/utils/introspection/ERC165.sol";
 import {Errors} from "../libraries/Errors.sol";
 import {IEntitlementModule} from "../interfaces/IEntitlementModule.sol";
-import {ISpaceManager} from "../interfaces/ISpaceManager.sol";
-import {DataTypes} from "../libraries/DataTypes.sol";
-import {PermissionTypes} from "../libraries/PermissionTypes.sol";
 
 abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   address public immutable _spaceManager;
   address public immutable _roleManager;
-  string private _name;
-  string private _description;
+  address public immutable _permisionRegistry;
+
+  string public name;
+  string public description;
+  string public moduleType;
 
   modifier onlySpaceManager() {
     if (msg.sender != _spaceManager) revert Errors.NotSpaceManager();
@@ -22,25 +22,19 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
   constructor(
     string memory name_,
     string memory description_,
+    string memory moduleType_,
     address spaceManager_,
-    address roleManager_
+    address roleManager_,
+    address permissionRegistry_
   ) {
-    if (spaceManager_ == address(0)) {
-      revert Errors.InvalidParameters();
-    }
+    _verifyParameters(spaceManager_);
 
-    _name = name_;
-    _description = description_;
+    name = name_;
+    description = description_;
+    moduleType = moduleType_;
     _spaceManager = spaceManager_;
     _roleManager = roleManager_;
-  }
-
-  function name() external view returns (string memory) {
-    return _name;
-  }
-
-  function description() external view returns (string memory) {
-    return _description;
+    _permisionRegistry = permissionRegistry_;
   }
 
   function supportsInterface(
@@ -49,5 +43,11 @@ abstract contract EntitlementModuleBase is ERC165, IEntitlementModule {
     return
       interfaceId == type(IEntitlementModule).interfaceId ||
       super.supportsInterface(interfaceId);
+  }
+
+  function _verifyParameters(address value) internal pure {
+    if (value == address(0)) {
+      revert Errors.InvalidParameters();
+    }
   }
 }

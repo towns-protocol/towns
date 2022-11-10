@@ -3,11 +3,14 @@ pragma solidity ^0.8.0;
 
 import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
 import {IRoleManager} from "../../interfaces/IRoleManager.sol";
-import {ZionSpaceManager} from "../../ZionSpaceManager.sol";
+import {IPermissionRegistry} from "../../interfaces/IPermissionRegistry.sol";
+
 import {DataTypes} from "../../libraries/DataTypes.sol";
-import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
-import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
 import {Constants} from "../../libraries/Constants.sol";
+import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
+import {Errors} from "../../libraries/Errors.sol";
+
+import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 
 contract UserGrantedEntitlementModule is EntitlementModuleBase {
   struct Entitlement {
@@ -35,15 +38,39 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
   constructor(
     string memory name_,
     string memory description_,
+    string memory moduleType_,
     address spaceManager_,
-    address roleManager_
-  ) EntitlementModuleBase(name_, description_, spaceManager_, roleManager_) {}
+    address roleManager_,
+    address permissionRegistry_
+  )
+    EntitlementModuleBase(
+      name_,
+      description_,
+      moduleType_,
+      spaceManager_,
+      roleManager_,
+      permissionRegistry_
+    )
+  {}
 
   function getEntitlementData(
-    string memory spaceId,
-    string memory channelId,
+    string calldata spaceId,
+    string calldata channelId,
     uint256 roleId
-  ) public view returns (address[] memory) {
+  ) external view returns (address[] memory) {
+    if (
+      !isEntitled(
+        spaceId,
+        channelId,
+        msg.sender,
+        IPermissionRegistry(_permisionRegistry).getPermissionByPermissionType(
+          PermissionTypes.Read
+        )
+      )
+    ) {
+      revert Errors.NotAllowed();
+    }
+
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );
