@@ -9,5 +9,6 @@ const config: Config.InitialOptions = {
     moduleNameMapper: {
         '\\.(wasm\\?url)$': require.resolve('./tests/mocks/file-mock.js'),
     },
+    runner: 'groups',
 }
 export default config
