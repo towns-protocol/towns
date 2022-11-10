@@ -4414,7 +4414,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^4.10.1":
+"@tanstack/react-query@npm:^4.10.1, @tanstack/react-query@npm:^4.14.3":
   version: 4.14.5
   resolution: "@tanstack/react-query@npm:4.14.5"
   dependencies:
@@ -12027,6 +12027,7 @@ __metadata:
     "@lexical/utils": ^0.6.0
     "@ngneat/falso": ^6.1.0
     "@react-hook/resize-observer": ^1.2.6
+    "@tanstack/react-query": ^4.14.3
     "@testing-library/jest-dom": ^5.16.5
     "@testing-library/react": ^13.4.0
     "@testing-library/user-event": ^14.4.3

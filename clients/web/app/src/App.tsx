@@ -11,6 +11,7 @@ import { SpacesNew } from 'routes/SpacesNew'
 import { SidebarLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { PATHS } from 'routes'
+import { QueryProvider } from 'api/queryClient'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -33,7 +34,9 @@ export const App = () => {
             onboardingOpts={{ skipAvatar: true }}
             initialSyncLimit={100}
         >
-            <AllRoutes />
+            <QueryProvider>
+                <AllRoutes />
+            </QueryProvider>
         </ZionContextProvider>
     )
 }
