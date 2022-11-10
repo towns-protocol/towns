@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Divider, Icon, Paragraph, Stack } from '@ui'
+import { Box, Icon, Paragraph, Stack } from '@ui'
 
 type Props = {
     name?: string
