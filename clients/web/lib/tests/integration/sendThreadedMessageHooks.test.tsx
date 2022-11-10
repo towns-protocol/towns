@@ -63,18 +63,24 @@ describe('sendThreadedMessageHooks', () => {
         // render bob's app
         act(() => {
             const TestChannelComponent = () => {
-                const { sendMessage } = useZionClient()
+                const { sendMessage, editMessage } = useZionClient()
                 const threadRoots = useSpaceThreadRoots()
                 const channelTimeline = useChannelTimeline()
                 const channelThreadStats = useChannelThreadStats()
 
                 const sendInitialMessages = useCallback(() => {
-                    const foo = async () => {
-                        await sendMessage(channel_1, 'hello jane in channel_1')
-                        await sendMessage(channel_2, 'hello jane in channel_2')
-                    }
-                    void foo()
+                    void sendMessage(channel_1, 'hello jane in channel_1')
+                    void sendMessage(channel_2, 'hello jane in channel_2')
                 }, [sendMessage])
+
+                const editChannel2Message1 = useCallback(() => {
+                    const root = Object.values(threadRoots).at(0)!
+                    const channelId = root.channel.id
+                    const messageId = root.thread.parentId
+                    void editMessage(channelId, 'hello jane old friend in channel_2', {
+                        originalEventId: messageId,
+                    })
+                }, [editMessage, threadRoots])
 
                 const formatThreadRoot = (t: ThreadResult) => {
                     return `channel: (${t.channel.label}) replyCount: (${
@@ -98,6 +104,7 @@ describe('sendThreadedMessageHooks', () => {
                     <>
                         <RegisterAndJoin roomIds={[spaceId, channel_1, channel_2]} />
                         <button onClick={sendInitialMessages}>sendInitialMessages</button>
+                        <button onClick={editChannel2Message1}>editChannel2Message1</button>
                         <div data-testid="threadRoots">
                             {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
                         </div>
@@ -128,6 +135,9 @@ describe('sendThreadedMessageHooks', () => {
         const threadRoots = screen.getByTestId('threadRoots')
         const sendInitialMessages = screen.getByRole('button', {
             name: 'sendInitialMessages',
+        })
+        const editChannel2Message1 = screen.getByRole('button', {
+            name: 'editChannel2Message1',
         })
 
         // - bob joins the space and both channels
@@ -191,6 +201,14 @@ describe('sendThreadedMessageHooks', () => {
         )
         // -- bob should not see the channel_1.thread in his thread list
         await waitFor(() => expect(threadRoots).not.toHaveTextContent(`channel: (channel_1)`))
+        // -- bob should see the thread root message in is thread list
+        await waitFor(() => expect(threadRoots).toHaveTextContent(`hello jane in channel_2`))
+        // -- bob edits is message in channel_2
+        fireEvent.click(editChannel2Message1)
+        // -- bob sees thread root updated
+        await waitFor(() =>
+            expect(threadRoots).toHaveTextContent(`hello jane old friend in channel_2`),
+        )
         // todo...
         // -- bob should see unread markers in channels and threads
         // - bob marks the thread markers as read one by one

@@ -5,7 +5,7 @@ import { useSpaceData } from './use-space-data'
 import { useTimelineStore } from '../store/use-timeline-store'
 import { ThreadStats } from '../types/timeline-types'
 
-export function useSpaceThreadRoots() {
+export function useSpaceThreadRoots(): ThreadResult[] {
     const { userId } = useMatrixStore()
     const data = useSpaceData()
     const channelGroups = data?.channelGroups ?? []

@@ -591,23 +591,40 @@ function addThreadStats(
     timelineEvent: TimelineEvent,
     threadsStats: ThreadStatsMap,
     timeline: TimelineEvent[] | undefined,
-) {
+): ThreadStatsMap {
     const parentId = timelineEvent.threadParentId
-    if (!parentId) {
-        return threadsStats
+    // if we have a parent...
+    if (parentId) {
+        return {
+            ...threadsStats,
+            [roomId]: {
+                ...threadsStats[roomId],
+                [parentId]: addThreadStat(
+                    timelineEvent,
+                    parentId,
+                    threadsStats[roomId]?.[parentId],
+                    timeline,
+                ),
+            },
+        }
     }
-    return {
-        ...threadsStats,
-        [roomId]: {
-            ...threadsStats[roomId],
-            [parentId]: addThreadStat(
-                timelineEvent,
-                parentId,
-                threadsStats[roomId]?.[parentId],
-                timeline,
-            ),
-        },
+    // if we are a parent...
+    const content = getRoomMessageContent(timelineEvent)
+    if (content && threadsStats[roomId]?.[timelineEvent.eventId]) {
+        // update ourself in the map
+        return {
+            ...threadsStats,
+            [roomId]: {
+                ...threadsStats[roomId],
+                [timelineEvent.eventId]: {
+                    ...threadsStats[roomId][timelineEvent.eventId],
+                    parent: content,
+                },
+            },
+        }
     }
+    // otherwise noop
+    return threadsStats
 }
 
 function addThreadStat(
@@ -615,7 +632,7 @@ function addThreadStat(
     parentId: string,
     entry: ThreadStats | undefined,
     timeline: TimelineEvent[] | undefined,
-) {
+): ThreadStats {
     const updated = entry ?? {
         replyCount: 0,
         userIds: new Set(),
