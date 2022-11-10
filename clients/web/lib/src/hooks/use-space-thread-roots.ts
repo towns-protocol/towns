@@ -28,7 +28,10 @@ export function useSpaceThreadRoots(): ThreadResult[] {
             threadsStats[channel.id.matrixRoomId] || {}
 
         const channelThreads = Object.values(channelThreadStats)
-            .filter((thread) => thread.userIds.has(userId) || thread.parent?.sender.id === userId)
+            .filter(
+                (thread) =>
+                    thread.userIds.has(userId) || thread.parentMessageContent?.sender.id === userId,
+            )
             .map((thread) => ({
                 type: 'thread' as const,
                 unread: false,

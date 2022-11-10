@@ -163,11 +163,13 @@ export interface TimelineEvent {
 }
 
 export interface ThreadStats {
+    /// Thread Parent
     replyCount: number
     userIds: Set<string>
     latestTs: number
     parentId: string
-    parent?: RoomMessageEvent
+    parentEvent?: TimelineEvent
+    parentMessageContent?: RoomMessageEvent
 }
 
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }

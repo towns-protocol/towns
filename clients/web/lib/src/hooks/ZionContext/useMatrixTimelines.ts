@@ -25,6 +25,7 @@ import {
 import { staticAssertNever } from '../../utils/zion-utils'
 import {
     ReactionsMap,
+    ThreadsMap,
     ThreadStatsMap,
     TimelinesMap,
     useTimelineStore,
@@ -46,9 +47,11 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     return state
                 }
                 const event = state.timelines[roomId][eventIndex]
+
                 return {
                     timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
                     threadsStats: removeThreadStat(roomId, event, state.threadsStats),
+                    threads: removeThreadEvent(roomId, event, state.threads),
                     reactions: removeReaction(roomId, event, state.reactions),
                 }
             })
@@ -62,6 +65,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     state.threadsStats,
                     state.timelines[roomId],
                 ),
+                threads: appendThreadEvent(roomId, timelineEvent, state.threads),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
             }))
         }
@@ -74,6 +78,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     state.threadsStats,
                     state.timelines[roomId],
                 ),
+                threads: prependThreadEvent(roomId, timelineEvent, state.threads),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
             }))
         }
@@ -86,13 +91,20 @@ export function useMatrixTimelines(client?: MatrixClient) {
             setState((state) => {
                 const timeline = state.timelines[roomId] ?? []
                 const eventIndex = timeline.findIndex(
-                    (value: TimelineEvent) => value.eventId === replacingId,
+                    (e: TimelineEvent) => e.eventId === replacingId,
                 )
                 if (eventIndex === -1) {
                     return state
                 }
                 const oldEvent = timeline[eventIndex]
                 const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
+
+                const threadParentId = newEvent.threadParentId
+                const threadTimeline = threadParentId
+                    ? state.threads[roomId]?.[threadParentId]
+                    : undefined
+                const threadEventIndex =
+                    threadTimeline?.findIndex((e) => e.eventId === replacingId) ?? -1
 
                 return {
                     timelines: replaceTimelineEvent(
@@ -108,6 +120,21 @@ export function useMatrixTimelines(client?: MatrixClient) {
                         removeThreadStat(roomId, oldEvent, state.threadsStats),
                         state.timelines[roomId],
                     ),
+                    threads:
+                        threadParentId && threadTimeline && threadEventIndex >= 0
+                            ? {
+                                  ...state.threads,
+                                  [roomId]: replaceTimelineEvent(
+                                      threadParentId,
+                                      newEvent,
+                                      threadEventIndex,
+                                      threadTimeline,
+                                      state.threads[roomId],
+                                  ),
+                              }
+                            : threadParentId
+                            ? appendThreadEvent(roomId, newEvent, state.threads)
+                            : state.threads,
                     reactions: addReactions(
                         roomId,
                         newEvent,
@@ -125,6 +152,10 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     ...state.threadsStats,
                     [room.roomId]: aggregated.threadStats,
                 },
+                threads: {
+                    ...state.threads,
+                    [room.roomId]: aggregated.threads,
+                },
                 reactions: {
                     ...state.reactions,
                     [room.roomId]: aggregated.reactions,
@@ -139,19 +170,26 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 return acc
             }, {} as TimelinesMap)
 
-            const { threadsStats, reactions } = Object.entries(timelines).reduce(
+            const { threadsStats, threads, reactions } = Object.entries(timelines).reduce(
                 (acc, kv) => {
                     const channelId = kv[0]
                     const aggregated = toStatsAndReactions(kv[1])
                     acc.threadsStats[channelId] = aggregated.threadStats
+                    acc.threads[channelId] = aggregated.threads
                     acc.reactions[channelId] = aggregated.reactions
                     return acc
                 },
-                { threadsStats: {} as ThreadStatsMap, reactions: {} as ReactionsMap },
+                {
+                    threadsStats: {} as ThreadStatsMap,
+                    threads: {} as ThreadsMap,
+                    reactions: {} as ReactionsMap,
+                },
             )
+
             setState(() => ({
                 timelines,
                 threadsStats,
+                threads,
                 reactions,
             }))
         }
@@ -243,6 +281,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             setState(() => ({
                 timelines: {},
                 threadsStats: {},
+                threads: {},
                 reactions: {},
             }))
         }
@@ -560,6 +599,7 @@ function toTimelineEvents(room: MatrixRoom) {
 function toStatsAndReactions(timeline: TimelineEvent[]) {
     return timeline.reduce<{
         threadStats: Record<string, ThreadStats>
+        threads: Record<string, TimelineEvent[]>
         reactions: Record<string, MessageReactions>
     }>(
         (acc, m) => {
@@ -570,6 +610,9 @@ function toStatsAndReactions(timeline: TimelineEvent[]) {
                     acc.threadStats[m.threadParentId],
                     timeline,
                 )
+                const thread = acc.threads[m.threadParentId] ?? []
+                thread.push(m)
+                acc.threads[m.threadParentId] = thread
             }
             if (m.reactionParentId) {
                 acc.reactions[m.reactionParentId] = addReaction(
@@ -581,6 +624,7 @@ function toStatsAndReactions(timeline: TimelineEvent[]) {
         },
         {
             threadStats: {} as Record<string, ThreadStats>,
+            threads: {} as Record<string, TimelineEvent[]>,
             reactions: {} as Record<string, MessageReactions>,
         },
     )
@@ -609,8 +653,7 @@ function addThreadStats(
         }
     }
     // if we are a parent...
-    const content = getRoomMessageContent(timelineEvent)
-    if (content && threadsStats[roomId]?.[timelineEvent.eventId]) {
+    if (threadsStats[roomId]?.[timelineEvent.eventId]) {
         // update ourself in the map
         return {
             ...threadsStats,
@@ -618,7 +661,8 @@ function addThreadStats(
                 ...threadsStats[roomId],
                 [timelineEvent.eventId]: {
                     ...threadsStats[roomId][timelineEvent.eventId],
-                    parent: content,
+                    parentEvent: timelineEvent,
+                    parentMessageContent: getRoomMessageContent(timelineEvent),
                 },
             },
         }
@@ -627,19 +671,25 @@ function addThreadStats(
     return threadsStats
 }
 
+function makeNewThreadStats(event: TimelineEvent, parentId: string, timeline?: TimelineEvent[]) {
+    const parent = timeline?.find((t) => t.eventId === parentId) // one time lookup of the parent message for the first reply
+    return {
+        replyCount: 0,
+        userIds: new Set<string>(),
+        latestTs: event.originServerTs,
+        parentId,
+        parentEvent: parent,
+        parentMessageContent: getRoomMessageContent(parent),
+    }
+}
+
 function addThreadStat(
     event: TimelineEvent,
     parentId: string,
     entry: ThreadStats | undefined,
     timeline: TimelineEvent[] | undefined,
 ): ThreadStats {
-    const updated = entry ?? {
-        replyCount: 0,
-        userIds: new Set(),
-        latestTs: event.originServerTs,
-        parent: getRoomMessageContent(timeline?.find((t) => t.eventId === parentId)), // one time lookup of the parent message for the first reply
-        parentId,
-    }
+    const updated = entry ?? makeNewThreadStats(event, parentId, timeline)
     updated.replyCount++
     updated.latestTs = Math.max(updated.latestTs, event.originServerTs)
     const senderId = getMessageSenderId(event)
@@ -739,6 +789,60 @@ function removeReaction(
         }
     }
     return { ...reactions, [roomId]: updated }
+}
+
+function removeThreadEvent(roomId: string, event: TimelineEvent, threads: ThreadsMap): ThreadsMap {
+    const parentId = event.threadParentId
+    if (!parentId) {
+        return threads
+    }
+    const threadEventIndex =
+        threads[roomId]?.[parentId]?.findIndex((e) => e.eventId === event.eventId) ?? -1
+    if (threadEventIndex === -1) {
+        return threads
+    }
+    return {
+        ...threads,
+        [roomId]: removeTimelineEvent(parentId, threadEventIndex, threads[roomId]),
+    }
+}
+
+function appendThreadEvent(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    threads: ThreadsMap,
+): ThreadsMap {
+    if (!timelineEvent.threadParentId) {
+        return threads
+    }
+    const newf = {
+        ...threads,
+        [roomId]: appendTimelineEvent(
+            timelineEvent.threadParentId,
+            timelineEvent,
+            threads[roomId] ?? {},
+        ),
+    }
+
+    return newf
+}
+
+function prependThreadEvent(
+    roomId: string,
+    timelineEvent: TimelineEvent,
+    threads: ThreadsMap,
+): ThreadsMap {
+    if (!timelineEvent.threadParentId) {
+        return threads
+    }
+    return {
+        ...threads,
+        [roomId]: prependTimelineEvent(
+            timelineEvent.threadParentId,
+            timelineEvent,
+            threads[roomId] ?? {},
+        ),
+    }
 }
 
 function removeTimelineEvent(

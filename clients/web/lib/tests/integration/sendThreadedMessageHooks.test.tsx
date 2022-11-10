@@ -15,6 +15,7 @@ import { RegisterAndJoin } from './helpers/TestComponents'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useChannelThreadStats } from '../../src/hooks/use-channel-thread-stats'
 import { useSpaceThreadRoots } from '../../src/hooks/use-space-thread-roots'
+import { useTimelineThread } from '../../src/hooks/use-timeline-thread'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { ThreadStats, TimelineEvent } from '../../src/types/timeline-types'
 
@@ -68,24 +69,36 @@ describe('sendThreadedMessageHooks', () => {
                 const channelTimeline = useChannelTimeline()
                 const channelThreadStats = useChannelThreadStats()
 
+                const channel_2_threadRoot = Object.values(threadRoots).at(0)
+                const channel_2_thread = useTimelineThread(
+                    channel_2,
+                    channel_2_threadRoot?.thread.parentId,
+                )
+
                 const sendInitialMessages = useCallback(() => {
                     void sendMessage(channel_1, 'hello jane in channel_1')
                     void sendMessage(channel_2, 'hello jane in channel_2')
                 }, [sendMessage])
 
                 const editChannel2Message1 = useCallback(() => {
-                    const root = Object.values(threadRoots).at(0)!
-                    const channelId = root.channel.id
-                    const messageId = root.thread.parentId
+                    if (!channel_2_threadRoot) {
+                        throw new Error('no channel_2_threadRoot')
+                    }
+                    const channelId = channel_2_threadRoot.channel.id
+                    const messageId = channel_2_threadRoot.thread.parentId
                     void editMessage(channelId, 'hello jane old friend in channel_2', {
                         originalEventId: messageId,
                     })
-                }, [editMessage, threadRoots])
+                }, [editMessage, channel_2_threadRoot])
+
+                const formatThreadParent = (t: ThreadStats) => {
+                    return `replyCount: (${t.replyCount}) parentId: (${t.parentId} message: (${
+                        t.parentMessageContent?.body ?? ''
+                    })`
+                }
 
                 const formatThreadRoot = (t: ThreadResult) => {
-                    return `channel: (${t.channel.label}) replyCount: (${
-                        t.thread.replyCount
-                    }) parentId: (${t.thread.parentId} message: (${t.thread.parent?.body ?? ''})`
+                    return `channel: (${t.channel.label}) ` + formatThreadParent(t.thread)
                 }
 
                 const formatMessage = useCallback(
@@ -107,6 +120,16 @@ describe('sendThreadedMessageHooks', () => {
                         <button onClick={editChannel2Message1}>editChannel2Message1</button>
                         <div data-testid="threadRoots">
                             {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
+                        </div>
+                        <div data-testid="channel2ThreadParent">
+                            {channel_2_thread?.parent
+                                ? formatThreadParent(channel_2_thread.parent)
+                                : 'undefined'}
+                        </div>
+                        <div data-testid="channel2ThreadMessages">
+                            {(channel_2_thread?.messages ?? [])
+                                .map((e) => formatMessage(e))
+                                .join('\n')}
                         </div>
                         <div data-testid="channelMessages">
                             {channelTimeline.map((event) => formatMessage(event)).join('\n')}
@@ -132,6 +155,8 @@ describe('sendThreadedMessageHooks', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         const joinComplete = screen.getByTestId('joinComplete')
         const channelMessages = screen.getByTestId('channelMessages')
+        const channel2ThreadParent = screen.getByTestId('channel2ThreadParent')
+        const channel2ThreadMessages = screen.getByTestId('channel2ThreadMessages')
         const threadRoots = screen.getByTestId('threadRoots')
         const sendInitialMessages = screen.getByRole('button', {
             name: 'sendInitialMessages',
@@ -208,6 +233,14 @@ describe('sendThreadedMessageHooks', () => {
         // -- bob sees thread root updated
         await waitFor(() =>
             expect(threadRoots).toHaveTextContent(`hello jane old friend in channel_2`),
+        )
+        // -- and the thread parent (different hook)
+        await waitFor(() =>
+            expect(channel2ThreadParent).toHaveTextContent('hello jane old friend in channel_2'),
+        )
+        // -- and the thread messages
+        await waitFor(() =>
+            expect(channel2ThreadMessages).toHaveTextContent('hello thread in channel_2'),
         )
         // todo...
         // -- bob should see unread markers in channels and threads
