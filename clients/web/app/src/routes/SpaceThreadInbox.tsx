@@ -7,19 +7,17 @@ import {
     ChannelContextProvider,
     RoomIdentifier,
     RoomMember,
-    useChannelTimeline,
     useMatrixStore,
     useSpaceId,
     useSpaceMembers,
     useSpaceThreadRoots,
+    useTimelineThread,
 } from 'use-zion-client'
 import { Message } from '@components/Message'
 import { TimelineMessageContent } from '@components/MessageTimeline/events/TimelineMessagesContent'
 import { Box, Stack } from '@ui'
-import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { getIsRoomMessageContent } from 'utils/ztevent_util'
 
 export const SpaceThreadsInbox = () => {
     const outlet = useOutlet()
@@ -95,12 +93,10 @@ const InboxEntry = (props: {
     members: RoomMember[]
 }) => {
     const { spaceId, channelId, parentId, selected: isSelected, channels, members } = props
-    const channelMessages = useChannelTimeline()
-
-    const { parentMessage, messages } = useMessageThread(parentId, channelMessages)
-
+    const { parent, messages } = useTimelineThread(channelId, parentId)
+    const parentMessage = parent?.parentEvent
+    const parentMessageContent = parent?.parentMessageContent
     const lastMessage = messages[messages.length - 1]
-    const parentMessageContent = getIsRoomMessageContent(parentMessage)
 
     return (
         <Link to={`${channelId.slug}/${parentId}/`}>

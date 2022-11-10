@@ -1,5 +1,5 @@
 import React from 'react'
-import { RoomIdentifier, useChannelTimeline } from 'use-zion-client'
+import { RoomIdentifier, useTimelineThread } from 'use-zion-client'
 import { TimelineMessage } from '@components/MessageTimeline/events/TimelineMessage'
 import {
     MessageTimelineType,
@@ -7,9 +7,7 @@ import {
 } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Paragraph, Stack } from '@ui'
-import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { useSendReply } from 'hooks/useSendReply'
-import { getIsRoomMessageContent } from 'utils/ztevent_util'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 
 export const MessageThread = (props: {
@@ -20,12 +18,9 @@ export const MessageThread = (props: {
     spaceId: RoomIdentifier
 }) => {
     const { parentId, spaceId, channelId, channelLabel } = props
-
-    const channelMessages = useChannelTimeline()
-
-    const { parentMessage, messages } = useMessageThread(parentId, channelMessages)
-
-    const parentMessageContent = getIsRoomMessageContent(parentMessage)
+    const { parent, messages } = useTimelineThread(channelId, parentId)
+    const parentMessage = parent?.parentEvent
+    const parentMessageContent = parent?.parentMessageContent
 
     const { sendReply } = useSendReply(parentId)
 

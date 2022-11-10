@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { TimelineEvent, ZTEvent, useChannelTimeline } from 'use-zion-client'
+import { TimelineEvent, useTimelineThread } from 'use-zion-client'
 import { useChannelContext } from 'use-zion-client/dist/components/ChannelContextProvider'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import {
@@ -8,7 +8,6 @@ import {
 } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, IconButton, Stack } from '@ui'
-import { useMessageThread } from 'hooks/useFixMeMessageThread'
 import { useSendReply } from 'hooks/useSendReply'
 
 type Props = {
@@ -20,13 +19,8 @@ export const WindowedMessageThread = (props: Props) => {
     const { channelId, spaceId } = useChannelContext()
     const { messageId } = props
 
-    // fixme: may be overusing this hook, no good if not memoized
-    const channelMessages = useChannelTimeline()
-
-    const { parentMessage, messages } = useMessageThread(
-        messageId,
-        channelMessages.filter((m) => m.content?.kind === ZTEvent.RoomMessage),
-    )
+    const { parent, messages } = useTimelineThread(channelId, messageId)
+    const parentMessage = parent?.parentEvent
 
     const messagesWithParent = useMemo(() => {
         return parentMessage ? [parentMessage, ...messages] : messages
