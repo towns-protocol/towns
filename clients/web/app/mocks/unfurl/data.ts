@@ -1,6 +1,7 @@
 // whatever site
 export const normal = {
     url: 'https://stackoverflow.com',
+    type: 'other',
     image: {
         url: 'https://cdn.sstatic.net/Sites/stackoverflow/Img/apple-touch-icon@2.png?v=73d79a89bded',
     },
@@ -13,23 +14,32 @@ export const normal = {
 // raw image
 export const image = {
     url: 'https://i.imgur.com/kJdpI5l.jpeg',
-    image: { url: 'https://i.imgur.com/kJdpI5l.jpeg' },
+    type: 'image',
     title: 'https://i.imgur.com/kJdpI5l.jpeg',
+    image: {
+        url: 'https://i.imgur.com/kJdpI5l.jpeg',
+        width: 1248,
+        height: 1600,
+    },
 }
 
 // Giphy
 export const giphy = {
-    url: 'https://giphy.com/gifs/mlb-baseball-playoffs-astros-rlO48a7OCYB3SIpndR',
+    url: 'https://giphy.com/gifs/mlb-omg-baseball-phillies-X92CoUeUr6351cDMhi',
+    type: 'other',
     image: {
-        url: 'https://media3.giphy.com/media/rlO48a7OCYB3SIpndR/giphy_s.gif?cid=790b761192e439be5bdcdd08d469d4ac888e4b97920a9b5c&rid=giphy_s.gif&ct=g',
+        url: 'https://media1.giphy.com/media/X92CoUeUr6351cDMhi/giphy.gif',
+        width: 480,
+        height: 270,
     },
-    title: 'Heart Love GIF by MLB - Find & Share on GIPHY',
+    title: 'Oh No Omg GIF by MLB - Find & Share on GIPHY',
     description:
         'Because where else would you find monstrous home runs, mascots racing and just some old-fashioned bloopers in one place?',
 }
 
 // TWITTER
 export const twitter = {
+    type: 'twitter',
     url: 'https://www.twitter.com/twitter/status/1588317338461413377',
     twitterInfo: {
         data: {
