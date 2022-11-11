@@ -12,6 +12,7 @@ export interface IZionContractsInfo {
             spacemanager: string
             usergranted: string
             tokengranted: string
+            rolemanager: string
         }
     }
     council: {
@@ -50,7 +51,12 @@ export function getContractInfo(chainId: number): IZionContractsInfo {
             // return localhost, won't matter
             return {
                 spaceManager: {
-                    addresses: { spacemanager: '', usergranted: '', tokengranted: '' },
+                    addresses: {
+                        spacemanager: '',
+                        usergranted: '',
+                        tokengranted: '',
+                        rolemanager: '',
+                    },
                 },
                 council: {
                     addresses: { councilnft: '' },

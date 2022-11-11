@@ -1,10 +1,11 @@
 import { CreateSpaceInfo, RoomIdentifier } from 'types/matrix-types'
 
+import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../client/web3/ZionContractTypes'
+import { createTokenEntitlementData } from '../client/web3/ContractDataFactory'
+import { getContractInfo } from '../client/web3/ZionContracts'
 import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
-import { getContractInfo } from '../client/web3/ZionContracts'
-import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
 
 /**
  * Combine Matrix space creation and Smart Contract space
@@ -21,18 +22,11 @@ export function useIntegratedSpaceManagement() {
                 console.error('createSpaceWithZionTokenEntitlement::chainId is undefined')
                 return undefined
             }
-            const contractInfo = getContractInfo(chainId)
 
-            const externalToken: DataTypes.ExternalTokenStruct = {
-                contractAddress: contractInfo.council.addresses.councilnft,
-                quantity: 1,
-                isSingleToken: false,
-                tokenId: 0,
-            }
-            const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
-                tag: 'Council NFT Gate',
-                tokens: [externalToken],
-            }
+            const contractInfo = getContractInfo(chainId)
+            const externalTokenEntitlement = createTokenEntitlementData({
+                contractAddress: contractInfo.spaceManager.addresses.tokengranted,
+            })
 
             const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
 

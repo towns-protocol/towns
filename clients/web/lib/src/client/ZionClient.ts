@@ -48,7 +48,10 @@ import { ISyncStateData, SyncState } from 'matrix-js-sdk/lib/sync'
 import { IStore } from 'matrix-js-sdk/lib/store'
 import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerShim'
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
+import { ZionRoleManagerShim } from './web3/shims/ZionRoleManagerShim'
 import { loadOlm } from './loadOlm'
+import { TokenEntitlementModuleShim } from './web3/shims/TokenEntitlementModuleShim'
+import { UserGrantedEntitlementModuleShim } from './web3/shims/UserGrantedEntitlementModuleShim'
 
 /***
  * Zion Client
@@ -77,6 +80,9 @@ export class ZionClient {
     }
     public spaceManager: ZionSpaceManagerShim
     public councilNFT: CouncilNFTShim
+    public roleManager: ZionRoleManagerShim
+    public tokenEntitlementModule: TokenEntitlementModuleShim
+    public userGrantedEntitlementModule: UserGrantedEntitlementModuleShim
     public matrixClient: MatrixClient
     private _chainId: number
     private _auth?: ZionAuth
@@ -97,6 +103,23 @@ export class ZionClient {
             this.chainId,
         )
         this.councilNFT = new CouncilNFTShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
+        this.roleManager = new ZionRoleManagerShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
+
+        this.tokenEntitlementModule = new TokenEntitlementModuleShim(
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+            this.chainId,
+        )
+
+        this.userGrantedEntitlementModule = new UserGrantedEntitlementModuleShim(
             this.opts.web3Provider,
             this.opts.web3Signer,
             this.chainId,
@@ -322,14 +345,13 @@ export class ZionClient {
     ): Promise<RoomIdentifier | undefined> {
         let roomIdentifier: RoomIdentifier | undefined = await this.createSpace(createSpaceInfo)
 
-        console.log('[createWeb3SpaceWithTokenEntitlement] Matrix createSpace', roomIdentifier)
+        console.log('[createWeb3Space] Matrix createSpace', roomIdentifier)
 
         if (roomIdentifier) {
             const spaceInfo: DataTypes.CreateSpaceDataStruct = {
                 spaceName: createSpaceInfo.name,
                 spaceNetworkId: roomIdentifier.matrixRoomId,
             }
-
             let transaction: ContractTransaction | undefined = undefined
             let receipt: ContractReceipt | undefined = undefined
             try {
@@ -340,7 +362,7 @@ export class ZionClient {
                 )
                 receipt = await transaction.wait()
             } catch (err) {
-                console.log('[createWeb3SpaceWithTokenEntitlement] error', err)
+                console.log('[createWeb3Space] error', err)
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
                 const revertData: BytesLike = (err as any).error?.error?.error?.data
                 const decodedError = this.spaceManager.signed.interface.parseError(revertData)
@@ -351,18 +373,13 @@ export class ZionClient {
                     const spaceId = await this.spaceManager.unsigned.getSpaceIdByNetworkId(
                         roomIdentifier.matrixRoomId,
                     )
-                    console.log(
-                        '[createWeb3SpaceWithTokenEntitlement] createSpaceWithTokenEntitlement successful',
-                        {
-                            spaceId,
-                            matrixRoomId: roomIdentifier.matrixRoomId,
-                        },
-                    )
+                    console.log('[createWeb3Space] success', {
+                        spaceId,
+                        matrixRoomId: roomIdentifier.matrixRoomId,
+                    })
                 } else {
                     // On-chain space creation failed. Abandon this space.
-                    console.log(
-                        '[createWeb3SpaceWithTokenEntitlement] createSpaceWithTokenEntitlement failed',
-                    )
+                    console.log('[createWeb3Space] failed')
                     await this.leave(roomIdentifier)
                     roomIdentifier = undefined
                 }
@@ -392,6 +409,54 @@ export class ZionClient {
             createInfo: createInfo,
             disableEncryption: this.opts.disableEncryption,
         })
+    }
+
+    /************************************************
+     * createWeb3Channel
+     *************************************************/
+    public async createWeb3Channel(
+        createChannelInfo: CreateChannelInfo,
+        roles: DataTypes.CreateRoleEntitlementDataStruct[],
+    ): Promise<RoomIdentifier | undefined> {
+        let roomIdentifier: RoomIdentifier | undefined = await this.createChannel(createChannelInfo)
+
+        console.log('[createWeb3Channel] Matrix createChannel', roomIdentifier)
+
+        if (roomIdentifier) {
+            const channelInfo: DataTypes.CreateChannelDataStruct = {
+                spaceNetworkId: createChannelInfo.parentSpaceId.matrixRoomId,
+                channelName: createChannelInfo.name,
+                channelNetworkId: roomIdentifier.matrixRoomId,
+            }
+            let transaction: ContractTransaction | undefined = undefined
+            let receipt: ContractReceipt | undefined = undefined
+            try {
+                transaction = await this.spaceManager.signed.createChannel(channelInfo, roles)
+                receipt = await transaction.wait()
+            } catch (err: unknown) {
+                const decodedErr = this.getDecodedError(err)
+                console.error('[createWeb3Channel]', decodedErr)
+            }
+
+            if (receipt?.status === 1) {
+                // Successful created the channel on-chain.
+                const channelId = await this.spaceManager.unsigned.getChannelIdByNetworkId(
+                    createChannelInfo.parentSpaceId.matrixRoomId,
+                    roomIdentifier.matrixRoomId,
+                )
+                console.log('[createWeb3Channel] success', {
+                    channelId,
+                    channelMatrixRoomId: roomIdentifier.matrixRoomId,
+                })
+            } else {
+                // On-chain channel creation failed. Abandon this channel.
+                console.log('[createWeb3Channel] failed')
+                await this.leave(roomIdentifier)
+                roomIdentifier = undefined
+            }
+        }
+
+        return roomIdentifier
     }
 
     /************************************************
@@ -839,6 +904,31 @@ export class ZionClient {
                     store: store as IStore,
                     baseUrl: baseUrl,
                 }),
+            }
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getDecodedError(err: any): Error {
+        let decodedError: Error | undefined = undefined
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            const revertData: BytesLike = err.error?.error?.error?.data
+            const errDescription = this.spaceManager.signed.interface.parseError(revertData)
+            decodedError = {
+                name: errDescription.errorFragment.name,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: err.error?.error?.error?.message,
+            }
+
+            return decodedError
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+            return {
+                name: 'unknown error',
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: e.message,
             }
         }
     }

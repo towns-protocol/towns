@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MAXTRIX_ERROR, NoThrownError, getError, MatrixError } from './helpers/ErrorUtils'
 import {
-    createSpace,
+    createSpaceWithEntitlement,
     registerAndStartClients,
     registerLoginAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
@@ -53,7 +53,7 @@ describe.skip('disable channel', () => {
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
 
-        const roomId = await createSpace(bob, [readPermission, writePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission, writePermission])
 
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId as RoomIdentifier, tokenGrantedUser.matrixUserId as string)
@@ -91,7 +91,7 @@ describe.skip('disable channel', () => {
         await bob.fundWallet()
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
-        const roomId = await createSpace(bob, [readPermission, writePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission, writePermission])
 
         /** Act */
 
@@ -136,7 +136,11 @@ describe.skip('write messages', () => {
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
 
-        const roomId = await createSpace(bob, [readPermission, writePermission], [readPermission])
+        const roomId = await createSpaceWithEntitlement(
+            bob,
+            [readPermission, writePermission],
+            [readPermission],
+        )
 
         /** Act */
 
@@ -202,7 +206,7 @@ describe.skip('write messages', () => {
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
 
-        const roomId = await createSpace(bob, [readPermission, writePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission, writePermission])
 
         /** Act */
 
@@ -250,7 +254,7 @@ describe.skip('write messages', () => {
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
 
-        const roomId = await createSpace(bob, [readPermission, writePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission, writePermission])
 
         /** Act */
         // invite user to join the space by first checking if they can read.
@@ -292,7 +296,7 @@ describe.skip('create role', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createSpace(alice, [{ name: Permission.Read }])
+        const roomId = await createSpaceWithEntitlement(alice, [{ name: Permission.Read }])
         const spaceNetworkId: string | undefined = roomId?.matrixRoomId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
@@ -317,7 +321,7 @@ describe.skip('create role', () => {
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
-        const roomId = await createSpace(alice, [{ name: Permission.Read }])
+        const roomId = await createSpaceWithEntitlement(alice, [{ name: Permission.Read }])
         const spaceNetworkId: string | undefined = roomId?.matrixRoomId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
@@ -348,7 +352,7 @@ describe.skip('create role', () => {
         await alice.fundWallet()
         await bob.fundWallet()
 
-        const roomId = await createSpace(alice, [{ name: Permission.Read }])
+        const roomId = await createSpaceWithEntitlement(alice, [{ name: Permission.Read }])
         const spaceNetworkId: string | undefined = roomId?.matrixRoomId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
@@ -374,7 +378,7 @@ describe.skip('create role', () => {
         await alice.fundWallet()
 
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const roomId = await createSpace(alice, [readPermission])
+        const roomId = await createSpaceWithEntitlement(alice, [readPermission])
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
@@ -396,7 +400,7 @@ describe.skip('create role', () => {
         await bob.fundWallet()
 
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const roomId = await createSpace(bob, [readPermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission])
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
@@ -421,7 +425,10 @@ describe.skip('create role', () => {
         const modifySpacePermission: DataTypes.PermissionStruct = {
             name: Permission.ModifySpacePermissions,
         }
-        const roomId = await createSpace(bob, [readPermission, modifySpacePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [
+            readPermission,
+            modifySpacePermission,
+        ])
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
@@ -440,7 +447,7 @@ describe.skip('create role', () => {
         await alice.fundWallet()
 
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const roomId = await createSpace(alice, [readPermission])
+        const roomId = await createSpaceWithEntitlement(alice, [readPermission])
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
@@ -472,7 +479,7 @@ describe.skip('space invite', () => {
         // create a space with token entitlement
 
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const roomId = await createSpace(bob, [readPermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission])
 
         /** Act */
         // invite users to join the space.
@@ -499,7 +506,7 @@ describe.skip('space invite', () => {
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
         // create a space with token entitlement to write
-        const roomId = await createSpace(bob, [readPermission, writePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission, writePermission])
 
         const isEntitledRead = await alice.isEntitled(
             roomId?.matrixRoomId as string,
@@ -543,7 +550,7 @@ describe.skip('space invite', () => {
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
 
-        const roomId = await createSpace(bob, [readPermission, writePermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission, writePermission])
         const isEntitledRead = await tokenGrantedUser.isEntitled(
             roomId?.matrixRoomId as string,
             '',
@@ -580,7 +587,7 @@ describe.skip('space invite', () => {
 
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         // create a space with token entitlement
-        const roomId = await createSpace(bob, [readPermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission])
 
         // invite users to join the space.
         if (roomId) {
@@ -607,7 +614,7 @@ describe.skip('space invite', () => {
 
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
         // create a space with token entitlement
-        const roomId = await createSpace(bob, [readPermission])
+        const roomId = await createSpaceWithEntitlement(bob, [readPermission])
 
         // invite users to join the space.
         if (roomId) {

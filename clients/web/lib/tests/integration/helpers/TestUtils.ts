@@ -1,4 +1,5 @@
 import {
+    CreateChannelInfo,
     CreateSpaceInfo,
     RoomIdentifier,
     RoomVisibility,
@@ -11,6 +12,10 @@ import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers, Wallet } from 'ethers'
 import { getContractInfo } from 'use-zion-client/src/client/web3/ZionContracts'
 import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
+import {
+    createRolesFromSpace,
+    createTokenEntitlementData,
+} from '../../../src/client/web3/ContractDataFactory'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -83,7 +88,7 @@ export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
     return result
 }
 
-export async function createSpace(
+export async function createSpaceWithEntitlement(
     client: ZionTestClient,
     permissions: DataTypes.PermissionStruct[],
     everyonePermissions: DataTypes.PermissionStruct[] = [],
@@ -98,16 +103,10 @@ export async function createSpace(
         }
     }
 
-    const externalToken: DataTypes.ExternalTokenStruct = {
+    const externalTokenEntitlement = createTokenEntitlementData({
         contractAddress: contractInfo.council.addresses.councilnft,
-        quantity: 1,
-        isSingleToken: false,
-        tokenId: 0,
-    }
-    const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
         tag: 'Council NFT Gate',
-        tokens: [externalToken],
-    }
+    })
 
     const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
         roleName: 'Member',
@@ -123,4 +122,17 @@ export async function createSpace(
     )
 
     return roomId
+}
+
+export async function createChannelWithEntitlement(
+    client: ZionTestClient,
+    createChannelInfo: CreateChannelInfo,
+): Promise<RoomIdentifier | undefined> {
+    // get all the roles in the space, and set it on the channel
+    const roles: DataTypes.CreateRoleEntitlementDataStruct[] = await createRolesFromSpace(
+        client,
+        createChannelInfo.parentSpaceId.matrixRoomId,
+    )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await client.createWeb3Channel(createChannelInfo, roles)
 }
