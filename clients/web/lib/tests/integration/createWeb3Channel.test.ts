@@ -7,7 +7,7 @@ import {
     registerAndStartClients,
 } from './helpers/TestUtils'
 
-describe('On-chain channel tests', () => {
+describe.skip('On-chain channel tests', () => {
     jest.setTimeout(30000)
     test('create channel on-chain', async () => {
         /* Arrange */
