@@ -1,6 +1,6 @@
 import React from 'react'
 import { Channel, MessageType, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
-import { MessageImage } from '@components/MessageImage/MessageImage'
+import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { MessageZionText } from '../../MessageZionText/MessageZionText'
 
 type Props = {
@@ -15,9 +15,15 @@ export const TimelineMessageContent = (props: Props) => {
 
     switch (eventContent.msgType) {
         case MessageType.Image: {
-            return <MessageImage content={eventContent.content} />
+            return (
+                <RatioedBackgroundImage
+                    withLinkOut
+                    url={eventContent.content.url}
+                    width={eventContent.content.info?.thumbnail_info?.w}
+                    height={eventContent.content.info?.thumbnail_info?.h}
+                />
+            )
         }
-        case MessageType.ZionText:
         default: {
             return (
                 <MessageZionText
