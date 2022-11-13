@@ -21,20 +21,7 @@ export const SpacesIndex = () => {
     const space = useSpaceData()
     const membership = useMyMembership(space?.id)
     const timeline = useSpaceTimeline()
-    const { unreadCounts, mentionCounts } = useZionContext()
     const { leaveRoom, sendMessage, joinRoom } = useZionClient()
-
-    const getChannelPostfix = useCallback(
-        (roomId: RoomIdentifier) => {
-            const unreadPostfix = unreadCounts[roomId.matrixRoomId] > 0 ? ' *' : ''
-            const mentionPostfix =
-                mentionCounts[roomId.matrixRoomId] > 0
-                    ? ` (${mentionCounts[roomId.matrixRoomId]})`
-                    : ''
-            return `${unreadPostfix}${mentionPostfix}`
-        },
-        [mentionCounts, unreadCounts],
-    )
 
     const onClickSettings = useCallback(() => {
         if (space?.id.slug) {
@@ -99,26 +86,6 @@ export const SpacesIndex = () => {
                     <div>
                         {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}
                     </div>
-                    {space && (
-                        <>
-                            <h3>Channels:</h3>
-                            <List>
-                                {space.channelGroups.flatMap((r: ChannelGroup) =>
-                                    r.channels.map((c: Channel) => (
-                                        <ListItem
-                                            button
-                                            key={c.id.slug}
-                                            onClick={() => onClickChannel(c.id)}
-                                        >
-                                            <ListItemText>
-                                                {c.label + getChannelPostfix(c.id)}
-                                            </ListItemText>
-                                        </ListItem>
-                                    )),
-                                )}
-                            </List>
-                        </>
-                    )}
                 </>
             )}
             <h3>Space Messages</h3>

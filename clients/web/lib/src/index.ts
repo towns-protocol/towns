@@ -67,6 +67,7 @@ export {
     Membership,
     MessageType,
     RoomVisibility,
+    toRoomIdentifier,
 } from './types/matrix-types'
 
 export type {

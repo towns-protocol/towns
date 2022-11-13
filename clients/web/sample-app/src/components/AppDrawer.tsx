@@ -50,7 +50,13 @@ export function AppDrawer(props: Props): JSX.Element {
     }, [mobileOpen])
 
     const onClickSpace = (spaceId: RoomIdentifier) => {
+        console.log('onClickSpace', spaceId)
         navigate('/spaces/' + spaceId.slug + '/')
+    }
+
+    const onClickChannel = (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
+        console.log('onClickChannel', spaceId, channelId)
+        navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/')
     }
 
     const onClickInvite = (invite: InviteData) => {
@@ -77,7 +83,7 @@ export function AppDrawer(props: Props): JSX.Element {
         <div>
             <Toolbar />
             <Divider />
-            <AppDrawerSpaces onClickSpace={onClickSpace} />
+            <AppDrawerSpaces onClickSpace={onClickSpace} onClickChannel={onClickChannel} />
             <Divider />
             <SidebarNewItemButton label="Create Space" onClick={onClickCreateSpace} />
             <Divider />
