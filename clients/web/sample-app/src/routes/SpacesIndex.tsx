@@ -1,16 +1,12 @@
 import React, { useCallback } from 'react'
 import {
-    Channel,
-    ChannelGroup,
     Membership,
     RoomIdentifier,
     useMyMembership,
     useSpaceData,
     useSpaceTimeline,
     useZionClient,
-    useZionContext,
 } from 'use-zion-client'
-import { List, ListItem, ListItemText } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { SpaceSettings } from './SpaceSettings'
 import { ChatMessages } from '../components/ChatMessages'
@@ -28,15 +24,6 @@ export const SpacesIndex = () => {
             navigate('/spaces/' + space.id.slug + '/settings')
         }
     }, [space?.id.slug, navigate])
-
-    const onClickChannel = useCallback(
-        (roomId: RoomIdentifier) => {
-            if (space?.id.slug) {
-                navigate(`/spaces/${space.id.slug}/channels/${roomId.slug}/`)
-            }
-        },
-        [space?.id.slug, navigate],
-    )
 
     const onCreateChannelClick = useCallback(() => {
         navigate('/spaces/' + space?.id.slug + '/channels/new')

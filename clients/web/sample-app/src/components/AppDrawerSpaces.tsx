@@ -1,7 +1,6 @@
 import { List, ListItem, ListItemText } from '@mui/material'
 import { RoomIdentifier, toRoomIdentifier, useZionContext } from 'use-zion-client'
 
-import { Theme } from '@mui/system'
 import { SpaceChild, SpaceItem } from 'use-zion-client/dist/types/matrix-types'
 import React, { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
@@ -86,9 +85,4 @@ export function AppDrawerSpaces(props: Props): JSX.Element {
             </List>
         </>
     )
-}
-
-const spacingStyle = {
-    padding: (theme: Theme) => theme.spacing(2),
-    gap: (theme: Theme) => theme.spacing(1),
 }
