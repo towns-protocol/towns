@@ -4,6 +4,11 @@ import { UnfurlData } from '../src/types'
 import { interceptResponseWithMock } from './interceptRequest'
 import { giphy as giphyMock, tweet as tweetMock, imgur as imgurMock } from './mocks'
 
+// unfurl.js node-fetch needs to be mocked so that requests in HTML mocks aren't made e.g
+// <meta property="og:video:url" content="https://media1.giphy.com/media/rlO48a7OCYB3SIpndR/giphy.mp4?cid=790b7611c4b0714165911809e35b32d90d551ae454dba2e4&rid=giphy.mp4&ct=g">
+// probably should switch to just mocking unfurl.js and it's return JSON instead of using HTML mocks
+jest.mock('node-fetch', () => jest.fn(() => Promise.resolve(new Response())))
+
 jest.mock('image-size', () => {
     return {
         default: jest.fn().mockImplementation(() => {
