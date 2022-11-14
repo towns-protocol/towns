@@ -2391,7 +2391,7 @@
         8696
       ],
       "IERC165": [
-        47596
+        47550
       ],
       "IEntitlementModule": [
         7639
@@ -2409,7 +2409,7 @@
         8002
       ],
       "Ownable": [
-        40029
+        39983
       ],
       "PermissionTypes": [
         8764
@@ -2421,7 +2421,7 @@
         7564
       ],
       "ZionSpaceManagerStorage": [
-        11337
+        11291
       ]
     },
     "nodeType": "SourceUnit",
@@ -2596,7 +2596,7 @@
         "file": "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 7565,
-        "sourceUnit": 47597,
+        "sourceUnit": 47551,
         "symbolAliases": [
           {
             "foreign": {
@@ -2604,7 +2604,7 @@
               "name": "IERC165",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 47596,
+              "referencedDeclaration": 47550,
               "src": "405:7:21",
               "typeDescriptions": {}
             },
@@ -2746,7 +2746,7 @@
         "file": "./storage/ZionSpaceManagerStorage.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 7565,
-        "sourceUnit": 11338,
+        "sourceUnit": 11292,
         "symbolAliases": [
           {
             "foreign": {
@@ -2754,7 +2754,7 @@
               "name": "ZionSpaceManagerStorage",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 11337,
+              "referencedDeclaration": 11291,
               "src": "803:23:21",
               "typeDescriptions": {}
             },
@@ -2771,7 +2771,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 7565,
-        "sourceUnit": 40030,
+        "sourceUnit": 39984,
         "symbolAliases": [
           {
             "foreign": {
@@ -2779,7 +2779,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 40029,
+              "referencedDeclaration": 39983,
               "src": "882:7:21",
               "typeDescriptions": {}
             },
@@ -3787,7 +3787,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "2435:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -4218,7 +4218,7 @@
                           "name": "_spaceById",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 11324,
+                          "referencedDeclaration": 11278,
                           "src": "2945:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -6205,7 +6205,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "5371:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -7437,7 +7437,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "6458:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -8465,7 +8465,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "7250:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -9035,7 +9035,7 @@
                           "name": "_spaceById",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 11324,
+                          "referencedDeclaration": 11278,
                           "src": "7745:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -9128,7 +9128,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "7834:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -9750,7 +9750,7 @@
                             "name": "_channelBySpaceIdByChannelId",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11318,
+                            "referencedDeclaration": 11272,
                             "src": "8399:28:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -9879,7 +9879,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "8556:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -10235,7 +10235,7 @@
                     "8716:9:21"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 39948,
+                  "referencedDeclaration": 39902,
                   "src": "8716:9:21"
                 },
                 "nodeType": "ModifierInvocation",
@@ -10437,7 +10437,7 @@
                     "8968:9:21"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 39948,
+                  "referencedDeclaration": 39902,
                   "src": "8968:9:21"
                 },
                 "nodeType": "ModifierInvocation",
@@ -10639,7 +10639,7 @@
                     "9190:9:21"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 39948,
+                  "referencedDeclaration": 39902,
                   "src": "9190:9:21"
                 },
                 "nodeType": "ModifierInvocation",
@@ -11516,7 +11516,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "10302:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -11888,7 +11888,7 @@
                           "name": "_spaceById",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 11324,
+                          "referencedDeclaration": 11278,
                           "src": "10590:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -12191,7 +12191,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "10823:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -12655,7 +12655,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "11253:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -13157,7 +13157,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "11745:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -15334,7 +15334,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14102:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -15387,7 +15387,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14140:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -15440,7 +15440,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14180:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -15493,7 +15493,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14220:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -15546,7 +15546,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14255:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -15599,7 +15599,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14293:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -15652,7 +15652,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "14329:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -16087,7 +16087,7 @@
                               "name": "_channelBySpaceIdByChannelId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11318,
+                              "referencedDeclaration": 11272,
                               "src": "14737:28:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -16165,7 +16165,7 @@
                               "name": "_channelBySpaceIdByChannelId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11318,
+                              "referencedDeclaration": 11272,
                               "src": "14807:28:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -16243,7 +16243,7 @@
                               "name": "_channelBySpaceIdByChannelId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11318,
+                              "referencedDeclaration": 11272,
                               "src": "14877:28:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -16321,7 +16321,7 @@
                               "name": "_channelBySpaceIdByChannelId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11318,
+                              "referencedDeclaration": 11272,
                               "src": "14947:28:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -16399,7 +16399,7 @@
                               "name": "_channelBySpaceIdByChannelId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11318,
+                              "referencedDeclaration": 11272,
                               "src": "15012:28:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -16477,7 +16477,7 @@
                               "name": "_channelBySpaceIdByChannelId",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11318,
+                              "referencedDeclaration": 11272,
                               "src": "15080:28:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -16821,7 +16821,7 @@
                         "name": "_spacesCounter",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11298,
+                        "referencedDeclaration": 11252,
                         "src": "15339:14:21",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -16954,7 +16954,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "15448:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -17421,7 +17421,7 @@
                       "name": "_spacesCounter",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11298,
+                      "referencedDeclaration": 11252,
                       "src": "15390:14:21",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
@@ -17607,7 +17607,7 @@
                       "name": "_channelsBySpaceId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11330,
+                      "referencedDeclaration": 11284,
                       "src": "15902:18:21",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Channels_$8445_storage_$",
@@ -17798,7 +17798,7 @@
                         "name": "_spaceById",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11324,
+                        "referencedDeclaration": 11278,
                         "src": "16119:10:21",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -18004,7 +18004,7 @@
                           "name": "_spaceById",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 11324,
+                          "referencedDeclaration": 11278,
                           "src": "16379:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -18393,7 +18393,7 @@
                               "name": "_spaceById",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11324,
+                              "referencedDeclaration": 11278,
                               "src": "16830:10:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -18564,7 +18564,7 @@
                           "name": "_spaceById",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 11324,
+                          "referencedDeclaration": 11278,
                           "src": "16923:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -18676,7 +18676,7 @@
                                 "name": "_spaceById",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 11324,
+                                "referencedDeclaration": 11278,
                                 "src": "17072:10:21",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -20168,7 +20168,7 @@
                       "name": "_spaceIdByHash",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11303,
+                      "referencedDeclaration": 11257,
                       "src": "18379:14:21",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
@@ -20389,7 +20389,7 @@
                         "name": "_channelIdBySpaceIdByHash",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11310,
+                        "referencedDeclaration": 11264,
                         "src": "18576:25:21",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_bytes32_$_t_uint256_$_$",
@@ -20859,7 +20859,7 @@
                           "name": "_spaceById",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 11324,
+                          "referencedDeclaration": 11278,
                           "src": "18987:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -20971,7 +20971,7 @@
                                 "name": "_spaceById",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 11324,
+                                "referencedDeclaration": 11278,
                                 "src": "19136:10:21",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -21733,7 +21733,7 @@
                             "name": "_spacesCounter",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11298,
+                            "referencedDeclaration": 11252,
                             "src": "19639:14:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -21790,7 +21790,7 @@
                               "name": "_msgSender",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 46019,
+                              "referencedDeclaration": 45973,
                               "src": "19750:10:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -21818,7 +21818,7 @@
                             "name": "_spaceIdByHash",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11303,
+                            "referencedDeclaration": 11257,
                             "src": "19772:14:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
@@ -21830,7 +21830,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "19796:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -22071,7 +22071,7 @@
                                 "name": "_channelsBySpaceId",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 11330,
+                                "referencedDeclaration": 11284,
                                 "src": "20048:18:21",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Channels_$8445_storage_$",
@@ -22179,7 +22179,7 @@
                               "name": "_msgSender",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 46019,
+                              "referencedDeclaration": 45973,
                               "src": "20205:10:21",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -22207,7 +22207,7 @@
                             "name": "_channelsBySpaceId",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11330,
+                            "referencedDeclaration": 11284,
                             "src": "20227:18:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Channels_$8445_storage_$",
@@ -22219,7 +22219,7 @@
                             "name": "_channelIdBySpaceIdByHash",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11310,
+                            "referencedDeclaration": 11264,
                             "src": "20255:25:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_bytes32_$_t_uint256_$_$",
@@ -22231,7 +22231,7 @@
                             "name": "_channelBySpaceIdByChannelId",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11318,
+                            "referencedDeclaration": 11272,
                             "src": "20290:28:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_struct$_Channel_$8438_storage_$_$",
@@ -24125,7 +24125,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "21963:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -24308,7 +24308,7 @@
                         "name": "_spaceById",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11324,
+                        "referencedDeclaration": 11278,
                         "src": "22179:10:21",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -24538,7 +24538,7 @@
                       "name": "_spaceIdByHash",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11303,
+                      "referencedDeclaration": 11257,
                       "src": "22420:14:21",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
@@ -24673,7 +24673,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "22524:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -25169,7 +25169,7 @@
                       "name": "_spaceIdByHash",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11303,
+                      "referencedDeclaration": 11257,
                       "src": "23050:14:21",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_bytes32_$_t_uint256_$",
@@ -25304,7 +25304,7 @@
                             "name": "_spaceById",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 11324,
+                            "referencedDeclaration": 11278,
                             "src": "23154:10:21",
                             "typeDescriptions": {
                               "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -26244,7 +26244,7 @@
                         "name": "_spaceById",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11324,
+                        "referencedDeclaration": 11278,
                         "src": "24026:10:21",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Space_$8425_storage_$",
@@ -26741,7 +26741,7 @@
                           "name": "_msgSender",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 46019,
+                          "referencedDeclaration": 45973,
                           "src": "24692:10:21",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$",
@@ -27840,10 +27840,10 @@
                             "name": "IERC165",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 47596,
+                            "referencedDeclaration": 47550,
                             "src": "25607:7:21",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_type$_t_contract$_IERC165_$47596_$",
+                              "typeIdentifier": "t_type$_t_contract$_IERC165_$47550_$",
                               "typeString": "type(contract IERC165)"
                             }
                           },
@@ -27859,7 +27859,7 @@
                           "src": "25607:27:21",
                           "tryCall": false,
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_IERC165_$47596",
+                            "typeIdentifier": "t_contract$_IERC165_$47550",
                             "typeString": "contract IERC165"
                           }
                         },
@@ -27871,7 +27871,7 @@
                         "memberLocation": "25635:17:21",
                         "memberName": "supportsInterface",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 47595,
+                        "referencedDeclaration": 47549,
                         "src": "25607:45:21",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_external_view$_t_bytes4_$returns$_t_bool_$",
@@ -28044,7 +28044,7 @@
                 "1160:7:21"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 40029,
+              "referencedDeclaration": 39983,
               "src": "1160:7:21"
             },
             "id": 5581,
@@ -28059,7 +28059,7 @@
                 "1169:23:21"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 11337,
+              "referencedDeclaration": 11291,
               "src": "1169:23:21"
             },
             "id": 5583,
@@ -28095,9 +28095,9 @@
         "linearizedBaseContracts": [
           7564,
           8002,
-          11337,
-          40029,
-          46029
+          11291,
+          39983,
+          45983
         ],
         "name": "ZionSpaceManager",
         "nameLocation": "1140:16:21",

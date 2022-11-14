@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {ISpaceManager} from "../../interfaces/ISpaceManager.sol";
 import {IRoleManager} from "../../interfaces/IRoleManager.sol";
-import {IPermissionRegistry} from "../../interfaces/IPermissionRegistry.sol";
 
 import {DataTypes} from "../../libraries/DataTypes.sol";
 import {Constants} from "../../libraries/Constants.sol";
@@ -58,23 +57,9 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     string calldata channelId,
     uint256 roleId
   ) external view returns (address[] memory) {
-    if (
-      !isEntitled(
-        spaceId,
-        channelId,
-        msg.sender,
-        IPermissionRegistry(_permisionRegistry).getPermissionByPermissionType(
-          PermissionTypes.Read
-        )
-      )
-    ) {
-      revert Errors.NotAllowed();
-    }
-
     uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
       spaceId
     );
-
     if (bytes(channelId).length == 0) {
       return _entitlementDataBySpaceIdByUser[_spaceId][roleId];
     } else {

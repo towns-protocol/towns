@@ -88,7 +88,7 @@ export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
     return result
 }
 
-export async function createSpaceWithEntitlement(
+export async function createTestSpaceWithEntitlement(
     client: ZionTestClient,
     permissions: DataTypes.PermissionStruct[],
     everyonePermissions: DataTypes.PermissionStruct[] = [],
@@ -124,7 +124,7 @@ export async function createSpaceWithEntitlement(
     return roomId
 }
 
-export async function createChannelWithEntitlement(
+export async function createTestChannelWithEntitlement(
     client: ZionTestClient,
     createChannelInfo: CreateChannelInfo,
 ): Promise<RoomIdentifier | undefined> {

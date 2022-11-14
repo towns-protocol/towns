@@ -42,11 +42,6 @@
   },
   {
     "inputs": [],
-    "name": "NotAllowed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotSpaceManager",
     "type": "error"
   },
