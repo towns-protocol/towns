@@ -541,6 +541,11 @@
           },
           {
             "internalType": "string",
+            "name": "moduleType",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
             "name": "description",
             "type": "string"
           }

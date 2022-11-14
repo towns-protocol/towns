@@ -41,6 +41,7 @@ export declare namespace DataTypes {
 
 export interface TokenEntitlementModuleInterface extends utils.Interface {
   functions: {
+    "_permisionRegistry()": FunctionFragment;
     "_roleManager()": FunctionFragment;
     "_spaceManager()": FunctionFragment;
     "description()": FunctionFragment;
@@ -48,6 +49,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     "getUserRoles(string,string,address)": FunctionFragment;
     "isEntitled(string,string,address,(string))": FunctionFragment;
     "isTokenEntitled(string,string,address,string)": FunctionFragment;
+    "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
     "removeEntitlement(string,string,uint256,bytes)": FunctionFragment;
     "setEntitlement(string,string,uint256,bytes)": FunctionFragment;
@@ -56,6 +58,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "_permisionRegistry"
       | "_roleManager"
       | "_spaceManager"
       | "description"
@@ -63,12 +66,17 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
       | "getUserRoles"
       | "isEntitled"
       | "isTokenEntitled"
+      | "moduleType"
       | "name"
       | "removeEntitlement"
       | "setEntitlement"
       | "supportsInterface"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "_permisionRegistry",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "_roleManager",
     values?: undefined
@@ -115,6 +123,10 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
       PromiseOrValue<string>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "moduleType",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "removeEntitlement",
@@ -140,6 +152,10 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
+    functionFragment: "_permisionRegistry",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "_roleManager",
     data: BytesLike
   ): Result;
@@ -164,6 +180,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     functionFragment: "isTokenEntitled",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "moduleType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "removeEntitlement",
@@ -208,6 +225,8 @@ export interface TokenEntitlementModule extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    _permisionRegistry(overrides?: CallOverrides): Promise<[string]>;
+
     _roleManager(overrides?: CallOverrides): Promise<[string]>;
 
     _spaceManager(overrides?: CallOverrides): Promise<[string]>;
@@ -244,6 +263,8 @@ export interface TokenEntitlementModule extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    moduleType(overrides?: CallOverrides): Promise<[string]>;
+
     name(overrides?: CallOverrides): Promise<[string]>;
 
     removeEntitlement(
@@ -267,6 +288,8 @@ export interface TokenEntitlementModule extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
   };
+
+  _permisionRegistry(overrides?: CallOverrides): Promise<string>;
 
   _roleManager(overrides?: CallOverrides): Promise<string>;
 
@@ -304,6 +327,8 @@ export interface TokenEntitlementModule extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  moduleType(overrides?: CallOverrides): Promise<string>;
+
   name(overrides?: CallOverrides): Promise<string>;
 
   removeEntitlement(
@@ -328,6 +353,8 @@ export interface TokenEntitlementModule extends BaseContract {
   ): Promise<boolean>;
 
   callStatic: {
+    _permisionRegistry(overrides?: CallOverrides): Promise<string>;
+
     _roleManager(overrides?: CallOverrides): Promise<string>;
 
     _spaceManager(overrides?: CallOverrides): Promise<string>;
@@ -364,6 +391,8 @@ export interface TokenEntitlementModule extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
+    moduleType(overrides?: CallOverrides): Promise<string>;
+
     name(overrides?: CallOverrides): Promise<string>;
 
     removeEntitlement(
@@ -391,6 +420,8 @@ export interface TokenEntitlementModule extends BaseContract {
   filters: {};
 
   estimateGas: {
+    _permisionRegistry(overrides?: CallOverrides): Promise<BigNumber>;
+
     _roleManager(overrides?: CallOverrides): Promise<BigNumber>;
 
     _spaceManager(overrides?: CallOverrides): Promise<BigNumber>;
@@ -427,6 +458,8 @@ export interface TokenEntitlementModule extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    moduleType(overrides?: CallOverrides): Promise<BigNumber>;
+
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
     removeEntitlement(
@@ -452,6 +485,10 @@ export interface TokenEntitlementModule extends BaseContract {
   };
 
   populateTransaction: {
+    _permisionRegistry(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     _roleManager(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _spaceManager(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -487,6 +524,8 @@ export interface TokenEntitlementModule extends BaseContract {
       tag: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    moduleType(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

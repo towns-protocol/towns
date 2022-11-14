@@ -89,6 +89,7 @@ library DataTypes {
   struct EntitlementModuleInfo {
     address addr;
     string name;
+    string moduleType;
     string description;
   }
 

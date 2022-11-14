@@ -592,6 +592,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         .EntitlementModuleInfo(
           entitlement,
           IEntitlementModule(entitlement).name(),
+          IEntitlementModule(entitlement).moduleType(),
           IEntitlementModule(entitlement).description()
         );
 

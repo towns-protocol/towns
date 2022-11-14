@@ -12,6 +12,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "moduleType_",
+        "type": "string"
+      },
+      {
         "internalType": "address",
         "name": "spaceManager_",
         "type": "address"
@@ -19,6 +24,11 @@
       {
         "internalType": "address",
         "name": "roleManager_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "permissionRegistry_",
         "type": "address"
       }
     ],
@@ -32,8 +42,26 @@
   },
   {
     "inputs": [],
+    "name": "NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotSpaceManager",
     "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "_permisionRegistry",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -180,6 +208,19 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "moduleType",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",

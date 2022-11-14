@@ -7,6 +7,9 @@ interface IEntitlementModule {
   /// @notice The name of the entitlement module
   function name() external view returns (string memory);
 
+  /// @notice The type of the entitlement module
+  function moduleType() external view returns (string memory);
+
   /// @notice The description of the entitlement module
   function description() external view returns (string memory);
 

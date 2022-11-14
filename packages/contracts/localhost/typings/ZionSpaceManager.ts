@@ -177,14 +177,16 @@ export declare namespace DataTypes {
   export type EntitlementModuleInfoStruct = {
     addr: PromiseOrValue<string>;
     name: PromiseOrValue<string>;
+    moduleType: PromiseOrValue<string>;
     description: PromiseOrValue<string>;
   };
 
-  export type EntitlementModuleInfoStructOutput = [string, string, string] & {
-    addr: string;
-    name: string;
-    description: string;
-  };
+  export type EntitlementModuleInfoStructOutput = [
+    string,
+    string,
+    string,
+    string
+  ] & { addr: string; name: string; moduleType: string; description: string };
 
   export type SpaceInfoStruct = {
     spaceId: PromiseOrValue<BigNumberish>;
