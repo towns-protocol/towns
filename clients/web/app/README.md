@@ -8,7 +8,9 @@
 yarn install
 ```
 
-2. Start local server by typing the following. Instructions to open the browser
+2. Copy `.env.local-sample` to `.env.local` and update.
+
+3. Start local server by typing the following. Instructions to open the browser
    on `localhost:3000` should follow.
 
 ```
@@ -19,7 +21,7 @@ yarn dev
 > `.vscode/settings.json`) will only be available if project is openened from
 > `clients/web/app` as root.
 
-3. Recommended VSCode Plugins
+4. Recommended VSCode Plugins
 
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 
