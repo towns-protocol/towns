@@ -49,7 +49,7 @@ function getDescription(response: Metadata): string | undefined {
 export function handleUnfurlJSResult(url: string, response: Metadata): UnfurlData {
     return {
         url,
-        type: 'other',
+        type: 'generic',
         image: getImage(response),
         title: getTitle(response),
         description: getDescription(response),

@@ -10,7 +10,7 @@
 
 import { isUrl } from './utils/isUrl'
 import { checkForTweetIdFromUrl, getTweet } from './twitter'
-import { UnfurlData } from './types'
+import { TwitterUnfurl, UnfurlData } from './types'
 import { formattedUnfurlJSData } from './unfurler'
 
 // These initial Types are based on bindings that don't exist in the project yet,
@@ -50,7 +50,7 @@ async function unfurlLink(url: string, env: Env): Promise<UnfurlData | null> {
             data = {
                 url,
                 type: 'twitter',
-                twitterInfo: json as UnfurlData['twitterInfo'],
+                info: json as TwitterUnfurl['info'],
             }
         } catch (error) {
             console.error('twitter error', error)

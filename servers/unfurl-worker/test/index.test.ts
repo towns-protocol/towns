@@ -127,7 +127,7 @@ describe('unfurl handler', () => {
         const response = await worker.fetch(...generateRequest([TWITTER_URL]))
 
         const json: UnfurlData[] = await response.json()
-        const twitterKeys = Object.keys(json[0].twitterInfo as Record<string, unknown>)
+        const twitterKeys = Object.keys(json[0].info || [])
         expect(json[0].type).toBe('twitter')
         expect(twitterKeys).toEqual(expect.arrayContaining(['data', 'includes']))
     })
@@ -136,7 +136,7 @@ describe('unfurl handler', () => {
         const response = await worker.fetch(...generateRequest([TWITTER_URL_WWW]))
 
         const json: UnfurlData[] = await response.json()
-        const twitterKeys = Object.keys(json[0].twitterInfo as Record<string, unknown>)
+        const twitterKeys = Object.keys(json[0].info || [])
         expect(json[0].type).toBe('twitter')
         expect(twitterKeys).toEqual(expect.arrayContaining(['data', 'includes']))
     })
@@ -194,7 +194,7 @@ describe('unfurl handler', () => {
 
         const giphy = json[0]
         const twitter = json[1]
-        const twitterKeys = Object.keys(twitter.twitterInfo as Record<string, unknown>)
+        const twitterKeys = Object.keys(twitter.info || [])
         expect(giphy.image?.url).not.toBeUndefined()
         expect(twitterKeys).toEqual(expect.arrayContaining(['data', 'includes']))
     })
