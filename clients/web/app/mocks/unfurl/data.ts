@@ -1,7 +1,7 @@
 // whatever site
 export const normal = {
     url: 'https://stackoverflow.com',
-    type: 'other',
+    type: 'generic',
     image: {
         url: 'https://cdn.sstatic.net/Sites/stackoverflow/Img/apple-touch-icon@2.png?v=73d79a89bded',
     },
@@ -26,7 +26,7 @@ export const image = {
 // Giphy
 export const giphy = {
     url: 'https://giphy.com/gifs/mlb-omg-baseball-phillies-X92CoUeUr6351cDMhi',
-    type: 'other',
+    type: 'generic',
     image: {
         url: 'https://media1.giphy.com/media/X92CoUeUr6351cDMhi/giphy.gif',
         width: 480,
@@ -41,7 +41,7 @@ export const giphy = {
 export const twitter = {
     type: 'twitter',
     url: 'https://www.twitter.com/twitter/status/1588317338461413377',
-    twitterInfo: {
+    info: {
         data: {
             attachments: { media_keys: ['3_1588317334032244738'] },
             created_at: '2022-11-03T23:48:57.000Z',

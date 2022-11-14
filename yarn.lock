@@ -4378,6 +4378,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:4.14.3":
+  version: 4.14.3
+  resolution: "@tanstack/query-core@npm:4.14.3"
+  checksum: 6a22037e60017ebda9f20486ffb96eab085dccb38e53c54438d8a0896c5e9103cad52726e26e219d69e07cbdd048e3a149509812163e51c4c151d672858da504
+  languageName: node
+  linkType: hard
+
 "@tanstack/query-core@npm:4.14.5":
   version: 4.14.5
   resolution: "@tanstack/query-core@npm:4.14.5"
@@ -4414,7 +4421,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^4.10.1, @tanstack/react-query@npm:^4.14.3":
+"@tanstack/react-query@npm:^4.10.1":
   version: 4.14.5
   resolution: "@tanstack/react-query@npm:4.14.5"
   dependencies:
@@ -4430,6 +4437,25 @@ __metadata:
     react-native:
       optional: true
   checksum: fe98c7900c989512c5818b7aa3c81d81ce2c1149a25e9279f8efcf462a00a156c78c398b5e01c50e5da23788709ed36f8dae4236a51fde459a427a5ece474b0f
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^4.14.3":
+  version: 4.14.3
+  resolution: "@tanstack/react-query@npm:4.14.3"
+  dependencies:
+    "@tanstack/query-core": 4.14.3
+    use-sync-external-store: ^1.2.0
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-native: "*"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: 3610443c3b7f2859e3132d9c206a97f8aa9905dca10f5d109cd861fd258a5002446a91c5b540f6eed145d75500e60ffcbc7ca0eba65f6a5275dbd14c155d05bf
   languageName: node
   linkType: hard
 
@@ -11611,20 +11637,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-urls@https://github.com/HereNotThere/get-urls":
-  version: 11.0.0
-  resolution: "get-urls@https://github.com/HereNotThere/get-urls.git#commit=10caffd3752d64d85f646508d5e59bc6daee1716"
-  dependencies:
-    normalize-url: ^8.0.0
-    re2: ^1.17.7
-    url-regex-safe: ^3.0.0
-  dependenciesMeta:
-    re2:
-      optional: true
-  checksum: a0a2327552f9569fdbffbe8cb9fbec240cc5cf2b972da15266720db81d6384dc604f31ed3fd60f5062d17e49c2bc1d9dd8ae4e68e02b1dd3998376a795c00822
-  languageName: node
-  linkType: hard
-
 "getpass@npm:^0.1.1":
   version: 0.1.7
   resolution: "getpass@npm:0.1.7"
@@ -12064,7 +12076,6 @@ __metadata:
     ethers: ^5.7.2
     framer-motion: ^7.6.1
     fuzzysort: ^2.0.1
-    get-urls: "https://github.com/HereNotThere/get-urls"
     http-status-codes: ^2.2.0
     jsdom: ^20.0.1
     lexical: ^0.6.0
@@ -12612,16 +12623,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"install-artifact-from-github@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "install-artifact-from-github@npm:1.3.1"
-  bin:
-    install-from-cache: bin/install-from-cache.js
-    save-to-github-cache: bin/save-to-github-cache.js
-  checksum: 9d33af5d021f0ec9ee28d55a95a63bd956a75940c4bb39c3107a5c4c583d61c079751deb15e7cceebcca2f8a4e6ba2e4cdc91ea9487589a9225047e9a1524d03
-  languageName: node
-  linkType: hard
-
 "internal-slot@npm:^1.0.3":
   version: 1.0.3
   resolution: "internal-slot@npm:1.0.3"
@@ -12661,13 +12662,6 @@ __metadata:
     redis-parser: ^3.0.0
     standard-as-callback: ^2.1.0
   checksum: c3a7df407a41ae516bede8b6db853c568198b13fe4a4785f66be5cd541087121b9d45fb9a6b1b6a5fb668c29ce52ab4685642b994803bdfa0a35f794ea8ef7ae
-  languageName: node
-  linkType: hard
-
-"ip-regex@npm:4.3.0":
-  version: 4.3.0
-  resolution: "ip-regex@npm:4.3.0"
-  checksum: 7ff904b891221b1847f3fdf3dbb3e6a8660dc39bc283f79eb7ed88f5338e1a3d1104b779bc83759159be266249c59c2160e779ee39446d79d4ed0890dfd06f08
   languageName: node
   linkType: hard
 
@@ -15783,7 +15777,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.14.0, nan@npm:^2.16.0":
+"nan@npm:^2.14.0":
   version: 2.17.0
   resolution: "nan@npm:2.17.0"
   dependencies:
@@ -15929,7 +15923,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-gyp@npm:^9.0.0, node-gyp@npm:latest":
+"node-gyp@npm:latest":
   version: 9.3.0
   resolution: "node-gyp@npm:9.3.0"
   dependencies:
@@ -16062,13 +16056,6 @@ __metadata:
   version: 6.1.0
   resolution: "normalize-url@npm:6.1.0"
   checksum: 4a4944631173e7d521d6b80e4c85ccaeceb2870f315584fa30121f505a6dfd86439c5e3fdd8cd9e0e291290c41d0c3599f0cb12ab356722ed242584c30348e50
-  languageName: node
-  linkType: hard
-
-"normalize-url@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "normalize-url@npm:8.0.0"
-  checksum: 24c20b75ebfd526d8453084692720b49d111c63c0911f1b7447427829597841eef5a8ba3f6bb93d6654007b991c1f5cd85da2c907800e439e2e2ec6c2abd0fc0
   languageName: node
   linkType: hard
 
@@ -17388,17 +17375,6 @@ __metadata:
     iconv-lite: 0.4.24
     unpipe: 1.0.0
   checksum: 5362adff1575d691bb3f75998803a0ffed8c64eabeaa06e54b4ada25a0cd1b2ae7f4f5ec46565d1bec337e08b5ac90c76eaa0758de6f72a633f025d754dec29e
-  languageName: node
-  linkType: hard
-
-"re2@npm:^1.17.7":
-  version: 1.17.7
-  resolution: "re2@npm:1.17.7"
-  dependencies:
-    install-artifact-from-github: ^1.3.1
-    nan: ^2.16.0
-    node-gyp: ^9.0.0
-  checksum: a53efcf1fd77ee9071206e9600791602f95818a471f9313aee931c6417bae4462e8441487ddf78be707ab3faa6cf9956e8deb5a3048c73ba4c024b16a05e5655
   languageName: node
   linkType: hard
 
@@ -19795,15 +19771,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tlds@npm:^1.228.0":
-  version: 1.233.0
-  resolution: "tlds@npm:1.233.0"
-  bin:
-    tlds: bin.js
-  checksum: 4ab5f0b0696ad380d22ca7b40c0bfc0e87564d29f5835efecd7bd57183b5e074fe893029f540b3c195d8e86e96021dc87111754b89bc951143896fd072be5330
-  languageName: node
-  linkType: hard
-
 "tmp@npm:^0.0.33":
   version: 0.0.33
   resolution: "tmp@npm:0.0.33"
@@ -20614,21 +20581,6 @@ __metadata:
     querystringify: ^2.1.1
     requires-port: ^1.0.0
   checksum: fbdba6b1d83336aca2216bbdc38ba658d9cfb8fc7f665eb8b17852de638ff7d1a162c198a8e4ed66001ddbf6c9888d41e4798912c62b4fd777a31657989f7bdf
-  languageName: node
-  linkType: hard
-
-"url-regex-safe@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "url-regex-safe@npm:3.0.0"
-  dependencies:
-    ip-regex: 4.3.0
-    tlds: ^1.228.0
-  peerDependencies:
-    re2: ^1.17.2
-  peerDependenciesMeta:
-    re2:
-      optional: true
-  checksum: 85b45f7436dcdffe3c8caca45a3dedc478dffe308e13637dfec1ad99545ac3b69edb20ba27d33edfca7b1cbc2ad5066e6443518fb363d4f54541bf0d9c1382c8
   languageName: node
   linkType: hard
 

@@ -14,7 +14,8 @@
         "noEmit": true,
         "paths": {
             "@components/*": ["components/*"],
-            "@ui": ["ui/components"]
+            "@ui": ["ui/components"],
+            "@unfurl-worker/types": ["../../../../servers/unfurl-worker/src/types"]
         },
         "resolveJsonModule": true,
         "skipLibCheck": true,
