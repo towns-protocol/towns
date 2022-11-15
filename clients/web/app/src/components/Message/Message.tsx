@@ -54,6 +54,7 @@ export const Message = (props: Props) => {
         reactions,
         relativeDate: isRelativeDate,
         replies,
+        canReply,
         timestamp,
         children,
         ...boxProps
@@ -159,7 +160,7 @@ export const Message = (props: Props) => {
                 </Stack>
                 {spaceId && channelId && eventId && isHover && !isEditing && (
                     <MessageContextMenu
-                        canReply={props.canReply}
+                        canReply={canReply}
                         canReact={!!onReaction}
                         channelId={channelId}
                         spaceId={spaceId}
