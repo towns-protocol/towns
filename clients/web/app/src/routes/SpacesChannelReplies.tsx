@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { ZTEvent, useChannelTimeline } from 'use-zion-client'
 import { Box } from '@ui'
 import { WindowedMessageThread } from '@components/MessageThread'
 
@@ -17,11 +16,6 @@ export const SpacesChannelReplies = (props: {
     }, [navigate, parentRoute])
 
     const isValid = !!messageId
-    const timeline = useChannelTimeline()
-    const channelMessages = useMemo(
-        () => timeline.filter((m) => m.content?.kind === ZTEvent.RoomMessage),
-        [timeline],
-    )
 
     return (
         <Box grow height="100%" overflow="hidden">
@@ -32,7 +26,6 @@ export const SpacesChannelReplies = (props: {
                             <WindowedMessageThread
                                 key={messageId}
                                 messageId={messageId}
-                                channelMessages={channelMessages}
                                 onClose={handleClose}
                             />
                         </Box>

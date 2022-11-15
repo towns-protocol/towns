@@ -1,10 +1,7 @@
 import React from 'react'
 import { RoomIdentifier, useTimelineThread } from 'use-zion-client'
 import { TimelineMessage } from '@components/MessageTimeline/events/TimelineMessage'
-import {
-    MessageTimelineType,
-    MessageTimelineWrapper,
-} from '@components/MessageTimeline/MessageTimelineContext'
+import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Paragraph, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
@@ -30,10 +27,10 @@ export const MessageThread = (props: {
 
     return (
         <MessageTimelineWrapper
-            type={MessageTimelineType.Thread}
             events={messages}
             spaceId={spaceId}
             channelId={channelId}
+            threadParentId={parentId}
         >
             <Stack gap padding>
                 <Box>

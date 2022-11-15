@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react'
-import { TimelineEvent, useTimelineThread } from 'use-zion-client'
-import { useChannelContext } from 'use-zion-client/dist/components/ChannelContextProvider'
+import { useChannelContext, useTimelineThread } from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
-import {
-    MessageTimelineType,
-    MessageTimelineWrapper,
-} from '@components/MessageTimeline/MessageTimelineContext'
+import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, IconButton, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
@@ -13,7 +9,6 @@ import { useSendReply } from 'hooks/useSendReply'
 type Props = {
     messageId: string
     onClose?: () => void
-    channelMessages: TimelineEvent[]
 }
 export const WindowedMessageThread = (props: Props) => {
     const { channelId, spaceId } = useChannelContext()
@@ -32,13 +27,11 @@ export const WindowedMessageThread = (props: Props) => {
         sendReply(value, channelId)
     }
 
-    // const parentMessageContent = getIsRoomMessageContent(parentMessage)
-
     return (
         <MessageTimelineWrapper
             spaceId={spaceId}
             channelId={channelId}
-            type={MessageTimelineType.Thread}
+            threadParentId={messageId}
             events={messagesWithParent}
         >
             <MessageWindow label="Thread" onClose={props.onClose}>
