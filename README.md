@@ -41,7 +41,10 @@ If you would like to run the sample-app against a local server and blockchain (r
 
 ```
 cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
+cp clients/web/app/.env.local-sample clients/web/app/.env.local
 ```
+
+Update `clients/web/sample-app/.env.local` with the giphy api key <https://www.notion.so/herenottherelabs/Credentials-4f284469da01425a9f7f936b9e3ed8aa>
 
 Open VScode in the root of this directory: `code .`
 
