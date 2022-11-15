@@ -26,7 +26,7 @@ interface Props {
 }
 
 export function ChannelContextProvider(props: Props): JSX.Element {
-    console.log('~~~~~ Channel Context ~~~~~~', props.channelId)
+    // console.log('~~~~~ Channel Context ~~~~~~', props.channelId)
     const spaceId = useSpaceId()
     if (!spaceId) {
         throw new Error('ChannelContextProvider: no spaceId')

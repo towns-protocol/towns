@@ -32,8 +32,6 @@ export function SpaceContextProvider(props: Props): JSX.Element {
         () => (props.spaceId ? toRoomIdentifier(props.spaceId) : defaultSpaceId),
         [props.spaceId, defaultSpaceId],
     )
-    // console.log("SPAECCONTEXTPROVIDER", props.spaceId, spaceId?.matrixRoomId);
-
     const spaceContext: ISpaceContext = useMemo(
         () => ({
             spaceId: spaceId,
