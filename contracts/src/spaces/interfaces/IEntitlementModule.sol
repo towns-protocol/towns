@@ -54,8 +54,8 @@ interface IEntitlementModule {
     uint256 roleId
   ) external;
 
-  function getUserRoles(uint256 spaceId, address user)
-    external
-    view
-    returns (DataTypes.Role[] memory);
+  function getUserRoles(
+    uint256 spaceId,
+    address user
+  ) external view returns (DataTypes.Role[] memory);
 }

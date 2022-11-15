@@ -2,6 +2,4 @@
 set -e
 set -v
 
-
-cd contracts/zion-governance
 forge build

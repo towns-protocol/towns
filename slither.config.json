@@ -9,7 +9,7 @@
         "murky/=lib/murky/src/",
         "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
         "openzeppelin-contracts/=lib/openzeppelin-contracts/",
-        "solidity-json-writer/=node_modules/solidity-json-writer/",
+        "solidity-json-writer/=lib/solidity-json-writer/",
         "solmate/=lib/solmate/src/"
     ]
 }

@@ -5,7 +5,7 @@ import {CouncilNFT} from "../src/council/CouncilNFT.sol";
 import "murky/Merkle.sol";
 import "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {Helper} from "./Helper.sol";
-import "solidity-json-writer/contracts/JsonWriter.sol";
+import "solidity-json-writer/JsonWriter.sol";
 
 contract DeployCouncilNFT is Script {
   using Strings for uint256;

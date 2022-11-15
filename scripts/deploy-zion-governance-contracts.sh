@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-cd contracts/zion-governance
+cd contracts/
 yarn clean
 source .env
 make deployLocalSpaceManager
 make deployLocalCouncilNFT
-cp -r ../../packages/contracts/localhost/addresses/ ../../servers/dendrite/zion/contracts/zion_localhost/
+cp -r ../packages/contracts/localhost/addresses/ ../servers/dendrite/zion/contracts/zion_localhost/

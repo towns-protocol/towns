@@ -20,7 +20,6 @@
         "prepare": "husky install",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
-        "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "publish:local": "turbo publish:local",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
@@ -81,7 +80,7 @@
         "clients/web/sample-app",
         "clients/governance-ui",
         "clients/contract-debug-ui",
-        "contracts/zion-governance",
+        "contracts",
         "packages/*",
         "servers/worker-template",
         "servers/unfurl-worker"

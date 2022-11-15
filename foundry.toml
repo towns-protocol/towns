@@ -1,5 +1,7 @@
 [profile.default]
 solc = "0.8.17"
+src = "contracts/src"
+test = "contracts/test"
 libs = ["node_modules", "lib"]
 verbosity = 3
 fs_permissions = [{ access = "write", path = "./packages"}, { access = "write", path = "./servers/dendrite"}]

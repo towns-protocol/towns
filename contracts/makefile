@@ -16,7 +16,7 @@ test :; forge test
 
 snapshot :; forge snapshot
 
-format :; yarn prettier --write src/**/*.sol
+format :; yarn prettier --write .
 
 lint :; yarn solhint src/**/*.sol
 

@@ -3,8 +3,6 @@
     "version": "0.1.0",
     "private": true,
     "packageManager": "yarn@3.2.2",
-    "main": "index.js",
-    "types": "index.d.ts",
     "scripts": {
         "all": "make all",
         "clean": "make clean",
@@ -19,21 +17,11 @@
         "@opengsn/contracts": "^2.2.6"
     },
     "devDependencies": {
-        "@ethersproject/abi": "^5.7.0",
-        "@ethersproject/providers": "^5.7.2",
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",
-        "@opengsn/provider": "^2.2.6",
-        "@types/chai": "^4.3.3",
-        "@types/node": "^18.11.3",
-        "eslint": "^8.25.0",
-        "eslint-plugin-node": "^11.1.0",
-        "ethers": "^5.7.2",
         "prettier": "^2.7.1",
         "prettier-plugin-solidity": "^1.0.0-rc.1",
         "solhint": "^3.3.7",
-        "solhint-plugin-prettier": "^0.0.5",
-        "solidity-coverage": "^0.8.2",
-        "solidity-json-writer": "^1.1.0"
+        "solhint-plugin-prettier": "^0.0.5"
     }
 }

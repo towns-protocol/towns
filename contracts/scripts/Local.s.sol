@@ -10,7 +10,7 @@ import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
 
 import {Helper} from "./Helper.sol";
-import "solidity-json-writer/contracts/JsonWriter.sol";
+import "solidity-json-writer/JsonWriter.sol";
 
 contract DeployLocal is Script {
   using JsonWriter for JsonWriter.Json;

@@ -74,7 +74,7 @@ anvil
 on a 2nd terminal window, run
 
 ```
-cd contracts/zion-governance
+cd contracts/
 make deployLocalCouncilNFT
 ```
 
