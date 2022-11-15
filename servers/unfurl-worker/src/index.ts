@@ -28,6 +28,27 @@ export interface Env {
     // MY_BUCKET: R2Bucket
 }
 
+const allowedOrigins = ['https://onrender.com/', 'http://localhost:3000']
+
+const corsHeaders = (origin: string) => ({
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Allow-Methods': 'GET',
+    'Access-Control-Allow-Origin': origin,
+})
+
+const checkOrigin = (request: Request) => {
+    const origin = request.headers.get('Origin') || ''
+    const foundOrigin = allowedOrigins.find((allowedOrigin) => allowedOrigin.includes(origin))
+    return foundOrigin ? foundOrigin : allowedOrigins[0]
+}
+
+// have to use module syntax to gain access to env which contains secret variables for local dev
+export default {
+    fetch(request: Request, env: Env, ctx: ExecutionContext) {
+        return worker.fetch(request, env, ctx)
+    },
+}
+
 /**
  * Unfurls content. If twitter link, then hit twitter API directly.
  * Otherwise handle with unfurl.js
@@ -98,11 +119,14 @@ export const worker = {
 
         const json = JSON.stringify(unfurledUrls, null, 2)
 
+        const allowedOrigin = checkOrigin(request)
+
         response = new Response(json, {
             status: 200,
             headers: {
                 'cache-control': 'public, max-age=14400',
                 'content-type': 'application/json;charset=UTF-8',
+                ...corsHeaders(allowedOrigin),
             },
         })
 
@@ -111,12 +135,5 @@ export const worker = {
         }
 
         return response
-    },
-}
-
-// have to use module syntax to gain access to env which contains secret variables for local dev
-export default {
-    fetch(request: Request, env: Env, ctx: ExecutionContext) {
-        return worker.fetch(request, env, ctx)
     },
 }

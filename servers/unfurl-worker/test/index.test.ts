@@ -3,11 +3,11 @@ import { queryParams } from '../src/twitter'
 import { UnfurlData } from '../src/types'
 import { interceptResponseWithMock } from './interceptRequest'
 import { giphy as giphyMock, tweet as tweetMock, imgur as imgurMock } from './mocks'
+import * as unfurlJs from 'unfurl.js'
+import giphyJSON from './mocks/giphyJSON'
+import imgurJSON from './mocks/imgurJSON'
 
-// unfurl.js node-fetch needs to be mocked so that requests in HTML mocks aren't made e.g
-// <meta property="og:video:url" content="https://media1.giphy.com/media/rlO48a7OCYB3SIpndR/giphy.mp4?cid=790b7611c4b0714165911809e35b32d90d551ae454dba2e4&rid=giphy.mp4&ct=g">
-// probably should switch to just mocking unfurl.js and it's return JSON instead of using HTML mocks
-jest.mock('node-fetch', () => jest.fn(() => Promise.resolve(new Response())))
+jest.mock('unfurl.js')
 
 jest.mock('image-size', () => {
     return {
@@ -142,24 +142,32 @@ describe('unfurl handler', () => {
     })
 
     test('gets giphy data', async () => {
+        jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
+            Promise.resolve(giphyJSON as unfurlJs.Metadata),
+        )
+
         const response = await worker.fetch(
             ...generateRequest([`${GIPHY_URL.host}${GIPHY_URL.path}`]),
         )
 
         const json: UnfurlData[] = await response.json()
         expect(json[0].image?.url).not.toBeUndefined()
-        expect(json[0].title).toBe('Heart Love GIF by MLB - Find & Share on GIPHY')
+        expect(json[0].title).toBe('Oh No Omg GIF by MLB - Find & Share on GIPHY')
         expect(json[0].description).not.toBeUndefined()
     })
 
     test('gets imgur data', async () => {
+        jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
+            Promise.resolve(imgurJSON as unknown as unfurlJs.Metadata),
+        )
+
         const response = await worker.fetch(
             ...generateRequest([`${IMGUR_URL.host}${IMGUR_URL.path}`]),
         )
 
         const json: UnfurlData[] = await response.json()
         expect(json[0].image?.url).not.toBeUndefined()
-        expect(json[0].title).toBe(
+        expect(json[0].title?.trim()).toBe(
             'The James Webb Telescope discovered a quintet of galaxies! - Album on Imgur',
         )
         expect(json[0].description).not.toBeUndefined()
@@ -186,6 +194,10 @@ describe('unfurl handler', () => {
     })
 
     test('returns content from various sources together', async () => {
+        jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
+            Promise.resolve(giphyJSON as unfurlJs.Metadata),
+        )
+
         const response = await worker.fetch(
             ...generateRequest([`${IMGUR_URL.host}${IMGUR_URL.path}`, TWITTER_URL]),
         )

@@ -79,8 +79,7 @@ export async function formattedUnfurlJSData(url: string): Promise<UnfurlData> {
         if (query.headers.get('content-type')?.startsWith('image/')) {
             data = await handleRawImage(url)
         } else {
-            // passing worker's fetch instead of letting unfurl.js use its own node-fetch
-            const result = await unfurl(url, { fetch })
+            const result = await unfurl(url)
             data = handleUnfurlJSResult(url, result)
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
