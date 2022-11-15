@@ -19,7 +19,9 @@ lcov.info
 .DS_Store
 coverage.json
 
+# Contracts
 contracts/.openzeppelin/unknown-*.json
+contracts/docs/coverage
 abi/
 
 /docs

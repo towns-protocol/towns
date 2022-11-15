@@ -4,7 +4,7 @@ DEFAULTPARAM="localhost"
 read -p "Enter a chain folder name or press enter: (default: localhost)" CHAIN
 
 forge clean
-forge build
+forge build --extra-output-files metadata --extra-output-files abi --force
 
 # Create typings using typechain
 yarn typechain --target=ethers-v5 "out/**/?(CouncilNFT|CouncilStaking|ZionSpaceManager|ZionRoleManager|TokenEntitlementModule|UserGrantedEntitlementModule).json" --out-dir "packages/contracts/${CHAIN:-$DEFAULTPARAM}/typings"

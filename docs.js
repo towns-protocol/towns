@@ -1,7 +1,7 @@
 const INPUT_DIR = 'contracts'
-const OUTPUT_DIR = 'contracts/docgen/docs'
-const SUMMARY_FILE = 'contracts/docgen/README.md'
-const EXCLUDE_FILE = 'contracts/docgen/exclude.txt'
+const OUTPUT_DIR = 'contracts/docs/docs'
+const SUMMARY_FILE = 'contracts/docs/README.md'
+const EXCLUDE_FILE = 'contracts/docs/exclude.txt'
 
 const fs = require('fs')
 const path = require('path')

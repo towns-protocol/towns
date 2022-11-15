@@ -10,5 +10,9 @@
   ],
   "gopls": {
     "build.experimentalWorkspaceModule": true
-  }
+  },
+  "[solidity]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "solidity.formatter": "prettier"
 }
