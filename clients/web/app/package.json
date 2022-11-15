@@ -9,7 +9,7 @@
         "lint": "eslint . --cache",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
-        "test": "vitest"
+        "test": "VITE_UNFURL_SERVER_URL=fake-unfurl-url vitest"
     },
     "dependencies": {
         "@emoji-mart/data": "^1.0.6",
