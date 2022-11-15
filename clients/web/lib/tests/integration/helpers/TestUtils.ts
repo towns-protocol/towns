@@ -12,10 +12,7 @@ import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers, Wallet } from 'ethers'
 import { getContractInfo } from 'use-zion-client/src/client/web3/ZionContracts'
 import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
-import {
-    createRolesFromSpace,
-    createTokenEntitlementData,
-} from '../../../src/client/web3/ContractDataFactory'
+import { createTokenEntitlementData } from '../../../src/client/web3/ContractDataFactory'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -105,7 +102,6 @@ export async function createTestSpaceWithEntitlement(
 
     const externalTokenEntitlement = createTokenEntitlementData({
         contractAddress: contractInfo.council.addresses.councilnft,
-        tag: 'Council NFT Gate',
     })
 
     const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
@@ -128,11 +124,6 @@ export async function createTestChannelWithEntitlement(
     client: ZionTestClient,
     createChannelInfo: CreateChannelInfo,
 ): Promise<RoomIdentifier | undefined> {
-    // get all the roles in the space, and set it on the channel
-    const roles: DataTypes.CreateRoleEntitlementDataStruct[] = await createRolesFromSpace(
-        client,
-        createChannelInfo.parentSpaceId.matrixRoomId,
-    )
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await client.createWeb3Channel(createChannelInfo, roles)
+    return await client.createWeb3Channel(createChannelInfo)
 }

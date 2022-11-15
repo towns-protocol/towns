@@ -11,7 +11,10 @@ import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/l
 
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import Goerli_ZionSpaceManagerArtifact from '@harmony/contracts/goerli/abis/ZionSpaceManager.json'
-import { ZionSpaceManager as Goerli_ZionSpaceManager } from '@harmony/contracts/goerli/typings/ZionSpaceManager'
+import {
+    ZionSpaceManager as Goerli_ZionSpaceManager,
+    DataTypes as Goerli_DataTypes,
+} from '@harmony/contracts/goerli/typings/ZionSpaceManager'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
@@ -68,6 +71,36 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         entitlementData: Localhost_DataTypes.CreateSpaceEntitlementDataStruct,
         everyonePermissions: Localhost_DataTypes.PermissionStruct[],
     ): Promise<ContractTransaction> {
-        return this.signed.createSpace(info, entitlementData, everyonePermissions)
+        if (this.isGoerli) {
+            const externalTokenEntitlements: Goerli_DataTypes.ExternalTokenEntitlementStruct[] = []
+            for (let i = 0; i < entitlementData.externalTokenEntitlements.length; i++) {
+                const tag = `ExternalTokenEntitlement ${i}`
+                const externalTokenEntitlement: Goerli_DataTypes.ExternalTokenEntitlementStruct = {
+                    tag: tag,
+                    tokens: entitlementData.externalTokenEntitlements[i].tokens,
+                }
+                externalTokenEntitlements.push(externalTokenEntitlement)
+            }
+
+            const goerliEntitlementData: Goerli_DataTypes.CreateSpaceEntitlementDataStruct = {
+                roleName: entitlementData.roleName,
+                permissions: entitlementData.permissions,
+                externalTokenEntitlements: externalTokenEntitlements,
+                users: entitlementData.users,
+            }
+            return this.signed.createSpace(info, goerliEntitlementData, everyonePermissions)
+        } else {
+            return this.localhost_signed.createSpace(info, entitlementData, everyonePermissions)
+        }
+    }
+
+    public async createChannel(
+        info: Localhost_DataTypes.CreateChannelDataStruct,
+    ): Promise<ContractTransaction> {
+        if (this.isGoerli) {
+            throw new Error('createChannel not implemented with new data on Goerli')
+        } else {
+            return this.localhost_signed.createChannel(info)
+        }
     }
 }

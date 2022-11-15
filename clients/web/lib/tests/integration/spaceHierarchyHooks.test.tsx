@@ -29,6 +29,7 @@ describe('spaceHierarchyHooks', () => {
             name: "bob's channel",
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
         // set the space child prop on the room to 0 so that anyone can make channels
         await bob.setPowerLevel(spaceId, 'm.space.child', 0)
@@ -79,6 +80,7 @@ describe('spaceHierarchyHooks', () => {
             name: "alice's channel",
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
         // wait for the space child count to change
         await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'), {

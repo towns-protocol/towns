@@ -19,6 +19,7 @@ describe('spaceHierarchy', () => {
             name: "bob's room",
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
 
         const bob_spaceInfo = await bob.syncSpace(spaceId)
@@ -54,6 +55,7 @@ describe('spaceHierarchy', () => {
             name: "bob's room",
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
 
         const bob_spaceInfo = await bob.syncSpace(spaceId)

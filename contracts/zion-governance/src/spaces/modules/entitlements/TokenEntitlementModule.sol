@@ -15,35 +15,26 @@ import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 
 contract TokenEntitlementModule is EntitlementModuleBase {
   struct TokenEntitlement {
-    string tag;
+    uint256 entitlementId;
     uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
     DataTypes.ExternalToken[] tokens;
   }
 
-  struct RoomTokenEntitlements {
-    mapping(string => TokenEntitlement) entitlementsByTag;
-    string[] entitlementTags;
+  struct SpaceTokenEntitlements {
+    mapping(uint256 => TokenEntitlement) entitlementsById;
+    uint256[] entitlementIds;
+    mapping(uint256 => uint256[]) roleIdsByChannelId;
+    mapping(uint256 => uint256[]) entitlementIdsByRoleId;
   }
 
-  struct SpaceTokenEntitlements {
-    mapping(string => TokenEntitlement) entitlementsByTag;
-    string[] entitlementTags;
-    mapping(uint256 => RoomTokenEntitlements) roomEntitlementsByRoomId;
-    mapping(string => string[]) tagsByPermission;
-    mapping(uint256 => string[]) tagsByRoleId;
+  struct EntitlementInfo {
+    uint256 entitlementId;
+    bytes entitlementData;
   }
 
   mapping(uint256 => SpaceTokenEntitlements) internal entitlementsBySpaceId;
-
-  // spaceId => channelId => roleId => entitlement
-  mapping(uint256 => mapping(uint256 => mapping(uint256 => bytes)))
-    internal _entitlementDataBySpaceIdByChannelIdByRoleId;
-
-  // spaceId => roleId => entitlement
-  mapping(uint256 => mapping(uint256 => bytes))
-    internal _entitlementDataBySpaceIdByRoleId;
 
   constructor(
     string memory name_,
@@ -63,90 +54,49 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     )
   {}
 
-  function getEntitlementData(
-    string calldata spaceId,
-    string calldata channelId,
-    uint256 roleId
-  ) public view returns (bytes memory) {
-    uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
-      spaceId
-    );
-    if (bytes(channelId).length == 0) {
-      return _entitlementDataBySpaceIdByRoleId[_spaceId][roleId];
-    } else {
-      uint256 _channelId = ISpaceManager(_spaceManager).getChannelIdByNetworkId(
-        spaceId,
-        channelId
-      );
-      return
-        _entitlementDataBySpaceIdByChannelIdByRoleId[_spaceId][_channelId][
-          roleId
-        ];
-    }
-  }
-
-  function setEntitlement(
-    string memory spaceId,
-    string memory channelId,
+  function setSpaceEntitlement(
+    uint256 spaceId,
     uint256 roleId,
     bytes calldata entitlementData
-  ) public override onlySpaceManager {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+  ) external override onlySpaceManager {
+    // get the length of the total Ids to get our next Id
+    uint256 entitlementId = entitlementsBySpaceId[spaceId]
+      .entitlementIds
+      .length;
 
-    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
-    uint256 _channelId = spaceManager.getChannelIdByNetworkId(
-      spaceId,
-      channelId
+    // and add it to the array for iteration
+    entitlementsBySpaceId[spaceId].entitlementIds.push(entitlementId);
+
+    //Get and save the main entitlement object
+    TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[spaceId]
+      .entitlementsById[entitlementId];
+    _addNewTokenEntitlement(
+      tokenEntitlement,
+      entitlementData,
+      roleId,
+      entitlementId
     );
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
 
-    require(
-      ownerAddress == msg.sender || msg.sender == _spaceManager,
-      "Only the owner can update entitlements"
+    //Set so we can look up all entitlements by role when creating a new channel with a roleId
+    entitlementsBySpaceId[spaceId].entitlementIdsByRoleId[roleId].push(
+      entitlementId
     );
+  }
 
-    DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement = abi
-      .decode(entitlementData, (DataTypes.ExternalTokenEntitlement));
-
-    string memory tag = externalTokenEntitlement.tag;
-
-    if (bytes(channelId).length > 0) {
-      // save entitlement data by channel
-      _entitlementDataBySpaceIdByChannelIdByRoleId[_spaceId][_channelId][
-        roleId
-      ] = entitlementData;
-
-      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
-        _spaceId
-      ].roomEntitlementsByRoomId[_channelId].entitlementsByTag[tag];
-
-      _addNewTokenEntitlement(tokenEntitlement, entitlementData, roleId);
-
-      // so we can iterate through all the token entitlements for a space
-      entitlementsBySpaceId[_spaceId]
-        .roomEntitlementsByRoomId[_channelId]
-        .entitlementTags
-        .push(tag);
-      //So we can look up all potential token entitlements for a permission
-      setAllDescByPermissionNames(spaceId, roleId, tag);
-    } else {
-      // save entitlement data by space
-      _entitlementDataBySpaceIdByRoleId[_spaceId][roleId] = entitlementData;
-
-      TokenEntitlement storage tokenEntitlement = entitlementsBySpaceId[
-        _spaceId
-      ].entitlementsByTag[tag];
-      _addNewTokenEntitlement(tokenEntitlement, entitlementData, roleId);
-      entitlementsBySpaceId[_spaceId].entitlementTags.push(tag);
-
-      setAllDescByPermissionNames(spaceId, roleId, tag);
-    }
+  function addRoleIdToChannel(
+    uint256 spaceId,
+    uint256 channelId,
+    uint256 roleId
+  ) external override onlySpaceManager {
+    //Add the roleId to the mapping for the channel
+    entitlementsBySpaceId[spaceId].roleIdsByChannelId[channelId].push(roleId);
   }
 
   function _addNewTokenEntitlement(
     TokenEntitlement storage tokenEntitlement,
     bytes calldata entitlementData,
-    uint256 roleId
+    uint256 roleId,
+    uint256 entitlementId
   ) internal {
     DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement = abi
       .decode(entitlementData, (DataTypes.ExternalTokenEntitlement));
@@ -173,108 +123,143 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     tokenEntitlement.grantedBy = msg.sender;
     tokenEntitlement.grantedTime = block.timestamp;
     tokenEntitlement.roleId = roleId;
-    tokenEntitlement.tag = externalTokenEntitlement.tag;
+    tokenEntitlement.entitlementId = entitlementId;
   }
 
-  function setAllDescByPermissionNames(
-    string memory spaceId,
-    uint256 roleId,
-    string memory desc
-  ) internal {
-    uint256 _spaceId = ISpaceManager(_spaceManager).getSpaceIdByNetworkId(
-      spaceId
-    );
-
-    DataTypes.Permission[] memory permissions = IRoleManager(_roleManager)
-      .getPermissionsBySpaceIdByRoleId(_spaceId, roleId);
-
-    for (uint256 j = 0; j < permissions.length; j++) {
-      DataTypes.Permission memory permission = permissions[j];
-      string memory permissionName = permission.name;
-      entitlementsBySpaceId[_spaceId].tagsByPermission[permissionName].push(
-        desc
-      );
-      entitlementsBySpaceId[_spaceId].tagsByRoleId[roleId].push(desc);
-    }
-  }
-
-  function removeEntitlement(
-    string calldata spaceId,
-    string calldata channelId,
+  function removeSpaceEntitlement(
+    uint256 spaceId,
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlySpaceManager {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+  ) external override onlySpaceManager {
+    uint256 entitlementId = abi.decode(entitlementData, (uint256));
 
-    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+    //When removing, remove it from the main map and the roleId map but NOT from the array
+    //of all EntitlementIds since we use that as a counter
 
-    address ownerAddress = spaceManager.getSpaceOwnerBySpaceId(spaceId);
-
-    if (ownerAddress != msg.sender || msg.sender != _spaceManager) {
-      revert("Only the owner can update entitlements");
+    //Remove the association of this entitlementId to this roleId
+    uint256[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[spaceId]
+      .entitlementIdsByRoleId[roleId];
+    for (uint256 i = 0; i < entitlementIdsFromRoleIds.length; i++) {
+      if (entitlementIdsFromRoleIds[i] == entitlementId) {
+        delete entitlementsBySpaceId[spaceId].entitlementIdsByRoleId[i];
+      }
     }
 
-    string memory tag = abi.decode(entitlementData, (string));
+    //delete the main object
+    delete entitlementsBySpaceId[spaceId].entitlementsById[entitlementId];
+  }
 
-    if (bytes(channelId).length > 0) {
-      uint256 _channelId = spaceManager.getChannelIdByNetworkId(
-        spaceId,
-        channelId
-      );
-      delete _entitlementDataBySpaceIdByChannelIdByRoleId[_spaceId][_channelId][
-        roleId
-      ];
-      delete entitlementsBySpaceId[_spaceId]
-        .roomEntitlementsByRoomId[_channelId]
-        .entitlementsByTag[tag];
-    } else {
-      delete _entitlementDataBySpaceIdByRoleId[_spaceId][roleId];
-      delete entitlementsBySpaceId[_spaceId].entitlementsByTag[tag];
-    }
-
-    DataTypes.Role[] memory roles = IRoleManager(_roleManager)
-      .getRolesBySpaceId(_spaceId);
-
-    for (uint256 i = 0; i < roles.length; i++) {
-      delete entitlementsBySpaceId[_spaceId].tagsByRoleId[roles[i].roleId];
+  function removeRoleIdFromChannel(
+    uint256 spaceId,
+    uint256 channelId,
+    uint256 roleId
+  ) external override onlySpaceManager {
+    //Remove the association of this roleId to this channelId
+    uint256[] memory roleIdsFromChannelIds = entitlementsBySpaceId[spaceId]
+      .roleIdsByChannelId[channelId];
+    for (uint256 i = 0; i < roleIdsFromChannelIds.length; i++) {
+      if (roleIdsFromChannelIds[i] == roleId) {
+        delete entitlementsBySpaceId[spaceId].roleIdsByChannelId[channelId][i];
+      }
     }
   }
 
   function isEntitled(
-    string calldata spaceId,
-    string calldata channelId,
+    uint256 spaceId,
+    uint256 channelId,
     address user,
     DataTypes.Permission memory permission
   ) public view override returns (bool) {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
+    if (channelId > 0) {
+      return isEntitledToChannel(spaceId, channelId, user, permission);
+    } else {
+      return isEntitledToSpace(spaceId, user, permission);
+    }
+  }
 
-    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
+  function isEntitledToSpace(
+    uint256 spaceId,
+    address user,
+    DataTypes.Permission memory permission
+  ) internal view returns (bool) {
+    //Get all the entitlement ids
+    uint256[] memory entitlementIds = entitlementsBySpaceId[spaceId]
+      .entitlementIds;
 
-    string[] memory tags = entitlementsBySpaceId[_spaceId].tagsByPermission[
-      permission.name
-    ];
-
-    for (uint256 i = 0; i < tags.length; i++) {
-      if (isTokenEntitled(spaceId, channelId, user, tags[i])) {
-        return true;
+    //For each, check if the role in it has the permission we are looking for,
+    //if so add it to the array of validRoleIds
+    uint256[] memory validRoleIds = new uint256[](entitlementIds.length);
+    for (uint256 i = 0; i < entitlementIds.length; i++) {
+      uint256 entitlementId = entitlementIds[i];
+      TokenEntitlement memory entitlement = entitlementsBySpaceId[spaceId]
+        .entitlementsById[entitlementId];
+      uint256 roleId = entitlement.roleId;
+      if (_checkRoleHasPermission(spaceId, roleId, permission)) {
+        validRoleIds[i] = roleId;
       }
     }
 
+    //for each of those roles, get all the entitlements associated with that role
+    for (uint256 i = 0; i < validRoleIds.length; i++) {
+      uint256 roleId = validRoleIds[i];
+      uint256[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[
+        spaceId
+      ].entitlementIdsByRoleId[roleId];
+      //And check if that entitlement allows the user access, if so return true
+      for (uint256 j = 0; j < entitlementIdsFromRoleIds.length; j++) {
+        if (isTokenEntitled(spaceId, user, entitlementIdsFromRoleIds[j])) {
+          return true;
+        }
+      }
+    }
+    //otherwise if none do, return false
+    return false;
+  }
+
+  function isEntitledToChannel(
+    uint256 spaceId,
+    uint256 channelId,
+    address user,
+    DataTypes.Permission memory permission
+  ) internal view returns (bool) {
+    // First get all the roles for that channel
+    uint256[] memory channelRoleIds = entitlementsBySpaceId[spaceId]
+      .roleIdsByChannelId[channelId];
+
+    // Then get strip that down to only the roles that have the permission we care about
+    uint256[] memory validRoleIds = new uint256[](channelRoleIds.length);
+    for (uint256 i = 0; i < channelRoleIds.length; i++) {
+      uint256 roleId = channelRoleIds[i];
+      if (_checkRoleHasPermission(spaceId, roleId, permission)) {
+        validRoleIds[i] = roleId;
+      }
+    }
+
+    //for each of those roles, get all the entitlements associated with that role
+    for (uint256 i = 0; i < validRoleIds.length; i++) {
+      uint256[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[
+        spaceId
+      ].entitlementIdsByRoleId[validRoleIds[i]];
+
+      //And check if that entitlement allows the user access, if so return true
+      for (uint256 j = 0; j < entitlementIdsFromRoleIds.length; j++) {
+        if (isTokenEntitled(spaceId, user, entitlementIdsFromRoleIds[j])) {
+          return true;
+        }
+      }
+    }
+
+    //if none of them do, return false
     return false;
   }
 
   function isTokenEntitled(
-    string calldata spaceId,
-    string calldata,
+    uint256 spaceId,
     address user,
-    string memory tag
+    uint256 entitlementId
   ) public view returns (bool) {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
-
-    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
-
-    DataTypes.ExternalToken[] memory tokens = entitlementsBySpaceId[_spaceId]
-      .entitlementsByTag[tag]
+    DataTypes.ExternalToken[] memory tokens = entitlementsBySpaceId[spaceId]
+      .entitlementsById[entitlementId]
       .tokens;
 
     bool entitled = false;
@@ -341,34 +326,49 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     return false;
   }
 
+  /// Check if any of the entitlements contain the permission we are checking for
+  function _checkRoleHasPermission(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.Permission memory permission
+  ) internal view returns (bool) {
+    DataTypes.Permission[] memory permissions = IRoleManager(_roleManager)
+      .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
+
+    for (uint256 p = 0; p < permissions.length; p++) {
+      if (
+        keccak256(abi.encodePacked(permissions[p].name)) ==
+        keccak256(abi.encodePacked(permission.name))
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function getUserRoles(
-    string calldata spaceId,
-    string calldata channelId,
+    uint256 spaceId,
     address user
   ) public view returns (DataTypes.Role[] memory) {
-    ISpaceManager spaceManager = ISpaceManager(_spaceManager);
-
-    uint256 _spaceId = spaceManager.getSpaceIdByNetworkId(spaceId);
-
     //Get all the entitlements for this space
-    string[] memory entitlementTags = entitlementsBySpaceId[_spaceId]
-      .entitlementTags;
+    uint256[] memory entitlementIds = entitlementsBySpaceId[spaceId]
+      .entitlementIds;
 
     //Create an empty array of the max size of all entitlements
-    DataTypes.Role[] memory roles = new DataTypes.Role[](
-      entitlementTags.length
-    );
+    DataTypes.Role[] memory roles = new DataTypes.Role[](entitlementIds.length);
     //Iterate through all the entitlements
-    for (uint256 i = 0; i < entitlementTags.length; i++) {
-      string memory tag = entitlementTags[i];
+    for (uint256 i = 0; i < entitlementIds.length; i++) {
+      uint256 entitlementId = entitlementIds[i];
       //If the user is entitled to a token entitlement
-      if (isTokenEntitled(spaceId, channelId, user, tag)) {
-        uint256 roleId = entitlementsBySpaceId[_spaceId]
-          .entitlementsByTag[tag]
+      //Get all the roles for that token entitlement, and add them to the array for this user
+      if (isTokenEntitled(spaceId, user, entitlementId)) {
+        uint256 roleId = entitlementsBySpaceId[spaceId]
+          .entitlementsById[entitlementId]
           .roleId;
-        //Get all the roles for that token entitlement, and add them to the array for this user
+
         roles[i] = IRoleManager(_roleManager).getRoleBySpaceIdByRoleId(
-          _spaceId,
+          spaceId,
           roleId
         );
       }

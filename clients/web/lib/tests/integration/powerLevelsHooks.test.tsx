@@ -80,6 +80,7 @@ describe('powerLevelsHooks', () => {
                 name: "alice's channel",
                 visibility: RoomVisibility.Private,
                 parentSpaceId: roomId,
+                roleIds: [],
             }),
         ).rejects.toThrow('is not allowed to send event. 0 < 50')
         // set update the power level to 0
@@ -94,6 +95,7 @@ describe('powerLevelsHooks', () => {
                 name: "alice's channel",
                 visibility: RoomVisibility.Private,
                 parentSpaceId: roomId,
+                roleIds: [],
             }),
         ).resolves.toBeDefined()
     })

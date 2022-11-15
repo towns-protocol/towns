@@ -15,22 +15,19 @@ interface ISpaceManager {
   ) external returns (uint256);
 
   /// @notice Create a channel within a space
-  function createChannel(
-    DataTypes.CreateChannelData memory data,
-    DataTypes.CreateRoleEntitlementData[] memory roles
-  ) external returns (uint256);
+  function createChannel(DataTypes.CreateChannelData memory data)
+    external
+    returns (uint256);
 
   /// @notice Sets the default entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
-  function setDefaultUserEntitlementModule(
-    address entitlementModuleAddress
-  ) external;
+  function setDefaultUserEntitlementModule(address entitlementModuleAddress)
+    external;
 
   /// @notice Sets the default token entitlement for a newly created space
   /// @param entitlementModuleAddress The address of the entitlement module
-  function setDefaultTokenEntitlementModule(
-    address entitlementModuleAddress
-  ) external;
+  function setDefaultTokenEntitlementModule(address entitlementModuleAddress)
+    external;
 
   /// @notice Sets the address for the space nft
   /// @param spaceNFTAddress The address of the zion space nft
@@ -46,7 +43,6 @@ interface ISpaceManager {
   /// @notice add an entitlement to an entitlement module
   function addRoleToEntitlementModule(
     string calldata spaceId,
-    string calldata channelId,
     address entitlementAddress,
     uint256 roleId,
     bytes memory data
@@ -55,17 +51,28 @@ interface ISpaceManager {
   /// @notice Removes an entitlement from an entitlement module
   function removeEntitlement(
     string calldata spaceId,
-    string calldata channelId,
     address entitlementModuleAddress,
     uint256 roleId,
     bytes memory data
   ) external;
 
-  /// @notice Create a role on a new space Id
-  function createRole(
+  /// @notice adds an array of roleIds to a channel for a space
+  function addRoleIdsToChannel(
     string calldata spaceId,
-    string calldata name
-  ) external returns (uint256);
+    string calldata channelId,
+    uint256[] calldata roleId
+  ) external;
+
+  function removeRoleIdsFromChannel(
+    string calldata spaceId,
+    string calldata channelId,
+    uint256[] calldata roleId
+  ) external;
+
+  /// @notice Create a new role on a space Id
+  function createRole(string calldata spaceId, string calldata name)
+    external
+    returns (uint256);
 
   /// @notice Adds a permission to a role
   function addPermissionToRole(
@@ -100,9 +107,10 @@ interface ISpaceManager {
   /// @notice Get the space information by id.
   /// @param spaceId The id of the space
   /// @return SpaceInfo a struct representing the space info
-  function getSpaceInfoBySpaceId(
-    string calldata spaceId
-  ) external view returns (DataTypes.SpaceInfo memory);
+  function getSpaceInfoBySpaceId(string calldata spaceId)
+    external
+    view
+    returns (DataTypes.SpaceInfo memory);
 
   /// @notice Get the channel info by channel id
   function getChannelInfoByChannelId(
@@ -115,16 +123,18 @@ interface ISpaceManager {
   function getSpaces() external view returns (DataTypes.SpaceInfo[] memory);
 
   /// @notice Returns an array of channels by space id
-  function getChannelsBySpaceId(
-    string memory spaceId
-  ) external view returns (DataTypes.Channels memory);
+  function getChannelsBySpaceId(string memory spaceId)
+    external
+    view
+    returns (DataTypes.Channels memory);
 
   /// @notice Returns entitlements for a space
   /// @param spaceId The id of the space
   /// @return entitlementModules an array of entitlements
-  function getEntitlementModulesBySpaceId(
-    string calldata spaceId
-  ) external view returns (address[] memory entitlementModules);
+  function getEntitlementModulesBySpaceId(string calldata spaceId)
+    external
+    view
+    returns (address[] memory entitlementModules);
 
   /// @notice Returns if an entitlement module is whitelisted for a space
   function isEntitlementModuleWhitelisted(
@@ -133,14 +143,16 @@ interface ISpaceManager {
   ) external view returns (bool);
 
   /// @notice Returns the entitlement info for a space
-  function getEntitlementsInfoBySpaceId(
-    string calldata spaceId
-  ) external view returns (DataTypes.EntitlementModuleInfo[] memory);
+  function getEntitlementsInfoBySpaceId(string calldata spaceId)
+    external
+    view
+    returns (DataTypes.EntitlementModuleInfo[] memory);
 
   /// @notice Returns the space id by network id
-  function getSpaceIdByNetworkId(
-    string calldata networkId
-  ) external view returns (uint256);
+  function getSpaceIdByNetworkId(string calldata networkId)
+    external
+    view
+    returns (uint256);
 
   /// @notice Returns the channel id by network id
   function getChannelIdByNetworkId(
@@ -151,7 +163,7 @@ interface ISpaceManager {
   /// @notice Returns the owner of the space by space id
   /// @param spaceId The space id
   /// @return ownerAddress The address of the owner of the space
-  function getSpaceOwnerBySpaceId(
-    string calldata spaceId
-  ) external returns (address ownerAddress);
+  function getSpaceOwnerBySpaceId(string calldata spaceId)
+    external
+    returns (address ownerAddress);
 }

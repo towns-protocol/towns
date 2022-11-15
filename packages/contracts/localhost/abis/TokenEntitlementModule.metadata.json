@@ -91,6 +91,29 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "channelId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "addRoleIdToChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "description",
         "outputs": [
@@ -106,43 +129,9 @@
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "spaceId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "channelId",
-            "type": "string"
-          },
-          {
             "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "name": "getEntitlementData",
-        "outputs": [
-          {
-            "internalType": "bytes",
-            "name": "",
-            "type": "bytes"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
             "name": "spaceId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "channelId",
-            "type": "string"
+            "type": "uint256"
           },
           {
             "internalType": "address",
@@ -176,14 +165,14 @@
       {
         "inputs": [
           {
-            "internalType": "string",
+            "internalType": "uint256",
             "name": "spaceId",
-            "type": "string"
+            "type": "uint256"
           },
           {
-            "internalType": "string",
+            "internalType": "uint256",
             "name": "channelId",
-            "type": "string"
+            "type": "uint256"
           },
           {
             "internalType": "address",
@@ -217,14 +206,9 @@
       {
         "inputs": [
           {
-            "internalType": "string",
+            "internalType": "uint256",
             "name": "spaceId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
+            "type": "uint256"
           },
           {
             "internalType": "address",
@@ -232,9 +216,9 @@
             "type": "address"
           },
           {
-            "internalType": "string",
-            "name": "tag",
-            "type": "string"
+            "internalType": "uint256",
+            "name": "entitlementId",
+            "type": "uint256"
           }
         ],
         "name": "isTokenEntitled",
@@ -277,27 +261,22 @@
       {
         "inputs": [
           {
-            "internalType": "string",
+            "internalType": "uint256",
             "name": "spaceId",
-            "type": "string"
+            "type": "uint256"
           },
           {
-            "internalType": "string",
+            "internalType": "uint256",
             "name": "channelId",
-            "type": "string"
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
             "name": "roleId",
             "type": "uint256"
-          },
-          {
-            "internalType": "bytes",
-            "name": "entitlementData",
-            "type": "bytes"
           }
         ],
-        "name": "removeEntitlement",
+        "name": "removeRoleIdFromChannel",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -305,14 +284,9 @@
       {
         "inputs": [
           {
-            "internalType": "string",
+            "internalType": "uint256",
             "name": "spaceId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "channelId",
-            "type": "string"
+            "type": "uint256"
           },
           {
             "internalType": "uint256",
@@ -325,7 +299,30 @@
             "type": "bytes"
           }
         ],
-        "name": "setEntitlement",
+        "name": "removeSpaceEntitlement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "setSpaceEntitlement",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -362,6 +359,9 @@
     "userdoc": {
       "kind": "user",
       "methods": {
+        "addRoleIdToChannel(uint256,uint256,uint256)": {
+          "notice": "Adds a roleId to a channel"
+        },
         "description()": {
           "notice": "The description of the entitlement module"
         },
@@ -371,11 +371,14 @@
         "name()": {
           "notice": "The name of the entitlement module"
         },
-        "removeEntitlement(string,string,uint256,bytes)": {
-          "notice": "Removes the entitlements for a space"
+        "removeRoleIdFromChannel(uint256,uint256,uint256)": {
+          "notice": "Removes  a roleId from a channel"
         },
-        "setEntitlement(string,string,uint256,bytes)": {
-          "notice": "Sets the entitlements for a space"
+        "removeSpaceEntitlement(uint256,uint256,bytes)": {
+          "notice": "Removes an entitlement from a space"
+        },
+        "setSpaceEntitlement(uint256,uint256,bytes)": {
+          "notice": "Sets a new entitlement for a space"
         }
       },
       "version": 1
@@ -409,11 +412,11 @@
   },
   "sources": {
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
-      "keccak256": "0xc38fde202f69287f886b1ffcbf119dc6a629db99b76069527ff9c3e1e25388fd",
+      "keccak256": "0xd2808281272c247b5024c0cdfb66f9b73a48a27018076fcdce625ecca2a658de",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://dad711595bb2073b2c78328c536d9948468d9f017be6670ea779481c473540a4",
-        "dweb:/ipfs/QmUnNQGGSdR3ZW4CuXMiN1DY7Beu5u87WdAXJ9k5fyKAJL"
+        "bzz-raw://d5f7a1ba3d8506ee7132e71b4c2c42024f3717d602215ea251d65ec23fa24b43",
+        "dweb:/ipfs/QmenqosXQqT5MnvfhmC6ZZBofxbMk9wHvnpk7kcSjWkG88"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IRoleManager.sol": {
@@ -425,19 +428,19 @@
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0x115309b0bcc01fc14c8b27bde3e464e571afb91abcb88a962c78898e2b505049",
+      "keccak256": "0x133f5cc8304fba0a0f59fea3696607eb90c1cf22617207e5971598c80b1c6307",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6df972b80771bb34236545c5074ec9da89777137a5c7a9d4ff073cafbd42662c",
-        "dweb:/ipfs/QmTN9SCBVKsgZNBiqp1kvPPM6AVMo1wp913VUfAPg9Twq7"
+        "bzz-raw://3b5af2e9680256241b160fb8c8f5a2eddd86273ea3bc0e7bd1f45ffc015ed119",
+        "dweb:/ipfs/QmWFWEHxTgudTChmToWiDEB2x59gMLoMYHbYrGUBZZmdZb"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0x5192d4e761fe92cfef3fab9ea336ac6ab9401941b397fad4b987a230aee2c1a1",
+      "keccak256": "0x8635ceffdd6e96f53f78d9c1c2703ec2efbf818dacacc37b4253660ebd7abc71",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://ae5ff20678e93ebc066f5507784670053e1982fd3fa060f0d397297bf697c433",
-        "dweb:/ipfs/QmVTcx5gzozYF15CgsmnfyNn1S4yjky2RUAVEQSvfEWHzk"
+        "bzz-raw://44d73637fe209fe63a29e80954f8e691fbad43d9ab623f6d5ced6b4b336bce26",
+        "dweb:/ipfs/QmNx7LLn45FNcqp6xwdiEi8edVNJCFj6bYZkLYLU6d6Tcq"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Errors.sol": {
@@ -465,11 +468,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/modules/entitlements/TokenEntitlementModule.sol": {
-      "keccak256": "0x69f5546e5f139386a0efc0257d3815ba7acf9880594dd65b251a99ec5cf302f0",
+      "keccak256": "0x7ac26bbfbe3186ca8747fe4c25089122352cb539b585d7b866afdf01ca12e69f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://590a967edb23e2087c73e57b40c5a8fe8719d5d3d9dabff7a79baf9ee80597c7",
-        "dweb:/ipfs/QmRd1AezjCbw5K1fcFANGQ8ap43ttQ7QricwMW89EpFbnJ"
+        "bzz-raw://29987e54046aa15864ef12a556300d7cfdd3229a59e251e9df4cb5b79de9aae2",
+        "dweb:/ipfs/QmNgzBVT44QsM3fZcKJtzzLjhT1LkzHijXvtGLpAYX7Gub"
       ]
     },
     "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": {

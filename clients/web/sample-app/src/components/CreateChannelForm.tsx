@@ -47,6 +47,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
             name: channelName,
             visibility,
             parentSpaceId: parentSpaceId,
+            roleIds: [],
         }
         const roomId = await createChannel(createRoomInfo)
         if (roomId) {

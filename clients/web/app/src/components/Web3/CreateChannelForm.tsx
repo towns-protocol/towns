@@ -32,10 +32,12 @@ export const CreateChannelForm = (props: Props) => {
             console.log('please enter a channel name')
             return
         }
+
         const createChannelInfo: CreateChannelInfo = {
             name: channelName,
             visibility,
             parentSpaceId: parentSpaceId,
+            roleIds: [],
         }
         const roomId = await createChannel(createChannelInfo)
 

@@ -57,7 +57,6 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
 
     DataTypes.ExternalTokenEntitlement
       memory externalTokenEntitlement = getTestExternalTokenEntitlement(
-        "Zion 100 Token Gate",
         address(zion),
         100,
         false,
@@ -67,7 +66,6 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
     // Add token entitlement module to space
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      roomId,
       address(tokenEntitlementModule),
       testerRoleId,
       abi.encode(externalTokenEntitlement)
@@ -129,7 +127,6 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
 
     DataTypes.ExternalTokenEntitlement
       memory externalTokenEntitlement = getTestExternalTokenEntitlement(
-        "Council NFT Gate",
         address(councilNFT),
         1,
         false,
@@ -139,7 +136,6 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
     // Add the token entitlement module to the space
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      roomId,
       address(tokenEntitlementModule),
       roleId,
       abi.encode(externalTokenEntitlement)
@@ -219,14 +215,12 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
 
     DataTypes.ExternalTokenEntitlement
       memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
-        "Multiple Token Gate",
         externalTokens
       );
 
     // Add the token entitlement module to the space
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      roomId,
       address(tokenEntitlementModule),
       roleId,
       abi.encode(externalTokenEntitlement)
@@ -274,7 +268,6 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
   }
 
   function getTestExternalTokenEntitlement(
-    string memory entitlementTag,
     address contractAddress,
     uint256 quantity,
     bool isSingleToken,
@@ -291,7 +284,6 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
 
     DataTypes.ExternalTokenEntitlement
       memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
-        entitlementTag,
         externalTokens
       );
 

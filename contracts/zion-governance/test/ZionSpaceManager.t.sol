@@ -149,7 +149,7 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
       PermissionTypes.Read
     );
 
-    uint spaceId = createSimpleSpaceWithEveryonePermissions(
+    uint256 spaceId = createSimpleSpaceWithEveryonePermissions(
       "space-name",
       spaceNetwork,
       permissions,
@@ -161,38 +161,38 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
       spaceId
     );
 
-    DataTypes.CreateRoleEntitlementData[]
-      memory roles = new DataTypes.CreateRoleEntitlementData[](1);
-
-    // get the space owner role
+    uint256[] memory roleIds = new uint256[](existingSpaceRoles.length);
+    // get the everyone role
     for (uint256 i = 0; i < existingSpaceRoles.length; i++) {
       if (compareStringsbyBytes(existingSpaceRoles[i].name, "Everyone")) {
-        roles[0] = DataTypes.CreateRoleEntitlementData({
-          roleId: existingSpaceRoles[i].roleId,
-          entitlementModule: address(userGrantedEntitlementModule),
-          entitlementData: abi.encode(Constants.EVERYONE_ADDRESS)
-        });
+        roleIds[i] = existingSpaceRoles[i].roleId;
       }
     }
 
+    //create the channel with the everyone role
     uint256 channelId = spaceManager.createChannel(
-      DataTypes.CreateChannelData(spaceNetwork, "channel-name", channelNetwork),
-      roles
+      DataTypes.CreateChannelData(
+        spaceNetwork,
+        "channel-name",
+        channelNetwork,
+        roleIds
+      )
     );
 
+    //everyone should now be entitled to read since the everyone role allows you to read
     bool isEveryoneReadEntitled = spaceManager.isEntitled(
       spaceNetwork,
       channelNetwork,
       address(8),
       permissionsRegistry.getPermissionByPermissionType(PermissionTypes.Read)
     );
+    assertTrue(isEveryoneReadEntitled);
 
     DataTypes.ChannelInfo memory info = spaceManager.getChannelInfoByChannelId(
       spaceNetwork,
       channelNetwork
     );
 
-    assertTrue(isEveryoneReadEntitled);
     assertEq(info.channelId, channelId);
     assertEq(info.name, "channel-name");
     assertEq(info.networkId, channelNetwork);
@@ -327,6 +327,20 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     createSimpleSpace("test", networkId, spaceManager);
 
+    vm.expectRevert(Errors.NotAllowed.selector);
+    spaceManager.whitelistEntitlementModule(
+      networkId,
+      address(tokenEntitlementModule),
+      false
+    );
+
+    vm.expectRevert(Errors.NotAllowed.selector);
+    spaceManager.whitelistEntitlementModule(
+      networkId,
+      address(userGrantedEntitlementModule),
+      false
+    );
+
     TokenEntitlementModule newTokenEntitlementModule = new TokenEntitlementModule(
         "New Token Entitlement Module",
         "Allows users to grant other users access to spaces and rooms based on tokens they hold",
@@ -393,14 +407,12 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     DataTypes.ExternalTokenEntitlement
       memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
-        "Council NFT Gate",
         externalTokens
       );
 
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      "",
       address(newTokenEntitlementModule),
       roleId,
       abi.encode(externalTokenEntitlement)
@@ -414,7 +426,6 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      "",
       address(newTokenEntitlementModule),
       roleId,
       abi.encode(externalTokenEntitlement)
@@ -439,10 +450,25 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     uint256 ownerRoleId = spaceManager.createRole(networkId, roleName);
     spaceManager.addPermissionToRole(networkId, ownerRoleId, joinPermission);
 
+    TokenEntitlementModule newTokenEntitlementModule = new TokenEntitlementModule(
+        "New Token Entitlement Module",
+        "Allows users to grant other users access to spaces and rooms based on tokens they hold",
+        "NewTokenEntitlementModule",
+        address(spaceManager),
+        address(roleManager),
+        address(permissionsRegistry)
+      );
+
+    spaceManager.whitelistEntitlementModule(
+      networkId,
+      address(newTokenEntitlementModule),
+      true
+    );
+
     vm.expectRevert(Errors.EntitlementAlreadyWhitelisted.selector);
     spaceManager.whitelistEntitlementModule(
       networkId,
-      address(userGrantedEntitlementModule),
+      address(newTokenEntitlementModule),
       true
     );
   }
@@ -540,10 +566,15 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     string memory channelNetworkId = "!7evmpuHDDgkady9u:localhost:channel";
 
     createSimpleSpace("test", networkId, spaceManager);
+    uint256[] memory roleIds = new uint256[](0);
 
     spaceManager.createChannel(
-      DataTypes.CreateChannelData(networkId, "channel-name", channelNetworkId),
-      new DataTypes.CreateRoleEntitlementData[](0)
+      DataTypes.CreateChannelData(
+        networkId,
+        "channel-name",
+        channelNetworkId,
+        roleIds
+      )
     );
 
     uint256 roleId = spaceManager.createRole(networkId, "TestRole");
@@ -562,7 +593,6 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      channelNetworkId,
       address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(2))
@@ -618,7 +648,6 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     vm.expectRevert(Errors.NotAllowed.selector);
     spaceManager.addRoleToEntitlementModule(
       networkId,
-      "",
       address(tokenEntitlementModule),
       ownerRoleId,
       abi.encode(testTokenGate)

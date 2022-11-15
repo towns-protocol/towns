@@ -54,11 +54,13 @@ describe('sendThreadedMessageHooks', () => {
             name: 'channel_1',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
         const channel_2 = await jane.createChannel({
             name: 'channel_2',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
 
         // render bob's app

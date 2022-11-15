@@ -73,11 +73,6 @@
       },
       {
         "inputs": [],
-        "name": "RoleDoesNotExist",
-        "type": "error"
-      },
-      {
-        "inputs": [],
         "name": "SpaceDoesNotExist",
         "type": "error"
       },
@@ -139,12 +134,30 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "spaceNetworkId",
+            "name": "spaceId",
             "type": "string"
           },
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleId",
+            "type": "uint256[]"
+          }
+        ],
+        "name": "addRoleIdsToChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "spaceNetworkId",
             "type": "string"
           },
           {
@@ -186,33 +199,16 @@
                 "internalType": "string",
                 "name": "channelNetworkId",
                 "type": "string"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "roleIds",
+                "type": "uint256[]"
               }
             ],
             "internalType": "struct DataTypes.CreateChannelData",
             "name": "data",
             "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "roleId",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "entitlementModule",
-                "type": "address"
-              },
-              {
-                "internalType": "bytes",
-                "name": "entitlementData",
-                "type": "bytes"
-              }
-            ],
-            "internalType": "struct DataTypes.CreateRoleEntitlementData[]",
-            "name": "roles",
-            "type": "tuple[]"
           }
         ],
         "name": "createChannel",
@@ -290,11 +286,6 @@
               },
               {
                 "components": [
-                  {
-                    "internalType": "string",
-                    "name": "tag",
-                    "type": "string"
-                  },
                   {
                     "components": [
                       {
@@ -794,11 +785,6 @@
             "type": "string"
           },
           {
-            "internalType": "string",
-            "name": "channelNetworkId",
-            "type": "string"
-          },
-          {
             "internalType": "address",
             "name": "entitlementModuleAddress",
             "type": "address"
@@ -863,6 +849,29 @@
           }
         ],
         "name": "removeRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleId",
+            "type": "uint256[]"
+          }
+        ],
+        "name": "removeRoleIdsFromChannel",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -995,7 +1004,7 @@
       "author": "HNT Labs",
       "kind": "dev",
       "methods": {
-        "createSpace((string,string),(string,(string)[],(string,(address,uint256,bool,uint256)[])[],address[]),(string)[])": {
+        "createSpace((string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
           "params": {
             "entitlementData": "Data to create additional role gated by tokens or specific users",
             "everyonePermissions": "The permissions to grant to the Everyone role",
@@ -1076,16 +1085,19 @@
         "addPermissionToRole(string,uint256,(string))": {
           "notice": "Adds a permission to a role"
         },
-        "addRoleToEntitlementModule(string,string,address,uint256,bytes)": {
+        "addRoleIdsToChannel(string,string,uint256[])": {
+          "notice": "adds an array of roleIds to a channel for a space"
+        },
+        "addRoleToEntitlementModule(string,address,uint256,bytes)": {
           "notice": "add an entitlement to an entitlement module"
         },
-        "createChannel((string,string,string),(uint256,address,bytes)[])": {
+        "createChannel((string,string,string,uint256[]))": {
           "notice": "Create a channel within a space"
         },
         "createRole(string,string)": {
-          "notice": "Create a role on a new space Id"
+          "notice": "Create a new role on a space Id"
         },
-        "createSpace((string,string),(string,(string)[],(string,(address,uint256,bool,uint256)[])[],address[]),(string)[])": {
+        "createSpace((string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
           "notice": "Create a new space"
         },
         "getChannelIdByNetworkId(string,string)": {
@@ -1121,7 +1133,7 @@
         "isEntitlementModuleWhitelisted(string,address)": {
           "notice": "Returns if an entitlement module is whitelisted for a space"
         },
-        "removeEntitlement(string,string,address,uint256,bytes)": {
+        "removeEntitlement(string,address,uint256,bytes)": {
           "notice": "Removes an entitlement from an entitlement module"
         },
         "removePermissionFromRole(string,uint256,(string))": {
@@ -1175,19 +1187,19 @@
   },
   "sources": {
     "contracts/zion-governance/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x8228642b7b62a8c65d92cd3c6d3dc42e994135f0e75c25ef913c788c2c4f6669",
+      "keccak256": "0x6f6dc8e7da4b4995d16a58e727659df1a22890a617063cd079d6eb0a9e417301",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://abd0d564942a6e87fe4b64a5a669f4fcd2d271de206cfdf5045ad62305cddb26",
-        "dweb:/ipfs/QmaGNJs9owXJjxxM3tgxLw75DqoL1cYwXAnaZM3qxRsixu"
+        "bzz-raw://b94be2bc20b326941a7aa3abadec009f88fe91261ca1b8b229e73d0fdd947ae4",
+        "dweb:/ipfs/QmNNpBSTeC4BSREfxDiTneN8aiEnrfrsRujNXamMv6uvXC"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IEntitlementModule.sol": {
-      "keccak256": "0xc38fde202f69287f886b1ffcbf119dc6a629db99b76069527ff9c3e1e25388fd",
+      "keccak256": "0xd2808281272c247b5024c0cdfb66f9b73a48a27018076fcdce625ecca2a658de",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://dad711595bb2073b2c78328c536d9948468d9f017be6670ea779481c473540a4",
-        "dweb:/ipfs/QmUnNQGGSdR3ZW4CuXMiN1DY7Beu5u87WdAXJ9k5fyKAJL"
+        "bzz-raw://d5f7a1ba3d8506ee7132e71b4c2c42024f3717d602215ea251d65ec23fa24b43",
+        "dweb:/ipfs/QmenqosXQqT5MnvfhmC6ZZBofxbMk9wHvnpk7kcSjWkG88"
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/IPermissionRegistry.sol": {
@@ -1215,11 +1227,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0x115309b0bcc01fc14c8b27bde3e464e571afb91abcb88a962c78898e2b505049",
+      "keccak256": "0x133f5cc8304fba0a0f59fea3696607eb90c1cf22617207e5971598c80b1c6307",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6df972b80771bb34236545c5074ec9da89777137a5c7a9d4ff073cafbd42662c",
-        "dweb:/ipfs/QmTN9SCBVKsgZNBiqp1kvPPM6AVMo1wp913VUfAPg9Twq7"
+        "bzz-raw://3b5af2e9680256241b160fb8c8f5a2eddd86273ea3bc0e7bd1f45ffc015ed119",
+        "dweb:/ipfs/QmWFWEHxTgudTChmToWiDEB2x59gMLoMYHbYrGUBZZmdZb"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Constants.sol": {
@@ -1239,11 +1251,11 @@
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0x5192d4e761fe92cfef3fab9ea336ac6ab9401941b397fad4b987a230aee2c1a1",
+      "keccak256": "0x8635ceffdd6e96f53f78d9c1c2703ec2efbf818dacacc37b4253660ebd7abc71",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://ae5ff20678e93ebc066f5507784670053e1982fd3fa060f0d397297bf697c433",
-        "dweb:/ipfs/QmVTcx5gzozYF15CgsmnfyNn1S4yjky2RUAVEQSvfEWHzk"
+        "bzz-raw://44d73637fe209fe63a29e80954f8e691fbad43d9ab623f6d5ced6b4b336bce26",
+        "dweb:/ipfs/QmNx7LLn45FNcqp6xwdiEi8edVNJCFj6bYZkLYLU6d6Tcq"
       ]
     },
     "contracts/zion-governance/src/spaces/libraries/Errors.sol": {

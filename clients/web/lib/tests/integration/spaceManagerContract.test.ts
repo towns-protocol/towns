@@ -44,7 +44,6 @@ describe('spaceManagerContract', () => {
             tokenId: 0,
         }
         const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
-            tag: 'Council NFT Gate',
             tokens: [externalToken],
         }
         const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }

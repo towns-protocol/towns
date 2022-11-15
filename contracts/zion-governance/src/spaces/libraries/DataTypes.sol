@@ -101,7 +101,6 @@ library DataTypes {
   }
 
   struct ExternalTokenEntitlement {
-    string tag;
     ExternalToken[] tokens;
   }
   /// *********************************
@@ -127,6 +126,7 @@ library DataTypes {
     string spaceNetworkId;
     string channelName;
     string channelNetworkId;
+    uint256[] roleIds;
   }
 
   /// @notice A struct containing the parameters required for creating a space

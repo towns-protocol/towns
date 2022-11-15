@@ -36,6 +36,7 @@ describe('defaultSpaceIdHooks', () => {
             name: 'janes channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: defaultSpaceId,
+            roleIds: [],
         })
         // create a veiw for bob
         const TestDefaultRoom = () => {

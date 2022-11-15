@@ -85,6 +85,29 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "channelId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "addRoleIdToChannel",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "description",
     "outputs": [
@@ -100,43 +123,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "spaceId",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      },
-      {
         "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getEntitlementData",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
         "name": "spaceId",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
+        "type": "uint256"
       },
       {
         "internalType": "address",
@@ -170,14 +159,14 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "spaceId",
-        "type": "string"
+        "type": "uint256"
       },
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "channelId",
-        "type": "string"
+        "type": "uint256"
       },
       {
         "internalType": "address",
@@ -237,27 +226,22 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "spaceId",
-        "type": "string"
+        "type": "uint256"
       },
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "channelId",
-        "type": "string"
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
         "name": "roleId",
         "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "entitlementData",
-        "type": "bytes"
       }
     ],
-    "name": "removeEntitlement",
+    "name": "removeRoleIdFromChannel",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -265,14 +249,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "spaceId",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -285,7 +264,30 @@
         "type": "bytes"
       }
     ],
-    "name": "setEntitlement",
+    "name": "removeSpaceEntitlement",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "entitlementData",
+        "type": "bytes"
+      }
+    ],
+    "name": "setSpaceEntitlement",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

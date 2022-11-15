@@ -41,6 +41,7 @@ describe('inviteToSpace', () => {
             name: 'janes_channel',
             visibility: RoomVisibility.Private,
             parentSpaceId: janesSpaceId_2,
+            roleIds: [],
         })
         console.log('janes rooms', {
             janesSpaceId_1,

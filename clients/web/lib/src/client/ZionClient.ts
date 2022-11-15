@@ -416,7 +416,6 @@ export class ZionClient {
      *************************************************/
     public async createWeb3Channel(
         createChannelInfo: CreateChannelInfo,
-        roles: DataTypes.CreateRoleEntitlementDataStruct[],
     ): Promise<RoomIdentifier | undefined> {
         let roomIdentifier: RoomIdentifier | undefined = await this.createChannel(createChannelInfo)
 
@@ -427,11 +426,12 @@ export class ZionClient {
                 spaceNetworkId: createChannelInfo.parentSpaceId.matrixRoomId,
                 channelName: createChannelInfo.name,
                 channelNetworkId: roomIdentifier.matrixRoomId,
+                roleIds: createChannelInfo.roleIds,
             }
             let transaction: ContractTransaction | undefined = undefined
             let receipt: ContractReceipt | undefined = undefined
             try {
-                transaction = await this.spaceManager.signed.createChannel(channelInfo, roles)
+                transaction = await this.spaceManager.createChannel(channelInfo)
                 receipt = await transaction.wait()
             } catch (err: unknown) {
                 const decodedErr = this.getDecodedError(err)

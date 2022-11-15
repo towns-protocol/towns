@@ -36,6 +36,7 @@ describe('sendReactionHooks', () => {
             name: 'janes channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: janesSpaceId,
+            roleIds: [],
         })
         // create a veiw for bob
         const TestRoomMessages = () => {

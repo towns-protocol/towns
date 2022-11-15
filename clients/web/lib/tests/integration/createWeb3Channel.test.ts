@@ -32,6 +32,7 @@ describe('On-chain channel tests', () => {
                 name: 'test_channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
+                roleIds: [],
             })
         }
 

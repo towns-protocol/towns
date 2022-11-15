@@ -41,6 +41,7 @@ describe('userProfileHooks', () => {
             name: 'alices channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: alicesSpaceId,
+            roleIds: [],
         })
         // create a veiw for bob
         const TestUserProfile = () => {

@@ -22,12 +22,14 @@ describe('unreadMessageCount', () => {
             name: 'channel 1',
             parentSpaceId: spaceId,
             visibility: RoomVisibility.Private,
+            roleIds: [],
         })
         // and another channel
         const channel_2 = await bob.createChannel({
             name: 'channel 2',
             parentSpaceId: spaceId,
             visibility: RoomVisibility.Private,
+            roleIds: [],
         })
         // log
         console.log('!!!sync room ids', {

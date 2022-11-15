@@ -31,6 +31,7 @@ describe('messageScrollbackHooks', () => {
             name: 'bobs channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
         //
         await alice.joinRoom(spaceId)

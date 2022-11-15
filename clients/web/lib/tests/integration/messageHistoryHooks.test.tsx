@@ -34,6 +34,7 @@ describe('messageHistoryHooks', () => {
             name: 'bobs channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
         //
         // send 25 messages (20 is our default initialSyncLimit)

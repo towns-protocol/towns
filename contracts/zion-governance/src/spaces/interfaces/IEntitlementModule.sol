@@ -20,31 +20,42 @@ interface IEntitlementModule {
   /// @param permission The type of permission to check
   /// @return bool representing if the user has access or not
   function isEntitled(
-    string calldata spaceId,
-    string calldata channelId,
+    uint256 spaceId,
+    uint256 channelId,
     address userAddress,
     DataTypes.Permission memory permission
   ) external view returns (bool);
 
-  /// @notice Sets the entitlements for a space
-  function setEntitlement(
-    string calldata spaceId,
-    string calldata channelId,
+  /// @notice Sets a new entitlement for a space
+  function setSpaceEntitlement(
+    uint256 spaceId,
     uint256 roleId,
     bytes calldata entitlementData
   ) external;
 
-  /// @notice Removes the entitlements for a space
-  function removeEntitlement(
-    string calldata spaceId,
-    string calldata channelId,
+  /// @notice Adds a roleId to a channel
+  function addRoleIdToChannel(
+    uint256 spaceId,
+    uint256 channelId,
+    uint256 roleId
+  ) external;
+
+  /// @notice Removes an entitlement from a space
+  function removeSpaceEntitlement(
+    uint256 spaceId,
     uint256 roleId,
     bytes calldata entitlementData
   ) external;
 
-  function getUserRoles(
-    string calldata spaceId,
-    string calldata channelId,
-    address user
-  ) external view returns (DataTypes.Role[] memory);
+  /// @notice Removes  a roleId from a channel
+  function removeRoleIdFromChannel(
+    uint256 spaceId,
+    uint256 channelId,
+    uint256 roleId
+  ) external;
+
+  function getUserRoles(uint256 spaceId, address user)
+    external
+    view
+    returns (DataTypes.Role[] memory);
 }

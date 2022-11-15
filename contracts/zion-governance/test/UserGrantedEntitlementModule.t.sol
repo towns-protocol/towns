@@ -29,30 +29,38 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
 
     createSimpleSpace(spaceName, spaceNetworkId, spaceManager);
 
+    uint256[] memory emptyRoleIds = new uint256[](0);
+
     spaceManager.createChannel(
       DataTypes.CreateChannelData(
         spaceNetworkId,
         channelName,
-        channelNetworkId
-      ),
-      new DataTypes.CreateRoleEntitlementData[](0)
+        channelNetworkId,
+        emptyRoleIds
+      )
     );
 
     address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
       spaceNetworkId
     );
 
-    assertEq(address(entitlements[0]), address(userGrantedEntitlementModule));
+    assertEq(
+      address(entitlements[0]),
+      address(userGrantedEntitlementModule),
+      "0th entitlement module should be usergranted address"
+    );
 
     DataTypes.Permission memory permission = permissionsRegistry
       .getPermissionByPermissionType(PermissionTypes.Write);
 
     assertTrue(
-      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission),
+      "user should be entitled to write"
     );
 
     assertFalse(
-      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission),
+      "address0 user should not be entitled to write"
     );
 
     uint256 roleId = spaceManager.createRole(spaceNetworkId, "test-role");
@@ -61,10 +69,18 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
 
     spaceManager.addRoleToEntitlementModule(
       spaceNetworkId,
-      channelNetworkId,
       address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(0))
+    );
+
+    uint256[] memory roleIds = new uint256[](1);
+    roleIds[0] = roleId;
+    spaceManager.addRoleIdsToChannel(spaceNetworkId, channelNetworkId, roleIds);
+
+    assertTrue(
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission),
+      "address0 user should be entitled to write to space"
     );
 
     assertTrue(
@@ -73,12 +89,12 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
         channelNetworkId,
         address(0),
         permission
-      )
+      ),
+      "address0 user should now be entitled to write to channel"
     );
 
     spaceManager.removeEntitlement(
       spaceNetworkId,
-      channelNetworkId,
       address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(0))
@@ -129,7 +145,6 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
 
     spaceManager.addRoleToEntitlementModule(
       spaceNetworkId,
-      "",
       address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(0))
@@ -141,7 +156,6 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
 
     spaceManager.removeEntitlement(
       spaceNetworkId,
-      "",
       address(userGrantedEntitlementModule),
       roleId,
       abi.encode(address(0))

@@ -1478,19 +1478,19 @@
         1586
       ],
       "ERC721": [
-        52267
+        52185
       ],
       "ERC721TokenReceiver": [
-        52287
+        52205
       ],
       "MerkleProof": [
-        47360
+        47278
       ],
       "Ownable": [
-        39983
+        39901
       ],
       "Strings": [
-        46283
+        46201
       ]
     },
     "nodeType": "SourceUnit",
@@ -1500,6 +1500,7 @@
         "id": 1254,
         "nodeType": "PragmaDirective",
         "src": "38:23:5",
+        "nodes": [],
         "literals": [
           "solidity",
           "^",
@@ -1511,11 +1512,12 @@
         "id": 1255,
         "nodeType": "ImportDirective",
         "src": "63:35:5",
+        "nodes": [],
         "absolutePath": "lib/solmate/src/tokens/ERC721.sol",
         "file": "solmate/tokens/ERC721.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1587,
-        "sourceUnit": 52288,
+        "sourceUnit": 52206,
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -1523,11 +1525,12 @@
         "id": 1257,
         "nodeType": "ImportDirective",
         "src": "99:76:5",
+        "nodes": [],
         "absolutePath": "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1587,
-        "sourceUnit": 39984,
+        "sourceUnit": 39902,
         "symbolAliases": [
           {
             "foreign": {
@@ -1535,7 +1538,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 39983,
+              "referencedDeclaration": 39901,
               "src": "107:7:5",
               "typeDescriptions": {}
             },
@@ -1548,11 +1551,12 @@
         "id": 1259,
         "nodeType": "ImportDirective",
         "src": "176:75:5",
+        "nodes": [],
         "absolutePath": "lib/openzeppelin-contracts/contracts/utils/Strings.sol",
         "file": "openzeppelin-contracts/contracts/utils/Strings.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1587,
-        "sourceUnit": 46284,
+        "sourceUnit": 46202,
         "symbolAliases": [
           {
             "foreign": {
@@ -1560,7 +1564,7 @@
               "name": "Strings",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 46283,
+              "referencedDeclaration": 46201,
               "src": "184:7:5",
               "typeDescriptions": {}
             },
@@ -1573,6 +1577,7 @@
         "id": 1261,
         "nodeType": "ImportDirective",
         "src": "252:60:5",
+        "nodes": [],
         "absolutePath": "contracts/zion-governance/src/council/libraries/CouncilErrors.sol",
         "file": "./libraries/CouncilErrors.sol",
         "nameLocation": "-1:-1:-1",
@@ -1598,6 +1603,7 @@
         "id": 1263,
         "nodeType": "ImportDirective",
         "src": "313:60:5",
+        "nodes": [],
         "absolutePath": "contracts/zion-governance/src/council/libraries/CouncilEvents.sol",
         "file": "./libraries/CouncilEvents.sol",
         "nameLocation": "-1:-1:-1",
@@ -1623,11 +1629,12 @@
         "id": 1265,
         "nodeType": "ImportDirective",
         "src": "374:96:5",
+        "nodes": [],
         "absolutePath": "lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol",
         "file": "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1587,
-        "sourceUnit": 47361,
+        "sourceUnit": 47279,
         "symbolAliases": [
           {
             "foreign": {
@@ -1635,7 +1642,7 @@
               "name": "MerkleProof",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 47360,
+              "referencedDeclaration": 47278,
               "src": "382:11:5",
               "typeDescriptions": {}
             },
@@ -1653,6 +1660,7 @@
             "id": 1273,
             "nodeType": "UsingForDirective",
             "src": "632:26:5",
+            "nodes": [],
             "global": false,
             "libraryName": {
               "id": 1271,
@@ -1661,7 +1669,7 @@
                 "638:7:5"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 46283,
+              "referencedDeclaration": 46201,
               "src": "638:7:5"
             },
             "typeName": {
@@ -1679,6 +1687,7 @@
             "id": 1277,
             "nodeType": "VariableDeclaration",
             "src": "711:43:5",
+            "nodes": [],
             "constant": true,
             "documentation": {
               "id": 1274,
@@ -1729,6 +1738,7 @@
             "id": 1281,
             "nodeType": "VariableDeclaration",
             "src": "810:47:5",
+            "nodes": [],
             "constant": true,
             "documentation": {
               "id": 1278,
@@ -1780,6 +1790,7 @@
             "id": 1284,
             "nodeType": "VariableDeclaration",
             "src": "930:21:5",
+            "nodes": [],
             "constant": false,
             "documentation": {
               "id": 1282,
@@ -1814,6 +1825,7 @@
             "id": 1287,
             "nodeType": "VariableDeclaration",
             "src": "1009:29:5",
+            "nodes": [],
             "constant": false,
             "documentation": {
               "id": 1285,
@@ -1848,6 +1860,7 @@
             "id": 1292,
             "nodeType": "VariableDeclaration",
             "src": "1114:45:5",
+            "nodes": [],
             "constant": false,
             "documentation": {
               "id": 1288,
@@ -1901,6 +1914,7 @@
             "id": 1294,
             "nodeType": "VariableDeclaration",
             "src": "1227:25:5",
+            "nodes": [],
             "constant": false,
             "functionSelector": "41fbddbd",
             "mutability": "mutable",
@@ -1929,6 +1943,7 @@
             "id": 1296,
             "nodeType": "VariableDeclaration",
             "src": "1256:24:5",
+            "nodes": [],
             "constant": false,
             "functionSelector": "aebb096c",
             "mutability": "mutable",
@@ -1957,6 +1972,7 @@
             "id": 1298,
             "nodeType": "VariableDeclaration",
             "src": "1284:22:5",
+            "nodes": [],
             "constant": false,
             "functionSelector": "26092b83",
             "mutability": "mutable",
@@ -1985,6 +2001,7 @@
             "id": 1301,
             "nodeType": "VariableDeclaration",
             "src": "1371:31:5",
+            "nodes": [],
             "constant": false,
             "documentation": {
               "id": 1299,
@@ -2018,10 +2035,12 @@
             "id": 1329,
             "nodeType": "FunctionDefinition",
             "src": "1407:211:5",
+            "nodes": [],
             "body": {
               "id": 1328,
               "nodeType": "Block",
               "src": "1545:73:5",
+              "nodes": [],
               "statements": [
                 {
                   "expression": {
@@ -2197,7 +2216,7 @@
                     "1522:6:5"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 52267,
+                  "referencedDeclaration": 52185,
                   "src": "1522:6:5"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2336,10 +2355,12 @@
             "id": 1388,
             "nodeType": "FunctionDefinition",
             "src": "2026:586:5",
+            "nodes": [],
             "body": {
               "id": 1387,
               "nodeType": "Block",
               "src": "2160:452:5",
+              "nodes": [],
               "statements": [
                 {
                   "condition": {
@@ -2820,10 +2841,10 @@
                             "name": "MerkleProof",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 47360,
+                            "referencedDeclaration": 47278,
                             "src": "2486:11:5",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_type$_t_contract$_MerkleProof_$47360_$",
+                              "typeIdentifier": "t_type$_t_contract$_MerkleProof_$47278_$",
                               "typeString": "type(library MerkleProof)"
                             }
                           },
@@ -2835,7 +2856,7 @@
                           "memberLocation": "2498:6:5",
                           "memberName": "verify",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 46882,
+                          "referencedDeclaration": 46800,
                           "src": "2486:18:5",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_pure$_t_array$_t_bytes32_$dyn_memory_ptr_$_t_bytes32_$_t_bytes32_$returns$_t_bool_$",
@@ -3130,10 +3151,12 @@
             "id": 1417,
             "nodeType": "FunctionDefinition",
             "src": "2816:244:5",
+            "nodes": [],
             "body": {
               "id": 1416,
               "nodeType": "Block",
               "src": "2882:178:5",
+              "nodes": [],
               "statements": [
                 {
                   "expression": {
@@ -3529,10 +3552,12 @@
             "id": 1469,
             "nodeType": "FunctionDefinition",
             "src": "3238:391:5",
+            "nodes": [],
             "body": {
               "id": 1468,
               "nodeType": "Block",
               "src": "3299:330:5",
+              "nodes": [],
               "statements": [
                 {
                   "condition": {
@@ -3926,10 +3951,10 @@
                       "name": "_safeMint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        52224,
-                        52266
+                        52142,
+                        52184
                       ],
-                      "referencedDeclaration": 52224,
+                      "referencedDeclaration": 52142,
                       "src": "3528:9:5",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$",
@@ -4135,10 +4160,12 @@
             "id": 1512,
             "nodeType": "FunctionDefinition",
             "src": "3800:319:5",
+            "nodes": [],
             "body": {
               "id": 1511,
               "nodeType": "Block",
               "src": "3896:223:5",
+              "nodes": [],
               "statements": [
                 {
                   "condition": {
@@ -4177,7 +4204,7 @@
                         "name": "ownerOf",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 51792,
+                        "referencedDeclaration": 51710,
                         "src": "3906:7:5",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_internal_view$_t_uint256_$returns$_t_address_$",
@@ -4605,7 +4632,7 @@
               ]
             },
             "baseFunctions": [
-              51761
+              51679
             ],
             "documentation": {
               "id": 1470,
@@ -4702,10 +4729,12 @@
             "id": 1547,
             "nodeType": "FunctionDefinition",
             "src": "4245:310:5",
+            "nodes": [],
             "body": {
               "id": 1546,
               "nodeType": "Block",
               "src": "4313:242:5",
+              "nodes": [],
               "statements": [
                 {
                   "assignments": [
@@ -5072,7 +5101,7 @@
                     "4303:9:5"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 39902,
+                  "referencedDeclaration": 39820,
                   "src": "4303:9:5"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5131,10 +5160,12 @@
             "id": 1566,
             "nodeType": "FunctionDefinition",
             "src": "4608:127:5",
+            "nodes": [],
             "body": {
               "id": 1565,
               "nodeType": "Block",
               "src": "4654:81:5",
+              "nodes": [],
               "statements": [
                 {
                   "expression": {
@@ -5299,7 +5330,7 @@
                     "4644:9:5"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 39902,
+                  "referencedDeclaration": 39820,
                   "src": "4644:9:5"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5329,10 +5360,12 @@
             "id": 1585,
             "nodeType": "FunctionDefinition",
             "src": "4786:125:5",
+            "nodes": [],
             "body": {
               "id": 1584,
               "nodeType": "Block",
               "src": "4830:81:5",
+              "nodes": [],
               "statements": [
                 {
                   "expression": {
@@ -5497,7 +5530,7 @@
                     "4820:9:5"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 39902,
+                  "referencedDeclaration": 39820,
                   "src": "4820:9:5"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5534,7 +5567,7 @@
                 "612:6:5"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 52267,
+              "referencedDeclaration": 52185,
               "src": "612:6:5"
             },
             "id": 1268,
@@ -5549,7 +5582,7 @@
                 "620:7:5"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 39983,
+              "referencedDeclaration": 39901,
               "src": "620:7:5"
             },
             "id": 1270,
@@ -5569,9 +5602,9 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
           1586,
-          39983,
-          45983,
-          52267
+          39901,
+          45901,
+          52185
         ],
         "name": "CouncilNFT",
         "nameLocation": "598:10:5",

@@ -131,6 +131,7 @@ export interface CreateChannelInfo {
     visibility: RoomVisibility
     parentSpaceId: RoomIdentifier
     historyVisibility?: HistoryVisibility
+    roleIds: number[]
 }
 
 /// use to send different types of messages, e.g. text, emoji, image, etc.

@@ -28,6 +28,7 @@ describe('isEncrypted', () => {
             name: "bob's channel",
             visibility: RoomVisibility.Private,
             parentSpaceId: spaceId,
+            roleIds: [],
         })
         // is it encrypted?
         expect(bob.isRoomEncrypted(channelId)).toBe(true)

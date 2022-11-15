@@ -39,6 +39,7 @@ describe('unreadMessageCountHooks', () => {
             name: 'janes channel',
             visibility: RoomVisibility.Private,
             parentSpaceId: janesSpaceId,
+            roleIds: [],
         })
         // send 20 messages to the space after we make the channel
         // dendrite doesn't natively send space child events with state
@@ -199,6 +200,7 @@ describe('unreadMessageCountHooks', () => {
             name: 'janes channel',
             visibility: RoomVisibility.Private,
             parentSpaceId: janesSpaceId,
+            roleIds: [],
         })
         // give bob a chance to see the new space.child message
         // when we get an invite it doesn't come with any space info
