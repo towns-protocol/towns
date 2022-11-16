@@ -9,14 +9,8 @@ import polyfillNode from 'rollup-plugin-polyfill-node'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-    resolve: {
-        alias: {
-            buffer: 'rollup-plugin-node-polyfills/polyfills/buffer-es6', // add buffer
-            process: 'rollup-plugin-node-polyfills/polyfills/process-es6', // add process
-        },
-    },
     plugins: [
-        polyfillNode({ sourceMap: true, buffer: true } as any),
+        polyfillNode(),
         react(),
         tsconfigPaths(),
         checker({ typescript: true }),
