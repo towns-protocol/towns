@@ -143,9 +143,7 @@ export const MessageTimeline = (props: Props) => {
                         <Divider space="none" />
                     </Box>
                 ) : r.type === 'fullyRead' ? (
-                    <Stack position="relative" style={{ boxShadow: '0 0 1px #f000' }} height="x4">
-                        <NewDivider fullyReadMarker={r.item.event} />
-                    </Stack>
+                    <NewDivider fullyReadMarker={r.item.event} />
                 ) : (
                     <MessageTimelineItem itemData={r.item} />
                 )
