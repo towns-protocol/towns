@@ -1,12 +1,10 @@
 import { firstBy } from 'thenby'
 import { Channel, ThreadResult } from '../types/matrix-types'
-import { useMatrixStore } from '../store/use-matrix-store'
 import { useSpaceData } from './use-space-data'
 import { useTimelineStore } from '../store/use-timeline-store'
 import { ThreadStats } from '../types/timeline-types'
 
 export function useSpaceThreadRoots(): ThreadResult[] {
-    const { userId } = useMatrixStore()
     const data = useSpaceData()
     const channelGroups = data?.channelGroups ?? []
 
@@ -17,10 +15,6 @@ export function useSpaceThreadRoots(): ThreadResult[] {
 
     const threadsStats = useTimelineStore((state) => state.threadsStats)
 
-    if (userId === null) {
-        return []
-    }
-
     const threads = [] as ThreadResult[]
 
     channels.forEach((channel) => {
@@ -28,10 +22,7 @@ export function useSpaceThreadRoots(): ThreadResult[] {
             threadsStats[channel.id.matrixRoomId] || {}
 
         const channelThreads = Object.values(channelThreadStats)
-            .filter(
-                (thread) =>
-                    thread.userIds.has(userId) || thread.parentMessageContent?.sender.id === userId,
-            )
+            .filter((thread) => thread.isParticipating)
             .map((thread) => ({
                 type: 'thread' as const,
                 unread: false,

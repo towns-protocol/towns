@@ -171,6 +171,7 @@ export interface ThreadStats {
     parentId: string
     parentEvent?: TimelineEvent
     parentMessageContent?: RoomMessageEvent
+    isParticipating: boolean
 }
 
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }

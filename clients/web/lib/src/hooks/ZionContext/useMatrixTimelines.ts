@@ -38,7 +38,10 @@ export function useMatrixTimelines(client?: MatrixClient) {
         if (!client) {
             return
         }
-
+        const userId = client.getUserId()
+        if (!userId) {
+            throw new Error('userId is expected to be defined and constant')
+        }
         // timeline helpers
         const removeEvent = (roomId: string, eventId: string) => {
             setState((state) => {
@@ -64,6 +67,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     timelineEvent,
                     state.threadsStats,
                     state.timelines[roomId],
+                    userId,
                 ),
                 threads: appendThreadEvent(roomId, timelineEvent, state.threads),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
@@ -77,6 +81,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     timelineEvent,
                     state.threadsStats,
                     state.timelines[roomId],
+                    userId,
                 ),
                 threads: prependThreadEvent(roomId, timelineEvent, state.threads),
                 reactions: addReactions(roomId, timelineEvent, state.reactions),
@@ -119,6 +124,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                         newEvent,
                         removeThreadStat(roomId, oldEvent, state.threadsStats),
                         state.timelines[roomId],
+                        userId,
                     ),
                     threads:
                         threadParentId && threadTimeline && threadEventIndex >= 0
@@ -145,7 +151,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
         }
         const initRoomTimeline = (room: MatrixRoom) => {
             const timelineEvents = toTimelineEvents(room)
-            const aggregated = toStatsAndReactions(timelineEvents)
+            const aggregated = toStatsAndReactions(timelineEvents, userId)
             setState((state) => ({
                 timelines: { ...state.timelines, [room.roomId]: timelineEvents },
                 threadsStats: {
@@ -173,7 +179,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             const { threadsStats, threads, reactions } = Object.entries(timelines).reduce(
                 (acc, kv) => {
                     const channelId = kv[0]
-                    const aggregated = toStatsAndReactions(kv[1])
+                    const aggregated = toStatsAndReactions(kv[1], userId)
                     acc.threadsStats[channelId] = aggregated.threadStats
                     acc.threads[channelId] = aggregated.threads
                     acc.reactions[channelId] = aggregated.reactions
@@ -596,7 +602,7 @@ function toTimelineEvents(room: MatrixRoom) {
     ).map(toEvent)
 }
 
-function toStatsAndReactions(timeline: TimelineEvent[]) {
+function toStatsAndReactions(timeline: TimelineEvent[], userId: string) {
     return timeline.reduce<{
         threadStats: Record<string, ThreadStats>
         threads: Record<string, TimelineEvent[]>
@@ -609,6 +615,7 @@ function toStatsAndReactions(timeline: TimelineEvent[]) {
                     m.threadParentId,
                     acc.threadStats[m.threadParentId],
                     timeline,
+                    userId,
                 )
                 const thread = acc.threads[m.threadParentId] ?? []
                 thread.push(m)
@@ -635,6 +642,7 @@ function addThreadStats(
     timelineEvent: TimelineEvent,
     threadsStats: ThreadStatsMap,
     timeline: TimelineEvent[] | undefined,
+    userId: string,
 ): ThreadStatsMap {
     const parentId = timelineEvent.threadParentId
     // if we have a parent...
@@ -648,6 +656,7 @@ function addThreadStats(
                     parentId,
                     threadsStats[roomId]?.[parentId],
                     timeline,
+                    userId,
                 ),
             },
         }
@@ -671,7 +680,11 @@ function addThreadStats(
     return threadsStats
 }
 
-function makeNewThreadStats(event: TimelineEvent, parentId: string, timeline?: TimelineEvent[]) {
+function makeNewThreadStats(
+    event: TimelineEvent,
+    parentId: string,
+    timeline?: TimelineEvent[],
+): ThreadStats {
     const parent = timeline?.find((t) => t.eventId === parentId) // one time lookup of the parent message for the first reply
     return {
         replyCount: 0,
@@ -680,6 +693,7 @@ function makeNewThreadStats(event: TimelineEvent, parentId: string, timeline?: T
         parentId,
         parentEvent: parent,
         parentMessageContent: getRoomMessageContent(parent),
+        isParticipating: false,
     }
 }
 
@@ -688,14 +702,19 @@ function addThreadStat(
     parentId: string,
     entry: ThreadStats | undefined,
     timeline: TimelineEvent[] | undefined,
+    userId: string,
 ): ThreadStats {
-    const updated = entry ?? makeNewThreadStats(event, parentId, timeline)
+    const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline)
     updated.replyCount++
     updated.latestTs = Math.max(updated.latestTs, event.originServerTs)
     const senderId = getMessageSenderId(event)
     if (senderId) {
         updated.userIds.add(senderId)
     }
+    updated.isParticipating =
+        updated.isParticipating ||
+        updated.userIds.has(userId) ||
+        updated.parentMessageContent?.sender.id === userId
     return updated
 }
 
