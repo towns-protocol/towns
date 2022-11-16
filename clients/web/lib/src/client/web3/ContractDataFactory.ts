@@ -1,4 +1,6 @@
+import { ZionClient } from '../../client/ZionClient'
 import { DataTypes } from './shims/ZionSpaceManagerShim'
+import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -19,4 +21,14 @@ export function createTokenEntitlementData(arg: {
     }
 
     return externalTokenEntitlement
+}
+
+export async function getRolesFromSpace(
+    client: ZionClient,
+    matrixSpaceId: string,
+): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
+    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(matrixSpaceId)
+    // get all the roles in the space
+    const allSpaceRoles = await client.roleManager.unsigned.getRolesBySpaceId(spaceId)
+    return allSpaceRoles
 }

@@ -10,6 +10,10 @@ import Localhost_ZionRoleManagerArtifact from '@harmony/contracts/localhost/abis
 import { ZionRoleManager as Localhost_ZionRoleManager } from '@harmony/contracts/localhost/typings/ZionRoleManager'
 import { ethers } from 'ethers'
 
+import { DataTypes as Localhost_DataTypes } from '@harmony/contracts/localhost/typings/ZionRoleManager'
+
+export type { Localhost_DataTypes as RoleManagerDataTypes }
+
 export class ZionRoleManagerShim extends BaseContractShim<
     Localhost_ZionRoleManager,
     Goerli_ZionRoleManager

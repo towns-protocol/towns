@@ -12,7 +12,10 @@ import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers, Wallet } from 'ethers'
 import { getContractInfo } from 'use-zion-client/src/client/web3/ZionContracts'
 import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
-import { createTokenEntitlementData } from '../../../src/client/web3/ContractDataFactory'
+import {
+    createTokenEntitlementData,
+    getRolesFromSpace,
+} from '../../../src/client/web3/ContractDataFactory'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -124,6 +127,17 @@ export async function createTestChannelWithEntitlement(
     client: ZionTestClient,
     createChannelInfo: CreateChannelInfo,
 ): Promise<RoomIdentifier | undefined> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (createChannelInfo.roleIds.length === 0) {
+        // For testing purposes, we want to make sure that the channel has at
+        // least one role. In the app, the user will be choosing the role(s) from UI.
+        // Get the roles from the space.
+        const allowedRoles = await getRolesFromSpace(
+            client,
+            createChannelInfo.parentSpaceId.matrixRoomId,
+        )
+        for (const r of allowedRoles) {
+            createChannelInfo.roleIds.push(r.roleId.toNumber())
+        }
+    }
     return await client.createWeb3Channel(createChannelInfo)
 }

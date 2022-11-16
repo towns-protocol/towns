@@ -88,7 +88,7 @@ export class ZionSpaceManagerShim extends BaseContractShim<
                 externalTokenEntitlements: externalTokenEntitlements,
                 users: entitlementData.users,
             }
-            return this.signed.createSpace(info, goerliEntitlementData, everyonePermissions)
+            return this.goerli_signed.createSpace(info, goerliEntitlementData, everyonePermissions)
         } else {
             return this.localhost_signed.createSpace(info, entitlementData, everyonePermissions)
         }
