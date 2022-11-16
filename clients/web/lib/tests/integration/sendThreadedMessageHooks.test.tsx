@@ -6,7 +6,7 @@ import React, { useCallback } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { RoomVisibility, ThreadResult } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/matrix-types'
 import { act } from 'react-dom/test-utils'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -14,10 +14,17 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { RegisterAndJoin } from './helpers/TestComponents'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useChannelThreadStats } from '../../src/hooks/use-channel-thread-stats'
+import { useSpaceNotificationCounts } from '../../src/hooks/use-space-notification-counts'
 import { useSpaceThreadRoots } from '../../src/hooks/use-space-thread-roots'
 import { useTimelineThread } from '../../src/hooks/use-timeline-thread'
 import { useZionClient } from '../../src/hooks/use-zion-client'
-import { ThreadStats, TimelineEvent } from '../../src/types/timeline-types'
+import {
+    ThreadStats,
+    TimelineEvent,
+    ThreadResult,
+    FullyReadMarker,
+} from '../../src/types/timeline-types'
+import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -66,13 +73,20 @@ describe('sendThreadedMessageHooks', () => {
         // render bob's app
         act(() => {
             const TestChannelComponent = () => {
-                const { sendMessage, editMessage } = useZionClient()
+                const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
                 const threadRoots = useSpaceThreadRoots()
                 const channelTimeline = useChannelTimeline()
                 const channelThreadStats = useChannelThreadStats()
+                const spaceNotifications = useSpaceNotificationCounts(spaceId)
+                const channel_1_fullyRead = useFullyReadMarker(channel_1)
+                const channel_2_fullyRead = useFullyReadMarker(channel_2)
 
                 const channel_2_threadRoot = Object.values(threadRoots).at(0)
                 const channel_2_thread = useTimelineThread(
+                    channel_2,
+                    channel_2_threadRoot?.thread.parentId,
+                )
+                const channel_2_thread_fullyRead = useFullyReadMarker(
                     channel_2,
                     channel_2_threadRoot?.thread.parentId,
                 )
@@ -93,14 +107,28 @@ describe('sendThreadedMessageHooks', () => {
                     })
                 }, [editMessage, channel_2_threadRoot])
 
+                const markAllAsRead = useCallback(() => {
+                    void sendReadReceipt(channel_1_fullyRead!)
+                    void sendReadReceipt(channel_2_fullyRead!)
+                    void sendReadReceipt(channel_2_thread_fullyRead!)
+                }, [
+                    channel_1_fullyRead,
+                    channel_2_fullyRead,
+                    channel_2_thread_fullyRead,
+                    sendReadReceipt,
+                ])
+
                 const formatThreadParent = (t: ThreadStats) => {
-                    return `replyCount: (${t.replyCount}) parentId: (${t.parentId} message: (${
+                    return `replyCount: (${t.replyCount}) parentId: (${t.parentId}) message: (${
                         t.parentMessageContent?.body ?? ''
                     })`
                 }
 
                 const formatThreadRoot = (t: ThreadResult) => {
-                    return `channel: (${t.channel.label}) ` + formatThreadParent(t.thread)
+                    return (
+                        `channel: (${t.channel.label}) isUnread: (${t.isUnread.toString()}) ` +
+                        formatThreadParent(t.thread)
+                    )
                 }
 
                 const formatMessage = useCallback(
@@ -115,11 +143,32 @@ describe('sendThreadedMessageHooks', () => {
                     return `${k} (replyCount:${v.replyCount} userIds:${[...v.userIds].join(',')})`
                 }
 
+                const formatFullyReadMarker = (m?: FullyReadMarker) => {
+                    return m === undefined
+                        ? 'undefined'
+                        : `isUnread:${m.isUnread.toString()} eventId:${m.eventId}`
+                }
+
                 return (
                     <>
                         <RegisterAndJoin roomIds={[spaceId, channel_1, channel_2]} />
                         <button onClick={sendInitialMessages}>sendInitialMessages</button>
                         <button onClick={editChannel2Message1}>editChannel2Message1</button>
+                        <button onClick={markAllAsRead}>markAllAsRead</button>
+                        <div data-testid="spaceNotifications">
+                            {`isUnread:${spaceNotifications.isUnread.toString()} mentions:${
+                                spaceNotifications.mentions
+                            }`}
+                        </div>
+                        <div data-testid="channel_1_fullyRead">
+                            {formatFullyReadMarker(channel_1_fullyRead)}
+                        </div>
+                        <div data-testid="channel_2_fullyRead">
+                            {formatFullyReadMarker(channel_2_fullyRead)}
+                        </div>
+                        <div data-testid="channel_2_thread_fullyRead">
+                            {formatFullyReadMarker(channel_2_thread_fullyRead)}
+                        </div>
                         <div data-testid="threadRoots">
                             {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
                         </div>
@@ -129,9 +178,8 @@ describe('sendThreadedMessageHooks', () => {
                                 : 'undefined'}
                         </div>
                         <div data-testid="channel2ThreadMessages">
-                            {(channel_2_thread?.messages ?? [])
-                                .map((e) => formatMessage(e))
-                                .join('\n')}
+                            {channel_2_thread?.messages?.map((e) => formatMessage(e)).join('\n') ??
+                                ''}
                         </div>
                         <div data-testid="channelMessages">
                             {channelTimeline.map((event) => formatMessage(event)).join('\n')}
@@ -159,6 +207,10 @@ describe('sendThreadedMessageHooks', () => {
         const channelMessages = screen.getByTestId('channelMessages')
         const channel2ThreadParent = screen.getByTestId('channel2ThreadParent')
         const channel2ThreadMessages = screen.getByTestId('channel2ThreadMessages')
+        const spaceNotifications = screen.getByTestId('spaceNotifications')
+        const channel_1_fullyRead = screen.getByTestId('channel_1_fullyRead')
+        const channel_2_fullyRead = screen.getByTestId('channel_2_fullyRead')
+        const channel_2_thread_fullyRead = screen.getByTestId('channel_2_thread_fullyRead')
         const threadRoots = screen.getByTestId('threadRoots')
         const sendInitialMessages = screen.getByRole('button', {
             name: 'sendInitialMessages',
@@ -166,6 +218,7 @@ describe('sendThreadedMessageHooks', () => {
         const editChannel2Message1 = screen.getByRole('button', {
             name: 'editChannel2Message1',
         })
+        const markAllAsRead = screen.getByRole('button', { name: 'markAllAsRead' })
 
         // - bob joins the space and both channels
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
@@ -199,6 +252,16 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() =>
             expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:1)'),
         )
+        // - jane messages again
+        await act(async () => {
+            await jane.sendMessage(channel_1, 'hello again in channel_1', {
+                threadId: channel_1_message_0.getId(),
+            })
+        })
+        // - bob sees thread stats on chanel_1.message_1
+        await waitFor(() =>
+            expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:2)'),
+        )
         // - jane replies to bobs's message in channel_2 creating channel_2.thread
         await waitFor(() =>
             expect(
@@ -223,7 +286,7 @@ describe('sendThreadedMessageHooks', () => {
         // -- bob should see the channel_2.thread in his thread list
         await waitFor(() =>
             expect(threadRoots).toHaveTextContent(
-                `channel: (channel_2) replyCount: (1) parentId: (${channel_2_message_1.getId()}`,
+                `channel: (channel_2) isUnread: (true) replyCount: (1) parentId: (${channel_2_message_1.getId()})`,
             ),
         )
         // -- bob should not see the channel_1.thread in his thread list
@@ -246,6 +309,15 @@ describe('sendThreadedMessageHooks', () => {
         )
         // todo...
         // -- bob should see unread markers in channels and threads
+        await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(spaceNotifications).toHaveTextContent('isUnread:true'))
         // - bob marks the thread markers as read one by one
+        fireEvent.click(markAllAsRead)
+        await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(spaceNotifications).toHaveTextContent('isUnread:false'))
     })
 })

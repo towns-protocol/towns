@@ -4,8 +4,8 @@ import {
     RoomIdentifier,
     TimelineEvent,
     ZTEvent,
+    useFullyReadMarker,
     useZionClient,
-    useZionContext,
 } from 'use-zion-client'
 import React, { useCallback, useState } from 'react'
 
@@ -22,12 +22,9 @@ interface Props {
 export function ChatMessages(props: Props): JSX.Element {
     const { timeline, membership, roomId, sendMessage, joinRoom } = props
     const { sendReadReceipt, scrollback } = useZionClient()
-    const { unreadCounts } = useZionContext()
+    const unreadMarker = useFullyReadMarker(roomId)
     const [currentMessage, setCurrentMessage] = useState<string>('')
-    const hasUnread =
-        membership === Membership.Join &&
-        timeline.length > 0 &&
-        unreadCounts[roomId.matrixRoomId] > 0
+    const hasUnread = membership === Membership.Join && unreadMarker?.isUnread === true
     // pull if the first message is create, we've reached the end
     // Caveat, when we first sync the space in the sample app, there's a leave event
     // that's prepended to the timeline, not sure where the bug is
@@ -56,8 +53,11 @@ export function ChatMessages(props: Props): JSX.Element {
     }, [scrollback, roomId])
 
     const onClickMarkAsRead = useCallback(() => {
-        void sendReadReceipt(roomId, timeline[timeline.length - 1].eventId)
-    }, [roomId, sendReadReceipt, timeline])
+        if (!unreadMarker) {
+            throw new Error('No unread marker')
+        }
+        void sendReadReceipt(unreadMarker)
+    }, [sendReadReceipt, unreadMarker])
 
     const onJoinRoom = useCallback(() => {
         joinRoom(roomId)
@@ -102,7 +102,7 @@ export function ChatMessages(props: Props): JSX.Element {
                                 sx={buttonStyle}
                                 onClick={onClickMarkAsRead}
                             >
-                                Mark as Read ({unreadCounts[roomId.matrixRoomId]})
+                                Mark as Read
                             </Typography>
                         )}
                     </>

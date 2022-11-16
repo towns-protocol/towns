@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
+import { RoomIdentifier, useSpaceNotificationCounts } from 'use-zion-client'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { SpaceNavTooltip } from '@components/Tooltips/SpaceNavTooltip'
 import { Badge, Box, ButtonText, Icon, TooltipRenderer } from '@ui'
@@ -18,8 +18,6 @@ type Props = {
     forceMatch?: boolean
     highlight?: boolean
     pinned?: boolean
-    newMessages?: boolean
-    mentions?: number
     settings?: boolean
     onSettings?: (id: RoomIdentifier) => void
     exact?: boolean
@@ -36,12 +34,14 @@ export const SpaceNavItem = (props: Props) => {
         icon,
         name,
         pinned,
-        mentions,
         settings,
         onSettings,
         isInvite,
     } = props
 
+    const notificationCounts = useSpaceNotificationCounts(id)
+    const mentions = notificationCounts.mentions
+    const newMessages = notificationCounts.isUnread
     const sizeContext = useSizeContext()
     // TODO: use tokens
     const isSmall = sizeContext.lessThan(180)
@@ -76,7 +76,7 @@ export const SpaceNavItem = (props: Props) => {
                     )}
 
                     <ButtonText grow truncate>
-                        {isInvite ? '(Invite) ' + name : name}
+                        {isInvite ? '(Invite) ' + name : newMessages ? name + '*' : name}
                     </ButtonText>
 
                     <Box shrink display={isSmall ? 'none' : undefined} color="gray2">

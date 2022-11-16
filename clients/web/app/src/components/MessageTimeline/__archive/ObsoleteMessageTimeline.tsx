@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo } from 'react'
-import { useZionContext } from 'use-zion-client'
+import { useFullyReadMarker } from 'use-zion-client'
 import { Box, Button, Stack } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { useGroupEvents } from '../hooks/useGroupEvents'
@@ -8,8 +8,6 @@ import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineC
 import { MessageTimelineItem } from '../events/TimelineItem'
 
 export const ObsoleteMessageTimeline = () => {
-    const { unreadCounts } = useZionContext()
-
     const timelineContext = useContext(MessageTimelineContext)
     const channelId = timelineContext?.channelId
     const events = useMemo(() => {
@@ -21,17 +19,15 @@ export const ObsoleteMessageTimeline = () => {
         timelineContext?.type === MessageTimelineType.Thread,
     )
 
-    const lastEvent = useMemo(() => {
-        return events?.at(events?.length - 1)?.eventId
-    }, [events])
+    const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
 
     const onMarkAsRead = useCallback(() => {
-        if (channelId && lastEvent) {
-            timelineContext?.sendReadReceipt(channelId, lastEvent)
+        if (channelId && fullyReadMarker) {
+            timelineContext?.sendReadReceipt(fullyReadMarker)
         }
-    }, [channelId, lastEvent, timelineContext])
+    }, [channelId, fullyReadMarker, timelineContext])
 
-    const dateGroups = useGroupEvents(filteredEvents)
+    const dateGroups = useGroupEvents(filteredEvents, fullyReadMarker)
 
     if (!timelineContext || !channelId) {
         return <></>
@@ -39,9 +35,7 @@ export const ObsoleteMessageTimeline = () => {
 
     const { type } = timelineContext
 
-    const hasUnread = (unreadCounts[channelId.matrixRoomId] ?? 0) > 0
-
-    const readMore = hasUnread && (
+    const readMore = fullyReadMarker?.isUnread && (
         <Box centerContent gap="sm">
             <Button
                 animate={false}
@@ -49,7 +43,7 @@ export const ObsoleteMessageTimeline = () => {
                 size="button_sm"
                 onClick={onMarkAsRead}
             >
-                Mark as Read ({unreadCounts[channelId.matrixRoomId]})
+                Mark as Read
             </Button>
         </Box>
     )

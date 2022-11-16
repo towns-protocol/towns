@@ -5,7 +5,7 @@ import {
     JoinRule,
     RestrictedAllowType,
 } from 'matrix-js-sdk'
-import { Membership, PowerLevels } from './matrix-types'
+import { Channel, Membership, PowerLevels, RoomIdentifier } from './matrix-types'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -174,5 +174,28 @@ export interface ThreadStats {
     isParticipating: boolean
 }
 
+export interface ThreadResult {
+    type: 'thread'
+    isNew: boolean
+    isUnread: boolean
+    fullyReadMarker?: FullyReadMarker
+    thread: ThreadStats
+    channel: Channel
+    timestamp: number
+}
+
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }
 export type MessageReactions = Record<string, Record<string, { eventId: string }>>
+
+export interface FullyReadMarker {
+    channelId: RoomIdentifier
+    threadParentId?: string
+    eventId: string
+    isUnread: boolean
+    markedUnreadAtTs: number
+    markedReadAtTs: number
+    isParticipating: boolean // true for all channels, any threads started or replied to
+    // possible future extensions
+    // muted: boolean
+    // mentions: number
+}

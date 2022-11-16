@@ -9,6 +9,7 @@ export const border = {
     accent: `1px solid ${vars.color.background.etherum}`,
     strong: `2px solid ${vars.color.text.default}`,
     inverted: `1px solid ${vars.color.text.inverted}`,
+    negative: `1px solid ${vars.color.background.negative}`,
 } as const
 
 export const aspectRatio = {

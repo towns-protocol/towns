@@ -1,18 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useCallback, useEffect, useState } from 'react'
-import {
-    ISyncResponse,
-    ClientEvent,
-    NotificationCountType,
-    IJoinedRoom,
-    IRooms,
-} from 'matrix-js-sdk'
+import { useEffect, useState } from 'react'
+import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
 import { ISyncStateData, SyncState } from 'matrix-js-sdk/lib/sync'
 import { ZionClient } from '../../client/ZionClient'
 import { IUnreadNotificationCounts } from 'client/store/CustomMatrixStore'
 
+/// this all breaks when we turn on encryption, should be moved the the
+/// content aware timeline parser
 export function useNotificationCounts(client: ZionClient | undefined) {
-    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
     const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({})
 
     useEffect(() => {
@@ -21,26 +15,17 @@ export function useNotificationCounts(client: ZionClient | undefined) {
         }
         console.log('USE UNREAD COUNTS EFFECT::init')
 
-        const handleCounts = (
-            debugString: string,
-            setCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>,
-        ) => {
-            return (channelId: string, count: number) => {
-                setCounts((prev) => {
-                    if (prev[channelId] === count) {
-                        return prev
-                    }
-                    // console.log("!!updating count", debugString, channelId, count);
-                    return {
-                        ...prev,
-                        [channelId]: count,
-                    }
-                })
-            }
+        const handleMentionCounts = (channelId: string, count: number) => {
+            setMentionCounts((prev) => {
+                if (prev[channelId] === count) {
+                    return prev
+                }
+                return {
+                    ...prev,
+                    [channelId]: count,
+                }
+            })
         }
-
-        const handleUnreadCounts = handleCounts('unread', setUnreadCounts)
-        const handleMentionCounts = handleCounts('highlight', setMentionCounts)
 
         const handleSyncEvent = (
             unreadNotificationsMap?: Record<string, IUnreadNotificationCounts>,
@@ -48,11 +33,7 @@ export function useNotificationCounts(client: ZionClient | undefined) {
             if (!unreadNotificationsMap) {
                 return
             }
-            // console.log("!!!sync event", unreadNotificationsMap);
             Object.entries(unreadNotificationsMap).forEach(([roomId, unread_notifications]) => {
-                if (unread_notifications.notification_count !== undefined) {
-                    handleUnreadCounts(roomId, unread_notifications.notification_count)
-                }
                 if (unread_notifications.highlight_count !== undefined) {
                     handleMentionCounts(roomId, unread_notifications.highlight_count)
                 }
@@ -61,11 +42,7 @@ export function useNotificationCounts(client: ZionClient | undefined) {
 
         // backfill
         client.getRooms().forEach((room) => {
-            const unreadCount = room.getUnreadNotificationCount(NotificationCountType.Total)
             const highlightCount = room.getUnreadNotificationCount(NotificationCountType.Highlight)
-            if (unreadCount) {
-                handleUnreadCounts(room.roomId, unreadCount)
-            }
             if (highlightCount) {
                 handleMentionCounts(room.roomId, highlightCount)
             }
@@ -74,7 +51,7 @@ export function useNotificationCounts(client: ZionClient | undefined) {
         handleSyncEvent(client.store.getLastUnreadNotificationCounts())
 
         // listen for sync events
-        const onSync = (state: SyncState, lastState?: SyncState, data?: ISyncStateData) => {
+        const onSync = (state: SyncState, _lastState?: SyncState, _data?: ISyncStateData) => {
             // console.log("!!!sync event", state);
             // grab the last sync data from the store
             if (state === SyncState.Syncing) {
@@ -88,5 +65,5 @@ export function useNotificationCounts(client: ZionClient | undefined) {
         }
     }, [client])
 
-    return { mentionCounts, unreadCounts }
+    return { mentionCounts }
 }

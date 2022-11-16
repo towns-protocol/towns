@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react'
 import { PowerLevel, usePowerLevels, useSpaceId, useZionClient } from 'use-zion-client'
-import { Box, Heading, Paragraph, Stack, TextField } from '@ui'
+import { Box, Button, Heading, Stack, TextField } from '@ui'
 
 export const SpacesSettings = () => {
-    const { setPowerLevel } = useZionClient()
+    const { resetFullyReadMarkers, setPowerLevel } = useZionClient()
     const spaceId = useSpaceId()
     const powerLevels = usePowerLevels(spaceId)
 
@@ -19,6 +19,9 @@ export const SpacesSettings = () => {
         <Stack horizontal padding="lg" gap="md">
             <Box shrink gap>
                 <Heading>Settings</Heading>
+
+                <Button onClick={resetFullyReadMarkers}>Mark All As Read</Button>
+
                 {powerLevels.levels.map((level: PowerLevel) => (
                     <PowerLevelView
                         key={level.definition.key}
@@ -45,7 +48,7 @@ const PowerLevelView = (props: {
     )
 
     return (
-        <Paragraph>
+        <Box>
             <b>{level.definition.name}:</b> {level.definition.description}
             <TextField
                 id={level.definition.key}
@@ -53,6 +56,6 @@ const PowerLevelView = (props: {
                 onChange={onTextFieldChanged}
             />
             <br />
-        </Paragraph>
+        </Box>
     )
 }

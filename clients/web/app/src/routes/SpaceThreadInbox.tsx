@@ -52,19 +52,20 @@ export const SpaceThreadsInbox = () => {
                 <Allotment.Pane minSize={550}>
                     {userId && spaceId ? (
                         <Stack grow paddingY="md" overflowY="scroll" height="100%">
-                            {threads.map(({ thread, channel }) => {
+                            {threads.map((t) => {
                                 return (
                                     <ChannelContextProvider
-                                        key={thread.parentId}
-                                        channelId={channel.id}
+                                        key={t.thread.parentId}
+                                        channelId={t.channel.id}
                                     >
                                         <InboxEntry
-                                            selected={thread.parentId === messageId}
+                                            selected={t.thread.parentId === messageId}
                                             spaceId={spaceId}
-                                            channelId={channel.id}
-                                            parentId={thread.parentId}
+                                            channelId={t.channel.id}
+                                            parentId={t.thread.parentId}
                                             channels={channels}
                                             members={members}
+                                            isNew={t.isNew}
                                         />
                                     </ChannelContextProvider>
                                 )
@@ -91,8 +92,9 @@ const InboxEntry = (props: {
     parentId: string
     channels: Channel[]
     members: RoomMember[]
+    isNew: boolean
 }) => {
-    const { spaceId, channelId, parentId, selected: isSelected, channels, members } = props
+    const { spaceId, channelId, parentId, selected: isSelected, channels, members, isNew } = props
     const { parent, messages } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
     const parentMessageContent = parent?.parentMessageContent
@@ -114,6 +116,21 @@ const InboxEntry = (props: {
                     timestamp={lastMessage?.originServerTs}
                     name={parentMessageContent?.sender.displayName ?? ''}
                 >
+                    {isNew && (
+                        <Box
+                            left
+                            right
+                            top
+                            centerContent
+                            position="absolute"
+                            paddingX="md"
+                            background="none"
+                            color="negative"
+                            fontSize="md"
+                        >
+                            New
+                        </Box>
+                    )}
                     {parentMessage && parentMessageContent && (
                         <TimelineMessageContent
                             event={parentMessage}

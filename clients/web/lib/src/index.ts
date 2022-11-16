@@ -9,10 +9,12 @@ export { LoginStatus } from './hooks/login'
 export { useChannelData } from './hooks/use-channel-data'
 export { useChannelId } from './hooks/use-channel-id'
 export { useChannelMembers } from './hooks/use-channel-members'
+export { useChannelNotificationCounts } from './hooks/use-channel-notification-counts'
 export { useChannelReactions } from './hooks/use-channel-reactions'
 export { useChannelThread } from './hooks/use-channel-thread'
 export { useChannelTimeline } from './hooks/use-channel-timeline'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
+export { useFullyReadMarker } from './hooks/use-fully-read-marker'
 export { useIntegratedSpaceManagement } from './hooks/use-integrated-space-management'
 export { useMember } from './hooks/use-member'
 export { useMembers } from './hooks/use-members'
@@ -24,10 +26,12 @@ export { usePowerLevels } from './hooks/use-power-levels'
 export { useRoom } from './hooks/use-room'
 export { useServerVersions } from './hooks/use-server-versions'
 export { useSpaceData, useInvites, useInvitesForSpace, useInviteData } from './hooks/use-space-data'
+export { useSpaceHierarchy } from './hooks/use-space-hierarchy'
 export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
+export { useSpaceNotificationCounts } from './hooks/use-space-notification-counts'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
-export { useSpaceThreadRoots } from './hooks/use-space-thread-roots'
+export { useSpaceThreadRoots, useSpaceThreadRootsUnreadCount } from './hooks/use-space-thread-roots'
 export { useSpacesFromContract, useSpaceFromContract } from './hooks/use-spaces-from-contract'
 export { useTimelineReactions } from './hooks/use-timeline-reactions'
 export { useTimelineThread } from './hooks/use-timeline-thread'
@@ -56,7 +60,6 @@ export type {
     SpaceChild,
     SpaceData,
     SpaceItem,
-    ThreadResult,
     MessageContent,
     ZionTextMessageContent,
 } from './types/matrix-types'
@@ -71,9 +74,8 @@ export {
 } from './types/matrix-types'
 
 export type {
+    FullyReadMarker,
     MessageReactions,
-    TimelineEvent,
-    TimelineEvent_OneOf,
     RoomCanonicalAliasEvent,
     RoomHistoryVisibilityEvent,
     RoomJoinRulesEvent,
@@ -85,7 +87,10 @@ export type {
     RoomPowerLevelsEvent,
     SpaceChildEvent,
     SpaceParentEvent,
+    ThreadResult,
     ThreadStats,
+    TimelineEvent,
+    TimelineEvent_OneOf,
 } from './types/timeline-types'
 
 export { ZTEvent } from './types/timeline-types'

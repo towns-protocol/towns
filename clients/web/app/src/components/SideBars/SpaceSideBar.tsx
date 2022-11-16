@@ -7,6 +7,7 @@ import {
     useInvitesForSpace,
     useZionContext,
 } from 'use-zion-client'
+import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
@@ -35,6 +36,7 @@ export const SpaceSideBar = (props: Props) => {
     const navigate = useNavigate()
 
     const totalMentions = useTotalMentionCount()
+    const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
 
     const onSettings = useCallback(
         (id: RoomIdentifier) => {
@@ -80,7 +82,11 @@ export const SpaceSideBar = (props: Props) => {
                             icon="threads"
                             link={`/spaces/${space.id.slug}/threads`}
                             id="threads"
-                            label="Threads"
+                            label={
+                                unreadThreadsCount > 0
+                                    ? `Threads (${unreadThreadsCount})`
+                                    : 'Threads'
+                            }
                         />
                         <ActionNavItem
                             icon="at"

@@ -1,8 +1,15 @@
 import { List, ListItem, ListItemText } from '@mui/material'
-import { RoomIdentifier, toRoomIdentifier, useZionContext } from 'use-zion-client'
+import {
+    RoomIdentifier,
+    toRoomIdentifier,
+    useChannelNotificationCounts,
+    useSpaceHierarchy,
+    useSpaceNotificationCounts,
+    useZionContext,
+} from 'use-zion-client'
 
 import { SpaceChild, SpaceItem } from 'use-zion-client/dist/types/matrix-types'
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
 interface Props {
@@ -13,76 +20,104 @@ interface Props {
 export function AppDrawerSpaces(props: Props): JSX.Element {
     const { spaceSlug, channelSlug } = useParams()
     const { onClickSpace, onClickChannel } = props
-    const {
-        unreadCounts,
-        mentionCounts,
-        spaces,
-        spaceHierarchies,
-        spaceUnreads,
-        spaceMentionCounts,
-    } = useZionContext()
-    const formatNameWithUnreads = useCallback(
-        (space: SpaceItem) => {
-            const unreadPostfix = spaceUnreads[space.id.matrixRoomId] === true ? ' *' : ''
-            const mentionPostfix =
-                spaceMentionCounts[space.id.matrixRoomId] > 0
-                    ? ` (${spaceMentionCounts[space.id.matrixRoomId]})`
-                    : ''
-            return `${space.name}${unreadPostfix}${mentionPostfix}`
-        },
-        [spaceMentionCounts, spaceUnreads],
-    )
+    const { spaces } = useZionContext()
 
-    const formatChannelNameWithUnreads = useCallback(
-        (channel: SpaceChild) => {
-            const unreadCount = unreadCounts[channel.id.matrixRoomId] ?? 0
-            const mentionCount = mentionCounts[channel.id.matrixRoomId] ?? 0
-            const unreadPostfix = unreadCount > 0 ? ' *' : ''
-            const mentionPostfix = mentionCount > 0 ? ` (${mentionCount})` : ''
-            return `${channel.name}${unreadPostfix}${mentionPostfix}`
-        },
-        [mentionCounts, unreadCounts],
-    )
-    const isSelectedSpace = useCallback(
-        (spaceId: RoomIdentifier) => {
-            return toRoomIdentifier(spaceSlug)?.matrixRoomId === spaceId.matrixRoomId
-        },
-        [spaceSlug],
-    )
-    const isSelectedChannel = useCallback(
-        (channelId: RoomIdentifier) => {
-            return toRoomIdentifier(channelSlug)?.matrixRoomId === channelId.matrixRoomId
-        },
-        [channelSlug],
-    )
+    const selectedSpaceId = useMemo(() => toRoomIdentifier(spaceSlug), [spaceSlug])
+    const selectedChannelId = useMemo(() => toRoomIdentifier(channelSlug), [channelSlug])
     return (
         <>
             <List>
                 {spaces.map((s) => (
-                    <ListItem button key={s.id.slug} onClick={() => onClickSpace(s.id)}>
-                        <ListItemText>
-                            {formatNameWithUnreads(s)}
-                            {isSelectedSpace(s.id) && spaceHierarchies[s.id.matrixRoomId] && (
-                                <List>
-                                    {spaceHierarchies[s.id.matrixRoomId].children.map((c) => (
-                                        <ListItem
-                                            button
-                                            selected={isSelectedChannel(c.id)}
-                                            key={c.id.slug}
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                onClickChannel(s.id, c.id)
-                                            }}
-                                        >
-                                            {formatChannelNameWithUnreads(c)}
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            )}
-                        </ListItemText>
-                    </ListItem>
+                    <SpaceListItem
+                        key={s.id.slug}
+                        space={s}
+                        selectedSpaceId={selectedSpaceId}
+                        selectedChannelId={selectedChannelId}
+                        onClickSpace={onClickSpace}
+                        onClickChannel={onClickChannel}
+                    />
                 ))}
             </List>
         </>
+    )
+}
+
+const SpaceListItem = (props: {
+    space: SpaceItem
+    selectedSpaceId?: RoomIdentifier
+    selectedChannelId?: RoomIdentifier
+    onClickSpace: (id: RoomIdentifier) => void
+    onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
+}) => {
+    const { space, selectedSpaceId, selectedChannelId, onClickSpace, onClickChannel } = props
+    const isSelectedSpace = (id: RoomIdentifier) => {
+        return id.matrixRoomId === selectedSpaceId?.matrixRoomId
+    }
+    const spaceNotifications = useSpaceNotificationCounts(space.id)
+    const spaceHierarchy = useSpaceHierarchy(space.id)
+    const formatNameWithUnreads = useCallback(
+        (space: SpaceItem) => {
+            const unreadPostfix = spaceNotifications.isUnread ? ' *' : ''
+            const mentionPostfix =
+                spaceNotifications.mentions > 0 ? ` (${spaceNotifications.mentions})` : ''
+            return `${space.name}${unreadPostfix}${mentionPostfix}`
+        },
+        [spaceNotifications],
+    )
+    return (
+        <ListItem button key={space.id.slug} onClick={() => onClickSpace(space.id)}>
+            <ListItemText>
+                {formatNameWithUnreads(space)}
+                {isSelectedSpace(space.id) && spaceHierarchy && (
+                    <List>
+                        {spaceHierarchy.children.map((c) => (
+                            <ChannelListItem
+                                key={c.id.slug}
+                                spaceId={space.id}
+                                channel={c}
+                                selectedChannelId={selectedChannelId}
+                                onClickChannel={onClickChannel}
+                            />
+                        ))}
+                    </List>
+                )}
+            </ListItemText>
+        </ListItem>
+    )
+}
+
+const ChannelListItem = (props: {
+    spaceId: RoomIdentifier
+    channel: SpaceChild
+    selectedChannelId?: RoomIdentifier
+    onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
+}) => {
+    const { spaceId, channel, selectedChannelId, onClickChannel } = props
+    const isSelectedChannel = (id: RoomIdentifier) => {
+        return id.matrixRoomId === selectedChannelId?.matrixRoomId
+    }
+    const channelNotifications = useChannelNotificationCounts(channel.id)
+    const formatChannelNameWithUnreads = useCallback(
+        (channel: SpaceChild) => {
+            const isUnread = channelNotifications.isUnread
+            const mentionCount = channelNotifications.mentions
+            const unreadPostfix = isUnread ? ' *' : ''
+            const mentionPostfix = mentionCount > 0 ? ` (${mentionCount})` : ''
+            return `${channel.name}${unreadPostfix}${mentionPostfix}`
+        },
+        [channelNotifications],
+    )
+    return (
+        <ListItem
+            button
+            selected={isSelectedChannel(channel.id)}
+            key={channel.id.slug}
+            onClick={(e) => {
+                e.stopPropagation()
+                onClickChannel(spaceId, channel.id)
+            }}
+        >
+            {formatChannelNameWithUnreads(channel)}
+        </ListItem>
     )
 }

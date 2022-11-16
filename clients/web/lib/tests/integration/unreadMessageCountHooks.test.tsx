@@ -12,8 +12,8 @@ import { RegisterWallet } from './helpers/TestComponents'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { useSpaceTimeline } from '../../src/hooks/use-space-timeline'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionContext } from '../../src/components/ZionContextProvider'
@@ -52,13 +52,12 @@ describe('unreadMessageCountHooks', () => {
             // create a veiw for bob
             const TestComponent = () => {
                 const { joinRoom, sendMessage, sendReadReceipt } = useZionClient()
-                const { unreadCounts, spaceUnreads } = useZionContext()
-                const unreadCount = unreadCounts[janesChannelId.matrixRoomId]
-                const spaceUnreadCount = unreadCounts[janesSpaceId.matrixRoomId]
+                const { spaceUnreads } = useZionContext()
+                const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
+                const channelFullyReadMarker = useFullyReadMarker(janesChannelId)
                 const spaceHasUnread = spaceUnreads[janesSpaceId.matrixRoomId]
                 const mySpaceMembership = useMyMembership(janesSpaceId)
                 const myChannelMembership = useMyMembership(janesChannelId)
-                const spaceTimeline = useSpaceTimeline()
                 const timeline = useChannelTimeline()
                 const messages = timeline.filter((x) => x.eventType === ZTEvent.RoomMessage)
                 // handle join
@@ -75,16 +74,16 @@ describe('unreadMessageCountHooks', () => {
                 }, [sendMessage])
                 // send read receipt
                 const onMarkAsRead = useCallback(() => {
-                    if (spaceUnreadCount > 0) {
+                    if (spaceFullyReadmarker?.isUnread === true) {
                         // this one is pretty weird, seems like every 10th run the server laggs
                         // and we receive a few space messages after we join the channel
                         // and end up with some space unread counts
-                        void sendReadReceipt(janesSpaceId, spaceTimeline.at(-1)!.eventId)
+                        void sendReadReceipt(spaceFullyReadmarker)
                     }
-                    if (unreadCount > 0) {
-                        void sendReadReceipt(janesChannelId, messages.at(-1)!.eventId)
+                    if (channelFullyReadMarker?.isUnread === true) {
+                        void sendReadReceipt(channelFullyReadMarker)
                     }
-                }, [messages, sendReadReceipt, spaceTimeline, spaceUnreadCount, unreadCount])
+                }, [channelFullyReadMarker, sendReadReceipt, spaceFullyReadmarker])
                 // format for easy reading
                 function formatMessage(e: TimelineEvent) {
                     return `${e.fallbackContent} eventId: ${e.eventId}`
@@ -98,12 +97,18 @@ describe('unreadMessageCountHooks', () => {
                         <button onClick={onClickJoinChannel}>join channel</button>
                         <button onClick={onMarkAsRead}>mark as read</button>
                         <button onClick={onClickSendMessage}>Send Message</button>
-                        <div data-testid="spaceUnreadCount"> {spaceUnreadCount} </div>
+                        <div data-testid="spaceFullyReadMarker">
+                            {JSON.stringify(spaceFullyReadmarker)}
+                        </div>
                         <div data-testid="spaceHasUnread">
                             {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
                         </div>
-                        <div data-testid="unreadCount">
-                            {unreadCount === undefined ? 'undefined' : unreadCount.toString()}
+                        <div data-testid="channelFullyReadMarker">
+                            {channelFullyReadMarker === undefined
+                                ? 'undefined'
+                                : `isUnread:${channelFullyReadMarker.isUnread.toString()} eventId:${
+                                      channelFullyReadMarker.eventId
+                                  }`}
                         </div>
                         <div data-testid="lastMessage">
                             {messages.length > 0 ? formatMessage(messages.at(-1)!) : 'empty'}
@@ -133,7 +138,7 @@ describe('unreadMessageCountHooks', () => {
         const channelMembership = screen.getByTestId('channelMembership')
         const lastMessage = screen.getByTestId('lastMessage')
         const spaceHasUnread = screen.getByTestId('spaceHasUnread')
-        const unreadCount = screen.getByTestId('unreadCount')
+        const channelFullyReadMarker = screen.getByTestId('channelFullyReadMarker')
         const joinSpaceButton = screen.getByRole('button', {
             name: 'join space',
         })
@@ -156,61 +161,73 @@ describe('unreadMessageCountHooks', () => {
         })
         // check assumptions
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
-        await waitFor(() => expect(unreadCount).toHaveTextContent('undefined'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
         // get invited to the channel
-        await jane.inviteUser(janesChannelId, bobId.textContent!)
+        await act(async () => {
+            await jane.inviteUser(janesChannelId, bobId.textContent!)
+        })
         // check the count (9/28/2022 dendrite doesn't send notifications for invites)
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
-        await waitFor(() => expect(unreadCount).toHaveTextContent('undefined'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
         // join the space
         fireEvent.click(joinChannelButton)
         // wait for the channel join
         await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // have jane send a message to bob
-        await jane.sendMessage(janesChannelId, 'hello bob')
+        await act(async () => {
+            await jane.sendMessage(janesChannelId, 'hello bob')
+        })
         // expect our message to show
         await waitFor(() => expect(lastMessage).toHaveTextContent('hello bob'))
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
-        await waitFor(() => expect(unreadCount).toHaveTextContent('2'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
         // mark as read
         fireEvent.click(markAsReadButton)
         // check count
-        await waitFor(() => expect(unreadCount).toHaveTextContent('0'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         // have jane send a message to bob
-        await jane.sendMessage(janesChannelId, "it's Jane!")
+        await act(async () => {
+            await jane.sendMessage(janesChannelId, "it's Jane!")
+        })
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
-        await waitFor(() => expect(unreadCount).toHaveTextContent('1'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
         // send another message
-        await jane.sendMessage(janesChannelId, 'rember me!')
+        await act(async () => {
+            await jane.sendMessage(janesChannelId, 'rember me!')
+        })
         // sending a message doesn't reset the count
         fireEvent.click(sendMessageButton)
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
-        await waitFor(() => expect(unreadCount).toHaveTextContent('2'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(lastMessage).toHaveTextContent('rember me!'))
         // send a message back
         fireEvent.click(markAsReadButton)
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
-        await waitFor(() => expect(unreadCount).toHaveTextContent('0'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
         // have jane create a new room and invite bob
-        const newRoomId = await jane.createChannel({
-            name: 'janes channel',
-            visibility: RoomVisibility.Private,
-            parentSpaceId: janesSpaceId,
-            roleIds: [],
+        await act(async () => {
+            const newRoomId = await jane.createChannel({
+                name: 'janes channel',
+                visibility: RoomVisibility.Private,
+                parentSpaceId: janesSpaceId,
+                roleIds: [],
+            })
+
+            // give bob a chance to see the new space.child message
+            // when we get an invite it doesn't come with any space info
+            // because the previous time we fetched the space we didn't have permission to see this space
+            // we didn't sync it
+            // it might exist in the timeline in a space.child event, but it probably won't be in the recent timeline
+            // and it's not a state event
+            await sleep(1000)
+            // get invited to the channel
+            await jane.inviteUser(newRoomId, bobId.textContent!)
         })
-        // give bob a chance to see the new space.child message
-        // when we get an invite it doesn't come with any space info
-        // because the previous time we fetched the space we didn't have permission to see this space
-        // we didn't sync it
-        // it might exist in the timeline in a space.child event, but it probably won't be in the recent timeline
-        // and it's not a state event
-        await sleep(1000)
-        // get invited to the channel
-        await jane.inviteUser(newRoomId, bobId.textContent!)
         // the space should show the unread count, but we don't (9/28/2022 dendrite doesn't send notifications for invites)
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
     })

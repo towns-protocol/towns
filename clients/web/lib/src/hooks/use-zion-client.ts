@@ -20,6 +20,9 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { CouncilNFTShim } from 'client/web3/shims/CouncilNFTShim'
 import { DataTypes, ZionSpaceManagerShim } from 'client/web3/shims/ZionSpaceManagerShim'
+import { FullyReadMarker } from 'types/timeline-types'
+import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
+import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -53,6 +56,7 @@ interface ZionClientImpl {
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
     registerPasswordUser: (username: string, password: string) => Promise<void>
     registerWallet: (statement: string) => Promise<void>
+    resetFullyReadMarkers: () => void
     scrollback: (roomId: RoomIdentifier, limit?: number) => Promise<void>
     sendMessage: (
         roomId: RoomIdentifier,
@@ -61,7 +65,7 @@ interface ZionClientImpl {
     ) => Promise<void>
     sendNotice: (roomId: RoomIdentifier, message: string) => Promise<void>
     sendReaction: (roomId: RoomIdentifier, eventId: string, reaction: string) => Promise<void>
-    sendReadReceipt: (roomId: RoomIdentifier, eventId: string) => Promise<void>
+    sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setPowerLevel: (
         roomId: RoomIdentifier,
         current: string | PowerLevel,
@@ -79,6 +83,8 @@ export function useZionClient(): ZionClientImpl {
     const loginWithPassword = useLoginWithPassword()
     const logout = useLogout()
     const registerPasswordUser = useRegisterPasswordUser()
+    const sendReadReceipt = useSendReadReceipt(client)
+    const resetFullyReadMarkers = useResetFullyReadMarkers()
 
     return {
         clientRunning,
@@ -101,11 +107,12 @@ export function useZionClient(): ZionClientImpl {
         redactEvent: useWithCatch(client?.redactEvent),
         registerPasswordUser,
         registerWallet,
+        resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),
         sendReaction: useWithCatch(client?.sendReaction),
         sendNotice: useWithCatch(client?.sendNotice),
-        sendReadReceipt: useWithCatch(client?.sendReadReceipt),
+        sendReadReceipt,
         setPowerLevel: useWithCatch(client?.setPowerLevel),
         syncSpace: useWithCatch(client?.syncSpace),
         setDisplayName: useWithCatch(client?.setDisplayName),

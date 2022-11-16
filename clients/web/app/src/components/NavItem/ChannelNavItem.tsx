@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams } from 'react-router'
-import { Channel, SpaceData, useZionContext } from 'use-zion-client'
+import { Channel, SpaceData, useFullyReadMarker } from 'use-zion-client'
 import { ButtonText, Icon, TooltipRenderer } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { NavItem } from './_NavItem'
@@ -13,10 +13,10 @@ type Props = {
 
 export const ChannelNavItem = (props: Props) => {
     const { channelSlug } = useParams()
-    const { unreadCounts } = useZionContext()
 
     const { id, space, channel } = props
-    const unreadCount = unreadCounts[channel.id.matrixRoomId]
+    const fullyReadMarker = useFullyReadMarker(channel.id)
+    const isUnread = fullyReadMarker?.isUnread === true
 
     const link = `/spaces/${space.id.slug}/channels/${channel.id.slug}/`
     const isHighlight = channel.id.slug === channelSlug
@@ -36,7 +36,6 @@ export const ChannelNavItem = (props: Props) => {
         >
             {({ triggerProps }) => {
                 const channelName = channel.label.toLocaleLowerCase()
-                const isUnread = unreadCount > 0
 
                 return (
                     <NavItem to={link} id={id} {...triggerProps} exact={false}>
@@ -52,6 +51,7 @@ export const ChannelNavItem = (props: Props) => {
                             color={isHighlight || isUnread ? 'default' : undefined}
                         >
                             {channelName}
+                            {!!isUnread && `*`}
                         </ButtonText>
                         {/* {!!mentionCount && (
               <Box

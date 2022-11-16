@@ -1,4 +1,5 @@
 import {
+    FullyReadMarker,
     RoomCreateEvent,
     RoomMemberEvent,
     RoomMessageEvent,
@@ -10,6 +11,7 @@ export enum RenderEventType {
     UserMessageGroup = 'UserMessageGroup',
     RoomMember = 'RoomMember',
     RoomCreate = 'RoomCreate',
+    FullyRead = 'FullyRead',
 }
 
 interface BaseEvent {
@@ -38,6 +40,12 @@ export interface RoomCreateRenderEvent extends BaseEvent {
     event: Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
 }
 
+export interface FullyReadRenderEvent extends BaseEvent {
+    type: RenderEventType.FullyRead
+    key: string
+    event: FullyReadMarker
+}
+
 const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
     return event.content?.kind === ZTEvent.RoomMessage
 }
@@ -52,9 +60,16 @@ export type DateGroup = {
     events: RenderEvent[]
 }
 
-export type RenderEvent = MessageRenderEvent | RoomMemberRenderEvent | RoomCreateRenderEvent
+export type RenderEvent =
+    | MessageRenderEvent
+    | RoomMemberRenderEvent
+    | RoomCreateRenderEvent
+    | FullyReadRenderEvent
 
-export const useGroupEvents = (events: TimelineEvent[]): DateGroup[] => {
+export const useGroupEvents = (
+    events: TimelineEvent[],
+    fullyReadMarker?: FullyReadMarker,
+): DateGroup[] => {
     const { getHumanDate: getRelativeDays } = useHumanDate()
     const { dateGroups } = events.reduce(
         (result, event: TimelineEvent, index, events) => {
@@ -79,6 +94,17 @@ export const useGroupEvents = (events: TimelineEvent[]): DateGroup[] => {
             const renderEvents = group.events
 
             if (isRoomMessage(event)) {
+                if (
+                    fullyReadMarker?.eventId === event.eventId &&
+                    shouldRenderFullyRead(fullyReadMarker)
+                ) {
+                    renderEvents.push({
+                        type: RenderEventType.FullyRead,
+                        key: `fully-read-${event.eventId}`,
+                        event: fullyReadMarker,
+                    })
+                }
+
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
                 if (
@@ -122,4 +148,34 @@ const useHumanDate = () => {
     return {
         getHumanDate,
     }
+}
+
+const shouldRenderFullyRead = (fullyReadMarker: FullyReadMarker) => {
+    // as soon as (100ms) we see this marker, we mark it as read
+    // but we don't want it flashing on and off
+    // render if the fully read marker is unread and older than 10 seconds,
+    // or read and unreadAt is older than N sec (for this example we'll use 10) and the mark as read is newer than M seconds (also using 10s)
+    // case 1: click on channel with unread messages, get new messages
+    //     | time = 1000s
+    //     | isUnread = true, markedReadAt = 0s, markedUnread = 700s
+    //     | shouldRender = true (marked unread is older than 10s)
+    //     -> marked as read
+    //     | time = 1001s
+    //     | isUnread = false, markedReadAt = 1001s, markedUnread = 700s
+    //     | shouldRender = true (marked unread is older than 10s, marked read is newer than 10s)
+    //     -> wait 10s, leave and come back
+    //     | time = 1011s
+    //     | isUnread = false, markedReadAt = 1001s, markedUnread = 700s
+    //     | shouldRender = false (marked unread is older than 10s, marked read is older than 10s)
+    //     -> get a new message
+    //     | time = 1012s
+    //     | isUnread = true, markedReadAt = 1001s, markedUnread = 1012s
+    //     | shouldRender = false (marked unread is newer than 10s)
+    const now = Date.now()
+    return (
+        (fullyReadMarker.isUnread && now - fullyReadMarker.markedUnreadAtTs > 1000) ||
+        (!fullyReadMarker.isUnread &&
+            now - fullyReadMarker.markedUnreadAtTs > 1000 &&
+            now - fullyReadMarker.markedReadAtTs < 4000)
+    )
 }

@@ -1,37 +1,18 @@
 import { useEffect } from 'react'
-import { SpaceChild, SpaceHierarchies, SpaceHierarchy } from '../../types/matrix-types'
 import { Badger } from '../../utils/Badger'
 
-export function useFavIconBadge(
-    unreadCounts: Record<string, number>,
-    spaceHierarchies: SpaceHierarchies,
-    invitedToIds: string[],
-    bShowSpaceRootUnreads: boolean,
-) {
+export function useFavIconBadge(invitedToIds: string[], spaceUnreads: Record<string, boolean>) {
     useEffect(() => {
-        // calculate the new value
         const value =
             // all invites
-            invitedToIds.length +
+            invitedToIds.length > 0 ||
             // all unreads in the space hierarchy
-            Object.values(spaceHierarchies).reduce((p1: number, current: SpaceHierarchy) => {
-                // optionally including the root
-                const spaceRootUnreadCount = bShowSpaceRootUnreads
-                    ? unreadCounts[current.root.id.matrixRoomId] ?? 0
-                    : 0
-                // and all children
-                const childUnreadCount = current.children.reduce(
-                    (p2: number, current: SpaceChild) =>
-                        p2 + (unreadCounts[current.id.matrixRoomId] ?? 0),
-                    0,
-                )
-                // add them up
-                return p1 + spaceRootUnreadCount + childUnreadCount
-            }, 0)
+            Object.values(spaceUnreads).indexOf(true) >= 0
         // set the badge
-        Badger.faviconSingleton().badge(value)
+        Badger.faviconSingleton().dot(value)
         // log
-        console.log('calculated new badge value', value)
+        console.log('calculated new badge value', { value, spaceUnreads })
+
         // end: useEffect
-    }, [unreadCounts, spaceHierarchies, invitedToIds, bShowSpaceRootUnreads])
+    }, [invitedToIds, spaceUnreads])
 }

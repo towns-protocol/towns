@@ -13,7 +13,7 @@ type Props = {
 
 export const MainSideBar = (props: Props) => {
     const { expanded: isExpanded } = props
-    const { spaces, spaceMentionCounts } = useZionContext()
+    const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
 
@@ -29,7 +29,6 @@ export const MainSideBar = (props: Props) => {
                         name={s.name}
                         avatar={s.avatarSrc}
                         pinned={false}
-                        mentions={spaceMentionCounts[s.id.matrixRoomId]}
                     />
                 ))}
                 <ActionNavItem id="spaces/new" link="/spaces/new" icon="plus" label="New Space" />

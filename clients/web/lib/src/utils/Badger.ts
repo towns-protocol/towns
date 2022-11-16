@@ -8,8 +8,10 @@ export class Badger {
     }
 
     private backgroundColor: string
+    private liteBackgroundColor: string
     private color: string
     private scale: number
+    private liteScale: number
     private src: string | null
     private canvas: HTMLCanvasElement | null
     private faviconEL: HTMLLinkElement | null
@@ -17,17 +19,22 @@ export class Badger {
 
     private faviconSize = 0
     private _value = 0
+    private _showDot = false
     private img?: HTMLImageElement
 
     constructor(
         backgroundColor = '#d00',
+        liteBackgroundColor = '#FFCF55',
         color = '#fff',
         scale = 0.6, // 0..1 (Scale in respect to the favicon image size)
+        liteScale = 0.4, // 0..1 (Scale in respect to the favicon image size)
         src: string | null = null, // Favicon source (dafaults to the <link> icon href)
     ) {
         this.backgroundColor = backgroundColor
+        this.liteBackgroundColor = liteBackgroundColor
         this.color = color
         this.scale = scale
+        this.liteScale = liteScale
         if (document) {
             this.canvas = document.createElement('canvas')
             this.faviconEL = document.querySelector('link[rel$=icon]')
@@ -129,6 +136,41 @@ export class Badger {
         this.ctx.closePath()
     }
 
+    _drawLiteShape() {
+        if (!this.ctx) {
+            return
+        }
+        const opt = {
+            w: this.faviconSize * this.liteScale,
+            h: this.faviconSize * this.liteScale,
+            x: this.faviconSize * (1 - this.liteScale),
+            y: this.faviconSize * (1 - this.liteScale),
+        }
+        const fillCorner = true
+        const TopLeft = { x: opt.x, y: opt.y }
+        const TopRight = { x: opt.x + opt.w, y: opt.y }
+        const BottomLeft = { x: opt.x, y: opt.y + opt.h }
+        const BottomRight = { x: opt.x + opt.w, y: opt.y + opt.h }
+        const Top = { x: opt.x + opt.w / 2, y: opt.y }
+        const Bottom = { x: opt.x + opt.w / 2, y: opt.y + opt.h }
+        const Left = { x: opt.x, y: opt.y + opt.h / 2 }
+        const Right = { x: opt.x + opt.w, y: opt.y + opt.h / 2 }
+        this.ctx.beginPath()
+        this.ctx.moveTo(Top.x, Top.y)
+        this.ctx.quadraticCurveTo(TopRight.x, TopRight.y, Right.x, Right.y)
+        if (fillCorner) {
+            this.ctx.lineTo(BottomRight.x, BottomRight.y) // fill in the bottom right corner
+            this.ctx.lineTo(Bottom.x, Bottom.y) // fill in the bottom right corner
+        } else {
+            this.ctx.quadraticCurveTo(BottomRight.x, BottomRight.y, Bottom.x, Bottom.y)
+        }
+        this.ctx.quadraticCurveTo(BottomLeft.x, BottomLeft.y, Left.x, Left.y)
+        this.ctx.quadraticCurveTo(TopLeft.x, TopLeft.y, Top.x, Top.y)
+        this.ctx.fillStyle = this.liteBackgroundColor
+        this.ctx.fill()
+        this.ctx.closePath()
+    }
+
     _drawFavicon() {
         if (!this.faviconEL || !this.canvas) {
             return
@@ -141,7 +183,11 @@ export class Badger {
 
     _draw() {
         this._drawIcon()
-        if (this.value) this._drawShape()
+        if (this.value) {
+            this._drawShape()
+        } else if (this._showDot) {
+            this._drawLiteShape()
+        }
         this._drawFavicon()
     }
 
@@ -177,6 +223,13 @@ export class Badger {
     badge(val: number) {
         if (val !== this._value) {
             this._value = val
+            this.update()
+        }
+    }
+
+    dot(showDot: boolean) {
+        if (showDot !== this._showDot) {
+            this._showDot = showDot
             this.update()
         }
     }

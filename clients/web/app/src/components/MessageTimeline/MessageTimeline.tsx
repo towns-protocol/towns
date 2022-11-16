@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { MessageType, useMyUserId, useZionContext } from 'use-zion-client'
+import { MessageType, useFullyReadMarker, useMyUserId } from 'use-zion-client'
 import { Box, Divider, Stack, VList } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { VListCtrl } from 'ui/components/VList/VList'
@@ -7,9 +7,15 @@ import { notUndefined } from 'ui/utils/utils'
 import { getIsRoomMessageContent } from 'utils/ztevent_util'
 import { DateDivider } from './events/DateDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
-import { MessageRenderEvent, RenderEventType, useGroupEvents } from './hooks/useGroupEvents'
+import {
+    FullyReadRenderEvent,
+    MessageRenderEvent,
+    RenderEventType,
+    useGroupEvents,
+} from './hooks/useGroupEvents'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
+import { NewDivider } from './events/NewDivider'
 
 export const TimelineMessageContext = createContext<null | ReturnType<
     typeof useTimelineMessageEditing
@@ -32,35 +38,16 @@ export const MessageTimeline = (props: Props) => {
         timelineContext?.type === MessageTimelineType.Thread,
     )
 
+    const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
+
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    //                                     mark channel as unread after a short time (FIXME)
+    //                                                                  initialize variables
 
     const lastEvent = useMemo(() => {
         return events?.at(events?.length - 1)
     }, [events])
 
-    const lastEventId = lastEvent?.eventId
-
-    const onMarkAsRead = useCallback(() => {
-        if (channelId && lastEventId) {
-            console.log(`mark as unread ${channelId.slug} ${lastEventId}`)
-            timelineContext?.sendReadReceipt(channelId, lastEventId)
-        }
-    }, [channelId, lastEventId, timelineContext])
-
-    const { unreadCounts } = useZionContext()
-    const hasUnread = (unreadCounts[channelId?.matrixRoomId ?? ''] ?? 0) > 0
-
-    useEffect(() => {
-        if (hasUnread) {
-            const timeout = setTimeout(onMarkAsRead, 3000)
-            return () => {
-                clearTimeout(timeout)
-            }
-        }
-    }, [hasUnread, onMarkAsRead])
-
-    const dateGroups = useGroupEvents(events)
+    const dateGroups = useGroupEvents(events, fullyReadMarker)
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered
@@ -99,6 +86,7 @@ export const MessageTimeline = (props: Props) => {
             | { id: string; type: 'header' }
             | { id: string; type: 'group'; date: string }
             | { id: string; type: 'message'; item: MessageRenderEvent }
+            | { id: string; type: 'fullyRead'; item: FullyReadRenderEvent }
 
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
@@ -122,6 +110,8 @@ export const MessageTimeline = (props: Props) => {
                     ? ({ id: e.key, type: 'group', date: e.date } as const)
                     : e.type === RenderEventType.UserMessageGroup
                     ? ({ id: e.key, type: 'message', item: e } as const)
+                    : e.type === RenderEventType.FullyRead
+                    ? ({ id: e.key, type: 'fullyRead', item: e } as const)
                     : undefined
             })
             .filter(notUndefined)
@@ -152,6 +142,10 @@ export const MessageTimeline = (props: Props) => {
                     <Box paddingX="md" paddingY="md">
                         <Divider space="none" />
                     </Box>
+                ) : r.type === 'fullyRead' ? (
+                    <Stack position="relative" style={{ boxShadow: '0 0 1px #f000' }} height="x4">
+                        <NewDivider fullyReadMarker={r.item.event} />
+                    </Stack>
                 ) : (
                     <MessageTimelineItem itemData={r.item} />
                 )

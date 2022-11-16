@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo } from 'react'
 import { ethers } from 'ethers'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOnboardingOpts } from '../client/ZionClientTypes'
+import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { useNotificationCounts } from '../hooks/ZionContext/useNotificationCounts'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import { useOnboardingState } from '../hooks/ZionContext/useOnboardingState'
@@ -26,7 +27,6 @@ import { Web3ContextProvider } from './Web3ContextProvider'
 
 export interface IZionContext {
     client?: ZionClient
-    unreadCounts: Record<string, number> // channel or unaggregated space -> count;
     mentionCounts: Record<string, number> // channel or unaggregated space -> count;
     rooms: Record<string, Room | undefined>
     invitedToIds: string[] // ordered list of invites (spaces and channels)
@@ -101,7 +101,8 @@ const ContextImpl = (props: Props): JSX.Element => {
         disableEncryption,
         signer,
     )
-    const { unreadCounts, mentionCounts } = useNotificationCounts(client)
+    useContentAwareTimelineDiff(client?.matrixClient)
+    const { mentionCounts } = useNotificationCounts(client)
     const { spaceIds, invitedToIds } = useSpacesIds(client)
     const { spaceMentionCounts } = useSpaceMentionCounts(client, spaceIds, mentionCounts)
     const { spaces } = useSpaces(client, spaceIds)
@@ -110,7 +111,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         client,
         spaceIds,
         spaceHierarchies,
-        unreadCounts,
         enableSpaceRootUnreads === true,
     )
 
@@ -124,13 +124,12 @@ const ContextImpl = (props: Props): JSX.Element => {
     const onboardingState = useOnboardingState(client)
     const syncError = useSyncErrorHandler(client)
 
-    useFavIconBadge(unreadCounts, spaceHierarchies, invitedToIds, enableSpaceRootUnreads === true)
+    useFavIconBadge(invitedToIds, spaceUnreads)
 
     return (
         <ZionContext.Provider
             value={{
                 client,
-                unreadCounts,
                 mentionCounts,
                 rooms,
                 invitedToIds,
