@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams } from 'react-router'
-import { Channel, SpaceData, useFullyReadMarker } from 'use-zion-client'
+import { Channel, SpaceData, useChannelNotificationCounts } from 'use-zion-client'
 import { ButtonText, Icon, TooltipRenderer } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { NavItem } from './_NavItem'
@@ -15,8 +15,7 @@ export const ChannelNavItem = (props: Props) => {
     const { channelSlug } = useParams()
 
     const { id, space, channel } = props
-    const fullyReadMarker = useFullyReadMarker(channel.id)
-    const isUnread = fullyReadMarker?.isUnread === true
+    const notis = useChannelNotificationCounts(channel.id)
 
     const link = `/spaces/${space.id.slug}/channels/${channel.id.slug}/`
     const isHighlight = channel.id.slug === channelSlug
@@ -47,13 +46,13 @@ export const ChannelNavItem = (props: Props) => {
                             size="square_lg"
                         />
                         <ButtonText
-                            strong={isHighlight || isUnread}
-                            color={isHighlight || isUnread ? 'default' : undefined}
+                            strong={isHighlight}
+                            color={isHighlight ? 'default' : undefined}
                         >
                             {channelName}
-                            {!!isUnread && `*`}
+                            {!!notis.isUnread && `*`}
                         </ButtonText>
-                        {/* {!!mentionCount && (
+                        {/* {!!notis.mentions && (
               <Box
                 centerContent
                 shrink={false}
@@ -64,7 +63,7 @@ export const ChannelNavItem = (props: Props) => {
                 fontWeight="strong"
                 color="default"
               >
-                {mentionCount}
+                {notis.mentions}
               </Box>
             )} */}
                     </NavItem>
