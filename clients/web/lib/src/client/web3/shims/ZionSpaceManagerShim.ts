@@ -74,9 +74,7 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         if (this.isGoerli) {
             const externalTokenEntitlements: Goerli_DataTypes.ExternalTokenEntitlementStruct[] = []
             for (let i = 0; i < entitlementData.externalTokenEntitlements.length; i++) {
-                const tag = `ExternalTokenEntitlement ${i}`
                 const externalTokenEntitlement: Goerli_DataTypes.ExternalTokenEntitlementStruct = {
-                    tag: tag,
                     tokens: entitlementData.externalTokenEntitlements[i].tokens,
                 }
                 externalTokenEntitlements.push(externalTokenEntitlement)

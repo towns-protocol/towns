@@ -4,6 +4,7 @@ import { createTestSpaceWithEntitlement, registerAndStartClients } from './helpe
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { getRolesFromSpace } from '../../src/client/web3/ContractDataFactory'
+import { CONTRACT_ERROR, getError, NoThrownError } from './helpers/ErrorUtils'
 
 describe('On-chain channel creation tests', () => {
     jest.setTimeout(30000)
@@ -98,18 +99,22 @@ describe('On-chain channel creation tests', () => {
         }
 
         /* Assert */
-        await expect(
-            alice.createWeb3Channel({
+        const error = await getError<Error>(async function () {
+            await alice.createWeb3Channel({
                 name: 'test_channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds,
-            }),
-        ).rejects.toThrow()
+            })
+        })
+
+        /* Assert */
+        // check that the returned error wasn't that no error was thrown.
+        expect(error).not.toBeInstanceOf(NoThrownError)
+        expect(error).toHaveProperty('name', CONTRACT_ERROR.AddRoleFailed)
     })
 
-    // https://linear.app/hnt-labs/issue/HNT-428/create-channel-with-duplicate-role-should-be-reverted
-    test.skip('reject create channel with duplicate roles', async () => {
+    test('reject create channel with duplicate roles', async () => {
         /* Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
@@ -134,14 +139,18 @@ describe('On-chain channel creation tests', () => {
             roleIds.push(r.roleId.toNumber())
         }
 
-        /* Assert */
-        await expect(
-            alice.createWeb3Channel({
+        const error = await getError<Error>(async function () {
+            await alice.createWeb3Channel({
                 name: 'test_channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
                 roleIds,
-            }),
-        ).rejects.toThrow()
+            })
+        })
+
+        /* Assert */
+        // check that the returned error wasn't that no error was thrown.
+        expect(error).not.toBeInstanceOf(NoThrownError)
+        expect(error).toHaveProperty('name', CONTRACT_ERROR.AddRoleFailed)
     })
 })

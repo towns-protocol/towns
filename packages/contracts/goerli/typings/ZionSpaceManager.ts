@@ -36,25 +36,20 @@ export declare namespace DataTypes {
     spaceNetworkId: PromiseOrValue<string>;
     channelName: PromiseOrValue<string>;
     channelNetworkId: PromiseOrValue<string>;
+    roleIds: PromiseOrValue<BigNumberish>[];
   };
 
-  export type CreateChannelDataStructOutput = [string, string, string] & {
+  export type CreateChannelDataStructOutput = [
+    string,
+    string,
+    string,
+    BigNumber[]
+  ] & {
     spaceNetworkId: string;
     channelName: string;
     channelNetworkId: string;
+    roleIds: BigNumber[];
   };
-
-  export type CreateRoleEntitlementDataStruct = {
-    roleId: PromiseOrValue<BigNumberish>;
-    entitlementModule: PromiseOrValue<string>;
-    entitlementData: PromiseOrValue<BytesLike>;
-  };
-
-  export type CreateRoleEntitlementDataStructOutput = [
-    BigNumber,
-    string,
-    string
-  ] & { roleId: BigNumber; entitlementModule: string; entitlementData: string };
 
   export type CreateSpaceDataStruct = {
     spaceName: PromiseOrValue<string>;
@@ -86,14 +81,12 @@ export declare namespace DataTypes {
   };
 
   export type ExternalTokenEntitlementStruct = {
-    tag: PromiseOrValue<string>;
     tokens: DataTypes.ExternalTokenStruct[];
   };
 
   export type ExternalTokenEntitlementStructOutput = [
-    string,
     DataTypes.ExternalTokenStructOutput[]
-  ] & { tag: string; tokens: DataTypes.ExternalTokenStructOutput[] };
+  ] & { tokens: DataTypes.ExternalTokenStructOutput[] };
 
   export type CreateSpaceEntitlementDataStruct = {
     roleName: PromiseOrValue<string>;
@@ -220,10 +213,11 @@ export declare namespace DataTypes {
 export interface ZionSpaceManagerInterface extends utils.Interface {
   functions: {
     "addPermissionToRole(string,uint256,(string))": FunctionFragment;
-    "addRoleToEntitlementModule(string,string,address,uint256,bytes)": FunctionFragment;
-    "createChannel((string,string,string),(uint256,address,bytes)[])": FunctionFragment;
+    "addRoleIdsToChannel(string,string,uint256[])": FunctionFragment;
+    "addRoleToEntitlementModule(string,address,uint256,bytes)": FunctionFragment;
+    "createChannel((string,string,string,uint256[]))": FunctionFragment;
     "createRole(string,string)": FunctionFragment;
-    "createSpace((string,string),(string,(string)[],(string,(address,uint256,bool,uint256)[])[],address[]),(string)[])": FunctionFragment;
+    "createSpace((string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": FunctionFragment;
     "getChannelIdByNetworkId(string,string)": FunctionFragment;
     "getChannelInfoByChannelId(string,string)": FunctionFragment;
     "getChannelsBySpaceId(string)": FunctionFragment;
@@ -236,9 +230,10 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     "isEntitled(string,string,address,(string))": FunctionFragment;
     "isEntitlementModuleWhitelisted(string,address)": FunctionFragment;
     "owner()": FunctionFragment;
-    "removeEntitlement(string,string,address,uint256,bytes)": FunctionFragment;
+    "removeEntitlement(string,address,uint256,bytes)": FunctionFragment;
     "removePermissionFromRole(string,uint256,(string))": FunctionFragment;
     "removeRole(string,uint256)": FunctionFragment;
+    "removeRoleIdsFromChannel(string,string,uint256[])": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "setChannelAccess(string,string,bool)": FunctionFragment;
     "setDefaultTokenEntitlementModule(address)": FunctionFragment;
@@ -252,6 +247,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "addPermissionToRole"
+      | "addRoleIdsToChannel"
       | "addRoleToEntitlementModule"
       | "createChannel"
       | "createRole"
@@ -271,6 +267,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
       | "removeEntitlement"
       | "removePermissionFromRole"
       | "removeRole"
+      | "removeRoleIdsFromChannel"
       | "renounceOwnership"
       | "setChannelAccess"
       | "setDefaultTokenEntitlementModule"
@@ -290,9 +287,16 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "addRoleToEntitlementModule",
+    functionFragment: "addRoleIdsToChannel",
     values: [
       PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "addRoleToEntitlementModule",
+    values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
@@ -301,10 +305,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createChannel",
-    values: [
-      DataTypes.CreateChannelDataStruct,
-      DataTypes.CreateRoleEntitlementDataStruct[]
-    ]
+    values: [DataTypes.CreateChannelDataStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "createRole",
@@ -370,7 +371,6 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
-      PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>
     ]
@@ -386,6 +386,14 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "removeRole",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "removeRoleIdsFromChannel",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>[]
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -430,6 +438,10 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "addPermissionToRole",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "addRoleIdsToChannel",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -493,6 +505,10 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "removeRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "removeRoleIdsFromChannel",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -579,9 +595,15 @@ export interface ZionSpaceManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    addRoleIdsToChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     addRoleToEntitlementModule(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
@@ -590,7 +612,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     createChannel(
       data: DataTypes.CreateChannelDataStruct,
-      roles: DataTypes.CreateRoleEntitlementDataStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -671,7 +692,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     removeEntitlement(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
@@ -688,6 +708,13 @@ export interface ZionSpaceManager extends BaseContract {
     removeRole(
       spaceNetworkId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    removeRoleIdsFromChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -743,9 +770,15 @@ export interface ZionSpaceManager extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  addRoleIdsToChannel(
+    spaceId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<string>,
+    roleId: PromiseOrValue<BigNumberish>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   addRoleToEntitlementModule(
     spaceNetworkId: PromiseOrValue<string>,
-    channelNetworkId: PromiseOrValue<string>,
     entitlementModuleAddress: PromiseOrValue<string>,
     roleId: PromiseOrValue<BigNumberish>,
     entitlementData: PromiseOrValue<BytesLike>,
@@ -754,7 +787,6 @@ export interface ZionSpaceManager extends BaseContract {
 
   createChannel(
     data: DataTypes.CreateChannelDataStruct,
-    roles: DataTypes.CreateRoleEntitlementDataStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -835,7 +867,6 @@ export interface ZionSpaceManager extends BaseContract {
 
   removeEntitlement(
     spaceNetworkId: PromiseOrValue<string>,
-    channelNetworkId: PromiseOrValue<string>,
     entitlementModuleAddress: PromiseOrValue<string>,
     roleId: PromiseOrValue<BigNumberish>,
     data: PromiseOrValue<BytesLike>,
@@ -852,6 +883,13 @@ export interface ZionSpaceManager extends BaseContract {
   removeRole(
     spaceNetworkId: PromiseOrValue<string>,
     roleId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  removeRoleIdsFromChannel(
+    spaceId: PromiseOrValue<string>,
+    channelId: PromiseOrValue<string>,
+    roleId: PromiseOrValue<BigNumberish>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -907,9 +945,15 @@ export interface ZionSpaceManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    addRoleIdsToChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     addRoleToEntitlementModule(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
@@ -918,7 +962,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     createChannel(
       data: DataTypes.CreateChannelDataStruct,
-      roles: DataTypes.CreateRoleEntitlementDataStruct[],
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -999,7 +1042,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     removeEntitlement(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
@@ -1016,6 +1058,13 @@ export interface ZionSpaceManager extends BaseContract {
     removeRole(
       spaceNetworkId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    removeRoleIdsFromChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1081,9 +1130,15 @@ export interface ZionSpaceManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    addRoleIdsToChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     addRoleToEntitlementModule(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
@@ -1092,7 +1147,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     createChannel(
       data: DataTypes.CreateChannelDataStruct,
-      roles: DataTypes.CreateRoleEntitlementDataStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1171,7 +1225,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     removeEntitlement(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
@@ -1188,6 +1241,13 @@ export interface ZionSpaceManager extends BaseContract {
     removeRole(
       spaceNetworkId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    removeRoleIdsFromChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1244,9 +1304,15 @@ export interface ZionSpaceManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    addRoleIdsToChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     addRoleToEntitlementModule(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
@@ -1255,7 +1321,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     createChannel(
       data: DataTypes.CreateChannelDataStruct,
-      roles: DataTypes.CreateRoleEntitlementDataStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1334,7 +1399,6 @@ export interface ZionSpaceManager extends BaseContract {
 
     removeEntitlement(
       spaceNetworkId: PromiseOrValue<string>,
-      channelNetworkId: PromiseOrValue<string>,
       entitlementModuleAddress: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
@@ -1351,6 +1415,13 @@ export interface ZionSpaceManager extends BaseContract {
     removeRole(
       spaceNetworkId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    removeRoleIdsFromChannel(
+      spaceId: PromiseOrValue<string>,
+      channelId: PromiseOrValue<string>,
+      roleId: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

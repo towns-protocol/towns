@@ -2,6 +2,10 @@ export enum MAXTRIX_ERROR {
     M_FORBIDDEN = 'M_FORBIDDEN',
 }
 
+export enum CONTRACT_ERROR {
+    AddRoleFailed = 'AddRoleFailed',
+}
+
 export class NoThrownError extends Error {}
 
 export interface ErrorData {

@@ -17,6 +17,11 @@
   },
   {
     "inputs": [],
+    "name": "AddRoleFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ChannelDoesNotExist",
     "type": "error"
   },

@@ -435,7 +435,7 @@ export class ZionClient {
                 receipt = await transaction.wait()
             } catch (err: unknown) {
                 const decodedErr = this.getDecodedError(err)
-                console.error('[createWeb3Channel]', decodedErr)
+                throw decodedErr
             }
 
             if (receipt?.status === 1) {

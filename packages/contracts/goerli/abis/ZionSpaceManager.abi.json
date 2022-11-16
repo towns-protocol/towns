@@ -17,6 +17,11 @@
   },
   {
     "inputs": [],
+    "name": "AddRoleFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ChannelDoesNotExist",
     "type": "error"
   },
@@ -63,11 +68,6 @@
   {
     "inputs": [],
     "name": "NotAllowed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "RoleDoesNotExist",
     "type": "error"
   },
   {
@@ -133,12 +133,30 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "roleId",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "addRoleIdsToChannel",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
         "type": "string"
       },
       {
@@ -180,33 +198,16 @@
             "internalType": "string",
             "name": "channelNetworkId",
             "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
           }
         ],
         "internalType": "struct DataTypes.CreateChannelData",
         "name": "data",
         "type": "tuple"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "entitlementModule",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "entitlementData",
-            "type": "bytes"
-          }
-        ],
-        "internalType": "struct DataTypes.CreateRoleEntitlementData[]",
-        "name": "roles",
-        "type": "tuple[]"
       }
     ],
     "name": "createChannel",
@@ -284,11 +285,6 @@
           },
           {
             "components": [
-              {
-                "internalType": "string",
-                "name": "tag",
-                "type": "string"
-              },
               {
                 "components": [
                   {
@@ -788,11 +784,6 @@
         "type": "string"
       },
       {
-        "internalType": "string",
-        "name": "channelNetworkId",
-        "type": "string"
-      },
-      {
         "internalType": "address",
         "name": "entitlementModuleAddress",
         "type": "address"
@@ -857,6 +848,29 @@
       }
     ],
     "name": "removeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "roleId",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "removeRoleIdsFromChannel",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

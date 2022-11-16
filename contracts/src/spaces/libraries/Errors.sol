@@ -21,4 +21,5 @@ library Errors {
   error NotAllowed();
   error RoleDoesNotExist();
   error RoleAlreadyExists();
+  error AddRoleFailed();
 }

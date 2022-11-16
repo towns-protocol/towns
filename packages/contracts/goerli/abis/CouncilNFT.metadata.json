@@ -742,7 +742,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/zion-governance/src/council/CouncilNFT.sol": "CouncilNFT"
+      "contracts/src/council/CouncilNFT.sol": "CouncilNFT"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -751,23 +751,22 @@
     },
     "optimizer": {
       "enabled": true,
-      "runs": 1000000
+      "runs": 200
     },
     "remappings": [
-      ":@harmony/=node_modules/@harmony/",
       ":@opengsn/=node_modules/@opengsn/",
       ":@openzeppelin/=node_modules/@openzeppelin/",
-      ":ds-test/=lib/solmate/lib/ds-test/src/",
+      ":ds-test/=lib/ds-test/src/",
       ":forge-std/=lib/forge-std/src/",
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":solidity-json-writer/=node_modules/solidity-json-writer/",
+      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
       ":solmate/=lib/solmate/src/"
     ]
   },
   "sources": {
-    "contracts/zion-governance/src/council/CouncilNFT.sol": {
+    "contracts/src/council/CouncilNFT.sol": {
       "keccak256": "0x41115345c1b873b0438e71ce22d026be4ef65fa1d1a09101ecb49d7cc23229fd",
       "license": "Apache-2.0",
       "urls": [
@@ -775,7 +774,7 @@
         "dweb:/ipfs/QmckANMuB9M2rjGPpxHkoFNynym5htzUVnSgXM6VLBewPf"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/CouncilErrors.sol": {
+    "contracts/src/council/libraries/CouncilErrors.sol": {
       "keccak256": "0x5e7ef03bdac9b2acca7cc67467765787e5387c533fb99807d761d639d78a1949",
       "license": "Apache-2.0",
       "urls": [
@@ -783,7 +782,7 @@
         "dweb:/ipfs/QmXYwWyy2bJSps8nUeLBss7wCY4zUJzDotaqh4tZUMu6jc"
       ]
     },
-    "contracts/zion-governance/src/council/libraries/CouncilEvents.sol": {
+    "contracts/src/council/libraries/CouncilEvents.sol": {
       "keccak256": "0x8aaeb1b2e207af77f4a2991319bd40355d55a4dafad0291c63d9a2767cbbc4ca",
       "license": "Apache-2.0",
       "urls": [
