@@ -12,11 +12,13 @@ OPTIONS:
    -h|--help    Show this message
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
    -was|--with-appservice   Start Dendrite with appservice
+   -waz|--with-authz   Start Dendrite with authorization checks
 EOF
 }
 
 WITH_APPSERVICE="${1:-no}"
 WITH_POSTGRES_PERSIST="${2:-no}"
+WITH_AUTHZ="${3:-no-authz}"
 
 while [ ! $# -eq 0 ]; do
     case "$1" in
@@ -25,6 +27,9 @@ while [ ! $# -eq 0 ]; do
             ;;
         -was | --with-appservice)
             WITH_APPSERVICE='with-appservice'
+            ;;
+        -waz | --with-authz)
+            WITH_AUTHZ='with-authz'
             ;;
         -h | --help)
             usage
@@ -91,6 +96,6 @@ then
   ./run_single.sh 0 dendrite.with_appservice.yaml
 else
    cd ${LOCAL_TEST_DIR}
-  ./run_single.sh 0
+  ./run_single.sh 0 dendrite.yaml ${WITH_AUTHZ}
 fi
 
