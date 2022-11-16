@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MAXTRIX_ERROR, NoThrownError, getError, MatrixError } from './helpers/ErrorUtils'
 import {
+    createTestChannelWithSpaceRoles,
     createTestSpaceWithEntitlement,
     registerAndStartClients,
     registerLoginAndStartClient,
@@ -8,11 +9,17 @@ import {
 
 import { waitFor } from '@testing-library/dom'
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
-import { Room, RoomIdentifier } from 'use-zion-client/src/types/matrix-types'
+import { Room, RoomIdentifier, RoomVisibility } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { MatrixEvent } from 'matrix-js-sdk'
+
+/**
+ * Permissions tests
+ *
+ * @group unit/permissions
+ */
 
 /** 
  * Todo: permission feature development, skip this suite in our CI.
@@ -635,3 +642,80 @@ describe.skip('space invite', () => {
         expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
     }) // end test
 }) // end describe
+
+describe.skip('channel with roles and permissions', () => {
+    test('join token-gated channel', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerLoginAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.FUNDED_WALLET_0,
+        )
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+        // create a space with token entitlement to read & write
+        const spaceId = await createTestSpaceWithEntitlement(
+            alice,
+            [readPermission, writePermission],
+            [],
+        )
+
+        // create a channel with the same roles and permissions as the space
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
+            name: `channel_${alice.makeUniqueName()}`,
+            visibility: RoomVisibility.Public,
+            parentSpaceId: spaceId as RoomIdentifier,
+            roleIds: [],
+        })
+        // invite user to join the channel
+        if (channelId && tokenGrantedUser.matrixUserId) {
+            await alice.inviteUser(channelId, tokenGrantedUser.matrixUserId)
+        }
+
+        /** Act */
+
+        // join the channel
+        const room = await tokenGrantedUser.joinRoom(channelId as RoomIdentifier)
+
+        /** Assert */
+        expect(room).toBeDefined()
+    }) // end test
+
+    test('denied access to token-gated channel', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        await alice.fundWallet()
+
+        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
+        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
+        // create a space with token entitlement to read & write
+        const spaceId = await createTestSpaceWithEntitlement(
+            alice,
+            [readPermission, writePermission],
+            [],
+        )
+
+        // create a channel with the same roles and permissions as the space
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
+            name: `channel_${alice.makeUniqueName()}`,
+            visibility: RoomVisibility.Public,
+            parentSpaceId: spaceId as RoomIdentifier,
+            roleIds: [],
+        })
+        // invite user to join the channel
+        if (channelId && bob.matrixUserId) {
+            await alice.inviteUser(channelId, bob.matrixUserId)
+        }
+
+        /** Act & Assert */
+
+        // join the channel
+        await expect(bob.joinRoom(channelId as RoomIdentifier)).rejects.toThrow('Unauthorised')
+    }) // end test
+})

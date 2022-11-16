@@ -123,14 +123,14 @@ export async function createTestSpaceWithEntitlement(
     return roomId
 }
 
-export async function createTestChannelWithEntitlement(
+export async function createTestChannelWithSpaceRoles(
     client: ZionTestClient,
     createChannelInfo: CreateChannelInfo,
 ): Promise<RoomIdentifier | undefined> {
     if (createChannelInfo.roleIds.length === 0) {
-        // For testing purposes, we want to make sure that the channel has at
-        // least one role. In the app, the user will be choosing the role(s) from UI.
-        // Get the roles from the space.
+        // In the app, the user is shown roles from the space and chooses
+        // at least one role from the UI.
+        // For testing, get the roles from the space and select all of them.
         const allowedRoles = await getRolesFromSpace(
             client,
             createChannelInfo.parentSpaceId.matrixRoomId,
