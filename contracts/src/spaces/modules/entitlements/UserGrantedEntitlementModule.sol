@@ -66,6 +66,15 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     uint256 channelId,
     uint256 roleId
   ) external override onlySpaceManager {
+    // check for duplicate role ids
+    uint256[] memory roles = _rolesByChannelIdBySpaceId[spaceId][channelId];
+
+    for (uint256 i = 0; i < roles.length; i++) {
+      if (roles[i] == roleId) {
+        revert Errors.RoleAlreadyExists();
+      }
+    }
+
     //add the roleId to the mapping for the channel
     _rolesByChannelIdBySpaceId[spaceId][channelId].push(roleId);
   }

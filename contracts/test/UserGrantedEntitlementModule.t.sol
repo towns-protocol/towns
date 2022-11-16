@@ -14,6 +14,7 @@ import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/Token
 import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
 import {BaseSetup} from "./BaseSetup.sol";
 import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
+import {Errors} from "../src/spaces/libraries/Errors.sol";
 
 contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
   function setUp() public virtual override {
@@ -76,6 +77,9 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
 
     uint256[] memory roleIds = new uint256[](1);
     roleIds[0] = roleId;
+    spaceManager.addRoleIdsToChannel(spaceNetworkId, channelNetworkId, roleIds);
+
+    vm.expectRevert(Errors.RoleAlreadyExists.selector);
     spaceManager.addRoleIdsToChannel(spaceNetworkId, channelNetworkId, roleIds);
 
     assertTrue(

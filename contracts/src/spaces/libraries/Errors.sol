@@ -20,4 +20,5 @@ library Errors {
   error PermissionAlreadyExists();
   error NotAllowed();
   error RoleDoesNotExist();
+  error RoleAlreadyExists();
 }

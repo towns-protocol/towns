@@ -178,6 +178,8 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       );
 
       for (uint256 j = 0; j < data.roleIds.length; j++) {
+        if (data.roleIds[j] == _spaceById[spaceId].ownerRoleId) continue;
+
         IEntitlementModule(entitlement).addRoleIdToChannel(
           spaceId,
           channelId,

@@ -88,6 +88,16 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     uint256 channelId,
     uint256 roleId
   ) external override onlySpaceManager {
+    // check for duplicate role ids
+    uint256[] memory roleIds = entitlementsBySpaceId[spaceId]
+      .roleIdsByChannelId[channelId];
+
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      if (roleIds[i] == roleId) {
+        revert Errors.RoleAlreadyExists();
+      }
+    }
+
     //Add the roleId to the mapping for the channel
     entitlementsBySpaceId[spaceId].roleIdsByChannelId[channelId].push(roleId);
   }
