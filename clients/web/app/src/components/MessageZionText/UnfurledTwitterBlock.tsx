@@ -32,6 +32,10 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
         ref,
     })
 
+    if (!data) {
+        return <Text color="gray2">** Could not load Twitter content. **</Text>
+    }
+
     return (
         <Box
             maxWidth="500"

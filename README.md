@@ -37,6 +37,8 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 ## Running everything locally
 
+## Sample App
+
 If you would like to run the sample-app against a local server and blockchain (recommended), first:
 
 ```
@@ -62,6 +64,14 @@ This workflow
 ![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
 
 ![Screen Shot 2022-09-02 at 3 05 12 PM](https://user-images.githubusercontent.com/950745/188241166-cf387398-6b43-4366-bead-b8c50fd1b0c2.png)
+
+# App
+
+If you would like to run the main app:
+
+`cp clients/web/app/.env.local-sample clients/web/app/.env.local` and populate with [Giphy API key](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
+
+`cp servers/unfurl-worker/.dev.vars-sample servers/unfurl-worker/.dev.vars` and populate with [Twitter bearer token](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
 
 ## Integration tests
 

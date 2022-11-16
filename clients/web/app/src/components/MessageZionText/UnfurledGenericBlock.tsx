@@ -6,7 +6,7 @@ import { atoms } from 'ui/styles/atoms.css'
 export const UnfurledGenericBlock = (props: UnfurlData) => {
     return (
         <Box
-            data-testId="unfurled-generic-block"
+            data-testid="unfurled-generic-block"
             style={{ marginRight: 'auto' }}
             background="level3"
             padding="md"

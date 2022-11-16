@@ -3,6 +3,7 @@ import { Channel, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-c
 import { RelationType } from 'matrix-js-sdk'
 import { LINK } from '@lexical/markdown'
 import { UnfurlData } from '@unfurl-worker/types'
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody } from 'utils/ztevent_util'
 import { isDev } from 'utils'
@@ -16,6 +17,16 @@ type Props = {
     eventContent: RoomMessageEvent
     members: RoomMember[]
     channels: Channel[]
+}
+
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+    return (
+        <div role="alert">
+            <p>Error unfurling content: </p>
+            <pre>{error.message}</pre>
+            <button onClick={resetErrorBoundary}>Try again</button>
+        </div>
+    )
 }
 
 const UnfurlBlock = (props: UnfurlData) => {
@@ -58,7 +69,9 @@ export const MessageZionText = ({ eventContent, event, members, channels }: Prop
             {!unfurledContent
                 ? null
                 : unfurledContent.map((unfurlData: UnfurlData) => (
-                      <UnfurlBlock key={unfurlData.url} {...unfurlData} />
+                      <ErrorBoundary key={unfurlData.url} FallbackComponent={ErrorFallback}>
+                          <UnfurlBlock {...unfurlData} />
+                      </ErrorBoundary>
                   ))}
         </>
     )
