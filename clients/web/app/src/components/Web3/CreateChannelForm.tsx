@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { KeyboardEventHandler, useCallback, useMemo, useState } from 'react'
 import {
     CreateChannelInfo,
     Membership,
@@ -24,7 +24,7 @@ export const CreateChannelForm = (props: Props) => {
     const disableCreateButton = useMemo(() => channelName.length === 0, [channelName.length])
 
     const onChannelNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setChannelName(event.target.value)
+        setChannelName(event.target.value.toLowerCase().replaceAll(' ', '-'))
     }, [])
 
     const onClickCreatChannel = useCallback(async () => {
@@ -47,6 +47,22 @@ export const CreateChannelForm = (props: Props) => {
         }
     }, [disableCreateButton, channelName, visibility, parentSpaceId, createChannel, onClick])
 
+    const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!new RegExp(/^[a-zA-Z0-9 _-]+$/).test(event.key)) {
+            event.preventDefault()
+            return
+        }
+
+        const val = event.currentTarget.value
+        const prevChar = val.charAt(val.length - 1)
+        if (
+            (event.key === ' ' || event.key === ' Spacebar' || event.key === '-') &&
+            prevChar === '-'
+        ) {
+            event.preventDefault()
+        }
+    }, [])
+
     return (
         <Stack padding gap="lg" minWidth="400">
             <Stack gap="lg">
@@ -57,6 +73,9 @@ export const CreateChannelForm = (props: Props) => {
                     secondaryLabel="(required)"
                     description="This is a channel within your space. This channel will have a unique url."
                     placeholder="Channel Name"
+                    value={channelName}
+                    maxLength={30}
+                    onKeyDown={onKeyDown}
                     onChange={onChannelNameChange}
                 />
 
