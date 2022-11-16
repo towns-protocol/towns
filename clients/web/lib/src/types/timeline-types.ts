@@ -21,11 +21,11 @@ export enum ZTEvent {
     RoomAvatar = 'm.room.avatar',
     RoomCanonicalAlias = 'm.room.canonical_alias',
     RoomCreate = 'm.room.create',
-    RoomEncrypted = 'm.room.encrypted',
     RoomHistoryVisibility = 'm.room.history_visibility',
     RoomJoinRules = 'm.room.join_rules',
     RoomMember = 'm.room.member',
     RoomMessage = 'm.room.message',
+    RoomMessageEncrypted = 'm.room.encrypted',
     RoomName = 'm.room.name',
     RoomPowerLevels = 'm.room.power_levels',
     RoomRedaction = 'm.room.redaction',
@@ -41,7 +41,7 @@ export type TimelineEvent_OneOf =
     | RoomJoinRulesEvent
     | RoomAvatarEvent
     | RoomCreateEvent
-    | RoomEncryptedEvent
+    | RoomMessageEncryptedEvent
     | RoomMemberEvent
     | RoomMessageEvent
     | RoomNameEvent
@@ -49,6 +49,7 @@ export type TimelineEvent_OneOf =
     | RoomPowerLevelsEvent
     | SpaceChildEvent
     | SpaceParentEvent
+
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
 
@@ -82,8 +83,8 @@ export interface RoomCreateEvent {
     type?: string
 }
 
-export interface RoomEncryptedEvent {
-    kind: ZTEvent.RoomEncrypted
+export interface RoomMessageEncryptedEvent {
+    kind: ZTEvent.RoomMessageEncrypted
 }
 
 export interface RoomHistoryVisibilityEvent {

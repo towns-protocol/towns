@@ -392,7 +392,7 @@ function toZionContent(event: MatrixEvent): {
                     type: content.type as string | undefined,
                 },
             }
-        case ZTEvent.RoomEncrypted:
+        case ZTEvent.RoomMessageEncrypted:
             return {
                 content: {
                     kind: eventType,
@@ -558,7 +558,7 @@ function getFallbackContent(
         }
         case ZTEvent.RoomCreate:
             return `type: ${content.type ?? 'none'}`
-        case ZTEvent.RoomEncrypted:
+        case ZTEvent.RoomMessageEncrypted:
             return `~Encrypted~`
         case ZTEvent.RoomHistoryVisibility:
             return `newValue: ${content.historyVisibility}`
@@ -583,7 +583,7 @@ function getFallbackContent(
             return `parentId: ${content.parentId}`
         default:
             staticAssertNever(content)
-            return `Unreachable`
+            return `Unreachable ${eventType}`
     }
 }
 
