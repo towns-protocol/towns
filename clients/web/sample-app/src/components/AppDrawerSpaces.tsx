@@ -1,10 +1,11 @@
-import { List, ListItem, ListItemText } from '@mui/material'
+import { Divider, List, ListItem, ListItemText } from '@mui/material'
 import {
     RoomIdentifier,
     toRoomIdentifier,
     useChannelNotificationCounts,
     useSpaceHierarchy,
     useSpaceNotificationCounts,
+    useSpaceThreadRootsUnreadCount,
     useZionContext,
 } from 'use-zion-client'
 
@@ -14,12 +15,13 @@ import { useParams } from 'react-router-dom'
 
 interface Props {
     onClickSpace: (id: RoomIdentifier) => void
+    onClickThreads: (spaceId: RoomIdentifier) => void
     onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
 }
 
 export function AppDrawerSpaces(props: Props): JSX.Element {
     const { spaceSlug, channelSlug } = useParams()
-    const { onClickSpace, onClickChannel } = props
+    const { onClickSpace, onClickChannel, onClickThreads } = props
     const { spaces } = useZionContext()
 
     const selectedSpaceId = useMemo(() => toRoomIdentifier(spaceSlug), [spaceSlug])
@@ -34,6 +36,7 @@ export function AppDrawerSpaces(props: Props): JSX.Element {
                         selectedSpaceId={selectedSpaceId}
                         selectedChannelId={selectedChannelId}
                         onClickSpace={onClickSpace}
+                        onClickThreads={onClickThreads}
                         onClickChannel={onClickChannel}
                     />
                 ))}
@@ -47,14 +50,23 @@ const SpaceListItem = (props: {
     selectedSpaceId?: RoomIdentifier
     selectedChannelId?: RoomIdentifier
     onClickSpace: (id: RoomIdentifier) => void
+    onClickThreads: (id: RoomIdentifier) => void
     onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
 }) => {
-    const { space, selectedSpaceId, selectedChannelId, onClickSpace, onClickChannel } = props
+    const {
+        space,
+        selectedSpaceId,
+        selectedChannelId,
+        onClickSpace,
+        onClickThreads,
+        onClickChannel,
+    } = props
     const isSelectedSpace = (id: RoomIdentifier) => {
         return id.matrixRoomId === selectedSpaceId?.matrixRoomId
     }
     const spaceNotifications = useSpaceNotificationCounts(space.id)
     const spaceHierarchy = useSpaceHierarchy(space.id)
+    const spaceThreadCount = useSpaceThreadRootsUnreadCount()
     const formatNameWithUnreads = useCallback(
         (space: SpaceItem) => {
             const unreadPostfix = spaceNotifications.isUnread ? ' *' : ''
@@ -70,6 +82,18 @@ const SpaceListItem = (props: {
                 {formatNameWithUnreads(space)}
                 {isSelectedSpace(space.id) && spaceHierarchy && (
                     <List>
+                        <ListItem
+                            button
+                            selected={false}
+                            key={space.id.slug + '_threads'}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onClickThreads(space.id)
+                            }}
+                        >
+                            Threads {spaceThreadCount > 0 && `(${spaceThreadCount})`}
+                        </ListItem>
+                        <Divider key={space.id.slug + '_threadsDivider'} />
                         {spaceHierarchy.children.map((c) => (
                             <ChannelListItem
                                 key={c.id.slug}

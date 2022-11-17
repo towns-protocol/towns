@@ -54,6 +54,11 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/spaces/' + spaceId.slug + '/')
     }
 
+    const onClickThreads = (spaceId: RoomIdentifier) => {
+        console.log('onClickThreads', spaceId)
+        navigate('/spaces/' + spaceId.slug + '/threads/')
+    }
+
     const onClickChannel = (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
         console.log('onClickChannel', spaceId, channelId)
         navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/')
@@ -83,7 +88,11 @@ export function AppDrawer(props: Props): JSX.Element {
         <div>
             <Toolbar />
             <Divider />
-            <AppDrawerSpaces onClickSpace={onClickSpace} onClickChannel={onClickChannel} />
+            <AppDrawerSpaces
+                onClickSpace={onClickSpace}
+                onClickThreads={onClickThreads}
+                onClickChannel={onClickChannel}
+            />
             <Divider />
             <SidebarNewItemButton label="Create Space" onClick={onClickCreateSpace} />
             <Divider />

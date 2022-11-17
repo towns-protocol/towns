@@ -3,6 +3,8 @@ import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
 import { ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
+import { Thread } from 'routes/Thread'
+import { Threads } from 'routes/Threads'
 import { Home } from './routes/Home'
 import { Main } from './components/Main'
 import { NotFound } from './routes/NotFound'
@@ -45,6 +47,11 @@ export const App = () => {
                                         <Route index element={<ChannelsIndex />} />
                                         <Route path="settings" element={<RoomSettings />} />
                                     </Route>
+                                    <Route path="threads" element={<Threads />} />
+                                    <Route
+                                        path="threads/:channelSlug/:threadParentId"
+                                        element={<Thread />}
+                                    />
                                 </Route>
                                 <Route path="web3" element={<Web3 />} />
                                 <Route path="*" element={<NotFound />} />

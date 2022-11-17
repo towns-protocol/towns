@@ -17,7 +17,7 @@ export const SpacesIndex = () => {
     const space = useSpaceData()
     const membership = useMyMembership(space?.id)
     const timeline = useSpaceTimeline()
-    const { leaveRoom, sendMessage, joinRoom } = useZionClient()
+    const { leaveRoom, sendMessage, joinRoom, resetFullyReadMarkers } = useZionClient()
 
     const onClickSettings = useCallback(() => {
         if (space?.id.slug) {
@@ -39,6 +39,10 @@ export const SpacesIndex = () => {
             navigate('/')
         }
     }, [leaveRoom, navigate, space?.id])
+
+    const onClickMarkAllAsRead = useCallback(async () => {
+        resetFullyReadMarkers()
+    }, [resetFullyReadMarkers])
 
     const onClickSendMessage = useCallback(
         (roomId: RoomIdentifier, message: string) => {
@@ -69,6 +73,9 @@ export const SpacesIndex = () => {
                     </div>
                     <div>
                         <button onClick={onClickLeaveSpace}>Leave space</button>
+                    </div>
+                    <div>
+                        <button onClick={onClickMarkAllAsRead}>Mark all as read</button>
                     </div>
                     <div>
                         {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}

@@ -13,6 +13,7 @@ import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {
     roomId: RoomIdentifier
+    threadParentId?: string
     timeline: TimelineEvent[]
     membership: string
     sendMessage: (roomId: RoomIdentifier, message: string) => Promise<void>
@@ -20,9 +21,9 @@ interface Props {
 }
 
 export function ChatMessages(props: Props): JSX.Element {
-    const { timeline, membership, roomId, sendMessage, joinRoom } = props
+    const { timeline, membership, roomId, threadParentId, sendMessage, joinRoom } = props
     const { sendReadReceipt, scrollback } = useZionClient()
-    const unreadMarker = useFullyReadMarker(roomId)
+    const unreadMarker = useFullyReadMarker(roomId, threadParentId)
     const [currentMessage, setCurrentMessage] = useState<string>('')
     const hasUnread = membership === Membership.Join && unreadMarker?.isUnread === true
     // pull if the first message is create, we've reached the end
