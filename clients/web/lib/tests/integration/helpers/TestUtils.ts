@@ -10,12 +10,14 @@ import { TestConstants } from './TestConstants'
 import { ZionTestClient } from './ZionTestClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ethers, Wallet } from 'ethers'
-import { getContractInfo } from 'use-zion-client/src/client/web3/ZionContracts'
-import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
 import {
-    createTokenEntitlementData,
+    createExternalTokenEntitlements,
+    createPermissions,
     getRolesFromSpace,
-} from '../../../src/client/web3/ContractDataFactory'
+    getZionTokenAddress,
+} from 'use-zion-client/src/client/web3/ZionContracts'
+import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
+import { Permission } from '../../../src/client/web3/ZionContractTypes'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -88,14 +90,12 @@ export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
     return result
 }
 
-export async function createTestSpaceWithEntitlement(
+export async function createTestSpaceWithZionMemberRole(
     client: ZionTestClient,
-    permissions: DataTypes.PermissionStruct[],
-    everyonePermissions: DataTypes.PermissionStruct[] = [],
+    tokenGrantedPermissions: Permission[],
+    everyonePermissions: Permission[] = [],
     createSpaceInfo?: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
-    const contractInfo = getContractInfo(client.chainId)
-
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
@@ -103,22 +103,18 @@ export async function createTestSpaceWithEntitlement(
         }
     }
 
-    const externalTokenEntitlement = createTokenEntitlementData({
-        contractAddress: contractInfo.council.addresses.councilnft,
-    })
-
+    const permissions = createPermissions(tokenGrantedPermissions)
+    const zionTokenAddress = getZionTokenAddress(client.chainId)
+    const externalTokenEntitlements = createExternalTokenEntitlements([zionTokenAddress])
     const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
         roleName: 'Member',
-        permissions: permissions,
-        externalTokenEntitlements: [externalTokenEntitlement],
+        permissions,
+        externalTokenEntitlements,
         users: [],
     }
 
-    const roomId = await client.createWeb3Space(
-        createSpaceInfo,
-        tokenEntitlement,
-        everyonePermissions,
-    )
+    const everyonePerms = createPermissions(everyonePermissions)
+    const roomId = await client.createWeb3Space(createSpaceInfo, tokenEntitlement, everyonePerms)
 
     return roomId
 }

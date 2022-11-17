@@ -1,10 +1,9 @@
+import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
-import { createTestSpaceWithEntitlement, registerAndStartClients } from './helpers/TestUtils'
+import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
 
-import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
-import { getRolesFromSpace } from '../../src/client/web3/ContractDataFactory'
-import { CONTRACT_ERROR, getError, NoThrownError } from './helpers/ErrorUtils'
+import { getRolesFromSpace } from '../../src/client/web3/ZionContracts'
 
 describe('On-chain channel creation tests', () => {
     jest.setTimeout(30000)
@@ -14,14 +13,10 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
-
-        const roomId = await createTestSpaceWithEntitlement(
-            alice,
-            [readPermission, writePermission],
-            [],
-        )
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
         let channel: RoomIdentifier | undefined
 
         /* Act */
@@ -45,14 +40,10 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
-
-        const roomId = (await createTestSpaceWithEntitlement(
-            alice,
-            [readPermission, writePermission],
-            [],
-        )) as RoomIdentifier
+        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
 
         /* Act */
         // create a channel on-chain with roles from the space
@@ -78,14 +69,10 @@ describe('On-chain channel creation tests', () => {
         await alice.fundWallet()
 
         // create a space with token entitlement to write
-        const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-        const writePermission: DataTypes.PermissionStruct = { name: Permission.Write }
-
-        const roomId = (await createTestSpaceWithEntitlement(
-            alice,
-            [readPermission, writePermission],
-            [],
-        )) as RoomIdentifier
+        const roomId = (await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
 
         /* Act */
         // create a channel on-chain with roles from the space

@@ -107,4 +107,7 @@ export {
     isUserIdentifier,
 } from './types/user-identifier'
 
+export { Permission } from './client/web3/ZionContractTypes'
+export { getZionTokenAddress } from './client/web3/ZionContracts'
+
 export { staticAssertNever } from './utils/zion-utils'

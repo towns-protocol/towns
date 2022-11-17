@@ -362,11 +362,9 @@ export class ZionClient {
                 )
                 receipt = await transaction.wait()
             } catch (err) {
-                console.log('[createWeb3Space] error', err)
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-                const revertData: BytesLike = (err as any).error?.error?.error?.data
-                const decodedError = this.spaceManager.signed.interface.parseError(revertData)
-                console.error(decodedError)
+                console.log('[createWeb3Space]', err)
+                const decodedErr = this.getDecodedError(err)
+                throw decodedErr
             } finally {
                 if (receipt?.status === 1) {
                     // Successful created the space on-chain.

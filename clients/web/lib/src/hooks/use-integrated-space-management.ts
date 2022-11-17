@@ -1,9 +1,8 @@
 import { CreateSpaceInfo, RoomIdentifier } from 'types/matrix-types'
+import { createExternalTokenEntitlements, createPermissions } from '../client/web3/ZionContracts'
 
 import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
-import { Permission } from '../client/web3/ZionContractTypes'
-import { createTokenEntitlementData } from '../client/web3/ContractDataFactory'
-import { getContractInfo } from '../client/web3/ZionContracts'
+import { Permission } from 'client/web3/ZionContractTypes'
 import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
 
@@ -14,37 +13,27 @@ import { useZionClient } from './use-zion-client'
 const TAG = '[useIntegratedSpaceManagement]'
 
 export function useIntegratedSpaceManagement() {
-    const { createWeb3Space, chainId } = useZionClient()
+    const { createWeb3Space } = useZionClient()
 
-    const createSpaceWithZionTokenEntitlement = useCallback(
-        async function (createInfo: CreateSpaceInfo): Promise<RoomIdentifier | undefined> {
-            if (!chainId) {
-                console.error('createSpaceWithZionTokenEntitlement::chainId is undefined')
-                return undefined
-            }
-
-            const contractInfo = getContractInfo(chainId)
-            const externalTokenEntitlement = createTokenEntitlementData({
-                contractAddress: contractInfo.spaceManager.addresses.tokengranted,
-            })
-
-            const readPermission: DataTypes.PermissionStruct = { name: Permission.Read }
-
+    const createSpaceWithMemberRole = useCallback(
+        async function (
+            createInfo: CreateSpaceInfo,
+            tokenAddresses: string[],
+            tokenGrantedPermissions: Permission[],
+            everyonePermissions: Permission[] = [],
+        ): Promise<RoomIdentifier | undefined> {
+            const permissions = createPermissions(tokenGrantedPermissions)
+            const externalTokenEntitlements = createExternalTokenEntitlements(tokenAddresses)
             const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
-                permissions: [readPermission],
                 roleName: 'Member',
-                externalTokenEntitlements: [externalTokenEntitlement],
+                permissions,
+                externalTokenEntitlements,
                 users: [],
             }
 
-            const everyonePermissions: DataTypes.PermissionStruct[] = []
+            const everyonePerms = createPermissions(everyonePermissions)
             try {
-                const roomId = await createWeb3Space(
-                    createInfo,
-                    tokenEntitlement,
-                    everyonePermissions,
-                )
-
+                const roomId = await createWeb3Space(createInfo, tokenEntitlement, everyonePerms)
                 return roomId
             } catch (e: unknown) {
                 console.error(TAG, e)
@@ -52,10 +41,10 @@ export function useIntegratedSpaceManagement() {
 
             return undefined
         },
-        [chainId, createWeb3Space],
+        [createWeb3Space],
     )
 
     return {
-        createSpaceWithZionTokenEntitlement,
+        createSpaceWithMemberRole,
     }
 }

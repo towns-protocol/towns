@@ -13,10 +13,13 @@ import {
 import {
     CreateSpaceInfo,
     Membership,
+    Permission,
     RoomIdentifier,
     RoomVisibility,
+    getZionTokenAddress,
     useIntegratedSpaceManagement,
     useWeb3Context,
+    useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useMemo, useState } from 'react'
 import { chain as ChainType, useBalance } from 'wagmi'
@@ -29,12 +32,19 @@ interface Props {
 
 export const CreateSpaceForm = (props: Props) => {
     const { chain, accounts, provider } = useWeb3Context()
+    const { chainId } = useZionClient()
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
-    const { createSpaceWithZionTokenEntitlement } = useIntegratedSpaceManagement()
+    const { createSpaceWithMemberRole } = useIntegratedSpaceManagement()
     const { onClick } = props
 
     const disableCreateButton = useMemo(() => spaceName.length === 0, [spaceName.length])
+
+    const zionTokenAddress = useMemo(() => {
+        if (chainId) {
+            return getZionTokenAddress(chainId)
+        }
+    }, [chainId])
 
     const onChangespaceName = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setSpaceName(event.target.value)
@@ -45,7 +55,6 @@ export const CreateSpaceForm = (props: Props) => {
             const afunc = async () => {
                 const privateKey =
                     '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // anvil default funded address #1
-                const chainId = (await provider?.getNetwork())?.chainId
                 const wallet = new ethers.Wallet(privateKey, provider)
                 const amount = 0.1
                 const tx = {
@@ -61,7 +70,7 @@ export const CreateSpaceForm = (props: Props) => {
             }
             void afunc()
         },
-        [provider],
+        [chainId, provider],
     )
 
     const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
@@ -69,11 +78,20 @@ export const CreateSpaceForm = (props: Props) => {
     }, [])
 
     const onClickCreateSpace = useAsyncButtonCallback(async () => {
+        if (!zionTokenAddress) {
+            console.error('Cannot create space. No zion token address.')
+            return undefined
+        }
+
         const createSpaceInfo: CreateSpaceInfo = {
             name: spaceName,
             visibility,
         }
-        const roomId = await createSpaceWithZionTokenEntitlement(createSpaceInfo)
+        const roomId = await createSpaceWithMemberRole(
+            createSpaceInfo,
+            [zionTokenAddress],
+            [Permission.Read, Permission.Write],
+        )
         if (roomId) {
             onClick(roomId, Membership.Join)
         }

@@ -4,14 +4,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
+
+import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
-import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
-import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
-import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
-import { useIntegratedSpaceManagement } from 'use-zion-client/src/hooks/use-integrated-space-management'
+import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
+import { getZionTokenAddress } from '../../src/client/web3/ZionContracts'
+import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
+import { useIntegratedSpaceManagement } from 'use-zion-client/src/hooks/use-integrated-space-management'
+import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
+import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -27,9 +30,10 @@ describe('spaceManagerContractHooks', () => {
         // create a veiw for alice
         const TestComponent = () => {
             // basic space
-            const { createBasicWeb3Space } = useZionClient()
-            //
-            const { createSpaceWithZionTokenEntitlement } = useIntegratedSpaceManagement()
+            const { chainId, createBasicWeb3Space } = useZionClient()
+            const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
+            const { createSpaceWithMemberRole: createSpaceWithMemberRole } =
+                useIntegratedSpaceManagement()
             // spaces
             const spaces = useSpacesFromContract()
             // callback to create a space
@@ -40,19 +44,25 @@ describe('spaceManagerContractHooks', () => {
                 })
             }, [createBasicWeb3Space])
             // callback to create a space with zion token entitlement
-            const onClickCreateSpaceWithZionTokenEntitlement = useCallback(() => {
-                void createSpaceWithZionTokenEntitlement({
-                    name: tokenGatedSpaceName,
-                    visibility: RoomVisibility.Public,
-                })
-            }, [createSpaceWithZionTokenEntitlement])
+            const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
+                if (zionTokenAddress) {
+                    void createSpaceWithMemberRole(
+                        {
+                            name: tokenGatedSpaceName,
+                            visibility: RoomVisibility.Public,
+                        },
+                        [zionTokenAddress],
+                        [Permission.Read, Permission.Write],
+                    )
+                }
+            }, [createSpaceWithMemberRole, zionTokenAddress])
 
             // the view
             return (
                 <>
                     <RegisterWallet />
                     <button onClick={onClickCreateSpace}>Create Space</button>
-                    <button onClick={onClickCreateSpaceWithZionTokenEntitlement}>
+                    <button onClick={onClickCreateSpaceWithZionMemberRole}>
                         Create Token-Gated Space
                     </button>
                     <div data-testid="spaces">
