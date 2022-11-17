@@ -24,7 +24,9 @@ import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { richText } from '@components/RichText/RichTextEditor.css'
 import { isDev } from 'utils'
+import { RadioCard } from 'ui/components/Radios/RadioCard'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
+import { DummyReactHooksFormWrapper } from './DummyReactHooksFormWrapper'
 
 const A3 = Array(3)
     .fill(undefined)
@@ -307,6 +309,39 @@ export const Playground = () => {
                 <Stack>
                     <VListExample />
                 </Stack>
+            </Container>
+            <Container darkOnly label="Sample RadioCard">
+                <DummyReactHooksFormWrapper>
+                    {({ register, setValue, getValues, control }) => (
+                        <>
+                            {[
+                                {
+                                    value: 'everyone',
+                                    title: 'Everyone',
+                                    description: 'Anyone can join',
+                                },
+                                {
+                                    value: 'multiple',
+                                    title: 'Token holders',
+                                    description: 'People who hold a specific token',
+                                    children: () =>
+                                        getValues().someProp === 'multiple' ? (
+                                            <Box padding="lg">{getValues().someProp}</Box>
+                                        ) : null,
+                                },
+                            ].map((option) => (
+                                <RadioCard
+                                    register={register}
+                                    key={option.value}
+                                    control={control}
+                                    name="someProp"
+                                    onClick={() => setValue('someProp', option.value)}
+                                    {...option}
+                                />
+                            ))}
+                        </>
+                    )}
+                </DummyReactHooksFormWrapper>
             </Container>
         </Stack>
     )
