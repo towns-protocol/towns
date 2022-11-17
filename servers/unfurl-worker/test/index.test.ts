@@ -48,7 +48,7 @@ function generateRequest(urlArray: string[], method = 'GET'): [Request, Env, Exe
     const url = `${FAKE_SERVER_URL}?url=${urls}`
 
     return [
-        new Request(url, { method: 'GET' }),
+        new Request(url, { method }),
         getMiniflareBindings(),
         { waitUntil: () => null, passThroughOnException: () => null },
     ]

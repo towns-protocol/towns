@@ -12,13 +12,15 @@ OPTIONS:
    -h|--help    Show this message
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
    -was|--with-appservice   Start Dendrite with appservice
+   -spg|--skip-postgres   Dont start postgres at all
    -waz|--with-authz   Start Dendrite with authorization checks
 EOF
 }
 
 WITH_APPSERVICE="${1:-no}"
 WITH_POSTGRES_PERSIST="${2:-no}"
-WITH_AUTHZ="${3:-no-authz}"
+SKIP_POSTGRES="${3:-no}"
+WITH_AUTHZ="${4:-no-authz}"
 
 while [ ! $# -eq 0 ]; do
     case "$1" in
@@ -27,6 +29,9 @@ while [ ! $# -eq 0 ]; do
             ;;
         -was | --with-appservice)
             WITH_APPSERVICE='with-appservice'
+            ;;
+        -spg | --skip-postgres)
+            SKIP_POSTGRES='skip-postgres'
             ;;
         -waz | --with-authz)
             WITH_AUTHZ='with-authz'
@@ -54,40 +59,41 @@ pushd ${LOCAL_TEST_DIR}
 ./deploy.sh
 popd
 
-if [ ${WITH_POSTGRES_PERSIST} == "with-postgres-persist" ]
-then
-  if [ ! "$(docker ps -q -f name=${DENDRITE_POSTGRES_IMAGE})" ]; then
-    echo "Using persistent postgres"
-      docker run \
-          --name ${DENDRITE_POSTGRES_IMAGE} \
-          -p 127.0.0.1:5432:5432 \
-          -e POSTGRES_USER=dendrite \
-          -e POSTGRES_PASSWORD=itsasecret \
-          -e POSTGRES_DB=dendrite \
-          -d postgres
+if [ ${SKIP_POSTGRES} == "skip-postgres" ]; then
+  echo "Skipping postgres"
+else 
+  if [ ${WITH_POSTGRES_PERSIST} == "with-postgres-persist" ]; then
+    if [ ! "$(docker ps -q -f name=${DENDRITE_POSTGRES_IMAGE})" ]; then
+      echo "Using persistent postgres"
+        docker run \
+            --name ${DENDRITE_POSTGRES_IMAGE} \
+            -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_USER=dendrite \
+            -e POSTGRES_PASSWORD=itsasecret \
+            -e POSTGRES_DB=dendrite \
+            -d postgres
+    else
+      echo "postgres already running"
+      fi
   else
-    echo "postgres already running"
-    fi
-else
-  echo "Using ephemeral postgres"
-  docker rm -f ${DENDRITE_POSTGRES_IMAGE}
-  docker run \
-      --name ${DENDRITE_POSTGRES_IMAGE} \
-      -p 127.0.0.1:5432:5432 \
-      -e POSTGRES_USER=dendrite \
-      -e POSTGRES_PASSWORD=itsasecret \
-      -e POSTGRES_DB=dendrite \
-      -d postgres
-  # Remove the database on EXIT
-  trap "docker rm -f ${DENDRITE_POSTGRES_IMAGE}" EXIT
+    echo "Using ephemeral postgres"
+    docker rm -f ${DENDRITE_POSTGRES_IMAGE}
+    docker run \
+        --name ${DENDRITE_POSTGRES_IMAGE} \
+        -p 127.0.0.1:5432:5432 \
+        -e POSTGRES_USER=dendrite \
+        -e POSTGRES_PASSWORD=itsasecret \
+        -e POSTGRES_DB=dendrite \
+        -d postgres
+    # Remove the database on EXIT
+    trap "docker rm -f ${DENDRITE_POSTGRES_IMAGE}" EXIT
+  fi
+  # Wait for postgres to be ready
+  until docker exec -it dendrite-test-postgres psql -U dendrite -c '\l'; do
+    sleep 1
+  done
+  echo >&2 "$(date +%Y%m%dt%H%M%S) Postgres is up"
 fi
-
-
-# Wait for postgres to be ready
-until docker exec -it dendrite-test-postgres psql -U dendrite -c '\l'; do
-  sleep 1
-done
-echo >&2 "$(date +%Y%m%dt%H%M%S) Postgres is up"
 
 if [ ${WITH_APPSERVICE} == "with-appservice" ]
 then
@@ -98,4 +104,3 @@ else
    cd ${LOCAL_TEST_DIR}
   ./run_single.sh 0 dendrite.yaml ${WITH_AUTHZ}
 fi
-

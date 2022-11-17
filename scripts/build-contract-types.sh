@@ -1,7 +1,14 @@
 #!/bin/bash
 
 DEFAULTPARAM="localhost"
-read -p "Enter a chain folder name or press enter: (default: localhost)" CHAIN
+
+CHAIN="localhost"
+
+# TODO: get team feedback on removing this line for CI purposes
+
+# TODO: should we .gitignore the generated typings?
+
+# read -p "Enter a chain folder name or press enter: (default: localhost)" CHAIN
 
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi --force

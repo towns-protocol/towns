@@ -4,14 +4,15 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
+        "test": "make test",
+        "lint": "make lint",
+        "build": "make all",
         "all": "make all",
         "clean": "make clean",
         "format": "make format",
-        "lint": "make lint",
         "setup": "make clean && make build",
         "snapshot": "make snapshot",
-        "sync": "make update",
-        "test": "make test"
+        "sync": "make update"
     },
     "dependencies": {
         "@opengsn/contracts": "^2.2.6"

@@ -14,7 +14,7 @@ import { LoginStatus } from '../../src/hooks/login'
 import { sleep } from '../../src/utils/zion-utils'
 
 describe('powerLevelsHooks', () => {
-    jest.setTimeout(20000)
+    jest.setTimeout(40000)
     test('create a space with two users, reduce the level required to create a space child', async () => {
         // create clients
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])

@@ -2,7 +2,7 @@
 
 .PHONY: all test clean deploy-anvil
 
-all: clean install update build
+all: clean install build
 
 clean  :; forge clean
 

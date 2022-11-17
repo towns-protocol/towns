@@ -8,7 +8,7 @@ on:
 jobs:
     check:
         runs-on: ubuntu-latest
-        timeout-minutes: 15
+        timeout-minutes: 20
         services:
             redis:
                 image: redis:latest
@@ -19,13 +19,6 @@ jobs:
                     --health-retries 5
                 ports:
                     - 55000:6379
-
-            anvil:
-                image: ghcr.io/foundry-rs/foundry:latest
-                ports:
-                    - 8545:8545
-                options: >-
-                    --entrypoint anvil
 
             postgres-casablanca:
                 image: postgres:latest
@@ -44,8 +37,8 @@ jobs:
             postgres-dendrite:
                 image: postgres:14
                 env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_USER: dendrite
+                    POSTGRES_PASSWORD: itsasecret
                 ports:
                     - 5432:5432
                 options: >-
@@ -61,6 +54,11 @@ jobs:
             - name: Git submodules
               run: git submodule update --init --recursive
 
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                go-version: '1.19.2' # The Go version to download (if necessary) and use.
+
             - name: Cancel previous runs
               uses: styfle/cancel-workflow-action@0.11.0
               with:
@@ -71,6 +69,9 @@ jobs:
               with:
                   version: nightly
 
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
             - uses: actions/setup-node@v3
               with:
                   node-version: '18'
@@ -78,10 +79,6 @@ jobs:
 
             - name: Install node dependencies
               run: yarn install --immutable
-
-            # TODO: this script has confusing relative pathing
-            # - name: Install forge dependencies
-            #   run: ./scripts/install-deps.sh
 
             - name: Syncpack
               run: yarn syncpack:check
@@ -92,12 +89,17 @@ jobs:
             - name: Build
               run: yarn build
 
-            - name: Publish:local smart contracts
-              run: yarn publish:local
+            - name: Build contract types
+              run: ./scripts/build-contract-types.sh
 
-            # TODO: fix the deploy script and make sure it can connect to
-            # - name: Deploy local zion governance contracts
-            #   run: ./scripts/deploy-local-zion-governance-contracts.sh
+            - name: Start anvil
+              run: anvil &
+
+            - name: Deploy local zion governance contracts
+              run: ./scripts/deploy-local-zion-governance-contracts.sh
+
+            - name: Start dendrite
+              run: ./scripts/start-local-dendrite.sh --skip-postgres &
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -106,17 +108,17 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Start dendrite
-              run: ./servers/dendrite_local_test/run_single.sh 0 &
-
-            - name: Test
-              run: yarn test
-
             - name: Run Casablanca node
               run: yarn csb:start &
 
             - name: Wait for Casablanca node to be up
               run: yarn csb:wait
+
+            - name: Wait for dendrite to be ready
+              run: yarn drt:wait
+
+            - name: Test
+              run: yarn test
 
             - name: Test Casablanca node
               run: yarn csb:test-remote

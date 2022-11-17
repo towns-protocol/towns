@@ -10,7 +10,8 @@ I=$1
 DENDRITE_YAML="${2:-dendrite.yaml}"
 ENABLE_AUTHZ="${3:-no-authz}"
 
-SCRIPT_DIR=$PWD
+SCRIPT_DIR="$(dirname "$PWD")"
+
 NODE_DIR="${TEST_DIR}/node${I}"
 
 if [ ${ENABLE_AUTHZ} == "with-authz" ]
@@ -23,7 +24,8 @@ fi
 echo "Running node ${I} from ${NODE_DIR}"
 
 cd ${NODE_DIR}
-${SCRIPT_DIR}/../dendrite/bin/dendrite-monolith-server \
+
+${SCRIPT_DIR}/dendrite/bin/dendrite-monolith-server \
   --tls-cert server.crt \
   --tls-key server.key \
   --config ${DENDRITE_YAML} \

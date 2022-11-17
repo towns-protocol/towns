@@ -12,18 +12,20 @@
         "csb:start": "yarn workspace @zion/server run start",
         "csb:stop": "./casablanca/scripts/stop.sh",
         "csb:storage": "./casablanca/scripts/launch_storage.sh",
-        "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
         "csb:test-remote": "yarn workspace @zion/server run test-remote",
+        "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
         "csb:wait": "yarn workspace @zion/server run wait",
         "lint": "turbo lint",
         "postinstall": "husky install",
         "prepare": "husky install",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
+        "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "publish:local": "turbo publish:local",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
-        "test": "turbo test --scope=\"!use-zion-client\""
+        "test": "turbo test",
+        "drt:wait": "wait-on tcp:8008 --timeout=400000 --verbose"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",
