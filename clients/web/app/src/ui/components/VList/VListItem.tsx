@@ -1,7 +1,5 @@
-import { clsx } from 'clsx'
 import React, { MutableRefObject, useCallback, useLayoutEffect, useRef } from 'react'
 import { useSize } from 'ui/hooks/useSize'
-import { atoms } from 'ui/styles/atoms.css'
 import { ItemCacheMap, ItemSize } from './VList'
 import * as styles from './VList.css'
 
@@ -9,7 +7,7 @@ interface Props {
     children: React.ReactNode
     id: string
     cache: MutableRefObject<ItemCacheMap>
-    onUpdate: () => void
+    onUpdate?: (id?: string) => void
     highlight?: boolean
 }
 
@@ -23,9 +21,12 @@ export const VListItem = (props: Props) => {
     useLayoutEffect(() => {
         const cacheItem = cache.current.get(id)
         const height = size?.height
-        if (height && cacheItem?.height !== height && height > 0) {
+        if (cacheItem?.height === height) {
+            return
+        }
+        if (typeof height !== 'undefined' && height >= 0) {
             cache.current.set(id, { ...(cacheItem ?? {}), height, isMeasured: true })
-            onUpdate()
+            onUpdate?.(id)
         }
     }, [id, cache, onUpdate, size])
 
@@ -35,16 +36,10 @@ export const VListItem = (props: Props) => {
     return (
         <div
             ref={ref}
-            className={clsx([
-                styles.vItem,
-                atoms({
-                    visibility: cacheItem?.isMeasured ? undefined : 'hidden',
-                    background: props.highlight ? `level3` : undefined,
-                    rounded: 'xs',
-                }),
-            ])}
+            data-id={id}
+            className={styles.listItem}
             style={{
-                top: `calc(${y}px + var(--correction,0px))`,
+                top: `${y}px`,
             }}
         >
             {props.children}
@@ -52,15 +47,17 @@ export const VListItem = (props: Props) => {
     )
 }
 
-export const useItemHeight = <T extends { id: string }>(
-    itemHeight: undefined | number | ((data: T) => number),
+export const useInitCacheItem = <T extends { id: string }>(
+    itemHeight: undefined | number | ((data: T) => number | undefined),
+    _skipEstimate = false,
 ) => {
     const getItemHeight = useCallback(
         (data: T) => {
             if (typeof itemHeight === 'number') {
                 return itemHeight
             } else if (typeof itemHeight === 'function') {
-                return itemHeight(data)
+                const h = itemHeight(data)
+                return typeof h !== 'undefined' ? h : DEFAULT_ITEM_HEIGHT
             } else {
                 return DEFAULT_ITEM_HEIGHT
             }
@@ -68,11 +65,11 @@ export const useItemHeight = <T extends { id: string }>(
         [itemHeight],
     )
 
-    const initializeCacheItem = useCallback(
+    const initItemCache = useCallback(
         (sizesRef: MutableRefObject<Map<string, ItemSize>>, data: T) => {
             const meta = {
                 y: undefined,
-                height: getItemHeight(data),
+                height: getItemHeight(data) || -1,
                 isMeasured: false,
             }
             sizesRef.current.set(data.id, meta)
@@ -80,5 +77,5 @@ export const useItemHeight = <T extends { id: string }>(
         },
         [getItemHeight],
     )
-    return { initItemCache: initializeCacheItem }
+    return { createCacheItem: initItemCache }
 }

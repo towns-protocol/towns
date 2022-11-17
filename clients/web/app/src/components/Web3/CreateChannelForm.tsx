@@ -1,4 +1,4 @@
-import React, { KeyboardEventHandler, useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
     CreateChannelInfo,
     Membership,

@@ -1,9 +1,9 @@
 import { seed } from '@ngneat/falso'
 import React, { useCallback, useState } from 'react'
 import { Button, Paragraph, Stack } from '@ui'
-import { VList } from '../VList'
-import { createMessage, createMessageList } from './helpers/createMessages'
+import { VList } from 'ui/components/VList/VList'
 import { ExampleMessage } from './ExampleMessage'
+import { createMessage, createMessageList } from './helpers/createMessages'
 
 const NUM_MESSAGES = 1
 
@@ -28,7 +28,12 @@ export const VListExample = () => {
     }
     const onAppendClick = () => {
         console.clear()
-        setList([...list, ...createMessageList(2)])
+        setList([...list, ...createMessageList(5)])
+    }
+
+    const onAppendNew = () => {
+        console.clear()
+        setList([...list, ...createMessageList(1)])
     }
 
     const updateMessage = useCallback(
@@ -77,6 +82,7 @@ export const VListExample = () => {
                     <Stack horizontal gap>
                         <Button onClick={onPrependClick}>Prepend messages</Button>
                         <Button onClick={onAppendClick}>Append messages</Button>
+                        <Button onClick={onAppendNew}>Append and scroll</Button>
                     </Stack>
                     <Stack>
                         <Button onClick={onResetClick}>Reset</Button>

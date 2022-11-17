@@ -11,6 +11,7 @@ type Props = {
     displayContext?: MessageProps['displayContext']
     event: TimelineEvent
     eventContent: RoomMessageEvent
+    highlight?: boolean
 }
 
 export const TimelineMessage = React.memo((props: Props) => {
@@ -57,6 +58,7 @@ export const TimelineMessage = React.memo((props: Props) => {
     return !event ? null : (
         <Message
             id={`event-${event.eventId}`}
+            highlight={props.highlight}
             userId={userId}
             canReply={!event.isLocalPending && type !== MessageTimelineType.Thread}
             timestamp={event.originServerTs}

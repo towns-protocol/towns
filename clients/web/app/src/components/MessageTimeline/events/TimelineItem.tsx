@@ -4,11 +4,11 @@ import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
 import { RenderEvent, RenderEventType } from '../hooks/useGroupEvents'
 
-export const MessageTimelineItem = (props: { itemData: RenderEvent }) => {
-    const { itemData } = props
+export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: boolean }) => {
+    const { itemData, highlight: isHighlight } = props
 
     switch (itemData.type) {
-        case RenderEventType.UserMessageGroup: {
+        case RenderEventType.UserMessages: {
             const messagesByUser = itemData.events.map((e, index, events) => {
                 return (
                     <TimelineMessage
@@ -21,6 +21,20 @@ export const MessageTimelineItem = (props: { itemData: RenderEvent }) => {
             })
             const key = itemData.events[0]?.eventId
             return <Stack key={key}>{messagesByUser}</Stack>
+        }
+
+        case RenderEventType.Message: {
+            const e = itemData.event
+            const displayContext = itemData.displayContext
+            return (
+                <TimelineMessage
+                    highlight={isHighlight}
+                    event={e}
+                    eventContent={e.content}
+                    displayContext={displayContext}
+                    key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}`}
+                />
+            )
         }
 
         case RenderEventType.RoomMember: {

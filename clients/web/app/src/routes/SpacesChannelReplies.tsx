@@ -17,6 +17,9 @@ export const SpacesChannelReplies = (props: {
 
     const isValid = !!messageId
 
+    const eventHash = window.location.hash?.replace(/^#/, '')
+    const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
+
     return (
         <Box grow height="100%" overflow="hidden">
             {isValid ? (
@@ -26,6 +29,7 @@ export const SpacesChannelReplies = (props: {
                             <WindowedMessageThread
                                 key={messageId}
                                 messageId={messageId}
+                                highlightId={highlightId}
                                 onClose={handleClose}
                             />
                         </Box>

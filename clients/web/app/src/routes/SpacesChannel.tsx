@@ -10,9 +10,8 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { ChannelHeader } from '@components/ChannelHeader'
-import { ObsoleteMessageTimelineScroller } from '@components/MessageTimeline'
-import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
+import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
 import { Box, Button, Stack } from '@ui'
@@ -41,10 +40,11 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
     }
     return <ChannelContextProvider channelId={channelSlug}>{props.children}</ChannelContextProvider>
 }
-const USE_VLIST = true
+
 const SpacesChannelComponent = () => {
     const { messageId } = useParams()
     const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
+
     const outlet = useOutlet()
 
     const { joinRoom, sendMessage } = useZionClient()
@@ -69,6 +69,9 @@ const SpacesChannelComponent = () => {
 
     const hasThreadOpen = !!messageId
 
+    const eventHash = window.location.hash?.replace(/^#/, '')
+    const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
+
     return (
         <Stack horizontal minHeight="100%">
             <Allotment onChange={onSizesChange}>
@@ -89,13 +92,10 @@ const SpacesChannelComponent = () => {
                                 channelId={channelId}
                                 events={channelMessages}
                             >
-                                {!USE_VLIST ? (
-                                    <ObsoleteMessageTimelineScroller hideThreads />
-                                ) : (
-                                    <MessageTimeline
-                                        header={<ChannelHeader name={channel.label} />}
-                                    />
-                                )}
+                                <MessageTimeline
+                                    header={<ChannelHeader name={channel.label} />}
+                                    highlightId={messageId || highlightId}
+                                />
                             </MessageTimelineWrapper>
 
                             <Box gap paddingBottom="lg" paddingX="lg">

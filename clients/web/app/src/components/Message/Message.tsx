@@ -1,5 +1,5 @@
 import { format, formatDistance } from 'date-fns'
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Reactions } from '@components/Reactions/Reactions'
 import { MessageThreadButton } from '@components/Replies/MessageReplies'
@@ -23,6 +23,7 @@ type Props = {
     editing?: boolean
     editable?: boolean
     eventId?: string
+    highlight?: boolean
     listView?: boolean
     channelId?: RoomIdentifier
     spaceId?: RoomIdentifier
@@ -48,6 +49,7 @@ export const Message = (props: Props) => {
         spaceId,
         editable: isEditable,
         editing: isEditing,
+        highlight: isHighlight,
         listView: isListView,
         displayContext = 'single',
         onReaction,
@@ -72,16 +74,10 @@ export const Message = (props: Props) => {
             : format(timestamp, 'h:mm a')
         : undefined
 
+    const backgroundProps = useMessageBackground(isEditing, isHover, isHighlight)
+
     return (
-        <Stack
-            horizontal
-            ref={ref}
-            onMouseEnter={onMouseEnter}
-            {...boxProps}
-            background={{
-                default: isEditing || isHover ? 'level2' : undefined,
-            }}
-        >
+        <Stack horizontal ref={ref} onMouseEnter={onMouseEnter} {...boxProps} {...backgroundProps}>
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
             <Box minWidth="x8">
@@ -171,4 +167,37 @@ export const Message = (props: Props) => {
             </Stack>
         </Stack>
     )
+}
+
+const useMessageBackground = (isEditing?: boolean, isHover?: boolean, isHighlight?: boolean) => {
+    const [isHighlightActive, setHighlightActive] = useState(isHighlight)
+
+    const background = isHighlightActive
+        ? ('level4' as const)
+        : isEditing || isHover
+        ? ('level2' as const)
+        : undefined
+
+    useEffect(() => {
+        if (isHighlightActive) {
+            const timeout = setTimeout(() => {
+                setHighlightActive(false)
+            }, 1000)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    })
+
+    const [backgroundTransitionEnabled, setBackgroundTransitionEnabled] = useState(isHighlight)
+
+    const onTransitionEnd = isHighlight
+        ? () => {
+              setBackgroundTransitionEnabled(false)
+          }
+        : undefined
+
+    const style = backgroundTransitionEnabled ? { transition: `background 1s ease` } : undefined
+
+    return { onTransitionEnd, style, background }
 }

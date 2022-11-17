@@ -8,7 +8,8 @@ import {
 } from 'use-zion-client'
 
 export enum RenderEventType {
-    UserMessageGroup = 'UserMessageGroup',
+    UserMessages = 'UserMessages',
+    Message = 'Message',
     RoomMember = 'RoomMember',
     RoomCreate = 'RoomCreate',
     FullyRead = 'FullyRead',
@@ -22,10 +23,18 @@ type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
     content: RoomMessageEvent
 }
 
-export interface MessageRenderEvent extends BaseEvent {
-    type: RenderEventType.UserMessageGroup
+export interface UserMessagesRenderEvent extends BaseEvent {
+    type: RenderEventType.UserMessages
     key: string
     events: ZRoomMessageEvent[]
+}
+
+export interface MessageRenderEvent extends BaseEvent {
+    type: RenderEventType.Message
+    key: string
+    event: ZRoomMessageEvent
+    displayContext: 'tail' | 'single' | 'head'
+    isHighlight?: boolean
 }
 
 export interface RoomMemberRenderEvent extends BaseEvent {
@@ -61,14 +70,18 @@ export type DateGroup = {
 }
 
 export type RenderEvent =
-    | MessageRenderEvent
+    | UserMessagesRenderEvent
     | RoomMemberRenderEvent
     | RoomCreateRenderEvent
     | FullyReadRenderEvent
+    | MessageRenderEvent
+
+const DEBUG_SINGLE = false
 
 export const useGroupEvents = (
     events: TimelineEvent[],
     fullyReadMarker?: FullyReadMarker,
+    isThread?: boolean,
 ): DateGroup[] => {
     const { getHumanDate: getRelativeDays } = useHumanDate()
     const { dateGroups } = events.reduce(
@@ -105,14 +118,16 @@ export const useGroupEvents = (
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
                 if (
+                    !DEBUG_SINGLE &&
                     prevEvent &&
-                    prevEvent.type === RenderEventType.UserMessageGroup &&
-                    prevEvent.events[0].content.sender.id === event.content.sender.id
+                    prevEvent.type === RenderEventType.UserMessages &&
+                    prevEvent.events[0].content.sender.id === event.content.sender.id &&
+                    (index > 1 || !isThread)
                 ) {
                     prevEvent.events.push(event)
                 } else {
                     renderEvents.push({
-                        type: RenderEventType.UserMessageGroup,
+                        type: RenderEventType.UserMessages,
                         key: event.eventId,
                         events: [event],
                     })

@@ -1,21 +1,20 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { MessageType, useFullyReadMarker, useMyUserId } from 'use-zion-client'
+import { default as React, createContext, useCallback, useContext, useMemo } from 'react'
+import { MessageType, useFullyReadMarker } from 'use-zion-client'
 import { Box, Divider, Stack, VList } from '@ui'
 import { useFilterReplies } from 'hooks/useFixMeMessageThread'
-import { VListCtrl } from 'ui/components/VList/VList'
 import { notUndefined } from 'ui/utils/utils'
-import { getIsRoomMessageContent } from 'utils/ztevent_util'
 import { DateDivider } from './events/DateDivider'
+import { NewDivider } from './events/NewDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
 import {
     FullyReadRenderEvent,
     MessageRenderEvent,
     RenderEventType,
+    UserMessagesRenderEvent,
     useGroupEvents,
 } from './hooks/useGroupEvents'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
-import { NewDivider } from './events/NewDivider'
 
 export const TimelineMessageContext = createContext<null | ReturnType<
     typeof useTimelineMessageEditing
@@ -23,6 +22,7 @@ export const TimelineMessageContext = createContext<null | ReturnType<
 
 type Props = {
     header?: JSX.Element
+    highlightId?: string
 }
 
 export const MessageTimeline = (props: Props) => {
@@ -43,39 +43,31 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                                  initialize variables
 
-    const lastEvent = useMemo(() => {
-        return events?.at(events?.length - 1)
-    }, [events])
-
     const dateGroups = useGroupEvents(events, fullyReadMarker)
+    // timelineContext?.type === MessageTimelineType.Thread
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered
 
     const estimateItemHeight = useCallback((r: typeof listItems[0]) => {
-        if (r.type === 'message') {
+        if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
-                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 150
+                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 100
                 return height + itemHeight
             }, 0)
             return height
         }
-        return 0
-    }, [])
-
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    //                                                                      scroll into view
-
-    const vListCtrlRef = useRef<VListCtrl>()
-    const userId = useMyUserId()
-
-    useEffect(() => {
-        if (getIsRoomMessageContent(lastEvent)?.sender.id === userId && lastEvent?.isLocalPending) {
-            setTimeout(() => {
-                vListCtrlRef.current?.scrolldown()
+        if (r.type === 'message') {
+            const height = [r.item.event].reduce((height, item) => {
+                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 50
+                return height + itemHeight
             }, 0)
+            return height
         }
-    }, [lastEvent, userId])
+        if (r.type === 'divider') {
+            return 50
+        }
+    }, [])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                               group and filter events
@@ -85,8 +77,9 @@ export const MessageTimeline = (props: Props) => {
             | { id: string; type: 'divider' }
             | { id: string; type: 'header' }
             | { id: string; type: 'group'; date: string }
-            | { id: string; type: 'message'; item: MessageRenderEvent }
+            | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
             | { id: string; type: 'fullyRead'; item: FullyReadRenderEvent }
+            | { id: string; type: 'message'; item: MessageRenderEvent }
 
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
@@ -105,14 +98,26 @@ export const MessageTimeline = (props: Props) => {
             timelineContext?.type === MessageTimelineType.Thread && flatGroups.length > 1
 
         const listItems: ListItem[] = flatGroups
-            .map((e) => {
+            .flatMap<ListItem>((e) => {
                 return e.type === 'group' && groupByDate
                     ? ({ id: e.key, type: 'group', date: e.date } as const)
-                    : e.type === RenderEventType.UserMessageGroup
-                    ? ({ id: e.key, type: 'message', item: e } as const)
                     : e.type === RenderEventType.FullyRead
                     ? ({ id: e.key, type: 'fullyRead', item: e } as const)
-                    : undefined
+                    : e.type === RenderEventType.UserMessages
+                    ? e.events.map((event, index, events) => {
+                          return {
+                              type: 'message',
+                              id: event.eventId,
+                              item: {
+                                  type: RenderEventType.Message,
+                                  key: event.eventId,
+                                  event,
+                                  displayContext:
+                                      index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                              } as const,
+                          } as const
+                      })
+                    : []
             })
             .filter(notUndefined)
 
@@ -128,14 +133,15 @@ export const MessageTimeline = (props: Props) => {
     return (
         <VList
             debug={false}
-            ctrlRef={vListCtrlRef}
-            itemHeight={estimateItemHeight}
+            key={channelId?.matrixRoomId}
+            highlightId={props.highlightId}
+            esimtateItemSize={estimateItemHeight}
             list={listItems}
-            renderItem={(r, i, l) => {
+            renderItem={(r) => {
                 return r.type === 'header' ? (
                     <>{props.header}</>
                 ) : r.type === 'group' ? (
-                    <Stack position="relative" style={{ boxShadow: '0 0 1px #f000' }} height="x4">
+                    <Stack position="relative" height="x4">
                         <DateDivider label={r.date} />
                     </Stack>
                 ) : r.type === 'divider' ? (
@@ -145,7 +151,7 @@ export const MessageTimeline = (props: Props) => {
                 ) : r.type === 'fullyRead' ? (
                     <NewDivider fullyReadMarker={r.item.event} />
                 ) : (
-                    <MessageTimelineItem itemData={r.item} />
+                    <MessageTimelineItem itemData={r.item} highlight={r.id === props.highlightId} />
                 )
             }}
         />

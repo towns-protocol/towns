@@ -19,7 +19,7 @@ vi.mock('use-zion-client', async () => {
 
 function generateMessage(events: MessageContent): RenderEvent {
     return {
-        type: RenderEventType.UserMessageGroup,
+        type: RenderEventType.UserMessages,
         key: '',
         events: events.map((e: MessageContent) => generateEvent(e)),
     }

@@ -166,7 +166,6 @@ const MentionBox = (props: { mention: MentionResult }) => {
     const channelSegment = `/spaces/${spaceSlug}/channels/${channelSlug}`
     const threadSegment = mention.thread ? `/replies/${mention.thread.eventId}` : ``
     const eventSegment = `#${mention.event.eventId}`
-
     const link = `${channelSegment}${threadSegment}${eventSegment}`
 
     return (

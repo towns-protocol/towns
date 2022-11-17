@@ -9,6 +9,7 @@ import { useSendReply } from 'hooks/useSendReply'
 type Props = {
     messageId: string
     onClose?: () => void
+    highlightId?: string
 }
 export const WindowedMessageThread = (props: Props) => {
     const { channelId, spaceId } = useChannelContext()
@@ -36,7 +37,7 @@ export const WindowedMessageThread = (props: Props) => {
         >
             <MessageWindow label="Thread" onClose={props.onClose}>
                 <Stack grow overflow="hidden">
-                    <MessageTimeline />
+                    <MessageTimeline highlightId={props.highlightId} />
                 </Stack>
             </MessageWindow>
             <Box paddingY="none" style={{ position: 'sticky', bottom: 0 }}>

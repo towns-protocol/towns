@@ -1,14 +1,19 @@
 import { style } from '@vanilla-extract/css'
 
-export const listStyle = style({
+export const main = style({
     display: `flex`,
     flexDirection: `column`,
     overflow: `hidden`,
+    vars: {
+        '--negative-scrollbars': `50px`,
+    },
 })
 
-export const scrollContainerStyle = style({
+export const scrollContainer = style({
     overflowY: `scroll`,
     overflowAnchor: 'none',
+    marginRight: `calc(-1 * var(--negative-scrollbars))`,
+
     selectors: {
         [`&::-webkit-scrollbar`]: {
             display: 'none',
@@ -16,14 +21,14 @@ export const scrollContainerStyle = style({
     },
 })
 
-export const containerStyle = style({
+export const scrollContent = style({
     position: `relative`,
-    width: `100%`,
+    overflow: `hidden`,
+    width: `calc(100% - var(--negative-scrollbars))`,
     overflowAnchor: 'none',
-    transition: `opacity 80ms ease-in`,
 })
 
-export const vItem = style({
+export const listItem = style({
     position: `absolute`,
     width: `100%`,
 })
