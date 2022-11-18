@@ -2,9 +2,9 @@ import React from 'react'
 import { Controller, UseFormReturn } from 'react-hook-form'
 import { clsx } from 'clsx'
 import { Box, Stack, Text } from '@ui'
-import * as style from '../RadioSelect/RadioSelect.css'
-import * as fieldStyles from '../_internal/Field/Field.css'
-import { FieldOutline } from '../_internal/Field/FieldOutline'
+import * as style from './RadioSelect/RadioSelect.css'
+import * as fieldStyles from '../../_internal/Field/Field.css'
+import { FieldOutline } from '../../_internal/Field/FieldOutline'
 
 type Props = {
     value: string
@@ -14,9 +14,7 @@ type Props = {
     children?: () => React.ReactNode
     name: string
     onClick?: () => void
-    register: UseFormReturn['register']
-    control: UseFormReturn['control']
-}
+} & Partial<UseFormReturn>
 
 export const RadioCard = (props: Props) => {
     const { title, description, children, onClick, name, control } = props
@@ -37,11 +35,13 @@ export const RadioCard = (props: Props) => {
                         return (
                             <Stack position="relative">
                                 <input
+                                    readOnly // b/c of react controlled component errors. Probably doing something else wrong with react-hook-form b/c including field.onChange like I thought doesn't register the change
                                     type="radio"
                                     color="negative"
                                     className={clsx([fieldStyles.field, style.radio])}
                                     name={field.name}
                                     checked={field.value === props.value}
+                                    value={field.value}
                                 />
                                 <FieldOutline tone="neutral" disabled={false} rounded="full" />
                             </Stack>

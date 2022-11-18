@@ -5,13 +5,16 @@ import {
     Box,
     BoxProps,
     Button,
+    Checkbox,
     Divider,
     Dropdown,
+    Form,
     Grid,
     Heading,
     Icon,
     IconName,
     Paragraph,
+    RadioCard,
     RadioSelect,
     Stack,
     Tooltip,
@@ -24,9 +27,8 @@ import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { richText } from '@components/RichText/RichTextEditor.css'
 import { isDev } from 'utils'
-import { RadioCard } from 'ui/components/Radios/RadioCard'
+import { FormRender } from 'ui/components/Form/Form'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
-import { DummyReactHooksFormWrapper } from './DummyReactHooksFormWrapper'
 
 const A3 = Array(3)
     .fill(undefined)
@@ -310,9 +312,14 @@ export const Playground = () => {
                     <VListExample />
                 </Stack>
             </Container>
+
             <Container darkOnly label="Sample RadioCard">
-                <DummyReactHooksFormWrapper>
-                    {({ register, setValue, getValues, control }) => (
+                <FormRender
+                    onSubmit={(data) => {
+                        console.log(data)
+                    }}
+                >
+                    {({ register, setValue, getValues, control, watch }) => (
                         <>
                             {[
                                 {
@@ -325,7 +332,7 @@ export const Playground = () => {
                                     title: 'Token holders',
                                     description: 'People who hold a specific token',
                                     children: () =>
-                                        getValues().someProp === 'multiple' ? (
+                                        watch('someProp') === 'multiple' ? (
                                             <Box padding="lg">{getValues().someProp}</Box>
                                         ) : null,
                                 },
@@ -339,9 +346,26 @@ export const Playground = () => {
                                     {...option}
                                 />
                             ))}
+                            <input type="submit" />
                         </>
                     )}
-                </DummyReactHooksFormWrapper>
+                </FormRender>
+            </Container>
+            <Container darkOnly label="Checkbox">
+                <Form<{
+                    myGroup: string[]
+                }>
+                    defaultValues={{
+                        myGroup: ['pizza'],
+                    }}
+                    onSubmit={(data) => {
+                        console.log(data)
+                    }}
+                >
+                    <Checkbox name="myGroup" label={<>🍕</>} value="pizza" />
+                    <Checkbox name="myGroup" label="Spaghett" />
+                    <input type="submit" />
+                </Form>
             </Container>
         </Stack>
     )
