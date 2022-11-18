@@ -45,6 +45,10 @@ export enum ZionClientEvent {
     NewSpace = 'ZionClient.NewSpace',
 }
 
+export enum ZionAccountDataType {
+    FullyRead = 'zion.fullyRead',
+}
+
 export interface IZionServerVersions {
     versions: string[]
     unstable_features: Record<string, boolean>

@@ -31,7 +31,7 @@ import {
 import { RoleIdentifier } from '../types/web3-types'
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'
-import { IZionServerVersions, ZionAuth, ZionOpts } from './ZionClientTypes'
+import { IZionServerVersions, ZionAccountDataType, ZionAuth, ZionOpts } from './ZionClientTypes'
 
 import { createZionChannel } from './matrix/CreateChannel'
 import { createZionSpace } from './matrix/CreateSpace'
@@ -52,6 +52,7 @@ import { ZionRoleManagerShim } from './web3/shims/ZionRoleManagerShim'
 import { loadOlm } from './loadOlm'
 import { TokenEntitlementModuleShim } from './web3/shims/TokenEntitlementModuleShim'
 import { UserGrantedEntitlementModuleShim } from './web3/shims/UserGrantedEntitlementModuleShim'
+import { FullyReadMarker } from 'types/timeline-types'
 
 /***
  * Zion Client
@@ -687,6 +688,20 @@ export class ZionClient {
      ************************************************/
     public isRoomEncrypted(roomId: RoomIdentifier): boolean {
         return this.matrixClient.isRoomEncrypted(roomId.matrixRoomId)
+    }
+
+    /************************************************
+     * setRoomFullyReadData
+     ************************************************/
+    public async setRoomFullyReadData(
+        roomId: RoomIdentifier,
+        content: Record<string, FullyReadMarker>,
+    ) {
+        return this.matrixClient.setRoomAccountData(
+            roomId.matrixRoomId,
+            ZionAccountDataType.FullyRead,
+            content,
+        )
     }
 
     /************************************************

@@ -11,29 +11,14 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
             }
             console.log('useSendReadReceipt::marker', { marker })
             useFullyReadMarkerStore.setState((state) => {
-                if (marker.threadParentId) {
-                    if (state.markers[marker.threadParentId]?.isUnread === true) {
-                        return {
-                            ...state,
-                            markers: {
-                                ...state.markers,
-                                [marker.threadParentId]: {
-                                    ...state.markers[marker.threadParentId],
-                                    isUnread: false,
-                                    markedReadAtTs: Date.now(),
-                                },
-                            },
-                        }
-                    } else {
-                        return state
-                    }
-                } else if (state.markers[marker.channelId.matrixRoomId]?.isUnread === true) {
+                const markerId = marker.threadParentId ?? marker.channelId.matrixRoomId
+                if (state.markers[markerId]?.isUnread === true) {
                     return {
                         ...state,
                         markers: {
                             ...state.markers,
-                            [marker.channelId.matrixRoomId]: {
-                                ...state.markers[marker.channelId.matrixRoomId],
+                            [markerId]: {
+                                ...state.markers[markerId],
                                 isUnread: false,
                                 markedReadAtTs: Date.now(),
                             },
@@ -49,7 +34,28 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
             } catch (e) {
                 console.error('Failed to send read receipt', e)
             }
+
+            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+            const channelMarkers = Object.entries(
+                useFullyReadMarkerStore.getState().markers,
+            ).reduce((acc, [key, value]) => {
+                if (value.channelId.matrixRoomId === marker.channelId.matrixRoomId) {
+                    // aellis early attempt at pruning these values, don't bother storing markers
+                    // that are older than 1 week if they're read
+                    if (value.isUnread || value.markedReadAtTs > oneWeekAgo) {
+                        acc[key] = value
+                    }
+                }
+                return acc
+            }, {} as Record<string, FullyReadMarker>)
+
+            try {
+                await client?.setRoomFullyReadData(marker.channelId, channelMarkers)
+            } catch (e) {
+                console.error('Failed to set room account data', e)
+            }
         },
+
         [client],
     )
 }

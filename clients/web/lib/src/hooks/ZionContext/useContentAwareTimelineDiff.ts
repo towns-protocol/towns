@@ -2,14 +2,17 @@ import {
     EventType,
     MatrixClient,
     MatrixEvent,
+    Room as MatrixRoom,
     NotificationCountType,
     RelationType,
+    RoomEvent,
 } from 'matrix-js-sdk'
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { makeRoomIdentifier } from '../../types/matrix-types'
 import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
+import { ZionAccountDataType } from '../../client/ZionClientTypes'
 
 type LocalEffectState = {
     /// { roomId: { eventId: index in timeline } }
@@ -38,12 +41,22 @@ export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
             effectState = diffTimeline(timelineState, prev, effectState, userId)
         }
 
+        const onRoomAccountDataEvent = (
+            event: MatrixEvent,
+            room: MatrixRoom,
+            prev?: MatrixEvent,
+        ) => {
+            onRemoteRoomAccountDataEvent(event, room, prev)
+        }
+
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
+        matrixClient.on(RoomEvent.AccountData, onRoomAccountDataEvent)
 
         // return ability to unsubscribe
         return () => {
             unsubTimeline()
+            matrixClient.off(RoomEvent.AccountData, onRoomAccountDataEvent)
         }
     }, [matrixClient])
 }
@@ -73,23 +86,34 @@ function isEncryptedZTEvent(event: TimelineEvent): boolean {
 
 function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState {
     const needsParticipationCheck: string[] = []
-    // loop over all the rooms, get the unread counts, push those into the store
-    matrixClient.getRooms().forEach((room) => {
-        const unreadCount = room.getUnreadNotificationCount(NotificationCountType.Total) ?? 0
-        if (unreadCount > 0) {
-            const allEvents = room
-                .getLiveTimeline()
-                .getEvents()
-                .slice(-1 * unreadCount)
-            const events = allEvents.filter((event) => isCountedAsUnread(event, userId))
-            if (events.length > 0) {
-                const eventsMap = events.reduce((acc, event) => {
-                    const parentId = event.replyEventId ?? room.roomId
-                    acc[parentId] = [...(acc[parentId] ?? []), event]
-                    return acc
-                }, {} as Record<string, MatrixEvent[]>)
-                useFullyReadMarkerStore.setState((state) => {
-                    const updated = { ...state.markers }
+
+    useFullyReadMarkerStore.setState((state) => {
+        const updated = { ...state.markers }
+        // loop over all the rooms, get the existing values, get the unread counts, push those into the store
+        matrixClient.getRooms().forEach((room) => {
+            const remoteMarkers = room.getAccountData(ZionAccountDataType.FullyRead)?.getContent()
+            if (remoteMarkers) {
+                for (const [key, value] of Object.entries(remoteMarkers)) {
+                    const marker = value as FullyReadMarker
+                    updated[key] = marker
+                    console.log('initOnce: setting marker for', { key, marker })
+                }
+            }
+
+            const unreadCount = room.getUnreadNotificationCount(NotificationCountType.Total) ?? 0
+            if (unreadCount > 0) {
+                const allEvents = room
+                    .getLiveTimeline()
+                    .getEvents()
+                    .slice(-1 * unreadCount)
+                const events = allEvents.filter((event) => isCountedAsUnread(event, userId))
+                if (events.length > 0) {
+                    const eventsMap = events.reduce((acc, event) => {
+                        const parentId = event.replyEventId ?? room.roomId
+                        acc[parentId] = [...(acc[parentId] ?? []), event]
+                        return acc
+                    }, {} as Record<string, MatrixEvent[]>)
+
                     Object.entries(eventsMap).forEach(([id, events]) => {
                         console.log('new unread events on launch', {
                             unreadCount,
@@ -120,35 +144,44 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                         needsParticipationCheck.push(id)
                         updated[id] = entry
                     })
-                    return { markers: updated }
-                })
-            }
-        } else if (unreadCount === 0) {
-            // set read state for rooms to 0, but don't reset threads
-            // we don't actually know if you read the thread or not, since
-            // the backend doesn't know jack about threads
-            useFullyReadMarkerStore.setState((state) => {
-                if (state.markers[room.roomId]?.isUnread === true) {
-                    return {
-                        ...state,
-                        markers: {
-                            ...state.markers,
-                            [room.roomId]: {
-                                ...state.markers[room.roomId],
-                                isUnread: false,
-                                markedReadAtTs: state.markers[room.roomId].markedUnreadAtTs + 1,
-                            },
-                        },
-                    }
                 }
-                return state
-            })
-        }
+            }
+        })
+        return { markers: updated }
     })
 
     return {
         encryptedEvents: {},
         needsParticipationCheck,
+    }
+}
+
+function onRemoteRoomAccountDataEvent(event: MatrixEvent, _room: MatrixRoom, _prev?: MatrixEvent) {
+    if (event.getType() === ZionAccountDataType.FullyRead) {
+        const remoteMarkers = event.getContent()
+        if (remoteMarkers) {
+            useFullyReadMarkerStore.setState((state) => {
+                let didUpdate = false
+                const updated = { ...state.markers }
+                for (const [key, value] of Object.entries(remoteMarkers)) {
+                    const marker = value as FullyReadMarker
+
+                    if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
+                        console.log('onRoomAccountDataEvent: setting marker for', {
+                            key,
+                            marker,
+                        })
+                        updated[key] = marker
+                        didUpdate = true
+                    }
+                }
+                if (didUpdate) {
+                    return { markers: updated }
+                } else {
+                    return state
+                }
+            })
+        }
     }
 }
 
