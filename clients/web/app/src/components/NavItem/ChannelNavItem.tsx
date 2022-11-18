@@ -1,7 +1,7 @@
 import React from 'react'
 import { useParams } from 'react-router'
 import { Channel, SpaceData, useChannelNotificationCounts } from 'use-zion-client'
-import { ButtonText, Icon, TooltipRenderer } from '@ui'
+import { Badge, ButtonText, Icon, Stack, TooltipRenderer } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { NavItem } from './_NavItem'
 
@@ -46,26 +46,16 @@ export const ChannelNavItem = (props: Props) => {
                             size="square_lg"
                         />
                         <ButtonText
-                            strong={isHighlight}
-                            color={isHighlight ? 'default' : undefined}
+                            strong={notis.isUnread}
+                            color={notis.isUnread ? 'default' : isHighlight ? 'default' : undefined}
                         >
                             {channelName}
-                            {!!notis.isUnread && `*`}
                         </ButtonText>
-                        {/* {!!notis.mentions && (
-              <Box
-                centerContent
-                shrink={false}
-                background="level3"
-                rounded="full"
-                square="square_sm"
-                fontSize="sm"
-                fontWeight="strong"
-                color="default"
-              >
-                {notis.mentions}
-              </Box>
-            )} */}
+                        {!!notis.mentions && (
+                            <Stack horizontal grow justifyContent="end">
+                                <Badge value={notis.mentions}>{notis.mentions}</Badge>
+                            </Stack>
+                        )}
                     </NavItem>
                 )
             }}

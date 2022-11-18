@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { RoomIdentifier, useSpaceNotificationCounts } from 'use-zion-client'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { SpaceNavTooltip } from '@components/Tooltips/SpaceNavTooltip'
-import { Badge, Box, ButtonText, Icon, TooltipRenderer } from '@ui'
+import { Badge, Box, ButtonText, Dot, Icon, TooltipRenderer } from '@ui'
 import { Avatar } from 'ui/components/Avatar/Avatar'
 import { IconName } from 'ui/components/Icon'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
@@ -69,14 +69,18 @@ export const SpaceNavItem = (props: Props) => {
                     highlight={highlight}
                     {...triggerProps}
                 >
-                    {avatar && <Avatar animate src={avatar} size="avatar_x4" type="space" />}
+                    {avatar && (
+                        <Avatar animate src={avatar} size="avatar_x4" type="space">
+                            {newMessages && <Dot position="bottomRight" />}
+                        </Avatar>
+                    )}
 
                     {icon && (
                         <Icon type={icon} color="gray2" background="level2" size="square_lg" />
                     )}
 
                     <ButtonText grow truncate>
-                        {isInvite ? '(Invite) ' + name : newMessages ? name + '*' : name}
+                        {isInvite ? '(Invite) ' + name : name}
                     </ButtonText>
 
                     <Box shrink display={isSmall ? 'none' : undefined} color="gray2">

@@ -4,7 +4,7 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SideBar } from '@components/SideBars/_SideBar'
-import { IconButton, Stack } from '@ui'
+import { Box, IconButton, Stack } from '@ui'
 
 type Props = {
     expanded: boolean
@@ -20,6 +20,9 @@ export const MainSideBar = (props: Props) => {
     return (
         <SideBar paddingY="sm">
             <Stack grow>
+                <Box padding paddingTop="sm">
+                    <ProfileCardButton expanded={isExpanded} />
+                </Box>
                 {spaces.map((s) => (
                     <SpaceNavItem
                         key={s.id.slug}
@@ -51,7 +54,6 @@ export const MainSideBar = (props: Props) => {
                 alignItems="start"
                 horizontal={isExpanded}
             >
-                <ProfileCardButton expanded={isExpanded} />
                 <IconButton
                     centerContent
                     opaque

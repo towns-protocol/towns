@@ -59,7 +59,7 @@ export const NavItem = forwardRef<
                         gap="sm"
                         minHeight="x6"
                         paddingX="sm"
-                        color={isHighlight || match ? 'default' : 'gray2'}
+                        color={isHighlight || match ? 'gray1' : 'gray2'}
                     >
                         {children}
                     </Stack>

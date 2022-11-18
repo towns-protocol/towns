@@ -11,12 +11,13 @@ import {
     useMyProfile,
     useSpaceData,
     useSpaceId,
+    useSpaceThreadRoots,
     useZionContext,
 } from 'use-zion-client'
 import { Box, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/Message'
-import { getIsRoomMessageContent, getMessageBody, getParentEvent } from 'utils/ztevent_util'
+import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 
 type Result = MentionResult | ReactionResult
 
@@ -45,11 +46,11 @@ type ReactionResult = {
 export const SpaceMentions = () => {
     const profile = useMyProfile()
 
+    const threads = useSpaceThreadRoots()
     const { mentionCounts } = useZionContext()
     const { client } = useZionContext()
 
     const data = useSpaceData()
-
     const profileMatcher = new RegExp(`@${profile?.displayName}`)
 
     if (!data) {
@@ -68,70 +69,43 @@ export const SpaceMentions = () => {
     channels.forEach((channel) => {
         const timeline = client?.getRoom(channel.id)?.timeline
 
-        if (!timeline?.length) return
+        if (!timeline?.length) {
+            return
+        }
 
         let unreadMentions = mentionCounts[channel.id.matrixRoomId] || 0
 
-        const redactedTimeline = timeline
+        timeline
             .filter((e) => e.getContent()['m.relates_to']?.rel_type !== RelationType.Replace)
             .map(toEvent)
+            .filter((e) => !e.threadParentId)
             .slice()
             .reverse()
+            .forEach((event) => {
+                const content = event.content
+                const hasUnreadMentions = unreadMentions > 0
+                if (content?.kind === ZTEvent.RoomMessage) {
+                    if (profileMatcher.test(content.body)) {
+                        const thread = threads.find(
+                            (t) => t.thread.parentEvent?.eventId === event.threadParentId,
+                        )?.thread.parentEvent
 
-        redactedTimeline.forEach((event) => {
-            const content = event.content
-            const hasUnreadMentions = unreadMentions > 0
-            if (content?.kind === ZTEvent.RoomMessage) {
-                if (profileMatcher.test(content.body)) {
-                    let thread = getParentEvent(event, redactedTimeline, true)
-                    thread = thread?.eventId !== event.eventId ? thread : undefined
+                        result.push({
+                            type: 'mention',
+                            unread: hasUnreadMentions,
+                            thread,
+                            channel,
+                            event,
+                            timestamp: event.originServerTs,
+                        })
 
-                    result.push({
-                        type: 'mention',
-                        unread: hasUnreadMentions,
-                        thread,
-                        channel,
-                        event,
-                        timestamp: event.originServerTs,
-                    })
-
-                    if (hasUnreadMentions) {
-                        // unread mentions only counts for unread messages
-                        unreadMentions--
+                        if (hasUnreadMentions) {
+                            // unread mentions only counts for unread messages
+                            unreadMentions--
+                        }
                     }
                 }
-            }
-            /*
-      else if (content?.kind === ZTEvent.Reaction) {
-        if (hasUnreadMentions) {
-          // unread mentions only counts for unread messages
-          unreadMentions--;
-        }
-
-        const parentEvent: TimelineEvent | undefined = redactedTimeline.find(
-          (e) =>
-            e.eventId === content.targetEventId &&
-            e.content?.kind === ZTEvent.RoomMessage &&
-            e.content.sender.id === userId,
-        );
-
-        if (parentEvent) {
-          result.push({
-            type: "reaction",
-            unread: false,
-            parentEvent,
-            channel,
-            event,
-            reaction: {
-              sender: content.sender.displayName,
-              reaction: content.reaction,
-            },
-            timestamp: event.originServerTs,
-          });
-        }
-      }
-      */
-        })
+            })
     })
 
     result.sort(firstBy<MentionResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1))
@@ -139,7 +113,7 @@ export const SpaceMentions = () => {
     return (
         <Stack grow horizontal>
             <Stack grow gap>
-                <Stack padding="md" gap="md">
+                <Stack>
                     {result.map((m, index, mentions) => {
                         return (
                             m.type === 'mention' && <MentionBox mention={m} key={m.event.eventId} />
@@ -170,15 +144,10 @@ const MentionBox = (props: { mention: MentionResult }) => {
 
     return (
         <NavLink to={link}>
-            <Box
-                border
-                rounded="xs"
-                background={mention.unread ? 'level2' : undefined}
-                cursor="alias"
-            >
+            <Box rounded="xs" background={mention.unread ? 'level2' : undefined} cursor="alias">
                 <Message
-                    padding
                     relativeDate
+                    padding="lg"
                     key={mention.event.eventId}
                     messageSourceAnnotation={`${
                         mention.thread ? `Thread in` : ``

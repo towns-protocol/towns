@@ -13,7 +13,7 @@ export const ActionNavItem = (props: {
 }) => {
     const { icon, id, link, highlight: isHighlight, label, badge } = props
     return (
-        <NavItem to={link} id={id} highlight={isHighlight} exact={false}>
+        <NavItem to={link} id={id} exact={false}>
             {icon && (
                 <Icon
                     type={icon}
@@ -23,7 +23,12 @@ export const ActionNavItem = (props: {
                     size="square_lg"
                 />
             )}
-            <ButtonText>{label}</ButtonText>
+            <ButtonText
+                fontWeight={isHighlight ? 'strong' : undefined}
+                color={isHighlight ? 'default' : undefined}
+            >
+                {label}
+            </ButtonText>
             <Stack horizontal grow justifyContent="end">
                 {badge}
             </Stack>

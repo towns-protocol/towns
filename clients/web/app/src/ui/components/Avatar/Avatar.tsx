@@ -17,6 +17,7 @@ type Props = {
     insetRight?: BoxProps['insetRight']
     inset?: BoxProps['inset']
     boxShadow?: BoxProps['boxShadow']
+    children?: React.ReactNode
 } & Omit<AvatarAtoms, 'circle'>
 
 export type AvatarProps = Props
@@ -40,6 +41,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
             variants={{ initial: { scale: 1 }, hover: { scale: 1.1 } }}
             ref={ref}
             shrink={false}
+            position="relative"
             className={clsx(
                 avatarToggleClasses({ stacked, border, circle: type === 'user' }),
                 undefined,

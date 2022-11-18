@@ -132,7 +132,6 @@ export const MessageTimeline = (props: Props) => {
 
     return (
         <VList
-            debug={false}
             key={channelId?.matrixRoomId}
             highlightId={props.highlightId}
             esimtateItemSize={estimateItemHeight}

@@ -8,14 +8,13 @@ import {
     useZionContext,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
+import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
-import { FadeIn } from '@components/Transitions'
-import { Badge, Stack } from '@ui'
+import { Badge, Box, Icon, Stack, TooltipRenderer } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { atoms } from 'ui/styles/atoms.css'
 import { ChannelsShimmer } from '../Shimmer/ChannelsShimmer'
 import { SideBar } from './_SideBar'
 
@@ -39,8 +38,8 @@ export const SpaceSideBar = (props: Props) => {
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
 
     const onSettings = useCallback(
-        (id: RoomIdentifier) => {
-            navigate(`/spaces/${id.slug}/settings`)
+        (spaceId: RoomIdentifier) => {
+            navigate(`/spaces/${spaceId.slug}/settings`)
         },
         [navigate],
     )
@@ -49,44 +48,19 @@ export const SpaceSideBar = (props: Props) => {
 
     return (
         <SideBar>
-            <Stack position="relative" background="level1" gap="md">
-                <FadeIn>
-                    <img
-                        src="/placeholders/space_1.png"
-                        alt="space logo"
-                        width="500"
-                        height="400"
-                        className={atoms({
-                            flexGrow: 'x1',
-                            display: 'flex',
-                            fit: 'width',
-                        })}
-                    />
-                </FadeIn>
+            <Stack padding position="relative" background="level2" width="100%" aspectRatio="1/1">
+                <SettingsGear spaceId={space.id} spaceName={space.name} onSettings={onSettings} />
             </Stack>
             <Stack paddingY="md">
-                {isReady && (
-                    <SpaceNavItem
-                        exact
-                        name="Home"
-                        spaceName={space.name}
-                        icon="home"
-                        id={space.id}
-                        settings={space.membership === Membership.Join}
-                        onSettings={onSettings}
-                    />
-                )}
                 {isReady && space?.membership === Membership.Join && (
                     <>
                         <ActionNavItem
+                            highlight={unreadThreadsCount > 0}
                             icon="threads"
                             link={`/spaces/${space.id.slug}/threads`}
                             id="threads"
-                            label={
-                                unreadThreadsCount > 0
-                                    ? `Threads (${unreadThreadsCount})`
-                                    : 'Threads'
-                            }
+                            label="Threads"
+                            badge={unreadThreadsCount > 0 && <Badge value={unreadThreadsCount} />}
                         />
                         <ActionNavItem
                             icon="at"
@@ -144,5 +118,42 @@ const ChannelList = (props: { space: SpaceData }) => {
                 </Stack>
             ))}
         </>
+    )
+}
+
+const SettingsGear = (props: {
+    spaceId: RoomIdentifier
+    onSettings: (spaceId: RoomIdentifier) => void
+    spaceName: string
+}) => {
+    const { spaceId, onSettings, spaceName } = props
+
+    const onSettingClick = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault()
+            onSettings?.(spaceId)
+        },
+        [onSettings, spaceId],
+    )
+
+    return (
+        <Box horizontal>
+            <TooltipRenderer
+                trigger="click"
+                placement="horizontal"
+                render={<SpaceSettingsCard spaceId={spaceId} spaceName={spaceName} />}
+                layoutId="settings"
+            >
+                {({ triggerProps }) => (
+                    <Box
+                        color={{ hover: 'default', default: 'gray2' }}
+                        onClick={onSettingClick}
+                        {...triggerProps}
+                    >
+                        <Icon type="settings" size="square_sm" />
+                    </Box>
+                )}
+            </TooltipRenderer>
+        </Box>
     )
 }
