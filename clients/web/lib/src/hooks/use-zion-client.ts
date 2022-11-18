@@ -40,6 +40,7 @@ interface ZionClientImpl {
         everyonePermissions: DataTypes.PermissionStruct[],
     ) => Promise<RoomIdentifier | undefined>
     createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
+    createWeb3Channel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
     editMessage: (
         roomId: RoomIdentifier,
         message: string,
@@ -95,6 +96,7 @@ export function useZionClient(): ZionClientImpl {
         createSpace: useWithCatch(client?.createSpace),
         createBasicWeb3Space: useWithCatch(client?.createBasicWeb3Space, ZionClientEvent.NewSpace),
         createWeb3Space: useWithCatch(client?.createWeb3Space, ZionClientEvent.NewSpace),
+        createWeb3Channel: useWithCatch(client?.createWeb3Channel),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),

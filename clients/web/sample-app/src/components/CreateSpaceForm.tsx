@@ -24,6 +24,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react'
 import { chain as ChainType, useBalance } from 'wagmi'
 import { ethers } from 'ethers'
+import { MembershipRequirement, RoleSettings } from 'routes/RoleSettings'
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 interface Props {
@@ -35,6 +36,9 @@ export const CreateSpaceForm = (props: Props) => {
     const { chainId } = useZionClient()
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
+    const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
+        MembershipRequirement.Everyone,
+    )
     const { createSpaceWithMemberRole } = useIntegratedSpaceManagement()
     const { onClick } = props
 
@@ -49,6 +53,13 @@ export const CreateSpaceForm = (props: Props) => {
     const onChangespaceName = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setSpaceName(event.target.value)
     }, [])
+
+    const onChangeMembershipRequirement = useCallback(
+        (membershipRequirement: MembershipRequirement) => {
+            setMembershipRequirement(membershipRequirement)
+        },
+        [],
+    )
 
     const onClickFundLocalHostWallet = useCallback(
         (accountId: string) => {
@@ -83,14 +94,22 @@ export const CreateSpaceForm = (props: Props) => {
             return undefined
         }
 
+        const tokenAddresses =
+            membershipRequirement === MembershipRequirement.ZionToken ? [zionTokenAddress] : []
+        const everyonePermissions: Permission[] =
+            membershipRequirement === MembershipRequirement.Everyone
+                ? [Permission.Read, Permission.Write]
+                : []
+
         const createSpaceInfo: CreateSpaceInfo = {
             name: spaceName,
             visibility,
         }
         const roomId = await createSpaceWithMemberRole(
             createSpaceInfo,
-            [zionTokenAddress],
+            tokenAddresses,
             [Permission.Read, Permission.Write],
+            everyonePermissions,
         )
         if (roomId) {
             onClick(roomId, Membership.Join)
@@ -154,6 +173,14 @@ export const CreateSpaceForm = (props: Props) => {
                             </Select>
                         </FormControl>
                     </Box>
+                </Box>
+                <Box
+                    display="grid"
+                    alignItems="center"
+                    gridTemplateColumns="repeat(1, 1fr)"
+                    marginTop="20px"
+                >
+                    <RoleSettings onChangeValue={onChangeMembershipRequirement} />
                 </Box>
                 <Box
                     display="grid"

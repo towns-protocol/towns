@@ -8,6 +8,7 @@ import { InviteButton } from './Buttons/InviteButton'
 import { InviteForm } from './InviteForm'
 import { LeaveRoomButton } from './Buttons/LeaveRoomButton'
 import { SettingsButton } from './Buttons/SettingsButton'
+import { LargeToast } from './LargeToast'
 
 interface Props {
     roomId: RoomIdentifier
@@ -22,6 +23,7 @@ export function Chat(props: Props): JSX.Element {
     const [showInviteForm, setShowInviteForm] = useState<boolean>(false)
     const navigate = useNavigate()
     const timeline = useChannelTimeline()
+    const [joinFailed, setJoinFailed] = useState(false)
 
     const onClickSettings = useCallback(() => {
         navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/settings')
@@ -57,8 +59,13 @@ export function Chat(props: Props): JSX.Element {
 
     const onClickJoinRoom = useCallback(
         async (roomId: RoomIdentifier) => {
-            await joinRoom(roomId)
-            props.goToRoom(spaceId, channelId)
+            const room = await joinRoom(roomId)
+            if (room) {
+                setJoinFailed(false)
+                props.goToRoom(spaceId, channelId)
+            } else {
+                setJoinFailed(true)
+            }
         },
         [channelId, joinRoom, props, spaceId],
     )
@@ -100,6 +107,8 @@ export function Chat(props: Props): JSX.Element {
                     sendInvite={onClickSendInvite}
                     onClickCancel={onClickCloseInviteForm}
                 />
+            ) : joinFailed ? (
+                <LargeToast message="Join room failed" />
             ) : (
                 <ChatMessages
                     roomId={props.roomId}

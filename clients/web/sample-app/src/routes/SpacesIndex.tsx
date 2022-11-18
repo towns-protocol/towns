@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
     Membership,
     RoomIdentifier,
@@ -8,7 +8,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
-import { SpaceSettings } from './SpaceSettings'
+import { LargeToast } from '@components/LargeToast'
 import { ChatMessages } from '../components/ChatMessages'
 
 export const SpacesIndex = () => {
@@ -18,6 +18,7 @@ export const SpacesIndex = () => {
     const membership = useMyMembership(space?.id)
     const timeline = useSpaceTimeline()
     const { leaveRoom, sendMessage, joinRoom, resetFullyReadMarkers } = useZionClient()
+    const [joinFailed, setJoinFailed] = useState(false)
 
     const onClickSettings = useCallback(() => {
         if (space?.id.slug) {
@@ -53,7 +54,12 @@ export const SpacesIndex = () => {
 
     const onClickJoinRoom = useCallback(
         async (roomId: RoomIdentifier) => {
-            await joinRoom(roomId)
+            const room = await joinRoom(roomId)
+            if (!room) {
+                setJoinFailed(true)
+            } else {
+                setJoinFailed(false)
+            }
         },
         [joinRoom],
     )
@@ -77,9 +83,6 @@ export const SpacesIndex = () => {
                     <div>
                         <button onClick={onClickMarkAllAsRead}>Mark all as read</button>
                     </div>
-                    <div>
-                        {space?.id ? <SpaceSettings spaceId={space.id.matrixRoomId} /> : null}
-                    </div>
                 </>
             )}
             <h3>Space Messages</h3>
@@ -90,6 +93,7 @@ export const SpacesIndex = () => {
                 sendMessage={onClickSendMessage}
                 joinRoom={onClickJoinRoom}
             />
+            {joinFailed ? <LargeToast message="Join room failed" /> : null}
         </>
     ) : (
         <h1>Space not found</h1>
