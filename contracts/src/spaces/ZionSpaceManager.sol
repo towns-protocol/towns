@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
+// import {console} from "forge-std/console.sol";
+
 import {ISpaceManager} from "./interfaces/ISpaceManager.sol";
 import {IEntitlementModule} from "./interfaces/IEntitlementModule.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";

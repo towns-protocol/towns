@@ -50,6 +50,9 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
   function testCreateSpace() public {
     string memory networkId = "!7evmpuHDDgkady9u:localhost";
 
+    vm.expectRevert(Errors.NameContainsInvalidCharacters.selector);
+    createSimpleSpace("XXXX", networkId, spaceManager);
+
     uint256 spaceId = createSimpleSpace("test", networkId, spaceManager);
 
     DataTypes.SpaceInfo memory info = spaceManager.getSpaceInfoBySpaceId(
