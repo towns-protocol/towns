@@ -362,11 +362,13 @@ export class ZionClient {
                     spaceEntitlementData,
                     everyonePermissions,
                 )
+                console.log(`[createWeb3Space] transaction`, transaction)
                 receipt = await transaction.wait()
+                console.log('[createWeb3Space] Matrix createSpace receipt', receipt)
             } catch (err) {
-                console.log('[createWeb3Space]', err)
-                const decodedErr = this.getDecodedError(err)
-                throw decodedErr
+                console.log('[createWeb3Space] error', err)
+                const decodedError = this.getDecodedError(err)
+                throw decodedError
             } finally {
                 if (receipt?.status === 1) {
                     // Successful created the space on-chain.
@@ -434,8 +436,9 @@ export class ZionClient {
                 transaction = await this.spaceManager.createChannel(channelInfo)
                 receipt = await transaction.wait()
             } catch (err: unknown) {
-                const decodedErr = this.getDecodedError(err)
-                throw decodedErr
+                console.log('[createWeb3Channel] error', err)
+                const decodedError = this.getDecodedError(err)
+                throw decodedError
             }
 
             if (receipt?.status === 1) {

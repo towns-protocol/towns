@@ -80,14 +80,14 @@ export function logTimeline(timeline?: EventTimeline) {
 
 export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
     const fundedWallet = TestConstants.FUNDED_WALLET_0
-    const tx = {
+    const tx = await fundedWallet.populateTransaction({
         from: fundedWallet.address,
         to: walletToFund.address,
         value: ethers.utils.parseEther(amount.toString()),
         gasLimit: 1000000,
-    }
+    })
     const result = await fundedWallet.sendTransaction(tx)
-    return result
+    await result.wait()
 }
 
 export async function createTestSpaceWithZionMemberRole(

@@ -124,8 +124,7 @@ export function useZionClient(): ZionClientImpl {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const useWithCatch = <T extends Array<any>, U>(
+const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
     event: ZionClientEvent | undefined = undefined,
 ) => {
@@ -141,15 +140,11 @@ const useWithCatch = <T extends Array<any>, U>(
                             triggerZionClientEvent(event)
                         }
                         return value
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } catch (ex: any) {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        console.error('Error', ex.stack, ex)
-                        return Promise.resolve(undefined)
+                    } catch (ex) {
+                        console.error('Error', ex)
                     }
                 } else {
                     console.log('useZionClient: Not logged in')
-                    return Promise.resolve(undefined)
                 }
             },
         [fn, client, event, triggerZionClientEvent],

@@ -18,7 +18,7 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     }
 
     public async fundWallet(amount = 0.1) {
-        return fundWallet(this.wallet, amount)
+        await fundWallet(this.wallet, amount)
     }
 
     public async request({

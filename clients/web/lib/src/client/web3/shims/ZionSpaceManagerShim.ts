@@ -71,24 +71,47 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         entitlementData: Localhost_DataTypes.CreateSpaceEntitlementDataStruct,
         everyonePermissions: Localhost_DataTypes.PermissionStruct[],
     ): Promise<ContractTransaction> {
-        if (this.isGoerli) {
-            const externalTokenEntitlements: Goerli_DataTypes.ExternalTokenEntitlementStruct[] = []
-            for (let i = 0; i < entitlementData.externalTokenEntitlements.length; i++) {
-                const externalTokenEntitlement: Goerli_DataTypes.ExternalTokenEntitlementStruct = {
-                    tokens: entitlementData.externalTokenEntitlements[i].tokens,
-                }
-                externalTokenEntitlements.push(externalTokenEntitlement)
-            }
+        try {
+            console.log(`createSpace called`, info, entitlementData, everyonePermissions)
 
-            const goerliEntitlementData: Goerli_DataTypes.CreateSpaceEntitlementDataStruct = {
-                roleName: entitlementData.roleName,
-                permissions: entitlementData.permissions,
-                externalTokenEntitlements: externalTokenEntitlements,
-                users: entitlementData.users,
+            if (this.isGoerli) {
+                const externalTokenEntitlements: Goerli_DataTypes.ExternalTokenEntitlementStruct[] =
+                    []
+                for (let i = 0; i < entitlementData.externalTokenEntitlements.length; i++) {
+                    const externalTokenEntitlement: Goerli_DataTypes.ExternalTokenEntitlementStruct =
+                        {
+                            tokens: entitlementData.externalTokenEntitlements[i].tokens,
+                        }
+                    externalTokenEntitlements.push(externalTokenEntitlement)
+                }
+
+                const goerliEntitlementData: Goerli_DataTypes.CreateSpaceEntitlementDataStruct = {
+                    roleName: entitlementData.roleName,
+                    permissions: entitlementData.permissions,
+                    externalTokenEntitlements: externalTokenEntitlements,
+                    users: entitlementData.users,
+                }
+                return this.goerli_signed.createSpace(
+                    info,
+                    goerliEntitlementData,
+                    everyonePermissions,
+                )
+            } else {
+                console.log(`createSpace localhost_signed`)
+
+                const result = await this.localhost_signed.createSpace(
+                    info,
+                    entitlementData,
+                    everyonePermissions,
+                )
+                console.log(`createSpace result`, result)
+                return result
             }
-            return this.goerli_signed.createSpace(info, goerliEntitlementData, everyonePermissions)
-        } else {
-            return this.localhost_signed.createSpace(info, entitlementData, everyonePermissions)
+        } catch (error) {
+            console.log(`createSpace error`, error)
+            throw error
+        } finally {
+            console.log(`createSpace finally`)
         }
     }
 

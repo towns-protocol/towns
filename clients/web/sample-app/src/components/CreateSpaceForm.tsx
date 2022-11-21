@@ -21,7 +21,7 @@ import {
     useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { chain as ChainType, useBalance } from 'wagmi'
 import { ethers } from 'ethers'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
@@ -60,26 +60,43 @@ export const CreateSpaceForm = (props: Props) => {
         },
         [],
     )
+    const txInProgress = useRef(false)
 
     const onClickFundLocalHostWallet = useCallback(
         (accountId: string) => {
-            const afunc = async () => {
-                const privateKey =
-                    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // anvil default funded address #1
-                const wallet = new ethers.Wallet(privateKey, provider)
-                const amount = 0.1
-                const tx = {
-                    from: wallet.address,
-                    to: accountId,
-                    value: ethers.utils.parseEther(amount.toString()),
-                    gasLimit: 1000000,
-                    chainId: chainId,
+            if (!txInProgress.current) {
+                const fundWallet = async () => {
+                    try {
+                        txInProgress.current = true
+                        const anvilKey =
+                            '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // anvil default funded address #1
+
+                        const wallet = new ethers.Wallet(anvilKey, provider)
+
+                        const amount = 0.1
+
+                        const tx = await wallet.populateTransaction({
+                            from: wallet.address,
+                            to: accountId,
+                            value: ethers.utils.parseEther(amount.toString()),
+                            gasLimit: 1000000,
+                            chainId: chainId,
+                        })
+                        console.log('fundWallet tx', tx)
+                        const result = await wallet.sendTransaction(tx)
+                        console.log('fundWallet result', result)
+                        const receipt = await result.wait()
+                        console.log('fundWallet receipt', receipt)
+                    } catch (error) {
+                        console.error('fundWallet failed', error)
+                    } finally {
+                        txInProgress.current = false
+                    }
                 }
-                console.log('tx', tx)
-                const result = await wallet.sendTransaction(tx)
-                console.log(result)
+                fundWallet()
+            } else {
+                console.log('fundWallet in progress')
             }
-            void afunc()
         },
         [chainId, provider],
     )

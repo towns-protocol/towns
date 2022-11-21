@@ -86,9 +86,8 @@ export class ZionTestClient extends ZionClient {
 
     /// add some funds to this wallet
     public async fundWallet(amount = 0.1) {
-        const result = await this.provider.fundWallet(amount)
-        this.log('funded wallet: ', result.hash)
-        return result
+        await this.provider.fundWallet(amount)
+        this.log('funded wallet')
     }
 
     /// register this users wallet with the matrix server
