@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/Test.sol";
-import {ISpaceManager} from "../src/spaces/interfaces/ISpaceManager.sol";
-import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
-import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
-import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
-import "murky/Merkle.sol";
-import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
-import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
-import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
-import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
-import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
-import {BaseSetup} from "./BaseSetup.sol";
-import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
-import {Errors} from "../src/spaces/libraries/Errors.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
+import {ISpaceManager} from "contracts/src/spaces/interfaces/ISpaceManager.sol";
+import {Merkle} from "murky/Merkle.sol";
+import {PermissionTypes} from "contracts/src/spaces/libraries/PermissionTypes.sol";
+import {SpaceTestUtils} from "contracts/test/spaces/SpaceTestUtils.sol";
+import {TokenEntitlementModule} from "contracts/src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "contracts/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {ZionPermissionsRegistry} from "contracts/src/spaces/ZionPermissionsRegistry.sol";
+import {ZionRoleManager} from "contracts/src/spaces/ZionRoleManager.sol";
+import {ZionSpace} from "contracts/src/spaces/nft/ZionSpace.sol";
+import {ZionSpaceManager} from "contracts/src/spaces/ZionSpaceManager.sol";
 
 contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
   function setUp() public virtual override {

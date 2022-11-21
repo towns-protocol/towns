@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {ISpaceManager} from "../../src/spaces/interfaces/ISpaceManager.sol";
-import {DataTypes} from "../../src/spaces/libraries/DataTypes.sol";
+import {ISpaceManager} from "contracts/src/spaces/interfaces/ISpaceManager.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
 
 abstract contract SpaceTestUtils {
   function createSimpleSpace(

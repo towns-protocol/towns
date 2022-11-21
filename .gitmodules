@@ -19,3 +19,6 @@
 [submodule "lib/solidity-json-writer"]
 	path = lib/solidity-json-writer
 	url = https://github.com/bmeredith/solidity-json-writer
+[submodule "lib/council"]
+	path = lib/council
+	url = https://github.com/element-fi/council

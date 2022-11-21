@@ -1,19 +1,19 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
-import "forge-std/Test.sol";
-import {ZionSpaceManager} from "../src/spaces/ZionSpaceManager.sol";
-import {Zion} from "../src/governance/Zion.sol";
-import {CouncilNFT} from "../src/council/CouncilNFT.sol";
-import {ISpaceManager} from "../src/spaces/interfaces/ISpaceManager.sol";
-import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
-import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
-import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
-import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
-import {IPermissionRegistry} from "../src/spaces/interfaces/IPermissionRegistry.sol";
-import {ZionSpace} from "../src/spaces/nft/ZionSpace.sol";
-import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
-import {BaseSetup} from "./BaseSetup.sol";
-import "murky/Merkle.sol";
+
+import {ZionSpaceManager} from "contracts/src/spaces/ZionSpaceManager.sol";
+import {Zion} from "contracts/src/governance/Zion.sol";
+import {CouncilNFT} from "contracts/src/council/CouncilNFT.sol";
+import {ISpaceManager} from "contracts/src/spaces/interfaces/ISpaceManager.sol";
+import {TokenEntitlementModule} from "contracts/src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "contracts/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
+import {PermissionTypes} from "contracts/src/spaces/libraries/PermissionTypes.sol";
+import {IPermissionRegistry} from "contracts/src/spaces/interfaces/IPermissionRegistry.sol";
+import {ZionSpace} from "contracts/src/spaces/nft/ZionSpace.sol";
+import {SpaceTestUtils} from "contracts/test/spaces/SpaceTestUtils.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {Merkle} from "murky/Merkle.sol";
 
 contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
   Zion internal zion;

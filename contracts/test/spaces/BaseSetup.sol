@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import {ZionSpaceManager} from "./../src/spaces/ZionSpaceManager.sol";
-import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
-import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
-import {ZionPermissionsRegistry} from "./../src/spaces/ZionPermissionsRegistry.sol";
-import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
-import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
+import {ZionSpaceManager} from "contracts/src/spaces/ZionSpaceManager.sol";
+import {TokenEntitlementModule} from "contracts/src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "contracts/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {ZionPermissionsRegistry} from "contracts/src/spaces/ZionPermissionsRegistry.sol";
+import {ZionRoleManager} from "contracts/src/spaces/ZionRoleManager.sol";
+import {ZionSpace} from "contracts/src/spaces/nft/ZionSpace.sol";
 
-contract BaseSetup is Test {
+abstract contract BaseSetup is Test {
   ZionSpaceManager internal spaceManager;
   ZionRoleManager internal roleManager;
   ZionPermissionsRegistry internal permissionsRegistry;

@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
 
-import "murky/Merkle.sol";
 import "forge-std/Test.sol";
-import "openzeppelin-contracts/contracts/utils/Strings.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import {MerkleHelper} from "./utils/MerkleHelper.sol";
-import {CouncilNFT} from "../src/council/CouncilNFT.sol";
+
+import {Merkle} from "murky/Merkle.sol";
+import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
+import {IERC721Receiver} from "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import {MerkleHelper} from "contracts/test/spaces/MerkleHelper.sol";
+import {CouncilNFT} from "contracts/src/council/CouncilNFT.sol";
 
 contract NFTTest is Test, MerkleHelper {
   using stdStorage for StdStorage;

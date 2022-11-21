@@ -1,5 +1,6 @@
 @opengsn/=node_modules/@opengsn/
 @openzeppelin/=node_modules/@openzeppelin/
+council/=lib/council/contracts/
 ds-test/=lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 murky/=lib/murky/src/

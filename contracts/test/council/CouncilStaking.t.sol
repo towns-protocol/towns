@@ -2,13 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "./../src/council/CouncilNFT.sol";
-import {MerkleHelper} from "./utils/MerkleHelper.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import "./../src/council/libraries/CouncilErrors.sol";
-import {CouncilDataTypes} from "../src/council/libraries/CouncilDataTypes.sol";
-import {CouncilStaking} from "./../src/council/CouncilStaking.sol";
-import "murky/Merkle.sol";
+
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {CouncilNFT} from "contracts/src/council/CouncilNFT.sol";
+import {MerkleHelper} from "contracts/test/spaces/MerkleHelper.sol";
+import {CouncilErrors} from "contracts/src/council/libraries/CouncilErrors.sol";
+import {CouncilDataTypes} from "contracts/src/council/libraries/CouncilDataTypes.sol";
+import {CouncilStaking} from "contracts/src/council/CouncilStaking.sol";
+import {CouncilEvents} from "contracts/src/council/libraries/CouncilEvents.sol";
+import {Merkle} from "murky/Merkle.sol";
 
 contract CouncilStakingTest is Test, MerkleHelper {
   CouncilNFT private nft;

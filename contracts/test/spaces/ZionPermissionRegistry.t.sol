@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
-import {ZionPermissionsRegistry} from "../src/spaces/ZionPermissionsRegistry.sol";
-import {DataTypes} from "../src/spaces/libraries/DataTypes.sol";
-import {PermissionTypes} from "../src/spaces/libraries/PermissionTypes.sol";
-import {Errors} from "../src/spaces/libraries/Errors.sol";
+import {ZionPermissionsRegistry} from "contracts/src/spaces/ZionPermissionsRegistry.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
+import {PermissionTypes} from "contracts/src/spaces/libraries/PermissionTypes.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
 
 contract ZionPermissionRegistryTest is Test {
   ZionPermissionsRegistry internal registry;

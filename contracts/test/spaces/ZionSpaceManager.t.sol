@@ -1,25 +1,24 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
-import "forge-std/Test.sol";
 
-import {ZionSpaceManager} from "./../src/spaces/ZionSpaceManager.sol";
-import {ISpaceManager} from "../src/spaces/interfaces/ISpaceManager.sol";
-import {DataTypes} from "./../src/spaces/libraries/DataTypes.sol";
-import {CouncilNFT} from "../src/council/CouncilNFT.sol";
-import {MerkleHelper} from "./utils/MerkleHelper.sol";
-import "murky/Merkle.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import {Events} from "./../src/spaces/libraries/Events.sol";
-import {Errors} from "./../src/spaces/libraries/Errors.sol";
-import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
-import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
-import {ZionPermissionsRegistry} from "./../src/spaces/ZionPermissionsRegistry.sol";
-import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
-import {PermissionTypes} from "./../src/spaces/libraries/PermissionTypes.sol";
-import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
-import {BaseSetup} from "./BaseSetup.sol";
-import {SpaceTestUtils} from "./utils/SpaceTestUtils.sol";
-import {Constants} from "./../src/spaces/libraries/Constants.sol";
+import {ZionSpaceManager} from "contracts/src/spaces/ZionSpaceManager.sol";
+import {ISpaceManager} from "contracts/src/spaces/interfaces/ISpaceManager.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
+import {CouncilNFT} from "contracts/src/council/CouncilNFT.sol";
+import {MerkleHelper} from "contracts/test/spaces/MerkleHelper.sol";
+import {Merkle} from "murky/Merkle.sol";
+import {IERC721Receiver} from "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
+import {Events} from "contracts/src/spaces/libraries/Events.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
+import {TokenEntitlementModule} from "contracts/src/spaces/modules/entitlements/TokenEntitlementModule.sol";
+import {UserGrantedEntitlementModule} from "contracts/src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
+import {ZionPermissionsRegistry} from "contracts/src/spaces/ZionPermissionsRegistry.sol";
+import {ZionRoleManager} from "contracts/src/spaces/ZionRoleManager.sol";
+import {PermissionTypes} from "contracts/src/spaces/libraries/PermissionTypes.sol";
+import {ZionSpace} from "contracts/src/spaces/nft/ZionSpace.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {SpaceTestUtils} from "contracts/test/spaces/SpaceTestUtils.sol";
+import {Constants} from "contracts/src/spaces/libraries/Constants.sol";
 
 contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
   function setUp() public virtual override {
