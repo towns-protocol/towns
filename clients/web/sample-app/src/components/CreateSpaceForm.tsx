@@ -24,7 +24,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react'
 import { chain as ChainType, useBalance } from 'wagmi'
 import { ethers } from 'ethers'
-import { MembershipRequirement, RoleSettings } from 'routes/RoleSettings'
+import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 interface Props {
@@ -96,6 +96,10 @@ export const CreateSpaceForm = (props: Props) => {
 
         const tokenAddresses =
             membershipRequirement === MembershipRequirement.ZionToken ? [zionTokenAddress] : []
+        const tokenGrantedPermissions: Permission[] =
+            membershipRequirement === MembershipRequirement.ZionToken
+                ? [Permission.Read, Permission.Write]
+                : []
         const everyonePermissions: Permission[] =
             membershipRequirement === MembershipRequirement.Everyone
                 ? [Permission.Read, Permission.Write]
@@ -108,7 +112,7 @@ export const CreateSpaceForm = (props: Props) => {
         const roomId = await createSpaceWithMemberRole(
             createSpaceInfo,
             tokenAddresses,
-            [Permission.Read, Permission.Write],
+            tokenGrantedPermissions,
             everyonePermissions,
         )
         if (roomId) {
@@ -180,7 +184,7 @@ export const CreateSpaceForm = (props: Props) => {
                     gridTemplateColumns="repeat(1, 1fr)"
                     marginTop="20px"
                 >
-                    <RoleSettings onChangeValue={onChangeMembershipRequirement} />
+                    <SpaceRoleSettings onChangeValue={onChangeMembershipRequirement} />
                 </Box>
                 <Box
                     display="grid"

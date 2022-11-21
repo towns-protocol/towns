@@ -7,6 +7,7 @@ import {
 
 import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../client/web3/ZionContractTypes'
+import { RoleManagerDataTypes } from 'client/web3/shims/ZionRoleManagerShim'
 import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -21,6 +22,38 @@ export function useIntegratedSpaceManagement() {
     const { client } = useZionContext()
     const { createWeb3Channel, createWeb3Space } = useZionClient()
 
+    const _getRolesFromSpace = useCallback(
+        async function (matrixSpaceId: string, includeAllRoles = false) {
+            if (!client) {
+                return undefined
+            }
+
+            const spaceRoles = await getRolesFromSpace(client, matrixSpaceId)
+            if (includeAllRoles) {
+                return spaceRoles
+            } else {
+                const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(
+                    matrixSpaceId,
+                )
+                const filteredRoles: RoleManagerDataTypes.RoleStructOutput[] = []
+                // Filter out space roles which won't work when creating a channel
+                for (const r of spaceRoles) {
+                    const permissions =
+                        await client.roleManager.unsigned.getPermissionsBySpaceIdByRoleId(
+                            spaceId.toNumber(),
+                            r.roleId.toNumber(),
+                        )
+                    // Filter out roles which have no permissions & the Owner role
+                    if (permissions.length && r.name !== 'Owner') {
+                        filteredRoles.push(r)
+                    }
+                }
+                return filteredRoles
+            }
+        },
+        [client],
+    )
+
     const createSpaceWithMemberRole = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
@@ -28,13 +61,21 @@ export function useIntegratedSpaceManagement() {
             tokenGrantedPermissions: Permission[],
             everyonePermissions: Permission[] = [],
         ): Promise<RoomIdentifier | undefined> {
-            const permissions = createPermissions(tokenGrantedPermissions)
-            const externalTokenEntitlements = createExternalTokenEntitlements(tokenAddresses)
-            const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
-                roleName: 'Member',
-                permissions,
-                externalTokenEntitlements,
-                users: [],
+            let tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct
+            if (tokenAddresses.length) {
+                tokenEntitlement = {
+                    roleName: 'Member',
+                    permissions: createPermissions(tokenGrantedPermissions),
+                    externalTokenEntitlements: createExternalTokenEntitlements(tokenAddresses),
+                    users: [],
+                }
+            } else {
+                tokenEntitlement = {
+                    roleName: '',
+                    permissions: [],
+                    externalTokenEntitlements: [],
+                    users: [],
+                }
             }
 
             const everyonePerms = createPermissions(everyonePermissions)
@@ -53,32 +94,28 @@ export function useIntegratedSpaceManagement() {
     const createChannelWithSpaceRoles = useCallback(
         async function (createInfo: CreateChannelInfo): Promise<RoomIdentifier | undefined> {
             // helper function to create a channel with the same roles as the space
-            if (!client) {
-                return undefined
-            }
-
             const roleIds: number[] = []
-            const allowedRoles = await getRolesFromSpace(
-                client,
-                createInfo.parentSpaceId.matrixRoomId,
-            )
-            for (const r of allowedRoles) {
-                roleIds.push(r.roleId.toNumber())
-            }
-            try {
-                const roomId = await createWeb3Channel(createInfo)
-                return roomId
-            } catch (e) {
-                console.error(TAG, e)
+            const spaceRoles = await _getRolesFromSpace(createInfo.parentSpaceId.matrixRoomId)
+            if (spaceRoles) {
+                for (const r of spaceRoles) {
+                    roleIds.push(r.roleId.toNumber())
+                }
+                try {
+                    const roomId = await createWeb3Channel(createInfo)
+                    return roomId
+                } catch (e) {
+                    console.error(TAG, e)
+                }
             }
 
             return undefined
         },
-        [client, createWeb3Channel],
+        [_getRolesFromSpace, createWeb3Channel],
     )
 
     return {
         createChannelWithSpaceRoles,
         createSpaceWithMemberRole,
+        getRolesFromSpace: _getRolesFromSpace,
     }
 }

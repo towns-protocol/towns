@@ -74,7 +74,7 @@ export function getContractInfo(chainId: number): IZionContractsInfo {
 
 export function getZionTokenAddress(chainId: number): string {
     const contractInfo = getContractInfo(chainId)
-    return contractInfo.spaceManager.addresses.tokengranted
+    return contractInfo.council.addresses.councilnft
 }
 
 export interface CreateTokenEntitlementDataInfo {

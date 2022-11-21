@@ -19,6 +19,7 @@ import {
 } from 'use-zion-client'
 import React, { useCallback, useMemo, useState } from 'react'
 
+import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 interface Props {
@@ -29,7 +30,8 @@ interface Props {
 export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
-    const { createChannelWithSpaceRoles } = useIntegratedSpaceManagement()
+    const [roles, setRoles] = useState<RolesSettings>({})
+    const { getRolesFromSpace, createChannelWithSpaceRoles } = useIntegratedSpaceManagement()
     const { onClick, parentSpaceId } = props
 
     const disableCreateButton = useMemo(() => channelName.length === 0, [channelName.length])
@@ -42,6 +44,10 @@ export function CreateChannelForm(props: Props): JSX.Element {
         setVisibility(event.target.value as RoomVisibility)
     }, [])
 
+    const onChangeRoles = useCallback((roles: RolesSettings) => {
+        setRoles(roles)
+    }, [])
+
     const onClickCreateChannel = useAsyncButtonCallback(async () => {
         const createRoomInfo: CreateChannelInfo = {
             name: channelName,
@@ -49,6 +55,18 @@ export function CreateChannelForm(props: Props): JSX.Element {
             parentSpaceId: parentSpaceId,
             roleIds: [],
         }
+
+        // Use the roles from the parent space to create the channel
+        const spaceRoles = await getRolesFromSpace(parentSpaceId.matrixRoomId)
+        if (spaceRoles) {
+            for (const r of spaceRoles) {
+                if (roles[r.name]?.isSelected) {
+                    console.log(`Adding role ${r.name} to channel`)
+                    createRoomInfo.roleIds.push(r.roleId.toNumber())
+                }
+            }
+        }
+
         const roomId = await createChannelWithSpaceRoles(createRoomInfo)
         if (roomId) {
             onClick(roomId, Membership.Join)
@@ -108,6 +126,17 @@ export function CreateChannelForm(props: Props): JSX.Element {
                             </Select>
                         </FormControl>
                     </Box>
+                </Box>
+                <Box
+                    display="grid"
+                    alignItems="center"
+                    gridTemplateColumns="repeat(1, 1fr)"
+                    marginTop="20px"
+                >
+                    <ChannelRoleSettings
+                        spaceId={parentSpaceId.matrixRoomId}
+                        onChangeValue={onChangeRoles}
+                    />
                 </Box>
                 <Box />
                 <Box display="flex" flexDirection="column" alignItems="center">
