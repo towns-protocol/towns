@@ -1180,6 +1180,7 @@
     "remappings": [
       ":@opengsn/=node_modules/@opengsn/",
       ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":forge-std/=lib/forge-std/src/",
       ":murky/=lib/murky/src/",
@@ -1191,11 +1192,11 @@
   },
   "sources": {
     "contracts/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0xfec82372b1038c9a62ba9580f95d936708c6091243767370ccc27d2c479b6f53",
+      "keccak256": "0x99880a08517b22e8b7726467a424ece78aaa1eeb4d51a54dd147b8fbdbd4f24f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3a4112e60214eb02e39e5e65cd207518a29c4df3509d4673224f619905a0128c",
-        "dweb:/ipfs/QmR1W6zCTaK3v7XKswgCLBhrbZAW1jouu261QuNiadimDx"
+        "bzz-raw://189f725945d2f5f618ccce54a4fb3a4b19a105bd4195cb28fa57dbe329931a99",
+        "dweb:/ipfs/QmRWiGY5Bar9pqeZmyT8cq5YTcHMTAQnifEHbZp2scseRv"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
