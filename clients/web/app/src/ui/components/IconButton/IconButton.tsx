@@ -23,7 +23,6 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
         <Box
             ref={ref}
             className={styles.iconButton}
-            {...boxProps}
             background={
                 background ?? {
                     default: !isOpaque ? undefined : isActive ? 'level3' : 'level2',
@@ -33,6 +32,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
             padding="xs"
             rounded="xs"
             color={isActive ? 'default' : 'gray2'}
+            {...boxProps}
         >
             <Icon type={props.icon} size={size} />
         </Box>
