@@ -53,10 +53,12 @@ export const MessageZionText = ({ eventContent, event, members, channels }: Prop
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
 
-    const { data: unfurledContent } = useUnfurlContent({
+    const { data: unfurledContent, isError } = useUnfurlContent({
         urlsArray: urls,
-        enabled: Boolean(isDev && urls.length),
+        enabled: urls.length > 0,
     })
+
+    const invalidContent = isError || !Array.isArray(unfurledContent)
 
     return (
         <>
@@ -66,7 +68,7 @@ export const MessageZionText = ({ eventContent, event, members, channels }: Prop
                 members={members}
                 channels={channels}
             />
-            {!unfurledContent
+            {invalidContent
                 ? null
                 : unfurledContent.map((unfurlData: UnfurlData) => (
                       <ErrorBoundary key={unfurlData.url} FallbackComponent={ErrorFallback}>
