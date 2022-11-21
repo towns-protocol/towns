@@ -2469,6 +2469,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@hookform/resolvers@npm:^2.9.10":
+  version: 2.9.10
+  resolution: "@hookform/resolvers@npm:2.9.10"
+  peerDependencies:
+    react-hook-form: ^7.0.0
+  checksum: ae3395372d6ff11506a72bb6b3c57046bd14b457c2fe1f0485f60cf2dba0ef4484e3a2fb5a0f6a217f6d701393ebc3683a2ede7c81c6f13e71f965f520c7af16
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.6":
   version: 0.11.7
   resolution: "@humanwhocodes/config-array@npm:0.11.7"
@@ -10884,6 +10893,7 @@ __metadata:
     "@giphy/react-components": ^6.2.0
     "@harmony/contracts": "workspace:^"
     "@harmony/prettier-config": "workspace:^"
+    "@hookform/resolvers": ^2.9.10
     "@lexical/clipboard": ^0.6.0
     "@lexical/code": ^0.6.0
     "@lexical/link": ^0.6.0
@@ -10962,6 +10972,7 @@ __metadata:
     vitest: ^0.24.4
     vitest-canvas-mock: ^0.2.0
     wagmi: ^0.7.5
+    zod: ^3.19.1
     zustand: ^4.1.2
   languageName: unknown
   linkType: soft
@@ -19582,6 +19593,13 @@ __metadata:
     mustache: ^4.2.0
     stack-trace: 0.0.10
   checksum: e81644ad9469a26949a85cb2e1a3f9c9faf11daa67a265e9ad0361942b2c06cf02ee1dc8c85d74fe7ad25d35bbc2fee34717a54c5a0b8eeb82dc9276d139906b
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.19.1":
+  version: 3.19.1
+  resolution: "zod@npm:3.19.1"
+  checksum: 56e420ea5845912324a8fc61833714a2aec84954e418b52660d76502183c6e62fef9447cbfa64349640c5ce190cf2c24267e006bb80f066183e2f3fa9fe11864
   languageName: node
   linkType: hard
 

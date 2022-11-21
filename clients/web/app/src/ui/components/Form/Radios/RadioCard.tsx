@@ -35,13 +35,13 @@ export const RadioCard = (props: Props) => {
                         return (
                             <Stack position="relative">
                                 <input
-                                    readOnly // b/c of react controlled component errors. Probably doing something else wrong with react-hook-form b/c including field.onChange like I thought doesn't register the change
                                     type="radio"
                                     color="negative"
                                     className={clsx([fieldStyles.field, style.radio])}
                                     name={field.name}
                                     checked={field.value === props.value}
-                                    value={field.value}
+                                    value={props.value}
+                                    onChange={() => field.onChange(props.value)}
                                 />
                                 <FieldOutline tone="neutral" disabled={false} rounded="full" />
                             </Stack>

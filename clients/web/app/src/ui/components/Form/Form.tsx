@@ -1,12 +1,16 @@
 import React from 'react'
 import { DefaultValues, FieldValues, Mode, UseFormReturn, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ZodTypeAny } from 'zod'
 import { Box } from '../Box/Box'
 
 type FormProps<T extends FieldValues> = {
     children: React.ReactNode
     defaultValues?: DefaultValues<T>
     onSubmit?: (data: T) => void
+    id?: string
     mode?: Mode
+    schema?: ZodTypeAny
 }
 
 /**
@@ -17,18 +21,21 @@ type FormProps<T extends FieldValues> = {
  * </Form>
  */
 export function Form<T extends FieldValues>({
+    id,
     defaultValues,
     children,
     onSubmit,
     mode = 'onSubmit',
+    schema,
 }: FormProps<T>) {
     const form = useForm<T>({
         defaultValues,
         mode,
+        resolver: schema ? zodResolver(schema) : undefined,
     })
 
     return (
-        <Box as="form" onSubmit={form.handleSubmit(onSubmit ?? (() => null))}>
+        <Box as="form" id={id} onSubmit={form.handleSubmit(onSubmit ?? (() => null))}>
             {React.Children.map(children, (child) => {
                 if (React.isValidElement(child) && typeof child.type === 'function') {
                     return React.cloneElement(child, {

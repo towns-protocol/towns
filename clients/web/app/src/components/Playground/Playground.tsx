@@ -338,7 +338,6 @@ export const Playground = () => {
                                 },
                             ].map((option) => (
                                 <RadioCard
-                                    register={register}
                                     key={option.value}
                                     control={control}
                                     name="someProp"
