@@ -30,21 +30,30 @@ function getMessageContent(message: string, options: SendMessageOptions): Messag
             }
             return content
         }
+        case undefined:
+        case MessageType.Text: {
+            if (options.mentions) {
+                return {
+                    ...defaultContent,
+                    mentions: options.mentions,
+                }
+            } else {
+                return defaultContent
+            }
+        }
         default:
             return defaultContent
     }
 }
 
 /** treat message as a reply to parentId if specified */
-export async function sendZionMessage(props: {
-    matrixClient: MatrixClient
-    roomId: RoomIdentifier
-    message: string
-    options: SendMessageOptions
-}): Promise<void> {
-    const { matrixClient, roomId, message, options } = props
-
-    const content = getMessageContent(message, options)
+export async function sendZionMessage(
+    matrixClient: MatrixClient,
+    roomId: RoomIdentifier,
+    message: string,
+    options?: SendMessageOptions,
+): Promise<void> {
+    const content = getMessageContent(message, options ?? {})
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const cb = function (err: any, res: any) {
@@ -53,7 +62,7 @@ export async function sendZionMessage(props: {
         }
     }
 
-    if (!options.threadId) {
+    if (!options?.threadId) {
         await matrixClient.sendEvent(roomId.matrixRoomId, 'm.room.message', content, '', cb)
     } else {
         // send as reply

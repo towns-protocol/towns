@@ -27,6 +27,7 @@ import {
     PowerLevels,
     RoomIdentifier,
     SendMessageOptions,
+    SendTextMessageOptions,
 } from '../types/matrix-types'
 import { RoleIdentifier } from '../types/web3-types'
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
@@ -582,14 +583,9 @@ export class ZionClient {
     public async sendMessage(
         roomId: RoomIdentifier,
         message: string,
-        options: SendMessageOptions = {},
+        options?: SendMessageOptions,
     ) {
-        return await sendZionMessage({
-            matrixClient: this.matrixClient,
-            roomId,
-            message,
-            options,
-        })
+        return await sendZionMessage(this.matrixClient, roomId, message, options)
     }
 
     public async sendReaction(
@@ -614,13 +610,13 @@ export class ZionClient {
     /************************************************
      * sendMessage
      *************************************************/
-    public async editMessage(roomId: RoomIdentifier, message: string, options: EditMessageOptions) {
-        return await editZionMessage({
-            matrixClient: this.matrixClient,
-            roomId,
-            message,
-            options,
-        })
+    public async editMessage(
+        roomId: RoomIdentifier,
+        message: string,
+        options: EditMessageOptions,
+        msgOptions: SendTextMessageOptions | undefined,
+    ) {
+        return await editZionMessage(this.matrixClient, roomId, message, options, msgOptions)
     }
 
     /************************************************

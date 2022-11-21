@@ -1,17 +1,21 @@
 import { MatrixClient, RelationType } from 'matrix-js-sdk'
-import { EditMessageOptions, MessageType, RoomIdentifier } from '../../types/matrix-types'
+import {
+    EditMessageOptions,
+    MessageType,
+    RoomIdentifier,
+    SendTextMessageOptions,
+} from '../../types/matrix-types'
 
 /**
  * https://github.com/uhoreg/matrix-doc/blob/b2457619ab3ac6199598d05a5e1b33dc51ab3ee1/proposals/2676-message-editing.md
  */
-export const editZionMessage = async (props: {
-    matrixClient: MatrixClient
-    roomId: RoomIdentifier
-    message: string
-    options: EditMessageOptions
-}) => {
-    const { matrixClient, roomId, message, options } = props
-
+export async function editZionMessage(
+    matrixClient: MatrixClient,
+    roomId: RoomIdentifier,
+    message: string,
+    options: EditMessageOptions,
+    msgOptions: SendTextMessageOptions | undefined,
+) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const cb = function (err: any, res: any) {
         console.log('editZionMessage:done')
@@ -20,7 +24,7 @@ export const editZionMessage = async (props: {
         }
     }
 
-    const content = {
+    let content = {
         body: message,
         msgtype: MessageType.Text,
         'm.new_content': {
@@ -31,6 +35,13 @@ export const editZionMessage = async (props: {
             rel_type: RelationType.Replace,
             event_id: options.originalEventId,
         },
+    }
+
+    if (msgOptions) {
+        content = {
+            ...content,
+            ...msgOptions,
+        }
     }
 
     // send as edit

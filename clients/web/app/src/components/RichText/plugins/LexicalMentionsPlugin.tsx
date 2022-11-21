@@ -19,6 +19,11 @@ import * as ReactDOM from 'react-dom'
 
 import { $createMentionNode } from '../nodes/MentionNode'
 
+interface MentionedUser {
+    userId: string
+    displayName: string
+}
+
 const PUNCTUATION = '\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%\'"~=<>_:;'
 const NAME = '\\b[A-Z][^\\s' + PUNCTUATION + ']'
 
@@ -87,26 +92,26 @@ const SUGGESTION_LIST_LENGTH_LIMIT = 5
 
 const mentionsCache = new Map()
 
-const dummyMentionsData = [
-    'Aayla Secura',
-    'Adi Gallia',
-    'Admiral Dodd Rancit',
-    'Admiral Firmus Piett',
+const dummyMentionsData: MentionedUser[] = [
+    { userId: '1', displayName: 'Aayla Secura' },
+    { userId: '2', displayName: 'Adi Gallia' },
+    { userId: '3', displayName: 'Admiral Dodd Rancit' },
+    { userId: '4', displayName: 'Admiral Firmus Piett' },
 ]
 
 const dummyLookupService = {
-    search(string: string, callback: (results: Array<string>) => void): void {
+    search(string: string, callback: (results: Array<MentionedUser>) => void): void {
         setTimeout(() => {
             const results = dummyMentionsData.filter((mention) =>
-                mention.toLowerCase().includes(string.toLowerCase()),
+                mention.displayName.toLowerCase().includes(string.toLowerCase()),
             )
             callback(results)
         }, 500)
     },
 }
 
-function useMentionLookupService(mentionString: string | null) {
-    const [results, setResults] = useState<Array<string>>([])
+function useMentionLookupService(mentionString: string | null): MentionedUser[] {
+    const [results, setResults] = useState<Array<MentionedUser>>([])
 
     useEffect(() => {
         const cachedResults = mentionsCache.get(mentionString)
@@ -182,11 +187,13 @@ function getPossibleQueryMatch(text: string): QueryMatch | null {
 
 class MentionTypeaheadOption extends TypeaheadOption {
     name: string
+    userId: string
     picture: JSX.Element
 
-    constructor(name: string, picture: JSX.Element) {
+    constructor(name: string, userId: string, picture: JSX.Element) {
         super(name)
         this.name = name
+        this.userId = userId
         this.picture = picture
     }
 }
@@ -240,7 +247,14 @@ export default function NewMentionsPlugin(): JSX.Element | null {
     const options = useMemo(
         () =>
             results
-                .map((result) => new MentionTypeaheadOption(result, <i className="icon user" />))
+                .map(
+                    (result) =>
+                        new MentionTypeaheadOption(
+                            result.displayName,
+                            result.userId,
+                            <i className="icon user" />,
+                        ),
+                )
                 .slice(0, SUGGESTION_LIST_LENGTH_LIMIT),
         [results],
     )
@@ -252,7 +266,7 @@ export default function NewMentionsPlugin(): JSX.Element | null {
             closeMenu: () => void,
         ) => {
             editor.update(() => {
-                const mentionNode = $createMentionNode(selectedOption.name)
+                const mentionNode = $createMentionNode(selectedOption.name, selectedOption.userId)
                 if (nodeToReplace) {
                     nodeToReplace.replace(mentionNode)
                 }

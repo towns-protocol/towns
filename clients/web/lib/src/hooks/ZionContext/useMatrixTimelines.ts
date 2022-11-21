@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Membership } from '../../types/matrix-types'
+import { Membership, Mention } from '../../types/matrix-types'
 import {
     ClientEvent,
     HistoryVisibility,
@@ -150,7 +150,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             })
         }
         const initRoomTimeline = (room: MatrixRoom) => {
-            const timelineEvents = toTimelineEvents(room)
+            const timelineEvents = toTimelineEvents(room, userId)
             const aggregated = toStatsAndReactions(timelineEvents, userId)
             setState((state) => ({
                 timelines: { ...state.timelines, [room.roomId]: timelineEvents },
@@ -172,7 +172,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
         const initStateData = () => {
             // initial state, for some reason the timeline doesn't filter replacements
             const timelines = client.getRooms().reduce((acc: TimelinesMap, room: MatrixRoom) => {
-                acc[room.roomId] = toTimelineEvents(room)
+                acc[room.roomId] = toTimelineEvents(room, userId)
                 return acc
             }, {} as TimelinesMap)
 
@@ -211,7 +211,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             data: IRoomTimelineData,
         ) => {
             const roomId = eventRoom.roomId
-            const timelineEvent = toEvent(event)
+            const timelineEvent = toEvent(event, userId)
             if (removed) {
                 removeEvent(roomId, timelineEvent.eventId)
             } else if (event.isRelation(RelationType.Replace)) {
@@ -227,7 +227,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             // handle local id replacement
             if (timelineEvent.isLocalPending) {
                 event.once(MatrixEventEvent.LocalEventIdReplaced, () => {
-                    replaceEvent(roomId, timelineEvent.eventId, toEvent(event))
+                    replaceEvent(roomId, timelineEvent.eventId, toEvent(event, userId))
                 })
             }
         }
@@ -237,7 +237,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
             if (!roomId) {
                 return
             }
-            replaceEvent(roomId, event.getId(), toEvent(event))
+            replaceEvent(roomId, event.getId(), toEvent(event, userId))
         }
 
         const onRoomRedaction = (event: MatrixEvent, eventRoom: MatrixRoom) => {
@@ -262,7 +262,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 // will swap out the id in the LocalEventIdReplaced listener
                 return
             }
-            replaceEvent(roomId, replacingId, toEvent(event))
+            replaceEvent(roomId, replacingId, toEvent(event, userId))
         }
 
         const onRoomEvent = (room: MatrixRoom) => {
@@ -294,7 +294,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
     }, [client, setState])
 }
 
-export function toEvent(event: MatrixEvent): TimelineEvent {
+export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     const { content, error } = toZionContent(event)
     const fbc = `${event.getType()} ${getFallbackContent(event, content, error)}`
     // console.log("!!!! to event", event.getId(), fbc);
@@ -308,6 +308,7 @@ export function toEvent(event: MatrixEvent): TimelineEvent {
         isLocalPending: event.getId().startsWith('~'),
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
+        isMentioned: getIsMentioned(content, userId),
     }
 }
 
@@ -335,6 +336,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         isLocalPending: eventId.startsWith('~'),
         threadParentId: prev.threadParentId,
         reactionParentId: prev.reactionParentId,
+        isMentioned: next.isMentioned,
     }
 }
 
@@ -472,6 +474,7 @@ function toZionContent(event: MatrixEvent): {
                     body: content.body as string,
                     msgType: content.msgtype,
                     content: content,
+                    mentions: (content['mentions'] as Mention[]) ?? [],
                 },
             }
         }
@@ -593,13 +596,13 @@ function getFallbackContent(
     }
 }
 
-function toTimelineEvents(room: MatrixRoom) {
+function toTimelineEvents(room: MatrixRoom, userId: string) {
     return (
         room
             .getLiveTimeline()
             .getEvents()
             ?.filter((m) => !m.isRelation(RelationType.Replace)) ?? []
-    ).map(toEvent)
+    ).map((x) => toEvent(x, userId))
 }
 
 function toStatsAndReactions(timeline: TimelineEvent[], userId: string) {
@@ -927,4 +930,10 @@ function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | u
 
 function getReactionParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
     return content?.kind === ZTEvent.Reaction ? content.targetEventId : undefined
+}
+
+function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string): boolean {
+    return content?.kind === ZTEvent.RoomMessage
+        ? content.mentions.findIndex((x) => x.userId === userId) >= 0
+        : false
 }

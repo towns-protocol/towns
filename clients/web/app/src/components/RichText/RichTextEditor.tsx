@@ -16,8 +16,14 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
-import React, { useMemo, useState } from 'react'
-import { Channel, RoomMember, useSpaceMembers } from 'use-zion-client'
+import React, { useCallback, useMemo, useState } from 'react'
+import {
+    Channel,
+    Mention,
+    RoomMember,
+    SendTextMessageOptions,
+    useSpaceMembers,
+} from 'use-zion-client'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
@@ -41,7 +47,7 @@ import { RichTextUI } from './ui/RichTextEditorUI'
 import { BLANK_LINK } from './transformers/LinkTransformer'
 
 type Props = {
-    onSend?: (value: string) => void
+    onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
     onCancel?: () => void
     autoFocus?: boolean
     editable: boolean
@@ -81,7 +87,9 @@ const filteredDefaultTransforms = TRANSFORMERS.filter((t) => !isEqual(t, HEADING
 
 const useTransformers = ({ members, channels }: IUseTransformers) => {
     const transformers = useMemo(() => {
-        const names = members.map((m) => m.name).filter(notUndefined)
+        const names = members
+            .filter((m) => notUndefined(m.name))
+            .map((m) => ({ displayName: m.name, userId: m.userId }))
         const channelHashtags = channels.filter(notUndefined)
         return [
             CHECK_LIST,
@@ -155,6 +163,13 @@ export const RichTextEditor = (props: Props) => {
     const onFocusChange = (focus: boolean) => {
         setFocused(focus)
     }
+    const onSendCb = useCallback(
+        (message: string, mentions: Mention[]) => {
+            const options = mentions.length > 0 ? { mentions } : undefined
+            onSend?.(message, options)
+        },
+        [onSend],
+    )
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
@@ -178,7 +193,7 @@ export const RichTextEditor = (props: Props) => {
             <CheckListPlugin />
             <SendMarkdownPlugin
                 displayButtons={props.displayButtons}
-                onSend={onSend}
+                onSend={onSendCb}
                 onCancel={props.onCancel}
             />
             <AutoFocusPlugin />

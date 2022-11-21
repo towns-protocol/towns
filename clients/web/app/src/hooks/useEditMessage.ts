@@ -1,18 +1,20 @@
 import { useCallback } from 'react'
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { RoomIdentifier, SendTextMessageOptions, useZionClient } from 'use-zion-client'
 
-export const useRedactChannelEvent = (channelId?: RoomIdentifier) => {
-    // should be called "redact" I suppose
+export const useEditMessage = (channelId?: RoomIdentifier) => {
     const { editMessage } = useZionClient()
 
-    const redactChannelEvent = useCallback(
-        ({ value, parentId }: { value: string; parentId: string }) => {
+    const editChannelEvent = useCallback(
+        (
+            { value, parentId }: { value: string; parentId: string },
+            msgOptions: SendTextMessageOptions | undefined,
+        ) => {
             if (value && parentId && channelId) {
-                editMessage(channelId, value, { originalEventId: parentId })
+                editMessage(channelId, value, { originalEventId: parentId }, msgOptions)
             }
         },
         [channelId, editMessage],
     )
 
-    return { redactChannelEvent }
+    return editChannelEvent
 }

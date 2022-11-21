@@ -77,7 +77,7 @@ export const SpaceMentions = () => {
 
         timeline
             .filter((e) => e.getContent()['m.relates_to']?.rel_type !== RelationType.Replace)
-            .map(toEvent)
+            .map((x) => toEvent(x, profile?.userId ?? ''))
             .filter((e) => !e.threadParentId)
             .slice()
             .reverse()

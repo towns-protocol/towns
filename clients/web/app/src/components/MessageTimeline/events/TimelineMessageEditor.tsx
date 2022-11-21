@@ -1,8 +1,8 @@
 import React, { useCallback, useContext } from 'react'
-import { RoomIdentifier } from 'use-zion-client'
+import { RoomIdentifier, SendTextMessageOptions } from 'use-zion-client'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Stack } from '@ui'
-import { useRedactChannelEvent } from 'hooks/useEditMessage'
+import { useEditMessage } from 'hooks/useEditMessage'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 
 export const TimelineMessageEditor = (props: {
@@ -12,14 +12,14 @@ export const TimelineMessageEditor = (props: {
 }) => {
     const { initialValue, channelId, eventId } = props
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
-    const { redactChannelEvent } = useRedactChannelEvent(channelId)
+    const editChannelEvent = useEditMessage(channelId)
 
     const onSend = useCallback(
-        (value: string) => {
-            redactChannelEvent({ parentId: eventId, value })
+        (value: string, options: SendTextMessageOptions | undefined) => {
+            editChannelEvent({ parentId: eventId, value }, options)
             timelineActions?.onCancelEditingMessage?.()
         },
-        [redactChannelEvent, eventId, timelineActions],
+        [editChannelEvent, eventId, timelineActions],
     )
 
     const onCancel = useCallback(() => {

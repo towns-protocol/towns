@@ -4,6 +4,7 @@ import { Outlet, useOutlet, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
+    SendMessageOptions,
     useChannelData,
     useChannelTimeline,
     useMyMembership,
@@ -55,9 +56,9 @@ const SpacesChannelComponent = () => {
     const channelMessages = useChannelTimeline()
 
     const onSend = useCallback(
-        (value: string) => {
+        (value: string, options: SendMessageOptions | undefined) => {
             if (value && channelId) {
-                sendMessage(channelId, value)
+                sendMessage(channelId, value, options)
             }
         },
         [channelId, sendMessage],

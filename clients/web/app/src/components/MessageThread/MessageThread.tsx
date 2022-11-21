@@ -1,5 +1,5 @@
 import React from 'react'
-import { RoomIdentifier, useTimelineThread } from 'use-zion-client'
+import { RoomIdentifier, SendMessageOptions, useTimelineThread } from 'use-zion-client'
 import { TimelineMessage } from '@components/MessageTimeline/events/TimelineMessage'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -21,8 +21,8 @@ export const MessageThread = (props: {
 
     const { sendReply } = useSendReply(parentId)
 
-    const onSend = (value: string) => {
-        sendReply(value, channelId)
+    const onSend = (value: string, options: SendMessageOptions | undefined) => {
+        sendReply(value, channelId, options)
     }
 
     return (

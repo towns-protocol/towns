@@ -5,7 +5,7 @@ import {
     JoinRule,
     RestrictedAllowType,
 } from 'matrix-js-sdk'
-import { Channel, Membership, PowerLevels, RoomIdentifier } from './matrix-types'
+import { Channel, Membership, Mention, PowerLevels, RoomIdentifier } from './matrix-types'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -118,6 +118,7 @@ export interface RoomMessageEvent {
     inReplyTo?: string
     body: string
     msgType: string
+    mentions: Mention[]
     content: IContent // room messages have lots of representations
 }
 
@@ -161,6 +162,7 @@ export interface TimelineEvent {
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server
     threadParentId?: string
     reactionParentId?: string
+    isMentioned: boolean
 }
 
 export interface ThreadStats {

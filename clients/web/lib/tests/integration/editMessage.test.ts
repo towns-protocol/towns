@@ -49,9 +49,14 @@ describe('editMessage', () => {
         // assert assumptions
         expect(event?.getContent().body).toBe('Hello Balice!')
         // edit the message
-        await bob.editMessage(roomId, 'Hello Alice!', {
-            originalEventId: event.getId(),
-        })
+        await bob.editMessage(
+            roomId,
+            'Hello Alice!',
+            {
+                originalEventId: event.getId(),
+            },
+            undefined,
+        )
         // bob should show the new message
         await waitFor(() =>
             expect(

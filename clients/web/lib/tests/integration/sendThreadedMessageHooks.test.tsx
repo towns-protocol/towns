@@ -103,9 +103,14 @@ describe('sendThreadedMessageHooks', () => {
                     }
                     const channelId = channel_2_threadRoot.channel.id
                     const messageId = channel_2_threadRoot.thread.parentId
-                    void editMessage(channelId, 'hello jane old friend in channel_2', {
-                        originalEventId: messageId,
-                    })
+                    void editMessage(
+                        channelId,
+                        'hello jane old friend in channel_2',
+                        {
+                            originalEventId: messageId,
+                        },
+                        undefined,
+                    )
                 }, [editMessage, channel_2_threadRoot])
 
                 const markAllAsRead = useCallback(() => {

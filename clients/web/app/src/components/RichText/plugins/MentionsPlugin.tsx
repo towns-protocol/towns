@@ -34,7 +34,9 @@ export const NewMentionsPlugin = (props: Props) => {
 
     const options = useMemo(() => {
         return props.members
-            .map((m) => (m.name ? new MentionTypeaheadOption(m.name, m.avatarUrl) : undefined))
+            .map((m) =>
+                m.name ? new MentionTypeaheadOption(m.name, m.userId, m.avatarUrl) : undefined,
+            )
             .filter(notUndefined)
     }, [props.members])
 
@@ -57,7 +59,10 @@ export const NewMentionsPlugin = (props: Props) => {
             closeMenu: () => void,
         ) => {
             editor.update(() => {
-                const mentionNode = $createMentionNode(`@${selectedOption.name}`)
+                const mentionNode = $createMentionNode(
+                    `@${selectedOption.name}`,
+                    selectedOption.userId,
+                )
                 const spaceNode = $createTextNode(' ')
 
                 if (nodeToReplace) {
@@ -241,11 +246,13 @@ const getPossibleQueryMatch = (text: string): QueryMatch | null => {
 
 class MentionTypeaheadOption extends TypeaheadOption {
     name: string
+    userId: string
     picture: string | undefined
 
-    constructor(name: string, picture: string | undefined) {
+    constructor(name: string, userId: string, picture: string | undefined) {
         super(name)
         this.name = name
+        this.userId = userId
         this.picture = picture
     }
 }

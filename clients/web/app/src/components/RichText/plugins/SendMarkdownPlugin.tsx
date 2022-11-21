@@ -2,17 +2,20 @@ import { $convertToMarkdownString } from '@lexical/markdown'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { mergeRegister } from '@lexical/utils'
 import {
+    $getRoot,
     CLEAR_EDITOR_COMMAND,
     COMMAND_PRIORITY_LOW,
     INSERT_PARAGRAPH_COMMAND,
     KEY_ENTER_COMMAND,
 } from 'lexical'
 import React, { useCallback, useEffect } from 'react'
+import { Mention } from 'use-zion-client'
 import { Button, Stack } from '@ui'
+import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
     displayButtons?: boolean
-    onSend?: (value: string) => void
+    onSend?: (value: string, mentions: Mention[]) => void
     onCancel?: () => void
 }) => {
     const { onSend } = props
@@ -66,14 +69,26 @@ const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void 
     )
 }
 
-const useParseMarkdown = (onSend?: (value: string) => void) => {
+const useParseMarkdown = (onSend?: (value: string, mentions: Mention[]) => void) => {
     const [editor] = useLexicalComposerContext()
     const parseMarkdown = useCallback(() => {
         if (onSend) {
             editor.getEditorState().read(() => {
+                const mentions = $getRoot()
+                    .getAllTextNodes()
+                    .filter($isMentionNode)
+                    .map((node) => {
+                        const mention = node.getMention()
+                        if (!mention.userId) {
+                            console.error('Mention is missing userId')
+                        }
+                        return mention
+                    })
                 const markdown = $convertToMarkdownString()
-                onSend(markdown)
+                onSend(markdown, mentions)
             })
+        } else {
+            console.error('No onSend callback provided to SendMarkdownPlugin')
         }
     }, [editor, onSend])
     return { parseMarkdown }

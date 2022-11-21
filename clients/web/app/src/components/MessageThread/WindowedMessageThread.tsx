@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { useChannelContext, useTimelineThread } from 'use-zion-client'
+import { SendMessageOptions, useChannelContext, useTimelineThread } from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -24,8 +24,8 @@ export const WindowedMessageThread = (props: Props) => {
 
     const { sendReply } = useSendReply(messageId)
 
-    const onSend = (value: string) => {
-        sendReply(value, channelId)
+    const onSend = (value: string, options: SendMessageOptions | undefined) => {
+        sendReply(value, channelId, options)
     }
 
     return (

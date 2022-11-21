@@ -1,6 +1,7 @@
 // import { TextMatchTransformer } from "@lexical/markdown";
 import { TextMatchTransformer } from '@lexical/markdown'
 import type { Spread } from 'lexical'
+import { Mention } from 'use-zion-client'
 
 import {
     DOMConversionMap,
@@ -27,7 +28,7 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
     const textContent = domNode.textContent
 
     if (textContent !== null) {
-        const node = $createMentionNode(textContent)
+        const node = $createMentionNode(textContent, undefined)
         return {
             node,
         }
@@ -38,6 +39,7 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
 
 export class MentionNode extends TextNode {
     __mention: string
+    __userId: string | undefined
 
     static getType(): string {
         return 'mention'
@@ -48,7 +50,7 @@ export class MentionNode extends TextNode {
     }
 
     static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-        const node = $createMentionNode(serializedNode.mentionName)
+        const node = $createMentionNode(serializedNode.mentionName, undefined)
         node.setTextContent(serializedNode.text)
         node.setFormat(serializedNode.format)
         node.setDetail(serializedNode.detail)
@@ -57,13 +59,21 @@ export class MentionNode extends TextNode {
         return node
     }
 
-    constructor(mentionName: string, text?: string, key?: NodeKey) {
+    constructor(mentionName: string, userId: string | undefined, text?: string, key?: NodeKey) {
         super(text ?? mentionName, key)
         this.__mention = mentionName
+        this.__userId = userId
     }
 
     getMentionName() {
         return this.__mention
+    }
+
+    getMention(): Mention {
+        return {
+            displayName: this.__mention,
+            userId: this.__userId,
+        }
     }
 
     exportJSON(): SerializedMentionNode {
@@ -113,8 +123,8 @@ export class MentionNode extends TextNode {
     }
 }
 
-export function $createMentionNode(mentionName: string): MentionNode {
-    const mentionNode = new MentionNode(mentionName)
+export function $createMentionNode(mentionName: string, userId: string | undefined): MentionNode {
+    const mentionNode = new MentionNode(mentionName, userId)
     mentionNode.setMode('segmented').toggleDirectionless()
     return mentionNode
 }
@@ -123,8 +133,14 @@ export function $isMentionNode(node: LexicalNode | null | undefined): node is Me
     return node instanceof MentionNode
 }
 
-export const createMentionTransformer = (names: string[]): TextMatchTransformer => {
-    const concat = names.join('|')
+export const createMentionTransformer = (
+    names: { displayName: string; userId: string }[],
+): TextMatchTransformer => {
+    const concat = names.map((n) => n.displayName).join('|')
+    const userIds = names.reduce((acc, n) => {
+        acc[n.displayName] = n.userId
+        return acc
+    }, {} as Record<string, string>)
     return {
         dependencies: [MentionNode],
         export: (node, exportChildren, exportFormat) => {
@@ -136,7 +152,9 @@ export const createMentionTransformer = (names: string[]): TextMatchTransformer 
         importRegExp: new RegExp('(@(' + concat + '))', 'i'),
         regExp: /(@[a-z0-9_-]+)$/i,
         replace: (textNode, match) => {
-            const mentionNode = $createMentionNode(match[1])
+            const name = match[1]
+            const userId = userIds[name]
+            const mentionNode = $createMentionNode(match[1], userId)
             textNode.replace(mentionNode)
         },
         trigger: '@',

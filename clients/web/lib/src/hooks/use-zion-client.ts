@@ -6,6 +6,7 @@ import {
     Room,
     RoomIdentifier,
     SendMessageOptions,
+    SendTextMessageOptions,
 } from '../types/matrix-types'
 
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -45,6 +46,7 @@ interface ZionClientImpl {
         roomId: RoomIdentifier,
         message: string,
         options: EditMessageOptions,
+        SendTextMessageOptions: SendTextMessageOptions | undefined,
     ) => Promise<void>
     getIsWalletIdRegistered: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>

@@ -51,9 +51,14 @@ describe('sendMessageHooks', () => {
             }, [sendMessage])
             // edit message
             const onEdit = useCallback(() => {
-                void editMessage(channelId, 'hello jane gm!', {
-                    originalEventId: messagesOrRedactions[1].eventId,
-                })
+                void editMessage(
+                    channelId,
+                    'hello jane gm!',
+                    {
+                        originalEventId: messagesOrRedactions[1].eventId,
+                    },
+                    undefined,
+                )
             }, [channelId, editMessage, messagesOrRedactions])
             // redact message
             const onRedact = useCallback(() => {

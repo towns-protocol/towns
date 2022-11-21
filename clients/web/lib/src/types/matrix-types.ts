@@ -134,9 +134,20 @@ export enum MessageType {
     ZionText = 'm.ZionText',
 }
 
-interface SendMessageOptionsBase {
+export interface SendTextMessageOptions {
     threadId?: string
-    messageType?: MessageType.Text | MessageType.WenMoon
+    messageType?: MessageType.Text
+    mentions?: Mention[]
+}
+
+export interface Mention {
+    displayName: string
+    userId?: string
+}
+
+interface SendWenMoonOptions {
+    threadId?: string
+    messageType: MessageType.WenMoon
 }
 
 // ImageInfo from matrix-js-sdk (node_modules/matrix-js-sdk/src/@types/partials.ts) is incomplete against matrix spec (https://spec.matrix.org/v1.3/client-server-api/#mimage)
@@ -171,7 +182,8 @@ interface SendZionTextMessageOptions {
 }
 
 export type SendMessageOptions =
-    | SendMessageOptionsBase
+    | SendTextMessageOptions
+    | SendWenMoonOptions
     | SendImageMessageOptions
     | SendZionTextMessageOptions
 
