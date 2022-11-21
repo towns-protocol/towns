@@ -1,12 +1,7 @@
 import { worker } from '../src/index'
 
-test.skip('GET /', async () => {
-	const result = await worker.fetch(
-		new Request('http://falcon', { method: 'GET' }),
-		{},
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		{} as any,
-	)
+test('GET /', async () => {
+	const result = await worker.fetch(new Request('http://falcon', { method: 'GET' }))
 	expect(result.status).toBe(200)
 
 	const text = await result.text()

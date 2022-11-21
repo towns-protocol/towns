@@ -1,6 +1,12 @@
 ## Getting Started
 
-This template is meant to be used with [Wrangler](https://github.com/cloudflare/wrangler) to develop Cloudflare [Workers](https://developers.cloudflare.com/workers/). Clone this directory under `servers/` into a new directory to develop a new Worker.
+This template is meant to be used with [Wrangler](https://github.com/cloudflare/wrangler) to develop Cloudflare [Workers](https://developers.cloudflare.com/workers/).
+
+1. Clone this directory under `servers/` into a new directory to develop a new Worker.
+2. Change the name in `package.json`
+3. Change the name in `wrangler.toml`
+4. Add an entry to `harmony/.prettierignore` like `!servers/your-worker`.
+5. Add an entry to `harmony/package.json` workspaces like `servers/your-worker`.
 
 If you are not already familiar with the Wrangler, install and configure it to work with your [Cloudflare account](https://dash.cloudflare.com). Documentation can be found [here](https://developers.cloudflare.com/workers/tooling/wrangler/).
 
@@ -18,13 +24,28 @@ To re-generate this template using Wrangler, run this command:
 wrangler generate my-ts-project https://github.com/cloudflare/worker-typescript-template
 ```
 
-### Testing
+## Development
 
-! TESTS ARE DISABLED FOR THIS TEMPLATE !
+`yarn dev:local` - run the worker directly on your local machine. Does not require wrangler creds. DOES require .dev.vars
 
-Otherwise you can add a `"test": "yarn test"` script in your package.json
+`yarn dev` - start local dev server. requires [Wrangler](https://github.com/cloudflare/wrangler) and then `wrangler login`. will give you access to secrets stored in cloudflare so you don't need dev.vars. Double check secret variables with `wrangler secret list` after logging in
+
+> :warning: **There are still some kinks to workout with linting**: It doesn't always come up in editor, so you may want to run `yarn lint` occasionally.
+
+## Environment variables
+
+Can be set in `wrangler.toml`. Secret variables can be set in `.dev.vars`.
+
+## Testing
+
+`yarn test` - runs a local version of cloudflare using `miniflare` (same as `yarn dev:local`). Should not require any Cloudflare credentials to run. You may need to run `yarn` first.
 
 This template comes with jest tests utilizing [Miniflare](https://github.com/cloudflare/miniflare) which simply test that the request handler can handle each request method. `yarn test` will run your tests.
+
+## Troubleshooting
+
+- `wrangler secret list` - should output any secrets stored in Cloudflare
+- If there's weird errors running tests, it could be caused by conflicting versions of `miniflare`. [issue](https://github.com/cloudflare/miniflare/issues/239#issuecomment-1092999752). Try `yarn why miniflare`. If there are confliciting versions and tests fail, try resolving miniflare to a single version in `harmony/packaga.json`
 
 ### Formatting
 
@@ -36,7 +57,7 @@ This template uses [`prettier`](https://prettier.io/) to format the project. To 
 yarn
 ```
 
-### Deploying to Local Dev
+## Deploying to Local Dev
 
 ```bash
 wrangler login
