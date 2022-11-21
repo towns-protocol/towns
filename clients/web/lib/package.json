@@ -11,7 +11,8 @@
         "lint:fix": "yarn lint --fix",
         "postinstall": "tsc",
         "prepack": "tsc",
-        "test": "tsc && NODE_ENV=development jest --forceExit --silent --maxWorkers=5",
+        "test:e2e": "tsc && NODE_ENV=development jest --forceExit --silent --maxWorkers=5",
+        "test": "yarn test:e2e",
         "test-load": "tsc && NUM_CLIENTS=25 NODE_ENV=development jest --forceExit --group=integration/load",
         "watch": "tsc --watch"
     },

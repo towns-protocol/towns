@@ -9,7 +9,8 @@
         "dev:local": "npx wrangler dev --local",
         "lint": "eslint .",
         "publish": "npx wrangler publish",
-        "test": "jest"
+        "test:unit": "jest",
+        "test": "yarn test:unit"
     },
     "dependencies": {
         "image-size": "^1.0.2",

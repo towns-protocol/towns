@@ -13,8 +13,7 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('useRegisterPasswordUserHooks', () => {
-    // TODO: unskip after ci
-    test.skip('username / password registration', async () => {
+    test('username / password registration', async () => {
         const bobProvider = new ZionTestWeb3Provider()
         const bobId = bobProvider.wallet.address
         // create a veiw for the wallet

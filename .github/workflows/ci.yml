@@ -117,8 +117,15 @@ jobs:
             - name: Wait for dendrite to be ready
               run: yarn drt:wait
 
-            - name: Test
-              run: yarn test
+            - name: Unit Tests
+              run: yarn test:unit
 
+            # We run the E2E tests only after the PR is merged
+            # TODO: create a notificaiton system like Sentry to notify us when the E2E tests fail
+            - name: E2E Tests
+              if: github.event.pull_request.merged == true
+              run: yarn test:e2e
+
+            # TODO: sync with serge to see if we can run these after merge as well
             - name: Test Casablanca node
               run: yarn csb:test-remote

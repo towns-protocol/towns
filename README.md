@@ -73,6 +73,23 @@ If you would like to run the main app:
 
 `cp servers/unfurl-worker/.dev.vars-sample servers/unfurl-worker/.dev.vars` and populate with [Twitter bearer token](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
 
-## Integration tests
+## Tests
 
-`./scripts/run-integration-tests.sh`
+- Run all unit tests via: `yarn test:unit`
+- Run all e2e tests via: `yarn test:e2e`
+- Run all tests (both unit and e2e) via: `yarn test`
+
+CI will gate PR merges via unit tests. However, failing e2e tests won't gate merges. In fact, they won't even be run pre-merge. e2e tests will be run after merging to main. This allows us to keep merging our work to main, while also staying aware of failing e2e tests.
+
+## Package.json Scripts
+
+We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos are a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first. 
+
+If you have a package in the monorepo, and 
+    a) you want it to be built on CI, add a `"build"` script
+    b) you want it to be linted on CI, add a `"lint"` script
+    c) you want its unit tests to be run on CI, add a `"test:unit"` script
+    d) you want its e2e tests to be run on CI, add a `"test:e2e"` script 
+    e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
+
+Similarly, if you edit or delete these scripts, be aware that you may be removing those scripts from CI.

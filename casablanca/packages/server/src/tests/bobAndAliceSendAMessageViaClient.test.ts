@@ -159,8 +159,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         log('pass2 done')
     })
 
-    // TODO: undo skip
-    test.skip('bobAndAliceConverse' + testSuffix, async () => {
+    test('bobAndAliceConverse' + testSuffix, async () => {
         log('bobAndAliceConverse')
 
         // Bob gets created, creates a space, and creates a channel.

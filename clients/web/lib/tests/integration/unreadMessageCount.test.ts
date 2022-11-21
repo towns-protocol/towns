@@ -8,7 +8,6 @@ import { registerAndStartClients } from './helpers/TestUtils'
 describe('unreadMessageCount', () => {
     // usefull for debugging or running against cloud servers
     jest.setTimeout(60000)
-    // test:
     test('create room, invite user, accept invite, and send message, check unread counts', async () => {
         // create clients
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])

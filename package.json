@@ -25,6 +25,8 @@
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
+        "test:unit": "turbo test:unit",
+        "test:e2e": "turbo test:e2e",
         "drt:wait": "wait-on tcp:8008 --timeout=400000 --verbose"
     },
     "devDependencies": {

@@ -9,7 +9,8 @@
         "lint": "eslint . --cache",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
-        "test": "vitest"
+        "test:unit": "vitest",
+        "test": "yarn test:unit"
     },
     "dependencies": {
         "@emotion/react": "^11.10.4",

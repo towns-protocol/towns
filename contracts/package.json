@@ -4,7 +4,8 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
-        "test": "make test",
+        "test:unit": "make test",
+        "test": "yarn test:unit",
         "lint": "make lint",
         "build": "make all",
         "all": "make all",
