@@ -28,7 +28,13 @@ export interface Env {
     // MY_BUCKET: R2Bucket
 }
 
-const allowedOrigins = ['https://onrender.com/', 'http://localhost:3000']
+const allowedOrigins = ['http://localhost:3000']
+
+const onRenderOrigin = (origin: string): string | undefined => {
+    if (origin.includes('onrender.com') && origin.includes('harmony-web')) {
+        return origin
+    }
+}
 
 const corsHeaders = (origin: string) => ({
     'Access-Control-Allow-Headers': '*',
@@ -38,7 +44,11 @@ const corsHeaders = (origin: string) => ({
 
 const checkOrigin = (request: Request) => {
     const origin = request.headers.get('Origin') || ''
-    const foundOrigin = allowedOrigins.find((allowedOrigin) => allowedOrigin.includes(origin))
+
+    const foundOrigin =
+        allowedOrigins.find((allowedOrigin) => allowedOrigin.includes(origin)) ||
+        onRenderOrigin(origin)
+
     return foundOrigin ? foundOrigin : allowedOrigins[0]
 }
 
