@@ -202,7 +202,7 @@ export class Badger {
 
     // Public functions / methods:
 
-    update() {
+    _update() {
         if (this.img) {
             this._draw()
         } else if (this.src) {
@@ -220,17 +220,12 @@ export class Badger {
         return this._value
     }
 
-    badge(val: number) {
-        if (val !== this._value) {
-            this._value = val
-            this.update()
+    badge(mentionCount: number, hasUnread: boolean) {
+        if (mentionCount === this._value && hasUnread === this._showDot) {
+            return
         }
-    }
-
-    dot(showDot: boolean) {
-        if (showDot !== this._showDot) {
-            this._showDot = showDot
-            this.update()
-        }
+        this._value = mentionCount
+        this._showDot = hasUnread
+        this._update()
     }
 }

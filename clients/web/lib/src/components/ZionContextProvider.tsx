@@ -3,12 +3,10 @@ import { ethers } from 'ethers'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOnboardingOpts } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
-import { useNotificationCounts } from '../hooks/ZionContext/useNotificationCounts'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import { useOnboardingState } from '../hooks/ZionContext/useOnboardingState'
 import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
-import { useSpaceMentionCounts } from '../hooks/ZionContext/useSpaceMentionCounts'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
@@ -27,12 +25,11 @@ import { Web3ContextProvider } from './Web3ContextProvider'
 
 export interface IZionContext {
     client?: ZionClient
-    mentionCounts: Record<string, number> // channel or unaggregated space -> count;
     rooms: Record<string, Room | undefined>
     invitedToIds: string[] // ordered list of invites (spaces and channels)
     spaceIds: string[] // ordered list of space ids
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
-    spaceMentionCounts: Record<string, number> // spaceId -> aggregated mentionCount
+    spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
     onboardingState: IOnboardingState
@@ -102,12 +99,10 @@ const ContextImpl = (props: Props): JSX.Element => {
         signer,
     )
     useContentAwareTimelineDiff(client?.matrixClient)
-    const { mentionCounts } = useNotificationCounts(client)
     const { spaceIds, invitedToIds } = useSpacesIds(client)
-    const { spaceMentionCounts } = useSpaceMentionCounts(client, spaceIds, mentionCounts)
     const { spaces } = useSpaces(client, spaceIds)
     const { spaceHierarchies } = useSyncSpaceHierarchies(client, spaceIds, invitedToIds)
-    const { spaceUnreads } = useSpaceUnreads(
+    const { spaceUnreads, spaceMentions } = useSpaceUnreads(
         client,
         spaceIds,
         spaceHierarchies,
@@ -124,18 +119,17 @@ const ContextImpl = (props: Props): JSX.Element => {
     const onboardingState = useOnboardingState(client)
     const syncError = useSyncErrorHandler(client)
 
-    useFavIconBadge(invitedToIds, spaceUnreads)
+    useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
 
     return (
         <ZionContext.Provider
             value={{
                 client,
-                mentionCounts,
                 rooms,
                 invitedToIds,
                 spaceIds,
                 spaceUnreads,
-                spaceMentionCounts,
+                spaceMentions,
                 spaces,
                 spaceHierarchies,
                 onboardingState,

@@ -10,15 +10,13 @@ import {
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { makeRoomIdentifier } from '../../types/matrix-types'
+import { makeRoomIdentifier, Mention, RoomIdentifier } from '../../types/matrix-types'
 import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
 import { ZionAccountDataType } from '../../client/ZionClientTypes'
 
 type LocalEffectState = {
     /// { roomId: { eventId: index in timeline } }
     encryptedEvents: Record<string, Record<string, number>> // this should be a Map instead of a record
-    /// events we found during init that we need to udpate with thread info
-    needsParticipationCheck: string[]
 }
 
 export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
@@ -71,6 +69,24 @@ function isCountedAsUnread(event: MatrixEvent, myUserId: string): boolean {
     }
 }
 
+function isMentioned(event: MatrixEvent, myUserId: string): boolean {
+    const eventType = event.getType()
+    switch (eventType) {
+        case EventType.RoomMessage: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const mentionsContent = event.getContent()?.['mentions']
+            if (mentionsContent) {
+                return (mentionsContent as Mention[]).some(
+                    (mention: Mention) => mention.userId === myUserId,
+                )
+            }
+            return false
+        }
+        default:
+            return false
+    }
+}
+
 function isCountedAsUnreadZTEvent(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
         case ZTEvent.RoomMessage:
@@ -80,8 +96,27 @@ function isCountedAsUnreadZTEvent(event: TimelineEvent, myUserId: string): boole
     }
 }
 
+function isMentionedZTEvent(event: TimelineEvent): boolean {
+    return event.isMentioned
+}
+
 function isEncryptedZTEvent(event: TimelineEvent): boolean {
     return event.content?.kind === ZTEvent.RoomMessageEncrypted
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toFullyReadMarker(value: any): FullyReadMarker {
+    return {
+        /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+        channelId: value.channelId as RoomIdentifier,
+        threadParentId: value.threadParentId ? (value.threadParentId as string) : undefined,
+        eventId: value.eventId as string,
+        isUnread: value.isUnread as boolean,
+        markedReadAtTs: value.markedReadAtTs as number,
+        markedUnreadAtTs: value.markedUnreadAtTs as number,
+        mentions: value.mentions ? (value.mentions as number) : 0,
+        /* eslint-enable @typescript-eslint/no-unsafe-member-access */
+    }
 }
 
 function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState {
@@ -94,7 +129,7 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
             const remoteMarkers = room.getAccountData(ZionAccountDataType.FullyRead)?.getContent()
             if (remoteMarkers) {
                 for (const [key, value] of Object.entries(remoteMarkers)) {
-                    const marker = value as FullyReadMarker
+                    const marker = toFullyReadMarker(value)
                     updated[key] = marker
                     console.log('initOnce: setting marker for', { key, marker })
                 }
@@ -122,6 +157,7 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                             events,
                         })
                         const isThread = id !== room.roomId
+                        const mentions = events.filter((event) => isMentioned(event, userId)).length
                         let entry: FullyReadMarker = updated[id]
                             ? updated[id]
                             : {
@@ -131,7 +167,7 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                                   isUnread: true,
                                   markedUnreadAtTs: Date.now(),
                                   markedReadAtTs: 0,
-                                  isParticipating: false,
+                                  mentions: 0,
                               }
                         if (!entry.isUnread) {
                             entry = {
@@ -139,6 +175,12 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                                 eventId: events[0].getId(),
                                 isUnread: true,
                                 markedUnreadAtTs: Date.now(),
+                                mentions: mentions,
+                            }
+                        } else if (mentions > 0) {
+                            entry = {
+                                ...entry,
+                                mentions: entry.mentions + mentions,
                             }
                         }
                         needsParticipationCheck.push(id)
@@ -152,7 +194,6 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
 
     return {
         encryptedEvents: {},
-        needsParticipationCheck,
     }
 }
 
@@ -164,7 +205,7 @@ function onRemoteRoomAccountDataEvent(event: MatrixEvent, _room: MatrixRoom, _pr
                 let didUpdate = false
                 const updated = { ...state.markers }
                 for (const [key, value] of Object.entries(remoteMarkers)) {
-                    const marker = value as FullyReadMarker
+                    const marker = toFullyReadMarker(value)
 
                     if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
                         console.log('onRoomAccountDataEvent: setting marker for', {
@@ -191,23 +232,6 @@ function diffTimeline(
     effectState: LocalEffectState,
     userId: string,
 ): LocalEffectState {
-    if (effectState.needsParticipationCheck.length > 0) {
-        useFullyReadMarkerStore.setState((state) => {
-            const updated = { ...state.markers }
-            for (const id of effectState.needsParticipationCheck) {
-                console.log('!!!! participation check !!!', id)
-                const roomId = state.markers[id]?.channelId.matrixRoomId
-                if (roomId && timelineState.threadsStats[roomId]?.[id]?.isParticipating === true) {
-                    updated[id] = {
-                        ...updated[id],
-                        isParticipating: true,
-                    }
-                }
-            }
-            return { markers: updated }
-        })
-        effectState.needsParticipationCheck = []
-    }
     if (Object.keys(prev.timelines).length === 0 || timelineState.timelines === prev.timelines) {
         // noop
         return effectState
@@ -245,17 +269,7 @@ function diffTimeline(
                             useFullyReadMarkerStore.setState((state) => {
                                 const id = event.threadParentId ?? roomId
                                 const oldMarker: FullyReadMarker | undefined = state.markers[id]
-                                if (
-                                    oldMarker?.isUnread === true &&
-                                    oldMarker?.isParticipating === true
-                                ) {
-                                    // same sate, noop
-                                    return state
-                                }
-                                const isParticipating =
-                                    timelineState.threadsStats[roomId]?.[id]?.isParticipating ??
-                                    false
-                                if (oldMarker?.isUnread === true && !isParticipating) {
+                                if (oldMarker?.isUnread === true) {
                                     // same sate, noop
                                     return state
                                 }
@@ -264,13 +278,14 @@ function diffTimeline(
                                     event,
                                     oldMarker,
                                 })
+                                const mentions = isMentionedZTEvent(event) ? 1 : 0
                                 const entry: FullyReadMarker = oldMarker
                                     ? {
                                           ...oldMarker,
                                           eventId: event.eventId,
                                           isUnread: true,
                                           markedUnreadAtTs: Date.now(),
-                                          isParticipating,
+                                          mentions: oldMarker.mentions + mentions,
                                       }
                                     : {
                                           channelId: makeRoomIdentifier(roomId),
@@ -279,7 +294,7 @@ function diffTimeline(
                                           isUnread: true,
                                           markedUnreadAtTs: Date.now(),
                                           markedReadAtTs: 0,
-                                          isParticipating,
+                                          mentions,
                                       }
 
                                 return { markers: { ...state.markers, [id]: entry } }
@@ -308,8 +323,7 @@ function diffTimeline(
                         const updated = { ...state.markers }
                         Object.entries(eventsMap).forEach(([id, events]) => {
                             const isThread = id !== roomId
-                            const isParticipating =
-                                timelineState.threadsStats[roomId]?.[id]?.isParticipating ?? false
+                            const mentions = events.filter(isMentionedZTEvent).length
                             console.log('new unread events', { id, roomId, events })
                             let entry: FullyReadMarker = updated[id]
                                 ? updated[id]
@@ -320,7 +334,7 @@ function diffTimeline(
                                       isUnread: true,
                                       markedUnreadAtTs: Date.now(),
                                       markedReadAtTs: 0,
-                                      isParticipating,
+                                      mentions: 0,
                                   }
                             if (!entry.isUnread) {
                                 entry = {
@@ -328,7 +342,12 @@ function diffTimeline(
                                     eventId: events[0].eventId,
                                     isUnread: true,
                                     markedUnreadAtTs: Date.now(),
-                                    isParticipating,
+                                    mentions,
+                                }
+                            } else if (mentions > 0) {
+                                entry = {
+                                    ...entry,
+                                    mentions: entry.mentions + mentions,
                                 }
                             }
                             updated[id] = entry

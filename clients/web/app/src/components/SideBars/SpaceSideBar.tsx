@@ -5,6 +5,7 @@ import {
     RoomIdentifier,
     SpaceData,
     useInvitesForSpace,
+    useSpaceNotificationCounts,
     useZionContext,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
@@ -22,19 +23,12 @@ type Props = {
     space: SpaceData
 }
 
-const useTotalMentionCount = () => {
-    const { mentionCounts } = useZionContext()
-    return Object.entries(mentionCounts).reduce((total, e) => {
-        return total + (e[1] || 0)
-    }, 0)
-}
-
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
     const invites = useInvitesForSpace(space.id)
     const navigate = useNavigate()
 
-    const totalMentions = useTotalMentionCount()
+    const { mentions } = useSpaceNotificationCounts(space.id)
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
 
     const onSettings = useCallback(
@@ -64,10 +58,10 @@ export const SpaceSideBar = (props: Props) => {
                         />
                         <ActionNavItem
                             icon="at"
-                            highlight={totalMentions > 0}
+                            highlight={mentions > 0}
                             id="mentions"
                             label="Mentions"
-                            badge={totalMentions > 0 && <Badge value={totalMentions} />}
+                            badge={mentions > 0 && <Badge value={mentions} />}
                             link={`/spaces/${space.id.slug}/mentions`}
                         />
                     </>

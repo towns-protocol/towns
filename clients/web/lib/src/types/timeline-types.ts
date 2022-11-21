@@ -189,6 +189,15 @@ export interface ThreadResult {
 /// MessageReactions: { reactionName: { userId: { eventId: string } } }
 export type MessageReactions = Record<string, Record<string, { eventId: string }>>
 
+export type MentionResult = {
+    type: 'mention'
+    unread: boolean
+    channel: Channel
+    timestamp: number
+    event: TimelineEvent
+    thread?: TimelineEvent
+}
+
 export interface FullyReadMarker {
     channelId: RoomIdentifier
     threadParentId?: string
@@ -196,8 +205,7 @@ export interface FullyReadMarker {
     isUnread: boolean
     markedUnreadAtTs: number
     markedReadAtTs: number
-    isParticipating: boolean // true for all channels, any threads started or replied to
+    mentions: number
     // possible future extensions
     // muted: boolean
-    // mentions: number
 }

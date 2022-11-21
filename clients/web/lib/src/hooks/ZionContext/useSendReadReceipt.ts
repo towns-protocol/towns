@@ -21,6 +21,7 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
                                 ...state.markers[markerId],
                                 isUnread: false,
                                 markedReadAtTs: Date.now(),
+                                mentions: 0,
                             },
                         },
                     }

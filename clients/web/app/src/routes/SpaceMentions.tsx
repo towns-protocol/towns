@@ -2,114 +2,14 @@ import { RelationType } from 'matrix-js-sdk'
 import React from 'react'
 import { Outlet } from 'react-router'
 import { NavLink } from 'react-router-dom'
-import { firstBy } from 'thenby'
-import {
-    Channel,
-    TimelineEvent,
-    ZTEvent,
-    toEvent,
-    useMyProfile,
-    useSpaceData,
-    useSpaceId,
-    useSpaceThreadRoots,
-    useZionContext,
-} from 'use-zion-client'
+import { MentionResult, useSpaceId, useSpaceMentions } from 'use-zion-client'
 import { Box, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/Message'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 
-type Result = MentionResult | ReactionResult
-
-type MentionResult = {
-    unread: boolean
-    type: 'mention'
-    channel: Channel
-    timestamp: number
-    event: TimelineEvent
-    thread?: TimelineEvent
-}
-
-type ReactionResult = {
-    unread: boolean
-    type: 'reaction'
-    channel: Channel
-    timestamp: number
-    reaction: {
-        reaction: string
-        sender: string
-    }
-    event: TimelineEvent
-    parentEvent?: TimelineEvent
-}
-
 export const SpaceMentions = () => {
-    const profile = useMyProfile()
-
-    const threads = useSpaceThreadRoots()
-    const { mentionCounts } = useZionContext()
-    const { client } = useZionContext()
-
-    const data = useSpaceData()
-    const profileMatcher = new RegExp(`@${profile?.displayName}`)
-
-    if (!data) {
-        return null
-    }
-
-    const { channelGroups } = data
-
-    const result = [] as Result[]
-
-    // flatmap channels
-    const channels = channelGroups.reduce((channels, group) => {
-        return [...channels, ...group.channels]
-    }, [] as Channel[])
-
-    channels.forEach((channel) => {
-        const timeline = client?.getRoom(channel.id)?.timeline
-
-        if (!timeline?.length) {
-            return
-        }
-
-        let unreadMentions = mentionCounts[channel.id.matrixRoomId] || 0
-
-        timeline
-            .filter((e) => e.getContent()['m.relates_to']?.rel_type !== RelationType.Replace)
-            .map((x) => toEvent(x, profile?.userId ?? ''))
-            .filter((e) => !e.threadParentId)
-            .slice()
-            .reverse()
-            .forEach((event) => {
-                const content = event.content
-                const hasUnreadMentions = unreadMentions > 0
-                if (content?.kind === ZTEvent.RoomMessage) {
-                    if (profileMatcher.test(content.body)) {
-                        const thread = threads.find(
-                            (t) => t.thread.parentEvent?.eventId === event.threadParentId,
-                        )?.thread.parentEvent
-
-                        result.push({
-                            type: 'mention',
-                            unread: hasUnreadMentions,
-                            thread,
-                            channel,
-                            event,
-                            timestamp: event.originServerTs,
-                        })
-
-                        if (hasUnreadMentions) {
-                            // unread mentions only counts for unread messages
-                            unreadMentions--
-                        }
-                    }
-                }
-            })
-    })
-
-    result.sort(firstBy<MentionResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1))
-
+    const result = useSpaceMentions()
     return (
         <Stack grow horizontal>
             <Stack grow gap>

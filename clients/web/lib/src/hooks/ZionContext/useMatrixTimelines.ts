@@ -717,7 +717,8 @@ function addThreadStat(
     updated.isParticipating =
         updated.isParticipating ||
         updated.userIds.has(userId) ||
-        updated.parentMessageContent?.sender.id === userId
+        updated.parentMessageContent?.sender.id === userId ||
+        event.isMentioned
     return updated
 }
 

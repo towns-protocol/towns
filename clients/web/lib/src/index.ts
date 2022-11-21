@@ -29,6 +29,7 @@ export { useSpaceData, useInvites, useInvitesForSpace, useInviteData } from './h
 export { useSpaceHierarchy } from './hooks/use-space-hierarchy'
 export { useSpaceId } from './hooks/use-space-id'
 export { useSpaceMembers } from './hooks/use-space-members'
+export { useSpaceMentions } from './hooks/use-space-mentions'
 export { useSpaceNotificationCounts } from './hooks/use-space-notification-counts'
 export { useSpaceTimeline } from './hooks/use-space-timeline'
 export { useSpaceThreadRoots, useSpaceThreadRootsUnreadCount } from './hooks/use-space-thread-roots'
@@ -77,6 +78,7 @@ export {
 
 export type {
     FullyReadMarker,
+    MentionResult,
     MessageReactions,
     RoomCanonicalAliasEvent,
     RoomHistoryVisibilityEvent,

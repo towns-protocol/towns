@@ -52,7 +52,7 @@ describe('roomAccountData', () => {
                 isUnread: false,
                 markedReadAtTs: Date.now(),
                 markedUnreadAtTs: 0,
-                isParticipating: true,
+                mentions: 0,
             },
         }
 

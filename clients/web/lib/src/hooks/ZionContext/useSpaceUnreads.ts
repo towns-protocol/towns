@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/matrix-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
+import { useTimelineStore } from '../../store/use-timeline-store'
 
 export function useSpaceUnreads(
     client: ZionClient | undefined,
     spaceIds: string[],
     spaceHierarchies: SpaceHierarchies,
     bShowSpaceRootUnreads: boolean,
-): { spaceUnreads: Record<string, boolean> } {
-    const [spaceUnreads, setSpaceUnreads] = useState<Record<string, boolean>>({})
+) {
+    const [state, setState] = useState<{
+        spaceUnreads: Record<string, boolean>
+        spaceMentions: Record<string, number>
+    }>({ spaceUnreads: {}, spaceMentions: {} })
 
     useEffect(() => {
         if (!client) {
@@ -17,55 +21,62 @@ export function useSpaceUnreads(
         }
         // gets run every time spaceIds changes
         // console.log("USE SPACE UNREADS::running effect");
-        const updateSpaceUnreads = (spaceId: string, hasUnread: boolean) => {
-            setSpaceUnreads((prev) => {
-                if (prev[spaceId] === hasUnread) {
+        const updateState = (spaceId: string, hasUnread: boolean, mentions: number) => {
+            setState((prev) => {
+                if (
+                    prev.spaceUnreads[spaceId] === hasUnread &&
+                    prev.spaceMentions[spaceId] === mentions
+                ) {
                     return prev
                 }
+                const spaceUnreads =
+                    prev.spaceUnreads[spaceId] === hasUnread
+                        ? prev.spaceUnreads
+                        : { ...prev.spaceUnreads, [spaceId]: hasUnread }
+                const spaceMentions =
+                    prev.spaceMentions[spaceId] === mentions
+                        ? prev.spaceMentions
+                        : { ...prev.spaceMentions, [spaceId]: mentions }
                 return {
-                    ...prev,
-                    [spaceId]: hasUnread,
+                    spaceUnreads,
+                    spaceMentions,
                 }
             })
         }
 
         const runUpdate = () => {
             const markers = useFullyReadMarkerStore.getState().markers
+            // note, okay using timeline store without listening to it because I'm
+            // mostly certian it's impossible to update the isParticipating without
+            // also updating the fullyReadMarkers
+            const threadStats = useTimelineStore.getState().threadsStats
             spaceIds.forEach((spaceId) => {
+                let hasUnread = false
+                let mentionCount = 0
                 // easy case: if the space has a fully read marker, then it's not unread
                 if (bShowSpaceRootUnreads && markers[spaceId]?.isUnread === true) {
-                    updateSpaceUnreads(spaceId, true)
-                    return
+                    hasUnread = true
+                    mentionCount += markers[spaceId].mentions
                 }
-                // next, check the channels
-                const childIds =
-                    spaceHierarchies[spaceId]?.children.map((x) => x.id.matrixRoomId) ?? []
-                const hasChannelUnread =
-                    childIds.find((id) => markers[id]?.isUnread === true) != undefined
-                if (hasChannelUnread) {
-                    updateSpaceUnreads(spaceId, true)
-                    return
-                }
-                // now find threads
-                const childSet = new Set(childIds)
-                const unreadRoot = Object.values(markers).find(
-                    (marker) =>
-                        marker.isUnread &&
-                        marker.isParticipating &&
-                        childSet.has(marker.channelId.matrixRoomId),
+                // next, check the channels & threads
+                const childIds = new Set(
+                    spaceHierarchies[spaceId]?.children.map((x) => x.id.matrixRoomId) ?? [],
                 )
-                const hasThreadUnread = unreadRoot != undefined
-                // todo, find if we're following the thread
-                if (hasThreadUnread) {
-                    console.log('hasThreadUnread', {
-                        unreadRoot,
-                        children: spaceHierarchies[spaceId]?.children,
-                    })
-                    updateSpaceUnreads(spaceId, true)
-                    return
-                }
+                // count all channels and threads we're patricipating in
+                Object.values(markers).forEach((marker) => {
+                    if (
+                        marker.isUnread &&
+                        (!marker.threadParentId ||
+                            threadStats[marker.channelId.matrixRoomId]?.[marker.threadParentId]
+                                ?.isParticipating === true) &&
+                        childIds.has(marker.channelId.matrixRoomId)
+                    ) {
+                        hasUnread = true
+                        mentionCount += marker.mentions
+                    }
+                })
 
-                updateSpaceUnreads(spaceId, false)
+                updateState(spaceId, hasUnread, mentionCount)
             })
         }
 
@@ -77,5 +88,5 @@ export function useSpaceUnreads(
         }
     }, [client, spaceIds, spaceHierarchies, bShowSpaceRootUnreads])
 
-    return { spaceUnreads }
+    return state
 }

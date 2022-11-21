@@ -47,7 +47,7 @@ export const SpacesIndex = () => {
 
     const onClickSendMessage = useCallback(
         (roomId: RoomIdentifier, message: string) => {
-            return sendMessage(roomId, message)
+            return sendMessage(roomId, message, undefined)
         },
         [sendMessage],
     )

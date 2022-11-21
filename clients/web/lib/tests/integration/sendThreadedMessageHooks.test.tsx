@@ -30,8 +30,7 @@ import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 
 describe('sendThreadedMessageHooks', () => {
     jest.setTimeout(60000)
-    // TODO: unskip after ci
-    test.skip('user can join a room, see messages, and send threaded messages', async () => {
+    test('user can join a room, see messages, and send threaded messages', async () => {
         // covers sending reactions, replies, etc
         // - jane creates a public space and two channels
         // - bob joins the space and both channels
@@ -132,8 +131,11 @@ describe('sendThreadedMessageHooks', () => {
 
                 const formatThreadRoot = (t: ThreadResult) => {
                     return (
-                        `channel: (${t.channel.label}) isUnread: (${t.isUnread.toString()}) ` +
-                        formatThreadParent(t.thread)
+                        `channel: (${
+                            t.channel.label
+                        }) isUnread: (${t.isUnread.toString()}) mentions: (${
+                            t.fullyReadMarker?.mentions ?? 0
+                        }) ` + formatThreadParent(t.thread)
                     )
                 }
 
@@ -152,7 +154,9 @@ describe('sendThreadedMessageHooks', () => {
                 const formatFullyReadMarker = (m?: FullyReadMarker) => {
                     return m === undefined
                         ? 'undefined'
-                        : `isUnread:${m.isUnread.toString()} eventId:${m.eventId}`
+                        : `isUnread:${m.isUnread.toString()} eventId:${
+                              m.eventId
+                          } mentions:${m.mentions.toString()}`
                 }
 
                 return (
@@ -208,6 +212,7 @@ describe('sendThreadedMessageHooks', () => {
                 </ZionTestApp>,
             )
         })
+        const bobUserId = screen.getByTestId('userId')
         const clientRunning = screen.getByTestId('clientRunning')
         const joinComplete = screen.getByTestId('joinComplete')
         const channelMessages = screen.getByTestId('channelMessages')
@@ -292,7 +297,7 @@ describe('sendThreadedMessageHooks', () => {
         // -- bob should see the channel_2.thread in his thread list
         await waitFor(() =>
             expect(threadRoots).toHaveTextContent(
-                `channel: (channel_2) isUnread: (true) replyCount: (1) parentId: (${channel_2_message_1.getId()})`,
+                `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.getId()})`,
             ),
         )
         // -- bob should not see the channel_1.thread in his thread list
@@ -325,5 +330,31 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('isUnread:false'))
         await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('isUnread:false'))
         await waitFor(() => expect(spaceNotifications).toHaveTextContent('isUnread:false'))
+
+        await act(async () => {
+            // mention bob (not worried about tagging his actual display name, the id will do)
+            await jane.sendMessage(channel_1, 'hello channel_1 @bob', {
+                mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
+            })
+            await jane.sendMessage(channel_2, 'hello channel_2 @bob', {
+                mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
+            })
+            await jane.sendMessage(channel_2, 'hello thread in channel_2 @bob', {
+                threadId: channel_2_message_1.getId(),
+                mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
+            })
+        })
+        // do we see mentions?
+        await waitFor(() => expect(spaceNotifications).toHaveTextContent('mentions:3'))
+        await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('mentions:1'))
+        await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('mentions:1'))
+        await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('mentions:1'))
+        // - bob marks the thread markers as read
+        fireEvent.click(markAllAsRead)
+        // did it work?
+        await waitFor(() => expect(spaceNotifications).toHaveTextContent('mentions:0'))
+        await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('mentions:0'))
+        await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('mentions:0'))
+        await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('mentions:0'))
     })
 })
