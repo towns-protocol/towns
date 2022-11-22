@@ -40,3 +40,16 @@ Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev
 ```bash
 yarn publish
 ```
+
+## Cache clearing
+
+We need to build another worker for allowing to easily clear the cache. For now, to clear cache run the following. You can get the api key from `dash.cloudflare.com/profile/api-tokens`, the "Global API Key" works fine.
+
+```
+curl --request POST \
+  --url https://api.cloudflare.com/client/v4/zones/26d0d19e0a900688cc377ceb7ec0413d/purge_cache \
+  --header 'Content-Type: application/json' \
+  --header 'X-Auth-Email: your_cloudflare_email.com' \
+  --header 'X-Auth-Key: cloudflare_global_api_key' \
+  --data '{"purge_everything":true}'
+```
