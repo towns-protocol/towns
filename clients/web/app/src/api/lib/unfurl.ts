@@ -18,5 +18,11 @@ export function useUnfurlContent({
     return useQuery(urlsArray, () => getUnfurlContent(urlsArray), {
         select: ({ data }) => data,
         enabled,
+        // unfurl content doesn't need to be refetched
+        // if user edits their message, that's fine, it's a new query key so will be fetched
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        staleTime: 1000 * 60 * 60 * 24,
     })
 }
