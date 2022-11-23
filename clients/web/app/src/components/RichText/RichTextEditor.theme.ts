@@ -36,7 +36,7 @@ export const theme: EditorThemeClasses = {
         fontWeight: 'strong',
     }),
     link: atoms({
-        color: 'etherum',
+        color: 'accent',
     }),
     list: {
         ul: ul,

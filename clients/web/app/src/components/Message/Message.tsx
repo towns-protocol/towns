@@ -102,12 +102,7 @@ export const Message = (props: Props) => {
                 {displayContext !== 'tail' && (
                     <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
                         {/* display name */}
-                        <Text
-                            truncate
-                            fontSize="md"
-                            color={name?.match(/\.eth$/) ? 'etherum' : 'gray1'}
-                            as="span"
-                        >
+                        <Text truncate fontSize="md" color="gray1" as="span">
                             {name}
                         </Text>
                         {/* date, alignment tbc depending on context */}
@@ -126,7 +121,7 @@ export const Message = (props: Props) => {
                     </Stack>
                 )}
                 <Stack gap="md">
-                    <Stack fontSize="md" color="gray1" gap="md">
+                    <Stack fontSize="md" color="default" gap="md">
                         {children}
                     </Stack>
 

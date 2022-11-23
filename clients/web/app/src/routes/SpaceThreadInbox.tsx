@@ -2,11 +2,13 @@ import { Allotment } from 'allotment'
 import React, { useEffect } from 'react'
 import { generatePath, useNavigate, useOutlet, useParams } from 'react-router'
 import { Link } from 'react-router-dom'
+import { firstBy } from 'thenby'
 import {
     Channel,
     ChannelContextProvider,
     RoomIdentifier,
     RoomMember,
+    ThreadResult,
     useMatrixStore,
     useSpaceId,
     useSpaceMembers,
@@ -15,7 +17,8 @@ import {
 } from 'use-zion-client'
 import { Message } from '@components/Message'
 import { TimelineMessageContent } from '@components/MessageTimeline/events/TimelineMessagesContent'
-import { Box, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
+import { usePersistOrder } from 'hooks/usePersistOrder'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
@@ -24,7 +27,7 @@ export const SpaceThreadsInbox = () => {
     const { sizes, onSizesChange } = usePersistPanes(['thread-inbox', 'thread-inbox-replies'])
     const { userId } = useMatrixStore()
     const spaceId = useSpaceId()
-    const threads = useSpaceThreadRoots()
+    const threadRoots = useSpaceThreadRoots()
     const channels = useSpaceChannels()
     const { members } = useSpaceMembers()
     const { messageId } = useParams()
@@ -32,9 +35,9 @@ export const SpaceThreadsInbox = () => {
     const navigate = useNavigate()
 
     useEffect(() => {
-        if (!outlet && threads[0] && spaceId) {
-            const threadId = threads[0].thread.parentId
-            const channelId = threads[0].channel.id
+        if (!outlet && threadRoots[0] && spaceId) {
+            const threadId = threadRoots[0].thread.parentId
+            const channelId = threadRoots[0].channel.id
 
             navigate(
                 generatePath('/spaces/:spaceId/threads/:channelId/:threadId/', {
@@ -44,14 +47,19 @@ export const SpaceThreadsInbox = () => {
                 }),
             )
         }
-    }, [navigate, outlet, spaceId, threads])
+    }, [navigate, outlet, spaceId, threadRoots])
+
+    const threads = usePersistOrder(threadRoots, {
+        sorterFn: sortThreads,
+        identityFn: (t: ThreadResult) => t.thread.parentId,
+    })
 
     return (
         <Stack horizontal minHeight="100%">
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
                     {userId && spaceId ? (
-                        <Stack grow paddingY="md" overflowY="scroll" height="100%">
+                        <Stack grow overflowY="scroll" height="100%">
                             {threads.map((t) => {
                                 return (
                                     <ChannelContextProvider
@@ -82,6 +90,12 @@ export const SpaceThreadsInbox = () => {
                 )}
             </Allotment>
         </Stack>
+    )
+}
+
+function sortThreads(threads: ThreadResult[]) {
+    return threads.sort(
+        firstBy<ThreadResult>((m) => (m.isUnread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
     )
 }
 
@@ -116,21 +130,6 @@ const InboxEntry = (props: {
                     timestamp={lastMessage?.originServerTs}
                     name={parentMessageContent?.sender.displayName ?? ''}
                 >
-                    {isNew && (
-                        <Box
-                            left
-                            right
-                            top
-                            centerContent
-                            position="absolute"
-                            paddingX="md"
-                            background="none"
-                            color="negative"
-                            fontSize="md"
-                        >
-                            New
-                        </Box>
-                    )}
                     {parentMessage && parentMessageContent && (
                         <TimelineMessageContent
                             event={parentMessage}
@@ -139,8 +138,11 @@ const InboxEntry = (props: {
                             channels={channels}
                         />
                     )}
-                    <Box color="etherum" fontWeight="strong">
-                        {messages.length} replies
+                    <Box
+                        color={isNew ? 'etherum' : 'gray2'}
+                        fontWeight={isNew ? 'strong' : undefined}
+                    >
+                        <Paragraph>{messages.length} replies</Paragraph>
                     </Box>
                 </Message>
             </Stack>
