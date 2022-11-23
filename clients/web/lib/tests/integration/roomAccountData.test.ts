@@ -49,6 +49,7 @@ describe('roomAccountData', () => {
                 channelId: roomId,
                 threadParentId: undefined,
                 eventId: event.getId(),
+                eventOriginServerTs: event.getTs(),
                 isUnread: false,
                 markedReadAtTs: Date.now(),
                 markedUnreadAtTs: 0,

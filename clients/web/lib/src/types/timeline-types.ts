@@ -202,6 +202,7 @@ export interface FullyReadMarker {
     channelId: RoomIdentifier
     threadParentId?: string
     eventId: string
+    eventOriginServerTs: number
     isUnread: boolean
     markedUnreadAtTs: number
     markedReadAtTs: number
