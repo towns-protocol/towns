@@ -83,13 +83,13 @@ CI will gate PR merges via unit tests. However, failing e2e tests won't gate mer
 
 ## Package.json Scripts
 
-We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos are a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first. 
+We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos are a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first.
 
-If you have a package in the monorepo, and 
-    a) you want it to be built on CI, add a `"build"` script
-    b) you want it to be linted on CI, add a `"lint"` script
-    c) you want its unit tests to be run on CI, add a `"test:unit"` script
-    d) you want its e2e tests to be run on CI, add a `"test:e2e"` script 
-    e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
+If you have a package in the monorepo, and
+a) you want it to be built on CI, add a `"build"` script
+b) you want it to be linted on CI, add a `"lint"` script
+c) you want its unit tests to be run on CI, add a `"test:unit"` script
+d) you want its e2e tests to be run on CI, add a `"test:e2e"` script
+e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
 
 Similarly, if you edit or delete these scripts, be aware that you may be removing those scripts from CI.

@@ -5,11 +5,7 @@
         "test:unit": {},
         "test:e2e": {},
         "build": {
-            "outputs": [
-                "dist/**",
-                "build/**",
-                "out/**"
-            ],
+            "outputs": ["dist/**", "build/**", "out/**"],
             "cache": false
         },
         "lint": {}

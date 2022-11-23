@@ -1,16 +1,16 @@
 {
-  "root": true,
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "ecmaVersion": 8,
-    "project": ["./tsconfig.eslint.json"],
-    "sourceType": "module"
-  },
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended",
-    "prettier"
-  ],
-  "plugins": ["@typescript-eslint", "prettier"]
+	"root": true,
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": 8,
+		"project": ["./tsconfig.eslint.json"],
+		"sourceType": "module"
+	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:prettier/recommended",
+		"prettier"
+	],
+	"plugins": ["@typescript-eslint", "prettier"]
 }

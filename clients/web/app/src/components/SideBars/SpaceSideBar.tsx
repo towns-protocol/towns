@@ -6,7 +6,6 @@ import {
     SpaceData,
     useInvitesForSpace,
     useSpaceNotificationCounts,
-    useZionContext,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
