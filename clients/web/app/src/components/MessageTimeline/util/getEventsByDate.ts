@@ -89,14 +89,33 @@ export type RenderEvent =
 
 const DEBUG_SINGLE = false
 
-export const useGroupEvents = (
+const createRelativeDateUtil = () => {
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    const getRelativeDays = (date: Date) => {
+        const str = date.toDateString()
+
+        return today.toDateString() === str
+            ? 'Today'
+            : yesterday.toDateString() === str
+            ? 'Yesterday'
+            : str.replace(/20[0-9]{2}$/, '')
+    }
+    return {
+        getRelativeDays,
+    }
+}
+
+export const getEventsByDate = (
     events: TimelineEvent[],
     fullyReadMarker?: FullyReadMarker,
     isThread?: boolean,
-): DateGroup[] => {
-    const { getHumanDate: getRelativeDays } = useHumanDate()
-    const { dateGroups } = events.reduce(
-        (result, event: TimelineEvent, index, events) => {
+) => {
+    const { getRelativeDays } = createRelativeDateUtil()
+    const result = events.reduce(
+        (result, event: TimelineEvent, index) => {
             const { dateGroups } = result
 
             let group = dateGroups[dateGroups.length - 1]
@@ -162,27 +181,10 @@ export const useGroupEvents = (
         },
         {
             dateGroups: [] as DateGroup[],
-            previousDay: '',
         },
     )
-    return dateGroups.filter((g) => g.events.length)
-}
 
-const useHumanDate = () => {
-    const today = new Date()
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
+    result.dateGroups = result.dateGroups.filter((g) => !!g.events.length)
 
-    const getHumanDate = (date: Date) => {
-        const str = date.toDateString()
-
-        return today.toDateString() === str
-            ? 'Today'
-            : yesterday.toDateString() === str
-            ? 'Yesterday'
-            : str.replace(/20[0-9]{2}$/, '')
-    }
-    return {
-        getHumanDate,
-    }
+    return result.dateGroups
 }

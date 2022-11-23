@@ -11,7 +11,7 @@ import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { notUndefined } from 'ui/utils/utils'
-import { ZRoomMessageEvent } from '../hooks/useGroupEvents'
+import { ZRoomMessageEvent } from '../util/getEventsByDate'
 
 type Props = {
     events: ZRoomMessageEvent[]

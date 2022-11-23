@@ -11,8 +11,8 @@ import {
     RenderEventType,
     ThreadUpdateRenderEvent,
     UserMessagesRenderEvent,
-    useGroupEvents,
-} from './hooks/useGroupEvents'
+    getEventsByDate,
+} from './util/getEventsByDate'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 
@@ -38,10 +38,14 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                                  initialize variables
 
-    const dateGroups = useGroupEvents(
-        events,
-        fullyReadMarker,
-        timelineContext?.type === MessageTimelineType.Thread,
+    const dateGroups = useMemo(
+        () =>
+            getEventsByDate(
+                events,
+                fullyReadMarker,
+                timelineContext?.type === MessageTimelineType.Thread,
+            ),
+        [events, fullyReadMarker, timelineContext?.type],
     )
     // timelineContext?.type === MessageTimelineType.Thread
 

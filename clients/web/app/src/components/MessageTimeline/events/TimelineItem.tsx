@@ -2,7 +2,7 @@ import React from 'react'
 import { Stack } from '@ui'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
-import { RenderEvent, RenderEventType } from '../hooks/useGroupEvents'
+import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
 import { TimelineThreadUpdates } from './TimelineThreadUpdates'
 
 export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: boolean }) => {

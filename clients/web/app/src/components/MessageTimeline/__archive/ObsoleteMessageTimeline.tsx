@@ -1,10 +1,10 @@
 import React, { useCallback, useContext, useMemo } from 'react'
 import { useFullyReadMarker } from 'use-zion-client'
 import { Box, Button, Stack } from '@ui'
-import { useGroupEvents } from '../hooks/useGroupEvents'
 
 import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
 import { MessageTimelineItem } from '../events/TimelineItem'
+import { getEventsByDate } from '../util/getEventsByDate'
 
 export const ObsoleteMessageTimeline = () => {
     const timelineContext = useContext(MessageTimelineContext)
@@ -21,7 +21,7 @@ export const ObsoleteMessageTimeline = () => {
         }
     }, [channelId, fullyReadMarker, timelineContext])
 
-    const dateGroups = useGroupEvents(
+    const dateGroups = getEventsByDate(
         events,
         fullyReadMarker,
         timelineContext?.type === MessageTimelineType.Thread,
