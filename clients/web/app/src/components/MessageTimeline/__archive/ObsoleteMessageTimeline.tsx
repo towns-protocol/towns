@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useMemo } from 'react'
 import { useFullyReadMarker } from 'use-zion-client'
 import { Box, Button, Stack } from '@ui'
-import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { useGroupEvents } from '../hooks/useGroupEvents'
 
 import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
@@ -14,11 +13,6 @@ export const ObsoleteMessageTimeline = () => {
         return timelineContext?.events ?? []
     }, [timelineContext?.events])
 
-    const { filteredEvents } = useFilterReplies(
-        events,
-        timelineContext?.type === MessageTimelineType.Thread,
-    )
-
     const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
 
     const onMarkAsRead = useCallback(() => {
@@ -27,7 +21,11 @@ export const ObsoleteMessageTimeline = () => {
         }
     }, [channelId, fullyReadMarker, timelineContext])
 
-    const dateGroups = useGroupEvents(filteredEvents, fullyReadMarker)
+    const dateGroups = useGroupEvents(
+        events,
+        fullyReadMarker,
+        timelineContext?.type === MessageTimelineType.Thread,
+    )
 
     if (!timelineContext || !channelId) {
         return <></>

@@ -1,7 +1,6 @@
 import { default as React, createContext, useCallback, useContext, useMemo } from 'react'
 import { MessageType, useFullyReadMarker } from 'use-zion-client'
 import { Box, Divider, Stack, VList } from '@ui'
-import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { notUndefined } from 'ui/utils/utils'
 import { DateDivider } from './events/DateDivider'
 import { NewDivider } from './events/NewDivider'
@@ -10,6 +9,7 @@ import {
     FullyReadRenderEvent,
     MessageRenderEvent,
     RenderEventType,
+    ThreadUpdateRenderEvent,
     UserMessagesRenderEvent,
     useGroupEvents,
 } from './hooks/useGroupEvents'
@@ -29,21 +29,20 @@ export const MessageTimeline = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const channelId = timelineContext?.channelId
 
-    const rawEvents = useMemo(() => {
+    const events = useMemo(() => {
         return timelineContext?.events ?? []
     }, [timelineContext?.events])
-
-    const { filteredEvents: events } = useFilterReplies(
-        rawEvents,
-        timelineContext?.type === MessageTimelineType.Thread,
-    )
 
     const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                                  initialize variables
 
-    const dateGroups = useGroupEvents(events, fullyReadMarker)
+    const dateGroups = useGroupEvents(
+        events,
+        fullyReadMarker,
+        timelineContext?.type === MessageTimelineType.Thread,
+    )
     // timelineContext?.type === MessageTimelineType.Thread
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -78,8 +77,9 @@ export const MessageTimeline = (props: Props) => {
             | { id: string; type: 'header' }
             | { id: string; type: 'group'; date: string }
             | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
-            | { id: string; type: 'fullyRead'; item: FullyReadRenderEvent }
+            | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
             | { id: string; type: 'message'; item: MessageRenderEvent }
+            | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
 
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
@@ -102,7 +102,9 @@ export const MessageTimeline = (props: Props) => {
                 return e.type === 'group' && groupByDate
                     ? ({ id: e.key, type: 'group', date: e.date } as const)
                     : e.type === RenderEventType.FullyRead
-                    ? ({ id: e.key, type: 'fullyRead', item: e } as const)
+                    ? ({ id: e.key, type: 'fully-read', item: e } as const)
+                    : e.type === RenderEventType.ThreadUpdate
+                    ? ({ id: e.key, type: 'thread-update', item: e } as const)
                     : e.type === RenderEventType.UserMessages
                     ? e.events.map((event, index, events) => {
                           return {
@@ -147,7 +149,7 @@ export const MessageTimeline = (props: Props) => {
                     <Box paddingX="md" paddingY="md">
                         <Divider space="none" />
                     </Box>
-                ) : r.type === 'fullyRead' ? (
+                ) : r.type === 'fully-read' ? (
                     <NewDivider fullyReadMarker={r.item.event} />
                 ) : (
                     <MessageTimelineItem itemData={r.item} highlight={r.id === props.highlightId} />

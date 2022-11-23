@@ -13,6 +13,7 @@ export { useChannelNotificationCounts } from './hooks/use-channel-notification-c
 export { useChannelReactions } from './hooks/use-channel-reactions'
 export { useChannelThread } from './hooks/use-channel-thread'
 export { useChannelTimeline } from './hooks/use-channel-timeline'
+export { useChannelThreadStat } from './hooks/use-channel-thread-stat'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
 export { useIntegratedSpaceManagement } from './hooks/use-integrated-space-management'
@@ -41,8 +42,9 @@ export { toEvent } from './hooks/ZionContext/useMatrixTimelines' // todo this do
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
 
-export { useTimelineStore } from './store/use-timeline-store'
+export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
 export { useMatrixStore } from './store/use-matrix-store'
+export { useTimelineStore } from './store/use-timeline-store'
 
 export type {
     Channel,

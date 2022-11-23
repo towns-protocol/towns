@@ -7,19 +7,23 @@ import {
     ZTEvent,
 } from 'use-zion-client'
 
+/// render selectable, unRead aware, aggregated replies in the main timeline
+const ENABLE_SERGE_MODE = true
+
 export enum RenderEventType {
     UserMessages = 'UserMessages',
     Message = 'Message',
     RoomMember = 'RoomMember',
     RoomCreate = 'RoomCreate',
     FullyRead = 'FullyRead',
+    ThreadUpdate = 'ThreadUpdate',
 }
 
 interface BaseEvent {
     type: RenderEventType
 }
 
-type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
+export type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
     content: RoomMessageEvent
 }
 
@@ -55,6 +59,12 @@ export interface FullyReadRenderEvent extends BaseEvent {
     event: FullyReadMarker
 }
 
+export interface ThreadUpdateRenderEvent extends BaseEvent {
+    type: RenderEventType.ThreadUpdate
+    key: string
+    events: ZRoomMessageEvent[]
+}
+
 const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
     return event.content?.kind === ZTEvent.RoomMessage
 }
@@ -75,6 +85,7 @@ export type RenderEvent =
     | RoomCreateRenderEvent
     | FullyReadRenderEvent
     | MessageRenderEvent
+    | ThreadUpdateRenderEvent
 
 const DEBUG_SINGLE = false
 
@@ -117,7 +128,21 @@ export const useGroupEvents = (
 
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
-                if (
+                if (!isThread && event.threadParentId) {
+                    if (!ENABLE_SERGE_MODE) {
+                        // serge mode is disabled
+                    } else {
+                        if (prevEvent && prevEvent.type === RenderEventType.ThreadUpdate) {
+                            prevEvent.events.push(event)
+                        } else {
+                            renderEvents.push({
+                                type: RenderEventType.ThreadUpdate,
+                                key: `thread-update-${event.eventId}`,
+                                events: [event],
+                            })
+                        }
+                    }
+                } else if (
                     !DEBUG_SINGLE &&
                     prevEvent &&
                     prevEvent.type === RenderEventType.UserMessages &&

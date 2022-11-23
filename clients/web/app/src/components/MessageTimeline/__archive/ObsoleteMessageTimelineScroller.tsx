@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useRef } from 'react'
 
 import { useZionClient } from 'use-zion-client'
 import { Stack } from '@ui'
-import { useFilterReplies } from 'hooks/useFixMeMessageThread'
 import { useIsScrolling } from '../hooks/useIsScrolling'
 import { useLazyLoad } from '../hooks/useLazyLoad'
 import { usePersistScrollPosition } from '../hooks/usePersistScrollPosition'
@@ -17,8 +16,6 @@ interface Props {
 }
 
 export const ObsoleteMessageTimelineScroller = (props: Props) => {
-    const { hideThreads } = props
-
     const timelineContext = useContext(MessageTimelineContext)
     const events = timelineContext?.events ?? []
     const channelId = timelineContext?.channelId
@@ -37,10 +34,8 @@ export const ObsoleteMessageTimelineScroller = (props: Props) => {
 
     const { intersectionRef } = useLazyLoad(onLoadMore, containerRef, events.length)
 
-    const { filteredEvents } = useFilterReplies(events, !hideThreads)
-
     usePersistScrollPosition(containerRef, contentRef)
-    useScrollDownOnNewMessage(containerRef, contentRef, filteredEvents)
+    useScrollDownOnNewMessage(containerRef, contentRef, events)
 
     const { isScrolling } = useIsScrolling(containerRef.current)
 

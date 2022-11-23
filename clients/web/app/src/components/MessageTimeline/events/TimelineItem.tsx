@@ -3,6 +3,7 @@ import { Stack } from '@ui'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
 import { RenderEvent, RenderEventType } from '../hooks/useGroupEvents'
+import { TimelineThreadUpdates } from './TimelineThreadUpdates'
 
 export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: boolean }) => {
     const { itemData, highlight: isHighlight } = props
@@ -43,6 +44,10 @@ export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: 
 
         case RenderEventType.RoomCreate: {
             return <TimelineGenericEvent event={itemData.event} key={itemData.event.eventId} />
+        }
+
+        case RenderEventType.ThreadUpdate: {
+            return <TimelineThreadUpdates events={itemData.events} key={itemData.key} />
         }
 
         default: {
