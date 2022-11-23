@@ -7,8 +7,7 @@ import {
     useSpaceMembers,
 } from 'use-zion-client'
 import { truncate } from 'lodash'
-import { RichTextPreviewPlain } from '@components/RichText/RichTextEditor'
-import { Avatar, Box, Stack } from '@ui'
+import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { notUndefined } from 'ui/utils/utils'
@@ -33,7 +32,7 @@ export const TimelineThreadUpdates = (props: Props) => {
     }, {} as Record<string, ZRoomMessageEvent[]>)
 
     return (
-        <Stack>
+        <Stack paddingY="md" gap="sm">
             {Object.entries(grouped).map(([threadParentId, events]) => (
                 <ThreadRootPreview2
                     key={threadParentId}
@@ -70,17 +69,19 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
         fullyReadMarker?.isUnread === true &&
         (events.at(-1)?.originServerTs ?? 0) >= fullyReadMarker.eventOriginServerTs
     const userIds = [...new Set<string>(events.map((e) => e.content.sender.id))]
-    const message = truncate(threadStats.parentMessageContent.body, { length: 16 })
+    const message = truncate(threadStats.parentMessageContent.body, { length: 128 })
 
     return (
-        <Stack ref={ref} onMouseEnter={onMouseEnter} {...backgroundProps} onClick={onClick}>
+        <Stack centerContent ref={ref} insetY="xs" onMouseEnter={onMouseEnter} onClick={onClick}>
             <Box
                 centerContent
                 horizontal
-                paddingX="lg"
-                paddingY="sm"
+                cursor="pointer"
+                padding="sm"
                 gap="sm"
                 color={isUnread ? 'gray1' : 'gray2'}
+                rounded="md"
+                {...backgroundProps}
             >
                 <Stack horizontal gap="xs">
                     {userIds
@@ -90,7 +91,9 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
                             <Avatar src={u.avatarUrl} key={u.userId} size="avatar_xs" />
                         ))}
                 </Stack>
-                <RichTextPreviewPlain content={`replied to "${message}"`} edited={false} />
+                <Box maxWidth="300">
+                    <Paragraph truncate size="sm">{`replied to "${message}"`}</Paragraph>
+                </Box>
             </Box>
         </Stack>
     )
