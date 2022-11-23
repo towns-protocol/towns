@@ -33,6 +33,7 @@ type Props = {
     rounded?: BoxProps['rounded']
     padding?: BoxProps['padding']
     background?: BoxProps['background']
+    channelLabel?: string
 } & BoxProps
 
 export type MessageProps = Props
@@ -102,9 +103,17 @@ export const Message = (props: Props) => {
                 {displayContext !== 'tail' && (
                     <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
                         {/* display name */}
-                        <Text truncate fontSize="md" color="gray1" as="span">
-                            {name}
-                        </Text>
+                        {name && (
+                            <Text truncate fontSize="md" color="gray1" as="span">
+                                {name}&nbsp;
+                            </Text>
+                        )}
+                        {props.channelLabel ? (
+                            <Text color="gray2">{`#${props.channelLabel}`}</Text>
+                        ) : (
+                            ``
+                        )}
+
                         {/* date, alignment tbc depending on context */}
                         {date && (
                             <Text

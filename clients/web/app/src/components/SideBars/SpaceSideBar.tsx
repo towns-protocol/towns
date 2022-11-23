@@ -2,10 +2,11 @@ import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import {
     Membership,
+    MentionResult,
     RoomIdentifier,
     SpaceData,
     useInvitesForSpace,
-    useSpaceNotificationCounts,
+    useSpaceMentions,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
@@ -27,7 +28,6 @@ export const SpaceSideBar = (props: Props) => {
     const invites = useInvitesForSpace(space.id)
     const navigate = useNavigate()
 
-    const { mentions } = useSpaceNotificationCounts(space.id)
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
 
     const onSettings = useCallback(
@@ -38,6 +38,11 @@ export const SpaceSideBar = (props: Props) => {
     )
 
     const isReady = !!space?.channelGroups?.length
+
+    const mentions = useSpaceMentions()
+    const unreadThreadMentions = mentions.reduce((count, m) => {
+        return m.thread && m.unread ? count + 1 : count
+    }, 0)
 
     return (
         <SideBar>
@@ -53,14 +58,14 @@ export const SpaceSideBar = (props: Props) => {
                             link={`/spaces/${space.id.slug}/threads`}
                             id="threads"
                             label="Threads"
-                            badge={unreadThreadsCount > 0 && <Badge value={unreadThreadsCount} />}
+                            badge={
+                                unreadThreadMentions > 0 && <Badge value={unreadThreadMentions} />
+                            }
                         />
                         <ActionNavItem
                             icon="at"
-                            highlight={mentions > 0}
                             id="mentions"
                             label="Mentions"
-                            badge={mentions > 0 && <Badge value={mentions} />}
                             link={`/spaces/${space.id.slug}/mentions`}
                         />
                     </>
@@ -78,7 +83,7 @@ export const SpaceSideBar = (props: Props) => {
                     ))}
                 {isReady ? (
                     <>
-                        <ChannelList space={space} />
+                        <ChannelList space={space} mentions={mentions} />
                         <ActionNavItem
                             icon="plus"
                             id="newChannel"
@@ -94,10 +99,10 @@ export const SpaceSideBar = (props: Props) => {
     )
 }
 
-const ChannelList = (props: { space: SpaceData }) => {
+const ChannelList = (props: { space: SpaceData; mentions: MentionResult[] }) => {
     const sizeContext = useSizeContext()
     const isSmall = sizeContext.lessThan(120)
-    const { space } = props
+    const { mentions, space } = props
 
     return (
         <>
@@ -106,7 +111,23 @@ const ChannelList = (props: { space: SpaceData }) => {
                     <ChannelNavGroup>{group.label}</ChannelNavGroup>
                     {group.channels.map((channel) => {
                         const key = `${group.label}/${channel.id.slug}`
-                        return <ChannelNavItem key={key} id={key} space={space} channel={channel} />
+                        // only unread mentions at the channel root
+                        const mentionCount = mentions.reduce(
+                            (count, m) =>
+                                m.unread && !m.thread && m.channel.id.slug === channel.id.slug
+                                    ? count + 1
+                                    : count,
+                            0,
+                        )
+                        return (
+                            <ChannelNavItem
+                                key={key}
+                                id={key}
+                                space={space}
+                                channel={channel}
+                                mentionCount={mentionCount}
+                            />
+                        )
                     })}
                 </Stack>
             ))}

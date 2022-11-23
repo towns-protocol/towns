@@ -9,12 +9,13 @@ type Props = {
     id: string
     space: SpaceData
     channel: Channel
+    mentionCount?: number
 }
 
 export const ChannelNavItem = (props: Props) => {
     const { channelSlug } = useParams()
 
-    const { id, space, channel } = props
+    const { id, space, channel, mentionCount = 0 } = props
     const notis = useChannelNotificationCounts(channel.id)
 
     const link = `/spaces/${space.id.slug}/channels/${channel.id.slug}/`
@@ -51,9 +52,9 @@ export const ChannelNavItem = (props: Props) => {
                         >
                             {channelName}
                         </ButtonText>
-                        {!!notis.mentions && (
+                        {!!mentionCount && (
                             <Stack horizontal grow justifyContent="end">
-                                <Badge value={notis.mentions}>{notis.mentions}</Badge>
+                                <Badge value={mentionCount}>{mentionCount}</Badge>
                             </Stack>
                         )}
                     </NavItem>

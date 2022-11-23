@@ -61,6 +61,7 @@ export const SpaceThreadsInbox = () => {
                     {userId && spaceId ? (
                         <Stack grow overflowY="scroll" height="100%">
                             {threads.map((t) => {
+                                t.fullyReadMarker?.eventId
                                 return (
                                     <ChannelContextProvider
                                         key={t.thread.parentId}
@@ -69,7 +70,7 @@ export const SpaceThreadsInbox = () => {
                                         <InboxEntry
                                             selected={t.thread.parentId === messageId}
                                             spaceId={spaceId}
-                                            channelId={t.channel.id}
+                                            channel={t.channel}
                                             parentId={t.thread.parentId}
                                             channels={channels}
                                             members={members}
@@ -102,20 +103,20 @@ function sortThreads(threads: ThreadResult[]) {
 const InboxEntry = (props: {
     selected?: boolean
     spaceId: RoomIdentifier
-    channelId: RoomIdentifier
+    channel: Channel
     parentId: string
     channels: Channel[]
     members: RoomMember[]
     isNew: boolean
 }) => {
-    const { spaceId, channelId, parentId, selected: isSelected, channels, members, isNew } = props
-    const { parent, messages } = useTimelineThread(channelId, parentId)
+    const { spaceId, channel, parentId, selected: isSelected, channels, members, isNew } = props
+    const { parent, messages } = useTimelineThread(channel.id, parentId)
     const parentMessage = parent?.parentEvent
     const parentMessageContent = parent?.parentMessageContent
     const lastMessage = messages[messages.length - 1]
 
     return (
-        <Link to={`${channelId.slug}/${parentId}/`}>
+        <Link to={`${channel.id.slug}/${parentId}/`}>
             <Stack background={isSelected ? 'level2' : undefined}>
                 <Message
                     relativeDate
@@ -125,10 +126,11 @@ const InboxEntry = (props: {
                     paddingY="lg"
                     avatar={parentMessageContent?.sender.avatarUrl}
                     userId={parentMessageContent?.sender.id}
-                    channelId={channelId}
+                    channelId={channel.id}
                     spaceId={spaceId}
                     timestamp={lastMessage?.originServerTs}
                     name={parentMessageContent?.sender.displayName ?? ''}
+                    channelLabel={channel.label}
                 >
                     {parentMessage && parentMessageContent && (
                         <TimelineMessageContent

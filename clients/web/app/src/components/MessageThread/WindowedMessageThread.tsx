@@ -1,10 +1,16 @@
 import React, { useMemo } from 'react'
-import { SendMessageOptions, useChannelContext, useTimelineThread } from 'use-zion-client'
+import {
+    SendMessageOptions,
+    useChannelContext,
+    useChannelData,
+    useTimelineThread,
+} from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, IconButton, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 type Props = {
     messageId: string
@@ -13,8 +19,9 @@ type Props = {
 }
 export const WindowedMessageThread = (props: Props) => {
     const { channelId, spaceId } = useChannelContext()
-    const { messageId } = props
 
+    const channelLabel = useChannelData().channel?.label
+    const { messageId } = props
     const { parent, messages } = useTimelineThread(channelId, messageId)
     const parentMessage = parent?.parentEvent
 
@@ -35,7 +42,10 @@ export const WindowedMessageThread = (props: Props) => {
             threadParentId={messageId}
             events={messagesWithParent}
         >
-            <MessageWindow label="Thread" onClose={props.onClose}>
+            <MessageWindow
+                label={`Thread ${channelLabel ? `in #${channelLabel}` : ``}`}
+                onClose={props.onClose}
+            >
                 <Stack grow overflow="hidden">
                     <MessageTimeline highlightId={props.highlightId} />
                 </Stack>

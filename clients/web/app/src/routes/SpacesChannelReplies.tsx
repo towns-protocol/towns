@@ -1,19 +1,21 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { Box } from '@ui'
 import { WindowedMessageThread } from '@components/MessageThread'
+import { Box } from '@ui'
 
 export const SpacesChannelReplies = (props: {
     children?: React.ReactNode
     parentRoute?: string
 }) => {
-    const { parentRoute = '..' } = props
+    const { parentRoute } = props
     const { messageId } = useParams()
     const navigate = useNavigate()
 
-    const handleClose = useCallback(() => {
-        navigate(parentRoute)
-    }, [navigate, parentRoute])
+    const handleClose = !parentRoute
+        ? undefined
+        : () => {
+              navigate(parentRoute)
+          }
 
     const isValid = !!messageId
 

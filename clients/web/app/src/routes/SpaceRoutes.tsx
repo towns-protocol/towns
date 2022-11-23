@@ -42,10 +42,7 @@ export const SpaceRoutes = () => (
                 element={USE_THREAD_GROUPS ? <SpaceThreads /> : <SpaceThreadsInbox />}
             >
                 <Route path=":channelId" element={<SpaceThreadInboxChannel />}>
-                    <Route
-                        path=":messageId"
-                        element={<SpacesChannelReplies parentRoute="../.." />}
-                    />
+                    <Route path=":messageId" element={<SpacesChannelReplies />} />
                 </Route>
             </Route>
             <Route path="mentions" element={<SpaceMentions />} />
