@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
@@ -19,6 +19,7 @@ contract Zioneer is ERC721, Ownable {
   // keep track of who can mint new tokens
   mapping(address => bool) internal allowed;
 
+  // keep track of token URIs
   modifier onlyAllowed() {
     if (!allowed[msg.sender]) revert NotAllowed();
     _;

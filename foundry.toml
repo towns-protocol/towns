@@ -1,6 +1,6 @@
 [profile.default]
 solc = "0.8.17"
-src = "contracts/src"
+src = "contracts"
 test = "contracts/test"
 libs = ["node_modules", "lib"]
 verbosity = 3
@@ -10,7 +10,7 @@ optimizer = true
 optimizer_runs = 200
 
 [rpc_endpoints]
-goerli = "https://eth-goerli.g.alchemy.com/v2/Sc1gVeBmMXEGDgS6_mMP-gbewns4h1EN"
+goerli = "${GOERLI_RPC_URL}"
 
 [etherscan]
 goerli = { key = "${ETHERSCAN_API_KEY}" }
