@@ -71,19 +71,23 @@ export function useSpaceData(): SpaceData | undefined {
 
 export function useInvites(): InviteData[] {
     const { invitedToIds, spaceHierarchies, client } = useZionContext()
-    return invitedToIds
-        .map((id) => {
-            const room = client?.getRoom(id)
-            if (!room) {
-                return undefined
-            }
-            return formatInvite(
-                toZionRoom(room),
-                getParentSpaceId(id, spaceHierarchies),
-                '/placeholders/nft_29.png',
-            )
-        })
-        .filter((x) => x !== undefined) as InviteData[]
+    return useMemo(
+        () =>
+            invitedToIds
+                .map((id) => {
+                    const room = client?.getRoom(id)
+                    if (!room) {
+                        return undefined
+                    }
+                    return formatInvite(
+                        toZionRoom(room),
+                        getParentSpaceId(id, spaceHierarchies),
+                        '/placeholders/nft_29.png',
+                    )
+                })
+                .filter((x) => x !== undefined) as InviteData[],
+        [client, invitedToIds, spaceHierarchies],
+    )
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -94,9 +98,13 @@ export const useInvitesForSpace = (spaceId: RoomIdentifier) => {
 
 export const useInviteData = (slug: string | undefined) => {
     const invites = useInvites()
-    return invites.find((invite) => {
-        invite.id.slug === slug
-    })
+    return useMemo(
+        () =>
+            invites.find((invite) => {
+                invite.id.slug === slug
+            }),
+        [invites, slug],
+    )
 }
 
 function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): RoomIdentifier | undefined {
