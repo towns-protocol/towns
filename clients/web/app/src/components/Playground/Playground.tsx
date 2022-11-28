@@ -8,6 +8,7 @@ import {
     Checkbox,
     Divider,
     Dropdown,
+    ErrorMessage,
     Form,
     Grid,
     Heading,
@@ -28,6 +29,7 @@ import { vars } from 'ui/styles/vars.css'
 import { richText } from '@components/RichText/RichTextEditor.css'
 import { isDev } from 'utils'
 import { FormRender } from 'ui/components/Form/Form'
+import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/UploadSpaceIcon'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -365,6 +367,32 @@ export const Playground = () => {
                     <Checkbox name="myGroup" label="Spaghett" />
                     <input type="submit" />
                 </Form>
+            </Container>
+            <Container darkOnly label="Upload">
+                <FormRender<{
+                    spaceIcon: File
+                }>
+                    mode="onChange"
+                    onSubmit={(data) => {
+                        console.log(data)
+                    }}
+                >
+                    {({ register, formState, setError, clearErrors }) => (
+                        <>
+                            <UploadSpaceIcon
+                                setError={setError}
+                                register={register}
+                                formState={formState}
+                                clearErrors={clearErrors}
+                                name="spaceIcon"
+                            />
+                            {formState.errors.spaceIcon && (
+                                <ErrorMessage errors={formState.errors} fieldName="spaceIcon" />
+                            )}
+                            <input type="submit" />
+                        </>
+                    )}
+                </FormRender>
             </Container>
         </Stack>
     )
