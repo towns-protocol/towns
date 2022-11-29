@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-./casablanca/scripts/launch.sh
+yarn run --top-level csb:dev
