@@ -28,7 +28,7 @@ describe('invalidTokenHooks', () => {
         useCredentialStore.destroy()
     })
     jest.setTimeout(30000)
-    test('test matrix js sdk', async () => {
+    test.skip('test matrix js sdk', async () => {
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
         // create a new client and sign in
@@ -42,7 +42,7 @@ describe('invalidTokenHooks', () => {
         //await expect(alice.startClient(badAliceAuth, chainId)).rejects.toThrow('Unknown token')
         await alice.startClient(badAliceAuth, chainId)
     })
-    test('test logging in with a bad auth resolves to good state', async () => {
+    test.skip('test logging in with a bad auth resolves to good state', async () => {
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
         // create a new client and sign in
@@ -80,7 +80,7 @@ describe('invalidTokenHooks', () => {
         console.log('!!! tests pass !!!')
     }) // end test
 
-    test('test logging out from second source resets browser state', async () => {
+    test.skip('test logging out from second source resets browser state', async () => {
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
         // grab the auth
