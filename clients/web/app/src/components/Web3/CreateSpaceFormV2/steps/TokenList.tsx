@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Box, Checkbox, Text, TextField } from '@ui'
-import { MOCK, MockDataProps } from '../mock'
+import { MOCK_TOKENS, MockTokenProps } from '../mock'
 import { TokenAvatar, TokenProps } from './TokenAvatar'
 
 const shortAddress = (address: string) => {
@@ -35,13 +35,13 @@ export const TokenList = ({
     setValue,
     watch,
 }: { isChecked: boolean } & UseFormReturn) => {
-    const data = MOCK // TODO: replace with fetch
+    const data = MOCK_TOKENS // TODO: replace with fetch
     const [results, setResults] = React.useState(data)
     const [search, setSearch] = React.useState('')
     const selectedTokens = watch('tokens')
     useEffect(() => {
         const _results = searchArrayOfData(data, search)
-        setResults(_results as MockDataProps[])
+        setResults(_results as MockTokenProps[])
     }, [search, data])
 
     function handleClick(contractAddress: string) {
@@ -54,7 +54,7 @@ export const TokenList = ({
             {!selectedTokens.length ? null : (
                 <Box display="flex" flexDirection="row" gap="md" paddingY="md">
                     {selectedTokens.map((contractAddress: string) => {
-                        const token = MOCK.find((t) => t.contractAddress === contractAddress)
+                        const token = MOCK_TOKENS.find((t) => t.contractAddress === contractAddress)
                         return (
                             <TokenAvatar
                                 key={contractAddress}

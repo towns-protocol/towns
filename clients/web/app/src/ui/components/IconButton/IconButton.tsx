@@ -22,6 +22,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
     return (
         <Box
             ref={ref}
+            role="button"
             className={styles.iconButton}
             background={
                 background ?? {

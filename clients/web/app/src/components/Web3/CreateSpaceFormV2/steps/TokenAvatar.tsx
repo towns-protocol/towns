@@ -11,7 +11,7 @@ export type TokenProps = {
 export const TokenAvatar = (props: Partial<TokenProps>) => {
     const { imgSrc, label, contractAddress, onClick } = props
     return (
-        <Box alignItems="center" maxWidth="x6">
+        <Box alignItems="center" maxWidth="x6" data-testid="token-avatar">
             <Box position="relative">
                 <Avatar src={imgSrc} size="avatar_md" />
                 {onClick && contractAddress && (

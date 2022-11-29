@@ -1,13 +1,18 @@
 import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Button, Heading } from '@ui'
+import { useQueryParams } from 'hooks/useQueryParam'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
+import { CreateSpaceStep3 } from './steps/CreateSpaceStep3'
 
 const MotionBox = motion(Box)
 
 export const CreateSpaceForm = () => {
+    const { step } = useQueryParams('step')
+    const startAt = step && (step as number) > 0 ? (step as number) - 1 : 0
+
     const {
         goNext,
         goPrev,
@@ -15,7 +20,11 @@ export const CreateSpaceForm = () => {
         hasPrev,
         stepIndex,
         StepComponent,
-    } = useFormSteps('create-space', [CreateSpaceStep1, CreateSpaceStep2])
+    } = useFormSteps(
+        'create-space',
+        [CreateSpaceStep1, CreateSpaceStep2, CreateSpaceStep3],
+        startAt,
+    )
 
     function onSubmit() {
         goNext()
@@ -35,9 +44,6 @@ export const CreateSpaceForm = () => {
                         Next
                     </Button>
                 </Box>
-            </Box>
-            <Box paddingTop="lg" paddingBottom="md">
-                <Heading level={3}> Who can join your space? </Heading>
             </Box>
 
             <AnimatePresence mode="wait">

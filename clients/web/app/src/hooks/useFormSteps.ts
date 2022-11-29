@@ -4,8 +4,12 @@ type FormStepComponent = ({ onSubmit, id }: FormStepProps) => JSX.Element
 
 export type FormStepProps = { onSubmit: () => void; id: string }
 
-export const useFormSteps = (formId: string, initialSteps: FormStepComponent[] = []) => {
-    const [stepIndex, setStepIndex] = useState(0)
+export const useFormSteps = (
+    formId: string,
+    initialSteps: FormStepComponent[] = [],
+    startAt = 0,
+) => {
+    const [stepIndex, setStepIndex] = useState(startAt)
     const [steps, setSteps] = useState<FormStepComponent[]>(initialSteps)
 
     const hasPrev = stepIndex > 0

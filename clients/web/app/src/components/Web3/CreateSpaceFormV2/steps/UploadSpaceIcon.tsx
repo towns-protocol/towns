@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react'
+import React, { ChangeEvent, useEffect } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { atoms } from 'ui/styles/atoms.css'
@@ -27,9 +27,18 @@ type Props = {
 } & Partial<UseFormReturn>
 
 export const UploadSpaceIcon = (props: Props) => {
-    const { setError, register, clearErrors, name } = props
+    const { setError, register, clearErrors, name, watch, setValue } = props
     const ref = React.useRef<HTMLInputElement>(null)
     const [image, setImage] = React.useState<string | null>(null)
+
+    const url = watch?.(name)
+
+    useEffect(() => {
+        if (url) {
+            setImage(url)
+            setValue?.(name, url)
+        }
+    }, [url, setValue, name])
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
@@ -54,6 +63,7 @@ export const UploadSpaceIcon = (props: Props) => {
                 return
             }
             // TODO: replace with image upload to somehwere
+            setValue?.(name, url)
             setImage(url)
         }
     }
@@ -93,7 +103,7 @@ export const UploadSpaceIcon = (props: Props) => {
                     width="100%"
                     height="100%"
                     rounded="sm"
-                    style={{ background: `no-repeat center/contain url(${image})` }}
+                    style={{ background: `no-repeat center/cover url(${image})` }}
                     onClick={onClick}
                 >
                     <Text className={srOnlyClass}>Change space icon</Text>

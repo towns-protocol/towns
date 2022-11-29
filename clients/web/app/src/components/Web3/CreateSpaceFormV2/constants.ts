@@ -1,0 +1,6 @@
+export const EVERYONE = 'everyone'
+export const TOKEN_HOLDERS = 'tokenHolders'
+export const MEMBERSHIP_TYPE = 'membershipType'
+export const TOKENS = 'tokens'
+export const SPACE_NAME = 'spaceName'
+export const SPACE_ICON_URL = 'spaceIconUrl'
