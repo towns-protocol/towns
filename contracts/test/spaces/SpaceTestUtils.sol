@@ -11,7 +11,7 @@ abstract contract SpaceTestUtils {
     ISpaceManager spaceManager
   ) internal returns (uint256) {
     uint256 spaceId = spaceManager.createSpace(
-      DataTypes.CreateSpaceData(spaceName, spaceNetworkId),
+      DataTypes.CreateSpaceData(spaceName, spaceNetworkId, ""),
       getEmptyCreateSpaceEntitlementData(),
       new DataTypes.Permission[](0)
     );
@@ -25,7 +25,7 @@ abstract contract SpaceTestUtils {
     ISpaceManager spaceManager
   ) internal returns (uint256) {
     uint256 spaceId = spaceManager.createSpace(
-      DataTypes.CreateSpaceData(spaceName, spaceNetworkId),
+      DataTypes.CreateSpaceData(spaceName, spaceNetworkId, ""),
       getEmptyCreateSpaceEntitlementData(),
       permissions
     );

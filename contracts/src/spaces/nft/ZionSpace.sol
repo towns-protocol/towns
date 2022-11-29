@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "solmate/tokens/ERC721.sol";
+import {ERC721URIStorage, ERC721} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ISpace} from "../interfaces/ISpace.sol";
 import {ISpaceManager} from "../interfaces/ISpaceManager.sol";
 
-contract ZionSpace is ERC721, ISpace {
+contract ZionSpace is ERC721URIStorage, ISpace {
   address internal _manager;
 
   constructor(
@@ -22,20 +22,15 @@ contract ZionSpace is ERC721, ISpace {
   }
 
   function mintBySpaceId(
-    uint256 spaceId,
-    address spaceOwner
+    uint256 _spaceId,
+    address _spaceOwner,
+    string calldata _tokenURI
   ) external onlySpaceManager {
-    _mint(spaceOwner, spaceId);
+    _mint(_spaceOwner, _spaceId);
+    _setTokenURI(_spaceId, _tokenURI);
   }
 
   function getOwnerBySpaceId(uint256 spaceId) external view returns (address) {
     return ownerOf(spaceId);
-  }
-
-  function tokenURI(uint256 id) public pure override returns (string memory) {
-    if (id > 0) {
-      return "https://zion.xyz";
-    }
-    return "";
   }
 }

@@ -135,6 +135,7 @@ library DataTypes {
   struct CreateSpaceData {
     string spaceName;
     string spaceNetworkId;
+    string spaceMetadata;
   }
 
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement

@@ -248,7 +248,7 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
 
     //Actually create the space
     spaceManager.createSpace(
-      DataTypes.CreateSpaceData("test", networkId),
+      DataTypes.CreateSpaceData("test", networkId, ""),
       entitlementData,
       new DataTypes.Permission[](0)
     );

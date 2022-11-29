@@ -59,7 +59,7 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     uint256 spaceId = _createSpace(info);
 
     // mint space nft
-    ISpace(SPACE_NFT).mintBySpaceId(spaceId, _msgSender());
+    ISpace(SPACE_NFT).mintBySpaceId(spaceId, _msgSender(), info.spaceMetadata);
 
     // whitespace default entitlement module
     _whitelistEntitlementModule(spaceId, DEFAULT_USER_ENTITLEMENT_MODULE, true);
