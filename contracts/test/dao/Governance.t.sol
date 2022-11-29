@@ -4,16 +4,17 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
 import {Zioneer} from "contracts/src/dao/Zioneer.sol";
+import {ZionDao} from "contracts/src/dao/ZionDao.sol";
 import {CoreVoting} from "council/CoreVoting.sol";
 import {Timelock} from "council/features/Timelock.sol";
 import {ZioneerVault} from "contracts/src/dao/ZioneerVault.sol";
-import {SimpleProxy} from "council/simpleProxy.sol";
+import {SimpleProxy} from "contracts/src/dao/utils/SimpleProxy.sol";
 
 contract GovernanceTest is Test {
   Zioneer zioneer;
   ZioneerVault vaultBase;
   ZioneerVault vault;
-  CoreVoting coreVoting;
+  ZionDao coreVoting;
   Timelock timelock;
   SimpleProxy proxy;
 
@@ -23,7 +24,7 @@ contract GovernanceTest is Test {
   address alice = address(0x2);
 
   function setUp() public {
-    coreVoting = new CoreVoting(
+    coreVoting = new ZionDao(
       deployer, // timelock
       10, // base quorum
       1, // mininum voting power to create proposal
