@@ -2,7 +2,7 @@ import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 
 import { WalletStatus, ZionContextProvider, useMatrixStore, useWeb3Context } from 'use-zion-client'
-import { Box, Heading } from '@ui'
+import { Box, Heading, Text } from '@ui'
 import { AppLayout } from 'AppLayout'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { Register } from 'routes/Register'
@@ -35,6 +35,17 @@ export const App = () => {
             initialSyncLimit={100}
         >
             <QueryProvider>
+                {MATRIX_HOMESERVER_URL.includes('localhost') && (
+                    <Box
+                        position="fixed"
+                        width="100%"
+                        zIndex="tooltips"
+                        background="etherum"
+                        paddingX="md"
+                    >
+                        <Text size="sm">Matrix Homeserver URL: {MATRIX_HOMESERVER_URL}</Text>
+                    </Box>
+                )}
                 <AllRoutes />
             </QueryProvider>
         </ZionContextProvider>
