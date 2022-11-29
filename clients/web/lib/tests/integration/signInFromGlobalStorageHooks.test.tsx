@@ -3,9 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/**
- * @jest-environment jsdom
- */
 import React from 'react'
 import { LoginWithAuth } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'

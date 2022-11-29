@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/**
- * @jest-environment jsdom
- */
 import React from 'react'
 import { LoginWithAuth } from './helpers/TestComponents'
 import { render, screen, waitFor } from '@testing-library/react'

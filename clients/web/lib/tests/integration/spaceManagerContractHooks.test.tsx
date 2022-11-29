@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'

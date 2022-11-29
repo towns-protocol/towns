@@ -1,9 +1,6 @@
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
-/**
- * @jest-environment jsdom
- */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useCallback } from 'react'
+import { Membership, RoomVisibility } from '../../src/types/matrix-types'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { LoginWithAuth } from './helpers/TestComponents'
 import { ZionTestApp } from './helpers/ZionTestApp'
