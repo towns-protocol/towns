@@ -2,6 +2,7 @@ import { ZionServiceInterface, ZionServicePrototype } from '@zion/core'
 import debug from 'debug'
 import { Wallet } from 'ethers'
 import express from 'express'
+import cors from 'cors'
 import { JSONRPCServer } from 'json-rpc-2.0'
 import { AddressInfo } from 'net'
 import { DumbActionGuard } from './dumbActionGuard'
@@ -40,6 +41,7 @@ export const makeJSONRPCServer = (zionServer: ZionServiceInterface): JSONRPCServ
 
 export const makeExpressApp = (server: JSONRPCServer) => {
     const app = express()
+    app.use(cors())
     app.use(express.urlencoded({ extended: true }))
     app.use(express.json({ strict: true }))
 
