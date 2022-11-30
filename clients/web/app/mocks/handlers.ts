@@ -1,9 +1,14 @@
 import { rest } from 'msw'
 import { unfurl } from './unfurl'
+import { tokenCollections } from './token-collections'
 
 export const browserHandlers = [
     rest.get('/mock-endpoint', (req, res, ctx) => {
         const data = { name: 'beavis' }
+        return res(ctx.status(200), ctx.json(data))
+    }),
+    rest.get('/tokens/:address', (req, res, ctx) => {
+        const data = tokenCollections()
         return res(ctx.status(200), ctx.json(data))
     }),
 ]

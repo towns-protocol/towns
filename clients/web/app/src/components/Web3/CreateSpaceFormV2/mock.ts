@@ -1,17 +1,11 @@
 import { randTextRange } from '@ngneat/falso'
 import { CreateSpaceFormState } from './types'
 
-export type MockTokenProps = {
-    imgSrc: string
-    label: string
-    contractAddress: string
-}
-
 export const MOCK_TOKENS = Array(5)
     .fill(0)
     .map((_, index) => {
         return {
-            imgSrc: `/placeholders/nft_${index + 1}.png`,
+            imgSrc: `https://picsum.photos/id/${index + 20}/400`,
             label: randTextRange({
                 min: 5,
                 max: 10,

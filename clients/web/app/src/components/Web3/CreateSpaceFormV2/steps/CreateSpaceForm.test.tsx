@@ -6,7 +6,6 @@ import { act } from 'react-dom/test-utils'
 import { TestApp } from 'test/testUtils'
 import { CreateSpaceForm } from '../CreateSpaceForm'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
-import { StoreMock } from '../mock'
 import { EVERYONE, TOKEN_HOLDERS } from '../constants'
 
 vi.mock('react-router-dom', () => ({
@@ -75,19 +74,27 @@ describe('CreateSpaceStep1', () => {
     })
 
     test('Step 2: if tokens are selected, can delete all but 1 token', async () => {
-        act(() => {
-            useCreateSpaceFormStore.setState(StoreMock)
-        })
         render(<Wrapper />)
         const next = screen.getByRole('button', { name: 'Next' })
+        const tokenRadio = screen.getByDisplayValue(TOKEN_HOLDERS)
+        fireEvent.click(tokenRadio)
         await waitFor(() => {
             expect(screen.getByDisplayValue(TOKEN_HOLDERS)).toBeChecked()
         })
+
+        const checkboxes = await screen.findAllByRole('checkbox')
+
+        fireEvent.click(checkboxes[0])
+        fireEvent.click(checkboxes[1])
+        fireEvent.click(checkboxes[2])
+
+        // going to step 2
         fireEvent.click(next)
+
         const tokenContainer = await screen.findByTestId('step-2-avatars')
 
         let tokens = await within(tokenContainer).findAllByRole('button')
-        expect(tokens).toHaveLength(5)
+        expect(tokens).toHaveLength(3)
 
         tokens.forEach((t) => {
             fireEvent.click(t)

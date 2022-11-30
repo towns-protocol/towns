@@ -1,5 +1,6 @@
 import React from 'react'
 import * as z from 'zod'
+import { useWeb3Context, useZionClient } from 'use-zion-client'
 import { Box, ErrorMessage, FormRender, Heading, RadioCard } from '@ui'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
@@ -34,6 +35,9 @@ const schema = z
 export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
     const defaultState = useCreateSpaceFormStore((state) => state.step1)
     const setStep1 = useCreateSpaceFormStore((state) => state.setStep1)
+    const { chainId } = useZionClient()
+    const { accounts } = useWeb3Context()
+    const wallet = accounts[0]
 
     return (
         <FormRender<CreateSpaceFormState['step1']>
@@ -86,7 +90,14 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                             {...formProps}
                         >
                             {() => {
-                                return <TokenList isChecked={isTokenHolders} {...formProps} />
+                                return (
+                                    <TokenList
+                                        wallet={wallet}
+                                        chainId={chainId}
+                                        isChecked={isTokenHolders}
+                                        {...formProps}
+                                    />
+                                )
                             }}
                         </RadioCard>
 
