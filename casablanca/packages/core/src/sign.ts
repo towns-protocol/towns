@@ -21,7 +21,7 @@ export interface SignerContext {
     delegateSig?: string
 }
 
-const publicKeyToBuffer = (publicKey: string): Buffer => {
+export const publicKeyToBuffer = (publicKey: string): Buffer => {
     // Uncompressed public key in string form should start with '0x04'.
     check(
         typeof publicKey === 'string' && publicKey.startsWith('0x04'),

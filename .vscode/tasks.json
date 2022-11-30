@@ -141,7 +141,17 @@
         }
       },
       {
-        "label": "Start MITM",
+        "label": "Start MITM - Casablanca",
+        "type": "shell",
+        "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      }, 
+      {
+        "label": "Start MITM - Dendrite",
         "type": "shell",
         "command": "mitmweb -p 8009 --mode reverse:http://localhost:8008/",
         "isBackground": true,

@@ -18656,6 +18656,8 @@ __metadata:
     "@types/request": ^2.48.8
     "@typescript-eslint/eslint-plugin": ^5.40.1
     "@typescript-eslint/parser": ^5.40.1
+    "@zion/client": "workspace:^"
+    "@zion/core": "workspace:^"
     eslint: ^8.25.0
     eslint-plugin-lodash: ^7.4.0
     eslint-plugin-react-hooks: ^4.6.0

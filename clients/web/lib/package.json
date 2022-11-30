@@ -19,6 +19,8 @@
     "dependencies": {
         "@matrix-org/olm": "^3.2.13",
         "@types/node-emoji": "^1.8.2",
+        "@zion/client": "workspace:^",
+        "@zion/core": "workspace:^",
         "node-emoji": "^1.11.0",
         "thenby": "^1.3.4"
     },
