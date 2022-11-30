@@ -80,6 +80,8 @@ const TokenList = (props: Partial<UseFormReturn>) => {
 
 export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
     const defaultState = useCreateSpaceFormStore((state) => state.step2)
+    const setStep2 = useCreateSpaceFormStore((state) => state.setStep2)
+
     const { accounts } = useWeb3Context()
     const wallet = accounts[0]
 
@@ -90,6 +92,7 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
             mode="onChange"
             schema={schema}
             onSubmit={(data) => {
+                setStep2(data)
                 onSubmit()
             }}
         >

@@ -6,6 +6,7 @@ import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
 import { CreateSpaceStep3 } from './steps/CreateSpaceStep3'
+import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 
 const MotionBox = motion(Box)
 
@@ -17,6 +18,7 @@ export const CreateSpaceForm = () => {
         goNext,
         goPrev,
         id: formId,
+        isLast,
         hasPrev,
         stepIndex,
         StepComponent,
@@ -27,6 +29,10 @@ export const CreateSpaceForm = () => {
     )
 
     function onSubmit() {
+        if (isLast) {
+            console.log(useCreateSpaceFormStore.getState())
+            return
+        }
         goNext()
     }
 

@@ -8,6 +8,7 @@ const withMock =
 
 interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void
+    setStep2: (step1: CreateSpaceFormState['step2']) => void
     removeToken: (token: string) => void
 }
 
@@ -32,6 +33,11 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
         set((state) => ({
             ...state,
             step1,
+        })),
+    setStep2: (step2: CreateSpaceFormState['step2']) =>
+        set((state) => ({
+            ...state,
+            step2,
         })),
     removeToken: (token: string) =>
         set((state) => {

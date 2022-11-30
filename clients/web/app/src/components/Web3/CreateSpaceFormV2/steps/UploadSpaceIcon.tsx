@@ -36,9 +36,8 @@ export const UploadSpaceIcon = (props: Props) => {
     useEffect(() => {
         if (url) {
             setImage(url)
-            setValue?.(name, url)
         }
-    }, [url, setValue, name])
+    }, [url])
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
@@ -63,8 +62,7 @@ export const UploadSpaceIcon = (props: Props) => {
                 return
             }
             // TODO: replace with image upload to somehwere
-            setValue?.(name, url)
-            setImage(url)
+            setValue?.(name, 'https://picsum.photos/400')
         }
     }
 

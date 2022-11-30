@@ -1,2 +1,13 @@
 import React from 'react'
-export const CreateSpaceStep3 = () => <> step 3</>
+import { Box, FormRender } from '@ui'
+import { FormStepProps } from 'hooks/useFormSteps'
+
+export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
+    return (
+        <FormRender id={id} onSubmit={onSubmit}>
+            {() => {
+                return <Box background="level2" rounded="sm" height="300" />
+            }}
+        </FormRender>
+    )
+}
