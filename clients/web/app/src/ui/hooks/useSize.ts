@@ -1,7 +1,7 @@
 import useResizeObserver from '@react-hook/resize-observer'
 import { RefObject, useLayoutEffect, useState } from 'react'
 
-export const useSize = (target: RefObject<HTMLDivElement>) => {
+export const useSize = (target: RefObject<HTMLElement>) => {
     const [size, setSize] = useState<{ width: number; height: number } | undefined>()
     useLayoutEffect(() => {
         const entry = target.current

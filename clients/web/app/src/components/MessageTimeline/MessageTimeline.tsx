@@ -1,6 +1,6 @@
 import { default as React, createContext, useCallback, useContext, useMemo } from 'react'
 import { MessageType, useFullyReadMarker } from 'use-zion-client'
-import { Box, Divider, Stack, VList } from '@ui'
+import { Box, Divider, VList } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { DateDivider } from './events/DateDivider'
 import { NewDivider } from './events/NewDivider'
@@ -136,19 +136,26 @@ export const MessageTimeline = (props: Props) => {
         return listItems
     }, [dateGroups, timelineContext?.type])
 
+    const groupIds = listItems.reduce((groupIds, item) => {
+        if (item.type === 'group') {
+            groupIds.push(item.id)
+        }
+        return groupIds
+    }, [] as string[])
+
     return (
         <VList
+            debug={false}
             key={channelId?.matrixRoomId}
             highlightId={props.highlightId}
             esimtateItemSize={estimateItemHeight}
             list={listItems}
-            renderItem={(r) => {
+            groupIds={groupIds}
+            itemRenderer={(r, ref) => {
                 return r.type === 'header' ? (
                     <>{props.header}</>
                 ) : r.type === 'group' ? (
-                    <Stack position="relative" height="x4">
-                        <DateDivider label={r.date} />
-                    </Stack>
+                    <DateDivider label={r.date} ref={ref} />
                 ) : r.type === 'divider' ? (
                     <Box paddingX="md" paddingY="md">
                         <Divider space="none" />

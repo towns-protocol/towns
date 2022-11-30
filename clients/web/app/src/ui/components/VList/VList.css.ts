@@ -13,7 +13,6 @@ export const scrollContainer = style({
     overflowY: `scroll`,
     overflowAnchor: 'none',
     marginRight: `calc(-1 * var(--negative-scrollbars))`,
-
     selectors: {
         [`&::-webkit-scrollbar`]: {
             display: 'none',
@@ -23,7 +22,6 @@ export const scrollContainer = style({
 
 export const scrollContent = style({
     position: `relative`,
-    overflow: `hidden`,
     width: `calc(100% - var(--negative-scrollbars))`,
     overflowAnchor: 'none',
 })

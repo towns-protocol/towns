@@ -1,4 +1,12 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    RefObject,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { useViewport } from './hooks/useViewport'
 import * as styles from './VList.css'
 import { useDebugView } from './VListDebugView'
@@ -8,16 +16,13 @@ const DEBUG = false
 const DEFAULT_VIEW_MARGIN = 400
 const PADDING = 16
 
-export type VListCtrl = {
-    scrollToEvent: (eventId: string) => void
-}
-
 interface Props<T> {
     list: T[]
     highlightId?: string
-    renderItem: (data: T, index: number, items: T[]) => JSX.Element
+    itemRenderer: (data: T, ref?: RefObject<HTMLElement>) => JSX.Element
     esimtateItemSize?: number | ((data: T) => number | undefined)
     viewMargin?: number
+    groupIds?: string[]
     debug?: boolean
 }
 
@@ -39,10 +44,11 @@ const Debug = {
 } as const
 
 export function VList<T extends { id: string }>(props: Props<T>) {
-    const { esimtateItemSize, highlightId, viewMargin = DEFAULT_VIEW_MARGIN } = props
+    const { esimtateItemSize, highlightId, groupIds, viewMargin = DEFAULT_VIEW_MARGIN } = props
 
     // create a copy of the incoming list for safety
     const list = useMemo(() => (props.list ?? []).slice(), [props.list])
+
     const lastItemId = list[list.length - 1]?.id
     // caches the bounding box of rendered elements
     const cachesRef = useRef(new Map<string, ItemSize>())
@@ -56,6 +62,24 @@ export function VList<T extends { id: string }>(props: Props<T>) {
     const [scrollMagnet, setScrollMagnet] = useState<string | undefined>(highlightId)
     // update this key to burst dependency of
     const [forceRecalculateKey, setForceRecalculateKey] = useState(0)
+
+    const groups = useMemo(() => {
+        const groups = list.reduce((groups, item) => {
+            if (groupIds?.includes(item.id)) {
+                groups.push([])
+            }
+            if (groups.length) {
+                groups[groups.length - 1].push(item.id)
+            }
+            return groups
+        }, [] as string[][])
+
+        return groups
+    }, [groupIds, list])
+
+    // useEffect(() => {
+    //     console.log({ groups, groupHeights })
+    // }, [groupHeights, groups])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - DEBUG
 
@@ -187,6 +211,15 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         })
     }, [list, listHeight, viewport, scrollMagnet, visibleArea])
 
+    const groupHeights = groups.reduce((groupHeights, group) => {
+        groupHeights[group[0]] = group.reduce((height, id) => {
+            return height + (cachesRef?.current.get(id)?.height || 0)
+        }, 0)
+        return groupHeights
+    }, {} as { [key: string]: number })
+
+    const groupHeightsRef = useRef(groupHeights)
+    groupHeightsRef.current = groupHeights
     // filters out the items to display on screen
     useLayoutEffect(() => {
         DEBUG && console.log(`%cbuild renderItem list`, Debug.Layout)
@@ -196,6 +229,11 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                 if (typeof item?.y === 'undefined') {
                     return false
                 }
+                if (groupIds?.includes(l.id)) {
+                    // needs to be a ref
+                    const h = groupHeightsRef.current[l.id]
+                    return item.y + item.height + h > visibleArea[0] && item.y < visibleArea[1]
+                }
                 return item.y + item.height > visibleArea[0] && item.y < visibleArea[1]
             })
             // resolve heights from bottom -> up since the anchor mostly at the
@@ -204,7 +242,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
 
         DEBUG && console.table(renderItems)
         setRenderedItems(renderItems)
-    }, [list, listHeight, visibleArea])
+    }, [groupIds, list, listHeight, visibleArea])
 
     // figure if all elements on screen have been rendered, only usfull to avoid
     // glitches on first layout
@@ -217,8 +255,15 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         if (m) {
             DEBUG && console.log(`%call items in viewport fully measured`, Debug.Measuring)
             setFullyMeasured(true)
-        } else {
-            console.log(`%missing measurements for some items`, Debug.Measuring)
+        } else if (DEBUG) {
+            const missing = renderedItems.reduce((missing, t) => {
+                if (!cachesRef.current.get(t.id)?.isMeasured) {
+                    missing.push(t)
+                }
+                return missing
+            }, [] as T[])
+            console.log(`%cmissing measurements for some items`, Debug.Measuring)
+            console.table(missing)
         }
 
         DEBUG && console.table(renderedItems.map((t) => cachesRef.current.get(t.id)))
@@ -313,10 +358,11 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                             cache={cachesRef}
                             id={`${item.id}`}
                             key={item.id}
+                            groupHeight={groupHeights[item.id]}
+                            itemRenderer={props.itemRenderer}
+                            itemData={item}
                             onUpdate={onItemUpdate}
-                        >
-                            {props.renderItem(item, index, arr)}
-                        </VListItem>
+                        />
                     ))}
                 </div>
             </div>

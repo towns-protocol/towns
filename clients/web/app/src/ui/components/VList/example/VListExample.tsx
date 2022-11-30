@@ -56,7 +56,7 @@ export const VListExample = () => {
                 debug
                 key={`${reset}`}
                 list={list}
-                renderItem={(data) => {
+                itemRenderer={(data) => {
                     return (
                         <Stack horizontal>
                             <Stack style={{ background: data.color }} width="x1" shrink={false} />

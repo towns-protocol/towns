@@ -1,48 +1,79 @@
-import React, { MutableRefObject, useCallback, useLayoutEffect, useRef } from 'react'
+import React, {
+    MutableRefObject,
+    RefObject,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+} from 'react'
 import { useSize } from 'ui/hooks/useSize'
 import { ItemCacheMap, ItemSize } from './VList'
 import * as styles from './VList.css'
 
-interface Props {
-    children: React.ReactNode
-    id: string
+interface Props<T> {
     cache: MutableRefObject<ItemCacheMap>
+    groupHeight?: number
+    id: string
     onUpdate?: (id?: string) => void
-    highlight?: boolean
+    itemRenderer: (data: T, ref?: RefObject<HTMLElement>) => JSX.Element
+    itemData: T
 }
 
-const DEFAULT_ITEM_HEIGHT = 50
+const DEFAULT_ITEM_HEIGHT = 0
 
-export const VListItem = (props: Props) => {
-    const { id, cache, onUpdate } = props
-    const ref = useRef<HTMLDivElement>(null)
-    const size = useSize(ref)
+export const VListItem = <T,>(props: Props<T>) => {
+    const { id, cache, groupHeight, onUpdate } = props
+    const ref = useRef<HTMLElement>(null)
+    const size = useSize(ref)?.height
+    const isGroupHeader = !!groupHeight
 
     useLayoutEffect(() => {
         const cacheItem = cache.current.get(id)
-        const height = size?.height
-        if (cacheItem?.height === height) {
+        const height = isGroupHeader ? size : size
+        if (cacheItem?.height === height && (!cacheItem || cacheItem.isMeasured)) {
             return
         }
+
         if (typeof height !== 'undefined' && height >= 0) {
             cache.current.set(id, { ...(cacheItem ?? {}), height, isMeasured: true })
             onUpdate?.(id)
         }
-    }, [id, cache, onUpdate, size])
+    }, [id, cache, onUpdate, size, isGroupHeader])
 
     const cacheItem = cache.current.get(id)
     const y = cacheItem?.y ? cacheItem.y : 0
 
+    const style = useMemo(() => {
+        const groupStyle = isGroupHeader
+            ? ({
+                  minHeight: groupHeight + `px`,
+                  pointerEvents: `none`,
+              } as React.CSSProperties)
+            : {}
+
+        return {
+            top: `${y}px`,
+            ...groupStyle,
+        }
+    }, [isGroupHeader, groupHeight, y])
+
+    useEffect(() => {
+        if (!ref.current) {
+            throw new Error(
+                `VList - ref wasn't assigned via custom component (${id}) ensure the component is a valid forwardRef`,
+            )
+        }
+    }, [id])
+
     return (
         <div
-            ref={ref}
+            ref={!isGroupHeader ? (ref as RefObject<HTMLDivElement>) : undefined}
             data-id={id}
             className={styles.listItem}
-            style={{
-                top: `${y}px`,
-            }}
+            style={style}
         >
-            {props.children}
+            {props.itemRenderer(props.itemData, isGroupHeader ? ref : undefined)}
         </div>
     )
 }

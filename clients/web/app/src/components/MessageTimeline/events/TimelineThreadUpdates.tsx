@@ -16,7 +16,7 @@ import { ZRoomMessageEvent } from '../util/getEventsByDate'
 type Props = {
     events: ZRoomMessageEvent[]
 }
-export const TimelineThreadUpdates = (props: Props) => {
+export const TimelineThreadUpdates = React.memo((props: Props) => {
     const { events } = props
 
     const grouped = events.reduce((acc, e) => {
@@ -42,7 +42,7 @@ export const TimelineThreadUpdates = (props: Props) => {
             ))}
         </Stack>
     )
-}
+})
 
 const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessageEvent[] }) => {
     const { events, threadParentId } = props
