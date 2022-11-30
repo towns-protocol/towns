@@ -1,10 +1,12 @@
-import { default as React, createContext, useCallback, useContext, useMemo } from 'react'
-import { MessageType, useFullyReadMarker } from 'use-zion-client'
+import { default as React, createContext, useCallback, useContext, useMemo, useRef } from 'react'
+import { FullyReadMarker, MessageType, useFullyReadMarker } from 'use-zion-client'
 import { Box, Divider, VList } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { DateDivider } from './events/DateDivider'
 import { NewDivider } from './events/NewDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
+import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
+import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import {
     FullyReadRenderEvent,
     MessageRenderEvent,
@@ -13,8 +15,6 @@ import {
     UserMessagesRenderEvent,
     getEventsByDate,
 } from './util/getEventsByDate'
-import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
-import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 
 export const TimelineMessageContext = createContext<null | ReturnType<
     typeof useTimelineMessageEditing
@@ -38,16 +38,23 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                                  initialize variables
 
+    const fullyPersistedRef = useRef<FullyReadMarker>()
+    // if a marker is shown once it will keep displaying until timeline gets
+    // unmounted despite the marker flipping to unread
+    fullyPersistedRef.current =
+        !fullyPersistedRef.current && !fullyReadMarker?.isUnread ? undefined : fullyReadMarker
+
+    const fullyReadPersisted = fullyPersistedRef.current
+
     const dateGroups = useMemo(
         () =>
             getEventsByDate(
                 events,
-                fullyReadMarker,
+                fullyReadPersisted,
                 timelineContext?.type === MessageTimelineType.Thread,
             ),
-        [events, fullyReadMarker, timelineContext?.type],
+        [events, fullyReadPersisted, timelineContext?.type],
     )
-    // timelineContext?.type === MessageTimelineType.Thread
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered
@@ -79,7 +86,7 @@ export const MessageTimeline = (props: Props) => {
         type ListItem =
             | { id: string; type: 'divider' }
             | { id: string; type: 'header' }
-            | { id: string; type: 'group'; date: string }
+            | { id: string; type: 'group'; date: string; isNew?: boolean }
             | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
             | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
             | { id: string; type: 'message'; item: MessageRenderEvent }
@@ -92,6 +99,7 @@ export const MessageTimeline = (props: Props) => {
                 {
                     type: 'group',
                     date: f.date.humanDate,
+                    isNew: f.isNew,
                     key: f.date.humanDate,
                 } as const,
                 ...f.events,
@@ -104,7 +112,7 @@ export const MessageTimeline = (props: Props) => {
         const listItems: ListItem[] = flatGroups
             .flatMap<ListItem>((e) => {
                 return e.type === 'group' && groupByDate
-                    ? ({ id: e.key, type: 'group', date: e.date } as const)
+                    ? ({ id: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
                     : e.type === RenderEventType.FullyRead
                     ? ({ id: e.key, type: 'fully-read', item: e } as const)
                     : e.type === RenderEventType.ThreadUpdate
@@ -129,7 +137,7 @@ export const MessageTimeline = (props: Props) => {
 
         if (timelineContext?.type === MessageTimelineType.Channel) {
             listItems.unshift({ id: 'header', type: 'header' } as const)
-        } else if (isThreadOrigin) {
+        } else if (isThreadOrigin && listItems.length > 1 && listItems[1]?.type !== 'fully-read') {
             listItems.splice(1, 0, { id: 'divider', type: 'divider' } as const)
         }
 
@@ -155,13 +163,19 @@ export const MessageTimeline = (props: Props) => {
                 return r.type === 'header' ? (
                     <>{props.header}</>
                 ) : r.type === 'group' ? (
-                    <DateDivider label={r.date} ref={ref} />
+                    <DateDivider label={r.date} ref={ref} new={r.isNew} />
                 ) : r.type === 'divider' ? (
                     <Box paddingX="md" paddingY="md">
                         <Divider space="none" />
                     </Box>
                 ) : r.type === 'fully-read' ? (
-                    <NewDivider fullyReadMarker={r.item.event} />
+                    <NewDivider
+                        fullyReadMarker={r.item.event}
+                        hidden={r.item.isHidden}
+                        paddingX={
+                            timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'
+                        }
+                    />
                 ) : (
                     <MessageTimelineItem itemData={r.item} highlight={r.id === props.highlightId} />
                 )

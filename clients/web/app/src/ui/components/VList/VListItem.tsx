@@ -35,7 +35,7 @@ export const VListItem = <T,>(props: Props<T>) => {
             return
         }
 
-        if (typeof height !== 'undefined' && height >= 0) {
+        if (typeof height !== 'undefined') {
             cache.current.set(id, { ...(cacheItem ?? {}), height, isMeasured: true })
             onUpdate?.(id)
         }

@@ -57,6 +57,7 @@ export interface FullyReadRenderEvent extends BaseEvent {
     type: RenderEventType.FullyRead
     key: string
     event: FullyReadMarker
+    isHidden: boolean
 }
 
 export interface ThreadUpdateRenderEvent extends BaseEvent {
@@ -77,6 +78,8 @@ export type DateGroup = {
         humanDate: string
     }
     events: RenderEvent[]
+    // display as new (unread)
+    isNew?: boolean
 }
 
 export type RenderEvent =
@@ -130,6 +133,7 @@ export const getEventsByDate = (
                         date,
                     },
                     events: [],
+                    isNew: false,
                 }
                 dateGroups.push(group)
             }
@@ -138,10 +142,24 @@ export const getEventsByDate = (
 
             if (isRoomMessage(event)) {
                 if (fullyReadMarker?.eventId === event.eventId) {
+                    if (
+                        // TODO: if we add readmarkers to more events than
+                        // messages this should get refactored
+                        !renderEvents.some(
+                            (r) =>
+                                r.type === RenderEventType.UserMessages ||
+                                r.type === RenderEventType.Message,
+                        )
+                    ) {
+                        // show date as "new" since first message appears to be unread
+                        group.isNew = true
+                    }
                     renderEvents.push({
                         type: RenderEventType.FullyRead,
                         key: `fully-read-${event.eventId}`,
                         event: fullyReadMarker,
+                        // hidden since message is shown within the date-group marker
+                        isHidden: !!group.isNew,
                     })
                 }
 

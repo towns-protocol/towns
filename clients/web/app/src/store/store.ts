@@ -6,6 +6,8 @@ interface AppState {
     setTheme: (theme: 'dark' | 'light') => void
     paneSizes: { [id: string]: number }
     setPaneSize: (id: string, size: number) => void
+    isWindowFocused: boolean
+    setIsWindowFocused: (isWindowActive: boolean) => void
 }
 
 export const useStore = create(
@@ -15,6 +17,12 @@ export const useStore = create(
             setTheme: (theme) => {
                 set(() => ({ theme }))
             },
+
+            isWindowFocused: true,
+            setIsWindowFocused: (isWindowActive) => {
+                set(() => ({ isWindowFocused: isWindowActive }))
+            },
+
             paneSizes: {},
             setPaneSize: (id: string, size: number) =>
                 set((state) => {

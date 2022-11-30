@@ -12,6 +12,7 @@ import { SidebarLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { PATHS } from 'routes'
 import { QueryProvider } from 'api/queryClient'
+import { useWindowListener } from 'hooks/useWindowListener'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -61,6 +62,9 @@ const AllRoutes = () => {
         ammendHTMLBody: true,
         useDefaultOSTheme: false,
     })
+
+    useWindowListener()
+
     return (
         <Routes>
             <Route element={<AppLayout />}>
