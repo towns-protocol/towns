@@ -10,7 +10,6 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, IconButton, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 type Props = {
     messageId: string
