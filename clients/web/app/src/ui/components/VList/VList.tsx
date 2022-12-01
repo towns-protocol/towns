@@ -77,9 +77,9 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         return groups
     }, [groupIds, list])
 
-    // useEffect(() => {
-    //     console.log({ groups, groupHeights })
-    // }, [groupHeights, groups])
+    useEffect(() => {
+        console.log({ groups })
+    }, [groups])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - DEBUG
 
@@ -211,12 +211,16 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         })
     }, [list, listHeight, viewport, scrollMagnet, visibleArea])
 
-    const groupHeights = groups.reduce((groupHeights, group) => {
-        groupHeights[group[0]] = group.reduce((height, id) => {
-            return height + (cachesRef?.current.get(id)?.height || 0)
-        }, 0)
-        return groupHeights
-    }, {} as { [key: string]: number })
+    const groupHeights = useMemo(
+        () =>
+            groups.reduce((groupHeights, group) => {
+                groupHeights[group[0]] = group.reduce((height, id) => {
+                    return height + (cachesRef?.current.get(id)?.height || 0)
+                }, 0)
+                return groupHeights
+            }, {} as { [key: string]: number }),
+        [groups],
+    )
 
     const groupHeightsRef = useRef(groupHeights)
     groupHeightsRef.current = groupHeights

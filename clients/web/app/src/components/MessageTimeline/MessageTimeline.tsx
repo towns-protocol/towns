@@ -144,12 +144,16 @@ export const MessageTimeline = (props: Props) => {
         return listItems
     }, [dateGroups, timelineContext?.type])
 
-    const groupIds = listItems.reduce((groupIds, item) => {
-        if (item.type === 'group') {
-            groupIds.push(item.id)
-        }
-        return groupIds
-    }, [] as string[])
+    const groupIds = useMemo(
+        () =>
+            listItems.reduce((groupIds, item) => {
+                if (item.type === 'group') {
+                    groupIds.push(item.id)
+                }
+                return groupIds
+            }, [] as string[]),
+        [listItems],
+    )
 
     return (
         <VList
