@@ -101,7 +101,7 @@ export const useInviteData = (slug: string | undefined) => {
     return useMemo(
         () =>
             invites.find((invite) => {
-                invite.id.slug === slug
+                return invite.id.slug === slug || invite.id.slug === encodeURIComponent(slug || '')
             }),
         [invites, slug],
     )
