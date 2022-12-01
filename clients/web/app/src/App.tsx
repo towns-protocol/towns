@@ -2,7 +2,7 @@ import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 
 import { WalletStatus, ZionContextProvider, useMatrixStore, useWeb3Context } from 'use-zion-client'
-import { Box, Heading, Text } from '@ui'
+import { Box, Heading } from '@ui'
 import { AppLayout } from 'AppLayout'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { Register } from 'routes/Register'
@@ -13,6 +13,8 @@ import { FontLoader } from 'ui/utils/FontLoader'
 import { PATHS } from 'routes'
 import { QueryProvider } from 'api/queryClient'
 import { useWindowListener } from 'hooks/useWindowListener'
+import { isDev } from 'utils'
+import { DebugBar } from '@components/DebugBar'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -36,17 +38,7 @@ export const App = () => {
             initialSyncLimit={100}
         >
             <QueryProvider>
-                {MATRIX_HOMESERVER_URL.includes('localhost') && (
-                    <Box
-                        position="fixed"
-                        width="100%"
-                        zIndex="tooltips"
-                        background="etherum"
-                        paddingX="md"
-                    >
-                        <Text size="sm">Matrix Homeserver URL: {MATRIX_HOMESERVER_URL}</Text>
-                    </Box>
-                )}
+                <>{isDev && <DebugBar MATRIX_HOMESERVER_URL={MATRIX_HOMESERVER_URL} />}</>
                 <AllRoutes />
             </QueryProvider>
         </ZionContextProvider>
