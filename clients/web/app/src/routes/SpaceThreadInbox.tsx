@@ -94,7 +94,7 @@ export const SpaceThreadsInbox = () => {
     )
 }
 
-function sortThreads(threads: ThreadResult[]) {
+export function sortThreads(threads: ThreadResult[]) {
     return threads.sort(
         firstBy<ThreadResult>((m) => (m.isUnread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
     )

@@ -17,7 +17,7 @@ import { SpaceThreadsInbox } from './SpaceThreadInbox'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceThreadInboxChannel } from './SpaceThreadInboxChannel'
 
-const USE_THREAD_GROUPS = false
+const USE_THREAD_GROUPS = true
 
 export const SpaceRoutes = () => (
     <Routes>
