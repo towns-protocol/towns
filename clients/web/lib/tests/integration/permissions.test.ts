@@ -42,7 +42,7 @@ import { MatrixEvent } from 'matrix-js-sdk'
  * 
  * */
 
-describe('disable channel', () => {
+describe.skip('disable channel', () => {
     //describe.only('disable channel', () => {
     jest.setTimeout(3000 * 1000)
     test('Channel member cant sync disabled room messages', async () => {
@@ -129,7 +129,7 @@ describe('disable channel', () => {
     })
 })
 
-describe('write messages', () => {
+describe.skip('write messages', () => {
     //describe.only('write messages', () => {
     jest.setTimeout(3000 * 1000)
 
@@ -291,7 +291,7 @@ describe('write messages', () => {
     })
 })
 
-describe('create role', () => {
+describe.skip('create role', () => {
     //describe.only('create role', () => {
     jest.setTimeout(300 * 1000)
 
@@ -463,7 +463,7 @@ describe('create role', () => {
     })
 })
 
-describe('space invite', () => {
+describe.skip('space invite', () => {
     //describe.only('space invite', () => {
     jest.setTimeout(300 * 1000)
 
@@ -631,7 +631,7 @@ describe('space invite', () => {
     }) // end test
 }) // end describe
 
-describe('channel with roles and permissions', () => {
+describe.skip('channel with roles and permissions', () => {
     test('join token-gated channel', async () => {
         /** Arrange */
 
