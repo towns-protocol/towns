@@ -497,6 +497,10 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     address user,
     DataTypes.Permission calldata permission
   ) external view returns (bool) {
+    if (_isSpaceAccessDisabled(spaceId)) {
+      return false;
+    }
+
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
     uint256 _channelId = _getChannelIdByNetworkId(spaceId, channelId);
     return _isEntitled(_spaceId, _channelId, user, permission);
@@ -907,6 +911,13 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
     uint256 _spaceId = _getSpaceIdByNetworkId(spaceId);
     if (_spaceId == 0) revert Errors.SpaceDoesNotExist();
     if (_spaceById[_spaceId].disabled) revert Errors.SpaceDoesNotExist();
+  }
+
+  function _isSpaceAccessDisabled(
+    string memory spaceNetworkId
+  ) internal view returns (bool isDisabled) {
+    uint256 _spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
+    return _spaceId == 0 || _spaceById[_spaceId].disabled;
   }
 
   function _validateChannelExists(
