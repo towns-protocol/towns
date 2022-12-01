@@ -1,19 +1,20 @@
-import React, { useContext } from 'react'
-import { Grid } from '@giphy/react-components'
 import { IGif } from '@giphy/js-types'
-import { ImageMessageContent, MessageType, useChannelId, useZionClient } from 'use-zion-client'
+import { Grid } from '@giphy/react-components'
+import React from 'react'
 import { useParams, useResolvedPath } from 'react-router'
-import { PATHS } from 'routes'
+import { ImageMessageContent, MessageType, useChannelId, useZionClient } from 'use-zion-client'
+import { Spinner } from '@components/Spinner'
 import { Box } from '@ui'
+import { PATHS } from 'routes'
+import { useStore } from 'store/store'
+import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { atoms } from 'ui/styles/atoms.css'
 import { themes } from 'ui/styles/themes'
-import { useStore } from 'store/store'
-import { Spinner } from '@components/Spinner'
-import { CardOpenerContext } from 'ui/components/Overlay/CardOpener'
 import { baseline } from 'ui/styles/vars.css'
-import { useGiphySearchContext } from './GiphySearchContext'
 import { GiphySearchBar } from './GiphySearchBar'
+import { useGiphySearchContext } from './GiphySearchContext'
 import { GiphyTrendingContainer } from './GiphyTrendingPill'
+
 import './GiphyGrid.css'
 
 const Loader = () => {
@@ -32,7 +33,7 @@ export const GiphyPicker = () => {
     const { messageId: threadId } = useParams()
 
     const channelId = useChannelId()
-    const cardOpenerContext = useContext(CardOpenerContext)
+    const { closeCard } = useCardOpenerContext()
     const gutterWidth = baseline * 0.75
     const width = 350
     const gridWidth = width - gutterWidth
@@ -48,7 +49,7 @@ export const GiphyPicker = () => {
     }
 
     function onGifClick(gifData: IGif) {
-        cardOpenerContext.closeCard?.()
+        closeCard()
         // for now, saving the original and downsized images
         // downsized is saved as thumbnail, but is not actually any smaller in dimension, only size
         // and serving the downsized (thumbnail) image in timeline

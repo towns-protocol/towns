@@ -50,15 +50,23 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
                 containerStyle,
             }
         }
-
-        if (placement === 'above') {
+        if (placement === 'topLeft') {
             anchorStyle.top = triggerRect.top - margin.y
             const topDiff = Math.max(0, (size.height ?? 0) - anchorStyle.top)
             containerStyle.bottom = -topDiff
 
             anchorStyle.left = triggerRect.right - margin.x
             const leftDiff = Math.max(0, (size.width ?? 0) - anchorStyle.left)
-            containerStyle.right = -leftDiff
+            containerStyle.right = leftDiff
+        }
+
+        if (placement === 'topRight') {
+            anchorStyle.top = triggerRect.top - margin.y
+            const topDiff = Math.max(0, (size.height ?? 0) - anchorStyle.top)
+            containerStyle.bottom = -topDiff
+
+            anchorStyle.left = triggerRect.right - margin.x
+            containerStyle.left = 0
         }
 
         if (placement === 'pointer' && hitPosition) {

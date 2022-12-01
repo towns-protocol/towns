@@ -45,6 +45,7 @@ import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
 import { RichTextUI } from './ui/RichTextEditorUI'
 import { BLANK_LINK } from './transformers/LinkTransformer'
+import { TabThroughPlugin } from './plugins/TabThroughPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -56,6 +57,7 @@ type Props = {
     initialValue?: string
     displayButtons?: boolean
     container?: (props: { children: React.ReactNode }) => JSX.Element
+    tabIndex?: number
 }
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
@@ -152,7 +154,7 @@ export const RichTextPreviewPlain = React.memo((props: { content: string; edited
 })
 
 export const RichTextEditor = (props: Props) => {
-    const { placeholder = 'Write something ...', editing: isEditing, onSend } = props
+    const { placeholder = 'Write something ...', editing: isEditing, onSend, tabIndex } = props
 
     const { members } = useSpaceMembers()
     const channels = useSpaceChannels()
@@ -175,7 +177,9 @@ export const RichTextEditor = (props: Props) => {
         <LexicalComposer initialConfig={initialConfig}>
             <RichTextUI focused={focused} editing={isEditing}>
                 <RichTextPlugin
-                    contentEditable={<ContentEditable className={inputClassName} />}
+                    contentEditable={
+                        <ContentEditable className={inputClassName} tabIndex={tabIndex} />
+                    }
                     placeholder={<RichTextPlaceholder placeholder={placeholder} />}
                     ErrorBoundary={LexicalErrorBoundary}
                 />
@@ -199,6 +203,7 @@ export const RichTextEditor = (props: Props) => {
             <AutoFocusPlugin />
             <AutoLinkMatcherPlugin />
             <ChannelMentionPlugin channels={channels} />
+            <TabThroughPlugin />
         </LexicalComposer>
     )
 }

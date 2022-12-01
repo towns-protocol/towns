@@ -3,7 +3,8 @@ import React from 'react'
 import { useMatrixStore, useMyProfile } from 'use-zion-client'
 import { ProfileSettingsCard } from '@components/Cards/ProfileSettingsCard'
 import { FadeIn } from '@components/Transitions'
-import { Avatar, Paragraph, Stack, TooltipRenderer } from '@ui'
+import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { CardOpener } from 'ui/components/Overlay/CardOpener'
 
 type Props = {
     expanded?: boolean
@@ -15,29 +16,37 @@ export const ProfileCardButton = (props: Props) => {
     const myProfile = useMyProfile()
 
     return !isAuthenticated ? null : (
-        <TooltipRenderer
+        <CardOpener
+            tabIndex={0}
+            placement="topRight"
             layoutId="topbar"
-            trigger="click"
-            placement="horizontal"
             render={
-                <ProfileSettingsCard
-                    userId={userId}
-                    username={username}
-                    avatarUrl={myProfile?.avatarUrl}
-                    displayName={myProfile?.displayName}
-                />
+                <Box horizontal paddingY="md">
+                    <ProfileSettingsCard
+                        userId={userId}
+                        username={username}
+                        avatarUrl={myProfile?.avatarUrl}
+                        displayName={myProfile?.displayName}
+                    />
+                </Box>
             }
         >
             {({ triggerProps }) => (
                 <>
                     <MotionStack
                         horizontal
+                        paddingTop="sm"
+                        paddingBottom="md"
+                        paddingX="md"
+                        background="inherit"
+                        as="button"
                         gap="sm"
                         alignItems="center"
                         layout="position"
                         overflow="hidden"
+                        {...triggerProps}
                     >
-                        <Avatar src={myProfile?.avatarUrl} size="avatar_x4" {...triggerProps} />
+                        <Avatar src={myProfile?.avatarUrl} size="avatar_x4" />
                         <AnimatePresence>
                             {isExpanded && (
                                 <FadeIn>
@@ -50,7 +59,7 @@ export const ProfileCardButton = (props: Props) => {
                     </MotionStack>
                 </>
             )}
-        </TooltipRenderer>
+        </CardOpener>
     )
 }
 

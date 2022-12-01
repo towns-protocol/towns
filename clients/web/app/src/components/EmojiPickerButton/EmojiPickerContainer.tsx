@@ -1,22 +1,22 @@
 import { EmojiData } from 'emoji-mart'
 
 import Picker from '@emoji-mart/react'
-import React, { useCallback, useContext } from 'react'
+import React, { useCallback } from 'react'
 
 import { Box } from '@ui'
-import { CardOpenerContext } from 'ui/components/Overlay/CardOpener'
+import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { vars } from 'ui/styles/vars.css'
 import { emojiPickerClassName } from './EmojiPickerContainer.css'
 
 export const EmojiPickerContainer = (props: { onEmojiSelect: (data: EmojiData) => void }) => {
-    const cardOpenerContext = useContext(CardOpenerContext)
+    const { closeCard } = useCardOpenerContext()
 
     const onEmojiSelect = useCallback(
         (data: EmojiData) => {
-            cardOpenerContext.closeCard?.()
+            closeCard()
             props.onEmojiSelect(data)
         },
-        [cardOpenerContext, props],
+        [closeCard, props],
     )
 
     return (

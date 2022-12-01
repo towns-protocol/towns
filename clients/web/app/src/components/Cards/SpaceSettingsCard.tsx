@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
-import { IconName } from 'ui/components/Icon'
-import { Box, BoxProps, Card, Icon, Stack } from '@ui'
+import { Box, Card } from '@ui'
+import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
+import { MenuItem } from './MenuItem'
 
 type Props = { spaceId: RoomIdentifier; spaceName: string }
 
@@ -11,32 +12,29 @@ export const SpaceSettingsCard = (props: Props) => {
 
     const navigate = useNavigate()
 
-    const onInviteClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.preventDefault()
-            navigate(`/spaces/${spaceId.slug}/invite`)
-        },
-        [navigate, spaceId.slug],
-    )
+    const { closeCard } = useCardOpenerContext()
+
+    const onInviteClick = useCallback(() => {
+        navigate(`/spaces/${spaceId.slug}/invite`)
+        closeCard()
+    }, [closeCard, navigate, spaceId.slug])
 
     const { leaveRoom } = useZionClient()
     const onLeaveClick = useCallback(async () => {
         await leaveRoom(spaceId)
         navigate('/')
-    }, [leaveRoom, navigate, spaceId])
+        closeCard()
+    }, [closeCard, leaveRoom, navigate, spaceId])
 
-    const onSettingsClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.preventDefault()
-            navigate(`/spaces/${spaceId.slug}/settings`)
-        },
-        [navigate, spaceId.slug],
-    )
+    const onSettingsClick = useCallback(() => {
+        navigate(`/spaces/${spaceId.slug}/settings`)
+        closeCard()
+    }, [closeCard, navigate, spaceId.slug])
 
     return (
         <Box position="relative">
-            <Card border width="300" fontSize="md" paddingY="sm">
-                <MenuItem icon="invite" onClick={onInviteClick}>
+            <Card border width="300" fontSize="md" paddingY="sm" role="navigation">
+                <MenuItem selected icon="invite" tabIndex={0} onClick={onInviteClick}>
                     Invite
                 </MenuItem>
                 <MenuItem icon="settings" onClick={onSettingsClick}>
@@ -49,20 +47,3 @@ export const SpaceSettingsCard = (props: Props) => {
         </Box>
     )
 }
-
-export const MenuItem = ({ children, ...props }: BoxProps & { icon?: IconName }) => (
-    <Box grow paddingY="sm" background={{ hover: 'level3' }} {...props}>
-        <Stack horizontal gap paddingX="md" cursor="pointer" alignItems="center">
-            {props.icon && (
-                <Icon
-                    color={props.color}
-                    type={props.icon}
-                    background="level3"
-                    size="square_lg"
-                    padding="sm"
-                />
-            )}
-            {children}
-        </Stack>
-    </Box>
-)

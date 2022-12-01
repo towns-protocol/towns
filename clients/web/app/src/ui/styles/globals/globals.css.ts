@@ -53,3 +53,16 @@ globalStyle('a', {
     textDecoration: 'none',
     color: 'inherit',
 })
+
+globalStyle('*:focus', {
+    border: `none`,
+    outline: 'none',
+})
+
+globalStyle('*:focus-visible', {
+    border: `none`,
+    outlineColor: vars.color.foreground.accent,
+    outlineWidth: 3,
+    outlineStyle: 'solid',
+    outlineOffset: -3,
+})

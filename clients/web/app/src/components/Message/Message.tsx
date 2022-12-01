@@ -65,7 +65,7 @@ export const Message = (props: Props) => {
 
     const ref = useRef<HTMLDivElement>(null)
 
-    const { isHover, onMouseEnter } = useHover(ref)
+    const { isHover, onMouseEnter, onFocus, onBlur } = useHover(ref)
 
     const date = timestamp
         ? isRelativeDate
@@ -78,7 +78,16 @@ export const Message = (props: Props) => {
     const backgroundProps = useMessageBackground(isEditing, isHover, isHighlight)
 
     return (
-        <Stack horizontal ref={ref} onMouseEnter={onMouseEnter} {...boxProps} {...backgroundProps}>
+        <Stack
+            horizontal
+            ref={ref}
+            onMouseEnter={onMouseEnter}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            {...boxProps}
+            {...backgroundProps}
+            tabIndex={0}
+        >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
             <Box minWidth="x8">

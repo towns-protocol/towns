@@ -6,6 +6,9 @@ const background = {
     none: {
         background: vars.color.background.none,
     },
+    inherit: {
+        background: vars.color.background.inherit,
+    },
     default: {
         background: vars.color.background.level1,
     },

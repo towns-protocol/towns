@@ -22,10 +22,11 @@ type Props = {
 type TriggerProps = {
     ref: (ref: HTMLElement | null) => void
     onClick?: (e: React.MouseEvent) => void
+    onKeyDown?: (e: React.KeyboardEvent) => void
     onContextMenu?: (e: React.MouseEvent) => void
     onMouseEnter: () => void
     onMouseLeave: () => void
-    tabIndex: 0
+    tabIndex?: number
     cursor: 'pointer'
 }
 
@@ -161,7 +162,6 @@ export const TooltipRenderer = (props: Props) => {
         <TooltipContext.Provider value={{ placement }}>
             {children({
                 triggerProps: {
-                    tabIndex: 0,
                     ref: setTriggerRef,
                     onMouseEnter,
                     onClick: trigger === Trigger.click ? onClick : undefined,

@@ -1,8 +1,8 @@
 import React, { forwardRef } from 'react'
 import { Box, BoxProps } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
-import * as styles from './IconButton.css'
 import { IconAtoms } from '../Icon/Icon.css'
+import * as styles from './IconButton.css'
 
 type Props = {
     opaque?: boolean
@@ -19,14 +19,16 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
         background,
         ...boxProps
     } = props
+
     return (
         <Box
+            as="button"
             ref={ref}
             role="button"
             className={styles.iconButton}
             background={
                 background ?? {
-                    default: !isOpaque ? undefined : isActive ? 'level3' : 'level2',
+                    default: !isOpaque ? 'inherit' : isActive ? 'level3' : 'level2',
                     hover: 'level3',
                 }
             }

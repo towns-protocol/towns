@@ -144,7 +144,9 @@ const InboxEntry = (props: {
                         color={isNew ? 'etherum' : 'gray2'}
                         fontWeight={isNew ? 'strong' : undefined}
                     >
-                        <Paragraph>{messages.length} replies</Paragraph>
+                        <Paragraph>
+                            {messages.length} {messages.length === 1 ? `reply` : `replies`}
+                        </Paragraph>
                     </Box>
                 </Message>
             </Stack>

@@ -34,6 +34,7 @@ const html = {
 const light = (() => {
     const layer = {
         none: 'none',
+        inherit: 'inherit',
         level1: Figma.LightMode.Level1,
         level2: Figma.LightMode.Level2,
         level3: Figma.LightMode.Level3,
@@ -78,6 +79,7 @@ const light = (() => {
 const dark = (() => {
     const layer = {
         none: 'none',
+        inherit: 'inherit',
         level1: Figma.DarkMode.Level1,
         level2: Figma.DarkMode.Level2,
         level3: Figma.DarkMode.Level3,

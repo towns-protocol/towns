@@ -2,9 +2,10 @@ import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useZionClient } from 'use-zion-client'
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from '@ui'
-import { useStore } from 'store/store'
 import { PATHS } from 'routes'
-import { MenuItem } from './SpaceSettingsCard'
+import { useStore } from 'store/store'
+import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
+import { MenuItem } from './MenuItem'
 
 type Props = {
     userId: string | null
@@ -15,6 +16,8 @@ type Props = {
 
 export const ProfileSettingsCard = (props: Props) => {
     const { username = '', avatarUrl, displayName } = props
+
+    const { closeCard } = useCardOpenerContext()
 
     const { setTheme, theme } = useStore((state) => ({
         theme: state.theme,
@@ -28,12 +31,14 @@ export const ProfileSettingsCard = (props: Props) => {
     const navigate = useNavigate()
 
     const onSettingsClick = useCallback(() => {
+        closeCard()
         navigate('/me')
-    }, [navigate])
+    }, [closeCard, navigate])
 
     const onSetupClick = useCallback(() => {
+        closeCard()
         navigate(`/${PATHS.PREFERENCES}`)
-    }, [navigate])
+    }, [closeCard, navigate])
 
     const { logout } = useZionClient()
 
@@ -42,7 +47,7 @@ export const ProfileSettingsCard = (props: Props) => {
     }, [logout])
 
     return (
-        <Card border paddingBottom="sm" width="300" fontSize="md">
+        <Card border paddingBottom="sm" width="300" fontSize="md" tabIndex={1}>
             <Stack horizontal padding gap="md" alignItems="center">
                 <Box>
                     <Avatar size="avatar_x4" src={avatarUrl} />
@@ -58,7 +63,7 @@ export const ProfileSettingsCard = (props: Props) => {
             {/* <MenuItem icon="settings" onClick={onThemeClick}>
         Switch to {theme !== "light" ? "light" : "dark"} theme
       </MenuItem> */}
-            <MenuItem icon="profile" onClick={onSettingsClick}>
+            <MenuItem selected icon="profile" onClick={onSettingsClick}>
                 Profile
             </MenuItem>
             <MenuItem icon="settings" onClick={onSetupClick}>
@@ -73,14 +78,6 @@ export const ProfileSettingsCard = (props: Props) => {
         </Card>
     )
 }
-
-// const MenuItem = ({ children, ...props }: BoxProps) => (
-//   <Box grow paddingY="sm" background={{ hover: "level3" }} {...props}>
-//     <Stack horizontal paddingX="md" cursor="pointer">
-//       {children}
-//     </Stack>
-//   </Box>
-// );
 
 export const shortenAddress = (s: string, charsStart = 6, charsEnd = 2, delimiter = '..') => {
     return (s?.length ?? 0) <= charsStart + delimiter.length + charsEnd

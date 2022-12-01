@@ -1,10 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import useEvent from 'react-use-event-hook'
 import { RootLayerContext } from '../Tooltip/OverlayPortal'
+import { CardOpenerContext } from './CardOpenerContext'
 import { OverlayContainer } from './CardOverlayContainer'
 
-export type Placement = 'above' | 'pointer'
+export type Placement = 'topLeft' | 'topRight' | 'pointer'
 
 const Trigger = {
     click: 'click',
@@ -19,23 +20,20 @@ type Props = {
     render: JSX.Element | undefined
     trigger?: typeof Trigger[keyof typeof Trigger]
     onClose?: () => void
+    tabIndex?: number
 }
 
 type TriggerProps = {
     ref: (ref: HTMLElement | null) => void
     onClick?: (e: React.MouseEvent) => void
+    onKeyDown?: (e: React.KeyboardEvent) => void
     onContextMenu?: (e: React.MouseEvent) => void
-    tabIndex: 0
+    tabIndex?: number
     cursor: 'pointer'
 }
 
 // keeping this for further refactoring
 const KEEP_OPEN_ON_CLICK_INSIDE = true
-
-export const CardOpenerContext = createContext<{
-    placement: Placement
-    closeCard?: () => void
-}>({ placement: 'above' })
 
 const createBounds = () => ({
     x: 0,
@@ -45,7 +43,14 @@ const createBounds = () => ({
 })
 
 export const CardOpener = (props: Props) => {
-    const { children, render, trigger = Trigger.click, placement = 'above', onClose } = props
+    const {
+        children,
+        render,
+        trigger = Trigger.click,
+        placement = 'topRight',
+        onClose,
+        tabIndex,
+    } = props
 
     const { rootLayerRef } = useContext(RootLayerContext)
     const root = rootLayerRef?.current ?? document.body
@@ -117,15 +122,24 @@ export const CardOpener = (props: Props) => {
             }
         }
 
+        const onGlobalKeyDown = (e: KeyboardEvent) => {
+            console.log(e.key)
+            if (e.key.match(/escape/i)) {
+                setActive(false)
+            }
+        }
+
         // if we add the handled to current callstack the listener gets called
         // immediately which is not the intention
         setTimeout(() => {
             window.addEventListener('click', onGlobalClick)
             window.addEventListener('contextmenu', onGlobalClick)
+            window.addEventListener('keydown', onGlobalKeyDown)
         })
         return () => {
             window.removeEventListener('click', onGlobalClick)
             window.removeEventListener('contextmenu', onGlobalClick)
+            window.removeEventListener('keydown', onGlobalKeyDown)
         }
     }, [active, trigger])
 
@@ -139,6 +153,17 @@ export const CardOpener = (props: Props) => {
     const onClick = useCallback(
         (e: React.MouseEvent) => {
             if (trigger === Trigger.click) {
+                e.preventDefault()
+                updateCoordsFromEvent(e)
+                setActive(true)
+            }
+        },
+        [trigger, updateCoordsFromEvent],
+    )
+
+    const onKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            if (trigger === Trigger.click && e.key.match(/space|enter/i)) {
                 e.preventDefault()
                 setActive(true)
             }
@@ -154,9 +179,10 @@ export const CardOpener = (props: Props) => {
         <CardOpenerContext.Provider value={{ placement, closeCard }}>
             {children({
                 triggerProps: {
-                    tabIndex: 0,
+                    tabIndex,
                     ref: setTriggerRef,
                     onClick: trigger === Trigger.click ? onClick : undefined,
+                    onKeyDown: trigger === Trigger.click ? onKeyDown : undefined,
                     onContextMenu: trigger === Trigger.contextmenu ? onContextMenu : undefined,
                     cursor: 'pointer',
                 },

@@ -14,6 +14,14 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
         setIsHoverEvent(true)
     }, [])
 
+    const onFocus = useCallback(() => {
+        setIsHoverVerified(true)
+    }, [])
+    const onBlur = useCallback(() => {
+        setIsHoverEvent(false)
+        setIsHoverVerified(false)
+    }, [])
+
     const { rootLayerRef } = useContext(RootLayerContext)
     const prevRef = useRef({ clientX: 0, clientY: 0 })
 
@@ -74,5 +82,5 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
         }
     }, [isHoverVerified])
 
-    return { isHover: isHoverVerified, onMouseEnter }
+    return { isHover: isHoverVerified, onMouseEnter, onFocus, onBlur }
 }

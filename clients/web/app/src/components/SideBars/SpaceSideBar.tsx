@@ -14,8 +14,9 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
-import { Badge, Box, Icon, Stack, TooltipRenderer } from '@ui'
+import { Badge, Box, Icon, Stack } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { ChannelsShimmer } from '../Shimmer/ChannelsShimmer'
 import { SideBar } from './_SideBar'
 
@@ -152,10 +153,15 @@ const SettingsGear = (props: {
 
     return (
         <Box horizontal>
-            <TooltipRenderer
+            <CardOpener
+                tabIndex={0}
                 trigger="click"
-                placement="horizontal"
-                render={<SpaceSettingsCard spaceId={spaceId} spaceName={spaceName} />}
+                placement="topRight"
+                render={
+                    <Box padding>
+                        <SpaceSettingsCard spaceId={spaceId} spaceName={spaceName} />
+                    </Box>
+                }
                 layoutId="settings"
             >
                 {({ triggerProps }) => (
@@ -167,7 +173,7 @@ const SettingsGear = (props: {
                         <Icon type="settings" size="square_sm" />
                     </Box>
                 )}
-            </TooltipRenderer>
+            </CardOpener>
         </Box>
     )
 }

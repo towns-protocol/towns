@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { forwardRef } from 'react'
 import { Stack } from '@ui'
 import { StackProps } from '../Stack/Stack'
 import { ArrowHead } from './CardArrowHead'
@@ -7,11 +7,12 @@ type Props = {
     arrow?: boolean
 } & StackProps
 
-export const Card = ({ children, arrow, ...boxProps }: Props) => {
+export const Card = forwardRef<HTMLDivElement, Props>(({ children, arrow, ...boxProps }, ref) => {
     return (
         <>
             {arrow && <ArrowHead />}
             <Stack
+                ref={ref}
                 background="level2"
                 borderRadius="md"
                 overflow="hidden"
@@ -23,4 +24,4 @@ export const Card = ({ children, arrow, ...boxProps }: Props) => {
             </Stack>
         </>
     )
-}
+})

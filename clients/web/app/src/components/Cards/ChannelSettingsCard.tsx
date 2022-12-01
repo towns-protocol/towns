@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { Box, Card } from '@ui'
-import { MenuItem } from './SpaceSettingsCard'
+import { MenuItem } from './MenuItem'
 
 type Props = {
     spaceId: RoomIdentifier
