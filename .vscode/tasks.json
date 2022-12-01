@@ -47,7 +47,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-clients"
+          "group": "ephemeral"
         },
       },
       {
@@ -67,7 +67,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "casablanca"
+          "group": "local-servers"
         },
       },
       {
@@ -83,11 +83,11 @@
       {
         "label": "DeployZionGovernance",
         "type": "shell",
-        "command": "./scripts/wait-for-anvil.sh && ./scripts/deploy-local-zion-governance-contracts.sh",
+        "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-local-zion-governance-contracts.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-servers"
+          "group": "ephemeral"
         }
       },
       {
@@ -97,7 +97,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-clients"
+          "group": "local-watch"
         }
       },
       {
@@ -107,7 +107,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "casablanca"
+          "group": "local-watch"
         }
       },
       {
@@ -117,7 +117,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "casablanca"
+          "group": "local-watch"
         }
       },
       {
