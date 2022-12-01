@@ -115,6 +115,7 @@ export interface RoomMember {
 export interface CreateSpaceInfo {
     name: string
     visibility: RoomVisibility
+    spaceMetadata?: string
 }
 
 export interface CreateChannelInfo {

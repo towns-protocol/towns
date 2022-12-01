@@ -54,11 +54,13 @@ export declare namespace DataTypes {
   export type CreateSpaceDataStruct = {
     spaceName: PromiseOrValue<string>;
     spaceNetworkId: PromiseOrValue<string>;
+    spaceMetadata: PromiseOrValue<string>;
   };
 
-  export type CreateSpaceDataStructOutput = [string, string] & {
+  export type CreateSpaceDataStructOutput = [string, string, string] & {
     spaceName: string;
     spaceNetworkId: string;
+    spaceMetadata: string;
   };
 
   export type ExternalTokenStruct = {
@@ -217,7 +219,7 @@ export interface ZionSpaceManagerInterface extends utils.Interface {
     "addRoleToEntitlementModule(string,address,uint256,bytes)": FunctionFragment;
     "createChannel((string,string,string,uint256[]))": FunctionFragment;
     "createRole(string,string)": FunctionFragment;
-    "createSpace((string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": FunctionFragment;
+    "createSpace((string,string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": FunctionFragment;
     "getChannelIdByNetworkId(string,string)": FunctionFragment;
     "getChannelInfoByChannelId(string,string)": FunctionFragment;
     "getChannelsBySpaceId(string)": FunctionFragment;

@@ -408,11 +408,11 @@
       ]
     },
     "contracts/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0x8635ceffdd6e96f53f78d9c1c2703ec2efbf818dacacc37b4253660ebd7abc71",
+      "keccak256": "0x75114eced808ede585f99552ecbefcaed45f0499a141ca02bb5d8dcd294da64c",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://44d73637fe209fe63a29e80954f8e691fbad43d9ab623f6d5ced6b4b336bce26",
-        "dweb:/ipfs/QmNx7LLn45FNcqp6xwdiEi8edVNJCFj6bYZkLYLU6d6Tcq"
+        "bzz-raw://76a2693d7c819212adfebf5a1727c59a151a729ca4c3a28239cad46be1580c99",
+        "dweb:/ipfs/QmNy393dm59MyqS3ww64VHbzf38c44uGSkPDrttFxu7JbB"
       ]
     },
     "contracts/src/spaces/libraries/Errors.sol": {

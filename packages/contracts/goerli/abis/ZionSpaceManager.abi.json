@@ -258,6 +258,11 @@
             "internalType": "string",
             "name": "spaceNetworkId",
             "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceMetadata",
+            "type": "string"
           }
         ],
         "internalType": "struct DataTypes.CreateSpaceData",

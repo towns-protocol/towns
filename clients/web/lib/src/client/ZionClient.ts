@@ -353,6 +353,7 @@ export class ZionClient {
             const spaceInfo: DataTypes.CreateSpaceDataStruct = {
                 spaceName: createSpaceInfo.name,
                 spaceNetworkId: roomIdentifier.matrixRoomId,
+                spaceMetadata: createSpaceInfo.spaceMetadata ?? '',
             }
             let transaction: ContractTransaction | undefined = undefined
             let receipt: ContractReceipt | undefined = undefined

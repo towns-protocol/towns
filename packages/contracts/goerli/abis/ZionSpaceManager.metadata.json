@@ -264,6 +264,11 @@
                 "internalType": "string",
                 "name": "spaceNetworkId",
                 "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "spaceMetadata",
+                "type": "string"
               }
             ],
             "internalType": "struct DataTypes.CreateSpaceData",
@@ -1009,7 +1014,7 @@
       "author": "HNT Labs",
       "kind": "dev",
       "methods": {
-        "createSpace((string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
+        "createSpace((string,string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
           "params": {
             "entitlementData": "Data to create additional role gated by tokens or specific users",
             "everyonePermissions": "The permissions to grant to the Everyone role",
@@ -1102,7 +1107,7 @@
         "createRole(string,string)": {
           "notice": "Create a new role on a space Id"
         },
-        "createSpace((string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
+        "createSpace((string,string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
           "notice": "Create a new space"
         },
         "getChannelIdByNetworkId(string,string)": {
@@ -1180,6 +1185,7 @@
     "remappings": [
       ":@opengsn/=node_modules/@opengsn/",
       ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":forge-std/=lib/forge-std/src/",
       ":murky/=lib/murky/src/",
@@ -1191,11 +1197,11 @@
   },
   "sources": {
     "contracts/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0xfec82372b1038c9a62ba9580f95d936708c6091243767370ccc27d2c479b6f53",
+      "keccak256": "0x5597e2c6ffe1f2d2864836328e856402eba73f6199e6c992c1b5db6dda8d7f0f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3a4112e60214eb02e39e5e65cd207518a29c4df3509d4673224f619905a0128c",
-        "dweb:/ipfs/QmR1W6zCTaK3v7XKswgCLBhrbZAW1jouu261QuNiadimDx"
+        "bzz-raw://f89c63db79a0b30827bea0a68db446793de82a4776e756b89fe669928230c45f",
+        "dweb:/ipfs/QmWx75XHNXAk44yLZ6j9oAhVqsxBtBChv3WgUdJX6KCh5j"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -1223,11 +1229,11 @@
       ]
     },
     "contracts/src/spaces/interfaces/ISpace.sol": {
-      "keccak256": "0xab4d7dbd54d76f47d47081bbae155e541dbcc37b84a138bb107b75a22216e802",
+      "keccak256": "0x200def4cf1f1cd046883c71efeccc3249d8b85c49738faef92f70b6ea04c39b0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1963ae4b50e8fae99bbac7af0ba8a4fabeb8bd03308584aa13abcb0ef182ffe5",
-        "dweb:/ipfs/QmadohGm8bMK3AmUarR3x1jPnBTUJ6ym9CnDdd9ojF9p7F"
+        "bzz-raw://21d558a9fc682e4d951524df4248322c31bcccf4532c2e92575e5fcc6a1e70cb",
+        "dweb:/ipfs/QmWuVPrft6XWkKfkxVQieBRKvmSKpXsgztm3wvmeen12QU"
       ]
     },
     "contracts/src/spaces/interfaces/ISpaceManager.sol": {
@@ -1255,11 +1261,11 @@
       ]
     },
     "contracts/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0x8635ceffdd6e96f53f78d9c1c2703ec2efbf818dacacc37b4253660ebd7abc71",
+      "keccak256": "0x75114eced808ede585f99552ecbefcaed45f0499a141ca02bb5d8dcd294da64c",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://44d73637fe209fe63a29e80954f8e691fbad43d9ab623f6d5ced6b4b336bce26",
-        "dweb:/ipfs/QmNx7LLn45FNcqp6xwdiEi8edVNJCFj6bYZkLYLU6d6Tcq"
+        "bzz-raw://76a2693d7c819212adfebf5a1727c59a151a729ca4c3a28239cad46be1580c99",
+        "dweb:/ipfs/QmNy393dm59MyqS3ww64VHbzf38c44uGSkPDrttFxu7JbB"
       ]
     },
     "contracts/src/spaces/libraries/Errors.sol": {
