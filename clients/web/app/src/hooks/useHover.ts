@@ -14,14 +14,6 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
         setIsHoverEvent(true)
     }, [])
 
-    const onFocus = useCallback(() => {
-        setIsHoverVerified(true)
-    }, [])
-    const onBlur = useCallback(() => {
-        setIsHoverEvent(false)
-        setIsHoverVerified(false)
-    }, [])
-
     const { rootLayerRef } = useContext(RootLayerContext)
     const prevRef = useRef({ clientX: 0, clientY: 0 })
 
@@ -52,13 +44,8 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
             },
         )
 
-        const onBlur = () => {
-            setIsHoverEvent(false)
-        }
-
         window.addEventListener('mousemove', onMouseMove)
         window.addEventListener('click', onMouseMove)
-        window.addEventListener('blur', onBlur)
 
         const interval = setInterval(onMouseMove, 100)
 
@@ -66,7 +53,6 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
             clearInterval(interval)
             window.removeEventListener('mousemove', onMouseMove)
             window.removeEventListener('click', onMouseMove)
-            window.removeEventListener('blur', onBlur)
         }
     }, [isHoverVerified, isHoverEvent, ref, rootLayerRef])
 
@@ -82,5 +68,5 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
         }
     }, [isHoverVerified])
 
-    return { isHover: isHoverVerified, onMouseEnter, onFocus, onBlur }
+    return { isHover: isHoverVerified, onMouseEnter }
 }

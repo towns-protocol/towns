@@ -7,6 +7,7 @@ import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
+import { useFocused } from 'hooks/useFocused'
 import { MessageContextMenu } from './MessageContextMenu'
 
 type Props = {
@@ -65,7 +66,10 @@ export const Message = (props: Props) => {
 
     const ref = useRef<HTMLDivElement>(null)
 
-    const { isHover, onMouseEnter, onFocus, onBlur } = useHover(ref)
+    const { isHover, onMouseEnter } = useHover(ref)
+    const { isFocused } = useFocused(ref)
+
+    const isActive = isFocused || isHover
 
     const date = timestamp
         ? isRelativeDate
@@ -75,15 +79,13 @@ export const Message = (props: Props) => {
             : format(timestamp, 'h:mm a')
         : undefined
 
-    const backgroundProps = useMessageBackground(isEditing, isHover, isHighlight)
+    const backgroundProps = useMessageBackground(isEditing, isActive, isHighlight)
 
     return (
         <Stack
             horizontal
             ref={ref}
             onMouseEnter={onMouseEnter}
-            onFocus={onFocus}
-            onBlur={onBlur}
             {...boxProps}
             {...backgroundProps}
             tabIndex={0}
@@ -95,7 +97,7 @@ export const Message = (props: Props) => {
                     <Avatar src={avatar} size={avatarSize} insetY="xxs" />
                 ) : (
                     <>
-                        {!isRelativeDate && isHover && (
+                        {!isRelativeDate && isActive && (
                             <Box paddingTop="xxs" insetBottom="xxs">
                                 <Paragraph truncate size="sm" color="gray2">
                                     {date}
@@ -167,7 +169,7 @@ export const Message = (props: Props) => {
                         </Stack>
                     )}
                 </Stack>
-                {spaceId && channelId && eventId && isHover && !isEditing && (
+                {spaceId && channelId && eventId && isActive && !isEditing && (
                     <MessageContextMenu
                         canReply={canReply}
                         canReact={!!onReaction}
@@ -182,12 +184,12 @@ export const Message = (props: Props) => {
     )
 }
 
-const useMessageBackground = (isEditing?: boolean, isHover?: boolean, isHighlight?: boolean) => {
+const useMessageBackground = (isEditing?: boolean, isActive?: boolean, isHighlight?: boolean) => {
     const [isHighlightActive, setHighlightActive] = useState(isHighlight)
 
     const background = isHighlightActive
         ? ('level4' as const)
-        : isEditing || isHover
+        : isEditing || isActive
         ? ('level2' as const)
         : undefined
 
