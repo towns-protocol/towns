@@ -1,4 +1,4 @@
-import { randTextRange } from '@ngneat/falso'
+import { randProductName, randTextRange } from '@ngneat/falso'
 import { CreateSpaceFormState } from './types'
 
 export const MOCK_TOKENS = Array(5)
@@ -14,13 +14,14 @@ export const MOCK_TOKENS = Array(5)
         }
     })
 
-export const StoreMock: CreateSpaceFormState = {
+export const StoreMockForManualSubmissionsNotToBeUsedInTests: CreateSpaceFormState = {
     step1: {
         membershipType: 'tokenHolders',
-        tokens: MOCK_TOKENS.map((token) => token.contractAddress),
+        // just for easier development, this is the zion token address from council.json, which may change so check it sometimes
+        tokens: ['0x9a676e781a523b5d0c0e43731313a708cb607508'],
     },
     step2: {
-        spaceName: 'Hot dogs for Algernon',
+        spaceName: randProductName().toLowerCase(),
         spaceIconUrl: 'https://picsum.photos/400',
     },
 }

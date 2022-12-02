@@ -13,14 +13,21 @@ const ErrorMessage = ({ errors, fieldName, message }: Props) => {
     const methods = useFormContext()
     const error = get(errors || methods.formState.errors, fieldName)
     const registrationMessage = error?.message
+    const errorMessage = !error ? '\u00A0' : message || registrationMessage
 
     return (
         <Box>
-            <Text color="negative" size="sm">
-                {!error ? '\u00A0' : message || registrationMessage}
-            </Text>
+            <ErrorMessageText message={errorMessage} />
         </Box>
     )
 }
 
-export { ErrorMessage }
+const ErrorMessageText = ({ message }: { message: string }) => {
+    return (
+        <Text color="negative" size="sm">
+            {message}
+        </Text>
+    )
+}
+
+export { ErrorMessage, ErrorMessageText }

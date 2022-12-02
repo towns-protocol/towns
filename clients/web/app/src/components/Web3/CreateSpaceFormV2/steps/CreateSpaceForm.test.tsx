@@ -3,26 +3,26 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
+import { MemoryRouter } from 'react-router-dom'
+import * as zionClient from 'use-zion-client'
+import * as router from 'react-router'
 import { TestApp } from 'test/testUtils'
-import { CreateSpaceForm } from '../CreateSpaceForm'
+import { SpacesNew } from 'routes/SpacesNew'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { EVERYONE, TOKEN_HOLDERS } from '../constants'
 
-vi.mock('react-router-dom', () => ({
-    ...vi.importActual('react-router-dom'),
-    useSearchParams: () => {
-        return [
-            {
-                get: () => undefined,
-            },
-        ]
-    },
-}))
+vi.mock('react-router', async () => {
+    return {
+        ...((await vi.importActual('react-router')) as Record<string, unknown>),
+    }
+})
 
 const Wrapper = () => {
     return (
         <TestApp>
-            <CreateSpaceForm />
+            <MemoryRouter>
+                <SpacesNew />
+            </MemoryRouter>
         </TestApp>
     )
 }
@@ -130,6 +130,199 @@ describe('CreateSpaceStep1', () => {
         })
         await waitFor(async () => {
             return screen.findByText(/please enter a name for your space./i)
+        })
+    })
+
+    test('Step 3: successfully creates space and navigates to it', async () => {
+        // setup
+        vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
+            return {
+                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createSpaceWithMemberRole: () => Promise.resolve({ slug: 'some-room-id' }),
+                getRolesFromSpace: () => Promise.resolve(undefined),
+            }
+        })
+
+        const navigateSpy = vi.fn()
+        vi.spyOn(router, 'useNavigate').mockReturnValueOnce((args) => navigateSpy(args))
+
+        act(() => {
+            useCreateSpaceFormStore.setState({
+                step1: {
+                    membershipType: EVERYONE,
+                    tokens: [],
+                },
+                step2: {
+                    spaceIconUrl: 'http://whatever.com?jpg',
+                    spaceName: 'sample space',
+                },
+            })
+        })
+
+        // render
+        const { unmount } = render(<Wrapper />)
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+        await screen.findByTestId('space-icon')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        // on 3rd step
+        await screen.findByTestId('space-form-3')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        await screen.findByText('Waiting for Approval')
+        expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-room-id/')
+        unmount()
+
+        await waitFor(() => {
+            return expect(useCreateSpaceFormStore.getState().step1.membershipType).toBeNull()
+        })
+    })
+
+    test('Step 3: handles space creation error and shows error message', async () => {
+        // setup
+        vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
+            return {
+                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createSpaceWithMemberRole: () => Promise.resolve(undefined),
+                getRolesFromSpace: () => Promise.resolve(undefined),
+            }
+        })
+
+        const navigateSpy = vi.fn()
+        vi.spyOn(router, 'useNavigate').mockReturnValueOnce((args) => navigateSpy(args))
+
+        act(() => {
+            useCreateSpaceFormStore.setState({
+                step1: {
+                    membershipType: EVERYONE,
+                    tokens: [],
+                },
+                step2: {
+                    spaceIconUrl: 'http://whatever.com?jpg',
+                    spaceName: 'sample space',
+                },
+            })
+        })
+
+        // render
+        render(<Wrapper />)
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+        await screen.findByTestId('space-icon')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        // on 3rd step
+        await screen.findByTestId('space-form-3')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        await screen.findByText('Waiting for Approval')
+        await screen.findByText('There was an error with the transaction. Please try again')
+
+        expect(navigateSpy).not.toHaveBeenCalled()
+    })
+
+    test('If space membership is for everyone, token permissions should be [] and everyone permissions should be [Read,Write]', async () => {
+        // setup
+        const createSpaceWithMemberRoleSpy = vi
+            .fn()
+            .mockImplementation(() => Promise.resolve({ slug: 'some-room-id' }))
+
+        vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
+            return {
+                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createSpaceWithMemberRole: createSpaceWithMemberRoleSpy,
+                getRolesFromSpace: () => Promise.resolve(undefined),
+            }
+        })
+
+        vi.spyOn(router, 'useNavigate').mockReturnValueOnce(() => vi.fn())
+
+        // form state when user has selected everyone (no tokens)
+        act(() => {
+            useCreateSpaceFormStore.setState({
+                step1: {
+                    membershipType: EVERYONE,
+                    tokens: [],
+                },
+                step2: {
+                    spaceIconUrl: 'http://whatever.com?jpg',
+                    spaceName: 'sample space',
+                },
+            })
+        })
+
+        // render
+        render(<Wrapper />)
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+        await screen.findByTestId('space-icon')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        // on 3rd step
+        await screen.findByTestId('space-form-3')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        await waitFor(async () => {
+            return expect(createSpaceWithMemberRoleSpy).toHaveBeenCalledWith(
+                {
+                    name: 'sample space',
+                    visibility: 'public',
+                },
+                [], // tokens
+                [], // token permissions
+                [zionClient.Permission.Read, zionClient.Permission.Write], // everyone permissions
+            )
+        })
+    })
+
+    test('If space membership is for token holders, token permissions should be [Read,Write] and everyone permissions should be []', async () => {
+        // setup
+        const createSpaceWithMemberRoleSpy = vi
+            .fn()
+            .mockImplementation(() => Promise.resolve({ slug: 'some-room-id' }))
+
+        vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
+            return {
+                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createSpaceWithMemberRole: createSpaceWithMemberRoleSpy,
+                getRolesFromSpace: () => Promise.resolve(undefined),
+            }
+        })
+
+        vi.spyOn(router, 'useNavigate').mockReturnValueOnce(() => vi.fn())
+
+        // form state when user has selected tokens
+        act(() => {
+            useCreateSpaceFormStore.setState({
+                step1: {
+                    membershipType: TOKEN_HOLDERS,
+                    tokens: ['0x123'],
+                },
+                step2: {
+                    spaceIconUrl: 'http://whatever.com?jpg',
+                    spaceName: 'sample space',
+                },
+            })
+        })
+
+        // render
+        render(<Wrapper />)
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+        await screen.findByTestId('space-icon')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        // on 3rd step
+        await screen.findByTestId('space-form-3')
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+        await waitFor(async () => {
+            return expect(createSpaceWithMemberRoleSpy).toHaveBeenCalledWith(
+                {
+                    name: 'sample space',
+                    visibility: 'public',
+                },
+                ['0x123'], // tokens
+                [zionClient.Permission.Read, zionClient.Permission.Write], // token permissions
+                [], // everyone permissions
+            )
         })
     })
 })

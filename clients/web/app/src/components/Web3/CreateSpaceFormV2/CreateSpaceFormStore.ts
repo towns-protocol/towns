@@ -1,7 +1,7 @@
 import create from 'zustand'
 import { isDev } from 'utils'
 import { CreateSpaceFormState } from './types'
-import { StoreMock } from './mock'
+import { StoreMockForManualSubmissionsNotToBeUsedInTests } from './mock'
 
 const withMock =
     isDev && new URLSearchParams(window.location.search).get('spaceFormMock') === 'true'
@@ -10,6 +10,7 @@ interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void
     setStep2: (step1: CreateSpaceFormState['step2']) => void
     removeToken: (token: string) => void
+    reset: () => void
 }
 
 let initialState: CreateSpaceFormState = {
@@ -24,7 +25,7 @@ let initialState: CreateSpaceFormState = {
 }
 
 if (withMock) {
-    initialState = StoreMock
+    initialState = StoreMockForManualSubmissionsNotToBeUsedInTests
 }
 
 export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpaceActions>((set) => ({
@@ -51,4 +52,5 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
                 },
             }
         }),
+    reset: () => set(initialState),
 }))
