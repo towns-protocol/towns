@@ -50,7 +50,12 @@ export const WindowedMessageThread = (props: Props) => {
                 </Stack>
             </MessageWindow>
             <Box paddingY="none" style={{ position: 'sticky', bottom: 0 }}>
-                <RichTextEditor editable placeholder="Reply..." onSend={onSend} />
+                <RichTextEditor
+                    editable
+                    placeholder="Reply..."
+                    storageId={`${channelId.matrixRoomId}-${messageId}`}
+                    onSend={onSend}
+                />
             </Box>
         </MessageTimelineWrapper>
     )

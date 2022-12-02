@@ -8,11 +8,13 @@ interface AppState {
     setPaneSize: (id: string, size: number) => void
     isWindowFocused: boolean
     setIsWindowFocused: (isWindowActive: boolean) => void
+    setChannelmessageInput: (id: string, value: string) => void
+    channelMessageInputMap: { [inputId: string]: string }
 }
 
 export const useStore = create(
     persist<AppState>(
-        (set) => ({
+        (set, get) => ({
             theme: undefined,
             setTheme: (theme) => {
                 set(() => ({ theme }))
@@ -21,6 +23,13 @@ export const useStore = create(
             isWindowFocused: true,
             setIsWindowFocused: (isWindowActive) => {
                 set(() => ({ isWindowFocused: isWindowActive }))
+            },
+
+            channelMessageInputMap: {},
+            setChannelmessageInput: (id, value) => {
+                const userInput = get().channelMessageInputMap
+                userInput[id] = value
+                set(() => ({ channelMessageInputMap: userInput }))
             },
 
             paneSizes: {},

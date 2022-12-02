@@ -27,6 +27,7 @@ import {
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
+import { useStore } from 'store/store'
 import { useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -46,6 +47,7 @@ import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
 import { RichTextUI } from './ui/RichTextEditorUI'
 import { BLANK_LINK } from './transformers/LinkTransformer'
 import { TabThroughPlugin } from './plugins/TabThroughPlugin'
+import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -58,6 +60,7 @@ type Props = {
     displayButtons?: boolean
     container?: (props: { children: React.ReactNode }) => JSX.Element
     tabIndex?: number
+    storageId?: string
 }
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
@@ -159,7 +162,19 @@ export const RichTextEditor = (props: Props) => {
     const { members } = useSpaceMembers()
     const channels = useSpaceChannels()
     const { transformers } = useTransformers({ members, channels })
-    const initialConfig = useInitialConfig(props.initialValue, nodes, transformers, true)
+
+    const userInput = useStore((state) =>
+        props.storageId ? state.channelMessageInputMap[props.storageId] : undefined,
+    )
+
+    const valueFromStore = props.storageId ? userInput : undefined
+
+    const initialConfig = useInitialConfig(
+        props.initialValue || valueFromStore,
+        nodes,
+        transformers,
+        true,
+    )
 
     const [focused, setFocused] = useState(false)
     const onFocusChange = (focus: boolean) => {
@@ -204,6 +219,7 @@ export const RichTextEditor = (props: Props) => {
             <AutoLinkMatcherPlugin />
             <ChannelMentionPlugin channels={channels} />
             <TabThroughPlugin />
+            <RememberInputPlugin storageId={props.storageId} />
         </LexicalComposer>
     )
 }
