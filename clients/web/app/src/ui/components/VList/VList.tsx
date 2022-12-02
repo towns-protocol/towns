@@ -211,16 +211,16 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         })
     }, [list, listHeight, viewport, scrollMagnet, visibleArea])
 
-    const groupHeights = useMemo(
-        () =>
-            groups.reduce((groupHeights, group) => {
-                groupHeights[group[0]] = group.reduce((height, id) => {
-                    return height + (cachesRef?.current.get(id)?.height || 0)
-                }, 0)
-                return groupHeights
-            }, {} as { [key: string]: number }),
-        [groups],
-    )
+    const groupHeights = groups.reduce((groupHeights, group) => {
+        // using the ID of the first item of the group (date divider) as index
+        const groupId = group[0]
+        // sum of all item heights = group height
+        groupHeights[groupId] = group.reduce(
+            (height, id) => height + (cachesRef?.current.get(id)?.height || 0),
+            0,
+        )
+        return groupHeights
+    }, {} as { [key: string]: number })
 
     const groupHeightsRef = useRef(groupHeights)
     groupHeightsRef.current = groupHeights
