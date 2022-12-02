@@ -6,6 +6,9 @@ import { RedisEventStore } from './redisEventStore'
 
 const log = debug('test:RedisEventStore')
 
+/**
+ * @group explicit-storage
+ */
 describe('RedisEventStore', () => {
     let store: RedisEventStore
 

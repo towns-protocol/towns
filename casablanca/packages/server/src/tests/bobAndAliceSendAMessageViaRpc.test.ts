@@ -21,7 +21,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
 
     beforeAll(async () => {
         log('beforeAll', 'starting app')
-        zionApp = startZionApp(0, 'postgres')
+        zionApp = startZionApp(0)
         log('beforeAll', 'app started')
     })
 

@@ -18,7 +18,7 @@ describe('BasicRpcTest', () => {
     let zionApp: ZionApp
 
     beforeAll(async () => {
-        zionApp = startZionApp(0, 'postgres')
+        zionApp = startZionApp(0)
     })
 
     afterAll(async () => {

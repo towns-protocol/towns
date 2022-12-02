@@ -7,27 +7,18 @@ import {
     throwWithCode,
 } from '@zion/core'
 import debug from 'debug'
-import _, { delay, Function, isObject, reject } from 'lodash'
-// import { config } from '../config'
+import _ from 'lodash'
+import { config } from '../config'
 import { EventStore } from './eventStore'
-import { Pool, PoolClient, Query, QueryResult } from 'pg'
+import { Pool, PoolClient } from 'pg'
 import format, { string } from 'pg-format'
-import { time } from 'console'
-import { channel } from 'diagnostics_channel'
 import { setTimeout as setTimeoutWithPromise } from 'timers/promises'
-import { access } from 'fs'
-import { resolve } from 'path'
-import e, { query } from 'express'
 
 const log = debug('zion:PGEventStore')
 
-// TODO - make this a config
 export const createPGPool = () =>
     new Pool({
-        user: 'postgres',
-        database: 'casablanca',
-        port: 5433,
-        password: 'postgres',
+        connectionString: config.postgresUrl,
     })
 
 const PG_EVENT_TABLE_NAME_PREFIX = 'es_'

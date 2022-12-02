@@ -6,6 +6,9 @@ import { setTimeout } from 'timers/promises'
 
 const log = debug('test:PGEventStore')
 
+/**
+ * @group explicit-storage
+ */
 describe('PGEventStore', () => {
     let store: PGEventStore
 

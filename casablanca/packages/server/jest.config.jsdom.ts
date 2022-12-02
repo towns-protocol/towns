@@ -17,6 +17,7 @@ const config: Config.InitialOptions = {
     },
     testPathIgnorePatterns: ['/dist/', '/node_modules/', 'util.test.ts'],
     setupFilesAfterEnv: ['jest-extended/all'],
+    runner: 'groups',
 }
 
 export default config

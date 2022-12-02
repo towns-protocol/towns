@@ -1,12 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
-import { Client, makeZionRpcClient } from '@zion/client'
+import { Client } from '@zion/client'
 import {
     FullEvent,
     genId,
     makeChannelStreamId,
     makeSpaceStreamId,
     MessagePayload,
-    SignerContext,
     StreamKind,
 } from '@zion/core'
 import debug from 'debug'
@@ -25,7 +24,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
     beforeAll(async () => {
         if (config.testRemoteUrl === undefined) {
-            zionApp = startZionApp(0, 'postgres')
+            zionApp = startZionApp(0)
             url = zionApp.url
         } else {
             url = config.testRemoteUrl

@@ -64,7 +64,9 @@ export const makeExpressApp = (server: JSONRPCServer) => {
     return app
 }
 
-export const startZionApp = (port: number, storageType: string) => {
+export type StorageType = 'redis' | 'postgres'
+
+export const startZionApp = (port: number, storageType?: StorageType) => {
     const wallet = Wallet.createRandom() // TODO: use config
     const store = initStorage(storageType)
     const zionServer = new ZionServer(
