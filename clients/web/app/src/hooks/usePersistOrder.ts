@@ -47,7 +47,7 @@ export const usePersistOrder = <T, C>(
                         ? // insert at the same index as original array
                           index
                         : // or estimate a better position with a sorting fn
-                          resultRef.current.reduce(
+                          newResult.reduce(
                               (keep, current, index) =>
                                   sorterFn([inputItem, current])[0] === inputItem
                                       ? keep
@@ -58,8 +58,6 @@ export const usePersistOrder = <T, C>(
             }
         }, [] as string[])
 
-        return newResult
+        return (resultRef.current = newResult)
     }, [input])
-
-    // return result
 }

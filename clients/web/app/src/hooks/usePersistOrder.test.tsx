@@ -33,7 +33,7 @@ describe('usePersistOrder without sorting', () => {
         expect(result.current).toEqual([3, 5, 1, 99])
     })
 
-    test('sequence', async () => {
+    test('shuffle + add sequence', async () => {
         const { result, rerender } = setup()
         rerender({ value: [] })
         expect(result.current).toEqual([])
@@ -43,6 +43,10 @@ describe('usePersistOrder without sorting', () => {
         expect(result.current).toEqual([3, 1])
         rerender({ value: [1, 99, 3, 5] })
         expect(result.current).toEqual([3, 99, 1, 5])
+        rerender({ value: [99, 1, 3, 5, 7] })
+        expect(result.current).toEqual([3, 99, 1, 5, 7])
+        rerender({ value: [22, 99, 1, 3, 5, 7] })
+        expect(result.current).toEqual([22, 3, 99, 1, 5, 7])
     })
 })
 
@@ -116,6 +120,150 @@ describe('usePersistOrder using identity function', () => {
             { id: 'a', date: 20230105 },
             { id: 'b', date: 20230102 },
             { id: 'c', date: 20230103 },
+        ])
+    })
+})
+
+describe('usePersistOrder using empty array to start with sort function for additional values', () => {
+    const setup = <T extends { id: string; date: number }>() =>
+        renderHook(
+            ({ value }: { value: T[] }) =>
+                usePersistOrder(value, {
+                    identityFn: (t: T) => t.id,
+                    sorterFn: (t: T[]) => t.sort((a, b) => a.date - b.date),
+                }),
+            {
+                initialProps: {
+                    value: [] as T[],
+                },
+            },
+        )
+
+    test('initial values to be empty', () => {
+        const { result } = setup()
+        expect(result.current).toEqual([])
+    })
+
+    test('additional values get sorted', () => {
+        const { result, rerender } = setup()
+        rerender({
+            value: [],
+        })
+        rerender({
+            value: [
+                { id: 'c', date: 20230103 },
+                { id: 'b', date: 20230102 },
+                { id: 'a', date: 20230105 },
+            ],
+        })
+
+        expect(result.current).toEqual([
+            { id: 'b', date: 20230102 },
+            { id: 'c', date: 20230103 },
+            { id: 'a', date: 20230105 },
+        ])
+    })
+
+    test('additional values get sorted 2 steps', () => {
+        const { result, rerender } = setup()
+        rerender({
+            value: [],
+        })
+        rerender({
+            value: [
+                { id: 'c', date: 20230103 },
+                { id: 'b', date: 20230102 },
+                { id: 'a', date: 20230105 },
+            ],
+        })
+
+        rerender({
+            value: [
+                { id: 'x', date: 20250000 },
+                { id: 'c', date: 20230103 },
+                { id: 'b', date: 20230102 },
+                { id: 'a', date: 20230105 },
+            ],
+        })
+
+        expect(result.current).toEqual([
+            { id: 'b', date: 20230102 },
+            { id: 'c', date: 20230103 },
+            { id: 'a', date: 20230105 },
+            { id: 'x', date: 20250000 },
+        ])
+    })
+})
+
+describe('usePersistOrder using empty array to start without sort function for additional values', () => {
+    const setup = <T extends { id: string; date: number }>() =>
+        renderHook(
+            ({ value }: { value: T[] }) =>
+                usePersistOrder(value, {
+                    identityFn: (t: T) => t.id,
+                    // sorterFn: (t: T[]) => t.sort((a, b) => a.date - b.date),
+                }),
+            {
+                initialProps: {
+                    value: [] as T[],
+                },
+            },
+        )
+
+    test('initial values to be empty', () => {
+        const { result } = setup()
+        expect(result.current).toEqual([])
+    })
+
+    test('additional values get sorted', () => {
+        const { result, rerender } = setup()
+        rerender({
+            value: [],
+        })
+        rerender({
+            value: [
+                { id: 'c', date: 20230103 },
+                { id: 'b', date: 20230102 },
+                { id: 'a', date: 20230105 },
+            ],
+        })
+
+        expect(result.current).toEqual([
+            { id: 'c', date: 20230103 },
+            { id: 'b', date: 20230102 },
+            { id: 'a', date: 20230105 },
+        ])
+    })
+
+    test('additional values get sorted 2 steps', () => {
+        const { result, rerender } = setup()
+        rerender({
+            value: [],
+        })
+
+        rerender({
+            value: [
+                { id: 'c', date: 20230103 },
+                { id: 'b', date: 20230102 },
+                { id: 'a', date: 20230105 },
+            ],
+        })
+
+        // a and c are shuffled + x enters
+        rerender({
+            value: [
+                { id: 'a', date: 20230105 },
+                { id: 'x', date: 20250000 },
+                { id: 'b', date: 20230102 },
+                { id: 'c', date: 20230103 },
+            ],
+        })
+
+        expect(result.current).toEqual([
+            { id: 'c', date: 20230103 },
+            { id: 'x', date: 20250000 },
+            { id: 'b', date: 20230102 },
+            { id: 'a', date: 20230105 },
         ])
     })
 })
