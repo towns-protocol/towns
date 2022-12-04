@@ -14,6 +14,7 @@ import * as styles from './VList.css'
 interface Props<T> {
     cache: MutableRefObject<ItemCacheMap>
     groupHeight?: number
+    isGroup: boolean
     id: string
     onUpdate?: (id?: string) => void
     itemRenderer: (data: T, ref?: RefObject<HTMLElement>) => JSX.Element
@@ -23,14 +24,13 @@ interface Props<T> {
 const DEFAULT_ITEM_HEIGHT = 0
 
 export const VListItem = <T,>(props: Props<T>) => {
-    const { id, cache, groupHeight, onUpdate } = props
+    const { id, cache, groupHeight, isGroup, onUpdate } = props
     const ref = useRef<HTMLElement>(null)
-    const size = useSize(ref)?.height
-    const isGroupHeader = !!groupHeight
+    const height = useSize(ref)?.height
 
     useLayoutEffect(() => {
         const cacheItem = cache.current.get(id)
-        const height = isGroupHeader ? size : size
+
         if (cacheItem?.height === height && (!cacheItem || cacheItem.isMeasured)) {
             return
         }
@@ -39,13 +39,13 @@ export const VListItem = <T,>(props: Props<T>) => {
             cache.current.set(id, { ...(cacheItem ?? {}), height, isMeasured: true })
             onUpdate?.(id)
         }
-    }, [id, cache, onUpdate, size, isGroupHeader])
+    }, [id, cache, onUpdate, height, isGroup, groupHeight])
 
     const cacheItem = cache.current.get(id)
     const y = cacheItem?.y ? cacheItem.y : 0
 
     const style = useMemo(() => {
-        const groupStyle = isGroupHeader
+        const groupStyle = isGroup
             ? ({
                   minHeight: groupHeight + `px`,
                   pointerEvents: `none`,
@@ -56,7 +56,7 @@ export const VListItem = <T,>(props: Props<T>) => {
             top: `${y}px`,
             ...groupStyle,
         }
-    }, [isGroupHeader, groupHeight, y])
+    }, [isGroup, groupHeight, y])
 
     useEffect(() => {
         if (!ref.current) {
@@ -68,12 +68,12 @@ export const VListItem = <T,>(props: Props<T>) => {
 
     return (
         <div
-            ref={!isGroupHeader ? (ref as RefObject<HTMLDivElement>) : undefined}
+            ref={!isGroup ? (ref as RefObject<HTMLDivElement>) : undefined}
             data-id={id}
             className={styles.listItem}
             style={style}
         >
-            {props.itemRenderer(props.itemData, isGroupHeader ? ref : undefined)}
+            {props.itemRenderer(props.itemData, isGroup ? ref : undefined)}
         </div>
     )
 }

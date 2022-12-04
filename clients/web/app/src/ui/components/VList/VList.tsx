@@ -131,7 +131,13 @@ export function VList<T extends { id: string }>(props: Props<T>) {
 
     // callback for items to force re-computing sizes / positions
     const onItemUpdate = useCallback((id?: string) => {
-        DEBUG && console.log(`%conItemUpdate ${id}`, Debug.Secondary)
+        DEBUG &&
+            console.log(
+                `%conItemUpdate ${id} ${groupHeightsRef.current?.[id ?? '']} ${
+                    cachesRef.current.get(id ?? '')?.height
+                }`,
+                Debug.Secondary,
+            )
         setForceRecalculateKey((k) => ++k)
     }, [])
 
@@ -359,9 +365,10 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                 >
                     {renderedItems.map((item, index, arr) => (
                         <VListItem
+                            key={item.id}
                             cache={cachesRef}
                             id={`${item.id}`}
-                            key={item.id}
+                            isGroup={!!groupIds?.includes(item.id)}
                             groupHeight={groupHeights[item.id]}
                             itemRenderer={props.itemRenderer}
                             itemData={item}
