@@ -17,7 +17,6 @@ import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { Badge, Box, Icon, Stack } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
-import { ChannelsShimmer } from '../Shimmer/ChannelsShimmer'
 import { SideBar } from './_SideBar'
 
 type Props = {
@@ -38,8 +37,6 @@ export const SpaceSideBar = (props: Props) => {
         [navigate],
     )
 
-    const isReady = !!space?.channelGroups?.length
-
     const mentions = useSpaceMentions()
     const unreadThreadMentions = mentions.reduce((count, m) => {
         return m.thread && m.unread ? count + 1 : count
@@ -51,7 +48,7 @@ export const SpaceSideBar = (props: Props) => {
                 <SettingsGear spaceId={space.id} spaceName={space.name} onSettings={onSettings} />
             </Stack>
             <Stack paddingY="md">
-                {isReady && space?.membership === Membership.Join && (
+                {space?.membership === Membership.Join && (
                     <>
                         <ActionNavItem
                             highlight={unreadThreadsCount > 0}
@@ -71,30 +68,25 @@ export const SpaceSideBar = (props: Props) => {
                         />
                     </>
                 )}
-                {isReady &&
-                    invites.map((m, index) => (
-                        <SpaceNavItem
-                            isInvite
-                            key={m.id.slug}
-                            id={m.id}
-                            name={m.name}
-                            avatar={m.avatarSrc}
-                            pinned={false}
-                        />
-                    ))}
-                {isReady ? (
-                    <>
-                        <ChannelList space={space} mentions={mentions} />
-                        <ActionNavItem
-                            icon="plus"
-                            id="newChannel"
-                            label="Create channel"
-                            link={`/spaces/${space.id.slug}/channels/new`}
-                        />
-                    </>
-                ) : (
-                    <ChannelsShimmer />
-                )}
+                {invites.map((m, index) => (
+                    <SpaceNavItem
+                        isInvite
+                        key={m.id.slug}
+                        id={m.id}
+                        name={m.name}
+                        avatar={m.avatarSrc}
+                        pinned={false}
+                    />
+                ))}
+                <>
+                    <ChannelList space={space} mentions={mentions} />
+                    <ActionNavItem
+                        icon="plus"
+                        id="newChannel"
+                        label="Create channel"
+                        link={`/spaces/${space.id.slug}/channels/new`}
+                    />
+                </>
             </Stack>
         </SideBar>
     )

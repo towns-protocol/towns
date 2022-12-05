@@ -14,11 +14,25 @@ export const SpaceHome = () => {
     useEffect(() => {
         const channels = space?.channelGroups.flatMap((g) => g.channels)
 
-        const firstChannelId = channels?.at(0)?.id
-        if (firstChannelId && space?.membership === Membership.Join) {
+        if (space?.membership === Membership.Join) {
+            let route: string
+            const firstChannelId = channels?.at(0)?.id
+
+            // if there's no channels, go to create form
+            // this should be the path for the owner of the space
+            // probably need to update this check based on roles/permissions
+            if (!firstChannelId) {
+                route = `/spaces/${spaceId?.slug}/channels/new`
+            }
+            // otherwise, go to the first channel
+            else {
+                route = `/spaces/${spaceId?.slug}/channels/${firstChannelId.slug}/`
+            }
+
             const timeout = setTimeout(() => {
-                navigate(`/spaces/${spaceId?.slug}/channels/${firstChannelId.slug}/`)
+                navigate(route)
             }, 500)
+
             return () => {
                 clearTimeout(timeout)
             }
