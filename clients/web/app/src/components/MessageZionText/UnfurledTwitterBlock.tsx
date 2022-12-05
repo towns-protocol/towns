@@ -1,10 +1,9 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic'
-import React, { useRef } from 'react'
+import React from 'react'
 import { format } from 'date-fns'
 import { UnfurlData } from '@unfurl-worker/types'
 import { Box, Text } from '@ui'
-import { useRestrictedImageDimensions } from 'ui/hooks/useRestrictedImageDimensions'
-import { atoms } from 'ui/styles/atoms.css'
+import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 
 type TwitterBlockProps = {
     url: string
@@ -20,18 +19,6 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
     // TODO: this :small appended works, but should this be returned from the server?
     const displayImageUrl = displayImage && `${displayImage.url}:small`
 
-    const maxWidth = 350
-    const maxHeight = 350
-
-    const ref = useRef(null)
-    const { width: imageWidth, height: imageHeight } = useRestrictedImageDimensions({
-        maxWidth,
-        maxHeight,
-        imageHeight: displayImage?.height || maxHeight,
-        imageWidth: displayImage?.width || maxWidth,
-        ref,
-    })
-
     if (!data) {
         return <Text color="gray2">** Could not load Twitter content. **</Text>
     }
@@ -39,7 +26,6 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
     return (
         <Box
             maxWidth="500"
-            minWidth="300"
             background="level3"
             padding="md"
             borderRadius="sm"
@@ -80,23 +66,11 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
                     <Text size="sm">{data.text}</Text>
                 </Box>
                 {displayImageUrl && (
-                    <Box
-                        ref={ref}
-                        style={assignInlineVars({
-                            width: `${imageWidth}px`,
-                            maxWidth: '100%',
-                            height: `${imageHeight}px`,
-                        })}
-                    >
-                        <img
-                            className={atoms({
-                                borderRadius: 'sm',
-                                width: '100%',
-                            })}
-                            alt={displayImageUrl}
-                            src={displayImageUrl}
-                        />
-                    </Box>
+                    <RatioedBackgroundImage
+                        url={displayImageUrl}
+                        width={displayImage.width}
+                        height={displayImage.height}
+                    />
                 )}
                 <Box flexDirection="row" gap="sm" color="gray2">
                     <Text size="sm">

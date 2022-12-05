@@ -27,7 +27,7 @@ export const RatioedBackgroundImage = ({
     }
 
     const { width: calculatedWidth, height: calculatedHeight } = useRestrictedImageDimensions({
-        maxWidth: MAX_WIDTH,
+        maxWidth: ref?.current?.offsetWidth || MAX_WIDTH,
         maxHeight: MAX_HEIGHT,
         ref,
         imageWidth: width || 0,
@@ -35,12 +35,14 @@ export const RatioedBackgroundImage = ({
     })
 
     return (
-        <Box maxWidth={`${MAX_WIDTH}`} maxHeight={`${MAX_HEIGHT}`} ref={ref}>
+        <Box ref={ref}>
             <Box
                 data-testid="ratioed-background-image"
                 className={containerStyle}
+                role="image"
+                aria-label={url}
                 style={assignInlineVars({
-                    width: `${calculatedWidth}px`,
+                    maxWidth: `${calculatedWidth}px`,
                     height: `${calculatedHeight}px`,
                     // these are broken up instead of shorthand to avoid an issue with
                     // vanilla-extract in tests

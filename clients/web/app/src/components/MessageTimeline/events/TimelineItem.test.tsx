@@ -126,7 +126,7 @@ describe('#TimelineItem', () => {
         )
         const backgroundImageNode = await screen.findByTestId('ratioed-background-image')
         expect(backgroundImageNode.style.backgroundImage).toEqual(`url(${url})`)
-        expect(backgroundImageNode.style.width).toEqual('250px')
+        expect(backgroundImageNode.style.maxWidth).toEqual('250px')
     })
 
     test('it should render generic unfurled content when a link is present', async () => {
@@ -163,7 +163,7 @@ describe('#TimelineItem', () => {
         const backgroundImageNode = await screen.findByTestId('ratioed-background-image')
         expect(backgroundImageNode.style.backgroundImage).toEqual(`url(${image.url})`)
         // the width of the image after it's been shrunk by the ratioed background image
-        expect(backgroundImageNode.style.width).toEqual('312px')
+        expect(backgroundImageNode.style.maxWidth).toEqual('312px')
     })
 
     test('it should render twitter content when a twitter link is present', async () => {
@@ -186,7 +186,7 @@ describe('#TimelineItem', () => {
         expect(authorLink).toHaveAttribute('href', `https://twitter.com/${author.username}`)
 
         expect(
-            screen.getByAltText(`${twitterInfo.includes.media[0].url}:small`),
+            screen.getByLabelText(`${twitterInfo.includes.media[0].url}:small`),
         ).toBeInTheDocument()
 
         expect(
