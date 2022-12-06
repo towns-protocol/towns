@@ -121,8 +121,6 @@ function toFullyReadMarker(value: any): FullyReadMarker {
 }
 
 function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState {
-    const needsParticipationCheck: string[] = []
-
     useFullyReadMarkerStore.setState((state) => {
         const updated = { ...state.markers }
         // loop over all the rooms, get the existing values, get the unread counts, push those into the store
@@ -185,7 +183,6 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                                 mentions: entry.mentions + mentions,
                             }
                         }
-                        needsParticipationCheck.push(id)
                         updated[id] = entry
                     })
                 }
