@@ -4946,6 +4946,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/seedrandom@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@types/seedrandom@npm:3.0.2"
+  checksum: 02e585601cb9764cb0eb3f92b384512f8e171422acea3d5a801a41a8a06d475b60ae520eba469bcedf0ed8ad650415919cf30a9cd6bc57090613e61bedc071ed
+  languageName: node
+  linkType: hard
+
 "@types/semver@npm:^7.3.12":
   version: 7.3.13
   resolution: "@types/semver@npm:7.3.13"
@@ -5602,6 +5609,7 @@ __metadata:
     "@types/node": ^18.11.3
     "@types/pg": ^8.6.5
     "@types/pg-format": ^1.0.2
+    "@types/seedrandom": ^3.0.2
     "@zion/client": "workspace:^"
     "@zion/core": "workspace:^"
     cors: ^2.8.5
@@ -5611,7 +5619,7 @@ __metadata:
     express: ^4.18.2
     ioredis: ^5.2.3
     jest: ^29.2.1
-    jest-extended: ^3.1.0
+    jest-extended: ^3.2.0
     jest-runner-groups: ^2.2.0
     json-rpc-2.0: ^1.4.1
     lodash: ^4.17.21
@@ -5620,6 +5628,7 @@ __metadata:
     npm-run-all: ^4.1.5
     pg: ^8.8.0
     pg-format: ^1.0.4
+    seedrandom: ^3.0.5
     supports-color: ^9.2.3
     ts-jest: ^29.0.3
     ts-node: ^10.9.1
@@ -12250,15 +12259,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-extended@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "jest-extended@npm:3.1.0"
+"jest-extended@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "jest-extended@npm:3.2.0"
   dependencies:
     jest-diff: ^29.0.0
     jest-get-type: ^29.0.0
   peerDependencies:
     jest: ">=27.2.5"
-  checksum: 1656670f7c58419f2ab1ff177db03b79e974faae88b4bdeaa4188fe962a623d77a78df0f9f06dc8a8a945c6e8d081fa48a8d3cf220434cc2ef7831dfa4ee9413
+  peerDependenciesMeta:
+    jest:
+      optional: true
+  checksum: 9b6299a4304b4833edbfdc716de8e0d22dc75df353b552f077ac4d46eaa310f4883821a203e95c619963e457307ecc38725a99a7136a0171552c80ccbfd3cb6e
   languageName: node
   linkType: hard
 
@@ -16776,7 +16788,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"seedrandom@npm:3.0.5":
+"seedrandom@npm:3.0.5, seedrandom@npm:^3.0.5":
   version: 3.0.5
   resolution: "seedrandom@npm:3.0.5"
   checksum: 728b56bc3bc1b9ddeabd381e449b51cb31bdc0aa86e27fcd0190cea8c44613d5bcb2f6bb63ed79f78180cbe791c20b8ec31a9627f7b7fc7f476fd2bdb7e2da9f

@@ -8,5 +8,6 @@ const config: Config.InitialOptions = {
     testPathIgnorePatterns: ['/dist/', '/node_modules/', 'util.test.ts'],
     setupFilesAfterEnv: ['jest-extended/all'],
     runner: 'groups',
+    testTimeout: 60000,
 }
 export default config

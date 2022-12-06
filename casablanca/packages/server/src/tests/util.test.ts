@@ -137,3 +137,25 @@ class DonePromise {
 export const makeDonePromise = (): DonePromise => {
     return new DonePromise()
 }
+
+export const waitForStream = async (client: Client, streamId: string): Promise<void> => {
+    if (client.stream(streamId) !== undefined) {
+        return
+    }
+
+    let resolve: () => void
+    const done = new Promise<void>((res) => {
+        resolve = res
+    })
+
+    const handler = (newStreamId: string) => {
+        if (newStreamId === streamId) {
+            client.off('streamInitialized', handler)
+            resolve()
+        }
+    }
+
+    client.on('streamInitialized', handler)
+
+    return done
+}

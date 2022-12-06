@@ -33,6 +33,8 @@ export type StreamEvents = {
     streamUpdated: (streamId: string, events: FullEvent[]) => void
 }
 
+export type StreamEventKeys = keyof StreamEvents
+
 export class StreamStateView {
     readonly streamId: string
     readonly streamKind: StreamKind

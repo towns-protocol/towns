@@ -2,6 +2,7 @@ import { ZionServiceInterface, ZionServicePrototype } from '@zion/core'
 import debug from 'debug'
 import { JSONRPCClient } from 'json-rpc-2.0'
 import axios from 'axios'
+import EventTarget, { setMaxListeners } from 'events'
 
 const log = debug('zion:rpc_client')
 
@@ -38,6 +39,9 @@ export type ZionRpcClient = ZionServiceInterface & {
 export const makeZionRpcClient = (url?: string): ZionRpcClient => {
     log('makeZionRpcClient', url)
     const abortController = new AbortController()
+    if (abortController.signal instanceof EventTarget) {
+        setMaxListeners(200, abortController.signal)
+    }
     abortController.signal.addEventListener('abort', () => {
         log('abortController aborted')
     })

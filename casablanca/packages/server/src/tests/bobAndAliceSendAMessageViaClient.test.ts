@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
+import { afterAll, beforeAll, beforeEach, describe, test } from '@jest/globals'
 import { Client } from '@zion/client'
 import {
     FullEvent,
@@ -10,8 +10,7 @@ import {
 } from '@zion/core'
 import debug from 'debug'
 import { startZionApp, ZionApp } from '../app'
-import { makeDonePromise, makeTestClient } from './util.test'
-import 'jest-extended'
+import { makeDonePromise, makeTestClient, waitForStream } from './util.test'
 import { config } from '../config'
 
 const log = debug('test')
@@ -158,6 +157,40 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         log('pass2 done')
     })
 
+    test('bobSendsSingleMessage' + testSuffix, async () => {
+        log('bobSendsSingleMessage')
+
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
+        bobsClient.startSync(1000)
+
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        await expect(bobsClient.createChannel(bobsChannelId, bobsSpaceId)).resolves.toBeUndefined()
+        await expect(waitForStream(bobsClient, bobsChannelId)).resolves.toBeUndefined()
+
+        // Bob can send a message.
+        const bobSelfHello = makeDonePromise()
+        bobsClient.once('channelNewMessage', (channelId: string, message: FullEvent): void => {
+            const payload = message.base.payload as MessagePayload
+            log('channelNewMessage', 'Bob Initial Message', channelId, payload.text)
+            bobSelfHello.runAndDone(() => {
+                // TODO: why 'Hello, world from Bob!' can be received here?
+                expect(channelId).toBe(bobsChannelId)
+                expect(payload.text).toBe('Hello, world from Bob!')
+            })
+        })
+
+        await expect(
+            bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
+        ).resolves.toBeUndefined()
+        await bobSelfHello.expectToSucceed()
+
+        log('bobSendsSingleMessage done')
+    })
+
     test('bobAndAliceConverse' + testSuffix, async () => {
         log('bobAndAliceConverse')
 
@@ -170,6 +203,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(bobsChannelId, bobsSpaceId)).resolves.toBeUndefined()
+        await expect(waitForStream(bobsClient, bobsChannelId)).resolves.toBeUndefined()
 
         // Alice gest created.
         await expect(alicesClient.createNewUser()).resolves.toBeUndefined()
