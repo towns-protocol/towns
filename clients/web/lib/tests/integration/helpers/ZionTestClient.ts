@@ -153,7 +153,8 @@ export class ZionTestClient extends ZionClient {
         if (!myAuth) {
             myAuth = await this.registerWallet()
         }
-        return this.startClient(myAuth, this.provider.network.chainId)
+        const chainId = (await this.provider.getNetwork()).chainId
+        return this.startClient(myAuth, chainId)
     }
 
     /// login to the matrix server with wallet account

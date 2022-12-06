@@ -79,15 +79,37 @@ export function logTimeline(timeline?: EventTimeline) {
 }
 
 export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
-    const fundedWallet = TestConstants.FUNDED_WALLET_0
-    const tx = await fundedWallet.populateTransaction({
+    let retries = 0
+    let isFunded = false
+    while (!isFunded && retries < 5) {
+        try {
+            isFunded = await _fundWallet(walletToFund, amount)
+        } catch (error) {
+            if ((error as Error).message.includes('nonce has already been used')) {
+                // we have multiple tests running in parallel, so this is expected.
+                // ignore this error and try again
+            } else {
+                throw error
+            }
+        } finally {
+            retries++
+        }
+    }
+
+    if (!isFunded) {
+        throw new Error('Failed to fund wallet')
+    }
+}
+
+async function _fundWallet(walletToFund: ethers.Wallet, amount = 0.1): Promise<boolean> {
+    const fundedWallet = TestConstants.getWalletWithoutNft()
+    const result = await fundedWallet.sendTransaction({
         from: fundedWallet.address,
         to: walletToFund.address,
         value: ethers.utils.parseEther(amount.toString()),
-        gasLimit: 1000000,
     })
-    const result = await fundedWallet.sendTransaction(tx)
     await result.wait()
+    return true
 }
 
 export async function createTestSpaceWithZionMemberRole(

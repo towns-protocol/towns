@@ -22,13 +22,15 @@ contract DeployCouncilNFT is Script {
     address second = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
     address third = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
     address fourth = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+    address fifth = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
 
-    bytes32[] memory data = new bytes32[](4);
+    bytes32[] memory data = new bytes32[](5);
 
     data[0] = keccak256(abi.encodePacked(first, uint256(1)));
     data[1] = keccak256(abi.encodePacked(second, uint256(1)));
     data[2] = keccak256(abi.encodePacked(third, uint256(1)));
     data[3] = keccak256(abi.encodePacked(fourth, uint256(1)));
+    data[4] = keccak256(abi.encodePacked(fifth, uint256(1)));
 
     Merkle m = new Merkle();
     bytes32 root = m.getRoot(data);
@@ -44,6 +46,7 @@ contract DeployCouncilNFT is Script {
     councilNFT.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
     councilNFT.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
     councilNFT.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
+    councilNFT.privateMint{value: NFT_PRICE}(fifth, 1, m.getProof(data, 4));
 
     writer = writer.writeStartObject();
     writer = writer.writeStringProperty(
