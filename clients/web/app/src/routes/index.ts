@@ -4,4 +4,6 @@ export const PATHS = {
     REPLIES: 'replies',
     REGISTER: 'register',
     PREFERENCES: 'preferences',
+    GETTING_STARTED: 'getting-started',
+    THREADS: 'threads',
 }

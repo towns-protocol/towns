@@ -5,18 +5,19 @@ import {
     MentionResult,
     RoomIdentifier,
     SpaceData,
-    useInvitesForSpace,
+    useSpaceFromContract,
     useSpaceMentions,
+    useWeb3Context,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
-import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { Badge, Box, Icon, Stack } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
+import { PATHS } from 'routes'
 import { SideBar } from './_SideBar'
 
 type Props = {
@@ -25,10 +26,12 @@ type Props = {
 
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
-    const invites = useInvitesForSpace(space.id)
+    const { accounts } = useWeb3Context()
     const navigate = useNavigate()
-
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
+    const wallet = accounts[0]
+    const { space: spaceContract } = useSpaceFromContract(space.id)
+    const owner = wallet === spaceContract?.owner
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
@@ -50,6 +53,15 @@ export const SpaceSideBar = (props: Props) => {
             <Stack paddingY="md">
                 {space?.membership === Membership.Join && (
                     <>
+                        {owner && (
+                            <ActionNavItem
+                                icon="wand"
+                                id="getting-started"
+                                label="Getting Started"
+                                link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
+                            />
+                        )}
+
                         <ActionNavItem
                             highlight={unreadThreadsCount > 0}
                             icon="threads"
@@ -68,16 +80,6 @@ export const SpaceSideBar = (props: Props) => {
                         />
                     </>
                 )}
-                {invites.map((m, index) => (
-                    <SpaceNavItem
-                        isInvite
-                        key={m.id.slug}
-                        id={m.id}
-                        name={m.name}
-                        avatar={m.avatarSrc}
-                        pinned={false}
-                    />
-                ))}
                 <>
                     <ChannelList space={space} mentions={mentions} />
                     <ActionNavItem

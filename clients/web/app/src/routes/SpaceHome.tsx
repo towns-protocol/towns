@@ -1,32 +1,48 @@
 import React, { useCallback, useEffect } from 'react'
 
 import { useNavigate } from 'react-router'
-import { Membership, SpaceData, useSpaceData, useSpaceId, useZionClient } from 'use-zion-client'
+import {
+    Membership,
+    SpaceData,
+    useSpaceData,
+    useSpaceFromContract,
+    useSpaceId,
+    useWeb3Context,
+    useZionClient,
+} from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Paragraph, Stack } from '@ui'
+import { PATHS } from 'routes'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
     const spaceId = useSpaceId()
     const space = useSpaceData()
+    const { accounts } = useWeb3Context()
     const navigate = useNavigate()
+    const wallet = accounts[0]
+    const { isLoading: contractLoading, space: spaceContract } = useSpaceFromContract(space?.id)
 
     useEffect(() => {
         const channels = space?.channelGroups.flatMap((g) => g.channels)
+
+        if (contractLoading) {
+            return
+        }
+        const owner = wallet === spaceContract?.owner
 
         if (space?.membership === Membership.Join) {
             let route: string
             const firstChannelId = channels?.at(0)?.id
 
-            // if there's no channels, go to create form
-            // this should be the path for the owner of the space
-            // probably need to update this check based on roles/permissions
             if (!firstChannelId) {
-                route = `/spaces/${spaceId?.slug}/channels/new`
-            }
-            // otherwise, go to the first channel
-            else {
-                route = `/spaces/${spaceId?.slug}/channels/${firstChannelId.slug}/`
+                if (owner) {
+                    route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.GETTING_STARTED}`
+                } else {
+                    route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.THREADS}`
+                }
+            } else {
+                route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.CHANNELS}/${firstChannelId.slug}/`
             }
 
             const timeout = setTimeout(() => {
@@ -37,7 +53,15 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [navigate, space?.channelGroups, space?.membership, spaceId?.slug])
+    }, [
+        navigate,
+        space?.channelGroups,
+        space?.membership,
+        spaceId?.slug,
+        contractLoading,
+        spaceContract?.owner,
+        wallet,
+    ])
 
     if (!spaceId || !space) {
         return null

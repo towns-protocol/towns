@@ -658,6 +658,25 @@ const Camera = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const Wand = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M12.9337 1.97562C11.5451 1.07029 9.72116 2.15023 9.84722 3.8031L10.0824 6.88674L7.67551 8.82866C6.38539 9.86954 6.84884 11.9379 8.45977 12.3288L10.3942 12.7982L2.70708 20.4853C2.31655 20.8758 2.31655 21.509 2.70708 21.8995C3.0976 22.29 3.73077 22.29 4.12129 21.8995L11.879 14.1418L12.5683 15.9472C13.1595 17.4958 15.2699 17.6943 16.1395 16.283L17.7617 13.65L20.8504 13.4937C22.5059 13.4099 23.3468 11.4641 22.2732 10.201L20.2704 7.84455L21.0762 4.85876C21.5081 3.25835 19.9174 1.85739 18.3844 2.48805L15.5244 3.66463L12.9337 1.97562ZM12.0766 6.73464L11.8414 3.651L14.4321 5.34001C14.9835 5.69952 15.6765 5.76467 16.2853 5.51423L19.1453 4.33765L18.3395 7.32343C18.168 7.95896 18.3202 8.63819 18.7465 9.13976L20.7493 11.4962L17.6606 11.6525C17.0032 11.6858 16.4043 12.0404 16.059 12.6009L14.4367 15.2338L13.3336 12.3447C13.0988 11.7297 12.5765 11.2696 11.9368 11.1144L8.93136 10.3852L11.3383 8.4433C11.8506 8.02996 12.1267 7.391 12.0766 6.73464Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 const iconMap = {
     at: AtIcon,
     back: BackIcon,
@@ -700,6 +719,7 @@ const iconMap = {
     verified: VerifiedIcon,
     wallet: WalletIcon,
     walletconnect: WalletConnectIcon,
+    wand: Wand,
 } as const
 
 export const iconTypes = Object.keys(iconMap) as IconName[]

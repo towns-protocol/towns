@@ -2,6 +2,7 @@ import React from 'react'
 import { Route, Routes } from 'react-router'
 import { MembersPage } from '@components/Members/MembersPage'
 import { ProposalPage } from '@components/Proposals/ProposalPage'
+import { PATHS } from 'routes'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
@@ -16,6 +17,7 @@ import { SpacesSettings } from './SpacesSettings'
 import { SpaceThreadsInbox } from './SpaceThreadInbox'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceThreadInboxChannel } from './SpaceThreadInboxChannel'
+import { SpaceGettingStarted } from './SpaceGettingStarted'
 
 const USE_THREAD_GROUPS = true
 
@@ -46,6 +48,7 @@ export const SpaceRoutes = () => (
                 </Route>
             </Route>
             <Route path="mentions" element={<SpaceMentions />} />
+            <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
             <Route path="settings" element={<SpacesSettings />} />
             <Route path="invite" element={<SpacesInvite />} />
             <Route path="channels/new" element={<SpacesNewChannel />} />
