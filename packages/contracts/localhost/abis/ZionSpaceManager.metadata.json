@@ -1187,6 +1187,7 @@
       ":@openzeppelin/=node_modules/@openzeppelin/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
@@ -1197,11 +1198,11 @@
   },
   "sources": {
     "contracts/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x5597e2c6ffe1f2d2864836328e856402eba73f6199e6c992c1b5db6dda8d7f0f",
+      "keccak256": "0x806bd18fe302b2e3c49ed97365da690a9f03310cc2123464564c182a6e8733cb",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f89c63db79a0b30827bea0a68db446793de82a4776e756b89fe669928230c45f",
-        "dweb:/ipfs/QmWx75XHNXAk44yLZ6j9oAhVqsxBtBChv3WgUdJX6KCh5j"
+        "bzz-raw://6085092e94a6ff69f1bf03d0e51d801f8eac3677f060604d3589e5679e994e6f",
+        "dweb:/ipfs/QmXqeJ8ZoyvxBEhCwSsaTiRFExxeLhTFJ2uoAYKMetSe7F"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
