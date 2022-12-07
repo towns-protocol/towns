@@ -77,7 +77,7 @@ export const Spaces = () => {
 }
 
 const MissingSpaceInfo = (props: { spaceId: RoomIdentifier; onJoinRoom: () => void }) => {
-    const spaceOnChainInfo = useSpaceFromContract(props.spaceId)
+    const { space: spaceOnChainInfo } = useSpaceFromContract(props.spaceId)
     return spaceOnChainInfo ? (
         <>
             <Typography display="block" variant="body1" component="span" sx={messageStyle}>

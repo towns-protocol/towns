@@ -6,9 +6,20 @@ import { useZionClientEvent } from './use-zion-client-event'
 import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
 import { RoomIdentifier } from 'types/matrix-types'
 
-export function useSpacesFromContract(): SpaceIdentifier[] {
+type UseSpaceFromContractReturn = {
+    spaces: SpaceIdentifier[]
+    isLoading: boolean
+    isError: boolean
+}
+
+export function useSpacesFromContract(): UseSpaceFromContractReturn {
     const { spaceManager } = useZionClient()
-    const [spaceIdentifiers, setSpaceIdentifiers] = useState<SpaceIdentifier[]>([])
+    const [{ isLoading, spaces, isError }, setSpaceIdentifiers] =
+        useState<UseSpaceFromContractReturn>({
+            isError: false,
+            isLoading: true,
+            spaces: [],
+        })
     const onNewSpace = useZionClientEvent(ZionClientEvent.NewSpace)
 
     useEffect(() => {
@@ -16,30 +27,39 @@ export function useSpacesFromContract(): SpaceIdentifier[] {
             return
         }
         void (async () => {
-            const spaces = await spaceManager.getSpaces()
-            if (spaces) {
-                setSpaceIdentifiers(
-                    spaces.map((x: DataTypes.SpaceInfoStructOutput) => {
-                        return {
-                            key: x.spaceId.toString(),
-                            spaceId: x.spaceId,
-                            createdAt: x.createdAt,
-                            name: x.name,
-                            networkId: x.networkId,
-                            creator: x.creator,
-                            owner: x.owner,
-                            disabled: x.disabled,
-                        }
-                    }),
-                )
+            try {
+                const spaces = await spaceManager.getSpaces()
+                setSpaceIdentifiers({
+                    isError: false,
+                    isLoading: false,
+                    spaces:
+                        spaces?.map((x: DataTypes.SpaceInfoStructOutput) => {
+                            return {
+                                key: x.spaceId.toString(),
+                                spaceId: x.spaceId,
+                                createdAt: x.createdAt,
+                                name: x.name,
+                                networkId: x.networkId,
+                                creator: x.creator,
+                                owner: x.owner,
+                                disabled: x.disabled,
+                            }
+                        }) || [],
+                })
+            } catch (e: unknown) {
+                setSpaceIdentifiers({ isError: true, isLoading: false, spaces: [] })
             }
         })()
     }, [spaceManager, onNewSpace])
 
-    return spaceIdentifiers
+    return { spaces, isLoading, isError }
 }
 
-export function useSpaceFromContract(spaceId: RoomIdentifier): SpaceIdentifier | undefined {
-    const spaces = useSpacesFromContract()
-    return spaces.find((x) => x.networkId === spaceId.matrixRoomId)
+export function useSpaceFromContract(spaceId: RoomIdentifier): {
+    isLoading: boolean
+    isError: boolean
+    space: SpaceIdentifier | undefined
+} {
+    const { spaces, isLoading, isError } = useSpacesFromContract()
+    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId.matrixRoomId) }
 }

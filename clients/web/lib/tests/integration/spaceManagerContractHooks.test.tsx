@@ -32,7 +32,7 @@ describe('spaceManagerContractHooks', () => {
             const { createSpaceWithMemberRole: createSpaceWithMemberRole } =
                 useIntegratedSpaceManagement()
             // spaces
-            const spaces = useSpacesFromContract()
+            const { spaces } = useSpacesFromContract()
             // callback to create a space
             const onClickCreateSpace = useCallback(() => {
                 void createBasicWeb3Space({

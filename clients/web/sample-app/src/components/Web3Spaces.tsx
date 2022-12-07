@@ -5,7 +5,7 @@ import { SpaceIdentifier, useSpacesFromContract } from 'use-zion-client'
 import { useNavigate } from 'react-router-dom'
 
 export function Web3Spaces(): JSX.Element {
-    const spaces = useSpacesFromContract()
+    const { spaces } = useSpacesFromContract()
     const navigate = useNavigate()
 
     const onListItemClick = (space: SpaceIdentifier) => {
