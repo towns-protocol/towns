@@ -1,26 +1,40 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { registerAndStartClients } from './helpers/TestUtils'
+
+import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithZionMemberRole,
+    makeUniqueName,
+    registerAndStartClients,
+    registerLoginAndStartClient,
+} from './helpers/TestUtils'
+
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { TestConstants } from './helpers/TestConstants'
 
 describe('spaceHierarchy', () => {
-    jest.setTimeout(30000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create a public space and a public room, have user join space and search for space childs', async () => {
         // create clients
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
-
+        // alice needs to have a valid nft in order to join bob's space / channel
+        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const { bob } = await registerAndStartClients(['bob'])
+        // bob needs funds to create a space
+        await bob.fundWallet()
         // bob creates a space
-        const spaceId = await bob.createSpace({
-            name: "bob's space",
-            visibility: RoomVisibility.Public,
-        })
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            [],
+        )) as RoomIdentifier
 
         // bob creates a room
-        const roomId = await bob.createChannel({
-            name: "bob's room",
-            visibility: RoomVisibility.Public,
+        const roomId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
             parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
             roleIds: [],
-        })
+        })) as RoomIdentifier
 
         const bob_spaceInfo = await bob.syncSpace(spaceId)
         expect(bob_spaceInfo?.children.length).toEqual(1)
@@ -42,21 +56,29 @@ describe('spaceHierarchy', () => {
     })
     test('create a private space and a public room, have user join space and search for space childs', async () => {
         // create clients
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
-
+        // alice needs to have a valid nft in order to join bob's space / channel
+        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const { bob } = await registerAndStartClients(['bob'])
+        // bob needs funds to create a space
+        await bob.fundWallet()
         // bob creates a space
-        const spaceId = await bob.createSpace({
-            name: "bob's private space",
-            visibility: RoomVisibility.Private,
-        })
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            [],
+            {
+                name: makeUniqueName('bobs space'),
+                visibility: RoomVisibility.Private,
+            },
+        )) as RoomIdentifier
 
         // bob creates a room
-        const roomId = await bob.createChannel({
-            name: "bob's room",
-            visibility: RoomVisibility.Public,
+        const roomId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
             parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
             roleIds: [],
-        })
+        })) as RoomIdentifier
 
         const bob_spaceInfo = await bob.syncSpace(spaceId)
         expect(bob_spaceInfo?.children.length).toEqual(1)

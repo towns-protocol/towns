@@ -363,12 +363,12 @@ export class ZionClient {
                     spaceEntitlementData,
                     everyonePermissions,
                 )
-                console.log(`[createWeb3Space] transaction`, transaction)
+                //console.log(`[createWeb3Space] transaction`, transaction)
                 receipt = await transaction.wait()
-                console.log('[createWeb3Space] Matrix createSpace receipt', receipt)
+                //console.log('[createWeb3Space] Matrix createSpace receipt', receipt)
             } catch (err) {
-                console.log('[createWeb3Space] error', err)
                 const decodedError = this.getDecodedError(err)
+                console.error('[createWeb3Space] failed', decodedError)
                 throw decodedError
             } finally {
                 if (receipt?.status === 1) {
@@ -382,7 +382,7 @@ export class ZionClient {
                     })
                 } else {
                     // On-chain space creation failed. Abandon this space.
-                    console.log('[createWeb3Space] failed')
+                    console.error('[createWeb3Space] failed')
                     await this.leave(roomIdentifier)
                     roomIdentifier = undefined
                 }
@@ -437,8 +437,8 @@ export class ZionClient {
                 transaction = await this.spaceManager.createChannel(channelInfo)
                 receipt = await transaction.wait()
             } catch (err: unknown) {
-                console.log('[createWeb3Channel] error', err)
                 const decodedError = this.getDecodedError(err)
+                console.error('[createWeb3Channel] failed', decodedError)
                 throw decodedError
             }
 
@@ -454,7 +454,7 @@ export class ZionClient {
                 })
             } else {
                 // On-chain channel creation failed. Abandon this channel.
-                console.log('[createWeb3Channel] failed')
+                console.error('[createWeb3Channel] failed')
                 await this.leave(roomIdentifier)
                 roomIdentifier = undefined
             }
@@ -510,11 +510,9 @@ export class ZionClient {
             transaction = await this.spaceManager.signed.createRole(spaceNetworkId, name)
             receipt = await transaction.wait()
         } catch (err) {
-            console.log('[createRole] error', err)
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-            const revertData: BytesLike = (err as any).error?.error?.error?.data
-            const decodedError = this.spaceManager.signed.interface.parseError(revertData)
-            console.error(decodedError)
+            const decodedError = this.getDecodedError(err)
+            console.error('[createRole] failed', decodedError)
+            throw decodedError
         } finally {
             if (receipt?.status === 1) {
                 // Successful created the role on-chain.
@@ -523,6 +521,9 @@ export class ZionClient {
                 // John: how can we best decode this 32 byte hex string to a human readable string ?
                 roleName = receipt?.logs[0].topics[3]
                 roleIdentifier = { roleId, name: roleName, spaceNetworkId }
+            } else {
+                // On-chain role creation failed.
+                console.error('[createRole] failed')
             }
         }
         return roleIdentifier
@@ -539,18 +540,15 @@ export class ZionClient {
             transaction = await this.spaceManager.signed.setSpaceAccess(spaceNetworkId, disabled)
             receipt = await transaction.wait()
         } catch (err) {
-            console.log('[setSpaceAccess] error', err)
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-            const revertData: BytesLike | undefined = (err as any).error?.error?.data
-            const decodedError = revertData
-                ? this.spaceManager.signed.interface.parseError(revertData)
-                : undefined
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-            console.error(decodedError ? decodedError : (err as any).error?.error?.message)
+            const decodedError = this.getDecodedError(err)
+            console.error('[setSpaceAccess] failed', decodedError)
+            throw decodedError
         } finally {
             if (receipt?.status === 1) {
                 console.log('[setSpaceAccess] successful')
                 success = true
+            } else {
+                console.error('[setSpaceAccess] failed')
             }
         }
         return success
@@ -938,6 +936,7 @@ export class ZionClient {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
+            console.error('[getDecodedError]', e)
             return {
                 name: 'unknown error',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access

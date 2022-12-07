@@ -1,6 +1,8 @@
-import { ethers, Wallet } from 'ethers'
-import { fundWallet } from './TestUtils'
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
+import { Wallet, ethers } from 'ethers'
+
+import { fundWallet } from './TestUtils'
 
 export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class

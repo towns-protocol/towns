@@ -17,7 +17,9 @@ import { useCredentialStore } from '../../src/store/use-credential-store'
 /// disabled beause the matrix js sdk doesn't correctly catch errors in DeviceLists.doKeyDownload
 /// and a few other places and the tests will fail due to unhandled promise rejections, even though
 /// all defined tests pass
-describe('invalidTokenHooks', () => {
+
+// Test fails 100% of the time. https://linear.app/hnt-labs/issue/HNT-474/invalidtokenhookstest-fails-100percent
+describe.skip('invalidTokenHooks', () => {
     beforeEach(() => {
         global.localStorage.clear()
         global.sessionStorage.clear()
@@ -25,7 +27,7 @@ describe('invalidTokenHooks', () => {
         useCredentialStore.destroy()
     })
     jest.setTimeout(30000)
-    test.skip('test matrix js sdk', async () => {
+    test('test matrix js sdk', async () => {
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
         // create a new client and sign in
@@ -39,7 +41,7 @@ describe('invalidTokenHooks', () => {
         //await expect(alice.startClient(badAliceAuth, chainId)).rejects.toThrow('Unknown token')
         await alice.startClient(badAliceAuth, chainId)
     })
-    test.skip('test logging in with a bad auth resolves to good state', async () => {
+    test('test logging in with a bad auth resolves to good state', async () => {
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
         // create a new client and sign in
@@ -77,7 +79,7 @@ describe('invalidTokenHooks', () => {
         console.log('!!! tests pass !!!')
     }) // end test
 
-    test.skip('test logging out from second source resets browser state', async () => {
+    test('test logging out from second source resets browser state', async () => {
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
         // grab the auth

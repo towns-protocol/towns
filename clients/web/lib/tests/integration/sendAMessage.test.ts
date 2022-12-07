@@ -5,12 +5,14 @@
  * @group integration/load
  *
  */
-
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { waitFor } from '@testing-library/dom'
+
+import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
+
 import { MatrixEvent } from 'matrix-js-sdk'
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { registerAndStartClients } from './helpers/TestUtils'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { waitFor } from '@testing-library/dom'
 
 describe('sendAMessage', () => {
     // can be run with `yarn test --group integration/load`, setting timeout to 10 minutes
@@ -27,10 +29,17 @@ describe('sendAMessage', () => {
 
         // bob creates a space
         console.log(`!!!!!! bob creates space`)
-        const roomId = await bob.createSpace({
-            name: "bob's room",
-            visibility: RoomVisibility.Private,
-        })
+        // bob needs funds to create a space
+        await bob.fundWallet()
+        // bob creates a space
+        const roomId = (await createTestSpaceWithEveryoneRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            {
+                name: bob.makeUniqueName(),
+                visibility: RoomVisibility.Private,
+            },
+        )) as RoomIdentifier
 
         // bob invites everyone else to the room
         for (let i = 1; i < numClients; i++) {

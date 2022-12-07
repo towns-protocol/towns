@@ -1,31 +1,51 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import React from 'react'
-import { useEffect } from 'react'
+
+import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithZionMemberRole,
+    makeUniqueName,
+    registerAndStartClients,
+    registerLoginAndStartClient,
+} from './helpers/TestUtils'
 import { render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { registerAndStartClients } from './helpers/TestUtils'
-import { useSpaceData } from '../../src/hooks/use-space-data'
-import { RoomVisibility } from '../../src/types/matrix-types'
+
 import { LoginStatus } from '../../src/hooks/login'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import React from 'react'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+import { TestConstants } from './helpers/TestConstants'
+import { ZionTestApp } from './helpers/ZionTestApp'
+import { useEffect } from 'react'
+import { useMatrixStore } from '../../src/store/use-matrix-store'
+import { useSpaceData } from '../../src/hooks/use-space-data'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 describe('spaceHierarchyHooks', () => {
-    jest.setTimeout(30000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
         // create clients
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        // alice needs to have a valid nft in order to join bob's space / channel
+        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const { bob } = await registerAndStartClients(['bob'])
+        // bob needs funds to create a space
+        await bob.fundWallet()
         // bob creates a space
-        const spaceId = await bob.createSpace({
-            name: "bob's space",
-            visibility: RoomVisibility.Public,
-        })
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            bob,
+            // For alice to create a channel, the role must include the AddRemoveChannels permission.
+            [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
+            [],
+            {
+                name: makeUniqueName('bobs space'),
+                visibility: RoomVisibility.Public,
+            },
+        )) as RoomIdentifier
         // and a channel
-        await bob.createChannel({
-            name: "bob's channel",
-            visibility: RoomVisibility.Public,
+        await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
             parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
             roleIds: [],
         })
         // set the space child prop on the room to 0 so that anyone can make channels
@@ -73,10 +93,10 @@ describe('spaceHierarchyHooks', () => {
         // expect the initial space child count to be 1
         await waitFor(() => expect(spaceChildCount).toHaveTextContent('1'))
         // have alice create a channel
-        await alice.createChannel({
-            name: "alice's channel",
-            visibility: RoomVisibility.Public,
+        await createTestChannelWithSpaceRoles(alice, {
+            name: 'alices channel',
             parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
             roleIds: [],
         })
         // wait for the space child count to change

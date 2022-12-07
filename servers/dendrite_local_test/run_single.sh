@@ -8,7 +8,7 @@ echo "Running from ${TEST_DIR}"
 
 I=$1
 DENDRITE_YAML="${2:-dendrite.yaml}"
-ENABLE_AUTHZ="${3:-no-authz}"
+ENABLE_AUTHZ="${3:-with-authz}"
 
 SCRIPT_DIR="$(dirname "$PWD")"
 

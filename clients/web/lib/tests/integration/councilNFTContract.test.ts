@@ -4,7 +4,7 @@ import { TestConstants } from './helpers/TestConstants'
 
 describe('councilNFTContract', () => {
     // usefull for debugging or running against cloud servers
-    jest.setTimeout(30 * 1000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test:
     test('interact with the council NFT contract', async () => {
         // create clients
@@ -15,7 +15,7 @@ describe('councilNFTContract', () => {
         const allowListMint = await bob.councilNFT.unsigned.allowlistMint()
         expect(allowListMint).toBeTruthy()
         // re-create one of the funded anvil wallets that we minted to in the deploy script
-        const fundedWallet = TestConstants.FUNDED_WALLET_0
+        const fundedWallet = TestConstants.getWalletWithNft()
         // get the balance
         const balance = await bob.councilNFT.unsigned.balanceOf(fundedWallet.address)
         try {

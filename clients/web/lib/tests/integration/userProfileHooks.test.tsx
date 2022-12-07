@@ -1,25 +1,33 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
+import { Membership, RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
 import React, { useCallback } from 'react'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithEveryoneRole,
+    makeUniqueName,
+    registerAndStartClients,
+} from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+
+import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RegisterAndJoinSpace } from './helpers/TestComponents'
+import { RoomMember } from 'matrix-js-sdk'
+import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+import { TestConstants } from './helpers/TestConstants'
+import { ZTEvent } from '../../src/types/timeline-types'
 import { ZionTestApp } from './helpers/ZionTestApp'
+import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useMember } from '../../src/hooks/use-member'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
-import { registerAndStartClients } from './helpers/TestUtils'
-import { RoomMember } from 'matrix-js-sdk'
-import { RegisterAndJoinSpace } from './helpers/TestComponents'
-import { sleep } from '../../src/utils/zion-utils'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { ZTEvent } from '../../src/types/timeline-types'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('userProfileHooks', () => {
-    jest.setTimeout(30000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see username and avatar info', async () => {
         // create clients
         const { alice } = await registerAndStartClients(['alice'])
@@ -28,18 +36,24 @@ describe('userProfileHooks', () => {
         await alice.setAvatarUrl('alice.png')
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
+        // alice needs funds to create a space
+        await alice.fundWallet()
         // create a space
-        const alicesSpaceId = await alice.createSpace({
-            name: 'alices space',
-            visibility: RoomVisibility.Public,
-        })
+        const alicesSpaceId = (await createTestSpaceWithEveryoneRole(
+            alice,
+            [Permission.Read, Permission.Write],
+            {
+                name: makeUniqueName('alices space'),
+                visibility: RoomVisibility.Public,
+            },
+        )) as RoomIdentifier
         //
-        const alicesChannelId = await alice.createChannel({
+        const alicesChannelId = (await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: alicesSpaceId,
+            visibility: RoomVisibility.Public,
             roleIds: [],
-        })
+        })) as RoomIdentifier
         // create a veiw for bob
         const TestUserProfile = () => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
@@ -96,34 +110,54 @@ describe('userProfileHooks', () => {
             name: 'Set Profile Info',
         })
         // wait for client to be running
-        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
+        await waitFor(
+            () => expect(clientRunning).toHaveTextContent('true'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // wait for the channel join
-        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join), {
-            timeout: 10000,
-        })
+        await waitFor(
+            () => expect(channelMembership).toHaveTextContent(Membership.Join),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // verify alice name is rendering
-        await waitFor(() => expect(alicesMemberName).toHaveTextContent("Alice's your aunt"))
+        await waitFor(
+            () => expect(alicesMemberName).toHaveTextContent("Alice's your aunt"),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // verify alice avatar is rendering
-        await waitFor(() => expect(alicesMemberAvatar).toHaveTextContent('alice.png'))
+        await waitFor(
+            () => expect(alicesMemberAvatar).toHaveTextContent('alice.png'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // have bob send a message to jane
         fireEvent.click(setProfileInfoButton)
         // verify my (bob) name is rendering
-        await sleep(500)
-        await waitFor(() => expect(myProfileName).toHaveTextContent("Bob's your uncle"))
+        await waitFor(
+            () => expect(myProfileName).toHaveTextContent("Bob's your uncle"),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // verify my (bob) avatar is rendering
-        await waitFor(() => expect(myProfileAvatar).toHaveTextContent('bob.png'))
+        await waitFor(
+            () => expect(myProfileAvatar).toHaveTextContent('bob.png'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // double check that alice sees the same info
-        await waitFor(() =>
-            expect(
-                alice
-                    .getRoom(alicesChannelId)
-                    ?.getMembers()
-                    .some((x: RoomMember) => x.name === "Bob's your uncle"),
-            ).toBe(true),
+        await waitFor(
+            () =>
+                expect(
+                    alice
+                        .getRoom(alicesChannelId)
+                        ?.getMembers()
+                        .some((x: RoomMember) => x.name === "Bob's your uncle"),
+                ).toBe(true),
+            TestConstants.DefaultWaitForTimeout,
         )
         // have alice send a message
         await alice.sendMessage(alicesChannelId, 'hello')
         // expect a result
-        await waitFor(() => expect(messageSender).toHaveTextContent("Alice's your aunt"))
+        await waitFor(
+            () => expect(messageSender).toHaveTextContent("Alice's your aunt"),
+            TestConstants.DefaultWaitForTimeout,
+        )
     }) // end test with bob
 }) // end describe

@@ -2,12 +2,12 @@ import { CreateChannelInfo, CreateSpaceInfo, RoomIdentifier } from 'types/matrix
 import {
     createExternalTokenEntitlements,
     createPermissions,
-    getRolesFromSpace,
+    getFilteredRolesFromSpace,
+    getAllRolesFromSpace,
 } from '../client/web3/ZionContracts'
 
 import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../client/web3/ZionContractTypes'
-import { RoleManagerDataTypes } from 'client/web3/shims/ZionRoleManagerShim'
 import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -28,27 +28,10 @@ export function useIntegratedSpaceManagement() {
                 return undefined
             }
 
-            const spaceRoles = await getRolesFromSpace(client, matrixSpaceId)
             if (includeAllRoles) {
-                return spaceRoles
+                return await getAllRolesFromSpace(client, matrixSpaceId)
             } else {
-                const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(
-                    matrixSpaceId,
-                )
-                const filteredRoles: RoleManagerDataTypes.RoleStructOutput[] = []
-                // Filter out space roles which won't work when creating a channel
-                for (const r of spaceRoles) {
-                    const permissions =
-                        await client.roleManager.unsigned.getPermissionsBySpaceIdByRoleId(
-                            spaceId.toNumber(),
-                            r.roleId.toNumber(),
-                        )
-                    // Filter out roles which have no permissions & the Owner role
-                    if (permissions.length && r.name !== 'Owner') {
-                        filteredRoles.push(r)
-                    }
-                }
-                return filteredRoles
+                return await getFilteredRolesFromSpace(client, matrixSpaceId)
             }
         },
         [client],

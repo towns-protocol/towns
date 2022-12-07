@@ -1,25 +1,45 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
 import React, { useCallback, useEffect } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { registerAndStartClients } from './helpers/TestUtils'
-import { usePowerLevels } from '../../src/hooks/use-power-levels'
 import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithZionMemberRole,
+    makeUniqueName,
+    registerAndStartClients,
+    registerLoginAndStartClient,
+} from './helpers/TestUtils'
+
 import { LoginStatus } from '../../src/hooks/login'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { TestConstants } from './helpers/TestConstants'
+import { ZionTestApp } from './helpers/ZionTestApp'
 import { sleep } from '../../src/utils/zion-utils'
+import { useMatrixStore } from '../../src/store/use-matrix-store'
+import { usePowerLevels } from '../../src/hooks/use-power-levels'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 describe('powerLevelsHooks', () => {
-    jest.setTimeout(40000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create a space with two users, reduce the level required to create a space child', async () => {
         // create clients
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        // bob creates a room
-        const roomId = await bob.createSpace({
-            name: "bob's space",
-            visibility: RoomVisibility.Private,
-        })
+        // alice needs to have a valid nft in order to join bob's space / channel
+        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const { bob } = await registerAndStartClients(['bob'])
+        // bob needs funds to create a space
+        await bob.fundWallet()
+        // bob creates a public room
+        const roomId = (await createTestSpaceWithZionMemberRole(
+            bob,
+            // For alice to create a channel, the role must include the AddRemoveChannels permission.
+            [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
+            [],
+            {
+                name: makeUniqueName('bobs room'),
+                visibility: RoomVisibility.Public,
+            },
+        )) as RoomIdentifier
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.matrixUserId!)
         // alice joins the room
@@ -73,10 +93,10 @@ describe('powerLevelsHooks', () => {
         await waitFor(() => expect(spaceChildLevel).toHaveTextContent('_50_'))
         // expect that alice can't make a space child
         await expect(
-            alice.createChannel({
-                name: "alice's channel",
-                visibility: RoomVisibility.Private,
+            createTestChannelWithSpaceRoles(alice, {
+                name: 'alices channel',
                 parentSpaceId: roomId,
+                visibility: RoomVisibility.Private,
                 roleIds: [],
             }),
         ).rejects.toThrow('is not allowed to send event. 0 < 50')
@@ -88,10 +108,10 @@ describe('powerLevelsHooks', () => {
         await waitFor(() => expect(alice.getPowerLevel(roomId, 'm.space.child')?.value).toEqual(0))
         // expect that alice can make a space child
         await expect(
-            alice.createChannel({
-                name: "alice's channel",
-                visibility: RoomVisibility.Private,
+            createTestChannelWithSpaceRoles(alice, {
+                name: 'alices channel',
                 parentSpaceId: roomId,
+                visibility: RoomVisibility.Private,
                 roleIds: [],
             }),
         ).resolves.toBeDefined()

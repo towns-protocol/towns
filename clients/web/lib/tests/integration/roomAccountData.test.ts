@@ -4,12 +4,19 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { waitFor } from '@testing-library/dom'
-import { MatrixEvent } from 'matrix-js-sdk'
-import { ZionAccountDataType } from '../../src/client/ZionClientTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+
+import {
+    createTestSpaceWithEveryoneRole,
+    registerAndStartClients,
+    registerLoginAndStartClient,
+} from './helpers/TestUtils'
+
 import { FullyReadMarker } from '../../src/types/timeline-types'
-import { registerAndStartClients, registerLoginAndStartClient } from './helpers/TestUtils'
+import { MatrixEvent } from 'matrix-js-sdk'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier } from '../../src/types/matrix-types'
+import { ZionAccountDataType } from '../../src/client/ZionClientTypes'
+import { waitFor } from '@testing-library/dom'
 
 describe('roomAccountData', () => {
     jest.setTimeout(30000)
@@ -17,11 +24,13 @@ describe('roomAccountData', () => {
     test('create room, send a message, post account data, log out, log in, validate account data', async () => {
         // create clients
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
+        // bob needs funds to create a space
+        await bob.fundWallet()
         // bob creates a public room
-        const roomId = await bob.createSpace({
-            name: "bob's room",
-            visibility: RoomVisibility.Public,
-        })
+        const roomId = (await createTestSpaceWithEveryoneRole(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])) as RoomIdentifier
         // alice joins the room
         await alice.joinRoom(roomId)
         // alice sends a wenmoon message

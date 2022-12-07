@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import React from 'react'
+
+import { Membership, RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { registerAndStartClients } from './helpers/TestUtils'
+
 import { LoginWithWallet } from './helpers/TestComponents'
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { useMyMembership } from '../../src/hooks/use-my-membership'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import React from 'react'
+import { ZionTestApp } from './helpers/ZionTestApp'
 import { useInvites } from '../../src/hooks/use-space-data'
+import { useMyMembership } from '../../src/hooks/use-my-membership'
+import { useMyProfile } from '../../src/hooks/use-my-profile'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
@@ -61,11 +64,17 @@ describe('userProfileOnAcceptInviteHooks', () => {
         const acceptButton = screen.getByRole('button', { name: 'Accept Invite' })
         // verify alice name is rendering
         await waitFor(() => expect(myProfileName).toHaveTextContent("Alice's your aunt"))
+        // bob needs funds to create a space
+        await bob.fundWallet()
         // bob creates a room
-        const roomId = await bob.createSpace({
-            name: "bob's space",
-            visibility: RoomVisibility.Private,
-        })
+        const roomId = (await createTestSpaceWithEveryoneRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            {
+                name: bob.makeUniqueName(),
+                visibility: RoomVisibility.Private,
+            },
+        )) as RoomIdentifier
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.matrixUserId!)
         // wait for the invite to show (this will transition back to 0 after the invite is accepted)

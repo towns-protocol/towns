@@ -1,12 +1,21 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
+import { Membership, RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
 import React, { useCallback } from 'react'
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithEveryoneRole,
+    makeUniqueName,
+    registerAndStartClients,
+} from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { LoginWithAuth } from './helpers/TestComponents'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { registerAndStartClients } from './helpers/TestUtils'
-import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { LoginWithAuth } from './helpers/TestComponents'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+import { TestConstants } from './helpers/TestConstants'
+import { ZionTestApp } from './helpers/ZionTestApp'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
@@ -14,22 +23,29 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('messageScrollbackHooks', () => {
-    jest.setTimeout(60000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
+        // alice needs to have a valid nft in order to join bob's space / channel
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
+        // bob needs funds to create a spaceß
+        await bob.fundWallet()
         // create a space
-        const spaceId = await bob.createSpace({
-            name: 'bobs space',
-            visibility: RoomVisibility.Public,
-        })
+        const spaceId = (await createTestSpaceWithEveryoneRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            {
+                name: makeUniqueName('bobs space'),
+                visibility: RoomVisibility.Public,
+            },
+        )) as RoomIdentifier
         // create a channel
-        const channelId = await bob.createChannel({
+        const channelId = (await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
-            visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
             roleIds: [],
-        })
+        })) as RoomIdentifier
         //
         await alice.joinRoom(spaceId)
         await alice.joinRoom(channelId)

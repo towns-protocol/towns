@@ -3,10 +3,11 @@ import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
 import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
-import { getRolesFromSpace } from '../../src/client/web3/ZionContracts'
+import { getFilteredRolesFromSpace } from '../../src/client/web3/ZionContracts'
+import { TestConstants } from './helpers/TestConstants'
 
 describe('On-chain channel creation tests', () => {
-    jest.setTimeout(30000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create channel with no roles', async () => {
         /* Arrange */
         const { alice } = await registerAndStartClients(['alice'])
@@ -48,19 +49,19 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getRolesFromSpace(alice, roomId.matrixRoomId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.matrixRoomId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
         }
-        const channel = await alice.createWeb3Channel({
+        const channel = (await alice.createWeb3Channel({
             name: 'test_channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: roomId,
             roleIds,
-        })
+        })) as RoomIdentifier
 
         /* Assert */
-        expect(channel).toBeDefined()
+        expect(channel?.matrixRoomId).toBeTruthy()
     })
 
     test('reject create channel with duplicate roles', async () => {
@@ -77,7 +78,7 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getRolesFromSpace(alice, roomId.matrixRoomId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.matrixRoomId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
             // Duplicate the role

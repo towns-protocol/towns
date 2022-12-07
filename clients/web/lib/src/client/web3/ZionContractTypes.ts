@@ -10,7 +10,7 @@ export enum Permission {
     Ban = 'Ban',
     Ping = 'Ping',
     PinMessage = 'PinMessage',
-    ModifyPermissions = 'ModifyPermissions',
+    ModifyChannelPermissions = 'ModifyChannelPermissions',
     ModifyProfile = 'ModifyProfile',
     AddRemoveChannels = 'AddRemoveChannels',
     ModifySpacePermissions = 'ModifySpacePermissions',

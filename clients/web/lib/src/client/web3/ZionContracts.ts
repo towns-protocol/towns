@@ -109,7 +109,7 @@ export function createExternalTokenEntitlements(
     return externalTokens.map((t) => createTokenEntitlementData(t))
 }
 
-export async function getRolesFromSpace(
+export async function getAllRolesFromSpace(
     client: ZionClient,
     matrixSpaceId: string,
 ): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
@@ -117,6 +117,27 @@ export async function getRolesFromSpace(
     // get all the roles in the space
     const allSpaceRoles = await client.roleManager.unsigned.getRolesBySpaceId(spaceId)
     return allSpaceRoles
+}
+
+export async function getFilteredRolesFromSpace(
+    client: ZionClient,
+    matrixSpaceId: string,
+): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
+    const spaceRoles = await getAllRolesFromSpace(client, matrixSpaceId)
+    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(matrixSpaceId)
+    const filteredRoles: RoleManagerDataTypes.RoleStructOutput[] = []
+    // Filter out space roles which won't work when creating a channel
+    for (const r of spaceRoles) {
+        const permissions = await client.roleManager.unsigned.getPermissionsBySpaceIdByRoleId(
+            spaceId.toNumber(),
+            r.roleId.toNumber(),
+        )
+        // Filter out roles which have no permissions & the Owner role
+        if (permissions.length && r.name !== 'Owner') {
+            filteredRoles.push(r)
+        }
+    }
+    return filteredRoles
 }
 
 export function createPermissions(permissions: Permission[]): DataTypes.PermissionStruct[] {

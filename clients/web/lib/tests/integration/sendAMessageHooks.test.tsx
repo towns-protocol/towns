@@ -1,39 +1,58 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
+import { Membership, RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
 import React, { useCallback } from 'react'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { ZionTestApp } from './helpers/ZionTestApp'
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
-import { registerAndStartClients } from './helpers/TestUtils'
-import { RegisterAndJoinSpace } from './helpers/TestComponents'
-import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
-import { useChannelId } from '../../src/hooks/use-channel-id'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithEveryoneRole,
+    makeUniqueName,
+    registerAndStartClients,
+} from './helpers/TestUtils'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+
+import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RegisterAndJoinSpace } from './helpers/TestComponents'
+import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+import { TestConstants } from './helpers/TestConstants'
+import { ZionTestApp } from './helpers/ZionTestApp'
+import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { useChannelId } from '../../src/hooks/use-channel-id'
+import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendMessageHooks', () => {
-    jest.setTimeout(60000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
-        const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()
+        const { jane } = await registerAndStartClients(['jane'])
+        // jane needs funds to create a space
+        await jane.fundWallet()
         // create a space
-        const janesSpaceId = await jane.createSpace({
-            name: 'janes space',
-            visibility: RoomVisibility.Public,
-        })
+        const janesSpaceId = (await createTestSpaceWithEveryoneRole(
+            jane,
+            [Permission.Read, Permission.Write],
+            {
+                name: makeUniqueName('janes space'),
+                visibility: RoomVisibility.Public,
+            },
+        )) as RoomIdentifier
+        // create a space
         //
-        const janesChannelId = await jane.createChannel({
-            name: 'janes channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: janesSpaceId,
-            roleIds: [],
-        })
+        let janesChannelId: RoomIdentifier
+        if (janesSpaceId) {
+            janesChannelId = (await createTestChannelWithSpaceRoles(jane, {
+                name: 'janes channel',
+                parentSpaceId: janesSpaceId,
+                visibility: RoomVisibility.Public,
+                roleIds: [],
+            })) as RoomIdentifier
+        }
         // create a veiw for bob
         const TestRoomMessages = () => {
             const { sendMessage, editMessage, redactEvent } = useZionClient()
@@ -91,7 +110,7 @@ describe('sendMessageHooks', () => {
         render(
             <ZionTestApp provider={bobProvider}>
                 <SpaceContextProvider spaceId={janesSpaceId}>
-                    <ChannelContextProvider channelId={janesChannelId}>
+                    <ChannelContextProvider channelId={janesChannelId!}>
                         <TestRoomMessages />
                     </ChannelContextProvider>
                 </SpaceContextProvider>
@@ -108,50 +127,72 @@ describe('sendMessageHooks', () => {
         const editButton = screen.getByRole('button', { name: 'Edit' })
         const redactButton = screen.getByRole('button', { name: 'Redact' })
         // wait for client to be running
-        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
+        await waitFor(
+            () => expect(clientRunning).toHaveTextContent('true'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // wait for the channel join
-        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join), {
-            timeout: 10000,
-        })
+        await waitFor(
+            () => expect(channelMembership).toHaveTextContent(Membership.Join),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // have jane send a message to bob
-        await jane.sendMessage(janesChannelId, 'hello bob')
+        await act(async () => {
+            await jane.sendMessage(janesChannelId, 'hello bob')
+        })
         // expect our message to show
-        await waitFor(() => expect(message0).toHaveTextContent('hello bob'))
+        await waitFor(
+            () => expect(message0).toHaveTextContent('hello bob'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // have bob send a message to jane
         fireEvent.click(sendMessageButton)
         // expect it to render as well
-        await waitFor(() => expect(message1).toHaveTextContent('hello jane'))
+        await waitFor(
+            () => expect(message1).toHaveTextContent('hello jane'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // expect jane to recieve the message
-        await waitFor(() =>
-            expect(
-                jane
-                    .getRoom(janesChannelId)
-                    ?.getLiveTimeline()
-                    .getEvents()
-                    .filter((e) => e.getType() === 'm.room.message')
-                    .at(-1)
-                    ?.getContent().body,
-            ).toBe('hello jane'),
+        await waitFor(
+            () =>
+                expect(
+                    jane
+                        .getRoom(janesChannelId)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .filter((e) => e.getType() === 'm.room.message')
+                        .at(-1)
+                        ?.getContent().body,
+                ).toBe('hello jane'),
+            TestConstants.DefaultWaitForTimeout,
         )
         // edit the event
         fireEvent.click(editButton)
         // expect the event to be edited
-        await waitFor(() => expect(message1).toHaveTextContent('hello jane gm!'))
+        await waitFor(
+            () => expect(message1).toHaveTextContent('hello jane gm!'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // expect jane to see the edited event
-        await waitFor(() =>
-            expect(
-                jane
-                    .getRoom(janesChannelId)
-                    ?.getLiveTimeline()
-                    .getEvents()
-                    .filter((e) => e.getType() === 'm.room.message')
-                    .at(-1)
-                    ?.getContent().body,
-            ).toBe('hello jane gm!'),
+        await waitFor(
+            () =>
+                expect(
+                    jane
+                        .getRoom(janesChannelId)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .filter((e) => e.getType() === 'm.room.message')
+                        .at(-1)
+                        ?.getContent().body,
+                ).toBe('hello jane gm!'),
+            TestConstants.DefaultWaitForTimeout,
         )
         // redact the event
         fireEvent.click(redactButton)
         // exect the message to be empty
-        await waitFor(() => expect(message1).toHaveTextContent('m.room.redaction'))
+        await waitFor(
+            () => expect(message1).toHaveTextContent('m.room.redaction'),
+            TestConstants.DefaultWaitForTimeout,
+        )
     })
 })

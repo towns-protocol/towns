@@ -4,6 +4,7 @@ export enum MAXTRIX_ERROR {
 
 export enum CONTRACT_ERROR {
     AddRoleFailed = 'AddRoleFailed',
+    NotAllowed = 'NotAllowed',
 }
 
 export class NoThrownError extends Error {}

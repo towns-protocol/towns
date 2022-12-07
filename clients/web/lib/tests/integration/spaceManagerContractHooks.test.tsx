@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
 import React, { useCallback } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
 import { getZionTokenAddress } from '../../src/client/web3/ZionContracts'
@@ -16,7 +18,7 @@ import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('spaceManagerContractHooks', () => {
-    jest.setTimeout(30000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can create and list web3 spaces', async () => {
         const provider = new ZionTestWeb3Provider()
         // add funds
@@ -84,17 +86,22 @@ describe('spaceManagerContractHooks', () => {
         const createTokenGatedSpaceButton = screen.getByRole('button', {
             name: 'Create Token-Gated Space',
         })
+        const spacesElement = screen.getByTestId('spaces')
         // verify alice name is rendering
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // click the button
         fireEvent.click(createSpaceButton)
         // did we make a space?
-        await waitFor(() => expect(screen.getByTestId('spaces')).toHaveTextContent(spaceName))
+        await waitFor(
+            () => within(spacesElement).getByText(spaceName),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // now with a token
         fireEvent.click(createTokenGatedSpaceButton)
         // did we make a space?
-        await waitFor(() =>
-            expect(screen.getByTestId('spaces')).toHaveTextContent(tokenGatedSpaceName),
+        await waitFor(
+            () => within(spacesElement).getByText(tokenGatedSpaceName),
+            TestConstants.DefaultWaitForTimeout,
         )
     }) // end test
 }) // end describe

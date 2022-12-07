@@ -13,7 +13,7 @@ import { ethers, Wallet } from 'ethers'
 import {
     createExternalTokenEntitlements,
     createPermissions,
-    getRolesFromSpace,
+    getFilteredRolesFromSpace,
     getZionTokenAddress,
 } from 'use-zion-client/src/client/web3/ZionContracts'
 import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
@@ -121,7 +121,7 @@ export async function createTestSpaceWithZionMemberRole(
     if (!createSpaceInfo) {
         createSpaceInfo = {
             name: client.makeUniqueName(),
-            visibility: RoomVisibility.Private,
+            visibility: RoomVisibility.Public,
         }
     }
 
@@ -136,9 +136,31 @@ export async function createTestSpaceWithZionMemberRole(
     }
 
     const everyonePerms = createPermissions(everyonePermissions)
-    const roomId = await client.createWeb3Space(createSpaceInfo, tokenEntitlement, everyonePerms)
+    return await client.createWeb3Space(createSpaceInfo, tokenEntitlement, everyonePerms)
+}
 
-    return roomId
+export async function createTestSpaceWithEveryoneRole(
+    client: ZionTestClient,
+    everyonePermissions: Permission[] = [],
+    createSpaceInfo?: CreateSpaceInfo,
+): Promise<RoomIdentifier | undefined> {
+    if (!createSpaceInfo) {
+        createSpaceInfo = {
+            name: client.makeUniqueName(),
+            visibility: RoomVisibility.Public,
+        }
+    }
+
+    // No member role. Everyone role is the only role.
+    const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
+        roleName: '',
+        permissions: [],
+        externalTokenEntitlements: [],
+        users: [],
+    }
+
+    const everyonePerms = createPermissions(everyonePermissions)
+    return await client.createWeb3Space(createSpaceInfo, tokenEntitlement, everyonePerms)
 }
 
 export async function createTestChannelWithSpaceRoles(
@@ -149,13 +171,14 @@ export async function createTestChannelWithSpaceRoles(
         // In the app, the user is shown roles from the space and chooses
         // at least one role from the UI.
         // For testing, get the roles from the space and select all of them.
-        const allowedRoles = await getRolesFromSpace(
+        const filteredRoles = await getFilteredRolesFromSpace(
             client,
             createChannelInfo.parentSpaceId.matrixRoomId,
         )
-        for (const r of allowedRoles) {
+        for (const r of filteredRoles) {
             createChannelInfo.roleIds.push(r.roleId.toNumber())
         }
     }
+
     return await client.createWeb3Channel(createChannelInfo)
 }

@@ -1,34 +1,54 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { waitFor } from '@testing-library/dom'
 import { MatrixEvent } from 'matrix-js-sdk'
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { registerAndStartClients } from './helpers/TestUtils'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { TestConstants } from './helpers/TestConstants'
+import {
+    createTestSpaceWithZionMemberRole,
+    registerAndStartClients,
+    registerLoginAndStartClient,
+} from './helpers/TestUtils'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
-    jest.setTimeout(30 * 1000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test: sendAMessage
     test('create room, invite user, accept invite, and send threadded message', async () => {
         // create clients
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
+        // alice needs to have a valid nft in order to join bob's space / channel
+        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const { bob } = await registerAndStartClients(['bob'])
+        // bob needs funds to create a space
+        await bob.fundWallet()
         // bob creates a room
-        const roomId = await bob.createSpace({
-            name: "bob's room",
-            visibility: RoomVisibility.Private,
-        })
+        const roomId = (await createTestSpaceWithZionMemberRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            [],
+            {
+                name: bob.makeUniqueName(),
+                visibility: RoomVisibility.Private,
+            },
+        )) as RoomIdentifier
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.matrixUserId!)
         // alice should expect an invite to the room
-        await waitFor(() => expect(alice.getRoom(roomId)).toBeDefined())
+        await waitFor(
+            () => expect(alice.getRoom(roomId)).toBeDefined(),
+            TestConstants.DefaultWaitForTimeout,
+        )
         // alice joins the room
         await alice.joinRoom(roomId)
         // bob sends a message to the room
         await bob.sendMessage(roomId, 'Hello Alice!')
         // alice should receive the message
-        await waitFor(() =>
-            expect(
-                alice.getRoom(roomId)?.getLiveTimeline().getEvents().at(-1)?.getContent().body,
-            ).toBe('Hello Alice!'),
+        await waitFor(
+            () =>
+                expect(
+                    alice.getRoom(roomId)?.getLiveTimeline().getEvents().at(-1)?.getContent().body,
+                ).toBe('Hello Alice!'),
+            TestConstants.DefaultWaitForTimeout,
         )
         // event
         const event = alice

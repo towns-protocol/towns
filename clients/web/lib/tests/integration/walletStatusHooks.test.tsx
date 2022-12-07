@@ -1,18 +1,21 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+
 import React, { useCallback } from 'react'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
-import { useZionClient } from '../../src/hooks/use-zion-client'
-import { LoginStatus } from '../../src/hooks/login'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+
+import { LoginStatus } from '../../src/hooks/login'
+import { TestConstants } from './helpers/TestConstants'
+import { WalletStatus } from '../../src/types/web3-types'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useWeb3Context } from '../../src/components/Web3ContextProvider'
-import { WalletStatus } from '../../src/types/web3-types'
+import { useZionClient } from '../../src/hooks/use-zion-client'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('walletStatusHooks', () => {
-    jest.setTimeout(60000)
+    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('new user registers a new wallet and is logged in', async () => {
         // create a provider for bob
         const bobProvider = new ZionTestWeb3Provider()

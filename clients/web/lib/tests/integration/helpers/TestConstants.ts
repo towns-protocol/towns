@@ -31,13 +31,10 @@ export class TestConstants {
 
     public static DefaultJestTimeout = 50000
     public static DefaultWaitForTimeout: waitForOptions = { timeout: 5000 }
-    public static FUNDED_WALLET_0: ethers.Wallet
 
     public static init() {
         const network = process.env.ETHERS_NETWORK!
-        const privateKey0 = process.env.FUNDED_WALLET_PRIVATE_KEY_0!
         const provider = new ethers.providers.JsonRpcProvider(network)
-        this.FUNDED_WALLET_0 = new ethers.Wallet(privateKey0, provider)
         for (const privateKey of this.privateKeysForWalletWithNft) {
             const wallet = new ethers.Wallet(privateKey, provider)
             this.fundedWalletsWithNft.push(wallet)
