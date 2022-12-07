@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
 import { WagmiConfig, createClient, configureChains, chain, Chain } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
-import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
+import { InjectedConnector } from 'wagmi/connectors/injected'
 import { WalletStatus } from '../types/web3-types'
 
 export interface IWeb3Context {
@@ -42,7 +42,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
         )
         const client = createClient({
             autoConnect: true,
-            connectors: [new MetaMaskConnector({ chains })],
+            connectors: [new InjectedConnector({ chains })],
             provider,
             webSocketProvider,
         })

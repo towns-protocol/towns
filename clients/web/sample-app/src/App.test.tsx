@@ -15,6 +15,6 @@ describe('Accordion test', () => {
             </React.StrictMode>,
         )
 
-        expect(screen.getByText(/MetaMask/i)).toBeDefined()
+        expect(screen.getByText(/Injected/i)).toBeDefined()
     })
 })
