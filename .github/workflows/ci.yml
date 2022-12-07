@@ -90,7 +90,7 @@ jobs:
               run: yarn lint
 
             - name: Build contract types
-              run: ./scripts/build-contract-types.sh
+              run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Start anvil
               run: anvil &
