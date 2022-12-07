@@ -102,14 +102,40 @@ resource "aws_ecs_task_definition" "dendrite" {
 
   container_definitions = jsonencode([{
     name  = "dendrite"
-    image = "docker.io/herenotthere/dendrite-monolith:latest"
+    image = "docker.io/herenotthere/dendrite-monolith:1.0.31"
     essential = true
     portMappings = [{
       containerPort = 8008
       hostPort = 80
     }]
 
-    command = ["--tls-cert=server.crt","--tls-key=server.key","--really-enable-open-registration"]
+    environment = [
+      # TODO: swap this one with AWS secret management service
+      {
+        name = "DATABASE_CONNECTION_STRING"
+        value = "postgresql://dendrite:itsasecret@172.17.0.1:5432/dendrite?sslmode=disable"
+      },
+      {
+        name = "SERVER_NAME",
+        value = "node1.zion.xyz"
+      },
+      {
+        name = "CHAIN_ID",
+        value = "5"
+      },
+      # TODO: swap this one with AWS secret management service
+      {
+        name = "BLOCKCHAIN_PROVIDER_URL",
+        value = "https://goerli.infura.io/v3/29b17e8631ca4c969a3972ac5a30daa2"
+      },
+      {
+        name = "ENABLE_AUTHZ",
+        value = "false"
+      }
+    ]
+
+
+    command = ["--tls-cert=server.crt","--tls-key=server.key","--really-enable-open-registration", "--config=/usr/config/dendrite-zion.yaml"]
 
     mountPoints = [{
       containerPath = "/etc/dendrite"
