@@ -66,41 +66,46 @@ describe('disable channel', () => {
         // create all the users for the test
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         await bob.fundWallet()
-        const roomId = await createTestSpaceWithEveryoneRole(
+        const roomId = (await createTestSpaceWithEveryoneRole(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Private,
             },
-        )
+        )) as RoomIdentifier
 
         /** Act */
 
-        await bob.inviteUser(roomId as RoomIdentifier, alice.matrixUserId as string)
-        await alice.joinRoom(roomId as RoomIdentifier)
+        await bob.inviteUser(roomId, alice.matrixUserId as string)
+        await alice.joinRoom(roomId)
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId?.matrixRoomId as string, true)
+        await bob.setSpaceAccess(roomId.matrixRoomId, true)
 
         try {
-            await alice.scrollback(roomId as RoomIdentifier, 30)
+            await alice.scrollback(roomId, 30)
         } catch (e) {
             // we want to suppress error since user should leave the disabled room
             // by way of a rejection on the promise
             console.log(e)
         }
 
-        await bob.setSpaceAccess(roomId?.matrixRoomId as string, false)
-
-        /** Assert */
+        // space is disabled. Should not be able to join. See issue for more details and
+        // fix this test if it is not the desired behavior.
+        // https://linear.app/hnt-labs/issue/HNT-509/permissionsdisablechanneltest-clarify-test-logic
         await waitFor(
-            () => expect(alice.joinRoom(roomId as RoomIdentifier)).rejects.toThrow(),
+            () => expect(alice.joinRoom(roomId)).rejects.toThrow(),
             TestConstants.DefaultWaitForTimeout,
         )
-        await bob.inviteUser(roomId as RoomIdentifier, alice.matrixUserId as string)
+
+        // re-enable space
+        await bob.setSpaceAccess(roomId.matrixRoomId, false)
+
+        /** Assert */
+        await bob.inviteUser(roomId, alice.matrixUserId as string)
         await waitFor(
-            () => expect(alice.joinRoom(roomId as RoomIdentifier)).resolves.toBeDefined(),
+            () => expect(alice.joinRoom(roomId)).resolves.toBeDefined(),
             TestConstants.DefaultWaitForTimeout,
         )
     })
