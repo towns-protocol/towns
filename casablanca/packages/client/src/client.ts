@@ -3,6 +3,8 @@ import {
     isChannelStreamId,
     isSpaceStreamId,
     makeEvent,
+    makeUniqueChannelStreamId,
+    makeUniqueSpaceStreamId,
     makeUserStreamId,
     Payload,
     SignerContext,
@@ -14,7 +16,6 @@ import {
     ZionServiceInterface,
 } from '@zion/core'
 import debug from 'debug'
-import { Wallet } from 'ethers'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 
@@ -151,7 +152,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.initUserStream(streamId, userStream)
     }
 
-    async createSpace(spaceId: string): Promise<void> {
+    async createSpace(spaceId?: string): Promise<{ streamId: string }> {
+        spaceId = spaceId ?? makeUniqueSpaceStreamId()
         logCall('createSpace', this.address, spaceId)
         assert(this.userStreamId !== undefined, 'streamId must be set')
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
@@ -177,9 +179,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         await this.rpcClient.createSpace({
             events: [inceptionEvent, joinEvent],
         })
+
+        return { streamId: spaceId! }
     }
 
-    async createChannel(channelId: string, spaceId: string): Promise<void> {
+    async createChannel(spaceId: string, channelId?: string): Promise<{ streamId: string }> {
+        channelId = channelId ?? makeUniqueChannelStreamId()
         logCall('createChannel', this.address, channelId, spaceId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
@@ -205,6 +210,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         await this.rpcClient.createChannel({
             events: [inceptionEvent, joinEvent],
         })
+
+        return { streamId: channelId! }
     }
 
     private async initStream(streamId: string): Promise<void> {

@@ -140,11 +140,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         bobsClient.startSync(1000)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeDefined()
 
         await expect(
-            bobsClient.createChannel(makeChannelStreamId('bobs-channel-' + genId()), bobsSpaceId),
-        ).resolves.toBeUndefined()
+            bobsClient.createChannel(bobsSpaceId, makeChannelStreamId('bobs-channel-' + genId())),
+        ).toResolve()
 
         await done.expectToSucceed()
 
@@ -165,11 +165,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         bobsClient.startSync(1000)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeDefined()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
-        await expect(bobsClient.createChannel(bobsChannelId, bobsSpaceId)).resolves.toBeUndefined()
-        await expect(waitForStream(bobsClient, bobsChannelId)).resolves.toBeUndefined()
+        await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
+        await expect(waitForStream(bobsClient, bobsChannelId)).toResolve()
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
@@ -199,11 +199,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         bobsClient.startSync(1000)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeUndefined()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
-        await expect(bobsClient.createChannel(bobsChannelId, bobsSpaceId)).resolves.toBeUndefined()
-        await expect(waitForStream(bobsClient, bobsChannelId)).resolves.toBeUndefined()
+        await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
+        await expect(waitForStream(bobsClient, bobsChannelId)).toResolve()
 
         // Alice gest created.
         await expect(alicesClient.createNewUser()).resolves.toBeUndefined()

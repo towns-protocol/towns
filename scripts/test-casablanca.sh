@@ -9,4 +9,4 @@
 # ./scripts/start-local-casablanca.sh
 #
 
-yarn workspace harmony run test-csb
+yarn workspace harmony run csb:test-remote

@@ -21,6 +21,9 @@ export const makeSpaceStreamId = (identity: string): string =>
 export const makeChannelStreamId = (identity: string): string =>
     makeStreamId(SteamPrefix.Channel, identity)
 
+export const makeUniqueSpaceStreamId = (): string => makeStreamId(SteamPrefix.Space, genId())
+export const makeUniqueChannelStreamId = (): string => makeStreamId(SteamPrefix.Channel, genId())
+
 export const isUserStreamId = (streamId: string): boolean => streamId.startsWith(SteamPrefix.User)
 export const isSpaceStreamId = (streamId: string): boolean => streamId.startsWith(SteamPrefix.Space)
 export const isChannelStreamId = (streamId: string): boolean =>

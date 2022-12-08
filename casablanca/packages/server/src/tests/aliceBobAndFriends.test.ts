@@ -127,7 +127,7 @@ const converse = async (url: string, conversation: string[][], testName: string)
 
     log(`${testName} creating channel`)
     const channelId = makeChannelStreamId(genId())
-    await expect(alice.client.createChannel(channelId, spaceId)).toResolve()
+    await expect(alice.client.createChannel(spaceId, channelId)).toResolve()
     await expect(waitForStream(alice.client, channelId)).toResolve()
 
     // Invite and join.
