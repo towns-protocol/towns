@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { TokenProps } from '@components/Web3/CreateSpaceFormV2/types'
+import { TokenProps } from '@components/Tokens'
 import { queryClient } from 'api/queryClient'
 import { axiosClient } from '../apiClient'
 

@@ -7,7 +7,7 @@ import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/Upload
 import { getCachedTokensForWallet } from 'api/lib/tokens'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
-import { TokenAvatar } from './TokenAvatar'
+import { TokenAvatar } from '../../../Tokens/TokenAvatar'
 import { CreateSpaceFormState } from '../types'
 import { SPACE_ICON_URL, SPACE_NAME } from '../constants'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Avatar, Box, IconButton, Text } from '@ui'
-import { TokenProps } from '../types'
+import { TokenProps } from './types'
 
 export const TokenAvatar = (props: Partial<TokenProps>) => {
     const { imgSrc, label, contractAddress, onClick } = props

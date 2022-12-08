@@ -4,7 +4,7 @@ import { useWeb3Context, useZionClient } from 'use-zion-client'
 import { Box, ErrorMessage, FormRender, Heading, RadioCard } from '@ui'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
-import { TokenList } from './TokenList'
+import { TokenList } from '../../../Tokens/TokenList'
 import { CreateSpaceFormState } from '../types'
 import { EVERYONE, MEMBERSHIP_TYPE, TOKENS, TOKEN_HOLDERS } from '../constants'
 

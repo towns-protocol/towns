@@ -3,8 +3,8 @@ import { UseFormReturn } from 'react-hook-form'
 import { getZionTokenAddress } from 'use-zion-client'
 import { Box, Checkbox, Text, TextField } from '@ui'
 import { getCachedTokensForWallet, useTokensForWallet } from 'api/lib/tokens'
-import { TokenProps } from '../types'
 import { TokenAvatar } from './TokenAvatar'
+import { TokenProps } from './types'
 
 const shortAddress = (address: string) => {
     const start = address.slice(0, 5)
