@@ -1,21 +1,20 @@
+/* eslint-disable @typescript-eslint/unbound-method */
+import { useMemo } from 'react'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
     EditMessageOptions,
     PowerLevel,
     Room,
-    RoomIdentifier,
     SendMessageOptions,
     SendTextMessageOptions,
 } from '../types/matrix-types'
-
-/* eslint-disable @typescript-eslint/unbound-method */
+import { RoomIdentifier } from '../types/room-identifier'
 import { IZionServerVersions, ZionClientEvent } from '../client/ZionClientTypes'
 import { useLoginWithPassword } from './MatrixClient/useLoginWithPassword'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
-import { useMemo } from 'react'
 import { useRegisterPasswordUser } from './MatrixClient/useRegisterPasswordUser'
 import { useZionContext } from '../components/ZionContextProvider'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'

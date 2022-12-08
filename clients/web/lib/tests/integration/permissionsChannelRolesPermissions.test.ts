@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { RoomIdentifier, RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,

@@ -1,5 +1,6 @@
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
-import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'

@@ -10,7 +10,8 @@ import {
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { makeRoomIdentifier, Mention, RoomIdentifier } from '../../types/matrix-types'
+import { Mention } from '../../types/matrix-types'
+import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
 import { ZionAccountDataType } from '../../client/ZionClientTypes'
 

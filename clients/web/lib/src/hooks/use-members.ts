@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useRoom } from './use-room'
-import { RoomIdentifier, RoomMember } from '../types/matrix-types'
+import { RoomMember } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 
 /**
  * Returns all members from all rooms

@@ -14,13 +14,8 @@ import { useFavIconBadge } from '../hooks/ZionContext/useFavIconBadge'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
-import {
-    makeRoomIdentifier,
-    Room,
-    RoomIdentifier,
-    SpaceHierarchies,
-    SpaceItem,
-} from '../types/matrix-types'
+import { Room, SpaceHierarchies, SpaceItem } from '../types/matrix-types'
+import { makeRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
 import { Web3ContextProvider } from './Web3ContextProvider'
 
 export interface IZionContext {

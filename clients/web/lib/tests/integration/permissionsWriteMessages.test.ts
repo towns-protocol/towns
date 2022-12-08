@@ -8,7 +8,7 @@ import {
 
 import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
-import { RoomIdentifier } from 'use-zion-client/src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 

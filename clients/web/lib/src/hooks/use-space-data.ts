@@ -4,12 +4,12 @@ import {
     ChannelGroup,
     InviteData,
     Room,
-    RoomIdentifier,
     SpaceChild,
     SpaceData,
     SpaceHierarchies,
     SpaceHierarchy,
 } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 import { toZionRoom } from '../store/use-matrix-store'
 import { useZionClient } from './use-zion-client'
 import { useRoom } from './use-room'

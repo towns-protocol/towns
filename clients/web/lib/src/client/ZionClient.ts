@@ -25,10 +25,10 @@ import {
     EditMessageOptions,
     PowerLevel,
     PowerLevels,
-    RoomIdentifier,
     SendMessageOptions,
     SendTextMessageOptions,
 } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 import { RoleIdentifier } from '../types/web3-types'
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'

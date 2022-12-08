@@ -6,12 +6,8 @@ import {
     Visibility,
 } from 'matrix-js-sdk'
 import { sleepUntil } from '../../utils/zion-utils'
-import {
-    CreateSpaceInfo,
-    makeRoomIdentifier,
-    RoomIdentifier,
-    RoomVisibility,
-} from '../../types/matrix-types'
+import { CreateSpaceInfo, RoomVisibility } from '../../types/matrix-types'
+import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 
 export const createZionSpace = async (props: {
     matrixClient: MatrixClient

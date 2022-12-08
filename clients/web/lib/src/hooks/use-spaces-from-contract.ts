@@ -1,10 +1,9 @@
-import { SpaceIdentifier, ZionClientEvent } from '../client/ZionClientTypes'
 import { useEffect, useState } from 'react'
-
+import { SpaceIdentifier, ZionClientEvent } from '../client/ZionClientTypes'
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
 import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
-import { RoomIdentifier } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 
 type UseSpaceFromContractReturn = {
     spaces: SpaceIdentifier[]

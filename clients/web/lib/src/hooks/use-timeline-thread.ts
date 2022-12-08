@@ -1,4 +1,4 @@
-import { RoomIdentifier } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 import { ThreadStats, TimelineEvent, ZTEvent } from '../types/timeline-types'
 import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
 

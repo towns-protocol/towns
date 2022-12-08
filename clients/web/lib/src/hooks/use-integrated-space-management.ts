@@ -1,4 +1,6 @@
-import { CreateChannelInfo, CreateSpaceInfo, RoomIdentifier } from '../types/matrix-types'
+import { useCallback } from 'react'
+import { CreateChannelInfo, CreateSpaceInfo } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 import {
     createExternalTokenEntitlements,
     createPermissions,
@@ -8,7 +10,6 @@ import {
 
 import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../client/web3/ZionContractTypes'
-import { useCallback } from 'react'
 import { useZionClient } from './use-zion-client'
 import { useZionContext } from '../components/ZionContextProvider'
 

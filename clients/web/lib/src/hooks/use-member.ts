@@ -10,7 +10,8 @@ import {
 } from 'matrix-js-sdk'
 import { useEffect, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-import { RoomMember, Membership, RoomIdentifier } from '../types/matrix-types'
+import { RoomMember, Membership } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 
 /// useMember provides the current membership state, displayname, avatar, etc of a user in a room.
 /// note: it might be useful to combine with useUser, which provides the basic user info.

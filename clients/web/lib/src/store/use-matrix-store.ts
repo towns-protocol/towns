@@ -1,5 +1,6 @@
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import { makeRoomIdentifier, Membership, Room, RoomMember, SpaceChild } from '../types/matrix-types'
+import { Membership, Room, RoomMember, SpaceChild } from '../types/matrix-types'
+import { makeRoomIdentifier } from '../types/room-identifier'
 import create, { SetState, StateCreator } from 'zustand'
 import { persist, PersistOptions } from 'zustand/middleware'
 

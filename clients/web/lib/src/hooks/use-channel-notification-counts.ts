@@ -1,4 +1,4 @@
-import { RoomIdentifier } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 import { useFullyReadMarker } from './use-fully-read-marker'
 
 export function useChannelNotificationCounts(channelId: RoomIdentifier) {

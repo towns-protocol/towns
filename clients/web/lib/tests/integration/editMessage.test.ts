@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 

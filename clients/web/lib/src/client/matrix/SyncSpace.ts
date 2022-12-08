@@ -1,7 +1,7 @@
 import { MatrixClient, Room as MatrixRoom } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
-import { RoomIdentifier } from '../../types/matrix-types'
+import { RoomIdentifier } from '../../types/room-identifier'
 
 export type MatrixSpaceHierarchy = {
     root: IHierarchyRoom

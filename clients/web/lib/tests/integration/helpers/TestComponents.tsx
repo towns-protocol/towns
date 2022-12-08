@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { LoginStatus } from '../../../src/hooks/login'
-import { RoomIdentifier } from '../../../src/types/matrix-types'
+import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionAuth } from '../../../src/client/ZionClientTypes'
 import { getUsernameFromId } from '../../../src/types/user-identifier'
 import { useCredentialStore } from '../../../src/store/use-credential-store'

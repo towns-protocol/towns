@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { makeRoomIdentifierFromSlug, RoomIdentifier } from '../types/matrix-types'
+import { makeRoomIdentifierFromSlug, RoomIdentifier } from '../types/room-identifier'
 import { useSpaceId } from '../hooks/use-space-id'
 
 export interface IChannelContext {

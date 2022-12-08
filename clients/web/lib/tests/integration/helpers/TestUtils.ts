@@ -1,10 +1,9 @@
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    RoomIdentifier,
     RoomVisibility,
 } from 'use-zion-client/src/types/matrix-types'
-
+import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { EventTimeline } from 'matrix-js-sdk'
 import { TestConstants } from './TestConstants'
 import { ZionTestClient } from './ZionTestClient'

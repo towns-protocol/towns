@@ -5,7 +5,8 @@ import {
     JoinRule,
     RestrictedAllowType,
 } from 'matrix-js-sdk'
-import { Channel, Membership, Mention, PowerLevels, RoomIdentifier } from './matrix-types'
+import { Channel, Membership, Mention, PowerLevels } from './matrix-types'
+import { RoomIdentifier } from './room-identifier'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that

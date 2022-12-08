@@ -2,11 +2,11 @@ import { MatrixClient } from 'matrix-js-sdk'
 import {
     MessageContent,
     MessageType,
-    RoomIdentifier,
     SendMessageOptions,
     ImageMessageContent,
     ZionTextMessageContent,
 } from '../../types/matrix-types'
+import { RoomIdentifier } from '../../types/room-identifier'
 
 function getMessageContent(message: string, options: SendMessageOptions): MessageContent {
     const defaultContent: MessageContent = {

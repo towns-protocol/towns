@@ -57,7 +57,6 @@ export type {
     PowerLevels,
     PowerLevelDefinition,
     Room,
-    RoomIdentifier,
     RoomMember,
     Rooms,
     SendMessageOptions,
@@ -69,14 +68,10 @@ export type {
     ZionTextMessageContent,
 } from './types/matrix-types'
 
-export {
-    isRoom,
-    makeRoomIdentifier,
-    Membership,
-    MessageType,
-    RoomVisibility,
-    toRoomIdentifier,
-} from './types/matrix-types'
+export { isRoom, Membership, MessageType, RoomVisibility } from './types/matrix-types'
+
+export type { RoomIdentifier } from './types/room-identifier'
+export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'
 
 export type {
     FullyReadMarker,

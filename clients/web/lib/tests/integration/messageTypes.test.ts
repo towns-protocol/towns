@@ -3,10 +3,10 @@
 import {
     ImageMessageContent,
     MessageType,
-    RoomIdentifier,
     RoomVisibility,
     ZionTextMessageContent,
 } from '../../src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestSpaceWithZionMemberRole,
     makeUniqueName,

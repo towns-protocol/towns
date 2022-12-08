@@ -1,5 +1,6 @@
 import { EventType, ISendEventResponse, MatrixClient } from 'matrix-js-sdk'
-import { PowerLevel, RoomIdentifier } from '../../types/matrix-types'
+import { PowerLevel } from '../../types/matrix-types'
+import { RoomIdentifier } from '../../types/room-identifier'
 
 export function setZionPowerLevel(
     matrixClient: MatrixClient,

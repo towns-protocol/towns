@@ -2,7 +2,8 @@
 import { waitFor } from '@testing-library/dom'
 import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
-import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import {
     createTestSpaceWithZionMemberRole,

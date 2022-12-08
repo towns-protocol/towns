@@ -1,5 +1,5 @@
 import { useZionContext } from '../components/ZionContextProvider'
-import { RoomIdentifier } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 
 export function useSpaceHierarchy(spaceId: RoomIdentifier) {
     const { spaceHierarchies } = useZionContext()

@@ -7,7 +7,8 @@ import {
     TimelineEvent,
 } from '../../src/types/timeline-types'
 import React, { useCallback } from 'react'
-import { RoomIdentifier, RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
     createTestChannelWithSpaceRoles,

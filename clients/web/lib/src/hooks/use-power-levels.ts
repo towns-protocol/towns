@@ -9,7 +9,8 @@ import {
 } from 'matrix-js-sdk'
 import { useEffect, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-import { RoomIdentifier, PowerLevels } from '../types/matrix-types'
+import { PowerLevels } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 import { enrichPowerLevels } from '../client/matrix/PowerLevels'
 
 export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels => {

@@ -8,7 +8,8 @@ import {
     RoomEvent,
 } from 'matrix-js-sdk'
 import { ZionClient } from '../../client/ZionClient'
-import { makeRoomIdentifier, SpaceItem } from '../../types/matrix-types'
+import { SpaceItem } from '../../types/matrix-types'
+import { makeRoomIdentifier } from '../../types/room-identifier'
 
 export function useSpaces(
     client: ZionClient | undefined,

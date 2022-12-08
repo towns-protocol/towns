@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { RoomIdentifier, toRoomIdentifier } from '../types/matrix-types'
+import { RoomIdentifier, toRoomIdentifier } from '../types/room-identifier'
 import { useZionContext } from './ZionContextProvider'
 
 export interface ISpaceContext {

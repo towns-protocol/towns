@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-import { RoomIdentifier, Room } from '../types/matrix-types'
+import { Room } from '../types/matrix-types'
+import { RoomIdentifier } from '../types/room-identifier'
 
 export function useRoom(roomId?: RoomIdentifier): Room | undefined {
     const { rooms } = useZionContext()

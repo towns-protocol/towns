@@ -6,7 +6,7 @@ import {
     RegisterRequest,
 } from '../../../src/hooks/login'
 
-import { RoomIdentifier } from '../../../src/types/matrix-types'
+import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'

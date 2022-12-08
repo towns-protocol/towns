@@ -8,7 +8,8 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
-import { RoomIdentifier, RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 
