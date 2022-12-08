@@ -1,4 +1,4 @@
-import { RoomIdentifier } from 'types/matrix-types'
+import { RoomIdentifier } from '../types/matrix-types'
 import { useChannelContext } from '../components/ChannelContextProvider'
 
 export function useChannelId(): RoomIdentifier {

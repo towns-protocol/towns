@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
-import { DataTypes } from 'client/web3/shims/ZionSpaceManagerShim'
-import { RoomIdentifier } from 'types/matrix-types'
+import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
+import { RoomIdentifier } from '../types/matrix-types'
 
 type UseSpaceFromContractReturn = {
     spaces: SpaceIdentifier[]
@@ -55,11 +55,11 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
     return { spaces, isLoading, isError }
 }
 
-export function useSpaceFromContract(spaceId: RoomIdentifier): {
+export function useSpaceFromContract(spaceId?: RoomIdentifier): {
     isLoading: boolean
     isError: boolean
     space: SpaceIdentifier | undefined
 } {
     const { spaces, isLoading, isError } = useSpacesFromContract()
-    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId.matrixRoomId) }
+    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId?.matrixRoomId) }
 }

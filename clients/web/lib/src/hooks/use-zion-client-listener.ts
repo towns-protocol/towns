@@ -4,7 +4,7 @@ import { ZionClient } from '../client/ZionClient'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
-import { ZionOnboardingOpts } from 'client/ZionClientTypes'
+import { ZionOnboardingOpts } from '../client/ZionClientTypes'
 import { LoginStatus } from './login'
 
 export const useZionClientListener = (

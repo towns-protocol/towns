@@ -1,8 +1,8 @@
-import { ZionClient } from 'client/ZionClient'
+import { ZionClient } from '../../../client/ZionClient'
 import { TypedEventEmitter } from 'matrix-js-sdk/lib/models/typed-event-emitter'
 import { IOnboardingState, ObState_Error } from './IOnboardingState'
 import { User as MatrixUser } from 'matrix-js-sdk'
-import { ZionOnboardingOpts } from 'client/ZionClientTypes'
+import { ZionOnboardingOpts } from '../../../client/ZionClientTypes'
 
 export enum OnboardingStepEvent {
     StateUpdate = 'state-update',

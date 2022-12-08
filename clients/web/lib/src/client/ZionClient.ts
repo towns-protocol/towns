@@ -53,7 +53,7 @@ import { ZionRoleManagerShim } from './web3/shims/ZionRoleManagerShim'
 import { loadOlm } from './loadOlm'
 import { TokenEntitlementModuleShim } from './web3/shims/TokenEntitlementModuleShim'
 import { UserGrantedEntitlementModuleShim } from './web3/shims/UserGrantedEntitlementModuleShim'
-import { FullyReadMarker } from 'types/timeline-types'
+import { FullyReadMarker } from '../types/timeline-types'
 
 /***
  * Zion Client

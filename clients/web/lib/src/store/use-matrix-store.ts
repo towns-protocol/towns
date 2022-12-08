@@ -5,7 +5,7 @@ import { persist, PersistOptions } from 'zustand/middleware'
 
 import { Room as MatrixRoom } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
-import { ZionClientEvent } from 'client/ZionClientTypes'
+import { ZionClientEvent } from '../client/ZionClientTypes'
 
 export type MatrixStoreStates = {
     isAuthenticated: boolean

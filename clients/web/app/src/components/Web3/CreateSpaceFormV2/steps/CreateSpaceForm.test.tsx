@@ -137,8 +137,9 @@ describe('CreateSpaceStep1', () => {
         // setup
         vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
             return {
-                createChannelWithSpaceRoles: () => Promise.resolve(),
-                createSpaceWithMemberRole: () => Promise.resolve({ slug: 'some-room-id' }),
+                createChannelWithSpaceRoles: () => Promise.resolve(undefined),
+                createSpaceWithMemberRole: () =>
+                    Promise.resolve({ slug: 'some-room-id', matrixRoomId: 'some-room-id' }),
                 getRolesFromSpace: () => Promise.resolve(undefined),
             }
         })
@@ -182,7 +183,7 @@ describe('CreateSpaceStep1', () => {
         // setup
         vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
             return {
-                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createChannelWithSpaceRoles: () => Promise.resolve(undefined),
                 createSpaceWithMemberRole: () => Promise.resolve(undefined),
                 getRolesFromSpace: () => Promise.resolve(undefined),
             }
@@ -228,7 +229,7 @@ describe('CreateSpaceStep1', () => {
 
         vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
             return {
-                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createChannelWithSpaceRoles: () => Promise.resolve(undefined),
                 createSpaceWithMemberRole: createSpaceWithMemberRoleSpy,
                 getRolesFromSpace: () => Promise.resolve(undefined),
             }
@@ -281,7 +282,7 @@ describe('CreateSpaceStep1', () => {
 
         vi.spyOn(zionClient, 'useIntegratedSpaceManagement').mockImplementation(() => {
             return {
-                createChannelWithSpaceRoles: () => Promise.resolve(),
+                createChannelWithSpaceRoles: () => Promise.resolve(undefined),
                 createSpaceWithMemberRole: createSpaceWithMemberRoleSpy,
                 getRolesFromSpace: () => Promise.resolve(undefined),
             }

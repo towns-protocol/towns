@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react'
 import { ethers } from 'ethers'
 import { useAccount, useNetwork, useSignMessage } from 'wagmi'
 import { IWeb3Context } from '../../components/Web3ContextProvider'
-import { WalletStatus } from 'types/web3-types'
+import { WalletStatus } from '../../types/web3-types'
 
 interface IWeb3ProviderWrapper {
     provider: ethers.providers.Web3Provider

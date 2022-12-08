@@ -1,4 +1,4 @@
-import { CreateChannelInfo, CreateSpaceInfo, RoomIdentifier } from 'types/matrix-types'
+import { CreateChannelInfo, CreateSpaceInfo, RoomIdentifier } from '../types/matrix-types'
 import {
     createExternalTokenEntitlements,
     createPermissions,

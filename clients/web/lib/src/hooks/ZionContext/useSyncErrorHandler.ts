@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ZionClient } from 'client/ZionClient'
+import { ZionClient } from '../../client/ZionClient'
 import { ClientEvent } from 'matrix-js-sdk'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
 import { useCredentialStore } from '../../store/use-credential-store'

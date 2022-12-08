@@ -1,4 +1,4 @@
-import { PowerLevelDefinition } from 'types/matrix-types'
+import { PowerLevelDefinition } from '../types/matrix-types'
 
 export const powerLevelDefinitions: PowerLevelDefinition[] = [
     {
