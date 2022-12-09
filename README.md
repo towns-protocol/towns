@@ -33,6 +33,13 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 1. Update submodules: `git submodule update --init --recursive`
 
+Pro Tip: If you end up with .DS_Store files in your submodules, you can exclude them globally using
+
+```
+    echo .DS_Store >> ~/.gitignore_global
+    git config --global core.excludesfile ~/.gitignore_global
+```
+
 2. Run `yarn install && yarn prepare` from the root of the repository
 
 ## Running everything locally
