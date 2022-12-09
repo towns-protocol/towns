@@ -59,14 +59,7 @@ Open VScode in the root of this directory: `code .`
 
 Launch local server via .vscode/tasks.json: `CMD+P task ~Start Local Development~`
 
-This workflow
-
-- Reruns yarn install
-- Launches local dendrite
-- Starts a local block chain
-- Deploys zion contracts
-- starts the app, pointing to staging
-- starts the sample-app, pointing to urls in .env.local
+This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and starts everything needed to work and run integration tests locally.
 
 ![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
 
