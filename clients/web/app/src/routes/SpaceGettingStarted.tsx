@@ -1,20 +1,15 @@
 import React from 'react'
-import { Outlet } from 'react-router'
-import { useSpaceData } from 'use-zion-client'
-import { Heading, Stack } from '@ui'
+import { Stack } from '@ui'
+import { BackgroundGrid } from '@components/BackgroundGrid'
+import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'
 
 export const SpaceGettingStarted = () => {
-    const space = useSpaceData()
-
     return (
         <Stack>
-            <Stack grow horizontal padding="lg">
-                <Heading level={1}>Welcome to {space?.name}</Heading>
+            <BackgroundGrid />
+            <Stack position="relative">
+                <SpaceOwnerLanding />
             </Stack>
-            <Stack grow gap>
-                <Stack />
-            </Stack>
-            <Outlet />
         </Stack>
     )
 }

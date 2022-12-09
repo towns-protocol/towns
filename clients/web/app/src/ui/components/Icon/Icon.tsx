@@ -676,6 +676,36 @@ const Wand = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
         />
     </svg>
 ))
+const PersonAdd = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M10 9.5C11.3807 9.5 12.5 8.38071 12.5 7C12.5 5.61929 11.3807 4.5 10 4.5C8.61929 4.5 7.5 5.61929 7.5 7C7.5 8.38071 8.61929 9.5 10 9.5ZM10 12C12.7614 12 15 9.76142 15 7C15 4.23858 12.7614 2 10 2C7.23858 2 5 4.23858 5 7C5 9.76142 7.23858 12 10 12Z"
+            fill="currentColor"
+        />
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M10 15.2499C7.65545 15.2499 5.04282 17.0053 4.26629 21.0821C4.14997 21.6928 3.55278 22.095 2.93242 21.9805C2.31207 21.866 1.90346 21.2782 2.01978 20.6675C2.95749 15.7445 6.3447 13 10 13C13.6553 13 17.0425 15.7445 17.9802 20.6675C18.0965 21.2782 17.6879 21.866 17.0676 21.9805C16.4472 22.095 15.85 21.6928 15.7337 21.0821C14.9572 17.0053 12.3445 15.2499 10 15.2499Z"
+            fill="currentColor"
+        />
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M21 7.5C21 7.22386 20.5523 7 20 7C19.4477 7 19 7.22386 19 7.5V10H16.5C16.2239 10 16 10.4477 16 11C16 11.5523 16.2239 12 16.5 12H19V14.5C19 14.7761 19.4477 15 20 15C20.5523 15 21 14.7761 21 14.5V12H23.5C23.7761 12 24 11.5523 24 11C24 10.4477 23.7761 10 23.5 10H21V7.5Z"
+            fill="currentColor"
+        />
+    </svg>
+))
 
 const iconMap = {
     at: AtIcon,
@@ -703,6 +733,7 @@ const iconMap = {
     metamask: MetamaskIcon,
     newmessage: NewMessageIcon,
     numberedlist: NumberedListIcon,
+    personAdd: PersonAdd,
     pin: PinIcon,
     plus: PlusIcon,
     profile: ProfileIcon,

@@ -13,6 +13,7 @@ type Props = {
     icon?: IconName
     disabled?: boolean
     minWidth?: BoxProps['minWidth']
+    width?: BoxProps['width']
     animate?: boolean
     onClick?: (e: React.MouseEvent) => void
 } & Omit<

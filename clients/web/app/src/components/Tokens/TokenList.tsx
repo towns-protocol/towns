@@ -3,14 +3,9 @@ import { UseFormReturn } from 'react-hook-form'
 import { getZionTokenAddress } from 'use-zion-client'
 import { Box, Checkbox, Text, TextField } from '@ui'
 import { getCachedTokensForWallet, useTokensForWallet } from 'api/lib/tokens'
+import { shortAddress } from 'ui/utils/utils'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
-
-const shortAddress = (address: string) => {
-    const start = address.slice(0, 5)
-    const end = address.slice(-3)
-    return `${start}...${end}`
-}
 
 export const searchArrayOfData = (array: TokenProps[], query: string): TokenProps[] => {
     const searchTerm = query

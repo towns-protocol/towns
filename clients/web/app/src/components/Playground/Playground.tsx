@@ -15,6 +15,7 @@ import {
     Icon,
     IconName,
     Paragraph,
+    Pill,
     RadioCard,
     RadioSelect,
     Stack,
@@ -30,6 +31,8 @@ import { richText } from '@components/RichText/RichTextEditor.css'
 import { isDev } from 'utils'
 import { FormRender } from 'ui/components/Form/Form'
 import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/UploadSpaceIcon'
+import { AddressPill } from '@components/AddressPill'
+import { TextFieldWithPill } from '@components/TextFieldWithPill'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -192,6 +195,13 @@ export const Playground = () => {
                         Action
                     </Button>
                 </Box>
+            </Container>
+
+            <Container label="Pills">
+                <Divider label="Address Pill" />
+                <div>
+                    <AddressPill address="0x17BA011308A820332fD0245a89E0551b6772d826" />
+                </div>
             </Container>
 
             <Container label="Icons">
@@ -368,6 +378,27 @@ export const Playground = () => {
                     <input type="submit" />
                 </Form>
             </Container>
+
+            <Container darkOnly label="TextField With Pills inside">
+                <FormRender<{
+                    spaceIcon: File
+                }>
+                    mode="onChange"
+                    onSubmit={(data) => {
+                        console.log(data)
+                    }}
+                >
+                    {({ register, formState, setError, clearErrors }) => (
+                        <TextFieldWithPill
+                            name="pills"
+                            register={register}
+                            pills={['abcd', '1234']}
+                            renderPill={(arg) => <Pill>{arg}</Pill>}
+                        />
+                    )}
+                </FormRender>
+            </Container>
+
             <Container darkOnly label="Upload">
                 <FormRender<{
                     spaceIcon: File
