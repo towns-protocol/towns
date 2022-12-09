@@ -2,20 +2,12 @@ import {
     ClientEvent,
     EventType,
     MatrixClient,
-    MatrixEvent,
-    MatrixEventEvent,
     Room as MatrixRoom,
     PendingEventOrdering,
     RelationType,
-    RoomEvent,
-    RoomMemberEvent,
     User,
     UserEvent,
-    IRoomTimelineData,
     createClient,
-    RoomStateEvent,
-    RoomState,
-    RoomMember,
     MatrixError,
 } from 'matrix-js-sdk'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction } from 'ethers'
@@ -45,7 +37,7 @@ import { setZionPowerLevel } from './matrix/SetPowerLevels'
 import { syncZionSpace } from './matrix/SyncSpace'
 import { CustomMemoryStore } from './store/CustomMatrixStore'
 import { toZionRoom } from '../store/use-matrix-store'
-import { ISyncStateData, SyncState } from 'matrix-js-sdk/lib/sync'
+import { SyncState } from 'matrix-js-sdk/lib/sync'
 import { IStore } from 'matrix-js-sdk/lib/store'
 import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerShim'
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
@@ -802,82 +794,6 @@ export class ZionClient {
         }
         const result = await this.matrixClient.sendReadReceipt(event)
         this.log('read receipt sent', result)
-    }
-
-    /************************************************
-     * on
-     * Some matrix events are only emitted by the matrixClient,
-     * not through the room object.
-     ************************************************/
-    public on(
-        event:
-            | ClientEvent.Sync
-            | ClientEvent.Room
-            | MatrixEventEvent.Decrypted
-            | MatrixEventEvent.Replaced
-            | MatrixEventEvent.VisibilityChange
-            | RoomEvent.Receipt
-            | RoomEvent.Redaction
-            | RoomEvent.Timeline
-            | RoomEvent.MyMembership
-            | RoomEvent.Name
-            | RoomMemberEvent.Membership
-            | RoomMemberEvent.Name
-            | RoomStateEvent.Members
-            | RoomStateEvent.NewMember,
-
-        callback:
-            | ((event: MatrixEvent) => void)
-            | ((
-                  event: MatrixEvent,
-                  room: MatrixRoom,
-                  toStartOfTimeline: boolean,
-                  removed: boolean,
-                  data: IRoomTimelineData,
-              ) => void)
-            | ((state: SyncState, lastState?: SyncState, data?: ISyncStateData) => void)
-            | ((room: MatrixRoom) => void)
-            | ((event: MatrixEvent, member: RoomMember, oldMembership: string | null) => void)
-            | ((event: MatrixEvent, roomState: RoomState, theMember: RoomMember) => void),
-    ) {
-        this.matrixClient.on(event, callback)
-    }
-    /************************************************
-     * off
-     * Some matrix events are only emitted by the matrixClient,
-     * not through the room object.
-     ************************************************/
-    public off(
-        event:
-            | ClientEvent.Sync
-            | ClientEvent.Room
-            | MatrixEventEvent.Decrypted
-            | MatrixEventEvent.Replaced
-            | MatrixEventEvent.VisibilityChange
-            | RoomEvent.Receipt
-            | RoomEvent.Redaction
-            | RoomEvent.Timeline
-            | RoomEvent.MyMembership
-            | RoomEvent.Name
-            | RoomMemberEvent.Membership
-            | RoomMemberEvent.Name
-            | RoomStateEvent.Members
-            | RoomStateEvent.NewMember,
-        callback:
-            | ((event: MatrixEvent) => void)
-            | ((
-                  event: MatrixEvent,
-                  room: MatrixRoom,
-                  toStartOfTimeline: boolean,
-                  removed: boolean,
-                  data: IRoomTimelineData,
-              ) => void)
-            | ((state: SyncState, lastState?: SyncState, data?: ISyncStateData) => void)
-            | ((room: MatrixRoom) => void)
-            | ((event: MatrixEvent, member: RoomMember, oldMembership: string | null) => void)
-            | ((event: MatrixEvent, roomState: RoomState, theMember: RoomMember) => void),
-    ) {
-        this.matrixClient.off(event, callback)
     }
 
     /************************************************

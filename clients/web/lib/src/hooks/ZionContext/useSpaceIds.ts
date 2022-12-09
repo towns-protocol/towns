@@ -59,11 +59,11 @@ export function useSpacesIds(client: ZionClient | undefined): {
             }
         }
         // for some stupid reason the matrix client stores the room after sending membership events
-        client.on(RoomEvent.MyMembership, onNewRoomOrMyMembership)
-        client.on(ClientEvent.Room, onNewRoomOrMyMembership)
+        client.matrixClient.on(RoomEvent.MyMembership, onNewRoomOrMyMembership)
+        client.matrixClient.on(ClientEvent.Room, onNewRoomOrMyMembership)
         return () => {
-            client.off(RoomEvent.MyMembership, onNewRoomOrMyMembership)
-            client.off(ClientEvent.Room, onNewRoomOrMyMembership)
+            client.matrixClient.off(RoomEvent.MyMembership, onNewRoomOrMyMembership)
+            client.matrixClient.off(ClientEvent.Room, onNewRoomOrMyMembership)
         }
     }, [client])
 

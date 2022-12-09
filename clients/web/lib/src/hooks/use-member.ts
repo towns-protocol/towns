@@ -76,18 +76,18 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
             }
         }
 
-        client.on(ClientEvent.Room, onRoomEvent)
-        client.on(RoomMemberEvent.Membership, onRoomMembership)
-        client.on(RoomMemberEvent.Name, onRoomMembership)
-        client.on(RoomStateEvent.Members, onMembersUpdated)
-        client.on(RoomStateEvent.NewMember, onMembersUpdated)
+        client.matrixClient.on(ClientEvent.Room, onRoomEvent)
+        client.matrixClient.on(RoomMemberEvent.Membership, onRoomMembership)
+        client.matrixClient.on(RoomMemberEvent.Name, onRoomMembership)
+        client.matrixClient.on(RoomStateEvent.Members, onMembersUpdated)
+        client.matrixClient.on(RoomStateEvent.NewMember, onMembersUpdated)
 
         return () => {
-            client.off(ClientEvent.Room, onRoomEvent)
-            client.off(RoomMemberEvent.Membership, onRoomMembership)
-            client.off(RoomMemberEvent.Name, onRoomMembership)
-            client.off(RoomStateEvent.Members, onMembersUpdated)
-            client.off(RoomStateEvent.NewMember, onMembersUpdated)
+            client.matrixClient.off(ClientEvent.Room, onRoomEvent)
+            client.matrixClient.off(RoomMemberEvent.Membership, onRoomMembership)
+            client.matrixClient.off(RoomMemberEvent.Name, onRoomMembership)
+            client.matrixClient.off(RoomStateEvent.Members, onMembersUpdated)
+            client.matrixClient.off(RoomStateEvent.NewMember, onMembersUpdated)
             setRoomMember(undefined)
         }
     }, [client, userId, roomId])

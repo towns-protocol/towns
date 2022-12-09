@@ -32,9 +32,9 @@ export function useSyncErrorHandler(client?: ZionClient) {
             }
         }
 
-        client.on(ClientEvent.Sync, onSync)
+        client.matrixClient.on(ClientEvent.Sync, onSync)
         return () => {
-            client.off(ClientEvent.Sync, onSync)
+            client.matrixClient.off(ClientEvent.Sync, onSync)
         }
     }, [client, setAccessToken, setLoginStatus])
 

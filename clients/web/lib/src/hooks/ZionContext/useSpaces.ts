@@ -73,11 +73,11 @@ export function useSpaces(
             }
         }
 
-        client.on(RoomEvent.Name, onRoomEvent)
-        client.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        client.matrixClient.on(RoomEvent.Name, onRoomEvent)
+        client.matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         return () => {
-            client.off(RoomEvent.Name, onRoomEvent)
-            client.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            client.matrixClient.off(RoomEvent.Name, onRoomEvent)
+            client.matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
     }, [client, spaceIds])
 

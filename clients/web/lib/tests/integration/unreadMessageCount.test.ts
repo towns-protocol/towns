@@ -58,7 +58,7 @@ describe('unreadMessageCount', () => {
         // set up some local data
         const alicesLastNotifications: Record<string, IUnreadNotificationCounts> = {}
         // add a listner
-        alice.on(ClientEvent.Sync, () => {
+        alice.matrixClient.on(ClientEvent.Sync, () => {
             console.log('!!!sync', alice.store.lastSyncData)
             const newNotifications = alice.store.getLastUnreadNotificationCounts()
             if (newNotifications) {

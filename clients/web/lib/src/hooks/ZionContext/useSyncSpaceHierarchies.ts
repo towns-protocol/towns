@@ -120,10 +120,10 @@ export function useSyncSpaceHierarchies(
                 enqueueSpaceId(eventRoom.roomId)
             }
         }
-        client.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        client.matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         return () => {
             // console.log("!!! REMOVING EVENTS");
-            client.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            client.matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
     }, [client, spaceIds])
     return { spaceHierarchies }

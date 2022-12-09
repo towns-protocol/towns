@@ -56,12 +56,12 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
             }
         }
         // subscribe to changes
-        client.on(ClientEvent.Room, onRoomEvent)
-        client.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        client.matrixClient.on(ClientEvent.Room, onRoomEvent)
+        client.matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         // cleanup
         return () => {
-            client.off(ClientEvent.Room, onRoomEvent)
-            client.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            client.matrixClient.off(ClientEvent.Room, onRoomEvent)
+            client.matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
             setPowerLevels(enrichPowerLevels())
         }
     }, [client, roomId])
