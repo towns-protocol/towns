@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     CreateSpaceInfo,
@@ -6,7 +6,8 @@ import {
     Permission,
     RoomIdentifier,
     RoomVisibility,
-    useIntegratedSpaceManagement,
+    TransactionStatus,
+    useCreateSpaceTransaction,
 } from 'use-zion-client'
 import { Box, Button, Heading, Text } from '@ui'
 import { useQueryParams } from 'hooks/useQueryParam'
@@ -27,23 +28,17 @@ interface Props {
     onCreateSpace: (roomId: RoomIdentifier, membership: Membership) => void
 }
 
-enum TransactionStates {
-    Approving = 'Approving',
-    Pending = 'Pending',
-    Completed = 'Completed',
-}
-
 type HeaderProps = {
     formId: string
     hasPrev: boolean
     goPrev: () => void
     error: boolean
-    transactionState: TransactionStates | null
+    transactionStatus: TransactionStatus | null
 }
 
 const Header = (props: HeaderProps) => {
-    const { hasPrev, goPrev, formId, transactionState, error } = props
-    const isTransacting = transactionState !== null
+    const { hasPrev, goPrev, formId, transactionStatus: transactionState, error } = props
+    const isTransacting = transactionState === TransactionStatus.Pending
 
     return (
         <>
@@ -100,9 +95,16 @@ export const CreateSpaceForm = (props: Props) => {
     const { onCreateSpace } = props
     const { step } = useQueryParams('step')
     const startAt = step && (step as number) > 0 ? (step as number) - 1 : 0
-    const { createSpaceWithMemberRole } = useIntegratedSpaceManagement()
-    const [transactionState, setTransactionState] = useState<TransactionStates | null>(null)
-    const [error, setError] = useState(false)
+    const {
+        data: roomId,
+        error,
+        transactionStatus,
+        createSpaceTransactionWithMemberRole,
+    } = useCreateSpaceTransaction()
+
+    const hasError = useMemo(() => {
+        return error != undefined
+    }, [error])
 
     const {
         goNext,
@@ -119,9 +121,6 @@ export const CreateSpaceForm = (props: Props) => {
     )
 
     function onPrevClick() {
-        if (error) {
-            setError(false)
-        }
         goPrev()
     }
 
@@ -134,9 +133,6 @@ export const CreateSpaceForm = (props: Props) => {
         if (!membershipType || !spaceName || !spaceIconUrl || !spaceName) {
             return
         }
-
-        setTransactionState(TransactionStates.Pending)
-        setError(false)
 
         const tokenGrantedPermissions =
             membershipType === TOKEN_HOLDERS ? [Permission.Read, Permission.Write] : []
@@ -151,26 +147,13 @@ export const CreateSpaceForm = (props: Props) => {
             // iconUrl: step2.spaceIcon as string,
         }
 
-        try {
-            const roomId = await createSpaceWithMemberRole(
-                createSpaceInfo,
-                tokens,
-                tokenGrantedPermissions,
-                everyonePermissions,
-            )
-            // success
-            if (roomId) {
-                onCreateSpace(roomId, Membership.Join)
-            }
-            // failure
-            else {
-                console.error('Failed to create space')
-                setError(true)
-            }
-        } finally {
-            setTransactionState(null)
-        }
-    }, [createSpaceWithMemberRole, onCreateSpace])
+        await createSpaceTransactionWithMemberRole(
+            createSpaceInfo,
+            tokens,
+            tokenGrantedPermissions,
+            everyonePermissions,
+        )
+    }, [createSpaceTransactionWithMemberRole])
 
     const onSubmit = useCallback(async () => {
         if (isLast) {
@@ -180,14 +163,21 @@ export const CreateSpaceForm = (props: Props) => {
         goNext()
     }, [createSpace, goNext, isLast])
 
+    useEffect(() => {
+        // success
+        if (roomId) {
+            onCreateSpace(roomId, Membership.Join)
+        }
+    }, [onCreateSpace, roomId])
+
     return (
         <Box>
             <Header
                 formId={formId}
                 hasPrev={hasPrev}
                 goPrev={onPrevClick}
-                error={error}
-                transactionState={transactionState}
+                error={hasError}
+                transactionStatus={transactionStatus}
             />
 
             <AnimatePresence mode="wait">

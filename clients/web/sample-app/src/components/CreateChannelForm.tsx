@@ -15,7 +15,8 @@ import {
     Membership,
     RoomIdentifier,
     RoomVisibility,
-    useIntegratedSpaceManagement,
+    useCreateChannelTransaction,
+    useRolesAndPermissions,
 } from 'use-zion-client'
 import React, { useCallback, useMemo, useState } from 'react'
 
@@ -31,7 +32,8 @@ export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
     const [roles, setRoles] = useState<RolesSettings>({})
-    const { getRolesFromSpace, createChannelWithSpaceRoles } = useIntegratedSpaceManagement()
+    const { getRolesFromSpace } = useRolesAndPermissions()
+    const { createChannelWithSpaceRoles } = useCreateChannelTransaction()
     const { onClick, parentSpaceId } = props
 
     const disableCreateButton = useMemo(() => channelName.length === 0, [channelName.length])

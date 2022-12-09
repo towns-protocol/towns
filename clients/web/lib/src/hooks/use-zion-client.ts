@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
-import { useMemo } from 'react'
+
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -9,20 +9,22 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
 } from '../types/matrix-types'
+import { DataTypes, ZionSpaceManagerShim } from '../client/web3/shims/ZionSpaceManagerShim'
+import { IZionServerVersions, TransactionContext, ZionClientEvent } from '../client/ZionClientTypes'
+
+import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
+import { FullyReadMarker } from '../types/timeline-types'
+import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { RoomIdentifier } from '../types/room-identifier'
-import { IZionServerVersions, ZionClientEvent } from '../client/ZionClientTypes'
 import { useLoginWithPassword } from './MatrixClient/useLoginWithPassword'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
+import { useMemo } from 'react'
 import { useRegisterPasswordUser } from './MatrixClient/useRegisterPasswordUser'
-import { useZionContext } from '../components/ZionContextProvider'
-import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
-import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
-import { DataTypes, ZionSpaceManagerShim } from '../client/web3/shims/ZionSpaceManagerShim'
-import { FullyReadMarker } from '../types/timeline-types'
-import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
+import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
+import { useZionContext } from '../components/ZionContextProvider'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -39,6 +41,14 @@ interface ZionClientImpl {
         tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct,
         everyonePermissions: DataTypes.PermissionStruct[],
     ) => Promise<RoomIdentifier | undefined>
+    createSpaceTransaction: (
+        createSpaceInfo: CreateSpaceInfo,
+        spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
+        everyonePermissions: DataTypes.PermissionStruct[],
+    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    waitForCreateSpaceTransaction: (
+        context: TransactionContext<RoomIdentifier> | undefined,
+    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
     createWeb3Channel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
     editMessage: (
@@ -97,6 +107,11 @@ export function useZionClient(): ZionClientImpl {
         createSpace: useWithCatch(client?.createSpace),
         createBasicWeb3Space: useWithCatch(client?.createBasicWeb3Space, ZionClientEvent.NewSpace),
         createWeb3Space: useWithCatch(client?.createWeb3Space, ZionClientEvent.NewSpace),
+        createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
+        waitForCreateSpaceTransaction: useWithCatch(
+            client?.waitForCreateSpaceTransaction,
+            ZionClientEvent.NewSpace,
+        ),
         createWeb3Channel: useWithCatch(client?.createWeb3Channel),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,

@@ -10,22 +10,23 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
+import { chain as ChainType, useBalance } from 'wagmi'
 import {
     CreateSpaceInfo,
     Membership,
     Permission,
     RoomIdentifier,
     RoomVisibility,
+    TransactionStatus,
     getZionTokenAddress,
-    useIntegratedSpaceManagement,
+    useCreateSpaceTransaction,
     useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { chain as ChainType, useBalance } from 'wagmi'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
 import { ethers } from 'ethers'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
-import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 interface Props {
     onClick: (roomId: RoomIdentifier, membership: Membership) => void
@@ -39,10 +40,20 @@ export const CreateSpaceForm = (props: Props) => {
     const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
         MembershipRequirement.Everyone,
     )
-    const { createSpaceWithMemberRole } = useIntegratedSpaceManagement()
+    const {
+        isLoading,
+        data: roomId,
+        transactionHash,
+        transactionStatus,
+        error,
+        createSpaceTransactionWithMemberRole,
+    } = useCreateSpaceTransaction()
     const { onClick } = props
 
-    const disableCreateButton = useMemo(() => spaceName.length === 0, [spaceName.length])
+    const disableCreateButton = useMemo(
+        () => spaceName.length === 0 || isLoading,
+        [isLoading, spaceName.length],
+    )
 
     const zionTokenAddress = useMemo(() => {
         if (chainId) {
@@ -75,13 +86,13 @@ export const CreateSpaceForm = (props: Props) => {
 
                         const amount = 0.1
 
-                        const tx = await wallet.populateTransaction({
+                        const tx = {
                             from: wallet.address,
                             to: accountId,
                             value: ethers.utils.parseEther(amount.toString()),
                             gasLimit: 1000000,
                             chainId: chainId,
-                        })
+                        }
                         console.log('fundWallet tx', tx)
                         const result = await wallet.sendTransaction(tx)
                         console.log('fundWallet result', result)
@@ -105,7 +116,7 @@ export const CreateSpaceForm = (props: Props) => {
         setVisibility(event.target.value as RoomVisibility)
     }, [])
 
-    const onClickCreateSpace = useAsyncButtonCallback(async () => {
+    const onClickCreateSpace = useCallback(async () => {
         if (!zionTokenAddress) {
             console.error('Cannot create space. No zion token address.')
             return undefined
@@ -126,16 +137,33 @@ export const CreateSpaceForm = (props: Props) => {
             name: spaceName,
             visibility,
         }
-        const roomId = await createSpaceWithMemberRole(
+        await createSpaceTransactionWithMemberRole(
             createSpaceInfo,
             tokenAddresses,
             tokenGrantedPermissions,
             everyonePermissions,
         )
-        if (roomId) {
+    }, [
+        createSpaceTransactionWithMemberRole,
+        membershipRequirement,
+        spaceName,
+        visibility,
+        zionTokenAddress,
+    ])
+
+    useEffect(() => {
+        if (transactionStatus === TransactionStatus.Success && roomId) {
             onClick(roomId, Membership.Join)
         }
-    }, [spaceName, visibility])
+    }, [onClick, roomId, transactionStatus])
+
+    console.log('CreateSpaceForm', 'states', {
+        isLoading,
+        roomId,
+        error,
+        transactionHash,
+        transactionStatus,
+    })
 
     return (
         <Box

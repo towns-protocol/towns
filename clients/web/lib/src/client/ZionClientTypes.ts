@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BigNumber, BigNumberish, ethers } from 'ethers'
+
+import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 
 export interface ZionOpts {
     matrixServerUrl: string
@@ -53,4 +54,19 @@ export interface IZionServerVersions {
     versions: string[]
     unstable_features: Record<string, boolean>
     release_version: string
+}
+
+export enum TransactionStatus {
+    None = 'None',
+    Pending = 'Pending',
+    Success = 'Success',
+    Failed = 'Failed',
+}
+
+export interface TransactionContext<T> {
+    data: T | undefined
+    status: TransactionStatus
+    receipt: ContractReceipt | undefined
+    transaction: ContractTransaction | undefined
+    error?: Error
 }

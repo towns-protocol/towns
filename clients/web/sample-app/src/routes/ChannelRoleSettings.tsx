@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useIntegratedSpaceManagement } from 'use-zion-client'
+import { useRolesAndPermissions } from 'use-zion-client'
 
 interface Role {
     name: string
@@ -17,7 +17,7 @@ interface Props {
 
 export function ChannelRoleSettings(props: Props): JSX.Element {
     const [roles, setRoles] = useState<RolesSettings>({})
-    const { getRolesFromSpace } = useIntegratedSpaceManagement()
+    const { getRolesFromSpace } = useRolesAndPermissions()
 
     useEffect(
         function () {

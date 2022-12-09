@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import React, { useCallback } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
@@ -11,7 +11,7 @@ import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestA
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
 import { getZionTokenAddress } from '../../src/client/web3/ZionContracts'
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
-import { useIntegratedSpaceManagement } from 'use-zion-client/src/hooks/use-integrated-space-management'
+import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
 import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
 
@@ -27,57 +27,77 @@ describe('spaceManagerContractHooks', () => {
         const spaceName = makeUniqueName('alice')
         const tokenGatedSpaceName = makeUniqueName('alice')
         // create a veiw for alice
-        const TestComponent = () => {
-            // basic space
-            const { chainId, createBasicWeb3Space } = useZionClient()
-            const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
-            const { createSpaceWithMemberRole: createSpaceWithMemberRole } =
-                useIntegratedSpaceManagement()
-            // spaces
-            const { spaces } = useSpacesFromContract()
-            // callback to create a space
-            const onClickCreateSpace = useCallback(() => {
-                void createBasicWeb3Space({
-                    name: spaceName,
-                    visibility: RoomVisibility.Public,
-                })
-            }, [createBasicWeb3Space])
-            // callback to create a space with zion token entitlement
-            const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
-                if (zionTokenAddress) {
-                    void createSpaceWithMemberRole(
-                        {
-                            name: tokenGatedSpaceName,
-                            visibility: RoomVisibility.Public,
-                        },
-                        [zionTokenAddress],
-                        [Permission.Read, Permission.Write],
-                    )
-                }
-            }, [createSpaceWithMemberRole, zionTokenAddress])
+        act(() => {
+            const TestComponent = () => {
+                // basic space
+                const { chainId, createBasicWeb3Space } = useZionClient()
+                const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
+                const {
+                    createSpaceTransactionWithMemberRole,
+                    isLoading,
+                    data,
+                    error,
+                    transactionStatus,
+                    transactionHash,
+                } = useCreateSpaceTransaction()
+                // spaces
+                const { spaces } = useSpacesFromContract()
+                // callback to create a space
+                const onClickCreateSpace = useCallback(() => {
+                    void createBasicWeb3Space({
+                        name: spaceName,
+                        visibility: RoomVisibility.Public,
+                    })
+                }, [createBasicWeb3Space])
+                // callback to create a space with zion token entitlement
+                const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
+                    const handleClick = async () => {
+                        if (zionTokenAddress) {
+                            await createSpaceTransactionWithMemberRole(
+                                {
+                                    name: tokenGatedSpaceName,
+                                    visibility: RoomVisibility.Public,
+                                },
+                                [zionTokenAddress],
+                                [Permission.Read, Permission.Write],
+                            )
+                        }
+                    }
 
-            // the view
-            return (
-                <>
-                    <RegisterWallet />
-                    <button onClick={onClickCreateSpace}>Create Space</button>
-                    <button onClick={onClickCreateSpaceWithZionMemberRole}>
-                        Create Token-Gated Space
-                    </button>
-                    <div data-testid="spaces">
-                        {spaces.map((element) => (
-                            <div key={element.key}>{element.name}</div>
-                        ))}
-                    </div>
-                </>
+                    void handleClick()
+                }, [createSpaceTransactionWithMemberRole, zionTokenAddress])
+
+                console.log('TestComponent', 'render', {
+                    isLoading,
+                    data,
+                    error,
+                    transactionStatus,
+                    transactionHash,
+                })
+
+                // the view
+                return (
+                    <>
+                        <RegisterWallet />
+                        <button onClick={onClickCreateSpace}>Create Space</button>
+                        <button onClick={onClickCreateSpaceWithZionMemberRole}>
+                            Create Token-Gated Space
+                        </button>
+                        <div data-testid="spaces">
+                            {spaces.map((element) => (
+                                <div key={element.key}>{element.name}</div>
+                            ))}
+                        </div>
+                    </>
+                )
+            }
+            // render it
+            render(
+                <ZionTestApp provider={provider}>
+                    <TestComponent />
+                </ZionTestApp>,
             )
-        }
-        // render it
-        render(
-            <ZionTestApp provider={provider}>
-                <TestComponent />
-            </ZionTestApp>,
-        )
+        })
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
         const createSpaceButton = screen.getByRole('button', {
@@ -86,21 +106,21 @@ describe('spaceManagerContractHooks', () => {
         const createTokenGatedSpaceButton = screen.getByRole('button', {
             name: 'Create Token-Gated Space',
         })
-        const spacesElement = screen.getByTestId('spaces')
+        const spaceElement = screen.getByTestId('spaces')
         // verify alice name is rendering
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // click the button
         fireEvent.click(createSpaceButton)
         // did we make a space?
         await waitFor(
-            () => within(spacesElement).getByText(spaceName),
+            () => within(spaceElement).getByText(spaceName),
             TestConstants.DefaultWaitForTimeout,
         )
         // now with a token
         fireEvent.click(createTokenGatedSpaceButton)
         // did we make a space?
         await waitFor(
-            () => within(spacesElement).getByText(tokenGatedSpaceName),
+            () => within(spaceElement).getByText(tokenGatedSpaceName),
             TestConstants.DefaultWaitForTimeout,
         )
     }) // end test

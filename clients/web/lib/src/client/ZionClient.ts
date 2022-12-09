@@ -24,7 +24,14 @@ import { RoomIdentifier } from '../types/room-identifier'
 import { RoleIdentifier } from '../types/web3-types'
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'
-import { IZionServerVersions, ZionAccountDataType, ZionAuth, ZionOpts } from './ZionClientTypes'
+import {
+    IZionServerVersions,
+    TransactionContext,
+    TransactionStatus,
+    ZionAccountDataType,
+    ZionAuth,
+    ZionOpts,
+} from './ZionClientTypes'
 
 import { createZionChannel } from './matrix/CreateChannel'
 import { createZionSpace } from './matrix/CreateSpace'
@@ -337,51 +344,113 @@ export class ZionClient {
         spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
         everyonePermissions: DataTypes.PermissionStruct[],
     ): Promise<RoomIdentifier | undefined> {
-        let roomIdentifier: RoomIdentifier | undefined = await this.createSpace(createSpaceInfo)
+        const txContext = await this.createSpaceTransaction(
+            createSpaceInfo,
+            spaceEntitlementData,
+            everyonePermissions,
+        )
+        const rxContext = await this.waitForCreateSpaceTransaction(txContext)
+        return rxContext?.data
+    }
 
-        console.log('[createWeb3Space] Matrix createSpace', roomIdentifier)
+    public async createSpaceTransaction(
+        createSpaceInfo: CreateSpaceInfo,
+        spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
+        everyonePermissions: DataTypes.PermissionStruct[],
+    ): Promise<TransactionContext<RoomIdentifier>> {
+        const roomId: RoomIdentifier | undefined = await this.createSpace(createSpaceInfo)
 
-        if (roomIdentifier) {
-            const spaceInfo: DataTypes.CreateSpaceDataStruct = {
-                spaceName: createSpaceInfo.name,
-                spaceNetworkId: roomIdentifier.matrixRoomId,
-                spaceMetadata: createSpaceInfo.spaceMetadata ?? '',
-            }
-            let transaction: ContractTransaction | undefined = undefined
-            let receipt: ContractReceipt | undefined = undefined
-            try {
-                transaction = await this.spaceManager.createSpace(
-                    spaceInfo,
-                    spaceEntitlementData,
-                    everyonePermissions,
-                )
-                //console.log(`[createWeb3Space] transaction`, transaction)
-                receipt = await transaction.wait()
-                //console.log('[createWeb3Space] Matrix createSpace receipt', receipt)
-            } catch (err) {
-                const decodedError = this.getDecodedError(err)
-                console.error('[createWeb3Space] failed', decodedError)
-                throw decodedError
-            } finally {
-                if (receipt?.status === 1) {
-                    // Successful created the space on-chain.
-                    const spaceId = await this.spaceManager.unsigned.getSpaceIdByNetworkId(
-                        roomIdentifier.matrixRoomId,
-                    )
-                    console.log('[createWeb3Space] success', {
-                        spaceId,
-                        matrixRoomId: roomIdentifier.matrixRoomId,
-                    })
-                } else {
-                    // On-chain space creation failed. Abandon this space.
-                    console.error('[createWeb3Space] failed')
-                    await this.leave(roomIdentifier)
-                    roomIdentifier = undefined
-                }
+        if (!roomId) {
+            console.error('[createSpaceTransaction] Matrix createSpace failed')
+            return {
+                transaction: undefined,
+                receipt: undefined,
+                status: TransactionStatus.Failed,
+                data: undefined,
+                error: new Error('Matrix createSpace failed'),
             }
         }
 
-        return roomIdentifier
+        console.log('[createSpaceTransaction] Matrix space created', roomId)
+
+        const spaceInfo: DataTypes.CreateSpaceDataStruct = {
+            spaceName: createSpaceInfo.name,
+            spaceNetworkId: roomId.matrixRoomId,
+            spaceMetadata: createSpaceInfo.spaceMetadata ?? '',
+        }
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = await this.spaceManager.createSpace(
+                spaceInfo,
+                spaceEntitlementData,
+                everyonePermissions,
+            )
+            console.log(`[createSpaceTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[createSpaceTransaction] error', err)
+            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction ? roomId : undefined,
+            error,
+        }
+    }
+
+    public async waitForCreateSpaceTransaction(
+        context: TransactionContext<RoomIdentifier> | undefined,
+    ): Promise<TransactionContext<RoomIdentifier>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let roomId: RoomIdentifier | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForCreateSpaceTransaction] transaction is undefined')
+            }
+
+            transaction = context.transaction
+            roomId = context.data
+            receipt = await context.transaction.wait()
+            console.log(
+                '[waitForCreateSpaceTransaction] createSpace receipt completed' /*, receipt */,
+            )
+        } catch (err) {
+            console.error('[waitForCreateSpaceTransaction] error', err)
+            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+        }
+
+        if (receipt?.status === 1) {
+            console.log('[waitForCreateSpaceTransaction] success', roomId)
+            return {
+                data: roomId,
+                status: TransactionStatus.Success,
+                transaction,
+                receipt,
+            }
+        }
+
+        // got here without success
+        if (!error) {
+            error = await this.onErrorLeaveRoomAndDecodeError(
+                new Error('Failed to create space'),
+                roomId,
+            )
+        }
+        console.error('[waitForCreateSpaceTransaction] failed', error)
+        return {
+            data: roomId,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        }
     }
 
     /************************************************
@@ -833,6 +902,16 @@ export class ZionClient {
                 }),
             }
         }
+    }
+
+    private async onErrorLeaveRoomAndDecodeError(
+        error: unknown,
+        roomId: RoomIdentifier | undefined,
+    ): Promise<Error> {
+        if (roomId) {
+            await this.leave(roomId)
+        }
+        return this.getDecodedError(error)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
