@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, beforeEach, describe, test } from '@jest/globals'
 import { Client } from '@zion/client'
 import {
     FullEvent,
@@ -52,8 +51,8 @@ describe('BobAndAliceSendAMessageViaClient', () => {
     test('clientsCanBeClosedNoSync' + testSuffix, async () => {})
 
     test('clientsCanBeClosedAfterSync' + testSuffix, async () => {
-        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
-        await expect(alicesClient.createNewUser()).resolves.toBeUndefined()
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(alicesClient.createNewUser()).toResolve()
         bobsClient.startSync(3000)
         alicesClient.startSync(3000)
     })
@@ -97,7 +96,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         }
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsAnotherClient.loadExistingUser()).resolves.toBeUndefined()
+        await expect(bobsAnotherClient.loadExistingUser()).toResolve()
 
         bobsAnotherClient.startSync(1000)
 
@@ -135,12 +134,12 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         }
         bobsClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
+        await expect(bobsClient.createNewUser()).toResolve()
 
         bobsClient.startSync(1000)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeDefined()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         await expect(
             bobsClient.createChannel(bobsSpaceId, makeChannelStreamId('bobs-channel-' + genId())),
@@ -152,7 +151,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         log('pass1 done')
 
-        await expect(bobCanReconnect()).resolves.toBe('done')
+        await expect(bobCanReconnect()).toResolve()
 
         log('pass2 done')
     })
@@ -161,11 +160,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         log('bobSendsSingleMessage')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
+        await expect(bobsClient.createNewUser()).toResolve()
         bobsClient.startSync(1000)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.toBeDefined()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
@@ -183,9 +182,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             })
         })
 
-        await expect(
-            bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
-        ).resolves.toBeUndefined()
+        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
         await bobSelfHello.expectToSucceed()
 
         log('bobSendsSingleMessage done')
@@ -195,7 +192,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         log('bobAndAliceConverse')
 
         // Bob gets created, creates a space, and creates a channel.
-        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
+        await expect(bobsClient.createNewUser()).toResolve()
         bobsClient.startSync(1000)
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -206,7 +203,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         await expect(waitForStream(bobsClient, bobsChannelId)).toResolve()
 
         // Alice gest created.
-        await expect(alicesClient.createNewUser()).resolves.toBeUndefined()
+        await expect(alicesClient.createNewUser()).toResolve()
         alicesClient.startSync(1000)
 
         // Bob can send a message.
@@ -221,9 +218,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             })
         })
 
-        await expect(
-            bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!'),
-        ).resolves.toBeUndefined()
+        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, world from Bob!')).toResolve()
         await bobSelfHello.expectToSucceed()
 
         // Alice can't sent a message to Bob's channel.
@@ -236,7 +231,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             log('userInvitedToStream', 'Alice', streamId)
             aliceJoined.runAndDoneAsync(async () => {
                 expect(streamId).toBe(bobsChannelId)
-                await expect(alicesClient.joinChannel(streamId)).resolves.toBeUndefined()
+                await expect(alicesClient.joinChannel(streamId)).toResolve()
             })
         })
 
@@ -291,9 +286,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             })
         })
 
-        await expect(
-            bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!'),
-        ).resolves.toBeUndefined()
+        await expect(bobsClient.sendMessage(bobsChannelId, 'Hello, Alice!')).toResolve()
 
         log('Waiting for Alice to get messages...')
         await aliceGetsMessage.expectToSucceed()

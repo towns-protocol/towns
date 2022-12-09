@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, describe, test } from '@jest/globals'
 import {
     genId,
     makeEvent,
@@ -146,7 +145,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             log('bobTalksToHimself Bob waits for sync to complete')
 
             // Bob sees the message in sync result
-            await expect(syncPromise).resolves.toBe('done')
+            await expect(syncPromise).toResolve()
             expect(syncResult).not.toBeNull()
             expect(syncResult!.streams).toHaveProperty(channelId)
             expect(syncResult!.streams[channelId].events).toEqual([event])
@@ -307,7 +306,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             })
 
             // Alice sees the invite in her user stream
-            await expect(aliceSyncPromise).resolves.toBe('done')
+            await expect(aliceSyncPromise).toResolve()
             expect(aliceSyncResult).not.toBeNull()
             expect(aliceSyncResult!.streams).toHaveProperty(aliceStreamId)
             expect(aliceSyncResult!.streams[aliceStreamId].events).toEqual(
@@ -356,7 +355,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             })
 
             // Alice sees derived join event in her user stream
-            await expect(aliceSyncPromise).resolves.toBe('done')
+            await expect(aliceSyncPromise).toResolve()
             expect(aliceSyncResult).not.toBeNull()
             expect(aliceSyncResult!.streams).toHaveProperty(aliceStreamId)
             expect(aliceSyncResult!.streams[aliceStreamId].events).toEqual(
@@ -416,7 +415,7 @@ describe('BobAndAliceSendAMessageViaRpc', () => {
             })
 
             // Alice sees the message in sync result
-            await expect(aliceSyncPromise).resolves.toBe('done')
+            await expect(aliceSyncPromise).toResolve()
             expect(aliceSyncResult).not.toBeNull()
             expect(aliceSyncResult!.streams).toHaveProperty(channelId)
             expect(aliceSyncResult!.streams[channelId].events).toEqual(

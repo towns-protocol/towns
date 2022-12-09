@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
 import { FullEvent, genId, StreamKind, StreamsAndCookies, SyncPos } from '@zion/core'
 import debug from 'debug'
 import { PGEventStore } from './pgEventStore'
@@ -173,7 +172,7 @@ describe('PGEventStore', () => {
         await store.addEvents(s2.streamId, MORE_EVENTS)
         await setTimeout(100)
 
-        await expect(readPromise).resolves.toBe('done')
+        await expect(readPromise).toResolve()
         log('readNewEventsAsyncMultiWait', 'readResult', readResult)
         expect(readResult).not.toBeNull()
         expect(readResult![s2.streamId].events).toEqual(MORE_EVENTS)

@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
 import { FullEvent, genId, StreamKind, StreamsAndCookies, SyncPos } from '@zion/core'
 import debug from 'debug'
 import { setTimeout } from 'timers/promises'
@@ -162,7 +161,7 @@ describe('RedisEventStore', () => {
 
         await store.addEvents(s2.streamId, MORE_EVENTS)
 
-        await expect(readPromise).resolves.toBe('done')
+        await expect(readPromise).toResolve()
         log('readNewEventsAsyncWait', 'readResult', readResult)
         expect(readResult).not.toBeNull()
         expect(readResult![s2.streamId].events).toEqual(MORE_EVENTS)
