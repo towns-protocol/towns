@@ -1,5 +1,11 @@
 import { Alert, Box, Button, CircularProgress, Snackbar, Theme, Typography } from '@mui/material'
-import { LoginStatus, useMatrixStore, useWeb3Context, useZionClient } from 'use-zion-client'
+import {
+    LoginStatus,
+    useMatrixStore,
+    useWeb3Context,
+    useZionClient,
+    useZionContext,
+} from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
@@ -149,6 +155,20 @@ export function Login(): JSX.Element {
 }
 
 export function Profile() {
+    const { homeServerUrl } = useZionContext()
+    return (
+        <>
+            <Box sx={{ display: 'grid', marginTop: '15px', alignItems: 'Center' }}>
+                <Typography variant="h6" component="span">
+                    Server: {homeServerUrl}
+                </Typography>
+            </Box>
+            <ProfileContent />
+        </>
+    )
+}
+
+function ProfileContent() {
     const onConnnectCb = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (params: { address: any; connector: any; isReconnected: any }) => {

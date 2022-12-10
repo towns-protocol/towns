@@ -3,6 +3,7 @@ import { useMatrixStore, useZionClient } from 'use-zion-client'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
+import { DebugBar } from './DebugBar'
 
 export function LoginUsernamePassword(): JSX.Element {
     const styles = useStyles()
@@ -101,6 +102,7 @@ export function LoginUsernamePassword(): JSX.Element {
                     </Button>
                 </Box>
             </Box>
+            <DebugBar />
             <Snackbar
                 open={showError ? true : false}
                 autoHideDuration={5000}

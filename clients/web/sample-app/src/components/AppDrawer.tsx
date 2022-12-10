@@ -21,6 +21,7 @@ import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'
 import { SidebarItemButton } from './Buttons/SidebarItemButton'
 import { AppDrawerSpaces } from './AppDrawerSpaces'
+import { DebugBar } from './DebugBar'
 
 const drawerWidth = 240
 
@@ -99,6 +100,7 @@ export function AppDrawer(props: Props): JSX.Element {
             <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
             <Divider />
+            <DebugBar />
         </div>
     )
 
