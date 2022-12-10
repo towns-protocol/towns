@@ -913,6 +913,18 @@ export class ZionClient {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDecodedError(err: any): Error {
         let decodedError: Error | undefined = undefined
+
+        // Wallet rejection
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        if (err?.code === 'ACTION_REJECTED' && !err?.error) {
+            return {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                name: err?.code,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: err.message,
+            }
+        }
+
         try {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             const revertData: BytesLike = err.error?.error?.error?.data
