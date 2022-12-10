@@ -138,7 +138,7 @@ describe.skip('CreateSpaceStep1', () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(() => {
             return {
                 createSpaceTransactionWithMemberRole: () => Promise.resolve(),
-                data: { slug: 'some-room-id', matrixRoomId: 'some-room-id' },
+                data: { slug: 'some-room-id', networkId: 'some-room-id' },
                 isLoading: false,
                 transactionHash: 'some-hash',
                 transactionStatus: zionClient.TransactionStatus.Success,
@@ -233,7 +233,7 @@ describe.skip('CreateSpaceStep1', () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(() => {
             return {
                 createSpaceTransactionWithMemberRole: createSpaceWithMemberRoleSpy,
-                data: { slug: 'some-room-id', matrixRoomId: 'some-room-id' },
+                data: { slug: 'some-room-id', networkId: 'some-room-id' },
                 isLoading: false,
                 transactionHash: 'some-hash',
                 transactionStatus: zionClient.TransactionStatus.Success,
@@ -289,7 +289,7 @@ describe.skip('CreateSpaceStep1', () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(() => {
             return {
                 createSpaceTransactionWithMemberRole: createSpaceWithMemberRoleSpy,
-                data: { slug: 'some-room-id', matrixRoomId: 'some-room-id' },
+                data: { slug: 'some-room-id', networkId: 'some-room-id' },
                 isLoading: false,
                 transactionHash: 'some-hash',
                 transactionStatus: zionClient.TransactionStatus.Success,

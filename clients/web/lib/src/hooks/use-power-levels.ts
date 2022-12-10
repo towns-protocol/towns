@@ -24,7 +24,7 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
         }
         // helpers
         const updateState = () => {
-            const matrixRoom = client.getRoom(roomId.matrixRoomId)
+            const matrixRoom = client.getRoom(roomId.networkId)
             const powerLevelsEvent = matrixRoom?.currentState.getStateEvents(
                 EventType.RoomPowerLevels,
                 '',
@@ -36,7 +36,7 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
         updateState()
         // event listeners
         const onRoomEvent = (room: MatrixRoom) => {
-            if (room.roomId === roomId.matrixRoomId) {
+            if (room.roomId === roomId.networkId) {
                 updateState()
             }
         }
@@ -48,7 +48,7 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
             data: IRoomTimelineData,
         ) => {
             // if the room is a space update our spaces
-            if (roomId.matrixRoomId == room.roomId) {
+            if (roomId.networkId == room.roomId) {
                 const eventType = event.getType()
                 if (eventType === EventType.RoomPowerLevels) {
                     updateState()

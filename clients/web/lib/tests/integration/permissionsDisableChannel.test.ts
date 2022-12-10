@@ -40,7 +40,7 @@ describe('disable channel', () => {
         /** Act */
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId.matrixRoomId, true)
+        await bob.setSpaceAccess(roomId.networkId, true)
 
         /** Assert */
 
@@ -82,7 +82,7 @@ describe('disable channel', () => {
         await alice.joinRoom(roomId)
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId.matrixRoomId, true)
+        await bob.setSpaceAccess(roomId.networkId, true)
 
         try {
             await alice.scrollback(roomId, 30)
@@ -101,7 +101,7 @@ describe('disable channel', () => {
         )
 
         // re-enable space
-        await bob.setSpaceAccess(roomId.matrixRoomId, false)
+        await bob.setSpaceAccess(roomId.networkId, false)
 
         /** Assert */
         await bob.inviteUser(roomId, alice.matrixUserId as string)

@@ -59,7 +59,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
         }
 
         // Use the roles from the parent space to create the channel
-        const spaceRoles = await getRolesFromSpace(parentSpaceId.matrixRoomId)
+        const spaceRoles = await getRolesFromSpace(parentSpaceId.networkId)
         if (spaceRoles) {
             for (const r of spaceRoles) {
                 if (roles[r.name]?.isSelected) {
@@ -136,7 +136,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
                     marginTop="20px"
                 >
                     <ChannelRoleSettings
-                        spaceId={parentSpaceId.matrixRoomId}
+                        spaceId={parentSpaceId.networkId}
                         onChangeValue={onChangeRoles}
                     />
                 </Box>

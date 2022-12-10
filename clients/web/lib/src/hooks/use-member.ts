@@ -26,7 +26,7 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
         // helpers
         const updateState = (inRoomMember?: MatrixRoomMember) => {
             const matrixMember =
-                inRoomMember ?? client?.getRoom(roomId.matrixRoomId)?.getMember(userId)
+                inRoomMember ?? client?.getRoom(roomId.networkId)?.getMember(userId)
             const matrixMembership = matrixMember?.membership
             const membership = (matrixMembership as Membership) ?? Membership.None
             const name = matrixMember?.name ?? ''
@@ -57,7 +57,7 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
             roomState: RoomState,
             member: MatrixRoomMember,
         ) => {
-            if (member.userId === userId && roomState.roomId === roomId.matrixRoomId) {
+            if (member.userId === userId && roomState.roomId === roomId.networkId) {
                 updateState(member)
             }
         }
@@ -66,12 +66,12 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
             member: MatrixRoomMember,
             oldMembership: string | null,
         ) => {
-            if (member.userId === userId && event.getRoomId() === roomId.matrixRoomId) {
+            if (member.userId === userId && event.getRoomId() === roomId.networkId) {
                 updateState(member)
             }
         }
         const onRoomEvent = (room: MatrixRoom) => {
-            if (room.roomId === roomId.matrixRoomId) {
+            if (room.roomId === roomId.networkId) {
                 updateState()
             }
         }

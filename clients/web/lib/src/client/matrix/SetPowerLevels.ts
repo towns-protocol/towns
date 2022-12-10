@@ -8,9 +8,9 @@ export function setZionPowerLevel(
     current: PowerLevel,
     newValue: number,
 ): Promise<ISendEventResponse> {
-    const room = matrixClient.getRoom(roomId.matrixRoomId)
+    const room = matrixClient.getRoom(roomId.networkId)
     if (!room) {
-        throw new Error(`Room ${roomId.matrixRoomId} not found`)
+        throw new Error(`Room ${roomId.networkId} not found`)
     }
 
     const powerLevelsEvent = room.currentState.getStateEvents(EventType.RoomPowerLevels, '')
@@ -26,9 +26,5 @@ export function setZionPowerLevel(
     } else {
         newPowerLevels[current.definition.key] = newValue
     }
-    return matrixClient.sendStateEvent(
-        roomId.matrixRoomId,
-        EventType.RoomPowerLevels,
-        newPowerLevels,
-    )
+    return matrixClient.sendStateEvent(roomId.networkId, EventType.RoomPowerLevels, newPowerLevels)
 }

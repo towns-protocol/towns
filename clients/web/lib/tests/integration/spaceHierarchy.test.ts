@@ -41,7 +41,7 @@ describe('spaceHierarchy', () => {
         expect(bob_spaceInfo?.children.length).toEqual(1)
 
         // alice peeks the space // todo https://github.com/HereNotThere/harmony/issues/188
-        // await alice.client.peekInRoom(spaceId.matrixRoomId);
+        // await alice.client.peekInRoom(spaceId.networkId);
         // expect alice to see info about the space
 
         // alice joins the space
@@ -53,7 +53,7 @@ describe('spaceHierarchy', () => {
 
         // can she join it?
         const alice_roomInfo = await alice.joinRoom(roomId)
-        expect(alice_roomInfo.id.matrixRoomId).toEqual(roomId.matrixRoomId)
+        expect(alice_roomInfo.id.networkId).toEqual(roomId.networkId)
     })
     test('create a private space and a public room, have user join space and search for space childs', async () => {
         // create clients
@@ -100,6 +100,6 @@ describe('spaceHierarchy', () => {
 
         // can she join it?
         const alice_roomInfo = await alice.joinRoom(roomId)
-        expect(alice_roomInfo.id.matrixRoomId).toEqual(roomId.matrixRoomId)
+        expect(alice_roomInfo.id.networkId).toEqual(roomId.networkId)
     })
 })

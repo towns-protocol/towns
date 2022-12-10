@@ -53,13 +53,13 @@ describe('space invite', () => {
         ])
 
         const isEntitledRead = await alice.isEntitled(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             '',
             alice.provider.wallet.address,
             { name: Permission.Read },
         )
         const isEntitledWrite = await alice.isEntitled(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             '',
             alice.provider.wallet.address,
             { name: Permission.Write },
@@ -96,13 +96,13 @@ describe('space invite', () => {
             Permission.Write,
         ])
         const isEntitledRead = await tokenGrantedUser.isEntitled(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             '',
             tokenGrantedUser.provider.wallet.address,
             { name: Permission.Read },
         )
         const isEntitledWrite = await tokenGrantedUser.isEntitled(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             '',
             tokenGrantedUser.provider.wallet.address,
             { name: Permission.Write },

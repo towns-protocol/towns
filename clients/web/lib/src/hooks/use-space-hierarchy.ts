@@ -3,5 +3,5 @@ import { RoomIdentifier } from '../types/room-identifier'
 
 export function useSpaceHierarchy(spaceId: RoomIdentifier) {
     const { spaceHierarchies } = useZionContext()
-    return spaceHierarchies[spaceId.matrixRoomId]
+    return spaceHierarchies[spaceId.networkId]
 }

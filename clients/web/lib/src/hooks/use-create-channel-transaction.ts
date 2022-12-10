@@ -18,7 +18,7 @@ export function useCreateChannelTransaction() {
         async function (createInfo: CreateChannelInfo): Promise<RoomIdentifier | undefined> {
             // helper function to create a channel with the same roles as the space
             const roleIds: number[] = []
-            const spaceRoles = await getRolesFromSpace(createInfo.parentSpaceId.matrixRoomId)
+            const spaceRoles = await getRolesFromSpace(createInfo.parentSpaceId.networkId)
             if (spaceRoles) {
                 for (const r of spaceRoles) {
                     roleIds.push(r.roleId.toNumber())

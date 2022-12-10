@@ -10,11 +10,11 @@ export function useTimelineThread(
         eventId
             ? {
                   parent:
-                      state.threadsStats[roomId.matrixRoomId]?.[eventId] ??
+                      state.threadsStats[roomId.networkId]?.[eventId] ??
                       toDummyThreadStats(
-                          state.timelines[roomId.matrixRoomId]?.find((e) => e.eventId === eventId),
+                          state.timelines[roomId.networkId]?.find((e) => e.eventId === eventId),
                       ),
-                  messages: state.threads[roomId.matrixRoomId]?.[eventId] ?? [],
+                  messages: state.threads[roomId.networkId]?.[eventId] ?? [],
               }
             : { parent: undefined, messages: [] },
     )

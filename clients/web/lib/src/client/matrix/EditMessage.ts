@@ -41,5 +41,5 @@ export async function editZionMessage(
     }
 
     // send as edit
-    await matrixClient.sendEvent(roomId.matrixRoomId, 'm.room.message', content, '', cb)
+    await matrixClient.sendEvent(roomId.networkId, 'm.room.message', content, '', cb)
 }

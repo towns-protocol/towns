@@ -60,16 +60,16 @@ export function useSpaceUnreads(
                 }
                 // next, check the channels & threads
                 const childIds = new Set(
-                    spaceHierarchies[spaceId]?.children.map((x) => x.id.matrixRoomId) ?? [],
+                    spaceHierarchies[spaceId]?.children.map((x) => x.id.networkId) ?? [],
                 )
                 // count all channels and threads we're patricipating in
                 Object.values(markers).forEach((marker) => {
                     if (
                         marker.isUnread &&
                         (!marker.threadParentId ||
-                            threadStats[marker.channelId.matrixRoomId]?.[marker.threadParentId]
+                            threadStats[marker.channelId.networkId]?.[marker.threadParentId]
                                 ?.isParticipating === true) &&
-                        childIds.has(marker.channelId.matrixRoomId)
+                        childIds.has(marker.channelId.networkId)
                     ) {
                         hasUnread = true
                         mentionCount += marker.mentions

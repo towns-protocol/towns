@@ -217,7 +217,7 @@ export function isRoom(room: any): room is Room {
     const r = room as Room
     return (
         r.id != undefined &&
-        r.id.matrixRoomId !== undefined &&
+        r.id.networkId !== undefined &&
         r.name !== undefined &&
         r.members !== undefined &&
         r.membership !== undefined

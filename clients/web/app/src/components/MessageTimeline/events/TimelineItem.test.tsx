@@ -53,12 +53,12 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                     userId: '',
                     spaceId: {
                         slug: '',
-                        matrixRoomId: '',
+                        networkId: '',
                     },
                     channels: [],
                     channelId: {
                         slug: '',
-                        matrixRoomId: '',
+                        networkId: '',
                     },
                     events: [],
                     messageRepliesMap: {},

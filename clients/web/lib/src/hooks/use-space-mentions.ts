@@ -18,7 +18,7 @@ export function useSpaceMentions(): MentionResult[] {
         const mentions = [] as MentionResult[]
 
         channels.forEach((channel) => {
-            const timeline = timelines[channel.id.matrixRoomId]
+            const timeline = timelines[channel.id.networkId]
             if (!timeline?.length) {
                 return
             }
@@ -27,10 +27,10 @@ export function useSpaceMentions(): MentionResult[] {
                 .filter((event) => event.isMentioned)
                 .map((event) => {
                     const threadStat = event.threadParentId
-                        ? threadsStats[channel.id.matrixRoomId]?.[event.threadParentId]
+                        ? threadsStats[channel.id.networkId]?.[event.threadParentId]
                         : undefined
                     const fullyReadMarker =
-                        unreadMarkers[event.threadParentId ?? channel.id.matrixRoomId]
+                        unreadMarkers[event.threadParentId ?? channel.id.networkId]
                     return {
                         type: 'mention' as const,
                         unread:

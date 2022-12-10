@@ -54,7 +54,7 @@ describe('roomAccountData', () => {
             .find((event: MatrixEvent) => event.getContent().body === 'GM Bob')!
 
         const fullyRead: Record<string, FullyReadMarker> = {
-            [roomId.matrixRoomId]: {
+            [roomId.networkId]: {
                 channelId: roomId,
                 threadParentId: undefined,
                 eventId: event.getId(),

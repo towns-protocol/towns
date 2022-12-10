@@ -22,7 +22,7 @@ describe('create role', () => {
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId?.matrixRoomId
+        const spaceNetworkId: string | undefined = roomId?.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const success: boolean | undefined = await alice.setSpaceAccess(
@@ -47,7 +47,7 @@ describe('create role', () => {
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId?.matrixRoomId
+        const spaceNetworkId: string | undefined = roomId?.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const disabled: boolean | undefined = await alice.setSpaceAccess(
@@ -78,7 +78,7 @@ describe('create role', () => {
         await bob.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId?.matrixRoomId
+        const spaceNetworkId: string | undefined = roomId?.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const error = await getError<Error>(async function () {
@@ -101,7 +101,7 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             'newRole1',
         )
 
@@ -122,7 +122,7 @@ describe('create role', () => {
         /** Act & Assert */
         // Try to create new role in space without permission
         const error = await getError<Error>(async function () {
-            await tokenGrantedUser.createRole(roomId?.matrixRoomId as string, 'newRole1')
+            await tokenGrantedUser.createRole(roomId?.networkId as string, 'newRole1')
         })
 
         /* Assert */
@@ -147,7 +147,7 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             'newRole1',
         )
 
@@ -165,11 +165,11 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             'newRole1',
         )
         const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.matrixRoomId as string,
+            roomId?.networkId as string,
             'newRole1',
         )
         /** Assert */

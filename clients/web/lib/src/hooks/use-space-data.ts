@@ -24,8 +24,8 @@ export function useSpaceData(): SpaceData | undefined {
     const { clientRunning } = useZionClient()
     const spaceRoom = useRoom(spaceId)
     const spaceHierarchy = useMemo(
-        () => (spaceId?.matrixRoomId ? spaceHierarchies[spaceId.matrixRoomId] : undefined),
-        [spaceId?.matrixRoomId, spaceHierarchies],
+        () => (spaceId?.networkId ? spaceHierarchies[spaceId.networkId] : undefined),
+        [spaceId?.networkId, spaceHierarchies],
     )
     return useMemo(() => {
         if (spaceRoom || spaceHierarchy) {
@@ -39,7 +39,7 @@ export function useSpaceData(): SpaceData | undefined {
         } else if (
             clientRunning &&
             defaultSpaceId &&
-            spaceId?.matrixRoomId == defaultSpaceId?.matrixRoomId
+            spaceId?.networkId == defaultSpaceId?.networkId
         ) {
             // this bit is temporary because client.peek(...) ("rooms_initial_sync") is unimplemented in dendrite https://github.com/HereNotThere/harmony/issues/188
             const defaultSpaceRoom: Room = {
@@ -109,7 +109,7 @@ export const useInviteData = (slug: string | undefined) => {
 
 function getParentSpaceId(roomId: string, spaces: SpaceHierarchies): RoomIdentifier | undefined {
     const hasChild = (space: SpaceHierarchy, id: string) =>
-        space.children.some((child) => child.id.matrixRoomId === id)
+        space.children.some((child) => child.id.networkId === id)
 
     const parentId = Object.values(spaces).find((space) => hasChild(space, roomId))?.root.id
     return parentId

@@ -89,7 +89,7 @@ describe('inviteToSpace', () => {
             }, [joinRoom])
             // format for easy reading
             function formatSpace(s: SpaceItem) {
-                return `${s.id.matrixRoomId}: ${s.name}`
+                return `${s.id.networkId}: ${s.name}`
             }
             return (
                 <>
@@ -131,7 +131,7 @@ describe('inviteToSpace', () => {
 
         // wait the invite to show up
         await waitFor(
-            () => expect(allInvites).toHaveTextContent(janesSpaceId_1.matrixRoomId),
+            () => expect(allInvites).toHaveTextContent(janesSpaceId_1.networkId),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
@@ -158,7 +158,7 @@ describe('inviteToSpace', () => {
 
         // wait for the invite to show up
         await waitFor(
-            () => expect(allInvites).toHaveTextContent(janesSpaceId_2.matrixRoomId),
+            () => expect(allInvites).toHaveTextContent(janesSpaceId_2.networkId),
             TestConstants.DefaultWaitForTimeout,
         )
         // expect the space to still render

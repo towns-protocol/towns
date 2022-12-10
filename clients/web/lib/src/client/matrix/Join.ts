@@ -9,5 +9,5 @@ export const joinZionRoom = async (props: {
     const opts = {
         syncRoom: true,
     }
-    return await matrixClient.joinRoom(roomId.matrixRoomId, opts)
+    return await matrixClient.joinRoom(roomId.networkId, opts)
 }

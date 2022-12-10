@@ -32,7 +32,7 @@ export const Spaces = () => {
         }
     }, [joinRoom, spaceId])
 
-    // console.log("SPACE CONTENT", space?.id.matrixRoomId, channelSlug);
+    // console.log("SPACE CONTENT", space?.id.networkId, channelSlug);
     if (space && channelSlug) {
         return (
             <>
@@ -57,7 +57,7 @@ export const Spaces = () => {
         return (
             <>
                 <h1>{space.name}</h1>
-                <h3>id: {space.id.matrixRoomId}</h3>
+                <h3>id: {space.id.networkId}</h3>
                 <Divider />
                 <Outlet />
             </>
@@ -66,7 +66,7 @@ export const Spaces = () => {
         return (
             <>
                 <h1>Unknown space Id</h1>
-                <h3>id: {spaceId.matrixRoomId}</h3>
+                <h3>id: {spaceId.networkId}</h3>
                 <Divider />
                 <MissingSpaceInfo spaceId={spaceId} onJoinRoom={onClickJoinSpace} />
             </>

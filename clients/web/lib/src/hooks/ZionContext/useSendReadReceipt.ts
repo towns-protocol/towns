@@ -11,7 +11,7 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
             }
             console.log('useSendReadReceipt::marker', { marker })
             useFullyReadMarkerStore.setState((state) => {
-                const markerId = marker.threadParentId ?? marker.channelId.matrixRoomId
+                const markerId = marker.threadParentId ?? marker.channelId.networkId
                 if (state.markers[markerId]?.isUnread === true) {
                     return {
                         ...state,
@@ -40,7 +40,7 @@ export function useSendReadReceipt(client: ZionClient | undefined) {
             const channelMarkers = Object.entries(
                 useFullyReadMarkerStore.getState().markers,
             ).reduce((acc, [key, value]) => {
-                if (value.channelId.matrixRoomId === marker.channelId.matrixRoomId) {
+                if (value.channelId.networkId === marker.channelId.networkId) {
                     // aellis early attempt at pruning these values, don't bother storing markers
                     // that are older than 1 week if they're read
                     if (value.isUnread || value.markedReadAtTs > oneWeekAgo) {

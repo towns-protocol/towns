@@ -51,7 +51,7 @@ describe('channel with roles and permissions', () => {
         const room = await tokenGrantedUser.joinRoom(channelId)
 
         /** Assert */
-        expect(room.id.matrixRoomId).toBeTruthy()
+        expect(room.id.networkId).toBeTruthy()
     }) // end test
 
     test('join Everyone channel', async () => {
@@ -80,7 +80,7 @@ describe('channel with roles and permissions', () => {
         const room = await bob.joinRoom(channelId)
 
         /** Assert */
-        expect(room.id.matrixRoomId).toBeTruthy()
+        expect(room.id.networkId).toBeTruthy()
     }) // end test
 
     test('denied access to token-gated channel', async () => {

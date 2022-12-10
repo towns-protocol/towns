@@ -36,7 +36,7 @@ export const RoomSettings = () => {
                 <b>RoomName:</b> {room.name}
             </p>
             <p>
-                <b>RoomId:</b> {room.id.matrixRoomId}
+                <b>RoomId:</b> {room.id.networkId}
             </p>
             <p>
                 <b>IsSpaceRoom:</b> {room.isSpaceRoom ? 'true' : 'false'}

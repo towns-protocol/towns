@@ -60,5 +60,5 @@ export function useSpaceFromContract(spaceId?: RoomIdentifier): {
     space: SpaceIdentifier | undefined
 } {
     const { spaces, isLoading, isError } = useSpacesFromContract()
-    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId?.matrixRoomId) }
+    return { isLoading, isError, space: spaces.find((x) => x.networkId === spaceId?.networkId) }
 }

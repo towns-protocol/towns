@@ -50,7 +50,7 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.matrixRoomId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.networkId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
         }
@@ -62,7 +62,7 @@ describe('On-chain channel creation tests', () => {
         })) as RoomIdentifier
 
         /* Assert */
-        expect(channel?.matrixRoomId).toBeTruthy()
+        expect(channel?.networkId).toBeTruthy()
     })
 
     test('reject create channel with duplicate roles', async () => {
@@ -79,7 +79,7 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.matrixRoomId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.networkId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
             // Duplicate the role

@@ -98,7 +98,7 @@ describe('defaultSpaceIdHooks', () => {
         render(
             <ZionTestApp
                 provider={bobProvider}
-                defaultSpaceId={defaultSpaceId.matrixRoomId}
+                defaultSpaceId={defaultSpaceId.networkId}
                 defaultSpaceName="janes space (fake default)"
             >
                 <SpaceContextProvider spaceId={undefined}>

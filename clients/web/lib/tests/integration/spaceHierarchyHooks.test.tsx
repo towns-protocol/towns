@@ -69,7 +69,7 @@ describe('spaceHierarchyHooks', () => {
                 <>
                     <div data-testid="loginStatus">{loginStatus}</div>
                     <div data-testid="loginError">{loginError?.message ?? ''}</div>
-                    <div data-testid="spaceId">{space?.id.matrixRoomId}</div>
+                    <div data-testid="spaceId">{space?.id.networkId}</div>
                     <div data-testid="spaceChildCount">
                         {space?.channelGroups && space?.channelGroups?.length > 0
                             ? space?.channelGroups[0].channels.length.toString()

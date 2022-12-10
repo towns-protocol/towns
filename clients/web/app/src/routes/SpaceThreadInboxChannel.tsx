@@ -7,7 +7,7 @@ export const SpaceThreadInboxChannel = () => {
     const spaceData = useSpaceData()
     const channel = spaceData?.channelGroups
         .flatMap((cg) => cg.channels)
-        .find((c) => c.id.matrixRoomId === channelId)
+        .find((c) => c.id.networkId === channelId)
 
     if (!channel) {
         return <></>

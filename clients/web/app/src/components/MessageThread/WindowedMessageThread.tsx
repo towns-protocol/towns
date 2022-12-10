@@ -53,7 +53,7 @@ export const WindowedMessageThread = (props: Props) => {
                 <RichTextEditor
                     editable
                     placeholder="Reply..."
-                    storageId={`${channelId.matrixRoomId}-${messageId}`}
+                    storageId={`${channelId.networkId}-${messageId}`}
                     onSend={onSend}
                 />
             </Box>

@@ -62,7 +62,7 @@ const SpaceListItem = (props: {
         onClickChannel,
     } = props
     const isSelectedSpace = (id: RoomIdentifier) => {
-        return id.matrixRoomId === selectedSpaceId?.matrixRoomId
+        return id.networkId === selectedSpaceId?.networkId
     }
     const spaceNotifications = useSpaceNotificationCounts(space.id)
     const spaceHierarchy = useSpaceHierarchy(space.id)
@@ -118,7 +118,7 @@ const ChannelListItem = (props: {
 }) => {
     const { spaceId, channel, selectedChannelId, onClickChannel } = props
     const isSelectedChannel = (id: RoomIdentifier) => {
-        return id.matrixRoomId === selectedChannelId?.matrixRoomId
+        return id.networkId === selectedChannelId?.networkId
     }
     const channelNotifications = useChannelNotificationCounts(channel.id)
     const formatChannelNameWithUnreads = useCallback(

@@ -25,7 +25,7 @@ export const MainSideBar = (props: Props) => {
                     <SpaceNavItem
                         key={s.id.slug}
                         exact={false}
-                        forceMatch={s.id.matrixRoomId === spaceId?.matrixRoomId}
+                        forceMatch={s.id.networkId === spaceId?.networkId}
                         id={s.id}
                         name={s.name}
                         avatar={s.avatarSrc}

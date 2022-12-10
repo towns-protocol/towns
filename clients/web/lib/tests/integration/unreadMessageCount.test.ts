@@ -51,9 +51,9 @@ describe('unreadMessageCount', () => {
         })) as RoomIdentifier
         // log
         console.log('!!!sync room ids', {
-            space: spaceId.matrixRoomId,
-            channel_1: channel_1.matrixRoomId,
-            channel_2: channel_2.matrixRoomId,
+            space: spaceId.networkId,
+            channel_1: channel_1.networkId,
+            channel_2: channel_2.networkId,
         })
         // set up some local data
         const alicesLastNotifications: Record<string, IUnreadNotificationCounts> = {}
@@ -80,7 +80,7 @@ describe('unreadMessageCount', () => {
         await waitFor(
             () =>
                 expect(
-                    alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count,
+                    alicesLastNotifications?.[spaceId.networkId]?.notification_count,
                 ).toBeUndefined(), // we don't get notifications for invites
             TestConstants.DefaultWaitForTimeout,
         )
@@ -108,22 +108,17 @@ describe('unreadMessageCount', () => {
         // alice should see the message, but it takes a moment for the client to sync
         // check our counts
         await waitFor(
-            () =>
-                expect(alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count).toBe(1),
+            () => expect(alicesLastNotifications?.[spaceId.networkId]?.notification_count).toBe(1),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
             () =>
-                expect(alicesLastNotifications?.[channel_1.matrixRoomId]?.notification_count).toBe(
-                    2,
-                ),
+                expect(alicesLastNotifications?.[channel_1.networkId]?.notification_count).toBe(2),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
             () =>
-                expect(alicesLastNotifications?.[channel_2.matrixRoomId]?.notification_count).toBe(
-                    1,
-                ),
+                expect(alicesLastNotifications?.[channel_2.networkId]?.notification_count).toBe(1),
             TestConstants.DefaultWaitForTimeout,
         )
         // start clearing the notifications
@@ -131,17 +126,14 @@ describe('unreadMessageCount', () => {
         // and see the update
         await waitFor(
             () =>
-                expect(alicesLastNotifications?.[channel_1.matrixRoomId]?.notification_count).toBe(
-                    0,
-                ),
+                expect(alicesLastNotifications?.[channel_1.networkId]?.notification_count).toBe(0),
             TestConstants.DefaultWaitForTimeout,
         )
         // clear
         await alice.sendReadReceipt(spaceId)
         // and see the update
         await waitFor(
-            () =>
-                expect(alicesLastNotifications?.[spaceId.matrixRoomId]?.notification_count).toBe(0),
+            () => expect(alicesLastNotifications?.[spaceId.networkId]?.notification_count).toBe(0),
             TestConstants.DefaultWaitForTimeout,
         )
     }) // end test

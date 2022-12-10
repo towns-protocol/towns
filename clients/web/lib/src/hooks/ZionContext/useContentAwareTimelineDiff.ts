@@ -106,10 +106,28 @@ function isEncryptedZTEvent(event: TimelineEvent): boolean {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toRoomId(value: any): RoomIdentifier {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
+    if (value.matrixRoomId) {
+        // aellis: data transform for backwards compatibility, Dec 9, 2022, can remove when we make a new space
+        return {
+            networkId: value.matrixRoomId,
+            slug: value.slug,
+        }
+    } else {
+        return {
+            networkId: value.networkId,
+            slug: value.slug,
+        }
+    }
+    /* eslint-enable */
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toFullyReadMarker(value: any): FullyReadMarker {
     return {
         /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-        channelId: value.channelId as RoomIdentifier,
+        channelId: toRoomId(value.channelId),
         threadParentId: value.threadParentId ? (value.threadParentId as string) : undefined,
         eventId: value.eventId as string,
         eventOriginServerTs: value.eventOriginServerTs ? (value.eventOriginServerTs as number) : 0,
@@ -117,7 +135,7 @@ function toFullyReadMarker(value: any): FullyReadMarker {
         markedReadAtTs: value.markedReadAtTs as number,
         markedUnreadAtTs: value.markedUnreadAtTs as number,
         mentions: value.mentions ? (value.mentions as number) : 0,
-        /* eslint-enable @typescript-eslint/no-unsafe-member-access */
+        /* eslint-enable */
     }
 }
 

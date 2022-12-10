@@ -375,7 +375,7 @@ export class ZionClient {
 
         const spaceInfo: DataTypes.CreateSpaceDataStruct = {
             spaceName: createSpaceInfo.name,
-            spaceNetworkId: roomId.matrixRoomId,
+            spaceNetworkId: roomId.networkId,
             spaceMetadata: createSpaceInfo.spaceMetadata ?? '',
         }
         let transaction: ContractTransaction | undefined = undefined
@@ -487,9 +487,9 @@ export class ZionClient {
 
         if (roomIdentifier) {
             const channelInfo: DataTypes.CreateChannelDataStruct = {
-                spaceNetworkId: createChannelInfo.parentSpaceId.matrixRoomId,
+                spaceNetworkId: createChannelInfo.parentSpaceId.networkId,
                 channelName: createChannelInfo.name,
-                channelNetworkId: roomIdentifier.matrixRoomId,
+                channelNetworkId: roomIdentifier.networkId,
                 roleIds: createChannelInfo.roleIds,
             }
             let transaction: ContractTransaction | undefined = undefined
@@ -506,12 +506,12 @@ export class ZionClient {
             if (receipt?.status === 1) {
                 // Successful created the channel on-chain.
                 const channelId = await this.spaceManager.unsigned.getChannelIdByNetworkId(
-                    createChannelInfo.parentSpaceId.matrixRoomId,
-                    roomIdentifier.matrixRoomId,
+                    createChannelInfo.parentSpaceId.networkId,
+                    roomIdentifier.networkId,
                 )
                 console.log('[createWeb3Channel] success', {
                     channelId,
-                    channelMatrixRoomId: roomIdentifier.matrixRoomId,
+                    channelMatrixRoomId: roomIdentifier.networkId,
                 })
             } else {
                 // On-chain channel creation failed. Abandon this channel.
@@ -627,7 +627,7 @@ export class ZionClient {
      * ************************************************/
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async leave(roomId: RoomIdentifier): Promise<void> {
-        await this.matrixClient.leave(roomId.matrixRoomId)
+        await this.matrixClient.leave(roomId.networkId)
     }
 
     /************************************************
@@ -656,17 +656,13 @@ export class ZionClient {
         eventId: string,
         reaction: string,
     ): Promise<void> {
-        const newEventId = await this.matrixClient.sendEvent(
-            roomId.matrixRoomId,
-            EventType.Reaction,
-            {
-                'm.relates_to': {
-                    rel_type: RelationType.Annotation,
-                    event_id: eventId,
-                    key: reaction,
-                },
+        const newEventId = await this.matrixClient.sendEvent(roomId.networkId, EventType.Reaction, {
+            'm.relates_to': {
+                rel_type: RelationType.Annotation,
+                event_id: eventId,
+                key: reaction,
             },
-        )
+        })
         console.log('sendReaction', newEventId)
     }
 
@@ -686,16 +682,16 @@ export class ZionClient {
      * redactEvent
      *************************************************/
     public async redactEvent(roomId: RoomIdentifier, eventId: string, reason?: string) {
-        const resp = await this.matrixClient.redactEvent(roomId.matrixRoomId, eventId, undefined, {
+        const resp = await this.matrixClient.redactEvent(roomId.networkId, eventId, undefined, {
             reason,
         })
-        console.log('event redacted', roomId.matrixRoomId, eventId, resp)
+        console.log('event redacted', roomId.networkId, eventId, resp)
     }
     /************************************************
      * sendNotice
      *************************************************/
     public async sendNotice(roomId: RoomIdentifier, message: string): Promise<void> {
-        await this.matrixClient.sendNotice(roomId.matrixRoomId, message)
+        await this.matrixClient.sendNotice(roomId.networkId, message)
     }
 
     /************************************************
@@ -718,9 +714,9 @@ export class ZionClient {
      * getPowerLevels
      ************************************************/
     public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
-        const room = this.matrixClient.getRoom(roomId.matrixRoomId)
+        const room = this.matrixClient.getRoom(roomId.networkId)
         if (!room) {
-            throw new Error(`Room ${roomId.matrixRoomId} not found`)
+            throw new Error(`Room ${roomId.networkId} not found`)
         }
         const powerLevelsEvent = room.currentState.getStateEvents(EventType.RoomPowerLevels, '')
         const powerLevels = powerLevelsEvent ? powerLevelsEvent.getContent() : {}
@@ -737,7 +733,7 @@ export class ZionClient {
         }
         const response = await setZionPowerLevel(this.matrixClient, roomId, current, newValue)
         this.log(
-            `updted power level ${current.definition.key} for room[${roomId.matrixRoomId}] from ${current.value} to ${newValue}`,
+            `updted power level ${current.definition.key} for room[${roomId.networkId}] from ${current.value} to ${newValue}`,
             response,
         )
     }
@@ -746,7 +742,7 @@ export class ZionClient {
      * isRoomEncrypted
      ************************************************/
     public isRoomEncrypted(roomId: RoomIdentifier): boolean {
-        return this.matrixClient.isRoomEncrypted(roomId.matrixRoomId)
+        return this.matrixClient.isRoomEncrypted(roomId.networkId)
     }
 
     /************************************************
@@ -757,7 +753,7 @@ export class ZionClient {
         content: Record<string, FullyReadMarker>,
     ) {
         return this.matrixClient.setRoomAccountData(
-            roomId.matrixRoomId,
+            roomId.networkId,
             ZionAccountDataType.FullyRead,
             content,
         )
@@ -770,7 +766,7 @@ export class ZionClient {
         if (typeof roomId === 'string') {
             return this.matrixClient.getRoom(roomId) ?? undefined
         } else {
-            return this.matrixClient.getRoom(roomId.matrixRoomId) ?? undefined
+            return this.matrixClient.getRoom(roomId.networkId) ?? undefined
         }
     }
 
@@ -833,7 +829,7 @@ export class ZionClient {
      * scrollback
      ************************************************/
     public async scrollback(roomId: RoomIdentifier, limit?: number): Promise<void> {
-        const room = this.matrixClient.getRoom(roomId.matrixRoomId)
+        const room = this.matrixClient.getRoom(roomId.networkId)
         if (!room) {
             throw new Error('room not found')
         }
@@ -849,16 +845,16 @@ export class ZionClient {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         eventId: string | undefined = undefined,
     ): Promise<void> {
-        const room = this.matrixClient.getRoom(roomId.matrixRoomId)
+        const room = this.matrixClient.getRoom(roomId.networkId)
         if (!room) {
-            throw new Error(`room with id ${roomId.matrixRoomId} not found`)
+            throw new Error(`room with id ${roomId.networkId} not found`)
         }
         const event = eventId
             ? room.findEventById(eventId)
             : room.getLiveTimeline().getEvents().at(-1)
         if (!event) {
             throw new Error(
-                `event for room ${roomId.matrixRoomId} eventId: ${eventId ?? 'at(-1)'} not found`,
+                `event for room ${roomId.networkId} eventId: ${eventId ?? 'at(-1)'} not found`,
             )
         }
         const result = await this.matrixClient.sendReadReceipt(event)

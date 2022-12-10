@@ -63,11 +63,11 @@ export async function sendZionMessage(
     }
 
     if (!options?.threadId) {
-        await matrixClient.sendEvent(roomId.matrixRoomId, 'm.room.message', content, '', cb)
+        await matrixClient.sendEvent(roomId.networkId, 'm.room.message', content, '', cb)
     } else {
         // send as reply
         await matrixClient.sendEvent(
-            roomId.matrixRoomId,
+            roomId.networkId,
             options.threadId,
             'm.room.message',
             {

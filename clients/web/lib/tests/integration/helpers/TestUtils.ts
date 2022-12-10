@@ -172,7 +172,7 @@ export async function createTestChannelWithSpaceRoles(
         // For testing, get the roles from the space and select all of them.
         const filteredRoles = await getFilteredRolesFromSpace(
             client,
-            createChannelInfo.parentSpaceId.matrixRoomId,
+            createChannelInfo.parentSpaceId.networkId,
         )
         for (const r of filteredRoles) {
             createChannelInfo.roleIds.push(r.roleId.toNumber())

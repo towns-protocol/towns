@@ -13,25 +13,25 @@ export async function syncZionSpace(
     spaceId: RoomIdentifier | string,
     userId: string,
 ): Promise<MatrixSpaceHierarchy | undefined> {
-    const matrixRoomId = typeof spaceId === 'string' ? spaceId : spaceId.matrixRoomId
-    const matrixRoom = client.getRoom(matrixRoomId) || new MatrixRoom(matrixRoomId, client, userId)
+    const networkId = typeof spaceId === 'string' ? spaceId : spaceId.networkId
+    const matrixRoom = client.getRoom(networkId) || new MatrixRoom(networkId, client, userId)
     const roomHierarchy = new RoomHierarchy(matrixRoom)
     try {
         while (roomHierarchy.canLoadMore || roomHierarchy.loading) {
-            console.log('syncing space', matrixRoomId)
+            console.log('syncing space', networkId)
             await roomHierarchy.load()
         }
     } catch (reason) {
-        console.error('syncing space error', matrixRoomId, reason)
+        console.error('syncing space error', networkId, reason)
     }
     const root = roomHierarchy.rooms
-        ? roomHierarchy.rooms.find((r) => r.room_id === matrixRoomId)
+        ? roomHierarchy.rooms.find((r) => r.room_id === networkId)
         : undefined
     const children = roomHierarchy.rooms
-        ? roomHierarchy.rooms.filter((r) => r.room_id !== matrixRoomId)
+        ? roomHierarchy.rooms.filter((r) => r.room_id !== networkId)
         : []
     if (!root) {
-        console.error('syncing space error', matrixRoomId, 'no root', roomHierarchy)
+        console.error('syncing space error', networkId, 'no root', roomHierarchy)
         return undefined
     }
     return { root: root, children: children }

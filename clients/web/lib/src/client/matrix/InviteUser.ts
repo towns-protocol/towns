@@ -8,7 +8,7 @@ export const inviteZionUser = async (props: {
 }) => {
     const { matrixClient, roomId, userId } = props
     await matrixClient.invite(
-        roomId.matrixRoomId,
+        roomId.networkId,
         userId.toLowerCase(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
         function (err: any, data: any) {

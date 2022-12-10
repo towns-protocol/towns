@@ -46,7 +46,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
                     <div data-testid="invitesCount">
                         {invites.length > 0 ? invites.length.toString() : 'none'}
                     </div>
-                    <div data-testid="roomId">{roomId?.matrixRoomId ?? 'none'}</div>
+                    <div data-testid="roomId">{roomId?.networkId ?? 'none'}</div>
                     <div data-testid="myMembership">{myMembership}</div>
                     <button onClick={() => void joinRoom(roomId)}>Accept Invite</button>
                 </>

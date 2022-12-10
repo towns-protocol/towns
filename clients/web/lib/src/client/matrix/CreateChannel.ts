@@ -35,7 +35,7 @@ export const createZionChannel = async (props: {
     if (createInfo.parentSpaceId) {
         try {
             await matrixClient.sendStateEvent(
-                createInfo.parentSpaceId.matrixRoomId,
+                createInfo.parentSpaceId.networkId,
                 'm.space.child',
                 {
                     via: [homeServerUrl],
@@ -84,7 +84,7 @@ function makeInitialState(
     if (createInfo.parentSpaceId) {
         initialState.push({
             type: 'm.space.parent',
-            state_key: createInfo.parentSpaceId.matrixRoomId,
+            state_key: createInfo.parentSpaceId.networkId,
             content: {
                 canonical: true,
                 via: [homeServerUrl],
@@ -104,7 +104,7 @@ function makeInitialState(
                 join_rule: 'restricted',
                 allow: [
                     {
-                        room_id: createInfo.parentSpaceId.matrixRoomId,
+                        room_id: createInfo.parentSpaceId.networkId,
                         type: 'm.room_membership',
                     },
                 ],
