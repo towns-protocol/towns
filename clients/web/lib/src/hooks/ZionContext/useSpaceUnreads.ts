@@ -3,10 +3,11 @@ import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/matrix-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { useTimelineStore } from '../../store/use-timeline-store'
+import { RoomIdentifier } from '../../types/room-identifier'
 
 export function useSpaceUnreads(
     client: ZionClient | undefined,
-    spaceIds: string[],
+    spaceIds: RoomIdentifier[],
     spaceHierarchies: SpaceHierarchies,
     bShowSpaceRootUnreads: boolean,
 ) {
@@ -54,13 +55,13 @@ export function useSpaceUnreads(
                 let hasUnread = false
                 let mentionCount = 0
                 // easy case: if the space has a fully read marker, then it's not unread
-                if (bShowSpaceRootUnreads && markers[spaceId]?.isUnread === true) {
+                if (bShowSpaceRootUnreads && markers[spaceId.networkId]?.isUnread === true) {
                     hasUnread = true
-                    mentionCount += markers[spaceId].mentions
+                    mentionCount += markers[spaceId.networkId].mentions
                 }
                 // next, check the channels & threads
                 const childIds = new Set(
-                    spaceHierarchies[spaceId]?.children.map((x) => x.id.networkId) ?? [],
+                    spaceHierarchies[spaceId.networkId]?.children.map((x) => x.id.networkId) ?? [],
                 )
                 // count all channels and threads we're patricipating in
                 Object.values(markers).forEach((marker) => {
@@ -76,7 +77,7 @@ export function useSpaceUnreads(
                     }
                 })
 
-                updateState(spaceId, hasUnread, mentionCount)
+                updateState(spaceId.networkId, hasUnread, mentionCount)
             })
         }
 

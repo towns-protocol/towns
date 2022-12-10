@@ -10,19 +10,21 @@ import { useEffect, useRef, useState } from 'react'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
 import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/matrix-types'
+import { RoomIdentifier } from '../../types/room-identifier'
 
 // the spaces are just tacked on to the matrix design system,
 // child events should be treated like state events, but they are not,
 // so we have to go and fetch them manually
+// assumes spaceIds is stable, meaning if networkId doesn't change, it will remain the same object
 export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
-    spaceIds: string[],
+    spaceIds: RoomIdentifier[],
     invitedToIds: string[],
 ): { spaceHierarchies: SpaceHierarchies } {
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
-    const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds)
+    const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
     const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
-    const seenSpaceIds = useRef<string[]>(spaceIds)
+    const seenSpaceIds = useRef<RoomIdentifier[]>(spaceIds)
     const seenInvitedToIds = useRef<string[]>(invitedToIds)
 
     const enqueueSpaceId = (spaceId: string) => {
@@ -54,9 +56,13 @@ export function useSyncSpaceHierarchies(
             return
         }
         dequeueSpaceId(spaceId)
+        const roomIdentifier = seenSpaceIds.current.find((s) => s.networkId === spaceId)
+        if (!roomIdentifier) {
+            throw new Error("can't find roomIdentifier for spaceId")
+        }
         // console.log("!!!!! hierarchies syncing space", spaceId);
         const inflight = client
-            .syncSpace(spaceId)
+            .syncSpace(roomIdentifier)
             .then((hierarchy) => {
                 if (!hierarchy) {
                     return
@@ -82,11 +88,11 @@ export function useSyncSpaceHierarchies(
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
         const newIds = spaceIds.filter((x) => !seenSpaceIds.current.includes(x))
-        const removedIds = seenSpaceIds.current.filter((x) => !spaceIds.includes(x))
-        // console.log("!!!!! hierarchies new ids", newIds);
-        // console.log("!!!!! hierarchies removed ids", removedIds);
-        newIds.forEach(enqueueSpaceId)
-        removedIds.forEach(dequeueSpaceId)
+        const removedIds = seenSpaceIds.current.filter((s) => !spaceIds.includes(s))
+        // console.log('!!!!! hierarchies new ids', newIds)
+        // console.log('!!!!! hierarchies removed ids', removedIds)
+        newIds.forEach((s) => enqueueSpaceId(s.networkId))
+        removedIds.forEach((s) => dequeueSpaceId(s.networkId))
         seenSpaceIds.current = spaceIds
     }, [spaceIds])
     // when we get a new invite, we need to sync all the spaces because we don't know which one it is for yet
@@ -95,7 +101,7 @@ export function useSyncSpaceHierarchies(
         const newIds = invitedToIds.filter((x) => !seenInvitedToIds.current.includes(x))
         if (newIds.length > 0) {
             // enqueue all the spaces (we don't know which one it is for yet)
-            spaceIds.forEach(enqueueSpaceId)
+            spaceIds.forEach((s) => enqueueSpaceId(s.networkId))
         }
         seenInvitedToIds.current = invitedToIds
     }, [invitedToIds, spaceIds])
@@ -111,7 +117,7 @@ export function useSyncSpaceHierarchies(
             removed: boolean,
             data: IRoomTimelineData,
         ) => {
-            if (!spaceIds.includes(eventRoom.roomId)) {
+            if (!spaceIds.find((s) => s.networkId === eventRoom.roomId)) {
                 return
             }
             const eventType = event.getType()

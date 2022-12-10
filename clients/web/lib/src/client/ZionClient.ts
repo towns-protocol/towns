@@ -691,11 +691,8 @@ export class ZionClient {
     /************************************************
      * syncSpace
      *************************************************/
-    public async syncSpace(spaceId: RoomIdentifier | string) {
-        if (!this.auth) {
-            throw new Error('not authenticated')
-        }
-        return syncZionSpace(this.matrixClient, spaceId, this.auth.userId)
+    public async syncSpace(spaceId: RoomIdentifier) {
+        return syncZionSpace(this.matrixClient, spaceId)
     }
 
     /************************************************

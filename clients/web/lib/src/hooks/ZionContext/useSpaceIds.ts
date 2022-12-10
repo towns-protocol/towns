@@ -1,16 +1,29 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
 import { Membership } from '../../types/matrix-types'
 import { ClientEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import isEqual from 'lodash/isEqual'
+import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 
+/// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
 export function useSpacesIds(client: ZionClient | undefined): {
-    spaceIds: string[]
+    spaceIds: RoomIdentifier[]
     invitedToIds: string[]
 } {
-    const [spaceIds, setSpaceIds] = useState<string[]>([])
+    const cache = useRef<Record<string, RoomIdentifier>>({})
+    const [spaceIds, setSpaceIds] = useState<RoomIdentifier[]>([])
     const [invitedToIds, setInvitedToIds] = useState<string[]>([])
+
+    // ensure that for the same roomId, we always return the same roomIdentifier reference
+    const getOrCreateRoomIdentifier = (roomId: string): RoomIdentifier => {
+        if (cache.current[roomId]) {
+            return cache.current[roomId]
+        }
+        const roomIdentifier = makeRoomIdentifier(roomId)
+        cache.current[roomId] = roomIdentifier
+        return roomIdentifier
+    }
 
     useEffect(() => {
         if (!client) {
@@ -24,7 +37,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
             const newSpaceIds = client
                 .getRooms()
                 .filter((r) => r.isSpaceRoom() && r.getMyMembership() === Membership.Join)
-                .map((r) => r.roomId)
+                .map((r) => getOrCreateRoomIdentifier(r.roomId))
 
             const newInviteIds = client
                 .getRooms()

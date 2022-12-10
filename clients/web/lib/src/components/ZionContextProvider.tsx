@@ -22,7 +22,7 @@ export interface IZionContext {
     client?: ZionClient
     rooms: Record<string, Room | undefined>
     invitedToIds: string[] // ordered list of invites (spaces and channels)
-    spaceIds: string[] // ordered list of space ids
+    spaceIds: RoomIdentifier[] // ordered list of space ids
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]

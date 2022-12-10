@@ -11,8 +11,11 @@ export type MatrixSpaceHierarchy = {
 export async function syncZionSpace(
     client: MatrixClient,
     spaceId: RoomIdentifier | string,
-    userId: string,
 ): Promise<MatrixSpaceHierarchy | undefined> {
+    const userId = client.getUserId()
+    if (!userId) {
+        throw new Error('not authenticated')
+    }
     const networkId = typeof spaceId === 'string' ? spaceId : spaceId.networkId
     const matrixRoom = client.getRoom(networkId) || new MatrixRoom(networkId, client, userId)
     const roomHierarchy = new RoomHierarchy(matrixRoom)

@@ -9,11 +9,11 @@ import {
 } from 'matrix-js-sdk'
 import { ZionClient } from '../../client/ZionClient'
 import { SpaceItem } from '../../types/matrix-types'
-import { makeRoomIdentifier } from '../../types/room-identifier'
+import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 
 export function useSpaces(
     client: ZionClient | undefined,
-    spaceIds: string[],
+    spaceIds: RoomIdentifier[],
 ): {
     spaces: SpaceItem[]
 } {
@@ -43,7 +43,7 @@ export function useSpaces(
         // the timeline, listen here to avoid "Empty room"
         // showing up when we create a space
         const onRoomEvent = (room: MatrixRoom) => {
-            if (spaceIds.includes(room.roomId)) {
+            if (spaceIds.find((s) => s.networkId === room.roomId)) {
                 updateSpaces()
             }
         }
@@ -56,7 +56,7 @@ export function useSpaces(
             data: IRoomTimelineData,
         ) => {
             // if the room is a space update our spaces
-            if (spaceIds.includes(room.roomId)) {
+            if (spaceIds.find((s) => s.networkId === room.roomId)) {
                 const eventType = event.getType()
                 if (
                     eventType === EventType.RoomCreate ||
