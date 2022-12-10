@@ -211,15 +211,3 @@ export interface PowerLevelDefinition {
     default: number
     parent?: string
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isRoom(room: any): room is Room {
-    const r = room as Room
-    return (
-        r.id != undefined &&
-        r.id.networkId !== undefined &&
-        r.name !== undefined &&
-        r.members !== undefined &&
-        r.membership !== undefined
-    )
-}

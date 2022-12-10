@@ -75,7 +75,6 @@ interface ZionClientImpl {
         message: string,
         options?: SendMessageOptions,
     ) => Promise<void>
-    sendNotice: (roomId: RoomIdentifier, message: string) => Promise<void>
     sendReaction: (roomId: RoomIdentifier, eventId: string, reaction: string) => Promise<void>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setPowerLevel: (
@@ -129,7 +128,6 @@ export function useZionClient(): ZionClientImpl {
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),
         sendReaction: useWithCatch(client?.sendReaction),
-        sendNotice: useWithCatch(client?.sendNotice),
         sendReadReceipt,
         setPowerLevel: useWithCatch(client?.setPowerLevel),
         syncSpace: useWithCatch(client?.syncSpace),

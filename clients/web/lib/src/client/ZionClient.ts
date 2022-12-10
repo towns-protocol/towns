@@ -687,12 +687,6 @@ export class ZionClient {
         })
         console.log('event redacted', roomId.networkId, eventId, resp)
     }
-    /************************************************
-     * sendNotice
-     *************************************************/
-    public async sendNotice(roomId: RoomIdentifier, message: string): Promise<void> {
-        await this.matrixClient.sendNotice(roomId.networkId, message)
-    }
 
     /************************************************
      * syncSpace
