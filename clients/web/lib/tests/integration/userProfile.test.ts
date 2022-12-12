@@ -92,8 +92,12 @@ describe('userProfile', () => {
         await waitFor(
             () =>
                 expect(
-                    alice.getRoom(roomId)?.getLiveTimeline().getEvents().at(-1)?.getContent().body,
-                ).toBe('hello'),
+                    alice
+                        .getRoom(roomId)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
+                ).toBeDefined(),
             TestConstants.DefaultWaitForTimeout,
         )
         // get the message
