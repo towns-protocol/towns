@@ -9,11 +9,11 @@ import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
 export function useSpacesIds(client: ZionClient | undefined): {
     spaceIds: RoomIdentifier[]
-    invitedToIds: string[]
+    invitedToIds: RoomIdentifier[]
 } {
     const cache = useRef<Record<string, RoomIdentifier>>({})
     const [spaceIds, setSpaceIds] = useState<RoomIdentifier[]>([])
-    const [invitedToIds, setInvitedToIds] = useState<string[]>([])
+    const [invitedToIds, setInvitedToIds] = useState<RoomIdentifier[]>([])
 
     // ensure that for the same roomId, we always return the same roomIdentifier reference
     const getOrCreateRoomIdentifier = (roomId: string): RoomIdentifier => {
@@ -31,7 +31,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
         }
         console.log('USE SPACE IDS::starting effect')
         // local data
-        let _invitedToIds: string[] = []
+        let _invitedToIds: RoomIdentifier[] = []
         // wrap up state interaction
         const updateSpaceAndInviteIds = () => {
             const newSpaceIds = client
@@ -42,7 +42,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
             const newInviteIds = client
                 .getRooms()
                 .filter((r) => r.getMyMembership() === Membership.Invite)
-                .map((r) => r.roomId)
+                .map((r) => getOrCreateRoomIdentifier(r.roomId))
             _invitedToIds = newInviteIds.slice()
 
             setSpaceIds((prev) => {
@@ -66,7 +66,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
             if (
                 room.isSpaceRoom() ||
                 room.getMyMembership() === Membership.Invite ||
-                _invitedToIds.indexOf(room.roomId) >= 0
+                _invitedToIds.find((r) => r.networkId === room.roomId)
             ) {
                 updateSpaceAndInviteIds()
             }

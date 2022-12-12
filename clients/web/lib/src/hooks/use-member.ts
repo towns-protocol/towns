@@ -25,8 +25,7 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
         }
         // helpers
         const updateState = (inRoomMember?: MatrixRoomMember) => {
-            const matrixMember =
-                inRoomMember ?? client?.getRoom(roomId.networkId)?.getMember(userId)
+            const matrixMember = inRoomMember ?? client?.getRoom(roomId)?.getMember(userId)
             const matrixMembership = matrixMember?.membership
             const membership = (matrixMembership as Membership) ?? Membership.None
             const name = matrixMember?.name ?? ''

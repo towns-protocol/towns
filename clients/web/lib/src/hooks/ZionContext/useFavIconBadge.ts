@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
+import { RoomIdentifier } from '../../types/room-identifier'
 import { Badger } from '../../utils/Badger'
 
 export function useFavIconBadge(
-    invitedToIds: string[],
+    invitedToIds: RoomIdentifier[],
     spaceUnreads: Record<string, boolean>,
     spaceMentions: Record<string, number>,
 ): void {

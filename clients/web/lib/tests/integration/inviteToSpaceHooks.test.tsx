@@ -100,7 +100,9 @@ describe('inviteToSpace', () => {
                     <div data-testid="allSpaces">
                         {spaces.map((space) => formatSpace(space)).join('\n')}
                     </div>
-                    <div data-testid="allInvites">{invitedToIds.map((id) => id).join('\n')}</div>
+                    <div data-testid="allInvites">
+                        {invitedToIds.map((id) => id.networkId).join('\n')}
+                    </div>
                     <div data-testid="myMembership1">{myMembership1}</div>
                     <div data-testid="myMembership2">{myMembership2}</div>
                     <div data-testid="myMembership3">{myMembership3}</div>

@@ -81,7 +81,7 @@ export function useInvites(): InviteData[] {
                     }
                     return formatInvite(
                         toZionRoom(room),
-                        getParentSpaceId(id, spaceHierarchies),
+                        getParentSpaceId(id.networkId, spaceHierarchies),
                         '/placeholders/nft_29.png',
                     )
                 })

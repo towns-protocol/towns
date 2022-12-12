@@ -21,7 +21,7 @@ import { Web3ContextProvider } from './Web3ContextProvider'
 export interface IZionContext {
     client?: ZionClient
     rooms: Record<string, Room | undefined>
-    invitedToIds: string[] // ordered list of invites (spaces and channels)
+    invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceIds: RoomIdentifier[] // ordered list of space ids
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount

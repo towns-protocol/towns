@@ -753,12 +753,8 @@ export class ZionClient {
     /************************************************
      * getRoom
      ************************************************/
-    public getRoom(roomId: RoomIdentifier | string): MatrixRoom | undefined {
-        if (typeof roomId === 'string') {
-            return this.matrixClient.getRoom(roomId) ?? undefined
-        } else {
-            return this.matrixClient.getRoom(roomId.networkId) ?? undefined
-        }
+    public getRoom(roomId: RoomIdentifier): MatrixRoom | undefined {
+        return this.matrixClient.getRoom(roomId.networkId) ?? undefined
     }
 
     /************************************************

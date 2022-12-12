@@ -24,7 +24,7 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
         }
         // helpers
         const updateState = () => {
-            const matrixRoom = client.getRoom(roomId.networkId)
+            const matrixRoom = client.getRoom(roomId)
             const powerLevelsEvent = matrixRoom?.currentState.getStateEvents(
                 EventType.RoomPowerLevels,
                 '',

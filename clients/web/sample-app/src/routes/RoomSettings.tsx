@@ -16,8 +16,9 @@ export const RoomSettings = () => {
     const { setPowerLevel } = useZionClient()
     // if we have a room id, use it, otherwise pull up the space id
     const targetId = channelSlug || spaceSlug
-    const room = useRoom(targetId ? makeRoomIdentifier(targetId) : undefined)
-    const matrixRoom = targetId ? client?.getRoom(targetId) : undefined
+    const roomId = targetId ? makeRoomIdentifier(targetId) : undefined
+    const room = useRoom(roomId)
+    const matrixRoom = roomId ? client?.getRoom(roomId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 
     const powerLevels = usePowerLevels(room?.id)

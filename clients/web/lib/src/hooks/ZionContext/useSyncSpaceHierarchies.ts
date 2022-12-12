@@ -19,13 +19,13 @@ import { RoomIdentifier } from '../../types/room-identifier'
 export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
     spaceIds: RoomIdentifier[],
-    invitedToIds: string[],
+    invitedToIds: RoomIdentifier[],
 ): { spaceHierarchies: SpaceHierarchies } {
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
     const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
     const seenSpaceIds = useRef<RoomIdentifier[]>(spaceIds)
-    const seenInvitedToIds = useRef<string[]>(invitedToIds)
+    const seenInvitedToIds = useRef<RoomIdentifier[]>(invitedToIds)
 
     const enqueueSpaceId = (spaceId: string) => {
         setSpaceIdsQueue((prev) => {
