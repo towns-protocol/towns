@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     CreateSpaceInfo,
@@ -14,6 +14,11 @@ import { useQueryParams } from 'hooks/useQueryParam'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import {
+    TransactionUIStates,
+    TransactionUIStatesType,
+    useTransactionUIStates,
+} from 'hooks/useTransactionStatus'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
@@ -31,14 +36,20 @@ interface Props {
 type HeaderProps = {
     formId: string
     hasPrev: boolean
+    isLast: boolean
     goPrev: () => void
-    error: boolean
-    transactionStatus: TransactionStatus | null
+    hasError: boolean
+    transactionUIState: TransactionUIStatesType
 }
 
 const Header = (props: HeaderProps) => {
-    const { hasPrev, goPrev, formId, transactionStatus: transactionState, error } = props
-    const isTransacting = transactionState === TransactionStatus.Pending
+    const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError } = props
+    const isTransacting = transactionUIState !== TransactionUIStates.None
+    const requesting = transactionUIState === TransactionUIStates.Requesting
+    const pending = transactionUIState === TransactionUIStates.Pending
+    const success = transactionUIState === TransactionUIStates.Success
+    const failed = transactionUIState === TransactionUIStates.Failed
+    const interactiveState = !isTransacting || failed
 
     return (
         <>
@@ -47,8 +58,8 @@ const Header = (props: HeaderProps) => {
                 <Box flexDirection="row" paddingLeft="sm" position="relative">
                     {hasPrev && (
                         <Box
-                            position={isTransacting ? 'absolute' : 'relative'}
-                            left={isTransacting ? 'md' : 'none'}
+                            position={!interactiveState ? 'absolute' : 'relative'}
+                            left={!interactiveState ? 'md' : 'none'}
                         >
                             <Button onClick={goPrev}>
                                 <Text>Prev</Text>
@@ -56,33 +67,39 @@ const Header = (props: HeaderProps) => {
                         </Box>
                     )}
 
-                    <MotionBox layout paddingLeft="sm" width={isTransacting ? '250' : 'auto'}>
+                    <MotionBox layout paddingLeft="sm" width={!interactiveState ? '250' : 'auto'}>
                         <Button
-                            tone={isTransacting ? 'level2' : 'cta1'}
-                            disabled={isTransacting}
+                            data-testid="create-space-next-button"
+                            tone={!interactiveState || success ? 'level2' : 'cta1'}
+                            disabled={!interactiveState}
                             style={{ opacity: 1, zIndex: 1 }}
                             type="submit"
                             form={formId}
                         >
-                            {isTransacting && (
+                            {/* broken up b/c of weird behavior with framer layout warping text */}
+                            {!interactiveState && (
                                 <FadeIn delay>
                                     <Box flexDirection="row" gap="sm">
                                         <ButtonSpinner />
-                                        <MotionText layout>Waiting for Approval</MotionText>
+                                        {requesting && (
+                                            <MotionText layout>Waiting For Approval</MotionText>
+                                        )}
+                                        {pending && <MotionText layout>Creating Space</MotionText>}
                                     </Box>
                                 </FadeIn>
                             )}
 
-                            {!isTransacting && (
+                            {interactiveState && (
                                 <FadeIn delay>
-                                    <MotionText layout>Next</MotionText>
+                                    {isLast && <MotionText layout>Create</MotionText>}
+                                    {!isLast && <MotionText layout>Next</MotionText>}
                                 </FadeIn>
                             )}
                         </Button>
                     </MotionBox>
                 </Box>
             </Box>
-            {error && (
+            {hasError && (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <ErrorMessageText message="There was an error with the transaction. Please try again" />
                 </Box>
@@ -102,9 +119,17 @@ export const CreateSpaceForm = (props: Props) => {
         createSpaceTransactionWithMemberRole,
     } = useCreateSpaceTransaction()
 
+    const [wentBackAfterAttemptingCreation, setWentBackAfterAttemptingCreation] = useState(false)
+
     const hasError = useMemo(() => {
-        return error != undefined
-    }, [error])
+        return (
+            error != undefined &&
+            error?.name !== 'ACTION_REJECTED' &&
+            !wentBackAfterAttemptingCreation
+        )
+    }, [error, wentBackAfterAttemptingCreation])
+
+    const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(roomId))
 
     const {
         goNext,
@@ -122,6 +147,9 @@ export const CreateSpaceForm = (props: Props) => {
 
     function onPrevClick() {
         goPrev()
+        if (isLast) {
+            setWentBackAfterAttemptingCreation(true)
+        }
     }
 
     const createSpace = useCallback(async () => {
@@ -157,6 +185,7 @@ export const CreateSpaceForm = (props: Props) => {
 
     const onSubmit = useCallback(async () => {
         if (isLast) {
+            setWentBackAfterAttemptingCreation(false)
             await createSpace()
             return
         }
@@ -164,11 +193,10 @@ export const CreateSpaceForm = (props: Props) => {
     }, [createSpace, goNext, isLast])
 
     useEffect(() => {
-        // success
-        if (roomId) {
+        if (roomId && transactionStatus === TransactionStatus.Success) {
             onCreateSpace(roomId, Membership.Join)
         }
-    }, [onCreateSpace, roomId])
+    }, [onCreateSpace, roomId, transactionStatus])
 
     return (
         <Box>
@@ -176,8 +204,9 @@ export const CreateSpaceForm = (props: Props) => {
                 formId={formId}
                 hasPrev={hasPrev}
                 goPrev={onPrevClick}
-                error={hasError}
-                transactionStatus={transactionStatus}
+                isLast={isLast}
+                hasError={hasError}
+                transactionUIState={transactionUIState}
             />
 
             <AnimatePresence mode="wait">

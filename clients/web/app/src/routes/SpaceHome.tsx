@@ -1,42 +1,32 @@
 import React, { useCallback, useEffect } from 'react'
 
 import { useNavigate } from 'react-router'
-import {
-    Membership,
-    SpaceData,
-    useSpaceData,
-    useSpaceFromContract,
-    useSpaceId,
-    useWeb3Context,
-    useZionClient,
-} from 'use-zion-client'
+import { Membership, SpaceData, useSpaceData, useZionClient } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
+import { useIsSpaceOwner } from 'hooks/useIsSpaceOwner'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
-    const spaceId = useSpaceId()
     const space = useSpaceData()
-    const { accounts } = useWeb3Context()
+    const spaceId = space?.id
     const navigate = useNavigate()
-    const wallet = accounts[0]
-    const { isLoading: contractLoading, space: spaceContract } = useSpaceFromContract(space?.id)
+    const isOwner = useIsSpaceOwner()
 
     useEffect(() => {
         const channels = space?.channelGroups.flatMap((g) => g.channels)
-
-        if (contractLoading) {
-            return
-        }
-        const owner = wallet === spaceContract?.owner
 
         if (space?.membership === Membership.Join) {
             let route: string
             const firstChannelId = channels?.at(0)?.id
 
             if (!firstChannelId) {
-                if (owner) {
+                if (isOwner === null) {
+                    return
+                }
+
+                if (isOwner) {
                     route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.GETTING_STARTED}`
                 } else {
                     route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.THREADS}`
@@ -53,15 +43,7 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [
-        navigate,
-        space?.channelGroups,
-        space?.membership,
-        spaceId?.slug,
-        contractLoading,
-        spaceContract?.owner,
-        wallet,
-    ])
+    }, [isOwner, navigate, space?.channelGroups, space?.membership, spaceId?.slug])
 
     if (!spaceId || !space) {
         return null

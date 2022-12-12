@@ -5,9 +5,7 @@ import {
     MentionResult,
     RoomIdentifier,
     SpaceData,
-    useSpaceFromContract,
     useSpaceMentions,
-    useWeb3Context,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
@@ -18,6 +16,7 @@ import { Badge, Box, Icon, Stack } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { PATHS } from 'routes'
+import { useIsSpaceOwner } from 'hooks/useIsSpaceOwner'
 import { SideBar } from './_SideBar'
 
 type Props = {
@@ -26,12 +25,9 @@ type Props = {
 
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
-    const { accounts } = useWeb3Context()
     const navigate = useNavigate()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
-    const wallet = accounts[0]
-    const { space: spaceContract } = useSpaceFromContract(space.id)
-    const owner = wallet === spaceContract?.owner
+    const isOwner = useIsSpaceOwner()
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
@@ -53,7 +49,7 @@ export const SpaceSideBar = (props: Props) => {
             <Stack paddingY="md">
                 {space?.membership === Membership.Join && (
                     <>
-                        {owner && (
+                        {isOwner && (
                             <ActionNavItem
                                 icon="wand"
                                 id="getting-started"
