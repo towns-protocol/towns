@@ -1,0 +1,22 @@
+main = "./src/index.ts"
+name = "token-worker"
+compatibility_date = "2022-07-26"
+
+# this is for tests, so it gets used even though wrangler CLI says otherwise
+[miniflare]
+cache_persist = false
+
+
+[dev]
+ip = "localhost"
+port = 8006
+local_protocol = "http"
+
+[vars]
+# VAR_NAME = "some_value"
+
+# The necessary secrets are: ALCHEMY_API_KEY
+# for local development, you can add these in .dev.vars
+# OR
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# add your secret property names here

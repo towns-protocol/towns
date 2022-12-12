@@ -87,6 +87,7 @@
         "contracts",
         "packages/*",
         "servers/worker-template",
+        "servers/token-worker",
         "servers/unfurl-worker"
     ]
 }
