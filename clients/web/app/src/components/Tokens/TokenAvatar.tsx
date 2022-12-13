@@ -7,7 +7,7 @@ export const TokenAvatar = (props: Partial<TokenProps>) => {
     return (
         <Box alignItems="center" maxWidth="x6" data-testid="token-avatar">
             <Box position="relative">
-                <Avatar src={imgSrc} size="avatar_md" />
+                <Avatar src={imgSrc || '/placeholders/nft_5.png'} size="avatar_md" />
                 {onClick && contractAddress && (
                     <IconButton
                         style={{

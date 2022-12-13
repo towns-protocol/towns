@@ -4,7 +4,7 @@ import { UseFormReturn } from 'react-hook-form'
 import { useWeb3Context } from 'use-zion-client'
 import { Box, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
 import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/UploadSpaceIcon'
-import { getCachedTokensForWallet } from 'api/lib/tokens'
+import { getCachedTokensForWallet } from 'api/lib/tokenContracts'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { TokenAvatar } from '../../../Tokens/TokenAvatar'
@@ -60,7 +60,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
                 data-testid="step-2-avatars"
             >
                 {tokens.map((contractAddress: string) => {
-                    const token = getCachedTokensForWallet().find(
+                    const token = getCachedTokensForWallet().tokens.find(
                         (t) => t.contractAddress === contractAddress,
                     )
                     return (

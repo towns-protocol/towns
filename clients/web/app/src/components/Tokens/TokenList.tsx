@@ -1,9 +1,12 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { getZionTokenAddress } from 'use-zion-client'
-import { Box, Checkbox, Text, TextField } from '@ui'
-import { getCachedTokensForWallet, useTokensForWallet } from 'api/lib/tokens'
+import uniqBy from 'lodash/uniqBy'
+import { Box, Button, Checkbox, Text, TextField } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
+import { getCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
+import { Spinner } from '@components/Spinner'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -31,6 +34,14 @@ const TokenCheckboxLabel = ({ imgSrc, label, contractAddress }: TokenProps) => {
     )
 }
 
+const Loader = () => {
+    return (
+        <Box centerContent paddingTop="md">
+            <Spinner />
+        </Box>
+    )
+}
+
 type TokenListProps = {
     isChecked: boolean
     wallet: string
@@ -49,17 +60,32 @@ export const TokenList = ({
         () => (chainId ? getZionTokenAddress(chainId) : null),
         [chainId],
     )
+
     const [results, setResults] = React.useState<TokenProps[]>([])
     const [search, setSearch] = React.useState('')
     const selectedTokens = watch('tokens')
+    const [page, setPage] = useState(getCachedTokensForWallet().previousPageKey || '')
+    const loadMore = (pageKey: string) => {
+        setPage(pageKey)
+    }
 
-    const { data: tokens } = useTokensForWallet(wallet, zionTokenAddress, isChecked)
+    const { data, isFetching, isLoading } = useTokenContractsForAddress(
+        'vitalik.eth', // hard coding for testing purposes
+        zionTokenAddress,
+        isChecked,
+        page,
+    )
 
     useEffect(() => {
-        if (!tokens) return
-        const _results = searchArrayOfData(tokens, search)
+        if (!data?.tokens) return
+        const unique = uniqBy(
+            [...getCachedTokensForWallet().tokens, ...data.tokens],
+            'contractAddress',
+        )
+        const _results = searchArrayOfData(unique, search)
         setResults(_results)
-    }, [search, tokens])
+        // do not depend on cached data
+    }, [search, data])
 
     function handleClick(contractAddress: string) {
         const _selectedTokens = selectedTokens.filter((token: string) => token !== contractAddress)
@@ -71,7 +97,7 @@ export const TokenList = ({
             {!selectedTokens.length ? null : (
                 <Box display="flex" flexDirection="row" gap="md" paddingY="md">
                     {selectedTokens.map((contractAddress: string) => {
-                        const token = getCachedTokensForWallet().find(
+                        const token = getCachedTokensForWallet().tokens.find(
                             (t) => t.contractAddress === contractAddress,
                         )
                         return (
@@ -93,16 +119,34 @@ export const TokenList = ({
                 onChange={(e) => setSearch(e.target.value)}
             />
             <Box paddingTop="md">
-                {isChecked &&
-                    results.map((data) => (
-                        <Checkbox
-                            name="tokens"
-                            key={data.contractAddress}
-                            value={data.contractAddress}
-                            label={<TokenCheckboxLabel {...data} />}
-                            register={register}
-                        />
-                    ))}
+                {isChecked && (
+                    <>
+                        {results.map((data) => (
+                            <Checkbox
+                                name="tokens"
+                                key={data.contractAddress}
+                                value={data.contractAddress}
+                                label={<TokenCheckboxLabel {...data} />}
+                                register={register}
+                            />
+                        ))}
+
+                        {isLoading && <Loader />}
+
+                        {data?.nextPageKey && (
+                            <Box paddingY="md">
+                                <Button
+                                    type="button"
+                                    animate={false}
+                                    onClick={() => loadMore(data?.nextPageKey || '')}
+                                >
+                                    {isFetching && <ButtonSpinner />}
+                                    Load more
+                                </Button>
+                            </Box>
+                        )}
+                    </>
+                )}
             </Box>
         </Box>
     )

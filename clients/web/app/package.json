@@ -9,7 +9,7 @@
         "lint": "eslint . --cache",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
-        "test:unit": "VITE_UNFURL_SERVER_URL=fake-unfurl-url vitest",
+        "test:unit": "VITE_UNFURL_SERVER_URL=http://fake.com VITE_TOKEN_SERVER_URL=http://fake.com vitest",
         "test": "yarn test:unit"
     },
     "dependencies": {
