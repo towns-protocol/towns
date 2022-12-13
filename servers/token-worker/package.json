@@ -26,6 +26,7 @@
         "wrangler": "^2.0.24"
     },
     "dependencies": {
+        "alchemy-sdk": "^2.2.4",
         "itty-router": "^2.6.6"
     }
 }
