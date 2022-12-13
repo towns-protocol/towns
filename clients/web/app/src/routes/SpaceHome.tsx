@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect } from 'react'
 
 import { useNavigate } from 'react-router'
-import { Membership, SpaceData, useSpaceData, useZionClient } from 'use-zion-client'
+import {
+    Membership,
+    SpaceData,
+    useMyMembership,
+    useSpaceData,
+    useZionClient,
+} from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
@@ -12,12 +18,13 @@ export const SpaceHome = () => {
     const space = useSpaceData()
     const spaceId = space?.id
     const navigate = useNavigate()
+    const membership = useMyMembership(space?.id)
     const isOwner = useIsSpaceOwner()
 
     useEffect(() => {
         const channels = space?.channelGroups.flatMap((g) => g.channels)
 
-        if (space?.membership === Membership.Join) {
+        if (membership === Membership.Join) {
             let route: string
             const firstChannelId = channels?.at(0)?.id
 
@@ -43,7 +50,7 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [isOwner, navigate, space?.channelGroups, space?.membership, spaceId?.slug])
+    }, [isOwner, navigate, space?.channelGroups, membership, spaceId?.slug])
 
     if (!spaceId || !space) {
         return null
@@ -52,7 +59,7 @@ export const SpaceHome = () => {
     return (
         <Stack horizontal grow justifyContent="center" basis="1200">
             <LiquidContainer fullbleed position="relative">
-                {space.membership !== Membership.Join ? (
+                {membership !== Membership.Join ? (
                     <JoinSpace space={space} />
                 ) : (
                     <Box absoluteFill padding grow overflow="hidden">

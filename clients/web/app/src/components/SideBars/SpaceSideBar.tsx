@@ -5,6 +5,7 @@ import {
     MentionResult,
     RoomIdentifier,
     SpaceData,
+    useMyMembership,
     useSpaceMentions,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
@@ -27,6 +28,7 @@ export const SpaceSideBar = (props: Props) => {
     const { space } = props
     const navigate = useNavigate()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
+    const membership = useMyMembership(space?.id)
     const isOwner = useIsSpaceOwner()
 
     const onSettings = useCallback(
@@ -47,7 +49,7 @@ export const SpaceSideBar = (props: Props) => {
                 <SettingsGear spaceId={space.id} spaceName={space.name} onSettings={onSettings} />
             </Stack>
             <Stack paddingY="md">
-                {space?.membership === Membership.Join && (
+                {membership === Membership.Join && (
                     <>
                         {isOwner && (
                             <ActionNavItem
