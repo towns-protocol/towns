@@ -1,4 +1,4 @@
-export type { Space, SpaceIdentifier } from './client/ZionClientTypes'
+export type { Space, SpaceIdentifier, TransactionContext } from './client/ZionClientTypes'
 export { TransactionStatus } from './client/ZionClientTypes'
 
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'

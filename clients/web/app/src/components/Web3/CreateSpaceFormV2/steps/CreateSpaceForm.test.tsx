@@ -6,7 +6,6 @@ import { act } from 'react-dom/test-utils'
 import { MemoryRouter } from 'react-router-dom'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
-import { TransactionContext } from 'use-zion-client/dist/client/ZionClientTypes'
 import { ContractReceipt, ContractTransaction } from 'ethers'
 import { TestApp } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
@@ -76,7 +75,7 @@ const useMockedCreateSpaceTransaction = (
     outcome: 'success' | 'failWithTransaction' | 'failWithoutTransaction' = 'success',
 ) => {
     const [transactionContext, setTransactionContext] = useState<
-        TransactionContext<zionClient.RoomIdentifier> | undefined
+        zionClient.TransactionContext<zionClient.RoomIdentifier> | undefined
     >(undefined)
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
