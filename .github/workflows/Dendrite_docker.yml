@@ -3,8 +3,11 @@
 name: 'Dendrite_docker'
 
 on:
-    release: # A GitHub release was published
-        types: [published]
+    push:
+        branches:
+            - main
+        paths:
+            - 'servers/dendrite/**'
     workflow_dispatch: # A build was manually requested
     workflow_call: # Another pipeline called us
         secrets:
@@ -23,14 +26,24 @@ jobs:
         name: Monolith image
         runs-on: ubuntu-latest
         permissions:
-            contents: read
+            contents: write
             packages: write
         steps:
             - name: Checkout
               uses: actions/checkout@v3
-            - name: Get release tag
-              if: github.event_name == 'release' # Only for GitHub releases
-              run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+            - name:  'Automated version bump'
+              uses:  'phips28/gh-action-bump-version@master'
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                PACKAGEJSON_DIR:  'servers/dendrite'
+              with:
+                version-type:  'patch'
+
+            - name: Get release version from package.json
+              working-directory: ./servers/dendrite
+              run: bash get-version.sh | awk '{print "RELEASE_VERSION="$1""}' >> $GITHUB_ENV
+
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v2
             - name: Set up Docker Buildx
@@ -41,8 +54,7 @@ jobs:
                   username: ${{ secrets.DOCKER_HUB_USERNAME }}
                   password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-            - name: Build main monolith image
-              if: github.ref_name == 'main'
+            - name: Build monolith image
               id: docker_build_monolith
               uses: docker/build-push-action@v3
               with:
@@ -54,22 +66,4 @@ jobs:
                   push: true
                   build-args: |
                       RELEASE_VERSION=${{ env.RELEASE_VERSION }}
-                  tags: |
-                      ${{ env.DOCKER_NAMESPACE }}/dendrite-monolith:${{ github.ref_name }}
-
-            - name: Build release monolith image
-              if: github.event_name == 'release' # Only for GitHub releases
-              id: docker_build_monolith_release
-              uses: docker/build-push-action@v3
-              with:
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-                  context: ./servers/dendrite
-                  file: ./servers/dendrite/build/docker/Dockerfile.monolith
-                  platforms: ${{ env.PLATFORMS }}
-                  push: true
-                  build-args: |
-                      RELEASE_VERSION=${{ env.RELEASE_VERSION }}
-                  tags: |
-                      ${{ env.DOCKER_NAMESPACE }}/dendrite-monolith:latest
-                      ${{ env.DOCKER_NAMESPACE }}/dendrite-monolith:${{ env.RELEASE_VERSION }}
+                  tags: ${{ env.DOCKER_NAMESPACE }}/dendrite-monolith:${{ env.RELEASE_VERSION }}
