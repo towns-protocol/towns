@@ -3,8 +3,6 @@
     "compilerOptions": {
         "rootDir": "./src" /* Specify the root folder within your source files. */,
         "outDir": "./dist" /* Specify an output folder for all emitted files. */,
-        "types": ["node", "jest"]
     },
     "include": ["./src/**/*"],
-    "references": [{ "path": "../core" }, { "path": "../client" } /* for integration tests */]
 }

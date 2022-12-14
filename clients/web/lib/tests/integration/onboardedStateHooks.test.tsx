@@ -9,7 +9,6 @@ import { useZionContext } from '../../src/components/ZionContextProvider'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('onboardedStateHooksTest', () => {
-    jest.setTimeout(30000)
     test("previously onboarded user doesn't get put in onboarding", async () => {
         // create clients
         const { alice } = await registerAndStartClients(['alice'])

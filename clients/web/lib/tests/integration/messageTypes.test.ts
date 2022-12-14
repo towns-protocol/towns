@@ -20,7 +20,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
 describe('messageTypes', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('send a m.wenmoon message to test message types', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

@@ -9,7 +9,6 @@ import { LoginWithWallet } from './helpers/TestComponents'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('userProfileOnLaunchHooks', () => {
-    jest.setTimeout(30000)
     test('user sees own info on next app launch', async () => {
         // create clients
         const { alice } = await registerAndStartClients(['alice'])

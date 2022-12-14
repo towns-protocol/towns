@@ -13,8 +13,6 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('create role', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
-
     test('Space owner is allowed to disable space access', async () => {
         /** Arrange */
 

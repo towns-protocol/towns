@@ -22,7 +22,6 @@ import { usePowerLevels } from '../../src/hooks/use-power-levels'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 
 describe('powerLevelsHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create a space with two users, reduce the level required to create a space child', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

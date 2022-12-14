@@ -3,16 +3,10 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 globalThis.OLM_OPTIONS = {}
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import olmWasm from '@matrix-org/olm/olm.wasm?url'
 import Olm from '@matrix-org/olm'
 
 export function loadOlm(): Promise<void> {
-    return Olm.init({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        locateFile: () => olmWasm,
-    })
+    return Olm.init()
         .then(() => {
             console.log('Using WebAssembly Olm')
         })

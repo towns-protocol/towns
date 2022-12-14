@@ -27,7 +27,6 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('defaultSpaceIdHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('new user sees default space information', async () => {
         // create clients
         // create a wallet for bob

@@ -22,8 +22,6 @@ import { useZionContext } from '../../src/components/ZionContextProvider'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 // https://linear.app/hnt-labs/issue/HNT-38/invites-might-not-sync-show-properly-in-some-instances
 describe('inviteToSpace', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
-
     test('user can receive an invite, display it, and accept it', async () => {
         // create clients
         const { jane, bob } = await registerAndStartClients(['jane', 'bob'])

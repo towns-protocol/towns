@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { firstBy } from 'thenby'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useTimelineStore } from '../store/use-timeline-store'
 import { MentionResult } from '../types/timeline-types'
@@ -49,7 +48,20 @@ export function useSpaceMentions(): MentionResult[] {
         })
 
         return mentions.sort(
-            firstBy<MentionResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
+            //firstBy<MentionResult>((m) => (m.unread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
+            (a: MentionResult, b: MentionResult): number => {
+                if (a.unread && !b.unread) {
+                    return -1
+                } else if (!a.unread && b.unread) {
+                    return 1
+                } else if (a.timestamp > b.timestamp) {
+                    return -1
+                } else if (a.timestamp < b.timestamp) {
+                    return 1
+                } else {
+                    return 0
+                }
+            },
         )
     }, [channels, threadsStats, timelines, unreadMarkers])
 }

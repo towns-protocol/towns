@@ -10,14 +10,15 @@ import debug from 'debug'
 import _ from 'lodash'
 import { config } from '../config'
 import { EventStore } from './eventStore'
-import { Pool, PoolClient } from 'pg'
+import { PoolClient } from 'pg'
 import format, { string } from 'pg-format'
 import { setTimeout as setTimeoutWithPromise } from 'timers/promises'
+import pg from 'pg'
 
 const log = debug('zion:PGEventStore')
 
 export const createPGPool = () =>
-    new Pool({
+    new pg.Pool({
         connectionString: config.postgresUrl,
     })
 
@@ -25,8 +26,8 @@ const PG_EVENT_TABLE_NAME_PREFIX = 'es_'
 
 // TODO: change throws to throwWithCode
 export class PGEventStore implements EventStore {
-    private pool: Pool
-    constructor(pool?: Pool) {
+    private pool: pg.Pool
+    constructor(pool?: pg.Pool) {
         this.pool = pool ?? createPGPool()
     }
 

@@ -11,7 +11,6 @@ import { useMyProfile } from '../../src/hooks/use-my-profile'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('onboardingStateHooks', () => {
-    jest.setTimeout(30000)
     test('test that onboarding state reflects reality', async () => {
         // create a wallet for bob
         const aliceProvider = new ZionTestWeb3Provider()

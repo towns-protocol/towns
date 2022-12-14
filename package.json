@@ -6,8 +6,9 @@
     "packageManager": "yarn@3.2.4",
     "scripts": {
         "build": "turbo build",
-        "csb:build": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build",
-        "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run build --clean",
+        "csb:build": "yarn workspace @zion/core run build && yarn workspace @zion/client run build && yarn workspace @zion/server run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
+        "csb:cb": "yarn csb:clean && yarn csb:build",
+        "csb:clean": "yarn workspaces foreach --all --include \"@zion/**\" run clean",
         "csb:dev": "./casablanca/scripts/launch.sh",
         "csb:start": "yarn workspace @zion/server run start",
         "csb:stop": "./casablanca/scripts/stop.sh",
@@ -71,6 +72,7 @@
             "license",
             "private",
             "packageManager",
+            "type",
             "main",
             "types",
             "scripts"

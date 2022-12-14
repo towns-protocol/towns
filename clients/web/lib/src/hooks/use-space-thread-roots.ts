@@ -1,4 +1,3 @@
-import { firstBy } from 'thenby'
 import { useTimelineStore } from '../store/use-timeline-store'
 import { FullyReadMarker, ThreadResult, ThreadStats } from '../types/timeline-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
@@ -34,7 +33,20 @@ export function useSpaceThreadRoots(): ThreadResult[] {
         })
 
         threads.sort(
-            firstBy<ThreadResult>((m) => (m.isUnread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
+            //firstBy<ThreadResult>((m) => (m.isUnread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
+            (a: ThreadResult, b: ThreadResult): number => {
+                if (a.isUnread && !b.isUnread) {
+                    return -1
+                } else if (!a.isUnread && b.isUnread) {
+                    return 1
+                } else if (a.timestamp > b.timestamp) {
+                    return -1
+                } else if (a.timestamp < b.timestamp) {
+                    return 1
+                } else {
+                    return 0
+                }
+            },
         )
 
         return threads

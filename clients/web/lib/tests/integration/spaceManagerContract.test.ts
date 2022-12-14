@@ -6,8 +6,6 @@ import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 
 describe('spaceManagerContract', () => {
-    // usefull for debugging or running against cloud servers
-    jest.setTimeout(30 * 1000)
     // test: spaceContract
     test('create web3 space', async () => {
         // create clients

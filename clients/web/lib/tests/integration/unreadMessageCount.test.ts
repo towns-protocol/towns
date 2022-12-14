@@ -17,7 +17,6 @@ import { waitFor } from '@testing-library/dom'
 
 describe('unreadMessageCount', () => {
     // usefull for debugging or running against cloud servers
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create room, invite user, accept invite, and send message, check unread counts', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

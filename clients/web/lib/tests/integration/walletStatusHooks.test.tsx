@@ -4,7 +4,6 @@ import React, { useCallback } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginStatus } from '../../src/hooks/login'
-import { TestConstants } from './helpers/TestConstants'
 import { WalletStatus } from '../../src/types/web3-types'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -15,7 +14,6 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('walletStatusHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('new user registers a new wallet and is logged in', async () => {
         // create a provider for bob
         const bobProvider = new ZionTestWeb3Provider()

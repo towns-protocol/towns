@@ -12,8 +12,6 @@ import { Room } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('space invite', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
-
     test('Inviter is not allowed due to missing Invite permission', async () => {
         /** Arrange */
 

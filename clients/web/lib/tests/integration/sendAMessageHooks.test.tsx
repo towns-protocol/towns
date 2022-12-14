@@ -26,7 +26,6 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendMessageHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
         // create a wallet for bob

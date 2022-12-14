@@ -33,8 +33,5 @@ export const isValidStreamId = (streamId: string): boolean =>
     allowedStreamPrefixes().some((prefix) => streamId.startsWith(prefix))
 
 export const genId = (): string => {
-    // TODO: what's up with all this nanoid version problems?
-    // 4 doesn't work in node with default imports
-    // 3 doesn't work in JSDOM
     return nanoid()
 }

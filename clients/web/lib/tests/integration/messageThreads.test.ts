@@ -13,7 +13,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
 describe('messageThreads', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('send a threaded message', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

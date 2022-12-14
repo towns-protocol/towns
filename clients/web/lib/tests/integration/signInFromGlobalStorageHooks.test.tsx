@@ -25,7 +25,6 @@ and setting up session storage.
 https://jestjs.io/docs/setup-teardown#order-of-execution-of-describe-and-test-blocks
 */
 describe('signInFromGlobalStorageHooks', () => {
-    jest.setTimeout(30000)
     afterEach(() => {
         // clear sessionStorage after each test simulating a new browser window
         global.sessionStorage.clear()

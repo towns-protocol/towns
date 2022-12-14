@@ -14,8 +14,6 @@ import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('channel with roles and permissions', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
-
     test('join token-gated channel', async () => {
         /** Arrange */
 

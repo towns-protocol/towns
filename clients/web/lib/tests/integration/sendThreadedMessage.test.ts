@@ -13,7 +13,6 @@ import {
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test: sendAMessage
     test('create room, invite user, accept invite, and send threadded message', async () => {
         // create clients

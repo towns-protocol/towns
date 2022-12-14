@@ -1,16 +1,11 @@
-import type { Config } from '@jest/types'
+import config from './jest.config'
+import type { JestConfigWithTsJest } from 'ts-jest'
 
-const esModules = ['nanoid'].join('|')
-
-const config: Config.InitialOptions = {
-    preset: 'ts-jest',
+const newConfig: JestConfigWithTsJest = {
+    ...config,
     testEnvironment: './../../jest.env.ts',
-    testEnvironmentOptions: { browsers: ['chrome', 'firefox', 'safari'] },
-    verbose: true,
-    modulePathIgnorePatterns: ['/dist/'],
-    transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
-    moduleNameMapper: {
-        '^nanoid(/(.*)|$)': 'nanoid$1',
+    testEnvironmentOptions: {
+        browsers: ['chrome', 'firefox', 'safari'],
     },
 }
 

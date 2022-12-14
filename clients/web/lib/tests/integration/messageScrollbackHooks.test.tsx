@@ -15,7 +15,6 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { LoginWithAuth } from './helpers/TestComponents'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
@@ -24,7 +23,6 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('messageScrollbackHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

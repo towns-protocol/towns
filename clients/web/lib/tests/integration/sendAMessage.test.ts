@@ -16,8 +16,6 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 
 describe('sendAMessage', () => {
-    // can be run with `yarn test --group integration/load`, setting timeout to 10 minutes
-    jest.setTimeout(10 * 60 * 1000)
     // test:
     test('create room, invite user, accept invite, and send message', async () => {
         const numClients = process.env.NUM_CLIENTS ? parseInt(process.env.NUM_CLIENTS, 10) : 2

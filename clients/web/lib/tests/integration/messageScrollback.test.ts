@@ -12,7 +12,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
 describe('messageScrollback', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('make sure we can scrollback', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

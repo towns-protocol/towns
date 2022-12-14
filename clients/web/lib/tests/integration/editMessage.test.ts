@@ -9,7 +9,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
 describe('editMessage', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test: sendAMessage
     test('create room, invite user, send message, edit message', async () => {
         // create clients

@@ -1,10 +1,13 @@
 {
     "name": "@zion/client",
     "packageManager": "yarn@3.2.3",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc --build",
+        "build": "tsc",
+        "cb": "yarn clean && yarn build",
+        "clean": "rm -rf dist",
         "dev": "ts-node src/index.ts",
         "watch": "tsc --watch"
     },

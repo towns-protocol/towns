@@ -11,10 +11,9 @@ import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
+import { jest } from '@jest/globals'
 
 describe('write messages', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
-
     test('Channel member cant write messages without permission', async () => {
         /** Arrange */
 

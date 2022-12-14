@@ -3,7 +3,6 @@ import { publicKeyToBuffer, SignerContext } from '@zion/core'
 import { ethers } from 'ethers'
 
 describe('casablanca', () => {
-    jest.setTimeout(30 * 1000)
     test('test instantiating a casablanca client', async () => {
         const primaryWallet = ethers.Wallet.createRandom()
         const zionWallet = ethers.Wallet.createRandom()

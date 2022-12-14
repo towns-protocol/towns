@@ -26,7 +26,6 @@ describe.skip('invalidTokenHooks', () => {
         useMatrixStore.destroy()
         useCredentialStore.destroy()
     })
-    jest.setTimeout(30000)
     test('test matrix js sdk', async () => {
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId

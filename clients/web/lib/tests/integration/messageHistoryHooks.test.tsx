@@ -22,7 +22,6 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('messageHistoryHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see messages, and send messages', async () => {
         // create client
         // create alice provider

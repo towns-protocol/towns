@@ -14,7 +14,6 @@ import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('spaceHierarchy', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create a public space and a public room, have user join space and search for space childs', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

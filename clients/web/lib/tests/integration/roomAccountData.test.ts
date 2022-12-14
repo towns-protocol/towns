@@ -19,7 +19,6 @@ import { ZionAccountDataType } from '../../src/client/ZionClientTypes'
 import { waitFor } from '@testing-library/dom'
 
 describe('roomAccountData', () => {
-    jest.setTimeout(30000)
     // test:
     test('create room, send a message, post account data, log out, log in, validate account data', async () => {
         // create clients

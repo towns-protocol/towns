@@ -18,7 +18,6 @@ import { useZionContext } from '../../src/components/ZionContextProvider'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('userProfileOnAcceptInviteHooks', () => {
-    jest.setTimeout(30000)
     /// when we accept an invite, matrix is sending us our own membership info without
     /// saturating it with the proper display name (avatar info seems correct).
     test('user sees own info after accepting an invite', async () => {

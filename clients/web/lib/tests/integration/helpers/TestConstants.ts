@@ -29,7 +29,6 @@ export class TestConstants {
     private static fundedWalletsWithNft: ethers.Wallet[] = []
     private static fundedWalletsWithoutNft: ethers.Wallet[] = []
 
-    public static DefaultJestTimeout = 50000
     public static DefaultWaitForTimeout: waitForOptions = { timeout: 5000 }
 
     public static init() {

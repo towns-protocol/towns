@@ -28,7 +28,6 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('userProfileHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see username and avatar info', async () => {
         // create clients
         const { alice } = await registerAndStartClients(['alice'])

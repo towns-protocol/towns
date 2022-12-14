@@ -13,7 +13,6 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { waitFor } from '@testing-library/dom'
 
 describe('sendReaction', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test:
     test('create room, invite user, accept invite, send message, send a reaction', async () => {
         // create clients

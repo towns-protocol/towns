@@ -1,19 +1,24 @@
-import type { Config } from '@jest/types'
+import type { JestConfigWithTsJest } from 'ts-jest'
 
-const esModules = ['nanoid'].join('|')
-
-// Sync object
-const config: Config.InitialOptions = {
+const config: JestConfigWithTsJest = {
     verbose: true,
-    preset: 'ts-jest',
+    preset: 'ts-jest/presets/default-esm',
     setupFilesAfterEnv: ['<rootDir>/jest-setup.ts'],
     testEnvironment: './jest.env.ts',
     testEnvironmentOptions: { browsers: ['chrome', 'firefox', 'safari'] },
-    transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
-    moduleNameMapper: {
-        '\\.(wasm\\?url)$': require.resolve('./tests/mocks/file-mock.js'),
-        '^nanoid(/(.*)|$)': 'nanoid$1',
-    },
     runner: 'groups',
+    extensionsToTreatAsEsm: ['.ts', '.tsx'],
+    transform: {
+        '^.+\\.tsx?$': [
+            'ts-jest',
+            {
+                useESM: true,
+            },
+        ],
+    },
+    modulePathIgnorePatterns: ['/dist/'],
+    testPathIgnorePatterns: ['/dist/', '/node_modules/'],
+    testTimeout: 60000,
 }
+
 export default config

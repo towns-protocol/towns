@@ -12,7 +12,6 @@ import {
 } from './helpers/TestUtils'
 
 describe('mentions', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('send and receive a mention', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

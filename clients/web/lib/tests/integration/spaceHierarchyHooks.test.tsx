@@ -23,7 +23,6 @@ import { useSpaceData } from '../../src/hooks/use-space-data'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 
 describe('spaceHierarchyHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel

@@ -5,10 +5,8 @@ import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './he
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { getFilteredRolesFromSpace } from '../../src/client/web3/ZionContracts'
-import { TestConstants } from './helpers/TestConstants'
 
 describe('On-chain channel creation tests', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('create channel with no roles', async () => {
         /* Arrange */
         const { alice } = await registerAndStartClients(['alice'])

@@ -14,8 +14,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 
 describe('disable channel', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
-
     test('Channel member cant sync disabled room messages', async () => {
         /** Arrange */
 

@@ -28,7 +28,6 @@ import { useZionContext } from '../../src/components/ZionContextProvider'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('unreadMessageCountHooks', () => {
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])

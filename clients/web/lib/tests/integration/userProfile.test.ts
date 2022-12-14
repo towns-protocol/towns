@@ -14,7 +14,6 @@ import { waitFor } from '@testing-library/dom'
 
 describe('userProfile', () => {
     // usefull for debugging or running against cloud servers
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test
     test('create users, update profile, create room, join, update profile', async () => {
         // create clients

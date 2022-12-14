@@ -3,8 +3,8 @@
         /* Visit https://aka.ms/tsconfig to read more about this file */
 
         /* Projects */
-        "incremental": true /* Save .tsbuildinfo files to allow for incremental compilation of projects. */,
-        "composite": true /* Enable constraints that allow a TypeScript project to be used with project references. */,
+        "incremental": false /* Save .tsbuildinfo files to allow for incremental compilation of projects. */,
+        "composite": false /* Enable constraints that allow a TypeScript project to be used with project references. */,
         // "tsBuildInfoFile": "./.tsbuildinfo",              /* Specify the path to .tsbuildinfo incremental compilation file. */
         // "disableSourceOfProjectReferenceRedirect": true,  /* Disable preferring source files instead of declaration files when referencing composite projects. */
         // "disableSolutionSearching": true,                 /* Opt a project out of multi-project reference checking when editing. */
@@ -25,7 +25,7 @@
         // "moduleDetection": "auto",                        /* Control what method is used to detect module-format JS files. */
 
         /* Modules */
-        "module": "commonjs" /* Specify what module code is generated. */,
+        "module": "esnext" /* Specify what module code is generated. */,
         "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
         // "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
         // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */

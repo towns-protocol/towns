@@ -4,7 +4,6 @@ import { TestConstants } from './helpers/TestConstants'
 
 describe('councilNFTContract', () => {
     // usefull for debugging or running against cloud servers
-    jest.setTimeout(TestConstants.DefaultJestTimeout)
     // test:
     test('interact with the council NFT contract', async () => {
         // create clients
