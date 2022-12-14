@@ -93,7 +93,7 @@
       {
         "label": "WatchSharedLib",
         "type": "shell",
-        "command": "cd clients/web/lib && yarn watch",
+        "command": "./scripts/wait-for-casablanca.sh && cd clients/web/lib && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
