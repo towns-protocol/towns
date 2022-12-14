@@ -21,6 +21,7 @@ interface AccurateOwnedNft extends OwnedNft {
 export interface AccurateNftResponse extends OwnedNftsResponse {
     blockHash: string
     ownedNfts: AccurateOwnedNft[]
+    pageKey?: string // override readonly
 }
 
 export type ContractMetadata = {
