@@ -12,6 +12,7 @@
         "build": "tsc",
         "lint": "eslint .",
         "lint:fix": "yarn lint --fix",
+        "preinstall": "yarn run --top-level csb:build",
         "postinstall": "tsc",
         "prepack": "tsc",
         "test:e2e": "NODE_ENV=development yarn node --experimental-vm-modules --experimental-wasm-modules $(yarn bin jest) --forceExit --silent --maxWorkers=5",
