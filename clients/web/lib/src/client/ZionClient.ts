@@ -1,3 +1,5 @@
+import { Client as CasablancaClient } from '@zion/client'
+import { publicKeyToBuffer, SignerContext } from '@zion/core'
 import {
     ClientEvent,
     EventType,
@@ -10,7 +12,7 @@ import {
     createClient,
     MatrixError,
 } from 'matrix-js-sdk'
-import { BigNumber, BytesLike, ContractReceipt, ContractTransaction } from 'ethers'
+import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -85,6 +87,7 @@ export class ZionClient {
     public tokenEntitlementModule: TokenEntitlementModuleShim
     public userGrantedEntitlementModule: UserGrantedEntitlementModuleShim
     public matrixClient: MatrixClient
+    public casablancaClient?: CasablancaClient
     private _chainId: number
     private _auth?: ZionAuth
 
@@ -168,6 +171,27 @@ export class ZionClient {
             this.opts.matrixServerUrl,
             this._auth,
         ))
+    }
+
+    /************************************************
+     * signCasablancaDelegate
+     * sign the public key of a local wallet
+     * that you will use to sign messages to casablanca
+     *************************************************/
+    public async signCasablancaDelegate(delegateWallet: Wallet): Promise<SignerContext> {
+        if (!this.opts.web3Signer) {
+            throw new Error("can't sign without a web3 signer")
+        }
+        const primaryAddress = await this.opts.web3Signer.getAddress()
+        const delegateSig = await this.opts.web3Signer.signMessage(
+            publicKeyToBuffer(delegateWallet.publicKey),
+        )
+        const context: SignerContext = {
+            wallet: delegateWallet,
+            creatorAddress: primaryAddress,
+            delegateSig: delegateSig,
+        }
+        return context
     }
 
     /************************************************
