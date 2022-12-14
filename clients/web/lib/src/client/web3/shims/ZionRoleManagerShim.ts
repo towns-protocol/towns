@@ -1,12 +1,12 @@
 /* eslint-disable no-restricted-imports */
 
 import { BaseContractShim } from './BaseContractShim'
-import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json' assert { type: 'json' }
-import Goerli_ZionRoleManagerArtifact from '@harmony/contracts/goerli/abis/ZionRoleManager.json' assert { type: 'json' }
-import { ZionRoleManager as Goerli_ZionRoleManager } from '@harmony/contracts/goerli/typings/ZionRoleManager' assert { type: 'json' }
+import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
+import Goerli_ZionRoleManagerArtifact from '@harmony/contracts/goerli/abis/ZionRoleManager.json'
+import { ZionRoleManager as Goerli_ZionRoleManager } from '@harmony/contracts/goerli/typings/ZionRoleManager'
 
-import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json' assert { type: 'json' }
-import Localhost_ZionRoleManagerArtifact from '@harmony/contracts/localhost/abis/ZionRoleManager.json' assert { type: 'json' }
+import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
+import Localhost_ZionRoleManagerArtifact from '@harmony/contracts/localhost/abis/ZionRoleManager.json'
 import { ZionRoleManager as Localhost_ZionRoleManager } from '@harmony/contracts/localhost/typings/ZionRoleManager'
 import { ethers } from 'ethers'
 
