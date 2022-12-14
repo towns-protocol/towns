@@ -91,6 +91,16 @@
         }
       },
       {
+        "label": "BuildContractTypes",
+        "type": "shell",
+        "command": "./scripts/build-contract-types.sh localhost",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
+      {
         "label": "WatchSharedLib",
         "type": "shell",
         "command": "./scripts/wait-for-casablanca.sh && cd clients/web/lib && yarn watch",
