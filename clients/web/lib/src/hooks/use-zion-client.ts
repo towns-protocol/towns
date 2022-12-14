@@ -36,11 +36,6 @@ interface ZionClientImpl {
     chainId: number | undefined
     createSpace: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
     createBasicWeb3Space: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
-    createWeb3Space: (
-        createInfo: CreateSpaceInfo,
-        tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct,
-        everyonePermissions: DataTypes.PermissionStruct[],
-    ) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
         spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
@@ -105,7 +100,6 @@ export function useZionClient(): ZionClientImpl {
         createChannel: useWithCatch(client?.createChannel),
         createSpace: useWithCatch(client?.createSpace),
         createBasicWeb3Space: useWithCatch(client?.createBasicWeb3Space, ZionClientEvent.NewSpace),
-        createWeb3Space: useWithCatch(client?.createWeb3Space, ZionClientEvent.NewSpace),
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
         waitForCreateSpaceTransaction: useWithCatch(
             client?.waitForCreateSpaceTransaction,

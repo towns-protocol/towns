@@ -373,6 +373,9 @@ export class ZionClient {
             spaceEntitlementData,
             everyonePermissions,
         )
+        if (txContext.error) {
+            throw txContext.error
+        }
         const rxContext = await this.waitForCreateSpaceTransaction(txContext)
         return rxContext?.data
     }
