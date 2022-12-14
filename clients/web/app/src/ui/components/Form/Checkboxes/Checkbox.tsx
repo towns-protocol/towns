@@ -1,6 +1,6 @@
 import React from 'react'
 import { UseFormReturn } from 'react-hook-form'
-import { Box } from 'ui/components/Box/Box'
+import { Box, BoxProps } from 'ui/components/Box/Box'
 import { CheckIcon } from 'ui/components/Icon'
 import * as style from './Checkbox.css'
 
@@ -8,10 +8,11 @@ type Props = {
     name: string
     label: string | React.ReactNode
     value?: string
+    width?: BoxProps['width']
 } & Partial<UseFormReturn>
 
 export const Checkbox = (props: Props) => {
-    const { name, label, value, register } = props
+    const { name, label, value, register, width } = props
     const _value =
         !value && typeof label === 'string' ? label.replace(' ', '').toLowerCase() : value
     return (
@@ -20,9 +21,10 @@ export const Checkbox = (props: Props) => {
                 as="label"
                 flexDirection="row"
                 display="inline-flex"
-                width="auto"
+                width={width || 'auto'}
                 alignItems="center"
                 cursor="pointer"
+                justifyContent="spaceBetween"
             >
                 <Box paddingRight="md">{label}</Box>
                 <Box className={style.checkboxWrapper}>

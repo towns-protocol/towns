@@ -17,15 +17,24 @@ type CachedData = {
     tokens: TokenProps[]
 }
 
-export function useTokenContractsForAddress(
-    wallet: string,
-    zionTokenAddress: string | null,
-    enabled: boolean,
-    pageKey: string,
-) {
+type UseTokenContractsForAdress = {
+    wallet: string
+    zionTokenAddress: string | null
+    enabled: boolean
+    pageKey: string
+    all: boolean
+}
+
+export function useTokenContractsForAddress({
+    wallet,
+    zionTokenAddress,
+    enabled,
+    pageKey,
+    all = false,
+}: UseTokenContractsForAdress) {
     return useQuery(
         [queryKey, pageKey],
-        () => getTokenContractsForAddress(wallet, zionTokenAddress, pageKey),
+        () => getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
         {
             onSuccess: (data) => {
                 const cached = getCachedTokensForWallet()
@@ -76,9 +85,12 @@ async function getTokenContractsForAddress(
     wallet: string,
     zionTokenAddress: string | null,
     pageKey = '',
+    all = false,
 ) {
     const TOKENS_SERVER_URL = import.meta.env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/eth-mainnet/${wallet}?contractMetadata&pageKey=${pageKey}`
+    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/eth-mainnet/${wallet}?contractMetadata&pageKey=${pageKey}${
+        all ? '&all' : ''
+    }`
     const response = await axiosClient.get(url)
     const parseResult = zSchema.safeParse(response.data)
 

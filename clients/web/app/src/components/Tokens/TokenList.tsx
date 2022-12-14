@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { getZionTokenAddress } from 'use-zion-client'
 import uniqBy from 'lodash/uniqBy'
-import { Box, Button, Checkbox, Text, TextField } from '@ui'
+import { Box, Button, Checkbox, Text, TextField, VList } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { getCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
-import { Spinner } from '@components/Spinner'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { FadeIn } from '@components/Transitions'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -34,10 +34,36 @@ const TokenCheckboxLabel = ({ imgSrc, label, contractAddress }: TokenProps) => {
     )
 }
 
+const loadingMessages = [
+    'Grabbing your NFTs...',
+    'Still grabbing your NFTs...',
+    'Wow, you must have a lot of NFTs...',
+    'How long have you been collecting NFTs??',
+    'With all these NFTs you could build a bridge to the moon...',
+]
+
 const Loader = () => {
+    const [message, setMessage] = useState(loadingMessages[0])
+    const count = useRef(1)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setMessage(loadingMessages[count.current])
+            count.current = count.current + 1
+            if (count.current === loadingMessages.length) {
+                clearInterval(interval)
+            }
+        }, 4000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, [])
     return (
-        <Box centerContent paddingTop="md">
-            <Spinner />
+        <Box centerContent paddingTop="md" flexDirection="row" gap="md">
+            <ButtonSpinner />
+            <FadeIn key={message}>
+                <Text>{message}</Text>
+            </FadeIn>
         </Box>
     )
 }
@@ -47,6 +73,8 @@ type TokenListProps = {
     wallet: string
     chainId?: number
 } & UseFormReturn
+
+type TokenPropsForVList = TokenProps & { id: string }
 
 export const TokenList = ({
     isChecked,
@@ -61,7 +89,7 @@ export const TokenList = ({
         [chainId],
     )
 
-    const [results, setResults] = React.useState<TokenProps[]>([])
+    const [results, setResults] = React.useState<TokenPropsForVList[]>([])
     const [search, setSearch] = React.useState('')
     const selectedTokens = watch('tokens')
     const [page, setPage] = useState(getCachedTokensForWallet().previousPageKey || '')
@@ -69,12 +97,13 @@ export const TokenList = ({
         setPage(pageKey)
     }
 
-    const { data, isFetching, isLoading } = useTokenContractsForAddress(
-        'vitalik.eth', // hard coding for testing purposes
+    const { data, isFetching, isLoading } = useTokenContractsForAddress({
+        wallet: 'vitalik.eth', // hard coding for testing purposes
         zionTokenAddress,
-        isChecked,
-        page,
-    )
+        enabled: true,
+        pageKey: page,
+        all: true,
+    })
 
     useEffect(() => {
         if (!data?.tokens) return
@@ -82,7 +111,10 @@ export const TokenList = ({
             [...getCachedTokensForWallet().tokens, ...data.tokens],
             'contractAddress',
         )
-        const _results = searchArrayOfData(unique, search)
+        const _results = searchArrayOfData(unique, search).map((res) => ({
+            ...res,
+            id: res.contractAddress,
+        }))
         setResults(_results)
         // do not depend on cached data
     }, [search, data])
@@ -118,36 +150,43 @@ export const TokenList = ({
                 placeholder="Search or paste contract address"
                 onChange={(e) => setSearch(e.target.value)}
             />
-            <Box paddingTop="md">
-                {isChecked && (
-                    <>
-                        {results.map((data) => (
-                            <Checkbox
-                                name="tokens"
-                                key={data.contractAddress}
-                                value={data.contractAddress}
-                                label={<TokenCheckboxLabel {...data} />}
-                                register={register}
-                            />
-                        ))}
+            {isChecked && (
+                <Box paddingTop="md" minHeight="100" maxHeight="500">
+                    <VList<TokenPropsForVList>
+                        list={results}
+                        viewMargin={200}
+                        esimtateItemSize={64}
+                        itemRenderer={(item) => {
+                            return (
+                                <Box key={item.contractAddress} paddingX="sm">
+                                    <Checkbox
+                                        name="tokens"
+                                        width="100%"
+                                        value={item.contractAddress}
+                                        label={<TokenCheckboxLabel {...item} />}
+                                        register={register}
+                                    />
+                                </Box>
+                            )
+                        }}
+                    />
 
-                        {isLoading && <Loader />}
+                    {isLoading && <Loader />}
 
-                        {data?.nextPageKey && (
-                            <Box paddingY="md">
-                                <Button
-                                    type="button"
-                                    animate={false}
-                                    onClick={() => loadMore(data?.nextPageKey || '')}
-                                >
-                                    {isFetching && <ButtonSpinner />}
-                                    Load more
-                                </Button>
-                            </Box>
-                        )}
-                    </>
-                )}
-            </Box>
+                    {data?.nextPageKey && (
+                        <Box paddingY="md">
+                            <Button
+                                type="button"
+                                animate={false}
+                                onClick={() => loadMore(data?.nextPageKey || '')}
+                            >
+                                {isFetching && <ButtonSpinner />}
+                                Load more
+                            </Button>
+                        </Box>
+                    )}
+                </Box>
+            )}
         </Box>
     )
 }

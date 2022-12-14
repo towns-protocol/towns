@@ -13,7 +13,6 @@ export const useTransactionUIStates = (
     hasData: boolean,
 ): TransactionUIStatesType => {
     const state = useMemo(() => {
-        console.log({ transactionStatus, hasData })
         if (transactionStatus === TransactionStatus.Pending && !hasData) {
             return TransactionUIStates.Requesting as TransactionStatus
         }
