@@ -41,6 +41,16 @@
         },
       },
       {
+        "label": "FoundryUp",
+        "type": "shell",
+        "command": "foundryup",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        },
+      },
+      {
         "label": "YarnInstall",
         "type": "shell",
         "command": "yarn",
@@ -73,7 +83,7 @@
       {
         "label": "StartBlockchain",
         "type": "shell",
-        "command": "./scripts/start-local-blockchain.sh",
+        "command": "foundryup && ./scripts/start-local-blockchain.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -93,7 +103,7 @@
       {
         "label": "BuildContractTypes",
         "type": "shell",
-        "command": "./scripts/build-contract-types.sh localhost",
+        "command": "foundryup && ./scripts/build-contract-types.sh localhost",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
