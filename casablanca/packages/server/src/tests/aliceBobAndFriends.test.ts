@@ -11,7 +11,7 @@ import {
 } from '@zion/core'
 import debug from 'debug'
 import { startZionApp, ZionApp } from '../app'
-import { makeDonePromise, makeTestClient, waitForStream } from './util.test'
+import { makeDonePromise, makeTestClient } from './util.test'
 import { config } from '../config'
 import { setTimeout } from 'timers/promises'
 import seedrandom from 'seedrandom'
@@ -128,7 +128,7 @@ const converse = async (url: string, conversation: string[][], testName: string)
     log(`${testName} creating channel`)
     const channelId = makeChannelStreamId(genId())
     await expect(alice.client.createChannel(spaceId, channelId)).toResolve()
-    await expect(waitForStream(alice.client, channelId)).toResolve()
+    await expect(alice.client.waitForStream(channelId)).toResolve()
 
     // Invite and join.
     log(`${testName} inviting others`)

@@ -9,7 +9,7 @@ import {
 } from '@zion/core'
 import debug from 'debug'
 import { startZionApp, ZionApp } from '../app'
-import { makeDonePromise, makeTestClient, waitForStream } from './util.test'
+import { makeDonePromise, makeTestClient } from './util.test'
 import { config } from '../config'
 
 const log = debug('test')
@@ -75,7 +75,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             log('streamInitialized', streamId, streamKind)
             done.run(() => {
                 if (streamKind === StreamKind.Channel) {
-                    const channel = bobsAnotherClient.stream(streamId)
+                    const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.rollup)
 
@@ -123,7 +123,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             log('streamInitialized', streamId, streamKind)
             done.run(() => {
                 if (streamKind === StreamKind.Channel) {
-                    const channel = bobsClient.stream(streamId)
+                    const channel = bobsClient.stream(streamId)!
                     log('channel content')
                     log(channel.rollup)
 
@@ -168,7 +168,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
-        await expect(waitForStream(bobsClient, bobsChannelId)).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
@@ -200,7 +200,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
-        await expect(waitForStream(bobsClient, bobsChannelId)).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Alice gest created.
         await expect(alicesClient.createNewUser()).toResolve()

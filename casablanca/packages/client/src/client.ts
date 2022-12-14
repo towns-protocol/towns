@@ -94,7 +94,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.signerContext.creatorAddress
     }
 
-    stream(streamId: string): Stream {
+    stream(streamId: string): Stream | undefined {
         return this.streams[streamId]
     }
 
@@ -212,6 +212,30 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         })
 
         return { streamId: channelId! }
+    }
+
+    async waitForStream(streamId: string): Promise<Stream> {
+        let stream = this.stream(streamId)
+        if (stream !== undefined) {
+            return stream
+        }
+        let resolve: () => void
+        const done = new Promise<void>((res) => {
+            resolve = res
+        })
+        const handler = (newStreamId: string) => {
+            if (newStreamId === streamId) {
+                this.off('streamInitialized', handler)
+                resolve()
+            }
+        }
+        this.on('streamInitialized', handler)
+        await done
+        stream = this.stream(streamId)
+        if (!stream) {
+            throw new Error(`Stream ${streamId} not found after waiting`)
+        }
+        return stream
     }
 
     private async initStream(streamId: string): Promise<void> {
