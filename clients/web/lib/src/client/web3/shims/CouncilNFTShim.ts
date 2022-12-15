@@ -1,11 +1,11 @@
 /* eslint-disable no-restricted-imports */
 
-import Goerli_CouncilNFTArtifact from '@harmony/contracts/goerli/abis/CouncilNFT.json'
+import Goerli_CouncilNFTArtifactAbi from '@harmony/contracts/goerli/abis/CouncilNFT.abi.json'
 import Goerli_CouncilAddresses from '@harmony/contracts/goerli/addresses/council.json'
 import { CouncilNFT as Goerli_CouncilNFT } from '@harmony/contracts/goerli/typings/CouncilNFT'
 
 import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
-import Localhost_CouncilNFTArtifact from '@harmony/contracts/localhost/abis/CouncilNFT.json'
+import Localhost_CouncilNFTArtifactAbi from '@harmony/contracts/localhost/abis/CouncilNFT.abi.json'
 import { CouncilNFT as Localhost_CouncilNFT } from '@harmony/contracts/localhost/typings/CouncilNFT'
 import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/localhost/typings/common'
 
@@ -40,11 +40,11 @@ export class CouncilNFTShim extends BaseContractShim<Localhost_CouncilNFT, Goerl
         super(chainId, provider, signer, {
             localhost: {
                 address: Localhost_CouncilAddresses.councilnft,
-                abi: Localhost_CouncilNFTArtifact.abi,
+                abi: Localhost_CouncilNFTArtifactAbi,
             },
             goerli: {
                 address: Goerli_CouncilAddresses.councilnft,
-                abi: Goerli_CouncilNFTArtifact.abi,
+                abi: Goerli_CouncilNFTArtifactAbi,
             },
         })
     }

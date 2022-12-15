@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
-import Localhost_ZionSpaceManagerArtifact from '@harmony/contracts/localhost/abis/ZionSpaceManager.json'
+import Localhost_ZionSpaceManagerArtifactAbi from '@harmony/contracts/localhost/abis/ZionSpaceManager.abi.json'
 import type {
     ZionSpaceManager as Localhost_ZionSpaceManager,
     DataTypes as Localhost_DataTypes,
@@ -10,7 +10,7 @@ import type {
 import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/localhost/typings/common'
 
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
-import Goerli_ZionSpaceManagerArtifact from '@harmony/contracts/goerli/abis/ZionSpaceManager.json'
+import Goerli_ZionSpaceManagerArtifactAbi from '@harmony/contracts/goerli/abis/ZionSpaceManager.abi.json'
 import {
     ZionSpaceManager as Goerli_ZionSpaceManager,
     DataTypes as Goerli_DataTypes,
@@ -53,11 +53,11 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         super(chainId, provider, signer, {
             localhost: {
                 address: Localhost_SpaceManagerAddresses.spacemanager,
-                abi: Localhost_ZionSpaceManagerArtifact.abi,
+                abi: Localhost_ZionSpaceManagerArtifactAbi,
             },
             goerli: {
                 address: Goerli_SpaceManagerAddresses.spacemanager,
-                abi: Goerli_ZionSpaceManagerArtifact.abi,
+                abi: Goerli_ZionSpaceManagerArtifactAbi,
             },
         })
     }
