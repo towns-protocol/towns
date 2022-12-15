@@ -53,7 +53,7 @@ const Header = (props: HeaderProps) => {
 
     return (
         <>
-            <Box flexDirection="row" justifyContent="spaceBetween" paddingBottom="lg">
+            <Box flexDirection="row" justifyContent="spaceBetween" paddingY="lg">
                 <Heading level={2}> Create Space </Heading>
                 <Box flexDirection="row" paddingLeft="sm" position="relative">
                     {hasPrev && (
@@ -91,7 +91,7 @@ const Header = (props: HeaderProps) => {
 
                             {interactiveState && (
                                 <FadeIn delay>
-                                    {isLast && <MotionText layout>Create</MotionText>}
+                                    {isLast && <MotionText layout>Mint</MotionText>}
                                     {!isLast && <MotionText layout>Next</MotionText>}
                                 </FadeIn>
                             )}

@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { MainLayout } from 'MainLayout'
 import { SiteHomeLayout } from 'routes/SiteHome'
 import { Stack } from '@ui'
-const App = React.lazy(() => import('./App'))
+import { App } from './App'
 
 const isDev = import.meta.env.DEV
 

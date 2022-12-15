@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import React, { SVGProps, forwardRef, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { SVGArcPath } from '../util/SVGArcPath'
 import * as styles from './TokenBadgeText.css'
 
 export const BadgeText = (props: { name: string; address?: string }) => (
@@ -14,7 +15,7 @@ export const BadgeText = (props: { name: string; address?: string }) => (
 const TokenText = ({ id = 'token-text', value }: { id?: string; value: string }) => (
     <>
         <defs>
-            <SVGArcCircle
+            <SVGArcPath
                 ccw
                 radius={152}
                 id={`${id}-path`}
@@ -139,23 +140,3 @@ const Letter = (props: { angle: number; minted: boolean; children: React.ReactNo
         </motion.text>
     )
 }
-
-type SVGArcCircleProps = {
-    radius: number
-    ccw?: boolean
-} & SVGProps<SVGPathElement>
-
-const SVGArcCircle = forwardRef<SVGPathElement, SVGArcCircleProps>((props, ref) => {
-    const { radius, ccw = false, ...svgProps } = props
-    return (
-        <path
-            {...svgProps}
-            d={`
-                M 0 0
-                m ${-radius}, 0
-                a ${radius},${radius} 0 ${ccw ? `1,0` : `0,1`} ${radius * 2},0
-                a ${radius},${radius} 0 ${ccw ? `1,0` : `0,1`} ${-radius * 2},0
-              `}
-        />
-    )
-})

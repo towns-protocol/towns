@@ -1,20 +1,17 @@
 import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
-
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { DebugBar } from '@components/DebugBar'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
-import { Box, Heading } from '@ui'
+import { Stack } from '@ui'
 import { QueryProvider } from 'api/queryClient'
-import { AppLayout } from 'AppLayout'
 import { useAuth } from 'hooks/useAuth'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
-import { SiteHome } from 'routes/SiteHome'
-import { SpacesNew } from 'routes/SpacesNew'
-import { SidebarLayout } from 'SidebarLayout'
+import { Welcome } from 'routes/Welcome'
+import { AppPanelLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { isDev } from 'utils'
 
@@ -64,25 +61,13 @@ const AllRoutes = () => {
         <Routes>
             <Route element={<AppLayout />}>
                 <Route element={<Outlet />}>
-                    <Route path="*" element={<SiteHome />} />
-                    <Route
-                        element={
-                            <Box grow centerContent>
-                                <Outlet />
-                            </Box>
-                        }
-                    >
-                        <Route path="/manifesto" element={<Heading>MANIFESTO</Heading>} />
-                        <Route path="/protocol" element={<Heading>PROTOCOL</Heading>} />
-                        <Route path="/dao" element={<Heading>DAO</Heading>} />
-                    </Route>
+                    <Route path="*" element={<Welcome />} />
                     {isAuthenticatedAndConnected && (
                         <>
                             <Route path={`/${PATHS.PREFERENCES}`} element={<Register isEdit />} />
-                            <Route path="*" element={<SidebarLayout />}>
+                            <Route path="*" element={<AppPanelLayout />}>
                                 <Route path="*" element={<SpaceRoutes />} />
                             </Route>
-                            <Route path="spaces/new" element={<SpacesNew />} />
                         </>
                     )}
                 </Route>
@@ -93,4 +78,10 @@ const AllRoutes = () => {
     )
 }
 
-export default App
+const AppLayout = () => {
+    return (
+        <Stack grow color="default" minHeight="100vh">
+            <Outlet />
+        </Stack>
+    )
+}

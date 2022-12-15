@@ -7,6 +7,8 @@ import { CreateSpaceFormV2 } from '@components/Web3/CreateSpaceFormV2'
 import { isDev } from 'utils'
 import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceFormV2/CreateSpaceFormStore'
 
+const USE_V2 = isDev
+
 export const SpacesNew = () => {
     const navigate = useNavigate()
 
@@ -26,17 +28,18 @@ export const SpacesNew = () => {
     return (
         <Stack alignItems="center" height="100%">
             <Stack grow width="600">
-                {isDev && (
-                    <Box padding="lg">
+                <Box padding="lg">
+                    {USE_V2 ? (
                         <CreateSpaceFormV2 onCreateSpace={onCreateSpace} />
-                    </Box>
-                )}
-                <Box paddingY="lg">
-                    <Heading level={2} textAlign="center">
-                        New Space
-                    </Heading>
+                    ) : (
+                        <>
+                            <Heading level={2} textAlign="center">
+                                New Space
+                            </Heading>
+                            <CreateSpaceForm onClick={onCreateSpace} />
+                        </>
+                    )}
                 </Box>
-                <CreateSpaceForm onClick={onCreateSpace} />
             </Stack>
         </Stack>
     )

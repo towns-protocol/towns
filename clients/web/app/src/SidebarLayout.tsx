@@ -1,6 +1,6 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
-import { Outlet, useMatch } from 'react-router'
+import { Outlet, matchPath, useMatch, useResolvedPath, useRoutes } from 'react-router'
 import { SpaceContextProvider, useSpaceData, useZionContext } from 'use-zion-client'
 import useEvent from 'react-use-event-hook'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
@@ -10,7 +10,7 @@ import { usePersistPanes } from 'hooks/usePersistPanes'
 import { atoms } from 'ui/styles/atoms.css'
 import { Register } from 'routes/Register'
 
-export const SidebarLayout = () => {
+export const AppPanelLayout = () => {
     const spaceRoute = useMatch({ path: '/spaces/:spaceSlug', end: false })
     const needsOnboarding = useNeedsOnboarding()
     return (
@@ -19,17 +19,19 @@ export const SidebarLayout = () => {
                 <Register />
             ) : (
                 <SpaceContextProvider spaceId={spaceRoute?.params.spaceSlug}>
-                    <SidebarLayoutContent />
+                    <AppPanelLayoutContent />
                 </SpaceContextProvider>
             )}
         </>
     )
 }
 
-export const SidebarLayoutContent = () => {
+export const AppPanelLayoutContent = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
     const messageRoute = useMatch({ path: '/messages', end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
+    const spacesNewRoute = useMatch({ path: '/spaces/new', end: true })
+
     const space = useSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
     const { onSizesChange, sizes } = usePersistPanes(config)
@@ -52,6 +54,8 @@ export const SidebarLayoutContent = () => {
         }, 0)
     })
 
+    const displaySpacePanel = !spacesNewRoute && !!space && !homeRoute
+
     return (
         <Stack horizontal grow position="relative">
             <Box absoluteFill>
@@ -67,7 +71,12 @@ export const SidebarLayoutContent = () => {
                     </Allotment.Pane>
 
                     {/* left-side side-bar goes here */}
-                    <Allotment.Pane minSize={180} maxSize={320} preferredSize={sizes[1] || 320}>
+                    <Allotment.Pane
+                        minSize={180}
+                        maxSize={320}
+                        preferredSize={sizes[1] || 320}
+                        visible={displaySpacePanel}
+                    >
                         {space && !homeRoute ? <SpaceSideBar space={space} /> : <></>}
                     </Allotment.Pane>
 

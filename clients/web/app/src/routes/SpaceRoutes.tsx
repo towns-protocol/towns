@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router'
 import { MembersPage } from '@components/Members/MembersPage'
 import { ProposalPage } from '@components/Proposals/ProposalPage'
 import { PATHS } from 'routes'
+import { AppPanelLayout } from 'SidebarLayout'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
@@ -18,6 +19,7 @@ import { SpaceThreadsInbox } from './SpaceThreadInbox'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceThreadInboxChannel } from './SpaceThreadInboxChannel'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
+import { SpacesNew } from './SpacesNew'
 
 const USE_THREAD_GROUPS = true
 
@@ -32,7 +34,7 @@ export const SpaceRoutes = () => (
         <Route path="invites/:inviteSlug">
             <Route index element={<InvitesIndex />} />
         </Route>
-
+        <Route path="spaces/new" element={<SpacesNew />} />
         <Route path="spaces/:spaceSlug">
             <Route element={<SpaceHome />}>
                 <Route index element={<HomeHighlights />} />

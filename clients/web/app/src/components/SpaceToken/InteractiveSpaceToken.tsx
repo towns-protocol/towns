@@ -2,7 +2,10 @@ import { TargetAndTransition, Transition, motion } from 'framer-motion'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { Box } from '@ui'
 import { vars } from 'ui/styles/vars.css'
+import { atoms } from 'ui/styles/atoms.css'
 import { SpaceToken, SpaceTokenProps } from './SpaceToken'
+import { SVGArcPath } from './util/SVGArcPath'
+import * as textStyles from './layers/TokenBadgeText.css'
 
 export const InteractiveSpaceToken = (props: SpaceTokenProps) => {
     const { address } = props
@@ -101,6 +104,7 @@ export const InteractiveSpaceToken = (props: SpaceTokenProps) => {
             }}
         >
             <Box
+                background="level1"
                 ref={ref}
                 style={
                     {
@@ -111,8 +115,48 @@ export const InteractiveSpaceToken = (props: SpaceTokenProps) => {
                 }
                 onMouseMove={onMouseMove}
             >
+                <BackgroundSVG />
                 <SpaceToken {...props} />
             </Box>
         </motion.div>
     )
 }
+
+const BackgroundSVG = () => (
+    <svg viewBox="0 0 500 500" width={500} height={500} className={atoms({ position: `absolute` })}>
+        <defs>
+            <SVGArcPath
+                id="space-nft-path"
+                radius={210}
+                stroke="#fff"
+                strokeWidth={2}
+                transform="translate(250,250)"
+            />
+            <filter x="0" y="0" width="1" height="1" id="solid">
+                <feFlood
+                    floodColor="red"
+                    result="bg"
+                    style={{ floodColor: vars.color.background.level1 }}
+                />
+                <feMerge>
+                    <feMergeNode in="bg" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+        <circle
+            cx={250}
+            cy={250}
+            r={214}
+            stroke="currentColor"
+            fill="none"
+            strokeDasharray="12 6"
+            opacity={0.4}
+        />
+        <text className={textStyles.smallTextThin} fill="currentColor" filter="url(#solid)">
+            <textPath xlinkHref="#space-nft-path" startOffset="25%" textAnchor="middle">
+                YOUR SPACE NFT
+            </textPath>
+        </text>
+    </svg>
+)
