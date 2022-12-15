@@ -7,13 +7,13 @@ import {
 } from 'matrix-js-sdk'
 import { sleepUntil } from '../../utils/zion-utils'
 import { CreateSpaceInfo, RoomVisibility } from '../../types/matrix-types'
-import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
+import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
-export const createZionSpace = async (props: {
+export const createMatrixSpace = async (props: {
     matrixClient: MatrixClient
     createSpaceInfo: CreateSpaceInfo
     disableEncryption?: boolean
-}): Promise<RoomIdentifier> => {
+}): Promise<MatrixRoomIdentifier> => {
     const { matrixClient, createSpaceInfo, disableEncryption } = props
     const options: ICreateRoomOpts = {
         visibility: createSpaceInfo.visibility as unknown as Visibility,
@@ -34,7 +34,7 @@ export const createZionSpace = async (props: {
         console.log('Created space isRoomEncrypted:', encrypted)
     }
     console.log('Created space', options, JSON.stringify(response))
-    return makeRoomIdentifier(response.room_id)
+    return makeMatrixRoomIdentifier(response.room_id)
 }
 
 function makeInitialState(createSpaceInfo: CreateSpaceInfo, bDisableEncryption?: boolean) {

@@ -13,7 +13,7 @@ import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store
 import { Mention } from '../../types/matrix-types'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
-import { ZionAccountDataType } from '../../client/ZionClientTypes'
+import { ZionAccountDataType, SpaceProtocol } from '../../client/ZionClientTypes'
 
 type LocalEffectState = {
     /// { roomId: { eventId: index in timeline } }
@@ -111,11 +111,13 @@ function toRoomId(value: any): RoomIdentifier {
     if (value.matrixRoomId) {
         // aellis: data transform for backwards compatibility, Dec 9, 2022, can remove when we make a new space
         return {
+            protocol: SpaceProtocol.Matrix,
             networkId: value.matrixRoomId,
             slug: value.slug,
         }
     } else {
         return {
+            protocol: SpaceProtocol.Matrix,
             networkId: value.networkId,
             slug: value.slug,
         }

@@ -38,7 +38,7 @@ describe.skip('invalidTokenHooks', () => {
         }
         const alice = new ZionTestClient(chainId, 'alice')
         //await expect(alice.startClient(badAliceAuth, chainId)).rejects.toThrow('Unknown token')
-        await alice.startClient(badAliceAuth, chainId)
+        await alice.startMatrixClient(badAliceAuth, chainId)
     })
     test('test logging in with a bad auth resolves to good state', async () => {
         const provider = new ZionTestWeb3Provider()
@@ -84,7 +84,7 @@ describe.skip('invalidTokenHooks', () => {
         // grab the auth
         const aliceAuth = alice.auth!
         // stop alice
-        alice.stopClient()
+        await alice.stopClients()
         // build a view for alice to render
         const TestComponent = () => {
             const { isConnected } = useWeb3Context()

@@ -66,7 +66,7 @@ describe('roomAccountData', () => {
         }
 
         await bob.setRoomFullyReadData(roomId, fullyRead)
-        bob.stopClient()
+        await bob.stopClients()
 
         // save some data
         const bob2 = await registerLoginAndStartClient('bob', bob.provider.wallet)

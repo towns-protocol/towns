@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { MessageContent, MessageType, ZTEvent } from 'use-zion-client'
+import { MessageContent, MessageType, SpaceProtocol, ZTEvent } from 'use-zion-client'
 import { describe, expect, test, vi } from 'vitest'
 import { TestApp } from 'test/testUtils'
 import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
@@ -54,11 +54,13 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                     spaceId: {
                         slug: '',
                         networkId: '',
+                        protocol: SpaceProtocol.Matrix,
                     },
                     channels: [],
                     channelId: {
                         slug: '',
                         networkId: '',
+                        protocol: SpaceProtocol.Matrix,
                     },
                     events: [],
                     messageRepliesMap: {},

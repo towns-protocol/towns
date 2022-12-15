@@ -24,12 +24,13 @@ export class ZionTestClient extends ZionClient {
             '========= ZionTestClient: cleanup =========',
             this.allClients.map((x) => x.getLoggingIdentifier()),
         )
-        await Promise.all(this.allClients.map((client) => client.stopClient()))
+        await Promise.all(this.allClients.map((client) => client.stopClients()))
         this.allClients = []
         console.log('========= ZionTestClient: cleanup done =========')
     }
 
     public provider: ZionTestWeb3Provider
+    public delegateWallet: ethers.Wallet
     public get matrixUserId(): string | undefined {
         return this.auth?.userId
     }
@@ -39,12 +40,14 @@ export class ZionTestClient extends ZionClient {
         name: string,
         disableEncryption?: boolean,
         inProvider?: ZionTestWeb3Provider,
+        delegateWallet?: ethers.Wallet,
     ) {
         const provider = inProvider ?? new ZionTestWeb3Provider()
         // super
         super(
             {
                 matrixServerUrl: process.env.HOMESERVER!,
+                casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 initialSyncLimit: 20,
                 disableEncryption: disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
                 web3Signer: provider.wallet,
@@ -55,10 +58,13 @@ export class ZionTestClient extends ZionClient {
         )
         // initialize our provider that wraps our wallet and chain communication
         this.provider = provider
+        // matrix user identifier
         this.userIdentifier = createUserIdFromEthereumAddress(
             this.provider.wallet.address,
             this.chainId,
         )
+        // casablanca delegate wallet
+        this.delegateWallet = delegateWallet ?? ethers.Wallet.createRandom()
 
         // add ourselves to the list of all clients
         ZionTestClient.allClients.push(this)
@@ -92,7 +98,7 @@ export class ZionTestClient extends ZionClient {
 
     /// register this users wallet with the matrix server
     /// a.ellis, would be nice if this used the same code as the web client
-    public async registerWallet() {
+    public async registerMatrixWallet() {
         // set up some hacky origin varible, no idea how the other code gets this
         const origin = this.opts.matrixServerUrl
 
@@ -149,12 +155,15 @@ export class ZionTestClient extends ZionClient {
 
     /// helper function to get a test client up and running
     public async registerWalletAndStartClient() {
-        let myAuth = this.auth
-        if (!myAuth) {
-            myAuth = await this.registerWallet()
+        if (this.auth) {
+            throw new Error('AUTHED!!')
         }
+        const myAuth = await this.registerMatrixWallet()
         const chainId = (await this.provider.getNetwork()).chainId
-        return this.startClient(myAuth, chainId)
+        await this.startMatrixClient(myAuth, chainId)
+
+        const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+        await this.startCasablancaClient(casablancaContext)
     }
 
     /// login to the matrix server with wallet account
@@ -193,7 +202,10 @@ export class ZionTestClient extends ZionClient {
         if (!myAuth) {
             myAuth = await this.loginWallet()
         }
-        return this.startClient(myAuth, this.provider.network.chainId)
+        await this.startMatrixClient(myAuth, this.provider.network.chainId)
+
+        const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+        await this.startCasablancaClient(casablancaContext)
     }
 
     /// set the room invite level

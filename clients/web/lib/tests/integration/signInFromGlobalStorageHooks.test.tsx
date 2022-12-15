@@ -35,7 +35,7 @@ describe('signInFromGlobalStorageHooks', () => {
         // grab the auth
         const aliceAuth = alice.auth!
         // stop alice
-        alice.stopClient()
+        await alice.stopClients()
 
         // build a view for alice to render
         const TestComponent = () => {

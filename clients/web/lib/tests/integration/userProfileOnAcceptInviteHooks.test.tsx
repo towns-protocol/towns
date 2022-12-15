@@ -29,7 +29,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
         await alice.setDisplayName("Alice's your aunt")
         await alice.setAvatarUrl('alice.p ng')
         // stop alice
-        alice.stopClient()
+        await alice.stopClients()
         // create a veiw for alice
         const TestUserProfileOnAcceptInvite = () => {
             const myProfile = useMyProfile()

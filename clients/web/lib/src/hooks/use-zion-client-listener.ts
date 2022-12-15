@@ -25,6 +25,7 @@ export const useZionClientListener = (
         clientSingleton.current = new ZionClient(
             {
                 matrixServerUrl,
+                casablancaServerUrl: '',
                 initialSyncLimit,
                 onboardingOpts,
                 disableEncryption,
@@ -57,7 +58,7 @@ export const useZionClientListener = (
         }
         console.log('******* start client *******')
         try {
-            await client.startClient({ userId, accessToken, deviceId }, chainId)
+            await client.startMatrixClient({ userId, accessToken, deviceId }, chainId)
             setClientRef(client)
             console.log('******* client started *******')
         } catch (e) {

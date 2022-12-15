@@ -45,7 +45,7 @@ describe('powerLevelsHooks', () => {
         // alice joins the room
         await alice.joinRoom(roomId)
         // stop bob
-        bob.stopClient()
+        await bob.stopClients()
         await sleep(50)
         // create a power levels view for bob
         const PowerLevelContent = (props: { roomId: RoomIdentifier }) => {

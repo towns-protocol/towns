@@ -1,5 +1,6 @@
+import { SpaceProtocol } from '../client/ZionClientTypes'
 import { HistoryVisibility, IContent } from 'matrix-js-sdk'
-import { RoomIdentifier } from './room-identifier'
+import { MatrixRoomIdentifier, RoomIdentifier } from './room-identifier'
 
 export enum RoomVisibility {
     Private = 'private',
@@ -67,7 +68,7 @@ export interface SpaceHierarchy {
 }
 
 export interface SpaceChild {
-    id: RoomIdentifier
+    id: MatrixRoomIdentifier
     name: string
     avatarUrl?: string
     topic?: string
@@ -112,6 +113,7 @@ export interface CreateSpaceInfo {
     name: string
     visibility: RoomVisibility
     spaceMetadata?: string
+    spaceProtocol?: SpaceProtocol
 }
 
 export interface CreateChannelInfo {

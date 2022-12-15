@@ -6,7 +6,7 @@ import {
     ImageMessageContent,
     ZionTextMessageContent,
 } from '../../types/matrix-types'
-import { RoomIdentifier } from '../../types/room-identifier'
+import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
 function getMessageContent(message: string, options: SendMessageOptions): MessageContent {
     const defaultContent: MessageContent = {
@@ -47,9 +47,9 @@ function getMessageContent(message: string, options: SendMessageOptions): Messag
 }
 
 /** treat message as a reply to parentId if specified */
-export async function sendZionMessage(
+export async function sendMatrixMessage(
     matrixClient: MatrixClient,
-    roomId: RoomIdentifier,
+    roomId: MatrixRoomIdentifier,
     message: string,
     options?: SendMessageOptions,
 ): Promise<void> {

@@ -21,7 +21,7 @@ export function useSyncErrorHandler(client?: ZionClient) {
                 if ((res as any)?.error?.errcode === 'M_UNKNOWN_TOKEN') {
                     console.log('Access token no longer valid, logging out')
                     try {
-                        client.stopClient()
+                        client.stopMatrixClient()
                     } catch (e) {
                         console.log('Error stopping client', e)
                     }

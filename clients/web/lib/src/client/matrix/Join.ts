@@ -1,9 +1,9 @@
 import { MatrixClient } from 'matrix-js-sdk'
-import { RoomIdentifier } from '../../types/room-identifier'
+import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
-export const joinZionRoom = async (props: {
+export const joinMatrixRoom = async (props: {
     matrixClient: MatrixClient
-    roomId: RoomIdentifier
+    roomId: MatrixRoomIdentifier
 }) => {
     const { matrixClient, roomId } = props
     const opts = {

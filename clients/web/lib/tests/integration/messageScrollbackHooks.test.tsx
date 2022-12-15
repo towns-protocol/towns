@@ -53,7 +53,7 @@ describe('messageScrollbackHooks', () => {
             await bob.sendMessage(channelId, `message ${i}`)
         }
         // stop alice
-        alice.stopClient()
+        await alice.stopClients()
         // create a veiw for alice
         const TestComponent = () => {
             const { scrollback } = useZionClient()

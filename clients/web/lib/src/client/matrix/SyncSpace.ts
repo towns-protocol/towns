@@ -1,22 +1,22 @@
 import { MatrixClient, Room as MatrixRoom } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
-import { RoomIdentifier } from '../../types/room-identifier'
+import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
 export type MatrixSpaceHierarchy = {
     root: IHierarchyRoom
     children: IHierarchyRoom[]
 }
 
-export async function syncZionSpace(
+export async function syncMatrixSpace(
     client: MatrixClient,
-    spaceId: RoomIdentifier | string,
+    spaceId: MatrixRoomIdentifier,
 ): Promise<MatrixSpaceHierarchy | undefined> {
     const userId = client.getUserId()
     if (!userId) {
-        throw new Error('not authenticated')
+        throw new Error('syncing space error: no userId')
     }
-    const networkId = typeof spaceId === 'string' ? spaceId : spaceId.networkId
+    const networkId = spaceId.networkId
     const matrixRoom = client.getRoom(networkId) || new MatrixRoom(networkId, client, userId)
     const roomHierarchy = new RoomHierarchy(matrixRoom)
     try {

@@ -16,7 +16,7 @@ describe('onboardedStateHooksTest', () => {
         await alice.setDisplayName("Alice's your aunt")
         await alice.setAvatarUrl('alice.png')
         // stop!
-        alice.stopClient()
+        await alice.stopClients()
         // create a veiw for bob
         const TestComponent = () => {
             const { onboardingState } = useZionContext()

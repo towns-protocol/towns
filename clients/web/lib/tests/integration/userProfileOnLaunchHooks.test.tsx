@@ -18,7 +18,7 @@ describe('userProfileOnLaunchHooks', () => {
         await alice.setDisplayName("Alice's your aunt")
         await alice.setAvatarUrl('alice.png')
         // stop alice
-        alice.stopClient()
+        await alice.stopClients()
         // create a veiw for alice
         const TestUserProfileOnLaunch = () => {
             const myProfile = useMyProfile()

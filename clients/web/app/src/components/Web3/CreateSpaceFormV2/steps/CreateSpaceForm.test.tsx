@@ -39,13 +39,21 @@ const pendingContext = {
     status: zionClient.TransactionStatus.Pending,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
     receipt: undefined,
-    data: { slug: 'some-room-id', matrixRoomId: 'some-room-id', networkId: '' },
+    data: {
+        slug: 'some-room-id',
+        networkId: 'some-room-id',
+        protocol: zionClient.SpaceProtocol.Matrix,
+    },
 }
 const successContext = {
     status: zionClient.TransactionStatus.Success,
     transaction: { hash: '0xhash', status: 1 } as unknown as ContractTransaction,
     receipt: {} as ContractReceipt,
-    data: { slug: 'some-room-id', matrixRoomId: 'some-room-id', networkId: '' },
+    data: {
+        slug: 'some-room-id',
+        networkId: 'some-room-id',
+        protocol: zionClient.SpaceProtocol.Matrix,
+    },
 }
 
 const failedWithoutTransactionContext = {
@@ -60,7 +68,11 @@ const failedWithTransactionContext = {
     status: zionClient.TransactionStatus.Failed,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
     receipt: undefined,
-    data: { slug: 'some-room-id', matrixRoomId: 'some-room-id', networkId: '' },
+    data: {
+        slug: 'some-room-id',
+        networkId: 'some-room-id',
+        protocol: zionClient.SpaceProtocol.Matrix,
+    },
     error: { name: 'whatever', message: 'some error' },
 }
 

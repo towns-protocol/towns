@@ -2,8 +2,14 @@
 
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 
+export enum SpaceProtocol {
+    Matrix = 'matrix',
+    Casablanca = 'casablanca',
+}
+
 export interface ZionOpts {
     matrixServerUrl: string
+    casablancaServerUrl: string
     initialSyncLimit: number
     onboardingOpts?: ZionOnboardingOpts
     disableEncryption?: boolean

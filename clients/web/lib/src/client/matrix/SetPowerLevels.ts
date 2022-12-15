@@ -1,10 +1,10 @@
 import { EventType, ISendEventResponse, MatrixClient } from 'matrix-js-sdk'
 import { PowerLevel } from '../../types/matrix-types'
-import { RoomIdentifier } from '../../types/room-identifier'
+import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
-export function setZionPowerLevel(
+export function setMatrixPowerLevel(
     matrixClient: MatrixClient,
-    roomId: RoomIdentifier,
+    roomId: MatrixRoomIdentifier,
     current: PowerLevel,
     newValue: number,
 ): Promise<ISendEventResponse> {

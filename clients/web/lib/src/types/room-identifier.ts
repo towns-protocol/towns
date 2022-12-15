@@ -1,8 +1,16 @@
-/********************************
- * RoomIdentifier
- * a room identifier identifies either a space or a channel
- *********************************/
-export interface RoomIdentifier {
+import { isValidStreamId as isValidCasablancaStreamId } from '@zion/core'
+import { SpaceProtocol } from '../client/ZionClientTypes'
+
+export type RoomIdentifier = MatrixRoomIdentifier | CasablancaStreamIdentifier
+
+export interface MatrixRoomIdentifier {
+    protocol: SpaceProtocol.Matrix
+    slug: string
+    networkId: string
+}
+
+export interface CasablancaStreamIdentifier {
+    protocol: SpaceProtocol.Casablanca
     slug: string
     networkId: string
 }
@@ -18,15 +26,30 @@ export function toRoomIdentifier(slugOrId: string | RoomIdentifier | undefined) 
 }
 
 export function makeRoomIdentifier(roomId: string): RoomIdentifier {
+    if (isValidCasablancaStreamId(roomId)) {
+        return makeCasablancaStreamIdentifier(roomId)
+    } else {
+        return makeMatrixRoomIdentifier(roomId)
+    }
+}
+
+export function makeRoomIdentifierFromSlug(slug: string): RoomIdentifier {
+    const roomId = decodeURIComponent(slug)
+    return makeRoomIdentifier(roomId)
+}
+
+export function makeMatrixRoomIdentifier(roomId: string): MatrixRoomIdentifier {
     return {
+        protocol: SpaceProtocol.Matrix,
         slug: encodeURIComponent(roomId.replace('.com', '-c0m-')), // TODO - this should be using matrixClient.getRoomIdForAlias, but didn't want to add another async loop here just yet
         networkId: roomId,
     }
 }
 
-export function makeRoomIdentifierFromSlug(slug: string): RoomIdentifier {
+export function makeCasablancaStreamIdentifier(roomId: string): CasablancaStreamIdentifier {
     return {
-        slug: encodeURIComponent(decodeURIComponent(slug)), // TODO - this should be using matrixClient.getRoomIdForAlias, but didn't want to add another async loop here just yet
-        networkId: decodeURIComponent(slug).replace('-c0m-', '.com'),
+        protocol: SpaceProtocol.Casablanca,
+        slug: encodeURIComponent(roomId),
+        networkId: roomId,
     }
 }

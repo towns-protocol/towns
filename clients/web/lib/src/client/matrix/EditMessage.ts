@@ -1,13 +1,13 @@
 import { MatrixClient, RelationType } from 'matrix-js-sdk'
 import { EditMessageOptions, MessageType, SendTextMessageOptions } from '../../types/matrix-types'
-import { RoomIdentifier } from '../../types/room-identifier'
+import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
 /**
  * https://github.com/uhoreg/matrix-doc/blob/b2457619ab3ac6199598d05a5e1b33dc51ab3ee1/proposals/2676-message-editing.md
  */
 export async function editZionMessage(
     matrixClient: MatrixClient,
-    roomId: RoomIdentifier,
+    roomId: MatrixRoomIdentifier,
     message: string,
     options: EditMessageOptions,
     msgOptions: SendTextMessageOptions | undefined,

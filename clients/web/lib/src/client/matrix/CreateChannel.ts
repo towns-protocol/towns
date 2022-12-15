@@ -7,13 +7,13 @@ import {
 } from 'matrix-js-sdk'
 import { sleepUntil } from '../../utils/zion-utils'
 import { CreateChannelInfo, RoomVisibility } from '../../types/matrix-types'
-import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
+import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
-export const createZionChannel = async (props: {
+export const createMatrixChannel = async (props: {
     matrixClient: MatrixClient
     createInfo: CreateChannelInfo
     disableEncryption?: boolean
-}): Promise<RoomIdentifier> => {
+}): Promise<MatrixRoomIdentifier> => {
     const { matrixClient, createInfo, disableEncryption } = props
     const homeServerUrl = matrixClient.baseUrl
     // initial state
@@ -50,7 +50,7 @@ export const createZionChannel = async (props: {
         }
     }
 
-    return makeRoomIdentifier(response.room_id)
+    return makeMatrixRoomIdentifier(response.room_id)
 }
 
 function makeInitialState(

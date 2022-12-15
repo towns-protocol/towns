@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@zion/client'
+import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
 import { publicKeyToBuffer, SignerContext } from '@zion/core'
 import {
     ClientEvent,
@@ -33,17 +33,18 @@ import {
     ZionAccountDataType,
     ZionAuth,
     ZionOpts,
+    SpaceProtocol,
 } from './ZionClientTypes'
-
-import { createZionChannel } from './matrix/CreateChannel'
-import { createZionSpace } from './matrix/CreateSpace'
+import { createMatrixChannel } from './matrix/CreateChannel'
+import { createMatrixSpace } from './matrix/CreateSpace'
+import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { editZionMessage } from './matrix/EditMessage'
 import { enrichPowerLevels } from './matrix/PowerLevels'
-import { inviteZionUser } from './matrix/InviteUser'
-import { joinZionRoom } from './matrix/Join'
-import { sendZionMessage } from './matrix/SendMessage'
-import { setZionPowerLevel } from './matrix/SetPowerLevels'
-import { syncZionSpace } from './matrix/SyncSpace'
+import { inviteMatrixUser } from './matrix/InviteUser'
+import { joinMatrixRoom } from './matrix/Join'
+import { sendMatrixMessage } from './matrix/SendMessage'
+import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
+import { syncMatrixSpace } from './matrix/SyncSpace'
 import { CustomMemoryStore } from './store/CustomMatrixStore'
 import { toZionRoom } from '../store/use-matrix-store'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
@@ -55,6 +56,9 @@ import { loadOlm } from './loadOlm'
 import { TokenEntitlementModuleShim } from './web3/shims/TokenEntitlementModuleShim'
 import { UserGrantedEntitlementModuleShim } from './web3/shims/UserGrantedEntitlementModuleShim'
 import { FullyReadMarker } from '../types/timeline-types'
+import { staticAssertNever } from '../utils/zion-utils'
+import { createCasablancaChannel } from './casablanca/CreateChannel'
+import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 
 /***
  * Zion Client
@@ -131,13 +135,17 @@ export class ZionClient {
     }
 
     /************************************************
-     * getVersion
+     * getServerVersions
      *************************************************/
     public async getServerVersions() {
         const version = await this.matrixClient.getVersions()
+        // TODO casablanca, return server versions
         return version as IZionServerVersions
     }
 
+    /************************************************
+     * isUserRegistered
+     *************************************************/
     public async isUserRegistered(username: string): Promise<boolean> {
         const isAvailable = await this.matrixClient.isUsernameAvailable(username)
         // If the username is available, then it is not yet registered.
@@ -151,7 +159,7 @@ export class ZionClient {
         if (!this.auth) {
             throw new Error('not authenticated')
         }
-        this.stopClient()
+        await this.stopClients()
         try {
             await this.matrixClient.logout()
         } catch (error) {
@@ -272,10 +280,10 @@ export class ZionClient {
     }
 
     /************************************************
-     * startClient
+     * startMatrixClient
      * start the matrix matrixClient, add listeners
      *************************************************/
-    public async startClient(auth: ZionAuth, chainId: number) {
+    public async startMatrixClient(auth: ZionAuth, chainId: number) {
         if (this.auth) {
             throw new Error('already authenticated')
         }
@@ -335,12 +343,51 @@ export class ZionClient {
     }
 
     /************************************************
-     * stopClient
+     * startCasablancaClient
      *************************************************/
-    public stopClient() {
+    public async startCasablancaClient(context: SignerContext) {
+        if (this.casablancaClient) {
+            throw new Error('already started casablancaClient')
+        }
+        const rpcClient = makeZionRpcClient(this.opts.casablancaServerUrl)
+        this.casablancaClient = new CasablancaClient(context, rpcClient)
+        try {
+            await this.casablancaClient.loadExistingUser()
+        } catch (error) {
+            if ((error as Error).message !== 'Stream not found') {
+                throw error
+            }
+            await this.casablancaClient.createNewUser()
+        }
+        void this.casablancaClient.startSync()
+    }
+
+    /************************************************
+     * stopMatrixClient
+     *************************************************/
+    public stopMatrixClient() {
         this.matrixClient.stopClient()
         this.matrixClient.removeAllListeners()
         this.log('Stopped matrixClient')
+    }
+
+    /************************************************
+     * stopCasablancaClient
+     *************************************************/
+    public async stopCasablancaClient() {
+        if (this.casablancaClient) {
+            this.log('Stopped casablanca client')
+            await this.casablancaClient.stop()
+            this.casablancaClient = undefined
+        }
+    }
+
+    /************************************************
+     * stopClients
+     *************************************************/
+    public async stopClients() {
+        this.stopMatrixClient()
+        await this.stopCasablancaClient()
     }
 
     /************************************************
@@ -484,22 +531,39 @@ export class ZionClient {
      * createSpace
      *************************************************/
     public async createSpace(createSpaceInfo: CreateSpaceInfo): Promise<RoomIdentifier> {
-        return createZionSpace({
-            matrixClient: this.matrixClient,
-            createSpaceInfo,
-            disableEncryption: this.opts.disableEncryption,
-        })
+        if (createSpaceInfo.spaceProtocol === SpaceProtocol.Casablanca) {
+            if (!this.casablancaClient) {
+                throw new Error("Casablanca client doesn't exist")
+            }
+            return createCasablancaSpace(this.casablancaClient, createSpaceInfo)
+        } else {
+            return createMatrixSpace({
+                matrixClient: this.matrixClient,
+                createSpaceInfo,
+                disableEncryption: this.opts.disableEncryption,
+            })
+        }
     }
 
     /************************************************
      * createChannel
      *************************************************/
     public async createChannel(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
-        return createZionChannel({
-            matrixClient: this.matrixClient,
-            createInfo: createInfo,
-            disableEncryption: this.opts.disableEncryption,
-        })
+        switch (createInfo.parentSpaceId.protocol) {
+            case SpaceProtocol.Matrix:
+                return createMatrixChannel({
+                    matrixClient: this.matrixClient,
+                    createInfo: createInfo,
+                    disableEncryption: this.opts.disableEncryption,
+                })
+            case SpaceProtocol.Casablanca:
+                if (!this.casablancaClient) {
+                    throw new Error("createChannel: Casablanca client doesn't exist")
+                }
+                return createCasablancaChannel(this.casablancaClient, createInfo.parentSpaceId)
+            default:
+                staticAssertNever(createInfo.parentSpaceId)
+        }
     }
 
     /************************************************
@@ -646,7 +710,14 @@ export class ZionClient {
      * inviteUser
      *************************************************/
     public async inviteUser(roomId: RoomIdentifier, userId: string) {
-        return inviteZionUser({ matrixClient: this.matrixClient, userId, roomId })
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return inviteMatrixUser({ matrixClient: this.matrixClient, userId, roomId })
+            case SpaceProtocol.Casablanca:
+                throw new Error('inviteUser not implemented for Casablanca')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
@@ -654,7 +725,15 @@ export class ZionClient {
      * ************************************************/
     // eslint-disable-next-line @typescript-eslint/ban-types
     public async leave(roomId: RoomIdentifier): Promise<void> {
-        await this.matrixClient.leave(roomId.networkId)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                await this.matrixClient.leave(roomId.networkId)
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('leave not implemented for Casablanca')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
@@ -663,8 +742,22 @@ export class ZionClient {
      * identified by a room id, this function handls joining both
      *************************************************/
     public async joinRoom(roomId: RoomIdentifier) {
-        const matrixRoom = await joinZionRoom({ matrixClient: this.matrixClient, roomId })
-        return toZionRoom(matrixRoom)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                const matrixRoom = await joinMatrixRoom({ matrixClient: this.matrixClient, roomId })
+                return toZionRoom(matrixRoom)
+            }
+            case SpaceProtocol.Casablanca: {
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                await this.casablancaClient.joinChannel(roomId.networkId)
+                const stream = await this.casablancaClient.waitForStream(roomId.networkId)
+                return toZionRoomFromStream(stream)
+            }
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
@@ -675,7 +768,17 @@ export class ZionClient {
         message: string,
         options?: SendMessageOptions,
     ) {
-        return await sendZionMessage(this.matrixClient, roomId, message, options)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return sendMatrixMessage(this.matrixClient, roomId, message, options)
+            case SpaceProtocol.Casablanca:
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                return this.casablancaClient.sendMessage(roomId.networkId, message)
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     public async sendReaction(
@@ -683,14 +786,28 @@ export class ZionClient {
         eventId: string,
         reaction: string,
     ): Promise<void> {
-        const newEventId = await this.matrixClient.sendEvent(roomId.networkId, EventType.Reaction, {
-            'm.relates_to': {
-                rel_type: RelationType.Annotation,
-                event_id: eventId,
-                key: reaction,
-            },
-        })
-        console.log('sendReaction', newEventId)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    const newEventId = await this.matrixClient.sendEvent(
+                        roomId.networkId,
+                        EventType.Reaction,
+                        {
+                            'm.relates_to': {
+                                rel_type: RelationType.Annotation,
+                                event_id: eventId,
+                                key: reaction,
+                            },
+                        },
+                    )
+                    console.log('sendReaction', newEventId)
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('sendReaction not implemented for Casablanca')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
@@ -702,24 +819,59 @@ export class ZionClient {
         options: EditMessageOptions,
         msgOptions: SendTextMessageOptions | undefined,
     ) {
-        return await editZionMessage(this.matrixClient, roomId, message, options, msgOptions)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return await editZionMessage(
+                    this.matrixClient,
+                    roomId,
+                    message,
+                    options,
+                    msgOptions,
+                )
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
      * redactEvent
      *************************************************/
     public async redactEvent(roomId: RoomIdentifier, eventId: string, reason?: string) {
-        const resp = await this.matrixClient.redactEvent(roomId.networkId, eventId, undefined, {
-            reason,
-        })
-        console.log('event redacted', roomId.networkId, eventId, resp)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    const resp = await this.matrixClient.redactEvent(
+                        roomId.networkId,
+                        eventId,
+                        undefined,
+                        {
+                            reason,
+                        },
+                    )
+                    console.log('event redacted', roomId.networkId, eventId, resp)
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
      * syncSpace
      *************************************************/
     public async syncSpace(spaceId: RoomIdentifier) {
-        return syncZionSpace(this.matrixClient, spaceId)
+        switch (spaceId.protocol) {
+            case SpaceProtocol.Matrix:
+                return syncMatrixSpace(this.matrixClient, spaceId)
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(spaceId)
+        }
     }
 
     /************************************************
@@ -732,7 +884,7 @@ export class ZionClient {
      * getPowerLevels
      ************************************************/
     public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
-        const room = this.matrixClient.getRoom(roomId.networkId)
+        const room = this.getRoom(roomId)
         if (!room) {
             throw new Error(`Room ${roomId.networkId} not found`)
         }
@@ -749,18 +901,40 @@ export class ZionClient {
         if (!current) {
             throw new Error(`Power level ${key as string} not found`)
         }
-        const response = await setZionPowerLevel(this.matrixClient, roomId, current, newValue)
-        this.log(
-            `updted power level ${current.definition.key} for room[${roomId.networkId}] from ${current.value} to ${newValue}`,
-            response,
-        )
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    const response = await setMatrixPowerLevel(
+                        this.matrixClient,
+                        roomId,
+                        current,
+                        newValue,
+                    )
+                    this.log(
+                        `updted power level ${current.definition.key} for room[${roomId.networkId}] from ${current.value} to ${newValue}`,
+                        response,
+                    )
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
      * isRoomEncrypted
      ************************************************/
     public isRoomEncrypted(roomId: RoomIdentifier): boolean {
-        return this.matrixClient.isRoomEncrypted(roomId.networkId)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return this.matrixClient.isRoomEncrypted(roomId.networkId)
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
@@ -770,24 +944,39 @@ export class ZionClient {
         roomId: RoomIdentifier,
         content: Record<string, FullyReadMarker>,
     ) {
-        return this.matrixClient.setRoomAccountData(
-            roomId.networkId,
-            ZionAccountDataType.FullyRead,
-            content,
-        )
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return this.matrixClient.setRoomAccountData(
+                    roomId.networkId,
+                    ZionAccountDataType.FullyRead,
+                    content,
+                )
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
      * getRoom
      ************************************************/
     public getRoom(roomId: RoomIdentifier): MatrixRoom | undefined {
-        return this.matrixClient.getRoom(roomId.networkId) ?? undefined
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return this.matrixClient.getRoom(roomId.networkId) ?? undefined
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
     }
 
     /************************************************
      * getRooms
      ************************************************/
     public getRooms(): MatrixRoom[] {
+        // todo casablanca return rooms here as well
         return this.matrixClient.getRooms()
     }
 
@@ -795,6 +984,7 @@ export class ZionClient {
      * getUser
      ************************************************/
     public getUser(userId: string): User | null {
+        // todo casablanca look for user in casablanca
         return this.matrixClient.getUser(userId)
     }
 
@@ -804,6 +994,7 @@ export class ZionClient {
     public async getProfileInfo(
         userId: string,
     ): Promise<{ avatar_url?: string; displayname?: string }> {
+        // todo casablanca look for user in casablanca
         const info = await this.matrixClient.getProfileInfo(userId)
         const user = this.matrixClient.getUser(userId)
         if (user) {
@@ -829,6 +1020,7 @@ export class ZionClient {
      * setDisplayName
      ************************************************/
     public async setDisplayName(name: string): Promise<void> {
+        // todo casablanca display name
         await this.matrixClient.setDisplayName(name)
     }
 
@@ -836,6 +1028,7 @@ export class ZionClient {
      * avatarUrl
      ************************************************/
     public async setAvatarUrl(url: string): Promise<void> {
+        // todo casablanca avatar url
         await this.matrixClient.setAvatarUrl(url)
     }
 
@@ -843,11 +1036,21 @@ export class ZionClient {
      * scrollback
      ************************************************/
     public async scrollback(roomId: RoomIdentifier, limit?: number): Promise<void> {
-        const room = this.matrixClient.getRoom(roomId.networkId)
-        if (!room) {
-            throw new Error('room not found')
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    const room = this.matrixClient.getRoom(roomId.networkId)
+                    if (!room) {
+                        throw new Error('room not found')
+                    }
+                    await this.matrixClient.scrollback(room, limit)
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
         }
-        await this.matrixClient.scrollback(room, limit)
     }
 
     /************************************************
@@ -859,20 +1062,32 @@ export class ZionClient {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         eventId: string | undefined = undefined,
     ): Promise<void> {
-        const room = this.matrixClient.getRoom(roomId.networkId)
-        if (!room) {
-            throw new Error(`room with id ${roomId.networkId} not found`)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    const room = this.matrixClient.getRoom(roomId.networkId)
+                    if (!room) {
+                        throw new Error(`room with id ${roomId.networkId} not found`)
+                    }
+                    const event = eventId
+                        ? room.findEventById(eventId)
+                        : room.getLiveTimeline().getEvents().at(-1)
+                    if (!event) {
+                        throw new Error(
+                            `event for room ${roomId.networkId} eventId: ${
+                                eventId ?? 'at(-1)'
+                            } not found`,
+                        )
+                    }
+                    const result = await this.matrixClient.sendReadReceipt(event)
+                    this.log('read receipt sent', result)
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
         }
-        const event = eventId
-            ? room.findEventById(eventId)
-            : room.getLiveTimeline().getEvents().at(-1)
-        if (!event) {
-            throw new Error(
-                `event for room ${roomId.networkId} eventId: ${eventId ?? 'at(-1)'} not found`,
-            )
-        }
-        const result = await this.matrixClient.sendReadReceipt(event)
-        this.log('read receipt sent', result)
     }
 
     /************************************************
