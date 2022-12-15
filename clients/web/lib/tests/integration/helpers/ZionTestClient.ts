@@ -13,7 +13,12 @@ import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-i
 import { createUserIdFromEthereumAddress, UserIdentifier } from '../../../src/types/user-identifier'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
-import { ZionAuth } from '../../../src/client/ZionClientTypes'
+import { ZionAuth, SpaceProtocol } from '../../../src/client/ZionClientTypes'
+
+export interface ZionTestClientProps {
+    primaryProtocol?: SpaceProtocol
+    disableEncryption?: boolean
+}
 
 export class ZionTestClient extends ZionClient {
     private userIdentifier: UserIdentifier
@@ -38,7 +43,7 @@ export class ZionTestClient extends ZionClient {
     constructor(
         chainId: number,
         name: string,
-        disableEncryption?: boolean,
+        props?: ZionTestClientProps,
         inProvider?: ZionTestWeb3Provider,
         delegateWallet?: ethers.Wallet,
     ) {
@@ -46,10 +51,15 @@ export class ZionTestClient extends ZionClient {
         // super
         super(
             {
+                primaryProtocol:
+                    props?.primaryProtocol ??
+                    (process.env.PRIMARY_PROTOCOL as SpaceProtocol) ??
+                    SpaceProtocol.Matrix,
                 matrixServerUrl: process.env.HOMESERVER!,
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 initialSyncLimit: 20,
-                disableEncryption: disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
+                disableEncryption:
+                    props?.disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
                 web3Signer: provider.wallet,
                 web3Provider: provider,
             },

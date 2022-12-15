@@ -27,7 +27,9 @@ export const TestApp = (props: TestAppProps) => {
         <QueryClientProvider client={queryClient}>
             <Zion.ZionContextProvider
                 disableEncryption
+                primaryProtocol={Zion.SpaceProtocol.Matrix}
                 homeServerUrl=""
+                casablancaServerUrl=""
                 {...props.zionContextProviderProps}
             >
                 {props.children}

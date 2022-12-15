@@ -1,7 +1,7 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
-import { ZionContextProvider } from 'use-zion-client'
+import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
@@ -21,6 +21,7 @@ import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL
+const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
 
 export const App = () => {
     return (
@@ -29,7 +30,9 @@ export const App = () => {
                 <ZionContextProvider
                     disableEncryption
                     enableSpaceRootUnreads
+                    primaryProtocol={SpaceProtocol.Matrix}
                     homeServerUrl={MATRIX_HOMESERVER_URL}
+                    casablancaServerUrl={CASABLANCA_SERVER_URL}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}
                 >

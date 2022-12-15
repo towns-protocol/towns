@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react'
 import { ethers } from 'ethers'
 import { ZionClient } from '../client/ZionClient'
-import { ZionOnboardingOpts } from '../client/ZionClientTypes'
+import { ZionOnboardingOpts, SpaceProtocol } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import { useOnboardingState } from '../hooks/ZionContext/useOnboardingState'
@@ -50,7 +50,9 @@ export function useZionContext(): IZionContext {
 }
 
 interface Props {
+    primaryProtocol: SpaceProtocol
     homeServerUrl: string
+    casablancaServerUrl: string
     onboardingOpts?: ZionOnboardingOpts
     disableEncryption?: boolean
     enableSpaceRootUnreads?: boolean
@@ -75,7 +77,9 @@ export function ZionContextProvider(props: Props): JSX.Element {
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
     const {
+        primaryProtocol,
         homeServerUrl,
+        casablancaServerUrl,
         onboardingOpts,
         disableEncryption,
         enableSpaceRootUnreads,
@@ -87,7 +91,9 @@ const ContextImpl = (props: Props): JSX.Element => {
     } = props
 
     const { client } = useZionClientListener(
+        primaryProtocol,
         homeServerUrl,
+        casablancaServerUrl,
         initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
         onboardingOpts,
         disableEncryption,

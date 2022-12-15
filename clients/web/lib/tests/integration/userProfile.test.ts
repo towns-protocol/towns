@@ -35,20 +35,16 @@ describe('userProfile', () => {
         // alice joins the room
         await alice.joinRoom(roomId)
         // alice should see bob's user name
-        await waitFor(
-            () =>
-                expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.name).toBe(
-                    "Bob's your uncle",
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.name).toBe(
+                "Bob's your uncle",
+            ),
         )
         // alice should see bob's profile photo
-        await waitFor(
-            () =>
-                expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.getMxcAvatarUrl()).toBe(
-                    'https://example.com/bob.png',
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.getMxcAvatarUrl()).toBe(
+                'https://example.com/bob.png',
+            ),
         )
         // log alice's view of bob
         const alicesViewOfBob = alice.getRoom(roomId)?.getMember(bob.matrixUserId!)
@@ -70,34 +66,28 @@ describe('userProfile', () => {
         await alice.setDisplayName("Alice's your aunt")
         await alice.setAvatarUrl('https://example.com/alice.png')
         // bob should see alices new user name
-        await waitFor(
-            () =>
-                expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name).toBe(
-                    "Alice's your aunt",
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name).toBe(
+                "Alice's your aunt",
+            ),
         )
         // alice should see bob's profile photo
-        await waitFor(
-            () =>
-                expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.getMxcAvatarUrl()).toBe(
-                    'https://example.com/alice.png',
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.getMxcAvatarUrl()).toBe(
+                'https://example.com/alice.png',
+            ),
         )
         // send a message
         await bob.sendMessage(roomId, 'hello')
         // alice should see the message
-        await waitFor(
-            () =>
-                expect(
-                    alice
-                        .getRoom(roomId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
-                ).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                alice
+                    .getRoom(roomId)
+                    ?.getLiveTimeline()
+                    .getEvents()
+                    .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
+            ).toBeDefined(),
         )
         // get the message
         const message = alice

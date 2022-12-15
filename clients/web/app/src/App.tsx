@@ -1,7 +1,13 @@
 import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 
-import { WalletStatus, ZionContextProvider, useMatrixStore, useWeb3Context } from 'use-zion-client'
+import {
+    SpaceProtocol,
+    WalletStatus,
+    ZionContextProvider,
+    useMatrixStore,
+    useWeb3Context,
+} from 'use-zion-client'
 import { Box, Heading } from '@ui'
 import { AppLayout } from 'AppLayout'
 import { useRootTheme } from 'hooks/useRootTheme'
@@ -22,6 +28,7 @@ const Playground = React.lazy(() => import('@components/Playground'))
 FontLoader.init()
 
 const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL
+const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
 const ZION_SPACE_ID = '!YtwhtUR6ghEUoc7H:node1.zion.xyz'
 const ZION_SPACE_NAME = 'Zion Preview' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
@@ -30,7 +37,9 @@ export const App = () => {
     return (
         <ZionContextProvider
             disableEncryption
+            primaryProtocol={SpaceProtocol.Matrix}
             homeServerUrl={MATRIX_HOMESERVER_URL}
+            casablancaServerUrl={CASABLANCA_SERVER_URL}
             defaultSpaceId={ZION_SPACE_ID}
             defaultSpaceName={ZION_SPACE_NAME}
             defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}

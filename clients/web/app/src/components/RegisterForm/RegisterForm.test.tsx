@@ -41,7 +41,9 @@ const Mock = ({ children }: any) => {
     return (
         <Zion.ZionContextProvider
             disableEncryption
+            primaryProtocol={Zion.SpaceProtocol.Matrix}
             homeServerUrl=""
+            casablancaServerUrl=""
             defaultSpaceId=""
             defaultSpaceName=""
             defaultSpaceAvatarSrc=""

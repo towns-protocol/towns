@@ -531,17 +531,23 @@ export class ZionClient {
      * createSpace
      *************************************************/
     public async createSpace(createSpaceInfo: CreateSpaceInfo): Promise<RoomIdentifier> {
-        if (createSpaceInfo.spaceProtocol === SpaceProtocol.Casablanca) {
-            if (!this.casablancaClient) {
-                throw new Error("Casablanca client doesn't exist")
-            }
-            return createCasablancaSpace(this.casablancaClient, createSpaceInfo)
-        } else {
-            return createMatrixSpace({
-                matrixClient: this.matrixClient,
-                createSpaceInfo,
-                disableEncryption: this.opts.disableEncryption,
-            })
+        if (!createSpaceInfo.spaceProtocol) {
+            createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
+        }
+        switch (createSpaceInfo.spaceProtocol) {
+            case SpaceProtocol.Matrix:
+                return createMatrixSpace({
+                    matrixClient: this.matrixClient,
+                    createSpaceInfo,
+                    disableEncryption: this.opts.disableEncryption,
+                })
+            case SpaceProtocol.Casablanca:
+                if (!this.casablancaClient) {
+                    throw new Error("Casablanca client doesn't exist")
+                }
+                return createCasablancaSpace(this.casablancaClient, createSpaceInfo)
+            default:
+                staticAssertNever(createSpaceInfo.spaceProtocol)
         }
     }
 

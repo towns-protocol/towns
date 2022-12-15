@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useEffect } from 'react'
 import { useConnect } from 'wagmi'
-import { ZionOnboardingOpts } from '../../../src/client/ZionClientTypes'
+import { ZionOnboardingOpts, SpaceProtocol } from '../../../src/client/ZionClientTypes'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 
 interface Props {
     provider: ZionTestWeb3Provider
+    primaryProtocol?: SpaceProtocol
     onboardingOpts?: ZionOnboardingOpts
     defaultSpaceId?: string
     defaultSpaceName?: string
@@ -19,6 +20,7 @@ interface Props {
 export const ZionTestApp = (props: Props) => {
     const {
         provider,
+        primaryProtocol: inPrimaryProtocol,
         onboardingOpts: inOnboardingOpts,
         defaultSpaceId,
         defaultSpaceName,
@@ -28,7 +30,10 @@ export const ZionTestApp = (props: Props) => {
         children,
     } = props
     // pull environment variables from the process
+    const primaryProtocol =
+        inPrimaryProtocol ?? (process.env.PRIMARY_PROTOCOL as SpaceProtocol) ?? SpaceProtocol.Matrix
     const homeServerUrl = process.env.HOMESERVER!
+    const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
     const disableEncryption = inDisableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true'
     const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts
         ? inOnboardingOpts
@@ -42,7 +47,9 @@ export const ZionTestApp = (props: Props) => {
 
     return (
         <ZionContextProvider
+            primaryProtocol={primaryProtocol}
             homeServerUrl={homeServerUrl}
+            casablancaServerUrl={casablancaServerUrl}
             onboardingOpts={onboardingOpts}
             disableEncryption={disableEncryption}
             signer={provider.wallet}
