@@ -2,20 +2,21 @@ import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { DebugBar } from '@components/DebugBar'
+import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Box, Heading } from '@ui'
+import { QueryProvider } from 'api/queryClient'
 import { AppLayout } from 'AppLayout'
+import { useAuth } from 'hooks/useAuth'
 import { useRootTheme } from 'hooks/useRootTheme'
+import { useWindowListener } from 'hooks/useWindowListener'
+import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
 import { SiteHome } from 'routes/SiteHome'
 import { SpacesNew } from 'routes/SpacesNew'
 import { SidebarLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
-import { PATHS } from 'routes'
-import { QueryProvider } from 'api/queryClient'
-import { useWindowListener } from 'hooks/useWindowListener'
 import { isDev } from 'utils'
-import { DebugBar } from '@components/DebugBar'
-import { useAuth } from 'hooks/useAuth'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -86,6 +87,7 @@ const AllRoutes = () => {
                     )}
                 </Route>
                 <Route path="/playground" element={<Playground />} />
+                <Route path="/playground/*" element={<PlaygroundRoutes />} />
             </Route>
         </Routes>
     )

@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from 'react'
 import axios, { AxiosResponse } from 'axios'
+import React, { useEffect, useState } from 'react'
+import { AddressPill } from '@components/AddressPill'
+import { richText } from '@components/RichText/RichTextEditor.css'
+import { TextFieldWithPill } from '@components/TextFieldWithPill'
+import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/UploadSpaceIcon'
 import {
     Avatar,
     Box,
@@ -23,16 +27,13 @@ import {
     TooltipRenderer,
     iconTypes,
 } from '@ui'
+import { FormRender } from 'ui/components/Form/Form'
 import { TextProps } from 'ui/components/Text/Text'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
-import { richText } from '@components/RichText/RichTextEditor.css'
 import { isDev } from 'utils'
-import { FormRender } from 'ui/components/Form/Form'
-import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/UploadSpaceIcon'
-import { AddressPill } from '@components/AddressPill'
-import { TextFieldWithPill } from '@components/TextFieldWithPill'
+import { SpaceTokenExample } from '@components/SpaceToken/example/SpaceTokenExample'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -48,6 +49,9 @@ export const Playground = () => {
     }, [])
     return (
         <Stack position="relative">
+            <Container label="token">
+                <SpaceTokenExample />
+            </Container>
             <Container label="Mock Data">
                 <p>{mockData?.data.name}</p>
             </Container>
@@ -429,7 +433,7 @@ export const Playground = () => {
     )
 }
 
-const Container = ({
+export const Container = ({
     label,
     children,
     darkOnly,

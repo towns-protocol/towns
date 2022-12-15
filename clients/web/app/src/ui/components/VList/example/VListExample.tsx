@@ -53,7 +53,6 @@ export const VListExample = () => {
     return (
         <Stack gap height="800">
             <VList
-                debug
                 key={`${reset}`}
                 list={list}
                 itemRenderer={(data) => {
