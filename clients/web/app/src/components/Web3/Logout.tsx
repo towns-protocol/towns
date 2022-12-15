@@ -1,14 +1,9 @@
-import { useMatrixStore, useZionClient } from 'use-zion-client'
-import React, { useCallback } from 'react'
+import React from 'react'
 import { Button } from '@ui'
+import { useAuth } from 'hooks/useAuth'
 
 export const Logout = () => {
-    const { isAuthenticated } = useMatrixStore()
-    const { logout } = useZionClient()
+    const { logout, isAuthenticated } = useAuth()
 
-    const onLogout = useCallback(async () => {
-        await logout()
-    }, [logout])
-
-    return isAuthenticated ? <Button onClick={onLogout}>Logout</Button> : null
+    return isAuthenticated ? <Button onClick={logout}>Logout</Button> : null
 }

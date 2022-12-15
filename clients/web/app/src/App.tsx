@@ -1,13 +1,7 @@
 import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 
-import {
-    SpaceProtocol,
-    WalletStatus,
-    ZionContextProvider,
-    useMatrixStore,
-    useWeb3Context,
-} from 'use-zion-client'
+import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { Box, Heading } from '@ui'
 import { AppLayout } from 'AppLayout'
 import { useRootTheme } from 'hooks/useRootTheme'
@@ -21,6 +15,7 @@ import { QueryProvider } from 'api/queryClient'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { isDev } from 'utils'
 import { DebugBar } from '@components/DebugBar'
+import { useAuth } from 'hooks/useAuth'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -55,9 +50,7 @@ export const App = () => {
 }
 
 const AllRoutes = () => {
-    const { isAuthenticated } = useMatrixStore()
-    const { walletStatus } = useWeb3Context()
-    const isAuthed = isAuthenticated && walletStatus !== WalletStatus.Disconnected
+    const { isAuthenticatedAndConnected } = useAuth()
 
     useRootTheme({
         ammendHTMLBody: true,
@@ -82,7 +75,7 @@ const AllRoutes = () => {
                         <Route path="/protocol" element={<Heading>PROTOCOL</Heading>} />
                         <Route path="/dao" element={<Heading>DAO</Heading>} />
                     </Route>
-                    {isAuthed && (
+                    {isAuthenticatedAndConnected && (
                         <>
                             <Route path={`/${PATHS.PREFERENCES}`} element={<Register isEdit />} />
                             <Route path="*" element={<SidebarLayout />}>

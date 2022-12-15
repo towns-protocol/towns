@@ -1,12 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import {
-    LoginStatus,
-    WalletStatus,
-    useMatrixStore,
-    useWeb3Context,
-    useZionClient,
-} from 'use-zion-client'
-import { useConnect } from 'wagmi'
+import { LoginStatus, WalletStatus, useZionClient } from 'use-zion-client'
+import { useAuth } from 'hooks/useAuth'
 import { LoginButton } from './LoginButton/LoginButton'
 import { ButtonTooltip } from './LoginButton/Tooltip/ButtonTooltip'
 
@@ -23,35 +17,26 @@ export enum ButtonStatus {
     Register = 'signup.Register',
 }
 
-const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
-export const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
-
 export const LoginComponent = () => {
-    const { loginStatus, loginError } = useMatrixStore()
-    const { loginWithWallet, registerWallet } = useZionClient()
-    const { walletStatus } = useWeb3Context()
-
-    const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
+    const {
+        loginStatus,
+        loginError,
+        login,
+        register,
+        walletStatus,
+        connect,
+        pendingConnector,
+        connectError,
+        connectLoading,
+    } = useAuth()
 
     console.log('LoginComponent wagmi info:', {
         walletStatus,
-        error,
-        isLoading,
+        error: connectError,
+        isLoading: connectLoading,
         pendingConnector,
         loginError,
     })
-
-    const handleConnect = useCallback(() => {
-        connect({ connector: connectors[0] })
-    }, [connect, connectors])
-
-    const handleLogin = useCallback(() => {
-        loginWithWallet(loginMsgToSign)
-    }, [loginWithWallet])
-
-    const handleRegister = useCallback(() => {
-        registerWallet(registerWalletMsgToSign)
-    }, [registerWallet])
 
     // retrieve the connection and login status synchronously
     const _preliminaryStatus = getButtonStatus(walletStatus, loginStatus)
@@ -66,9 +51,9 @@ export const LoginComponent = () => {
     const tooltipMessage = getTooltipMessage(status)
     const isSpinning = getIsSpinning(status)
     const onButtonClick = useButtonClick(status, {
-        handleConnect,
-        handleLogin,
-        handleRegister,
+        connect,
+        login,
+        register,
     })
 
     return (
@@ -81,24 +66,24 @@ export const LoginComponent = () => {
 const useButtonClick = (
     status: ButtonStatus,
     actions: {
-        handleConnect: () => void
-        handleLogin: () => void
-        handleRegister: () => void
+        connect: () => void
+        login: () => void
+        register: () => void
     },
 ) => {
-    const { handleConnect, handleLogin, handleRegister } = actions
+    const { connect, login, register } = actions
 
     return useCallback(() => {
         switch (status) {
             case ButtonStatus.ConnectRequired:
             case ButtonStatus.ConnectError:
-                return handleConnect()
+                return connect()
             case ButtonStatus.Login:
-                return handleLogin()
+                return login()
             case ButtonStatus.Register:
-                return handleRegister()
+                return register()
         }
-    }, [handleConnect, handleLogin, handleRegister, status])
+    }, [connect, login, register, status])
 }
 
 const getButtonLabel = (status: ButtonStatus) => {

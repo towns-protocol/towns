@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import {
     LoginStatus,
-    WalletStatus,
     useMatrixStore,
     useMyProfile,
     useWeb3Context,
@@ -13,7 +12,7 @@ import {
 } from 'use-zion-client'
 import { vars } from 'ui/styles/vars.css'
 import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
-import { registerWalletMsgToSign } from '@components/Login/LoginComponent'
+import { useAuth } from 'hooks/useAuth'
 
 const placeholders = {
     names: [
@@ -33,8 +32,10 @@ const placeholders = {
 }
 
 export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
-    const { accounts, walletStatus } = useWeb3Context()
-    const { registerWallet, setDisplayName, setAvatarUrl } = useZionClient()
+    const { accounts } = useWeb3Context()
+    const { isConnected } = useAuth()
+    const { setDisplayName, setAvatarUrl } = useZionClient()
+    const { register: registerWallet } = useAuth()
     const navigate = useNavigate()
     const { loginStatus } = useMatrixStore()
     const myProfile = useMyProfile()
@@ -61,8 +62,6 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
 
     const { errors, isValid } = formState
 
-    const isConnected = walletStatus === WalletStatus.Connected
-
     console.log('loaded onboarding', {
         isConnected,
         loginStatus,
@@ -79,7 +78,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                         return
                     }
                     if (loginStatus === LoginStatus.LoggedOut) {
-                        await registerWallet(registerWalletMsgToSign)
+                        await registerWallet()
                     }
                     if (data.displayName !== myProfile?.displayName) {
                         await setDisplayName(data.displayName)

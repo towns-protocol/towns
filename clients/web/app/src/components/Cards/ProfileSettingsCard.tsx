@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { useZionClient } from 'use-zion-client'
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
+import { useAuth } from 'hooks/useAuth'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
 
 export const ProfileSettingsCard = (props: Props) => {
     const { username = '', avatarUrl, displayName } = props
+    const { logout } = useAuth()
 
     const { closeCard } = useCardOpenerContext()
 
@@ -39,12 +40,6 @@ export const ProfileSettingsCard = (props: Props) => {
         closeCard()
         navigate(`/${PATHS.PREFERENCES}`)
     }, [closeCard, navigate])
-
-    const { logout } = useZionClient()
-
-    const onLogoutClick = useCallback(() => {
-        logout()
-    }, [logout])
 
     return (
         <Card border paddingBottom="sm" width="300" fontSize="md" tabIndex={1}>
@@ -72,7 +67,7 @@ export const ProfileSettingsCard = (props: Props) => {
             <MenuItem icon="back" onClick={onThemeClick}>
                 Switch Theme
             </MenuItem>
-            <MenuItem icon="logout" onClick={onLogoutClick}>
+            <MenuItem icon="logout" onClick={logout}>
                 Logout
             </MenuItem>
         </Card>
