@@ -1,4 +1,7 @@
+/* eslint-disable no-restricted-imports */
+
 import { ethers } from 'ethers'
+import Localhost_EventsAbi from '@harmony/contracts/localhost/abis/Events.abi.json'
 
 interface ContractParams {
     address: string
@@ -46,6 +49,29 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
         ) as unknown as T_LOCALHOST
     }
 
+    protected get localhost_events() {
+        if (!this.provider) {
+            throw new Error('No provider')
+        }
+        return new ethers.Contract(
+            this.localhost.address,
+            Localhost_EventsAbi,
+            this.provider,
+        ) as unknown as T_LOCALHOST
+    }
+
+    protected get goerli_events() {
+        if (!this.provider) {
+            throw new Error('No provider')
+        }
+        throw new Error('No events abi')
+        // return new ethers.Contract(
+        //     this.goerli.address,
+        //     this.goerli.eventsAbi,
+        //     this.provider,
+        // ) as unknown as T_LOCALHOST
+    }
+
     protected get localhost_signed(): T_LOCALHOST {
         if (!this.signer) {
             throw new Error('No signer')
@@ -77,6 +103,37 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
             this.goerli.abi,
             this.signer,
         ) as unknown as T_GOERLI
+    }
+
+    get address() {
+        if (this.isLocalhost) {
+            return this.localhost.address
+        } else if (this.isGoerli) {
+            return this.goerli.address
+        } else {
+            throw new Error('Unsupported chainId')
+        }
+    }
+
+    get eventsAbi(): ethers.ContractInterface {
+        if (this.isLocalhost) {
+            return Localhost_EventsAbi
+        }
+        // Goerli TODO
+        else {
+            throw new Error('Unsupported chainId')
+        }
+    }
+
+    /// get contract for events
+    get events(): T_LOCALHOST | T_GOERLI {
+        if (this.isLocalhost) {
+            return this.localhost_events
+        }
+        // Goerli TODO
+        else {
+            throw new Error('Unsupported chainId')
+        }
     }
 
     /// get contract without signature, for reading from the blockchain
