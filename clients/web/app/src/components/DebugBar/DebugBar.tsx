@@ -7,6 +7,7 @@ import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { HomeServerUrl, UseHomeServerUrlReturn } from 'hooks/useMatrixHomeServerUrl'
+import { useAuth } from 'hooks/useAuth'
 
 type Props = {
     homeserverUrl: string
@@ -176,6 +177,7 @@ const DebugModal = ({
 
 const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
     const { chain } = useNetwork()
+    const { logout } = useAuth()
 
     const [modal, setModal] = useState(false)
 
@@ -189,12 +191,14 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
 
     const { synced, platform } = areSynced(homeserverUrl, chain?.name || '')
 
-    function onNetworkSwitch(chainId: number) {
+    async function onNetworkSwitch(chainId: number) {
         if (chainId === 31337) {
             setUrl(HomeServerUrl.LOCAL)
         } else if (chainId === 5) {
             setUrl(HomeServerUrl.REMOTE)
         }
+        await logout()
+        window.location.href = 'http://localhost:3000'
     }
 
     function onClearUrl() {

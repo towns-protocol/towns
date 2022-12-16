@@ -29,8 +29,8 @@ export function useAuth() {
         registerWallet(registerWalletMsgToSign)
     }, [registerWallet])
 
-    const logout = useCallback(() => {
-        _logout()
+    const logout = useCallback(async () => {
+        await _logout()
     }, [_logout])
 
     const isConnected = useMemo(() => {
