@@ -1,0 +1,158 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "AddRoleFailed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "DefaultEntitlementModuleNotSet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "DefaultPermissionsManagerNotSet",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementAlreadyWhitelisted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementModuleNotSupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementNotWhitelisted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidParameters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NameContainsInvalidCharacters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NameLengthInvalid",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotSpaceManager",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotSpaceOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "PermissionAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "SpaceAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "SpaceDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "SpaceNFTNotSet",
+        "type": "error"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spaces/libraries/Errors.sol": "Errors"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/spaces/libraries/Errors.sol": {
+      "keccak256": "0x9a941e4fc071bba09676638161d691f9d5e0cef3270d4eeb8d97c1fd091e08b5",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b33c1d41f30be06a7dd4c4308320703bf217a568a53a22b6af7f1390fd5bc580",
+        "dweb:/ipfs/QmXLCmvmkTmyGs8HGGF9McFX7vCG8Pxsu4xHorgkSPYiW6"
+      ]
+    }
+  },
+  "version": 1
+}

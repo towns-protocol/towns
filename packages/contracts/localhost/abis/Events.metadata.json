@@ -1,0 +1,417 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "CreateChannel",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          }
+        ],
+        "name": "CreateRole",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          }
+        ],
+        "name": "CreateSpace",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "entitlementAddress",
+            "type": "address"
+          }
+        ],
+        "name": "DefaultEntitlementSet",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "entitlementAddress",
+            "type": "address"
+          }
+        ],
+        "name": "EntitlementModuleAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "entitlementAddress",
+            "type": "address"
+          }
+        ],
+        "name": "EntitlementModuleRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "updater",
+            "type": "address"
+          }
+        ],
+        "name": "RemoveRole",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "SetChannelAccess",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "SetSpaceAccess",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "spaceNFTAddress",
+            "type": "address"
+          }
+        ],
+        "name": "SpaceNFTAddressSet",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "updater",
+            "type": "address"
+          }
+        ],
+        "name": "UpdateRole",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "entitlementAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "whitelist",
+            "type": "bool"
+          }
+        ],
+        "name": "WhitelistEntitlementModule",
+        "type": "event"
+      }
+    ],
+    "devdoc": {
+      "events": {
+        "CreateChannel(string,string,address)": {
+          "details": "Emitted when a channel is created",
+          "params": {
+            "channelNetworkId": "The id of the channel",
+            "owner": "The address of the creator of the channel",
+            "spaceNetworkId": "The id of the space"
+          }
+        },
+        "CreateRole(string,uint256,string,address)": {
+          "details": "Emitted when a role is created",
+          "params": {
+            "roleId": "The id of the role",
+            "roleName": "The name of the role",
+            "spaceId": "The id of the space"
+          }
+        },
+        "CreateSpace(string,address)": {
+          "details": "Emitted when a space is created",
+          "params": {
+            "owner": "The address of the owner of the space",
+            "spaceNetworkId": "The id of the space"
+          }
+        },
+        "DefaultEntitlementSet(address)": {
+          "details": "Emitted when the default entitlement module is set on the contract",
+          "params": {
+            "entitlementAddress": "The address of the entitlement module"
+          }
+        },
+        "EntitlementModuleAdded(string,address)": {
+          "details": "Emitted when an entitlement module is added to a space",
+          "params": {
+            "entitlementAddress": "The address of the entitlement module",
+            "spaceId": "The id of the space"
+          }
+        },
+        "EntitlementModuleRemoved(string,address)": {
+          "details": "Emitted when an entitlement module is removed from a space",
+          "params": {
+            "entitlementAddress": "The address of the entitlement module",
+            "spaceId": "The id of the space"
+          }
+        },
+        "RemoveRole(string,uint256,address)": {
+          "details": "Emitted when a role is updated",
+          "params": {
+            "roleId": "The id of the role",
+            "spaceId": "The id of the space"
+          }
+        },
+        "SetChannelAccess(string,string,address,bool)": {
+          "details": "Emitted when a channel access is updated",
+          "params": {
+            "channelNetworkId": "The id of the channel",
+            "disabled": "The disabled status",
+            "spaceNetworkId": "The id of the space",
+            "user": "The address of the user"
+          }
+        },
+        "SetSpaceAccess(string,address,bool)": {
+          "details": "Emitted when a space access is updated",
+          "params": {
+            "disabled": "The disabled status",
+            "spaceNetworkId": "The id of the space",
+            "user": "The address of the user"
+          }
+        },
+        "SpaceNFTAddressSet(address)": {
+          "details": "Emitted when the space nft address is set on the contract",
+          "params": {
+            "spaceNFTAddress": "The address of the space nft"
+          }
+        },
+        "UpdateRole(string,uint256,address)": {
+          "details": "Emitted when a role is updated",
+          "params": {
+            "roleId": "The id of the role",
+            "spaceId": "The id of the space"
+          }
+        },
+        "WhitelistEntitlementModule(string,address,bool)": {
+          "details": "Emitted when an entitlement module is white listed on a space",
+          "params": {
+            "entitlementAddress": "The address of the entitlement module",
+            "spaceNetworkId": "The id of the space"
+          }
+        }
+      },
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spaces/libraries/Events.sol": "Events"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/spaces/libraries/Events.sol": {
+      "keccak256": "0xf2672cea93eae66554e9ee207271c27205099d4b2f98d7485693780ec4f628e3",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c066b1040ad26e2ff5e5d66e5e7953f706104d449038a79548ec80bfb4d5571e",
+        "dweb:/ipfs/QmTiFb674cbZboVEVMUaPStDmuVyEHGFp8wLR9VvmztqrG"
+      ]
+    }
+  },
+  "version": 1
+}
