@@ -1,18 +1,205 @@
-import React from 'react'
-import { useNetwork } from 'wagmi'
-import { Box, Text } from '@ui'
+import React, { useState } from 'react'
+import { useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
+import useEvent from 'react-use-event-hook'
+import { ethers, providers } from 'ethers'
+import { useWeb3Context, useZionClient } from 'use-zion-client'
+import { Box, Button, Divider, Stack, Text } from '@ui'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { shortAddress } from 'ui/utils/utils'
+import { HomeServerUrl, UseHomeServerUrlReturn } from 'hooks/useMatrixHomeServerUrl'
 
 type Props = {
-    MATRIX_HOMESERVER_URL: string
+    homeserverUrl: string
+} & UseHomeServerUrlReturn
+
+type ModalProps = {
+    onHide: () => void
+    platform: string
+    synced: boolean
+    homeserverUrl: HomeServerUrl
+    onNetworkSwitch: (chainId: number) => void
+    onClearUrl: () => void
 }
-export const DebugBar = ({ MATRIX_HOMESERVER_URL }: Props) => {
+
+function areSynced(homeserverUrl: HomeServerUrl, chainName: string) {
+    const serverIsLocal = homeserverUrl.includes('localhost')
+    const chainIsLocal = chainName.toLowerCase().includes('foundry')
+    const localSync = serverIsLocal && chainIsLocal
+    const nonLocalSync = !serverIsLocal && !chainIsLocal
+    let platform = !chainName ? 'Not connected' : 'Mismatch'
+
+    if (localSync) {
+        platform = 'foundry/local'
+    } else if (nonLocalSync) {
+        platform = 'goerli/zion.xyz'
+    }
+    return {
+        synced: localSync || nonLocalSync,
+        platform,
+    }
+}
+
+type FundProps = {
+    accountId: string
+    provider?: providers.BaseProvider
+    chainId?: number
+}
+
+async function fundWallet({ accountId, provider, chainId }: FundProps) {
+    try {
+        const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+        const wallet = new ethers.Wallet(anvilKey, provider)
+
+        const amount = 0.1
+
+        const tx = {
+            from: wallet.address,
+            to: accountId,
+            value: ethers.utils.parseEther(amount.toString()),
+            gasLimit: 1000000,
+            chainId: chainId,
+        }
+
+        console.log('fundWallet tx', tx)
+        const result = await wallet.sendTransaction(tx)
+        console.log('fundWallet result', result)
+        const receipt = await result.wait()
+        console.log('fundWallet receipt', receipt)
+    } catch (e) {
+        console.error('fundWallet error', e)
+    }
+}
+
+const FundButton = (props: FundProps & { disabled: boolean }) => {
+    const balance = useBalance({ addressOrName: props.accountId, watch: true })
+    return (
+        <Button disabled={props.disabled} size="button_xs" onClick={() => fundWallet(props)}>
+            <>
+                <Text size="sm">{shortAddress(props.accountId)}</Text>
+                <Text size="sm" color="negative">
+                    Balance: {balance.data?.formatted} {balance.data?.symbol}
+                </Text>
+            </>
+        </Button>
+    )
+}
+
+const DebugModal = ({
+    homeserverUrl,
+    onHide,
+    onNetworkSwitch,
+    onClearUrl,
+    platform,
+}: ModalProps) => {
+    const { chain, accounts, provider } = useWeb3Context()
+    const { chainId } = useZionClient()
+
+    const { switchNetwork } = useSwitchNetwork({
+        onSuccess: (chain) => {
+            onNetworkSwitch(chain.id)
+        },
+    })
+
+    const switchToLocal = () => {
+        switchNetwork?.(31337)
+    }
+
+    const switchToTestnet = () => {
+        switchNetwork?.(5)
+    }
+
+    return (
+        <ModalContainer onHide={onHide}>
+            <Stack gap="lg">
+                <Text strong size="sm">
+                    Server: {homeserverUrl}
+                </Text>
+                <Text strong size="sm">
+                    Chain: {chain?.name || 'Not connected'}
+                </Text>
+
+                {chain?.name && (
+                    <>
+                        <Divider />
+
+                        <Box shrink display="block">
+                            <Text strong size="sm">
+                                {chain.id === 31337 && 'Fund '}
+                                Accounts
+                            </Text>
+                            <br />
+                            {accounts.map((accountId) => (
+                                <FundButton
+                                    key={accountId}
+                                    accountId={accountId}
+                                    disabled={chain.id !== 31337}
+                                    provider={provider}
+                                    chainId={chainId}
+                                />
+                            ))}
+                        </Box>
+
+                        <Divider />
+
+                        <Stack horizontal gap justifyContent="end">
+                            <Button
+                                size="button_xs"
+                                tone="etherum"
+                                disabled={chain.id === 31337}
+                                onClick={switchToLocal}
+                            >
+                                Switch to foundry/local
+                            </Button>
+                            <Button
+                                size="button_xs"
+                                tone="cta1"
+                                disabled={chain.id === 5}
+                                onClick={switchToTestnet}
+                            >
+                                Switch to goerli/zion.xyz
+                            </Button>
+                            <Button size="button_xs" onClick={onClearUrl}>
+                                <Text size="sm" color="default">
+                                    Clear Local Storage
+                                </Text>
+                            </Button>
+                            <Button size="button_xs" onClick={onHide}>
+                                Cancel
+                            </Button>
+                        </Stack>
+                    </>
+                )}
+            </Stack>
+        </ModalContainer>
+    )
+}
+
+const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
     const { chain } = useNetwork()
-    const serverBg = MATRIX_HOMESERVER_URL.includes('localhost') ? 'etherum' : 'cta1'
-    const chainBg = !chain?.name
-        ? 'level3'
-        : chain?.name.toLowerCase().includes('foundry')
-        ? 'etherum'
-        : 'cta1'
+
+    const [modal, setModal] = useState(false)
+
+    const onHide = useEvent(() => {
+        setModal(false)
+    })
+
+    const onShow = useEvent(() => {
+        setModal(true)
+    })
+
+    const { synced, platform } = areSynced(homeserverUrl, chain?.name || '')
+
+    function onNetworkSwitch(chainId: number) {
+        if (chainId === 31337) {
+            setUrl(HomeServerUrl.LOCAL)
+        } else if (chainId === 5) {
+            setUrl(HomeServerUrl.REMOTE)
+        }
+    }
+
+    function onClearUrl() {
+        clearUrl()
+    }
 
     return (
         <Box
@@ -26,26 +213,48 @@ export const DebugBar = ({ MATRIX_HOMESERVER_URL }: Props) => {
             gap="sm"
             justifyContent="end"
         >
-            <Box flexDirection="row" alignItems="center" gap="sm">
-                <Box
-                    background={serverBg}
-                    rounded="full"
-                    style={{ width: '20px', height: '20px' }}
+            {modal && (
+                <DebugModal
+                    homeserverUrl={homeserverUrl}
+                    platform={platform}
+                    synced={synced}
+                    onNetworkSwitch={onNetworkSwitch}
+                    onClearUrl={onClearUrl}
+                    onHide={onHide}
                 />
-                <Text strong size="sm">
-                    Server: {MATRIX_HOMESERVER_URL}
+            )}
+            <Box flexDirection="row" alignItems="center" cursor="pointer" gap="sm" onClick={onShow}>
+                <Box>
+                    {synced && (
+                        <Box
+                            background={platform.includes('foundry') ? 'etherum' : 'cta1'}
+                            rounded="full"
+                            style={{ width: '15px', height: '15px' }}
+                        />
+                    )}
+                    {!synced && (
+                        <Box
+                            border="negative"
+                            rounded="full"
+                            style={{ width: '15px', height: '15px' }}
+                        >
+                            {' '}
+                        </Box>
+                    )}
+                </Box>
+
+                <Text strong as="span" size="sm">
+                    {platform}&nbsp;{' '}
                 </Text>
-            </Box>
-            <Box flexDirection="row" alignItems="center" gap="sm">
-                <Box
-                    background={chainBg}
-                    rounded="full"
-                    style={{ width: '20px', height: '20px' }}
-                />
-                <Text strong size="sm">
-                    Chain: {chain?.name || 'Not connected'}
-                </Text>
+
+                {hasUrl() && (
+                    <Text as="span" size="sm" color="negative">
+                        Local Storage
+                    </Text>
+                )}
             </Box>
         </Box>
     )
 }
+
+export default DebugBar

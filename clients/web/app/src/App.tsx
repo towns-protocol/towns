@@ -1,7 +1,6 @@
 import React from 'react'
 import { Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
-import { DebugBar } from '@components/DebugBar'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
 import { QueryProvider } from 'api/queryClient'
@@ -14,25 +13,28 @@ import { Welcome } from 'routes/Welcome'
 import { AppPanelLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { isDev } from 'utils'
+import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
+const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
 
-const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL
 const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
 const ZION_SPACE_ID = '!YtwhtUR6ghEUoc7H:node1.zion.xyz'
 const ZION_SPACE_NAME = 'Zion Preview' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 
 export const App = () => {
+    const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
+
     return (
         <ZionContextProvider
             disableEncryption
             primaryProtocol={SpaceProtocol.Matrix}
-            homeServerUrl={MATRIX_HOMESERVER_URL}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
+            homeServerUrl={homeserverUrl}
             defaultSpaceId={ZION_SPACE_ID}
             defaultSpaceName={ZION_SPACE_NAME}
             defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
@@ -40,7 +42,7 @@ export const App = () => {
             initialSyncLimit={100}
         >
             <QueryProvider>
-                <>{isDev && <DebugBar MATRIX_HOMESERVER_URL={MATRIX_HOMESERVER_URL} />}</>
+                <>{isDev && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
                 <AllRoutes />
             </QueryProvider>
         </ZionContextProvider>
