@@ -16,12 +16,10 @@ import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
 import { FullyReadMarker } from '../types/timeline-types'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { RoomIdentifier } from '../types/room-identifier'
-import { useLoginWithPassword } from './MatrixClient/useLoginWithPassword'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
 import { useMemo } from 'react'
-import { useRegisterPasswordUser } from './MatrixClient/useRegisterPasswordUser'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -58,10 +56,8 @@ interface ZionClientImpl {
     joinRoom: (roomId: RoomIdentifier) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier) => Promise<void>
     logout: () => Promise<void>
-    loginWithPassword: (username: string, password: string) => Promise<void>
     loginWithWallet: (statement: string) => Promise<void>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
-    registerPasswordUser: (username: string, password: string) => Promise<void>
     registerWallet: (statement: string) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (roomId: RoomIdentifier, limit?: number) => Promise<void>
@@ -86,9 +82,7 @@ export function useZionClient(): ZionClientImpl {
     const { getIsWalletIdRegistered, loginWithWallet, registerWallet } = useMatrixWalletSignIn()
     const { client } = useZionContext()
     const clientRunning = useMemo(() => client !== undefined, [client])
-    const loginWithPassword = useLoginWithPassword()
     const logout = useLogout()
-    const registerPasswordUser = useRegisterPasswordUser()
     const sendReadReceipt = useSendReadReceipt(client)
     const resetFullyReadMarkers = useResetFullyReadMarkers()
 
@@ -112,11 +106,9 @@ export function useZionClient(): ZionClientImpl {
         inviteUser: useWithCatch(client?.inviteUser),
         joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
-        loginWithPassword,
         loginWithWallet,
         logout,
         redactEvent: useWithCatch(client?.redactEvent),
-        registerPasswordUser,
         registerWallet,
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
