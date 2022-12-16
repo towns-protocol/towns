@@ -86,7 +86,7 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
         } else if (this.isGoerli) {
             return this.goerli_unsigned
         } else {
-            throw new Error('Unsupported chainId')
+            throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
@@ -97,7 +97,7 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
         } else if (this.isGoerli) {
             return this.goerli_signed
         } else {
-            throw new Error('Unsupported chainId')
+            throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 }
