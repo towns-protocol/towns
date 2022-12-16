@@ -12,14 +12,15 @@
         "build": "tsc",
         "lint": "eslint .",
         "lint:fix": "yarn lint --fix",
+        "my-jest": "NODE_ENV=development yarn node -r ../../../scripts/node-no-warn.js --experimental-vm-modules --experimental-wasm-modules $(yarn bin jest) --forceExit",
         "preinstall": "yarn run --top-level csb:build",
         "postinstall": "tsc",
         "prepack": "tsc",
         "test:e2e-csb-ts-only": "yarn test:e2e-csb **/*.ts",
         "test:e2e-csb": "PRIMARY_PROTOCOL=casablanca yarn test:e2e",
-        "test:e2e": "NODE_ENV=development yarn node --experimental-vm-modules --experimental-wasm-modules $(yarn bin jest) --forceExit --silent --maxWorkers=5",
+        "test:e2e": "yarn my-jest --silent --maxWorkers=5",
         "test": "yarn test:e2e",
-        "test-load": "tsc && NUM_CLIENTS=25 NODE_ENV=development yarn node --experimental-vm-modules --experimental-wasm-modules $(yarn bin jest) --forceExit --group=integration/load --testTimeout=600000",
+        "test-load": "NUM_CLIENTS=25 yarn my-jest --group=integration/load --testTimeout=600000",
         "watch": "tsc --watch"
     },
     "dependencies": {
