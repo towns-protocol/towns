@@ -3,7 +3,7 @@ import { Outlet } from 'react-router'
 import {
     ChannelContextProvider,
     ThreadResult,
-    useMatrixStore,
+    useMatrixCredentials,
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-zion-client'
@@ -13,7 +13,7 @@ import { usePersistOrder } from 'hooks/usePersistOrder'
 import { sortThreads } from './SpaceThreadInbox'
 
 export const SpaceThreads = () => {
-    const { userId } = useMatrixStore()
+    const { userId } = useMatrixCredentials()
     const spaceId = useSpaceId()
     const threadRoots = useSpaceThreadRoots()
 

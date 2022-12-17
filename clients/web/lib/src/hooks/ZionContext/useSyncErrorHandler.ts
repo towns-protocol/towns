@@ -6,9 +6,9 @@ import { useCredentialStore } from '../../store/use-credential-store'
 import { useMatrixStore } from '../../store/use-matrix-store'
 import { LoginStatus } from '../../hooks/login'
 
-export function useSyncErrorHandler(client?: ZionClient) {
+export function useSyncErrorHandler(homeServerUrl: string, client?: ZionClient) {
     const { setLoginStatus } = useMatrixStore()
-    const { setAccessToken } = useCredentialStore()
+    const { setMatrixCredentials } = useCredentialStore()
     const [syncError, setSyncError] = useState<string>()
     useEffect(() => {
         if (!client) {
@@ -27,7 +27,7 @@ export function useSyncErrorHandler(client?: ZionClient) {
                     }
                     setSyncError('M_UNKNOWN_TOKEN')
                     setLoginStatus(LoginStatus.LoggedOut)
-                    setAccessToken('')
+                    setMatrixCredentials(homeServerUrl, null)
                 }
             }
         }
@@ -36,7 +36,7 @@ export function useSyncErrorHandler(client?: ZionClient) {
         return () => {
             client.matrixClient.off(ClientEvent.Sync, onSync)
         }
-    }, [client, setAccessToken, setLoginStatus])
+    }, [client, setMatrixCredentials, setLoginStatus, homeServerUrl])
 
     return syncError
 }

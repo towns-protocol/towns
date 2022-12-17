@@ -1,10 +1,10 @@
-import { useMatrixStore, useZionClient } from 'use-zion-client'
+import { useMatrixCredentials, useZionClient } from 'use-zion-client'
 
 import { Button } from '@mui/material'
 import React, { useCallback } from 'react'
 
 export function Logout(): JSX.Element | null {
-    const { isAuthenticated } = useMatrixStore()
+    const { isAuthenticated } = useMatrixCredentials()
     const { logout } = useZionClient()
 
     const onLogout = useCallback(

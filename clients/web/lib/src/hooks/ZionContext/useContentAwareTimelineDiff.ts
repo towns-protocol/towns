@@ -27,7 +27,8 @@ export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
         }
         const userId = matrixClient.getUserId()
         if (!userId) {
-            throw new Error('userId is expected to be defined and constant')
+            // can happen on logout
+            return
         }
         // state
         let effectState = initOnce(matrixClient, userId)

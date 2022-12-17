@@ -12,10 +12,10 @@ import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { LoginStatus } from '../../src/hooks/login'
 
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { useCredentialStore } from '../../src/store/use-credential-store'
 import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { sleep } from '../../src/utils/zion-utils'
+import { useMatrixCredentials } from '../../src/hooks/use-matrix-credentials'
 
 /*
 Note: Jest runs tests serially within the collection,
@@ -63,28 +63,28 @@ describe('signInFromGlobalStorageHooks', () => {
     }) // end test
 
     test('test reading prior auth objects and logged in state from localStorage', async () => {
+        const hs = process.env.HOMESERVER!
         const credentialSessionStore = JSON.parse(
             global.sessionStorage.getItem('credential-store') || '{}',
         )
         const credentialStore = JSON.parse(global.localStorage.getItem('credential-store') || '{}')
-        const matrixStore = JSON.parse(global.localStorage.getItem('matrix-store') || '{}')
-        await waitFor(() => expect(credentialStore.state).toHaveProperty('accessToken'))
-        await waitFor(() => expect(matrixStore.state.isAuthenticated as boolean).toBe(true))
+        await waitFor(() =>
+            expect(credentialStore.state.matrixCredentialsMap[hs]).toHaveProperty('accessToken'),
+        )
         // session storage should be empty, but this is ok b/c we use localStorage for auth instead
         await waitFor(() => expect(Object.keys(credentialSessionStore).length).toEqual(0))
     })
 
     test('test logging in again using stored auth from localStorage', async () => {
+        const hs = process.env.HOMESERVER!
         const credentialStore = JSON.parse(global.localStorage.getItem('credential-store') || '{}')
-        const matrixStore = JSON.parse(global.localStorage.getItem('matrix-store') || '{}')
         expect(Object.keys(credentialStore.state).length).toBeGreaterThan(0)
-        expect(Object.keys(matrixStore.state).length).toBeGreaterThan(0)
         const dummyProvider = new ZionTestWeb3Provider()
 
         // build a view for alice to render
         const TestComponent = () => {
             const { isConnected } = useWeb3Context()
-            const { accessToken } = useCredentialStore()
+            const { accessToken } = useMatrixCredentials()
             const { loginStatus, loginError } = useMatrixStore()
             const { logout } = useZionClient()
 
@@ -116,7 +116,9 @@ describe('signInFromGlobalStorageHooks', () => {
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
         // check that alice is using stored accessToken, not a new one
         await waitFor(() =>
-            expect(accessToken).toHaveTextContent(credentialStore.state.accessToken),
+            expect(accessToken).toHaveTextContent(
+                credentialStore.state.matrixCredentialsMap[hs].accessToken,
+            ),
         )
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // logout
@@ -124,20 +126,15 @@ describe('signInFromGlobalStorageHooks', () => {
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
     })
     test('test stores are cleared after logout', async () => {
+        const hs = process.env.HOMESERVER!
         const credentialStore = JSON.parse(global.localStorage.getItem('credential-store') || '{}')
-        const matrixStore = JSON.parse(global.localStorage.getItem('matrix-store') || '{}')
-        expect(credentialStore.state.accessToken).toEqual('')
-        expect(matrixStore.state.isAuthenticated).toEqual(false)
-        expect(matrixStore.state.loginStatus).toEqual(LoginStatus.LoggedOut)
-        expect(matrixStore.state.userId).toBeNull()
-        expect(matrixStore.state.username).toBeNull()
-
+        expect(credentialStore.state.matrixCredentialsMap[hs]).toBeNull()
         const dummyProvider = new ZionTestWeb3Provider()
 
         // build a view for alice to render
         const TestComponent = () => {
             const { isConnected } = useWeb3Context()
-            const { accessToken } = useCredentialStore()
+            const { accessToken } = useMatrixCredentials()
             const { loginStatus, loginError } = useMatrixStore()
             return (
                 <>

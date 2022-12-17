@@ -3,7 +3,7 @@ import {
     RoomIdentifier,
     createUserIdFromString,
     getShortUsername,
-    useMatrixStore,
+    useMatrixCredentials,
 } from 'use-zion-client'
 import { Outlet, useNavigate } from 'react-router-dom'
 import React, { useCallback, useMemo, useState } from 'react'
@@ -37,7 +37,7 @@ export function AppDrawer(props: Props): JSX.Element {
     const { window } = props
     const navigate = useNavigate()
     const [mobileOpen, setMobileOpen] = useState(false)
-    const { userId } = useMatrixStore()
+    const { userId } = useMatrixCredentials()
 
     const myWalletAddress = useMemo(() => {
         if (userId) {

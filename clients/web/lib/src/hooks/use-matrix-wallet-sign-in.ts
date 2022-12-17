@@ -40,10 +40,9 @@ interface SignedAuthenticationData {
 }
 
 export function useMatrixWalletSignIn() {
-    const { loginStatus, setLoginError, setLoginStatus, setDeviceId, setUserId, setUsername } =
-        useMatrixStore()
+    const { loginStatus, setLoginError, setLoginStatus } = useMatrixStore()
     const { homeServerUrl: homeServer } = useZionContext()
-    const { setAccessToken } = useCredentialStore()
+    const { setMatrixCredentials } = useCredentialStore()
     const { accounts, sign, chain } = useWeb3Context()
 
     const chainIdEip155 = chain?.id
@@ -69,11 +68,13 @@ export function useMatrixWalletSignIn() {
         function (response: IAuthData) {
             const { access_token, device_id, user_id } = response
             if (access_token && device_id && user_id) {
-                setAccessToken(access_token)
-                setDeviceId(device_id)
+                setMatrixCredentials(homeServer, {
+                    accessToken: access_token,
+                    deviceId: device_id,
+                    userId: user_id,
+                    username: getUsernameFromId(user_id),
+                })
                 setLoginStatus(LoginStatus.LoggedIn)
-                setUserId(user_id)
-                setUsername(getUsernameFromId(user_id))
             } else {
                 setLoginError({
                     code: StatusCodes.UNAUTHORIZED,
@@ -82,7 +83,7 @@ export function useMatrixWalletSignIn() {
                 setLoginStatus(LoginStatus.LoggedOut)
             }
         },
-        [setAccessToken, setDeviceId, setLoginError, setLoginStatus, setUserId, setUsername],
+        [homeServer, setLoginError, setLoginStatus, setMatrixCredentials],
     )
 
     const signMessage = useCallback(
@@ -191,7 +192,7 @@ export function useMatrixWalletSignIn() {
 
     const registerWallet = useCallback(
         async function (statement: string): Promise<void> {
-            console.log(`[registerWallet] start`)
+            console.log(`[registerWallet] start`, { homeServer })
             // Registration of a new wallet is allowed if the user is currently logged out.
             if (loginStatus === LoginStatus.LoggedOut) {
                 if (userIdentifier && userIdentifier.chainId && homeServer) {

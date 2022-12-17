@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
-import { useMatrixStore, useMyProfile } from 'use-zion-client'
+import { useMatrixCredentials, useMyProfile } from 'use-zion-client'
 import { ProfileSettingsCard } from '@components/Cards/ProfileSettingsCard'
 import { FadeIn } from '@components/Transitions'
 import { Avatar, Box, Paragraph, Stack } from '@ui'
@@ -12,7 +12,7 @@ type Props = {
 
 export const ProfileCardButton = (props: Props) => {
     const { expanded: isExpanded } = props
-    const { isAuthenticated, userId, username } = useMatrixStore()
+    const { isAuthenticated, userId, username } = useMatrixCredentials()
     const myProfile = useMyProfile()
 
     return !isAuthenticated ? null : (
@@ -23,8 +23,8 @@ export const ProfileCardButton = (props: Props) => {
             render={
                 <Box horizontal paddingY="md">
                     <ProfileSettingsCard
-                        userId={userId}
-                        username={username}
+                        userId={userId ?? ''}
+                        username={username ?? ''}
                         avatarUrl={myProfile?.avatarUrl}
                         displayName={myProfile?.displayName}
                     />

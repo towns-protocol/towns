@@ -1,12 +1,12 @@
 import { useCallback, useMemo } from 'react'
-import { WalletStatus, useMatrixStore, useWeb3Context, useZionClient } from 'use-zion-client'
+import { WalletStatus, useMatrixCredentials, useWeb3Context, useZionClient } from 'use-zion-client'
 import { useConnect } from 'wagmi'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
 
 export function useAuth() {
-    const { isAuthenticated, loginStatus, loginError } = useMatrixStore()
+    const { isAuthenticated, loginStatus, loginError } = useMatrixCredentials()
     const { loginWithWallet, registerWallet, logout: _logout } = useZionClient()
     const { walletStatus } = useWeb3Context()
     const {

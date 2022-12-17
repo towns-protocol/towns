@@ -1,5 +1,5 @@
 import { RefObject, useLayoutEffect, useMemo } from 'react'
-import { TimelineEvent, useMatrixStore } from 'use-zion-client'
+import { TimelineEvent, useMatrixCredentials } from 'use-zion-client'
 import { getIsRoomMessageContent } from 'utils/ztevent_util'
 
 export const useScrollDownOnNewMessage = (
@@ -7,7 +7,7 @@ export const useScrollDownOnNewMessage = (
     contentRef: RefObject<HTMLDivElement>,
     messages: TimelineEvent[],
 ) => {
-    const { userId } = useMatrixStore()
+    const { userId } = useMatrixCredentials()
 
     const lastMessageIdByUser = useMemo(() => {
         for (let i = messages.length; i >= 0; i--) {

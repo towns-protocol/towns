@@ -1,6 +1,6 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
-import { Outlet, matchPath, useMatch, useResolvedPath, useRoutes } from 'react-router'
+import { Outlet, useMatch } from 'react-router'
 import { SpaceContextProvider, useSpaceData, useZionContext } from 'use-zion-client'
 import useEvent from 'react-use-event-hook'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'

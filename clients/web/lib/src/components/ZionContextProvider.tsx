@@ -28,7 +28,7 @@ export interface IZionContext {
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
     onboardingState: IOnboardingState
-    homeServerUrl?: string
+    homeServerUrl: string
     disableEncryption?: boolean // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
     defaultSpaceId?: RoomIdentifier
     defaultSpaceName?: string
@@ -118,7 +118,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     const rooms = useMatrixRooms(client?.matrixClient)
     useMatrixTimelines(client?.matrixClient)
     const onboardingState = useOnboardingState(client)
-    const syncError = useSyncErrorHandler(client)
+    const syncError = useSyncErrorHandler(homeServerUrl, client)
 
     useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
 

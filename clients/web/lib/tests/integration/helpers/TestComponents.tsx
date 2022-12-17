@@ -5,14 +5,16 @@ import { ZionAuth } from '../../../src/client/ZionClientTypes'
 import { getUsernameFromId } from '../../../src/types/user-identifier'
 import { useCredentialStore } from '../../../src/store/use-credential-store'
 import { useMatrixStore } from '../../../src/store/use-matrix-store'
+import { useMatrixCredentials } from '../../../src/hooks/use-matrix-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
 import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
 import { WalletStatus } from '../../../src/types/web3-types'
+import { useZionContext } from '../../../src/components/ZionContextProvider'
 
 export const RegisterWallet = () => {
     const { walletStatus } = useWeb3Context()
-    const { loginStatus, loginError, userId } = useMatrixStore()
+    const { loginStatus, loginError, userId } = useMatrixCredentials()
     const { clientRunning, registerWallet } = useZionClient()
 
     useEffect(() => {
@@ -59,18 +61,20 @@ interface LoginWithAuthProps {
 }
 
 export const LoginWithAuth = (props: LoginWithAuthProps) => {
+    const { homeServerUrl } = useZionContext()
     const { walletStatus } = useWeb3Context()
-    const { loginStatus, loginError, setDeviceId, setUserId, setLoginStatus, setUsername } =
-        useMatrixStore()
+    const { loginStatus, loginError, setLoginStatus } = useMatrixStore()
     const { clientRunning } = useZionClient()
-    const { setAccessToken } = useCredentialStore()
+    const { setMatrixCredentials } = useCredentialStore()
     useEffect(() => {
         if (walletStatus === WalletStatus.Connected) {
-            setAccessToken(props.auth.accessToken)
-            setDeviceId(props.auth.deviceId)
+            setMatrixCredentials(homeServerUrl, {
+                accessToken: props.auth.accessToken,
+                deviceId: props.auth.deviceId,
+                userId: props.auth.userId,
+                username: getUsernameFromId(props.auth.userId),
+            })
             setLoginStatus(LoginStatus.LoggedIn)
-            setUserId(props.auth.userId)
-            setUsername(getUsernameFromId(props.auth.userId))
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletStatus])

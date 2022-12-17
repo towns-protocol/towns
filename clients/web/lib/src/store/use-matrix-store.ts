@@ -1,78 +1,43 @@
 import { AuthenticationError, LoginStatus } from '../hooks/login'
 import { Membership, Room, RoomMember, SpaceChild } from '../types/matrix-types'
 import { makeRoomIdentifier, makeMatrixRoomIdentifier } from '../types/room-identifier'
-import create, { SetState, StateCreator } from 'zustand'
-import { persist, PersistOptions } from 'zustand/middleware'
+import create, { SetState } from 'zustand'
 
 import { Room as MatrixRoom } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { ZionClientEvent } from '../client/ZionClientTypes'
 
 export type MatrixStoreStates = {
-    isAuthenticated: boolean
-    deviceId: string | null
-    setDeviceId: (deviceId: string | undefined) => void
     loginStatus: LoginStatus
     setLoginStatus: (loginStatus: LoginStatus) => void
     loginError: AuthenticationError | null
     setLoginError: (error: AuthenticationError | undefined) => void
-    userId: string | null
-    setUserId: (userId: string | undefined) => void
-    username: string | null
-    setUsername: (username: string | undefined) => void
     zionClientEvents: { [event in ZionClientEvent]?: number }
     triggerZionClientEvent: (event: ZionClientEvent) => void
 }
 
-type MyPersist = (
-    config: StateCreator<MatrixStoreStates>,
-    options: PersistOptions<MatrixStoreStates>,
-) => StateCreator<MatrixStoreStates>
-
-export const useMatrixStore = create<MatrixStoreStates>(
-    (persist as unknown as MyPersist)(
-        (set: SetState<MatrixStoreStates>) => ({
-            isAuthenticated: false,
-            loginStatus: LoginStatus.LoggedOut,
-            setLoginStatus: (loginStatus: LoginStatus) =>
-                loginStatus === LoginStatus.LoggedOut
-                    ? set({
-                          isAuthenticated: false,
-                          deviceId: null,
-                          loginStatus,
-                          userId: null,
-                          username: null,
-                      })
-                    : loginStatus === LoginStatus.LoggingIn
-                    ? set({
-                          isAuthenticated: false,
-                          loginError: null,
-                          loginStatus,
-                      })
-                    : set({
-                          isAuthenticated: loginStatus === LoginStatus.LoggedIn,
-                          loginStatus,
-                      }),
-            loginError: null,
-            setLoginError: (error: AuthenticationError | undefined) =>
-                set({ loginError: error ?? null }),
-            deviceId: null,
-            setDeviceId: (deviceId: string | undefined) => set({ deviceId: deviceId ?? null }),
-            userId: null,
-            setUserId: (userId: string | undefined) => set({ userId: userId ?? null }),
-            username: null,
-            setUsername: (username: string | undefined) => set({ username: username ?? null }),
-            zionClientEvents: {},
-            triggerZionClientEvent: (event: ZionClientEvent) =>
-                set((state: MatrixStoreStates) => triggerZionClientEvent(state, event)),
-        }),
-        {
-            // default store uses localStorage
-            name: 'matrix-store',
-            getStorage: () => localStorage,
-        },
-    ),
-)
+export const useMatrixStore = create<MatrixStoreStates>((set: SetState<MatrixStoreStates>) => ({
+    isAuthenticated: false,
+    loginStatus: LoginStatus.LoggedOut,
+    setLoginStatus: (loginStatus: LoginStatus) =>
+        loginStatus === LoginStatus.LoggedOut
+            ? set({
+                  loginStatus,
+              })
+            : loginStatus === LoginStatus.LoggingIn
+            ? set({
+                  loginError: null,
+                  loginStatus,
+              })
+            : set({
+                  loginStatus,
+              }),
+    loginError: null,
+    setLoginError: (error: AuthenticationError | undefined) => set({ loginError: error ?? null }),
+    zionClientEvents: {},
+    triggerZionClientEvent: (event: ZionClientEvent) =>
+        set((state: MatrixStoreStates) => triggerZionClientEvent(state, event)),
+}))
 
 function triggerZionClientEvent(state: MatrixStoreStates, event: ZionClientEvent) {
     const changed = { ...state.zionClientEvents }

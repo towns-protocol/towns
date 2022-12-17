@@ -9,7 +9,7 @@ import {
     RoomIdentifier,
     RoomMember,
     ThreadResult,
-    useMatrixStore,
+    useMatrixCredentials,
     useSpaceId,
     useSpaceMembers,
     useSpaceThreadRoots,
@@ -25,7 +25,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 export const SpaceThreadsInbox = () => {
     const outlet = useOutlet()
     const { sizes, onSizesChange } = usePersistPanes(['thread-inbox', 'thread-inbox-replies'])
-    const { userId } = useMatrixStore()
+    const { userId } = useMatrixCredentials()
     const spaceId = useSpaceId()
     const threadRoots = useSpaceThreadRoots()
     const channels = useSpaceChannels()

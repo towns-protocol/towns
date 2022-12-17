@@ -17,8 +17,9 @@ export const useZionClientListener = (
     signer?: ethers.Signer,
 ) => {
     const { provider, chain } = useWeb3Context()
-    const { deviceId, isAuthenticated, userId, setLoginStatus } = useMatrixStore()
-    const { accessToken, setAccessToken } = useCredentialStore()
+    const { setLoginStatus } = useMatrixStore()
+    const { matrixCredentialsMap, setMatrixCredentials } = useCredentialStore()
+    const matrixCredentials = matrixCredentialsMap[matrixServerUrl]
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
     const chainId = chain?.id
@@ -40,7 +41,7 @@ export const useZionClientListener = (
     }
 
     const startClient = useCallback(async () => {
-        if (!accessToken || !userId || !deviceId) {
+        if (!matrixCredentials) {
             console.error('startClient: accessToken, userId, or deviceId is undefined')
             return
         }
@@ -51,7 +52,7 @@ export const useZionClientListener = (
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const client = clientSingleton.current!
         // make sure we're not re-starting the client
-        if (client.auth?.accessToken === accessToken) {
+        if (client.auth?.accessToken === matrixCredentials.accessToken) {
             if (client.chainId != chainId) {
                 console.warn("ChainId changed, we're not handling this yet")
             } else {
@@ -60,8 +61,18 @@ export const useZionClientListener = (
             return
         }
         console.log('******* start client *******')
+        // unset the client ref if it's not already, we need to cycle the ui
+        setClientRef(undefined)
+        // start it up!
         try {
-            await client.startMatrixClient({ userId, accessToken, deviceId }, chainId)
+            await client.startMatrixClient(
+                {
+                    userId: matrixCredentials.userId,
+                    accessToken: matrixCredentials.accessToken,
+                    deviceId: matrixCredentials.deviceId,
+                },
+                chainId,
+            )
             setClientRef(client)
             console.log('******* client started *******')
         } catch (e) {
@@ -72,20 +83,20 @@ export const useZionClientListener = (
                 console.log('error while logging out', e)
             }
             setLoginStatus(LoginStatus.LoggedOut)
-            setAccessToken('')
+            setMatrixCredentials(matrixServerUrl, null)
         }
         /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-    }, [accessToken, chainId, deviceId, setAccessToken, setLoginStatus, userId])
+    }, [chainId, matrixCredentials, matrixServerUrl, setLoginStatus, setMatrixCredentials])
 
     useEffect(() => {
-        if (isAuthenticated) {
+        if (matrixCredentials) {
             void (async () => await startClient())()
             console.log(`Matrix client listener started`)
         } else {
             setClientRef(undefined)
             console.log('Matrix client listener stopped')
         }
-    }, [isAuthenticated, startClient])
+    }, [matrixCredentials, startClient])
 
     return {
         client: clientRef,

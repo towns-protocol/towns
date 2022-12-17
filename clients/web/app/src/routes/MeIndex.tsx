@@ -1,10 +1,10 @@
 import React from 'react'
-import { useMatrixStore, useMyProfile, useServerVersions } from 'use-zion-client'
+import { useMatrixCredentials, useMyProfile, useServerVersions } from 'use-zion-client'
 import { Stack } from 'ui/components/Stack/Stack'
 import { LiquidContainer } from './SpacesIndex'
 
 export const MeIndex = () => {
-    const { isAuthenticated, username, userId } = useMatrixStore()
+    const { isAuthenticated, username, userId } = useMatrixCredentials()
     const myProfile = useMyProfile()
     const serverVersions = useServerVersions()
     if (!myProfile) {

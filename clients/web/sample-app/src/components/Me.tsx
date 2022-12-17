@@ -2,13 +2,13 @@ import { Stack } from '@mui/material'
 import React, { useMemo } from 'react'
 import {
     createUserIdFromString,
-    useMatrixStore,
+    useMatrixCredentials,
     useMyProfile,
     useServerVersions,
 } from 'use-zion-client'
 
 export const Me = () => {
-    const { userId } = useMatrixStore()
+    const { userId } = useMatrixCredentials()
     const myProfile = useMyProfile()
     const serverVersions = useServerVersions()
     const userIdentifier = useMemo(() => {

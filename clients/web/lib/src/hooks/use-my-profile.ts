@@ -1,8 +1,8 @@
 import { User } from '../types/matrix-types'
-import { useMyUserId } from './use-my-user-id'
+import { useMatrixCredentials } from './use-matrix-credentials'
 import { useUser } from './use-user'
 
 export function useMyProfile(): User | undefined {
-    const userId = useMyUserId()
+    const { userId } = useMatrixCredentials()
     return useUser(userId)
 }

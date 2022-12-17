@@ -1,9 +1,19 @@
 import create, { SetState, StateCreator } from 'zustand'
 import { persist, PersistOptions } from 'zustand/middleware'
 
+export type MatrixCredentials = {
+    accessToken: string
+    deviceId: string
+    userId: string
+    username?: string
+}
+
 export type CredentialStoreStates = {
-    accessToken: string | null
-    setAccessToken: (accessToken: string | undefined) => void
+    matrixCredentialsMap: Record<string, MatrixCredentials | null>
+    setMatrixCredentials: (
+        homeServerUrl: string,
+        matrixCredentials: MatrixCredentials | null,
+    ) => void
 }
 
 type MyPersist = (
@@ -16,9 +26,18 @@ export const useCredentialStore = create<CredentialStoreStates>(
     // issue https://github.com/pmndrs/zustand/issues/650
     (persist as unknown as MyPersist)(
         (set: SetState<CredentialStoreStates>) => ({
-            accessToken: null,
-            setAccessToken: (accessToken: string | undefined) =>
-                set({ accessToken: accessToken ?? null }),
+            matrixCredentialsMap: {},
+            setMatrixCredentials: (
+                homeServerUrl: string,
+                matrixCredentials: MatrixCredentials | null,
+            ) =>
+                set((state) => ({
+                    ...state,
+                    matrixCredentialsMap: {
+                        ...state.matrixCredentialsMap,
+                        [homeServerUrl]: matrixCredentials,
+                    },
+                })),
         }),
         {
             name: 'credential-store',

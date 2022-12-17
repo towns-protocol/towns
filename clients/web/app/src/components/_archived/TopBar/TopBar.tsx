@@ -2,7 +2,7 @@ import React from 'react'
 import { useMatch, useResolvedPath } from 'react-router'
 import { Link, NavLink } from 'react-router-dom'
 
-import { useMatrixStore } from 'use-zion-client'
+import { useMatrixCredentials } from 'use-zion-client'
 import { LoginComponent } from '@components/Login/LoginComponent'
 import { MinimalLogo } from '@components/Logo/Logo'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
@@ -60,7 +60,7 @@ const TopMenu = () => {
     // following ones need to be excluded
     const isAppRoute = !(manifesto || protocol || dao)
 
-    const { isAuthenticated } = useMatrixStore()
+    const { isAuthenticated } = useMatrixCredentials()
     return (
         <Stack horizontal height="100%" justifyContent="spaceBetween">
             {isAuthenticated && (
