@@ -16,6 +16,7 @@ import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
 import { FullyReadMarker } from '../types/timeline-types'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { RoomIdentifier } from '../types/room-identifier'
+import { ZionRoleManagerShim } from '../client/web3/shims/ZionRoleManagerShim'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
@@ -28,10 +29,11 @@ import { useZionContext } from '../components/ZionContextProvider'
  * Matrix client API to interact with the Matrix server.
  */
 interface ZionClientImpl {
+    chainId: number | undefined
     clientRunning: boolean
     councilNFT: CouncilNFTShim | undefined
+    roleManager: ZionRoleManagerShim | undefined
     spaceManager: ZionSpaceManagerShim | undefined
-    chainId: number | undefined
     createSpace: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
     createBasicWeb3Space: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
@@ -44,6 +46,12 @@ interface ZionClientImpl {
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
     createWeb3Channel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
+    createChannelTransaction: (
+        createChannelInfo: CreateChannelInfo,
+    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    waitForCreateChannelTransaction: (
+        context: TransactionContext<RoomIdentifier> | undefined,
+    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     editMessage: (
         roomId: RoomIdentifier,
         message: string,
@@ -87,10 +95,11 @@ export function useZionClient(): ZionClientImpl {
     const resetFullyReadMarkers = useResetFullyReadMarkers()
 
     return {
+        chainId: client?.chainId,
         clientRunning,
         councilNFT: client?.councilNFT,
+        roleManager: client?.roleManager,
         spaceManager: client?.spaceManager,
-        chainId: client?.chainId,
         createChannel: useWithCatch(client?.createChannel),
         createSpace: useWithCatch(client?.createSpace),
         createBasicWeb3Space: useWithCatch(client?.createBasicWeb3Space, ZionClientEvent.NewSpace),
@@ -99,7 +108,12 @@ export function useZionClient(): ZionClientImpl {
             client?.waitForCreateSpaceTransaction,
             ZionClientEvent.NewSpace,
         ),
-        createWeb3Channel: useWithCatch(client?.createWeb3Channel),
+        createWeb3Channel: useWithCatch(client?.createWeb3Channel, ZionClientEvent.NewChannel),
+        createChannelTransaction: useWithCatch(client?.createChannelTransaction),
+        waitForCreateChannelTransaction: useWithCatch(
+            client?.waitForCreateSpaceTransaction,
+            ZionClientEvent.NewChannel,
+        ),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),

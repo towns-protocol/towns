@@ -1,42 +1,65 @@
+import { useCallback, useMemo, useState } from 'react'
+
 import { CreateChannelInfo } from '../types/matrix-types'
 import { RoomIdentifier } from '../types/room-identifier'
-import { useCallback } from 'react'
-import { useRolesAndPermissions } from './use-roles-and-permissions'
+import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
 import { useZionClient } from './use-zion-client'
 
 /**
  * Combine Matrix channel creation and Smart Contract channel
  * creation into one hook.
  */
-const TAG = '[useCreateChannelTransaction]'
-
 export function useCreateChannelTransaction() {
-    const { getRolesFromSpace } = useRolesAndPermissions()
-    const { createWeb3Channel } = useZionClient()
+    const { createChannelTransaction, waitForCreateChannelTransaction } = useZionClient()
+    const [transactionContext, setTransactionContext] = useState<
+        TransactionContext<RoomIdentifier> | undefined
+    >(undefined)
 
-    const createChannelWithSpaceRoles = useCallback(
-        async function (createInfo: CreateChannelInfo): Promise<RoomIdentifier | undefined> {
-            // helper function to create a channel with the same roles as the space
-            const roleIds: number[] = []
-            const spaceRoles = await getRolesFromSpace(createInfo.parentSpaceId.networkId)
-            if (spaceRoles) {
-                for (const r of spaceRoles) {
-                    roleIds.push(r.roleId.toNumber())
-                }
-                try {
-                    const roomId = await createWeb3Channel(createInfo)
-                    return roomId
-                } catch (e) {
-                    console.error(TAG, e)
-                }
+    const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
+        return {
+            data: transactionContext?.data,
+            isLoading: transactionContext?.status === TransactionStatus.Pending,
+            transactionHash: transactionContext?.transaction?.hash,
+            transactionStatus: transactionContext?.status ?? TransactionStatus.None,
+            error: transactionContext?.error,
+        }
+    }, [transactionContext])
+
+    const _createChannelTransaction = useCallback(
+        async function (createInfo: CreateChannelInfo): Promise<void> {
+            const loading: TransactionContext<RoomIdentifier> = {
+                status: TransactionStatus.Pending,
+                transaction: undefined,
+                receipt: undefined,
+                data: undefined,
             }
-
-            return undefined
+            setTransactionContext(loading)
+            const txContext = await createChannelTransaction(createInfo)
+            setTransactionContext(txContext)
+            if (txContext?.status === TransactionStatus.Pending) {
+                // No error and transaction is pending
+                // Wait for transaction to be mined
+                const rxContext = await waitForCreateChannelTransaction(txContext)
+                setTransactionContext(rxContext)
+            }
         },
-        [getRolesFromSpace, createWeb3Channel],
+        [createChannelTransaction, waitForCreateChannelTransaction],
     )
 
+    console.log('useCreateChannelTransaction', 'states', {
+        isLoading,
+        data,
+        error,
+        transactionStatus,
+        transactionHash,
+    })
+
     return {
-        createChannelWithSpaceRoles,
+        isLoading,
+        data,
+        error,
+        transactionHash,
+        transactionStatus,
+        createChannelTransaction: _createChannelTransaction,
     }
 }

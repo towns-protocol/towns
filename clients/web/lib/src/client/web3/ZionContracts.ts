@@ -1,15 +1,14 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
-import Goerli_CouncilAddresses from '@harmony/contracts/goerli/addresses/council.json'
 
-import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
-import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
-
-import { ZionClient } from '../../client/ZionClient'
 import { DataTypes } from './shims/ZionSpaceManagerShim'
-import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
+import Goerli_CouncilAddresses from '@harmony/contracts/goerli/addresses/council.json'
+import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
+import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
+import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
 import { Permission } from './ZionContractTypes'
+import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
+import { ZionClient } from '../../client/ZionClient'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -109,11 +108,19 @@ export function createExternalTokenEntitlements(
     return externalTokens.map((t) => createTokenEntitlementData(t))
 }
 
+export function createPermissions(permissions: Permission[]): DataTypes.PermissionStruct[] {
+    const dataStruct: DataTypes.PermissionStruct[] = []
+    for (const p of permissions) {
+        dataStruct.push({ name: p })
+    }
+    return dataStruct
+}
+
 export async function getAllRolesFromSpace(
     client: ZionClient,
-    matrixSpaceId: string,
+    spaceNetworkId: string,
 ): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
-    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(matrixSpaceId)
+    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(spaceNetworkId)
     // get all the roles in the space
     const allSpaceRoles = await client.roleManager.unsigned.getRolesBySpaceId(spaceId)
     return allSpaceRoles
@@ -121,10 +128,10 @@ export async function getAllRolesFromSpace(
 
 export async function getFilteredRolesFromSpace(
     client: ZionClient,
-    matrixSpaceId: string,
+    spaceNetworkId: string,
 ): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
-    const spaceRoles = await getAllRolesFromSpace(client, matrixSpaceId)
-    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(matrixSpaceId)
+    const spaceRoles = await getAllRolesFromSpace(client, spaceNetworkId)
+    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(spaceNetworkId)
     const filteredRoles: RoleManagerDataTypes.RoleStructOutput[] = []
     // Filter out space roles which won't work when creating a channel
     for (const r of spaceRoles) {
@@ -138,12 +145,4 @@ export async function getFilteredRolesFromSpace(
         }
     }
     return filteredRoles
-}
-
-export function createPermissions(permissions: Permission[]): DataTypes.PermissionStruct[] {
-    const dataStruct: DataTypes.PermissionStruct[] = []
-    for (const p of permissions) {
-        dataStruct.push({ name: p })
-    }
-    return dataStruct
 }

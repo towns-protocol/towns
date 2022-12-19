@@ -67,13 +67,12 @@ export function useCreateSpaceTransaction() {
             )
             setTransactionContext(txContext)
 
-            if (txContext?.status === TransactionStatus.Failed) {
-                return
+            if (txContext?.status === TransactionStatus.Pending) {
+                // No error and transaction is pending
+                // Wait for transaction to be mined
+                const rxContext = await waitForCreateSpaceTransaction(txContext)
+                setTransactionContext(rxContext)
             }
-
-            // Wait for transaction to be mined
-            const rxContext = await waitForCreateSpaceTransaction(txContext)
-            setTransactionContext(rxContext)
         },
         [createSpaceTransaction, waitForCreateSpaceTransaction],
     )

@@ -11,15 +11,15 @@ export function useRolesAndPermissions() {
     const { client } = useZionContext()
 
     const getRolesFromSpace = useCallback(
-        async function (matrixSpaceId: string, includeAllRoles = false) {
+        async function (spaceNetworkId: string, includeAllRoles = false) {
             if (!client) {
                 return undefined
             }
 
             if (includeAllRoles) {
-                return await getAllRolesFromSpace(client, matrixSpaceId)
+                return await getAllRolesFromSpace(client, spaceNetworkId)
             } else {
-                return await getFilteredRolesFromSpace(client, matrixSpaceId)
+                return await getFilteredRolesFromSpace(client, spaceNetworkId)
             }
         },
         [client],

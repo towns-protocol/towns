@@ -15,12 +15,13 @@ import {
     Membership,
     RoomIdentifier,
     RoomVisibility,
+    TransactionStatus,
     useCreateChannelTransaction,
     useRolesAndPermissions,
 } from 'use-zion-client'
-import React, { useCallback, useMemo, useState } from 'react'
-
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
+
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
 
 interface Props {
@@ -33,8 +34,15 @@ export function CreateChannelForm(props: Props): JSX.Element {
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
     const [roles, setRoles] = useState<RolesSettings>({})
     const { getRolesFromSpace } = useRolesAndPermissions()
-    const { createChannelWithSpaceRoles } = useCreateChannelTransaction()
     const { onClick, parentSpaceId } = props
+    const {
+        isLoading,
+        data: roomId,
+        transactionHash,
+        transactionStatus,
+        error,
+        createChannelTransaction,
+    } = useCreateChannelTransaction()
 
     const disableCreateButton = useMemo(() => channelName.length === 0, [channelName.length])
 
@@ -69,11 +77,22 @@ export function CreateChannelForm(props: Props): JSX.Element {
             }
         }
 
-        const roomId = await createChannelWithSpaceRoles(createRoomInfo)
-        if (roomId) {
+        await createChannelTransaction(createRoomInfo)
+    }, [createChannelTransaction, onClick, parentSpaceId, channelName, visibility])
+
+    useEffect(() => {
+        if (transactionStatus === TransactionStatus.Success && roomId) {
             onClick(roomId, Membership.Join)
         }
-    }, [createChannelWithSpaceRoles, onClick, parentSpaceId, channelName, visibility])
+    }, [onClick, roomId, transactionStatus])
+
+    console.log('CreateChannelForm', 'states', {
+        isLoading,
+        roomId,
+        error,
+        transactionHash,
+        transactionStatus,
+    })
 
     return (
         <Box

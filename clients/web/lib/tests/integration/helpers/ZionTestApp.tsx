@@ -14,6 +14,7 @@ interface Props {
     defaultSpaceAvatarSrc?: string
     initialSyncLimit?: number
     disableEncryption?: boolean
+    chainId?: number
     children: JSX.Element
 }
 
@@ -27,6 +28,7 @@ export const ZionTestApp = (props: Props) => {
         defaultSpaceAvatarSrc,
         initialSyncLimit,
         disableEncryption: inDisableEncryption,
+        chainId,
         children,
     } = props
     // pull environment variables from the process
@@ -57,6 +59,7 @@ export const ZionTestApp = (props: Props) => {
             defaultSpaceName={defaultSpaceName}
             defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}
             initialSyncLimit={initialSyncLimit}
+            chainId={chainId}
         >
             <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>

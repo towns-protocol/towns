@@ -50,6 +50,7 @@ export interface Space {
 }
 
 export enum ZionClientEvent {
+    NewChannel = 'ZionClient.NewChannel',
     NewSpace = 'ZionClient.NewSpace',
 }
 

@@ -15,6 +15,7 @@ export const useZionClientListener = (
     onboardingOpts?: ZionOnboardingOpts,
     disableEncryption?: boolean,
     signer?: ethers.Signer,
+    _chainId?: number, // allow testing because web3context is not populated in tests
 ) => {
     const { provider, chain } = useWeb3Context()
     const { setLoginStatus } = useMatrixStore()
@@ -22,7 +23,7 @@ export const useZionClientListener = (
     const matrixCredentials = matrixCredentialsMap[matrixServerUrl]
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
-    const chainId = chain?.id
+    const chainId = chain?.id ?? _chainId // web3context chainId takes precedence.
 
     if (!clientSingleton.current) {
         clientSingleton.current = new ZionClient(

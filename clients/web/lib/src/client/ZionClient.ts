@@ -423,8 +423,12 @@ export class ZionClient {
         if (txContext.error) {
             throw txContext.error
         }
-        const rxContext = await this.waitForCreateSpaceTransaction(txContext)
-        return rxContext?.data
+        if (txContext.status === TransactionStatus.Pending) {
+            const rxContext = await this.waitForCreateSpaceTransaction(txContext)
+            return rxContext?.data
+        }
+        // Something went wrong. Don't return a room identifier.
+        return undefined
     }
 
     public async createSpaceTransaction(
@@ -578,47 +582,112 @@ export class ZionClient {
     public async createWeb3Channel(
         createChannelInfo: CreateChannelInfo,
     ): Promise<RoomIdentifier | undefined> {
-        let roomIdentifier: RoomIdentifier | undefined = await this.createChannel(createChannelInfo)
+        const txContext = await this.createChannelTransaction(createChannelInfo)
+        if (txContext.error) {
+            throw txContext.error
+        }
+        if (txContext.status === TransactionStatus.Pending) {
+            const rxContext = await this.waitForCreateChannelTransaction(txContext)
+            return rxContext?.data
+        }
+        // Something went wrong. Don't return a room identifier.
+        return undefined
+    }
 
-        console.log('[createWeb3Channel] Matrix createChannel', roomIdentifier)
+    public async createChannelTransaction(
+        createChannelInfo: CreateChannelInfo,
+    ): Promise<TransactionContext<RoomIdentifier>> {
+        const roomId: RoomIdentifier | undefined = await this.createChannel(createChannelInfo)
 
-        if (roomIdentifier) {
-            const channelInfo: DataTypes.CreateChannelDataStruct = {
-                spaceNetworkId: createChannelInfo.parentSpaceId.networkId,
-                channelName: createChannelInfo.name,
-                channelNetworkId: roomIdentifier.networkId,
-                roleIds: createChannelInfo.roleIds,
-            }
-            let transaction: ContractTransaction | undefined = undefined
-            let receipt: ContractReceipt | undefined = undefined
-            try {
-                transaction = await this.spaceManager.createChannel(channelInfo)
-                receipt = await transaction.wait()
-            } catch (err: unknown) {
-                const decodedError = this.getDecodedError(err)
-                console.error('[createWeb3Channel] failed', decodedError)
-                throw decodedError
-            }
-
-            if (receipt?.status === 1) {
-                // Successful created the channel on-chain.
-                const channelId = await this.spaceManager.unsigned.getChannelIdByNetworkId(
-                    createChannelInfo.parentSpaceId.networkId,
-                    roomIdentifier.networkId,
-                )
-                console.log('[createWeb3Channel] success', {
-                    channelId,
-                    channelMatrixRoomId: roomIdentifier.networkId,
-                })
-            } else {
-                // On-chain channel creation failed. Abandon this channel.
-                console.error('[createWeb3Channel] failed')
-                await this.leave(roomIdentifier)
-                roomIdentifier = undefined
+        if (!roomId) {
+            console.error('[createChannelTransaction] Matrix createChannel failed')
+            return {
+                transaction: undefined,
+                receipt: undefined,
+                status: TransactionStatus.Failed,
+                data: undefined,
+                error: new Error('Matrix createChannel failed'),
             }
         }
 
-        return roomIdentifier
+        console.log('[createChannelTransaction] Matrix channel created', roomId)
+
+        const channelInfo: DataTypes.CreateChannelDataStruct = {
+            spaceNetworkId: createChannelInfo.parentSpaceId.networkId,
+            channelName: createChannelInfo.name,
+            channelNetworkId: roomId.networkId,
+            roleIds: createChannelInfo.roleIds,
+        }
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = await this.spaceManager.createChannel(channelInfo)
+            console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[createChannelTransaction] error', err)
+            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: transaction ? roomId : undefined,
+            error,
+        }
+    }
+
+    public async waitForCreateChannelTransaction(
+        context: TransactionContext<RoomIdentifier> | undefined,
+    ): Promise<TransactionContext<RoomIdentifier>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let roomId: RoomIdentifier | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForCreateChannelTransaction] transaction is undefined')
+            }
+
+            transaction = context.transaction
+            roomId = context.data
+            receipt = await transaction.wait()
+            console.log(
+                '[waitForCreateChannelTransaction] createChannel receipt completed' /*, receipt */,
+            )
+        } catch (err) {
+            console.error('[waitForCreateChannelTransaction] error', err)
+            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+        }
+
+        if (receipt?.status === 1) {
+            console.log('[waitForCreateChannelTransaction] success', roomId)
+            return {
+                data: roomId,
+                status: TransactionStatus.Success,
+                transaction,
+                receipt,
+            }
+        }
+
+        // got here without success
+        if (!error) {
+            // If we don't have an error from the transaction, create one
+            error = await this.onErrorLeaveRoomAndDecodeError(
+                new Error('Failed to create channel'),
+                roomId,
+            )
+        }
+        console.error('[waitForCreateChannelTransaction] failed', error)
+        return {
+            data: roomId,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        }
     }
 
     /************************************************
@@ -1147,9 +1216,9 @@ export class ZionClient {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private getDecodedError(err: any): Error {
-        let decodedError: Error | undefined = undefined
-
-        // Wallet rejection
+        /**
+         *  Wallet rejection
+         * */
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         if (err?.code === 'ACTION_REJECTED' && !err?.error) {
             return {
@@ -1160,9 +1229,21 @@ export class ZionClient {
             }
         }
 
+        /**
+         *  Transaction error
+         * */
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const revertData: BytesLike = err.error?.error?.error?.data
+        if (!revertData) {
+            return {
+                name: 'unknown',
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: err?.message,
+            }
+        }
+
+        let decodedError: Error | undefined = undefined
         try {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const revertData: BytesLike = err.error?.error?.error?.data
             const errDescription = this.spaceManager.signed.interface.parseError(revertData)
             decodedError = {
                 name: errDescription.errorFragment.name,
@@ -1174,9 +1255,10 @@ export class ZionClient {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
+            // Cannot decode error
             console.error('[getDecodedError]', e)
             return {
-                name: 'unknown error',
+                name: 'unknown',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 message: e.message,
             }
