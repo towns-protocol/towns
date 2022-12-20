@@ -190,5 +190,15 @@
           "group": "local-servers"
         }
       },
+      {
+        "label": "KillAllLocalDev",
+        "type": "shell",
+        "command": "./scripts/kill-all-local-dev.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
     ]
   }
