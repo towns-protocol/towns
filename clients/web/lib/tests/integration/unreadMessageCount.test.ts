@@ -9,12 +9,15 @@ import {
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
-import { ClientEvent } from 'matrix-js-sdk'
-import { IUnreadNotificationCounts } from '../../src/client/store/CustomMatrixStore'
+import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
+import { sleep } from '../../src/utils/zion-utils'
+import { SyncState } from 'matrix-js-sdk/lib/sync'
 
+/// matrix notification counts are broken during sync, but they should work
+/// between syncs. This test is to make sure that the counts are correct
 describe('unreadMessageCount', () => {
     // usefull for debugging or running against cloud servers
     test('create room, invite user, accept invite, and send message, check unread counts', async () => {
@@ -54,33 +57,48 @@ describe('unreadMessageCount', () => {
             channel_1: channel_1.networkId,
             channel_2: channel_2.networkId,
         })
-        // set up some local data
-        const alicesLastNotifications: Record<string, IUnreadNotificationCounts> = {}
-        // add a listner
-        alice.matrixClient.on(ClientEvent.Sync, () => {
-            console.log('!!!sync', alice.store.lastSyncData)
-            const newNotifications = alice.store.getLastUnreadNotificationCounts()
-            if (newNotifications) {
-                Object.entries(newNotifications).forEach(
-                    ([roomId, nots]) => (alicesLastNotifications[roomId] = nots),
-                )
-            }
-        })
+
+        const stopAlice = async () => {
+            alice.matrixClient.stopClient()
+            await sleep(1000)
+        }
+
+        const startAlice = async () => {
+            await alice.matrixClient.startClient()
+            const initialSync = new Promise<string>((resolve, reject) => {
+                alice.matrixClient.once(ClientEvent.Sync, (state: SyncState) => {
+                    if (state === SyncState.Prepared) {
+                        resolve(state)
+                    } else {
+                        reject(new Error(`sync state is ${state}`))
+                    }
+                })
+            })
+            await initialSync
+        }
+
+        const countFor = (roomId: string) => {
+            return alice.matrixClient
+                .getRoom(roomId)
+                ?.getUnreadNotificationCount(NotificationCountType.Total)
+        }
+
+        ////// Stop alice /////
+        await stopAlice()
+
         // bob invites alice to the room
         await bob.inviteUser(spaceId, alice.matrixUserId!)
         await bob.inviteUser(channel_1, alice.matrixUserId!)
         await bob.inviteUser(channel_2, alice.matrixUserId!)
-        // alice should see the room
-        await waitFor(
-            () => expect(alice.getRoom(spaceId)).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
-        )
+
+        ////// Start alice /////
+        await startAlice()
+
+        // ali should see the room
+        await waitFor(() => expect(alice.getRoom(spaceId)).toBeDefined())
         // initially we have 1 unread messages for space and each channel
         await waitFor(
-            () =>
-                expect(
-                    alicesLastNotifications?.[spaceId.networkId]?.notification_count,
-                ).toBeUndefined(), // we don't get notifications for invites
+            () => expect(countFor(spaceId.networkId)).toBeUndefined(), // we don't get notifications for invites
             TestConstants.DefaultWaitForTimeout,
         )
         // alice joins the room
@@ -100,39 +118,48 @@ describe('unreadMessageCount', () => {
             () => expect(alice.getRoom(channel_2)?.getMyMembership()).toBe('join'),
             TestConstants.DefaultWaitForTimeout,
         )
+
+        ////// Stop alice /////
+        await stopAlice()
+
         // bob sends a message to the room
         await bob.sendMessage(channel_1, 'Hello Alice!')
 
-        // BUG https://linear.app/hnt-labs/issue/HNT-211/in-tests-sending-a-message-from-one-client-doesnt-immediately-update
-        // alice should see the message, but it takes a moment for the client to sync
-        // check our counts
+        ////// Start alice /////
+        await startAlice()
+
+        // che our counts
         await waitFor(
-            () => expect(alicesLastNotifications?.[spaceId.networkId]?.notification_count).toBe(1),
+            () => expect(countFor(spaceId.networkId)).toBe(1),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
-            () =>
-                expect(alicesLastNotifications?.[channel_1.networkId]?.notification_count).toBe(2),
+            () => expect(countFor(channel_1.networkId)).toBe(2),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
-            () =>
-                expect(alicesLastNotifications?.[channel_2.networkId]?.notification_count).toBe(1),
+            () => expect(countFor(channel_2.networkId)).toBe(1),
             TestConstants.DefaultWaitForTimeout,
         )
         // start clearing the notifications
         await alice.sendReadReceipt(channel_1)
+
+        ////// Stop alice /////
+        await stopAlice()
+
+        ////// Start alice /////
+        await startAlice()
+
         // and see the update
         await waitFor(
-            () =>
-                expect(alicesLastNotifications?.[channel_1.networkId]?.notification_count).toBe(0),
+            () => expect(countFor(channel_1.networkId)).toBe(0),
             TestConstants.DefaultWaitForTimeout,
         )
         // clear
         await alice.sendReadReceipt(spaceId)
         // and see the update
         await waitFor(
-            () => expect(alicesLastNotifications?.[spaceId.networkId]?.notification_count).toBe(0),
+            () => expect(countFor(spaceId.networkId)).toBe(0),
             TestConstants.DefaultWaitForTimeout,
         )
     }) // end test

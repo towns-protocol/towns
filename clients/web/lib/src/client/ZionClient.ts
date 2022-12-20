@@ -45,10 +45,8 @@ import { joinMatrixRoom } from './matrix/Join'
 import { sendMatrixMessage } from './matrix/SendMessage'
 import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
 import { syncMatrixSpace } from './matrix/SyncSpace'
-import { CustomMemoryStore } from './store/CustomMatrixStore'
 import { toZionRoom } from '../store/use-matrix-store'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
-import { IStore } from 'matrix-js-sdk/lib/store'
 import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerShim'
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
 import { ZionRoleManagerShim } from './web3/shims/ZionRoleManagerShim'
@@ -76,7 +74,6 @@ import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 export class ZionClient {
     public readonly opts: ZionOpts
     public readonly name: string
-    public store: CustomMemoryStore
     public get auth(): ZionAuth | undefined {
         return this._auth
     }
@@ -100,10 +97,7 @@ export class ZionClient {
         this.name = name || ''
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
-            opts.matrixServerUrl,
-            this._auth,
-        ))
+        this.matrixClient = ZionClient.createMatrixClient(opts.matrixServerUrl, this._auth)
 
         this.spaceManager = new ZionSpaceManagerShim(
             this.opts.web3Provider,
@@ -175,10 +169,7 @@ export class ZionClient {
         }
 
         this._auth = undefined
-        ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
-            this.opts.matrixServerUrl,
-            this._auth,
-        ))
+        this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
     }
 
     /************************************************
@@ -307,10 +298,7 @@ export class ZionClient {
             this.chainId,
         )
         // new matrixClient
-        ;({ matrixClient: this.matrixClient, store: this.store } = ZionClient.createMatrixClient(
-            this.opts.matrixServerUrl,
-            this._auth,
-        ))
+        this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
         // start it up, this begins a sync command
         if (!this.opts.disableEncryption) {
             await loadOlm()
@@ -1176,31 +1164,19 @@ export class ZionClient {
      * createMatrixClient
      * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
-    private static createMatrixClient(
-        baseUrl: string,
-        auth?: ZionAuth,
-    ): { store: CustomMemoryStore; matrixClient: MatrixClient } {
-        const store = new CustomMemoryStore({ localStorage: global.localStorage })
+    private static createMatrixClient(baseUrl: string, auth?: ZionAuth): MatrixClient {
         if (auth) {
-            return {
-                store: store,
-                matrixClient: createClient({
-                    store: store as IStore,
-                    baseUrl: baseUrl,
-                    accessToken: auth.accessToken,
-                    userId: auth.userId,
-                    deviceId: auth.deviceId,
-                    useAuthorizationHeader: true,
-                }),
-            }
+            return createClient({
+                baseUrl: baseUrl,
+                accessToken: auth.accessToken,
+                userId: auth.userId,
+                deviceId: auth.deviceId,
+                useAuthorizationHeader: true,
+            })
         } else {
-            return {
-                store: store,
-                matrixClient: createClient({
-                    store: store as IStore,
-                    baseUrl: baseUrl,
-                }),
-            }
+            return createClient({
+                baseUrl: baseUrl,
+            })
         }
     }
 
