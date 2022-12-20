@@ -30,6 +30,7 @@ export class TestConstants {
     private static fundedWalletsWithoutNft: ethers.Wallet[] = []
 
     public static DefaultWaitForTimeout: waitForOptions = { timeout: 5000 }
+    public static DoubleDefaultWaitForTimeout: waitForOptions = { timeout: 10000 }
 
     public static init() {
         const network = process.env.ETHERS_NETWORK!

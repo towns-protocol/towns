@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import React, { useCallback } from 'react'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
@@ -82,11 +82,7 @@ describe('spaceManagerContractHooks', () => {
                         <button onClick={onClickCreateSpaceWithZionMemberRole}>
                             Create Token-Gated Space
                         </button>
-                        <div data-testid="spaces">
-                            {spaces.map((element) => (
-                                <div key={element.key}>{element.name}</div>
-                            ))}
-                        </div>
+                        <div data-testid="spaces">{spaces.map((x) => x.name).join(', ')}</div>
                     </>
                 )
             }
@@ -112,15 +108,15 @@ describe('spaceManagerContractHooks', () => {
         fireEvent.click(createSpaceButton)
         // did we make a space?
         await waitFor(
-            () => within(spaceElement).getByText(spaceName),
-            TestConstants.DefaultWaitForTimeout,
+            () => expect(spaceElement).toHaveTextContent(spaceName),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
         // now with a token
         fireEvent.click(createTokenGatedSpaceButton)
         // did we make a space?
         await waitFor(
-            () => within(spaceElement).getByText(tokenGatedSpaceName),
-            TestConstants.DefaultWaitForTimeout,
+            () => expect(spaceElement).toHaveTextContent(tokenGatedSpaceName),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
     }) // end test
 }) // end describe
