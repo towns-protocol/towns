@@ -1,3 +1,4 @@
+import sourcemaps from 'rollup-plugin-sourcemaps'
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
@@ -32,6 +33,7 @@ export default defineConfig({
         eslintPlugin(),
         vanillaExtractPlugin(),
         visualizer({ filename: 'dist/stats.html' }),
+        sourcemaps(),
     ],
     server: {
         port: 3000,
