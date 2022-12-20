@@ -87,7 +87,7 @@ export class ZionClient {
     public roleManager: ZionRoleManagerShim
     public tokenEntitlementModule: TokenEntitlementModuleShim
     public userGrantedEntitlementModule: UserGrantedEntitlementModuleShim
-    public matrixClient: MatrixClient
+    public matrixClient?: MatrixClient
     public casablancaClient?: CasablancaClient
     private _chainId: number
     private _auth?: ZionAuth
@@ -132,7 +132,8 @@ export class ZionClient {
      * getServerVersions
      *************************************************/
     public async getServerVersions() {
-        const version = await this.matrixClient.getVersions()
+        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const version = await matrixClient.getVersions()
         // TODO casablanca, return server versions
         return version as IZionServerVersions
     }
@@ -141,7 +142,8 @@ export class ZionClient {
      * isUserRegistered
      *************************************************/
     public async isUserRegistered(username: string): Promise<boolean> {
-        const isAvailable = await this.matrixClient.isUsernameAvailable(username)
+        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const isAvailable = await matrixClient.isUsernameAvailable(username)
         // If the username is available, then it is not yet registered.
         return isAvailable === false
     }
@@ -153,19 +155,22 @@ export class ZionClient {
         if (!this.auth) {
             throw new Error('not authenticated')
         }
+        const matrixClient = this.matrixClient
         await this.stopClients()
-        try {
-            await this.matrixClient.logout()
-        } catch (error) {
-            this.log("caught error while trying to logout, but we're going to ignore it", error)
-        }
-        try {
-            await this.matrixClient.clearStores()
-        } catch (error) {
-            this.log(
-                "caught error while trying to clearStores, but we're going to ignore it",
-                error,
-            )
+        if (matrixClient) {
+            try {
+                await matrixClient.logout()
+            } catch (error) {
+                this.log("caught error while trying to logout, but we're going to ignore it", error)
+            }
+            try {
+                await matrixClient.clearStores()
+            } catch (error) {
+                this.log(
+                    "caught error while trying to clearStores, but we're going to ignore it",
+                    error,
+                )
+            }
         }
 
         this._auth = undefined
@@ -202,7 +207,8 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already registered')
         }
-        return await newRegisterSession(this.matrixClient, walletAddress)
+        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        return await newRegisterSession(matrixClient, walletAddress)
     }
 
     /************************************************
@@ -214,7 +220,8 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already registered')
         }
-        const { access_token, device_id, user_id } = await this.matrixClient.registerRequest(
+        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const { access_token, device_id, user_id } = await matrixClient.registerRequest(
             request,
             LoginTypePublicKey,
         )
@@ -236,7 +243,8 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already logged in')
         }
-        return await newLoginSession(this.matrixClient)
+        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        return await newLoginSession(matrixClient)
     }
 
     /************************************************
@@ -248,14 +256,11 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already logged in')
         }
-
+        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const { access_token, device_id, user_id } = await this.matrixClient.login(
-            LoginTypePublicKey,
-            {
-                auth,
-            },
-        )
+        const { access_token, device_id, user_id } = await matrixClient.login(LoginTypePublicKey, {
+            auth,
+        })
         if (!access_token || !device_id || !user_id) {
             throw new Error('failed to login')
         }
@@ -278,7 +283,7 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already authenticated')
         }
-        if (this.matrixClient.clientRunning) {
+        if (this.matrixClient?.clientRunning) {
             throw new Error('matrixClient already running')
         }
         // log startOpts
@@ -313,11 +318,13 @@ export class ZionClient {
         })
         // wait for the sync to complete
         const initialSync = new Promise<string>((resolve, reject) => {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
+            }
             this.matrixClient.once(
                 ClientEvent.Sync,
                 (state: SyncState, prevState: unknown, res: unknown) => {
                     if (state === SyncState.Prepared) {
-                        this.log('initial sync complete', this.matrixClient.getRooms())
                         resolve(state)
                     } else {
                         this.log('Unhandled sync event:', state, prevState, res)
@@ -354,8 +361,9 @@ export class ZionClient {
      * stopMatrixClient
      *************************************************/
     public stopMatrixClient() {
-        this.matrixClient.stopClient()
-        this.matrixClient.removeAllListeners()
+        this.matrixClient?.stopClient()
+        this.matrixClient?.removeAllListeners()
+        this.matrixClient = undefined
         this.log('Stopped matrixClient')
     }
 
@@ -528,6 +536,9 @@ export class ZionClient {
         }
         switch (createSpaceInfo.spaceProtocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return createMatrixSpace({
                     matrixClient: this.matrixClient,
                     createSpaceInfo,
@@ -549,6 +560,9 @@ export class ZionClient {
     public async createChannel(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
         switch (createInfo.parentSpaceId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return createMatrixChannel({
                     matrixClient: this.matrixClient,
                     createInfo: createInfo,
@@ -775,6 +789,9 @@ export class ZionClient {
     public async inviteUser(roomId: RoomIdentifier, userId: string) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return inviteMatrixUser({ matrixClient: this.matrixClient, userId, roomId })
             case SpaceProtocol.Casablanca:
                 throw new Error('inviteUser not implemented for Casablanca')
@@ -790,6 +807,9 @@ export class ZionClient {
     public async leave(roomId: RoomIdentifier): Promise<void> {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 await this.matrixClient.leave(roomId.networkId)
                 break
             case SpaceProtocol.Casablanca:
@@ -807,6 +827,9 @@ export class ZionClient {
     public async joinRoom(roomId: RoomIdentifier) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 const matrixRoom = await joinMatrixRoom({ matrixClient: this.matrixClient, roomId })
                 return toZionRoom(matrixRoom)
             }
@@ -833,6 +856,9 @@ export class ZionClient {
     ) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return sendMatrixMessage(this.matrixClient, roomId, message, options)
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
@@ -852,6 +878,9 @@ export class ZionClient {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 {
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
                     const newEventId = await this.matrixClient.sendEvent(
                         roomId.networkId,
                         EventType.Reaction,
@@ -884,6 +913,9 @@ export class ZionClient {
     ) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return await editZionMessage(
                     this.matrixClient,
                     roomId,
@@ -905,6 +937,9 @@ export class ZionClient {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 {
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
                     const resp = await this.matrixClient.redactEvent(
                         roomId.networkId,
                         eventId,
@@ -929,6 +964,9 @@ export class ZionClient {
     public async syncSpace(spaceId: RoomIdentifier) {
         switch (spaceId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return syncMatrixSpace(this.matrixClient, spaceId)
             case SpaceProtocol.Casablanca:
                 throw new Error('not implemented')
@@ -967,6 +1005,9 @@ export class ZionClient {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 {
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
                     const response = await setMatrixPowerLevel(
                         this.matrixClient,
                         roomId,
@@ -992,6 +1033,9 @@ export class ZionClient {
     public isRoomEncrypted(roomId: RoomIdentifier): boolean {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return this.matrixClient.isRoomEncrypted(roomId.networkId)
             case SpaceProtocol.Casablanca:
                 throw new Error('not implemented')
@@ -1009,6 +1053,9 @@ export class ZionClient {
     ) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return this.matrixClient.setRoomAccountData(
                     roomId.networkId,
                     ZionAccountDataType.FullyRead,
@@ -1027,6 +1074,9 @@ export class ZionClient {
     public getRoom(roomId: RoomIdentifier): MatrixRoom | undefined {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
                 return this.matrixClient.getRoom(roomId.networkId) ?? undefined
             case SpaceProtocol.Casablanca:
                 throw new Error('not implemented')
@@ -1036,18 +1086,13 @@ export class ZionClient {
     }
 
     /************************************************
-     * getRooms
-     ************************************************/
-    public getRooms(): MatrixRoom[] {
-        // todo casablanca return rooms here as well
-        return this.matrixClient.getRooms()
-    }
-
-    /************************************************
      * getUser
      ************************************************/
     public getUser(userId: string): User | null {
         // todo casablanca look for user in casablanca
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
         return this.matrixClient.getUser(userId)
     }
 
@@ -1058,6 +1103,9 @@ export class ZionClient {
         userId: string,
     ): Promise<{ avatar_url?: string; displayname?: string }> {
         // todo casablanca look for user in casablanca
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
         const info = await this.matrixClient.getProfileInfo(userId)
         const user = this.matrixClient.getUser(userId)
         if (user) {
@@ -1084,6 +1132,9 @@ export class ZionClient {
      ************************************************/
     public async setDisplayName(name: string): Promise<void> {
         // todo casablanca display name
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
         await this.matrixClient.setDisplayName(name)
     }
 
@@ -1092,6 +1143,9 @@ export class ZionClient {
      ************************************************/
     public async setAvatarUrl(url: string): Promise<void> {
         // todo casablanca avatar url
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
         await this.matrixClient.setAvatarUrl(url)
     }
 
@@ -1102,6 +1156,9 @@ export class ZionClient {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 {
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
                     const room = this.matrixClient.getRoom(roomId.networkId)
                     if (!room) {
                         throw new Error('room not found')
@@ -1128,6 +1185,9 @@ export class ZionClient {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 {
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
                     const room = this.matrixClient.getRoom(roomId.networkId)
                     if (!room) {
                         throw new Error(`room with id ${roomId.networkId} not found`)

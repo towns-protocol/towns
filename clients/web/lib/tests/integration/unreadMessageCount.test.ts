@@ -59,13 +59,22 @@ describe('unreadMessageCount', () => {
         })
 
         const stopAlice = async () => {
+            if (!alice.matrixClient) {
+                throw new Error('alice matrix client is not defined')
+            }
             alice.matrixClient.stopClient()
             await sleep(1000)
         }
 
         const startAlice = async () => {
+            if (!alice.matrixClient) {
+                throw new Error('alice matrix client is not defined')
+            }
             await alice.matrixClient.startClient()
             const initialSync = new Promise<string>((resolve, reject) => {
+                if (!alice.matrixClient) {
+                    throw new Error('alice matrix client is not defined')
+                }
                 alice.matrixClient.once(ClientEvent.Sync, (state: SyncState) => {
                     if (state === SyncState.Prepared) {
                         resolve(state)
@@ -78,6 +87,9 @@ describe('unreadMessageCount', () => {
         }
 
         const countFor = (roomId: string) => {
+            if (!alice.matrixClient) {
+                throw new Error('alice matrix client is not defined')
+            }
             return alice.matrixClient
                 .getRoom(roomId)
                 ?.getUnreadNotificationCount(NotificationCountType.Total)

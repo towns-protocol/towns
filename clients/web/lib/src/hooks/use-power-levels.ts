@@ -15,11 +15,12 @@ import { enrichPowerLevels } from '../client/matrix/PowerLevels'
 
 export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels => {
     const { client } = useZionContext()
+    const matrixClient = client?.matrixClient
     const [powerLevels, setPowerLevels] = useState<PowerLevels>(enrichPowerLevels())
 
     useEffect(() => {
         // precondition
-        if (!client || !roomId) {
+        if (!matrixClient || !roomId) {
             return
         }
         // helpers
@@ -56,14 +57,14 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
             }
         }
         // subscribe to changes
-        client.matrixClient.on(ClientEvent.Room, onRoomEvent)
-        client.matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        matrixClient.on(ClientEvent.Room, onRoomEvent)
+        matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         // cleanup
         return () => {
-            client.matrixClient.off(ClientEvent.Room, onRoomEvent)
-            client.matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            matrixClient.off(ClientEvent.Room, onRoomEvent)
+            matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
             setPowerLevels(enrichPowerLevels())
         }
-    }, [client, roomId])
+    }, [client, matrixClient, roomId])
     return powerLevels
 }

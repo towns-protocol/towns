@@ -21,6 +21,7 @@ export function useSyncSpaceHierarchies(
     spaceIds: RoomIdentifier[],
     invitedToIds: RoomIdentifier[],
 ): { spaceHierarchies: SpaceHierarchies } {
+    const matrixClient = client?.matrixClient
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
     const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
@@ -45,7 +46,7 @@ export function useSyncSpaceHierarchies(
     }
     // our queue
     useEffect(() => {
-        if (!client) {
+        if (!matrixClient) {
             return
         }
         if (inFlightCurrent) {
@@ -83,7 +84,7 @@ export function useSyncSpaceHierarchies(
                 setInflightCurrnet(null)
             })
         setInflightCurrnet(inflight)
-    }, [client, inFlightCurrent, spaceIdsQueue])
+    }, [client, inFlightCurrent, matrixClient, spaceIdsQueue])
     // watch for new or updated space ids
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
@@ -107,7 +108,7 @@ export function useSyncSpaceHierarchies(
     }, [invitedToIds, spaceIds])
     // watch client for space udpates
     useEffect(() => {
-        if (!client) {
+        if (!matrixClient) {
             return
         }
         const onRoomTimelineEvent = (
@@ -126,11 +127,11 @@ export function useSyncSpaceHierarchies(
                 enqueueSpaceId(eventRoom.roomId)
             }
         }
-        client.matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         return () => {
             // console.log("!!! REMOVING EVENTS");
-            client.matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
-    }, [client, spaceIds])
+    }, [matrixClient, spaceIds])
     return { spaceHierarchies }
 }

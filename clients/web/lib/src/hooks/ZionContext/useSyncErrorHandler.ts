@@ -7,11 +7,12 @@ import { useMatrixStore } from '../../store/use-matrix-store'
 import { LoginStatus } from '../../hooks/login'
 
 export function useSyncErrorHandler(homeServerUrl: string, client?: ZionClient) {
+    const matrixClient = client?.matrixClient
     const { setLoginStatus } = useMatrixStore()
     const { setMatrixCredentials } = useCredentialStore()
     const [syncError, setSyncError] = useState<string>()
     useEffect(() => {
-        if (!client) {
+        if (!client || !matrixClient) {
             return
         }
 
@@ -32,11 +33,11 @@ export function useSyncErrorHandler(homeServerUrl: string, client?: ZionClient) 
             }
         }
 
-        client.matrixClient.on(ClientEvent.Sync, onSync)
+        matrixClient.on(ClientEvent.Sync, onSync)
         return () => {
-            client.matrixClient.off(ClientEvent.Sync, onSync)
+            matrixClient.off(ClientEvent.Sync, onSync)
         }
-    }, [client, setMatrixCredentials, setLoginStatus, homeServerUrl])
+    }, [client, setMatrixCredentials, setLoginStatus, homeServerUrl, matrixClient])
 
     return syncError
 }

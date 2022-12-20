@@ -17,10 +17,11 @@ export function useSpaces(
 ): {
     spaces: SpaceItem[]
 } {
+    const matrixClient = client?.matrixClient
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
 
     useEffect(() => {
-        if (!client) {
+        if (!matrixClient) {
             return
         }
         const updateSpaces = () => {
@@ -73,13 +74,13 @@ export function useSpaces(
             }
         }
 
-        client.matrixClient.on(RoomEvent.Name, onRoomEvent)
-        client.matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
+        matrixClient.on(RoomEvent.Name, onRoomEvent)
+        matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         return () => {
-            client.matrixClient.off(RoomEvent.Name, onRoomEvent)
-            client.matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
+            matrixClient.off(RoomEvent.Name, onRoomEvent)
+            matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
-    }, [client, spaceIds])
+    }, [client, matrixClient, spaceIds])
 
     return { spaces }
 }

@@ -17,15 +17,16 @@ import { RoomIdentifier } from '../types/room-identifier'
 /// note: it might be useful to combine with useUser, which provides the basic user info.
 export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember | undefined {
     const { client } = useZionContext()
+    const matrixClient = client?.matrixClient
     const [roomMember, setRoomMember] = useState<RoomMember>()
 
     useEffect(() => {
-        if (!client || !userId || !roomId) {
+        if (!client || !matrixClient || !userId || !roomId) {
             return
         }
         // helpers
         const updateState = (inRoomMember?: MatrixRoomMember) => {
-            const matrixMember = inRoomMember ?? client?.getRoom(roomId)?.getMember(userId)
+            const matrixMember = inRoomMember ?? client.getRoom(roomId)?.getMember(userId)
             const matrixMembership = matrixMember?.membership
             const membership = (matrixMembership as Membership) ?? Membership.None
             const name = matrixMember?.name ?? ''
@@ -75,20 +76,20 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
             }
         }
 
-        client.matrixClient.on(ClientEvent.Room, onRoomEvent)
-        client.matrixClient.on(RoomMemberEvent.Membership, onRoomMembership)
-        client.matrixClient.on(RoomMemberEvent.Name, onRoomMembership)
-        client.matrixClient.on(RoomStateEvent.Members, onMembersUpdated)
-        client.matrixClient.on(RoomStateEvent.NewMember, onMembersUpdated)
+        matrixClient.on(ClientEvent.Room, onRoomEvent)
+        matrixClient.on(RoomMemberEvent.Membership, onRoomMembership)
+        matrixClient.on(RoomMemberEvent.Name, onRoomMembership)
+        matrixClient.on(RoomStateEvent.Members, onMembersUpdated)
+        matrixClient.on(RoomStateEvent.NewMember, onMembersUpdated)
 
         return () => {
-            client.matrixClient.off(ClientEvent.Room, onRoomEvent)
-            client.matrixClient.off(RoomMemberEvent.Membership, onRoomMembership)
-            client.matrixClient.off(RoomMemberEvent.Name, onRoomMembership)
-            client.matrixClient.off(RoomStateEvent.Members, onMembersUpdated)
-            client.matrixClient.off(RoomStateEvent.NewMember, onMembersUpdated)
+            matrixClient.off(ClientEvent.Room, onRoomEvent)
+            matrixClient.off(RoomMemberEvent.Membership, onRoomMembership)
+            matrixClient.off(RoomMemberEvent.Name, onRoomMembership)
+            matrixClient.off(RoomStateEvent.Members, onMembersUpdated)
+            matrixClient.off(RoomStateEvent.NewMember, onMembersUpdated)
             setRoomMember(undefined)
         }
-    }, [client, userId, roomId])
+    }, [matrixClient, userId, roomId, client])
     return roomMember
 }

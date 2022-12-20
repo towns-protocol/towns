@@ -11,6 +11,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
     spaceIds: RoomIdentifier[]
     invitedToIds: RoomIdentifier[]
 } {
+    const matrixClient = client?.matrixClient
     const cache = useRef<Record<string, RoomIdentifier>>({})
     const [spaceIds, setSpaceIds] = useState<RoomIdentifier[]>([])
     const [invitedToIds, setInvitedToIds] = useState<RoomIdentifier[]>([])
@@ -26,7 +27,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
     }
 
     useEffect(() => {
-        if (!client) {
+        if (!matrixClient) {
             return
         }
         console.log('USE SPACE IDS::starting effect')
@@ -34,12 +35,12 @@ export function useSpacesIds(client: ZionClient | undefined): {
         let _invitedToIds: RoomIdentifier[] = []
         // wrap up state interaction
         const updateSpaceAndInviteIds = () => {
-            const newSpaceIds = client
+            const newSpaceIds = matrixClient
                 .getRooms()
                 .filter((r) => r.isSpaceRoom() && r.getMyMembership() === Membership.Join)
                 .map((r) => getOrCreateRoomIdentifier(r.roomId))
 
-            const newInviteIds = client
+            const newInviteIds = matrixClient
                 .getRooms()
                 .filter((r) => r.getMyMembership() === Membership.Invite)
                 .map((r) => getOrCreateRoomIdentifier(r.roomId))
@@ -72,13 +73,13 @@ export function useSpacesIds(client: ZionClient | undefined): {
             }
         }
         // for some stupid reason the matrix client stores the room after sending membership events
-        client.matrixClient.on(RoomEvent.MyMembership, onNewRoomOrMyMembership)
-        client.matrixClient.on(ClientEvent.Room, onNewRoomOrMyMembership)
+        matrixClient.on(RoomEvent.MyMembership, onNewRoomOrMyMembership)
+        matrixClient.on(ClientEvent.Room, onNewRoomOrMyMembership)
         return () => {
-            client.matrixClient.off(RoomEvent.MyMembership, onNewRoomOrMyMembership)
-            client.matrixClient.off(ClientEvent.Room, onNewRoomOrMyMembership)
+            matrixClient.off(RoomEvent.MyMembership, onNewRoomOrMyMembership)
+            matrixClient.off(ClientEvent.Room, onNewRoomOrMyMembership)
         }
-    }, [client])
+    }, [matrixClient])
 
     return { spaceIds, invitedToIds }
 }
