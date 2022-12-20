@@ -19,6 +19,7 @@ import { SpaceThreads } from './SpaceThreads'
 import { SpaceThreadInboxChannel } from './SpaceThreadInboxChannel'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpacesNew } from './SpacesNew'
+import { SpaceCreate } from './SpaceCreate'
 
 const USE_THREAD_GROUPS = true
 
@@ -34,6 +35,7 @@ export const SpaceRoutes = () => (
             <Route index element={<InvitesIndex />} />
         </Route>
         <Route path="spaces/new" element={<SpacesNew />} />
+        <Route path="spaces/create" element={<SpaceCreate />} />
         <Route path="spaces/:spaceSlug">
             <Route element={<SpaceHome />}>
                 <Route index element={<HomeHighlights />} />
