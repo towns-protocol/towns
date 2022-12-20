@@ -1,49 +1,112 @@
-import {
-    Err,
-    FullEvent,
-    StreamAndCookie,
-    StreamsAndCookies,
-    SyncPos,
-    throwWithCode,
-} from '@zion/core'
+import type { FullEvent, StreamAndCookie, StreamsAndCookies, SyncPos } from '@zion/core'
+import { Err, throwWithCode } from '@zion/core'
 import debug from 'debug'
-import _ from 'lodash'
 import { config } from '../config'
 import { EventStore } from './eventStore'
-import { PoolClient } from 'pg'
+import { PoolClient, Notification } from 'pg'
 import format, { string } from 'pg-format'
 import { setTimeout as setTimeoutWithPromise } from 'timers/promises'
 import pg from 'pg'
 
 const log = debug('zion:PGEventStore')
 
-export const createPGPool = () =>
-    new pg.Pool({
+function createPGPool() {
+    return new pg.Pool({
+        max: 1000, // TODO - make this configurable, needed to be larger then 10 to get the tests to pass
         connectionString: config.postgresUrl,
+        application_name: 'casablanca_server',
     })
+}
 
 const PG_EVENT_TABLE_NAME_PREFIX = 'es_'
+const closedFlag = 'closedFlag' as const
+const timeoutFlag = 'timeoutFlag' as const
+
+async function pgListen(streamIds: string[], client: PoolClient) {
+    log('pgListen', streamIds)
+    let queryString = ''
+    streamIds.forEach((streamId) => {
+        // TODO - limit the size of this query
+        queryString += format('LISTEN %I;', 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX + streamId)
+    })
+    await client.query(queryString)
+}
+
+async function pgUnlisten(streamIds: string[], client: PoolClient) {
+    log('pgUnlisten', streamIds)
+    let queryString = ''
+    streamIds.forEach((streamId) => {
+        // TODO - limit the size of this query
+        queryString += format('UNLISTEN %I;', 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX + streamId)
+    })
+    await client.query(queryString)
+}
+
+async function tableExists(streamId: string, client: PoolClient): Promise<boolean> {
+    const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
+    log('tableExists start', tableName)
+
+    const result = await client.query({
+        name: 'table-exists',
+        text: `SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            where    table_name   = $1
+            )`,
+        values: [tableName],
+    })
+    log('tableExists end', tableName, result.rows[0].exists)
+    return result.rows[0].exists
+}
+
+async function createStreamTable(streamId: string, client: PoolClient) {
+    const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
+
+    // TODO - do we need try catch here? maybe better to just let the except bubble up
+    log('createStreamTable', 'creating table:', tableName)
+    await client.query(`
+    CREATE TABLE IF NOT EXISTS "${tableName}" (
+      seq_num BIGSERIAL,
+      data TEXT NOT NULL
+    );
+    CREATE TRIGGER new_event_trigger AFTER INSERT ON "${tableName}" FOR EACH ROW EXECUTE PROCEDURE notify_newevent();
+  `)
+    log('createStreamTable', 'table created:', tableName)
+}
 
 // TODO: change throws to throwWithCode
 export class PGEventStore implements EventStore {
-    private pool: pg.Pool
-    constructor(pool?: pg.Pool) {
-        this.pool = pool ?? createPGPool()
+    readonly pool: pg.Pool
+    private closeResolver:
+        | ((value: typeof closedFlag | PromiseLike<typeof closedFlag>) => void)
+        | undefined = undefined
+    readonly closePromise: Promise<typeof closedFlag>
+    private closed = false
+    constructor() {
+        this.pool = createPGPool()
+        this.closePromise = new Promise<typeof closedFlag>(async (resolve, reject) => {
+            this.closeResolver = resolve
+        })
     }
 
     async close(): Promise<void> {
-        this.pool.end()
+        log('PGEventStore closing')
+        this.closed = true
+        this.closeResolver?.(closedFlag)
+        await this.pool.end()
+        log('PGEventStore closed')
     }
 
     private async addEventsImpl(
         streamId: string,
         events: FullEvent[],
-        newStream: boolean,
+        dbClient: PoolClient,
     ): Promise<string> {
         if (events.length <= 0) {
             throw new Error('Events must not be empty')
         }
-        log('addEvents', 'streamId', streamId, 'events', events)
+        let seq_num: string | undefined = undefined
+
+        log('addEventsImpl begin', { streamId, events })
 
         const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
         const insertQuery = format(
@@ -52,39 +115,18 @@ export class PGEventStore implements EventStore {
             events.map((event) => [JSON.stringify(event)]),
         )
 
-        const execInsert = async (): Promise<string> => {
-            const ret = await this.pool.query(insertQuery)
+        try {
+            const ret = await dbClient.query(insertQuery)
             if (ret.rows.length === 0) {
                 throw new Error('Failed to add events')
             }
-            return ret.rows[ret.rows.length - 1].seq_num
-        }
-
-        try {
-            return await execInsert()
+            seq_num = string(ret.rows[ret.rows.length - 1].seq_num)
+            return seq_num
         } catch (err: any) {
-            if (err.code == '42P01') {
-                // table does not exist
-                log('addEvents', 'table does not exist:', tableName)
-                if (newStream == false) {
-                    throwWithCode('Stream not found', Err.STREAM_NOT_FOUND)
-                }
-                // TODO - figure out a better way to create table as this uses the existing PK seq which is shared
-                let createQuery = format(
-                    'CREATE TABLE %I (LIKE es_sample INCLUDING ALL);',
-                    tableName,
-                )
-                createQuery += format(
-                    'CREATE TRIGGER new_event_trigger AFTER INSERT ON %I FOR EACH ROW EXECUTE PROCEDURE notify_newevent();',
-                    tableName,
-                )
-                // TODO - do we need try catch here? maybe better to just let the except bubble up
-                await this.pool.query(createQuery)
-                log('addEvents', 'table created:', tableName)
-                return await execInsert()
-            } else {
-                throw err
-            }
+            log('addEventsImpl err', tableName, err)
+            throw err
+        } finally {
+            log('addEventsImpl finally', { streamId, seq_num })
         }
     }
 
@@ -95,7 +137,16 @@ export class PGEventStore implements EventStore {
      * @returns sync cookie for reading new events from the stream
      */
     async createEventStream(streamId: string, inceptionEvents: FullEvent[]): Promise<string> {
-        return this.addEventsImpl(streamId, inceptionEvents, true)
+        const dbClient = await this.pool.connect()
+
+        const exists = await tableExists(streamId, dbClient)
+        if (!exists) {
+            await createStreamTable(streamId, dbClient)
+        }
+        const result = await this.addEventsImpl(streamId, inceptionEvents, dbClient)
+        await dbClient.query('COMMIT;')
+        dbClient.release()
+        return result
     }
 
     /**
@@ -105,120 +156,74 @@ export class PGEventStore implements EventStore {
      * @returns sync cookie for reading new events from the stream
      */
     async addEvents(streamId: string, events: FullEvent[]): Promise<string> {
-        return this.addEventsImpl(streamId, events, false)
+        const dbClient = await this.pool.connect()
+        const result = await this.addEventsImpl(streamId, events, dbClient)
+        await dbClient.query('COMMIT;')
+        dbClient.release()
+        return result
     }
 
     async streamExists(streamId: string): Promise<boolean> {
-        const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
-        const query = format('SELECT 1 FROM %I LIMIT 1', tableName)
-        try {
-            const ret = await this.pool.query(query)
-            return ret ? true : false
-        } catch (err: any) {
-            if (err.code == '42P01') {
-                // table not exists error from PG
-                return false
-            } else {
-                throw err
-            }
-        }
+        const dbClient = await this.pool.connect()
+        const exists = await tableExists(streamId, dbClient)
+        dbClient.release()
+        return exists
     }
 
     async getEventStream(streamId: string): Promise<StreamAndCookie> {
         const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
         // TODO - add pagination using LIMIT
-        const query = format('SELECT * FROM %I', tableName)
+        const query = {
+            // give the query a unique name
+            name: `fetch-all-events-${tableName}`.slice(0, 63),
+            text: `SELECT * FROM "${tableName}" ORDER BY seq_num`,
+        }
+
         try {
             const ret = await this.pool.query(query)
             if (ret.rows.length <= 0) {
                 throwWithCode('Stream not found', Err.STREAM_NOT_FOUND)
             }
+            const rows = ret.rows.map((item) => ({
+                data: JSON.parse(item.data),
+                seq_num: item.seq_num,
+            }))
+            log(
+                `getEventStream`,
+                rows.map((event) => ({ hash: event.data.hash, seq_num: event.seq_num })),
+            )
             return {
-                events: ret.rows.map((item) => JSON.parse(item.data)),
-                syncCookie: ret.rows[ret.rows.length - 1].seq_num,
+                events: rows.map((event) => event.data),
+                syncCookie: rows[rows.length - 1].seq_num,
             }
         } catch (err: any) {
             if (err.code == '42P01') {
                 throwWithCode('Stream not found', Err.STREAM_NOT_FOUND)
             } else {
+                log('getEventStream err', streamId, err)
                 throw err
             }
         }
     }
 
-    private async pgListen(streamIds: string[], client: PoolClient) {
-        log('pgListen', streamIds)
-        let queryString = ''
-        streamIds.forEach((streamId) => {
-            // TODO - limit the size of this query
-            queryString += format('LISTEN %I;', 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX + streamId)
-        })
-        try {
-            await client.query(queryString)
-        } catch (e) {
-            client.release()
-            throw e
-        }
-    }
-
-    private async pgUnlisten(client: PoolClient) {
-        log('pgUnlisten', 'executing UNLISTEN *')
-        // unlisten to all channels before releasing the client back to the pool
-        try {
-            await client.query('UNLISTEN *')
-        } finally {
-            // TODO - this is not great as this client instance keeps LISTENING even after release.
-            // figure out a way to destroy this client instance
-            client.release()
-        }
-    }
-
     private makeOutput(
-        queryResult: any,
-        notificationData: any[],
-        reqStreamIds: string[],
-        reqCookies: string[],
-    ): Object {
-        const finalOuput = Object()
-        const notificationResults = Object()
-
-        notificationData.forEach((item) => {
-            const channelName = item.channel
-            const substr = 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX
-            const streamId = channelName.substring(channelName.indexOf(substr) + substr.length)
-            if (!(streamId in notificationResults)) {
-                notificationResults[streamId] = []
-            }
-            notificationResults[streamId].push(JSON.parse(item.payload))
-        })
-        const streamIds = [
-            ...new Set([...Object.keys(queryResult), ...Object.keys(notificationResults)]),
-        ]
+        queryResult: Record<string, any[]>,
+        streamToOrigCookie: Record<string, string>,
+    ): StreamsAndCookies {
+        const finalOuput: StreamsAndCookies = {}
+        const streamIds = Object.keys(queryResult)
 
         streamIds.forEach((streamId) => {
-            const allRows: any[] = []
-            if (streamId in queryResult) {
-                allRows.push(...queryResult[streamId])
-            }
-            if (streamId in notificationResults) {
-                allRows.push(...notificationResults[streamId])
-            }
-
-            const uniqueRows = Array.from(new Set(allRows.map((a) => string(a.seq_num)))).map(
-                (seq_num) => {
-                    return allRows.find((a) => string(a.seq_num) === seq_num)
-                },
-            )
-
-            uniqueRows.sort((a, b) => (a.seq_num < b.seq_num ? -1 : a.seq_num > b.seq_num ? 1 : 0))
-
+            const rows = queryResult[streamId]
+            const syncCookie = rows[rows.length - 1].seq_num
             finalOuput[streamId] = {
-                events: uniqueRows.map((item) => JSON.parse(item.data)),
-                syncCookie: uniqueRows[uniqueRows.length - 1].seq_num,
-                originalSyncCookie: reqCookies[reqStreamIds.indexOf(streamId)],
+                events: queryResult[streamId].map((item) => JSON.parse(item.data)),
+                syncCookie: syncCookie,
+                originalSyncCookie: streamToOrigCookie[streamId],
             }
         })
 
+        log('makeOutput', finalOuput)
         return finalOuput
     }
 
@@ -226,86 +231,148 @@ export class PGEventStore implements EventStore {
         if (args.length <= 0) {
             throw new Error('args must not be empty')
         }
+        const streamToOrigCookie = args.reduce(function (map, obj) {
+            map[obj.streamId] = obj.syncCookie
+            return map
+        }, {} as Record<string, string>)
         const streamIds = args.map((arg) => arg.streamId)
         const cookies = args.map((arg) => arg.syncCookie)
-        log('readNewEvents', 'readArgs', ...streamIds, ...cookies)
-        const queryResult = Object()
-        let dbClient = Object()
-        let queryFinished = false
-        let listenPromise: Promise<boolean> | undefined
-        let handleNotificationData: ((data: any) => Promise<void>) | undefined
-        const notificationData: any[] = []
-
-        var stopListening = async () => {
-            dbClient.off('notification', handleNotificationData)
-            await this.pgUnlisten(dbClient)
-        }
-
-        // start listening to streams if this is a long poll
-        if (timeousMs > 0) {
-            log('readNewEvents: starting long poll', streamIds)
-            dbClient = await this.pool.connect()
-            await this.pgListen(streamIds, dbClient)
-            listenPromise = new Promise<boolean>(async (resolve, reject) => {
-                //create callback function
-                handleNotificationData = async function (data: any): Promise<void> {
-                    log('pgListen', 'notification received', data)
-                    notificationData.push(data)
-                    if (queryFinished) {
-                        resolve(true)
-                    }
-                }
-            })
-            dbClient.on('notification', handleNotificationData)
-        }
+        log('readNewEvents', 'readArgs begin', timeousMs, ...streamIds, ...cookies)
+        let cleanupdbClient: PoolClient | undefined = undefined
+        let queryError: Error | undefined = undefined
 
         try {
+            const queryResult: Record<string, any[]> = {}
+            const notificationData: Notification[] = []
+
+            const dbClient = await this.pool.connect()
+            cleanupdbClient = dbClient
+            let listenResolver: ((value: boolean | PromiseLike<boolean>) => void) | undefined =
+                undefined
+            const listenPromise = new Promise<boolean>(async (resolve, reject) => {
+                listenResolver = resolve
+                //create callback function
+            })
+
+            const handleNotificationData = function (notification: Notification): void {
+                const channelName = notification.channel
+                log('pgListen', 'notification received', channelName)
+                notificationData.push(notification)
+                if (listenResolver) {
+                    listenResolver(true)
+                }
+            }
+
+            dbClient.on('notification', handleNotificationData)
+            await pgListen(streamIds, dbClient)
+            await dbClient.query('COMMIT;')
+
             await Promise.all(
                 streamIds.map(async (streamId, index) => {
                     // TODO - figure out how to query all tables at once or in batches. Maybe UNION?
                     const cookie = cookies[index]
                     const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
-                    const query = format('SELECT * FROM %I WHERE seq_num > %s', tableName, cookie)
-                    const ret = await this.pool.query(query)
+
+                    const query = {
+                        // give the query a unique name
+                        name: `fetch-events-${tableName}`.slice(0, 63),
+                        text: `SELECT * FROM "${tableName}" WHERE seq_num > $1 ORDER BY seq_num`,
+                        values: [cookie],
+                    }
+
+                    const ret = await dbClient.query(query)
                     // TODO - handle subset of queries failure gracefully
                     if (ret.rows.length > 0) {
                         queryResult[streamId] = ret.rows
                     }
                 }),
             )
-        } catch (err) {
-            // if a DB error happens, stopListening
-            await stopListening()
-            throw err
-        }
 
-        queryFinished = true
+            log(
+                'readNewEvents',
+                'queryResult',
+                Object.keys(queryResult).length === 0
+                    ? 'query returned no rows'
+                    : 'query returned rows',
+                Object.entries(queryResult).map((k, v) => ({ k, v })),
+            )
 
-        if (timeousMs > 0) {
-            if (Object.keys(queryResult).length > 0 || notificationData.length > 0) {
-                await stopListening()
-            } else {
-                log('readNewEvents', 'starting wait timer')
-                const ac = new AbortController()
-                let result = await Promise.race([
+            if (timeousMs > 0 && Object.keys(queryResult).length === 0) {
+                const timeoutController = new AbortController()
+
+                log('readNewEvents: parking for notification', streamIds, timeousMs)
+                const result = await Promise.race([
+                    this.closePromise,
                     listenPromise,
-                    setTimeoutWithPromise(timeousMs, undefined, { signal: ac.signal }),
+                    setTimeoutWithPromise(timeousMs, timeoutFlag, {
+                        signal: timeoutController.signal,
+                    }),
                 ])
-                await stopListening()
-                if (result === undefined) {
-                    log('readNewEvents', 'timeout occurred')
-                } else {
-                    // remove the settimeout
-                    ac.abort()
+                log(
+                    'readNewEvents',
+                    'returned from parking',
+                    `notificationData length ${notificationData.length}`,
+                    result,
+                )
+                if (result !== timeoutFlag) {
+                    // Cleanup the timeout timer
+                    timeoutController.abort()
+                }
+                if (result === closedFlag) {
+                    log('readNewEvents closed')
+                    await pgUnlisten(streamIds, dbClient)
+                    await dbClient.query('COMMIT;')
+                    dbClient.off('notification', handleNotificationData)
+                    return {}
                 }
             }
-        }
+            await pgUnlisten(streamIds, dbClient)
+            await dbClient.query('COMMIT;')
+            dbClient.off('notification', handleNotificationData)
 
-        return this.makeOutput(
-            queryResult,
-            notificationData,
-            streamIds,
-            cookies,
-        ) as StreamsAndCookies
+            if (Object.keys(notificationData).length > 0) {
+                await Promise.all(
+                    notificationData.map(async (notification) => {
+                        const channelName = notification.channel
+                        const substr = 'newevent_' + PG_EVENT_TABLE_NAME_PREFIX
+                        const streamId = channelName.substring(
+                            channelName.indexOf(substr) + substr.length,
+                        )
+
+                        const cookie = streamToOrigCookie[streamId]
+                        const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
+                        const query = {
+                            // give the query a unique name
+                            name: `fetch-events-${tableName}`.slice(0, 63),
+                            text: `SELECT * FROM "${tableName}" WHERE seq_num > $1 ORDER BY seq_num`,
+                            values: [cookie],
+                        }
+                        const ret = await dbClient.query(query)
+                        log(
+                            'readNewEvents',
+                            'fetching notification',
+                            tableName,
+                            cookie,
+                            ret.rows.length,
+                        )
+
+                        // TODO - handle subset of queries failure gracefully
+                        if (ret.rows.length > 0) {
+                            queryResult[streamId] = ret.rows
+                        } else {
+                            log('notificationData had a notificaiton with no new data')
+                        }
+                    }),
+                )
+            }
+            return this.makeOutput(queryResult, streamToOrigCookie)
+        } catch (err) {
+            queryError = err as Error
+            log('readNewEvents', 'error occurred', queryError)
+            throw err
+        } finally {
+            cleanupdbClient?.release(queryError)
+            log('readNewEvents', 'finally')
+        }
     }
 }

@@ -1,5 +1,7 @@
 import { FullEvent, genId, StreamKind, StreamsAndCookies, SyncPos } from '@zion/core'
 import debug from 'debug'
+import util from 'node:util'
+
 import { PGEventStore } from './pgEventStore'
 import { setTimeout } from 'timers/promises'
 
@@ -139,20 +141,22 @@ describe('PGEventStore', () => {
         const syncPos = await makeStream()
 
         // Empty read
-        let readResult: StreamsAndCookies | null = null
-        const ret2 = store.readNewEvents([syncPos], 2000).then((res) => {
-            readResult = res
-            return 'done'
-        })
-        await setTimeout(200)
-
-        expect(readResult).toEqual(null)
+        const readPromise = store.readNewEvents([syncPos], 2000)
+        expect(util.inspect(readPromise).includes('pending')).toEqual(true)
 
         await store.addEvents(syncPos.streamId, MORE_EVENTS)
+        // Give postgress a moment to send the notify
         await setTimeout(100)
-        log('readNewEventsAsyncWait', 'readResult', readResult)
-        expect(readResult).not.toBeNull()
-        expect(readResult![syncPos.streamId].events).toEqual(MORE_EVENTS)
+        expect(util.inspect(readPromise).includes('pending')).toEqual(false)
+
+        const readResult = await readPromise
+
+        const readResult2 = await store.readNewEvents([syncPos], 2000)
+        log('readNewEventsAsyncWait', 'readResult2', readResult, readResult2)
+
+        expect(readResult2).not.toBeNull()
+        expect(readResult2).toEqual(readResult)
+        expect(readResult2[syncPos.streamId].events).toEqual(MORE_EVENTS)
     })
 
     test('readNewEventsAsyncMultiWait', async () => {
@@ -160,37 +164,35 @@ describe('PGEventStore', () => {
         const s1 = await makeStream()
         const s2 = await makeStream()
 
-        let readResult: StreamsAndCookies | null = null
-        const readPromise = store.readNewEvents([s0, s1, s2], 2000).then((res) => {
-            readResult = res
-            return 'done'
-        })
+        const readPromise = store.readNewEvents([s0, s1, s2], 2000)
+        expect(util.inspect(readPromise).includes('pending')).toEqual(true)
         await setTimeout(500)
-
-        expect(readResult).toBeNull()
+        expect(util.inspect(readPromise).includes('pending')).toEqual(true)
 
         await store.addEvents(s2.streamId, MORE_EVENTS)
+
+        // Give postgress a moment to send the notify
         await setTimeout(100)
+        const readResult = await store.readNewEvents([s0, s1, s2], 2000)
+        expect(util.inspect(readPromise).includes('pending')).toEqual(false)
 
         await expect(readPromise).toResolve()
         log('readNewEventsAsyncMultiWait', 'readResult', readResult)
         expect(readResult).not.toBeNull()
-        expect(readResult![s2.streamId].events).toEqual(MORE_EVENTS)
+        expect(readResult[s2.streamId].events).toEqual(MORE_EVENTS)
     })
 
     test('readNewEventsAsyncWaitTimeout', async () => {
         const syncPos = await makeStream()
 
         // Empty read
-        let readResult: StreamsAndCookies | null = null
-        const ret2 = store.readNewEvents([syncPos], 100).then((res) => {
-            readResult = res
-            return 'done'
-        })
+        const readPromise = store.readNewEvents([syncPos], 100)
+        expect(util.inspect(readPromise).includes('pending')).toEqual(true)
 
-        expect(readResult).toEqual(null)
-
+        // Let the long poll timeout returning an empty result
         await setTimeout(200)
+        expect(util.inspect(readPromise).includes('pending')).toEqual(false)
+        const readResult = await readPromise
 
         log('readNewEventsAsyncWaitTimeout', 'readResult', readResult)
         expect(readResult).not.toBeNull()

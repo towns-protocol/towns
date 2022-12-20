@@ -33,14 +33,14 @@ export const addEvent = async (
     switch (params.event.base.payload.kind) {
         case 'inception':
             throwWithCode('Inception event cannot be added', Err.BAD_EVENT)
-
+            break
         case 'user-invited':
         case 'user-joined':
         case 'user-left':
         case 'channel-created':
         case 'channel-deleted':
             throwWithCode('Derived event cannot be added by user', Err.BAD_EVENT)
-
+            break
         case 'join':
         case 'invite':
         case 'leave':
@@ -50,7 +50,7 @@ export const addEvent = async (
             return addMessageEvent(server, params, rollup)
 
         default:
-            const c: never = params.event.base.payload
+            const c = params.event.base.payload
             throwWithCode(`Unhandled event kind: ${c}`, Err.INTERNAL_ERROR_SWITCH)
     }
 }
@@ -113,7 +113,7 @@ const addJoinAndFriendsEvent = async (
             break
 
         default:
-            const c: never = payload
+            const c = payload
             throwWithCode(`Unhandled event kind: ${c}`, Err.INTERNAL_ERROR_SWITCH)
     }
 

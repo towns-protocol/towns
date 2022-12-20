@@ -1,11 +1,6 @@
 CREATE DATABASE casablanca;
 \c casablanca;
 
-CREATE TABLE IF NOT EXISTS es_sample (
-  seq_num BIGSERIAL,
-  data TEXT NOT NULL
-);
-
 CREATE OR REPLACE FUNCTION public.notify_newevent()
   RETURNS trigger
   LANGUAGE plpgsql
@@ -18,5 +13,3 @@ BEGIN
 END;
 $function$;
 
-CREATE TRIGGER new_event_trigger AFTER INSERT ON es_sample
-FOR EACH ROW EXECUTE PROCEDURE notify_newevent();

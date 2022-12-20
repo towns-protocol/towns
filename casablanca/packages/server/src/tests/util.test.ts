@@ -14,6 +14,11 @@ import { Wallet } from 'ethers'
 import { ZionApp } from '../app'
 import { config } from '../config'
 
+import { Worker } from 'worker_threads'
+
+import debug from 'debug'
+const log = debug('zion:test:util')
+
 export const makeEvent_test = (
     context: SignerContext,
     payload: Payload,
@@ -52,13 +57,40 @@ export const makeTestParams = (zionApp: () => ZionApp): TestParams => {
     return ret
 }
 
+async function createWallet(): Promise<Wallet> {
+    const result = await new Promise<{ wallet: string }>((resolve, reject) => {
+        const worker = new Worker(
+            `
+                const {parentPort} = require("worker_threads");
+                const ethers = require('ethers');
+                const wallet = ethers.Wallet.createRandom()
+                parentPort.postMessage(JSON.stringify({wallet: wallet.privateKey}))
+                process.exit( 0 )
+        `,
+            { eval: true },
+        )
+        worker.on('message', (msg) => resolve(JSON.parse(msg)))
+        worker.on('error', reject)
+        worker.on('exit', (code) => {
+            if (code !== 0)
+                reject(new Error(`makeRandomUserContext worker stopped with ${code} exit code`))
+        })
+    })
+    return new Wallet(result.wallet)
+}
+
+/**
+ *
+ * @returns a random user context
+ * Done using a worker thread to avoid blocking the main thread
+ */
 export const makeRandomUserContext = async (): Promise<SignerContext> => {
-    const primaryWallet = Wallet.createRandom()
-    const wallet = Wallet.createRandom()
+    log('makeRandomUserContext')
+    const wallets = await Promise.all([createWallet(), createWallet()])
     return {
-        wallet,
-        creatorAddress: primaryWallet.address,
-        delegateSig: await makeDelegateSig(primaryWallet, wallet),
+        wallet: wallets[1],
+        creatorAddress: wallets[0].address,
+        delegateSig: await makeDelegateSig(wallets[0], wallets[1]),
     }
 }
 

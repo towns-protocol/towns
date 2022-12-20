@@ -12,11 +12,12 @@ import * as http from 'http'
 
 const log_rpc = debug('zion:rpc')
 const log_http = debug('zion:http')
+const log_lifecycle = debug('zion:lifecycle')
 
 export const makeJSONRPCServer = (zionServer: ZionServiceInterface): JSONRPCServer => {
     const server = new JSONRPCServer({
         errorListener: (message: string, data: unknown) => {
-            log_http('JSONRPCServer errorListener', message, data)
+            log_lifecycle('JSONRPCServer errorListener', message, data)
         },
     })
     // Iterate through all methods on the service and add them to the JSONRPCServer with zion_ prefix
@@ -69,18 +70,21 @@ export type StorageType = 'redis' | 'postgres'
 export const startZionApp = (port: number, storageType?: StorageType) => {
     const wallet = Wallet.createRandom() // TODO: use config
     const store = initStorage(storageType)
+    log_lifecycle('storage created', storageType)
+
     const zionServer = new ZionServer(
         { wallet, creatorAddress: wallet.address },
         store,
         new DumbActionGuard(),
     )
+    log_lifecycle('zionServer created')
     const express = makeExpressApp(makeJSONRPCServer(zionServer))
     const httpServer = http.createServer(express)
     httpServer.listen(port)
     const addr = httpServer.address() as AddressInfo
     const host = addr.address === '::' ? 'localhost' : addr.address
     const url = `http://${host}:${addr.port}/json-rpc`
-    log_http('httpServer ', httpServer.address())
+    log_lifecycle('httpServer started', httpServer.address())
     return {
         wallet,
         express,
@@ -88,16 +92,15 @@ export const startZionApp = (port: number, storageType?: StorageType) => {
         zionServer,
         url,
         stop: async (): Promise<void> => {
-            const p = new Promise<void>((resolve) => {
-                httpServer.close(() => {
-                    log_http('httpServer closed')
-                    resolve()
+            const p = new Promise<Error | undefined>((resolve) => {
+                httpServer.close((err?: Error | undefined) => {
+                    resolve(err)
                 })
             })
-            await p
-            log_http('httpServer close callback done')
+            const err = await p
+            log_lifecycle('httpServer close callback done', err)
             await store.close()
-            log_http('storage close done')
+            log_lifecycle('storage close done')
         },
     }
 }

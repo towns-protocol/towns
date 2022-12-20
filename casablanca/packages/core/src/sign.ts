@@ -15,6 +15,10 @@ import { genId } from './id'
 import { BaseEvent, EventRef, FullEvent, Payload } from './types'
 import { Buffer } from 'buffer'
 
+import debug from 'debug'
+
+const log = debug('sign')
+
 export interface SignerContext {
     wallet: Wallet
     creatorAddress: string
@@ -87,6 +91,7 @@ export const makeEvent = (
         Buffer.from(stripHexPrefix(context.wallet.privateKey), 'hex'),
     )
     const signature = toRpcSig(v, r, s)
+    log('makeEvent', { hash, signature }, context, payload)
 
     return { hash, signature, base: event }
 }
