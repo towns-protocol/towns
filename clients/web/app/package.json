@@ -10,8 +10,8 @@
         "lint": "eslint . --cache",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
-        "test:unit": "VITE_UNFURL_SERVER_URL=http://fake.com VITE_TOKEN_SERVER_URL=http://fake.com vitest",
-        "test": "yarn test:unit"
+        "test": "yarn test:unit",
+        "test:unit": "VITE_UNFURL_SERVER_URL=http://fake.com VITE_TOKEN_SERVER_URL=http://fake.com vitest"
     },
     "dependencies": {
         "@emoji-mart/data": "^1.0.6",
@@ -79,16 +79,16 @@
         "@vanilla-extract/sprinkles": "^1.5.0",
         "@vanilla-extract/vite-plugin": "^3.6.1",
         "@vitejs/plugin-react": "^2.2.0",
-        "babel-loader": "^8.2.5",
+        "babel-loader": "^9.1.0",
         "clsx": "^1.2.1",
-        "eslint": "^8.25.0",
+        "eslint": "^8.30.0",
         "eslint-config-react-app": "^7.0.1",
-        "eslint-config-standard-with-typescript": "^23.0.0",
+        "eslint-config-standard-with-typescript": "^24.0.0",
         "eslint-import-resolver-typescript": "^3.5.2",
         "eslint-plugin-import": "^2.26.0",
-        "eslint-plugin-jest": "^27.1.3",
+        "eslint-plugin-jest": "^27.1.7",
         "eslint-plugin-mdx": "^2.0.5",
-        "eslint-plugin-react": "^7.31.10",
+        "eslint-plugin-react": "^7.31.11",
         "eslint-plugin-sort-imports-es6-autofix": "^0.6.0",
         "eslint-plugin-testing-library": "^5.9.1",
         "eslint-plugin-unused-imports": "^2.0.0",
@@ -100,13 +100,13 @@
         "react-test-renderer": "^18.2.0",
         "rollup-plugin-sourcemaps": "^0.6.3",
         "rollup-plugin-visualizer": "^5.8.3",
-        "typescript": "^4.8.4",
-        "vite": "^3.2.2",
-        "vite-plugin-checker": "^0.5.1",
+        "typescript": "^4.9.4",
+        "vite": "^4.0.3",
+        "vite-plugin-checker": "^0.5.2",
         "vite-plugin-eslint": "^1.8.1",
-        "vite-tsconfig-paths": "^3.5.2",
-        "vitest": "^0.24.4",
-        "vitest-canvas-mock": "^0.2.0"
+        "vite-tsconfig-paths": "^4.0.3",
+        "vitest": "^0.26.2",
+        "vitest-canvas-mock": "^0.2.2"
     },
     "msw": {
         "workerDirectory": "public"

@@ -32,13 +32,13 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name:  'Automated version bump'
-              uses:  'phips28/gh-action-bump-version@master'
+            - name: 'Automated version bump'
+              uses: 'phips28/gh-action-bump-version@master'
               env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                PACKAGEJSON_DIR:  'servers/dendrite'
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  PACKAGEJSON_DIR: 'servers/dendrite'
               with:
-                version-type:  'patch'
+                  version-type: 'patch'
 
             - name: Get release version from package.json
               working-directory: ./servers/dendrite

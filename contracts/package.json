@@ -4,16 +4,16 @@
     "private": true,
     "packageManager": "yarn@3.2.2",
     "scripts": {
-        "test:unit": "make test",
-        "test": "yarn test:unit",
-        "lint": "make lint",
-        "build": "make all",
         "all": "make all",
+        "build": "make all",
         "clean": "make clean",
         "format": "make format",
+        "lint": "make lint",
         "setup": "make clean && make build",
         "snapshot": "make snapshot",
-        "sync": "make update"
+        "sync": "make update",
+        "test": "yarn test:unit",
+        "test:unit": "make test"
     },
     "dependencies": {
         "@opengsn/contracts": "^2.2.6"
@@ -21,8 +21,8 @@
     "devDependencies": {
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",
-        "prettier": "^2.7.1",
-        "prettier-plugin-solidity": "^1.0.0-rc.1",
+        "prettier": "^2.8.1",
+        "prettier-plugin-solidity": "^1.1.0",
         "solhint": "^3.3.7",
         "solhint-plugin-prettier": "^0.0.5"
     }
