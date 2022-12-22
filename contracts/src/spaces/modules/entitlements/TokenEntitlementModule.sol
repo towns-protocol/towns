@@ -15,18 +15,18 @@ import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
 
 contract TokenEntitlementModule is EntitlementModuleBase {
   struct TokenEntitlement {
-    uint256 entitlementId;
+    bytes32 entitlementId;
     uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
     DataTypes.ExternalToken[] tokens;
   }
-
+  
   struct SpaceTokenEntitlements {
-    mapping(uint256 => TokenEntitlement) entitlementsById;
-    uint256[] entitlementIds;
+    mapping(bytes32 => TokenEntitlement) entitlementsById;
+    bytes32[] entitlementIds;
     mapping(uint256 => uint256[]) roleIdsByChannelId;
-    mapping(uint256 => uint256[]) entitlementIdsByRoleId;
+    mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
   }
 
   struct EntitlementInfo {
@@ -60,9 +60,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     bytes calldata entitlementData
   ) external override onlySpaceManager {
     // get the length of the total Ids to get our next Id
-    uint256 entitlementId = entitlementsBySpaceId[spaceId]
-      .entitlementIds
-      .length;
+    bytes32 entitlementId = keccak256(abi.encode(roleId, entitlementData));
 
     // and add it to the array for iteration
     entitlementsBySpaceId[spaceId].entitlementIds.push(entitlementId);
@@ -106,7 +104,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     TokenEntitlement storage tokenEntitlement,
     bytes calldata entitlementData,
     uint256 roleId,
-    uint256 entitlementId
+    bytes32 entitlementId
   ) internal {
     DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement = abi
       .decode(entitlementData, (DataTypes.ExternalTokenEntitlement));
@@ -141,13 +139,13 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     uint256 roleId,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
-    uint256 entitlementId = abi.decode(entitlementData, (uint256));
+    bytes32 entitlementId = keccak256(abi.encode(roleId, entitlementData));
 
     //When removing, remove it from the main map and the roleId map but NOT from the array
     //of all EntitlementIds since we use that as a counter
 
     //Remove the association of this entitlementId to this roleId
-    uint256[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[spaceId]
+    bytes32[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[spaceId]
       .entitlementIdsByRoleId[roleId];
     for (uint256 i = 0; i < entitlementIdsFromRoleIds.length; i++) {
       if (entitlementIdsFromRoleIds[i] == entitlementId) {
@@ -193,14 +191,14 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     DataTypes.Permission memory permission
   ) internal view returns (bool) {
     //Get all the entitlement ids
-    uint256[] memory entitlementIds = entitlementsBySpaceId[spaceId]
+    bytes32[] memory entitlementIds = entitlementsBySpaceId[spaceId]
       .entitlementIds;
 
     //For each, check if the role in it has the permission we are looking for,
     //if so add it to the array of validRoleIds
     uint256[] memory validRoleIds = new uint256[](entitlementIds.length);
     for (uint256 i = 0; i < entitlementIds.length; i++) {
-      uint256 entitlementId = entitlementIds[i];
+      bytes32 entitlementId = entitlementIds[i];
       TokenEntitlement memory entitlement = entitlementsBySpaceId[spaceId]
         .entitlementsById[entitlementId];
       uint256 roleId = entitlement.roleId;
@@ -212,7 +210,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     //for each of those roles, get all the entitlements associated with that role
     for (uint256 i = 0; i < validRoleIds.length; i++) {
       uint256 roleId = validRoleIds[i];
-      uint256[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[
+      bytes32[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[
         spaceId
       ].entitlementIdsByRoleId[roleId];
       //And check if that entitlement allows the user access, if so return true
@@ -247,7 +245,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
     //for each of those roles, get all the entitlements associated with that role
     for (uint256 i = 0; i < validRoleIds.length; i++) {
-      uint256[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[
+      bytes32[] memory entitlementIdsFromRoleIds = entitlementsBySpaceId[
         spaceId
       ].entitlementIdsByRoleId[validRoleIds[i]];
 
@@ -266,7 +264,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
   function isTokenEntitled(
     uint256 spaceId,
     address user,
-    uint256 entitlementId
+    bytes32 entitlementId
   ) public view returns (bool) {
     DataTypes.ExternalToken[] memory tokens = entitlementsBySpaceId[spaceId]
       .entitlementsById[entitlementId]
@@ -362,14 +360,14 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     address user
   ) public view returns (DataTypes.Role[] memory) {
     //Get all the entitlements for this space
-    uint256[] memory entitlementIds = entitlementsBySpaceId[spaceId]
+    bytes32[] memory entitlementIds = entitlementsBySpaceId[spaceId]
       .entitlementIds;
 
     //Create an empty array of the max size of all entitlements
     DataTypes.Role[] memory roles = new DataTypes.Role[](entitlementIds.length);
     //Iterate through all the entitlements
     for (uint256 i = 0; i < entitlementIds.length; i++) {
-      uint256 entitlementId = entitlementIds[i];
+      bytes32 entitlementId = entitlementIds[i];
       //If the user is entitled to a token entitlement
       //Get all the roles for that token entitlement, and add them to the array for this user
       if (isTokenEntitled(spaceId, user, entitlementId)) {

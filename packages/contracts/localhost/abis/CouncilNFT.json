@@ -1487,19 +1487,19 @@
         1657
       ],
       "ERC721": [
-        63459
+        63461
       ],
       "ERC721TokenReceiver": [
-        63479
+        63481
       ],
       "MerkleProof": [
-        58247
+        58249
       ],
       "Ownable": [
-        48438
+        48440
       ],
       "Strings": [
-        57016
+        57018
       ]
     },
     "nodeType": "SourceUnit",
@@ -1526,7 +1526,7 @@
         "file": "solmate/tokens/ERC721.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1658,
-        "sourceUnit": 63480,
+        "sourceUnit": 63482,
         "symbolAliases": [],
         "unitAlias": ""
       },
@@ -1539,7 +1539,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1658,
-        "sourceUnit": 48439,
+        "sourceUnit": 48441,
         "symbolAliases": [
           {
             "foreign": {
@@ -1547,7 +1547,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 48438,
+              "referencedDeclaration": 48440,
               "src": "107:7:6",
               "typeDescriptions": {}
             },
@@ -1565,7 +1565,7 @@
         "file": "openzeppelin-contracts/contracts/utils/Strings.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1658,
-        "sourceUnit": 57017,
+        "sourceUnit": 57019,
         "symbolAliases": [
           {
             "foreign": {
@@ -1573,7 +1573,7 @@
               "name": "Strings",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 57016,
+              "referencedDeclaration": 57018,
               "src": "184:7:6",
               "typeDescriptions": {}
             },
@@ -1643,7 +1643,7 @@
         "file": "openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 1658,
-        "sourceUnit": 58248,
+        "sourceUnit": 58250,
         "symbolAliases": [
           {
             "foreign": {
@@ -1651,7 +1651,7 @@
               "name": "MerkleProof",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 58247,
+              "referencedDeclaration": 58249,
               "src": "382:11:6",
               "typeDescriptions": {}
             },
@@ -1678,7 +1678,7 @@
                 "638:7:6"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 57016,
+              "referencedDeclaration": 57018,
               "src": "638:7:6"
             },
             "typeName": {
@@ -2225,7 +2225,7 @@
                     "1522:6:6"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 63459,
+                  "referencedDeclaration": 63461,
                   "src": "1522:6:6"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2850,10 +2850,10 @@
                             "name": "MerkleProof",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 58247,
+                            "referencedDeclaration": 58249,
                             "src": "2486:11:6",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_type$_t_contract$_MerkleProof_$58247_$",
+                              "typeIdentifier": "t_type$_t_contract$_MerkleProof_$58249_$",
                               "typeString": "type(library MerkleProof)"
                             }
                           },
@@ -2865,7 +2865,7 @@
                           "memberLocation": "2498:6:6",
                           "memberName": "verify",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 57769,
+                          "referencedDeclaration": 57771,
                           "src": "2486:18:6",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_internal_pure$_t_array$_t_bytes32_$dyn_memory_ptr_$_t_bytes32_$_t_bytes32_$returns$_t_bool_$",
@@ -3960,10 +3960,10 @@
                       "name": "_safeMint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        63416,
-                        63458
+                        63418,
+                        63460
                       ],
-                      "referencedDeclaration": 63416,
+                      "referencedDeclaration": 63418,
                       "src": "3528:9:6",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$",
@@ -4213,7 +4213,7 @@
                         "name": "ownerOf",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 62984,
+                        "referencedDeclaration": 62986,
                         "src": "3906:7:6",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_internal_view$_t_uint256_$returns$_t_address_$",
@@ -4641,7 +4641,7 @@
               ]
             },
             "baseFunctions": [
-              62953
+              62955
             ],
             "documentation": {
               "id": 1541,
@@ -5110,7 +5110,7 @@
                     "4303:9:6"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 48357,
+                  "referencedDeclaration": 48359,
                   "src": "4303:9:6"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5339,7 +5339,7 @@
                     "4644:9:6"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 48357,
+                  "referencedDeclaration": 48359,
                   "src": "4644:9:6"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5539,7 +5539,7 @@
                     "4820:9:6"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 48357,
+                  "referencedDeclaration": 48359,
                   "src": "4820:9:6"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5576,7 +5576,7 @@
                 "612:6:6"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 63459,
+              "referencedDeclaration": 63461,
               "src": "612:6:6"
             },
             "id": 1339,
@@ -5591,7 +5591,7 @@
                 "620:7:6"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 48438,
+              "referencedDeclaration": 48440,
               "src": "620:7:6"
             },
             "id": 1341,
@@ -5611,9 +5611,9 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
           1657,
-          48438,
-          56767,
-          63459
+          48440,
+          56769,
+          63461
         ],
         "name": "CouncilNFT",
         "nameLocation": "598:10:6",

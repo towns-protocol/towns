@@ -221,9 +221,9 @@
             "type": "address"
           },
           {
-            "internalType": "uint256",
+            "internalType": "bytes32",
             "name": "entitlementId",
-            "type": "uint256"
+            "type": "bytes32"
           }
         ],
         "name": "isTokenEntitled",
@@ -474,11 +474,11 @@
       ]
     },
     "contracts/src/spaces/modules/entitlements/TokenEntitlementModule.sol": {
-      "keccak256": "0xda66da436923d51b2f3a0cbe892a18b51305bed38805712f6bac866fd4f604a6",
+      "keccak256": "0xe4fd26b05d20ef691cd6775467fe78af07ba063285eb3a9cc59f8857949c306a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b36ebdc945e4c7afa6305f14d82f75cb8dc7d00f97a6447b735f09a01bb277de",
-        "dweb:/ipfs/QmNcWbXissTJaWKxrCohBwRvdNYwDG3GLaumQuYQeCAx37"
+        "bzz-raw://9e7e85a4a33ffbb9b461dc10d1559c498c6fc25c365b7c594dffded5bfead875",
+        "dweb:/ipfs/QmWfDcS1SZEjTYmbape7AN81xvivDZ3ooc6hSq5c8zJ4UQ"
       ]
     },
     "lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol": {

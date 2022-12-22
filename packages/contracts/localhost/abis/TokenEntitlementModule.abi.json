@@ -215,9 +215,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "bytes32",
         "name": "entitlementId",
-        "type": "uint256"
+        "type": "bytes32"
       }
     ],
     "name": "isTokenEntitled",

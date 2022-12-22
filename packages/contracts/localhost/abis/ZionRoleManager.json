@@ -842,7 +842,7 @@
         8816
       ],
       "Ownable": [
-        48438
+        48440
       ],
       "PermissionTypes": [
         9596
@@ -854,7 +854,7 @@
         5975
       ],
       "ZionRoleStorage": [
-        11886
+        11888
       ]
     },
     "nodeType": "SourceUnit",
@@ -907,7 +907,7 @@
         "file": "./storage/ZionRoleStorage.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 5976,
-        "sourceUnit": 11887,
+        "sourceUnit": 11889,
         "symbolAliases": [
           {
             "foreign": {
@@ -915,7 +915,7 @@
               "name": "ZionRoleStorage",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 11886,
+              "referencedDeclaration": 11888,
               "src": "143:15:25",
               "typeDescriptions": {}
             },
@@ -1011,7 +1011,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 5976,
-        "sourceUnit": 48439,
+        "sourceUnit": 48441,
         "symbolAliases": [
           {
             "foreign": {
@@ -1019,7 +1019,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 48438,
+              "referencedDeclaration": 48440,
               "src": "353:7:25",
               "typeDescriptions": {}
             },
@@ -1715,7 +1715,7 @@
                     "1267:9:25"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 48357,
+                  "referencedDeclaration": 48359,
                   "src": "1267:9:25"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1813,7 +1813,7 @@
                         "name": "_rolesBySpaceId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11876,
+                        "referencedDeclaration": 11878,
                         "src": "1486:15:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Roles_$9294_storage_$",
@@ -2089,7 +2089,7 @@
                         "name": "_rolesBySpaceId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11876,
+                        "referencedDeclaration": 11878,
                         "src": "1695:15:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Roles_$9294_storage_$",
@@ -3380,7 +3380,7 @@
                         "name": "_rolesBySpaceId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11876,
+                        "referencedDeclaration": 11878,
                         "src": "2727:15:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Roles_$9294_storage_$",
@@ -3652,7 +3652,7 @@
                                     "name": "_permissionsBySpaceIdByRoleId",
                                     "nodeType": "Identifier",
                                     "overloadedDeclarations": [],
-                                    "referencedDeclaration": 11885,
+                                    "referencedDeclaration": 11887,
                                     "src": "2939:29:25",
                                     "typeDescriptions": {
                                       "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_array$_t_struct$_Permission_$9302_storage_$dyn_storage_$_$",
@@ -4473,7 +4473,7 @@
                         "name": "_permissionsBySpaceIdByRoleId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11885,
+                        "referencedDeclaration": 11887,
                         "src": "3513:29:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_array$_t_struct$_Permission_$9302_storage_$dyn_storage_$_$",
@@ -4680,7 +4680,7 @@
                         "name": "_rolesBySpaceId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11876,
+                        "referencedDeclaration": 11878,
                         "src": "3681:15:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Roles_$9294_storage_$",
@@ -4904,7 +4904,7 @@
                         "name": "_rolesBySpaceId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11876,
+                        "referencedDeclaration": 11878,
                         "src": "3888:15:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_struct$_Roles_$9294_storage_$",
@@ -5475,7 +5475,7 @@
                         "name": "_permissionsBySpaceIdByRoleId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11885,
+                        "referencedDeclaration": 11887,
                         "src": "4339:29:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_array$_t_struct$_Permission_$9302_storage_$dyn_storage_$_$",
@@ -5738,7 +5738,7 @@
                         "name": "_permissionsBySpaceIdByRoleId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11885,
+                        "referencedDeclaration": 11887,
                         "src": "4567:29:25",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_uint256_$_t_mapping$_t_uint256_$_t_array$_t_struct$_Permission_$9302_storage_$dyn_storage_$_$",
@@ -6931,7 +6931,7 @@
                 "811:7:25"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 48438,
+              "referencedDeclaration": 48440,
               "src": "811:7:25"
             },
             "id": 5489,
@@ -6946,7 +6946,7 @@
                 "820:15:25"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 11886,
+              "referencedDeclaration": 11888,
               "src": "820:15:25"
             },
             "id": 5491,
@@ -6960,9 +6960,9 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
           5975,
-          11886,
-          48438,
-          56767
+          11888,
+          48440,
+          56769
         ],
         "name": "ZionRoleManager",
         "nameLocation": "792:15:25",
