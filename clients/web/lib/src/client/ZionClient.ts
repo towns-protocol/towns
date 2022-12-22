@@ -726,9 +726,12 @@ export class ZionClient {
     /************************************************
      * createRole
      *************************************************/
-    public async createRole(
+    public async createRoleWithEntitlementData(
         spaceNetworkId: string,
         name: string,
+        permissions: DataTypes.PermissionStruct[],
+        tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[],
+        users: string[],
     ): Promise<RoleIdentifier | undefined> {
         let transaction: ContractTransaction | undefined = undefined
         let receipt: ContractReceipt | undefined = undefined
@@ -736,7 +739,13 @@ export class ZionClient {
         let roleId: string | undefined = undefined
         let roleName: string | undefined = undefined
         try {
-            transaction = await this.spaceManager.signed.createRole(spaceNetworkId, name)
+            transaction = await this.spaceManager.createRoleWithEntitlementData(
+                spaceNetworkId,
+                name,
+                permissions,
+                tokenEntitlements,
+                users,
+            )
             receipt = await transaction.wait()
         } catch (err) {
             const decodedError = this.getDecodedError(err)

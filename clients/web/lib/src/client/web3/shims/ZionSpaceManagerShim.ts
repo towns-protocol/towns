@@ -119,9 +119,29 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         info: Localhost_DataTypes.CreateChannelDataStruct,
     ): Promise<ContractTransaction> {
         if (this.isGoerli) {
-            throw new Error('createChannel not implemented with new data on Goerli')
+            throw new Error('createChannel not yet deployed on Goerli')
         } else {
             return this.localhost_signed.createChannel(info)
+        }
+    }
+
+    public async createRoleWithEntitlementData(
+        spaceNetworkId: string,
+        roleName: string,
+        permissions: Localhost_DataTypes.PermissionStruct[],
+        tokenEntitlements: Localhost_DataTypes.ExternalTokenEntitlementStruct[],
+        users: string[],
+    ): Promise<ContractTransaction> {
+        if (this.isGoerli) {
+            throw new Error('createRoleWithEntitlementData not yet deployed on Goerli')
+        } else {
+            return this.localhost_signed.createRoleWithEntitlementData(
+                spaceNetworkId,
+                roleName,
+                permissions,
+                tokenEntitlements,
+                users,
+            )
         }
     }
 }

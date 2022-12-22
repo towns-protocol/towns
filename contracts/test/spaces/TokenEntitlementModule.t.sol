@@ -267,6 +267,107 @@ contract TokenEntitlementModuleTest is BaseSetup, SpaceTestUtils {
     assertTrue(isEntitled);
   }
 
+  struct TestCreateRoleWithEntitlementParams {
+    string spaceName;
+    string networkId;
+    string roomId;
+    string roleName;
+    address[] users;
+    DataTypes.Permission[] permissions;
+    DataTypes.ExternalTokenEntitlement[] tokenEntitlements;
+  }
+
+  function testCreateRoleWithEntitlementData() public {
+    // Create a space with the user granted entitlement module
+    TestCreateRoleWithEntitlementParams memory params;
+    params.spaceName = "test-space";
+    params.networkId = "test-network-id";
+    params.roomId = "";
+    params.roleName = "Tester";    
+    params.users = new address[](0);
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Ban);
+    params.permissions = SpaceTestUtils.convertToPermissionArray(permission);
+
+    createSimpleSpace(params.spaceName, params.networkId, spaceManager);
+
+    // Create roles and add permissions
+     
+    DataTypes.ExternalToken memory councilNFTGate = getTestExternalToken(
+      address(councilNFT),
+      1,
+      false,
+      0
+    );
+    DataTypes.ExternalToken memory zionTokenGate = getTestExternalToken(
+      address(zion),
+      100,
+      false,
+      0
+    );
+
+    DataTypes.ExternalToken[]
+      memory externalTokens = new DataTypes.ExternalToken[](2);
+    externalTokens[0] = councilNFTGate;
+    externalTokens[1] = zionTokenGate;
+
+    DataTypes.ExternalTokenEntitlement
+      memory externalTokenEntitlement = DataTypes.ExternalTokenEntitlement(
+        externalTokens
+      );
+
+    params.tokenEntitlements =
+      SpaceTestUtils.convertToTokenEntitlementArray(externalTokenEntitlement);
+
+    spaceManager.createRoleWithEntitlementData(
+      params.networkId,
+      params.roleName,
+      params.permissions,
+      params.tokenEntitlements,
+      params.users
+    );
+
+    // Verify the token entitlement module is added to the space
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
+      params.networkId
+    );
+    assertEq(entitlements.length, 2);
+    assertEq(entitlements[1], address(tokenEntitlementModule));
+
+    // Verify user1 is not yet a moderator
+    bool isEntitledPre = spaceManager.isEntitled(
+      params.networkId,
+      params.roomId,
+      user1,
+      permission
+    );
+    assertFalse(isEntitledPre);
+
+    // Transfer nft to user1
+    councilNFT.mint{value: councilNFT.MINT_PRICE()}(user1);
+
+    // Verify user1 is STILL not yet a moderator after receiving just one of the tokens
+    bool isEntitledOneToken = spaceManager.isEntitled(
+      params.networkId,
+      params.roomId,
+      user1,
+      permission
+    );
+    assertFalse(isEntitledOneToken);
+
+    // transfer tokens
+    transferZionToken(user1, 100);
+
+    // Verify user1 is a moderator
+    bool isEntitled = spaceManager.isEntitled(
+      params.networkId,
+      params.roomId,
+      user1,
+      permission
+    );
+    assertTrue(isEntitled);
+  }
+
   function getTestExternalTokenEntitlement(
     address contractAddress,
     uint256 quantity,

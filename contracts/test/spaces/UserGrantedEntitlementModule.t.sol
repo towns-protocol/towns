@@ -168,4 +168,63 @@ contract UserGrantedEntitlemtModuleTest is BaseSetup, SpaceTestUtils {
       spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
     );
   }
+
+  function testCreateRoleWithEntitlementData() public {
+    string memory spaceName = "test-space";
+    string memory spaceNetworkId = "test-network-id";
+    DataTypes.ExternalTokenEntitlement[] memory tokenEntitlements =
+      new DataTypes.ExternalTokenEntitlement[](0);
+
+    createSimpleSpace(spaceName, spaceNetworkId, spaceManager);
+
+    address[] memory entitlements = spaceManager.getEntitlementModulesBySpaceId(
+      spaceNetworkId
+    );
+
+    assertEq(
+      address(entitlements[0]),
+      address(userGrantedEntitlementModule),
+      "First entitlement module should be user granted"
+    );
+
+    DataTypes.Permission memory permission = permissionsRegistry
+      .getPermissionByPermissionType(PermissionTypes.Write);
+    DataTypes.Permission[] memory permissions = SpaceTestUtils.convertToPermissionArray(permission);
+
+    assertTrue(
+      spaceManager.isEntitled(spaceNetworkId, "", address(this), permission),
+      "User should be entitled to write"
+    );
+
+    assertFalse(
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission),
+      "Zero User should not be entitled to write"
+    );
+
+    address[] memory users = new address[](1);
+    users[0] = address(0);
+    uint256 roleId = spaceManager.createRoleWithEntitlementData(
+      spaceNetworkId,
+      "test-role",
+      permissions,
+      tokenEntitlements,
+      users
+    );
+
+    assertTrue(
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission),
+      "isEntitled should return true for address(0)"
+    );
+
+    spaceManager.removeEntitlement(
+      spaceNetworkId,
+      address(userGrantedEntitlementModule),
+      roleId,
+      abi.encode(address(0))
+    );
+
+    assertFalse(
+      spaceManager.isEntitled(spaceNetworkId, "", address(0), permission)
+    );
+  }
 }

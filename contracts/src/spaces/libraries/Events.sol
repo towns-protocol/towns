@@ -84,6 +84,19 @@ library Events {
   );
 
   /**
+   * @dev Emitted when a role is created
+   * @param spaceId The id of the space
+   * @param roleId The id of the role
+   * @param roleName The name of the role
+   */
+  event CreateRoleWithEntitlementData(
+    string indexed spaceId,
+    uint256 indexed roleId,
+    string indexed roleName,
+    address creator
+  );
+
+  /**
    * @dev Emitted when a role is updated
    * @param spaceId The id of the space
    * @param roleId The id of the role

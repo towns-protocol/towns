@@ -254,6 +254,81 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission[]",
+            "name": "permissions",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "quantity",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "isSingleToken",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct DataTypes.ExternalToken[]",
+                "name": "tokens",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalTokenEntitlement[]",
+            "name": "tokenEntitlements",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "users",
+            "type": "address[]"
+          }
+        ],
+        "name": "createRoleWithEntitlementData",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "components": [
               {
                 "internalType": "string",
@@ -1107,6 +1182,9 @@
         "createRole(string,string)": {
           "notice": "Create a new role on a space Id"
         },
+        "createRoleWithEntitlementData(string,string,(string)[],((address,uint256,bool,uint256)[])[],address[])": {
+          "notice": "Create a new role with entitlement data"
+        },
         "createSpace((string,string,string),(string,(string)[],((address,uint256,bool,uint256)[])[],address[]),(string)[])": {
           "notice": "Create a new space"
         },
@@ -1198,11 +1276,11 @@
   },
   "sources": {
     "contracts/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x806bd18fe302b2e3c49ed97365da690a9f03310cc2123464564c182a6e8733cb",
+      "keccak256": "0xe7ac8df2661ade2ee0bb666f91532304a91ab59f324ab1aba4680032a6d8f251",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6085092e94a6ff69f1bf03d0e51d801f8eac3677f060604d3589e5679e994e6f",
-        "dweb:/ipfs/QmXqeJ8ZoyvxBEhCwSsaTiRFExxeLhTFJ2uoAYKMetSe7F"
+        "bzz-raw://60eea12bc5e68ad02393e548c859dc390073874cd0840a8b41b5d57038ed4c57",
+        "dweb:/ipfs/QmPDoyfSQgXBx5vpuuhBHTEAyvwbSxzVxpqQ3kAbd9PJRC"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -1238,11 +1316,11 @@
       ]
     },
     "contracts/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0x4a82a0d71edf6870113e306e74453fdc738be35b1f601d1ec03ccf48dbf0f146",
+      "keccak256": "0xf2ce4ed7af6f7c8989c5e03003caaa9a4bc6d544dabb0867d858b78292ecd9db",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://bfca35c0bf4f896b77816bb205b5ffc03ad1d6703f2270b70e56ce2dd23dfa05",
-        "dweb:/ipfs/QmU2VmrJrbCQRU2JW7ySrB14AuuhwWDRMjnrRMCWDSUPke"
+        "bzz-raw://896802d0c14f50c9971a0d118e26f20277f485e0b5eac8690d71eb4c417f9e61",
+        "dweb:/ipfs/QmbPipo3NEKPHAteCFBb3Wn71ioewZdyCa4TvendoPk1Rb"
       ]
     },
     "contracts/src/spaces/libraries/Constants.sol": {
@@ -1278,11 +1356,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Events.sol": {
-      "keccak256": "0xf2672cea93eae66554e9ee207271c27205099d4b2f98d7485693780ec4f628e3",
+      "keccak256": "0x0f32e09c3fff4ad8be872e2b01dae1c88061c2dd9db652461005f5dfa9b8fbac",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c066b1040ad26e2ff5e5d66e5e7953f706104d449038a79548ec80bfb4d5571e",
-        "dweb:/ipfs/QmTiFb674cbZboVEVMUaPStDmuVyEHGFp8wLR9VvmztqrG"
+        "bzz-raw://062f9314920f998015e25e30fd360bfe65d2c90c5812ec13b141b378740dda2d",
+        "dweb:/ipfs/QmS9JuuEUshSLhCeATe515Ut5q6jyXKUC1YxrbuqQd4maE"
       ]
     },
     "contracts/src/spaces/libraries/PermissionTypes.sol": {

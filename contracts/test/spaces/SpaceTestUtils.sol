@@ -88,4 +88,26 @@ abstract contract SpaceTestUtils {
       );
     return externalTokenEntitlement;
   }
+
+  function convertToPermissionArray(
+    DataTypes.Permission memory permission
+  ) internal pure returns (DataTypes.Permission[] memory) {
+    DataTypes.Permission[] memory permissions = new DataTypes.Permission[](1);
+    permissions[0] = permission;
+    return permissions;
+  }
+
+  function convertToTokenEntitlementArray(
+    DataTypes.ExternalTokenEntitlement memory externalTokenEntitlement
+  )
+    internal
+    pure
+    returns (DataTypes.ExternalTokenEntitlement[] memory)
+  {
+    DataTypes.ExternalTokenEntitlement[]
+      memory externalTokenEntitlements = new DataTypes
+        .ExternalTokenEntitlement[](1);
+    externalTokenEntitlements[0] = externalTokenEntitlement;
+    return externalTokenEntitlements;
+  }
 }

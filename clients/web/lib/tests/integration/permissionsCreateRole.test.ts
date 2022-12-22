@@ -11,6 +11,7 @@ import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
+import { createPermissions } from '../../src/client/web3/ZionContracts'
 
 describe('create role', () => {
     test('Space owner is allowed to disable space access', async () => {
@@ -98,10 +99,18 @@ describe('create role', () => {
 
         /** Act */
         // create new role in space
-        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.networkId as string,
-            'newRole1',
-        )
+        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
+        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const users: string[] = []
+
+        const roleIdentifier: RoleIdentifier | undefined =
+            await alice.createRoleWithEntitlementData(
+                roomId?.networkId as string,
+                'newRole1',
+                permissions,
+                tokenEntitlements,
+                users,
+            )
 
         /** Assert */
         expect(roleIdentifier).toBeDefined()
@@ -119,8 +128,17 @@ describe('create role', () => {
         const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
         /** Act & Assert */
         // Try to create new role in space without permission
+        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
+        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const users: string[] = []
         const error = await getError<Error>(async function () {
-            await tokenGrantedUser.createRole(roomId?.networkId as string, 'newRole1')
+            await tokenGrantedUser.createRoleWithEntitlementData(
+                roomId?.networkId as string,
+                'newRole1',
+                permissions,
+                tokenEntitlements,
+                users,
+            )
         })
 
         /* Assert */
@@ -144,10 +162,17 @@ describe('create role', () => {
         ])
         /** Act */
         // create new role in space
-        const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
-            roomId?.networkId as string,
-            'newRole1',
-        )
+        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
+        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const users: string[] = []
+        const roleIdentifier: RoleIdentifier | undefined =
+            await tokenGrantedUser.createRoleWithEntitlementData(
+                roomId?.networkId as string,
+                'newRole1',
+                permissions,
+                tokenEntitlements,
+                users,
+            )
 
         /** Assert */
         expect(roleIdentifier).toBeDefined()
@@ -162,14 +187,25 @@ describe('create role', () => {
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         /** Act */
         // create new role in space
-        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.networkId as string,
-            'newRole1',
-        )
-        const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
-            roomId?.networkId as string,
-            'newRole1',
-        )
+        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
+        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const users: string[] = []
+        const roleIdentifier: RoleIdentifier | undefined =
+            await alice.createRoleWithEntitlementData(
+                roomId?.networkId as string,
+                'newRole1',
+                permissions,
+                tokenEntitlements,
+                users,
+            )
+        const roleIdentifier2: RoleIdentifier | undefined =
+            await alice.createRoleWithEntitlementData(
+                roomId?.networkId as string,
+                'newRole2',
+                permissions,
+                tokenEntitlements,
+                users,
+            )
         /** Assert */
         expect(roleIdentifier?.roleId).toBeDefined()
         expect(roleIdentifier2?.roleId).toBeDefined()

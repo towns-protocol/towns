@@ -32,7 +32,7 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
     return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
   }
 
-  function testGetEntitlementsInfoBySpaceId() public {
+    function testGetEntitlementsInfoBySpaceId() public {
     string memory networkId = "!7evmpuHDDgkady9u:localhost";
 
     createSimpleSpace("test", networkId, spaceManager);
@@ -654,5 +654,49 @@ contract ZionSpaceManagerTest is BaseSetup, MerkleHelper, SpaceTestUtils {
       ownerRoleId,
       abi.encode(testTokenGate)
     );
+  }
+
+  function testCreateRoleWithEntitlementData() public {
+    string memory networkId = "!7evmpuHDDgkady9u:localhost";
+
+    createSimpleSpace("test", networkId, spaceManager);
+
+    // Create role and add permissions
+    string memory roleName = "TestRole";
+    address[] memory users = new address[](0);
+    DataTypes.ExternalTokenEntitlement[] memory tokenEntitlements =
+      new DataTypes.ExternalTokenEntitlement[](0);
+    DataTypes.Permission[] memory testPermissions = new DataTypes.Permission[](2);
+    testPermissions[0] = DataTypes.Permission("TestPermission");
+    testPermissions[1] = DataTypes.Permission("TestPermission2");
+    uint256 roleId = spaceManager.createRoleWithEntitlementData(
+      networkId,
+      roleName,
+      testPermissions,
+      tokenEntitlements,
+      users
+    );
+
+    DataTypes.Permission[] memory permissions = roleManager
+      .getPermissionsBySpaceIdByRoleId(
+        spaceManager.getSpaceIdByNetworkId(networkId),
+        roleId
+      );
+
+    assertEq(permissions.length, 2);
+
+    spaceManager.removePermissionFromRole(
+      networkId,
+      roleId,
+      DataTypes.Permission("TestPermission")
+    );
+
+    permissions = roleManager.getPermissionsBySpaceIdByRoleId(
+      spaceManager.getSpaceIdByNetworkId(networkId),
+      roleId
+    );
+
+    assertEq(permissions.length, 1);
+    assertEq(permissions[0].name, "TestPermission2");
   }
 }

@@ -67,6 +67,37 @@
           {
             "indexed": true,
             "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": true,
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          }
+        ],
+        "name": "CreateRoleWithEntitlementData",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "string",
             "name": "spaceNetworkId",
             "type": "string"
           },
@@ -294,6 +325,14 @@
             "spaceId": "The id of the space"
           }
         },
+        "CreateRoleWithEntitlementData(string,uint256,string,address)": {
+          "details": "Emitted when a role is created",
+          "params": {
+            "roleId": "The id of the role",
+            "roleName": "The name of the role",
+            "spaceId": "The id of the space"
+          }
+        },
         "CreateSpace(string,address)": {
           "details": "Emitted when a space is created",
           "params": {
@@ -405,11 +444,11 @@
   },
   "sources": {
     "contracts/src/spaces/libraries/Events.sol": {
-      "keccak256": "0xf2672cea93eae66554e9ee207271c27205099d4b2f98d7485693780ec4f628e3",
+      "keccak256": "0x0f32e09c3fff4ad8be872e2b01dae1c88061c2dd9db652461005f5dfa9b8fbac",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c066b1040ad26e2ff5e5d66e5e7953f706104d449038a79548ec80bfb4d5571e",
-        "dweb:/ipfs/QmTiFb674cbZboVEVMUaPStDmuVyEHGFp8wLR9VvmztqrG"
+        "bzz-raw://062f9314920f998015e25e30fd360bfe65d2c90c5812ec13b141b378740dda2d",
+        "dweb:/ipfs/QmS9JuuEUshSLhCeATe515Ut5q6jyXKUC1YxrbuqQd4maE"
       ]
     }
   },

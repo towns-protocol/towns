@@ -90,56 +90,28 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
         entitlementData.roleName
       );
 
-      //Add all the permissions for this role to it
-      for (uint256 i = 0; i < permissionLen; ) {
-        roleManager.addPermissionToRole(
-          spaceId,
-          additionalRoleId,
-          entitlementData.permissions[i]
-        );
-        unchecked {
-          ++i;
-        }
-      }
-      //Iterate through the external tokens for this role and add them all to the token entitlement module
-      if (entitlementData.externalTokenEntitlements.length > 0) {
-        for (
-          uint256 i = 0;
-          i < entitlementData.externalTokenEntitlements.length;
+      // Add all the permissions for this role to it
+      _addPermissionsToRole(
+        spaceId,
+        additionalRoleId,
+        entitlementData.permissions
+      );
 
-        ) {
-          DataTypes.ExternalTokenEntitlement
-            memory externalTokenEntitlement = entitlementData
-              .externalTokenEntitlements[i];
+      // Iterate through the external tokens for this role and add them all to the
+      // token entitlement module
+      _addRoleToTokenEntitlementModule(
+        spaceId,
+        additionalRoleId,
+        entitlementData.externalTokenEntitlements
+      );
 
-          // add additional role to the token entitlement module
-          _addRoleToEntitlementModule(
-            spaceId,
-            DEFAULT_TOKEN_ENTITLEMENT_MODULE,
-            additionalRoleId,
-            abi.encode(externalTokenEntitlement)
-          );
-          unchecked {
-            ++i;
-          }
-        }
-      }
-
-      //Iterate through the specified users for this role and add them all to the user entitlement module
-      if (entitlementData.users.length > 0) {
-        for (uint256 i = 0; i < entitlementData.users.length; ) {
-          // add additional role to the user entitlement module
-          _addRoleToEntitlementModule(
-            spaceId,
-            DEFAULT_USER_ENTITLEMENT_MODULE,
-            additionalRoleId,
-            abi.encode(address(entitlementData.users[i]))
-          );
-          unchecked {
-            ++i;
-          }
-        }
-      }
+      // Iterate through the specified users for this role and add them all to
+      // the user entitlement module
+      _addRoleToUserEntitlementModule(
+        spaceId,
+        additionalRoleId,
+        entitlementData.users
+      );
     }
 
     emit Events.CreateSpace(info.spaceNetworkId, _msgSender());
@@ -371,7 +343,41 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
+  function createRoleWithEntitlementData(
+    string calldata spaceNetworkId,
+    string calldata roleName,
+    DataTypes.Permission[] calldata permissions,
+    DataTypes.ExternalTokenEntitlement[] calldata tokenEntitlements, // For Token Entitlements
+    address[] calldata users // For User Entitlements
+  ) external returns (uint256 roleId) {
+    /** Validate inputs */
+    require(permissions.length > 0, "No permissions provided");
+    _validateIsAllowed(
+      spaceNetworkId,
+      "",
+      PermissionTypes.ModifySpacePermissions
+    );
 
+    // Create the role
+    uint256 spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
+    roleId = roleManager.createRole(spaceId, roleName);
+    // Add the permissions to the role
+    _addPermissionsToRole(spaceId, roleId, permissions);
+    // Add the token entitlements to the role
+    _addRoleToTokenEntitlementModule(spaceId, roleId, tokenEntitlements);
+    // Add the users to the role
+    _addRoleToUserEntitlementModule(spaceId, roleId, users);
+
+    emit Events.CreateRoleWithEntitlementData(
+      spaceNetworkId,
+      roleId,
+      roleName,
+      _msgSender()
+    );
+    return roleId;
+  }
+
+  /// @inheritdoc ISpaceManager
   function removeRole(string calldata spaceNetworkId, uint256 roleId) external {
     _validateIsAllowed(
       spaceNetworkId,
@@ -902,6 +908,65 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
       spaceId
     );
     return tokenInfo;
+  }
+
+  // Add all the permissions for this role to it
+  function _addPermissionsToRole(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.Permission[] calldata permissions
+  ) internal {
+    for (uint256 i = 0; i < permissions.length; ) {
+      roleManager.addPermissionToRole(spaceId, roleId, permissions[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  // Iterate through the external tokens for this role and add them all to the
+  // token entitlement module
+  function _addRoleToTokenEntitlementModule(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.ExternalTokenEntitlement[] calldata tokenEntitlements
+  ) internal {
+    for (uint256 i = 0; i < tokenEntitlements.length; ) {
+      DataTypes.ExternalTokenEntitlement
+        memory externalTokenEntitlement = tokenEntitlements[i];
+
+      // add additional role to the token entitlement module
+      _addRoleToEntitlementModule(
+        spaceId,
+        DEFAULT_TOKEN_ENTITLEMENT_MODULE,
+        roleId,
+        abi.encode(externalTokenEntitlement)
+      );
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  // Iterate through the specified users for this role and add them all to
+  // the user entitlement module
+  function _addRoleToUserEntitlementModule(
+    uint256 spaceId,
+    uint256 roleId,
+    address[] calldata users
+  ) internal {
+    for (uint256 i = 0; i < users.length; ) {
+      // add additional role to the user entitlement module
+      _addRoleToEntitlementModule(
+        spaceId,
+        DEFAULT_USER_ENTITLEMENT_MODULE,
+        roleId,
+        abi.encode(users[i])
+      );
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// ****************************
