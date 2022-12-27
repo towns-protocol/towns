@@ -27,6 +27,12 @@ interface IRoleManager {
 
   function removeRole(uint256 spaceId, uint256 roleId) external;
 
+  function modifyRoleName(
+    uint256 spaceId,
+    uint256 roleId,
+    string calldata newRoleName
+  ) external;
+
   /// @notice Returns the permissions for a role in a space
   function getPermissionsBySpaceIdByRoleId(
     uint256 spaceId,

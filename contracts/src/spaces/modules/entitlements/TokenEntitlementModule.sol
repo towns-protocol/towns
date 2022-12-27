@@ -12,6 +12,7 @@ import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
 import {Errors} from "../../libraries/Errors.sol";
 
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
+import {Utils} from "../../libraries/Utils.sol";
 
 contract TokenEntitlementModule is EntitlementModuleBase {
   struct TokenEntitlement {
@@ -27,11 +28,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     bytes32[] entitlementIds;
     mapping(uint256 => uint256[]) roleIdsByChannelId;
     mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
-  }
-
-  struct EntitlementInfo {
-    uint256 entitlementId;
-    bytes entitlementData;
+    mapping(uint256 => bytes[]) entitlementDataByRoleId;
   }
 
   mapping(uint256 => SpaceTokenEntitlements) internal entitlementsBySpaceId;
@@ -54,13 +51,20 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     )
   {}
 
+  function getEntitlementDataByRoleId(
+    uint256 spaceId,
+    uint256 roleId
+  ) external view override returns (bytes[] memory) {
+    return entitlementsBySpaceId[spaceId].entitlementDataByRoleId[roleId];
+  }
+
   function setSpaceEntitlement(
     uint256 spaceId,
     uint256 roleId,
     bytes calldata entitlementData
   ) external override onlySpaceManager {
     // get the length of the total Ids to get our next Id
-    bytes32 entitlementId = keccak256(abi.encode(roleId, entitlementData));
+    bytes32 entitlementId = keccak256(abi.encode(roleId, entitlementData));    
 
     // and add it to the array for iteration
     entitlementsBySpaceId[spaceId].entitlementIds.push(entitlementId);
@@ -78,6 +82,11 @@ contract TokenEntitlementModule is EntitlementModuleBase {
     //Set so we can look up all entitlements by role when creating a new channel with a roleId
     entitlementsBySpaceId[spaceId].entitlementIdsByRoleId[roleId].push(
       entitlementId
+    );
+
+    //Set so we can look up all entitlements by role
+    entitlementsBySpaceId[spaceId].entitlementDataByRoleId[roleId].push(
+      entitlementData
     );
   }
 
@@ -155,6 +164,26 @@ contract TokenEntitlementModule is EntitlementModuleBase {
 
     //delete the main object
     delete entitlementsBySpaceId[spaceId].entitlementsById[entitlementId];
+
+    // delete the entitlement data
+    bytes[] memory entitlementDataFromRoleId = entitlementsBySpaceId[spaceId]
+      .entitlementDataByRoleId[roleId];
+    for (uint256 i = 0; i < entitlementDataFromRoleId.length; ) {
+      if (Utils.bytesEquals(entitlementDataFromRoleId[i], entitlementData)) {
+        entitlementsBySpaceId[spaceId].entitlementDataByRoleId[i] = 
+          entitlementsBySpaceId[spaceId].entitlementDataByRoleId[
+            entitlementDataFromRoleId.length - 1
+          ];
+        entitlementsBySpaceId[spaceId].entitlementDataByRoleId[roleId].pop();
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    if (entitlementsBySpaceId[spaceId].entitlementDataByRoleId[roleId].length == 0) {
+      delete entitlementsBySpaceId[spaceId].entitlementDataByRoleId[roleId];
+    }
   }
 
   function removeRoleIdFromChannel(
@@ -319,7 +348,7 @@ contract TokenEntitlementModule is EntitlementModuleBase {
       } catch {}
     }
     return false;
-  }
+  }  
 
   function _isERC20Entitled(
     address contractAddress,

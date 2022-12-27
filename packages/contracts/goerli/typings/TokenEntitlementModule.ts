@@ -46,9 +46,10 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     "_spaceManager()": FunctionFragment;
     "addRoleIdToChannel(uint256,uint256,uint256)": FunctionFragment;
     "description()": FunctionFragment;
+    "getEntitlementDataByRoleId(uint256,uint256)": FunctionFragment;
     "getUserRoles(uint256,address)": FunctionFragment;
     "isEntitled(uint256,uint256,address,(string))": FunctionFragment;
-    "isTokenEntitled(uint256,address,uint256)": FunctionFragment;
+    "isTokenEntitled(uint256,address,bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
     "removeRoleIdFromChannel(uint256,uint256,uint256)": FunctionFragment;
@@ -64,6 +65,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
       | "_spaceManager"
       | "addRoleIdToChannel"
       | "description"
+      | "getEntitlementDataByRoleId"
       | "getUserRoles"
       | "isEntitled"
       | "isTokenEntitled"
@@ -100,6 +102,10 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getEntitlementDataByRoleId",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getUserRoles",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
   ): string;
@@ -117,7 +123,7 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
+      PromiseOrValue<BytesLike>
     ]
   ): string;
   encodeFunctionData(
@@ -172,6 +178,10 @@ export interface TokenEntitlementModuleInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "description",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getEntitlementDataByRoleId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -247,6 +257,12 @@ export interface TokenEntitlementModule extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<[string]>;
 
+    getEntitlementDataByRoleId(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
+
     getUserRoles(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
@@ -264,7 +280,7 @@ export interface TokenEntitlementModule extends BaseContract {
     isTokenEntitled(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
-      entitlementId: PromiseOrValue<BigNumberish>,
+      entitlementId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
@@ -314,6 +330,12 @@ export interface TokenEntitlementModule extends BaseContract {
 
   description(overrides?: CallOverrides): Promise<string>;
 
+  getEntitlementDataByRoleId(
+    spaceId: PromiseOrValue<BigNumberish>,
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
+
   getUserRoles(
     spaceId: PromiseOrValue<BigNumberish>,
     user: PromiseOrValue<string>,
@@ -331,7 +353,7 @@ export interface TokenEntitlementModule extends BaseContract {
   isTokenEntitled(
     spaceId: PromiseOrValue<BigNumberish>,
     user: PromiseOrValue<string>,
-    entitlementId: PromiseOrValue<BigNumberish>,
+    entitlementId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
@@ -381,6 +403,12 @@ export interface TokenEntitlementModule extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<string>;
 
+    getEntitlementDataByRoleId(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
     getUserRoles(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
@@ -398,7 +426,7 @@ export interface TokenEntitlementModule extends BaseContract {
     isTokenEntitled(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
-      entitlementId: PromiseOrValue<BigNumberish>,
+      entitlementId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -451,6 +479,12 @@ export interface TokenEntitlementModule extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getEntitlementDataByRoleId(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getUserRoles(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
@@ -468,7 +502,7 @@ export interface TokenEntitlementModule extends BaseContract {
     isTokenEntitled(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
-      entitlementId: PromiseOrValue<BigNumberish>,
+      entitlementId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -521,6 +555,12 @@ export interface TokenEntitlementModule extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    getEntitlementDataByRoleId(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getUserRoles(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
@@ -538,7 +578,7 @@ export interface TokenEntitlementModule extends BaseContract {
     isTokenEntitled(
       spaceId: PromiseOrValue<BigNumberish>,
       user: PromiseOrValue<string>,
-      entitlementId: PromiseOrValue<BigNumberish>,
+      entitlementId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

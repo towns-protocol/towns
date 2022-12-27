@@ -10,6 +10,7 @@ import {PermissionTypes} from "../../libraries/PermissionTypes.sol";
 import {Errors} from "../../libraries/Errors.sol";
 
 import {EntitlementModuleBase} from "../EntitlementModuleBase.sol";
+import {Utils} from "../../libraries/Utils.sol";
 
 contract UserGrantedEntitlementModule is EntitlementModuleBase {
   struct Entitlement {
@@ -30,6 +31,10 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
   mapping(uint256 => mapping(uint256 => uint256[]))
     internal _rolesByChannelIdBySpaceId;
 
+  // spaceId => roleId => entitlementData[]
+  mapping(uint256 => mapping(uint256 => bytes[]))
+    internal _entitlementDataBySpaceIdByRoleId;
+
   constructor(
     string memory name_,
     string memory description_,
@@ -48,6 +53,13 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     )
   {}
 
+  function getEntitlementDataByRoleId(
+    uint256 spaceId,
+    uint256 roleId
+  ) external view override returns (bytes[] memory) {
+    return _entitlementDataBySpaceIdByRoleId[spaceId][roleId];
+  }
+
   function setSpaceEntitlement(
     uint256 spaceId,
     uint256 roleId,
@@ -59,6 +71,7 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
     _entitlementsByUserBySpaceId[spaceId][user].push(
       Entitlement(user, block.timestamp, roleId)
     );
+    _entitlementDataBySpaceIdByRoleId[spaceId][roleId].push(entitlementData);
   }
 
   function addRoleIdToChannel(
@@ -222,6 +235,20 @@ contract UserGrantedEntitlementModule is EntitlementModuleBase {
 
         _usersByRoleIdBySpaceId[spaceId][roleId].pop();
       }
+    }
+
+    uint256 entitlementDataLen = _entitlementDataBySpaceIdByRoleId[spaceId][roleId].length;
+    for (uint256 i = 0; i < entitlementDataLen; i++) {
+      if (Utils.bytesEquals(_entitlementDataBySpaceIdByRoleId[spaceId][roleId][i], entitlementData)) {
+        _entitlementDataBySpaceIdByRoleId[spaceId][roleId][
+          i
+        ] = _entitlementDataBySpaceIdByRoleId[spaceId][roleId][entitlementDataLen - 1];
+        _entitlementDataBySpaceIdByRoleId[spaceId][roleId].pop();
+        break;
+      }
+    }
+    if (_entitlementDataBySpaceIdByRoleId[spaceId][roleId].length == 0) {
+      delete _entitlementDataBySpaceIdByRoleId[spaceId][roleId];
     }
   }
 

@@ -51,6 +51,7 @@ export interface ZionRoleManagerInterface extends utils.Interface {
     "getPermissionsBySpaceIdByRoleId(uint256,uint256)": FunctionFragment;
     "getRoleBySpaceIdByRoleId(uint256,uint256)": FunctionFragment;
     "getRolesBySpaceId(uint256)": FunctionFragment;
+    "modifyRoleName(uint256,uint256,string)": FunctionFragment;
     "owner()": FunctionFragment;
     "removePermissionFromRole(uint256,uint256,(string))": FunctionFragment;
     "removeRole(uint256,uint256)": FunctionFragment;
@@ -67,6 +68,7 @@ export interface ZionRoleManagerInterface extends utils.Interface {
       | "getPermissionsBySpaceIdByRoleId"
       | "getRoleBySpaceIdByRoleId"
       | "getRolesBySpaceId"
+      | "modifyRoleName"
       | "owner"
       | "removePermissionFromRole"
       | "removeRole"
@@ -102,6 +104,14 @@ export interface ZionRoleManagerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getRolesBySpaceId",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "modifyRoleName",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -148,6 +158,10 @@ export interface ZionRoleManagerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getRolesBySpaceId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "modifyRoleName",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -252,6 +266,13 @@ export interface ZionRoleManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[DataTypes.RoleStructOutput[]]>;
 
+    modifyRoleName(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      newRoleName: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     removePermissionFromRole(
@@ -317,6 +338,13 @@ export interface ZionRoleManager extends BaseContract {
     overrides?: CallOverrides
   ): Promise<DataTypes.RoleStructOutput[]>;
 
+  modifyRoleName(
+    spaceId: PromiseOrValue<BigNumberish>,
+    roleId: PromiseOrValue<BigNumberish>,
+    newRoleName: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   owner(overrides?: CallOverrides): Promise<string>;
 
   removePermissionFromRole(
@@ -381,6 +409,13 @@ export interface ZionRoleManager extends BaseContract {
       spaceId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<DataTypes.RoleStructOutput[]>;
+
+    modifyRoleName(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      newRoleName: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -457,6 +492,13 @@ export interface ZionRoleManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    modifyRoleName(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      newRoleName: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     removePermissionFromRole(
@@ -521,6 +563,13 @@ export interface ZionRoleManager extends BaseContract {
     getRolesBySpaceId(
       spaceId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    modifyRoleName(
+      spaceId: PromiseOrValue<BigNumberish>,
+      roleId: PromiseOrValue<BigNumberish>,
+      newRoleName: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;

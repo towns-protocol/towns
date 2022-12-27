@@ -22,6 +22,11 @@ library Utils {
     return true;
   }
 
+  function bytesEquals(bytes memory b1, bytes memory b2)
+    internal pure returns (bool) {
+    return keccak256(abi.encodePacked(b1)) == keccak256(abi.encodePacked(b2));
+  }
+
   /// @notice validates the name of the space
   /// @param name The name of the space
   function validateName(string calldata name) internal pure {

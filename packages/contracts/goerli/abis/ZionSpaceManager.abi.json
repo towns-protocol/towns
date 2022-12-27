@@ -248,6 +248,81 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "roleName",
+        "type": "string"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission[]",
+        "name": "permissions",
+        "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bool",
+                "name": "isSingleToken",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalToken[]",
+            "name": "tokens",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct DataTypes.ExternalTokenEntitlement[]",
+        "name": "tokenEntitlements",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "users",
+        "type": "address[]"
+      }
+    ],
+    "name": "createRoleWithEntitlementData",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "string",
@@ -766,6 +841,86 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "roleName",
+        "type": "string"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission[]",
+        "name": "permissions",
+        "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bool",
+                "name": "isSingleToken",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalToken[]",
+            "name": "tokens",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct DataTypes.ExternalTokenEntitlement[]",
+        "name": "tokenEntitlements",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "users",
+        "type": "address[]"
+      }
+    ],
+    "name": "modifyRoleWithEntitlementData",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isModified",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

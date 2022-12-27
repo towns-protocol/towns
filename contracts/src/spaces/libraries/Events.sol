@@ -97,6 +97,17 @@ library Events {
   );
 
   /**
+   * @dev Emitted when a role is modified
+   * @param spaceId The id of the space
+   * @param roleId The id of the role
+   */
+  event ModifyRoleWithEntitlementData(
+    string indexed spaceId,
+    uint256 indexed roleId,
+    address updater
+  );
+
+  /**
    * @dev Emitted when a role is updated
    * @param spaceId The id of the space
    * @param roleId The id of the role

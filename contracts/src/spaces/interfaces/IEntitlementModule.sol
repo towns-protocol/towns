@@ -26,6 +26,12 @@ interface IEntitlementModule {
     DataTypes.Permission memory permission
   ) external view returns (bool);
 
+  /// @notice Gets the list of entitlement data for a role
+  function getEntitlementDataByRoleId(
+    uint256 spaceId,
+    uint256 roleId
+  ) external view returns (bytes[] memory);
+
   /// @notice Sets a new entitlement for a space
   function setSpaceEntitlement(
     uint256 spaceId,

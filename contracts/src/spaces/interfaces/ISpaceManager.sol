@@ -86,6 +86,16 @@ interface ISpaceManager {
     address[] calldata users // For User Entitlements
   ) external returns (uint256);
 
+  /// @notice Modify role with entitlement data
+  function modifyRoleWithEntitlementData(
+    string calldata spaceId,
+    uint256 roleId,
+    string calldata roleName,
+    DataTypes.Permission[] calldata permissions,
+    DataTypes.ExternalTokenEntitlement[] calldata tokenEntitlements, // For Token Entitlements
+    address[] calldata users // For User Entitlements
+  ) external returns (bool);
+
   /// @notice Adds a permission to a role
   function addPermissionToRole(
     string calldata spaceId,

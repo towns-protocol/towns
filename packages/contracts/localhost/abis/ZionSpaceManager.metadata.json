@@ -850,6 +850,86 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission[]",
+            "name": "permissions",
+            "type": "tuple[]"
+          },
+          {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "quantity",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "isSingleToken",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct DataTypes.ExternalToken[]",
+                "name": "tokens",
+                "type": "tuple[]"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalTokenEntitlement[]",
+            "name": "tokenEntitlements",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "users",
+            "type": "address[]"
+          }
+        ],
+        "name": "modifyRoleWithEntitlementData",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "isModified",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "owner",
         "outputs": [
@@ -1221,6 +1301,9 @@
         "isEntitlementModuleWhitelisted(string,address)": {
           "notice": "Returns if an entitlement module is whitelisted for a space"
         },
+        "modifyRoleWithEntitlementData(string,uint256,string,(string)[],((address,uint256,bool,uint256)[])[],address[])": {
+          "notice": "Modify role with entitlement data"
+        },
         "removeEntitlement(string,address,uint256,bytes)": {
           "notice": "Removes an entitlement from an entitlement module"
         },
@@ -1276,19 +1359,19 @@
   },
   "sources": {
     "contracts/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0xe7ac8df2661ade2ee0bb666f91532304a91ab59f324ab1aba4680032a6d8f251",
+      "keccak256": "0x0ccd0277d39234f30f2ad95e83e2777ac954d59ed4c59389e61ab696ed4a33c3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://60eea12bc5e68ad02393e548c859dc390073874cd0840a8b41b5d57038ed4c57",
-        "dweb:/ipfs/QmPDoyfSQgXBx5vpuuhBHTEAyvwbSxzVxpqQ3kAbd9PJRC"
+        "bzz-raw://0b088f3d06707244b3efd80c6f91f67ffd21fa7474ec81b619efcd4617355cdc",
+        "dweb:/ipfs/QmaCamU8TwGnYiNBbbethRZSR5EcTuGqCv8VEmDt9yF4tL"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
-      "keccak256": "0xc8c0b671f6633e6d9ae003aff0578d5559d48a36b6e145530abd9ff935c4e813",
+      "keccak256": "0x9f87cc45c58af0f48d79089c154594c37c4e0416584c129b394ef62ddc1bd613",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d820c00db59d269de20538100dbebddf093ec4de39a39651b8e3ddc0396c38a2",
-        "dweb:/ipfs/QmTZ8RR2rvvuRMA8XBSyt5vNmgCkpYkZkvmSkyrJjgF8ng"
+        "bzz-raw://78aa9d235e4aa42fae181b356c7743def26b23c1a20c88b624f713df65c48817",
+        "dweb:/ipfs/QmVz7EqmspN62hvAeeVA1t2k7HqEbuXD3QYcZoXBiv4YJi"
       ]
     },
     "contracts/src/spaces/interfaces/IPermissionRegistry.sol": {
@@ -1300,11 +1383,11 @@
       ]
     },
     "contracts/src/spaces/interfaces/IRoleManager.sol": {
-      "keccak256": "0x4ebccb9b92180a6d56d9a372897ad05f5417dafb12f40cf51512a2267f8ef3ad",
+      "keccak256": "0x92b6478cd53bec46caffe0618507e4152cfc7d3720a17df62bf0da0567643212",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ea4c3db495f1127438f8c45c46a22891224088e75982d529608cad7b55c27083",
-        "dweb:/ipfs/QmamV3fg9HaBhVDbjjNmqAQquCLHxS5ieAvPSkULQGazth"
+        "bzz-raw://67891a6bb4c3167eecf4527a57486cccaeae3e4ddfa0d7b249053dc32f19742a",
+        "dweb:/ipfs/QmVTkRTXHS4eeZJWbDDEedh15wvaPDwL1Tx28njbaXLyEk"
       ]
     },
     "contracts/src/spaces/interfaces/ISpace.sol": {
@@ -1316,19 +1399,19 @@
       ]
     },
     "contracts/src/spaces/interfaces/ISpaceManager.sol": {
-      "keccak256": "0xf2ce4ed7af6f7c8989c5e03003caaa9a4bc6d544dabb0867d858b78292ecd9db",
+      "keccak256": "0xd1d3d8b7a196bb2ec5526eb8b25883d6a9f04d03026a05e73b895f9db187bef5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://896802d0c14f50c9971a0d118e26f20277f485e0b5eac8690d71eb4c417f9e61",
-        "dweb:/ipfs/QmbPipo3NEKPHAteCFBb3Wn71ioewZdyCa4TvendoPk1Rb"
+        "bzz-raw://625064a7ac0a50c603325dd5e70375aad8cf856fb80c6376e4b5c601ada8ba55",
+        "dweb:/ipfs/QmRDsV42pSCZxGsgjfPLKUbvTd1BmfbiVif7oA8b3oEuAD"
       ]
     },
     "contracts/src/spaces/libraries/Constants.sol": {
-      "keccak256": "0xd4f2b16156d8d9f9e0cdcd4ad0835b94a67b49beabe22967eda7c069a7268407",
+      "keccak256": "0xe9e3a6c723495eb46b9aed6868d882eced8b2766133d28a438bdd1b9d1f62695",
       "license": "MIT",
       "urls": [
-        "bzz-raw://077701214ca4757cac2887f47c347ec75a9f3b4026785df11b95a0bc8b1e2ecc",
-        "dweb:/ipfs/Qmd8uKoJU8EAhUhYc1MpDHBUaHHtxGGBr9V9ahVp4cUxPv"
+        "bzz-raw://e605be1bc8a9416c54b48d6e61e47be0266e9e2ea5cad27cbf5a4349ef799406",
+        "dweb:/ipfs/QmRBhdHM7ziCfYshEJiDozK51C9zt4T7TGFnSeLZiaNQ8J"
       ]
     },
     "contracts/src/spaces/libraries/CreationLogic.sol": {
@@ -1356,11 +1439,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Events.sol": {
-      "keccak256": "0x0f32e09c3fff4ad8be872e2b01dae1c88061c2dd9db652461005f5dfa9b8fbac",
+      "keccak256": "0x75d73e771cf6ec22a6176fd01fdbc01f676ad22d55ed284f3f7d3d792e58eb8e",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://062f9314920f998015e25e30fd360bfe65d2c90c5812ec13b141b378740dda2d",
-        "dweb:/ipfs/QmS9JuuEUshSLhCeATe515Ut5q6jyXKUC1YxrbuqQd4maE"
+        "bzz-raw://7e83cfaf7a1d90338a8ba72071d8ddfa0542417e293fe4df021ef1f7d9f66cdb",
+        "dweb:/ipfs/QmUddapNGoSNzVLiTC4rx7ncWMEnZQmst5pfGJM49VShJQ"
       ]
     },
     "contracts/src/spaces/libraries/PermissionTypes.sol": {
@@ -1372,11 +1455,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Utils.sol": {
-      "keccak256": "0xa80bbef58a9e472109f1228b577ccb77d14f10a31a73f5bbc5ad852d490a7639",
+      "keccak256": "0x208f0437ba3da7fa39745826f05109a76974115877c7751bd3c5aab8731fa411",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://062ba1b53957a4cfffbecbbb5a8f918d883553f518683e61471ccb1b697ddaf0",
-        "dweb:/ipfs/QmQTJP2j6M4Hm8GcakRaCy75xNCz7AMh4W3Sd1n69RCKF2"
+        "bzz-raw://e7f7a4af20ad9acbc951d5c3c42083f7d7b55553f6dd34998a1bcb1689973570",
+        "dweb:/ipfs/QmZu3LK8rrZp6FbZfFrowTZendH8KPM1qPpKfkce3Wf6iL"
       ]
     },
     "contracts/src/spaces/storage/ZionSpaceManagerStorage.sol": {

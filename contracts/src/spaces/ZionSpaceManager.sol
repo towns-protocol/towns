@@ -378,6 +378,43 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   }
 
   /// @inheritdoc ISpaceManager
+  function modifyRoleWithEntitlementData(
+    string calldata spaceNetworkId,
+    uint256 roleId,
+    string calldata roleName,
+    DataTypes.Permission[] calldata permissions,
+    DataTypes.ExternalTokenEntitlement[] calldata tokenEntitlements, // For Token Entitlements
+    address[] calldata users // For User Entitlements
+  ) external returns (bool isModified) {
+    /** Validate inputs */
+    require(permissions.length > 0, "No permissions provided");
+    uint256 spaceId = _getSpaceIdByNetworkId(spaceNetworkId);
+    _validateNotOwnerRoleId(spaceId, roleId);
+    _validateIsAllowed(
+      spaceNetworkId,
+      "",
+      PermissionTypes.ModifySpacePermissions
+    );
+
+    /** Modify the role */
+    // Change the role name if it is provided
+    roleManager.modifyRoleName(spaceId, roleId, roleName);
+    // Change the permissions to the role
+    _modifyRolePermissions(spaceId, roleId, permissions);
+    // Change the token entitlements to the role
+    _modifyRoleTokenEntitlements(spaceId, roleId, tokenEntitlements);
+    // Change the users to the role
+    _modifyRoleUserEntitlements(spaceId, roleId, users);
+
+    emit Events.ModifyRoleWithEntitlementData(
+      spaceNetworkId,
+      roleId,
+      _msgSender()
+    );
+    return true;
+  }
+
+  /// @inheritdoc ISpaceManager
   function removeRole(string calldata spaceNetworkId, uint256 roleId) external {
     _validateIsAllowed(
       spaceNetworkId,
@@ -957,6 +994,114 @@ contract ZionSpaceManager is Ownable, ZionSpaceManagerStorage, ISpaceManager {
   ) internal {
     for (uint256 i = 0; i < users.length; ) {
       // add additional role to the user entitlement module
+      _addRoleToEntitlementModule(
+        spaceId,
+        DEFAULT_USER_ENTITLEMENT_MODULE,
+        roleId,
+        abi.encode(users[i])
+      );
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  // Modify the permissions for this role
+  function _modifyRolePermissions(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.Permission[] calldata newPermissions
+  ) internal {
+    DataTypes.Permission[] memory currentPermissions = roleManager
+      .getPermissionsBySpaceIdByRoleId(spaceId, roleId);
+    string memory ownerPermission = IPermissionRegistry(PERMISSION_REGISTRY)
+      .getPermissionByPermissionType(PermissionTypes.Owner)
+      .name;
+    bytes32 ownerHash = keccak256(abi.encodePacked(ownerPermission));
+    for (uint256 i = 0; i < currentPermissions.length; ) {
+      if (
+        keccak256(abi.encodePacked(currentPermissions[i].name)) != ownerHash
+      ) {
+        // Only remove the permission if it is not the owner permission
+        roleManager.removePermissionFromRole(
+          spaceId,
+          roleId,
+          currentPermissions[i]
+        );
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    for (uint256 i = 0; i < newPermissions.length; ) {
+      if (keccak256(abi.encodePacked(newPermissions[i].name)) != ownerHash) {
+        // Only add the permission if it is not the owner permission
+        roleManager.addPermissionToRole(spaceId, roleId, newPermissions[i]);
+      }
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _modifyRoleTokenEntitlements(
+    uint256 spaceId,
+    uint256 roleId,
+    DataTypes.ExternalTokenEntitlement[] calldata tokenEntitlements
+  ) internal {
+    // Remove all the token entitlement data for this role
+    bytes[] memory currentTokenEntitlements = IEntitlementModule(
+      DEFAULT_TOKEN_ENTITLEMENT_MODULE
+    ).getEntitlementDataByRoleId(spaceId, roleId);
+    for (uint256 i = 0; i < currentTokenEntitlements.length; ) {
+      _removeEntitlementRole(
+        spaceId,
+        DEFAULT_TOKEN_ENTITLEMENT_MODULE,
+        roleId,
+        currentTokenEntitlements[i]
+      );
+      unchecked {
+        ++i;
+      }
+    }
+    // add the updated token entitlement data
+    for (uint256 i = 0; i < tokenEntitlements.length; ) {
+      DataTypes.ExternalTokenEntitlement
+        memory externalTokenEntitlement = tokenEntitlements[i];
+      _addRoleToEntitlementModule(
+        spaceId,
+        DEFAULT_TOKEN_ENTITLEMENT_MODULE,
+        roleId,
+        abi.encode(externalTokenEntitlement)
+      );
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _modifyRoleUserEntitlements(
+    uint256 spaceId,
+    uint256 roleId,
+    address[] calldata users
+  ) internal {
+    // Remove all the user entitlement data for this role
+    bytes[] memory currentTokenEntitlements = IEntitlementModule(
+      DEFAULT_USER_ENTITLEMENT_MODULE
+    ).getEntitlementDataByRoleId(spaceId, roleId);
+    for (uint256 i = 0; i < users.length; ) {
+      _removeEntitlementRole(
+        spaceId,
+        DEFAULT_USER_ENTITLEMENT_MODULE,
+        roleId,
+        currentTokenEntitlements[i]
+      );
+      unchecked {
+        ++i;
+      }
+    }
+    // add the updated user entitlement data
+    for (uint256 i = 0; i < users.length; ) {
       _addRoleToEntitlementModule(
         spaceId,
         DEFAULT_USER_ENTITLEMENT_MODULE,

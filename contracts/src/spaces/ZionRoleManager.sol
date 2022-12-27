@@ -44,7 +44,7 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
   ) external onlySpaceManager returns (uint256) {
     uint256 ownerRoleId = CreationLogic.createRole(
       spaceId,
-      "Owner",
+      Constants.OWNER_ROLE_NAME,
       _rolesBySpaceId
     );
 
@@ -79,6 +79,31 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
   ) external onlySpaceManager {
     _validateNotModifyOwner(permission);
     _removePermissionFromRole(spaceId, roleId, permission);
+  }
+
+  function modifyRoleName(
+    uint256 spaceId,
+    uint256 roleId,
+    string calldata newRoleName
+  ) external onlySpaceManager {
+    // Owner role name cannot be modified
+    if (Utils.stringEquals(newRoleName, Constants.OWNER_ROLE_NAME)) {
+      revert Errors.InvalidParameters();
+    }
+
+    DataTypes.Role[] memory roles = _rolesBySpaceId[spaceId].roles;
+    uint256 roleLen = roles.length;
+    for (uint256 i = 0; i < roleLen; ) {
+      if (roleId == roles[i].roleId) {
+        if (!Utils.stringEquals(roles[i].name, newRoleName)) {
+          _rolesBySpaceId[spaceId].roles[i].name = newRoleName;
+        }
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function removeRole(
