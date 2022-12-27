@@ -119,7 +119,7 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         info: Localhost_DataTypes.CreateChannelDataStruct,
     ): Promise<ContractTransaction> {
         if (this.isGoerli) {
-            throw new Error('createChannel not yet deployed on Goerli')
+            return this.goerli_signed.createChannel(info)
         } else {
             return this.localhost_signed.createChannel(info)
         }
