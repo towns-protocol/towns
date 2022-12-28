@@ -1,0 +1,715 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_space",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_tokenEntitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_userEntitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_spaceToken",
+            "type": "address"
+          },
+          {
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "NameContainsInvalidCharacters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NameLengthInvalid",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "PermissionAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "SpaceAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "SPACE_IMPLEMENTATION_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "SPACE_TOKEN_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOKEN_IMPLEMENTATION_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "USER_IMPLEMENTATION_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
+          }
+        ],
+        "name": "addOwnerPermissions",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "spaceName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "spaceNetworkId",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "spaceMetadata",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateSpaceData",
+            "name": "_info",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "roleName",
+                "type": "string"
+              },
+              {
+                "internalType": "string[]",
+                "name": "permissions",
+                "type": "string[]"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "quantity",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "bool",
+                    "name": "isSingleToken",
+                    "type": "bool"
+                  },
+                  {
+                    "internalType": "uint256[]",
+                    "name": "tokenIds",
+                    "type": "uint256[]"
+                  }
+                ],
+                "internalType": "struct DataTypes.ExternalToken[]",
+                "name": "tokens",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "address[]",
+                "name": "users",
+                "type": "address[]"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateSpaceEntitlementData",
+            "name": "_entitlementData",
+            "type": "tuple"
+          },
+          {
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
+          }
+        ],
+        "name": "createSpace",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "_spaceAddress",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getOwnerPermissions",
+        "outputs": [
+          {
+            "internalType": "string[]",
+            "name": "",
+            "type": "string[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "ownerPermissions",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "spaceByHash",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "tokenByHash",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_space",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_tokenEntitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_userEntitlement",
+            "type": "address"
+          }
+        ],
+        "name": "updateInitialImplementations",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "owner()": {
+          "details": "Returns the address of the current owner."
+        },
+        "renounceOwnership()": {
+          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+        },
+        "transferOwnership(address)": {
+          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spacesv2/SpaceFactory.sol": "SpaceFactory"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/spacesv2/Space.sol": {
+      "keccak256": "0xb15b34bbc86f215080957f6a8b662184b92f6496ddf68129299956ade3074ca9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://68e0dc5e0230fe50374949331dcfbcf0a2ac29f3a4fcc5a5278284c3ded4f7de",
+        "dweb:/ipfs/QmY71VSJEdW2dzADVq4rXXGTTMby8hG8LZ6ni8xxfJSAT3"
+      ]
+    },
+    "contracts/src/spacesv2/SpaceFactory.sol": {
+      "keccak256": "0x7cc1fce6c1e0943dbcc23531f7f9e96cb5eb2dfe4fc3379b5c837f96ad75a242",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e6f0bd62e8d2074507b019f4952a98862b1e2460e80754531fb18fb1595638c6",
+        "dweb:/ipfs/QmNx9iLW5FVRWAvmxcho8JtxoqrnDfaN9KGSmVbkAK7KCi"
+      ]
+    },
+    "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
+      "keccak256": "0x7c472c858ff1f1ffced419705698e73d71d2a31a9aec0cc1e7251b083e813675",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://dd2c1d9dfb6d449b7b0fc098f29bca10e12e1ac00907f0d7ebe384a43cbed62a",
+        "dweb:/ipfs/QmZsgwGreWAVGWdu9bc6hHKX6K6osGcwK1EVAYoSyWnkkN"
+      ]
+    },
+    "contracts/src/spacesv2/entitlements/UserEntitlement.sol": {
+      "keccak256": "0x20eebab2e60baed301f1bff3be93c8ee8c89bc92c5ae80e44ed57910c7a1aa34",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e406e3b803b4477bff722328398ac968e225b565783d79b68dba4d2769f5ccbf",
+        "dweb:/ipfs/QmZprRJ5NsjQFECqqeuSqns5NqTBFHAuBmTDvNiWD9C9Cy"
+      ]
+    },
+    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
+      "keccak256": "0x7b23ec78ac0df3ad63a61530279b11c9470130b271120459ae615aec481b8cc8",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5b3666bca1e15b3ce9cf557885be74004f2d45dd0d5e2bf6e4a3d5767fdecd55",
+        "dweb:/ipfs/QmSAF8ehZKfYDaQXBM2Pyw8ehC9Lo53BgXeDkHHSmsjonV"
+      ]
+    },
+    "contracts/src/spacesv2/interfaces/ISpace.sol": {
+      "keccak256": "0xecaee683f287d1a0b4752c27841f853dd35cf5144c5e09fcf583e3b0af154513",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://9c2ddab288abbfdcaca5bab9d073ccbeffdcd68cee6480ad9fcdeef5040dfe1a",
+        "dweb:/ipfs/QmSg5JEcM47C1CdMFLpnrof4ETaop4NK7n522p5xezRgES"
+      ]
+    },
+    "contracts/src/spacesv2/interfaces/ISpaceFactory.sol": {
+      "keccak256": "0x3ef0e81aec39c0787f51bb8d1d0719210b701eeac4d0d7b9a3536de55dabf022",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://00b14691b7c4ef4cd506144e925eba141b7ede01d23e65ce58dd5ebb5150f795",
+        "dweb:/ipfs/QmUxtREvhAFKmqzp5k6Rvyc9JZbv9PF6J4qExQ7rEU4Sso"
+      ]
+    },
+    "contracts/src/spacesv2/interfaces/ISpaceOwner.sol": {
+      "keccak256": "0x05a2a7acd81fa42deb1b153a96b4476a59af31eff7f16a171b1a84c28767a8f1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b090791a0bfae05714ea02f7e3387eda2025f2b042435f84fc9f079ffa8efcfa",
+        "dweb:/ipfs/QmTq6Dtx5V1bQ7aJFYuNc4K4FN5NtZ5iZqn6sSf5QoaAnt"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/DataTypes.sol": {
+      "keccak256": "0x2614bea5a2d99b821529b6c1d0e320a6ce81fbd9f2b895d61266084f49459df3",
+      "license": "Apache-20",
+      "urls": [
+        "bzz-raw://c7d745413d762b45287c4606bc942607f4c420bd112c50e20005ec0a06d8f66a",
+        "dweb:/ipfs/QmQdvwGPb8EecwweGMhUQJg4DTzfpXi4qYmR4qRjH9MB3k"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Errors.sol": {
+      "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
+        "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Events.sol": {
+      "keccak256": "0x2b77d3d9886e56a15ae3c3d37bfe68a4bd748b18703b5ac1f4dcfab297f7000e",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f2c885715968f6a57a9294e230d3fbb2d63e71f43e28c24421e2e5dc5790cd1a",
+        "dweb:/ipfs/QmSn4n416SePtjp59WohbUmgV6nzhjGkVZPvymwzMgEMwn"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Permissions.sol": {
+      "keccak256": "0x041510f19d4c4409f07a2371e53863f21c51d11f20d1c5d36898b25da80acfed",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://b3fdf833d428ec8bab778017fb475eb70ee652746058e46cd07c0da07dcb660f",
+        "dweb:/ipfs/QmTVN4fe7FnrrL9o9DZbxZUwVbBTjrScybaGiW8V9oYhuR"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Utils.sol": {
+      "keccak256": "0x5aa3aee5134845cd64fbc2df36dc016b509524443156f3d7636339cf8463424b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6bf45246ccecdc97a6811cb211856d65d11be51cbda48640fab6875eafd21557",
+        "dweb:/ipfs/QmV2N9CXHdErW8ZKLMXsyK6WgvSX9z177BhK2nnXFaEUAe"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol": {
+      "keccak256": "0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7fc8396619de513c96b6e00301b88dd790e83542aab918425633a5f7297a15a",
+        "dweb:/ipfs/QmXbP4kiZyp7guuS7xe8KaybnwkRPGrBc2Kbi3vhcTfpxb"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/interfaces/draft-IERC1822Upgradeable.sol": {
+      "keccak256": "0x77c89f893e403efc6929ba842b7ccf6534d4ffe03afe31670b4a528c0ad78c0f",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://496bd9b3df2455d571018c09f0c6badd29713fdeb907c6aa09d8d28cb603f053",
+        "dweb:/ipfs/QmXdJDyYs6WMwMh21dez2BYPxhSUaUYFMDtVNcn2cgFR79"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol": {
+      "keccak256": "0x315887e846f1e5f8d8fa535a229d318bb9290aaa69485117f1ee8a9a6b3be823",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://29dda00da6d269685b555e710e4abf1c3eb6d00c15b888a7880a2f8dd3c4fdc2",
+        "dweb:/ipfs/QmSqcjtdECygtT1Gy7uEo42x8542srpgGEeKKHfcnQqXgn"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/beacon/IBeaconUpgradeable.sol": {
+      "keccak256": "0x24b86ac8c005b8c654fbf6ac34a5a4f61580d7273541e83e013e89d66fbf0908",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://4dbfe1a3b3b3fb64294ce41fd2ad362e7b7012208117864f42c1a67620a6d5c1",
+        "dweb:/ipfs/QmVMU5tWt7zBQMmf5cpMX8UMHV86T3kFeTxBTBjFqVWfoJ"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol": {
+      "keccak256": "0xedc5eaa54866c6d0e8960d9fe8ea6f9052ba28686907f6886f83dfba41fa1549",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://0b296244e62d13e87d8272c574fb58c22af02b262d74d7a8f642753522351bb0",
+        "dweb:/ipfs/Qmcd3MfBWRE8EQt67AqgGGHviNum5aQ7JE7manH5nNtx4o"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol": {
+      "keccak256": "0xcf6837f68b5376c07f7b5130dc8de39f00f357f119113a82a15229bf2b96fdc5",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://6be1e3e05f79a714c08a446a994dba2939203092d7aa97302d7b2ab157b437fb",
+        "dweb:/ipfs/QmdgBbHNijVgApRQ9UM17qds6QdhTgXxKHUoLAswA6VNyH"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol": {
+      "keccak256": "0x0a3b4afc301241e2629ad192fa02e0f8626e3cf38ab6f45342bfd7afbde16ee0",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://b189423f1102ff4487e9c59a65ec400b98cc4aeef478dac8272b482e9f5ad7de",
+        "dweb:/ipfs/QmdpYHrzD8wPe5DMuEiWkXiVLsTkqD7C4tbBjWwkBQwJi2"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol": {
+      "keccak256": "0x963ea7f0b48b032eef72fe3a7582edf78408d6f834115b9feadd673a4d5bd149",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d6520943ea55fdf5f0bafb39ed909f64de17051bc954ff3e88c9e5621412c79c",
+        "dweb:/ipfs/QmWZ4rAKTQbNG2HxGs46AcTXShsVytKeLs7CUCdCSv5N7a"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/StorageSlotUpgradeable.sol": {
+      "keccak256": "0x09864aea84f01e39313375b5610c73a3c1c68abbdc51e5ccdd25ff977fdadf9a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://aedb48081190fa828d243529ce25c708202c7d4ccfe99f0e4ecd6bc0cfcd03f3",
+        "dweb:/ipfs/QmWyiDQHPZA56iqsAwTmiJoxvNeRQLUVr4gTfzpdpXivpo"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol": {
+      "keccak256": "0x9a3b990bd56d139df3e454a9edf1c64668530b5a77fc32eb063bc206f958274a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://0895399d170daab2d69b4c43a0202e5a07f2e67a93b26e3354dcbedb062232f7",
+        "dweb:/ipfs/QmUM1VH3XDk559Dsgh4QPvupr3YVKjz87HrSyYzzVFZbxw"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/IERC165Upgradeable.sol": {
+      "keccak256": "0xc6cef87559d0aeffdf0a99803de655938a7779ec0a3cd5d4383483ad85565a09",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://92ad7e572cf44e6b4b37631b44b62f9eb9fb1cf14d9ce51c1504d5dc7ccaf758",
+        "dweb:/ipfs/QmcnbqX85tsWnUXPmtuPLE4SczME2sJaTfmqEFkuAJvWhy"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+      "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
+        "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol": {
+      "keccak256": "0x1d4afe6cb24200cc4545eed814ecf5847277dfe5d613a1707aad5fceecebcfff",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://383fb7b8181016ac5ccf07bc9cdb7c1b5045ea36e2cc4df52bcbf20396fc7688",
+        "dweb:/ipfs/QmYJ7Cg4WmE3rR8KGQxjUCXFfTH6TcwZ2Z1f6tPrq7jHFr"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol": {
+      "keccak256": "0xa2b22da3032e50b55f95ec1d13336102d675f341167aa76db571ef7f8bb7975d",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://96b6d77a20bebd4eb06b801d3d020c7e82be13bd535cb0d0a6b7181c51dab5d5",
+        "dweb:/ipfs/QmPUR9Cv9jNFdQX6PtBfaBW1ZCnKwiu65R2VD5kbdanDyn"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Upgrade.sol": {
+      "keccak256": "0xabf3f59bc0e5423eae45e459dbe92e7052c6983628d39008590edc852a62f94a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://89c2a0f70157c13845be5cb49b078a6374fee3a78fa950052a3af26190255da8",
+        "dweb:/ipfs/QmUcvMEQH1oMM2pUyMuDiBUKdvvnTz1NRB8bmPHrVq8725"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/proxy/Proxy.sol": {
+      "keccak256": "0xc130fe33f1b2132158531a87734153293f6d07bc263ff4ac90e85da9c82c0e27",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://8831721b6f4cc26534d190f9f1631c3f59c9ff38efdd911f85e0882b8e360472",
+        "dweb:/ipfs/QmQZnLErZNStirSQ13ZNWQgvEYUtGE5tXYwn4QUPaVUfPN"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol": {
+      "keccak256": "0xd50a3421ac379ccb1be435fa646d66a65c986b4924f0849839f08692f39dde61",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ada1e030c0231db8d143b44ce92b4d1158eedb087880cad6d8cc7bd7ebe7b354",
+        "dweb:/ipfs/QmWZ2NHZweRpz1U9GF6R1h65ri76dnX7fNxLBeM2t5N5Ce"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
+      "keccak256": "0x03a26b0ce85afee2c16f3232bd123286b849ca576778781cf6e8bbf51cb7570a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://13a4f5cec214760f14abaedfc0a1860d80c2267386fa62dc77e8eee51ec84d71",
+        "dweb:/ipfs/QmWmEKeofHqLnNEeCivhzTepo1k5xZZqzMxyyyzNBYiYBW"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol": {
+      "keccak256": "0x6392f2cfe3a5ee802227fe7a2dfd47096d881aec89bddd214b35c5b46d3cd941",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://bd9c47a375639888e726a99da718890ba16d17d7ad9eacb0ccc892d46d1b3ee0",
+        "dweb:/ipfs/Qmb41W5RUjy2sWg49A2rMnxekSeEk6SvGyJL5tyCCSr7un"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
+      "keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
+        "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+      "keccak256": "0x68404b57d114b893554b0e54334b32f578f5d1abf61830025c83fb71dc1944ce",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d3d0a94b3c8afd92c2a9f03f3325e9ac22cec56e995b94ff212670ff3653f0d3",
+        "dweb:/ipfs/QmPqKWUysbo8QqKcqH5Lp7SQiL1LfjeoGCSa7iFWmAP8Mw"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+      "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+        "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol": {
+      "keccak256": "0xd5c50c54bf02740ebd122ff06832546cb5fa84486d52695a9ccfd11666e0c81d",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://39e096c60a6eb1c6a257122d515496bd92d0c6a693a8f07acb6aa4b1263e95d4",
+        "dweb:/ipfs/QmPs5trJBacCiSkezP6tpevapuRYWNY6mqSFzsMCJj7e6B"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    }
+  },
+  "version": 1
+}

@@ -6,7 +6,7 @@ forge clean
 forge build --extra-output-files metadata --extra-output-files abi --force
 
 ABI_DIR="packages/contracts/${CHAIN}/abis"
-TYPINGS_DIR="servers/dendrite/zion_${CHAIN}"
+TYPINGS_DIR="servers/dendrite/zion/contracts/zion_${CHAIN}"
 
 # A command line option to exit with a failure status if this script generates any new files.
 # Example usage:
@@ -14,13 +14,24 @@ TYPINGS_DIR="servers/dendrite/zion_${CHAIN}"
 FROZEN="${2:-}"
 
 # Create typings using typechain
-yarn typechain --target=ethers-v5 "out/**/?(Errors,Events,CouncilNFT|CouncilStaking|ZionSpaceManager|ZionRoleManager|TokenEntitlementModule|UserGrantedEntitlementModule).json" --out-dir "packages/contracts/${CHAIN}/typings"
+yarn typechain --target=ethers-v5 "out/**/?(CouncilNFT|CouncilStaking|ZionSpaceManager|ZionRoleManager|TokenEntitlementModule|UserGrantedEntitlementModule|Space|SpaceFactory).json" --out-dir "packages/contracts/${CHAIN}/typings"
 
 # Move abis to the packages folder
-mkdir -p $ABI_DIR && cp -a out/{Errors,Events,CouncilNFT,CouncilStaking,ZionSpaceManager,ZionRoleManager,TokenEntitlementModule,UserGrantedEntitlementModule}.sol/* "packages/contracts/${CHAIN}/abis"
+mkdir -p $ABI_DIR && cp -a out/{CouncilNFT,CouncilStaking,ZionSpaceManager,ZionRoleManager,TokenEntitlementModule,UserGrantedEntitlementModule,Space,SpaceFactory}.sol/* "packages/contracts/${CHAIN}/abis"
 
 # Move typings to the dendrite folder
-mkdir -p $TYPINGS_DIR && go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg "zion_${CHAIN}"  --type "zion_space_manager_${CHAIN}" --out "servers/dendrite/zion/contracts/zion_${CHAIN}/zion_space_manager_${CHAIN}.go"
+mkdir -p $TYPINGS_DIR
+
+# Create space manager v1 typings
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg "zion_${CHAIN}" --type "zion_space_manager_${CHAIN}" --out "servers/dendrite/zion/contracts/zion_${CHAIN}/zion_space_manager_${CHAIN}.go"
+
+# Create space factory v2 typings
+mkdir -p "servers/dendrite/zion/contracts/${CHAIN}_space_factory"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/SpaceFactory.sol/SpaceFactory.abi.json --pkg "${CHAIN}_space_factory" --type "${CHAIN}_space_factory" --out "servers/dendrite/zion/contracts/${CHAIN}_space_factory/${CHAIN}_space_factory.go"
+
+# Create space v2 typings
+mkdir -p "servers/dendrite/zion/contracts/${CHAIN}_space"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/Space.sol/Space.abi.json --pkg "${CHAIN}_space"  --type "${CHAIN}_space" --out "servers/dendrite/zion/contracts/${CHAIN}_space/${CHAIN}_space.go"
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR or $TYPINGS_DIR directories.

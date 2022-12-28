@@ -39,6 +39,18 @@ contract ZionRoleManager is Ownable, ZionRoleStorage {
     return CreationLogic.createRole(spaceId, name, _rolesBySpaceId);
   }
 
+  function createRole(
+    uint256 spaceId,
+    string memory name,
+    DataTypes.Permission[] calldata permissions
+  ) external onlySpaceManager returns (uint256) {
+    uint256 roleId = CreationLogic.createRole(spaceId, name, _rolesBySpaceId);
+    for (uint256 i = 0; i < permissions.length; i++) {
+      _addPermissionToRole(spaceId, roleId, permissions[i]);
+    }
+    return roleId;
+  }
+
   function createOwnerRole(
     uint256 spaceId
   ) external onlySpaceManager returns (uint256) {

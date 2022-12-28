@@ -99,6 +99,42 @@
         "internalType": "string",
         "name": "name",
         "type": "string"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.Permission[]",
+        "name": "permissions",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "createRole",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "spaceId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
       }
     ],
     "name": "createRole",

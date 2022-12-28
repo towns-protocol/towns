@@ -1,0 +1,423 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "contract IERC721",
+            "name": "_councilNFT",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "NoPointsToClaim",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NoStakedTokens",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotTokenOwner",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "claimPoints",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "councilNFT",
+        "outputs": [
+          {
+            "internalType": "contract IERC721",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_staker",
+            "type": "address"
+          }
+        ],
+        "name": "getAvailablePoints",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_user",
+            "type": "address"
+          }
+        ],
+        "name": "getStakedTokensByAddress",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "staker",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct CouncilDataTypes.StakedToken[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getStakerAddressByTokenId",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_staker",
+            "type": "address"
+          }
+        ],
+        "name": "getStakerByAddress",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "amountStaked",
+                "type": "uint256"
+              },
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "staker",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct CouncilDataTypes.StakedToken[]",
+                "name": "stakedTokens",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "uint256",
+                "name": "timeOfLastUpdate",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "unclaimedPoints",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct CouncilDataTypes.Staker",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "stakeToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalSupply",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "withdrawToken",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "author": "HNT Labs",
+      "kind": "dev",
+      "methods": {
+        "owner()": {
+          "details": "Returns the address of the current owner."
+        },
+        "renounceOwnership()": {
+          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+        },
+        "transferOwnership(address)": {
+          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        }
+      },
+      "title": "CouncilStaking",
+      "version": 1
+    },
+    "userdoc": {
+      "errors": {
+        "NoPointsToClaim()": [
+          {
+            "notice": "thrown when no there are not points to claim by user"
+          }
+        ],
+        "NoStakedTokens()": [
+          {
+            "notice": "thrown when no tokens are staked by user"
+          }
+        ],
+        "NotTokenOwner()": [
+          {
+            "notice": "thrown when a token is not owned by the user"
+          }
+        ]
+      },
+      "kind": "user",
+      "methods": {
+        "claimPoints()": {
+          "notice": "Claim accrued points"
+        }
+      },
+      "notice": "This is the staking contract for the council NFT",
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/council/CouncilStaking.sol": "CouncilStaking"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/council/CouncilStaking.sol": {
+      "keccak256": "0xfc8a6deb7279a3f6f1bcc267abceba36558fff083381f8f8177ab55a31808c88",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3dfd083256309932697a1d982778c904f98561ca347706dca998fb74b293c518",
+        "dweb:/ipfs/QmNqQq1m3Umz4h8sN8WpzheJwYB2rFZcZeUmU8yiFb4Ts5"
+      ]
+    },
+    "contracts/src/council/libraries/CouncilDataTypes.sol": {
+      "keccak256": "0xb56faf3d9aa03a8f6fbf6d048dbbd3ab4c0b4e6a5ed8952f5051db12940814a2",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b02ca5bd98053dc514447f7cebbc6ada03bc572a11a4ba680790173c1163f457",
+        "dweb:/ipfs/QmcU1YayjuNSNDDuaFVUEihgCJJyz2nbL6YiYVUGfWqsKu"
+      ]
+    },
+    "contracts/src/council/libraries/CouncilErrors.sol": {
+      "keccak256": "0x5e7ef03bdac9b2acca7cc67467765787e5387c533fb99807d761d639d78a1949",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a8afb26af4a9b7cb160ac10f822f591efdfcf74423ff58289264f1205cb8f578",
+        "dweb:/ipfs/QmXYwWyy2bJSps8nUeLBss7wCY4zUJzDotaqh4tZUMu6jc"
+      ]
+    },
+    "contracts/src/council/libraries/CouncilEvents.sol": {
+      "keccak256": "0x8aaeb1b2e207af77f4a2991319bd40355d55a4dafad0291c63d9a2767cbbc4ca",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1cfaad4621e80c43319ce12c07acdf75693a8fb28d17cd97ddfd1f8936b09e97",
+        "dweb:/ipfs/QmXwNeZDJ2zhjjoPGtyTaKrLagCf3D4RVx543PWHwtnxpB"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
+      "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
+        "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/interfaces/IERC721.sol": {
+      "keccak256": "0xaf297d12d8d4a57fe01a70f0ef38908f208e3faedc577056d0b728fa2f3ccf0c",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://fbfaf37123958822a2720a4ea29651be00edab787540b770f73d3e025d286ff8",
+        "dweb:/ipfs/QmbzgWeTm8hJVUqWrNAwFjshqbYVyeGpQA8D1huzxQdmw6"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
+      "keccak256": "0x03a26b0ce85afee2c16f3232bd123286b849ca576778781cf6e8bbf51cb7570a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://13a4f5cec214760f14abaedfc0a1860d80c2267386fa62dc77e8eee51ec84d71",
+        "dweb:/ipfs/QmWmEKeofHqLnNEeCivhzTepo1k5xZZqzMxyyyzNBYiYBW"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
+      "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
+        "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    }
+  },
+  "version": 1
+}

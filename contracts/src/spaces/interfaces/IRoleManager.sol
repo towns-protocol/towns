@@ -11,6 +11,12 @@ interface IRoleManager {
     string memory name
   ) external returns (uint256);
 
+  function createRole(
+    uint256 spaceId,
+    string memory name,
+    DataTypes.Permission[] calldata permissions
+  ) external returns (uint256);
+
   function createOwnerRole(uint256 spaceId) external returns (uint256);
 
   function addPermissionToRole(

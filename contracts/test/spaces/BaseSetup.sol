@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/Test.sol";
+import "../utils/TestUtils.sol";
 
 import {ZionSpaceManager} from "contracts/src/spaces/ZionSpaceManager.sol";
 import {TokenEntitlementModule} from "contracts/src/spaces/modules/entitlements/TokenEntitlementModule.sol";

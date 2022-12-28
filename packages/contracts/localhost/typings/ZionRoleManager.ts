@@ -47,6 +47,7 @@ export interface ZionRoleManagerInterface extends utils.Interface {
   functions: {
     "addPermissionToRole(uint256,uint256,(string))": FunctionFragment;
     "createOwnerRole(uint256)": FunctionFragment;
+    "createRole(uint256,string,(string)[])": FunctionFragment;
     "createRole(uint256,string)": FunctionFragment;
     "getPermissionsBySpaceIdByRoleId(uint256,uint256)": FunctionFragment;
     "getRoleBySpaceIdByRoleId(uint256,uint256)": FunctionFragment;
@@ -64,7 +65,8 @@ export interface ZionRoleManagerInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "addPermissionToRole"
       | "createOwnerRole"
-      | "createRole"
+      | "createRole(uint256,string,(string)[])"
+      | "createRole(uint256,string)"
       | "getPermissionsBySpaceIdByRoleId"
       | "getRoleBySpaceIdByRoleId"
       | "getRolesBySpaceId"
@@ -90,7 +92,15 @@ export interface ZionRoleManagerInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "createRole",
+    functionFragment: "createRole(uint256,string,(string)[])",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      DataTypes.PermissionStruct[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createRole(uint256,string)",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -147,7 +157,14 @@ export interface ZionRoleManagerInterface extends utils.Interface {
     functionFragment: "createOwnerRole",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "createRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "createRole(uint256,string,(string)[])",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "createRole(uint256,string)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getPermissionsBySpaceIdByRoleId",
     data: BytesLike
@@ -241,7 +258,14 @@ export interface ZionRoleManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    createRole(
+    "createRole(uint256,string,(string)[])"(
+      spaceId: PromiseOrValue<BigNumberish>,
+      name: PromiseOrValue<string>,
+      permissions: DataTypes.PermissionStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "createRole(uint256,string)"(
       spaceId: PromiseOrValue<BigNumberish>,
       name: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -315,7 +339,14 @@ export interface ZionRoleManager extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  createRole(
+  "createRole(uint256,string,(string)[])"(
+    spaceId: PromiseOrValue<BigNumberish>,
+    name: PromiseOrValue<string>,
+    permissions: DataTypes.PermissionStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "createRole(uint256,string)"(
     spaceId: PromiseOrValue<BigNumberish>,
     name: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -387,7 +418,14 @@ export interface ZionRoleManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    createRole(
+    "createRole(uint256,string,(string)[])"(
+      spaceId: PromiseOrValue<BigNumberish>,
+      name: PromiseOrValue<string>,
+      permissions: DataTypes.PermissionStruct[],
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "createRole(uint256,string)"(
       spaceId: PromiseOrValue<BigNumberish>,
       name: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -469,7 +507,14 @@ export interface ZionRoleManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    createRole(
+    "createRole(uint256,string,(string)[])"(
+      spaceId: PromiseOrValue<BigNumberish>,
+      name: PromiseOrValue<string>,
+      permissions: DataTypes.PermissionStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "createRole(uint256,string)"(
       spaceId: PromiseOrValue<BigNumberish>,
       name: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -542,7 +587,14 @@ export interface ZionRoleManager extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    createRole(
+    "createRole(uint256,string,(string)[])"(
+      spaceId: PromiseOrValue<BigNumberish>,
+      name: PromiseOrValue<string>,
+      permissions: DataTypes.PermissionStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "createRole(uint256,string)"(
       spaceId: PromiseOrValue<BigNumberish>,
       name: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

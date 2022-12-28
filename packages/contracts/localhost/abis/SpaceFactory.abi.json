@@ -1,0 +1,353 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_space",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_tokenEntitlement",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_userEntitlement",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_spaceToken",
+        "type": "address"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "NameContainsInvalidCharacters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NameLengthInvalid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PermissionAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SpaceAlreadyRegistered",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "SPACE_IMPLEMENTATION_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "SPACE_TOKEN_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "TOKEN_IMPLEMENTATION_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "USER_IMPLEMENTATION_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
+      }
+    ],
+    "name": "addOwnerPermissions",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "spaceName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceMetadata",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.CreateSpaceData",
+        "name": "_info",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "internalType": "string[]",
+            "name": "permissions",
+            "type": "string[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "contractAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "uint256",
+                "name": "quantity",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bool",
+                "name": "isSingleToken",
+                "type": "bool"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "tokenIds",
+                "type": "uint256[]"
+              }
+            ],
+            "internalType": "struct DataTypes.ExternalToken[]",
+            "name": "tokens",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "users",
+            "type": "address[]"
+          }
+        ],
+        "internalType": "struct DataTypes.CreateSpaceEntitlementData",
+        "name": "_entitlementData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
+      }
+    ],
+    "name": "createSpace",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "_spaceAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOwnerPermissions",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ownerPermissions",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "spaceByHash",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "tokenByHash",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_space",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_tokenEntitlement",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_userEntitlement",
+        "type": "address"
+      }
+    ],
+    "name": "updateInitialImplementations",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

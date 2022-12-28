@@ -105,6 +105,42 @@
             "internalType": "string",
             "name": "name",
             "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Permission[]",
+            "name": "permissions",
+            "type": "tuple[]"
+          }
+        ],
+        "name": "createRole",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "spaceId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
           }
         ],
         "name": "createRole",
@@ -384,11 +420,11 @@
   },
   "sources": {
     "contracts/src/spaces/ZionRoleManager.sol": {
-      "keccak256": "0xe88051f8063fbe94df3e82bbd891f60dd032943a965fdfc870c42193f4e0acb3",
+      "keccak256": "0xd508eb5c798ead14329de7e41fff1d59ed4a37164504abf3701491daecc357a2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b8584b919a1f7e47b0e8cf3f95fd69f03732db51731d0588ec61b315128f2cb5",
-        "dweb:/ipfs/QmeWB3vTQhnqVQLfk95BYgmHMW34wupV1yvw2cwvghPmbJ"
+        "bzz-raw://45d0f9424b201a80d11cfc1a7fb58c9a19343aaebd5ef4a2a75890bbad588eb9",
+        "dweb:/ipfs/QmbHTzKSJziHKJo94hvoAAHbbwcA4mkH3teghp5F6bCrMG"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -416,11 +452,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Constants.sol": {
-      "keccak256": "0xe9e3a6c723495eb46b9aed6868d882eced8b2766133d28a438bdd1b9d1f62695",
+      "keccak256": "0xdf602192b1eea921112673105945a906d1fe96729fa84125ae1e7131cd4d604b",
       "license": "MIT",
       "urls": [
-        "bzz-raw://e605be1bc8a9416c54b48d6e61e47be0266e9e2ea5cad27cbf5a4349ef799406",
-        "dweb:/ipfs/QmRBhdHM7ziCfYshEJiDozK51C9zt4T7TGFnSeLZiaNQ8J"
+        "bzz-raw://486429f7d46ffcd029c5e21e14e5011dba92cb2b43698e2c5b3d86370439d67b",
+        "dweb:/ipfs/QmQgRQUKmpmbXdqJphBJDBbumtBDtjyyGV89fYR7XzphNm"
       ]
     },
     "contracts/src/spaces/libraries/CreationLogic.sol": {

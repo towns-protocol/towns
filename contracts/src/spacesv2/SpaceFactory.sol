@@ -1,0 +1,250 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity 0.8.17;
+
+import {ISpaceFactory} from "./interfaces/ISpaceFactory.sol";
+import {ISpaceOwner} from "./interfaces/ISpaceOwner.sol";
+import {IEntitlement} from "./interfaces/IEntitlement.sol";
+
+import {Permissions} from "./libraries/Permissions.sol";
+import {DataTypes} from "./libraries/DataTypes.sol";
+import {Events} from "./libraries/Events.sol";
+import {Errors} from "./libraries/Errors.sol";
+import {Utils} from "./libraries/Utils.sol";
+
+import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+
+import {TokenEntitlement} from "./entitlements/TokenEntitlement.sol";
+import {UserEntitlement} from "./entitlements/UserEntitlement.sol";
+import {Space} from "./Space.sol";
+
+contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
+  string internal constant everyoneRoleName = "Everyone";
+  string internal constant ownerRoleName = "Owner";
+
+  address public SPACE_IMPLEMENTATION_ADDRESS;
+  address public TOKEN_IMPLEMENTATION_ADDRESS;
+  address public USER_IMPLEMENTATION_ADDRESS;
+  address public SPACE_TOKEN_ADDRESS;
+
+  string[] public ownerPermissions;
+  mapping(bytes32 => address) public spaceByHash;
+  mapping(bytes32 => uint256) public tokenByHash;
+
+  constructor(
+    address _space,
+    address _tokenEntitlement,
+    address _userEntitlement,
+    address _spaceToken,
+    string[] memory _permissions
+  ) {
+    SPACE_IMPLEMENTATION_ADDRESS = _space;
+    TOKEN_IMPLEMENTATION_ADDRESS = _tokenEntitlement;
+    USER_IMPLEMENTATION_ADDRESS = _userEntitlement;
+    SPACE_TOKEN_ADDRESS = _spaceToken;
+
+    for (uint256 i = 0; i < _permissions.length; i++) {
+      ownerPermissions.push(_permissions[i]);
+    }
+  }
+
+  /// @inheritdoc ISpaceFactory
+  function updateInitialImplementations(
+    address _space,
+    address _tokenEntitlement,
+    address _userEntitlement
+  ) external onlyOwner {
+    if (_space != address(0)) SPACE_IMPLEMENTATION_ADDRESS = _space;
+    if (_tokenEntitlement != address(0))
+      TOKEN_IMPLEMENTATION_ADDRESS = _tokenEntitlement;
+    if (_userEntitlement != address(0))
+      USER_IMPLEMENTATION_ADDRESS = _userEntitlement;
+  }
+
+  /// @inheritdoc ISpaceFactory
+  function createSpace(
+    DataTypes.CreateSpaceData calldata _info,
+    DataTypes.CreateSpaceEntitlementData calldata _entitlementData,
+    string[] calldata _permissions
+  ) external nonReentrant returns (address _spaceAddress) {
+    // validate space name
+    Utils.validateName(_info.spaceName);
+
+    // hash the network id
+    bytes32 _networkHash = keccak256(bytes(_info.spaceNetworkId));
+
+    // validate that the network id hasn't been used before
+    if (spaceByHash[_networkHash] != address(0)) {
+      revert Errors.SpaceAlreadyRegistered();
+    }
+
+    // mint space nft to owner
+    uint256 _tokenId = ISpaceOwner(SPACE_TOKEN_ADDRESS).mintTo(
+      _msgSender(),
+      _info.spaceMetadata
+    );
+
+    // save token id to mapping
+    tokenByHash[_networkHash] = _tokenId;
+
+    // deploy token entitlement module
+    address _tokenEntitlement = address(
+      new ERC1967Proxy(
+        TOKEN_IMPLEMENTATION_ADDRESS,
+        abi.encodeCall(TokenEntitlement.initialize, ())
+      )
+    );
+
+    // deploy user entitlement module
+    address _userEntitlement = address(
+      new ERC1967Proxy(
+        USER_IMPLEMENTATION_ADDRESS,
+        abi.encodeCall(UserEntitlement.initialize, ())
+      )
+    );
+
+    address[] memory _entitlements = new address[](2);
+    _entitlements[0] = _tokenEntitlement;
+    _entitlements[1] = _userEntitlement;
+
+    // deploy the space contract
+    _spaceAddress = address(
+      new ERC1967Proxy(
+        SPACE_IMPLEMENTATION_ADDRESS,
+        abi.encodeCall(
+          Space.initialize,
+          (_info.spaceName, _info.spaceNetworkId, _entitlements)
+        )
+      )
+    );
+
+    // save space address to mapping
+    spaceByHash[_networkHash] = _spaceAddress;
+
+    // set space on entitlement modules
+    TokenEntitlement(_tokenEntitlement).setSpace(_spaceAddress);
+    UserEntitlement(_userEntitlement).setSpace(_spaceAddress);
+
+    _createOwnerEntitlement(_spaceAddress, _tokenEntitlement, _tokenId);
+    _createEveryoneEntitlement(_spaceAddress, _userEntitlement, _permissions);
+    _createExtraEntitlements(
+      _spaceAddress,
+      _tokenEntitlement,
+      _userEntitlement,
+      _entitlementData
+    );
+
+    Space(_spaceAddress).transferOwnership(_msgSender());
+
+    emit Events.SpaceCreated(_info.spaceNetworkId, _spaceAddress);
+  }
+
+  function addOwnerPermissions(
+    string[] calldata _permissions
+  ) external onlyOwner {
+    // check permission doesn't already exist
+    for (uint256 i = 0; i < _permissions.length; i++) {
+      for (uint256 j = 0; j < ownerPermissions.length; j++) {
+        if (Utils.isEqual(_permissions[i], ownerPermissions[j])) {
+          revert Errors.PermissionAlreadyExists();
+        }
+      }
+
+      // add permission to initial permissions
+      ownerPermissions.push(_permissions[i]);
+    }
+  }
+
+  function getOwnerPermissions() external view returns (string[] memory) {
+    return ownerPermissions;
+  }
+
+  /// ****************************
+  /// Internal functions
+  /// ****************************
+  function _createExtraEntitlements(
+    address spaceAddress,
+    address tokenAddress,
+    address userAddress,
+    DataTypes.CreateSpaceEntitlementData memory _entitlementData
+  ) internal {
+    if (_entitlementData.permissions.length == 0) return;
+
+    uint256 additionalRoleId = Space(spaceAddress).createRole(
+      _entitlementData.roleName,
+      _entitlementData.permissions
+    );
+
+    // check entitlementdata has users
+    for (uint256 i = 0; i < _entitlementData.users.length; i++) {
+      Space(spaceAddress).addRoleToEntitlement(
+        userAddress,
+        additionalRoleId,
+        abi.encode(_entitlementData.users[i])
+      );
+    }
+
+    // check entitlementdata has tokens
+    if (_entitlementData.tokens.length == 0) return;
+
+    Space(spaceAddress).addRoleToEntitlement(
+      tokenAddress,
+      additionalRoleId,
+      abi.encode(_entitlementData.tokens)
+    );
+  }
+
+  function _createOwnerEntitlement(
+    address spaceAddress,
+    address tokenAddress,
+    uint256 tokenId
+  ) internal {
+    // create owner role with all permissions
+    uint256 ownerRoleId = Space(spaceAddress).createRole(
+      ownerRoleName,
+      ownerPermissions
+    );
+
+    Space(spaceAddress).setOwnerRoleId(ownerRoleId);
+
+    // create external token struct
+    DataTypes.ExternalToken[] memory tokens = new DataTypes.ExternalToken[](1);
+
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
+
+    // assign token data to struct
+    tokens[0] = DataTypes.ExternalToken({
+      contractAddress: SPACE_TOKEN_ADDRESS,
+      quantity: 1,
+      isSingleToken: true,
+      tokenIds: tokenIds
+    });
+
+    // add token data to entitlement
+    Space(spaceAddress).addRoleToEntitlement(
+      tokenAddress,
+      ownerRoleId,
+      abi.encode(tokens)
+    );
+  }
+
+  function _createEveryoneEntitlement(
+    address spaceAddress,
+    address userAddress,
+    string[] memory _permissions
+  ) internal {
+    uint256 everyoneRoleId = Space(spaceAddress).createRole(
+      everyoneRoleName,
+      _permissions
+    );
+
+    // add everyone role to user entitlement
+    Space(spaceAddress).addRoleToEntitlement(
+      userAddress,
+      everyoneRoleId,
+      abi.encode(Utils.EVERYONE_ADDRESS)
+    );
+  }
+}
