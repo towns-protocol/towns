@@ -11,10 +11,7 @@ import { PromiseOrValue as Localhost_PromiseOrValue } from '@harmony/contracts/l
 
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import Goerli_ZionSpaceManagerArtifactAbi from '@harmony/contracts/goerli/abis/ZionSpaceManager.abi.json'
-import {
-    ZionSpaceManager as Goerli_ZionSpaceManager,
-    DataTypes as Goerli_DataTypes,
-} from '@harmony/contracts/goerli/typings/ZionSpaceManager'
+import { ZionSpaceManager as Goerli_ZionSpaceManager } from '@harmony/contracts/goerli/typings/ZionSpaceManager'
 
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
@@ -75,27 +72,7 @@ export class ZionSpaceManagerShim extends BaseContractShim<
             console.log(`createSpace called`, info, entitlementData, everyonePermissions)
 
             if (this.isGoerli) {
-                const externalTokenEntitlements: Goerli_DataTypes.ExternalTokenEntitlementStruct[] =
-                    []
-                for (let i = 0; i < entitlementData.externalTokenEntitlements.length; i++) {
-                    const externalTokenEntitlement: Goerli_DataTypes.ExternalTokenEntitlementStruct =
-                        {
-                            tokens: entitlementData.externalTokenEntitlements[i].tokens,
-                        }
-                    externalTokenEntitlements.push(externalTokenEntitlement)
-                }
-
-                const goerliEntitlementData: Goerli_DataTypes.CreateSpaceEntitlementDataStruct = {
-                    roleName: entitlementData.roleName,
-                    permissions: entitlementData.permissions,
-                    externalTokenEntitlements: externalTokenEntitlements,
-                    users: entitlementData.users,
-                }
-                return this.goerli_signed.createSpace(
-                    info,
-                    goerliEntitlementData,
-                    everyonePermissions,
-                )
+                return this.goerli_signed.createSpace(info, entitlementData, everyonePermissions)
             } else {
                 console.log(`createSpace localhost_signed`)
 
@@ -133,7 +110,13 @@ export class ZionSpaceManagerShim extends BaseContractShim<
         users: string[],
     ): Promise<ContractTransaction> {
         if (this.isGoerli) {
-            throw new Error('createRoleWithEntitlementData not yet deployed on Goerli')
+            return this.goerli_signed.createRoleWithEntitlementData(
+                spaceNetworkId,
+                roleName,
+                permissions,
+                tokenEntitlements,
+                users,
+            )
         } else {
             return this.localhost_signed.createRoleWithEntitlementData(
                 spaceNetworkId,
