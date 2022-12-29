@@ -28,7 +28,7 @@ contract SpaceTestUpgradeTo is BaseSetup {
     SpaceV2(_space).addItem(_item);
     vm.stopPrank();
 
-    assertEq(SpaceV2(_space).name(), _info.spaceName);
+    assertEq(SpaceV2(_space).name(), "zion");
     assertEq(SpaceV2(_space).items(0), _item);
     assertTrue(SpaceV2(_space).isEntitled(_creator, Permissions.Owner));
   }

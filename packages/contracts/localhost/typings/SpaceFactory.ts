@@ -9,6 +9,7 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
+  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -28,18 +29,6 @@ import type {
 } from "./common";
 
 export declare namespace DataTypes {
-  export type CreateSpaceDataStruct = {
-    spaceName: PromiseOrValue<string>;
-    spaceNetworkId: PromiseOrValue<string>;
-    spaceMetadata: PromiseOrValue<string>;
-  };
-
-  export type CreateSpaceDataStructOutput = [string, string, string] & {
-    spaceName: string;
-    spaceNetworkId: string;
-    spaceMetadata: string;
-  };
-
   export type ExternalTokenStruct = {
     contractAddress: PromiseOrValue<string>;
     quantity: PromiseOrValue<BigNumberish>;
@@ -59,14 +48,14 @@ export declare namespace DataTypes {
     tokenIds: BigNumber[];
   };
 
-  export type CreateSpaceEntitlementDataStruct = {
+  export type CreateSpaceExtraEntitlementsStruct = {
     roleName: PromiseOrValue<string>;
     permissions: PromiseOrValue<string>[];
     tokens: DataTypes.ExternalTokenStruct[];
     users: PromiseOrValue<string>[];
   };
 
-  export type CreateSpaceEntitlementDataStructOutput = [
+  export type CreateSpaceExtraEntitlementsStructOutput = [
     string,
     string[],
     DataTypes.ExternalTokenStructOutput[],
@@ -86,15 +75,19 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "TOKEN_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "USER_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "addOwnerPermissions(string[])": FunctionFragment;
-    "createSpace((string,string,string),(string,string[],(address,uint256,bool,uint256[])[],address[]),string[])": FunctionFragment;
+    "createSpace(string,string,string,string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": FunctionFragment;
     "getOwnerPermissions()": FunctionFragment;
+    "initialize(address,address,address,address,string[])": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerPermissions(uint256)": FunctionFragment;
+    "proxiableUUID()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "spaceByHash(bytes32)": FunctionFragment;
     "tokenByHash(bytes32)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "updateInitialImplementations(address,address,address)": FunctionFragment;
+    "updateImplementations(address,address,address)": FunctionFragment;
+    "upgradeTo(address)": FunctionFragment;
+    "upgradeToAndCall(address,bytes)": FunctionFragment;
   };
 
   getFunction(
@@ -106,13 +99,17 @@ export interface SpaceFactoryInterface extends utils.Interface {
       | "addOwnerPermissions"
       | "createSpace"
       | "getOwnerPermissions"
+      | "initialize"
       | "owner"
       | "ownerPermissions"
+      | "proxiableUUID"
       | "renounceOwnership"
       | "spaceByHash"
       | "tokenByHash"
       | "transferOwnership"
-      | "updateInitialImplementations"
+      | "updateImplementations"
+      | "upgradeTo"
+      | "upgradeToAndCall"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -138,19 +135,35 @@ export interface SpaceFactoryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "createSpace",
     values: [
-      DataTypes.CreateSpaceDataStruct,
-      DataTypes.CreateSpaceEntitlementDataStruct,
-      PromiseOrValue<string>[]
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[],
+      DataTypes.CreateSpaceExtraEntitlementsStruct
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "getOwnerPermissions",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[]
+    ]
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "ownerPermissions",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proxiableUUID",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -169,12 +182,20 @@ export interface SpaceFactoryInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "updateInitialImplementations",
+    functionFragment: "updateImplementations",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "upgradeTo",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "upgradeToAndCall",
+    values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
   ): string;
 
   decodeFunctionResult(
@@ -205,9 +226,14 @@ export interface SpaceFactoryInterface extends utils.Interface {
     functionFragment: "getOwnerPermissions",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "ownerPermissions",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proxiableUUID",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -227,16 +253,57 @@ export interface SpaceFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "updateInitialImplementations",
+    functionFragment: "updateImplementations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
 
   events: {
+    "AdminChanged(address,address)": EventFragment;
+    "BeaconUpgraded(address)": EventFragment;
+    "Initialized(uint8)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "Upgraded(address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
+
+export interface AdminChangedEventObject {
+  previousAdmin: string;
+  newAdmin: string;
+}
+export type AdminChangedEvent = TypedEvent<
+  [string, string],
+  AdminChangedEventObject
+>;
+
+export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
+
+export interface BeaconUpgradedEventObject {
+  beacon: string;
+}
+export type BeaconUpgradedEvent = TypedEvent<
+  [string],
+  BeaconUpgradedEventObject
+>;
+
+export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
+
+export interface InitializedEventObject {
+  version: number;
+}
+export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
+
+export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -249,6 +316,13 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface UpgradedEventObject {
+  implementation: string;
+}
+export type UpgradedEvent = TypedEvent<[string], UpgradedEventObject>;
+
+export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
 
 export interface SpaceFactory extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -291,13 +365,24 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<ContractTransaction>;
 
     createSpace(
-      _info: DataTypes.CreateSpaceDataStruct,
-      _entitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-      _permissions: PromiseOrValue<string>[],
+      spaceName: PromiseOrValue<string>,
+      spaceNetworkId: PromiseOrValue<string>,
+      spaceMetadata: PromiseOrValue<string>,
+      _everyonePermissions: PromiseOrValue<string>[],
+      _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     getOwnerPermissions(overrides?: CallOverrides): Promise<[string[]]>;
+
+    initialize(
+      _space: PromiseOrValue<string>,
+      _tokenEntitlement: PromiseOrValue<string>,
+      _userEntitlement: PromiseOrValue<string>,
+      _spaceToken: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -305,6 +390,8 @@ export interface SpaceFactory extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string]>;
+
+    proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -325,11 +412,22 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    updateInitialImplementations(
+    updateImplementations(
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    upgradeTo(
+      newImplementation: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    upgradeToAndCall(
+      newImplementation: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
@@ -347,13 +445,24 @@ export interface SpaceFactory extends BaseContract {
   ): Promise<ContractTransaction>;
 
   createSpace(
-    _info: DataTypes.CreateSpaceDataStruct,
-    _entitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-    _permissions: PromiseOrValue<string>[],
+    spaceName: PromiseOrValue<string>,
+    spaceNetworkId: PromiseOrValue<string>,
+    spaceMetadata: PromiseOrValue<string>,
+    _everyonePermissions: PromiseOrValue<string>[],
+    _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
+
+  initialize(
+    _space: PromiseOrValue<string>,
+    _tokenEntitlement: PromiseOrValue<string>,
+    _userEntitlement: PromiseOrValue<string>,
+    _spaceToken: PromiseOrValue<string>,
+    _permissions: PromiseOrValue<string>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -361,6 +470,8 @@ export interface SpaceFactory extends BaseContract {
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -381,11 +492,22 @@ export interface SpaceFactory extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  updateInitialImplementations(
+  updateImplementations(
     _space: PromiseOrValue<string>,
     _tokenEntitlement: PromiseOrValue<string>,
     _userEntitlement: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  upgradeTo(
+    newImplementation: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  upgradeToAndCall(
+    newImplementation: PromiseOrValue<string>,
+    data: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
@@ -403,13 +525,24 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<void>;
 
     createSpace(
-      _info: DataTypes.CreateSpaceDataStruct,
-      _entitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-      _permissions: PromiseOrValue<string>[],
+      spaceName: PromiseOrValue<string>,
+      spaceNetworkId: PromiseOrValue<string>,
+      spaceMetadata: PromiseOrValue<string>,
+      _everyonePermissions: PromiseOrValue<string>[],
+      _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: CallOverrides
     ): Promise<string>;
 
     getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
+
+    initialize(
+      _space: PromiseOrValue<string>,
+      _tokenEntitlement: PromiseOrValue<string>,
+      _userEntitlement: PromiseOrValue<string>,
+      _spaceToken: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -417,6 +550,8 @@ export interface SpaceFactory extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
@@ -435,15 +570,45 @@ export interface SpaceFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    updateInitialImplementations(
+    updateImplementations(
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    upgradeTo(
+      newImplementation: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    upgradeToAndCall(
+      newImplementation: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
+    "AdminChanged(address,address)"(
+      previousAdmin?: null,
+      newAdmin?: null
+    ): AdminChangedEventFilter;
+    AdminChanged(
+      previousAdmin?: null,
+      newAdmin?: null
+    ): AdminChangedEventFilter;
+
+    "BeaconUpgraded(address)"(
+      beacon?: PromiseOrValue<string> | null
+    ): BeaconUpgradedEventFilter;
+    BeaconUpgraded(
+      beacon?: PromiseOrValue<string> | null
+    ): BeaconUpgradedEventFilter;
+
+    "Initialized(uint8)"(version?: null): InitializedEventFilter;
+    Initialized(version?: null): InitializedEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -452,6 +617,13 @@ export interface SpaceFactory extends BaseContract {
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
+
+    "Upgraded(address)"(
+      implementation?: PromiseOrValue<string> | null
+    ): UpgradedEventFilter;
+    Upgraded(
+      implementation?: PromiseOrValue<string> | null
+    ): UpgradedEventFilter;
   };
 
   estimateGas: {
@@ -469,13 +641,24 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<BigNumber>;
 
     createSpace(
-      _info: DataTypes.CreateSpaceDataStruct,
-      _entitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-      _permissions: PromiseOrValue<string>[],
+      spaceName: PromiseOrValue<string>,
+      spaceNetworkId: PromiseOrValue<string>,
+      spaceMetadata: PromiseOrValue<string>,
+      _everyonePermissions: PromiseOrValue<string>[],
+      _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getOwnerPermissions(overrides?: CallOverrides): Promise<BigNumber>;
+
+    initialize(
+      _space: PromiseOrValue<string>,
+      _tokenEntitlement: PromiseOrValue<string>,
+      _userEntitlement: PromiseOrValue<string>,
+      _spaceToken: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -483,6 +666,8 @@ export interface SpaceFactory extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -503,11 +688,22 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    updateInitialImplementations(
+    updateImplementations(
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    upgradeTo(
+      newImplementation: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    upgradeToAndCall(
+      newImplementation: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
@@ -534,14 +730,25 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     createSpace(
-      _info: DataTypes.CreateSpaceDataStruct,
-      _entitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-      _permissions: PromiseOrValue<string>[],
+      spaceName: PromiseOrValue<string>,
+      spaceNetworkId: PromiseOrValue<string>,
+      spaceMetadata: PromiseOrValue<string>,
+      _everyonePermissions: PromiseOrValue<string>[],
+      _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     getOwnerPermissions(
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      _space: PromiseOrValue<string>,
+      _tokenEntitlement: PromiseOrValue<string>,
+      _userEntitlement: PromiseOrValue<string>,
+      _spaceToken: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -550,6 +757,8 @@ export interface SpaceFactory extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -570,11 +779,22 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    updateInitialImplementations(
+    updateImplementations(
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    upgradeTo(
+      newImplementation: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    upgradeToAndCall(
+      newImplementation: PromiseOrValue<string>,
+      data: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
 }

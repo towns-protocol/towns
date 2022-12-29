@@ -23,7 +23,7 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     address tokenEntitlement = _randomAddress();
     address userEntitlement = _randomAddress();
 
-    spaceFactory.updateInitialImplementations(
+    spaceFactory.updateImplementations(
       space,
       tokenEntitlement,
       userEntitlement
@@ -36,22 +36,50 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
 
   function testCreateSimpleSpace() external {
     address spaceAddress = createSimpleSpace();
-    bytes32 spaceHash = keccak256(bytes(_info.spaceNetworkId));
+    bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
     assertEq(spaceFactory.spaceByHash(spaceHash), spaceAddress);
   }
 
   function testRevertIfInvalidNameLength() external {
-    _info.spaceName = "a";
+    DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements = DataTypes
+      .CreateSpaceExtraEntitlements({
+        roleName: "",
+        permissions: new string[](0),
+        tokens: new DataTypes.ExternalToken[](0),
+        users: new address[](0)
+      });
+
+    string[] memory _permissions = new string[](0);
 
     vm.expectRevert(Errors.NameLengthInvalid.selector);
-    createSimpleSpace();
+    spaceFactory.createSpace(
+      "z",
+      "!7evmpuHDDgkady9u:goerli",
+      "ipfs://QmZion",
+      _permissions,
+      _extraEntitlements
+    );
   }
 
   function testRevertIfSpaceNameInvalid() external {
-    _info.spaceName = "Crzy_Sp@ce_N@m3";
+    DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements = DataTypes
+      .CreateSpaceExtraEntitlements({
+        roleName: "",
+        permissions: new string[](0),
+        tokens: new DataTypes.ExternalToken[](0),
+        users: new address[](0)
+      });
+
+    string[] memory _everyonePermissions = new string[](0);
 
     vm.expectRevert(Errors.NameContainsInvalidCharacters.selector);
-    createSimpleSpace();
+    spaceFactory.createSpace(
+      "Crzy_Sp@ce_N@m3",
+      "!7evmpuHDDgkady9u:goerli",
+      "ipfs://QmZion",
+      _everyonePermissions,
+      _extraEntitlements
+    );
   }
 
   function testRevertIfSpaceAlreadyRegistered() external {
@@ -65,7 +93,7 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     createSimpleSpace();
 
     // grab token id of new space
-    bytes32 spaceHash = keccak256(bytes(_info.spaceNetworkId));
+    bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
     uint256 tokenId = spaceFactory.tokenByHash(spaceHash);
 
     assertEq(spaceToken.ownerOf(tokenId), address(this));
@@ -74,7 +102,7 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
   function testEntitlementModulesDeployed() external {
     createSimpleSpace();
 
-    bytes32 spaceHash = keccak256(bytes(_info.spaceNetworkId));
+    bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
     address spaceAddress = spaceFactory.spaceByHash(spaceHash);
 
     address[] memory entitlements = Space(spaceAddress).getEntitlements();
@@ -112,17 +140,17 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     address bob = _randomAddress();
     address alice = _randomAddress();
 
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "Custom Role",
         permissions: new string[](1),
         tokens: new DataTypes.ExternalToken[](1),
         users: new address[](1)
       });
 
-    _entitlementData.permissions[0] = Permissions.Read;
-    _entitlementData.users[0] = bob;
-    _entitlementData.tokens[0] = DataTypes.ExternalToken({
+    _extraEntitlements.permissions[0] = Permissions.Read;
+    _extraEntitlements.users[0] = bob;
+    _extraEntitlements.tokens[0] = DataTypes.ExternalToken({
       contractAddress: address(mockToken),
       quantity: 1,
       isSingleToken: false,
@@ -132,7 +160,7 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     mockToken.mintTo(alice);
 
     vm.prank(creator);
-    address spaceAddress = createSpaceWithEntitlements(_entitlementData);
+    address spaceAddress = createSpaceWithEntitlements(_extraEntitlements);
 
     assertTrue(Space(spaceAddress).isEntitled(creator, Permissions.Owner));
 

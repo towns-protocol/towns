@@ -1,36 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_space",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_tokenEntitlement",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_userEntitlement",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_spaceToken",
-        "type": "address"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_permissions",
-        "type": "string[]"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "inputs": [],
     "name": "NameContainsInvalidCharacters",
     "type": "error"
@@ -54,6 +23,51 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "previousAdmin",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "AdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "beacon",
+        "type": "address"
+      }
+    ],
+    "name": "BeaconUpgraded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "previousOwner",
@@ -67,6 +81,19 @@
       }
     ],
     "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "Upgraded",
     "type": "event"
   },
   {
@@ -137,26 +164,24 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "spaceName",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "spaceNetworkId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "spaceMetadata",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.CreateSpaceData",
-        "name": "_info",
-        "type": "tuple"
+        "internalType": "string",
+        "name": "spaceName",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "spaceMetadata",
+        "type": "string"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_everyonePermissions",
+        "type": "string[]"
       },
       {
         "components": [
@@ -203,14 +228,9 @@
             "type": "address[]"
           }
         ],
-        "internalType": "struct DataTypes.CreateSpaceEntitlementData",
-        "name": "_entitlementData",
+        "internalType": "struct DataTypes.CreateSpaceExtraEntitlements",
+        "name": "_extraEntitlements",
         "type": "tuple"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_permissions",
-        "type": "string[]"
       }
     ],
     "name": "createSpace",
@@ -235,6 +255,39 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_space",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_tokenEntitlement",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_userEntitlement",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_spaceToken",
+        "type": "address"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -264,6 +317,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proxiableUUID",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -345,9 +411,40 @@
         "type": "address"
       }
     ],
-    "name": "updateInitialImplementations",
+    "name": "updateImplementations",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      }
+    ],
+    "name": "upgradeTo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   }
 ]

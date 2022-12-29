@@ -42,6 +42,11 @@
       },
       {
         "inputs": [],
+        "name": "InvalidParameters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "MissingOwnerPermission",
         "type": "error"
       },
@@ -191,14 +196,14 @@
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "_entitlement",
-            "type": "address"
-          },
-          {
             "internalType": "uint256",
             "name": "_roleId",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "_entitlement",
+            "type": "address"
           },
           {
             "internalType": "bytes",
@@ -267,26 +272,19 @@
       {
         "inputs": [
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "channelName",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "channelNetworkId",
-                "type": "string"
-              },
-              {
-                "internalType": "uint256[]",
-                "name": "roleIds",
-                "type": "uint256[]"
-              }
-            ],
-            "internalType": "struct DataTypes.CreateChannelData",
-            "name": "_info",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "channelName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
           }
         ],
         "name": "createChannel",
@@ -322,6 +320,19 @@
           }
         ],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "disabled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -689,14 +700,14 @@
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "_entitlement",
-            "type": "address"
-          },
-          {
             "internalType": "uint256",
             "name": "_roleId",
             "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "_entitlement",
+            "type": "address"
           },
           {
             "internalType": "bytes",
@@ -751,6 +762,19 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "_disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "setAccess",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -811,6 +835,24 @@
           }
         ],
         "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "_roleName",
+            "type": "string"
+          }
+        ],
+        "name": "updateRole",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -922,35 +964,35 @@
   },
   "sources": {
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0xb15b34bbc86f215080957f6a8b662184b92f6496ddf68129299956ade3074ca9",
+      "keccak256": "0xa77dba42b4d209abf1c5aacff5a0b8b36d4d9bc59448505023a0ff2d6535a8f0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://68e0dc5e0230fe50374949331dcfbcf0a2ac29f3a4fcc5a5278284c3ded4f7de",
-        "dweb:/ipfs/QmY71VSJEdW2dzADVq4rXXGTTMby8hG8LZ6ni8xxfJSAT3"
+        "bzz-raw://0f6dd67190b1f9c5e84c5032192231d91f2348468438c02b1e9e0a43892c42f9",
+        "dweb:/ipfs/QmcDPPCrHyvGqaw1q3kYyMWxntK3PzfhSsLjEvaGpFQE8U"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0x7b23ec78ac0df3ad63a61530279b11c9470130b271120459ae615aec481b8cc8",
+      "keccak256": "0x9d9bda1dafd40523762bf3ff7ba5953de390c5020246c0f10fc61cdc40d1088d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://5b3666bca1e15b3ce9cf557885be74004f2d45dd0d5e2bf6e4a3d5767fdecd55",
-        "dweb:/ipfs/QmSAF8ehZKfYDaQXBM2Pyw8ehC9Lo53BgXeDkHHSmsjonV"
+        "bzz-raw://ba499208ecb443aa3ea61eda0a82526140f57afcac51d07c4363dd8346017249",
+        "dweb:/ipfs/QmVtoyU297x8ESqYurxL1oCa7yXGapex472NRSdchJwacs"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0xecaee683f287d1a0b4752c27841f853dd35cf5144c5e09fcf583e3b0af154513",
+      "keccak256": "0xfbbfbe04043581304d821710674e5a624e325ba5437760424c283e80856f69d1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9c2ddab288abbfdcaca5bab9d073ccbeffdcd68cee6480ad9fcdeef5040dfe1a",
-        "dweb:/ipfs/QmSg5JEcM47C1CdMFLpnrof4ETaop4NK7n522p5xezRgES"
+        "bzz-raw://1eb1935f3e189af967927bc00384eb10706d4c58aa8814c604a261523e13b8de",
+        "dweb:/ipfs/QmboP12Yayas7GbfxksZGRKu4NUWnj8hqrWRLEaSmwA9fZ"
       ]
     },
     "contracts/src/spacesv2/libraries/DataTypes.sol": {
-      "keccak256": "0x2614bea5a2d99b821529b6c1d0e320a6ce81fbd9f2b895d61266084f49459df3",
+      "keccak256": "0xb2dbfe87e6bafb16bf2d3b5207628d7d0f253a32084ee056c24179f9797ebd3d",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://c7d745413d762b45287c4606bc942607f4c420bd112c50e20005ec0a06d8f66a",
-        "dweb:/ipfs/QmQdvwGPb8EecwweGMhUQJg4DTzfpXi4qYmR4qRjH9MB3k"
+        "bzz-raw://f7e6702ec580e3de8574d861d4709a874abb45a9bcd5e2ac508e0c2fa2fcaefc",
+        "dweb:/ipfs/QmfDM4ynXL9CiMARZTHPD2ef1UfCB7CYb8gPrjx8F4Tqhs"
       ]
     },
     "contracts/src/spacesv2/libraries/Errors.sol": {

@@ -16,14 +16,17 @@ contract SpaceTestSetChannelAccess is BaseSetup {
   function testSetChannelAccess() external {
     address _space = createSimpleSpace();
 
-    DataTypes.CreateChannelData
-      memory _channelData = _createSimpleChannelData();
-    Space(_space).createChannel(_channelData);
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
 
-    Space(_space).setChannelAccess(_channelData.channelNetworkId, true);
+    Space(_space).setChannelAccess(channelNetworkId, true);
 
     DataTypes.Channel memory _channel = Space(_space).getChannelByHash(
-      keccak256(abi.encodePacked(_channelData.channelNetworkId))
+      keccak256(abi.encodePacked(channelNetworkId))
     );
 
     assertTrue(_channel.disabled);
@@ -32,13 +35,16 @@ contract SpaceTestSetChannelAccess is BaseSetup {
   function testSetChannelAccessNotAllowed() external {
     address _space = createSimpleSpace();
 
-    DataTypes.CreateChannelData
-      memory _channelData = _createSimpleChannelData();
-    Space(_space).createChannel(_channelData);
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).setChannelAccess(_channelData.channelNetworkId, true);
+    Space(_space).setChannelAccess(channelNetworkId, true);
   }
 
   function testSetChannelAccessChannelDoesNotExist() external {

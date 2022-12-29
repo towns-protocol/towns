@@ -22,8 +22,8 @@ contract SpaceTestRemoveRole is BaseSetup {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.ModifySpacePermissions;
 
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "Moderator",
         permissions: _spacePermissions,
         users: _users,
@@ -53,8 +53,8 @@ contract SpaceTestRemoveRole is BaseSetup {
 
     // Remove role from entitlement
     Space(_space).removeRoleFromEntitlement(
-      _userEntitlement,
       moderatorRoleId,
+      _userEntitlement,
       abi.encode(_moderator)
     );
 
@@ -82,8 +82,8 @@ contract SpaceTestRemoveRole is BaseSetup {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.ModifySpacePermissions;
 
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "Moderator",
         permissions: _spacePermissions,
         users: _users,

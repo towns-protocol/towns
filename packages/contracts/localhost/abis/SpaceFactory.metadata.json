@@ -6,37 +6,6 @@
   "output": {
     "abi": [
       {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "_space",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "_tokenEntitlement",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "_userEntitlement",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "_spaceToken",
-            "type": "address"
-          },
-          {
-            "internalType": "string[]",
-            "name": "_permissions",
-            "type": "string[]"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-      },
-      {
         "inputs": [],
         "name": "NameContainsInvalidCharacters",
         "type": "error"
@@ -60,6 +29,51 @@
         "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
+            "internalType": "address",
+            "name": "previousAdmin",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "newAdmin",
+            "type": "address"
+          }
+        ],
+        "name": "AdminChanged",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "beacon",
+            "type": "address"
+          }
+        ],
+        "name": "BeaconUpgraded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "version",
+            "type": "uint8"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
             "indexed": true,
             "internalType": "address",
             "name": "previousOwner",
@@ -73,6 +87,19 @@
           }
         ],
         "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          }
+        ],
+        "name": "Upgraded",
         "type": "event"
       },
       {
@@ -143,26 +170,24 @@
       {
         "inputs": [
           {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "spaceName",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "spaceNetworkId",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "spaceMetadata",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct DataTypes.CreateSpaceData",
-            "name": "_info",
-            "type": "tuple"
+            "internalType": "string",
+            "name": "spaceName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceMetadata",
+            "type": "string"
+          },
+          {
+            "internalType": "string[]",
+            "name": "_everyonePermissions",
+            "type": "string[]"
           },
           {
             "components": [
@@ -209,14 +234,9 @@
                 "type": "address[]"
               }
             ],
-            "internalType": "struct DataTypes.CreateSpaceEntitlementData",
-            "name": "_entitlementData",
+            "internalType": "struct DataTypes.CreateSpaceExtraEntitlements",
+            "name": "_extraEntitlements",
             "type": "tuple"
-          },
-          {
-            "internalType": "string[]",
-            "name": "_permissions",
-            "type": "string[]"
           }
         ],
         "name": "createSpace",
@@ -241,6 +261,39 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_space",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_tokenEntitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_userEntitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_spaceToken",
+            "type": "address"
+          },
+          {
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
+          }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -270,6 +323,19 @@
             "internalType": "string",
             "name": "",
             "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "proxiableUUID",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
           }
         ],
         "stateMutability": "view",
@@ -351,9 +417,40 @@
             "type": "address"
           }
         ],
-        "name": "updateInitialImplementations",
+        "name": "updateImplementations",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeToAndCall",
+        "outputs": [],
+        "stateMutability": "payable",
         "type": "function"
       }
     ],
@@ -363,11 +460,20 @@
         "owner()": {
           "details": "Returns the address of the current owner."
         },
+        "proxiableUUID()": {
+          "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
+        },
         "renounceOwnership()": {
           "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
         },
         "transferOwnership(address)": {
           "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        },
+        "upgradeTo(address)": {
+          "details": "Upgrade the implementation of the proxy to `newImplementation`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
+        },
+        "upgradeToAndCall(address,bytes)": {
+          "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
         }
       },
       "version": 1
@@ -407,19 +513,19 @@
   },
   "sources": {
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0xb15b34bbc86f215080957f6a8b662184b92f6496ddf68129299956ade3074ca9",
+      "keccak256": "0xa77dba42b4d209abf1c5aacff5a0b8b36d4d9bc59448505023a0ff2d6535a8f0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://68e0dc5e0230fe50374949331dcfbcf0a2ac29f3a4fcc5a5278284c3ded4f7de",
-        "dweb:/ipfs/QmY71VSJEdW2dzADVq4rXXGTTMby8hG8LZ6ni8xxfJSAT3"
+        "bzz-raw://0f6dd67190b1f9c5e84c5032192231d91f2348468438c02b1e9e0a43892c42f9",
+        "dweb:/ipfs/QmcDPPCrHyvGqaw1q3kYyMWxntK3PzfhSsLjEvaGpFQE8U"
       ]
     },
     "contracts/src/spacesv2/SpaceFactory.sol": {
-      "keccak256": "0x7cc1fce6c1e0943dbcc23531f7f9e96cb5eb2dfe4fc3379b5c837f96ad75a242",
+      "keccak256": "0xc59ad13908b254acac0c5579439fcaf749fa4aedf02172b5cc369a25ef8f6287",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e6f0bd62e8d2074507b019f4952a98862b1e2460e80754531fb18fb1595638c6",
-        "dweb:/ipfs/QmNx9iLW5FVRWAvmxcho8JtxoqrnDfaN9KGSmVbkAK7KCi"
+        "bzz-raw://b69c12387940e9775d7ed20a54cf347b2bc844f3d6b6b1267341fab1887ba014",
+        "dweb:/ipfs/QmbrBEHoXA7tnH68w4ue8ahue69JmNcRL8LiynJ4efB1JN"
       ]
     },
     "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
@@ -439,27 +545,27 @@
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0x7b23ec78ac0df3ad63a61530279b11c9470130b271120459ae615aec481b8cc8",
+      "keccak256": "0x9d9bda1dafd40523762bf3ff7ba5953de390c5020246c0f10fc61cdc40d1088d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://5b3666bca1e15b3ce9cf557885be74004f2d45dd0d5e2bf6e4a3d5767fdecd55",
-        "dweb:/ipfs/QmSAF8ehZKfYDaQXBM2Pyw8ehC9Lo53BgXeDkHHSmsjonV"
+        "bzz-raw://ba499208ecb443aa3ea61eda0a82526140f57afcac51d07c4363dd8346017249",
+        "dweb:/ipfs/QmVtoyU297x8ESqYurxL1oCa7yXGapex472NRSdchJwacs"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0xecaee683f287d1a0b4752c27841f853dd35cf5144c5e09fcf583e3b0af154513",
+      "keccak256": "0xfbbfbe04043581304d821710674e5a624e325ba5437760424c283e80856f69d1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9c2ddab288abbfdcaca5bab9d073ccbeffdcd68cee6480ad9fcdeef5040dfe1a",
-        "dweb:/ipfs/QmSg5JEcM47C1CdMFLpnrof4ETaop4NK7n522p5xezRgES"
+        "bzz-raw://1eb1935f3e189af967927bc00384eb10706d4c58aa8814c604a261523e13b8de",
+        "dweb:/ipfs/QmboP12Yayas7GbfxksZGRKu4NUWnj8hqrWRLEaSmwA9fZ"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpaceFactory.sol": {
-      "keccak256": "0x3ef0e81aec39c0787f51bb8d1d0719210b701eeac4d0d7b9a3536de55dabf022",
+      "keccak256": "0x9f4843e70c606a3574564925ca604d6d5b4f608b69a42500c717eb9c5fa0b62b",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://00b14691b7c4ef4cd506144e925eba141b7ede01d23e65ce58dd5ebb5150f795",
-        "dweb:/ipfs/QmUxtREvhAFKmqzp5k6Rvyc9JZbv9PF6J4qExQ7rEU4Sso"
+        "bzz-raw://2f3c5f667199d3b0b742f059138338b734b44354a8080d8b25ffa7a6fa63fe70",
+        "dweb:/ipfs/QmYDekVUdCQkJ2NXTaPdchUjp6YDCA65E1QdtHgV1bbi6e"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpaceOwner.sol": {
@@ -471,11 +577,11 @@
       ]
     },
     "contracts/src/spacesv2/libraries/DataTypes.sol": {
-      "keccak256": "0x2614bea5a2d99b821529b6c1d0e320a6ce81fbd9f2b895d61266084f49459df3",
+      "keccak256": "0xb2dbfe87e6bafb16bf2d3b5207628d7d0f253a32084ee056c24179f9797ebd3d",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://c7d745413d762b45287c4606bc942607f4c420bd112c50e20005ec0a06d8f66a",
-        "dweb:/ipfs/QmQdvwGPb8EecwweGMhUQJg4DTzfpXi4qYmR4qRjH9MB3k"
+        "bzz-raw://f7e6702ec580e3de8574d861d4709a874abb45a9bcd5e2ac508e0c2fa2fcaefc",
+        "dweb:/ipfs/QmfDM4ynXL9CiMARZTHPD2ef1UfCB7CYb8gPrjx8F4Tqhs"
       ]
     },
     "contracts/src/spacesv2/libraries/Errors.sol": {
@@ -558,6 +664,14 @@
         "dweb:/ipfs/QmdgBbHNijVgApRQ9UM17qds6QdhTgXxKHUoLAswA6VNyH"
       ]
     },
+    "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol": {
+      "keccak256": "0xab6029e025f8da00444f741cdf6714301865d302450d24e7e8493cf27c709e2f",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://0e8109ef362b9426afb526a9280cb2de559c50fa2649b03b2cbc0ce4a7f9826c",
+        "dweb:/ipfs/QmcC2XjeAHw6rgTywXDFNZt6qGv4ddTv6EhdkxYFXEoMAk"
+      ]
+    },
     "lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol": {
       "keccak256": "0x0a3b4afc301241e2629ad192fa02e0f8626e3cf38ab6f45342bfd7afbde16ee0",
       "license": "MIT",
@@ -596,14 +710,6 @@
       "urls": [
         "bzz-raw://92ad7e572cf44e6b4b37631b44b62f9eb9fb1cf14d9ce51c1504d5dc7ccaf758",
         "dweb:/ipfs/QmcnbqX85tsWnUXPmtuPLE4SczME2sJaTfmqEFkuAJvWhy"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
-      "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
-        "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
       ]
     },
     "lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol": {
@@ -646,14 +752,6 @@
         "dweb:/ipfs/QmWZ2NHZweRpz1U9GF6R1h65ri76dnX7fNxLBeM2t5N5Ce"
       ]
     },
-    "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
-      "keccak256": "0x03a26b0ce85afee2c16f3232bd123286b849ca576778781cf6e8bbf51cb7570a",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://13a4f5cec214760f14abaedfc0a1860d80c2267386fa62dc77e8eee51ec84d71",
-        "dweb:/ipfs/QmWmEKeofHqLnNEeCivhzTepo1k5xZZqzMxyyyzNBYiYBW"
-      ]
-    },
     "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol": {
       "keccak256": "0x6392f2cfe3a5ee802227fe7a2dfd47096d881aec89bddd214b35c5b46d3cd941",
       "license": "MIT",
@@ -684,14 +782,6 @@
       "urls": [
         "bzz-raw://d3d0a94b3c8afd92c2a9f03f3325e9ac22cec56e995b94ff212670ff3653f0d3",
         "dweb:/ipfs/QmPqKWUysbo8QqKcqH5Lp7SQiL1LfjeoGCSa7iFWmAP8Mw"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
-      "keccak256": "0xe2e337e6dde9ef6b680e07338c493ebea1b5fd09b43424112868e9cc1706bca7",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://6df0ddf21ce9f58271bdfaa85cde98b200ef242a05a3f85c2bc10a8294800a92",
-        "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol": {

@@ -93,8 +93,8 @@ contract UserEntitlementTest is BaseSetup {
 
     vm.prank(_creator);
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_creator)
     );
 

@@ -11,6 +11,8 @@ interface ISpace {
     address[] memory entitlements
   ) external;
 
+  function setAccess(bool disabled) external;
+
   function setOwnerRoleId(uint256 roleId) external;
 
   /// ***** Channel Management *****
@@ -21,7 +23,9 @@ interface ISpace {
   function setChannelAccess(string calldata channelId, bool disabled) external;
 
   function createChannel(
-    DataTypes.CreateChannelData calldata info
+    string memory channelName,
+    string memory channelNetworkId,
+    uint256[] memory roleIds
   ) external returns (bytes32);
 
   /// ***** Role Management *****
@@ -31,6 +35,8 @@ interface ISpace {
     string memory roleName,
     string[] memory permissions
   ) external returns (uint256);
+
+  function updateRole(uint256 roleId, string memory roleName) external;
 
   function removeRole(uint256 roleId) external;
 
@@ -70,14 +76,14 @@ interface ISpace {
   function setEntitlement(address entitlement, bool whitelist) external;
 
   function removeRoleFromEntitlement(
-    address entitlement,
     uint256 roleId,
+    address entitlement,
     bytes calldata entitlementData
   ) external;
 
   function addRoleToEntitlement(
-    address entitlement,
     uint256 roleId,
+    address entitlement,
     bytes memory entitlementData
   ) external;
 }

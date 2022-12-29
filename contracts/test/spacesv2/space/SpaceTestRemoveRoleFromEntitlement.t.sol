@@ -21,8 +21,8 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).removeRoleFromEntitlement(
-      _userEntitlement,
       _randomRoleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
   }
@@ -35,8 +35,8 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
 
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     Space(_space).removeRoleFromEntitlement(
-      _randomEntitlement,
       _randomRoleId,
+      _randomEntitlement,
       abi.encode(_bob)
     );
   }
@@ -51,16 +51,16 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
 
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).removeRoleFromEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
   }
@@ -76,14 +76,14 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
 
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_alice)
     );
 
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
 
@@ -91,8 +91,8 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
 
     // remove role from entitlement
     Space(_space).removeRoleFromEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
 

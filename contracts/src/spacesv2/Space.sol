@@ -17,6 +17,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   string public name;
   string public networkId;
+  bool public disabled;
   uint256 public ownerRoleId;
 
   mapping(address => bool) public hasEntitlement;
@@ -54,6 +55,12 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
     for (uint256 i = 0; i < _entitlements.length; i++) {
       _setEntitlement(_entitlements[i], true);
     }
+  }
+
+  /// @inheritdoc ISpace
+  function setAccess(bool _disabled) external {
+    _isAllowed("", Permissions.Owner);
+    disabled = _disabled;
   }
 
   /// @inheritdoc ISpace
@@ -110,11 +117,13 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
 
   /// @inheritdoc ISpace
   function createChannel(
-    DataTypes.CreateChannelData calldata _info
+    string memory channelName,
+    string memory channelNetworkId,
+    uint256[] memory roleIds
   ) external returns (bytes32) {
     _isAllowed("", Permissions.AddRemoveChannels);
 
-    bytes32 channelId = keccak256(abi.encodePacked(_info.channelNetworkId));
+    bytes32 channelId = keccak256(abi.encodePacked(channelNetworkId));
 
     if (channelsByHash[channelId].channelId != 0) {
       revert Errors.ChannelAlreadyRegistered();
@@ -122,7 +131,7 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
 
     // save channel info
     channelsByHash[channelId] = DataTypes.Channel({
-      name: _info.channelName,
+      name: channelName,
       channelId: channelId,
       createdAt: block.timestamp,
       disabled: false
@@ -136,23 +145,23 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
       address entitlement = entitlements[i];
 
       IEntitlement(entitlement).addRoleIdToChannel(
-        _info.channelNetworkId,
+        channelNetworkId,
         ownerRoleId
       );
 
       // Add extra roles to the channel's entitlements
-      for (uint256 j = 0; j < _info.roleIds.length; j++) {
-        if (_info.roleIds[j] == ownerRoleId) continue;
+      for (uint256 j = 0; j < roleIds.length; j++) {
+        if (roleIds[j] == ownerRoleId) continue;
 
         // make sure the role exists
-        if (rolesById[_info.roleIds[j]].roleId == 0) {
+        if (rolesById[roleIds[j]].roleId == 0) {
           revert Errors.RoleDoesNotExist();
         }
 
         try
           IEntitlement(entitlement).addRoleIdToChannel(
-            _info.channelNetworkId,
-            _info.roleIds[j]
+            channelNetworkId,
+            roleIds[j]
           )
         {} catch {
           revert Errors.AddRoleFailed();
@@ -200,6 +209,27 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
     }
 
     return newRoleId;
+  }
+
+  /// @inheritdoc ISpace
+  function updateRole(uint256 _roleId, string memory _roleName) external {
+    _isAllowed("", Permissions.ModifySpacePermissions);
+
+    // check not renaming owner role
+    if (_roleId == ownerRoleId) {
+      revert Errors.NotAllowed();
+    }
+
+    // check if role exists
+    if (rolesById[_roleId].roleId == 0) {
+      revert Errors.RoleDoesNotExist();
+    }
+
+    if (bytes(_roleName).length == 0) {
+      revert Errors.InvalidParameters();
+    }
+
+    rolesById[_roleId].name = _roleName;
   }
 
   /// @inheritdoc ISpace
@@ -355,8 +385,8 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
 
   /// @inheritdoc ISpace
   function removeRoleFromEntitlement(
-    address _entitlement,
     uint256 _roleId,
+    address _entitlement,
     bytes calldata _entitlementData
   ) external {
     _isAllowed("", Permissions.ModifySpacePermissions);
@@ -387,8 +417,8 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
 
   /// @inheritdoc ISpace
   function addRoleToEntitlement(
-    address _entitlement,
     uint256 _roleId,
+    address _entitlement,
     bytes memory _entitlementData
   ) external {
     _isAllowed("", Permissions.ModifySpacePermissions);
@@ -466,11 +496,12 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   ) internal view {
     if (
       _msgSender() == owner() ||
-      _isEntitled(
-        _channelId,
-        _msgSender(),
-        bytes32(abi.encodePacked(_permission))
-      )
+      (!disabled &&
+        _isEntitled(
+          _channelId,
+          _msgSender(),
+          bytes32(abi.encodePacked(_permission))
+        ))
     ) {
       return;
     } else {

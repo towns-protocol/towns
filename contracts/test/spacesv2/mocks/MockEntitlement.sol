@@ -39,6 +39,10 @@ contract MockEntitlement is
       super.supportsInterface(interfaceId);
   }
 
+  function setSpace(address) external pure {
+    return;
+  }
+
   function isEntitled(
     string calldata,
     address,

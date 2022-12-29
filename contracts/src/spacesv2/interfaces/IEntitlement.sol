@@ -13,6 +13,8 @@ interface IEntitlement {
   /// @notice The description of the entitlement module
   function description() external view returns (string memory);
 
+  function setSpace(address _space) external;
+
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData

@@ -2,6 +2,7 @@
 cd contracts/
 yarn clean
 source .env
-make deployLocalSpaceManager
-make deployLocalCouncilNFT
-cp -r ../packages/contracts/localhost/addresses/ ../servers/dendrite/zion/contracts/zion_localhost/
+make deploy-anvil contract=Local
+make deploy-anvil contract=CouncilNFT
+make deploy-anvil contract=Spaces
+cp -r ../packages/contracts/localhost/addresses/space-factory.json ../servers/dendrite/zion/contracts/localhost_space_factory/space-factory.json

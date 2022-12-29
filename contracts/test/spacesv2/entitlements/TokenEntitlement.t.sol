@@ -163,8 +163,8 @@ contract TokenEntitlementTest is BaseSetup {
       tokenIds: tokenTypes
     });
 
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "Moderator",
         permissions: permissions,
         users: new address[](0),
@@ -213,8 +213,8 @@ contract TokenEntitlementTest is BaseSetup {
       tokenIds: tokenIds
     });
 
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "Moderator",
         permissions: permissions,
         users: new address[](0),
@@ -249,6 +249,8 @@ contract TokenEntitlementTest is BaseSetup {
 
     tokenEntitlement.setEntitlement(roleId, abi.encode(tokens2));
     tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
+
+    tokenEntitlement.getEntitlementDataByRoleId(roleId);
 
     tokenEntitlement.removeEntitlement(roleId, abi.encode(tokens));
   }

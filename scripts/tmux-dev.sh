@@ -4,7 +4,7 @@ tmux new-window -d -t '=harmony' -n anvil
 tmux send-keys -t '=harmony:=anvil' 'anvil' Enter
 
 tmux new-window -d -t '=harmony' -n deploy
-tmux send-keys -t '=harmony:=deploy' './scripts/deploy-local-zion-governance-contracts.sh' Enter
+tmux send-keys -t '=harmony:=deploy' './scripts/deploy-zion-governance-contracts.sh' Enter
 
 tmux new-window -d -t '=harmony' -n dendrite
 tmux send-keys -t '=harmony:=dendrite' './scripts/start-local-dendrite.sh -waz' Enter

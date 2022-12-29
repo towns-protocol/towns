@@ -20,8 +20,8 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _randomUint256(),
+      _userEntitlement,
       abi.encode(_bob)
     );
   }
@@ -40,8 +40,8 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
     // add role to entitlement
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     Space(_space).addRoleToEntitlement(
-      _randomAddress(),
       _roleId,
+      _randomAddress(),
       abi.encode(_bob)
     );
   }
@@ -53,7 +53,7 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).addRoleToEntitlement(_userEntitlement, 0, abi.encode(_bob));
+    Space(_space).addRoleToEntitlement(0, _userEntitlement, abi.encode(_bob));
   }
 
   function testRevertIfEntitlementIdAlreadyExists() external {
@@ -69,15 +69,15 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
 
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
 
     vm.expectRevert(Errors.EntitlementAlreadyExists.selector);
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
   }
@@ -96,8 +96,8 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
 
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
-      _userEntitlement,
       _roleId,
+      _userEntitlement,
       abi.encode(_bob)
     );
 

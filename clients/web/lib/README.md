@@ -20,7 +20,7 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 ./scripts/start-local-dendrite.sh
 ./scripts/start-local-casablanca.sh
 ./scripts/start-local-blockchain.sh
-./scripts/deploy-local-zion-governance-contracts.sh
+./scripts/deploy-zion-governance-contracts.sh
 ./scripts/run-integration-tests.sh
 # OR - run a single tests from visual studio code via F5 or the "Jest: current file in 'web/lib/` commmand
 ```
@@ -31,16 +31,16 @@ And run against a local blockchain, See [Zion-Governance](https://github.com:Her
 <ZionContextProvider {...props}>
   <SpaceContextProvider spaceId="{...}">
     <ChannelContextProvider channelId="{...}">
-      <!-- 
+      <!--
             function getContent(t: TimelineEvent) {
               // the protocol can change and content can be undefined
               if (!t.content) { return undefined; }
               // switch over the kind type
               switch (t.content.kind) {
-                case ZTEvent.RoomMessage: 
-                  // through the magic of union type differentiation, content is now typed to RoomMessageEvent 
+                case ZTEvent.RoomMessage:
+                  // through the magic of union type differentiation, content is now typed to RoomMessageEvent
                   return makeRoomMessageCompoennt(t.content)
-                default: 
+                default:
                   staticAssertNever(t.content) // optional, will enforce compile time check for enum exhaustion
                   return defaultComponent(t.fallbackContent)
               }
@@ -95,7 +95,7 @@ Then change all instances of http://localhost:8008/ in your app to http://localh
 - for the tests, change clients/web/lib/jest-setup.ts
 - for the app, change the app url in clients/web/app/src/App.tsk
 
-### Non-idempotence of deploy-local-zion-governance-contracts.sh per local anvil instance
+### Non-idempotence of deploy-zion-governance-contracts.sh per local anvil instance
 
 Contract addresses in deploy script are generated deterministically based on account, nonce tuple
 of deploy account. In local development, this is a local anvil instance with deterministic accounts.

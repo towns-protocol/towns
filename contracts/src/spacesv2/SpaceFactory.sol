@@ -1,25 +1,36 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.17;
 
+/** Interfaces */
 import {ISpaceFactory} from "./interfaces/ISpaceFactory.sol";
 import {ISpaceOwner} from "./interfaces/ISpaceOwner.sol";
 import {IEntitlement} from "./interfaces/IEntitlement.sol";
 
+/** Libraries */
 import {Permissions} from "./libraries/Permissions.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Utils} from "./libraries/Utils.sol";
 
+/** Contracts */
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {TokenEntitlement} from "./entitlements/TokenEntitlement.sol";
 import {UserEntitlement} from "./entitlements/UserEntitlement.sol";
 import {Space} from "./Space.sol";
 
-contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
+contract SpaceFactory is
+  Initializable,
+  OwnableUpgradeable,
+  ReentrancyGuardUpgradeable,
+  UUPSUpgradeable,
+  ISpaceFactory
+{
   string internal constant everyoneRoleName = "Everyone";
   string internal constant ownerRoleName = "Owner";
 
@@ -32,13 +43,17 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
   mapping(bytes32 => address) public spaceByHash;
   mapping(bytes32 => uint256) public tokenByHash;
 
-  constructor(
+  function initialize(
     address _space,
     address _tokenEntitlement,
     address _userEntitlement,
     address _spaceToken,
     string[] memory _permissions
-  ) {
+  ) external initializer {
+    __UUPSUpgradeable_init();
+    __Ownable_init();
+    __ReentrancyGuard_init();
+
     SPACE_IMPLEMENTATION_ADDRESS = _space;
     TOKEN_IMPLEMENTATION_ADDRESS = _tokenEntitlement;
     USER_IMPLEMENTATION_ADDRESS = _userEntitlement;
@@ -50,7 +65,7 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
   }
 
   /// @inheritdoc ISpaceFactory
-  function updateInitialImplementations(
+  function updateImplementations(
     address _space,
     address _tokenEntitlement,
     address _userEntitlement
@@ -64,15 +79,17 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
 
   /// @inheritdoc ISpaceFactory
   function createSpace(
-    DataTypes.CreateSpaceData calldata _info,
-    DataTypes.CreateSpaceEntitlementData calldata _entitlementData,
-    string[] calldata _permissions
+    string calldata spaceName,
+    string calldata spaceNetworkId,
+    string calldata spaceMetadata,
+    string[] calldata _everyonePermissions,
+    DataTypes.CreateSpaceExtraEntitlements calldata _extraEntitlements
   ) external nonReentrant returns (address _spaceAddress) {
     // validate space name
-    Utils.validateName(_info.spaceName);
+    Utils.validateName(spaceName);
 
     // hash the network id
-    bytes32 _networkHash = keccak256(bytes(_info.spaceNetworkId));
+    bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
 
     // validate that the network id hasn't been used before
     if (spaceByHash[_networkHash] != address(0)) {
@@ -82,7 +99,7 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
     // mint space nft to owner
     uint256 _tokenId = ISpaceOwner(SPACE_TOKEN_ADDRESS).mintTo(
       _msgSender(),
-      _info.spaceMetadata
+      spaceMetadata
     );
 
     // save token id to mapping
@@ -114,7 +131,7 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
         SPACE_IMPLEMENTATION_ADDRESS,
         abi.encodeCall(
           Space.initialize,
-          (_info.spaceName, _info.spaceNetworkId, _entitlements)
+          (spaceName, spaceNetworkId, _entitlements)
         )
       )
     );
@@ -123,21 +140,26 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
     spaceByHash[_networkHash] = _spaceAddress;
 
     // set space on entitlement modules
-    TokenEntitlement(_tokenEntitlement).setSpace(_spaceAddress);
-    UserEntitlement(_userEntitlement).setSpace(_spaceAddress);
+    for (uint256 i = 0; i < _entitlements.length; i++) {
+      IEntitlement(_entitlements[i]).setSpace(_spaceAddress);
+    }
 
     _createOwnerEntitlement(_spaceAddress, _tokenEntitlement, _tokenId);
-    _createEveryoneEntitlement(_spaceAddress, _userEntitlement, _permissions);
+    _createEveryoneEntitlement(
+      _spaceAddress,
+      _userEntitlement,
+      _everyonePermissions
+    );
     _createExtraEntitlements(
       _spaceAddress,
       _tokenEntitlement,
       _userEntitlement,
-      _entitlementData
+      _extraEntitlements
     );
 
     Space(_spaceAddress).transferOwnership(_msgSender());
 
-    emit Events.SpaceCreated(_info.spaceNetworkId, _spaceAddress);
+    emit Events.SpaceCreated(spaceNetworkId, _spaceAddress);
   }
 
   function addOwnerPermissions(
@@ -167,31 +189,31 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
     address spaceAddress,
     address tokenAddress,
     address userAddress,
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData
+    DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements
   ) internal {
-    if (_entitlementData.permissions.length == 0) return;
+    if (_extraEntitlements.permissions.length == 0) return;
 
     uint256 additionalRoleId = Space(spaceAddress).createRole(
-      _entitlementData.roleName,
-      _entitlementData.permissions
+      _extraEntitlements.roleName,
+      _extraEntitlements.permissions
     );
 
     // check entitlementdata has users
-    for (uint256 i = 0; i < _entitlementData.users.length; i++) {
+    for (uint256 i = 0; i < _extraEntitlements.users.length; i++) {
       Space(spaceAddress).addRoleToEntitlement(
-        userAddress,
         additionalRoleId,
-        abi.encode(_entitlementData.users[i])
+        userAddress,
+        abi.encode(_extraEntitlements.users[i])
       );
     }
 
     // check entitlementdata has tokens
-    if (_entitlementData.tokens.length == 0) return;
+    if (_extraEntitlements.tokens.length == 0) return;
 
     Space(spaceAddress).addRoleToEntitlement(
-      tokenAddress,
       additionalRoleId,
-      abi.encode(_entitlementData.tokens)
+      tokenAddress,
+      abi.encode(_extraEntitlements.tokens)
     );
   }
 
@@ -224,8 +246,8 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
 
     // add token data to entitlement
     Space(spaceAddress).addRoleToEntitlement(
-      tokenAddress,
       ownerRoleId,
+      tokenAddress,
       abi.encode(tokens)
     );
   }
@@ -242,9 +264,13 @@ contract SpaceFactory is Ownable, ReentrancyGuard, ISpaceFactory {
 
     // add everyone role to user entitlement
     Space(spaceAddress).addRoleToEntitlement(
-      userAddress,
       everyoneRoleId,
+      userAddress,
       abi.encode(Utils.EVERYONE_ADDRESS)
     );
   }
+
+  function _authorizeUpgrade(
+    address newImplementation
+  ) internal override onlyOwner {}
 }

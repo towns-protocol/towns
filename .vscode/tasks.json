@@ -93,7 +93,7 @@
       {
         "label": "DeployZionGovernance",
         "type": "shell",
-        "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-local-zion-governance-contracts.sh",
+        "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-zion-governance-contracts.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -169,7 +169,7 @@
         "presentation": {
           "group": "local-servers"
         }
-      }, 
+      },
       {
         "label": "Start MITM - Dendrite",
         "type": "shell",
@@ -179,7 +179,7 @@
         "presentation": {
           "group": "local-servers"
         }
-      }, 
+      },
       {
         "label": "StartUnfurlWorker",
         "type": "shell",

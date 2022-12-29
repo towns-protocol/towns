@@ -3,11 +3,15 @@ pragma solidity ^0.8.0;
 
 import "../utils/TestUtils.sol";
 
+/** Interfaces */
 import {IEntitlement} from "contracts/src/spacesv2/interfaces/IEntitlement.sol";
 
+/** Libraries */
 import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
+/** Contracts */
+import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 import {SpaceOwner} from "contracts/src/spacesv2/SpaceOwner.sol";
 import {SpaceFactory} from "contracts/src/spacesv2/SpaceFactory.sol";
@@ -20,32 +24,36 @@ contract BaseSetup is TestUtils {
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
   SpaceOwner internal spaceToken;
-  string[] public initialPermissions;
 
-  DataTypes.CreateSpaceData _info =
-    DataTypes.CreateSpaceData({
-      spaceName: "zion",
-      spaceNetworkId: "!7evmpuHDDgkady9u:goerli",
-      spaceMetadata: "ipfs://QmZion"
-    });
+  string[] public initialPermissions;
 
   function init() internal {
     spaceToken = new SpaceOwner("Space Token", "ZION");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();
+    spaceFactory = new SpaceFactory();
 
     _createInitialOwnerPermissions();
 
-    spaceFactory = new SpaceFactory(
-      address(spaceImplementation),
-      address(tokenImplementation),
-      address(userImplementation),
-      address(spaceToken),
-      initialPermissions
+    address spaceFactoryAddress = address(
+      new ERC1967Proxy(
+        address(spaceFactory),
+        abi.encodeCall(
+          spaceFactory.initialize,
+          (
+            address(spaceImplementation),
+            address(tokenImplementation),
+            address(userImplementation),
+            address(spaceToken),
+            initialPermissions
+          )
+        )
+      )
     );
 
-    spaceToken.setFactory(address(spaceFactory));
+    spaceToken.setFactory(spaceFactoryAddress);
+    spaceFactory = SpaceFactory(spaceFactoryAddress);
   }
 
   function _createInitialOwnerPermissions() internal {
@@ -65,12 +73,17 @@ contract BaseSetup is TestUtils {
   }
 
   function createSimpleChannel(address _space) internal returns (bytes32) {
-    return Space(_space).createChannel(_createSimpleChannelData());
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+    return Space(_space).createChannel(channelName, channelNetworkId, roleIds);
   }
 
   function createSimpleSpace() internal returns (address) {
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "",
         permissions: new string[](0),
         tokens: new DataTypes.ExternalToken[](0),
@@ -80,9 +93,11 @@ contract BaseSetup is TestUtils {
     string[] memory _permissions = new string[](0);
 
     address space = spaceFactory.createSpace(
-      _info,
-      _entitlementData,
-      _permissions
+      "zion",
+      "!7evmpuHDDgkady9u:goerli",
+      "ipfs://QmZion",
+      _permissions,
+      _entitlementData
     );
 
     return space;
@@ -91,8 +106,8 @@ contract BaseSetup is TestUtils {
   function createSpaceWithEveryonePermissions(
     string[] memory _permissions
   ) internal returns (address) {
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "",
         permissions: new string[](0),
         tokens: new DataTypes.ExternalToken[](0),
@@ -100,23 +115,27 @@ contract BaseSetup is TestUtils {
       });
 
     address space = spaceFactory.createSpace(
-      _info,
-      _entitlementData,
-      _permissions
+      "zion",
+      "!7evmpuHDDgkady9u:goerli",
+      "ipfs://QmZion",
+      _permissions,
+      _entitlementData
     );
 
     return space;
   }
 
   function createSpaceWithEntitlements(
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData
   ) internal returns (address) {
     string[] memory _permissions = new string[](0);
 
     address space = spaceFactory.createSpace(
-      _info,
-      _entitlementData,
-      _permissions
+      "zion",
+      "!7evmpuHDDgkady9u:goerli",
+      "ipfs://QmZion",
+      _permissions,
+      _entitlementData
     );
 
     return space;
@@ -134,8 +153,8 @@ contract BaseSetup is TestUtils {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.ModifySpacePermissions;
 
-    DataTypes.CreateSpaceEntitlementData memory _entitlementData = DataTypes
-      .CreateSpaceEntitlementData({
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
         roleName: "Moderator",
         permissions: _spacePermissions,
         users: _users,
@@ -156,14 +175,13 @@ contract BaseSetup is TestUtils {
   function _createSimpleChannelData()
     internal
     pure
-    returns (DataTypes.CreateChannelData memory)
+    returns (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    )
   {
-    return
-      DataTypes.CreateChannelData({
-        channelName: "general",
-        channelNetworkId: "!7evmpuHDDgkady9u:localhost",
-        roleIds: new uint256[](0)
-      });
+    return ("general", "!7evmpuHDDgkady9u:localhost", new uint256[](0));
   }
 
   function createSimpleRoleWithPermission(

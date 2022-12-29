@@ -98,7 +98,7 @@ jobs:
               run: anvil &
 
             - name: Deploy local zion governance contracts
-              run: ./scripts/deploy-local-zion-governance-contracts.sh
+              run: ./scripts/deploy-zion-governance-contracts.sh
 
             - name: Start dendrite
               run: ./scripts/start-local-dendrite.sh --skip-postgres &

@@ -57,16 +57,15 @@ contract SpaceTestAddRoleToChannel is BaseSetup {
 
     uint256 _roleId = Space(_space).createRole(_roleName, _permissions);
 
-    DataTypes.CreateChannelData
-      memory _channelInfo = _createSimpleChannelData();
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
 
-    Space(_space).createChannel(_channelInfo);
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
-    Space(_space).addRoleToChannel(
-      _channelInfo.channelName,
-      _userEntitlement,
-      _roleId
-    );
+    Space(_space).addRoleToChannel(channelName, _userEntitlement, _roleId);
   }
 }

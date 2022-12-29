@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.17;
 
-// interfaces
-// libraries
+/* Interfaces */
+
+/* Libraries */
+import "forge-std/Script.sol";
 import {Helper} from "./Helper.sol";
 import {JsonWriter} from "solidity-json-writer/JsonWriter.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
-// contracts
-import "forge-std/Script.sol";
+/* Contracts */
 import {Space} from "contracts/src/spacesv2/Space.sol";
 import {SpaceOwner} from "contracts/src/spacesv2/SpaceOwner.sol";
 import {SpaceFactory} from "contracts/src/spacesv2/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/spacesv2/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/spacesv2/entitlements/TokenEntitlement.sol";
+import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeploySpaces is Script {
   using JsonWriter for JsonWriter.Json;
@@ -34,16 +36,27 @@ contract DeploySpaces is Script {
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();
+    spaceFactory = new SpaceFactory();
 
-    spaceFactory = new SpaceFactory(
-      address(spaceImplementation),
-      address(tokenImplementation),
-      address(userImplementation),
-      address(spaceToken),
-      initialPermissions
+    address spaceFactoryAddress = address(
+      new ERC1967Proxy(
+        address(spaceFactory),
+        abi.encodeCall(
+          spaceFactory.initialize,
+          (
+            address(spaceImplementation),
+            address(tokenImplementation),
+            address(userImplementation),
+            address(spaceToken),
+            initialPermissions
+          )
+        )
+      )
     );
 
-    spaceToken.setFactory(address(spaceFactory));
+    spaceToken.setFactory(spaceFactoryAddress);
+    spaceFactory = SpaceFactory(spaceFactoryAddress);
+
     vm.stopBroadcast();
 
     _writeJson();
@@ -70,7 +83,7 @@ contract DeploySpaces is Script {
     string memory path = string.concat(
       "packages/contracts/",
       Helper.getChainName(),
-      "/addresses/spaceFactory.json"
+      "/addresses/space-factory.json"
     );
     vm.writeFile(path, writer.value);
   }
