@@ -76,7 +76,7 @@ on a 2nd terminal window, run
 
 ```
 cd contracts/
-make deployLocalCouncilNFT
+make deploy-anvil contract=CouncilNFT
 ```
 
 This will mint an NFT belonging to the first 4 addresses in the anvil node

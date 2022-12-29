@@ -763,7 +763,6 @@
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
       ":solmate/=lib/solmate/src/"
     ]
   },

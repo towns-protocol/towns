@@ -4,9 +4,8 @@ pragma solidity 0.8.17;
 /* Interfaces */
 
 /* Libraries */
-import "forge-std/Script.sol";
-import {Helper} from "./Helper.sol";
-import {JsonWriter} from "solidity-json-writer/JsonWriter.sol";
+import {console} from "forge-std/console.sol";
+import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
 /* Contracts */
@@ -17,10 +16,7 @@ import {UserEntitlement} from "contracts/src/spacesv2/entitlements/UserEntitleme
 import {TokenEntitlement} from "contracts/src/spacesv2/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract DeploySpaces is Script {
-  using JsonWriter for JsonWriter.Json;
-
-  JsonWriter.Json writer;
+contract DeploySpaces is ScriptUtils {
   SpaceFactory internal spaceFactory;
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
@@ -74,18 +70,27 @@ contract DeploySpaces is Script {
   }
 
   function _writeJson() internal {
-    writer = writer.writeStartObject();
-    writer = writer.writeStringProperty(
+    string memory json = "";
+    json = vm.serializeString(
+      json,
       "spaceFactory",
-      Helper.toString(abi.encodePacked(address(spaceFactory)))
+      vm.toString(address(spaceFactory))
     );
-    writer = writer.writeEndObject();
     string memory path = string.concat(
       "packages/contracts/",
-      Helper.getChainName(),
+      _getChainName(),
       "/addresses/space-factory.json"
     );
-    vm.writeFile(path, writer.value);
+
+    string memory goPath = string.concat(
+      "servers/dendrite/zion/contracts/",
+      _getChainName(),
+      "_space_factory",
+      "/space-factory.json"
+    );
+
+    vm.writeJson(json, path);
+    vm.writeJson(json, goPath);
   }
 
   function _createInitialOwnerPermissions() internal {

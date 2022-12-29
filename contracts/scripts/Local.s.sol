@@ -2,6 +2,9 @@
 pragma solidity ^0.8.13;
 import "forge-std/Script.sol";
 
+import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
+import {console} from "forge-std/console.sol";
+
 import {ZionSpaceManager} from "./../src/spaces/ZionSpaceManager.sol";
 import {TokenEntitlementModule} from "./../src/spaces/modules/entitlements/TokenEntitlementModule.sol";
 import {UserGrantedEntitlementModule} from "./../src/spaces/modules/entitlements/UserGrantedEntitlementModule.sol";
@@ -9,13 +12,7 @@ import {ZionPermissionsRegistry} from "./../src/spaces/ZionPermissionsRegistry.s
 import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
 
-import {Helper} from "./Helper.sol";
-import "solidity-json-writer/JsonWriter.sol";
-
-contract DeployLocal is Script {
-  using JsonWriter for JsonWriter.Json;
-  JsonWriter.Json writer;
-
+contract DeployLocal is ScriptUtils {
   ZionSpaceManager internal spaceManager;
   ZionRoleManager internal roleManager;
   ZionPermissionsRegistry internal permissionsRegistry;
@@ -66,54 +63,61 @@ contract DeployLocal is Script {
 
     vm.stopBroadcast();
 
+    _writeJson();
+    _logAddresses();
+  }
+
+  function _logAddresses() internal view {
     console.log("Deployed ZionSpaceManager: ", address(spaceManager));
     console.log(
       "Deployed ZionPermissionsRegistry: ",
       address(permissionsRegistry)
     );
     console.log("Deployed ZionRoleManager: ", address(roleManager));
-
     console.log(
       "User Granted Entitlement Address",
       address(userGrantedEntitlementModule)
     );
-
     console.log("Token Entitlement Address", address(tokenEntitlementModule));
-
     console.log("Zion Space Address", address(zionSpaceNFT));
+  }
 
-    writer = writer.writeStartObject();
-    writer = writer.writeStringProperty(
+  function _writeJson() internal {
+    string memory json = "";
+    vm.serializeString(
+      json,
       "spacemanager",
-      Helper.toString(abi.encodePacked(address(spaceManager)))
+      vm.toString(address(spaceManager))
     );
-    writer = writer.writeStringProperty(
+    vm.serializeString(
+      json,
       "usergranted",
-      Helper.toString(abi.encodePacked(address(userGrantedEntitlementModule)))
+      vm.toString(address(userGrantedEntitlementModule))
     );
-    writer = writer.writeStringProperty(
+    vm.serializeString(
+      json,
       "tokengranted",
-      Helper.toString(abi.encodePacked(address(tokenEntitlementModule)))
+      vm.toString(address(tokenEntitlementModule))
     );
-    writer = writer.writeStringProperty(
+    json = vm.serializeString(
+      json,
       "rolemanager",
-      Helper.toString(abi.encodePacked(address(roleManager)))
+      vm.toString(address(roleManager))
     );
-    writer = writer.writeEndObject();
 
     string memory path = string.concat(
       "packages/contracts/",
-      Helper.getChainName(),
+      _getChainName(),
       "/addresses/space-manager.json"
     );
 
     string memory goPath = string.concat(
       "servers/dendrite/zion/contracts/zion_",
-      Helper.getChainName(),
+      _getChainName(),
       "/space-manager.json"
     );
 
-    vm.writeFile(path, writer.value);
-    vm.writeFile(goPath, writer.value);
+    vm.writeJson(json, path);
+    vm.writeJson(json, goPath);
   }
 }

@@ -10,7 +10,6 @@ contract DeployZioneer is Script {
   function run() public {
     vm.startBroadcast();
     zioneer = new Zioneer("Zioneer", "ZNR", "");
-
     vm.stopBroadcast();
   }
 }

@@ -38,13 +38,5 @@ read-anvil :; @cast call ${contractAddress} "${functionName}" --rpc-url http://l
 
 write-anvil :; @cast send ${contractAddress} "${functionName}" --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY}
 
-# --------------- OLD Deployment scripts ----------------
-deployLocalSpaceManager :; make deploy-anvil contract=Local
-deployLocalCouncilNFT :; make deploy-anvil contract=CouncilNFT
-
-deployGoerliCouncilNFT :; make deploy-goerli contract=CouncilNFT
-deployGoerliSpaceManager :; make deploy-goerli contract=ZionSpaceManager
-deployGoerliSpaceNFT :; make deploy-goerli contract=ZionSpaceNFT
-
 startLocalWaitlist :; make write-anvil contractAddress=${contractAddress} functionName="startWaitlistMint()"
 
