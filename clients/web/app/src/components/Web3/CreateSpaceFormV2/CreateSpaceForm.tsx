@@ -19,6 +19,7 @@ import {
     TransactionUIStatesType,
     useTransactionUIStates,
 } from 'hooks/useTransactionStatus'
+import { StoredTransactionType, useTransactionStore } from 'store/transactionsStore'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
@@ -115,9 +116,11 @@ export const CreateSpaceForm = (props: Props) => {
     const {
         data: roomId,
         error,
+        transactionHash,
         transactionStatus,
         createSpaceTransactionWithMemberRole,
     } = useCreateSpaceTransaction()
+    const storeTransaction = useTransactionStore((state) => state.storeTransaction)
 
     const [wentBackAfterAttemptingCreation, setWentBackAfterAttemptingCreation] = useState(false)
 
@@ -193,10 +196,18 @@ export const CreateSpaceForm = (props: Props) => {
     }, [createSpace, goNext, isLast])
 
     useEffect(() => {
+        if (transactionHash && transactionStatus === TransactionStatus.Pending) {
+            storeTransaction({
+                hash: transactionHash,
+                data: roomId?.slug,
+                type: StoredTransactionType.CreateSpace,
+            })
+        }
+
         if (roomId && transactionStatus === TransactionStatus.Success) {
             onCreateSpace(roomId, Membership.Join)
         }
-    }, [onCreateSpace, roomId, transactionStatus])
+    }, [onCreateSpace, roomId, transactionStatus, transactionHash, storeTransaction])
 
     return (
         <Box>

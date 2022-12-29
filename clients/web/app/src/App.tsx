@@ -14,6 +14,7 @@ import { AppPanelLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { isDev } from 'utils'
 import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { TransactionEvents } from 'TransactionEvents'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -43,6 +44,7 @@ export const App = () => {
         >
             <QueryProvider>
                 <>{isDev && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
+                <TransactionEvents />
                 <AllRoutes />
             </QueryProvider>
         </ZionContextProvider>
