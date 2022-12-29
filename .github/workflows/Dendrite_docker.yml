@@ -39,6 +39,7 @@ jobs:
                   PACKAGEJSON_DIR: 'servers/dendrite'
               with:
                   version-type: 'patch'
+                  skip-tag: 'true'
 
             - name: Get release version from package.json
               working-directory: ./servers/dendrite
