@@ -7,7 +7,7 @@ library Events {
    * @param owner The address of the owner of the space
    * @param spaceNetworkId The id of the space
    */
-  event CreateSpace(string indexed spaceNetworkId, address indexed owner);
+  event CreateSpace(string spaceNetworkId, address indexed owner);
 
   /**
    * @dev Emitted when a channel is created

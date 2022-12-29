@@ -90,7 +90,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "string",
         "name": "spaceNetworkId",
         "type": "string"

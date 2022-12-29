@@ -159,7 +159,7 @@ contract SpaceFactory is
 
     Space(_spaceAddress).transferOwnership(_msgSender());
 
-    emit Events.SpaceCreated(spaceNetworkId, _spaceAddress);
+    emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceNetworkId);
   }
 
   function addOwnerPermissions(

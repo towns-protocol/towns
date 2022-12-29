@@ -1439,11 +1439,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Events.sol": {
-      "keccak256": "0x75d73e771cf6ec22a6176fd01fdbc01f676ad22d55ed284f3f7d3d792e58eb8e",
+      "keccak256": "0xa4e7776f9eef562db0f950c8cd9faea474ab094a46301723b58cc0231bce63ad",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7e83cfaf7a1d90338a8ba72071d8ddfa0542417e293fe4df021ef1f7d9f66cdb",
-        "dweb:/ipfs/QmUddapNGoSNzVLiTC4rx7ncWMEnZQmst5pfGJM49VShJQ"
+        "bzz-raw://cb1039c499e28f29d69a24d9ebd4ca84e519dc0830de55dabc158c30a80322bc",
+        "dweb:/ipfs/Qme7whMckFbZBUCFfsZi5mR3h8Q9oWCqaZmW7otNZGVaeD"
       ]
     },
     "contracts/src/spaces/libraries/PermissionTypes.sol": {

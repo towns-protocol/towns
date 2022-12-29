@@ -40,15 +40,16 @@ Run `yarn`
  If you want to interact with anvil via the front end, you will need to add the local network to Metamask with `ChainID=1337`
 
 <b>To deploy the compiled contracts to the local network:</b>\
- Solidity deploy scripts are located in `/script`\
- Add a `.env` file to the root of the project (this is excluded from git via .gitignore) with the following fields (RPC URLs may need modified)
+ Solidity deploy scripts are located in `contracts/scripts`\
+ Add a `.env` file to the contracts folder of the project (this is excluded from git via .gitignore) with the following fields (RPC URLs may need modified)
 
 ```
-MAINNET_RPC_URL=https://cloudflare-eth.com/
+GOERLI_RPC_URL=
 LOCAL_RPC_URL=http://127.0.0.1:8545
-RINKEBY_RPC_URL=https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161
+
 LOCAL_PRIVATE_KEY=[YOUR PRIVATE KEY]
-RINKEBY_PRIVATE_KEY=[YOUR PRIVATE KEY]
+GOERLI_PRIVATE_KEY=[YOUR PRIVATE KEY]
+
 ETHERSCAN_KEY=[YOUR ETHERSCAN KEY]
 ```
 

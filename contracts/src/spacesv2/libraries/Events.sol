@@ -3,7 +3,8 @@ pragma solidity 0.8.17;
 
 library Events {
   event SpaceCreated(
-    string indexed spaceNetworkId,
-    address indexed spaceAddress
+    address indexed spaceAddress,
+    address indexed ownerAddress,
+    string networkId
   );
 }

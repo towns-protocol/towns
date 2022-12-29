@@ -14,10 +14,10 @@ TYPINGS_DIR="servers/dendrite/zion/contracts/zion_${CHAIN}"
 FROZEN="${2:-}"
 
 # Create typings using typechain
-yarn typechain --target=ethers-v5 "out/**/?(CouncilNFT|CouncilStaking|ZionSpaceManager|ZionRoleManager|TokenEntitlementModule|UserGrantedEntitlementModule|Space|SpaceFactory).json" --out-dir "packages/contracts/${CHAIN}/typings"
+yarn typechain --target=ethers-v5 "out/**/?(Events|Errors|CouncilNFT|CouncilStaking|ZionSpaceManager|ZionRoleManager|TokenEntitlementModule|UserGrantedEntitlementModule|Space|SpaceFactory).json" --out-dir "packages/contracts/${CHAIN}/typings"
 
 # Move abis to the packages folder
-mkdir -p $ABI_DIR && cp -a out/{CouncilNFT,CouncilStaking,ZionSpaceManager,ZionRoleManager,TokenEntitlementModule,UserGrantedEntitlementModule,Space,SpaceFactory}.sol/* "packages/contracts/${CHAIN}/abis"
+mkdir -p $ABI_DIR && cp -a out/{libraries/Events,libraries/Errors,CouncilNFT,CouncilStaking,ZionSpaceManager,ZionRoleManager,TokenEntitlementModule,UserGrantedEntitlementModule,Space,SpaceFactory}.sol/* "packages/contracts/${CHAIN}/abis"
 
 # Move typings to the dendrite folder
 mkdir -p $TYPINGS_DIR
