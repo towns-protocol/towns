@@ -1,12 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
+import { ContractMetadata, ContractMetadataResponse } from '@token-worker/types'
 import { TokenProps } from '@components/Tokens'
 import { queryClient } from 'api/queryClient'
 import { axiosClient } from '../apiClient'
-import {
-    ContractMetadata,
-    ContractMetadataResponse,
-} from '../../../../../../servers/token-worker/src/types'
 
 const queryKey = 'tokenContractsForAddress'
 const queryKeyAll = 'tokenContractsForAddressAll'

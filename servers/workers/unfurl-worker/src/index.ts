@@ -1,13 +1,4 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npx wrangler dev src/index.ts` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npx wrangler publish src/index.ts --name my-worker` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
+import { withCorsHeaders } from '../../common/cors'
 import { isUrl } from './utils/isUrl'
 import { checkForTweetIdFromUrl, getTweet } from './twitter'
 import { TwitterUnfurl, UnfurlData } from './types'
@@ -26,30 +17,6 @@ export interface Env {
     //
     // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
     // MY_BUCKET: R2Bucket
-}
-
-const allowedOrigins = ['http://localhost:3000']
-
-const onRenderOrigin = (origin: string): string | undefined => {
-    if (origin.includes('onrender.com') && origin.includes('harmony-web')) {
-        return origin
-    }
-}
-
-const corsHeaders = (origin: string) => ({
-    'Access-Control-Allow-Headers': '*',
-    'Access-Control-Allow-Methods': 'GET',
-    'Access-Control-Allow-Origin': origin,
-})
-
-const checkOrigin = (request: Request) => {
-    const origin = request.headers.get('Origin') || ''
-
-    const foundOrigin =
-        allowedOrigins.find((allowedOrigin) => allowedOrigin.includes(origin)) ||
-        onRenderOrigin(origin)
-
-    return foundOrigin ? foundOrigin : allowedOrigins[0]
 }
 
 // have to use module syntax to gain access to env which contains secret variables for local dev
@@ -129,14 +96,12 @@ export const worker = {
 
         const json = JSON.stringify(unfurledUrls, null, 2)
 
-        const allowedOrigin = checkOrigin(request)
-
         response = new Response(json, {
             status: 200,
             headers: {
                 'cache-control': 'public, max-age=14400',
                 'content-type': 'application/json;charset=UTF-8',
-                ...corsHeaders(allowedOrigin),
+                ...withCorsHeaders(request),
             },
         })
 

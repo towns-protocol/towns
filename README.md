@@ -71,7 +71,7 @@ If you would like to run the main app:
 
 `cp clients/web/app/.env.local-sample clients/web/app/.env.local` and populate with [Giphy API key](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
 
-`cp servers/unfurl-worker/.dev.vars-sample servers/unfurl-worker/.dev.vars` and populate with [Twitter bearer token](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
+`cp servers/workers/unfurl-worker/.dev.vars-sample servers/workers/unfurl-worker/.dev.vars` and populate with [Twitter bearer token](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
 
 ## Tests
 

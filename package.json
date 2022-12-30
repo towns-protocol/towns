@@ -88,8 +88,6 @@
         "clients/contract-debug-ui",
         "contracts",
         "packages/*",
-        "servers/worker-template",
-        "servers/token-worker",
-        "servers/unfurl-worker"
+        "servers/workers/*"
     ]
 }

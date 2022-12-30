@@ -1,6 +1,6 @@
 import { randProductName, randTextRange } from '@ngneat/falso'
+import { ContractMetadataResponse } from '@token-worker/types'
 import { CreateSpaceFormState } from './types'
-import { ContractMetadataResponse } from '../../../../../../../servers/token-worker/src/types'
 
 export const MOCK_CONTRACT_METADATA_RESPONSE: ContractMetadataResponse = {
     pageKey:

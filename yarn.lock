@@ -18154,9 +18154,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-worker@workspace:servers/token-worker":
+"token-worker@workspace:servers/workers/token-worker":
   version: 0.0.0-use.local
-  resolution: "token-worker@workspace:servers/token-worker"
+  resolution: "token-worker@workspace:servers/workers/token-worker"
   dependencies:
     "@cloudflare/workers-types": ^3.18.0
     "@types/jest": ^29.2.0
@@ -18687,9 +18687,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"unfurl-worker@workspace:servers/unfurl-worker":
+"unfurl-worker@workspace:servers/workers/unfurl-worker":
   version: 0.0.0-use.local
-  resolution: "unfurl-worker@workspace:servers/unfurl-worker"
+  resolution: "unfurl-worker@workspace:servers/workers/unfurl-worker"
   dependencies:
     "@cloudflare/workers-types": ^3.18.0
     "@types/jest": ^29.2.0
@@ -19676,9 +19676,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"worker-typescript-template@workspace:servers/worker-template":
+"worker-typescript-template@workspace:servers/workers/worker-template":
   version: 0.0.0-use.local
-  resolution: "worker-typescript-template@workspace:servers/worker-template"
+  resolution: "worker-typescript-template@workspace:servers/workers/worker-template"
   dependencies:
     "@cloudflare/workers-types": ^3.18.0
     "@types/jest": ^29.2.0

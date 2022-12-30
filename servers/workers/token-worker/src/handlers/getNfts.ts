@@ -1,4 +1,4 @@
-import { withCorsHeaders } from '../cors'
+import { withCorsHeaders } from '../../../common/cors'
 import { AccurateNftResponse, ContractMetadataResponse, RequestWithAlchemyConfig } from '../types'
 
 const fetchAlchemyNfts = async (
