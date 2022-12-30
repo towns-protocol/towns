@@ -6,7 +6,7 @@ import {console} from "forge-std/console.sol";
 import {CouncilNFT} from "../src/council/CouncilNFT.sol";
 import "murky/Merkle.sol";
 
-contract DeployCouncilNFT is ScriptUtils {
+contract DeployCouncil is ScriptUtils {
   CouncilNFT councilNFT;
   uint256 private NFT_PRICE = 0.08 ether;
 

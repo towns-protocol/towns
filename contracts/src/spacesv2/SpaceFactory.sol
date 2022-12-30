@@ -88,6 +88,11 @@ contract SpaceFactory is
     // validate space name
     Utils.validateName(spaceName);
 
+    // validate space network id
+    if (bytes(spaceNetworkId).length == 0) {
+      revert Errors.InvalidParameters();
+    }
+
     // hash the network id
     bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
 

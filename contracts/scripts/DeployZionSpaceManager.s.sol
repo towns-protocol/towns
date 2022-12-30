@@ -1,6 +1,5 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
-import "forge-std/Script.sol";
 
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 import {console} from "forge-std/console.sol";
@@ -12,7 +11,7 @@ import {ZionPermissionsRegistry} from "./../src/spaces/ZionPermissionsRegistry.s
 import {ZionRoleManager} from "./../src/spaces/ZionRoleManager.sol";
 import {ZionSpace} from "./../src/spaces/nft/ZionSpace.sol";
 
-contract DeployLocal is ScriptUtils {
+contract DeployZionSpaceManager is ScriptUtils {
   ZionSpaceManager internal spaceManager;
   ZionRoleManager internal roleManager;
   ZionPermissionsRegistry internal permissionsRegistry;

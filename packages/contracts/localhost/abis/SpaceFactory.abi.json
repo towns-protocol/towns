@@ -1,6 +1,11 @@
 [
   {
     "inputs": [],
+    "name": "InvalidParameters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NameContainsInvalidCharacters",
     "type": "error"
   },

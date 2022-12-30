@@ -51,9 +51,9 @@ contract DeploySpaces is ScriptUtils {
     );
 
     spaceToken.setFactory(spaceFactoryAddress);
-    spaceFactory = SpaceFactory(spaceFactoryAddress);
-
     vm.stopBroadcast();
+
+    spaceFactory = SpaceFactory(spaceFactoryAddress);
 
     _writeJson();
     _logAddresses();

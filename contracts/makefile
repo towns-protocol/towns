@@ -26,7 +26,7 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-anvil :;
 	@forge build
-	@forge script scripts/${contract}.s.sol:Deploy${contract} --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@forge script scripts/${contract}.s.sol:${contract} --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-goerli :;

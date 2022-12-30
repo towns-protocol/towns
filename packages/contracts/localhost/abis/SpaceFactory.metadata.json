@@ -7,6 +7,11 @@
     "abi": [
       {
         "inputs": [],
+        "name": "InvalidParameters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "NameContainsInvalidCharacters",
         "type": "error"
       },
@@ -520,11 +525,11 @@
       ]
     },
     "contracts/src/spacesv2/SpaceFactory.sol": {
-      "keccak256": "0x78dcd9386768e2c807fe76cafb42574f29717904e94bc4a2d7e138894c6a779f",
+      "keccak256": "0x09f10a5b0144c307870122982401779f345398e76cd4246831fdd165c53f8b25",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://af2321ea99352ff8983da0847fa271463b982576b42b3ea77c245ec694e4fe4c",
-        "dweb:/ipfs/QmarwzExW7cp2dLHsMcysK3dzJxzFLgKc5x8UiwzT9AisH"
+        "bzz-raw://d21ad465e25ea7cc82c2887bca4fb8a4a7735b00e0368a73e6ed3cac5e88884a",
+        "dweb:/ipfs/QmVRTUxuSWcb7kxq4SzX2hC23ZgDFgax3EsQc3Dkd71bc1"
       ]
     },
     "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
