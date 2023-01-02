@@ -539,11 +539,7 @@ export class ZionClient {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return createMatrixSpace({
-                    matrixClient: this.matrixClient,
-                    createSpaceInfo,
-                    disableEncryption: this.opts.disableEncryption,
-                })
+                return createMatrixSpace(this.matrixClient, createSpaceInfo)
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
@@ -563,11 +559,7 @@ export class ZionClient {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return createMatrixChannel({
-                    matrixClient: this.matrixClient,
-                    createInfo: createInfo,
-                    disableEncryption: this.opts.disableEncryption,
-                })
+                return createMatrixChannel(this.matrixClient, createInfo)
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
                     throw new Error("createChannel: Casablanca client doesn't exist")

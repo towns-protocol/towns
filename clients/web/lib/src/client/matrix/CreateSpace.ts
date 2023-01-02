@@ -9,12 +9,14 @@ import { sleepUntil } from '../../utils/zion-utils'
 import { CreateSpaceInfo, RoomVisibility } from '../../types/matrix-types'
 import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
-export const createMatrixSpace = async (props: {
-    matrixClient: MatrixClient
-    createSpaceInfo: CreateSpaceInfo
-    disableEncryption?: boolean
-}): Promise<MatrixRoomIdentifier> => {
-    const { matrixClient, createSpaceInfo, disableEncryption } = props
+export async function createMatrixSpace(
+    matrixClient: MatrixClient,
+    createSpaceInfo: CreateSpaceInfo,
+): Promise<MatrixRoomIdentifier> {
+    // allow globally overriding the encryption in tests
+    createSpaceInfo.disableEncryption =
+        createSpaceInfo.disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true'
+
     const options: ICreateRoomOpts = {
         visibility: createSpaceInfo.visibility as unknown as Visibility,
         name: createSpaceInfo.name,
@@ -23,13 +25,13 @@ export const createMatrixSpace = async (props: {
         creation_content: {
             type: 'm.space',
         },
-        initial_state: makeInitialState(createSpaceInfo, disableEncryption),
+        initial_state: makeInitialState(createSpaceInfo),
         power_level_content_override: {
             invite: createSpaceInfo.visibility == RoomVisibility.Public ? 0 : 50,
         },
     }
     const response = await matrixClient.createRoom(options)
-    if (!disableEncryption === true) {
+    if (!createSpaceInfo.disableEncryption === true) {
         const encrypted = await sleepUntil(matrixClient, (x) => x.isRoomEncrypted(response.room_id))
         console.log('Created space isRoomEncrypted:', encrypted)
     }
@@ -37,7 +39,7 @@ export const createMatrixSpace = async (props: {
     return makeMatrixRoomIdentifier(response.room_id)
 }
 
-function makeInitialState(createSpaceInfo: CreateSpaceInfo, bDisableEncryption?: boolean) {
+function makeInitialState(createSpaceInfo: CreateSpaceInfo) {
     const initialState: ICreateRoomStateEvent[] = [
         {
             type: 'm.room.join_rules',
@@ -55,7 +57,7 @@ function makeInitialState(createSpaceInfo: CreateSpaceInfo, bDisableEncryption?:
             },
         },
     ]
-    if (bDisableEncryption !== true) {
+    if (createSpaceInfo.disableEncryption !== true) {
         initialState.push({
             content: {
                 algorithm: 'm.megolm.v1.aes-sha2',

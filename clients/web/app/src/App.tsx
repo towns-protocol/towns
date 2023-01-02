@@ -32,7 +32,6 @@ export const App = () => {
 
     return (
         <ZionContextProvider
-            disableEncryption
             primaryProtocol={SpaceProtocol.Matrix}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
             homeServerUrl={homeserverUrl}

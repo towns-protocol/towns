@@ -17,7 +17,6 @@ import { ZionAuth, SpaceProtocol } from '../../../src/client/ZionClientTypes'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
-    disableEncryption?: boolean
 }
 
 export class ZionTestClient extends ZionClient {
@@ -58,8 +57,6 @@ export class ZionTestClient extends ZionClient {
                 matrixServerUrl: process.env.HOMESERVER!,
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 initialSyncLimit: 20,
-                disableEncryption:
-                    props?.disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true',
                 web3Signer: provider.wallet,
                 web3Provider: provider,
             },

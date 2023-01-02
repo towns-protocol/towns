@@ -13,7 +13,6 @@ export const useZionClientListener = (
     casablancaServerUrl: string,
     initialSyncLimit: number,
     onboardingOpts?: ZionOnboardingOpts,
-    disableEncryption?: boolean,
     signer?: ethers.Signer,
     _chainId?: number, // allow testing because web3context is not populated in tests
 ) => {
@@ -33,7 +32,6 @@ export const useZionClientListener = (
                 casablancaServerUrl,
                 initialSyncLimit,
                 onboardingOpts,
-                disableEncryption,
                 web3Provider: provider,
                 web3Signer: signer ?? provider?.getSigner(),
             },

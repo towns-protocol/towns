@@ -28,7 +28,6 @@ export const App = () => {
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
                 <ZionContextProvider
-                    disableEncryption
                     enableSpaceRootUnreads
                     primaryProtocol={SpaceProtocol.Matrix}
                     homeServerUrl={MATRIX_HOMESERVER_URL}

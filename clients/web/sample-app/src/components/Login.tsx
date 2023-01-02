@@ -159,9 +159,7 @@ export function Profile() {
     return (
         <>
             <Box sx={{ display: 'grid', marginTop: '15px', alignItems: 'Center' }}>
-                <Typography variant="h6" component="span">
-                    Server: {homeServerUrl}
-                </Typography>
+                <Typography component="span">Server: {homeServerUrl}</Typography>
             </Box>
             <ProfileContent />
         </>

@@ -9,12 +9,13 @@ import { sleepUntil } from '../../utils/zion-utils'
 import { CreateChannelInfo, RoomVisibility } from '../../types/matrix-types'
 import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
-export const createMatrixChannel = async (props: {
-    matrixClient: MatrixClient
-    createInfo: CreateChannelInfo
-    disableEncryption?: boolean
-}): Promise<MatrixRoomIdentifier> => {
-    const { matrixClient, createInfo, disableEncryption } = props
+export async function createMatrixChannel(
+    matrixClient: MatrixClient,
+    createInfo: CreateChannelInfo,
+): Promise<MatrixRoomIdentifier> {
+    // allow globally overriding the encryption in tests
+    createInfo.disableEncryption =
+        createInfo.disableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true'
     const homeServerUrl = matrixClient.baseUrl
     // initial state
     const options: ICreateRoomOpts = {
@@ -22,12 +23,12 @@ export const createMatrixChannel = async (props: {
         visibility: createInfo.visibility as unknown as Visibility,
         name: createInfo.name,
         is_direct: false,
-        initial_state: makeInitialState(homeServerUrl, createInfo, disableEncryption),
+        initial_state: makeInitialState(homeServerUrl, createInfo, createInfo.disableEncryption),
         room_version: '10',
     }
     // create the room
     const response = await matrixClient.createRoom(options)
-    if (disableEncryption !== true) {
+    if (createInfo.disableEncryption !== true) {
         const encrypted = await sleepUntil(matrixClient, (x) => x.isRoomEncrypted(response.room_id))
         console.log('Created channel isRoomEncrypted:', encrypted)
     }
@@ -56,7 +57,6 @@ export const createMatrixChannel = async (props: {
 function makeInitialState(
     homeServerUrl: string,
     createInfo: CreateChannelInfo,
-    bDisableEncryption?: boolean,
     bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
 ): ICreateRoomStateEvent[] {
     const initialState: ICreateRoomStateEvent[] = [
@@ -69,7 +69,7 @@ function makeInitialState(
         },
     ]
 
-    if (bDisableEncryption !== true) {
+    if (createInfo.disableEncryption !== true) {
         initialState.push({
             content: {
                 algorithm: 'm.megolm.v1.aes-sha2',

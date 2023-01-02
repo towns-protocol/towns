@@ -13,7 +13,6 @@ interface Props {
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
     initialSyncLimit?: number
-    disableEncryption?: boolean
     chainId?: number
     children: JSX.Element
 }
@@ -27,7 +26,6 @@ export const ZionTestApp = (props: Props) => {
         defaultSpaceName,
         defaultSpaceAvatarSrc,
         initialSyncLimit,
-        disableEncryption: inDisableEncryption,
         chainId,
         children,
     } = props
@@ -36,7 +34,6 @@ export const ZionTestApp = (props: Props) => {
         inPrimaryProtocol ?? (process.env.PRIMARY_PROTOCOL as SpaceProtocol) ?? SpaceProtocol.Matrix
     const homeServerUrl = process.env.HOMESERVER!
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
-    const disableEncryption = inDisableEncryption ?? process.env.DISABLE_ENCRYPTION === 'true'
     const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts
         ? inOnboardingOpts
         : {
@@ -53,7 +50,6 @@ export const ZionTestApp = (props: Props) => {
             homeServerUrl={homeServerUrl}
             casablancaServerUrl={casablancaServerUrl}
             onboardingOpts={onboardingOpts}
-            disableEncryption={disableEncryption}
             signer={provider.wallet}
             defaultSpaceId={defaultSpaceId}
             defaultSpaceName={defaultSpaceName}

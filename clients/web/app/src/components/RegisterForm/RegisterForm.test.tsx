@@ -40,7 +40,6 @@ vi.mock('use-zion-client', async () => {
 const Mock = ({ children }: any) => {
     return (
         <Zion.ZionContextProvider
-            disableEncryption
             primaryProtocol={Zion.SpaceProtocol.Matrix}
             homeServerUrl=""
             casablancaServerUrl=""

@@ -37,6 +37,7 @@ export const CreateSpaceForm = (props: Props) => {
     const { chainId } = useZionClient()
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
+    const [encrypted, setEncrypted] = useState<string>('yes')
     const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
         MembershipRequirement.Everyone,
     )
@@ -116,6 +117,10 @@ export const CreateSpaceForm = (props: Props) => {
         setVisibility(event.target.value as RoomVisibility)
     }, [])
 
+    const onChangeEncrypted = useCallback((event: SelectChangeEvent) => {
+        setEncrypted(event.target.value as string)
+    }, [])
+
     const onClickCreateSpace = useCallback(async () => {
         if (!zionTokenAddress) {
             console.error('Cannot create space. No zion token address.')
@@ -136,6 +141,7 @@ export const CreateSpaceForm = (props: Props) => {
         const createSpaceInfo: CreateSpaceInfo = {
             name: spaceName,
             visibility,
+            disableEncryption: encrypted === 'no',
         }
         await createSpaceTransactionWithMemberRole(
             createSpaceInfo,
@@ -145,6 +151,7 @@ export const CreateSpaceForm = (props: Props) => {
         )
     }, [
         createSpaceTransactionWithMemberRole,
+        encrypted,
         membershipRequirement,
         spaceName,
         visibility,
@@ -219,6 +226,30 @@ export const CreateSpaceForm = (props: Props) => {
                             >
                                 <MenuItem value={RoomVisibility.Private}>private</MenuItem>
                                 <MenuItem value={RoomVisibility.Public}>public</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </Box>
+                <Box
+                    display="grid"
+                    alignItems="center"
+                    gridTemplateColumns="repeat(2, 1fr)"
+                    marginTop="20px"
+                >
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                        Encrypted:
+                    </Typography>
+                    <Box minWidth="120px">
+                        <FormControl fullWidth>
+                            <InputLabel id="encrypted-select-label" />
+                            <Select
+                                labelId="encrypted-select-label"
+                                id="encrypted-select"
+                                value={encrypted}
+                                onChange={onChangeEncrypted}
+                            >
+                                <MenuItem value="yes">yes</MenuItem>
+                                <MenuItem value="no">no</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

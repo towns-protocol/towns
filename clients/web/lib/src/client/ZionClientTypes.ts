@@ -13,7 +13,6 @@ export interface ZionOpts {
     casablancaServerUrl: string
     initialSyncLimit: number
     onboardingOpts?: ZionOnboardingOpts
-    disableEncryption?: boolean
     web3Provider?: ethers.providers.Provider
     web3Signer?: ethers.Signer
 }

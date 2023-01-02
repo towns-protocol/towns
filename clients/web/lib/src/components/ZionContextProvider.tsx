@@ -29,7 +29,6 @@ export interface IZionContext {
     spaceHierarchies: SpaceHierarchies
     onboardingState: IOnboardingState
     homeServerUrl: string
-    disableEncryption?: boolean // TODO remove this when we support olm in the browser https://github.com/HereNotThere/harmony/issues/223
     defaultSpaceId?: RoomIdentifier
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
@@ -54,7 +53,6 @@ interface Props {
     homeServerUrl: string
     casablancaServerUrl: string
     onboardingOpts?: ZionOnboardingOpts
-    disableEncryption?: boolean
     enableSpaceRootUnreads?: boolean
     signer?: ethers.Signer // only used for testing, when the signer is a local in memory wallet
     defaultSpaceId?: string
@@ -82,7 +80,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         homeServerUrl,
         casablancaServerUrl,
         onboardingOpts,
-        disableEncryption,
         enableSpaceRootUnreads,
         signer,
         defaultSpaceId,
@@ -98,7 +95,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         casablancaServerUrl,
         initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
         onboardingOpts,
-        disableEncryption,
         signer,
         chainId,
     )
@@ -138,7 +134,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceHierarchies,
                 onboardingState,
                 homeServerUrl,
-                disableEncryption,
                 defaultSpaceId: convertedDefaultSpaceId,
                 defaultSpaceName,
                 defaultSpaceAvatarSrc,

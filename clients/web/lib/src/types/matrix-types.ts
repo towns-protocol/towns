@@ -114,6 +114,7 @@ export interface CreateSpaceInfo {
     visibility: RoomVisibility
     spaceMetadata?: string
     spaceProtocol?: SpaceProtocol
+    disableEncryption?: boolean
 }
 
 export interface CreateChannelInfo {
@@ -122,6 +123,7 @@ export interface CreateChannelInfo {
     parentSpaceId: RoomIdentifier
     historyVisibility?: HistoryVisibility
     roleIds: number[]
+    disableEncryption?: boolean
 }
 
 /// use to send different types of messages, e.g. text, emoji, image, etc.
