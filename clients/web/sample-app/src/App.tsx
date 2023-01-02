@@ -5,6 +5,7 @@ import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
+import { useSampleAppStore } from 'store/store'
 import { Home } from './routes/Home'
 import { Main } from './components/Main'
 import { NotFound } from './routes/NotFound'
@@ -20,17 +21,19 @@ import { ChannelsIndex } from './routes/ChannelsIndex'
 import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
-const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL
+const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL ?? ``
 const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
 
 export const App = () => {
+    const { homeServerUrl: savedHomeServerUrl } = useSampleAppStore()
+    const homeServerUrl = savedHomeServerUrl ?? MATRIX_HOMESERVER_URL
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
                 <ZionContextProvider
                     enableSpaceRootUnreads
                     primaryProtocol={SpaceProtocol.Matrix}
-                    homeServerUrl={MATRIX_HOMESERVER_URL}
+                    homeServerUrl={homeServerUrl}
                     casablancaServerUrl={CASABLANCA_SERVER_URL}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}

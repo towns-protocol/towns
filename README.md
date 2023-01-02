@@ -42,18 +42,18 @@ Pro Tip: If you end up with .DS_Store files in your submodules, you can exclude 
 
 2. Run `yarn install && yarn prepare` from the root of the repository
 
-## Running everything locally
+3. Create `.env.local` files:
 
-## Sample App
-
-If you would like to run the sample-app against a local server and blockchain (recommended), first:
+First:
 
 ```
 cp clients/web/sample-app/.env.local-sample clients/web/sample-app/.env.local
 cp clients/web/app/.env.local-sample clients/web/app/.env.local
 ```
 
-Update `clients/web/sample-app/.env.local` with the giphy api key <https://www.notion.so/herenottherelabs/Credentials-4f284469da01425a9f7f936b9e3ed8aa>
+Then update `clients/web/app/.env.local` with the giphy api key <https://www.notion.so/herenottherelabs/Credentials-4f284469da01425a9f7f936b9e3ed8aa>
+
+## Running everything locally
 
 Open VScode in the root of this directory: `code .`
 

@@ -1,4 +1,17 @@
-import { Alert, Box, Button, CircularProgress, Snackbar, Theme, Typography } from '@mui/material'
+import {
+    Alert,
+    Box,
+    Button,
+    CircularProgress,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+    SelectChangeEvent,
+    Snackbar,
+    Theme,
+    Typography,
+} from '@mui/material'
 import {
     LoginStatus,
     useMatrixStore,
@@ -6,10 +19,11 @@ import {
     useZionClient,
     useZionContext,
 } from 'use-zion-client'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
 import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName, useNetwork } from 'wagmi'
+import { useSampleAppStore } from 'store/store'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
@@ -156,10 +170,51 @@ export function Login(): JSX.Element {
 
 export function Profile() {
     const { homeServerUrl } = useZionContext()
+    const { saveHomeServerUrl } = useSampleAppStore()
+    const servers = useRef(['http://localhost:8008', 'https://node1.zion.xyz'])
+    if (homeServerUrl && !servers.current.includes(homeServerUrl)) {
+        servers.current.push(homeServerUrl)
+    }
+
+    const onChangeHomeServerUrl = useCallback(
+        (event: SelectChangeEvent) => {
+            saveHomeServerUrl(event.target.value as string)
+            // hard reload the app, somehow the matrix client
+            // hangs on to the old url in crypto, so if you sign in after
+            // switching it tries to upload keys to the wrong server
+            window.location.href = 'http://localhost:3001'
+        },
+        [saveHomeServerUrl],
+    )
+
     return (
         <>
-            <Box sx={{ display: 'grid', marginTop: '15px', alignItems: 'Center' }}>
-                <Typography component="span">Server: {homeServerUrl}</Typography>
+            <Box
+                display="grid"
+                alignItems="center"
+                gridTemplateColumns="repeat(2, 1fr)"
+                marginTop="20px"
+            >
+                <Typography noWrap variant="h6" component="div">
+                    homeServer:
+                </Typography>
+                <Box minWidth="120px">
+                    <FormControl fullWidth>
+                        <InputLabel id="encrypted-select-label" />
+                        <Select
+                            labelId="encrypted-select-label"
+                            id="encrypted-select"
+                            value={homeServerUrl}
+                            onChange={onChangeHomeServerUrl}
+                        >
+                            {servers.current.map((server) => (
+                                <MenuItem key={server} value={server}>
+                                    {server}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
             </Box>
             <ProfileContent />
         </>
@@ -222,8 +277,15 @@ function ProfileContent() {
         )
     }
     return (
-        <div>
-            Connect with
+        <Box
+            display="grid"
+            alignItems="center"
+            gridTemplateColumns="repeat(2, 1fr)"
+            marginTop="20px"
+        >
+            <Typography variant="h6" component="span">
+                Connect with:
+            </Typography>
             {connectors.map((connector) => (
                 <Button
                     variant="contained"
@@ -239,7 +301,7 @@ function ProfileContent() {
                 </Button>
             ))}
             {error && <div>{error.message}</div>}
-        </div>
+        </Box>
     )
 }
 
