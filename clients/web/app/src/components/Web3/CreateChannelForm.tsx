@@ -18,6 +18,7 @@ export const CreateChannelForm = (props: Props) => {
 
     const [channelName, setChannelName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
+    const [encrypted, setEncrypted] = useState<'yes' | 'no'>('no')
     const { createChannel } = useZionClient()
     const { onClick, parentSpaceId } = props
 
@@ -38,6 +39,7 @@ export const CreateChannelForm = (props: Props) => {
             visibility,
             parentSpaceId: parentSpaceId,
             roleIds: [],
+            disableEncryption: encrypted === 'no',
         }
         const roomId = await createChannel(createChannelInfo)
 
@@ -45,7 +47,15 @@ export const CreateChannelForm = (props: Props) => {
             console.log('channel created with id', roomId)
             onClick(roomId, Membership.Join)
         }
-    }, [disableCreateButton, channelName, visibility, parentSpaceId, createChannel, onClick])
+    }, [
+        disableCreateButton,
+        channelName,
+        visibility,
+        parentSpaceId,
+        encrypted,
+        createChannel,
+        onClick,
+    ])
 
     const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (!new RegExp(/^[a-zA-Z0-9 _-]+$/).test(event.key)) {
@@ -89,6 +99,17 @@ export const CreateChannelForm = (props: Props) => {
                     }))}
                     defaultValue={visibility}
                     onChange={(value) => setVisibility(value as RoomVisibility)}
+                />
+                <Dropdown
+                    background="level2"
+                    label="Encrypted"
+                    message=""
+                    options={['yes', 'no'].map((value) => ({
+                        label: value,
+                        value,
+                    }))}
+                    defaultValue={encrypted}
+                    onChange={(value) => setEncrypted(value as 'yes' | 'no')}
                 />
             </Stack>
             <Button size="button_lg" disabled={disableCreateButton} onClick={onClickCreatChannel}>

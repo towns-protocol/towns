@@ -32,7 +32,7 @@ interface Props {
 export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
-    const [encrypted, setEncrypted] = useState<string>('yes')
+    const [encrypted, setEncrypted] = useState<'yes' | 'no'>('yes')
     const [roles, setRoles] = useState<RolesSettings>({})
     const { getRolesFromSpace } = useRolesAndPermissions()
     const { onClick, parentSpaceId } = props
@@ -56,7 +56,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
     }, [])
 
     const onChangeEncrypted = useCallback((event: SelectChangeEvent) => {
-        setEncrypted(event.target.value as string)
+        setEncrypted(event.target.value as 'yes' | 'no')
     }, [])
 
     const onChangeRoles = useCallback((roles: RolesSettings) => {
