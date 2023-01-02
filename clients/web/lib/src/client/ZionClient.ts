@@ -305,12 +305,12 @@ export class ZionClient {
         // new matrixClient
         this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
         // start it up, this begins a sync command
-        if (!this.opts.disableEncryption) {
+        if (!this.matrixClient.crypto) {
             await loadOlm()
-            await this.matrixClient.initCrypto()
-            // disable log...
-            this.matrixClient.setGlobalErrorOnUnknownDevices(false)
         }
+        await this.matrixClient.initCrypto()
+        // disable log...
+        this.matrixClient.setGlobalErrorOnUnknownDevices(false)
         // start matrixClient
         await this.matrixClient.startClient({
             pendingEventOrdering: PendingEventOrdering.Chronological,

@@ -16,6 +16,9 @@ const config: JestConfigWithTsJest = {
             },
         ],
     },
+    moduleNameMapper: {
+        '\\.(wasm)$': require.resolve('./tests/mocks/file-mock.js'),
+    },
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
     testTimeout: 60000,
