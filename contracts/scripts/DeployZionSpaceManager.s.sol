@@ -82,26 +82,57 @@ contract DeployZionSpaceManager is ScriptUtils {
   }
 
   function _writeJson() internal {
-    string memory json = "";
-    vm.serializeString(
+    // vm.serializeString(
+    //   json,
+    //   "spacemanager",
+    //   vm.toString(address(spaceManager))
+    // );
+
+    // vm.serializeString(
+    //   json,
+    //   "usergranted",
+    //   vm.toString(address(userGrantedEntitlementModule))
+    // );
+
+    // vm.serializeString(
+    //   json,
+    //   "tokengranted",
+    //   vm.toString(address(tokenEntitlementModule))
+    // );
+    // json = vm.serializeString(
+    //   json,
+    //   "rolemanager",
+    //   vm.toString(address(roleManager))
+    // );
+
+    string memory json = "{";
+
+    json = string.concat(
       json,
-      "spacemanager",
-      vm.toString(address(spaceManager))
+      '"spacemanager": "',
+      vm.toString(address(spaceManager)),
+      '",'
     );
-    vm.serializeString(
+
+    json = string.concat(
       json,
-      "usergranted",
-      vm.toString(address(userGrantedEntitlementModule))
+      '"usergranted": "',
+      vm.toString(address(userGrantedEntitlementModule)),
+      '",'
     );
-    vm.serializeString(
+
+    json = string.concat(
       json,
-      "tokengranted",
-      vm.toString(address(tokenEntitlementModule))
+      '"tokengranted": "',
+      vm.toString(address(tokenEntitlementModule)),
+      '",'
     );
-    json = vm.serializeString(
+
+    json = string.concat(
       json,
-      "rolemanager",
-      vm.toString(address(roleManager))
+      '"rolemanager": "',
+      vm.toString(address(roleManager)),
+      '"}'
     );
 
     string memory path = string.concat(
