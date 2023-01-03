@@ -20,6 +20,7 @@ type UseTokenContractsForAdress = {
     enabled: boolean
     pageKey: string
     all: boolean
+    chainId: number | undefined
 }
 
 export function useTokenContractsForAddress({
@@ -28,10 +29,14 @@ export function useTokenContractsForAddress({
     enabled,
     pageKey,
     all = false,
+    chainId,
 }: UseTokenContractsForAdress) {
     return useQuery(
         [queryKey, pageKey],
-        () => getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
+        () =>
+            chainId === 31337
+                ? getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all)
+                : getGoerliTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
         {
             onSuccess: (data) => {
                 const cached = getCachedTokensForWallet()
@@ -77,6 +82,25 @@ const zSchema: z.ZodType<ContractMetadataResponse> = z.object({
     pageKey: z.string().optional(),
     ownedNftsContract: z.array(zContractData),
 })
+
+async function getGoerliTokenContractsForAddress(
+    _wallet: string,
+    zionTokenAddress: string | null,
+    _pageKey = '',
+    _all = false,
+) {
+    let tokens: TokenProps[] = []
+    if (zionTokenAddress) {
+        const zionData: TokenProps = {
+            imgSrc: 'https://picsum.photos/id/99/400',
+            label: 'Zion',
+            contractAddress: zionTokenAddress,
+        }
+
+        tokens = [zionData]
+    }
+    return { tokens, nextPageKey: undefined }
+}
 
 async function getTokenContractsForAddress(
     wallet: string,

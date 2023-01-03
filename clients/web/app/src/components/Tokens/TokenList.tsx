@@ -97,12 +97,15 @@ export const TokenList = ({
         setPage(pageKey)
     }
 
+    // NOTE: on Goerli, this is only going to return the Zion token, even if it is not in user's wallet
+    // Fetching tokens via worker is only for local dev for now, until the worker is deployed (pending auth flow)
     const { data, isFetching, isLoading } = useTokenContractsForAddress({
         wallet: 'vitalik.eth', // hard coding for testing purposes
         zionTokenAddress,
-        enabled: true,
+        enabled: Boolean(zionTokenAddress),
         pageKey: page,
         all: true,
+        chainId,
     })
 
     useEffect(() => {
