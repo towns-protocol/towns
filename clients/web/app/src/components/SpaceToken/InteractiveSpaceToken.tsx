@@ -1,5 +1,5 @@
 import { TargetAndTransition, Transition, motion } from 'framer-motion'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box } from '@ui'
 import { vars } from 'ui/styles/vars.css'
 import { atoms } from 'ui/styles/atoms.css'
@@ -7,8 +7,12 @@ import { SpaceToken, SpaceTokenProps } from './SpaceToken'
 import { SVGArcPath } from './util/SVGArcPath'
 import * as textStyles from './layers/TokenBadgeText.css'
 
-export const InteractiveSpaceToken = (props: SpaceTokenProps) => {
-    const { address } = props
+export const InteractiveSpaceToken = (
+    props: SpaceTokenProps & {
+        onAnimationComplete?: () => void
+    },
+) => {
+    const { address, onAnimationComplete } = props
 
     const [{ x, y, a }, setInput] = useState({ x: 0, y: 0, a: 0 })
 
@@ -55,6 +59,19 @@ export const InteractiveSpaceToken = (props: SpaceTokenProps) => {
                   },
         [isMint, isPop],
     )
+
+    // using useEffect instead of motion.div onAnimationComplete because
+    // it is terrible to try and test
+    useEffect(() => {
+        if (isMint) {
+            const timeout = setTimeout(() => {
+                onAnimationComplete?.()
+            }, 3500)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [isMint, onAnimationComplete])
 
     return (
         <motion.div

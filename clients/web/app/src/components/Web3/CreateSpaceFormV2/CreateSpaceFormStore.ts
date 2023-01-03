@@ -11,6 +11,8 @@ interface CreateSpaceActions {
     setStep2: (step1: CreateSpaceFormState['step2']) => void
     removeToken: (token: string) => void
     reset: () => void
+    setCreatedSpaceId: (createdSpaceId: string) => void
+    setMintedTokenAddress: (mintedTokenAddress: string) => void
 }
 
 let initialState: CreateSpaceFormState = {
@@ -22,6 +24,8 @@ let initialState: CreateSpaceFormState = {
         spaceName: null,
         spaceIconUrl: null,
     },
+    createdSpaceId: null,
+    mintedTokenAddress: null,
 }
 
 if (withMock) {
@@ -52,5 +56,7 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
                 },
             }
         }),
+    setCreatedSpaceId: (createdSpaceId: string) => set({ createdSpaceId }),
+    setMintedTokenAddress: (mintedTokenAddress: string) => set({ mintedTokenAddress }),
     reset: () => set(initialState),
 }))

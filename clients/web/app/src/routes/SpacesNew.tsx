@@ -11,12 +11,17 @@ const USE_V2 = isDev
 
 export const SpacesNew = () => {
     const navigate = useNavigate()
+    const setCreatedSpaceId = useCreateSpaceFormStore((s) => s.setCreatedSpaceId)
 
     const onCreateSpace = useCallback(
         (roomId: RoomIdentifier, membership: Membership) => {
-            navigate('/spaces/' + roomId.slug + '/')
+            if (USE_V2) {
+                setCreatedSpaceId(roomId.slug)
+            } else {
+                navigate('/spaces/' + roomId.slug + '/')
+            }
         },
-        [navigate],
+        [setCreatedSpaceId, navigate],
     )
 
     useEffect(() => {

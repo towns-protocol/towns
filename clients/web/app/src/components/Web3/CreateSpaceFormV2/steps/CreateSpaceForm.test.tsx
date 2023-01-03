@@ -18,6 +18,28 @@ vi.mock('react-router', async () => {
     }
 })
 
+vi.mock('use-zion-client', async () => {
+    return {
+        ...((await vi.importActual('use-zion-client')) as Record<string, unknown>),
+        useZionClient: () => ({
+            spaceManager: {
+                eventsAbi: [],
+            },
+        }),
+    }
+})
+
+vi.mock('../CreateSpaceListener', () => {
+    return {
+        CreateSpaceEventListener: () => {
+            React.useEffect(() => {
+                useCreateSpaceFormStore.getState().setMintedTokenAddress('0x1234')
+            }, [])
+            return null
+        },
+    }
+})
+
 const Wrapper = () => {
     return (
         <TestApp>
@@ -250,7 +272,7 @@ describe('CreateSpaceStep1', () => {
         )
 
         const navigateSpy = vi.fn()
-        vi.spyOn(router, 'useNavigate').mockReturnValueOnce((args) => navigateSpy(args))
+        vi.spyOn(router, 'useNavigate').mockReturnValue((args) => navigateSpy(args))
 
         await act(() => {
             useCreateSpaceFormStore.setState({
@@ -277,11 +299,16 @@ describe('CreateSpaceStep1', () => {
         await screen.findByTestId('space-form-3')
         fireEvent.click(nextButton)
 
-        await screen.findByText('Creating Space')
-
-        await waitFor(() => {
-            expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-room-id/')
+        await waitFor(async () => {
+            await screen.findByText('Creating Space')
         })
+
+        await waitFor(
+            () => {
+                expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-room-id/')
+            },
+            { timeout: 10000 },
+        )
         unmount()
 
         await waitFor(() => {
@@ -295,7 +322,7 @@ describe('CreateSpaceStep1', () => {
         )
 
         const navigateSpy = vi.fn()
-        vi.spyOn(router, 'useNavigate').mockReturnValueOnce((args) => navigateSpy(args))
+        vi.spyOn(router, 'useNavigate').mockReturnValue((args) => navigateSpy(args))
 
         await act(() => {
             useCreateSpaceFormStore.setState({
@@ -332,7 +359,7 @@ describe('CreateSpaceStep1', () => {
             useMockedCreateSpaceTransaction,
         )
 
-        vi.spyOn(router, 'useNavigate').mockReturnValueOnce(() => vi.fn())
+        vi.spyOn(router, 'useNavigate').mockReturnValue(() => vi.fn())
 
         // form state when user has selected everyone (no tokens) //
         await act(() => {
@@ -360,7 +387,9 @@ describe('CreateSpaceStep1', () => {
         await screen.findByTestId('space-form-3')
         fireEvent.click(nextButton)
 
-        await screen.findByText('Creating Space')
+        await waitFor(async () => {
+            await screen.findByText('Creating Space')
+        })
 
         await waitFor(async () => {
             return expect(createSpaceTransactionWithMemberRoleSpy).toHaveBeenCalledWith(
@@ -382,7 +411,7 @@ describe('CreateSpaceStep1', () => {
             useMockedCreateSpaceTransaction,
         )
 
-        vi.spyOn(router, 'useNavigate').mockReturnValueOnce(() => vi.fn())
+        vi.spyOn(router, 'useNavigate').mockReturnValue(() => vi.fn())
 
         // form state when user has selected tokens
         await act(() => {

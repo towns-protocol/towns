@@ -47,7 +47,6 @@ const Header = (props: HeaderProps) => {
     const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError } = props
     const isTransacting = transactionUIState !== TransactionUIStates.None
     const requesting = transactionUIState === TransactionUIStates.Requesting
-    const pending = transactionUIState === TransactionUIStates.Pending
     const success = transactionUIState === TransactionUIStates.Success
     const failed = transactionUIState === TransactionUIStates.Failed
     const interactiveState = !isTransacting || failed
@@ -85,7 +84,9 @@ const Header = (props: HeaderProps) => {
                                         {requesting && (
                                             <MotionText layout>Waiting For Approval</MotionText>
                                         )}
-                                        {pending && <MotionText layout>Creating Space</MotionText>}
+                                        {!requesting && (
+                                            <MotionText layout>Creating Space</MotionText>
+                                        )}
                                     </Box>
                                 </FadeIn>
                             )}
