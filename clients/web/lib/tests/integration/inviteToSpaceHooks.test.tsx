@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import { Membership, RoomVisibility, SpaceItem } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -13,6 +12,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useMyMembership } from '../../src/hooks/use-my-membership'

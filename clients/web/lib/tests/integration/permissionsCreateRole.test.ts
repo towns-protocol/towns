@@ -11,7 +11,7 @@ import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
-import { createPermissions } from '../../src/client/web3/ZionContracts'
+import { createPermissions } from '../../src/client/web3/ContractHelpers'
 
 describe('create role', () => {
     test('Space owner is allowed to disable space access', async () => {

@@ -3,20 +3,22 @@ import {
     CreateSpaceInfo,
     RoomVisibility,
 } from 'use-zion-client/src/types/matrix-types'
-import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
-import { EventTimeline } from 'matrix-js-sdk'
-import { TestConstants } from './TestConstants'
+import { Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
-import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
-import { ethers, Wallet } from 'ethers'
 import {
     createExternalTokenEntitlements,
     createPermissions,
     getFilteredRolesFromSpace,
     getZionTokenAddress,
-} from 'use-zion-client/src/client/web3/ZionContracts'
+} from 'use-zion-client/src/client/web3/ContractHelpers'
+
 import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
+import { EventTimeline } from 'matrix-js-sdk'
 import { Permission } from '../../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
+import { TestConstants } from './TestConstants'
+import { ZionClient } from '../../../src/client/ZionClient'
+import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -110,6 +112,21 @@ async function _fundWallet(walletToFund: ethers.Wallet, amount = 0.1): Promise<b
     return true
 }
 
+export async function createBasicTestSpace(
+    client: ZionClient,
+    createSpaceInfo: CreateSpaceInfo,
+): Promise<RoomIdentifier | undefined> {
+    const emptyPermissions: DataTypes.PermissionStruct[] = []
+    const emptyExternalTokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+    const spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct = {
+        roleName: '',
+        permissions: emptyPermissions,
+        externalTokenEntitlements: emptyExternalTokenEntitlements,
+        users: [],
+    }
+    return client.createSpace(createSpaceInfo, spaceEntitlementData, emptyPermissions)
+}
+
 export async function createTestSpaceWithZionMemberRole(
     client: ZionTestClient,
     tokenGrantedPermissions: Permission[],
@@ -134,7 +151,7 @@ export async function createTestSpaceWithZionMemberRole(
     }
 
     const everyonePerms = createPermissions(everyonePermissions)
-    return await client.createWeb3Space(createSpaceInfo, tokenEntitlement, everyonePerms)
+    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePerms)
 }
 
 export async function createTestSpaceWithEveryoneRole(
@@ -158,7 +175,7 @@ export async function createTestSpaceWithEveryoneRole(
     }
 
     const everyonePerms = createPermissions(everyonePermissions)
-    return await client.createWeb3Space(createSpaceInfo, tokenEntitlement, everyonePerms)
+    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePerms)
 }
 
 export async function createTestChannelWithSpaceRoles(
@@ -178,5 +195,5 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    return await client.createWeb3Channel(createChannelInfo)
+    return await client.createChannel(createChannelInfo)
 }

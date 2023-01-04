@@ -1,10 +1,10 @@
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
-import { getFilteredRolesFromSpace } from '../../src/client/web3/ZionContracts'
+import { RoomIdentifier } from '../../src/types/room-identifier'
+import { RoomVisibility } from '../../src/types/matrix-types'
+import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
 
 describe('On-chain channel creation tests', () => {
     test('create channel with no roles', async () => {
@@ -22,7 +22,7 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         if (roomId) {
             // create a channel on-chain with no roles
-            channel = await alice.createWeb3Channel({
+            channel = await alice.createChannel({
                 name: 'test_channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,
@@ -52,7 +52,7 @@ describe('On-chain channel creation tests', () => {
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
         }
-        const channel = (await alice.createWeb3Channel({
+        const channel = (await alice.createChannel({
             name: 'test_channel',
             visibility: RoomVisibility.Public,
             parentSpaceId: roomId,
@@ -85,7 +85,7 @@ describe('On-chain channel creation tests', () => {
         }
 
         const error = await getError<Error>(async function () {
-            await alice.createWeb3Channel({
+            await alice.createChannel({
                 name: 'test_channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: roomId,

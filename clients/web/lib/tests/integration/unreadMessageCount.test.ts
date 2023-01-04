@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
+import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithZionMemberRole,
@@ -9,12 +8,13 @@ import {
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
-import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
-import { TestConstants } from './helpers/TestConstants'
-import { waitFor } from '@testing-library/dom'
-import { sleep } from '../../src/utils/zion-utils'
+import { RoomIdentifier } from '../../src/types/room-identifier'
+import { RoomVisibility } from '../../src/types/matrix-types'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
+import { TestConstants } from './helpers/TestConstants'
+import { sleep } from '../../src/utils/zion-utils'
+import { waitFor } from '@testing-library/dom'
 
 /// matrix notification counts are broken during sync, but they should work
 /// between syncs. This test is to make sure that the counts are correct

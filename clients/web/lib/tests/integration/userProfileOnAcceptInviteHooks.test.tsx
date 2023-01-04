@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import { Membership, RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import React from 'react'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useInvites } from '../../src/hooks/use-space-data'
 import { useMyMembership } from '../../src/hooks/use-my-membership'

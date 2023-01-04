@@ -1,15 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { waitFor } from '@testing-library/dom'
-import { MatrixEvent } from 'matrix-js-sdk'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
-import { TestConstants } from './helpers/TestConstants'
+
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
+
+import { MatrixEvent } from 'matrix-js-sdk'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier } from '../../src/types/room-identifier'
+import { RoomVisibility } from '../../src/types/matrix-types'
+import { TestConstants } from './helpers/TestConstants'
+import { waitFor } from '@testing-library/dom'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers

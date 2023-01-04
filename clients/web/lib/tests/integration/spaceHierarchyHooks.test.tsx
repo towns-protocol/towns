@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithZionMemberRole,
@@ -14,6 +12,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { LoginStatus } from '../../src/hooks/login'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import React from 'react'
+import { RoomIdentifier } from '../../src/types/room-identifier'
+import { RoomVisibility } from '../../src/types/matrix-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'

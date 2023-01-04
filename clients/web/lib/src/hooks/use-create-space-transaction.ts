@@ -1,5 +1,5 @@
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
-import { createExternalTokenEntitlements, createPermissions } from '../client/web3/ZionContracts'
+import { createExternalTokenEntitlements, createPermissions } from '../client/web3/ContractHelpers'
 import { useCallback, useMemo, useState } from 'react'
 
 import { CreateSpaceInfo } from '../types/matrix-types'

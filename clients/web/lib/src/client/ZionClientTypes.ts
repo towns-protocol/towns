@@ -2,6 +2,12 @@
 
 import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 
+// todo: remove this when contract migration is complete
+export enum ContractVersion {
+    V1 = 'v1',
+    V2 = 'v2',
+}
+
 export enum SpaceProtocol {
     Matrix = 'matrix',
     Casablanca = 'casablanca',
@@ -15,6 +21,7 @@ export interface ZionOpts {
     onboardingOpts?: ZionOnboardingOpts
     web3Provider?: ethers.providers.Provider
     web3Signer?: ethers.Signer
+    contractVersion?: ContractVersion // todo: remove this when contract migration is complete
 }
 
 export interface ZionAuth {

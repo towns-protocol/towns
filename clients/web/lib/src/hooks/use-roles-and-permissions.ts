@@ -1,4 +1,4 @@
-import { getAllRolesFromSpace, getFilteredRolesFromSpace } from '../client/web3/ZionContracts'
+import { getAllRolesFromSpace, getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
 
 import { useCallback } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'

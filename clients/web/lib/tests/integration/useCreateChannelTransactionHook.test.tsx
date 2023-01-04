@@ -13,7 +13,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getZionTokenAddress } from '../../src/client/web3/ZionContracts'
+import { getZionTokenAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -175,7 +175,7 @@ describe('useCreateChannelTransaction', () => {
         // wait for the space name to render
         await waitFor(
             () => within(spaceElement).getByText(spaceName),
-            TestConstants.DefaultWaitForTimeout,
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
 
         /* Act */

@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithZionMemberRole,
@@ -11,6 +9,8 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomIdentifier } from '../../src/types/room-identifier'
+import { RoomVisibility } from '../../src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('spaceHierarchy', () => {

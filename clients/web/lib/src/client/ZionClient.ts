@@ -51,8 +51,6 @@ import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerSh
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
 import { ZionRoleManagerShim } from './web3/shims/ZionRoleManagerShim'
 import { loadOlm } from './loadOlm'
-import { TokenEntitlementModuleShim } from './web3/shims/TokenEntitlementModuleShim'
-import { UserGrantedEntitlementModuleShim } from './web3/shims/UserGrantedEntitlementModuleShim'
 import { FullyReadMarker } from '../types/timeline-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { createCasablancaChannel } from './casablanca/CreateChannel'
@@ -85,8 +83,6 @@ export class ZionClient {
     public spaceManager: ZionSpaceManagerShim
     public councilNFT: CouncilNFTShim
     public roleManager: ZionRoleManagerShim
-    public tokenEntitlementModule: TokenEntitlementModuleShim
-    public userGrantedEntitlementModule: UserGrantedEntitlementModuleShim
     public matrixClient?: MatrixClient
     public casablancaClient?: CasablancaClient
     private _chainId: number
@@ -110,18 +106,6 @@ export class ZionClient {
             this.chainId,
         )
         this.roleManager = new ZionRoleManagerShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
-
-        this.tokenEntitlementModule = new TokenEntitlementModuleShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
-
-        this.userGrantedEntitlementModule = new UserGrantedEntitlementModuleShim(
             this.opts.web3Provider,
             this.opts.web3Signer,
             this.chainId,
@@ -387,26 +371,9 @@ export class ZionClient {
     }
 
     /************************************************
-     * createBasicWeb3Space
+     * createSpace
      *************************************************/
-    public async createBasicWeb3Space(
-        createSpaceInfo: CreateSpaceInfo,
-    ): Promise<RoomIdentifier | undefined> {
-        const emptyPermissions: DataTypes.PermissionStruct[] = []
-        const emptyExternalTokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
-        const spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct = {
-            roleName: '',
-            permissions: emptyPermissions,
-            externalTokenEntitlements: emptyExternalTokenEntitlements,
-            users: [],
-        }
-        return this.createWeb3Space(createSpaceInfo, spaceEntitlementData, emptyPermissions)
-    }
-
-    /************************************************
-     * createWeb3Space
-     *************************************************/
-    public async createWeb3Space(
+    public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
         spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
         everyonePermissions: DataTypes.PermissionStruct[],
@@ -432,7 +399,7 @@ export class ZionClient {
         spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
         everyonePermissions: DataTypes.PermissionStruct[],
     ): Promise<TransactionContext<RoomIdentifier>> {
-        const roomId: RoomIdentifier | undefined = await this.createSpace(createSpaceInfo)
+        const roomId: RoomIdentifier | undefined = await this.createSpaceRoom(createSpaceInfo)
 
         if (!roomId) {
             console.error('[createSpaceTransaction] Matrix createSpace failed')
@@ -530,7 +497,7 @@ export class ZionClient {
     /************************************************
      * createSpace
      *************************************************/
-    public async createSpace(createSpaceInfo: CreateSpaceInfo): Promise<RoomIdentifier> {
+    public async createSpaceRoom(createSpaceInfo: CreateSpaceInfo): Promise<RoomIdentifier> {
         if (!createSpaceInfo.spaceProtocol) {
             createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
         }
@@ -551,9 +518,9 @@ export class ZionClient {
     }
 
     /************************************************
-     * createChannel
+     * createChannelRoom
      *************************************************/
-    public async createChannel(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
+    public async createChannelRoom(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
         switch (createInfo.parentSpaceId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {
@@ -571,9 +538,9 @@ export class ZionClient {
     }
 
     /************************************************
-     * createWeb3Channel
+     * createChannel
      *************************************************/
-    public async createWeb3Channel(
+    public async createChannel(
         createChannelInfo: CreateChannelInfo,
     ): Promise<RoomIdentifier | undefined> {
         const txContext = await this.createChannelTransaction(createChannelInfo)
@@ -591,7 +558,7 @@ export class ZionClient {
     public async createChannelTransaction(
         createChannelInfo: CreateChannelInfo,
     ): Promise<TransactionContext<RoomIdentifier>> {
-        const roomId: RoomIdentifier | undefined = await this.createChannel(createChannelInfo)
+        const roomId: RoomIdentifier | undefined = await this.createChannelRoom(createChannelInfo)
 
         if (!roomId) {
             console.error('[createChannelTransaction] Matrix createChannel failed')

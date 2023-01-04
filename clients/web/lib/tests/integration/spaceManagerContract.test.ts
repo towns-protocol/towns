@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
-import { registerAndStartClients } from 'use-zion-client/tests/integration/helpers/TestUtils'
-import { getContractInfo } from '../../src/client/web3/ZionContracts'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
+import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { getContractInfo } from '../../src/client/web3/ContractHelpers'
+import {
+    createBasicTestSpace,
+    registerAndStartClients,
+} from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 describe('spaceManagerContract', () => {
     // test: spaceContract
@@ -15,7 +19,7 @@ describe('spaceManagerContract', () => {
         // create a space
 
         const spaceName = bob.makeUniqueName()
-        const roomId = await bob.createBasicWeb3Space({
+        const roomId = await createBasicTestSpace(bob, {
             name: spaceName,
             visibility: RoomVisibility.Private,
         })
@@ -52,7 +56,7 @@ describe('spaceManagerContract', () => {
             users: [],
         }
         const everyonePermissions: DataTypes.PermissionStruct[] = []
-        const roomId = await bob.createWeb3Space(
+        const roomId = await bob.createSpace(
             {
                 name: spaceName,
                 visibility: RoomVisibility.Private,

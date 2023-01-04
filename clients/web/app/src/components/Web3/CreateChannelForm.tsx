@@ -19,7 +19,7 @@ export const CreateChannelForm = (props: Props) => {
     const [channelName, setChannelName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
     const [encrypted, setEncrypted] = useState<'yes' | 'no'>('no')
-    const { createChannel } = useZionClient()
+    const { createChannelRoom } = useZionClient()
     const { onClick, parentSpaceId } = props
 
     const disableCreateButton = useMemo(() => channelName.length === 0, [channelName.length])
@@ -41,7 +41,7 @@ export const CreateChannelForm = (props: Props) => {
             roleIds: [],
             disableEncryption: encrypted === 'no',
         }
-        const roomId = await createChannel(createChannelInfo)
+        const roomId = await createChannelRoom(createChannelInfo)
 
         if (roomId) {
             console.log('channel created with id', roomId)
@@ -53,7 +53,7 @@ export const CreateChannelForm = (props: Props) => {
         visibility,
         parentSpaceId,
         encrypted,
-        createChannel,
+        createChannelRoom,
         onClick,
     ])
 

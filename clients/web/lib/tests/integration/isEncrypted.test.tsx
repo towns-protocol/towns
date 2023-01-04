@@ -16,14 +16,14 @@ describe('isEncrypted', () => {
         // create clients
         const { bob } = await registerAndStartClients(['bob'])
         // bob creates a room
-        const spaceId = await bob.createSpace({
+        const spaceId = await bob.createSpaceRoom({
             name: "bob's space",
             visibility: RoomVisibility.Public,
         })
         // is it encrypted?
         expect(bob.isRoomEncrypted(spaceId)).toBe(true)
         // bob creates a channel
-        const channelId = await bob.createChannel({
+        const channelId = await bob.createChannelRoom({
             name: "bob's channel",
             visibility: RoomVisibility.Private,
             parentSpaceId: spaceId,

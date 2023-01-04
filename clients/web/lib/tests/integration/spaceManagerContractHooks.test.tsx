@@ -9,7 +9,7 @@ import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
-import { getZionTokenAddress } from '../../src/client/web3/ZionContracts'
+import { getZionTokenAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
@@ -29,7 +29,7 @@ describe('spaceManagerContractHooks', () => {
         act(() => {
             const TestComponent = () => {
                 // basic space
-                const { chainId, createBasicWeb3Space } = useZionClient()
+                const { chainId } = useZionClient()
                 const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
                 const {
                     createSpaceTransactionWithMemberRole,
@@ -43,11 +43,18 @@ describe('spaceManagerContractHooks', () => {
                 const { spaces } = useSpacesFromContract()
                 // callback to create a space
                 const onClickCreateSpace = useCallback(() => {
-                    void createBasicWeb3Space({
-                        name: spaceName,
-                        visibility: RoomVisibility.Public,
-                    })
-                }, [createBasicWeb3Space])
+                    const handleClick = async () => {
+                        await createSpaceTransactionWithMemberRole(
+                            {
+                                name: spaceName,
+                                visibility: RoomVisibility.Public,
+                            },
+                            [],
+                            [],
+                        )
+                    }
+                    void handleClick()
+                }, [createSpaceTransactionWithMemberRole])
                 // callback to create a space with zion token entitlement
                 const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
                     const handleClick = async () => {
@@ -62,7 +69,6 @@ describe('spaceManagerContractHooks', () => {
                             )
                         }
                     }
-
                     void handleClick()
                 }, [createSpaceTransactionWithMemberRole, zionTokenAddress])
 

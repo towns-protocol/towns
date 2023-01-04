@@ -18,7 +18,7 @@ export const CreateSpaceForm = (props: Props) => {
     const VisibilityOptions = [RoomVisibility.Private, RoomVisibility.Public]
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
-    const { createSpace } = useZionClient()
+    const { createSpaceRoom } = useZionClient()
 
     const disableCreateButton = useMemo(() => spaceName.length === 0, [spaceName.length])
 
@@ -35,13 +35,13 @@ export const CreateSpaceForm = (props: Props) => {
             name: spaceName,
             visibility,
         }
-        const roomId = await createSpace(createSpaceInfo)
+        const roomId = await createSpaceRoom(createSpaceInfo)
 
         if (roomId) {
             console.log('space created with id', roomId)
             props.onClick(roomId, Membership.Join)
         }
-    }, [createSpace, props, spaceName, visibility, disableCreateButton])
+    }, [createSpaceRoom, props, spaceName, visibility, disableCreateButton])
 
     return (
         <Stack padding gap="lg" minWidth="400">

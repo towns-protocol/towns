@@ -8,7 +8,7 @@ import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/c
 import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
 import { Permission } from './ZionContractTypes'
 import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
-import { ZionClient } from '../../client/ZionClient'
+import { ZionClient } from '../ZionClient'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
