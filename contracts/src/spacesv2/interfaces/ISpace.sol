@@ -60,7 +60,7 @@ interface ISpace {
   ) external;
 
   /// ***** Entitlement Management *****
-  function isEntitled(
+  function isEntitledToChannel(
     string calldata channelId,
     address user,
     string calldata permission

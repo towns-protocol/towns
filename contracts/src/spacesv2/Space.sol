@@ -335,7 +335,7 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
 
   /// ***** Entitlement Management *****
   /// @inheritdoc ISpace
-  function isEntitled(
+  function isEntitledToChannel(
     string calldata _channelId,
     address _user,
     string calldata _permission

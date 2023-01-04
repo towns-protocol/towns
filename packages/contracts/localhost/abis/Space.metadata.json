@@ -567,7 +567,7 @@
             "type": "string"
           }
         ],
-        "name": "isEntitled",
+        "name": "isEntitledToChannel",
         "outputs": [
           {
             "internalType": "bool",
@@ -928,7 +928,7 @@
         "initialize(string,string,address[])": {
           "notice": "***** Space Management *****"
         },
-        "isEntitled(string,address,string)": {
+        "isEntitledToChannel(string,address,string)": {
           "notice": "***** Entitlement Management *****"
         }
       },
@@ -963,11 +963,11 @@
   },
   "sources": {
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0xa77dba42b4d209abf1c5aacff5a0b8b36d4d9bc59448505023a0ff2d6535a8f0",
+      "keccak256": "0x83c6c42203efade16238552dd7000b37ecccecba5ad73407a9be1f8422f9bca6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0f6dd67190b1f9c5e84c5032192231d91f2348468438c02b1e9e0a43892c42f9",
-        "dweb:/ipfs/QmcDPPCrHyvGqaw1q3kYyMWxntK3PzfhSsLjEvaGpFQE8U"
+        "bzz-raw://6052f6d1152a7b36fabf2784b5aae1a403a916ad61300fc64a059341e73c1fc5",
+        "dweb:/ipfs/QmPXGr5xN9SkJQ2ZzE5yJMadfJCdo2B5s8EhuecwNBm8cQ"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
@@ -979,11 +979,11 @@
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0xfbbfbe04043581304d821710674e5a624e325ba5437760424c283e80856f69d1",
+      "keccak256": "0x9f28a007f7db653d5fc7bf61f61827012deb7ba1a43b5dbdf90f95c08760c7e1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1eb1935f3e189af967927bc00384eb10706d4c58aa8814c604a261523e13b8de",
-        "dweb:/ipfs/QmboP12Yayas7GbfxksZGRKu4NUWnj8hqrWRLEaSmwA9fZ"
+        "bzz-raw://573573aac5720ad90fec337cf042d62444b2e484fa94c340b8e507e8b7804668",
+        "dweb:/ipfs/QmX2Y6edtXj7JPKnnudy3v9yFNDhHUnWs7e1fzu8HAzTZZ"
       ]
     },
     "contracts/src/spacesv2/libraries/DataTypes.sol": {

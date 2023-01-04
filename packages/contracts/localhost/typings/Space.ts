@@ -73,7 +73,7 @@ export interface SpaceInterface extends utils.Interface {
     "hasEntitlement(address)": FunctionFragment;
     "initialize(string,string,address[])": FunctionFragment;
     "isEntitled(address,string)": FunctionFragment;
-    "isEntitled(string,address,string)": FunctionFragment;
+    "isEntitledToChannel(string,address,string)": FunctionFragment;
     "name()": FunctionFragment;
     "networkId()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -114,8 +114,8 @@ export interface SpaceInterface extends utils.Interface {
       | "getRoles"
       | "hasEntitlement"
       | "initialize"
-      | "isEntitled(address,string)"
-      | "isEntitled(string,address,string)"
+      | "isEntitled"
+      | "isEntitledToChannel"
       | "name"
       | "networkId"
       | "owner"
@@ -213,11 +213,11 @@ export interface SpaceInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "isEntitled(address,string)",
+    functionFragment: "isEntitled",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "isEntitled(string,address,string)",
+    functionFragment: "isEntitledToChannel",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
@@ -350,12 +350,9 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "isEntitled(address,string)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isEntitled(string,address,string)",
+    functionFragment: "isEntitledToChannel",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -591,13 +588,13 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    "isEntitled(address,string)"(
+    isEntitled(
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean] & { _entitled: boolean }>;
 
-    "isEntitled(string,address,string)"(
+    isEntitledToChannel(
       _channelId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
@@ -783,13 +780,13 @@ export interface Space extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  "isEntitled(address,string)"(
+  isEntitled(
     _user: PromiseOrValue<string>,
     _permission: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  "isEntitled(string,address,string)"(
+  isEntitledToChannel(
     _channelId: PromiseOrValue<string>,
     _user: PromiseOrValue<string>,
     _permission: PromiseOrValue<string>,
@@ -975,13 +972,13 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    "isEntitled(address,string)"(
+    isEntitled(
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    "isEntitled(string,address,string)"(
+    isEntitledToChannel(
       _channelId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
@@ -1196,13 +1193,13 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    "isEntitled(address,string)"(
+    isEntitled(
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    "isEntitled(string,address,string)"(
+    isEntitledToChannel(
       _channelId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
@@ -1382,13 +1379,13 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    "isEntitled(address,string)"(
+    isEntitled(
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    "isEntitled(string,address,string)"(
+    isEntitledToChannel(
       _channelId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,

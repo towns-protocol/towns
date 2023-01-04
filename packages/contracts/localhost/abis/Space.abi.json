@@ -561,7 +561,7 @@
         "type": "string"
       }
     ],
-    "name": "isEntitled",
+    "name": "isEntitledToChannel",
     "outputs": [
       {
         "internalType": "bool",

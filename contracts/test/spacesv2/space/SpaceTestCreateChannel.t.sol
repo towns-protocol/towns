@@ -67,7 +67,7 @@ contract SpaceTestCreateChannel is BaseSetup {
     Space(_space).createChannel(channelName, channelNetworkId, roleIds);
 
     // check if bob is entitled to channel
-    assertTrue(Space(_space).isEntitled(channelNetworkId, _bob, _permission));
+    assertTrue(Space(_space).isEntitledToChannel(channelNetworkId, _bob, _permission));
   }
 
   function testCreateChannelNotAllowed() external {
@@ -124,7 +124,7 @@ contract SpaceTestCreateChannel is BaseSetup {
     assertEq(_channel.channelId, channelId);
 
     assertTrue(
-      Space(_space).isEntitled(channelNetworkId, creator, Permissions.Owner)
+      Space(_space).isEntitledToChannel(channelNetworkId, creator, Permissions.Owner)
     );
   }
 }
