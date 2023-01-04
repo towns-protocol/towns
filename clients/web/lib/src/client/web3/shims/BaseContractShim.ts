@@ -2,6 +2,7 @@
 
 import { ethers } from 'ethers'
 import Localhost_EventsAbi from '@harmony/contracts/localhost/abis/Events.abi.json'
+import Goerli_EventsAbi from '@harmony/contracts/goerli/abis/Events.abi.json'
 
 interface ContractParams {
     address: string
@@ -60,18 +61,6 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
         ) as unknown as T_LOCALHOST
     }
 
-    protected get goerli_events() {
-        if (!this.provider) {
-            throw new Error('No provider')
-        }
-        throw new Error('No events abi')
-        // return new ethers.Contract(
-        //     this.goerli.address,
-        //     this.goerli.eventsAbi,
-        //     this.provider,
-        // ) as unknown as T_LOCALHOST
-    }
-
     protected get localhost_signed(): T_LOCALHOST {
         if (!this.signer) {
             throw new Error('No signer')
@@ -81,6 +70,17 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
             this.localhost.abi,
             this.signer,
         ) as unknown as T_LOCALHOST
+    }
+
+    protected get goerli_events() {
+        if (!this.provider) {
+            throw new Error('No provider')
+        }
+        return new ethers.Contract(
+            this.goerli.address,
+            Goerli_EventsAbi,
+            this.provider,
+        ) as unknown as T_GOERLI
     }
 
     protected get goerli_unsigned(): T_GOERLI {
@@ -115,13 +115,23 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
         }
     }
 
+    get abi(): ethers.ContractInterface {
+        if (this.isLocalhost) {
+            return this.localhost.abi
+        } else if (this.isGoerli) {
+            return this.goerli.abi
+        } else {
+            throw new Error(`Unsupported chainId ${this.chainId} for abi`)
+        }
+    }
+
     get eventsAbi(): ethers.ContractInterface {
         if (this.isLocalhost) {
             return Localhost_EventsAbi
-        }
-        // Goerli TODO
-        else {
-            throw new Error('Unsupported chainId')
+        } else if (this.isGoerli) {
+            return Goerli_EventsAbi
+        } else {
+            throw new Error(`Unsupported chainId ${this.chainId} for eventsAbi`)
         }
     }
 
@@ -129,10 +139,10 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
     get events(): T_LOCALHOST | T_GOERLI {
         if (this.isLocalhost) {
             return this.localhost_events
-        }
-        // Goerli TODO
-        else {
-            throw new Error('Unsupported chainId')
+        } else if (this.isGoerli) {
+            return this.goerli_events
+        } else {
+            throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
