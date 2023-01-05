@@ -11,3 +11,8 @@ yarn.lock
 
 vite.config.ts
 vitest.config.ts
+
+# a very annoying bug, seems vite-eslint-plugin is also linting our local @harmony/packages package
+# https://github.com/gxmari007/vite-plugin-eslint/issues/43#issuecomment-1274575702
+# we likely won't import this directly in app, but it is imported in our clients/lib, and causes errors here
+../../../packages/contracts/

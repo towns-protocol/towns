@@ -112,6 +112,6 @@ export {
 } from './types/user-identifier'
 
 export { Permission } from './client/web3/ZionContractTypes'
-export { getZionTokenAddress } from './client/web3/ContractHelpers'
+export { getZionTokenAddress, getContractInfo } from './client/web3/ContractHelpers'
 
 export { staticAssertNever } from './utils/zion-utils'

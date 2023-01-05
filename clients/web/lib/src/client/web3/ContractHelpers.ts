@@ -6,6 +6,10 @@ import Goerli_CouncilAddresses from '@harmony/contracts/goerli/addresses/council
 import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
 import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
+
+import Goerli_ZionSpaceManagerArtifactAbi from '@harmony/contracts/goerli/abis/ZionSpaceManager.abi.json'
+import Localhost_ZionSpaceManagerArtifactAbi from '@harmony/contracts/localhost/abis/ZionSpaceManager.abi'
+
 import { Permission } from './ZionContractTypes'
 import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
 import { ZionClient } from '../ZionClient'
@@ -20,6 +24,9 @@ export interface IZionContractsInfo {
             tokengranted: string
             rolemanager: string
         }
+        abis: {
+            spacemanager: typeof Localhost_ZionSpaceManagerArtifactAbi
+        }
     }
     council: {
         addresses: { councilnft: string }
@@ -33,7 +40,13 @@ export function getContractInfo(chainId: number): IZionContractsInfo {
             return {
                 spaceManager: {
                     addresses: Goerli_SpaceManagerAddresses,
+                    abis: {
+                        spacemanager:
+                            // This is a temporary cast and once goerli is deployed again we can import the abi.ts for georli
+                            Goerli_ZionSpaceManagerArtifactAbi as unknown as typeof Localhost_ZionSpaceManagerArtifactAbi,
+                    },
                 },
+
                 council: {
                     addresses: Goerli_CouncilAddresses,
                 },
@@ -43,7 +56,11 @@ export function getContractInfo(chainId: number): IZionContractsInfo {
             return {
                 spaceManager: {
                     addresses: Localhost_SpaceManagerAddresses,
+                    abis: {
+                        spacemanager: Localhost_ZionSpaceManagerArtifactAbi,
+                    },
                 },
+
                 council: {
                     addresses: Localhost_CouncilAddresses,
                 },
@@ -62,6 +79,9 @@ export function getContractInfo(chainId: number): IZionContractsInfo {
                         usergranted: '',
                         tokengranted: '',
                         rolemanager: '',
+                    },
+                    abis: {
+                        spacemanager: Localhost_ZionSpaceManagerArtifactAbi,
                     },
                 },
                 council: {
