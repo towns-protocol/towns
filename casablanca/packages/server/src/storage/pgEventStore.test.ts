@@ -145,18 +145,18 @@ describe('PGEventStore', () => {
         expect(util.inspect(readPromise).includes('pending')).toEqual(true)
 
         await store.addEvents(syncPos.streamId, MORE_EVENTS)
-        // Give postgress a moment to send the notify
-        await setTimeout(100)
-        expect(util.inspect(readPromise).includes('pending')).toEqual(false)
 
+        // Wait until readPromise is fulfilled
+        await expect(readPromise).toResolve()
         const readResult = await readPromise
+        log('readNewEventsAsyncMultiWait', 'readResult', readResult)
 
         const readResult2 = await store.readNewEvents([syncPos], 2000)
         log('readNewEventsAsyncWait', 'readResult2', readResult, readResult2)
 
         expect(readResult2).not.toBeNull()
         expect(readResult2).toEqual(readResult)
-        expect(readResult2[syncPos.streamId].events).toEqual(MORE_EVENTS)
+        expect(readResult[syncPos.streamId].events).toEqual(MORE_EVENTS)
     })
 
     test('readNewEventsAsyncMultiWait', async () => {
@@ -166,20 +166,25 @@ describe('PGEventStore', () => {
 
         const readPromise = store.readNewEvents([s0, s1, s2], 2000)
         expect(util.inspect(readPromise).includes('pending')).toEqual(true)
+
+        // Wait until DB query is finished before inserting new events
         await setTimeout(500)
         expect(util.inspect(readPromise).includes('pending')).toEqual(true)
 
         await store.addEvents(s2.streamId, MORE_EVENTS)
 
-        // Give postgress a moment to send the notify
-        await setTimeout(100)
-        const readResult = await store.readNewEvents([s0, s1, s2], 2000)
-        expect(util.inspect(readPromise).includes('pending')).toEqual(false)
-
+        // Wait until readPromise is fulfilled
         await expect(readPromise).toResolve()
+        const readResult = await readPromise
         log('readNewEventsAsyncMultiWait', 'readResult', readResult)
+
+        const readResult2 = await store.readNewEvents([s0, s1, s2], 2000)
+        log('readNewEventsAsyncWait', 'readResult2', readResult, readResult2)
+
         expect(readResult).not.toBeNull()
         expect(readResult[s2.streamId].events).toEqual(MORE_EVENTS)
+        expect(readResult2).not.toBeNull()
+        expect(readResult2).toEqual(readResult)
     })
 
     test('readNewEventsAsyncWaitTimeout', async () => {
@@ -189,9 +194,8 @@ describe('PGEventStore', () => {
         const readPromise = store.readNewEvents([syncPos], 100)
         expect(util.inspect(readPromise).includes('pending')).toEqual(true)
 
-        // Let the long poll timeout returning an empty result
-        await setTimeout(200)
-        expect(util.inspect(readPromise).includes('pending')).toEqual(false)
+        // Wait until readPromise is fulfilled
+        await expect(readPromise).toResolve()
         const readResult = await readPromise
 
         log('readNewEventsAsyncWaitTimeout', 'readResult', readResult)
