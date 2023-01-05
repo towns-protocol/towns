@@ -18,6 +18,11 @@ yarn typechain --target=ethers-v5 "out/**/?(Events|Errors|CouncilNFT|CouncilStak
 
 # Move abis to the packages folder
 mkdir -p $ABI_DIR && cp -a out/{libraries/Events,libraries/Errors,CouncilNFT,CouncilStaking,ZionSpaceManager,ZionRoleManager,TokenEntitlementModule,UserGrantedEntitlementModule,Space,SpaceFactory}.sol/* "packages/contracts/${CHAIN}/abis"
+# Copy the json abis to TS files for type inference
+for file in $ABI_DIR/*.abi.json; do
+  filename=$(basename  "$file" .json)
+  echo "export default $(cat $file) as const" > $ABI_DIR/$filename.ts
+done
 
 # Move typings to the dendrite folder
 mkdir -p $TYPINGS_DIR
