@@ -1,3 +1,4 @@
+import { Address } from 'wagmi'
 import { MEMBERSHIP_TYPE, SPACE_ICON_URL, SPACE_NAME, TOKENS } from './constants'
 
 export interface CreateSpaceFormState {
@@ -10,5 +11,5 @@ export interface CreateSpaceFormState {
         [SPACE_ICON_URL]: string | null
     }
     createdSpaceId: string | null
-    mintedTokenAddress: string | null
+    mintedTokenAddress: Address | null
 }

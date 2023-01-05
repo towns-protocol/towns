@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
+import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
 import useEvent from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import { useWeb3Context, useZionClient } from 'use-zion-client'
@@ -41,7 +41,7 @@ function areSynced(homeserverUrl: HomeServerUrl, chainName: string) {
 }
 
 type FundProps = {
-    accountId: string
+    accountId: Address
     provider?: providers.BaseProvider
     chainId?: number
 }
@@ -72,7 +72,7 @@ async function fundWallet({ accountId, provider, chainId }: FundProps) {
 }
 
 const FundButton = (props: FundProps & { disabled: boolean }) => {
-    const balance = useBalance({ addressOrName: props.accountId, watch: true })
+    const balance = useBalance({ address: props.accountId, watch: true })
     return (
         <Button disabled={props.disabled} size="button_xs" onClick={() => fundWallet(props)}>
             <>

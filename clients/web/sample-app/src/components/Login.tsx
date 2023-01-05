@@ -307,7 +307,7 @@ function ProfileContent() {
 
 function ENSInfo(props: { address: `0x${string}` | undefined }): JSX.Element {
     const { address } = props
-    const { data: ensAvatar } = useEnsAvatar({ addressOrName: address })
+    const { data: ensAvatar } = useEnsAvatar({ address })
     const { data: ensName } = useEnsName({ address })
 
     return (

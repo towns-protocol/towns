@@ -1,4 +1,4 @@
-import { allChains } from 'wagmi'
+import * as allChains from '@wagmi/core/chains'
 
 export const LoginTypePublicKey = 'm.login.publickey'
 export const LoginTypePublicKeyEthereum = 'm.login.publickey.ethereum'
@@ -116,7 +116,7 @@ export function getParamsPublicKeyEthereum(
 // https://chainlist.org/
 // https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
 export function getChainName(chainId: number): string {
-    const chain = allChains.find((x) => x.id === chainId)
+    const chain = Object.values(allChains).find((x) => x.id === chainId)
     if (chain) {
         return chain.name
     }

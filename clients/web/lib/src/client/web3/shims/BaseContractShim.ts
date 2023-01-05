@@ -3,6 +3,7 @@
 import { ethers } from 'ethers'
 import Localhost_EventsAbi from '@harmony/contracts/localhost/abis/Events.abi.json'
 import Goerli_EventsAbi from '@harmony/contracts/goerli/abis/Events.abi.json'
+import { Address } from 'wagmi'
 
 interface ContractParams {
     address: string
@@ -105,11 +106,11 @@ export class BaseContractShim<T_LOCALHOST, T_GOERLI> {
         ) as unknown as T_GOERLI
     }
 
-    get address() {
+    get address(): Address {
         if (this.isLocalhost) {
-            return this.localhost.address
+            return this.localhost.address as Address
         } else if (this.isGoerli) {
-            return this.goerli.address
+            return this.goerli.address as Address
         } else {
             throw new Error('Unsupported chainId')
         }

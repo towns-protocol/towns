@@ -1,4 +1,5 @@
 import create from 'zustand'
+import { Address } from 'wagmi'
 import { isDev } from 'utils'
 import { CreateSpaceFormState } from './types'
 import { StoreMockForManualSubmissionsNotToBeUsedInTests } from './mock'
@@ -12,7 +13,7 @@ interface CreateSpaceActions {
     removeToken: (token: string) => void
     reset: () => void
     setCreatedSpaceId: (createdSpaceId: string) => void
-    setMintedTokenAddress: (mintedTokenAddress: string) => void
+    setMintedTokenAddress: (mintedTokenAddress: Address) => void
 }
 
 let initialState: CreateSpaceFormState = {
@@ -57,6 +58,6 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
             }
         }),
     setCreatedSpaceId: (createdSpaceId: string) => set({ createdSpaceId }),
-    setMintedTokenAddress: (mintedTokenAddress: string) => set({ mintedTokenAddress }),
+    setMintedTokenAddress: (mintedTokenAddress: Address) => set({ mintedTokenAddress }),
     reset: () => set(initialState),
 }))

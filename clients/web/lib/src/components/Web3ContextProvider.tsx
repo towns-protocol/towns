@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useRef } from 'react'
 import { ethers } from 'ethers'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
-import { WagmiConfig, createClient, configureChains, chain, Chain } from 'wagmi'
+import { WagmiConfig, createClient, configureChains, Chain, Address } from 'wagmi'
+import { goerli, localhost, foundry } from '@wagmi/core/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { WalletStatus } from '../types/web3-types'
@@ -9,7 +10,7 @@ import { WalletStatus } from '../types/web3-types'
 export interface IWeb3Context {
     provider?: ethers.providers.Web3Provider
     sign: (message: string, walletAddress: string) => Promise<string | undefined>
-    accounts: string[]
+    accounts: Address[]
     chain?: Chain & {
         unsupported?: boolean
     }
@@ -37,7 +38,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
     const wagmiClient = useRef<any>()
     if (!wagmiClient.current) {
         const { chains, provider, webSocketProvider } = configureChains(
-            [chain.goerli, chain.foundry, chain.localhost],
+            [goerli, foundry, localhost],
             [publicProvider()], // todo, add more providers see: https://github.com/HereNotThere/harmony/issues/460
         )
         const client = createClient({

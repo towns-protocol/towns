@@ -10,7 +10,8 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
-import { chain as ChainType, useBalance } from 'wagmi'
+import { Address, useBalance } from 'wagmi'
+import { foundry, hardhat, localhost } from 'wagmi/chains'
 import {
     CreateSpaceInfo,
     Membership,
@@ -278,9 +279,9 @@ export const CreateSpaceForm = (props: Props) => {
                         Create
                     </Button>
                 </Box>
-                {(chain?.id === ChainType.localhost.id ||
-                    chain?.id === ChainType.foundry.id ||
-                    chain?.id === ChainType.hardhat.id) &&
+                {(chain?.id === localhost.id ||
+                    chain?.id === foundry.id ||
+                    chain?.id === hardhat.id) &&
                     accounts.map((accountId) => (
                         <AccountDisplay
                             accountId={accountId}
@@ -294,11 +295,11 @@ export const CreateSpaceForm = (props: Props) => {
 }
 
 const AccountDisplay = (props: {
-    accountId: string
+    accountId: Address
     onClickFundWallet: (accountId: string) => void
 }) => {
     const { accountId, onClickFundWallet } = props
-    const balance = useBalance({ addressOrName: accountId, watch: true })
+    const balance = useBalance({ address: accountId, watch: true })
     return (
         <Box
             display="flex"
