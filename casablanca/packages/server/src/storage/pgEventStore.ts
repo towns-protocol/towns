@@ -1,12 +1,11 @@
 import type { FullEvent, StreamAndCookie, StreamsAndCookies, SyncPos } from '@zion/core'
 import { Err, throwWithCode } from '@zion/core'
 import debug from 'debug'
-import { config } from '../config'
-import { EventStore } from './eventStore'
-import { PoolClient, Notification } from 'pg'
+import pg, { Notification, PoolClient } from 'pg'
 import format, { string } from 'pg-format'
 import { setTimeout as setTimeoutWithPromise } from 'timers/promises'
-import pg from 'pg'
+import { config } from '../config'
+import { EventStore } from './eventStore'
 
 const log = debug('zion:PGEventStore')
 
@@ -73,6 +72,21 @@ async function createStreamTable(streamId: string, client: PoolClient) {
     log('createStreamTable', 'table created:', tableName)
 }
 
+async function withConnection<T>(
+    pool: pg.Pool,
+    thunk: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+    const client = await pool.connect()
+    try {
+        const res = await thunk(client)
+        client.release()
+        return res
+    } catch (err: any) {
+        client.release(err)
+        throw err
+    }
+}
+
 // TODO: change throws to throwWithCode
 export class PGEventStore implements EventStore {
     readonly pool: pg.Pool
@@ -137,16 +151,70 @@ export class PGEventStore implements EventStore {
      * @returns sync cookie for reading new events from the stream
      */
     async createEventStream(streamId: string, inceptionEvents: FullEvent[]): Promise<string> {
-        const dbClient = await this.pool.connect()
+        return await withConnection(this.pool, async (dbClient) => {
+            const exists = await tableExists(streamId, dbClient)
+            if (!exists) {
+                await createStreamTable(streamId, dbClient)
+            }
+            const result = await this.addEventsImpl(streamId, inceptionEvents, dbClient)
+            await dbClient.query('COMMIT;')
+            return result
+        })
+    }
 
-        const exists = await tableExists(streamId, dbClient)
-        if (!exists) {
-            await createStreamTable(streamId, dbClient)
+    /**
+     * get all event streams
+     * @returns array of stream ids
+     */
+    async getEventStreams(): Promise<string[]> {
+        return await withConnection(this.pool, async (dbClient) => {
+            const query = `SELECT table_name FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_type = 'BASE TABLE'
+            AND table_name LIKE '${PG_EVENT_TABLE_NAME_PREFIX}%'`
+            const result = await dbClient.query(query)
+
+            return result.rows.map((row: any) =>
+                row.table_name.slice(PG_EVENT_TABLE_NAME_PREFIX.length),
+            )
+        })
+    }
+
+    /**
+     * @param streamId
+     */
+    async deleteEventStream(streamId: string): Promise<void> {
+        log('deleteEventStream', streamId)
+        await withConnection(this.pool, async (dbClient) => {
+            const tableName = PG_EVENT_TABLE_NAME_PREFIX + streamId
+            const query = `DROP TABLE IF EXISTS "${tableName}"`
+            await dbClient.query(query)
+        })
+    }
+
+    /**
+     * delete all event stream tables
+     * @returns array of stream ids
+     */
+    async deleteAllEventStreams(): Promise<string[]> {
+        log('deleteAllEventStreams')
+        const query = `SELECT table_name FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_type = 'BASE TABLE' 
+            AND table_name LIKE '${PG_EVENT_TABLE_NAME_PREFIX}%'`
+        try {
+            const tables = await this.pool
+                .query(query)
+                .then((res) => res.rows.map((row) => row.table_name))
+
+            for (const table of tables) {
+                await this.deleteEventStream(table.slice(PG_EVENT_TABLE_NAME_PREFIX.length))
+            }
+            return tables
+        } catch (err: any) {
+            log('deleteAllEventStreams err', err)
+            throw err
         }
-        const result = await this.addEventsImpl(streamId, inceptionEvents, dbClient)
-        await dbClient.query('COMMIT;')
-        dbClient.release()
-        return result
     }
 
     /**
@@ -156,18 +224,18 @@ export class PGEventStore implements EventStore {
      * @returns sync cookie for reading new events from the stream
      */
     async addEvents(streamId: string, events: FullEvent[]): Promise<string> {
-        const dbClient = await this.pool.connect()
-        const result = await this.addEventsImpl(streamId, events, dbClient)
-        await dbClient.query('COMMIT;')
-        dbClient.release()
-        return result
+        return await withConnection(this.pool, async (dbClient) => {
+            const result = await this.addEventsImpl(streamId, events, dbClient)
+            await dbClient.query('COMMIT;')
+            return result
+        })
     }
 
     async streamExists(streamId: string): Promise<boolean> {
-        const dbClient = await this.pool.connect()
-        const exists = await tableExists(streamId, dbClient)
-        dbClient.release()
-        return exists
+        return await withConnection(this.pool, async (dbClient) => {
+            const exists = await tableExists(streamId, dbClient)
+            return exists
+        })
     }
 
     async getEventStream(streamId: string): Promise<StreamAndCookie> {

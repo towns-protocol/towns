@@ -202,4 +202,14 @@ describe('PGEventStore', () => {
         expect(readResult).not.toBeNull()
         expect(readResult).toEqual({})
     })
+
+    test('deleteAllStreams', async () => {
+        await store.createEventStream('stream1', DEFAULT_INITIAL_EVENTS)
+        const allStreams = new Set(await store.getEventStreams())
+        const deleted = await store.deleteAllEventStreams()
+        const res = new Set(await store.getEventStreams())
+        for (const id of allStreams) {
+            expect(res).not.toContain(id)
+        }
+    })
 })
