@@ -350,7 +350,7 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   }
 
   /// @inheritdoc ISpace
-  function isEntitled(
+  function isEntitledToSpace(
     address _user,
     string calldata _permission
   ) external view returns (bool _entitled) {

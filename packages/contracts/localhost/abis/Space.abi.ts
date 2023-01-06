@@ -522,30 +522,6 @@ export default [
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "_permission",
-        "type": "string"
-      }
-    ],
-    "name": "isEntitled",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "_entitled",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
         "name": "_channelId",
         "type": "string"
@@ -562,6 +538,30 @@ export default [
       }
     ],
     "name": "isEntitledToChannel",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "_entitled",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_permission",
+        "type": "string"
+      }
+    ],
+    "name": "isEntitledToSpace",
     "outputs": [
       {
         "internalType": "bool",

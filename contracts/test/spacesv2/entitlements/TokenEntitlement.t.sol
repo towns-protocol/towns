@@ -223,7 +223,7 @@ contract TokenEntitlementTest is BaseSetup {
 
     address _space = createSpaceWithEntitlements(_entitlementData);
 
-    assertTrue(Space(_space).isEntitled(_bob, Permissions.Read));
+    assertTrue(Space(_space).isEntitledToSpace(_bob, Permissions.Read));
   }
 
   function testRemoveEntitlement() external {

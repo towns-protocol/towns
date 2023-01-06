@@ -30,7 +30,7 @@ contract SpaceTestUpgradeTo is BaseSetup {
 
     assertEq(SpaceV2(_space).name(), "zion");
     assertEq(SpaceV2(_space).items(0), _item);
-    assertTrue(SpaceV2(_space).isEntitled(_creator, Permissions.Owner));
+    assertTrue(SpaceV2(_space).isEntitledToSpace(_creator, Permissions.Owner));
   }
 }
 

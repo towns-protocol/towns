@@ -66,7 +66,7 @@ interface ISpace {
     string calldata permission
   ) external view returns (bool);
 
-  function isEntitled(
+  function isEntitledToSpace(
     address user,
     string calldata permission
   ) external view returns (bool);

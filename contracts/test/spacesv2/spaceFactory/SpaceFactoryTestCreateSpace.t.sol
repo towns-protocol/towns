@@ -116,7 +116,7 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     vm.prank(creator);
     address spaceAddress = createSimpleSpace();
 
-    assertTrue(Space(spaceAddress).isEntitled(creator, Permissions.Owner));
+    assertTrue(Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner));
   }
 
   function testEveryoneEntitlement() external {
@@ -129,7 +129,7 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     address spaceAddress = createSpaceWithEveryonePermissions(_permissions);
 
     assertTrue(
-      Space(spaceAddress).isEntitled(_randomAddress(), Permissions.Read)
+      Space(spaceAddress).isEntitledToSpace(_randomAddress(), Permissions.Read)
     );
   }
 
@@ -162,13 +162,13 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     vm.prank(creator);
     address spaceAddress = createSpaceWithEntitlements(_extraEntitlements);
 
-    assertTrue(Space(spaceAddress).isEntitled(creator, Permissions.Owner));
+    assertTrue(Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner));
 
-    assertTrue(Space(spaceAddress).isEntitled(bob, Permissions.Read));
-    assertTrue(Space(spaceAddress).isEntitled(alice, Permissions.Read));
+    assertTrue(Space(spaceAddress).isEntitledToSpace(bob, Permissions.Read));
+    assertTrue(Space(spaceAddress).isEntitledToSpace(alice, Permissions.Read));
 
-    assertFalse(Space(spaceAddress).isEntitled(bob, Permissions.Write));
-    assertFalse(Space(spaceAddress).isEntitled(alice, Permissions.Write));
+    assertFalse(Space(spaceAddress).isEntitledToSpace(bob, Permissions.Write));
+    assertFalse(Space(spaceAddress).isEntitledToSpace(alice, Permissions.Write));
   }
 
   function testOwnershipTransferred() external {

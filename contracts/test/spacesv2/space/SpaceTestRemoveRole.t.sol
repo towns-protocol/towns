@@ -33,7 +33,7 @@ contract SpaceTestRemoveRole is BaseSetup {
     address _space = createSpaceWithEntitlements(_entitlementData);
 
     assertTrue(
-      Space(_space).isEntitled(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
     );
 
     DataTypes.Role[] memory allRoles = Space(_space).getRoles();
@@ -62,7 +62,7 @@ contract SpaceTestRemoveRole is BaseSetup {
     Space(_space).removeRole(moderatorRoleId);
 
     assertFalse(
-      Space(_space).isEntitled(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
     );
   }
 
@@ -93,7 +93,7 @@ contract SpaceTestRemoveRole is BaseSetup {
     address _space = createSpaceWithEntitlements(_entitlementData);
 
     assertTrue(
-      Space(_space).isEntitled(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
     );
 
     uint256 ownerRoleId = Space(_space).ownerRoleId();

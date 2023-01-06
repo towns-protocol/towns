@@ -87,7 +87,7 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
       abi.encode(_bob)
     );
 
-    assertTrue(Space(_space).isEntitled(_bob, "Vote"));
+    assertTrue(Space(_space).isEntitledToSpace(_bob, "Vote"));
 
     // remove role from entitlement
     Space(_space).removeRoleFromEntitlement(
@@ -96,6 +96,6 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
       abi.encode(_bob)
     );
 
-    assertFalse(Space(_space).isEntitled(_bob, "Vote"));
+    assertFalse(Space(_space).isEntitledToSpace(_bob, "Vote"));
   }
 }

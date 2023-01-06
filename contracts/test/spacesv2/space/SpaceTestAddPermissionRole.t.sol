@@ -86,7 +86,7 @@ contract SpaceTestAddPermissionRole is BaseSetup {
     }
 
     // Check entitlements for new permission
-    assertTrue(Space(_space).isEntitled(_moderator, Permissions.Ban));
+    assertTrue(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
     assertTrue(exists);
   }
 }

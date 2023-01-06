@@ -33,7 +33,7 @@ contract SpaceTestCreateRole is BaseSetup {
     address _space = createSpaceWithEntitlements(_entitlementData);
 
     assertTrue(
-      Space(_space).isEntitled(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
     );
 
     string memory _roleName = "Hacker";

@@ -24,11 +24,11 @@ contract SpaceTestRemovePermissionRole is BaseSetup {
 
     Space(_space).addPermissionToRole(_moderatorRoleId, Permissions.Ban);
 
-    assertTrue(Space(_space).isEntitled(_moderator, Permissions.Ban));
+    assertTrue(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
 
     Space(_space).removePermissionFromRole(_moderatorRoleId, Permissions.Ban);
 
-    assertFalse(Space(_space).isEntitled(_moderator, Permissions.Ban));
+    assertFalse(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
 
     bytes32[] memory _permissions = Space(_space).getPermissionsByRoleId(
       _moderatorRoleId

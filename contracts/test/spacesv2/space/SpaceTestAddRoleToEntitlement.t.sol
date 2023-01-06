@@ -100,7 +100,6 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
       _userEntitlement,
       abi.encode(_bob)
     );
-
-    assertTrue(Space(_space).isEntitled(_bob, "UniquePermision"));
+    assertTrue(Space(_space).isEntitledToSpace(_bob, "UniquePermision"));
   }
 }
