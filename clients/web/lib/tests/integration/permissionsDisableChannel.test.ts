@@ -49,13 +49,13 @@ describe('disable channel', () => {
                 expect(tokenGrantedUser.scrollback(roomId, 30)).rejects.toThrow(
                     'You cannot remain in a disabled server',
                 ),
-            TestConstants.DefaultWaitForTimeout,
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
         // give dendrite time to federate leave event
         // can't rejoin the room after it's disabled without a re-invite
         await waitFor(
             () => expect(tokenGrantedUser.joinRoom(roomId)).rejects.toThrow('Unauthorised'),
-            TestConstants.DefaultWaitForTimeout,
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
     })
 
@@ -82,21 +82,15 @@ describe('disable channel', () => {
         // set space access off, disabling space in ZionSpaceManager
         await bob.setSpaceAccess(roomId.networkId, true)
 
-        try {
-            await alice.scrollback(roomId, 30)
-        } catch (e) {
-            // we want to suppress error since user should leave the disabled room
-            // by way of a rejection on the promise
-            console.log(e)
-        }
-
-        // space is disabled. Should not be able to join. See issue for more details and
-        // fix this test if it is not the desired behavior.
-        // https://linear.app/hnt-labs/issue/HNT-509/permissionsdisablechanneltest-clarify-test-logic
         await waitFor(
-            () => expect(alice.joinRoom(roomId)).rejects.toThrow(),
-            TestConstants.DefaultWaitForTimeout,
+            () =>
+                expect(alice.scrollback(roomId, 30)).rejects.toThrow(
+                    'You cannot remain in a disabled server',
+                ),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
+
+        // space is re-enabled. Should be able to join.
 
         // re-enable space
         await bob.setSpaceAccess(roomId.networkId, false)
@@ -105,7 +99,7 @@ describe('disable channel', () => {
         await bob.inviteUser(roomId, alice.matrixUserId as string)
         await waitFor(
             () => expect(alice.joinRoom(roomId)).resolves.toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
     })
 })
