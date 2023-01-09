@@ -22,7 +22,6 @@ export const EmojiPickerContainer = (props: { onEmojiSelect: (data: EmojiData) =
     return (
         <Box className={emojiPickerClassName} insetX="xs" paddingTop="lg">
             <Picker
-                className={emojiPickerClassName}
                 previewPosition="none"
                 theme="dark"
                 emojiButtonColors={[vars.color.background.level3]}

@@ -78,7 +78,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
     }, [groupIds, list])
 
     useEffect(() => {
-        console.log({ groups })
+        DEBUG && console.log({ groups })
     }, [groups])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - DEBUG

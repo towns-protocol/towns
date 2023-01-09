@@ -1,4 +1,6 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef } from 'react'
+import useDebounce from 'hooks/useDebounce'
+import { useSize } from 'ui/hooks/useSize'
 
 import { Box } from '../Box/Box'
 import { Placement } from './CardOpener'
@@ -25,10 +27,16 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
         containerRef,
         margin = defaultMargin,
     } = props
-    const [size, setSize] = useState({ width: 0, height: 0 })
-
     const ref = useRef<HTMLDivElement>(null)
     containerRef.current = ref.current
+
+    const targetSize = useSize(ref)
+    const undeferredSize = useMemo(() => {
+        return targetSize ?? { width: 0, height: 0 }
+    }, [targetSize])
+
+    // use debounced value to avoid flickering
+    const size = useDebounce(undeferredSize, 100)
 
     const isContainerEmpty = size.height === 0
 
@@ -78,26 +86,7 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
             anchorStyle,
             containerStyle,
         }
-    }, [
-        hitPosition,
-        isContainerEmpty,
-        margin.x,
-        margin.y,
-        placement,
-        size.height,
-        size.width,
-        triggerRect,
-    ])
-
-    useLayoutEffect(() => {
-        const domRect = ref.current?.getBoundingClientRect()
-        if (domRect) {
-            setSize({
-                width: domRect.width,
-                height: domRect.height,
-            })
-        }
-    }, [ref, triggerRect.top])
+    }, [hitPosition, isContainerEmpty, margin.x, margin.y, placement, size, triggerRect])
 
     return (
         <>
