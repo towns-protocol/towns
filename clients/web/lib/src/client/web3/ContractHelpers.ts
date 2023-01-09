@@ -1,99 +1,15 @@
-/* eslint-disable no-restricted-imports */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { DataTypes } from './shims/ZionSpaceManagerShim'
-import Goerli_CouncilAddresses from '@harmony/contracts/goerli/addresses/council.json'
-import Goerli_SpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
-import Localhost_CouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
-import Localhost_SpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
-
-import Goerli_ZionSpaceManagerArtifactAbi from '@harmony/contracts/goerli/abis/ZionSpaceManager.abi.json'
-import Localhost_ZionSpaceManagerArtifactAbi from '@harmony/contracts/localhost/abis/ZionSpaceManager.abi'
-
 import { Permission } from './ZionContractTypes'
 import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
 import { ZionClient } from '../ZionClient'
-
-export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
-
-export interface IZionContractsInfo {
-    spaceManager: {
-        addresses: {
-            spacemanager: string
-            usergranted: string
-            tokengranted: string
-            rolemanager: string
-        }
-        abis: {
-            spacemanager: typeof Localhost_ZionSpaceManagerArtifactAbi
-        }
-    }
-    council: {
-        addresses: { councilnft: string }
-    }
-}
-
-/// get zion contract addresses for a given network id
-export function getContractInfo(chainId: number): IZionContractsInfo {
-    switch (chainId) {
-        case 5:
-            return {
-                spaceManager: {
-                    addresses: Goerli_SpaceManagerAddresses,
-                    abis: {
-                        spacemanager:
-                            // This is a temporary cast and once goerli is deployed again we can import the abi.ts for georli
-                            Goerli_ZionSpaceManagerArtifactAbi as unknown as typeof Localhost_ZionSpaceManagerArtifactAbi,
-                    },
-                },
-
-                council: {
-                    addresses: Goerli_CouncilAddresses,
-                },
-            }
-        case 1337:
-        case 31337:
-            return {
-                spaceManager: {
-                    addresses: Localhost_SpaceManagerAddresses,
-                    abis: {
-                        spacemanager: Localhost_ZionSpaceManagerArtifactAbi,
-                    },
-                },
-
-                council: {
-                    addresses: Localhost_CouncilAddresses,
-                },
-            }
-        default:
-            if (chainId !== 0) {
-                console.error(
-                    `Unsupported chainId, please add chainId: ${chainId} info to ZionContractAddresses.ts`,
-                )
-            }
-            // return localhost, won't matter
-            return {
-                spaceManager: {
-                    addresses: {
-                        spacemanager: '',
-                        usergranted: '',
-                        tokengranted: '',
-                        rolemanager: '',
-                    },
-                    abis: {
-                        spacemanager: Localhost_ZionSpaceManagerArtifactAbi,
-                    },
-                },
-                council: {
-                    addresses: { councilnft: '' },
-                },
-            }
-    }
-}
+import { getContractsInfo } from './ContractsInfo'
 
 export function getZionTokenAddress(chainId: number): string {
-    const contractInfo = getContractInfo(chainId)
-    return contractInfo.council.addresses.councilnft
+    const contractInfo = getContractsInfo(chainId)
+    if (!contractInfo) {
+        throw new Error(`Contract info for chainId ${chainId} is not found.`)
+    }
+    return contractInfo.council.address.councilnft
 }
 
 export interface CreateTokenEntitlementDataInfo {

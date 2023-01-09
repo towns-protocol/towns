@@ -34,6 +34,7 @@ import {
     ZionAuth,
     ZionOpts,
     SpaceProtocol,
+    ContractVersion,
 } from './ZionClientTypes'
 import { createMatrixChannel } from './matrix/CreateChannel'
 import { createMatrixSpace } from './matrix/CreateSpace'
@@ -55,6 +56,9 @@ import { FullyReadMarker } from '../types/timeline-types'
 import { staticAssertNever } from '../utils/zion-utils'
 import { createCasablancaChannel } from './casablanca/CreateChannel'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
+import { ISpaceDapp } from './web3/ISpaceDapp'
+import { SpaceDappV2 } from './web3/SpaceDappV2'
+import { SpaceDappV1 } from './web3/SpaceDappV1'
 
 /***
  * Zion Client
@@ -85,6 +89,7 @@ export class ZionClient {
     public roleManager: ZionRoleManagerShim
     public matrixClient?: MatrixClient
     public casablancaClient?: CasablancaClient
+    private readonly spaceDapp: ISpaceDapp
     private _chainId: number
     private _auth?: ZionAuth
 
@@ -95,16 +100,29 @@ export class ZionClient {
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.matrixClient = ZionClient.createMatrixClient(opts.matrixServerUrl, this._auth)
 
+        if (opts.contractVersion === ContractVersion.V2) {
+            this.spaceDapp = new SpaceDappV2(this.chainId, opts.web3Provider, opts.web3Signer)
+        } else {
+            this.spaceDapp = new SpaceDappV1(
+                this.chainId,
+                this.opts.web3Provider,
+                this.opts.web3Signer,
+            )
+        }
+
+        // todo: deprecated
         this.spaceManager = new ZionSpaceManagerShim(
             this.opts.web3Provider,
             this.opts.web3Signer,
             this.chainId,
         )
+        // todo: deprecated
         this.councilNFT = new CouncilNFTShim(
             this.opts.web3Provider,
             this.opts.web3Signer,
             this.chainId,
         )
+        // todo: deprecated
         this.roleManager = new ZionRoleManagerShim(
             this.opts.web3Provider,
             this.opts.web3Signer,

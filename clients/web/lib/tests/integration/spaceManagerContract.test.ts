@@ -3,7 +3,7 @@
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
-import { getContractInfo } from '../../src/client/web3/ContractHelpers'
+import { getContractsInfo } from '../../src/client/web3/ContractsInfo'
 import {
     createBasicTestSpace,
     registerAndStartClients,
@@ -37,10 +37,9 @@ describe('spaceManagerContract', () => {
         await bob.fundWallet()
         // create a space
         const spaceName = bob.makeUniqueName()
-        const contractInfo = getContractInfo(bob.chainId)
-
+        const contractInfo = getContractsInfo(bob.chainId)
         const externalToken: DataTypes.ExternalTokenStruct = {
-            contractAddress: contractInfo.council.addresses.councilnft,
+            contractAddress: contractInfo.council.address.councilnft,
             quantity: 1,
             isSingleToken: false,
             tokenId: 0,
