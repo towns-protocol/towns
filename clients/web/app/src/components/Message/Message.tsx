@@ -1,5 +1,5 @@
 import { format, formatDistance } from 'date-fns'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Reactions } from '@components/Reactions/Reactions'
 import { MessageThreadButton } from '@components/Replies/MessageReplies'
@@ -8,6 +8,7 @@ import { useHover } from 'hooks/useHover'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
 import { useFocused } from 'hooks/useFocused'
+import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { MessageContextMenu } from './MessageContextMenu'
 
 type Props = {
@@ -81,6 +82,13 @@ export const Message = (props: Props) => {
 
     const backgroundProps = useMessageBackground(isEditing, isActive, isHighlight)
 
+    const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
+    const onDoubleClick = useCallback(() => {
+        if (canReply && eventId) {
+            onOpenMessageThread(eventId)
+        }
+    }, [canReply, onOpenMessageThread, eventId])
+
     return (
         <Stack
             horizontal
@@ -89,6 +97,7 @@ export const Message = (props: Props) => {
             {...boxProps}
             {...backgroundProps}
             tabIndex={0}
+            onDoubleClick={canReply ? onDoubleClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
