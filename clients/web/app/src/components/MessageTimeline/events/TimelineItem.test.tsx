@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 import { MessageContent, MessageType, SpaceProtocol, ZTEvent } from 'use-zion-client'
 import { describe, expect, test, vi } from 'vitest'
+import { BrowserRouter } from 'react-router-dom'
 import { TestApp } from 'test/testUtils'
 import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
 import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
@@ -48,37 +49,39 @@ function generateEvent(content: MessageContent) {
 const Wrapper = ({ events }: { events: MessageContent[] }) => {
     return (
         <TestApp>
-            <MessageTimelineContext.Provider
-                value={{
-                    userId: '',
-                    spaceId: {
-                        slug: '',
-                        networkId: '',
-                        protocol: SpaceProtocol.Matrix,
-                    },
-                    channels: [],
-                    channelId: {
-                        slug: '',
-                        networkId: '',
-                        protocol: SpaceProtocol.Matrix,
-                    },
-                    events: [],
-                    messageRepliesMap: {},
-                    messageReactionsMap: {},
-                    timelineActions: {
-                        editingMessageId: '',
-                        onSelectEditingMessage: () => null,
-                        onCancelEditingMessage: () => null,
-                    },
-                    handleReaction: () => null,
-                    sendReadReceipt: () => new Promise(() => null),
-                    type: MessageTimelineType.Channel,
-                    members: [],
-                    membersMap: {},
-                }}
-            >
-                <MessageTimelineItem itemData={generateMessage(events)} />
-            </MessageTimelineContext.Provider>
+            <BrowserRouter>
+                <MessageTimelineContext.Provider
+                    value={{
+                        userId: '',
+                        spaceId: {
+                            slug: '',
+                            networkId: '',
+                            protocol: SpaceProtocol.Matrix,
+                        },
+                        channels: [],
+                        channelId: {
+                            slug: '',
+                            networkId: '',
+                            protocol: SpaceProtocol.Matrix,
+                        },
+                        events: [],
+                        messageRepliesMap: {},
+                        messageReactionsMap: {},
+                        timelineActions: {
+                            editingMessageId: '',
+                            onSelectEditingMessage: () => null,
+                            onCancelEditingMessage: () => null,
+                        },
+                        handleReaction: () => null,
+                        sendReadReceipt: () => new Promise(() => null),
+                        type: MessageTimelineType.Channel,
+                        members: [],
+                        membersMap: {},
+                    }}
+                >
+                    <MessageTimelineItem itemData={generateMessage(events)} />
+                </MessageTimelineContext.Provider>
+            </BrowserRouter>
         </TestApp>
     )
 }
