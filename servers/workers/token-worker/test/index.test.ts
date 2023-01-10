@@ -1,27 +1,97 @@
 import { worker } from '../src/index'
+import { getNftsContractMetaMock, getNftsMock, getNftsMockPage2 } from './mocks'
 
-// dunno why this doesn't work
-// once the mock is introduced, it breaks. this is following same pattern from unfurl-worker
-test.skip('getNftsForOwner', async () => {
-    const fetchMock = getMiniflareFetchMock()
+const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
+const GET_NFTS_PATH = '/v2/fake_key/getNFTs?owner=vitalik.eth&pageKey=&filters[]=SPAM'
+const GET_NFTS_PAGE_2 = '/v2/fake_key/getNFTs?owner=vitalik.eth&pageKey=b&filters[]=SPAM'
 
-    fetchMock.disableNetConnect()
+describe('token worker', () => {
+    test('getNftsForOwner', async () => {
+        const fetchMock = getMiniflareFetchMock()
 
-    const origin = fetchMock.get('https://eth-mainnet.g.alchemy.com')
+        fetchMock.disableNetConnect()
 
-    origin
-        .intercept({
-            method: 'GET',
-            path: '/v2/fake_key/getNFTs?owner=vitalik.eth',
-        })
-        .reply(200, 'Mocked response!')
+        const origin = fetchMock.get(ALCHEMY_URL)
 
-    const result = await worker.fetch(
-        new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth'),
-        {
-            ALCHEMY_API_KEY: 'fake_key',
-        },
-    )
+        origin
+            .intercept({
+                method: 'GET',
+                path: GET_NFTS_PATH,
+            })
+            .reply(200, getNftsMock)
 
-    expect(result.status).toBe(200)
+        const result = await worker.fetch(
+            new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth'),
+            {
+                ALCHEMY_API_KEY: 'fake_key',
+            },
+        )
+
+        expect(result.status).toBe(200)
+        expect(await result.json()).toEqual(getNftsMock)
+    })
+
+    test('getNftsForOwner with "contractMetadata" query parameter', async () => {
+        const fetchMock = getMiniflareFetchMock()
+
+        fetchMock.disableNetConnect()
+
+        const origin = fetchMock.get(ALCHEMY_URL)
+
+        origin
+            .intercept({
+                method: 'GET',
+                path: GET_NFTS_PATH,
+            })
+            .reply(200, getNftsMock)
+
+        const result = await worker.fetch(
+            new Request(
+                'https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth?contractMetadata',
+            ),
+            {
+                ALCHEMY_API_KEY: 'fake_key',
+            },
+        )
+
+        expect(result.status).toBe(200)
+        expect(await result.json()).toEqual(getNftsContractMetaMock)
+    })
+
+    test('getNftsForOwner with "all" query parameter', async () => {
+        const fetchMock = getMiniflareFetchMock()
+
+        fetchMock.disableNetConnect()
+
+        const origin = fetchMock.get(ALCHEMY_URL)
+
+        origin
+            .intercept({
+                method: 'GET',
+                path: GET_NFTS_PATH,
+            })
+            .reply(200, getNftsMock)
+
+        origin
+            .intercept({
+                method: 'GET',
+                path: GET_NFTS_PAGE_2,
+            })
+            .reply(200, getNftsMockPage2)
+
+        const result = await worker.fetch(
+            new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth?all'),
+            {
+                ALCHEMY_API_KEY: 'fake_key',
+            },
+        )
+
+        expect(result.status).toBe(200)
+
+        const expected = {
+            ...getNftsMockPage2,
+            ownedNfts: [...getNftsMock.ownedNfts, ...getNftsMockPage2.ownedNfts],
+        }
+        expect(await result.json()).toEqual(expected)
+    })
 })

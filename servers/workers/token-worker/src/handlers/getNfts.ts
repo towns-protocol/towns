@@ -1,4 +1,5 @@
 import { withCorsHeaders } from '../../../common/cors'
+import { throwCustomError } from '../router'
 import { AccurateNftResponse, ContractMetadataResponse, RequestWithAlchemyConfig } from '../types'
 
 const fetchAlchemyNfts = async (
@@ -9,6 +10,12 @@ const fetchAlchemyNfts = async (
     const response = await fetch(
         `${rpcUrl}/getNFTs?owner=${wallet}&pageKey=${pageKey}&filters[]=SPAM`,
     )
+    if (!response.ok) {
+        throwCustomError(
+            (await response.text?.()) || 'could not fetch from alchemy',
+            response.status,
+        )
+    }
     return response.json()
 }
 
