@@ -9,6 +9,9 @@ type Props = {
     label: string | React.ReactNode
     value?: string
     width?: BoxProps['width']
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+    readOnly?: boolean
+    disabled?: boolean
 } & Partial<UseFormReturn>
 
 export const Checkbox = (props: Props) => {
@@ -32,6 +35,9 @@ export const Checkbox = (props: Props) => {
                         className={style.hiddenCheckbox}
                         type="checkbox"
                         value={_value}
+                        readOnly={props.readOnly}
+                        disabled={props.disabled}
+                        onChange={props.onChange}
                         {...register?.(name)}
                     />
                     <CheckIcon className={style.svg} />

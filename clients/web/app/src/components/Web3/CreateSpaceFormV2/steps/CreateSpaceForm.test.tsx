@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { describe, expect, test, vi } from 'vitest'
@@ -6,9 +6,9 @@ import { act } from 'react-dom/test-utils'
 import { MemoryRouter } from 'react-router-dom'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
-import { ContractReceipt, ContractTransaction } from 'ethers'
 import { TestApp } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
+import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { EVERYONE, TOKEN_HOLDERS } from '../constants'
 
@@ -50,110 +50,14 @@ const Wrapper = () => {
     )
 }
 
-const loadingContext = {
-    status: zionClient.TransactionStatus.Pending,
-    transaction: undefined,
-    receipt: undefined,
-    data: undefined,
-}
+const {
+    createTransactionSpy: createSpaceTransactionWithMemberRoleSpy,
+    useMockedCreateTransaction,
+} = mockCreateTransactionWithSpy('createSpaceTransactionWithMemberRole')
 
-const pendingContext = {
-    status: zionClient.TransactionStatus.Pending,
-    transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
-    receipt: undefined,
-    data: {
-        slug: 'some-room-id',
-        networkId: 'some-room-id',
-        protocol: zionClient.SpaceProtocol.Matrix,
-    },
-}
-const successContext = {
-    status: zionClient.TransactionStatus.Success,
-    transaction: { hash: '0xhash', status: 1 } as unknown as ContractTransaction,
-    receipt: {} as ContractReceipt,
-    data: {
-        slug: 'some-room-id',
-        networkId: 'some-room-id',
-        protocol: zionClient.SpaceProtocol.Matrix,
-    },
-}
-
-const failedWithoutTransactionContext = {
-    status: zionClient.TransactionStatus.Failed,
-    transaction: undefined,
-    receipt: undefined,
-    data: undefined,
-    error: { name: 'whatever', message: 'some error' },
-}
-
-const failedWithTransactionContext = {
-    status: zionClient.TransactionStatus.Failed,
-    transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
-    receipt: undefined,
-    data: {
-        slug: 'some-room-id',
-        networkId: 'some-room-id',
-        protocol: zionClient.SpaceProtocol.Matrix,
-    },
-    error: { name: 'whatever', message: 'some error' },
-}
-
-const createSpaceTransactionWithMemberRoleSpy = vi.fn()
-
-// useCreateSpaceTransaction contains a couple calls to createSpaceTransaction and waitForCreateSpaceTransaction
-// and mocking those functions in useZionClient does not override their reference in the hook. Maybe I'm doing something wrong.
-// Workarounds:
-// 1. Could mock a logged in state - useWithCatch wrapped around createSpaceTransaction is failing b/c not logged in, and ultimately causes test failures
-// 2. Could mock the whole hook, which is what the below does. Kind of a hack but works for now
 const useMockedCreateSpaceTransaction = (
-    outcome: 'success' | 'failWithTransaction' | 'failWithoutTransaction' = 'success',
-) => {
-    const [transactionContext, setTransactionContext] = useState<
-        zionClient.TransactionContext<zionClient.RoomIdentifier> | undefined
-    >(undefined)
-
-    const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
-        return {
-            data: transactionContext?.data,
-            isLoading: transactionContext?.status === zionClient.TransactionStatus.Pending,
-            transactionHash: transactionContext?.transaction?.hash,
-            transactionStatus: transactionContext?.status ?? zionClient.TransactionStatus.None,
-            error: transactionContext?.error,
-        }
-    }, [transactionContext])
-
-    const createSpaceTransactionWithMemberRole =
-        createSpaceTransactionWithMemberRoleSpy.mockImplementation(
-            useCallback(async () => {
-                await waitFor(() => {
-                    setTransactionContext(loadingContext)
-                })
-
-                await waitFor(() => {
-                    setTransactionContext(pendingContext)
-                })
-
-                await waitFor(() => {
-                    if (outcome === 'success') {
-                        setTransactionContext(successContext)
-                    } else if (outcome === 'failWithoutTransaction') {
-                        setTransactionContext(failedWithoutTransactionContext)
-                    } else {
-                        setTransactionContext(failedWithTransactionContext)
-                    }
-                })
-            }, [outcome]),
-        )
-
-    return {
-        isLoading,
-        data,
-        error,
-        transactionHash,
-        transactionStatus,
-        createSpaceTransactionWithMemberRole,
-    }
-}
+    ...args: typeof zionClient.useCreateSpaceTransaction['arguments']
+) => useMockedCreateTransaction(...args) as UseMockCreateSpaceReturn
 
 describe('CreateSpaceStep1', () => {
     test('renders the form', async () => {

@@ -1,24 +1,29 @@
 import { useMemo } from 'react'
 import { TransactionStatus } from 'use-zion-client'
 
-export const TransactionUIStates = {
-    ...TransactionStatus,
-    Requesting: 'Requesting',
+export type TransactionUIStatesType = {
+    isTransacting: boolean
+    isRequesting: boolean
+    isSuccess: boolean
+    isFailed: boolean
+    isAbleToInteract: boolean
 }
-
-export type TransactionUIStatesType = keyof typeof TransactionUIStates
 
 export const useTransactionUIStates = (
     transactionStatus: TransactionStatus,
     hasData: boolean,
 ): TransactionUIStatesType => {
-    const state = useMemo(() => {
-        if (transactionStatus === TransactionStatus.Pending && !hasData) {
-            return TransactionUIStates.Requesting as TransactionStatus
+    const { isAbleToInteract, isRequesting, isSuccess, isFailed, isTransacting } = useMemo(() => {
+        const isTransacting = transactionStatus !== TransactionStatus.None
+        const failed = transactionStatus === TransactionStatus.Failed
+        return {
+            isTransacting: transactionStatus !== TransactionStatus.None,
+            isRequesting: transactionStatus === TransactionStatus.Pending && !hasData,
+            isSuccess: transactionStatus === TransactionStatus.Success,
+            isFailed: failed,
+            isAbleToInteract: !isTransacting || failed,
         }
-
-        return transactionStatus
     }, [transactionStatus, hasData])
 
-    return state
+    return { isAbleToInteract, isRequesting, isSuccess, isFailed, isTransacting }
 }

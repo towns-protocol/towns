@@ -10,10 +10,11 @@ export const ActionNavItem = (props: {
     link?: string
     icon?: IconName
     highlight?: boolean
+    onClick?: (e: React.MouseEvent) => void
 }) => {
-    const { icon, id, link, highlight: isHighlight, label, badge } = props
+    const { icon, id, link, highlight: isHighlight, label, badge, onClick } = props
     return (
-        <NavItem to={link} id={id} exact={false}>
+        <NavItem to={link} id={id} exact={false} cursor="pointer" onClick={onClick}>
             {icon && (
                 <Icon
                     type={icon}

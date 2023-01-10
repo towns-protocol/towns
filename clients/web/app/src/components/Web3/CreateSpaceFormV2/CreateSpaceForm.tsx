@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     CreateSpaceInfo,
@@ -6,20 +6,16 @@ import {
     Permission,
     RoomIdentifier,
     RoomVisibility,
-    TransactionStatus,
     useCreateSpaceTransaction,
 } from 'use-zion-client'
 import { Box, Button, Heading, Text } from '@ui'
 import { useQueryParams } from 'hooks/useQueryParam'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { FadeIn } from '@components/Transitions'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import {
-    TransactionUIStates,
-    TransactionUIStatesType,
-    useTransactionUIStates,
-} from 'hooks/useTransactionStatus'
-import { StoredTransactionType, useTransactionStore } from 'store/transactionsStore'
+import { TransactionUIStatesType, useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { StoredTransactionType } from 'store/transactionsStore'
+import { TransactionButton } from '@components/TransactionButton'
+import { useSaveTransactionOnCreation } from 'hooks/useSaveTransactionOnSuccess'
+import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
@@ -45,11 +41,7 @@ type HeaderProps = {
 
 const Header = (props: HeaderProps) => {
     const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError } = props
-    const isTransacting = transactionUIState !== TransactionUIStates.None
-    const requesting = transactionUIState === TransactionUIStates.Requesting
-    const success = transactionUIState === TransactionUIStates.Success
-    const failed = transactionUIState === TransactionUIStates.Failed
-    const interactiveState = !isTransacting || failed
+    const { isAbleToInteract } = transactionUIState
 
     return (
         <>
@@ -58,8 +50,8 @@ const Header = (props: HeaderProps) => {
                 <Box flexDirection="row" paddingLeft="sm" position="relative">
                     {hasPrev && (
                         <Box
-                            position={!interactiveState ? 'absolute' : 'relative'}
-                            left={!interactiveState ? 'md' : 'none'}
+                            position={!isAbleToInteract ? 'absolute' : 'relative'}
+                            left={!isAbleToInteract ? 'md' : 'none'}
                         >
                             <Button onClick={goPrev}>
                                 <Text>Prev</Text>
@@ -67,37 +59,11 @@ const Header = (props: HeaderProps) => {
                         </Box>
                     )}
 
-                    <MotionBox layout paddingLeft="sm" width={!interactiveState ? '250' : 'auto'}>
-                        <Button
-                            data-testid="create-space-next-button"
-                            tone={!interactiveState || success ? 'level2' : 'cta1'}
-                            disabled={!interactiveState}
-                            style={{ opacity: 1, zIndex: 1 }}
-                            type="submit"
-                            form={formId}
-                        >
-                            {/* broken up b/c of weird behavior with framer layout warping text */}
-                            {!interactiveState && (
-                                <FadeIn delay>
-                                    <Box flexDirection="row" gap="sm">
-                                        <ButtonSpinner />
-                                        {requesting && (
-                                            <MotionText layout>Waiting For Approval</MotionText>
-                                        )}
-                                        {!requesting && (
-                                            <MotionText layout>Creating Space</MotionText>
-                                        )}
-                                    </Box>
-                                </FadeIn>
-                            )}
-
-                            {interactiveState && (
-                                <FadeIn delay>
-                                    {isLast && <MotionText layout>Mint</MotionText>}
-                                    {!isLast && <MotionText layout>Next</MotionText>}
-                                </FadeIn>
-                            )}
-                        </Button>
+                    <MotionBox layout paddingLeft="sm" width={!isAbleToInteract ? '250' : 'auto'}>
+                        <TransactionButton formId={formId} transactionUIState={transactionUIState}>
+                            {isLast && <MotionText layout>Mint</MotionText>}
+                            {!isLast && <MotionText layout>Next</MotionText>}
+                        </TransactionButton>
                     </MotionBox>
                 </Box>
             </Box>
@@ -121,15 +87,12 @@ export const CreateSpaceForm = (props: Props) => {
         transactionStatus,
         createSpaceTransactionWithMemberRole,
     } = useCreateSpaceTransaction()
-    const storeTransaction = useTransactionStore((state) => state.storeTransaction)
 
     const [wentBackAfterAttemptingCreation, setWentBackAfterAttemptingCreation] = useState(false)
 
     const hasError = useMemo(() => {
-        return (
-            error != undefined &&
-            error?.name !== 'ACTION_REJECTED' &&
-            !wentBackAfterAttemptingCreation
+        return Boolean(
+            error && error.name !== 'ACTION_REJECTED' && !wentBackAfterAttemptingCreation,
         )
     }, [error, wentBackAfterAttemptingCreation])
 
@@ -196,19 +159,21 @@ export const CreateSpaceForm = (props: Props) => {
         goNext()
     }, [createSpace, goNext, isLast])
 
-    useEffect(() => {
-        if (transactionHash && transactionStatus === TransactionStatus.Pending) {
-            storeTransaction({
-                hash: transactionHash,
-                data: roomId?.slug,
-                type: StoredTransactionType.CreateSpace,
-            })
-        }
+    useSaveTransactionOnCreation({
+        hash: transactionHash,
+        data: roomId?.slug,
+        type: StoredTransactionType.CreateChannel,
+        status: transactionStatus,
+    })
 
-        if (roomId && transactionStatus === TransactionStatus.Success) {
-            onCreateSpace(roomId, Membership.Join)
-        }
-    }, [onCreateSpace, roomId, transactionStatus, transactionHash, storeTransaction])
+    const onSuccessfulTransaction = useCallback(() => {
+        roomId && onCreateSpace(roomId, Membership.Join)
+    }, [roomId, onCreateSpace])
+
+    useOnSuccessfulTransaction({
+        status: transactionStatus,
+        callback: onSuccessfulTransaction,
+    })
 
     return (
         <Box>

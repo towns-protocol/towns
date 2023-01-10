@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
     Membership,
@@ -9,6 +9,7 @@ import {
     useSpaceMentions,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
+import useEvent from 'react-use-event-hook'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
@@ -18,6 +19,8 @@ import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { PATHS } from 'routes'
 import { useIsSpaceOwner } from 'hooks/useIsSpaceOwner'
+import { CreateChannelFormContainer } from '@components/Web3/CreateChannelFormV2'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 import { SideBar } from './_SideBar'
 
 type Props = {
@@ -37,6 +40,16 @@ export const SpaceSideBar = (props: Props) => {
         },
         [navigate],
     )
+
+    const [modal, setModal] = useState(false)
+
+    const onHide = useEvent(() => {
+        setModal(false)
+    })
+
+    const onShow = useEvent(() => {
+        setModal(true)
+    })
 
     const mentions = useSpaceMentions()
     const unreadThreadMentions = mentions.reduce((count, m) => {
@@ -80,11 +93,16 @@ export const SpaceSideBar = (props: Props) => {
                 )}
                 <>
                     <ChannelList space={space} mentions={mentions} />
+                    {modal && (
+                        <ModalContainer onHide={onHide}>
+                            <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
+                        </ModalContainer>
+                    )}
                     <ActionNavItem
                         icon="plus"
                         id="newChannel"
                         label="Create channel"
-                        link={`/spaces/${space.id.slug}/channels/new`}
+                        onClick={onShow}
                     />
                 </>
             </Stack>
