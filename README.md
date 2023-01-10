@@ -53,6 +53,10 @@ cp clients/web/app/.env.local-sample clients/web/app/.env.local
 
 Then update `clients/web/app/.env.local` with the giphy api key <https://www.notion.so/herenottherelabs/Credentials-4f284469da01425a9f7f936b9e3ed8aa>
 
+4. Update your metamask localhost network id. Our app uses `31337` as the localhost id, but metamask defaults to 1337. See screenshot:
+
+![Screen Shot 2023-01-09 at 11 52 26 AM](https://user-images.githubusercontent.com/950745/211434823-f38ed503-a282-479c-99c2-fb3bc350ab59.png)
+
 ## Running everything locally
 
 Open VScode in the root of this directory: `code .`
