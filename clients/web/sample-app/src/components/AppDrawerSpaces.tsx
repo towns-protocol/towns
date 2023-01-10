@@ -106,10 +106,9 @@ const SpaceListItem = (props: {
                                 onClickMentions(space.id)
                             }}
                         >
-                            @ Mentions
+                            Mentions
                         </ListItem>
                         <Divider key={space.id.slug + '_threadsDivider'} />
-                        CHANNELS
                         {spaceHierarchy.children.map((c) => (
                             <ChannelListItem
                                 key={c.id.slug}
