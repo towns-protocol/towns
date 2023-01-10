@@ -19,6 +19,7 @@ import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { TestConstants } from './TestConstants'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
+import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -196,4 +197,10 @@ export async function createTestChannelWithSpaceRoles(
     }
 
     return await client.createChannel(createChannelInfo)
+}
+
+export function getTestPrimaryProtocol(): SpaceProtocol {
+    return process.env.PRIMARY_PROTOCOL && process.env.PRIMARY_PROTOCOL == 'casablanca'
+        ? SpaceProtocol.Casablanca
+        : SpaceProtocol.Matrix
 }
