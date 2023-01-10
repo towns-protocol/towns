@@ -82,59 +82,6 @@ contract DeployZionSpaceManager is ScriptUtils {
   }
 
   function _writeJson() internal {
-    // vm.serializeString(
-    //   json,
-    //   "spacemanager",
-    //   vm.toString(address(spaceManager))
-    // );
-
-    // vm.serializeString(
-    //   json,
-    //   "usergranted",
-    //   vm.toString(address(userGrantedEntitlementModule))
-    // );
-
-    // vm.serializeString(
-    //   json,
-    //   "tokengranted",
-    //   vm.toString(address(tokenEntitlementModule))
-    // );
-    // json = vm.serializeString(
-    //   json,
-    //   "rolemanager",
-    //   vm.toString(address(roleManager))
-    // );
-
-    string memory json = "{";
-
-    json = string.concat(
-      json,
-      '"spacemanager": "',
-      vm.toString(address(spaceManager)),
-      '",'
-    );
-
-    json = string.concat(
-      json,
-      '"usergranted": "',
-      vm.toString(address(userGrantedEntitlementModule)),
-      '",'
-    );
-
-    json = string.concat(
-      json,
-      '"tokengranted": "',
-      vm.toString(address(tokenEntitlementModule)),
-      '",'
-    );
-
-    json = string.concat(
-      json,
-      '"rolemanager": "',
-      vm.toString(address(roleManager)),
-      '"}'
-    );
-
     string memory path = string.concat(
       "packages/contracts/",
       _getChainName(),
@@ -147,7 +94,30 @@ contract DeployZionSpaceManager is ScriptUtils {
       "/space-manager.json"
     );
 
-    vm.writeJson(json, path);
-    vm.writeJson(json, goPath);
+    vm.writeJson(vm.toString(address(spaceManager)), path, ".spacemanager");
+    vm.writeJson(
+      vm.toString(address(userGrantedEntitlementModule)),
+      path,
+      ".usergranted"
+    );
+    vm.writeJson(
+      vm.toString(address(tokenEntitlementModule)),
+      path,
+      ".tokengranted"
+    );
+    vm.writeJson(vm.toString(address(roleManager)), path, ".rolemanager");
+
+    vm.writeJson(vm.toString(address(spaceManager)), goPath, ".spacemanager");
+    vm.writeJson(
+      vm.toString(address(userGrantedEntitlementModule)),
+      goPath,
+      ".usergranted"
+    );
+    vm.writeJson(
+      vm.toString(address(tokenEntitlementModule)),
+      goPath,
+      ".tokengranted"
+    );
+    vm.writeJson(vm.toString(address(roleManager)), goPath, ".rolemanager");
   }
 }

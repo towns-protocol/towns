@@ -4,7 +4,7 @@ src = "contracts"
 test = "contracts/test"
 libs = ["node_modules", "lib"]
 verbosity = 3
-fs_permissions = [{ access = "write", path = "./packages"}, { access = "write", path = "./servers/dendrite"}]
+fs_permissions = [{ access = "read-write", path = "./packages"}, { access = "read-write", path = "./servers/dendrite"}]
 gas_reports = ["*"]
 optimizer = true
 optimizer_runs = 200
