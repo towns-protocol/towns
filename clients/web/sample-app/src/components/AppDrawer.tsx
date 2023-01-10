@@ -60,6 +60,11 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/spaces/' + spaceId.slug + '/threads/')
     }
 
+    const onClickMentions = (spaceId: RoomIdentifier) => {
+        console.log('onClickMentions', spaceId)
+        navigate('/spaces/' + spaceId.slug + '/mentions/')
+    }
+
     const onClickChannel = (spaceId: RoomIdentifier, channelId: RoomIdentifier) => {
         console.log('onClickChannel', spaceId, channelId)
         navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/')
@@ -92,6 +97,7 @@ export function AppDrawer(props: Props): JSX.Element {
             <AppDrawerSpaces
                 onClickSpace={onClickSpace}
                 onClickThreads={onClickThreads}
+                onClickMentions={onClickMentions}
                 onClickChannel={onClickChannel}
             />
             <Divider />

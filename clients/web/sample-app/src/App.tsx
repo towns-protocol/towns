@@ -5,6 +5,7 @@ import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
+import { Mentions } from 'routes/Mentions'
 import { useSampleAppStore } from 'store/store'
 import { Home } from './routes/Home'
 import { Main } from './components/Main'
@@ -57,6 +58,7 @@ export const App = () => {
                                         path="threads/:channelSlug/:threadParentId"
                                         element={<Thread />}
                                     />
+                                    <Route path="mentions" element={<Mentions />} />
                                 </Route>
                                 <Route path="web3" element={<Web3 />} />
                                 <Route path="*" element={<NotFound />} />

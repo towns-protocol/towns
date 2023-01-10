@@ -16,12 +16,13 @@ import { useParams } from 'react-router-dom'
 interface Props {
     onClickSpace: (id: RoomIdentifier) => void
     onClickThreads: (spaceId: RoomIdentifier) => void
+    onClickMentions: (spaceId: RoomIdentifier) => void
     onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
 }
 
 export function AppDrawerSpaces(props: Props): JSX.Element {
     const { spaceSlug, channelSlug } = useParams()
-    const { onClickSpace, onClickChannel, onClickThreads } = props
+    const { onClickSpace, onClickChannel, onClickThreads, onClickMentions } = props
     const { spaces } = useZionContext()
 
     const selectedSpaceId = useMemo(() => toRoomIdentifier(spaceSlug), [spaceSlug])
@@ -37,6 +38,7 @@ export function AppDrawerSpaces(props: Props): JSX.Element {
                         selectedChannelId={selectedChannelId}
                         onClickSpace={onClickSpace}
                         onClickThreads={onClickThreads}
+                        onClickMentions={onClickMentions}
                         onClickChannel={onClickChannel}
                     />
                 ))}
@@ -51,6 +53,7 @@ const SpaceListItem = (props: {
     selectedChannelId?: RoomIdentifier
     onClickSpace: (id: RoomIdentifier) => void
     onClickThreads: (id: RoomIdentifier) => void
+    onClickMentions: (id: RoomIdentifier) => void
     onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
 }) => {
     const {
@@ -59,6 +62,7 @@ const SpaceListItem = (props: {
         selectedChannelId,
         onClickSpace,
         onClickThreads,
+        onClickMentions,
         onClickChannel,
     } = props
     const isSelectedSpace = (id: RoomIdentifier) => {
@@ -93,7 +97,19 @@ const SpaceListItem = (props: {
                         >
                             Threads {spaceThreadCount > 0 && `(${spaceThreadCount})`}
                         </ListItem>
+                        <ListItem
+                            button
+                            selected={false}
+                            key={space.id.slug + '_mentions'}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onClickMentions(space.id)
+                            }}
+                        >
+                            @ Mentions
+                        </ListItem>
                         <Divider key={space.id.slug + '_threadsDivider'} />
+                        CHANNELS
                         {spaceHierarchy.children.map((c) => (
                             <ChannelListItem
                                 key={c.id.slug}
