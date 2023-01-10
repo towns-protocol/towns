@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-imports */
 
 import { BigNumber, ContractTransaction } from 'ethers'
-import { Permission } from './ZionContractTypes'
+import { Permission } from './ContractTypes'
 import { DataTypes as SpaceDataTypes } from '@harmony/contracts/localhost/typings/Space'
 import { DataTypes as SpaceFactoryDataTypes } from '@harmony/contracts/localhost/typings/SpaceFactory'
 import { SpaceInfo } from './SpaceInfo'

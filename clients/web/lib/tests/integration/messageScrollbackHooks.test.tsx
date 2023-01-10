@@ -13,7 +13,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { LoginWithAuth } from './helpers/TestComponents'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'

@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'

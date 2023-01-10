@@ -11,7 +11,7 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginStatus } from '../../src/hooks/login'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'

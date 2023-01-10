@@ -3,7 +3,7 @@ import { waitFor } from '@testing-library/dom'
 import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
 import { publicKeyToBuffer, SignerContext } from '@zion/core'
 import { ethers } from 'ethers'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/matrix-types'
 import {

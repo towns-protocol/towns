@@ -14,7 +14,7 @@ import {
 
 import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
 import { EventTimeline } from 'matrix-js-sdk'
-import { Permission } from '../../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { TestConstants } from './TestConstants'
 import { ZionClient } from '../../../src/client/ZionClient'

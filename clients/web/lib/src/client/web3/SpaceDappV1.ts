@@ -13,7 +13,7 @@ import {
     ZionSpaceManagerShim,
 } from './shims/ZionSpaceManagerShim'
 import { createExternalTokenEntitlements, createPermissions } from './ContractHelpers'
-import { Permission } from './ZionContractTypes'
+import { Permission } from './ContractTypes'
 
 // todo: this exists mainly to unblock the migration to v2.
 // todo: remove when migration to v2 is completed

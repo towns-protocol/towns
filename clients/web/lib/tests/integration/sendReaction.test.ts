@@ -6,7 +6,7 @@ import {
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { ZTEvent } from '../../src/types/timeline-types'

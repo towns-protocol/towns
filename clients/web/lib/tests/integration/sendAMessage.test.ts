@@ -10,7 +10,7 @@
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { MatrixEvent } from 'matrix-js-sdk'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/matrix-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'

@@ -1,7 +1,7 @@
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/matrix-types'
 import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
 import { getContractsInfo } from '../../src/client/web3/ContractsInfo'
 import {

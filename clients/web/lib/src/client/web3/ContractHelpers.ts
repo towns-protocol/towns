@@ -1,5 +1,5 @@
 import { DataTypes } from './shims/ZionSpaceManagerShim'
-import { Permission } from './ZionContractTypes'
+import { Permission } from './ContractTypes'
 import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
 import { ZionClient } from '../ZionClient'
 import { getContractsInfo } from './ContractsInfo'

@@ -7,7 +7,7 @@ import {
 } from './helpers/TestUtils'
 
 import { MatrixEvent } from 'matrix-js-sdk'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'

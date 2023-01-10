@@ -10,7 +10,7 @@ import {
     registerLoginAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
+import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('channel with roles and permissions', () => {

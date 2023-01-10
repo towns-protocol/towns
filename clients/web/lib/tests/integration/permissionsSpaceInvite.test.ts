@@ -7,7 +7,7 @@ import {
     registerLoginAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
+import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { Room } from 'use-zion-client/src/types/matrix-types'
 import { TestConstants } from './helpers/TestConstants'
 

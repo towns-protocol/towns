@@ -8,7 +8,7 @@ import {
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/matrix-types'
 import { SyncState } from 'matrix-js-sdk/lib/sync'

@@ -13,7 +13,7 @@ import {
 } from './helpers/TestUtils'
 
 import { LoginStatus } from '../../src/hooks/login'
-import { Permission } from '../../src/client/web3/ZionContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { sleep } from '../../src/utils/zion-utils'

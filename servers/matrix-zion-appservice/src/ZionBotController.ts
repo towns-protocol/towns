@@ -8,7 +8,7 @@ import { CreateRoomFunction, CreateUserFunction } from "./appservice-types";
 
 import { BlockchainProviders } from "./BlockchainProviders";
 import { AppserviceConfig, CliOptions } from "./AppserviceConfig";
-import { EntitlementType } from "./contracts/ZionContractTypes";
+import { EntitlementType } from "./contracts/ContractTypes";
 import { M_UNAUTHORIZED_ACCESS } from "./global-const";
 import { WeakEvent } from "matrix-appservice-bridge";
 import { createUserIdFromString } from "./UserIdentifier";

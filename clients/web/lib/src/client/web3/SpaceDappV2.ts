@@ -5,7 +5,7 @@ import { IContractsInfo, getContractsInfo } from './ContractsInfo'
 
 //import GoerliSpaceFactoryAddress from '@harmony/contracts/goerli/addresses/space-factory.json'
 import { ISpaceDapp } from './ISpaceDapp'
-import { Permission } from './ZionContractTypes'
+import { Permission } from './ContractTypes'
 import { DataTypes as SpaceDataTypes } from '@harmony/contracts/localhost/typings/Space'
 import { DataTypes as SpaceFactoryDataTypes } from '@harmony/contracts/localhost/typings/SpaceFactory'
 import { SpaceFactoryShim } from './shims/SpaceFactoryShim'

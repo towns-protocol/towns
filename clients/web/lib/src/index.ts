@@ -111,7 +111,7 @@ export {
     isUserIdentifier,
 } from './types/user-identifier'
 
-export { Permission } from './client/web3/ZionContractTypes'
+export { Permission } from './client/web3/ContractTypes'
 export {
     getZionTokenAddress,
     getAllRolesFromSpace,

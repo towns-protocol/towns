@@ -1,7 +1,6 @@
 /**
  * Todo: Should generate and publish from our solidity contract definition.
  */
-
 export enum Permission {
     Read = 'Read',
     Write = 'Write',

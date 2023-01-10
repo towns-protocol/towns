@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 
 import { CreateSpaceInfo } from '../types/matrix-types'
 import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
-import { Permission } from '../client/web3/ZionContractTypes'
+import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { useZionClient } from './use-zion-client'
 

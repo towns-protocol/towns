@@ -8,7 +8,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
-import { Permission } from 'use-zion-client/src/client/web3/ZionContractTypes'
+import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 import { createPermissions } from '../../src/client/web3/ContractHelpers'
