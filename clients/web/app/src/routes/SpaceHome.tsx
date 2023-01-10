@@ -19,7 +19,7 @@ export const SpaceHome = () => {
     const spaceId = space?.id
     const navigate = useNavigate()
     const membership = useMyMembership(space?.id)
-    const isOwner = useIsSpaceOwner()
+    const { data: isOwner, isLoading } = useIsSpaceOwner()
 
     useEffect(() => {
         const channels = space?.channelGroups.flatMap((g) => g.channels)
@@ -29,7 +29,7 @@ export const SpaceHome = () => {
             const firstChannelId = channels?.at(0)?.id
 
             if (!firstChannelId) {
-                if (isOwner === null) {
+                if (isLoading) {
                     return
                 }
 
@@ -50,7 +50,7 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [isOwner, navigate, space?.channelGroups, membership, spaceId?.slug])
+    }, [isOwner, isLoading, navigate, space?.channelGroups, membership, spaceId?.slug])
 
     if (!spaceId || !space) {
         return null

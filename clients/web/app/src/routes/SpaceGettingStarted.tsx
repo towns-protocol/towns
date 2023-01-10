@@ -9,18 +9,18 @@ import { useIsSpaceOwner } from 'hooks/useIsSpaceOwner'
 
 export const SpaceGettingStarted = () => {
     const space = useSpaceData()
-    const owner = useIsSpaceOwner()
+    const { data: owner, isLoading } = useIsSpaceOwner()
     const navigate = useNavigate()
 
     //  temporary auth hack
     useEffect(() => {
-        if (owner === null) {
+        if (isLoading) {
             return
         }
         if (!owner) {
             navigate(`/${PATHS.SPACES}/${space?.id?.slug}/${PATHS.THREADS}`)
         }
-    }, [owner, navigate, space?.id?.slug])
+    }, [owner, isLoading, navigate, space?.id?.slug])
 
     return (
         <Stack>

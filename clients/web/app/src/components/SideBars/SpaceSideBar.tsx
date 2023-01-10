@@ -32,7 +32,7 @@ export const SpaceSideBar = (props: Props) => {
     const navigate = useNavigate()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
-    const isOwner = useIsSpaceOwner()
+    const { data: isOwner } = useIsSpaceOwner()
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
