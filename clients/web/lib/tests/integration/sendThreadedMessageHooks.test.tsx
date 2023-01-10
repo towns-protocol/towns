@@ -82,147 +82,145 @@ describe('sendThreadedMessageHooks', () => {
         })) as RoomIdentifier
 
         // render bob's app
-        act(() => {
-            const TestChannelComponent = () => {
-                const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
-                const threadRoots = useSpaceThreadRoots()
-                const channelTimeline = useChannelTimeline()
-                const channelThreadStats = useChannelThreadStats()
-                const spaceNotifications = useSpaceNotificationCounts(spaceId)
-                const channel_1_fullyRead = useFullyReadMarker(channel_1)
-                const channel_2_fullyRead = useFullyReadMarker(channel_2)
+        const TestChannelComponent = () => {
+            const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
+            const threadRoots = useSpaceThreadRoots()
+            const channelTimeline = useChannelTimeline()
+            const channelThreadStats = useChannelThreadStats()
+            const spaceNotifications = useSpaceNotificationCounts(spaceId)
+            const channel_1_fullyRead = useFullyReadMarker(channel_1)
+            const channel_2_fullyRead = useFullyReadMarker(channel_2)
 
-                const channel_2_threadRoot = Object.values(threadRoots).at(0)
-                const channel_2_thread = useTimelineThread(
-                    channel_2,
-                    channel_2_threadRoot?.thread.parentId,
-                )
-                const channel_2_thread_fullyRead = useFullyReadMarker(
-                    channel_2,
-                    channel_2_threadRoot?.thread.parentId,
-                )
+            const channel_2_threadRoot = Object.values(threadRoots).at(0)
+            const channel_2_thread = useTimelineThread(
+                channel_2,
+                channel_2_threadRoot?.thread.parentId,
+            )
+            const channel_2_thread_fullyRead = useFullyReadMarker(
+                channel_2,
+                channel_2_threadRoot?.thread.parentId,
+            )
 
-                const sendInitialMessages = useCallback(() => {
-                    void sendMessage(channel_1, 'hello jane in channel_1')
-                    void sendMessage(channel_2, 'hello jane in channel_2')
-                }, [sendMessage])
+            const sendInitialMessages = useCallback(() => {
+                void sendMessage(channel_1, 'hello jane in channel_1')
+                void sendMessage(channel_2, 'hello jane in channel_2')
+            }, [sendMessage])
 
-                const editChannel2Message1 = useCallback(() => {
-                    if (!channel_2_threadRoot) {
-                        throw new Error('no channel_2_threadRoot')
-                    }
-                    const channelId = channel_2_threadRoot.channel.id
-                    const messageId = channel_2_threadRoot.thread.parentId
-                    void editMessage(
-                        channelId,
-                        'hello jane old friend in channel_2',
-                        {
-                            originalEventId: messageId,
-                        },
-                        undefined,
-                    )
-                }, [editMessage, channel_2_threadRoot])
-
-                const markAllAsRead = useCallback(() => {
-                    void sendReadReceipt(channel_1_fullyRead!)
-                    void sendReadReceipt(channel_2_fullyRead!)
-                    void sendReadReceipt(channel_2_thread_fullyRead!)
-                }, [
-                    channel_1_fullyRead,
-                    channel_2_fullyRead,
-                    channel_2_thread_fullyRead,
-                    sendReadReceipt,
-                ])
-
-                const formatThreadParent = (t: ThreadStats) => {
-                    return `replyCount: (${t.replyCount}) parentId: (${t.parentId}) message: (${
-                        t.parentMessageContent?.body ?? ''
-                    })`
+            const editChannel2Message1 = useCallback(() => {
+                if (!channel_2_threadRoot) {
+                    throw new Error('no channel_2_threadRoot')
                 }
-
-                const formatThreadRoot = (t: ThreadResult) => {
-                    const mentions = t.fullyReadMarker?.mentions ?? 0
-                    return (
-                        `channel: (${
-                            t.channel.label
-                        }) isUnread: (${t.isUnread.toString()}) mentions: (${mentions}) ` +
-                        formatThreadParent(t.thread)
-                    )
-                }
-
-                const formatMessage = useCallback(
-                    (e: TimelineEvent) => {
-                        const replyCount = channelThreadStats[e.eventId]?.replyCount
-                        const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
-                        return `${e.fallbackContent} ${replyCountStr}`
+                const channelId = channel_2_threadRoot.channel.id
+                const messageId = channel_2_threadRoot.thread.parentId
+                void editMessage(
+                    channelId,
+                    'hello jane old friend in channel_2',
+                    {
+                        originalEventId: messageId,
                     },
-                    [channelThreadStats],
+                    undefined,
                 )
-                const formatThreadStats = (k: string, v: ThreadStats) => {
-                    return `${k} (replyCount:${v.replyCount} userIds:${[...v.userIds].join(',')})`
-                }
+            }, [editMessage, channel_2_threadRoot])
 
-                const formatFullyReadMarker = (m?: FullyReadMarker) => {
-                    return m === undefined
-                        ? 'undefined'
-                        : `isUnread:${m.isUnread.toString()} eventId:${
-                              m.eventId
-                          } mentions:${m.mentions.toString()}`
-                }
+            const markAllAsRead = useCallback(() => {
+                void sendReadReceipt(channel_1_fullyRead!)
+                void sendReadReceipt(channel_2_fullyRead!)
+                void sendReadReceipt(channel_2_thread_fullyRead!)
+            }, [
+                channel_1_fullyRead,
+                channel_2_fullyRead,
+                channel_2_thread_fullyRead,
+                sendReadReceipt,
+            ])
 
+            const formatThreadParent = (t: ThreadStats) => {
+                return `replyCount: (${t.replyCount}) parentId: (${t.parentId}) message: (${
+                    t.parentMessageContent?.body ?? ''
+                })`
+            }
+
+            const formatThreadRoot = (t: ThreadResult) => {
+                const mentions = t.fullyReadMarker?.mentions ?? 0
                 return (
-                    <>
-                        <RegisterAndJoin roomIds={[spaceId, channel_1, channel_2]} />
-                        <button onClick={sendInitialMessages}>sendInitialMessages</button>
-                        <button onClick={editChannel2Message1}>editChannel2Message1</button>
-                        <button onClick={markAllAsRead}>markAllAsRead</button>
-                        <div data-testid="spaceNotifications">
-                            {`isUnread:${spaceNotifications.isUnread.toString()} mentions:${
-                                spaceNotifications.mentions
-                            }`}
-                        </div>
-                        <div data-testid="channel_1_fullyRead">
-                            {formatFullyReadMarker(channel_1_fullyRead)}
-                        </div>
-                        <div data-testid="channel_2_fullyRead">
-                            {formatFullyReadMarker(channel_2_fullyRead)}
-                        </div>
-                        <div data-testid="channel_2_thread_fullyRead">
-                            {formatFullyReadMarker(channel_2_thread_fullyRead)}
-                        </div>
-                        <div data-testid="threadRoots">
-                            {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
-                        </div>
-                        <div data-testid="channel2ThreadParent">
-                            {channel_2_thread?.parent
-                                ? formatThreadParent(channel_2_thread.parent)
-                                : 'undefined'}
-                        </div>
-                        <div data-testid="channel2ThreadMessages">
-                            {channel_2_thread?.messages?.map((e) => formatMessage(e)).join('\n') ??
-                                ''}
-                        </div>
-                        <div data-testid="channelMessages">
-                            {channelTimeline.map((event) => formatMessage(event)).join('\n')}
-                        </div>
-                        <div data-testid="channelThreadStats">
-                            {Object.entries(channelThreadStats)
-                                .map((kv) => formatThreadStats(kv[0], kv[1]))
-                                .join('\n')}
-                        </div>
-                    </>
+                    `channel: (${
+                        t.channel.label
+                    }) isUnread: (${t.isUnread.toString()}) mentions: (${mentions}) ` +
+                    formatThreadParent(t.thread)
                 )
             }
-            render(
-                <ZionTestApp provider={bobProvider}>
-                    <SpaceContextProvider spaceId={spaceId}>
-                        <ChannelContextProvider channelId={channel_1}>
-                            <TestChannelComponent />
-                        </ChannelContextProvider>
-                    </SpaceContextProvider>
-                </ZionTestApp>,
+
+            const formatMessage = useCallback(
+                (e: TimelineEvent) => {
+                    const replyCount = channelThreadStats[e.eventId]?.replyCount
+                    const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
+                    return `${e.fallbackContent} ${replyCountStr}`
+                },
+                [channelThreadStats],
             )
-        })
+            const formatThreadStats = (k: string, v: ThreadStats) => {
+                return `${k} (replyCount:${v.replyCount} userIds:${[...v.userIds].join(',')})`
+            }
+
+            const formatFullyReadMarker = (m?: FullyReadMarker) => {
+                return m === undefined
+                    ? 'undefined'
+                    : `isUnread:${m.isUnread.toString()} eventId:${
+                          m.eventId
+                      } mentions:${m.mentions.toString()}`
+            }
+
+            return (
+                <>
+                    <RegisterAndJoin roomIds={[spaceId, channel_1, channel_2]} />
+                    <button onClick={sendInitialMessages}>sendInitialMessages</button>
+                    <button onClick={editChannel2Message1}>editChannel2Message1</button>
+                    <button onClick={markAllAsRead}>markAllAsRead</button>
+                    <div data-testid="spaceNotifications">
+                        {`isUnread:${spaceNotifications.isUnread.toString()} mentions:${
+                            spaceNotifications.mentions
+                        }`}
+                    </div>
+                    <div data-testid="channel_1_fullyRead">
+                        {formatFullyReadMarker(channel_1_fullyRead)}
+                    </div>
+                    <div data-testid="channel_2_fullyRead">
+                        {formatFullyReadMarker(channel_2_fullyRead)}
+                    </div>
+                    <div data-testid="channel_2_thread_fullyRead">
+                        {formatFullyReadMarker(channel_2_thread_fullyRead)}
+                    </div>
+                    <div data-testid="threadRoots">
+                        {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
+                    </div>
+                    <div data-testid="channel2ThreadParent">
+                        {channel_2_thread?.parent
+                            ? formatThreadParent(channel_2_thread.parent)
+                            : 'undefined'}
+                    </div>
+                    <div data-testid="channel2ThreadMessages">
+                        {channel_2_thread?.messages?.map((e) => formatMessage(e)).join('\n') ?? ''}
+                    </div>
+                    <div data-testid="channelMessages">
+                        {channelTimeline.map((event) => formatMessage(event)).join('\n')}
+                    </div>
+                    <div data-testid="channelThreadStats">
+                        {Object.entries(channelThreadStats)
+                            .map((kv) => formatThreadStats(kv[0], kv[1]))
+                            .join('\n')}
+                    </div>
+                </>
+            )
+        }
+        render(
+            <ZionTestApp provider={bobProvider}>
+                <SpaceContextProvider spaceId={spaceId}>
+                    <ChannelContextProvider channelId={channel_1}>
+                        <TestChannelComponent />
+                    </ChannelContextProvider>
+                </SpaceContextProvider>
+            </ZionTestApp>,
+        )
+
         const bobUserId = screen.getByTestId('userId')
         const clientRunning = screen.getByTestId('clientRunning')
         const joinComplete = screen.getByTestId('joinComplete')

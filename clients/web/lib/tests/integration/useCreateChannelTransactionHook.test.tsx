@@ -2,7 +2,7 @@
 
 import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/matrix-types'
 import React, { useCallback, useMemo } from 'react'
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ZionContractTypes'
@@ -31,130 +31,128 @@ describe('useCreateChannelTransaction', () => {
         const channelName = 'test channel'
         await provider.fundWallet()
         // create a view for alice
-        act(() => {
-            const SpacesComponent = () => {
-                // spaces
-                const { spaces } = useSpacesFromContract()
-                return (
-                    <div data-testid="spaces">
-                        {spaces.map((element) => (
-                            <div key={element.key}>{element.name}</div>
-                        ))}
-                    </div>
-                )
-            }
+        const SpacesComponent = () => {
+            // spaces
+            const { spaces } = useSpacesFromContract()
+            return (
+                <div data-testid="spaces">
+                    {spaces.map((element) => (
+                        <div key={element.key}>{element.name}</div>
+                    ))}
+                </div>
+            )
+        }
 
-            const ChannelComponent = () => {
-                const { channel } = useChannelData()
-                return <div>{channel?.label}</div>
-            }
+        const ChannelComponent = () => {
+            const { channel } = useChannelData()
+            return <div>{channel?.label}</div>
+        }
 
-            const TestComponent = () => {
-                const { getRolesFromSpace } = useRolesAndPermissions()
-                const {
-                    createSpaceTransactionWithMemberRole,
-                    data: spaceId,
-                    transactionStatus: createSpaceTxStatus,
-                } = useCreateSpaceTransaction()
-                const {
-                    createChannelTransaction,
-                    isLoading: isLoadingChannel,
-                    data: channelId,
-                    error: createChannelError,
-                    transactionStatus: createChannelTxStatus,
-                    transactionHash: createChannelTxHash,
-                } = useCreateChannelTransaction()
+        const TestComponent = () => {
+            const { getRolesFromSpace } = useRolesAndPermissions()
+            const {
+                createSpaceTransactionWithMemberRole,
+                data: spaceId,
+                transactionStatus: createSpaceTxStatus,
+            } = useCreateSpaceTransaction()
+            const {
+                createChannelTransaction,
+                isLoading: isLoadingChannel,
+                data: channelId,
+                error: createChannelError,
+                transactionStatus: createChannelTxStatus,
+                transactionHash: createChannelTxHash,
+            } = useCreateChannelTransaction()
 
-                // Use the roles from the parent space to create the channel
-                const spaceRoles = useMemo(() => {
-                    const spaceRoles: number[] = []
+            // Use the roles from the parent space to create the channel
+            const spaceRoles = useMemo(() => {
+                const spaceRoles: number[] = []
 
-                    const getSpaceRoles = async () => {
-                        if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
-                            const roles = await getRolesFromSpace(spaceId.networkId)
-                            if (roles) {
-                                for (const r of roles) {
-                                    spaceRoles.push(r.roleId.toNumber())
-                                }
+                const getSpaceRoles = async () => {
+                    if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
+                        const roles = await getRolesFromSpace(spaceId.networkId)
+                        if (roles) {
+                            for (const r of roles) {
+                                spaceRoles.push(r.roleId.toNumber())
                             }
                         }
                     }
+                }
 
-                    void getSpaceRoles()
-                    return spaceRoles
-                }, [getRolesFromSpace, spaceId, createSpaceTxStatus])
+                void getSpaceRoles()
+                return spaceRoles
+            }, [getRolesFromSpace, spaceId, createSpaceTxStatus])
 
-                const onClickCreateSpace = useCallback(() => {
-                    const handleClick = async () => {
-                        if (zionTokenAddress) {
-                            await createSpaceTransactionWithMemberRole(
-                                {
-                                    name: spaceName,
-                                    visibility: RoomVisibility.Public,
-                                },
-                                [zionTokenAddress],
-                                [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
-                            )
-                        }
+            const onClickCreateSpace = useCallback(() => {
+                const handleClick = async () => {
+                    if (zionTokenAddress) {
+                        await createSpaceTransactionWithMemberRole(
+                            {
+                                name: spaceName,
+                                visibility: RoomVisibility.Public,
+                            },
+                            [zionTokenAddress],
+                            [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
+                        )
                     }
+                }
 
-                    void handleClick()
-                }, [createSpaceTransactionWithMemberRole])
+                void handleClick()
+            }, [createSpaceTransactionWithMemberRole])
 
-                // callback to create a channel with zion token entitlement
-                const onClickCreateChannel = useCallback(() => {
-                    const handleClick = async (parentSpaceId: RoomIdentifier) => {
-                        const createRoomInfo: CreateChannelInfo = {
-                            name: channelName,
-                            visibility: RoomVisibility.Public,
-                            parentSpaceId,
-                            roleIds: spaceRoles,
-                        }
-                        await createChannelTransaction(createRoomInfo)
+            // callback to create a channel with zion token entitlement
+            const onClickCreateChannel = useCallback(() => {
+                const handleClick = async (parentSpaceId: RoomIdentifier) => {
+                    const createRoomInfo: CreateChannelInfo = {
+                        name: channelName,
+                        visibility: RoomVisibility.Public,
+                        parentSpaceId,
+                        roleIds: spaceRoles,
                     }
+                    await createChannelTransaction(createRoomInfo)
+                }
 
-                    if (spaceId) {
-                        void handleClick(spaceId)
-                    }
-                }, [createChannelTransaction, spaceId, spaceRoles])
+                if (spaceId) {
+                    void handleClick(spaceId)
+                }
+            }, [createChannelTransaction, spaceId, spaceRoles])
 
-                console.log('TestComponent', 'createChannelTransactionStates', {
-                    isLoadingChannel,
-                    channelId,
-                    createChannelError,
-                    createChannelTxStatus,
-                    createChannelTxHash,
-                })
-                // the view
-                return (
-                    <>
-                        <button onClick={onClickCreateSpace}>Create Space</button>
-                        <button onClick={onClickCreateChannel}>Create Channel</button>
-                        <SpaceContextProvider spaceId={spaceId}>
-                            <>
-                                <SpacesComponent />
-                                <div data-testid="channel">
-                                    {channelId && (
-                                        <ChannelContextProvider channelId={channelId}>
-                                            <ChannelComponent />
-                                        </ChannelContextProvider>
-                                    )}
-                                </div>
-                            </>
-                        </SpaceContextProvider>
-                    </>
-                )
-            }
-            // render it
-            render(
-                <ZionTestApp provider={provider} chainId={chainId}>
-                    <>
-                        <RegisterWallet />
-                        <TestComponent />
-                    </>
-                </ZionTestApp>,
+            console.log('TestComponent', 'createChannelTransactionStates', {
+                isLoadingChannel,
+                channelId,
+                createChannelError,
+                createChannelTxStatus,
+                createChannelTxHash,
+            })
+            // the view
+            return (
+                <>
+                    <button onClick={onClickCreateSpace}>Create Space</button>
+                    <button onClick={onClickCreateChannel}>Create Channel</button>
+                    <SpaceContextProvider spaceId={spaceId}>
+                        <>
+                            <SpacesComponent />
+                            <div data-testid="channel">
+                                {channelId && (
+                                    <ChannelContextProvider channelId={channelId}>
+                                        <ChannelComponent />
+                                    </ChannelContextProvider>
+                                )}
+                            </div>
+                        </>
+                    </SpaceContextProvider>
+                </>
             )
-        })
+        }
+        // render it
+        render(
+            <ZionTestApp provider={provider} chainId={chainId}>
+                <>
+                    <RegisterWallet />
+                    <TestComponent />
+                </>
+            </ZionTestApp>,
+        )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
         const spaceElement = screen.getByTestId('spaces')

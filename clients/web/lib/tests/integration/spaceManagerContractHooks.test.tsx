@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import React, { useCallback } from 'react'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ZionContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
@@ -26,79 +26,78 @@ describe('spaceManagerContractHooks', () => {
         const spaceName = makeUniqueName('alice')
         const tokenGatedSpaceName = makeUniqueName('alice')
         // create a veiw for alice
-        act(() => {
-            const TestComponent = () => {
-                // basic space
-                const { chainId } = useZionClient()
-                const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
-                const {
-                    createSpaceTransactionWithMemberRole,
-                    isLoading,
-                    data,
-                    error,
-                    transactionStatus,
-                    transactionHash,
-                } = useCreateSpaceTransaction()
-                // spaces
-                const { spaces } = useSpacesFromContract()
-                // callback to create a space
-                const onClickCreateSpace = useCallback(() => {
-                    const handleClick = async () => {
+
+        const TestComponent = () => {
+            // basic space
+            const { chainId } = useZionClient()
+            const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
+            const {
+                createSpaceTransactionWithMemberRole,
+                isLoading,
+                data,
+                error,
+                transactionStatus,
+                transactionHash,
+            } = useCreateSpaceTransaction()
+            // spaces
+            const { spaces } = useSpacesFromContract()
+            // callback to create a space
+            const onClickCreateSpace = useCallback(() => {
+                const handleClick = async () => {
+                    await createSpaceTransactionWithMemberRole(
+                        {
+                            name: spaceName,
+                            visibility: RoomVisibility.Public,
+                        },
+                        [],
+                        [],
+                    )
+                }
+                void handleClick()
+            }, [createSpaceTransactionWithMemberRole])
+            // callback to create a space with zion token entitlement
+            const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
+                const handleClick = async () => {
+                    if (zionTokenAddress) {
                         await createSpaceTransactionWithMemberRole(
                             {
-                                name: spaceName,
+                                name: tokenGatedSpaceName,
                                 visibility: RoomVisibility.Public,
                             },
-                            [],
-                            [],
+                            [zionTokenAddress],
+                            [Permission.Read, Permission.Write],
                         )
                     }
-                    void handleClick()
-                }, [createSpaceTransactionWithMemberRole])
-                // callback to create a space with zion token entitlement
-                const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
-                    const handleClick = async () => {
-                        if (zionTokenAddress) {
-                            await createSpaceTransactionWithMemberRole(
-                                {
-                                    name: tokenGatedSpaceName,
-                                    visibility: RoomVisibility.Public,
-                                },
-                                [zionTokenAddress],
-                                [Permission.Read, Permission.Write],
-                            )
-                        }
-                    }
-                    void handleClick()
-                }, [createSpaceTransactionWithMemberRole, zionTokenAddress])
+                }
+                void handleClick()
+            }, [createSpaceTransactionWithMemberRole, zionTokenAddress])
 
-                console.log('TestComponent', 'render', {
-                    isLoading,
-                    data,
-                    error,
-                    transactionStatus,
-                    transactionHash,
-                })
+            console.log('TestComponent', 'render', {
+                isLoading,
+                data,
+                error,
+                transactionStatus,
+                transactionHash,
+            })
 
-                // the view
-                return (
-                    <>
-                        <RegisterWallet />
-                        <button onClick={onClickCreateSpace}>Create Space</button>
-                        <button onClick={onClickCreateSpaceWithZionMemberRole}>
-                            Create Token-Gated Space
-                        </button>
-                        <div data-testid="spaces">{spaces.map((x) => x.name).join(', ')}</div>
-                    </>
-                )
-            }
-            // render it
-            render(
-                <ZionTestApp provider={provider}>
-                    <TestComponent />
-                </ZionTestApp>,
+            // the view
+            return (
+                <>
+                    <RegisterWallet />
+                    <button onClick={onClickCreateSpace}>Create Space</button>
+                    <button onClick={onClickCreateSpaceWithZionMemberRole}>
+                        Create Token-Gated Space
+                    </button>
+                    <div data-testid="spaces">{spaces.map((x) => x.name).join(', ')}</div>
+                </>
             )
-        })
+        }
+        // render it
+        render(
+            <ZionTestApp provider={provider}>
+                <TestComponent />
+            </ZionTestApp>,
+        )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
         const createSpaceButton = screen.getByRole('button', {
