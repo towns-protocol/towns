@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
-contract SpaceTestUpgradeTo is BaseSetup {
+contract UpgradeToTest is BaseSetup {
   SpaceV2 public spaceV2;
 
   function setUp() public {

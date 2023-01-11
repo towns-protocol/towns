@@ -13,7 +13,7 @@ import {MockEntitlement} from "contracts/test/spacesv2/mocks/MockEntitlement.sol
 
 import {console} from "forge-std/console.sol";
 
-contract SpaceTestSetEntitlement is BaseSetup {
+contract SetEntitlementTest is BaseSetup {
   MockEntitlement public implementation;
   address public entitlementAddress;
 

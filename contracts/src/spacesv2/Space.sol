@@ -1,27 +1,37 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.17;
 
+//interfaces
 import {ISpace} from "./interfaces/ISpace.sol";
 import {IEntitlement} from "./interfaces/IEntitlement.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
+//libraries
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Utils} from "./libraries/Utils.sol";
 import {Errors} from "./libraries/Errors.sol";
 import {Permissions} from "./libraries/Permissions.sol";
 
+//contracts
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {MultiCaller} from "./MultiCaller.sol";
 
-contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
+contract Space is
+  Initializable,
+  OwnableUpgradeable,
+  UUPSUpgradeable,
+  MultiCaller,
+  ISpace
+{
   string public name;
   string public networkId;
   bool public disabled;
   uint256 public ownerRoleId;
 
   mapping(address => bool) public hasEntitlement;
-  mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
+  mapping(uint256 => bytes32[]) internal entitlementIdsByRoleId;
   address[] public entitlements;
 
   uint256 public roleId;
@@ -58,7 +68,7 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   }
 
   /// @inheritdoc ISpace
-  function setAccess(bool _disabled) external {
+  function setSpaceAccess(bool _disabled) external {
     _isAllowed("", Permissions.Owner);
     disabled = _disabled;
   }
@@ -186,13 +196,14 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   /// @inheritdoc ISpace
   function createRole(
     string memory _roleName,
-    string[] memory _permissions
+    string[] memory _permissions,
+    DataTypes.Entitlement[] memory _entitlements
   ) external returns (uint256) {
     _isAllowed("", Permissions.ModifySpacePermissions);
 
     uint256 newRoleId = ++roleId;
 
-    DataTypes.Role memory role = DataTypes.Role(roleId, _roleName);
+    DataTypes.Role memory role = DataTypes.Role(newRoleId, _roleName);
     rolesById[newRoleId] = role;
 
     for (uint256 i = 0; i < _permissions.length; i++) {
@@ -206,6 +217,25 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
 
       bytes32 _permission = bytes32(abi.encodePacked(_permissions[i]));
       permissionsByRoleId[newRoleId].push(_permission);
+    }
+
+    // loop through entitlements and set entitlement data for role
+    for (uint256 i = 0; i < _entitlements.length; i++) {
+      address _entitlement = _entitlements[i].module;
+      bytes memory _entitlementData = _entitlements[i].data;
+
+      // check for empty address or data
+      if (_entitlement == address(0) || _entitlementData.length == 0) {
+        continue;
+      }
+
+      // check if entitlement is valid
+      if (hasEntitlement[_entitlement] == false) {
+        revert Errors.EntitlementNotWhitelisted();
+      }
+
+      // set entitlement data for role
+      _addRoleToEntitlement(newRoleId, _entitlement, _entitlementData);
     }
 
     return newRoleId;
@@ -334,6 +364,12 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   }
 
   /// ***** Entitlement Management *****
+  function getEntitlementIdsByRoleId(
+    uint256 _roleId
+  ) external view returns (bytes32[] memory) {
+    return entitlementIdsByRoleId[_roleId];
+  }
+
   /// @inheritdoc ISpace
   function isEntitledToChannel(
     string calldata _channelId,
@@ -373,8 +409,6 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
     // validate entitlement interface
     _validateEntitlementInterface(_entitlement);
 
-    // validate if caller is allowed to whitelist
-
     // check if entitlement already exists
     if (_whitelist && hasEntitlement[_entitlement]) {
       revert Errors.EntitlementAlreadyWhitelisted();
@@ -386,12 +420,11 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   /// @inheritdoc ISpace
   function removeRoleFromEntitlement(
     uint256 _roleId,
-    address _entitlement,
-    bytes calldata _entitlementData
+    DataTypes.Entitlement calldata _entitlement
   ) external {
     _isAllowed("", Permissions.ModifySpacePermissions);
 
-    if (!hasEntitlement[_entitlement]) {
+    if (!hasEntitlement[_entitlement.module]) {
       revert Errors.EntitlementNotWhitelisted();
     }
 
@@ -400,7 +433,9 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
       revert Errors.RoleDoesNotExist();
     }
 
-    bytes32 entitlementId = keccak256(abi.encode(_roleId, _entitlementData));
+    bytes32 entitlementId = keccak256(
+      abi.encodePacked(_roleId, _entitlement.data)
+    );
 
     // remove entitlementId from entitlementIdsByRoleId
     bytes32[] storage entitlementIds = entitlementIdsByRoleId[_roleId];
@@ -412,18 +447,20 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
       break;
     }
 
-    IEntitlement(_entitlement).removeEntitlement(_roleId, _entitlementData);
+    IEntitlement(_entitlement.module).removeEntitlement(
+      _roleId,
+      _entitlement.data
+    );
   }
 
   /// @inheritdoc ISpace
   function addRoleToEntitlement(
     uint256 _roleId,
-    address _entitlement,
-    bytes memory _entitlementData
+    DataTypes.Entitlement memory _entitlement
   ) external {
     _isAllowed("", Permissions.ModifySpacePermissions);
 
-    if (!hasEntitlement[_entitlement]) {
+    if (!hasEntitlement[_entitlement.module]) {
       revert Errors.EntitlementNotWhitelisted();
     }
 
@@ -432,23 +469,7 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
       revert Errors.RoleDoesNotExist();
     }
 
-    bytes32 entitlementId = keccak256(abi.encode(_roleId, _entitlementData));
-
-    // check that entitlementId does not already exist
-    // this is to prevent duplicate entries
-    // but could lead to wanting to use the same entitlement data and role id
-    // on different entitlement contracts
-    bytes32[] memory entitlementIds = entitlementIdsByRoleId[_roleId];
-    for (uint256 i = 0; i < entitlementIds.length; i++) {
-      if (entitlementIds[i] == entitlementId) {
-        revert Errors.EntitlementAlreadyExists();
-      }
-    }
-
-    // keep track of which entitlements are associated with a role
-    entitlementIdsByRoleId[_roleId].push(entitlementId);
-
-    IEntitlement(_entitlement).setEntitlement(_roleId, _entitlementData);
+    _addRoleToEntitlement(_roleId, _entitlement.module, _entitlement.data);
   }
 
   function addRoleToChannel(
@@ -490,6 +511,32 @@ contract Space is Initializable, OwnableUpgradeable, UUPSUpgradeable, ISpace {
   }
 
   /// ***** Internal *****
+  function _addRoleToEntitlement(
+    uint256 _roleId,
+    address _entitlement,
+    bytes memory _entitlementData
+  ) internal {
+    bytes32 entitlementId = keccak256(
+      abi.encodePacked(_roleId, _entitlementData)
+    );
+
+    // check that entitlementId does not already exist
+    // this is to prevent duplicate entries
+    // but could lead to wanting to use the same entitlement data and role id
+    // on different entitlement contracts
+    bytes32[] memory entitlementIds = entitlementIdsByRoleId[_roleId];
+    for (uint256 i = 0; i < entitlementIds.length; i++) {
+      if (entitlementIds[i] == entitlementId) {
+        revert Errors.EntitlementAlreadyExists();
+      }
+    }
+
+    // keep track of which entitlements are associated with a role
+    entitlementIdsByRoleId[_roleId].push(entitlementId);
+
+    IEntitlement(_entitlement).setEntitlement(_roleId, _entitlementData);
+  }
+
   function _isAllowed(
     string memory _channelId,
     string memory _permission

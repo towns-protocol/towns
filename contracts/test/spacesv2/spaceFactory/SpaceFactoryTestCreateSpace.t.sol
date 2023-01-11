@@ -34,6 +34,22 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     assertEq(spaceFactory.USER_IMPLEMENTATION_ADDRESS(), userEntitlement);
   }
 
+  function testRevertIfNoSpaceNetworkId() external {
+    vm.expectRevert(Errors.InvalidParameters.selector);
+    spaceFactory.createSpace(
+      "zion",
+      "",
+      "ipfs://QmZion",
+      new string[](0),
+      DataTypes.CreateSpaceExtraEntitlements({
+        roleName: "",
+        permissions: new string[](0),
+        tokens: new DataTypes.ExternalToken[](0),
+        users: new address[](0)
+      })
+    );
+  }
+
   function testCreateSimpleSpace() external {
     address spaceAddress = createSimpleSpace();
     bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
@@ -116,7 +132,9 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     vm.prank(creator);
     address spaceAddress = createSimpleSpace();
 
-    assertTrue(Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner));
+    assertTrue(
+      Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner)
+    );
   }
 
   function testEveryoneEntitlement() external {
@@ -162,13 +180,17 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     vm.prank(creator);
     address spaceAddress = createSpaceWithEntitlements(_extraEntitlements);
 
-    assertTrue(Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner));
+    assertTrue(
+      Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner)
+    );
 
     assertTrue(Space(spaceAddress).isEntitledToSpace(bob, Permissions.Read));
     assertTrue(Space(spaceAddress).isEntitledToSpace(alice, Permissions.Read));
 
     assertFalse(Space(spaceAddress).isEntitledToSpace(bob, Permissions.Write));
-    assertFalse(Space(spaceAddress).isEntitledToSpace(alice, Permissions.Write));
+    assertFalse(
+      Space(spaceAddress).isEntitledToSpace(alice, Permissions.Write)
+    );
   }
 
   function testOwnershipTransferred() external {

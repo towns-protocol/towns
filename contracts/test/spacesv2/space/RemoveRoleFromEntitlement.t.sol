@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
-contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
+contract RemoveRoleFromEntitlementTest is BaseSetup {
   function setUp() public {
     BaseSetup.init();
   }
@@ -19,12 +19,12 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
     address _userEntitlement = getSpaceUserEntitlement(_space);
     uint256 _randomRoleId = _randomUint256();
 
+    DataTypes.Entitlement memory _entitlement;
+    _entitlement.module = _userEntitlement;
+    _entitlement.data = abi.encode(_bob);
+
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).removeRoleFromEntitlement(
-      _randomRoleId,
-      _userEntitlement,
-      abi.encode(_bob)
-    );
+    Space(_space).removeRoleFromEntitlement(_randomRoleId, _entitlement);
   }
 
   function testRevertIfNotWhitelisted() external {
@@ -33,12 +33,12 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
     address _randomEntitlement = _randomAddress();
     uint256 _randomRoleId = _randomUint256();
 
+    DataTypes.Entitlement memory _entitlement;
+    _entitlement.module = _randomEntitlement;
+    _entitlement.data = abi.encode(_bob);
+
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
-    Space(_space).removeRoleFromEntitlement(
-      _randomRoleId,
-      _randomEntitlement,
-      abi.encode(_bob)
-    );
+    Space(_space).removeRoleFromEntitlement(_randomRoleId, _entitlement);
   }
 
   function testRevertIfNotAllowedByPermission() external {
@@ -46,23 +46,22 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
     address _userEntitlement = getSpaceUserEntitlement(_space);
     address _bob = _randomAddress();
 
+    DataTypes.Entitlement memory _entitlement;
+    _entitlement.module = _userEntitlement;
+    _entitlement.data = abi.encode(_bob);
+
     // create role
     uint256 _roleId = createSimpleRoleWithPermission(_space);
 
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
     );
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).removeRoleFromEntitlement(
-      _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
-    );
+    Space(_space).removeRoleFromEntitlement(_roleId, _entitlement);
   }
 
   function testRemoveRoleFromEntitlement() external {
@@ -77,24 +76,22 @@ contract SpaceTestRemoveRoleFromEntitlement is BaseSetup {
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _userEntitlement,
-      abi.encode(_alice)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_alice))
     );
 
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
     );
 
     assertTrue(Space(_space).isEntitledToSpace(_bob, "Vote"));
 
+    DataTypes.Entitlement memory _entitlement;
+    _entitlement.module = _userEntitlement;
+    _entitlement.data = abi.encode(_bob);
+
     // remove role from entitlement
-    Space(_space).removeRoleFromEntitlement(
-      _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
-    );
+    Space(_space).removeRoleFromEntitlement(_roleId, _entitlement);
 
     assertFalse(Space(_space).isEntitledToSpace(_bob, "Vote"));
   }

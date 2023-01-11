@@ -201,14 +201,21 @@
             "type": "uint256"
           },
           {
-            "internalType": "address",
+            "components": [
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.Entitlement",
             "name": "_entitlement",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "_entitlementData",
-            "type": "bytes"
+            "type": "tuple"
           }
         ],
         "name": "addRoleToEntitlement",
@@ -309,6 +316,23 @@
             "internalType": "string[]",
             "name": "_permissions",
             "type": "string[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.Entitlement[]",
+            "name": "_entitlements",
+            "type": "tuple[]"
           }
         ],
         "name": "createRole",
@@ -390,6 +414,25 @@
             "internalType": "struct DataTypes.Channel",
             "name": "",
             "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementIdsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32[]",
+            "name": "",
+            "type": "bytes32[]"
           }
         ],
         "stateMutability": "view",
@@ -579,6 +622,25 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "name",
         "outputs": [
@@ -705,14 +767,21 @@
             "type": "uint256"
           },
           {
-            "internalType": "address",
+            "components": [
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.Entitlement",
             "name": "_entitlement",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "_entitlementData",
-            "type": "bytes"
+            "type": "tuple"
           }
         ],
         "name": "removeRoleFromEntitlement",
@@ -767,19 +836,6 @@
       {
         "inputs": [
           {
-            "internalType": "bool",
-            "name": "_disabled",
-            "type": "bool"
-          }
-        ],
-        "name": "setAccess",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
             "internalType": "string",
             "name": "_channelId",
             "type": "string"
@@ -822,6 +878,19 @@
           }
         ],
         "name": "setOwnerRoleId",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "_disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "setSpaceAccess",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -922,6 +991,9 @@
         "getChannelByHash(bytes32)": {
           "notice": "***** Channel Management *****"
         },
+        "getEntitlementIdsByRoleId(uint256)": {
+          "notice": "***** Entitlement Management *****"
+        },
         "getRoles()": {
           "notice": "***** Role Management *****"
         },
@@ -962,12 +1034,19 @@
     ]
   },
   "sources": {
+    "contracts/src/spacesv2/MultiCaller.sol": {
+      "keccak256": "0x63b88e6c353367a985f7092bfbb5a70ee608636c6a60805841a08ef5c11b6e7c",
+      "urls": [
+        "bzz-raw://fca31f351152762f6d004cd9c7969151f2a94d56511b5e9842846a6760892fc2",
+        "dweb:/ipfs/QmaFf1F1E7Eb2eA4kKMWZQyqcKh4hq2rfHXDWwLKYyW3Dt"
+      ]
+    },
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0x5a9342409262d85cbe4bf67fec9cc9a600db8adea1790336b4102cdeb861f475",
+      "keccak256": "0xd12f26bee7bcc974936d409129efc98cb16947e8aac3249955e89883c5d963b2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://bf8594ecb0c02a91d471d8d8b470d77a05bff8fef2c384f96e78e472ea9342a0",
-        "dweb:/ipfs/QmVUF1Mr9E2gWhqWfFu3gip9zRdbyPvrtB1ekbN4aFPVh9"
+        "bzz-raw://95c7a6053617562e81d533ab514a035ed5ee27e0eaf067b5d6dbf0a86cfdc03b",
+        "dweb:/ipfs/QmPtTRQ1hxnuSCJJa3h7G2kV1hyXuUnwNXr2Gb3XTtjokC"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
@@ -979,19 +1058,19 @@
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0x8f69f2b6ff94a2b9add465b42030bc0721e65497b5795a02c18890a1e86c0077",
+      "keccak256": "0x892ff6e3088df5b70d98d7e443be62afcba084cfbeddc1e80c39a4776e1a3ba8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://30bd590154923664810207ba15fad800315027b77344d843031cb45122a31719",
-        "dweb:/ipfs/QmXd3aTTnXe1m7Ten6YXq4kGRLZFsoSz1j9Cp4CtpSbijj"
+        "bzz-raw://a296fae16a95d3b88a78e09b8f06285b5cb0c93751ae581c16d6fd80eb5f0255",
+        "dweb:/ipfs/QmQeJVTTc4ZQ8JE4iBpYLcEyHvRH5PfCpaoxUxsE8NsbpP"
       ]
     },
     "contracts/src/spacesv2/libraries/DataTypes.sol": {
-      "keccak256": "0xb2dbfe87e6bafb16bf2d3b5207628d7d0f253a32084ee056c24179f9797ebd3d",
+      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://f7e6702ec580e3de8574d861d4709a874abb45a9bcd5e2ac508e0c2fa2fcaefc",
-        "dweb:/ipfs/QmfDM4ynXL9CiMARZTHPD2ef1UfCB7CYb8gPrjx8F4Tqhs"
+        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
+        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
       ]
     },
     "contracts/src/spacesv2/libraries/Errors.sol": {

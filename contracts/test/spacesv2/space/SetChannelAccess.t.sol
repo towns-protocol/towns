@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
-contract SpaceTestSetChannelAccess is BaseSetup {
+contract SetChannelAccessTest is BaseSetup {
   function setUp() external {
     BaseSetup.init();
   }

@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
-contract SpaceTestSetOwnerRoleId is BaseSetup {
+contract SetOwnerRoleIdTest is BaseSetup {
   function setUp() public {
     BaseSetup.init();
   }
@@ -39,7 +39,18 @@ contract SpaceTestSetOwnerRoleId is BaseSetup {
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
-    uint256 _newRoleId = Space(_space).createRole(_roleName, _permissions);
+    DataTypes.Entitlement[]
+      memory _roleEntitlements = new DataTypes.Entitlement[](1);
+    _roleEntitlements[0] = DataTypes.Entitlement({
+      module: address(0),
+      data: ""
+    });
+
+    uint256 _newRoleId = Space(_space).createRole(
+      _roleName,
+      _permissions,
+      _roleEntitlements
+    );
 
     vm.expectRevert(Errors.MissingOwnerPermission.selector);
     Space(_space).setOwnerRoleId(_newRoleId);
@@ -51,7 +62,18 @@ contract SpaceTestSetOwnerRoleId is BaseSetup {
     string memory _roleName = "NewOwner";
     string[] memory _permissions = spaceFactory.getOwnerPermissions();
 
-    uint256 _newRoleId = Space(_space).createRole(_roleName, _permissions);
+    DataTypes.Entitlement[]
+      memory _roleEntitlements = new DataTypes.Entitlement[](1);
+    _roleEntitlements[0] = DataTypes.Entitlement({
+      module: address(0),
+      data: ""
+    });
+
+    uint256 _newRoleId = Space(_space).createRole(
+      _roleName,
+      _permissions,
+      _roleEntitlements
+    );
 
     Space(_space).setOwnerRoleId(_newRoleId);
 

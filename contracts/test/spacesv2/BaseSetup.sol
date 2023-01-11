@@ -192,7 +192,12 @@ contract BaseSetup is TestUtils {
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
-    _roleId = Space(_space).createRole(_roleName, _permissions);
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
+
+    _roleId = Space(_space).createRole(_roleName, _permissions, _entitlements);
   }
 
   function getSpaceUserEntitlement(

@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
-contract SpaceTestRemoveRole is BaseSetup {
+contract RemoveRoleTest is BaseSetup {
   function setUp() external {
     BaseSetup.init();
   }
@@ -33,7 +33,10 @@ contract SpaceTestRemoveRole is BaseSetup {
     address _space = createSpaceWithEntitlements(_entitlementData);
 
     assertTrue(
-      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(
+        _moderator,
+        Permissions.ModifySpacePermissions
+      )
     );
 
     DataTypes.Role[] memory allRoles = Space(_space).getRoles();
@@ -51,18 +54,21 @@ contract SpaceTestRemoveRole is BaseSetup {
     vm.expectRevert(Errors.RoleIsAssignedToEntitlement.selector);
     Space(_space).removeRole(moderatorRoleId);
 
+    DataTypes.Entitlement memory _entitlement;
+    _entitlement.module = _userEntitlement;
+    _entitlement.data = abi.encode(_moderator);
+
     // Remove role from entitlement
-    Space(_space).removeRoleFromEntitlement(
-      moderatorRoleId,
-      _userEntitlement,
-      abi.encode(_moderator)
-    );
+    Space(_space).removeRoleFromEntitlement(moderatorRoleId, _entitlement);
 
     // Remove role from space
     Space(_space).removeRole(moderatorRoleId);
 
     assertFalse(
-      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(
+        _moderator,
+        Permissions.ModifySpacePermissions
+      )
     );
   }
 
@@ -93,7 +99,10 @@ contract SpaceTestRemoveRole is BaseSetup {
     address _space = createSpaceWithEntitlements(_entitlementData);
 
     assertTrue(
-      Space(_space).isEntitledToSpace(_moderator, Permissions.ModifySpacePermissions)
+      Space(_space).isEntitledToSpace(
+        _moderator,
+        Permissions.ModifySpacePermissions
+      )
     );
 
     uint256 ownerRoleId = Space(_space).ownerRoleId();

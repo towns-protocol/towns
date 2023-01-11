@@ -87,15 +87,23 @@ contract UserEntitlementTest is BaseSetup {
     string[] memory _rolePermissions = new string[](1);
     _rolePermissions[0] = "TestPermission";
 
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
+
     vm.prank(_creator);
-    uint256 _roleId = Space(_space).createRole(_roleName, _rolePermissions);
+    uint256 _roleId = Space(_space).createRole(
+      _roleName,
+      _rolePermissions,
+      _entitlements
+    );
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
     vm.prank(_creator);
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _userEntitlement,
-      abi.encode(_creator)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_creator))
     );
 
     DataTypes.Role[] memory roles = IEntitlement(_userEntitlement).getUserRoles(

@@ -10,7 +10,7 @@ import {Space} from "contracts/src/spacesv2/Space.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract SpaceTestCreateChannel is BaseSetup {
+contract CreateChannelTest is BaseSetup {
   function setUp() external {
     BaseSetup.init();
   }
@@ -42,7 +42,17 @@ contract SpaceTestCreateChannel is BaseSetup {
 
     string[] memory _permissions = new string[](1);
     _permissions[0] = _permission;
-    uint256 _memberRoleId = Space(_space).createRole("Member", _permissions);
+
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
+
+    uint256 _memberRoleId = Space(_space).createRole(
+      "Member",
+      _permissions,
+      _entitlements
+    );
 
     // get user entitlement module
     address userEntitlement = getSpaceUserEntitlement(_space);
@@ -50,8 +60,7 @@ contract SpaceTestCreateChannel is BaseSetup {
     // add role to user entitlement module
     Space(_space).addRoleToEntitlement(
       _memberRoleId,
-      userEntitlement,
-      abi.encode(_bob)
+      DataTypes.Entitlement(userEntitlement, abi.encode(_bob))
     );
 
     // add member role id to channel data
@@ -67,7 +76,9 @@ contract SpaceTestCreateChannel is BaseSetup {
     Space(_space).createChannel(channelName, channelNetworkId, roleIds);
 
     // check if bob is entitled to channel
-    assertTrue(Space(_space).isEntitledToChannel(channelNetworkId, _bob, _permission));
+    assertTrue(
+      Space(_space).isEntitledToChannel(channelNetworkId, _bob, _permission)
+    );
   }
 
   function testCreateChannelNotAllowed() external {
@@ -124,7 +135,11 @@ contract SpaceTestCreateChannel is BaseSetup {
     assertEq(_channel.channelId, channelId);
 
     assertTrue(
-      Space(_space).isEntitledToChannel(channelNetworkId, creator, Permissions.Owner)
+      Space(_space).isEntitledToChannel(
+        channelNetworkId,
+        creator,
+        Permissions.Owner
+      )
     );
   }
 }

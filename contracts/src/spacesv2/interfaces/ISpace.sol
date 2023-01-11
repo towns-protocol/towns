@@ -8,10 +8,10 @@ interface ISpace {
   function initialize(
     string memory name,
     string memory networkId,
-    address[] memory entitlements
+    address[] memory modules
   ) external;
 
-  function setAccess(bool disabled) external;
+  function setSpaceAccess(bool disabled) external;
 
   function setOwnerRoleId(uint256 roleId) external;
 
@@ -33,7 +33,8 @@ interface ISpace {
 
   function createRole(
     string memory roleName,
-    string[] memory permissions
+    string[] memory permissions,
+    DataTypes.Entitlement[] memory entitlements
   ) external returns (uint256);
 
   function updateRole(uint256 roleId, string memory roleName) external;
@@ -77,13 +78,11 @@ interface ISpace {
 
   function removeRoleFromEntitlement(
     uint256 roleId,
-    address entitlement,
-    bytes calldata entitlementData
+    DataTypes.Entitlement memory entitlement
   ) external;
 
   function addRoleToEntitlement(
     uint256 roleId,
-    address entitlement,
-    bytes memory entitlementData
+    DataTypes.Entitlement memory entitlement
   ) external;
 }

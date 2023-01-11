@@ -8,7 +8,7 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
-contract SpaceTestAddRoleToEntitlement is BaseSetup {
+contract AddRoleToEntitlementTest is BaseSetup {
   function setUp() public {
     BaseSetup.init();
   }
@@ -21,8 +21,7 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).addRoleToEntitlement(
       _randomUint256(),
-      _userEntitlement,
-      abi.encode(_bob)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
     );
   }
 
@@ -35,14 +34,22 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
-    uint256 _roleId = Space(_space).createRole(_roleName, _permissions);
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
+
+    uint256 _roleId = Space(_space).createRole(
+      _roleName,
+      _permissions,
+      _entitlements
+    );
 
     // add role to entitlement
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _randomAddress(),
-      abi.encode(_bob)
+      DataTypes.Entitlement(_randomAddress(), abi.encode(_bob))
     );
   }
 
@@ -53,7 +60,10 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).addRoleToEntitlement(0, _userEntitlement, abi.encode(_bob));
+    Space(_space).addRoleToEntitlement(
+      0,
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
+    );
   }
 
   function testRevertIfEntitlementIdAlreadyExists() external {
@@ -65,20 +75,28 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
     string memory _roleName = "Member";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
-    uint256 _roleId = Space(_space).createRole(_roleName, _permissions);
+
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
+
+    uint256 _roleId = Space(_space).createRole(
+      _roleName,
+      _permissions,
+      _entitlements
+    );
 
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
     );
 
     vm.expectRevert(Errors.EntitlementAlreadyExists.selector);
     Space(_space).addRoleToEntitlement(
       _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
     );
   }
 
@@ -92,14 +110,23 @@ contract SpaceTestAddRoleToEntitlement is BaseSetup {
     string[] memory _permissions = new string[](1);
     _permissions[0] = "UniquePermision";
 
-    uint256 _roleId = Space(_space).createRole(_roleName, _permissions);
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
+
+    uint256 _roleId = Space(_space).createRole(
+      _roleName,
+      _permissions,
+      _entitlements
+    );
 
     // add role to entitlement
-    Space(_space).addRoleToEntitlement(
-      _roleId,
-      _userEntitlement,
-      abi.encode(_bob)
-    );
+    DataTypes.Entitlement memory _roleEntitlement;
+    _roleEntitlement.module = _userEntitlement;
+    _roleEntitlement.data = abi.encode(_bob);
+
+    Space(_space).addRoleToEntitlement(_roleId, _roleEntitlement);
     assertTrue(Space(_space).isEntitledToSpace(_bob, "UniquePermision"));
   }
 }

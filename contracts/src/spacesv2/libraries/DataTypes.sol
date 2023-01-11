@@ -20,6 +20,11 @@ library DataTypes {
     string name;
   }
 
+  struct Entitlement {
+    address module;
+    bytes data;
+  }
+
   struct ExternalToken {
     address contractAddress;
     uint256 quantity;
@@ -30,7 +35,6 @@ library DataTypes {
   /// *********************************
   /// **************DTO****************
   /// *********************************
-
   /// @notice A struct containing the parameters required for creating a space
   /// @param spaceName The name of the space
   /// @param networkId The network id of the space

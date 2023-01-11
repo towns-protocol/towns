@@ -10,7 +10,7 @@ import {Space} from "contracts/src/spacesv2/Space.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract SpaceTestAddPermissionRole is BaseSetup {
+contract AddPermissionRoleTest is BaseSetup {
   function setUp() external {
     BaseSetup.init();
   }

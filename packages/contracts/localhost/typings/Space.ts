@@ -29,6 +29,16 @@ import type {
 } from "./common";
 
 export declare namespace DataTypes {
+  export type EntitlementStruct = {
+    module: PromiseOrValue<string>;
+    data: PromiseOrValue<BytesLike>;
+  };
+
+  export type EntitlementStructOutput = [string, string] & {
+    module: string;
+    data: string;
+  };
+
   export type ChannelStruct = {
     name: PromiseOrValue<string>;
     channelId: PromiseOrValue<BytesLike>;
@@ -58,14 +68,15 @@ export interface SpaceInterface extends utils.Interface {
   functions: {
     "addPermissionToRole(uint256,string)": FunctionFragment;
     "addRoleToChannel(string,address,uint256)": FunctionFragment;
-    "addRoleToEntitlement(uint256,address,bytes)": FunctionFragment;
+    "addRoleToEntitlement(uint256,(address,bytes))": FunctionFragment;
     "channels(uint256)": FunctionFragment;
     "channelsByHash(bytes32)": FunctionFragment;
     "createChannel(string,string,uint256[])": FunctionFragment;
-    "createRole(string,string[])": FunctionFragment;
+    "createRole(string,string[],(address,bytes)[])": FunctionFragment;
     "disabled()": FunctionFragment;
     "entitlements(uint256)": FunctionFragment;
     "getChannelByHash(bytes32)": FunctionFragment;
+    "getEntitlementIdsByRoleId(uint256)": FunctionFragment;
     "getEntitlements()": FunctionFragment;
     "getPermissionsByRoleId(uint256)": FunctionFragment;
     "getRoleById(uint256)": FunctionFragment;
@@ -74,6 +85,7 @@ export interface SpaceInterface extends utils.Interface {
     "initialize(string,string,address[])": FunctionFragment;
     "isEntitledToChannel(string,address,string)": FunctionFragment;
     "isEntitledToSpace(address,string)": FunctionFragment;
+    "multicall(bytes[])": FunctionFragment;
     "name()": FunctionFragment;
     "networkId()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -82,14 +94,14 @@ export interface SpaceInterface extends utils.Interface {
     "removePermissionFromRole(uint256,string)": FunctionFragment;
     "removeRole(uint256)": FunctionFragment;
     "removeRoleFromChannel(string,address,uint256)": FunctionFragment;
-    "removeRoleFromEntitlement(uint256,address,bytes)": FunctionFragment;
+    "removeRoleFromEntitlement(uint256,(address,bytes))": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "roleId()": FunctionFragment;
     "rolesById(uint256)": FunctionFragment;
-    "setAccess(bool)": FunctionFragment;
     "setChannelAccess(string,bool)": FunctionFragment;
     "setEntitlement(address,bool)": FunctionFragment;
     "setOwnerRoleId(uint256)": FunctionFragment;
+    "setSpaceAccess(bool)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "updateRole(uint256,string)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
@@ -108,6 +120,7 @@ export interface SpaceInterface extends utils.Interface {
       | "disabled"
       | "entitlements"
       | "getChannelByHash"
+      | "getEntitlementIdsByRoleId"
       | "getEntitlements"
       | "getPermissionsByRoleId"
       | "getRoleById"
@@ -116,6 +129,7 @@ export interface SpaceInterface extends utils.Interface {
       | "initialize"
       | "isEntitledToChannel"
       | "isEntitledToSpace"
+      | "multicall"
       | "name"
       | "networkId"
       | "owner"
@@ -128,10 +142,10 @@ export interface SpaceInterface extends utils.Interface {
       | "renounceOwnership"
       | "roleId"
       | "rolesById"
-      | "setAccess"
       | "setChannelAccess"
       | "setEntitlement"
       | "setOwnerRoleId"
+      | "setSpaceAccess"
       | "transferOwnership"
       | "updateRole"
       | "upgradeTo"
@@ -152,11 +166,7 @@ export interface SpaceInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "addRoleToEntitlement",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [PromiseOrValue<BigNumberish>, DataTypes.EntitlementStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "channels",
@@ -176,7 +186,11 @@ export interface SpaceInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createRole",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>[]]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[],
+      DataTypes.EntitlementStruct[]
+    ]
   ): string;
   encodeFunctionData(functionFragment: "disabled", values?: undefined): string;
   encodeFunctionData(
@@ -186,6 +200,10 @@ export interface SpaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getChannelByHash",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getEntitlementIdsByRoleId",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getEntitlements",
@@ -224,6 +242,10 @@ export interface SpaceInterface extends utils.Interface {
     functionFragment: "isEntitledToSpace",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "multicall",
+    values: [PromiseOrValue<BytesLike>[]]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "networkId", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -253,11 +275,7 @@ export interface SpaceInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "removeRoleFromEntitlement",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>
-    ]
+    values: [PromiseOrValue<BigNumberish>, DataTypes.EntitlementStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -267,10 +285,6 @@ export interface SpaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "rolesById",
     values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setAccess",
-    values: [PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
     functionFragment: "setChannelAccess",
@@ -283,6 +297,10 @@ export interface SpaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setOwnerRoleId",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setSpaceAccess",
+    values: [PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -333,6 +351,10 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getEntitlementIdsByRoleId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getEntitlements",
     data: BytesLike
   ): Result;
@@ -358,6 +380,7 @@ export interface SpaceInterface extends utils.Interface {
     functionFragment: "isEntitledToSpace",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "multicall", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "networkId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -388,7 +411,6 @@ export interface SpaceInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "roleId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "rolesById", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setAccess", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setChannelAccess",
     data: BytesLike
@@ -399,6 +421,10 @@ export interface SpaceInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setOwnerRoleId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setSpaceAccess",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -516,8 +542,7 @@ export interface Space extends BaseContract {
 
     addRoleToEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -548,6 +573,7 @@ export interface Space extends BaseContract {
     createRole(
       _roleName: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
+      _entitlements: DataTypes.EntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -562,6 +588,11 @@ export interface Space extends BaseContract {
       _channelHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[DataTypes.ChannelStructOutput]>;
+
+    getEntitlementIdsByRoleId(
+      _roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
 
     getEntitlements(overrides?: CallOverrides): Promise<[string[]]>;
 
@@ -604,6 +635,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean] & { _entitled: boolean }>;
 
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     name(overrides?: CallOverrides): Promise<[string]>;
 
     networkId(overrides?: CallOverrides): Promise<[string]>;
@@ -634,8 +670,7 @@ export interface Space extends BaseContract {
 
     removeRoleFromEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -649,11 +684,6 @@ export interface Space extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber, string] & { roleId: BigNumber; name: string }>;
-
-    setAccess(
-      _disabled: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
 
     setChannelAccess(
       _channelId: PromiseOrValue<string>,
@@ -669,6 +699,11 @@ export interface Space extends BaseContract {
 
     setOwnerRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setSpaceAccess(
+      _disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -710,8 +745,7 @@ export interface Space extends BaseContract {
 
   addRoleToEntitlement(
     _roleId: PromiseOrValue<BigNumberish>,
-    _entitlement: PromiseOrValue<string>,
-    _entitlementData: PromiseOrValue<BytesLike>,
+    _entitlement: DataTypes.EntitlementStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -742,6 +776,7 @@ export interface Space extends BaseContract {
   createRole(
     _roleName: PromiseOrValue<string>,
     _permissions: PromiseOrValue<string>[],
+    _entitlements: DataTypes.EntitlementStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -756,6 +791,11 @@ export interface Space extends BaseContract {
     _channelHash: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<DataTypes.ChannelStructOutput>;
+
+  getEntitlementIdsByRoleId(
+    _roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
 
   getEntitlements(overrides?: CallOverrides): Promise<string[]>;
 
@@ -796,6 +836,11 @@ export interface Space extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  multicall(
+    data: PromiseOrValue<BytesLike>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   name(overrides?: CallOverrides): Promise<string>;
 
   networkId(overrides?: CallOverrides): Promise<string>;
@@ -826,8 +871,7 @@ export interface Space extends BaseContract {
 
   removeRoleFromEntitlement(
     _roleId: PromiseOrValue<BigNumberish>,
-    _entitlement: PromiseOrValue<string>,
-    _entitlementData: PromiseOrValue<BytesLike>,
+    _entitlement: DataTypes.EntitlementStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -841,11 +885,6 @@ export interface Space extends BaseContract {
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<[BigNumber, string] & { roleId: BigNumber; name: string }>;
-
-  setAccess(
-    _disabled: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   setChannelAccess(
     _channelId: PromiseOrValue<string>,
@@ -861,6 +900,11 @@ export interface Space extends BaseContract {
 
   setOwnerRoleId(
     _roleId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setSpaceAccess(
+    _disabled: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -902,8 +946,7 @@ export interface Space extends BaseContract {
 
     addRoleToEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -934,6 +977,7 @@ export interface Space extends BaseContract {
     createRole(
       _roleName: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
+      _entitlements: DataTypes.EntitlementStruct[],
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -948,6 +992,11 @@ export interface Space extends BaseContract {
       _channelHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<DataTypes.ChannelStructOutput>;
+
+    getEntitlementIdsByRoleId(
+      _roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     getEntitlements(overrides?: CallOverrides): Promise<string[]>;
 
@@ -988,6 +1037,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
     name(overrides?: CallOverrides): Promise<string>;
 
     networkId(overrides?: CallOverrides): Promise<string>;
@@ -1018,8 +1072,7 @@ export interface Space extends BaseContract {
 
     removeRoleFromEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1031,11 +1084,6 @@ export interface Space extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber, string] & { roleId: BigNumber; name: string }>;
-
-    setAccess(
-      _disabled: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     setChannelAccess(
       _channelId: PromiseOrValue<string>,
@@ -1051,6 +1099,11 @@ export interface Space extends BaseContract {
 
     setOwnerRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setSpaceAccess(
+      _disabled: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1130,8 +1183,7 @@ export interface Space extends BaseContract {
 
     addRoleToEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1155,6 +1207,7 @@ export interface Space extends BaseContract {
     createRole(
       _roleName: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
+      _entitlements: DataTypes.EntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1167,6 +1220,11 @@ export interface Space extends BaseContract {
 
     getChannelByHash(
       _channelHash: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getEntitlementIdsByRoleId(
+      _roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1209,6 +1267,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
     networkId(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1239,8 +1302,7 @@ export interface Space extends BaseContract {
 
     removeRoleFromEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1253,11 +1315,6 @@ export interface Space extends BaseContract {
     rolesById(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    setAccess(
-      _disabled: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     setChannelAccess(
@@ -1274,6 +1331,11 @@ export interface Space extends BaseContract {
 
     setOwnerRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setSpaceAccess(
+      _disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1316,8 +1378,7 @@ export interface Space extends BaseContract {
 
     addRoleToEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1341,6 +1402,7 @@ export interface Space extends BaseContract {
     createRole(
       _roleName: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
+      _entitlements: DataTypes.EntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1353,6 +1415,11 @@ export interface Space extends BaseContract {
 
     getChannelByHash(
       _channelHash: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getEntitlementIdsByRoleId(
+      _roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1395,6 +1462,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    multicall(
+      data: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     networkId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -1425,8 +1497,7 @@ export interface Space extends BaseContract {
 
     removeRoleFromEntitlement(
       _roleId: PromiseOrValue<BigNumberish>,
-      _entitlement: PromiseOrValue<string>,
-      _entitlementData: PromiseOrValue<BytesLike>,
+      _entitlement: DataTypes.EntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1439,11 +1510,6 @@ export interface Space extends BaseContract {
     rolesById(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    setAccess(
-      _disabled: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     setChannelAccess(
@@ -1460,6 +1526,11 @@ export interface Space extends BaseContract {
 
     setOwnerRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setSpaceAccess(
+      _disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -10,7 +10,7 @@ import {Space} from "contracts/src/spacesv2/Space.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract SpaceTestSetAccess is BaseSetup {
+contract SetSpaceAccessTest is BaseSetup {
   function setUp() public {
     BaseSetup.init();
   }
@@ -20,16 +20,16 @@ contract SpaceTestSetAccess is BaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).setAccess(true);
+    Space(_space).setSpaceAccess(true);
   }
 
   function testSetAccess() external {
     address _space = createSimpleSpace();
 
-    Space(_space).setAccess(false);
+    Space(_space).setSpaceAccess(false);
     assertFalse(Space(_space).disabled());
 
-    Space(_space).setAccess(true);
+    Space(_space).setSpaceAccess(true);
     assertTrue(Space(_space).disabled());
 
     Space(_space).transferOwnership(_randomAddress());

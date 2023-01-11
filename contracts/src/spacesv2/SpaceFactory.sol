@@ -198,17 +198,25 @@ contract SpaceFactory is
   ) internal {
     if (_extraEntitlements.permissions.length == 0) return;
 
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement(address(0), "");
+
     uint256 additionalRoleId = Space(spaceAddress).createRole(
       _extraEntitlements.roleName,
-      _extraEntitlements.permissions
+      _extraEntitlements.permissions,
+      _entitlements
     );
 
     // check entitlementdata has users
     for (uint256 i = 0; i < _extraEntitlements.users.length; i++) {
       Space(spaceAddress).addRoleToEntitlement(
         additionalRoleId,
-        userAddress,
-        abi.encode(_extraEntitlements.users[i])
+        DataTypes.Entitlement(
+          userAddress,
+          abi.encode(_extraEntitlements.users[i])
+        )
       );
     }
 
@@ -217,8 +225,7 @@ contract SpaceFactory is
 
     Space(spaceAddress).addRoleToEntitlement(
       additionalRoleId,
-      tokenAddress,
-      abi.encode(_extraEntitlements.tokens)
+      DataTypes.Entitlement(tokenAddress, abi.encode(_extraEntitlements.tokens))
     );
   }
 
@@ -227,14 +234,6 @@ contract SpaceFactory is
     address tokenAddress,
     uint256 tokenId
   ) internal {
-    // create owner role with all permissions
-    uint256 ownerRoleId = Space(spaceAddress).createRole(
-      ownerRoleName,
-      ownerPermissions
-    );
-
-    Space(spaceAddress).setOwnerRoleId(ownerRoleId);
-
     // create external token struct
     DataTypes.ExternalToken[] memory tokens = new DataTypes.ExternalToken[](1);
 
@@ -249,12 +248,22 @@ contract SpaceFactory is
       tokenIds: tokenIds
     });
 
-    // add token data to entitlement
-    Space(spaceAddress).addRoleToEntitlement(
-      ownerRoleId,
-      tokenAddress,
-      abi.encode(tokens)
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
     );
+    _entitlements[0] = DataTypes.Entitlement({
+      module: tokenAddress,
+      data: abi.encode(tokens)
+    });
+
+    // create owner role with all permissions
+    uint256 ownerRoleId = Space(spaceAddress).createRole(
+      ownerRoleName,
+      ownerPermissions,
+      _entitlements
+    );
+
+    Space(spaceAddress).setOwnerRoleId(ownerRoleId);
   }
 
   function _createEveryoneEntitlement(
@@ -262,16 +271,18 @@ contract SpaceFactory is
     address userAddress,
     string[] memory _permissions
   ) internal {
-    uint256 everyoneRoleId = Space(spaceAddress).createRole(
-      everyoneRoleName,
-      _permissions
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
     );
+    _entitlements[0] = DataTypes.Entitlement({
+      module: userAddress,
+      data: abi.encode(Utils.EVERYONE_ADDRESS)
+    });
 
-    // add everyone role to user entitlement
-    Space(spaceAddress).addRoleToEntitlement(
-      everyoneRoleId,
-      userAddress,
-      abi.encode(Utils.EVERYONE_ADDRESS)
+    Space(spaceAddress).createRole(
+      everyoneRoleName,
+      _permissions,
+      _entitlements
     );
   }
 

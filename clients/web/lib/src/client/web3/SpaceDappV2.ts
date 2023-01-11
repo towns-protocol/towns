@@ -174,7 +174,7 @@ export class SpaceDappV2 implements ISpaceDapp {
         if (!space.write) {
             throw new Error(`Space with networkId "${spaceId}" is not deployed properly.`)
         }
-        return space.write.setAccess(disabled)
+        return space.write.setSpaceAccess(disabled)
     }
 
     public async setChannelAccess(

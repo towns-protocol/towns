@@ -195,14 +195,21 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "address",
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct DataTypes.Entitlement",
         "name": "_entitlement",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_entitlementData",
-        "type": "bytes"
+        "type": "tuple"
       }
     ],
     "name": "addRoleToEntitlement",
@@ -303,6 +310,23 @@ export default [
         "internalType": "string[]",
         "name": "_permissions",
         "type": "string[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct DataTypes.Entitlement[]",
+        "name": "_entitlements",
+        "type": "tuple[]"
       }
     ],
     "name": "createRole",
@@ -384,6 +408,25 @@ export default [
         "internalType": "struct DataTypes.Channel",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getEntitlementIdsByRoleId",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
       }
     ],
     "stateMutability": "view",
@@ -573,6 +616,25 @@ export default [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "data",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "multicall",
+    "outputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "results",
+        "type": "bytes[]"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "name",
     "outputs": [
@@ -699,14 +761,21 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "address",
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct DataTypes.Entitlement",
         "name": "_entitlement",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_entitlementData",
-        "type": "bytes"
+        "type": "tuple"
       }
     ],
     "name": "removeRoleFromEntitlement",
@@ -761,19 +830,6 @@ export default [
   {
     "inputs": [
       {
-        "internalType": "bool",
-        "name": "_disabled",
-        "type": "bool"
-      }
-    ],
-    "name": "setAccess",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
         "name": "_channelId",
         "type": "string"
@@ -816,6 +872,19 @@ export default [
       }
     ],
     "name": "setOwnerRoleId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_disabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setSpaceAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

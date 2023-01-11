@@ -92,7 +92,7 @@ contract TokenEntitlement is
     uint256 roleId,
     bytes calldata entitlementData
   ) external onlySpace returns (bytes32 entitlementId) {
-    entitlementId = keccak256(abi.encode(roleId, entitlementData));
+    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     DataTypes.ExternalToken[] memory externalTokens = abi.decode(
       entitlementData,
@@ -131,7 +131,7 @@ contract TokenEntitlement is
     uint256 roleId,
     bytes calldata entitlementData
   ) external onlySpace returns (bytes32 entitlementId) {
-    entitlementId = keccak256(abi.encode(roleId, entitlementData));
+    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     // remove from roleIdsByChannelId
     bytes32[] storage entitlementIdsFromRoleIds = entitlementIdsByRoleId[
