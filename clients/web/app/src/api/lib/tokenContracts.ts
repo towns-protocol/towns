@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, ContractMetadataResponse } from '@token-worker/types'
+import { erc20ABI } from '@wagmi/core'
+import { ethers } from 'ethers'
 import { TokenProps } from '@components/Tokens'
 import { queryClient } from 'api/queryClient'
+import { hasVitalkTokensParam, isDev } from 'utils'
 import { axiosClient } from '../apiClient'
 
 const queryKey = 'tokenContractsForAddress'
@@ -23,6 +26,21 @@ type UseTokenContractsForAdress = {
     chainId: number | undefined
 }
 
+const zContractData: z.ZodType<ContractMetadata> = z.object({
+    address: z.string().optional(),
+    name: z.string().optional(),
+    symbol: z.string().optional(),
+    tokenType: z.string().optional(),
+    imageUrl: z.string().optional(),
+})
+
+const zSchema: z.ZodType<ContractMetadataResponse> = z.object({
+    blockHash: z.string(),
+    totalCount: z.number(),
+    pageKey: z.string().optional(),
+    ownedNftsContract: z.array(zContractData),
+})
+
 export function useTokenContractsForAddress({
     wallet,
     zionTokenAddress,
@@ -36,7 +54,8 @@ export function useTokenContractsForAddress({
         () =>
             chainId === 31337
                 ? getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all)
-                : getGoerliTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
+                : // once zion token is airdropped remove this
+                  getGoerliTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
         {
             onSuccess: (data) => {
                 const cached = getCachedTokensForWallet()
@@ -60,29 +79,6 @@ export function getCachedTokensForWallet(): CachedData {
     return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
 }
 
-function mapToTokenProps(token: ContractMetadata): TokenProps {
-    return {
-        imgSrc: token.imageUrl || '',
-        label: token.name || '',
-        contractAddress: token.address || '',
-    }
-}
-
-const zContractData: z.ZodType<ContractMetadata> = z.object({
-    address: z.string().optional(),
-    name: z.string().optional(),
-    symbol: z.string().optional(),
-    tokenType: z.string().optional(),
-    imageUrl: z.string().optional(),
-})
-
-const zSchema: z.ZodType<ContractMetadataResponse> = z.object({
-    blockHash: z.string(),
-    totalCount: z.number(),
-    pageKey: z.string().optional(),
-    ownedNftsContract: z.array(zContractData),
-})
-
 async function getGoerliTokenContractsForAddress(
     _wallet: string,
     zionTokenAddress: string | null,
@@ -102,14 +98,30 @@ async function getGoerliTokenContractsForAddress(
     return { tokens, nextPageKey: undefined }
 }
 
+const GOERLI = 'eth-goerli'
+const MAINNET = 'eth-mainnet'
+const fetchVitalikTokens = hasVitalkTokensParam()
+const NETWORK = fetchVitalikTokens ? MAINNET : GOERLI
+
 async function getTokenContractsForAddress(
     wallet: string,
     zionTokenAddress: string | null,
     pageKey = '',
     all = false,
 ) {
+    // on local, just return the zion token, if it exists (must be anvil account)
+    if (isDev && zionTokenAddress && !fetchVitalikTokens) {
+        const tokens = []
+        const balance = await getLocalZionTokenBalance(zionTokenAddress, wallet)
+        if (balance > 0) tokens.push(mapZionTokenToTokenProps(zionTokenAddress))
+        return {
+            tokens,
+            nextPageKey: undefined,
+        }
+    }
+
     const TOKENS_SERVER_URL = import.meta.env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/eth-mainnet/${wallet}?contractMetadata&pageKey=${pageKey}${
+    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/${NETWORK}/${wallet}?contractMetadata&pageKey=${pageKey}${
         all ? '&all' : ''
     }`
     const response = await axiosClient.get(url)
@@ -122,15 +134,33 @@ async function getTokenContractsForAddress(
     let tokens = parseResult.data.ownedNftsContract.map(mapToTokenProps)
     const nextPageKey = parseResult.data.pageKey
 
-    // TBD: are we adding zion token to list of tokens for everyone?
+    // zion token should come from the NFT query, but it's not airdropped yet
+    // once it's airdropped we can remove this
     if (zionTokenAddress) {
-        const zionData: TokenProps = {
-            imgSrc: 'https://picsum.photos/id/99/400',
-            label: 'Zion',
-            contractAddress: zionTokenAddress,
-        }
-
-        tokens = [zionData, ...tokens]
+        tokens = [mapZionTokenToTokenProps(zionTokenAddress), ...tokens]
     }
     return { tokens, nextPageKey }
+}
+
+function mapToTokenProps(token: ContractMetadata): TokenProps {
+    return {
+        imgSrc: token.imageUrl || '',
+        label: token.name || '',
+        contractAddress: token.address || '',
+    }
+}
+
+function mapZionTokenToTokenProps(zionTokenAddress: string) {
+    return {
+        imgSrc: 'https://picsum.photos/id/99/400',
+        label: 'Zion',
+        contractAddress: zionTokenAddress,
+    }
+}
+
+async function getLocalZionTokenBalance(zionTokenAddress: string, wallet: string) {
+    const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+    const contract = new ethers.Contract(zionTokenAddress, erc20ABI, provider)
+    const balance = await contract.balanceOf(wallet)
+    return balance.toNumber()
 }

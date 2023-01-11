@@ -7,6 +7,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { getCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
+import { hasVitalkTokensParam } from 'utils'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -99,8 +100,8 @@ export const TokenList = ({
 
     // NOTE: on Goerli, this is only going to return the Zion token, even if it is not in user's wallet
     // Fetching tokens via worker is only for local dev for now, until the worker is deployed (pending auth flow)
-    const { data, isFetching, isLoading } = useTokenContractsForAddress({
-        wallet: 'vitalik.eth', // hard coding for testing purposes
+    const { data, isFetching, isLoading, isError } = useTokenContractsForAddress({
+        wallet: hasVitalkTokensParam() ? 'vitalik.eth' : wallet,
         zionTokenAddress,
         enabled: Boolean(zionTokenAddress),
         pageKey: page,
@@ -153,6 +154,14 @@ export const TokenList = ({
                 placeholder="Search or paste contract address"
                 onChange={(e) => setSearch(e.target.value)}
             />
+
+            {isError && (
+                <Box paddingTop="sm">
+                    <Text size="sm" color="negative">
+                        There was an error fetching your tokens
+                    </Text>
+                </Box>
+            )}
             {isChecked && (
                 <Box paddingTop="md" minHeight="100" maxHeight="500">
                     <VList<TokenPropsForVList>
