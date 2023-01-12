@@ -55,7 +55,7 @@ const useMockedCreateChannelTransaction = (
 describe('CreateChannelForm', () => {
     test('renders checkbox for each role', async () => {
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
-            (_spaceNetworkId: string) => {
+            (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
                         {
@@ -83,7 +83,7 @@ describe('CreateChannelForm', () => {
 
     test('requires name and role for submission', async () => {
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
-            (_spaceNetworkId: string) => {
+            (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
                         {
@@ -113,7 +113,7 @@ describe('CreateChannelForm', () => {
         )
 
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
-            (_spaceNetworkId: string) => {
+            (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
                         {
@@ -166,7 +166,7 @@ describe('CreateChannelForm', () => {
         )
 
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
-            (_spaceNetworkId: string) => {
+            (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
                         {

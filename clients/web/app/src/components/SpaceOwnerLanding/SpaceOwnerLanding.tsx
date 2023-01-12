@@ -1,12 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSpaceData } from 'use-zion-client'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import useEvent from 'react-use-event-hook'
 import { Box, Button, Heading, Icon, IconProps, Paragraph, Stack, Text, TextField } from '@ui'
 import { StackProps } from 'ui/components/Stack/Stack'
 import { PATHS } from 'routes'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { FadeIn } from '@components/Transitions'
+import { useChannelCreationRoles } from 'hooks/useContractRoles'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { CreateChannelFormContainer } from '@components/Web3/CreateChannelFormV2'
 import { childStyle, contentStyle, copiedStyle, headerStyle } from './SpaceOwnerLanding.css'
 
 type InviteCardProps = {
@@ -41,12 +45,24 @@ export const SpaceOwnerLanding = () => {
     const navigate = useNavigate()
     const [, copy] = useCopyToClipboard()
     const [copyWasClicked, setCopyWasClicked] = React.useState(false)
-    const HREF = window.location.href
+    const inviteUrl = `${window.location.host}/${PATHS.SPACES}/${space?.id.slug}?invite`
+    const { data: roles } = useChannelCreationRoles(space?.id.networkId)
+    const hasEveryoneRole = roles?.find((role) => role.name === 'Everyone')
+    const hasMemberRole = roles?.find((role) => role.name === 'Member')
+    const [modal, setModal] = useState(false)
+
+    const onHide = useEvent(() => {
+        setModal(false)
+    })
+
+    const onShow = useEvent(() => {
+        setModal(true)
+    })
 
     function onCopy() {
         if (copyWasClicked) return
         setCopyWasClicked(true)
-        copy(HREF)
+        copy(inviteUrl)
 
         setTimeout(() => {
             setCopyWasClicked(false)
@@ -58,7 +74,7 @@ export const SpaceOwnerLanding = () => {
     }
 
     function onChannel() {
-        navigate(`/${PATHS.SPACES}/${space?.id.slug}/${PATHS.CHANNELS}/new`)
+        onShow()
     }
 
     return (
@@ -95,26 +111,26 @@ export const SpaceOwnerLanding = () => {
                     </Paragraph>
                 </Stack>
                 <Stack gap="md" className={childStyle}>
-                    {/* TODO: hide this on everyone spaces https://linear.app/hnt-labs/issue/HNT-513/update-contract-to-provide-prop-for-whether-a-space-is-gated*/}
-                    <InviteCard
-                        icon="personAdd"
-                        description="Add members via wallet address"
-                        justifyContent="spaceBetween"
-                    >
-                        <Button width="x10" tone="cta1" onClick={onInvite}>
-                            Add
-                        </Button>
-                    </InviteCard>
-                    {/* --------------------------------- */}
+                    {hasEveryoneRole && (
+                        <InviteCard
+                            icon="personAdd"
+                            description="Add members via wallet address"
+                            justifyContent="spaceBetween"
+                        >
+                            <Button width="x10" tone="cta1" onClick={onInvite}>
+                                Add
+                            </Button>
+                        </InviteCard>
+                    )}
 
                     <InviteCard
                         flexDirection="column"
                         alignItems="start"
                         icon="link"
-                        description="Invite members via wallet address"
+                        description="Share your space link:"
                     >
                         <Stack flexDirection="row" flexWrap="wrap" gap="sm" width="100%">
-                            <TextField readOnly value={HREF} background="level3" />
+                            <TextField readOnly value={inviteUrl} background="level3" />
 
                             <Box position="relative">
                                 <Button width="x10" tone="cta1" onClick={onCopy}>
@@ -139,18 +155,25 @@ export const SpaceOwnerLanding = () => {
                         </Stack>
                     </InviteCard>
 
-                    {/* TODO: hide this on token gated spaces */}
-                    <InviteCard
-                        icon="lock"
-                        description="Create a token gated channel"
-                        justifyContent="spaceBetween"
-                    >
-                        <Button width="x10" tone="cta1" onClick={onChannel}>
-                            Add
-                        </Button>
-                    </InviteCard>
+                    {hasMemberRole && (
+                        <InviteCard
+                            icon="lock"
+                            description="Create a token gated channel"
+                            justifyContent="spaceBetween"
+                        >
+                            <Button width="x10" tone="cta1" onClick={onChannel}>
+                                Add
+                            </Button>
+                        </InviteCard>
+                    )}
                 </Stack>
             </Stack>
+
+            {modal && space?.id && (
+                <ModalContainer onHide={onHide}>
+                    <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
+                </ModalContainer>
+            )}
         </>
     )
 }
