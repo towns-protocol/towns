@@ -6,7 +6,6 @@ compatibility_date = "2022-07-26"
 [miniflare]
 cache_persist = false
 
-
 [dev]
 ip = "localhost"
 port = 8006
@@ -15,8 +14,11 @@ local_protocol = "http"
 [vars]
 # VAR_NAME = "some_value"
 
-# The necessary secrets are: ALCHEMY_API_KEY
+
+# The necessary secrets are: 
+# ALCHEMY_API_KEY
+# AUTH_SECRET - set in this file for local dev/tests
 # for local development, you can add these in .dev.vars
-# OR
-# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
-# add your secret property names here
+# 
+# For production, you can add these in the Cloudflare dashboard or run
+# `echo <VALUE> | wrangler secret put <NAME>` for each of these

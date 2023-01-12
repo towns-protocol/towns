@@ -24,6 +24,7 @@ describe('token worker', () => {
             new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth'),
             {
                 ALCHEMY_API_KEY: 'fake_key',
+                AUTH_SECRET: 'fake_secret',
             },
         )
 
@@ -51,6 +52,7 @@ describe('token worker', () => {
             ),
             {
                 ALCHEMY_API_KEY: 'fake_key',
+                AUTH_SECRET: 'fake_secret',
             },
         )
 
@@ -83,6 +85,7 @@ describe('token worker', () => {
             new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth?all'),
             {
                 ALCHEMY_API_KEY: 'fake_key',
+                AUTH_SECRET: 'fake_secret',
             },
         )
 

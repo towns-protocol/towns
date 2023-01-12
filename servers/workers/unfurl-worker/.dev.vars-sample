@@ -1,3 +1,4 @@
 # add your secret variables here for local development
 # for public variables, add them in wrangler.toml
 TWITTER_BEARER=
+AUTH_SECRET=my-secret

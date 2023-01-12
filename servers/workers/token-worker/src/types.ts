@@ -1,7 +1,8 @@
 import { Request as IttyRequest } from 'itty-router'
 import { OwnedNftsResponse, NftContract, OwnedNft } from 'alchemy-sdk'
+import { AuthEnv } from '../../common/auth'
 
-export interface Env {
+export interface Env extends AuthEnv {
     ALCHEMY_API_KEY: string
 }
 

@@ -3,3 +3,4 @@
 
 # get from credentials page in Notion
 ALCHEMY_API_KEY=
+AUTH_SECRET=my-secret

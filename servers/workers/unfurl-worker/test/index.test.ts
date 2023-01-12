@@ -47,9 +47,16 @@ function generateRequest(urlArray: string[], method = 'GET'): [Request, Env, Exe
     const urls = urlArray.map((url) => encodeURIComponent(url)).join('&url=')
     const url = `${FAKE_SERVER_URL}?url=${urls}`
 
+    const bindings = getMiniflareBindings()
+
     return [
-        new Request(url, { method }),
-        getMiniflareBindings(),
+        new Request(url, {
+            method,
+            headers: {
+                Authorization: `Bearer ${btoa(bindings.AUTH_SECRET)}`,
+            },
+        }),
+        bindings,
         { waitUntil: () => null, passThroughOnException: () => null },
     ]
 }
@@ -91,10 +98,31 @@ describe('unfurl handler', () => {
 
     // !! TIP: make one mock request per test !!
 
-    test('handles no url param', async () => {
+    test('Returns unauthorized if not authorized request', async () => {
+        const bindings = getMiniflareBindings()
         const response = await worker.fetch(
-            new Request(FAKE_SERVER_URL, { method: 'GET' }),
-            getMiniflareBindings(),
+            new Request(FAKE_SERVER_URL, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer wrongkey`,
+                },
+            }),
+            bindings,
+            { waitUntil: () => null, passThroughOnException: () => null },
+        )
+        expect(response.status).toBe(401)
+    })
+
+    test('handles no url param', async () => {
+        const bindings = getMiniflareBindings()
+        const response = await worker.fetch(
+            new Request(FAKE_SERVER_URL, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${btoa(bindings.AUTH_SECRET)}`,
+                },
+            }),
+            bindings,
             { waitUntil: () => null, passThroughOnException: () => null },
         )
         expect(response.status).toBe(200)

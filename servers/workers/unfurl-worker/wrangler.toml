@@ -28,6 +28,8 @@ local_protocol = "http"
 
 # The necessary secrets are:
 # TWITTER_BEARER
+# AUTH_SECRET - set in this file for local dev/tests
 # for local development, you can add these in .dev.vars
-# OR
-# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# 
+# For production, you can add these in the Cloudflare dashboard or run
+# `echo <VALUE> | wrangler secret put <NAME>` for each of these
