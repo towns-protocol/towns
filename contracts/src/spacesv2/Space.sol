@@ -31,6 +31,7 @@ contract Space is
   uint256 public ownerRoleId;
 
   mapping(address => bool) public hasEntitlement;
+  mapping(address => bool) public defaultEntitlements;
   mapping(uint256 => bytes32[]) internal entitlementIdsByRoleId;
   address[] public entitlements;
 
@@ -64,6 +65,7 @@ contract Space is
     // whitelist modules
     for (uint256 i = 0; i < _entitlements.length; i++) {
       _setEntitlement(_entitlements[i], true);
+      defaultEntitlements[_entitlements[i]] = true;
     }
   }
 
@@ -123,6 +125,26 @@ contract Space is
     }
 
     channelsByHash[channelId].disabled = _disabled;
+  }
+
+  function updateChannel(
+    string calldata _channelId,
+    string memory _channelName
+  ) external {
+    _isAllowed("", Permissions.AddRemoveChannels);
+
+    bytes32 channelId = keccak256(abi.encodePacked(_channelId));
+
+    if (channelsByHash[channelId].channelId == 0) {
+      revert Errors.ChannelDoesNotExist();
+    }
+
+    // verify channelName is not empty
+    if (bytes(_channelName).length == 0) {
+      revert Errors.NotAllowed();
+    }
+
+    channelsByHash[channelId].name = _channelName;
   }
 
   /// @inheritdoc ISpace
@@ -364,6 +386,8 @@ contract Space is
   }
 
   /// ***** Entitlement Management *****
+
+  /// @inheritdoc ISpace
   function getEntitlementIdsByRoleId(
     uint256 _roleId
   ) external view returns (bytes32[] memory) {
@@ -414,6 +438,11 @@ contract Space is
       revert Errors.EntitlementAlreadyWhitelisted();
     }
 
+    // check if removing a default entitlement
+    if (!_whitelist && defaultEntitlements[_entitlement]) {
+      revert Errors.NotAllowed();
+    }
+
     _setEntitlement(_entitlement, _whitelist);
   }
 
@@ -424,6 +453,12 @@ contract Space is
   ) external {
     _isAllowed("", Permissions.ModifySpacePermissions);
 
+    // check not removing owner role
+    if (_roleId == ownerRoleId) {
+      revert Errors.NotAllowed();
+    }
+
+    // check if entitlement is whitelisted
     if (!hasEntitlement[_entitlement.module]) {
       revert Errors.EntitlementNotWhitelisted();
     }
@@ -433,6 +468,7 @@ contract Space is
       revert Errors.RoleDoesNotExist();
     }
 
+    // create entitlement id
     bytes32 entitlementId = keccak256(
       abi.encodePacked(_roleId, _entitlement.data)
     );
@@ -472,6 +508,7 @@ contract Space is
     _addRoleToEntitlement(_roleId, _entitlement.module, _entitlement.data);
   }
 
+  /// @inheritdoc ISpace
   function addRoleToChannel(
     string calldata _channelId,
     address _entitlement,
@@ -491,6 +528,7 @@ contract Space is
     IEntitlement(_entitlement).addRoleIdToChannel(_channelId, _roleId);
   }
 
+  /// @inheritdoc ISpace
   function removeRoleFromChannel(
     string calldata _channelId,
     address _entitlement,
@@ -564,7 +602,7 @@ contract Space is
     if (_whitelist) {
       entitlements.push(_entitlement);
     } else {
-      // if user wants to remove entitlement, remove from entitlements array
+      // remove from entitlements array
       for (uint256 i = 0; i < entitlements.length; i++) {
         if (_entitlement != entitlements[i]) continue;
         entitlements[i] = entitlements[entitlements.length - 1];

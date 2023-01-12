@@ -54,6 +54,26 @@ contract TokenEntitlementTest is BaseSetup {
     assertTrue(tokenEntitlement.supportsInterface(interfaceId));
   }
 
+  function testGetEntitlementDataByRoleId() external {
+    address _space = createSimpleSpace();
+    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    uint256 _ownerRoleId = Space(_space).ownerRoleId();
+    address _spaceToken = spaceFactory.SPACE_TOKEN_ADDRESS();
+
+    bytes[] memory entitlementData = IEntitlement(_tokenEntitlement)
+      .getEntitlementDataByRoleId(_ownerRoleId);
+
+    for (uint256 i = 0; i < entitlementData.length; i++) {
+      DataTypes.ExternalToken[] memory externalTokens = abi.decode(
+        entitlementData[i],
+        (DataTypes.ExternalToken[])
+      );
+
+      assertEq(externalTokens.length, 1);
+      assertEq(externalTokens[0].contractAddress, _spaceToken);
+    }
+  }
+
   function testRevertIfAddRoleToChannel() external {
     uint256 roleId = _randomUint256();
     string memory channelId = "some-channel";

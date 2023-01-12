@@ -70,12 +70,6 @@ contract DeploySpaces is ScriptUtils {
   }
 
   function _writeJson() internal {
-    string memory json = "";
-    json = vm.serializeString(
-      json,
-      "spaceFactory",
-      vm.toString(address(spaceFactory))
-    );
     string memory path = string.concat(
       "packages/contracts/",
       _getChainName(),
@@ -89,8 +83,11 @@ contract DeploySpaces is ScriptUtils {
       "/space-factory.json"
     );
 
-    vm.writeJson(json, path);
-    vm.writeJson(json, goPath);
+    vm.writeJson(vm.toString(address(spaceFactory)), path, ".spaceFactory");
+    vm.writeJson(vm.toString(address(spaceFactory)), goPath, ".spaceFactory");
+
+    vm.writeJson(vm.toString(address(spaceToken)), path, ".spaceToken");
+    vm.writeJson(vm.toString(address(spaceToken)), goPath, ".spaceToken");
   }
 
   function _createInitialOwnerPermissions() internal {

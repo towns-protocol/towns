@@ -24,6 +24,15 @@ contract SetEntitlementTest is BaseSetup {
     entitlementAddress = address(new ERC1967Proxy(address(implementation), ""));
   }
 
+  function testRevertIfRemovingDefaultEntitlement() external {
+    address _space = createSimpleSpace();
+
+    address _userEntitlement = getSpaceUserEntitlement(_space);
+
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).setEntitlement(_userEntitlement, false);
+  }
+
   function testSetEntitlement() external {
     address _space = createSimpleSpace();
 

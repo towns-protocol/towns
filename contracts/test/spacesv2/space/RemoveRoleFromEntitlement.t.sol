@@ -8,9 +8,26 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract RemoveRoleFromEntitlementTest is BaseSetup {
   function setUp() public {
     BaseSetup.init();
+  }
+
+  function testRevertIfRemovingOwnerRole() external {
+    address _space = createSimpleSpace();
+    address _owner = Space(_space).owner();
+    uint256 _ownerRoleId = Space(_space).ownerRoleId();
+
+    address _userEntitlement = getSpaceUserEntitlement(_space);
+
+    DataTypes.Entitlement memory _entitlement;
+    _entitlement.module = _userEntitlement;
+    _entitlement.data = abi.encode(_owner);
+
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).removeRoleFromEntitlement(_ownerRoleId, _entitlement);
   }
 
   function testRevertIfRoleNotExists() external {

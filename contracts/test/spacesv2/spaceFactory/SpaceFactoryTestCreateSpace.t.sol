@@ -56,6 +56,15 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
     assertEq(spaceFactory.spaceByHash(spaceHash), spaceAddress);
   }
 
+  function testGetTokenIdByNetworkId() external {
+    createSimpleSpace();
+    uint256 tokenId = spaceFactory.getTokenIdByNetworkId(
+      "!7evmpuHDDgkady9u:goerli"
+    );
+
+    assertEq(tokenId, 0);
+  }
+
   function testRevertIfInvalidNameLength() external {
     DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements = DataTypes
       .CreateSpaceExtraEntitlements({

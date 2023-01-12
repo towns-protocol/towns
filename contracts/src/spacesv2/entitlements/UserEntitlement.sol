@@ -29,9 +29,9 @@ contract UserEntitlement is
   uint256 entitlementCount;
 
   struct Entitlement {
+    uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
-    uint256 roleId;
     address user;
   }
 
@@ -70,6 +70,7 @@ contract UserEntitlement is
       super.supportsInterface(interfaceId);
   }
 
+  /// @inheritdoc IEntitlement
   function isEntitled(
     string calldata channelId,
     address user,

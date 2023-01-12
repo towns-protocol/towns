@@ -23,7 +23,6 @@ contract TokenEntitlement is
   IEntitlement
 {
   struct Entitlement {
-    bytes32 entitlementId;
     uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
@@ -116,7 +115,6 @@ contract TokenEntitlement is
       entitlementsById[entitlementId].tokens.push(externalTokens[i]);
     }
 
-    entitlementsById[entitlementId].entitlementId = entitlementId;
     entitlementsById[entitlementId].roleId = roleId;
     entitlementsById[entitlementId].grantedBy = _msgSender();
     entitlementsById[entitlementId].grantedTime = block.timestamp;

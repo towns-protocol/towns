@@ -183,6 +183,13 @@ contract SpaceFactory is
     }
   }
 
+  function getTokenIdByNetworkId(
+    string calldata spaceNetworkId
+  ) external view returns (uint256) {
+    bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
+    return tokenByHash[_networkHash];
+  }
+
   function getOwnerPermissions() external view returns (string[] memory) {
     return ownerPermissions;
   }

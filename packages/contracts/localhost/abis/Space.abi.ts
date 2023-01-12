@@ -341,6 +341,25 @@ export default [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "defaultEntitlements",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "disabled",
     "outputs": [
@@ -898,6 +917,24 @@ export default [
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_channelId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_channelName",
+        "type": "string"
+      }
+    ],
+    "name": "updateChannel",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

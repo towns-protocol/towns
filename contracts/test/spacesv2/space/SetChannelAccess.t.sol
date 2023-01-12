@@ -40,6 +40,7 @@ contract SetChannelAccessTest is BaseSetup {
       string memory channelNetworkId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
+
     Space(_space).createChannel(channelName, channelNetworkId, roleIds);
 
     vm.prank(_randomAddress());
@@ -47,10 +48,12 @@ contract SetChannelAccessTest is BaseSetup {
     Space(_space).setChannelAccess(channelNetworkId, true);
   }
 
-  function testSetChannelAccessChannelDoesNotExist() external {
+  function testSetChannelAccessChannelDoesNotExist(
+    string memory channelId
+  ) external {
     address _space = createSimpleSpace();
 
     vm.expectRevert(Errors.ChannelDoesNotExist.selector);
-    Space(_space).setChannelAccess("non-existent-channel", true);
+    Space(_space).setChannelAccess(channelId, true);
   }
 }

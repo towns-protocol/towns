@@ -265,6 +265,25 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      }
+    ],
+    "name": "getTokenIdByNetworkId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_space",
         "type": "address"

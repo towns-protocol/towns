@@ -61,6 +61,10 @@ interface ISpace {
   ) external;
 
   /// ***** Entitlement Management *****
+  function getEntitlementIdsByRoleId(
+    uint256 roleId
+  ) external view returns (bytes32[] memory);
+
   function isEntitledToChannel(
     string calldata channelId,
     address user,
@@ -81,8 +85,20 @@ interface ISpace {
     DataTypes.Entitlement memory entitlement
   ) external;
 
+  function addRoleToChannel(
+    string calldata channelId,
+    address entitlement,
+    uint256 roleId
+  ) external;
+
   function addRoleToEntitlement(
     uint256 roleId,
     DataTypes.Entitlement memory entitlement
+  ) external;
+
+  function removeRoleFromChannel(
+    string calldata channelId,
+    address entitlement,
+    uint256 roleId
   ) external;
 }

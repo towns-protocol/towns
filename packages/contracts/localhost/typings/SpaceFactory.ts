@@ -77,6 +77,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "addOwnerPermissions(string[])": FunctionFragment;
     "createSpace(string,string,string,string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": FunctionFragment;
     "getOwnerPermissions()": FunctionFragment;
+    "getTokenIdByNetworkId(string)": FunctionFragment;
     "initialize(address,address,address,address,string[])": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerPermissions(uint256)": FunctionFragment;
@@ -99,6 +100,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
       | "addOwnerPermissions"
       | "createSpace"
       | "getOwnerPermissions"
+      | "getTokenIdByNetworkId"
       | "initialize"
       | "owner"
       | "ownerPermissions"
@@ -145,6 +147,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getOwnerPermissions",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTokenIdByNetworkId",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -224,6 +230,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getOwnerPermissions",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getTokenIdByNetworkId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -375,6 +385,11 @@ export interface SpaceFactory extends BaseContract {
 
     getOwnerPermissions(overrides?: CallOverrides): Promise<[string[]]>;
 
+    getTokenIdByNetworkId(
+      spaceNetworkId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     initialize(
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
@@ -455,6 +470,11 @@ export interface SpaceFactory extends BaseContract {
 
   getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
 
+  getTokenIdByNetworkId(
+    spaceNetworkId: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   initialize(
     _space: PromiseOrValue<string>,
     _tokenEntitlement: PromiseOrValue<string>,
@@ -534,6 +554,11 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<string>;
 
     getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
+
+    getTokenIdByNetworkId(
+      spaceNetworkId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     initialize(
       _space: PromiseOrValue<string>,
@@ -651,6 +676,11 @@ export interface SpaceFactory extends BaseContract {
 
     getOwnerPermissions(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getTokenIdByNetworkId(
+      spaceNetworkId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     initialize(
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
@@ -739,6 +769,11 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getOwnerPermissions(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getTokenIdByNetworkId(
+      spaceNetworkId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

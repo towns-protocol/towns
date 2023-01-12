@@ -51,6 +51,12 @@ contract MockEntitlement is
     return true;
   }
 
+  function getEntitlementDataByEntitlementId(
+    bytes32
+  ) external pure returns (bytes memory) {
+    return bytes("");
+  }
+
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
