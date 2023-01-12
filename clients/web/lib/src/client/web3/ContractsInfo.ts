@@ -1,12 +1,14 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
+import GoerliCouncilNFTAbi from '@harmony/contracts/goerli/abis/CouncilNFT.abi.json'
 import GoerliCouncilAddresses from '@harmony/contracts/goerli/addresses/council.json'
 // todo: goerli SpaceFactory is not deployed yet. Fake it for now.
 import GoerliSpaceFactoryAbi from '@harmony/contracts/localhost/abis/SpaceFactory.abi.json'
 // todo: goerli SpaceFactory is not deployed yet. Fake it for now.
 import GoerliSpaceFactoryAddress from '@harmony/contracts/localhost/addresses/space-factory.json'
 import GoerliSpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
+import LocalhostCouncilNFTAbi from '@harmony/contracts/localhost/abis/CouncilNFT.abi.json'
 import LocalhostCouncilAddresses from '@harmony/contracts/localhost/addresses/council.json'
 import LocalhostSpaceFactoryAbi from '@harmony/contracts/localhost/abis/SpaceFactory.abi.json'
 import LocalhostSpaceFactoryAddress from '@harmony/contracts/localhost/addresses/space-factory.json'
@@ -22,6 +24,7 @@ export interface IContractsInfo {
         }
     }
     council: {
+        abi: typeof LocalhostCouncilNFTAbi | typeof GoerliCouncilNFTAbi
         address: { councilnft: string }
     }
     spaceFactory: {
@@ -39,6 +42,7 @@ export function getContractsInfo(chainId: number): IContractsInfo {
                     addresses: GoerliSpaceManagerAddresses,
                 },
                 council: {
+                    abi: GoerliCouncilNFTAbi,
                     address: GoerliCouncilAddresses,
                 },
                 spaceFactory: {
@@ -46,12 +50,14 @@ export function getContractsInfo(chainId: number): IContractsInfo {
                     address: GoerliSpaceFactoryAddress,
                 },
             }
+        case 0:
         case 31337:
             return {
                 spaceManager: {
                     addresses: LocalhostSpaceManagerAddresses,
                 },
                 council: {
+                    abi: LocalhostCouncilNFTAbi,
                     address: LocalhostCouncilAddresses,
                 },
                 spaceFactory: {

@@ -81,16 +81,16 @@ const MissingSpaceInfo = (props: { spaceId: RoomIdentifier; onJoinRoom: () => vo
     return spaceOnChainInfo ? (
         <>
             <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+                onchain space networkId: {spaceOnChainInfo.networkId}
+            </Typography>
+            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
                 onchain spaceName: {spaceOnChainInfo.name}
             </Typography>
             <Typography display="block" variant="body1" component="span" sx={messageStyle}>
                 onchain space owner: {spaceOnChainInfo.owner}
             </Typography>
             <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-                onchain space creator: {spaceOnChainInfo.creator}
-            </Typography>
-            <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-                <>onchain space createdAt: {spaceOnChainInfo.createdAt.toString()}</>
+                onchain space disabled: {spaceOnChainInfo.disabled}
             </Typography>
             <Button variant="contained" onClick={props.onJoinRoom}>
                 Join Room

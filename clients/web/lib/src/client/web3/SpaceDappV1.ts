@@ -1,25 +1,23 @@
 /* eslint-disable no-restricted-imports */
 
-import { BigNumber, BytesLike, ContractTransaction, ethers } from 'ethers'
-
-import { CouncilNFTShim } from './shims/CouncilNFTShim'
-import { ISpaceDapp } from './ISpaceDapp'
-import { DataTypes as SpaceDataTypes } from '@harmony/contracts/localhost/typings/Space'
-import { DataTypes as SpaceFactoryDataTypes } from '@harmony/contracts/localhost/typings/SpaceFactory'
-import { SpaceInfo } from './SpaceInfo'
-import { ZionRoleManagerShim } from './shims/ZionRoleManagerShim'
+import { BytesLike, ContractTransaction, ethers } from 'ethers'
+import { EventsContractInfo, ISpaceDapp } from './ISpaceDapp'
 import {
     DataTypes as SpaceManagerDataTypes,
     ZionSpaceManagerShim,
 } from './shims/ZionSpaceManagerShim'
 import { createExternalTokenEntitlements, createPermissions } from './ContractHelpers'
+
 import { Permission } from './ContractTypes'
+import { DataTypes as SpaceDataTypes } from '@harmony/contracts/localhost/typings/Space'
+import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
+import { SpaceInfo } from './SpaceInfo'
+import { ZionRoleManagerShim } from './shims/ZionRoleManagerShim'
 
 // todo: this exists mainly to unblock the migration to v2.
 // todo: remove when migration to v2 is completed
 export class SpaceDappV1 implements ISpaceDapp {
     private readonly spaceManager: ZionSpaceManagerShim
-    private readonly councilNFT: CouncilNFTShim
     private readonly roleManager: ZionRoleManagerShim
 
     constructor(
@@ -28,7 +26,6 @@ export class SpaceDappV1 implements ISpaceDapp {
         signer: ethers.Signer | undefined,
     ) {
         this.spaceManager = new ZionSpaceManagerShim(provider, signer, chainId)
-        this.councilNFT = new CouncilNFTShim(provider, signer, chainId)
         this.roleManager = new ZionRoleManagerShim(provider, signer, chainId)
     }
 
@@ -36,17 +33,17 @@ export class SpaceDappV1 implements ISpaceDapp {
         spaceName: string,
         spaceNetworkId: string,
         spaceMetadata: string,
-        _permissions: Permission[],
-        extraEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        everyonePermissions: Permission[],
     ): Promise<ContractTransaction> {
         const spaceInfo: SpaceManagerDataTypes.CreateSpaceDataStruct = {
             spaceName,
             spaceNetworkId,
             spaceMetadata,
         }
-        const permissions = createPermissions(_permissions)
-        const tokenEntitlement = this.createTokenEntitlement(extraEntitlements, permissions)
-        return this.spaceManager.createSpace(spaceInfo, tokenEntitlement, permissions)
+        const everyonePerms = createPermissions(everyonePermissions)
+        const memberEntitlementData = this.createMemberEntitlementData(memberEntitlements)
+        return this.spaceManager.createSpace(spaceInfo, memberEntitlementData, everyonePerms)
     }
 
     public createChannel(
@@ -108,15 +105,30 @@ export class SpaceDappV1 implements ISpaceDapp {
         )
     }
 
-    public getSpaceIdByNetworkId(spaceNetworkId: string): Promise<BigNumber> {
-        return this.spaceManager.unsigned.getSpaceIdByNetworkId(spaceNetworkId)
-    }
-
     public getSpaceInfo(spaceNetworkId: string): Promise<SpaceInfo> {
         return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceNetworkId)
     }
 
-    public isEntitledToSpace(spaceId: string, user: string, _permission: string): Promise<boolean> {
+    public getSpaceFactoryEventsContractInfo(): EventsContractInfo {
+        return {
+            abi: this.spaceManager.eventsAbi,
+            address: this.spaceManager.address,
+        }
+    }
+
+    public getSpaceEventsContractInfo(_spaceId: string): Promise<EventsContractInfo> {
+        // spaceManager v1 doesn't have a separate events abi for spaces
+        return Promise.resolve({
+            abi: this.spaceManager.eventsAbi,
+            address: this.spaceManager.address,
+        })
+    }
+
+    public isEntitledToSpace(
+        spaceId: string,
+        user: string,
+        _permission: Permission,
+    ): Promise<boolean> {
         const permission: SpaceManagerDataTypes.PermissionStruct = {
             name: _permission,
         }
@@ -127,7 +139,7 @@ export class SpaceDappV1 implements ISpaceDapp {
         spaceId: string,
         channelId: string,
         user: string,
-        _permission: string,
+        _permission: Permission,
     ): Promise<boolean> {
         const permission: SpaceManagerDataTypes.PermissionStruct = {
             name: _permission,
@@ -143,7 +155,7 @@ export class SpaceDappV1 implements ISpaceDapp {
         return Promise.resolve(this.getDecodedError(error))
     }
 
-    public setAccess(spaceNetworkId: string, disabled: boolean): Promise<ContractTransaction> {
+    public setSpaceAccess(spaceNetworkId: string, disabled: boolean): Promise<ContractTransaction> {
         return this.spaceManager.signed.setSpaceAccess(spaceNetworkId, disabled)
     }
 
@@ -155,27 +167,19 @@ export class SpaceDappV1 implements ISpaceDapp {
         return this.spaceManager.signed.setChannelAccess(spaceNetworkId, channelNetworkId, disabled)
     }
 
-    private createTokenEntitlement(
-        tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
-        permissions: SpaceManagerDataTypes.PermissionStruct[],
+    private createMemberEntitlementData(
+        entitlementData: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
     ): SpaceManagerDataTypes.CreateSpaceEntitlementDataStruct {
-        if (tokenEntitlement.tokens.length) {
-            const tokenAddresses = tokenEntitlement.tokens.map(
-                (token) => token.contractAddress as string,
-            )
-            return {
-                roleName: 'Member',
-                permissions,
-                externalTokenEntitlements: createExternalTokenEntitlements(tokenAddresses),
-                users: [],
-            }
-        } else {
-            return {
-                roleName: '',
-                permissions: [],
-                externalTokenEntitlements: [],
-                users: [],
-            }
+        const tokenPermissions = createPermissions(entitlementData.permissions as Permission[])
+        const tokenAddresses = entitlementData.tokens.map(
+            (token) => token.contractAddress as string,
+        )
+        const externalTokenEntitlements = createExternalTokenEntitlements(tokenAddresses)
+        return {
+            roleName: entitlementData.roleName,
+            permissions: tokenPermissions,
+            externalTokenEntitlements: externalTokenEntitlements,
+            users: entitlementData.users,
         }
     }
 

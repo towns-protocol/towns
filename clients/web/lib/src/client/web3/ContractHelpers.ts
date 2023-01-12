@@ -1,6 +1,7 @@
 import { DataTypes } from './shims/ZionSpaceManagerShim'
 import { Permission } from './ContractTypes'
-import { RoleManagerDataTypes } from './shims/ZionRoleManagerShim'
+import { SpaceDataTypes } from './shims/SpaceShim'
+import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { ZionClient } from '../ZionClient'
 import { getContractsInfo } from './ContractsInfo'
 
@@ -44,7 +45,23 @@ export function createExternalTokenEntitlements(
     return externalTokens.map((t) => createTokenEntitlementData(t))
 }
 
-export function createPermissions(permissions: Permission[]): DataTypes.PermissionStruct[] {
+export function createExternalTokenStruct(
+    tokenAddresses: string[],
+): SpaceFactoryDataTypes.ExternalTokenStruct[] {
+    const tokenStruct: SpaceFactoryDataTypes.ExternalTokenStruct[] = tokenAddresses.map(
+        (address) => ({
+            contractAddress: address,
+            isSingleToken: false,
+            quantity: 1,
+            tokenIds: [],
+        }),
+    )
+    return tokenStruct
+}
+
+export function createPermissions(
+    permissions: Permission[] | string[],
+): DataTypes.PermissionStruct[] {
     const dataStruct: DataTypes.PermissionStruct[] = []
     for (const p of permissions) {
         dataStruct.push({ name: p })
@@ -52,27 +69,16 @@ export function createPermissions(permissions: Permission[]): DataTypes.Permissi
     return dataStruct
 }
 
-export async function getAllRolesFromSpace(
-    client: ZionClient,
-    spaceNetworkId: string,
-): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
-    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(spaceNetworkId)
-    // get all the roles in the space
-    const allSpaceRoles = await client.roleManager.unsigned.getRolesBySpaceId(spaceId)
-    return allSpaceRoles
-}
-
 export async function getFilteredRolesFromSpace(
     client: ZionClient,
     spaceNetworkId: string,
-): Promise<RoleManagerDataTypes.RoleStructOutput[]> {
-    const spaceRoles = await getAllRolesFromSpace(client, spaceNetworkId)
-    const spaceId = await client.spaceManager.unsigned.getSpaceIdByNetworkId(spaceNetworkId)
-    const filteredRoles: RoleManagerDataTypes.RoleStructOutput[] = []
+): Promise<SpaceDataTypes.RoleStructOutput[]> {
+    const spaceRoles = await client.spaceDapp.getRoles(spaceNetworkId)
+    const filteredRoles: SpaceDataTypes.RoleStructOutput[] = []
     // Filter out space roles which won't work when creating a channel
     for (const r of spaceRoles) {
-        const permissions = await client.roleManager.unsigned.getPermissionsBySpaceIdByRoleId(
-            spaceId.toNumber(),
+        const permissions = await client.spaceDapp.getPermissionsByRoleId(
+            spaceNetworkId,
             r.roleId.toNumber(),
         )
         // Filter out roles which have no permissions & the Owner role

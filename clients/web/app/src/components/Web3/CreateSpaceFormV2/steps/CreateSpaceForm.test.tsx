@@ -22,8 +22,13 @@ vi.mock('use-zion-client', async () => {
     return {
         ...((await vi.importActual('use-zion-client')) as Record<string, unknown>),
         useZionClient: () => ({
-            spaceManager: {
-                eventsAbi: [],
+            spaceDapp: {
+                getSpaceFactoryEventsContractInfo: () => {
+                    return {
+                        abi: 'some abi',
+                        address: '0x',
+                    }
+                },
             },
         }),
     }

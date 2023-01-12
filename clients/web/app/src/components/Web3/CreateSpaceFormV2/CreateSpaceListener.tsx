@@ -1,21 +1,21 @@
 import { Address, useAccount, useContractEvent } from 'wagmi'
 import { Abi } from 'abitype'
 import { ethers } from 'ethers'
-import { useZionClient } from 'use-zion-client'
 import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 
 type ListenerProps = {
-    spaceManager: NonNullable<ReturnType<typeof useZionClient>['spaceManager']>
+    eventsAbi: ethers.ContractInterface
+    contractAddress: string
 }
 
-export const CreateSpaceEventListener = ({ spaceManager }: ListenerProps) => {
+export const CreateSpaceEventListener = ({ eventsAbi, contractAddress }: ListenerProps) => {
     const { address } = useAccount()
-    const iface = new ethers.utils.Interface(spaceManager?.eventsAbi as string)
+    const iface = new ethers.utils.Interface(eventsAbi as string)
     const setMintedTokenAddress = useCreateSpaceFormStore((s) => s.setMintedTokenAddress)
 
     useContractEvent({
-        address: spaceManager.address,
-        abi: spaceManager.eventsAbi as Abi,
+        address: contractAddress as Address,
+        abi: eventsAbi as Abi,
         eventName: 'CreateSpace',
         listener: async (data, owner, eventData) => {
             if (owner !== address) {

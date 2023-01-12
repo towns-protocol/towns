@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionClient } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import { Box, FormRender } from '@ui'
@@ -11,7 +11,7 @@ import { CreateSpaceEventListener } from '../CreateSpaceListener'
 export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
     const s = useCreateSpaceFormStore()
     const name = s.step2.spaceName ?? ''
-    const { spaceManager } = useZionClient()
+    const { spaceDapp } = useZionClient()
     const navigate = useNavigate()
     const [animationAddress, setAnimationAddress] = useState('')
 
@@ -22,6 +22,14 @@ export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
         navigate(`/${PATHS.SPACES}/${createdSpaceId}/`)
     }, [createdSpaceId, navigate])
 
+    const { eventsAbi, contractAddress } = useMemo(() => {
+        const contractInfo = spaceDapp?.getSpaceFactoryEventsContractInfo()
+        return {
+            eventsAbi: contractInfo?.abi,
+            contractAddress: contractInfo?.address,
+        }
+    }, [spaceDapp])
+
     useEffect(() => {
         if (mintedTokenAddress && createdSpaceId && !animationAddress) {
             setAnimationAddress(mintedTokenAddress)
@@ -30,7 +38,9 @@ export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
 
     return (
         <>
-            {spaceManager?.eventsAbi && <CreateSpaceEventListener spaceManager={spaceManager} />}
+            {eventsAbi && contractAddress && (
+                <CreateSpaceEventListener eventsAbi={eventsAbi} contractAddress={contractAddress} />
+            )}
             <FormRender id={id} onSubmit={onSubmit}>
                 {() => {
                     return (

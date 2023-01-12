@@ -28,6 +28,6 @@
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
       "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
-    }
+    },
   ]
 }

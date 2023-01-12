@@ -1,18 +1,29 @@
+import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
+import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
 import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
-import { publicKeyToBuffer, SignerContext } from '@zion/core'
+import {
+    ChannelTransactionContext,
+    ContractVersion,
+    IZionServerVersions,
+    SpaceProtocol,
+    TransactionContext,
+    TransactionStatus,
+    ZionAccountDataType,
+    ZionAuth,
+    ZionOpts,
+} from './ZionClientTypes'
 import {
     ClientEvent,
     EventType,
     MatrixClient,
+    MatrixError,
     Room as MatrixRoom,
     PendingEventOrdering,
     RelationType,
     User,
     UserEvent,
     createClient,
-    MatrixError,
 } from 'matrix-js-sdk'
-import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -22,43 +33,36 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
 } from '../types/matrix-types'
-import { RoomIdentifier } from '../types/room-identifier'
+import { NewSession, newLoginSession, newRegisterSession } from '../hooks/use-matrix-wallet-sign-in'
+import { SignerContext, publicKeyToBuffer } from '@zion/core'
+
+import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
+import { FullyReadMarker } from '../types/timeline-types'
+import { ISpaceDapp } from './web3/ISpaceDapp'
+import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier } from '../types/web3-types'
-import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
-import { NewSession, newRegisterSession, newLoginSession } from '../hooks/use-matrix-wallet-sign-in'
-import {
-    IZionServerVersions,
-    TransactionContext,
-    TransactionStatus,
-    ZionAccountDataType,
-    ZionAuth,
-    ZionOpts,
-    SpaceProtocol,
-    ContractVersion,
-} from './ZionClientTypes'
+import { RoomIdentifier } from '../types/room-identifier'
+import { SpaceDappV1 } from './web3/SpaceDappV1'
+import { SpaceDappV2 } from './web3/SpaceDappV2'
+import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
+import { SpaceInfo } from './web3/SpaceInfo'
+import { SyncState } from 'matrix-js-sdk/lib/sync'
+import { createCasablancaChannel } from './casablanca/CreateChannel'
+import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { createMatrixChannel } from './matrix/CreateChannel'
 import { createMatrixSpace } from './matrix/CreateSpace'
-import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { editZionMessage } from './matrix/EditMessage'
 import { enrichPowerLevels } from './matrix/PowerLevels'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
+import { loadOlm } from './loadOlm'
 import { sendMatrixMessage } from './matrix/SendMessage'
 import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
+import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom } from '../store/use-matrix-store'
-import { SyncState } from 'matrix-js-sdk/lib/sync'
-import { DataTypes, ZionSpaceManagerShim } from './web3/shims/ZionSpaceManagerShim'
-import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
-import { ZionRoleManagerShim } from './web3/shims/ZionRoleManagerShim'
-import { loadOlm } from './loadOlm'
-import { FullyReadMarker } from '../types/timeline-types'
-import { staticAssertNever } from '../utils/zion-utils'
-import { createCasablancaChannel } from './casablanca/CreateChannel'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { ISpaceDapp } from './web3/ISpaceDapp'
-import { SpaceDappV2 } from './web3/SpaceDappV2'
-import { SpaceDappV1 } from './web3/SpaceDappV1'
+import { getContractsInfo } from './web3/ContractsInfo'
 
 /***
  * Zion Client
@@ -76,20 +80,10 @@ import { SpaceDappV1 } from './web3/SpaceDappV1'
 export class ZionClient {
     public readonly opts: ZionOpts
     public readonly name: string
-    public get auth(): ZionAuth | undefined {
-        return this._auth
-    }
-    /// chain id at the time the contracts were created
-    /// contracts are recreated when the client is started
-    public get chainId(): number {
-        return this._chainId
-    }
-    public spaceManager: ZionSpaceManagerShim
-    public councilNFT: CouncilNFTShim
-    public roleManager: ZionRoleManagerShim
+    public spaceDapp: ISpaceDapp
+    public councilNFT?: CouncilNFTShim
     public matrixClient?: MatrixClient
     public casablancaClient?: CasablancaClient
-    private readonly spaceDapp: ISpaceDapp
     private _chainId: number
     private _auth?: ZionAuth
 
@@ -100,34 +94,39 @@ export class ZionClient {
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.matrixClient = ZionClient.createMatrixClient(opts.matrixServerUrl, this._auth)
 
-        if (opts.contractVersion === ContractVersion.V2) {
-            this.spaceDapp = new SpaceDappV2(this.chainId, opts.web3Provider, opts.web3Signer)
+        if (this.opts.contractVersion === ContractVersion.V2) {
+            this.spaceDapp = new SpaceDappV2(
+                this._chainId,
+                this.opts.web3Provider,
+                this.opts.web3Signer,
+            )
         } else {
             this.spaceDapp = new SpaceDappV1(
-                this.chainId,
+                this._chainId,
                 this.opts.web3Provider,
                 this.opts.web3Signer,
             )
         }
+        if (this.opts.web3Provider && this.opts.web3Signer) {
+            const contractsInfo = getContractsInfo(this._chainId)
+            this.councilNFT = new CouncilNFTShim(
+                contractsInfo.council.address.councilnft,
+                contractsInfo.council.abi,
+                this._chainId,
+                this.opts.web3Provider,
+                this.opts.web3Signer,
+            )
+        }
+    }
 
-        // todo: deprecated
-        this.spaceManager = new ZionSpaceManagerShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
-        // todo: deprecated
-        this.councilNFT = new CouncilNFTShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
-        // todo: deprecated
-        this.roleManager = new ZionRoleManagerShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
+    public get auth(): ZionAuth | undefined {
+        return this._auth
+    }
+
+    /// chain id at the time the contracts were created
+    /// contracts are recreated when the client is started
+    public get chainId(): number {
+        return this._chainId
     }
 
     /************************************************
@@ -288,22 +287,16 @@ export class ZionClient {
         if (this.matrixClient?.clientRunning) {
             throw new Error('matrixClient already running')
         }
+        if (!this.opts.web3Provider || !this.opts.web3Signer) {
+            throw new Error('web3Provider and web3Signer are required')
+        }
         // log startOpts
         this.log('Starting matrixClient')
         // set auth, chainId
         this._auth = auth
         this._chainId = chainId
         // new contracts
-        this.spaceManager = new ZionSpaceManagerShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
-        this.councilNFT = new CouncilNFTShim(
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-            this.chainId,
-        )
+        this.initializeContractShims(this._chainId, this.opts.web3Provider, this.opts.web3Signer)
         // new matrixClient
         this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
         // start it up, this begins a sync command
@@ -393,12 +386,12 @@ export class ZionClient {
      *************************************************/
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
-        spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-        everyonePermissions: DataTypes.PermissionStruct[],
+        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        everyonePermissions: Permission[],
     ): Promise<RoomIdentifier | undefined> {
         const txContext = await this.createSpaceTransaction(
             createSpaceInfo,
-            spaceEntitlementData,
+            memberEntitlements,
             everyonePermissions,
         )
         if (txContext.error) {
@@ -414,8 +407,8 @@ export class ZionClient {
 
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-        everyonePermissions: DataTypes.PermissionStruct[],
+        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        everyonePermissions: Permission[],
     ): Promise<TransactionContext<RoomIdentifier>> {
         const roomId: RoomIdentifier | undefined = await this.createSpaceRoom(createSpaceInfo)
 
@@ -432,24 +425,21 @@ export class ZionClient {
 
         console.log('[createSpaceTransaction] Matrix space created', roomId)
 
-        const spaceInfo: DataTypes.CreateSpaceDataStruct = {
-            spaceName: createSpaceInfo.name,
-            spaceNetworkId: roomId.networkId,
-            spaceMetadata: createSpaceInfo.spaceMetadata ?? '',
-        }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
 
         try {
-            transaction = await this.spaceManager.createSpace(
-                spaceInfo,
-                spaceEntitlementData,
+            transaction = await this.spaceDapp.createSpace(
+                createSpaceInfo.name,
+                roomId.networkId,
+                createSpaceInfo.spaceMetadata ?? '',
+                memberEntitlements,
                 everyonePermissions,
             )
             console.log(`[createSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createSpaceTransaction] error', err)
-            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+            error = await this.onErrorLeaveSpaceRoomAndDecodeError(roomId, err)
         }
 
         return {
@@ -482,7 +472,7 @@ export class ZionClient {
             )
         } catch (err) {
             console.error('[waitForCreateSpaceTransaction] error', err)
-            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+            error = await this.onErrorLeaveSpaceRoomAndDecodeError(roomId, err)
         }
 
         if (receipt?.status === 1) {
@@ -497,9 +487,9 @@ export class ZionClient {
 
         // got here without success
         if (!error) {
-            error = await this.onErrorLeaveRoomAndDecodeError(
-                new Error('Failed to create space'),
+            error = await this.onErrorLeaveSpaceRoomAndDecodeError(
                 roomId,
+                new Error('Failed to create space'),
             )
         }
         console.error('[waitForCreateSpaceTransaction] failed', error)
@@ -575,7 +565,7 @@ export class ZionClient {
 
     public async createChannelTransaction(
         createChannelInfo: CreateChannelInfo,
-    ): Promise<TransactionContext<RoomIdentifier>> {
+    ): Promise<ChannelTransactionContext> {
         const roomId: RoomIdentifier | undefined = await this.createChannelRoom(createChannelInfo)
 
         if (!roomId) {
@@ -585,40 +575,45 @@ export class ZionClient {
                 receipt: undefined,
                 status: TransactionStatus.Failed,
                 data: undefined,
+                parentSpaceId: undefined,
                 error: new Error('Matrix createChannel failed'),
             }
         }
 
         console.log('[createChannelTransaction] Matrix channel created', roomId)
 
-        const channelInfo: DataTypes.CreateChannelDataStruct = {
-            spaceNetworkId: createChannelInfo.parentSpaceId.networkId,
-            channelName: createChannelInfo.name,
-            channelNetworkId: roomId.networkId,
-            roleIds: createChannelInfo.roleIds,
-        }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
 
         try {
-            transaction = await this.spaceManager.createChannel(channelInfo)
+            transaction = await this.spaceDapp.createChannel(
+                createChannelInfo.parentSpaceId.networkId,
+                createChannelInfo.name,
+                roomId.networkId,
+                createChannelInfo.roleIds,
+            )
             console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
-            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+            error = await this.onErrorLeaveChannelRoomAndDecodeError(
+                createChannelInfo.parentSpaceId.networkId,
+                roomId,
+                err,
+            )
         }
 
         return {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            parentSpaceId: createChannelInfo.parentSpaceId.networkId,
             data: transaction ? roomId : undefined,
             error,
         }
     }
 
     public async waitForCreateChannelTransaction(
-        context: TransactionContext<RoomIdentifier> | undefined,
+        context: ChannelTransactionContext | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
         let transaction: ContractTransaction | undefined = undefined
         let receipt: ContractReceipt | undefined = undefined
@@ -638,7 +633,11 @@ export class ZionClient {
             )
         } catch (err) {
             console.error('[waitForCreateChannelTransaction] error', err)
-            error = await this.onErrorLeaveRoomAndDecodeError(err, roomId)
+            error = await this.onErrorLeaveChannelRoomAndDecodeError(
+                context?.parentSpaceId,
+                roomId,
+                err,
+            )
         }
 
         if (receipt?.status === 1) {
@@ -654,9 +653,10 @@ export class ZionClient {
         // got here without success
         if (!error) {
             // If we don't have an error from the transaction, create one
-            error = await this.onErrorLeaveRoomAndDecodeError(
-                new Error('Failed to create channel'),
+            error = await this.onErrorLeaveChannelRoomAndDecodeError(
+                context?.parentSpaceId,
                 roomId,
+                new Error('Failed to create channel'),
             )
         }
         console.error('[waitForCreateChannelTransaction] failed', error)
@@ -672,32 +672,31 @@ export class ZionClient {
     /************************************************
      * isEntitled
      *************************************************/
-    public async isEntitled(
+    public isEntitled(
         spaceId: string,
         channelId: string,
         user: string,
-        permission: DataTypes.PermissionStruct,
+        permission: Permission,
     ): Promise<boolean> {
-        const isEntitled: boolean = await this.spaceManager.unsigned.isEntitled(
-            spaceId,
-            channelId,
-            user,
-            permission,
-        )
         console.log('[isEntitled] is user entitlted for channel and space for permission', {
             user: user,
             spaceId: spaceId,
             channelId: channelId,
-            permission: permission.name,
+            permission: permission,
         })
-        return isEntitled
+
+        if (channelId) {
+            return this.spaceDapp.isEntitledToChannel(spaceId, channelId, user, permission)
+        } else {
+            return this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
+        }
     }
 
     /************************************************
      * getSpaceInfoBySpaceId
      *************************************************/
-    public async getSpaceInfoBySpaceId(spaceNetworkId: string): Promise<DataTypes.SpaceInfoStruct> {
-        return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceNetworkId)
+    public async getSpaceInfoBySpaceId(spaceNetworkId: string): Promise<SpaceInfo> {
+        return this.spaceDapp.getSpaceInfo(spaceNetworkId)
     }
 
     /************************************************
@@ -706,8 +705,8 @@ export class ZionClient {
     public async createRoleWithEntitlementData(
         spaceNetworkId: string,
         name: string,
-        permissions: DataTypes.PermissionStruct[],
-        tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[],
+        permissions: Permission[],
+        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
     ): Promise<RoleIdentifier | undefined> {
         let transaction: ContractTransaction | undefined = undefined
@@ -716,22 +715,22 @@ export class ZionClient {
         let roleId: string | undefined = undefined
         let roleName: string | undefined = undefined
         try {
-            transaction = await this.spaceManager.createRoleWithEntitlementData(
+            transaction = await this.spaceDapp.createRoleWithEntitlementData(
                 spaceNetworkId,
                 name,
                 permissions,
-                tokenEntitlements,
+                tokens,
                 users,
             )
             receipt = await transaction.wait()
         } catch (err) {
-            const decodedError = this.getDecodedError(err)
+            const decodedError = this.getDecodedErrorForSpace(spaceNetworkId, err)
             console.error('[createRole] failed', decodedError)
             throw decodedError
         } finally {
             if (receipt?.status === 1) {
                 // Successful created the role on-chain.
-                console.log('[createRole] createRole successful', receipt?.logs[0].topics[2])
+                console.log('[createRoleWithEntitlementData] success', receipt?.logs[0].topics[2])
                 roleId = BigNumber.from(receipt?.logs[0].topics[2]).toString()
                 // John: how can we best decode this 32 byte hex string to a human readable string ?
                 roleName = receipt?.logs[0].topics[3]
@@ -752,10 +751,10 @@ export class ZionClient {
         let receipt: ContractReceipt | undefined = undefined
         let success = false
         try {
-            transaction = await this.spaceManager.signed.setSpaceAccess(spaceNetworkId, disabled)
+            transaction = await this.spaceDapp.setSpaceAccess(spaceNetworkId, disabled)
             receipt = await transaction.wait()
         } catch (err) {
-            const decodedError = this.getDecodedError(err)
+            const decodedError = this.getDecodedErrorForSpace(spaceNetworkId, err)
             console.error('[setSpaceAccess] failed', decodedError)
             throw decodedError
         } finally {
@@ -1206,6 +1205,26 @@ export class ZionClient {
         console.log(message, ...optionalParams)
     }
 
+    private initializeContractShims(
+        chainId: number,
+        provider: ethers.providers.Provider,
+        signer: ethers.Signer,
+    ): void {
+        if (this.opts.contractVersion === ContractVersion.V2) {
+            this.spaceDapp = new SpaceDappV2(chainId, provider, signer)
+        } else {
+            this.spaceDapp = new SpaceDappV1(chainId, provider, signer)
+        }
+        const contractsInfo = getContractsInfo(chainId)
+        this.councilNFT = new CouncilNFTShim(
+            contractsInfo.council.address.councilnft,
+            contractsInfo.council.abi,
+            chainId,
+            provider,
+            signer,
+        )
+    }
+
     /************************************************
      * createMatrixClient
      * helper, creates a matrix matrixClient with appropriate auth
@@ -1226,59 +1245,91 @@ export class ZionClient {
         }
     }
 
-    private async onErrorLeaveRoomAndDecodeError(
-        error: unknown,
+    private async onErrorLeaveSpaceRoomAndDecodeError(
         roomId: RoomIdentifier | undefined,
+        error: unknown,
     ): Promise<Error> {
         if (roomId) {
             await this.leave(roomId)
         }
-        return this.getDecodedError(error)
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private getDecodedError(err: any): Error {
         /**
          *  Wallet rejection
          * */
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        if (err?.code === 'ACTION_REJECTED' && !err?.error) {
-            return {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                name: err?.code,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: err.message,
-            }
+        const walletRejectionError = this.getWalletRejectionError(error)
+        if (walletRejectionError) {
+            return walletRejectionError
         }
 
         /**
-         *  Transaction error
+         *  Transaction error generated by space factory contract when creating space.
          * */
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const revertData: BytesLike = err.error?.error?.error?.data
-        if (!revertData) {
-            return {
-                name: 'unknown',
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: err?.message,
-            }
+        return this.getDecodedErrorForSpaceFactory(error)
+    }
+
+    private async onErrorLeaveChannelRoomAndDecodeError(
+        parentSpaceId: string | undefined,
+        channelRoomId: RoomIdentifier | undefined,
+        error: unknown,
+    ): Promise<Error> {
+        if (channelRoomId) {
+            await this.leave(channelRoomId)
+        }
+        /**
+         *  Wallet rejection
+         * */
+        const walletRejectionError = this.getWalletRejectionError(error)
+        if (walletRejectionError) {
+            return walletRejectionError
         }
 
-        let decodedError: Error | undefined = undefined
-        try {
-            const errDescription = this.spaceManager.signed.interface.parseError(revertData)
-            decodedError = {
-                name: errDescription.errorFragment.name,
+        /**
+         *  Transaction error created by Space contract when creating channel.
+         * */
+        if (parentSpaceId) {
+            return this.getDecodedErrorForSpace(parentSpaceId, error)
+        }
+        // If no spaceId is provided, we can't decode the error.
+        return new Error('cannot decode error because no spaceId is provided')
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getWalletRejectionError(error: any): Error | undefined {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        if (error?.code === 'ACTION_REJECTED' && !error?.error) {
+            return {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: err.error?.error?.error?.message,
+                name: error?.code,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: error.message,
             }
+        }
+        return undefined
+    }
 
-            return decodedError
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getDecodedErrorForSpaceFactory(error: any): Error {
+        try {
+            return this.spaceDapp.parseSpaceFactoryError(error)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             // Cannot decode error
-            console.error('[getDecodedError]', e)
+            console.error('[getDecodedErrorForSpaceFactory]', e)
+            return {
+                name: 'unknown',
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                message: e.message,
+            }
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private async getDecodedErrorForSpace(spaceId: string, error: any): Promise<Error> {
+        try {
+            return await this.spaceDapp.parseSpaceError(spaceId, error)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
+            // Cannot decode error
+            console.error('[getDecodedErrorForSpace]', e)
             return {
                 name: 'unknown',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access

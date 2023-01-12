@@ -11,15 +11,18 @@ describe('councilNFTContract', () => {
         // put some money in bob's account
         await bob.fundWallet()
         // call the contract
-        const allowListMint = await bob.councilNFT.unsigned.allowlistMint()
+        if (!bob.councilNFT) {
+            throw new Error('No council NFT contract')
+        }
+        const allowListMint = await bob.councilNFT.read.allowlistMint()
         expect(allowListMint).toBeTruthy()
         // re-create one of the funded anvil wallets that we minted to in the deploy script
         const fundedWallet = TestConstants.getWalletWithNft()
         // get the balance
-        const balance = await bob.councilNFT.unsigned.balanceOf(fundedWallet.address)
+        const balance = await bob.councilNFT.read.balanceOf(fundedWallet.address)
         try {
             // mint
-            const receipt = await bob.councilNFT.signed.mint(bob.provider.wallet.address)
+            const receipt = await bob.councilNFT.write.mint(bob.provider.wallet.address)
             // log our our transaction
             console.log('receipt', receipt)
         } catch (error) {

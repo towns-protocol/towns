@@ -1,4 +1,4 @@
-import { getAllRolesFromSpace, getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
+import { getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
 
 import { useCallback } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -17,7 +17,7 @@ export function useRolesAndPermissions() {
             }
 
             if (includeAllRoles) {
-                return await getAllRolesFromSpace(client, spaceNetworkId)
+                return await client.spaceDapp.getRoles(spaceNetworkId)
             } else {
                 return await getFilteredRolesFromSpace(client, spaceNetworkId)
             }

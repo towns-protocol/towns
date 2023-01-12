@@ -1,11 +1,11 @@
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
-import { createExternalTokenEntitlements, createPermissions } from '../client/web3/ContractHelpers'
 import { useCallback, useMemo, useState } from 'react'
 
 import { CreateSpaceInfo } from '../types/matrix-types'
-import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
+import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
+import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useZionClient } from './use-zion-client'
 
 /**
@@ -32,7 +32,7 @@ export function useCreateSpaceTransaction() {
         async function (
             createInfo: CreateSpaceInfo,
             tokenAddresses: string[],
-            tokenGrantedPermissions: Permission[],
+            memberPermissions: Permission[],
             everyonePermissions: Permission[] = [],
         ): Promise<void> {
             const loading: TransactionContext<RoomIdentifier> = {
@@ -42,28 +42,27 @@ export function useCreateSpaceTransaction() {
                 data: undefined,
             }
             setTransactionContext(loading)
-            let tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct
+            let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
             if (tokenAddresses.length) {
                 tokenEntitlement = {
                     roleName: 'Member',
-                    permissions: createPermissions(tokenGrantedPermissions),
-                    externalTokenEntitlements: createExternalTokenEntitlements(tokenAddresses),
+                    permissions: memberPermissions,
+                    tokens: createExternalTokenStruct(tokenAddresses),
                     users: [],
                 }
             } else {
                 tokenEntitlement = {
                     roleName: '',
                     permissions: [],
-                    externalTokenEntitlements: [],
+                    tokens: [],
                     users: [],
                 }
             }
 
-            const everyonePerms = createPermissions(everyonePermissions)
             const txContext = await createSpaceTransaction(
                 createInfo,
                 tokenEntitlement,
-                everyonePerms,
+                everyonePermissions,
             )
             setTransactionContext(txContext)
 

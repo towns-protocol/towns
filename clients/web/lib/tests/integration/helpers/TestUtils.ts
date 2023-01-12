@@ -6,16 +6,15 @@ import {
 import { Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 import {
-    createExternalTokenEntitlements,
-    createPermissions,
+    createExternalTokenStruct,
     getFilteredRolesFromSpace,
     getZionTokenAddress,
 } from 'use-zion-client/src/client/web3/ContractHelpers'
 
-import { DataTypes } from '../../../src/client/web3/shims/ZionSpaceManagerShim'
 import { EventTimeline } from 'matrix-js-sdk'
 import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
+import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './TestConstants'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
@@ -117,12 +116,12 @@ export async function createBasicTestSpace(
     client: ZionClient,
     createSpaceInfo: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
-    const emptyPermissions: DataTypes.PermissionStruct[] = []
-    const emptyExternalTokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
-    const spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct = {
+    const emptyPermissions: Permission[] = []
+    const emptyTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+    const spaceEntitlementData: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
         roleName: '',
         permissions: emptyPermissions,
-        externalTokenEntitlements: emptyExternalTokenEntitlements,
+        tokens: emptyTokens,
         users: [],
     }
     return client.createSpace(createSpaceInfo, spaceEntitlementData, emptyPermissions)
@@ -141,18 +140,16 @@ export async function createTestSpaceWithZionMemberRole(
         }
     }
 
-    const permissions = createPermissions(tokenGrantedPermissions)
     const zionTokenAddress = getZionTokenAddress(client.chainId)
-    const externalTokenEntitlements = createExternalTokenEntitlements([zionTokenAddress])
-    const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
+    const tokens = createExternalTokenStruct([zionTokenAddress])
+    const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
         roleName: 'Member',
-        permissions,
-        externalTokenEntitlements,
+        permissions: tokenGrantedPermissions,
+        tokens,
         users: [],
     }
 
-    const everyonePerms = createPermissions(everyonePermissions)
-    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePerms)
+    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
 }
 
 export async function createTestSpaceWithEveryoneRole(
@@ -168,15 +165,14 @@ export async function createTestSpaceWithEveryoneRole(
     }
 
     // No member role. Everyone role is the only role.
-    const tokenEntitlement: DataTypes.CreateSpaceEntitlementDataStruct = {
+    const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
         roleName: '',
         permissions: [],
-        externalTokenEntitlements: [],
+        tokens: [],
         users: [],
     }
 
-    const everyonePerms = createPermissions(everyonePermissions)
-    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePerms)
+    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
 }
 
 export async function createTestChannelWithSpaceRoles(

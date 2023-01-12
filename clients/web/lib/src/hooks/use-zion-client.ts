@@ -1,5 +1,12 @@
+/* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
 
+import {
+    ChannelTransactionContext,
+    IZionServerVersions,
+    TransactionContext,
+    ZionClientEvent,
+} from '../client/ZionClientTypes'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -9,15 +16,15 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
 } from '../types/matrix-types'
-import { DataTypes, ZionSpaceManagerShim } from '../client/web3/shims/ZionSpaceManagerShim'
-import { IZionServerVersions, TransactionContext, ZionClientEvent } from '../client/ZionClientTypes'
 
 import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
 import { FullyReadMarker } from '../types/timeline-types'
+import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
+import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
+import { DataTypes as SpaceFactoryDataTypes } from '@harmony/contracts/localhost/typings/SpaceFactory'
 import { ZionClient } from '../client/ZionClient'
-import { ZionRoleManagerShim } from '../client/web3/shims/ZionRoleManagerShim'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
@@ -34,13 +41,12 @@ interface ZionClientImpl {
     client: ZionClient | undefined
     clientRunning: boolean
     councilNFT: CouncilNFTShim | undefined
-    roleManager: ZionRoleManagerShim | undefined
-    spaceManager: ZionSpaceManagerShim | undefined
+    spaceDapp: ISpaceDapp | undefined
     createSpaceRoom: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
-        spaceEntitlementData: DataTypes.CreateSpaceEntitlementDataStruct,
-        everyonePermissions: DataTypes.PermissionStruct[],
+        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        everyonePermissions: Permission[],
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     waitForCreateSpaceTransaction: (
         context: TransactionContext<RoomIdentifier> | undefined,
@@ -49,9 +55,9 @@ interface ZionClientImpl {
     createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
-    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    ) => Promise<ChannelTransactionContext | undefined>
     waitForCreateChannelTransaction: (
-        context: TransactionContext<RoomIdentifier> | undefined,
+        context: ChannelTransactionContext | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     editMessage: (
         roomId: RoomIdentifier,
@@ -100,8 +106,7 @@ export function useZionClient(): ZionClientImpl {
         client,
         clientRunning,
         councilNFT: client?.councilNFT,
-        roleManager: client?.roleManager,
-        spaceManager: client?.spaceManager,
+        spaceDapp: client?.spaceDapp,
         createChannelRoom: useWithCatch(client?.createChannelRoom),
         createSpaceRoom: useWithCatch(client?.createSpaceRoom),
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),

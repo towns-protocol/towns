@@ -7,11 +7,10 @@ import {
     registerLoginAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { DataTypes } from '../../src/client/web3/shims/ZionSpaceManagerShim'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
+import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
-import { createPermissions } from '../../src/client/web3/ContractHelpers'
 
 describe('create role', () => {
     test('Space owner is allowed to disable space access', async () => {
@@ -29,9 +28,7 @@ describe('create role', () => {
             true,
         )
 
-        const spaceInfo: DataTypes.SpaceInfoStruct = await alice.getSpaceInfoBySpaceId(
-            spaceNetworkId as string,
-        )
+        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
 
         /** Assert */
         expect(success).toEqual(true)
@@ -58,9 +55,7 @@ describe('create role', () => {
             spaceNetworkId as string,
             false,
         )
-        const spaceInfo: DataTypes.SpaceInfoStruct = await alice.getSpaceInfoBySpaceId(
-            spaceNetworkId as string,
-        )
+        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
 
         /** Assert */
         expect(disabled).toEqual(true)
@@ -99,8 +94,8 @@ describe('create role', () => {
 
         /** Act */
         // create new role in space
-        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
-        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const permissions = [Permission.Ban]
+        const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
 
         const roleIdentifier: RoleIdentifier | undefined =
@@ -128,8 +123,8 @@ describe('create role', () => {
         const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
         /** Act & Assert */
         // Try to create new role in space without permission
-        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
-        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const permissions = [Permission.Ban]
+        const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const error = await getError<Error>(async function () {
             await tokenGrantedUser.createRoleWithEntitlementData(
@@ -162,8 +157,8 @@ describe('create role', () => {
         ])
         /** Act */
         // create new role in space
-        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
-        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const permissions = [Permission.Ban]
+        const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined =
             await tokenGrantedUser.createRoleWithEntitlementData(
@@ -187,8 +182,8 @@ describe('create role', () => {
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         /** Act */
         // create new role in space
-        const permissions: DataTypes.PermissionStruct[] = createPermissions([Permission.Ban])
-        const tokenEntitlements: DataTypes.ExternalTokenEntitlementStruct[] = []
+        const permissions = [Permission.Ban]
+        const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined =
             await alice.createRoleWithEntitlementData(

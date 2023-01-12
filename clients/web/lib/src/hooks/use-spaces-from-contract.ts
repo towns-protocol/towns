@@ -1,9 +1,15 @@
-import { useEffect, useState } from 'react'
 import { SpaceIdentifier, ZionClientEvent } from '../client/ZionClientTypes'
+import { useEffect, useMemo, useState } from 'react'
+
+import { Permission } from '../client/web3/ContractTypes'
+import { RoomIdentifier } from '../types/room-identifier'
+import { SpaceInfo } from '../client/web3/SpaceInfo'
+import { SpaceItem } from '../types/matrix-types'
+import { createUserIdFromString } from '../types/user-identifier'
+import { useMatrixCredentials } from './use-matrix-credentials'
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
-import { DataTypes } from '../client/web3/shims/ZionSpaceManagerShim'
-import { RoomIdentifier } from '../types/room-identifier'
+import { useZionContext } from '../components/ZionContextProvider'
 
 type UseSpaceFromContractReturn = {
     spaces: SpaceIdentifier[]
@@ -12,7 +18,8 @@ type UseSpaceFromContractReturn = {
 }
 
 export function useSpacesFromContract(): UseSpaceFromContractReturn {
-    const { spaceManager } = useZionClient()
+    const { spaceDapp } = useZionClient()
+    const { spaces: spaceRooms } = useZionContext()
     const [{ isLoading, spaces, isError }, setSpaceIdentifiers] =
         useState<UseSpaceFromContractReturn>({
             isError: false,
@@ -20,36 +27,77 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
             spaces: [],
         })
     const onNewSpace = useZionClientEvent(ZionClientEvent.NewSpace)
+    const { userId } = useMatrixCredentials()
+    const myWalletAddress = useMemo(() => {
+        return userId ? createUserIdFromString(userId)?.accountAddress : undefined
+    }, [userId])
 
     useEffect(() => {
-        if (!spaceManager) {
-            return
+        const getEntitledSpaceItems = async () => {
+            if (!spaceDapp || !myWalletAddress) {
+                return []
+            }
+
+            /* get all the entitlement status for each space */
+            // create an array of promises to get all the entitlement status for each space
+            const isEntitledPromises = spaceRooms.map((s: SpaceItem) =>
+                spaceDapp?.isEntitledToSpace(s.id.networkId, myWalletAddress, Permission.Read),
+            )
+            // Wait for all the promises to resolve
+            const entitledSpaces = await Promise.all(isEntitledPromises)
+            // Filter out the spaces that the user is not entitled to see
+            const entitledSpaceItems = entitledSpaces
+                .map((isEntitled, index) => {
+                    if (isEntitled) {
+                        return spaceRooms[index]
+                    }
+                    return undefined
+                })
+                .filter((x) => x !== undefined) as SpaceItem[]
+            return entitledSpaceItems
         }
-        void (async () => {
-            try {
-                const spaces = await spaceManager.getSpaces()
+
+        const getSpaces = async () => {
+            const spaceItems = await getEntitledSpaceItems()
+            if (!spaceDapp || spaceItems.length === 0) {
                 setSpaceIdentifiers({
                     isError: false,
                     isLoading: false,
-                    spaces:
-                        spaces?.map((x: DataTypes.SpaceInfoStructOutput) => {
-                            return {
-                                key: x.spaceId.toString(),
-                                spaceId: x.spaceId,
-                                createdAt: x.createdAt,
-                                name: x.name,
-                                networkId: x.networkId,
-                                creator: x.creator,
-                                owner: x.owner,
-                                disabled: x.disabled,
-                            }
-                        }) || [],
+                    spaces: [],
                 })
-            } catch (e: unknown) {
-                setSpaceIdentifiers({ isError: true, isLoading: false, spaces: [] })
             }
-        })()
-    }, [spaceManager, onNewSpace])
+
+            /* get all the space info */
+            // create an array of promises to get all the space info
+            const getSpaceInfoPromises = spaceItems
+                .map((s: SpaceItem) => spaceDapp?.getSpaceInfo(s.id.networkId))
+                .filter((x) => x !== undefined) as Promise<SpaceInfo>[]
+            // Wait for all the promises to resolve
+            const entitledSpaces = await Promise.all(getSpaceInfoPromises)
+            const spaces = entitledSpaces.map((s: SpaceInfo) => {
+                return {
+                    key: s.networkId,
+                    name: s.name,
+                    networkId: s.networkId,
+                    owner: s.owner,
+                    disabled: s.disabled,
+                }
+            })
+
+            // Return spaces that the user is entitled to see
+            setSpaceIdentifiers({
+                isError: false,
+                isLoading: false,
+                spaces,
+            })
+        }
+
+        try {
+            void getSpaces()
+        } catch (e: unknown) {
+            setSpaceIdentifiers({ isError: true, isLoading: false, spaces: [] })
+        }
+    }, [onNewSpace, spaceDapp, myWalletAddress, spaceRooms])
 
     return { spaces, isLoading, isError }
 }

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { BigNumber, BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+
+import { RoomIdentifier } from '../types/room-identifier'
 
 // todo: remove this when contract migration is complete
 export enum ContractVersion {
@@ -38,11 +40,8 @@ export interface ZionOnboardingOpts {
 
 export interface SpaceIdentifier {
     key: string
-    spaceId: BigNumber
     networkId: string
-    createdAt: BigNumber
     name: string
-    creator: string
     owner: string
     disabled: boolean
 }
@@ -83,4 +82,8 @@ export interface TransactionContext<T> {
     receipt: ContractReceipt | undefined
     transaction: ContractTransaction | undefined
     error?: Error
+}
+
+export interface ChannelTransactionContext extends TransactionContext<RoomIdentifier> {
+    parentSpaceId: string | undefined
 }

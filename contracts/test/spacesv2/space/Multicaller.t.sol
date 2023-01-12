@@ -41,7 +41,7 @@ contract MultiCallerTest is BaseSetup {
       (_randomUint256(), _newRoleName)
     );
 
-    vm.expectRevert(bytes(""));
+    vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).multicall(_data);
   }
 

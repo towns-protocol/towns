@@ -1,16 +1,13 @@
 /* eslint-disable no-restricted-imports */
 
-import { BigNumber, ContractTransaction, ethers } from 'ethers'
+import { ContractTransaction, ethers } from 'ethers'
+import { EventsContractInfo, ISpaceDapp } from './ISpaceDapp'
 import { IContractsInfo, getContractsInfo } from './ContractsInfo'
+import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
+import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
 
-//import GoerliSpaceFactoryAddress from '@harmony/contracts/goerli/addresses/space-factory.json'
-import { ISpaceDapp } from './ISpaceDapp'
 import { Permission } from './ContractTypes'
-import { DataTypes as SpaceDataTypes } from '@harmony/contracts/localhost/typings/Space'
-import { DataTypes as SpaceFactoryDataTypes } from '@harmony/contracts/localhost/typings/SpaceFactory'
-import { SpaceFactoryShim } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
-import { SpaceShim } from './shims/SpaceShim'
 import { keccak256 } from 'ethers/lib/utils'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
@@ -48,8 +45,8 @@ export class SpaceDappV2 implements ISpaceDapp {
         spaceName: string,
         spaceNetworkId: string,
         spaceMetadata: string,
-        permissions: Permission[],
-        extraEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        everyonePermissions: Permission[],
     ): Promise<ContractTransaction> {
         if (!this.spaceFactory.write) {
             throw new Error('SpaceFactory write contract is not deployed properly.')
@@ -58,8 +55,8 @@ export class SpaceDappV2 implements ISpaceDapp {
             spaceName,
             spaceNetworkId,
             spaceMetadata,
-            permissions,
-            extraEntitlements,
+            everyonePermissions,
+            memberEntitlements,
         )
     }
 
@@ -104,9 +101,22 @@ export class SpaceDappV2 implements ISpaceDapp {
         return (await permissions).map((permission) => permission as Permission)
     }
 
-    // todo: v1. deprecated.
-    public getSpaceIdByNetworkId(_spaceId: string): Promise<BigNumber> {
-        return Promise.resolve(ethers.BigNumber.from(0))
+    public getSpaceFactoryEventsContractInfo(): EventsContractInfo {
+        return {
+            abi: this.spaceFactory.eventsAbi,
+            address: this.spaceFactory.address,
+        }
+    }
+
+    public async getSpaceEventsContractInfo(spaceId: string): Promise<EventsContractInfo> {
+        const space = await this.getSpace(spaceId)
+        if (!space.eventsAbi) {
+            throw new Error(`events abi for space "${spaceId}" is not found.`)
+        }
+        return {
+            abi: space.eventsAbi,
+            address: space.address,
+        }
     }
 
     public async getSpaceInfo(spaceId: string): Promise<SpaceInfo> {
@@ -130,7 +140,7 @@ export class SpaceDappV2 implements ISpaceDapp {
     public async isEntitledToSpace(
         spaceId: string,
         user: string,
-        permission: string,
+        permission: Permission,
     ): Promise<boolean> {
         const space = await this.getSpace(spaceId)
         if (!space.read) {
@@ -143,7 +153,7 @@ export class SpaceDappV2 implements ISpaceDapp {
         spaceId: string,
         channelId: string,
         user: string,
-        permission: string,
+        permission: Permission,
     ): Promise<boolean> {
         const space = await this.getSpace(spaceId)
         if (!space.read) {
@@ -169,7 +179,7 @@ export class SpaceDappV2 implements ISpaceDapp {
         return space.parseError(error)
     }
 
-    public async setAccess(spaceId: string, disabled: boolean): Promise<ContractTransaction> {
+    public async setSpaceAccess(spaceId: string, disabled: boolean): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
         if (!space.write) {
             throw new Error(`Space with networkId "${spaceId}" is not deployed properly.`)

@@ -54,13 +54,13 @@ describe('space invite', () => {
             roomId?.networkId as string,
             '',
             alice.provider.wallet.address,
-            { name: Permission.Read },
+            Permission.Read,
         )
         const isEntitledWrite = await alice.isEntitled(
             roomId?.networkId as string,
             '',
             alice.provider.wallet.address,
-            { name: Permission.Write },
+            Permission.Write,
         )
         /** Act */
         // invite user to join the space by first checking if they can read.
@@ -97,13 +97,13 @@ describe('space invite', () => {
             roomId?.networkId as string,
             '',
             tokenGrantedUser.provider.wallet.address,
-            { name: Permission.Read },
+            Permission.Read,
         )
         const isEntitledWrite = await tokenGrantedUser.isEntitled(
             roomId?.networkId as string,
             '',
             tokenGrantedUser.provider.wallet.address,
-            { name: Permission.Write },
+            Permission.Write,
         )
         /** Act */
         // invite user to join the space by first checking if they can read.

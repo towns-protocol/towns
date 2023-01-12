@@ -112,10 +112,6 @@ export {
 } from './types/user-identifier'
 
 export { Permission } from './client/web3/ContractTypes'
-export {
-    getZionTokenAddress,
-    getAllRolesFromSpace,
-    getFilteredRolesFromSpace,
-} from './client/web3/ContractHelpers'
+export { getZionTokenAddress, getFilteredRolesFromSpace } from './client/web3/ContractHelpers'
 
 export { staticAssertNever } from './utils/zion-utils'

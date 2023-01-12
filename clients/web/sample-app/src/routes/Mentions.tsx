@@ -1,7 +1,8 @@
 import { Divider, List, ListItem } from '@mui/material'
+import { MentionResult, ZTEvent, useSpaceId, useSpaceMentions } from 'use-zion-client'
 import React, { useCallback } from 'react'
+
 import { useNavigate } from 'react-router-dom'
-import { MentionResult, useSpaceId, useSpaceMentions, ZTEvent } from 'use-zion-client'
 
 export function Mentions(): JSX.Element {
     const spaceId = useSpaceId()
