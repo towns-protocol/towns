@@ -26,6 +26,7 @@ jobs:
         name: Monolith image
         runs-on: ubuntu-latest
         permissions:
+            contents: write
             packages: write
         steps:
             - name: Checkout
