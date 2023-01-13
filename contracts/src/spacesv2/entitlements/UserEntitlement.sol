@@ -32,7 +32,7 @@ contract UserEntitlement is
     uint256 roleId;
     address grantedBy;
     uint256 grantedTime;
-    address user;
+    address[] users;
   }
 
   mapping(bytes32 => Entitlement) public entitlementsById;
@@ -40,18 +40,18 @@ contract UserEntitlement is
   mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
   mapping(address => bytes32[]) entitlementIdsByUser;
 
-  function initialize() public initializer {
-    __UUPSUpgradeable_init();
-    __ERC165_init();
-    __Ownable_init();
-  }
-
   modifier onlySpace() {
     require(
       _msgSender() == owner() || _msgSender() == SPACE_ADDRESS,
       "Space: only space"
     );
     _;
+  }
+
+  function initialize() public initializer {
+    __UUPSUpgradeable_init();
+    __ERC165_init();
+    __Ownable_init();
   }
 
   function setSpace(address _space) external onlyOwner {
@@ -94,17 +94,29 @@ contract UserEntitlement is
   ) external onlySpace returns (bytes32 entitlementId) {
     entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
-    address user = abi.decode(entitlementData, (address));
+    address[] memory users = abi.decode(entitlementData, (address[]));
+
+    if (users.length == 0) {
+      revert Errors.EntitlementNotFound();
+    }
+
+    for (uint256 i = 0; i < users.length; i++) {
+      address user = users[i];
+      if (user == address(0)) {
+        revert Errors.AddressNotFound();
+      }
+
+      entitlementIdsByUser[user].push(entitlementId);
+    }
 
     entitlementsById[entitlementId] = Entitlement({
-      grantedBy: msg.sender,
+      grantedBy: _msgSender(),
       grantedTime: block.timestamp,
       roleId: roleId,
-      user: user
+      users: users
     });
 
     entitlementIdsByRoleId[roleId].push(entitlementId);
-    entitlementIdsByUser[user].push(entitlementId);
   }
 
   function removeEntitlement(
@@ -115,7 +127,7 @@ contract UserEntitlement is
 
     Entitlement memory entitlement = entitlementsById[entitlementId];
 
-    if (entitlement.user == address(0) || entitlement.roleId == 0) {
+    if (entitlement.users.length == 0 || entitlement.roleId == 0) {
       revert Errors.EntitlementNotFound();
     }
 
@@ -125,11 +137,11 @@ contract UserEntitlement is
 
     _removeFromArray(entitlementIds, entitlementId);
 
-    bytes32[] storage _entitlementIdsByUser = entitlementIdsByUser[
-      entitlement.user
-    ];
-
-    _removeFromArray(_entitlementIdsByUser, entitlementId);
+    for (uint256 i = 0; i < entitlement.users.length; i++) {
+      address user = entitlement.users[i];
+      bytes32[] storage _entitlementIdsByUser = entitlementIdsByUser[user];
+      _removeFromArray(_entitlementIdsByUser, entitlementId);
+    }
 
     delete entitlementsById[entitlementId];
   }
@@ -143,7 +155,7 @@ contract UserEntitlement is
     bytes[] memory entitlements = new bytes[](entitlementIds.length);
 
     for (uint256 i = 0; i < entitlementIds.length; i++) {
-      entitlements[i] = abi.encode(entitlementsById[entitlementIds[i]].user);
+      entitlements[i] = abi.encode(entitlementsById[entitlementIds[i]].users);
     }
 
     return entitlements;

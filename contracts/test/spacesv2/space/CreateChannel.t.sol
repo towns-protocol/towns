@@ -57,10 +57,13 @@ contract CreateChannelTest is BaseSetup {
     // get user entitlement module
     address userEntitlement = getSpaceUserEntitlement(_space);
 
+    address[] memory _users = new address[](1);
+    _users[0] = _bob;
+
     // add role to user entitlement module
     Space(_space).addRoleToEntitlement(
       _memberRoleId,
-      DataTypes.Entitlement(userEntitlement, abi.encode(_bob))
+      DataTypes.Entitlement(userEntitlement, abi.encode(_users))
     );
 
     // add member role id to channel data

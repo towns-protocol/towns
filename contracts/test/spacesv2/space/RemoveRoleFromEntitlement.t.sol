@@ -63,9 +63,12 @@ contract RemoveRoleFromEntitlementTest is BaseSetup {
     address _userEntitlement = getSpaceUserEntitlement(_space);
     address _bob = _randomAddress();
 
+    address[] memory _bobsAddresses = new address[](1);
+    _bobsAddresses[0] = _bob;
+
     DataTypes.Entitlement memory _entitlement;
     _entitlement.module = _userEntitlement;
-    _entitlement.data = abi.encode(_bob);
+    _entitlement.data = abi.encode(_bobsAddresses);
 
     // create role
     uint256 _roleId = createSimpleRoleWithPermission(_space);
@@ -73,7 +76,7 @@ contract RemoveRoleFromEntitlementTest is BaseSetup {
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
       _roleId,
-      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bobsAddresses))
     );
 
     vm.prank(_randomAddress());
@@ -90,22 +93,28 @@ contract RemoveRoleFromEntitlementTest is BaseSetup {
     // create role
     uint256 _roleId = createSimpleRoleWithPermission(_space);
 
+    address[] memory _bobsAddresses = new address[](1);
+    _bobsAddresses[0] = _bob;
+
+    address[] memory _alicesAddresses = new address[](1);
+    _alicesAddresses[0] = _alice;
+
     // add role to entitlement
     Space(_space).addRoleToEntitlement(
       _roleId,
-      DataTypes.Entitlement(_userEntitlement, abi.encode(_alice))
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_alicesAddresses))
     );
 
     Space(_space).addRoleToEntitlement(
       _roleId,
-      DataTypes.Entitlement(_userEntitlement, abi.encode(_bob))
+      DataTypes.Entitlement(_userEntitlement, abi.encode(_bobsAddresses))
     );
 
     assertTrue(Space(_space).isEntitledToSpace(_bob, "Vote"));
 
     DataTypes.Entitlement memory _entitlement;
     _entitlement.module = _userEntitlement;
-    _entitlement.data = abi.encode(_bob);
+    _entitlement.data = abi.encode(_bobsAddresses);
 
     // remove role from entitlement
     Space(_space).removeRoleFromEntitlement(_roleId, _entitlement);

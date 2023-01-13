@@ -97,7 +97,7 @@ export interface SpaceInterface extends utils.Interface {
     "removeRoleFromChannel(string,address,uint256)": FunctionFragment;
     "removeRoleFromEntitlement(uint256,(address,bytes))": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "roleId()": FunctionFragment;
+    "roleCount()": FunctionFragment;
     "rolesById(uint256)": FunctionFragment;
     "setChannelAccess(string,bool)": FunctionFragment;
     "setEntitlement(address,bool)": FunctionFragment;
@@ -143,7 +143,7 @@ export interface SpaceInterface extends utils.Interface {
       | "removeRoleFromChannel"
       | "removeRoleFromEntitlement"
       | "renounceOwnership"
-      | "roleId"
+      | "roleCount"
       | "rolesById"
       | "setChannelAccess"
       | "setEntitlement"
@@ -289,7 +289,7 @@ export interface SpaceInterface extends utils.Interface {
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "roleId", values?: undefined): string;
+  encodeFunctionData(functionFragment: "roleCount", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "rolesById",
     values: [PromiseOrValue<BigNumberish>]
@@ -425,7 +425,7 @@ export interface SpaceInterface extends utils.Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "roleId", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "roleCount", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "rolesById", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setChannelAccess",
@@ -703,7 +703,7 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    roleId(overrides?: CallOverrides): Promise<[BigNumber]>;
+    roleCount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     rolesById(
       arg0: PromiseOrValue<BigNumberish>,
@@ -915,7 +915,7 @@ export interface Space extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  roleId(overrides?: CallOverrides): Promise<BigNumber>;
+  roleCount(overrides?: CallOverrides): Promise<BigNumber>;
 
   rolesById(
     arg0: PromiseOrValue<BigNumberish>,
@@ -1125,7 +1125,7 @@ export interface Space extends BaseContract {
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    roleId(overrides?: CallOverrides): Promise<BigNumber>;
+    roleCount(overrides?: CallOverrides): Promise<BigNumber>;
 
     rolesById(
       arg0: PromiseOrValue<BigNumberish>,
@@ -1368,7 +1368,7 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    roleId(overrides?: CallOverrides): Promise<BigNumber>;
+    roleCount(overrides?: CallOverrides): Promise<BigNumber>;
 
     rolesById(
       arg0: PromiseOrValue<BigNumberish>,
@@ -1574,7 +1574,7 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    roleId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    roleCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     rolesById(
       arg0: PromiseOrValue<BigNumberish>,

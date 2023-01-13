@@ -817,7 +817,7 @@
       },
       {
         "inputs": [],
-        "name": "roleId",
+        "name": "roleCount",
         "outputs": [
           {
             "internalType": "uint256",
@@ -1076,11 +1076,11 @@
       ]
     },
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0x4560334054923af4c49d917c5b84b79dfa96aeddd1f236cfb92a60006ecdf8e8",
+      "keccak256": "0xbab744e67dd373b49139a8fb3a1cc5408849c575159a55e73b812ed5100a1e53",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://174c9a7cdc874e08c5338a4fb76c8fe22c8662981c4d1fc946867e1e0830b0b5",
-        "dweb:/ipfs/QmSTgCDW84tvCDiygbWgZ3a7yUxWi5wCAVJoY3HTepjQnR"
+        "bzz-raw://1a5ecfc1737edde99360f183fca2521e145d073ada823f26ee3361f3cf43775c",
+        "dweb:/ipfs/QmcjqPn3DT1VhEQMjqF5h9YHCQT7i9sU3n4hsYA2xsGyTK"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {

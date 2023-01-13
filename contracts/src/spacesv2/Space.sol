@@ -35,7 +35,7 @@ contract Space is
   mapping(uint256 => bytes32[]) internal entitlementIdsByRoleId;
   address[] public entitlements;
 
-  uint256 public roleId;
+  uint256 public roleCount;
   mapping(uint256 => DataTypes.Role) public rolesById;
   mapping(uint256 => bytes32[]) internal permissionsByRoleId;
   mapping(uint256 => bool) internal roleAssigned;
@@ -208,8 +208,8 @@ contract Space is
 
   /// @inheritdoc ISpace
   function getRoles() external view returns (DataTypes.Role[] memory) {
-    DataTypes.Role[] memory roles = new DataTypes.Role[](roleId);
-    for (uint256 i = 0; i < roleId; i++) {
+    DataTypes.Role[] memory roles = new DataTypes.Role[](roleCount);
+    for (uint256 i = 0; i < roleCount; i++) {
       roles[i] = rolesById[i + 1];
     }
     return roles;
@@ -223,7 +223,7 @@ contract Space is
   ) external returns (uint256) {
     _isAllowed("", Permissions.ModifySpacePermissions);
 
-    uint256 newRoleId = ++roleId;
+    uint256 newRoleId = ++roleCount;
 
     DataTypes.Role memory role = DataTypes.Role(newRoleId, _roleName);
     rolesById[newRoleId] = role;

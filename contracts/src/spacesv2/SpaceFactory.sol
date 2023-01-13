@@ -217,13 +217,10 @@ contract SpaceFactory is
     );
 
     // check entitlementdata has users
-    for (uint256 i = 0; i < _extraEntitlements.users.length; i++) {
+    if (_extraEntitlements.users.length > 0) {
       Space(spaceAddress).addRoleToEntitlement(
         additionalRoleId,
-        DataTypes.Entitlement(
-          userAddress,
-          abi.encode(_extraEntitlements.users[i])
-        )
+        DataTypes.Entitlement(userAddress, abi.encode(_extraEntitlements.users))
       );
     }
 
@@ -281,9 +278,13 @@ contract SpaceFactory is
     DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
       1
     );
+
+    address[] memory users = new address[](1);
+    users[0] = Utils.EVERYONE_ADDRESS;
+
     _entitlements[0] = DataTypes.Entitlement({
       module: userAddress,
-      data: abi.encode(Utils.EVERYONE_ADDRESS)
+      data: abi.encode(users)
     });
 
     Space(spaceAddress).createRole(

@@ -100,10 +100,13 @@ contract UserEntitlementTest is BaseSetup {
     );
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
+    address[] memory users = new address[](1);
+    users[0] = _creator;
+
     vm.prank(_creator);
     Space(_space).addRoleToEntitlement(
       _roleId,
-      DataTypes.Entitlement(_userEntitlement, abi.encode(_creator))
+      DataTypes.Entitlement(_userEntitlement, abi.encode(users))
     );
 
     DataTypes.Role[] memory roles = IEntitlement(_userEntitlement).getUserRoles(
@@ -121,12 +124,24 @@ contract UserEntitlementTest is BaseSetup {
     uint256 roleId = _randomUint256();
     address user = _randomAddress();
 
-    userEntitlement.setEntitlement(_randomUint256(), abi.encode(user));
-    userEntitlement.setEntitlement(roleId, abi.encode(user));
+    address[] memory users = new address[](1);
+    users[0] = user;
+
+    address[] memory emptyUsers = new address[](0);
+    vm.expectRevert(Errors.EntitlementNotFound.selector);
+    userEntitlement.setEntitlement(roleId, abi.encode(emptyUsers));
+
+    address[] memory invalidUsers = new address[](1);
+    invalidUsers[0] = address(0);
+    vm.expectRevert(Errors.AddressNotFound.selector);
+    userEntitlement.setEntitlement(roleId, abi.encode(invalidUsers));
+
+    userEntitlement.setEntitlement(_randomUint256(), abi.encode(users));
+    userEntitlement.setEntitlement(roleId, abi.encode(users));
 
     userEntitlement.getEntitlementDataByRoleId(roleId);
 
-    userEntitlement.removeEntitlement(roleId, abi.encode(user));
+    userEntitlement.removeEntitlement(roleId, abi.encode(users));
   }
 }
 

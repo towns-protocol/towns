@@ -56,7 +56,11 @@ contract RemoveRoleTest is BaseSetup {
 
     DataTypes.Entitlement memory _entitlement;
     _entitlement.module = _userEntitlement;
-    _entitlement.data = abi.encode(_moderator);
+
+    address[] memory _moderators = new address[](1);
+    _moderators[0] = _moderator;
+
+    _entitlement.data = abi.encode(_moderators);
 
     // Remove role from entitlement
     Space(_space).removeRoleFromEntitlement(moderatorRoleId, _entitlement);

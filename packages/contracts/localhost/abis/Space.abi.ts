@@ -811,7 +811,7 @@ export default [
   },
   {
     "inputs": [],
-    "name": "roleId",
+    "name": "roleCount",
     "outputs": [
       {
         "internalType": "uint256",
