@@ -28,6 +28,7 @@ export async function createMatrixSpace(
         initial_state: makeInitialState(createSpaceInfo),
         power_level_content_override: {
             invite: createSpaceInfo.visibility == RoomVisibility.Public ? 0 : 50,
+            events: { 'm.space.child': 0 }, // permission to create channel in the space
         },
     }
     const response = await matrixClient.createRoom(options)
