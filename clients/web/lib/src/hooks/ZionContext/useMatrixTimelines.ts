@@ -30,6 +30,7 @@ import {
     TimelinesMap,
     useTimelineStore,
 } from '../../store/use-timeline-store'
+import { IRoomEncryption } from 'matrix-js-sdk/lib/crypto/RoomList'
 
 export function useMatrixTimelines(client?: MatrixClient) {
     const setState = useTimelineStore((s) => s.setState)
@@ -401,6 +402,19 @@ function toZionContent(event: MatrixEvent): {
                     type: content.type as string | undefined,
                 },
             }
+        case ZTEvent.RoomEncryption: {
+            const content = event.getContent<IRoomEncryption>()
+            return {
+                content: {
+                    kind: eventType,
+                    roomEncryption: {
+                        algorithm: content.algorithm,
+                        rotationPeriodMs: content.rotation_period_ms,
+                        rotationPeriodMsgs: content.rotation_period_msgs,
+                    },
+                },
+            }
+        }
         case ZTEvent.RoomMessageEncrypted:
             return {
                 content: {
@@ -567,9 +581,13 @@ function getFallbackContent(
             return `alias: ${content.alias}, alt alaises: ${alt}`
         }
         case ZTEvent.RoomCreate:
-            return `type: ${content.type ?? 'none'}`
+            return content.type ? `type: ${content.type}` : ''
+        case ZTEvent.RoomEncryption:
+            return `algorithm: ${content.roomEncryption.algorithm} rotationMs: ${
+                content.roomEncryption.rotationPeriodMs?.toString() ?? 'N/A'
+            } rotationMsgs: ${content.roomEncryption.rotationPeriodMsgs?.toString() ?? 'N/A'}`
         case ZTEvent.RoomMessageEncrypted:
-            return `~Encrypted~`
+            return `~Encrypted Message~`
         case ZTEvent.RoomHistoryVisibility:
             return `newValue: ${content.historyVisibility}`
         case ZTEvent.RoomJoinRules:

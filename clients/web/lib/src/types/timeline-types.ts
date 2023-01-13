@@ -22,6 +22,7 @@ export enum ZTEvent {
     RoomAvatar = 'm.room.avatar',
     RoomCanonicalAlias = 'm.room.canonical_alias',
     RoomCreate = 'm.room.create',
+    RoomEncryption = 'm.room.encryption',
     RoomHistoryVisibility = 'm.room.history_visibility',
     RoomJoinRules = 'm.room.join_rules',
     RoomMember = 'm.room.member',
@@ -38,6 +39,7 @@ export enum ZTEvent {
 export type TimelineEvent_OneOf =
     | ReactionEvent
     | RoomCanonicalAliasEvent
+    | RoomEncryptionEvent
     | RoomHistoryVisibilityEvent
     | RoomJoinRulesEvent
     | RoomAvatarEvent
@@ -82,6 +84,15 @@ export interface RoomCreateEvent {
     creator: string
     predecessor?: { event_id: string; room_id: string }
     type?: string
+}
+
+export interface RoomEncryptionEvent {
+    kind: ZTEvent.RoomEncryption
+    roomEncryption: {
+        algorithm: string
+        rotationPeriodMs?: number
+        rotationPeriodMsgs?: number
+    }
 }
 
 export interface RoomMessageEncryptedEvent {

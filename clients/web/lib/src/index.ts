@@ -86,6 +86,7 @@ export type {
     RoomAvatarEvent,
     RoomCreateEvent,
     RoomMemberEvent,
+    RoomMessageEncryptedEvent,
     RoomMessageEvent,
     RoomNameEvent,
     RoomPowerLevelsEvent,
