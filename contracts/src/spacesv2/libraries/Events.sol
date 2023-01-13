@@ -7,4 +7,24 @@ library Events {
     address indexed ownerAddress,
     string networkId
   );
+
+  event RoleCreated(
+    address indexed caller,
+    uint256 indexed roleId,
+    string roleName,
+    string networkId
+  );
+
+  event RoleUpdated(
+    address indexed caller,
+    uint256 indexed roleId,
+    string roleName,
+    string networkId
+  );
+
+  event RoleRemoved(
+    address indexed caller,
+    uint256 indexed roleId,
+    string networkId
+  );
 }

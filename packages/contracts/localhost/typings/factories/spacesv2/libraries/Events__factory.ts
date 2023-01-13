@@ -16,6 +16,93 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "caller",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "roleId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "roleName",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "networkId",
+        type: "string",
+      },
+    ],
+    name: "RoleCreated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "caller",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "roleId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "networkId",
+        type: "string",
+      },
+    ],
+    name: "RoleRemoved",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "caller",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "roleId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "roleName",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "networkId",
+        type: "string",
+      },
+    ],
+    name: "RoleUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
         name: "spaceAddress",
         type: "address",
       },
@@ -38,7 +125,7 @@ const _abi = [
 ];
 
 const _bytecode =
-  "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220488e0f0ad9fd62914913b67eef620445c27d7697a5befe252b846c71288517d264736f6c63430008110033";
+  "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220d15c5d3806239d331d6e321114c82f298d38493a2167a72b2fe2bed794e4b36464736f6c63430008110033";
 
 type EventsConstructorParams =
   | [signer?: Signer]

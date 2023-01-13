@@ -10,6 +10,7 @@ import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Utils} from "./libraries/Utils.sol";
 import {Errors} from "./libraries/Errors.sol";
+import {Events} from "./libraries/Events.sol";
 import {Permissions} from "./libraries/Permissions.sol";
 
 //contracts
@@ -260,6 +261,8 @@ contract Space is
       _addRoleToEntitlement(newRoleId, _entitlement, _entitlementData);
     }
 
+    emit Events.RoleCreated(_msgSender(), newRoleId, _roleName, networkId);
+
     return newRoleId;
   }
 
@@ -282,6 +285,8 @@ contract Space is
     }
 
     rolesById[_roleId].name = _roleName;
+
+    emit Events.RoleUpdated(_msgSender(), _roleId, _roleName, networkId);
   }
 
   /// @inheritdoc ISpace
@@ -308,6 +313,8 @@ contract Space is
 
     // delete permissions of role
     delete permissionsByRoleId[_roleId];
+
+    emit Events.RoleRemoved(_msgSender(), _roleId, networkId);
   }
 
   /// @inheritdoc ISpace
