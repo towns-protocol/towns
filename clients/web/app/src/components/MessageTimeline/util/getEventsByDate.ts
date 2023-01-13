@@ -2,6 +2,7 @@ import {
     FullyReadMarker,
     RoomCreateEvent,
     RoomMemberEvent,
+    RoomMessageEncryptedEvent,
     RoomMessageEvent,
     TimelineEvent,
     ZTEvent,
@@ -13,6 +14,7 @@ const ENABLE_SERGE_MODE = true
 export enum RenderEventType {
     UserMessages = 'UserMessages',
     Message = 'Message',
+    EncryptedMessage = 'EncryptedMessage',
     RoomMember = 'RoomMember',
     RoomCreate = 'RoomCreate',
     FullyRead = 'FullyRead',
@@ -26,6 +28,14 @@ interface BaseEvent {
 export type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
     content: RoomMessageEvent
 }
+
+export type ZRoomMessageEncryptedEvent = Omit<TimelineEvent, 'content'> & {
+    content: RoomMessageEncryptedEvent
+}
+
+export type ZRoomMemberEvent = Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
+
+export type ZRoomCreateEvent = Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
 
 export interface UserMessagesRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessages
@@ -44,13 +54,13 @@ export interface MessageRenderEvent extends BaseEvent {
 export interface RoomMemberRenderEvent extends BaseEvent {
     type: RenderEventType.RoomMember
     key: string
-    event: Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
+    event: ZRoomMemberEvent
 }
 
 export interface RoomCreateRenderEvent extends BaseEvent {
     type: RenderEventType.RoomCreate
     key: string
-    event: Omit<TimelineEvent, 'content'> & { content: RoomCreateEvent }
+    event: ZRoomCreateEvent
 }
 
 export interface FullyReadRenderEvent extends BaseEvent {
@@ -66,8 +76,26 @@ export interface ThreadUpdateRenderEvent extends BaseEvent {
     events: ZRoomMessageEvent[]
 }
 
+export interface EncryptedMessageRenderEvent extends BaseEvent {
+    type: RenderEventType.EncryptedMessage
+    key: string
+    event: ZRoomMessageEncryptedEvent
+}
+
+const isRoomCreate = (event: TimelineEvent): event is ZRoomCreateEvent => {
+    return event.content?.kind === ZTEvent.RoomCreate
+}
+
 const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
     return event.content?.kind === ZTEvent.RoomMessage
+}
+
+const isEncryptedRoomMessage = (event: TimelineEvent): event is ZRoomMessageEncryptedEvent => {
+    return event.content?.kind === ZTEvent.RoomMessageEncrypted
+}
+
+const isRoomMember = (event: TimelineEvent): event is ZRoomMemberEvent => {
+    return event.content?.kind === ZTEvent.RoomMember
 }
 
 export type DateGroup = {
@@ -89,6 +117,7 @@ export type RenderEvent =
     | FullyReadRenderEvent
     | MessageRenderEvent
     | ThreadUpdateRenderEvent
+    | EncryptedMessageRenderEvent
 
 const DEBUG_SINGLE = false
 
@@ -194,6 +223,24 @@ export const getEventsByDate = (
                         events: [event],
                     })
                 }
+            } else if (isEncryptedRoomMessage(event)) {
+                renderEvents.push({
+                    type: RenderEventType.EncryptedMessage,
+                    key: event.eventId,
+                    event,
+                })
+            } else if (isRoomMember(event)) {
+                renderEvents.push({
+                    type: RenderEventType.RoomMember,
+                    key: event.eventId,
+                    event,
+                })
+            } else if (isRoomCreate(event)) {
+                renderEvents.push({
+                    type: RenderEventType.RoomCreate,
+                    key: event.eventId,
+                    event,
+                })
             }
             return result
         },

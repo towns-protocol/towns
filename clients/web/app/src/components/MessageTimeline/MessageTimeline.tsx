@@ -10,6 +10,7 @@ import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineCo
 import {
     FullyReadRenderEvent,
     MessageRenderEvent,
+    RenderEvent,
     RenderEventType,
     ThreadUpdateRenderEvent,
     UserMessagesRenderEvent,
@@ -91,6 +92,11 @@ export const MessageTimeline = (props: Props) => {
             | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
             | { id: string; type: 'message'; item: MessageRenderEvent }
             | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
+            | {
+                  id: string
+                  type: 'generic'
+                  item: RenderEvent
+              }
 
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
@@ -120,8 +126,8 @@ export const MessageTimeline = (props: Props) => {
                     : e.type === RenderEventType.UserMessages
                     ? e.events.map((event, index, events) => {
                           return {
-                              type: 'message',
                               id: event.eventId,
+                              type: 'message',
                               item: {
                                   type: RenderEventType.Message,
                                   key: event.eventId,
@@ -131,6 +137,8 @@ export const MessageTimeline = (props: Props) => {
                               } as const,
                           } as const
                       })
+                    : e.type !== 'group'
+                    ? ({ id: e.key, type: 'generic', item: e } as const)
                     : []
             })
             .filter(notUndefined)

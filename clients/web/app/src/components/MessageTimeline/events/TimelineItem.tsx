@@ -1,4 +1,5 @@
 import React from 'react'
+import { staticAssertNever } from 'use-zion-client'
 import { Stack } from '@ui'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
@@ -50,7 +51,16 @@ export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: 
             return <TimelineThreadUpdates events={itemData.events} key={itemData.key} />
         }
 
+        case RenderEventType.EncryptedMessage: {
+            return <TimelineGenericEvent event={itemData.event} key={itemData.event.eventId} />
+        }
+
+        case RenderEventType.FullyRead: {
+            return null
+        }
+
         default: {
+            staticAssertNever(itemData)
             return null
         }
     }
