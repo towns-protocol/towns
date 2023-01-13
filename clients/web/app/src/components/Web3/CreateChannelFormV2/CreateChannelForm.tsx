@@ -11,6 +11,7 @@ import { StoredTransactionType } from 'store/transactionsStore'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useSaveTransactionOnCreation } from 'hooks/useSaveTransactionOnSuccess'
 import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
+import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 
 type Props = {
     spaceId: RoomIdentifier
@@ -57,9 +58,16 @@ export const CreateChannelForm = (props: Props) => {
     const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
     const { isAbleToInteract } = transactionUIState
 
-    const hasError = useMemo(() => {
-        return Boolean(transactionError && transactionError.name !== 'ACTION_REJECTED')
-    }, [transactionError])
+    const { hasTransactionError, hasServerError } = useMemo(() => {
+        return {
+            hasTransactionError: Boolean(
+                transactionError && transactionHash && !isRejectionError(transactionError),
+            ),
+            hasServerError: Boolean(
+                transactionError && !transactionHash && !isRejectionError(transactionError),
+            ),
+        }
+    }, [transactionError, transactionHash])
 
     const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (!channelNameRegEx.test(event.key)) {
@@ -182,9 +190,23 @@ export const CreateChannelForm = (props: Props) => {
                                 />
                             </Box>
 
-                            {hasError && (
+                            {hasTransactionError && (
                                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                                     <ErrorMessageText message="There was an error with the transaction. Please try again" />
+                                </Box>
+                            )}
+
+                            {transactionError && hasServerError && (
+                                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
+                                    {isForbiddenError(transactionError)}
+                                    {transactionError.name}
+                                    <ErrorMessageText
+                                        message={
+                                            isForbiddenError(transactionError)
+                                                ? "You don't have permission to create a channel in this space"
+                                                : 'There was an error creating the channel'
+                                        }
+                                    />
                                 </Box>
                             )}
                         </Stack>

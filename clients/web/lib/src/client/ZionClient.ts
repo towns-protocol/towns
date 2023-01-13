@@ -566,17 +566,20 @@ export class ZionClient {
     public async createChannelTransaction(
         createChannelInfo: CreateChannelInfo,
     ): Promise<ChannelTransactionContext> {
-        const roomId: RoomIdentifier | undefined = await this.createChannelRoom(createChannelInfo)
-
-        if (!roomId) {
-            console.error('[createChannelTransaction] Matrix createChannel failed')
+        let roomId: RoomIdentifier | undefined
+        try {
+            roomId = await this.createChannelRoom(createChannelInfo)
+        } catch (error) {
+            const _error = new Error('Matrix createChannel failed')
+            _error.name = (error as Error).name ?? 'Error'
+            console.error(_error)
             return {
                 transaction: undefined,
                 receipt: undefined,
                 status: TransactionStatus.Failed,
                 data: undefined,
                 parentSpaceId: undefined,
-                error: new Error('Matrix createChannel failed'),
+                error: _error,
             }
         }
 

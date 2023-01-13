@@ -160,9 +160,9 @@ describe('CreateChannelForm', () => {
         })
     })
 
-    test('shows error message if there was an transaction error', async () => {
+    test('shows transaction error message if there was an transaction error', async () => {
         vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
-            useMockedCreateChannelTransaction('failWithoutTransaction'),
+            useMockedCreateChannelTransaction('failedWithTransactionContext'),
         )
 
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
@@ -199,5 +199,46 @@ describe('CreateChannelForm', () => {
         })
 
         await screen.findByText('There was an error with the transaction. Please try again')
+    })
+
+    test('shows permission error message if there was an error with Matrix permissions', async () => {
+        vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(() =>
+            useMockedCreateChannelTransaction('failedWithMatrixPermissionContext'),
+        )
+
+        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+            (_spaceNetworkId: string | undefined) => {
+                return {
+                    data: [
+                        {
+                            ...everyoneRole,
+                        },
+                        {
+                            ...memberRole,
+                        },
+                    ],
+                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+            },
+        )
+
+        render(<Wrapper />)
+
+        const submitButton = screen.getByRole('button', { name: /create/i })
+
+        const nameInput = screen.getByRole('textbox', { name: /name/i })
+        const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
+        const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
+
+        fireEvent.change(nameInput, { target: { value: 'test channel' } })
+        fireEvent.click(everyoneCheckbox)
+        fireEvent.click(memberCheckbox)
+
+        fireEvent.click(submitButton)
+
+        await waitFor(() => {
+            return screen.getByText('Creating channel')
+        })
+
+        await screen.findByText("You don't have permission to create a channel in this space")
     })
 })

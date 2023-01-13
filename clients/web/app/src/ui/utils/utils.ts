@@ -16,3 +16,11 @@ export const shortAddress = (address: string) => {
     const end = address.slice(-3)
     return `${start}...${end}`
 }
+
+export const isRejectionError = (error: Error): boolean => {
+    return error.name === 'ACTION_REJECTED'
+}
+
+export const isForbiddenError = (error: Error): boolean => {
+    return error.name === 'M_FORBIDDEN'
+}

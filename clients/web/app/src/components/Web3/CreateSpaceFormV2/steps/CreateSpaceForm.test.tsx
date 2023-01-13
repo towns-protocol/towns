@@ -227,7 +227,7 @@ describe('CreateSpaceStep1', () => {
 
     test('Step 3: handles space creation error and shows error message', async () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(() =>
-            useMockedCreateSpaceTransaction('failWithoutTransaction'),
+            useMockedCreateSpaceTransaction('failedWithTransactionContext'),
         )
 
         const navigateSpy = vi.fn()

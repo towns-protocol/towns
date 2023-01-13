@@ -32,14 +32,6 @@ const successContext = {
     },
 }
 
-const failedWithoutTransactionContext = {
-    status: zionClient.TransactionStatus.Failed,
-    transaction: undefined,
-    receipt: undefined,
-    data: undefined,
-    error: { name: 'whatever', message: 'some error' },
-}
-
 const failedWithTransactionContext = {
     status: zionClient.TransactionStatus.Failed,
     transaction: { hash: '0xhash', status: 0 } as unknown as ContractTransaction,
@@ -50,6 +42,14 @@ const failedWithTransactionContext = {
         protocol: zionClient.SpaceProtocol.Matrix,
     },
     error: { name: 'whatever', message: 'some error' },
+}
+
+const failedWithMatrixPermissionContext = {
+    status: zionClient.TransactionStatus.Failed,
+    transaction: undefined,
+    receipt: undefined,
+    data: undefined,
+    error: { name: 'M_FORBIDDEN', message: 'some error' },
 }
 
 type TransactionFnNames = 'createSpaceTransactionWithMemberRole' | 'createChannelTransaction'
@@ -78,7 +78,10 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
     const createTransactionSpy = vi.fn()
 
     const useMockedCreateTransaction = (
-        outcome: 'success' | 'failWithTransaction' | 'failWithoutTransaction' = 'success',
+        outcome:
+            | 'success'
+            | 'failWithTransaction'
+            | 'failedWithMatrixPermissionContext' = 'success',
     ): UseMockCreateSpaceReturn | UseMockCreateChannelReturn => {
         const [transactionContext, setTransactionContext] = useState<
             zionClient.TransactionContext<zionClient.RoomIdentifier> | undefined
@@ -107,8 +110,8 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
                 await waitFor(() => {
                     if (outcome === 'success') {
                         setTransactionContext(successContext)
-                    } else if (outcome === 'failWithoutTransaction') {
-                        setTransactionContext(failedWithoutTransactionContext)
+                    } else if (outcome === 'failedWithMatrixPermissionContext') {
+                        setTransactionContext(failedWithMatrixPermissionContext)
                     } else {
                         setTransactionContext(failedWithTransactionContext)
                     }
