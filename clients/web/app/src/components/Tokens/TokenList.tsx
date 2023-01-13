@@ -7,7 +7,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { getCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
-import { hasVitalkTokensParam } from 'utils'
+import { hasVitalkTokensParam, isDev } from 'utils'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -159,6 +159,14 @@ export const TokenList = ({
                 <Box paddingTop="sm">
                     <Text size="sm" color="negative">
                         There was an error fetching your tokens
+                    </Text>
+                </Box>
+            )}
+            {isDev && chainId === 31337 && (
+                <Box padding="sm">
+                    <Text size="sm">
+                        Localhost will only return the zion token for anvil accounts. To test a long
+                        list, add ?vitalikTokens to url
                     </Text>
                 </Box>
             )}
