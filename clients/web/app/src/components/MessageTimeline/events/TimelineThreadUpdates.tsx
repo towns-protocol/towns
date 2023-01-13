@@ -32,7 +32,7 @@ export const TimelineThreadUpdates = React.memo((props: Props) => {
     }, {} as Record<string, ZRoomMessageEvent[]>)
 
     return (
-        <Stack paddingY="md" gap="sm">
+        <Stack grow paddingY="md" gap="sm" paddingX="lg">
             {Object.entries(grouped).map(([threadParentId, events]) => (
                 <ThreadRootPreview2
                     key={threadParentId}
@@ -72,29 +72,40 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
     const message = truncate(threadStats.parentMessageContent.body, { length: 128 })
 
     return (
-        <Stack centerContent ref={ref} insetY="xs" onMouseEnter={onMouseEnter} onClick={onClick}>
-            <Box
-                centerContent
-                horizontal
-                cursor="pointer"
-                padding="sm"
-                gap="sm"
-                color={isUnread ? 'gray1' : 'gray2'}
-                rounded="md"
-                {...backgroundProps}
-            >
-                <Stack horizontal gap="xs">
-                    {userIds
-                        .map((u) => membersMap[u])
-                        .filter(notUndefined)
-                        .map((u) => (
-                            <Avatar src={u.avatarUrl} key={u.userId} size="avatar_xs" />
-                        ))}
-                </Stack>
-                <Box maxWidth="300">
-                    <Paragraph truncate size="sm">{`replied to "${message}"`}</Paragraph>
+        <Stack horizontal grow paddingY="xs" onMouseEnter={onMouseEnter} onClick={onClick}>
+            <Stack ref={ref} insetY="xs" alignItems="start">
+                <Box
+                    centerContent
+                    horizontal
+                    cursor="pointer"
+                    insetLeft="xs"
+                    paddingLeft="sm"
+                    paddingRight="md"
+                    paddingY="xs"
+                    gap="sm"
+                    color={isUnread ? 'gray1' : 'gray2'}
+                    rounded="md"
+                    {...backgroundProps}
+                >
+                    <Stack horizontal gap="xs">
+                        {userIds
+                            .map((u) => membersMap[u])
+                            .filter(notUndefined)
+                            .map((u, index) => (
+                                <Avatar
+                                    border
+                                    src={u.avatarUrl}
+                                    key={u.userId}
+                                    size="avatar_xs"
+                                    insetLeft={index > 0 ? 'xs' : undefined}
+                                />
+                            ))}
+                    </Stack>
+                    <Box maxWidth="300">
+                        <Paragraph truncate size="sm">{`replied to "${message}"`}</Paragraph>
+                    </Box>
                 </Box>
-            </Box>
+            </Stack>
         </Stack>
     )
 }
