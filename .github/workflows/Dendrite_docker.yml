@@ -26,22 +26,12 @@ jobs:
         name: Monolith image
         runs-on: ubuntu-latest
         permissions:
-            contents: write
             packages: write
         steps:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: 'Automated version bump'
-              uses: 'phips28/gh-action-bump-version@master'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  PACKAGEJSON_DIR: 'servers/dendrite'
-              with:
-                  version-type: 'patch'
-                  skip-tag: 'true'
-
-            - name: Get release version from package.json
+            - name: Put commit hash to release version
               working-directory: ./servers/dendrite
               run: bash get-version.sh | awk '{print "RELEASE_VERSION="$1""}' >> $GITHUB_ENV
 
