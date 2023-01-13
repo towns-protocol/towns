@@ -40,6 +40,11 @@ describe('powerLevelsHooks', () => {
                 visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
+        const pl = bob.getPowerLevel(roomId, 'm.space.child')
+        if (!pl) {
+            throw new Error('no space child level found')
+        }
+        await bob.setPowerLevel(roomId, pl, 50)
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.matrixUserId!)
         // alice joins the room
@@ -56,7 +61,7 @@ describe('powerLevelsHooks', () => {
                 (x) => x.definition.key == 'm.space.child',
             )
             // callback to set the level required to create a space child to 0
-            const updateSpaceChildLevel = useCallback(() => {
+            const powerDownSpaceChildLevel = useCallback(() => {
                 if (!spaceChildLevel) {
                     throw new Error('no space child level found')
                 }
@@ -74,7 +79,7 @@ describe('powerLevelsHooks', () => {
                     <div data-testid="spaceChildLevel">
                         {'_' + (spaceChildLevel?.value.toString() ?? 'none') + '_'}
                     </div>
-                    <button onClick={updateSpaceChildLevel}>PowerDown</button>
+                    <button onClick={powerDownSpaceChildLevel}>PowerDown</button>
                 </>
             )
         }
@@ -89,7 +94,7 @@ describe('powerLevelsHooks', () => {
         const spaceChildLevel = screen.getByTestId('spaceChildLevel')
         const powerDownButton = screen.getByRole('button', { name: 'PowerDown' })
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
-        // expect the initial power levels to be set to 50
+        // wait for the power levels to be set to 50
         await waitFor(() => expect(spaceChildLevel).toHaveTextContent('_50_'))
         // expect that alice can't make a space child
         await expect(

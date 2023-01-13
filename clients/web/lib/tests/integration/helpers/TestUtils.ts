@@ -112,7 +112,7 @@ async function _fundWallet(walletToFund: ethers.Wallet, amount = 0.1): Promise<b
     return true
 }
 
-export async function createBasicTestSpace(
+export function createBasicTestSpace(
     client: ZionClient,
     createSpaceInfo: CreateSpaceInfo,
 ): Promise<RoomIdentifier | undefined> {
@@ -127,7 +127,7 @@ export async function createBasicTestSpace(
     return client.createSpace(createSpaceInfo, spaceEntitlementData, emptyPermissions)
 }
 
-export async function createTestSpaceWithZionMemberRole(
+export function createTestSpaceWithZionMemberRole(
     client: ZionTestClient,
     tokenGrantedPermissions: Permission[],
     everyonePermissions: Permission[] = [],
@@ -149,10 +149,10 @@ export async function createTestSpaceWithZionMemberRole(
         users: [],
     }
 
-    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
+    return client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
 }
 
-export async function createTestSpaceWithEveryoneRole(
+export function createTestSpaceWithEveryoneRole(
     client: ZionTestClient,
     everyonePermissions: Permission[] = [],
     createSpaceInfo?: CreateSpaceInfo,
@@ -172,7 +172,7 @@ export async function createTestSpaceWithEveryoneRole(
         users: [],
     }
 
-    return await client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
+    return client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
 }
 
 export async function createTestChannelWithSpaceRoles(
@@ -192,7 +192,7 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    return await client.createChannel(createChannelInfo)
+    return client.createChannel(createChannelInfo)
 }
 
 export function getTestPrimaryProtocol(): SpaceProtocol {
