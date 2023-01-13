@@ -18,6 +18,7 @@ export default {
     testEnvironmentOptions: {
         scriptPath: './src/index.ts',
         wranglerConfigEnv: 'dev',
+        wranglerConfigPath: './wrangler.test.toml',
         modules: true,
     },
 }

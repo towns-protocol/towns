@@ -1,4 +1,4 @@
-import { withCorsHeaders } from '../../../common/cors'
+import { withCorsHeaders } from '../../../common'
 import { throwCustomError } from '../router'
 import { AccurateNftResponse, ContractMetadataResponse, RequestWithAlchemyConfig } from '../types'
 

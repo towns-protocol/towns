@@ -32,13 +32,23 @@ Wrangler will automatically check your variables in `.dev.vars` in the project r
 - `wrangler secret list` - should output any secrets stored in Cloudflare
 - If there's weird errors running tests, it could be caused by conflicting versions of `miniflare`. [issue](https://github.com/cloudflare/miniflare/issues/239#issuecomment-1092999752). Try `yarn why miniflare`. If there are confliciting versions and tests fail, try resolving miniflare to a single version in `harmony/packaga.json`
 
-## Deploying to Production
+## Deploying
 
 Deployment account and workers domain is defined in wrangler.toml config.
+
+STAGING
+Publish to staging for branch previews. This will deploy to `{name}`-staging.johnhnt.workers.dev
+
+```bash
+yarn publish:stage
+```
+
+PRODUCTION
+
 Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev domain. See [Wrangler Config](https://developers.cloudflare.com/workers/wrangler/configuration/) for more details.
 
 ```bash
-yarn publish
+yarn publish:prod
 ```
 
 ## Cache clearing

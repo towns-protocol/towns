@@ -1,4 +1,4 @@
-import { Env, worker } from '../src/index'
+import unfurlDefaultExport, { Env, worker } from '../src/index'
 import { queryParams } from '../src/twitter'
 import { UnfurlData } from '../src/types'
 import { interceptResponseWithMock } from './interceptRequest'
@@ -47,9 +47,13 @@ function generateRequest(urlArray: string[], method = 'GET'): [Request, Env, Exe
     const urls = urlArray.map((url) => encodeURIComponent(url)).join('&url=')
     const url = `${FAKE_SERVER_URL}?url=${urls}`
 
+    const bindings = getMiniflareBindings()
+
     return [
-        new Request(url, { method }),
-        getMiniflareBindings(),
+        new Request(url, {
+            method,
+        }),
+        bindings,
         { waitUntil: () => null, passThroughOnException: () => null },
     ]
 }
@@ -91,10 +95,28 @@ describe('unfurl handler', () => {
 
     // !! TIP: make one mock request per test !!
 
+    test('Returns unauthorized if not authorized request', async () => {
+        const bindings = getMiniflareBindings()
+        const response = await unfurlDefaultExport.fetch(
+            new Request(FAKE_SERVER_URL, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer wrongkey`,
+                },
+            }),
+            bindings,
+            { waitUntil: () => null, passThroughOnException: () => null },
+        )
+        expect(response.status).toBe(401)
+    })
+
     test('handles no url param', async () => {
+        const bindings = getMiniflareBindings()
         const response = await worker.fetch(
-            new Request(FAKE_SERVER_URL, { method: 'GET' }),
-            getMiniflareBindings(),
+            new Request(FAKE_SERVER_URL, {
+                method: 'GET',
+            }),
+            bindings,
             { waitUntil: () => null, passThroughOnException: () => null },
         )
         expect(response.status).toBe(200)

@@ -8,7 +8,6 @@ type="javascript"
 # This causes `wrangler dev` to fail https://github.com/cloudflare/wrangler2/issues/2149
 # But `wrangler dev --local` (which is what our VSCode task uses) and publishing work fine. 
 # If you really need `wrangler dev` for some reason, remove the following line temporarily
-route = { pattern = "unfurl-proxy.zion.xyz", custom_domain = true }
 # keeping zone_id for reference
 zone_id = "26d0d19e0a900688cc377ceb7ec0413d"
 account_id="9840f8a36a817b103e00e29a0e2bad6f"
@@ -28,6 +27,25 @@ local_protocol = "http"
 
 # The necessary secrets are:
 # TWITTER_BEARER
+# AUTH_SECRET
+#
 # for local development, you can add these in .dev.vars
+#
+# For production, you can add these in the Cloudflare dashboard or run
+# `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# for staging, the secrets must be deployed behind the staging flag
+# `echo <VALUE> | wrangler secret put <NAME> --env staging`
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+
+# staging routes
+# yarn publish:stage
+[env.staging]
+workers_dev = true
+# vars = { ENVIRONMENT = "staging" } # [vars] access, not secrets
+
+# production routes
+# yarn publish:prod
+[env.production]
+route = { pattern = "unfurl-proxy.zion.xyz", custom_domain = true }
+# vars = { ENVIRONMENT = "production" }

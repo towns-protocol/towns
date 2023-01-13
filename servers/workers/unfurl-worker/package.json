@@ -8,7 +8,8 @@
         "dev": "echo use dev:local for now - see wranlger.toml",
         "dev:local": "npx wrangler dev --local",
         "lint": "eslint .",
-        "publish": "npx wrangler publish",
+        "publish:prod": "npx wrangler publish --env production",
+        "publish:stage": "npx wrangler publish --env staging",
         "test": "yarn test:unit",
         "test:unit": "jest"
     },

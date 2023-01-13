@@ -8,7 +8,8 @@
 		"dev": "npx wrangler dev",
 		"dev:local": "npx wrangler dev --local",
 		"lint": "eslint .",
-		"publish": "npx wrangler publish",
+		"publish:prod": "npx wrangler publish --env production",
+		"publish:stage": "npx wrangler publish --env staging",
 		"test": "jest"
 	},
 	"devDependencies": {

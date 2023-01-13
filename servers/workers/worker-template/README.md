@@ -67,11 +67,21 @@ curl http://127.0.0.1:8787
 Hello World from GET!
 ```
 
-## Deploying to Production
+## Deploying
 
 Deployment account and workers domain is defined in wrangler.toml config.
+
+STAGING
+Publish to staging for branch previews. This will deploy to `{name}`-staging.johnhnt.workers.dev
+
+```bash
+yarn publish:stage
+```
+
+PRODUCTION
+
 Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev domain. See [Wrangler Config](https://developers.cloudflare.com/workers/wrangler/configuration/) for more details.
 
 ```bash
-yarn publish
+yarn publish:prod
 ```

@@ -1,4 +1,11 @@
-import { withCorsHeaders } from '../../common/cors'
+import {
+    withCorsHeaders,
+    AuthEnv,
+    isAuthedRequest,
+    isOptionsRequest,
+    getOptionsResponse,
+} from '../../common'
+
 import { isUrl } from './utils/isUrl'
 import { checkForTweetIdFromUrl, getTweet } from './twitter'
 import { TwitterUnfurl, UnfurlData } from './types'
@@ -7,7 +14,7 @@ import { formattedUnfurlJSData } from './unfurler'
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
 
-export interface Env {
+export interface Env extends AuthEnv {
     TWITTER_BEARER: string
     // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
     // MY_KV_NAMESPACE: KVNamespace
@@ -22,6 +29,20 @@ export interface Env {
 // have to use module syntax to gain access to env which contains secret variables for local dev
 export default {
     fetch(request: Request, env: Env, ctx: ExecutionContext) {
+        if (isOptionsRequest(request)) {
+            return getOptionsResponse(request)
+        }
+
+        if (!isAuthedRequest(request, env)) {
+            return new Response('Unauthorized', { status: 401, headers: withCorsHeaders(request) })
+        }
+
+        if (request.method !== 'GET') {
+            return new Response('Method not allowed', {
+                status: 405,
+                headers: withCorsHeaders(request),
+            })
+        }
         return worker.fetch(request, env, ctx)
     },
 }
@@ -71,10 +92,6 @@ export const worker = {
         env: Env,
         ctx?: ExecutionContext,
     ): Promise<Response> {
-        if (request.method !== 'GET') {
-            return new Response('Method not allowed', { status: 405 })
-        }
-
         const url = new URL(request.url)
         const cacheKey = url.toString()
 

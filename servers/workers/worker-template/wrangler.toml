@@ -6,6 +6,8 @@ compatibility_date = "2022-07-26"
 [miniflare]
 cache_persist = false
 
+[env.staging]
+workers_dev = true
 
 [vars]
 # VAR_NAME = "some_value"

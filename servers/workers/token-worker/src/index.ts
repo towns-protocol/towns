@@ -1,3 +1,9 @@
+import {
+    isAuthedRequest,
+    withCorsHeaders,
+    getOptionsResponse,
+    isOptionsRequest,
+} from '../../common'
 import { getNftsForOwner } from './handlers/getNfts'
 import { router } from './router'
 import { Env, RequestWithAlchemyConfig } from './types'
@@ -27,6 +33,12 @@ export const worker = {
 
 export default {
     fetch(request: Request, env: Env) {
+        if (isOptionsRequest(request)) {
+            return getOptionsResponse(request)
+        }
+        if (!isAuthedRequest(request, env)) {
+            return new Response('Unauthorized', { status: 401, headers: withCorsHeaders(request) })
+        }
         return worker.fetch(request, env)
     },
 }

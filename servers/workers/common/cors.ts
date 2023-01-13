@@ -8,7 +8,7 @@ const onRenderOrigin = (origin: string): string | undefined => {
 
 const corsHeaders = (origin: string) => ({
     'Access-Control-Allow-Headers': '*',
-    'Access-Control-Allow-Methods': 'GET',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Origin': origin,
 })
 

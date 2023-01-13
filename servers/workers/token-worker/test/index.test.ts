@@ -1,4 +1,4 @@
-import { worker } from '../src/index'
+import tokenDefaultExport, { worker } from '../src/index'
 import { getNftsContractMetaMock, getNftsMock, getNftsMockPage2 } from './mocks'
 
 const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
@@ -6,6 +6,23 @@ const GET_NFTS_PATH = '/v2/fake_key/getNFTs?owner=vitalik.eth&pageKey=&filters[]
 const GET_NFTS_PAGE_2 = '/v2/fake_key/getNFTs?owner=vitalik.eth&pageKey=b&filters[]=SPAM'
 
 describe('token worker', () => {
+    test('Returns unauthorized if not authorized request', async () => {
+        const bindings = getMiniflareBindings()
+        const response = await tokenDefaultExport.fetch(
+            new Request(
+                'https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth?contractMetadata',
+                {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer wrongkey`,
+                    },
+                },
+            ),
+            bindings,
+        )
+        expect(response.status).toBe(401)
+    })
+
     test('getNftsForOwner', async () => {
         const fetchMock = getMiniflareFetchMock()
 
@@ -24,6 +41,7 @@ describe('token worker', () => {
             new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth'),
             {
                 ALCHEMY_API_KEY: 'fake_key',
+                AUTH_SECRET: 'fake_secret',
             },
         )
 
@@ -51,6 +69,7 @@ describe('token worker', () => {
             ),
             {
                 ALCHEMY_API_KEY: 'fake_key',
+                AUTH_SECRET: 'fake_secret',
             },
         )
 
@@ -83,6 +102,7 @@ describe('token worker', () => {
             new Request('https://fake.com/api/getNftsForOwner/eth-mainnet/vitalik.eth?all'),
             {
                 ALCHEMY_API_KEY: 'fake_key',
+                AUTH_SECRET: 'fake_secret',
             },
         )
 
