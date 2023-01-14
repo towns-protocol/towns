@@ -91,7 +91,7 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": false,
           "internalType": "string",
           "name": "spaceNetworkId",
           "type": "string"
@@ -328,17 +328,17 @@
     }
   ],
   "bytecode": {
-    "object": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122042e54163039d7890b6c6e6d8ab5e7dcef8e27a4da768d64a03e592b1aa48d31364736f6c63430008110033",
-    "sourceMap": "63:3976:36:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;63:3976:36;;;;;;;;;;;;;;;;;",
+    "object": "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122074d84cf1352e81c50164b57ad5e227cb0baeaeab5498e3731fcac5dcd7a880cb64736f6c63430008110033",
+    "sourceMap": "63:3968:36:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;63:3968:36;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
-    "object": "0x73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122042e54163039d7890b6c6e6d8ab5e7dcef8e27a4da768d64a03e592b1aa48d31364736f6c63430008110033",
-    "sourceMap": "63:3976:36:-:0;;;;;;;;",
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122074d84cf1352e81c50164b57ad5e227cb0baeaeab5498e3731fcac5dcd7a880cb64736f6c63430008110033",
+    "sourceMap": "63:3968:36:-:0;;;;;;;;",
     "linkReferences": {}
   },
   "methodIdentifiers": {},
-  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"channelNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"CreateChannel\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"roleName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"CreateRole\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"roleName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"CreateRoleWithEntitlementData\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"CreateSpace\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"}],\"name\":\"DefaultEntitlementSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"}],\"name\":\"EntitlementModuleAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"}],\"name\":\"EntitlementModuleRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"updater\",\"type\":\"address\"}],\"name\":\"ModifyRoleWithEntitlementData\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"updater\",\"type\":\"address\"}],\"name\":\"RemoveRole\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"channelNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"}],\"name\":\"SetChannelAccess\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"}],\"name\":\"SetSpaceAccess\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spaceNFTAddress\",\"type\":\"address\"}],\"name\":\"SpaceNFTAddressSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"updater\",\"type\":\"address\"}],\"name\":\"UpdateRole\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"whitelist\",\"type\":\"bool\"}],\"name\":\"WhitelistEntitlementModule\",\"type\":\"event\"}],\"devdoc\":{\"events\":{\"CreateChannel(string,string,address)\":{\"details\":\"Emitted when a channel is created\",\"params\":{\"channelNetworkId\":\"The id of the channel\",\"owner\":\"The address of the creator of the channel\",\"spaceNetworkId\":\"The id of the space\"}},\"CreateRole(string,uint256,string,address)\":{\"details\":\"Emitted when a role is created\",\"params\":{\"roleId\":\"The id of the role\",\"roleName\":\"The name of the role\",\"spaceId\":\"The id of the space\"}},\"CreateRoleWithEntitlementData(string,uint256,string,address)\":{\"details\":\"Emitted when a role is created\",\"params\":{\"roleId\":\"The id of the role\",\"roleName\":\"The name of the role\",\"spaceId\":\"The id of the space\"}},\"CreateSpace(string,address)\":{\"details\":\"Emitted when a space is created\",\"params\":{\"owner\":\"The address of the owner of the space\",\"spaceNetworkId\":\"The id of the space\"}},\"DefaultEntitlementSet(address)\":{\"details\":\"Emitted when the default entitlement module is set on the contract\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\"}},\"EntitlementModuleAdded(string,address)\":{\"details\":\"Emitted when an entitlement module is added to a space\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\",\"spaceId\":\"The id of the space\"}},\"EntitlementModuleRemoved(string,address)\":{\"details\":\"Emitted when an entitlement module is removed from a space\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\",\"spaceId\":\"The id of the space\"}},\"ModifyRoleWithEntitlementData(string,uint256,address)\":{\"details\":\"Emitted when a role is modified\",\"params\":{\"roleId\":\"The id of the role\",\"spaceId\":\"The id of the space\"}},\"RemoveRole(string,uint256,address)\":{\"details\":\"Emitted when a role is updated\",\"params\":{\"roleId\":\"The id of the role\",\"spaceId\":\"The id of the space\"}},\"SetChannelAccess(string,string,address,bool)\":{\"details\":\"Emitted when a channel access is updated\",\"params\":{\"channelNetworkId\":\"The id of the channel\",\"disabled\":\"The disabled status\",\"spaceNetworkId\":\"The id of the space\",\"user\":\"The address of the user\"}},\"SetSpaceAccess(string,address,bool)\":{\"details\":\"Emitted when a space access is updated\",\"params\":{\"disabled\":\"The disabled status\",\"spaceNetworkId\":\"The id of the space\",\"user\":\"The address of the user\"}},\"SpaceNFTAddressSet(address)\":{\"details\":\"Emitted when the space nft address is set on the contract\",\"params\":{\"spaceNFTAddress\":\"The address of the space nft\"}},\"UpdateRole(string,uint256,address)\":{\"details\":\"Emitted when a role is updated\",\"params\":{\"roleId\":\"The id of the role\",\"spaceId\":\"The id of the space\"}},\"WhitelistEntitlementModule(string,address,bool)\":{\"details\":\"Emitted when an entitlement module is white listed on a space\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\",\"spaceNetworkId\":\"The id of the space\"}}},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/spaces/libraries/Events.sol\":\"Events\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@opengsn/=node_modules/@opengsn/\",\":@openzeppelin/=node_modules/@openzeppelin/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":solidity-json-writer/=lib/solidity-json-writer/contracts/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"contracts/src/spaces/libraries/Events.sol\":{\"keccak256\":\"0x75d73e771cf6ec22a6176fd01fdbc01f676ad22d55ed284f3f7d3d792e58eb8e\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://7e83cfaf7a1d90338a8ba72071d8ddfa0542417e293fe4df021ef1f7d9f66cdb\",\"dweb:/ipfs/QmUddapNGoSNzVLiTC4rx7ncWMEnZQmst5pfGJM49VShJQ\"]}},\"version\":1}",
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"channelNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"CreateChannel\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"roleName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"CreateRole\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"roleName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"CreateRoleWithEntitlementData\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"CreateSpace\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"}],\"name\":\"DefaultEntitlementSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"}],\"name\":\"EntitlementModuleAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"}],\"name\":\"EntitlementModuleRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"updater\",\"type\":\"address\"}],\"name\":\"ModifyRoleWithEntitlementData\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"updater\",\"type\":\"address\"}],\"name\":\"RemoveRole\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"string\",\"name\":\"channelNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"}],\"name\":\"SetChannelAccess\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"disabled\",\"type\":\"bool\"}],\"name\":\"SetSpaceAccess\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spaceNFTAddress\",\"type\":\"address\"}],\"name\":\"SpaceNFTAddressSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"updater\",\"type\":\"address\"}],\"name\":\"UpdateRole\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"string\",\"name\":\"spaceNetworkId\",\"type\":\"string\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"entitlementAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"whitelist\",\"type\":\"bool\"}],\"name\":\"WhitelistEntitlementModule\",\"type\":\"event\"}],\"devdoc\":{\"events\":{\"CreateChannel(string,string,address)\":{\"details\":\"Emitted when a channel is created\",\"params\":{\"channelNetworkId\":\"The id of the channel\",\"owner\":\"The address of the creator of the channel\",\"spaceNetworkId\":\"The id of the space\"}},\"CreateRole(string,uint256,string,address)\":{\"details\":\"Emitted when a role is created\",\"params\":{\"roleId\":\"The id of the role\",\"roleName\":\"The name of the role\",\"spaceId\":\"The id of the space\"}},\"CreateRoleWithEntitlementData(string,uint256,string,address)\":{\"details\":\"Emitted when a role is created\",\"params\":{\"roleId\":\"The id of the role\",\"roleName\":\"The name of the role\",\"spaceId\":\"The id of the space\"}},\"CreateSpace(string,address)\":{\"details\":\"Emitted when a space is created\",\"params\":{\"owner\":\"The address of the owner of the space\",\"spaceNetworkId\":\"The id of the space\"}},\"DefaultEntitlementSet(address)\":{\"details\":\"Emitted when the default entitlement module is set on the contract\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\"}},\"EntitlementModuleAdded(string,address)\":{\"details\":\"Emitted when an entitlement module is added to a space\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\",\"spaceId\":\"The id of the space\"}},\"EntitlementModuleRemoved(string,address)\":{\"details\":\"Emitted when an entitlement module is removed from a space\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\",\"spaceId\":\"The id of the space\"}},\"ModifyRoleWithEntitlementData(string,uint256,address)\":{\"details\":\"Emitted when a role is modified\",\"params\":{\"roleId\":\"The id of the role\",\"spaceId\":\"The id of the space\"}},\"RemoveRole(string,uint256,address)\":{\"details\":\"Emitted when a role is updated\",\"params\":{\"roleId\":\"The id of the role\",\"spaceId\":\"The id of the space\"}},\"SetChannelAccess(string,string,address,bool)\":{\"details\":\"Emitted when a channel access is updated\",\"params\":{\"channelNetworkId\":\"The id of the channel\",\"disabled\":\"The disabled status\",\"spaceNetworkId\":\"The id of the space\",\"user\":\"The address of the user\"}},\"SetSpaceAccess(string,address,bool)\":{\"details\":\"Emitted when a space access is updated\",\"params\":{\"disabled\":\"The disabled status\",\"spaceNetworkId\":\"The id of the space\",\"user\":\"The address of the user\"}},\"SpaceNFTAddressSet(address)\":{\"details\":\"Emitted when the space nft address is set on the contract\",\"params\":{\"spaceNFTAddress\":\"The address of the space nft\"}},\"UpdateRole(string,uint256,address)\":{\"details\":\"Emitted when a role is updated\",\"params\":{\"roleId\":\"The id of the role\",\"spaceId\":\"The id of the space\"}},\"WhitelistEntitlementModule(string,address,bool)\":{\"details\":\"Emitted when an entitlement module is white listed on a space\",\"params\":{\"entitlementAddress\":\"The address of the entitlement module\",\"spaceNetworkId\":\"The id of the space\"}}},\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/spaces/libraries/Events.sol\":\"Events\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@opengsn/=node_modules/@opengsn/\",\":@openzeppelin/=node_modules/@openzeppelin/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"contracts/src/spaces/libraries/Events.sol\":{\"keccak256\":\"0xa4e7776f9eef562db0f950c8cd9faea474ab094a46301723b58cc0231bce63ad\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://cb1039c499e28f29d69a24d9ebd4ca84e519dc0830de55dabc158c30a80322bc\",\"dweb:/ipfs/Qme7whMckFbZBUCFfsZi5mR3h8Q9oWCqaZmW7otNZGVaeD\"]}},\"version\":1}",
   "metadata": {
     "compiler": {
       "version": "0.8.17+commit.8df45f5f"
@@ -439,7 +439,7 @@
               "internalType": "string",
               "name": "spaceNetworkId",
               "type": "string",
-              "indexed": true
+              "indexed": false
             },
             {
               "internalType": "address",
@@ -695,7 +695,6 @@
         ":murky/=lib/murky/src/",
         ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
         ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-        ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
         ":solmate/=lib/solmate/src/"
       ],
       "optimizer": {
@@ -712,10 +711,10 @@
     },
     "sources": {
       "contracts/src/spaces/libraries/Events.sol": {
-        "keccak256": "0x75d73e771cf6ec22a6176fd01fdbc01f676ad22d55ed284f3f7d3d792e58eb8e",
+        "keccak256": "0xa4e7776f9eef562db0f950c8cd9faea474ab094a46301723b58cc0231bce63ad",
         "urls": [
-          "bzz-raw://7e83cfaf7a1d90338a8ba72071d8ddfa0542417e293fe4df021ef1f7d9f66cdb",
-          "dweb:/ipfs/QmUddapNGoSNzVLiTC4rx7ncWMEnZQmst5pfGJM49VShJQ"
+          "bzz-raw://cb1039c499e28f29d69a24d9ebd4ca84e519dc0830de55dabc158c30a80322bc",
+          "dweb:/ipfs/Qme7whMckFbZBUCFfsZi5mR3h8Q9oWCqaZmW7otNZGVaeD"
         ],
         "license": "Apache-2.0"
       }
@@ -724,17 +723,17 @@
   },
   "ast": {
     "absolutePath": "contracts/src/spaces/libraries/Events.sol",
-    "id": 10028,
+    "id": 10105,
     "exportedSymbols": {
       "Events": [
-        10027
+        10104
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "38:4002:36",
+    "src": "38:3994:36",
     "nodes": [
       {
-        "id": 9908,
+        "id": 9985,
         "nodeType": "PragmaDirective",
         "src": "38:23:36",
         "nodes": [],
@@ -746,18 +745,18 @@
         ]
       },
       {
-        "id": 10027,
+        "id": 10104,
         "nodeType": "ContractDefinition",
-        "src": "63:3976:36",
+        "src": "63:3968:36",
         "nodes": [
           {
-            "id": 9915,
+            "id": 9992,
             "nodeType": "EventDefinition",
-            "src": "239:72:36",
+            "src": "239:64:36",
             "nodes": [],
             "anonymous": false,
             "documentation": {
-              "id": 9909,
+              "id": 9986,
               "nodeType": "StructuredDocumentation",
               "src": "82:154:36",
               "text": " @dev Emitted when a space is created\n @param owner The address of the owner of the space\n @param spaceNetworkId The id of the space"
@@ -766,19 +765,19 @@
             "name": "CreateSpace",
             "nameLocation": "245:11:36",
             "parameters": {
-              "id": 9914,
+              "id": 9991,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9911,
-                  "indexed": true,
+                  "id": 9988,
+                  "indexed": false,
                   "mutability": "mutable",
                   "name": "spaceNetworkId",
-                  "nameLocation": "272:14:36",
+                  "nameLocation": "264:14:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9915,
-                  "src": "257:29:36",
+                  "scope": 9992,
+                  "src": "257:21:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -786,7 +785,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9910,
+                    "id": 9987,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "257:6:36",
@@ -799,14 +798,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 9913,
+                  "id": 9990,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "owner",
-                  "nameLocation": "304:5:36",
+                  "nameLocation": "296:5:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9915,
-                  "src": "288:21:36",
+                  "scope": 9992,
+                  "src": "280:21:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -814,10 +813,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9912,
+                    "id": 9989,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "288:7:36",
+                    "src": "280:7:36",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -827,38 +826,38 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "256:54:36"
+              "src": "256:46:36"
             }
           },
           {
-            "id": 9924,
+            "id": 10001,
             "nodeType": "EventDefinition",
-            "src": "529:123:36",
+            "src": "521:123:36",
             "nodes": [],
             "anonymous": false,
             "documentation": {
-              "id": 9916,
+              "id": 9993,
               "nodeType": "StructuredDocumentation",
-              "src": "315:211:36",
+              "src": "307:211:36",
               "text": " @dev Emitted when a channel is created\n @param spaceNetworkId The id of the space\n @param channelNetworkId The id of the channel\n @param owner The address of the creator of the channel"
             },
             "eventSelector": "f22ca4e1529bca70f91b82d259651796b8973cec866e55ad258c1f6d56ea71d3",
             "name": "CreateChannel",
-            "nameLocation": "535:13:36",
+            "nameLocation": "527:13:36",
             "parameters": {
-              "id": 9923,
+              "id": 10000,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9918,
+                  "id": 9995,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "spaceNetworkId",
-                  "nameLocation": "569:14:36",
+                  "nameLocation": "561:14:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9924,
-                  "src": "554:29:36",
+                  "scope": 10001,
+                  "src": "546:29:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -866,10 +865,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9917,
+                    "id": 9994,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "554:6:36",
+                    "src": "546:6:36",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -877,932 +876,16 @@
                   },
                   "visibility": "internal"
                 },
-                {
-                  "constant": false,
-                  "id": 9920,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "channelNetworkId",
-                  "nameLocation": "604:16:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9924,
-                  "src": "589:31:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9919,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "589:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9922,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "owner",
-                  "nameLocation": "642:5:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9924,
-                  "src": "626:21:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9921,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "626:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "548:103:36"
-            }
-          },
-          {
-            "id": 9933,
-            "nodeType": "EventDefinition",
-            "src": "846:105:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9925,
-              "nodeType": "StructuredDocumentation",
-              "src": "656:187:36",
-              "text": " @dev Emitted when a space access is updated\n @param spaceNetworkId The id of the space\n @param user The address of the user\n @param disabled The disabled status"
-            },
-            "eventSelector": "b52a77d1c8e7ecf705bef894088b2c74fb373648434090edc15688f5c80a8687",
-            "name": "SetSpaceAccess",
-            "nameLocation": "852:14:36",
-            "parameters": {
-              "id": 9932,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9927,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceNetworkId",
-                  "nameLocation": "887:14:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9933,
-                  "src": "872:29:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9926,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "872:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9929,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "user",
-                  "nameLocation": "923:4:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9933,
-                  "src": "907:20:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9928,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "907:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9931,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "disabled",
-                  "nameLocation": "938:8:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9933,
-                  "src": "933:13:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_bool",
-                    "typeString": "bool"
-                  },
-                  "typeName": {
-                    "id": 9930,
-                    "name": "bool",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "933:4:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_bool",
-                      "typeString": "bool"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "866:84:36"
-            }
-          },
-          {
-            "id": 9944,
-            "nodeType": "EventDefinition",
-            "src": "1198:144:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9934,
-              "nodeType": "StructuredDocumentation",
-              "src": "955:240:36",
-              "text": " @dev Emitted when a channel access is updated\n @param spaceNetworkId The id of the space\n @param channelNetworkId The id of the channel\n @param user The address of the user\n @param disabled The disabled status"
-            },
-            "eventSelector": "cba51876aa74b247950c251d3459c41aaebd8b10717beadb480ca1a105166ab5",
-            "name": "SetChannelAccess",
-            "nameLocation": "1204:16:36",
-            "parameters": {
-              "id": 9943,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9936,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceNetworkId",
-                  "nameLocation": "1241:14:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9944,
-                  "src": "1226:29:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9935,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "1226:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9938,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "channelNetworkId",
-                  "nameLocation": "1276:16:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9944,
-                  "src": "1261:31:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9937,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "1261:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9940,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "user",
-                  "nameLocation": "1314:4:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9944,
-                  "src": "1298:20:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9939,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "1298:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9942,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "disabled",
-                  "nameLocation": "1329:8:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9944,
-                  "src": "1324:13:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_bool",
-                    "typeString": "bool"
-                  },
-                  "typeName": {
-                    "id": 9941,
-                    "name": "bool",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "1324:4:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_bool",
-                      "typeString": "bool"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "1220:121:36"
-            }
-          },
-          {
-            "id": 9949,
-            "nodeType": "EventDefinition",
-            "src": "1504:64:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9945,
-              "nodeType": "StructuredDocumentation",
-              "src": "1346:155:36",
-              "text": " @dev Emitted when the default entitlement module is set on the contract\n @param entitlementAddress The address of the entitlement module"
-            },
-            "eventSelector": "07b136952c7460e1fc2d593fad96b5b379f28cc13a49857b6a825c5228c1a8d1",
-            "name": "DefaultEntitlementSet",
-            "nameLocation": "1510:21:36",
-            "parameters": {
-              "id": 9948,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9947,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "entitlementAddress",
-                  "nameLocation": "1548:18:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9949,
-                  "src": "1532:34:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9946,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "1532:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "1531:36:36"
-            }
-          },
-          {
-            "id": 9954,
-            "nodeType": "EventDefinition",
-            "src": "1709:58:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9950,
-              "nodeType": "StructuredDocumentation",
-              "src": "1572:134:36",
-              "text": " @dev Emitted when the space nft address is set on the contract\n @param spaceNFTAddress The address of the space nft"
-            },
-            "eventSelector": "68e3ca42e475f54d65227ed8cb60daf9cec4546691052783063876ad972db711",
-            "name": "SpaceNFTAddressSet",
-            "nameLocation": "1715:18:36",
-            "parameters": {
-              "id": 9953,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9952,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceNFTAddress",
-                  "nameLocation": "1750:15:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9954,
-                  "src": "1734:31:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9951,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "1734:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "1733:33:36"
-            }
-          },
-          {
-            "id": 9963,
-            "nodeType": "EventDefinition",
-            "src": "1971:132:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9955,
-              "nodeType": "StructuredDocumentation",
-              "src": "1771:197:36",
-              "text": " @dev Emitted when an entitlement module is white listed on a space\n @param spaceNetworkId The id of the space\n @param entitlementAddress The address of the entitlement module"
-            },
-            "eventSelector": "558bdc63bfb8cb1188bc6f559a22d16b8e64dccf7af1d84c90bcf2b7feb1e009",
-            "name": "WhitelistEntitlementModule",
-            "nameLocation": "1977:26:36",
-            "parameters": {
-              "id": 9962,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9957,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceNetworkId",
-                  "nameLocation": "2024:14:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9963,
-                  "src": "2009:29:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9956,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2009:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9959,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "entitlementAddress",
-                  "nameLocation": "2060:18:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9963,
-                  "src": "2044:34:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9958,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2044:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9961,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "whitelist",
-                  "nameLocation": "2089:9:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9963,
-                  "src": "2084:14:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_bool",
-                    "typeString": "bool"
-                  },
-                  "typeName": {
-                    "id": 9960,
-                    "name": "bool",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2084:4:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_bool",
-                      "typeString": "bool"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "2003:99:36"
-            }
-          },
-          {
-            "id": 9974,
-            "nodeType": "EventDefinition",
-            "src": "2280:127:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9964,
-              "nodeType": "StructuredDocumentation",
-              "src": "2107:170:36",
-              "text": " @dev Emitted when a role is created\n @param spaceId The id of the space\n @param roleId The id of the role\n @param roleName The name of the role"
-            },
-            "eventSelector": "c06cee439d340740b1e427558729eb0fcc080aa2ab6d0bcfb30b6618234f460a",
-            "name": "CreateRole",
-            "nameLocation": "2286:10:36",
-            "parameters": {
-              "id": 9973,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9966,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "2317:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9974,
-                  "src": "2302:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9965,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2302:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9968,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "roleId",
-                  "nameLocation": "2346:6:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9974,
-                  "src": "2330:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 9967,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2330:7:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9970,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "roleName",
-                  "nameLocation": "2373:8:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9974,
-                  "src": "2358:23:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9969,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2358:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9972,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "creator",
-                  "nameLocation": "2395:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9974,
-                  "src": "2387:15:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9971,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2387:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "2296:110:36"
-            }
-          },
-          {
-            "id": 9985,
-            "nodeType": "EventDefinition",
-            "src": "2584:146:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9975,
-              "nodeType": "StructuredDocumentation",
-              "src": "2411:170:36",
-              "text": " @dev Emitted when a role is created\n @param spaceId The id of the space\n @param roleId The id of the role\n @param roleName The name of the role"
-            },
-            "eventSelector": "eb29af321b2cd1d53b9e6e813395256774b0015589f25c335a6d00670a164ac8",
-            "name": "CreateRoleWithEntitlementData",
-            "nameLocation": "2590:29:36",
-            "parameters": {
-              "id": 9984,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9977,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "2640:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9985,
-                  "src": "2625:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9976,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2625:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9979,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "roleId",
-                  "nameLocation": "2669:6:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9985,
-                  "src": "2653:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 9978,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2653:7:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9981,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "roleName",
-                  "nameLocation": "2696:8:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9985,
-                  "src": "2681:23:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9980,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2681:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9983,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "creator",
-                  "nameLocation": "2718:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9985,
-                  "src": "2710:15:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9982,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2710:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "2619:110:36"
-            }
-          },
-          {
-            "id": 9994,
-            "nodeType": "EventDefinition",
-            "src": "2866:117:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9986,
-              "nodeType": "StructuredDocumentation",
-              "src": "2734:129:36",
-              "text": " @dev Emitted when a role is modified\n @param spaceId The id of the space\n @param roleId The id of the role"
-            },
-            "eventSelector": "801a8340a2e3e69143ad15dc0e65197734d77195e7339e153576c528f9e81d7c",
-            "name": "ModifyRoleWithEntitlementData",
-            "nameLocation": "2872:29:36",
-            "parameters": {
-              "id": 9993,
-              "nodeType": "ParameterList",
-              "parameters": [
-                {
-                  "constant": false,
-                  "id": 9988,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "2922:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9994,
-                  "src": "2907:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 9987,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2907:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9990,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "roleId",
-                  "nameLocation": "2951:6:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9994,
-                  "src": "2935:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 9989,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2935:7:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 9992,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "updater",
-                  "nameLocation": "2971:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 9994,
-                  "src": "2963:15:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_address",
-                    "typeString": "address"
-                  },
-                  "typeName": {
-                    "id": 9991,
-                    "name": "address",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "2963:7:36",
-                    "stateMutability": "nonpayable",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_address",
-                      "typeString": "address"
-                    }
-                  },
-                  "visibility": "internal"
-                }
-              ],
-              "src": "2901:81:36"
-            }
-          },
-          {
-            "id": 10003,
-            "nodeType": "EventDefinition",
-            "src": "3118:98:36",
-            "nodes": [],
-            "anonymous": false,
-            "documentation": {
-              "id": 9995,
-              "nodeType": "StructuredDocumentation",
-              "src": "2987:128:36",
-              "text": " @dev Emitted when a role is updated\n @param spaceId The id of the space\n @param roleId The id of the role"
-            },
-            "eventSelector": "7bb07acd566d038f77cba9c39e7536f74ea2c4ee382024d1b428d7f0680dbc02",
-            "name": "RemoveRole",
-            "nameLocation": "3124:10:36",
-            "parameters": {
-              "id": 10002,
-              "nodeType": "ParameterList",
-              "parameters": [
                 {
                   "constant": false,
                   "id": 9997,
                   "indexed": true,
                   "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "3155:7:36",
+                  "name": "channelNetworkId",
+                  "nameLocation": "596:16:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10003,
-                  "src": "3140:22:36",
+                  "scope": 10001,
+                  "src": "581:31:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1813,7 +896,7 @@
                     "id": 9996,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3140:6:36",
+                    "src": "581:6:36",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -1826,39 +909,11 @@
                   "id": 9999,
                   "indexed": true,
                   "mutability": "mutable",
-                  "name": "roleId",
-                  "nameLocation": "3184:6:36",
+                  "name": "owner",
+                  "nameLocation": "634:5:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10003,
-                  "src": "3168:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 9998,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "3168:7:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 10001,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "updater",
-                  "nameLocation": "3204:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 10003,
-                  "src": "3196:15:36",
+                  "scope": 10001,
+                  "src": "618:21:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1866,10 +921,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 10000,
+                    "id": 9998,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3196:7:36",
+                    "src": "618:7:36",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -1879,38 +934,38 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "3134:81:36"
+              "src": "540:103:36"
             }
           },
           {
-            "id": 10012,
+            "id": 10010,
             "nodeType": "EventDefinition",
-            "src": "3351:98:36",
+            "src": "838:105:36",
             "nodes": [],
             "anonymous": false,
             "documentation": {
-              "id": 10004,
+              "id": 10002,
               "nodeType": "StructuredDocumentation",
-              "src": "3220:128:36",
-              "text": " @dev Emitted when a role is updated\n @param spaceId The id of the space\n @param roleId The id of the role"
+              "src": "648:187:36",
+              "text": " @dev Emitted when a space access is updated\n @param spaceNetworkId The id of the space\n @param user The address of the user\n @param disabled The disabled status"
             },
-            "eventSelector": "b72e43fbdf2abeb3bfe59e783bcca829d13e9fcde1eac425751faabea6c134c9",
-            "name": "UpdateRole",
-            "nameLocation": "3357:10:36",
+            "eventSelector": "b52a77d1c8e7ecf705bef894088b2c74fb373648434090edc15688f5c80a8687",
+            "name": "SetSpaceAccess",
+            "nameLocation": "844:14:36",
             "parameters": {
-              "id": 10011,
+              "id": 10009,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10006,
+                  "id": 10004,
                   "indexed": true,
                   "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "3388:7:36",
+                  "name": "spaceNetworkId",
+                  "nameLocation": "879:14:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10012,
-                  "src": "3373:22:36",
+                  "scope": 10010,
+                  "src": "864:29:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1918,10 +973,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 10005,
+                    "id": 10003,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3373:6:36",
+                    "src": "864:6:36",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -1931,42 +986,14 @@
                 },
                 {
                   "constant": false,
-                  "id": 10008,
+                  "id": 10006,
                   "indexed": true,
                   "mutability": "mutable",
-                  "name": "roleId",
-                  "nameLocation": "3417:6:36",
+                  "name": "user",
+                  "nameLocation": "915:4:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10012,
-                  "src": "3401:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_uint256",
-                    "typeString": "uint256"
-                  },
-                  "typeName": {
-                    "id": 10007,
-                    "name": "uint256",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "3401:7:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_uint256",
-                      "typeString": "uint256"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
-                  "id": 10010,
-                  "indexed": false,
-                  "mutability": "mutable",
-                  "name": "updater",
-                  "nameLocation": "3437:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 10012,
-                  "src": "3429:15:36",
+                  "scope": 10010,
+                  "src": "899:20:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1974,10 +1001,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 10009,
+                    "id": 10005,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3429:7:36",
+                    "src": "899:7:36",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -1985,40 +1012,96 @@
                     }
                   },
                   "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10008,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "disabled",
+                  "nameLocation": "930:8:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10010,
+                  "src": "925:13:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 10007,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "925:4:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
                 }
               ],
-              "src": "3367:81:36"
+              "src": "858:84:36"
             }
           },
           {
-            "id": 10019,
+            "id": 10021,
             "nodeType": "EventDefinition",
-            "src": "3639:101:36",
+            "src": "1190:144:36",
             "nodes": [],
             "anonymous": false,
             "documentation": {
-              "id": 10013,
+              "id": 10011,
               "nodeType": "StructuredDocumentation",
-              "src": "3453:183:36",
-              "text": " @dev Emitted when an entitlement module is added to a space\n @param spaceId The id of the space\n @param entitlementAddress The address of the entitlement module"
+              "src": "947:240:36",
+              "text": " @dev Emitted when a channel access is updated\n @param spaceNetworkId The id of the space\n @param channelNetworkId The id of the channel\n @param user The address of the user\n @param disabled The disabled status"
             },
-            "eventSelector": "e78ad18845af93a80fbe8718cacc631fbe1c453b092806818a044440b96ba677",
-            "name": "EntitlementModuleAdded",
-            "nameLocation": "3645:22:36",
+            "eventSelector": "cba51876aa74b247950c251d3459c41aaebd8b10717beadb480ca1a105166ab5",
+            "name": "SetChannelAccess",
+            "nameLocation": "1196:16:36",
             "parameters": {
-              "id": 10018,
+              "id": 10020,
               "nodeType": "ParameterList",
               "parameters": [
+                {
+                  "constant": false,
+                  "id": 10013,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceNetworkId",
+                  "nameLocation": "1233:14:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10021,
+                  "src": "1218:29:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10012,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1218:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
                 {
                   "constant": false,
                   "id": 10015,
                   "indexed": true,
                   "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "3688:7:36",
+                  "name": "channelNetworkId",
+                  "nameLocation": "1268:16:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10019,
-                  "src": "3673:22:36",
+                  "scope": 10021,
+                  "src": "1253:31:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2029,7 +1112,7 @@
                     "id": 10014,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3673:6:36",
+                    "src": "1253:6:36",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -2042,11 +1125,11 @@
                   "id": 10017,
                   "indexed": true,
                   "mutability": "mutable",
-                  "name": "entitlementAddress",
-                  "nameLocation": "3717:18:36",
+                  "name": "user",
+                  "nameLocation": "1306:4:36",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10019,
-                  "src": "3701:34:36",
+                  "scope": 10021,
+                  "src": "1290:20:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2057,7 +1140,7 @@
                     "id": 10016,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3701:7:36",
+                    "src": "1290:7:36",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2065,68 +1148,68 @@
                     }
                   },
                   "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10019,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "disabled",
+                  "nameLocation": "1321:8:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10021,
+                  "src": "1316:13:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 10018,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1316:4:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
                 }
               ],
-              "src": "3667:72:36"
+              "src": "1212:121:36"
             }
           },
           {
             "id": 10026,
             "nodeType": "EventDefinition",
-            "src": "3934:103:36",
+            "src": "1496:64:36",
             "nodes": [],
             "anonymous": false,
             "documentation": {
-              "id": 10020,
+              "id": 10022,
               "nodeType": "StructuredDocumentation",
-              "src": "3744:187:36",
-              "text": " @dev Emitted when an entitlement module is removed from a space\n @param spaceId The id of the space\n @param entitlementAddress The address of the entitlement module"
+              "src": "1338:155:36",
+              "text": " @dev Emitted when the default entitlement module is set on the contract\n @param entitlementAddress The address of the entitlement module"
             },
-            "eventSelector": "9b42a541e0a10f6a80059e1448b92d56a4e71354d43a2ca1fd3701878cb50ae2",
-            "name": "EntitlementModuleRemoved",
-            "nameLocation": "3940:24:36",
+            "eventSelector": "07b136952c7460e1fc2d593fad96b5b379f28cc13a49857b6a825c5228c1a8d1",
+            "name": "DefaultEntitlementSet",
+            "nameLocation": "1502:21:36",
             "parameters": {
               "id": 10025,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10022,
-                  "indexed": true,
-                  "mutability": "mutable",
-                  "name": "spaceId",
-                  "nameLocation": "3985:7:36",
-                  "nodeType": "VariableDeclaration",
-                  "scope": 10026,
-                  "src": "3970:22:36",
-                  "stateVariable": false,
-                  "storageLocation": "default",
-                  "typeDescriptions": {
-                    "typeIdentifier": "t_string_memory_ptr",
-                    "typeString": "string"
-                  },
-                  "typeName": {
-                    "id": 10021,
-                    "name": "string",
-                    "nodeType": "ElementaryTypeName",
-                    "src": "3970:6:36",
-                    "typeDescriptions": {
-                      "typeIdentifier": "t_string_storage_ptr",
-                      "typeString": "string"
-                    }
-                  },
-                  "visibility": "internal"
-                },
-                {
-                  "constant": false,
                   "id": 10024,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "entitlementAddress",
-                  "nameLocation": "4014:18:36",
+                  "nameLocation": "1540:18:36",
                   "nodeType": "VariableDeclaration",
                   "scope": 10026,
-                  "src": "3998:34:36",
+                  "src": "1524:34:36",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2137,7 +1220,7 @@
                     "id": 10023,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3998:7:36",
+                    "src": "1524:7:36",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -2147,7 +1230,923 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "3964:72:36"
+              "src": "1523:36:36"
+            }
+          },
+          {
+            "id": 10031,
+            "nodeType": "EventDefinition",
+            "src": "1701:58:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10027,
+              "nodeType": "StructuredDocumentation",
+              "src": "1564:134:36",
+              "text": " @dev Emitted when the space nft address is set on the contract\n @param spaceNFTAddress The address of the space nft"
+            },
+            "eventSelector": "68e3ca42e475f54d65227ed8cb60daf9cec4546691052783063876ad972db711",
+            "name": "SpaceNFTAddressSet",
+            "nameLocation": "1707:18:36",
+            "parameters": {
+              "id": 10030,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10029,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceNFTAddress",
+                  "nameLocation": "1742:15:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10031,
+                  "src": "1726:31:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10028,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1726:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1725:33:36"
+            }
+          },
+          {
+            "id": 10040,
+            "nodeType": "EventDefinition",
+            "src": "1963:132:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10032,
+              "nodeType": "StructuredDocumentation",
+              "src": "1763:197:36",
+              "text": " @dev Emitted when an entitlement module is white listed on a space\n @param spaceNetworkId The id of the space\n @param entitlementAddress The address of the entitlement module"
+            },
+            "eventSelector": "558bdc63bfb8cb1188bc6f559a22d16b8e64dccf7af1d84c90bcf2b7feb1e009",
+            "name": "WhitelistEntitlementModule",
+            "nameLocation": "1969:26:36",
+            "parameters": {
+              "id": 10039,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10034,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceNetworkId",
+                  "nameLocation": "2016:14:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10040,
+                  "src": "2001:29:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10033,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2001:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10036,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "entitlementAddress",
+                  "nameLocation": "2052:18:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10040,
+                  "src": "2036:34:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10035,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2036:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10038,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "whitelist",
+                  "nameLocation": "2081:9:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10040,
+                  "src": "2076:14:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 10037,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2076:4:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1995:99:36"
+            }
+          },
+          {
+            "id": 10051,
+            "nodeType": "EventDefinition",
+            "src": "2272:127:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10041,
+              "nodeType": "StructuredDocumentation",
+              "src": "2099:170:36",
+              "text": " @dev Emitted when a role is created\n @param spaceId The id of the space\n @param roleId The id of the role\n @param roleName The name of the role"
+            },
+            "eventSelector": "c06cee439d340740b1e427558729eb0fcc080aa2ab6d0bcfb30b6618234f460a",
+            "name": "CreateRole",
+            "nameLocation": "2278:10:36",
+            "parameters": {
+              "id": 10050,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10043,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "2309:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10051,
+                  "src": "2294:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10042,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2294:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10045,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "2338:6:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10051,
+                  "src": "2322:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 10044,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2322:7:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10047,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleName",
+                  "nameLocation": "2365:8:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10051,
+                  "src": "2350:23:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10046,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2350:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10049,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "creator",
+                  "nameLocation": "2387:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10051,
+                  "src": "2379:15:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10048,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2379:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2288:110:36"
+            }
+          },
+          {
+            "id": 10062,
+            "nodeType": "EventDefinition",
+            "src": "2576:146:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10052,
+              "nodeType": "StructuredDocumentation",
+              "src": "2403:170:36",
+              "text": " @dev Emitted when a role is created\n @param spaceId The id of the space\n @param roleId The id of the role\n @param roleName The name of the role"
+            },
+            "eventSelector": "eb29af321b2cd1d53b9e6e813395256774b0015589f25c335a6d00670a164ac8",
+            "name": "CreateRoleWithEntitlementData",
+            "nameLocation": "2582:29:36",
+            "parameters": {
+              "id": 10061,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10054,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "2632:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10062,
+                  "src": "2617:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10053,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2617:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10056,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "2661:6:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10062,
+                  "src": "2645:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 10055,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2645:7:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10058,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleName",
+                  "nameLocation": "2688:8:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10062,
+                  "src": "2673:23:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10057,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2673:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10060,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "creator",
+                  "nameLocation": "2710:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10062,
+                  "src": "2702:15:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10059,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2702:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2611:110:36"
+            }
+          },
+          {
+            "id": 10071,
+            "nodeType": "EventDefinition",
+            "src": "2858:117:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10063,
+              "nodeType": "StructuredDocumentation",
+              "src": "2726:129:36",
+              "text": " @dev Emitted when a role is modified\n @param spaceId The id of the space\n @param roleId The id of the role"
+            },
+            "eventSelector": "801a8340a2e3e69143ad15dc0e65197734d77195e7339e153576c528f9e81d7c",
+            "name": "ModifyRoleWithEntitlementData",
+            "nameLocation": "2864:29:36",
+            "parameters": {
+              "id": 10070,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10065,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "2914:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10071,
+                  "src": "2899:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10064,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2899:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10067,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "2943:6:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10071,
+                  "src": "2927:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 10066,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2927:7:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10069,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "updater",
+                  "nameLocation": "2963:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10071,
+                  "src": "2955:15:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10068,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2955:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2893:81:36"
+            }
+          },
+          {
+            "id": 10080,
+            "nodeType": "EventDefinition",
+            "src": "3110:98:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10072,
+              "nodeType": "StructuredDocumentation",
+              "src": "2979:128:36",
+              "text": " @dev Emitted when a role is updated\n @param spaceId The id of the space\n @param roleId The id of the role"
+            },
+            "eventSelector": "7bb07acd566d038f77cba9c39e7536f74ea2c4ee382024d1b428d7f0680dbc02",
+            "name": "RemoveRole",
+            "nameLocation": "3116:10:36",
+            "parameters": {
+              "id": 10079,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10074,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "3147:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10080,
+                  "src": "3132:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10073,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3132:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10076,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "3176:6:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10080,
+                  "src": "3160:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 10075,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3160:7:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10078,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "updater",
+                  "nameLocation": "3196:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10080,
+                  "src": "3188:15:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10077,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3188:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3126:81:36"
+            }
+          },
+          {
+            "id": 10089,
+            "nodeType": "EventDefinition",
+            "src": "3343:98:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10081,
+              "nodeType": "StructuredDocumentation",
+              "src": "3212:128:36",
+              "text": " @dev Emitted when a role is updated\n @param spaceId The id of the space\n @param roleId The id of the role"
+            },
+            "eventSelector": "b72e43fbdf2abeb3bfe59e783bcca829d13e9fcde1eac425751faabea6c134c9",
+            "name": "UpdateRole",
+            "nameLocation": "3349:10:36",
+            "parameters": {
+              "id": 10088,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10083,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "3380:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10089,
+                  "src": "3365:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10082,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3365:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10085,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "3409:6:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10089,
+                  "src": "3393:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 10084,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3393:7:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10087,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "updater",
+                  "nameLocation": "3429:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10089,
+                  "src": "3421:15:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10086,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3421:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3359:81:36"
+            }
+          },
+          {
+            "id": 10096,
+            "nodeType": "EventDefinition",
+            "src": "3631:101:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10090,
+              "nodeType": "StructuredDocumentation",
+              "src": "3445:183:36",
+              "text": " @dev Emitted when an entitlement module is added to a space\n @param spaceId The id of the space\n @param entitlementAddress The address of the entitlement module"
+            },
+            "eventSelector": "e78ad18845af93a80fbe8718cacc631fbe1c453b092806818a044440b96ba677",
+            "name": "EntitlementModuleAdded",
+            "nameLocation": "3637:22:36",
+            "parameters": {
+              "id": 10095,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10092,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "3680:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10096,
+                  "src": "3665:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10091,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3665:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10094,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "entitlementAddress",
+                  "nameLocation": "3709:18:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10096,
+                  "src": "3693:34:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10093,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3693:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3659:72:36"
+            }
+          },
+          {
+            "id": 10103,
+            "nodeType": "EventDefinition",
+            "src": "3926:103:36",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 10097,
+              "nodeType": "StructuredDocumentation",
+              "src": "3736:187:36",
+              "text": " @dev Emitted when an entitlement module is removed from a space\n @param spaceId The id of the space\n @param entitlementAddress The address of the entitlement module"
+            },
+            "eventSelector": "9b42a541e0a10f6a80059e1448b92d56a4e71354d43a2ca1fd3701878cb50ae2",
+            "name": "EntitlementModuleRemoved",
+            "nameLocation": "3932:24:36",
+            "parameters": {
+              "id": 10102,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 10099,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "spaceId",
+                  "nameLocation": "3977:7:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10103,
+                  "src": "3962:22:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 10098,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3962:6:36",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 10101,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "entitlementAddress",
+                  "nameLocation": "4006:18:36",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 10103,
+                  "src": "3990:34:36",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 10100,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3990:7:36",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3956:72:36"
             }
           }
         ],
@@ -2158,11 +2157,11 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          10027
+          10104
         ],
         "name": "Events",
         "nameLocation": "71:6:36",
-        "scope": 10028,
+        "scope": 10105,
         "usedErrors": []
       }
     ],

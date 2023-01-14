@@ -1,0 +1,1225 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "AddRoleFailed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementAlreadyWhitelisted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementModuleNotSupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementNotWhitelisted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidParameters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MissingOwnerPermission",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "OwnerPermissionNotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "PermissionAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleIsAssignedToEntitlement",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "previousAdmin",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "newAdmin",
+            "type": "address"
+          }
+        ],
+        "name": "AdminChanged",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "beacon",
+            "type": "address"
+          }
+        ],
+        "name": "BeaconUpgraded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "version",
+            "type": "uint8"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          }
+        ],
+        "name": "Upgraded",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "_permission",
+            "type": "string"
+          }
+        ],
+        "name": "addPermissionToRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "_entitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "addRoleToChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.Entitlement",
+            "name": "_entitlement",
+            "type": "tuple"
+          }
+        ],
+        "name": "addRoleToEntitlement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "channels",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "channelsByHash",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "createdAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
+          }
+        ],
+        "name": "createChannel",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_roleName",
+            "type": "string"
+          },
+          {
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.Entitlement[]",
+            "name": "_entitlements",
+            "type": "tuple[]"
+          }
+        ],
+        "name": "createRole",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "defaultEntitlements",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "disabled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "entitlements",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "_channelHash",
+            "type": "bytes32"
+          }
+        ],
+        "name": "getChannelByHash",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "channelId",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "uint256",
+                "name": "createdAt",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct DataTypes.Channel",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementIdsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32[]",
+            "name": "",
+            "type": "bytes32[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getEntitlements",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getPermissionsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32[]",
+            "name": "",
+            "type": "bytes32[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getRoleById",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Role",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getRoles",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Role[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "name": "hasEntitlement",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_networkId",
+            "type": "string"
+          },
+          {
+            "internalType": "address[]",
+            "name": "_entitlements",
+            "type": "address[]"
+          }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "_user",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "_permission",
+            "type": "string"
+          }
+        ],
+        "name": "isEntitledToChannel",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "_entitled",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_user",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "_permission",
+            "type": "string"
+          }
+        ],
+        "name": "isEntitledToSpace",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "_entitled",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "data",
+            "type": "bytes[]"
+          }
+        ],
+        "name": "multicall",
+        "outputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "results",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "networkId",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "ownerRoleId",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "proxiableUUID",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "_permission",
+            "type": "string"
+          }
+        ],
+        "name": "removePermissionFromRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "_entitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeRoleFromChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "module",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct DataTypes.Entitlement",
+            "name": "_entitlement",
+            "type": "tuple"
+          }
+        ],
+        "name": "removeRoleFromEntitlement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "roleCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "rolesById",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "_disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "setChannelAccess",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_entitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "_whitelist",
+            "type": "bool"
+          }
+        ],
+        "name": "setEntitlement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "setOwnerRoleId",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "_disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "setSpaceAccess",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "_channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_channelName",
+            "type": "string"
+          }
+        ],
+        "name": "updateChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "_roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "_roleName",
+            "type": "string"
+          }
+        ],
+        "name": "updateRole",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeTo",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "newImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "upgradeToAndCall",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "owner()": {
+          "details": "Returns the address of the current owner."
+        },
+        "proxiableUUID()": {
+          "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
+        },
+        "renounceOwnership()": {
+          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+        },
+        "transferOwnership(address)": {
+          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        },
+        "upgradeTo(address)": {
+          "details": "Upgrade the implementation of the proxy to `newImplementation`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
+        },
+        "upgradeToAndCall(address,bytes)": {
+          "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "addPermissionToRole(uint256,string)": {
+          "notice": "***** Permission Management *****"
+        },
+        "getChannelByHash(bytes32)": {
+          "notice": "***** Channel Management *****"
+        },
+        "getEntitlementIdsByRoleId(uint256)": {
+          "notice": "***** Entitlement Management *****"
+        },
+        "getRoles()": {
+          "notice": "***** Role Management *****"
+        },
+        "initialize(string,string,address[])": {
+          "notice": "***** Space Management *****"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spacesv2/Space.sol": "Space"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/spacesv2/MultiCaller.sol": {
+      "keccak256": "0x2d279dd3b7fc19e88016935f99c8b1b101311811cdf5255a32c1bbef333f2192",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6a3a80176ef47e196eb8ca5eb0cfed35750d2e1ebd970fb85d4c7ad680f5207f",
+        "dweb:/ipfs/QmT6dLVzhFB5MWgBy8HCCNpjRTJkbib7VAkaL6fA89oZCG"
+      ]
+    },
+    "contracts/src/spacesv2/Space.sol": {
+      "keccak256": "0xa9ef2fb4c53fe8b8d55e91582ccb66dea5dda98644c681e79adcb6bebb04b835",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6daadfd2c9f60980b87c05dc070af6183a25940e1623ec4ec26b49b698059ee3",
+        "dweb:/ipfs/QmeiKetd9jPU5XngU37dkVBKu31LDNhAF3cGzZcUvRbvUo"
+      ]
+    },
+    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
+      "keccak256": "0x9d9bda1dafd40523762bf3ff7ba5953de390c5020246c0f10fc61cdc40d1088d",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ba499208ecb443aa3ea61eda0a82526140f57afcac51d07c4363dd8346017249",
+        "dweb:/ipfs/QmVtoyU297x8ESqYurxL1oCa7yXGapex472NRSdchJwacs"
+      ]
+    },
+    "contracts/src/spacesv2/interfaces/ISpace.sol": {
+      "keccak256": "0xd9d2e9782c7e9b3fcd9f9c66c507ee97dda705ba665a90f0335096f156683b99",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://cb8fcea66d442577c176b1f6221515d415485ec8a1bb2387d142a6a8e3a4dd60",
+        "dweb:/ipfs/QmeLbTyNuYo3zDZrehSgx6Ay8SxNjfBpf412RNTV1pvfUt"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/DataTypes.sol": {
+      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
+      "license": "Apache-20",
+      "urls": [
+        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
+        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Errors.sol": {
+      "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
+        "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Events.sol": {
+      "keccak256": "0xf85630e7cf615f44c0e40ae2bc54fe617c7fb0ed9f5b5f2be305c1b893929281",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://06c543e82bb8ac6121d0613cc405263cc6130563aae54cfa55a7958978664381",
+        "dweb:/ipfs/QmV6z23bcZtTdeKxTeQZkym9syDXu1sd7mSjgiVDg1Nsnd"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Permissions.sol": {
+      "keccak256": "0x041510f19d4c4409f07a2371e53863f21c51d11f20d1c5d36898b25da80acfed",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://b3fdf833d428ec8bab778017fb475eb70ee652746058e46cd07c0da07dcb660f",
+        "dweb:/ipfs/QmTVN4fe7FnrrL9o9DZbxZUwVbBTjrScybaGiW8V9oYhuR"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Utils.sol": {
+      "keccak256": "0xb27a26f1156b750b8986b79160f50c61e566b73c55ea3924301ac8637a5a6c9f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a89f6b6ffeff675130c64973988d0e2118953399cbac55fe2e2e26cbd3b11fb7",
+        "dweb:/ipfs/QmbQf71y4Qxiax3hnfuwSpCP2ermtSSDcizGfaHTPrTsSK"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol": {
+      "keccak256": "0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7fc8396619de513c96b6e00301b88dd790e83542aab918425633a5f7297a15a",
+        "dweb:/ipfs/QmXbP4kiZyp7guuS7xe8KaybnwkRPGrBc2Kbi3vhcTfpxb"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/interfaces/draft-IERC1822Upgradeable.sol": {
+      "keccak256": "0x77c89f893e403efc6929ba842b7ccf6534d4ffe03afe31670b4a528c0ad78c0f",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://496bd9b3df2455d571018c09f0c6badd29713fdeb907c6aa09d8d28cb603f053",
+        "dweb:/ipfs/QmXdJDyYs6WMwMh21dez2BYPxhSUaUYFMDtVNcn2cgFR79"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol": {
+      "keccak256": "0x315887e846f1e5f8d8fa535a229d318bb9290aaa69485117f1ee8a9a6b3be823",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://29dda00da6d269685b555e710e4abf1c3eb6d00c15b888a7880a2f8dd3c4fdc2",
+        "dweb:/ipfs/QmSqcjtdECygtT1Gy7uEo42x8542srpgGEeKKHfcnQqXgn"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/beacon/IBeaconUpgradeable.sol": {
+      "keccak256": "0x24b86ac8c005b8c654fbf6ac34a5a4f61580d7273541e83e013e89d66fbf0908",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://4dbfe1a3b3b3fb64294ce41fd2ad362e7b7012208117864f42c1a67620a6d5c1",
+        "dweb:/ipfs/QmVMU5tWt7zBQMmf5cpMX8UMHV86T3kFeTxBTBjFqVWfoJ"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol": {
+      "keccak256": "0xedc5eaa54866c6d0e8960d9fe8ea6f9052ba28686907f6886f83dfba41fa1549",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://0b296244e62d13e87d8272c574fb58c22af02b262d74d7a8f642753522351bb0",
+        "dweb:/ipfs/Qmcd3MfBWRE8EQt67AqgGGHviNum5aQ7JE7manH5nNtx4o"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol": {
+      "keccak256": "0xcf6837f68b5376c07f7b5130dc8de39f00f357f119113a82a15229bf2b96fdc5",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://6be1e3e05f79a714c08a446a994dba2939203092d7aa97302d7b2ab157b437fb",
+        "dweb:/ipfs/QmdgBbHNijVgApRQ9UM17qds6QdhTgXxKHUoLAswA6VNyH"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol": {
+      "keccak256": "0x0a3b4afc301241e2629ad192fa02e0f8626e3cf38ab6f45342bfd7afbde16ee0",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://b189423f1102ff4487e9c59a65ec400b98cc4aeef478dac8272b482e9f5ad7de",
+        "dweb:/ipfs/QmdpYHrzD8wPe5DMuEiWkXiVLsTkqD7C4tbBjWwkBQwJi2"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol": {
+      "keccak256": "0x963ea7f0b48b032eef72fe3a7582edf78408d6f834115b9feadd673a4d5bd149",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d6520943ea55fdf5f0bafb39ed909f64de17051bc954ff3e88c9e5621412c79c",
+        "dweb:/ipfs/QmWZ4rAKTQbNG2HxGs46AcTXShsVytKeLs7CUCdCSv5N7a"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/utils/StorageSlotUpgradeable.sol": {
+      "keccak256": "0x09864aea84f01e39313375b5610c73a3c1c68abbdc51e5ccdd25ff977fdadf9a",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://aedb48081190fa828d243529ce25c708202c7d4ccfe99f0e4ecd6bc0cfcd03f3",
+        "dweb:/ipfs/QmWyiDQHPZA56iqsAwTmiJoxvNeRQLUVr4gTfzpdpXivpo"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    }
+  },
+  "version": 1
+}

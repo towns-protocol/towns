@@ -31,7 +31,7 @@ deploy-anvil :;
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-goerli :;
 	@forge build
-	@forge script scripts/${contract}.s.sol:Deploy${contract} --rpc-url ${GOERLI_RPC_URL} --private-key ${GOERLI_PRIVATE_KEY} --broadcast --verify -vvvv
+	@forge script scripts/${contract}.s.sol:${contract} --rpc-url ${GOERLI_RPC_URL} --private-key ${GOERLI_PRIVATE_KEY} --broadcast --verify -vvvv
 
 # Council NFT interaction scripts
 read-anvil :; @cast call ${contractAddress} "${functionName}" --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY}

@@ -1353,17 +1353,16 @@
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":solidity-json-writer/=lib/solidity-json-writer/contracts/",
       ":solmate/=lib/solmate/src/"
     ]
   },
   "sources": {
     "contracts/src/spaces/ZionSpaceManager.sol": {
-      "keccak256": "0x0ccd0277d39234f30f2ad95e83e2777ac954d59ed4c59389e61ab696ed4a33c3",
+      "keccak256": "0xf5459f6da273685f9ec2f851d5ceca42b29c61e9b4667aa1c6f6d6a70f1d1c52",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0b088f3d06707244b3efd80c6f91f67ffd21fa7474ec81b619efcd4617355cdc",
-        "dweb:/ipfs/QmaCamU8TwGnYiNBbbethRZSR5EcTuGqCv8VEmDt9yF4tL"
+        "bzz-raw://3503da1fb65d2ed0334e4bfeec2e2844a5f27e4867b310e1b417be1a05ba7bdc",
+        "dweb:/ipfs/QmaSpSbrpo2JWGyLqHXGqKXfUghQbNc7qcVEeW9dFH4zkE"
       ]
     },
     "contracts/src/spaces/interfaces/IEntitlementModule.sol": {
@@ -1383,11 +1382,11 @@
       ]
     },
     "contracts/src/spaces/interfaces/IRoleManager.sol": {
-      "keccak256": "0x92b6478cd53bec46caffe0618507e4152cfc7d3720a17df62bf0da0567643212",
+      "keccak256": "0x029af326cdbdfe77cba9f8dcc762d73780a8cb4dafdfcb18408c1e02bb69dfa0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://67891a6bb4c3167eecf4527a57486cccaeae3e4ddfa0d7b249053dc32f19742a",
-        "dweb:/ipfs/QmVTkRTXHS4eeZJWbDDEedh15wvaPDwL1Tx28njbaXLyEk"
+        "bzz-raw://237a54eb82f379740d550abac3cd9b312855b7b4971066dc0155d7b13bb4501f",
+        "dweb:/ipfs/QmYzvnUY6LHUiThqpxPNKjH2B1CkN6tp96C24XUoLay94a"
       ]
     },
     "contracts/src/spaces/interfaces/ISpace.sol": {
@@ -1407,11 +1406,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Constants.sol": {
-      "keccak256": "0xe9e3a6c723495eb46b9aed6868d882eced8b2766133d28a438bdd1b9d1f62695",
+      "keccak256": "0xdf602192b1eea921112673105945a906d1fe96729fa84125ae1e7131cd4d604b",
       "license": "MIT",
       "urls": [
-        "bzz-raw://e605be1bc8a9416c54b48d6e61e47be0266e9e2ea5cad27cbf5a4349ef799406",
-        "dweb:/ipfs/QmRBhdHM7ziCfYshEJiDozK51C9zt4T7TGFnSeLZiaNQ8J"
+        "bzz-raw://486429f7d46ffcd029c5e21e14e5011dba92cb2b43698e2c5b3d86370439d67b",
+        "dweb:/ipfs/QmQgRQUKmpmbXdqJphBJDBbumtBDtjyyGV89fYR7XzphNm"
       ]
     },
     "contracts/src/spaces/libraries/CreationLogic.sol": {
@@ -1439,11 +1438,11 @@
       ]
     },
     "contracts/src/spaces/libraries/Events.sol": {
-      "keccak256": "0x75d73e771cf6ec22a6176fd01fdbc01f676ad22d55ed284f3f7d3d792e58eb8e",
+      "keccak256": "0xa4e7776f9eef562db0f950c8cd9faea474ab094a46301723b58cc0231bce63ad",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7e83cfaf7a1d90338a8ba72071d8ddfa0542417e293fe4df021ef1f7d9f66cdb",
-        "dweb:/ipfs/QmUddapNGoSNzVLiTC4rx7ncWMEnZQmst5pfGJM49VShJQ"
+        "bzz-raw://cb1039c499e28f29d69a24d9ebd4ca84e519dc0830de55dabc158c30a80322bc",
+        "dweb:/ipfs/Qme7whMckFbZBUCFfsZi5mR3h8Q9oWCqaZmW7otNZGVaeD"
       ]
     },
     "contracts/src/spaces/libraries/PermissionTypes.sol": {
