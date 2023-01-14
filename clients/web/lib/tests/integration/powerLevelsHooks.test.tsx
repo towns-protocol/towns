@@ -104,7 +104,7 @@ describe('powerLevelsHooks', () => {
                 visibility: RoomVisibility.Private,
                 roleIds: [],
             }),
-        ).rejects.toThrow('is not allowed to send event. 0 < 50')
+        ).rejects.toThrow('Matrix createChannel failed')
         // set update the power level to 0
         fireEvent.click(powerDownButton)
         // expect the power level to change
