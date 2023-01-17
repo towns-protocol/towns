@@ -208,6 +208,11 @@ contract TokenEntitlement is
     }
   }
 
+  // A convenience function to generate types for the client to encode the token struct. No implementation needed.
+  function encodeExternalTokens(
+    DataTypes.ExternalToken[] calldata tokens
+  ) public pure {}
+
   function _isEntitledToChannel(
     bytes32 channelId,
     address user,
