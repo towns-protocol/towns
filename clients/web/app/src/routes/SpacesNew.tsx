@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect } from 'react'
 import { Membership, RoomIdentifier } from 'use-zion-client'
 import { Box, Stack } from '@ui'
-import { CreateSpaceFormV2 } from '@components/Web3/CreateSpaceFormV2'
-import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceFormV2/CreateSpaceFormStore'
+import { CreateSpaceForm } from '@components/Web3/CreateSpaceForm'
+import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
 
 export const SpacesNew = () => {
     const setCreatedSpaceId = useCreateSpaceFormStore((s) => s.setCreatedSpaceId)
@@ -24,7 +24,7 @@ export const SpacesNew = () => {
         <Stack alignItems="center" height="100%">
             <Stack grow width="600">
                 <Box padding="lg">
-                    <CreateSpaceFormV2 onCreateSpace={onCreateSpace} />
+                    <CreateSpaceForm onCreateSpace={onCreateSpace} />
                 </Box>
             </Stack>
         </Stack>

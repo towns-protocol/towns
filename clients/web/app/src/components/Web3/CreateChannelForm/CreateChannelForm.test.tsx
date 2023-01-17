@@ -6,7 +6,7 @@ import { BigNumber } from 'ethers'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
-import { CreateChannelFormV2 } from '.'
+import { CreateChannelForm } from '.'
 
 const Wrapper = ({
     onCreateChannel = vi.fn(),
@@ -17,7 +17,7 @@ const Wrapper = ({
 }) => {
     return (
         <TestApp>
-            <CreateChannelFormV2
+            <CreateChannelForm
                 spaceId={{
                     slug: '',
                     protocol: zionClient.SpaceProtocol.Matrix,

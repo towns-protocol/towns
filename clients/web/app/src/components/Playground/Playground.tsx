@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { AddressPill } from '@components/AddressPill'
 import { richText } from '@components/RichText/RichTextEditor.css'
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
-import { UploadSpaceIcon } from '@components/Web3/CreateSpaceFormV2/steps/UploadSpaceIcon'
+import { UploadSpaceIcon } from '@components/Web3/CreateSpaceForm/steps/UploadSpaceIcon'
 import {
     Avatar,
     Box,

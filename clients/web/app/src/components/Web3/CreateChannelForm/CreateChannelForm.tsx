@@ -198,8 +198,6 @@ export const CreateChannelForm = (props: Props) => {
 
                             {transactionError && hasServerError && (
                                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
-                                    {isForbiddenError(transactionError)}
-                                    {transactionError.name}
                                     <ErrorMessageText
                                         message={
                                             isForbiddenError(transactionError)

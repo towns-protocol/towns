@@ -19,7 +19,7 @@ import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { PATHS } from 'routes'
 import { useIsSpaceOwner } from 'hooks/useIsSpaceOwner'
-import { CreateChannelFormContainer } from '@components/Web3/CreateChannelFormV2'
+import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { SideBar } from './_SideBar'
 

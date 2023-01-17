@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Membership, RoomIdentifier } from 'use-zion-client'
-import { CreateSpaceFormV2 } from '@components/Web3/CreateSpaceFormV2'
-import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceFormV2/CreateSpaceFormStore'
+import { CreateSpaceForm } from '@components/Web3/CreateSpaceForm'
+import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
 import { Box, Stack } from '@ui'
 
 export const SpaceCreate = () => {
@@ -25,7 +25,7 @@ export const SpaceCreate = () => {
         <Stack alignItems="center" height="100%">
             <Stack grow width="600">
                 <Box padding="lg">
-                    <CreateSpaceFormV2 onCreateSpace={onCreateSpace} />
+                    <CreateSpaceForm onCreateSpace={onCreateSpace} />
                 </Box>
             </Stack>
         </Stack>

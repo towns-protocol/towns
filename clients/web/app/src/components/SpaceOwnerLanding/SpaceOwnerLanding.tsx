@@ -10,7 +10,7 @@ import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { FadeIn } from '@components/Transitions'
 import { useChannelCreationRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { CreateChannelFormContainer } from '@components/Web3/CreateChannelFormV2'
+import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { childStyle, contentStyle, copiedStyle, headerStyle } from './SpaceOwnerLanding.css'
 
 type InviteCardProps = {

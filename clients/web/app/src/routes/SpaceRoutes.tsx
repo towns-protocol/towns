@@ -12,7 +12,6 @@ import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
 import { SpacesChannelReplies } from './SpacesChannelReplies'
 import { SpacesInvite } from './SpacesInvite'
-import { SpacesNewChannel } from './SpacesNewChannel'
 import { SpacesSettings } from './SpacesSettings'
 import { SpaceThreadsInbox } from './SpaceThreadInbox'
 import { SpaceThreads } from './SpaceThreads'
@@ -54,7 +53,6 @@ export const SpaceRoutes = () => (
             <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
             <Route path="settings" element={<SpacesSettings />} />
             <Route path="invite" element={<SpacesInvite />} />
-            <Route path="channels/new" element={<SpacesNewChannel />} />
             <Route path="channels/:channelSlug" element={<SpacesChannel />}>
                 <Route
                     path="replies/:messageId"
