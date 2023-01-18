@@ -16,3 +16,8 @@ export enum Permission {
     ModifySpacePermissions = 'ModifySpacePermissions',
     ModifyChannelDefaults = 'ModifyChannelDefaults',
 }
+
+export enum EntitlementModuleType {
+    TokenEntitlement = 'TokenEntitlement',
+    UserEntitlement = 'UserEntitlement',
+}

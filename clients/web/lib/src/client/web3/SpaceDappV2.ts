@@ -1,15 +1,16 @@
-/* eslint-disable no-restricted-imports */
-
 import { ContractTransaction, ethers } from 'ethers'
+import { EntitlementModuleType, Permission } from './ContractTypes'
 import { EventsContractInfo, ISpaceDapp } from './ISpaceDapp'
-import { IContractsInfo, getContractsInfo } from './ContractsInfo'
+import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
 
-import { Permission } from './ContractTypes'
+import { ShimFactory } from './shims/ShimFactory'
 import { SpaceInfo } from './SpaceInfo'
 import { keccak256 } from 'ethers/lib/utils'
 import { toUtf8Bytes } from '@ethersproject/strings'
+
+//import GoerliSpaceAbi from '@harmony/contracts/goerli/abis/Space.abi.json'
 
 interface Spaces {
     [spaceId: string]: SpaceShim
@@ -19,7 +20,7 @@ export class SpaceDappV2 implements ISpaceDapp {
     private readonly chainId: number
     private readonly spaceFactory: SpaceFactoryShim
     private readonly spaces: Spaces = {}
-    private readonly contractsInfo: IContractsInfo
+    private readonly contractsInfo: IStaticContractsInfo
     private readonly provider: ethers.providers.Provider | undefined
     private readonly signer: ethers.Signer | undefined
 
@@ -67,26 +68,114 @@ export class SpaceDappV2 implements ISpaceDapp {
         roleIds: number[],
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
-        if (!space.write) {
+        if (!space?.write) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         return space.write.createChannel(channelName, channelNetworkId, roleIds)
     }
 
-    public createRoleWithEntitlementData(
-        _spaceId: string,
-        _roleName: string,
-        _permissions: string[],
-        _tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
-        _users: string[],
+    public async createRole(
+        spaceId: string,
+        roleName: string,
+        permissions: Permission[],
+        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        users: string[],
     ): Promise<ContractTransaction> {
-        // V2 smart contract does not support this yet
-        throw new Error('Method not implemented.')
+        const space = await this.getSpace(spaceId)
+        if (!space?.read || !space?.write) {
+            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        }
+
+        // figure out the addresses for each entitlement module
+        const entitlementAddresses = await space.read.getEntitlements()
+        let tokenModuleAddress = ''
+        let userModuleAddress = ''
+        for (const address of entitlementAddresses) {
+            const entitlementModule = ShimFactory.createEntitlementModule(
+                address,
+                this.chainId,
+                this.provider,
+                this.signer,
+            )
+            const moduleType = await entitlementModule.read?.moduleType()
+            switch (moduleType) {
+                case EntitlementModuleType.TokenEntitlement:
+                    tokenModuleAddress = address
+                    break
+                case EntitlementModuleType.UserEntitlement:
+                    userModuleAddress = address
+                    break
+            }
+        }
+        if (tokens.length && !tokenModuleAddress) {
+            throw new Error('Token entitlement moodule address not found.')
+        }
+        if (users.length && !userModuleAddress) {
+            throw new Error('User entitlement moodule address not found.')
+        }
+
+        const abiCoder = ethers.utils.defaultAbiCoder
+        // create the entitlements array
+        const entitlements: SpaceDataTypes.EntitlementStruct[] = []
+        if (tokens.length) {
+            // create the token entitlement
+            const tokenEntitlementShim = ShimFactory.createTokenEntitlement(
+                tokenModuleAddress,
+                this.chainId,
+                this.provider,
+                this.signer,
+            )
+            const tokenData = tokenEntitlementShim.contractInterface.encodeFunctionData(
+                'encodeExternalTokens',
+                [tokens],
+            )
+            const tokenEntitlement: SpaceDataTypes.EntitlementStruct = {
+                module: tokenModuleAddress,
+                data: tokenData,
+            }
+            entitlements.push(tokenEntitlement)
+        }
+        // create the user entitlement
+        if (users.length) {
+            if (!userModuleAddress) {
+                throw new Error('User entitlement moodule address not found.')
+            }
+            const userData = abiCoder.encode(['string[]'], users)
+            const userEntitlement: SpaceDataTypes.EntitlementStruct = {
+                module: userModuleAddress,
+                data: userData,
+            }
+            entitlements.push(userEntitlement)
+        }
+        // create the role
+        return space.write.createRole(roleName, permissions, entitlements)
+    }
+
+    public async getSpace(spaceId: string): Promise<SpaceShim | undefined> {
+        if (!this.provider || !this.signer) {
+            throw new Error('Provider or signer is not set.')
+        }
+        if (!this.spaces[spaceId]) {
+            const hash = keccak256(toUtf8Bytes(spaceId))
+            const spaceAddress = await this.spaceFactory.read?.spaceByHash(hash)
+            if (!spaceAddress || spaceAddress === ethers.constants.AddressZero) {
+                return undefined // space is not found
+            }
+            const abi = ShimFactory.getSpaceAbi(this.chainId, spaceId)
+            this.spaces[spaceId] = new SpaceShim(
+                spaceAddress,
+                abi,
+                this.chainId,
+                this.provider,
+                this.signer,
+            )
+        }
+        return this.spaces[spaceId]
     }
 
     public async getRoles(spaceId: string): Promise<SpaceDataTypes.RoleStructOutput[]> {
         const space = await this.getSpace(spaceId)
-        if (!space.read) {
+        if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         return space.read.getRoles()
@@ -94,7 +183,7 @@ export class SpaceDappV2 implements ISpaceDapp {
 
     public async getPermissionsByRoleId(spaceId: string, roleId: number): Promise<Permission[]> {
         const space = await this.getSpace(spaceId)
-        if (!space.read) {
+        if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         const permissions = space.read.getPermissionsByRoleId(roleId)
@@ -110,7 +199,7 @@ export class SpaceDappV2 implements ISpaceDapp {
 
     public async getSpaceEventsContractInfo(spaceId: string): Promise<EventsContractInfo> {
         const space = await this.getSpace(spaceId)
-        if (!space.eventsAbi) {
+        if (!space?.eventsAbi) {
             throw new Error(`events abi for space "${spaceId}" is not found.`)
         }
         return {
@@ -119,22 +208,23 @@ export class SpaceDappV2 implements ISpaceDapp {
         }
     }
 
-    public async getSpaceInfo(spaceId: string): Promise<SpaceInfo> {
+    public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
         const space = await this.getSpace(spaceId)
-        if (!space.read) {
-            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        if (space?.read) {
+            const [name, owner, disabled] = await Promise.all([
+                space.read.name(),
+                space.read.owner(),
+                space.read.disabled(),
+            ])
+            return {
+                networkId: spaceId,
+                name,
+                owner,
+                disabled,
+            }
         }
-        const [name, owner, disabled] = await Promise.all([
-            space.read.name(),
-            space.read.owner(),
-            space.read.disabled(),
-        ])
-        return {
-            networkId: spaceId,
-            name,
-            owner,
-            disabled,
-        }
+        // space not found.
+        return undefined
     }
 
     public async isEntitledToSpace(
@@ -143,8 +233,8 @@ export class SpaceDappV2 implements ISpaceDapp {
         permission: Permission,
     ): Promise<boolean> {
         const space = await this.getSpace(spaceId)
-        if (!space.read) {
-            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        if (!space?.read) {
+            return false
         }
         return space.read.isEntitledToSpace(user, permission)
     }
@@ -156,8 +246,8 @@ export class SpaceDappV2 implements ISpaceDapp {
         permission: Permission,
     ): Promise<boolean> {
         const space = await this.getSpace(spaceId)
-        if (!space.read) {
-            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        if (!space?.read) {
+            return false
         }
         return space.read.isEntitledToChannel(channelId, user, permission)
     }
@@ -173,7 +263,7 @@ export class SpaceDappV2 implements ISpaceDapp {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async parseSpaceError(spaceId: string, error: any): Promise<Error> {
         const space = await this.getSpace(spaceId)
-        if (!space.write) {
+        if (!space?.write) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         return space.parseError(error)
@@ -181,7 +271,7 @@ export class SpaceDappV2 implements ISpaceDapp {
 
     public async setSpaceAccess(spaceId: string, disabled: boolean): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
-        if (!space.write) {
+        if (!space?.write) {
             throw new Error(`Space with networkId "${spaceId}" is not deployed properly.`)
         }
         return space.write.setSpaceAccess(disabled)
@@ -193,32 +283,9 @@ export class SpaceDappV2 implements ISpaceDapp {
         disabled: boolean,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
-        if (!space.write) {
+        if (!space?.write) {
             throw new Error(`Space with networkId "${spaceId}" is not deployed properly.`)
         }
         return space.write.setChannelAccess(channelId, disabled)
-    }
-
-    private async getSpace(spaceId: string): Promise<SpaceShim> {
-        if (!this.provider || !this.signer) {
-            throw new Error('Provider or signer is not set.')
-        }
-        if (!this.spaces[spaceId]) {
-            const hash = keccak256(toUtf8Bytes(spaceId))
-            const spaceAddress = await this.spaceFactory.read?.spaceByHash(hash)
-            if (!spaceAddress) {
-                throw new Error(`Space ${spaceId} not found`)
-            }
-            // todo: fetch the correct abi by version. For now, use the latest abi.
-            const abi = this.contractsInfo.spaceFactory.abi
-            this.spaces[spaceId] = new SpaceShim(
-                spaceAddress,
-                abi,
-                this.chainId,
-                this.provider,
-                this.signer,
-            )
-        }
-        return this.spaces[spaceId]
     }
 }

@@ -11,12 +11,15 @@ export type PromiseOrValue<T> = T | Promise<T>
 // V2 smart contract shim
 // todo: replace BaseContractShim with this when refactoring is done
 export class BaseContractShimV2<
-    T_LOCALHOST extends ethers.Contract,
-    T_GOERLI extends ethers.Contract | undefined,
+    T_LOCALHOST_CONTRACT extends ethers.Contract,
+    T_LOCALHOST_INTERFACE extends ethers.utils.Interface,
+    T_GOERLI_CONTRACT extends ethers.Contract | undefined,
+    T_GOERLI_INTERFACE extends ethers.utils.Interface | undefined,
 > {
     public readonly address: string
     public readonly chainId: number
     public readonly abi: ethers.ContractInterface
+    public readonly contractInterface: ethers.utils.Interface
     private readonly provider: ethers.providers.Provider | undefined
     private readonly signer: ethers.Signer | undefined
     private eventsContract?: ethers.Contract
@@ -35,6 +38,18 @@ export class BaseContractShimV2<
         this.provider = provider
         this.signer = signer
         this.abi = abi
+        this.contractInterface = new ethers.utils.Interface(abi as string)
+    }
+
+    public get interface(): T_LOCALHOST_INTERFACE | T_GOERLI_INTERFACE {
+        switch (this.chainId) {
+            case LOCALHOST_CHAIN_ID:
+                return this.contractInterface as unknown as T_LOCALHOST_INTERFACE
+            case GOERLI:
+                return this.contractInterface as unknown as T_GOERLI_INTERFACE
+            default:
+                throw new Error(`Unsupported chainId ${this.chainId}`)
+        }
     }
 
     public get eventsAbi(): ethers.ContractInterface {
@@ -48,46 +63,46 @@ export class BaseContractShimV2<
         }
     }
 
-    public get events(): T_GOERLI | T_LOCALHOST {
+    public get events(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.eventsContract) {
             this.eventsContract = this.createEventsContractInstance()
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
-                return this.eventsContract as unknown as T_LOCALHOST
+                return this.eventsContract as unknown as T_LOCALHOST_CONTRACT
             case GOERLI:
-                return this.eventsContract as unknown as T_GOERLI
+                return this.eventsContract as unknown as T_GOERLI_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public get read(): T_GOERLI | T_LOCALHOST {
+    public get read(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.readContract) {
             this.readContract = this.createReadContractInstance()
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
-                return this.readContract as unknown as T_LOCALHOST
+                return this.readContract as unknown as T_LOCALHOST_CONTRACT
             case GOERLI:
-                return this.readContract as unknown as T_GOERLI
+                return this.readContract as unknown as T_GOERLI_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public get write(): T_GOERLI | T_LOCALHOST {
+    public get write(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
             this.writeContract = this.createWriteContractInstance()
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
-                return this.writeContract as unknown as T_LOCALHOST
+                return this.writeContract as unknown as T_LOCALHOST_CONTRACT
             case GOERLI:
-                return this.writeContract as unknown as T_GOERLI
+                return this.writeContract as unknown as T_GOERLI_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }

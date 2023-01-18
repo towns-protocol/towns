@@ -62,7 +62,7 @@ import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { getContractsInfo } from './web3/ContractsInfo'
+import { getContractsInfo } from './web3/IStaticContractsInfo'
 
 /***
  * Zion Client
@@ -88,6 +88,8 @@ export class ZionClient {
     private _auth?: ZionAuth
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
+        // todo: remove when v2 is default
+        //opts.contractVersion = ContractVersion.V2
         this.opts = opts
         this.name = name || ''
         this._chainId = chainId ?? 0
@@ -698,14 +700,14 @@ export class ZionClient {
     /************************************************
      * getSpaceInfoBySpaceId
      *************************************************/
-    public async getSpaceInfoBySpaceId(spaceNetworkId: string): Promise<SpaceInfo> {
+    public async getSpaceInfoBySpaceId(spaceNetworkId: string): Promise<SpaceInfo | undefined> {
         return this.spaceDapp.getSpaceInfo(spaceNetworkId)
     }
 
     /************************************************
      * createRole
      *************************************************/
-    public async createRoleWithEntitlementData(
+    public async createRole(
         spaceNetworkId: string,
         name: string,
         permissions: Permission[],
@@ -718,7 +720,7 @@ export class ZionClient {
         let roleId: string | undefined = undefined
         let roleName: string | undefined = undefined
         try {
-            transaction = await this.spaceDapp.createRoleWithEntitlementData(
+            transaction = await this.spaceDapp.createRole(
                 spaceNetworkId,
                 name,
                 permissions,

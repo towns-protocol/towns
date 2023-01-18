@@ -38,10 +38,10 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
                 return []
             }
 
-            /* get all the entitlement status for each space */
+            // get all the entitlement status for each space
             // create an array of promises to get all the entitlement status for each space
             const isEntitledPromises = spaceRooms.map((s: SpaceItem) =>
-                spaceDapp?.isEntitledToSpace(s.id.networkId, myWalletAddress, Permission.Read),
+                spaceDapp.isEntitledToSpace(s.id.networkId, myWalletAddress, Permission.Read),
             )
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(isEntitledPromises)
@@ -65,24 +65,30 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
                     isLoading: false,
                     spaces: [],
                 })
+                return
             }
 
             /* get all the space info */
             // create an array of promises to get all the space info
-            const getSpaceInfoPromises = spaceItems
-                .map((s: SpaceItem) => spaceDapp?.getSpaceInfo(s.id.networkId))
-                .filter((x) => x !== undefined) as Promise<SpaceInfo>[]
+            const getSpaceInfoPromises = spaceItems.map((s: SpaceItem) =>
+                spaceDapp.getSpaceInfo(s.id.networkId),
+            )
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(getSpaceInfoPromises)
-            const spaces = entitledSpaces.map((s: SpaceInfo) => {
-                return {
-                    key: s.networkId,
-                    name: s.name,
-                    networkId: s.networkId,
-                    owner: s.owner,
-                    disabled: s.disabled,
-                }
-            })
+            const spaces = entitledSpaces
+                .map((s: SpaceInfo | undefined) => {
+                    if (s) {
+                        return {
+                            key: s.networkId,
+                            name: s.name,
+                            networkId: s.networkId,
+                            owner: s.owner,
+                            disabled: s.disabled,
+                        }
+                    }
+                    return undefined
+                })
+                .filter((x) => x !== undefined) as SpaceIdentifier[]
 
             // Return spaces that the user is entitled to see
             setSpaceIdentifiers({

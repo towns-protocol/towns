@@ -32,8 +32,8 @@ describe('create role', () => {
 
         /** Assert */
         expect(success).toEqual(true)
-        expect(spaceInfo.disabled).toEqual(true)
-        expect(spaceInfo.networkId).toEqual(spaceNetworkId)
+        expect(spaceInfo?.disabled).toEqual(true)
+        expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
     })
 
     test('Space owner is allowed to re-enable disabled space access', async () => {
@@ -60,8 +60,8 @@ describe('create role', () => {
         /** Assert */
         expect(disabled).toEqual(true)
         expect(enabled).toEqual(true)
-        expect(spaceInfo.disabled).toEqual(false)
-        expect(spaceInfo.networkId).toEqual(spaceNetworkId)
+        expect(spaceInfo?.disabled).toEqual(false)
+        expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
     })
 
     test('Space member is not allowed to disable space access', async () => {
@@ -98,14 +98,13 @@ describe('create role', () => {
         const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
 
-        const roleIdentifier: RoleIdentifier | undefined =
-            await alice.createRoleWithEntitlementData(
-                roomId?.networkId as string,
-                'newRole1',
-                permissions,
-                tokenEntitlements,
-                users,
-            )
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            roomId?.networkId as string,
+            'newRole1',
+            permissions,
+            tokenEntitlements,
+            users,
+        )
 
         /** Assert */
         expect(roleIdentifier).toBeDefined()
@@ -127,7 +126,7 @@ describe('create role', () => {
         const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const error = await getError<Error>(async function () {
-            await tokenGrantedUser.createRoleWithEntitlementData(
+            await tokenGrantedUser.createRole(
                 roomId?.networkId as string,
                 'newRole1',
                 permissions,
@@ -160,14 +159,13 @@ describe('create role', () => {
         const permissions = [Permission.Ban]
         const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
-        const roleIdentifier: RoleIdentifier | undefined =
-            await tokenGrantedUser.createRoleWithEntitlementData(
-                roomId?.networkId as string,
-                'newRole1',
-                permissions,
-                tokenEntitlements,
-                users,
-            )
+        const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
+            roomId?.networkId as string,
+            'newRole1',
+            permissions,
+            tokenEntitlements,
+            users,
+        )
 
         /** Assert */
         expect(roleIdentifier).toBeDefined()
@@ -185,22 +183,20 @@ describe('create role', () => {
         const permissions = [Permission.Ban]
         const tokenEntitlements: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
-        const roleIdentifier: RoleIdentifier | undefined =
-            await alice.createRoleWithEntitlementData(
-                roomId?.networkId as string,
-                'newRole1',
-                permissions,
-                tokenEntitlements,
-                users,
-            )
-        const roleIdentifier2: RoleIdentifier | undefined =
-            await alice.createRoleWithEntitlementData(
-                roomId?.networkId as string,
-                'newRole2',
-                permissions,
-                tokenEntitlements,
-                users,
-            )
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            roomId?.networkId as string,
+            'newRole1',
+            permissions,
+            tokenEntitlements,
+            users,
+        )
+        const roleIdentifier2: RoleIdentifier | undefined = await alice.createRole(
+            roomId?.networkId as string,
+            'newRole2',
+            permissions,
+            tokenEntitlements,
+            users,
+        )
         /** Assert */
         expect(roleIdentifier?.roleId).toBeDefined()
         expect(roleIdentifier2?.roleId).toBeDefined()

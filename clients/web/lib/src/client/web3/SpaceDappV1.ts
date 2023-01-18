@@ -61,7 +61,7 @@ export class SpaceDappV1 implements ISpaceDapp {
         return this.spaceManager.createChannel(channelInfo)
     }
 
-    public createRoleWithEntitlementData(
+    public createRole(
         spaceId: string,
         roleName: string,
         _permissions: Permission[],
@@ -105,7 +105,7 @@ export class SpaceDappV1 implements ISpaceDapp {
         )
     }
 
-    public getSpaceInfo(spaceNetworkId: string): Promise<SpaceInfo> {
+    public getSpaceInfo(spaceNetworkId: string): Promise<SpaceInfo | undefined> {
         return this.spaceManager.unsigned.getSpaceInfoBySpaceId(spaceNetworkId)
     }
 

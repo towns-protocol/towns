@@ -32,4 +32,5 @@ ${SCRIPT_DIR}/dendrite/bin/dendrite-monolith-server \
   --really-enable-open-registration \
   --http-bind-address ":$((8008 + $I))" \
   --https-bind-address ":$((8448 + $I))" \
-  ${ENABLE_AUTHZ}
+  ${ENABLE_AUTHZ} \
+#  --contract-version v2

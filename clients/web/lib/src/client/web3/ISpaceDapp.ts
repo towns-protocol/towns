@@ -25,10 +25,10 @@ export interface ISpaceDapp {
         channelNetworkId: string,
         roleIds: number[],
     ) => Promise<ContractTransaction>
-    createRoleWithEntitlementData(
+    createRole(
         spaceId: string,
         roleName: string,
-        permissions: string[],
+        permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
     ): Promise<ContractTransaction>
@@ -36,7 +36,7 @@ export interface ISpaceDapp {
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
     getSpaceFactoryEventsContractInfo: () => EventsContractInfo
     getSpaceEventsContractInfo: (spaceId: string) => Promise<EventsContractInfo>
-    getSpaceInfo: (spaceId: string) => Promise<SpaceInfo>
+    getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (
         spaceId: string,

@@ -3,7 +3,7 @@ import { Permission } from './ContractTypes'
 import { SpaceDataTypes } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { ZionClient } from '../ZionClient'
-import { getContractsInfo } from './ContractsInfo'
+import { getContractsInfo } from './IStaticContractsInfo'
 
 export function getZionTokenAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)
@@ -13,6 +13,7 @@ export function getZionTokenAddress(chainId: number): string {
     return contractInfo.council.address.councilnft
 }
 
+// todo: v1 - remove
 export interface CreateTokenEntitlementDataInfo {
     contractAddress: string
     quantity?: number
@@ -20,6 +21,7 @@ export interface CreateTokenEntitlementDataInfo {
     tokenId?: number
 }
 
+// todo: v1 - remove
 function createTokenEntitlementData(
     arg: CreateTokenEntitlementDataInfo,
 ): DataTypes.ExternalTokenEntitlementStruct {
@@ -36,6 +38,7 @@ function createTokenEntitlementData(
     return externalTokenEntitlement
 }
 
+// todo: v1 - remove
 export function createExternalTokenEntitlements(
     tokenAddresses: string[],
 ): DataTypes.ExternalTokenEntitlementStruct[] {
@@ -59,6 +62,7 @@ export function createExternalTokenStruct(
     return tokenStruct
 }
 
+// todo: v1 - remove
 export function createPermissions(
     permissions: Permission[] | string[],
 ): DataTypes.PermissionStruct[] {
