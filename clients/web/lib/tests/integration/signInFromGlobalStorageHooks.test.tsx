@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React from 'react'
 import { LoginWithAuth } from './helpers/TestComponents'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { useWeb3Context } from '../../src/components/Web3ContextProvider'
@@ -16,6 +16,8 @@ import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { sleep } from '../../src/utils/zion-utils'
 import { useMatrixCredentials } from '../../src/hooks/use-matrix-credentials'
+
+const initialMatrixStoreState = useMatrixStore.getState()
 
 /*
 Note: Jest runs tests serially within the collection,
@@ -28,6 +30,9 @@ describe('signInFromGlobalStorageHooks', () => {
     afterEach(() => {
         // clear sessionStorage after each test simulating a new browser window
         global.sessionStorage.clear()
+        act(() => {
+            useMatrixStore.setState(initialMatrixStoreState)
+        })
     })
     test('test login using localStorage for auth', async () => {
         // create a new client and sign in
