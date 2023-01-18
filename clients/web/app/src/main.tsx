@@ -5,11 +5,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { MainLayout } from 'MainLayout'
 import { SiteHomeLayout } from 'routes/SiteHome'
 import { Stack } from '@ui'
+import { env } from 'utils'
 import { App } from './App'
 
-const isDev = import.meta.env.DEV
-
-if (isDev) {
+if (env.IS_DEV) {
     // Register runtime-error overlay
     // From: https://github.com/vitejs/vite/issues/2076
     const showErrorOverlay = (event: ErrorEvent) => {
@@ -49,7 +48,7 @@ const Main = () => (
 )
 
 if (node) {
-    if (isDev) {
+    if (env.IS_DEV) {
         import(`../mocks/browser`)
             .then(({ worker }) => {
                 worker.start({

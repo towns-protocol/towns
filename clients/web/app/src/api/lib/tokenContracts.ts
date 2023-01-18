@@ -5,7 +5,7 @@ import { erc20ABI } from '@wagmi/core'
 import { ethers } from 'ethers'
 import { TokenProps } from '@components/Tokens'
 import { queryClient } from 'api/queryClient'
-import { hasVitalkTokensParam, isDev } from 'utils'
+import { env, hasVitalkTokensParam } from 'utils'
 import { axiosClient } from '../apiClient'
 
 const queryKey = 'tokenContractsForAddress'
@@ -87,7 +87,7 @@ async function getLocalHostTokens(
     all = false,
 ) {
     // to test with a big list of tokens, add ?vitalikTokens to the url
-    if (isDev && fetchVitalikTokens) {
+    if (env.IS_DEV && fetchVitalikTokens) {
         return getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all)
     }
 
@@ -112,7 +112,7 @@ async function getTokenContractsForAddress(
     pageKey = '',
     all = false,
 ) {
-    const TOKENS_SERVER_URL = import.meta.env.VITE_TOKEN_SERVER_URL
+    const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/${NETWORK}/${wallet}?contractMetadata&pageKey=${pageKey}${
         all ? '&all' : ''
     }`

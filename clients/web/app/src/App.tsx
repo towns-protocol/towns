@@ -12,7 +12,7 @@ import { Register } from 'routes/Register'
 import { Welcome } from 'routes/Welcome'
 import { AppPanelLayout } from 'SidebarLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
-import { isDev } from 'utils'
+import { env } from 'utils'
 import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { TransactionEvents } from 'TransactionEvents'
 
@@ -22,7 +22,7 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
 
-const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
+const CASABLANCA_SERVER_URL = env.VITE_CASABLANCA_SERVER_URL ?? ''
 const ZION_SPACE_ID = '!IX8l0ziEc4khEQch:node1.zion.xyz'
 const ZION_SPACE_NAME = 'zion preview 2' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
@@ -42,7 +42,7 @@ export const App = () => {
             initialSyncLimit={100}
         >
             <QueryProvider>
-                <>{isDev && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
+                <>{env.IS_DEV && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
                 <TransactionEvents />
                 <AllRoutes />
             </QueryProvider>

@@ -32,7 +32,7 @@ import { TextProps } from 'ui/components/Text/Text'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
-import { isDev } from 'utils'
+import { env } from 'utils'
 import { SpaceTokenExample } from '@components/SpaceToken/example/SpaceTokenExample'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
@@ -43,7 +43,7 @@ const A3 = Array(3)
 export const Playground = () => {
     const [mockData, setMockData] = useState<AxiosResponse | null>(null)
     useEffect(() => {
-        if (isDev) {
+        if (env.IS_DEV) {
             axios.get('/mock-endpoint').then(setMockData)
         }
     }, [])

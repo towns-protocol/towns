@@ -1,9 +1,9 @@
 import { useSearchParams } from 'react-router-dom'
-import { isDev } from 'utils'
+import { env } from 'utils'
 
 export function useQueryParams(...keys: string[]) {
     const [searchParams] = useSearchParams()
-    if (!isDev) {
+    if (!env.IS_DEV) {
         return {}
     }
     return keys.reduce((acc: Record<string, unknown>, k) => {

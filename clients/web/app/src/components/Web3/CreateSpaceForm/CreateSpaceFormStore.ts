@@ -1,11 +1,11 @@
 import create from 'zustand'
 import { Address } from 'wagmi'
-import { isDev } from 'utils'
+import { env } from 'utils'
 import { CreateSpaceFormState } from './types'
 import { StoreMockForManualSubmissionsNotToBeUsedInTests } from './mock'
 
 const withMock =
-    isDev && new URLSearchParams(window.location.search).get('spaceFormMock') === 'true'
+    env.IS_DEV && new URLSearchParams(window.location.search).get('spaceFormMock') === 'true'
 
 interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void

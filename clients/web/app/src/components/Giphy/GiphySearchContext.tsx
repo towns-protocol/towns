@@ -1,5 +1,6 @@
 import { GifsResult, GiphyFetch, Result, request } from '@giphy/js-fetch-api'
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { env } from 'utils'
 
 export interface IGiphySearchContext {
     setQuery: (query: string) => void
@@ -30,7 +31,7 @@ const emptyGifsResult = {
 }
 
 export function GiphySearchContextProvider({ children }: { children?: JSX.Element }) {
-    const apiKey = import.meta.env.VITE_GIPHY_API_KEY
+    const apiKey = env.VITE_GIPHY_API_KEY
     const initialQuery = ''
     const gf = useMemo(() => new GiphyFetch(apiKey), [apiKey])
     const [inputValue, setInputValue] = useState('')

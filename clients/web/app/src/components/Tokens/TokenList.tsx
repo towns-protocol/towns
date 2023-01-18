@@ -7,7 +7,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { getCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
-import { hasVitalkTokensParam, isDev } from 'utils'
+import { env, hasVitalkTokensParam } from 'utils'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -162,7 +162,7 @@ export const TokenList = ({
                     </Text>
                 </Box>
             )}
-            {isDev && chainId === 31337 && (
+            {env.IS_DEV && chainId === 31337 && (
                 <Box padding="sm">
                     <Text size="sm">
                         Localhost will only return the zion token for anvil accounts. To test a long

@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
+import { env } from 'utils'
 import { axiosClient } from '../apiClient'
 
 export function getUnfurlContent(urlsArray: string[]) {
-    const UNFURL_SERVER_URL = import.meta.env.VITE_UNFURL_SERVER_URL
+    const UNFURL_SERVER_URL = env.VITE_UNFURL_SERVER_URL
     const encodedUrls = urlsArray.map((url) => `&url=${encodeURIComponent(url)}`)
     return axiosClient.get(`${UNFURL_SERVER_URL}?${encodedUrls}`)
 }

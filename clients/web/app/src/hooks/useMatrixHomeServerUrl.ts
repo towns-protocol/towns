@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { isDev } from 'utils'
+import { env } from 'utils'
 
 const MATRIX_HOMESERVER_URL = 'MATRIX_HOMESERVER_URL'
 
@@ -11,9 +11,9 @@ export enum HomeServerUrl {
 export type UseHomeServerUrlReturn = ReturnType<typeof useMatrixHomeServerUrl>
 
 export function useMatrixHomeServerUrl() {
-    let URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL
+    let URL = env.VITE_MATRIX_HOMESERVER_URL
 
-    if (isDev) {
+    if (env.IS_DEV) {
         URL = localStorage.getItem(MATRIX_HOMESERVER_URL) || URL
     }
 
@@ -21,10 +21,10 @@ export function useMatrixHomeServerUrl() {
 
     const clearUrl = useCallback(() => {
         localStorage.removeItem(MATRIX_HOMESERVER_URL)
-        _setHomerserverUrl(import.meta.env.VITE_MATRIX_HOMESERVER_URL)
+        _setHomerserverUrl(env.VITE_MATRIX_HOMESERVER_URL)
     }, [])
 
-    const setUrl = useCallback((url: HomeServerUrl) => {
+    const setUrl = useCallback((url: string) => {
         _setHomerserverUrl(url)
         localStorage.setItem(MATRIX_HOMESERVER_URL, url)
     }, [])

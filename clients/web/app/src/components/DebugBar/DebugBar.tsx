@@ -17,12 +17,12 @@ type ModalProps = {
     onHide: () => void
     platform: string
     synced: boolean
-    homeserverUrl: HomeServerUrl
+    homeserverUrl: string
     onNetworkSwitch: (chainId: number) => void
     onClearUrl: () => void
 }
 
-function areSynced(homeserverUrl: HomeServerUrl, chainName: string) {
+function areSynced(homeserverUrl: string, chainName: string) {
     const serverIsLocal = homeserverUrl.includes('localhost')
     const chainIsLocal = chainName.toLowerCase().includes('foundry')
     const localSync = serverIsLocal && chainIsLocal
