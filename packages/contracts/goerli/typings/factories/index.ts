@@ -8,5 +8,6 @@ export { CouncilStaking__factory } from "./CouncilStaking__factory";
 export { IEntitlementModule__factory } from "./IEntitlementModule__factory";
 export { Space__factory } from "./Space__factory";
 export { SpaceFactory__factory } from "./SpaceFactory__factory";
+export { TokenEntitlement__factory } from "./TokenEntitlement__factory";
 export { ZionRoleManager__factory } from "./ZionRoleManager__factory";
 export { ZionSpaceManager__factory } from "./ZionSpaceManager__factory";
