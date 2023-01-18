@@ -1,5 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router'
+import { firstBy } from 'thenby'
 import {
     ChannelContextProvider,
     ThreadResult,
@@ -7,10 +8,15 @@ import {
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-zion-client'
-import { MessageThread } from '@components/MessageThread/MessageThread'
-import { Stack } from '@ui'
 import { usePersistOrder } from 'hooks/usePersistOrder'
-import { sortThreads } from './SpaceThreadInbox'
+import { Stack } from '@ui'
+import { MessageThread } from '@components/MessageThread/MessageThread'
+
+function sortThreads(threads: ThreadResult[]) {
+    return threads.sort(
+        firstBy<ThreadResult>((m) => (m.isUnread ? 0 : 1)).thenBy((a) => a.timestamp, -1),
+    )
+}
 
 export const SpaceThreads = () => {
     const { userId } = useMatrixCredentials()

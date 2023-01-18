@@ -7,7 +7,7 @@ export const UnfurledGenericBlock = (props: UnfurlData) => {
     return (
         <Box
             data-testid="unfurled-generic-block"
-            style={{ marginRight: 'auto' }}
+            alignSelf="start"
             background="level3"
             padding="md"
             borderRadius="sm"

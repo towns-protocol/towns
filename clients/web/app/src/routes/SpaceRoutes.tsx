@@ -6,21 +6,17 @@ import { PATHS } from 'routes'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
+import { SpaceCreate } from './SpaceCreate'
+import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome } from './SpaceHome'
 import { HomeHighlights } from './SpaceHomeHilights'
 import { SpaceMentions } from './SpaceMentions'
 import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
 import { SpacesChannelReplies } from './SpacesChannelReplies'
 import { SpacesInvite } from './SpacesInvite'
-import { SpacesSettings } from './SpacesSettings'
-import { SpaceThreadsInbox } from './SpaceThreadInbox'
-import { SpaceThreads } from './SpaceThreads'
-import { SpaceThreadInboxChannel } from './SpaceThreadInboxChannel'
-import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpacesNew } from './SpacesNew'
-import { SpaceCreate } from './SpaceCreate'
-
-const USE_THREAD_GROUPS = true
+import { SpacesSettings } from './SpacesSettings'
+import { SpaceThreads } from './SpaceThreads'
 
 export const SpaceRoutes = () => (
     <Routes>
@@ -41,14 +37,7 @@ export const SpaceRoutes = () => (
                 <Route path="proposals" element={<ProposalPage />} />
                 <Route path="members" element={<MembersPage />} />
             </Route>
-            <Route
-                path="threads"
-                element={USE_THREAD_GROUPS ? <SpaceThreads /> : <SpaceThreadsInbox />}
-            >
-                <Route path=":channelId" element={<SpaceThreadInboxChannel />}>
-                    <Route path=":messageId" element={<SpacesChannelReplies />} />
-                </Route>
-            </Route>
+            <Route path="threads" element={<SpaceThreads />} />
             <Route path="mentions" element={<SpaceMentions />} />
             <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
             <Route path="settings" element={<SpacesSettings />} />
