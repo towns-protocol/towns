@@ -9,7 +9,7 @@ import {
     useSpaceThreadRoots,
 } from 'use-zion-client'
 import { usePersistOrder } from 'hooks/usePersistOrder'
-import { Stack } from '@ui'
+import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { MessageThread } from '@components/MessageThread/MessageThread'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -48,6 +48,16 @@ export const SpaceThreads = () => {
             <Outlet />
         </Stack>
     ) : (
-        <></>
+        <Stack centerContent grow>
+            <Stack centerContent gap="lg" width="250">
+                <Box padding="md" color="gray2" background="level2" rounded="sm">
+                    <Icon type="threads" size="square_sm" />
+                </Box>
+                <Heading level={3}>No threads yet</Heading>
+                <Paragraph textAlign="center" color="gray2">
+                    Threads help you keep track of conversations you engage with.
+                </Paragraph>
+            </Stack>
+        </Stack>
     )
 }
