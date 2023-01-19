@@ -3,9 +3,9 @@ import React, { Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { MainLayout } from 'MainLayout'
-import { SiteHomeLayout } from 'routes/SiteHome'
-import { Stack } from '@ui'
 import { env } from 'utils'
+import { LoadingScreen } from 'routes/LoadingScreen'
+import { useRootTheme } from 'hooks/useRootTheme'
 import { App } from './App'
 
 if (env.IS_DEV) {
@@ -29,23 +29,24 @@ if (env.IS_DEV) {
 
 const node = document.getElementById('root')
 
-const LoadingScreen = () => (
-    <Stack absoluteFill centerContent background="inverted">
-        <SiteHomeLayout />
-    </Stack>
-)
+const Main = () => {
+    useRootTheme({
+        ammendHTMLBody: true,
+        useDefaultOSTheme: false,
+    })
 
-const Main = () => (
-    <React.StrictMode>
-        <BrowserRouter>
-            <MainLayout>
-                <Suspense fallback={<LoadingScreen />}>
-                    <App />
-                </Suspense>
-            </MainLayout>
-        </BrowserRouter>
-    </React.StrictMode>
-)
+    return (
+        <React.StrictMode>
+            <BrowserRouter>
+                <MainLayout>
+                    <Suspense fallback={<LoadingScreen />}>
+                        <App />
+                    </Suspense>
+                </MainLayout>
+            </BrowserRouter>
+        </React.StrictMode>
+    )
+}
 
 if (node) {
     if (env.IS_DEV) {

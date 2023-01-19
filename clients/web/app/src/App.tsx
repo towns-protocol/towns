@@ -5,7 +5,6 @@ import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
 import { QueryProvider } from 'api/queryClient'
 import { useAuth } from 'hooks/useAuth'
-import { useRootTheme } from 'hooks/useRootTheme'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
@@ -15,6 +14,7 @@ import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
 import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { TransactionEvents } from 'TransactionEvents'
+import { LoadingScreen } from 'routes/LoadingScreen'
 
 const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
 const Playground = React.lazy(() => import('@components/Playground'))
@@ -51,14 +51,13 @@ export const App = () => {
 }
 
 const AllRoutes = () => {
-    const { isAuthenticatedAndConnected } = useAuth()
-
-    useRootTheme({
-        ammendHTMLBody: true,
-        useDefaultOSTheme: false,
-    })
+    const { isAuthenticatedAndConnected, connectLoading } = useAuth()
 
     useWindowListener()
+
+    if (connectLoading) {
+        return <LoadingScreen />
+    }
 
     return (
         <Routes>

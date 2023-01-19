@@ -9,13 +9,7 @@ export function useAuth() {
     const { isAuthenticated, loginStatus, loginError } = useMatrixCredentials()
     const { loginWithWallet, registerWallet, logout: _logout } = useZionClient()
     const { walletStatus } = useWeb3Context()
-    const {
-        connect: _connect,
-        connectors,
-        error: connectError,
-        isLoading: connectLoading,
-        pendingConnector,
-    } = useConnect()
+    const { connect: _connect, connectors, error: connectError, pendingConnector } = useConnect()
 
     const connect = useCallback(() => {
         _connect({ connector: connectors[0] })
@@ -40,6 +34,13 @@ export function useAuth() {
     const isAuthenticatedAndConnected = useMemo(() => {
         return isAuthenticated && isConnected
     }, [isAuthenticated, isConnected])
+
+    // wagmi's useConnect().isLoading resolves much faster than our own wallet status and so we need to create our own connect loading status
+    const connectLoading = useMemo(() => {
+        return (
+            walletStatus === WalletStatus.Reconnecting || walletStatus === WalletStatus.Connecting
+        )
+    }, [walletStatus])
 
     return {
         connect,
