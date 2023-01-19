@@ -175,6 +175,11 @@ export interface TimelineEvent {
     threadParentId?: string
     reactionParentId?: string
     isMentioned: boolean
+    sender: {
+        displayName: string
+        avatarUrl?: string
+        id: string
+    }
 }
 
 export interface ThreadStats {

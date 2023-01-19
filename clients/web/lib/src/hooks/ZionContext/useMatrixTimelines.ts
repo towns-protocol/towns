@@ -299,6 +299,11 @@ export function useMatrixTimelines(client?: MatrixClient) {
 export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     const { content, error } = toZionContent(event)
     const fbc = `${event.getType()} ${getFallbackContent(event, content, error)}`
+    const sender = {
+        id: event.getSender(),
+        displayName: event.sender?.rawDisplayName ?? event.getSender(),
+        avatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
+    }
     // console.log("!!!! to event", event.getId(), fbc);
     return {
         eventId: event.getId(),
@@ -311,6 +316,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
+        sender,
     }
 }
 
@@ -339,6 +345,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         threadParentId: prev.threadParentId,
         reactionParentId: prev.reactionParentId,
         isMentioned: next.isMentioned,
+        sender: prev.sender,
     }
 }
 
