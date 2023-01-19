@@ -22,6 +22,12 @@ contract TokenEntitlement is
   UUPSUpgradeable,
   IEntitlement
 {
+  /// @notice struct holding information about a single entitlement
+  /// @param entitlementId unique id of the entitlement
+  /// @param roleId id of the role that the entitlement is gating
+  /// @param grantedBy address of the account that granted the entitlement
+  /// @param grantedTime timestamp of when the entitlement was granted
+  /// @param tokens array of tokens that are required for the entitlement, ANDed together
   struct Entitlement {
     uint256 roleId;
     address grantedBy;
@@ -35,9 +41,13 @@ contract TokenEntitlement is
 
   address public SPACE_ADDRESS;
 
+  /// @notice mapping holding all the entitlements of entitlementId to Entitlement
   mapping(bytes32 => Entitlement) public entitlementsById;
+  /// @notice mapping of all the roles for a given channelId
   mapping(bytes32 => uint256[]) roleIdsByChannelId;
+  /// @notice mapping of all the entitlements for a given roleId
   mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
+  /// @notice array of all the entitlementIds
   bytes32[] public allEntitlementIds;
 
   modifier onlySpace() {
@@ -54,10 +64,13 @@ contract TokenEntitlement is
     __Ownable_init();
   }
 
+  // @inheritdoc IEntitlement
   function setSpace(address _space) external onlyOwner {
     SPACE_ADDRESS = _space;
   }
 
+  /// @notice allow the contract to be upgraded while retaining state
+  /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
   ) internal override onlyOwner {}
@@ -70,6 +83,7 @@ contract TokenEntitlement is
       super.supportsInterface(interfaceId);
   }
 
+  // @inheritdoc IEntitlement
   function isEntitled(
     string calldata channelId,
     address user,
@@ -87,6 +101,7 @@ contract TokenEntitlement is
     }
   }
 
+  // @inheritdoc IEntitlement
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
@@ -160,6 +175,7 @@ contract TokenEntitlement is
     return entitlements;
   }
 
+  // @inheritdoc IEntitlement
   function getUserRoles(
     address user
   ) external view returns (DataTypes.Role[] memory) {
@@ -176,6 +192,7 @@ contract TokenEntitlement is
     return roles;
   }
 
+  // @inheritdoc IEntitlement
   function addRoleIdToChannel(
     string calldata channelId,
     uint256 roleId
@@ -193,6 +210,7 @@ contract TokenEntitlement is
     roleIdsByChannelId[_channelId].push(roleId);
   }
 
+  // @inheritdoc IEntitlement
   function removeRoleIdFromChannel(
     string calldata channelId,
     uint256 roleId
@@ -208,11 +226,16 @@ contract TokenEntitlement is
     }
   }
 
-  // A convenience function to generate types for the client to encode the token struct. No implementation needed.
   function encodeExternalTokens(
     DataTypes.ExternalToken[] calldata tokens
   ) public pure {}
 
+  /// @notice checks is a user is entitled to a specific channel
+  /// @param channelId the channel id
+  /// @param user the user address who we are checking for
+  /// @param permission the permission we are checking for
+  /// @return _entitled true if the user is entitled to the channel
+  // A convenience function to generate types for the client to encode the token struct. No implementation needed.
   function _isEntitledToChannel(
     bytes32 channelId,
     address user,
@@ -237,6 +260,9 @@ contract TokenEntitlement is
     }
   }
 
+  /// @notice utility to remove an item from an array
+  /// @param array the array to remove from
+  /// @param value the value to remove
   function _removeFromArray(bytes32[] storage array, bytes32 value) internal {
     for (uint256 i = 0; i < array.length; i++) {
       if (array[i] != value) continue;
@@ -246,6 +272,10 @@ contract TokenEntitlement is
     }
   }
 
+  /// @notice checks if a user is entitled to a space
+  /// @param user the user to check
+  /// @param permission the permission to check
+  /// @return _entitled true if the user is entitled
   function _isEntitledToSpace(
     address user,
     bytes32 permission
@@ -270,6 +300,10 @@ contract TokenEntitlement is
     }
   }
 
+  /// @notice checks if a user holds the necessary tokens to meet the token entitlement requirements
+  /// @param user the user to check
+  /// @param entitlementId the entitlement id to check
+  /// @return true if the user is entitled
   function _isTokenEntitled(
     address user,
     bytes32 entitlementId
@@ -312,6 +346,12 @@ contract TokenEntitlement is
     return entitled;
   }
 
+  /// @notice checks if a user holds the necessary ERC1155 tokens
+  /// @param contractAddress the contract address to check
+  /// @param user the user to check
+  /// @param quantity the quantity to check, user needs to have at least this amount
+  /// @param isSingleToken qualifier on if we are checking for a unique tokenID or not since ERC1155 can contain fungible and non-fungible types
+  /// @return bool true if the user holds the tokens
   function _isERC1155Entitled(
     address contractAddress,
     address user,
@@ -334,6 +374,12 @@ contract TokenEntitlement is
     return false;
   }
 
+  /// @notice checks if a user holds the necessary ERC721 tokens
+  /// @param contractAddress the contract address to check
+  /// @param user the user to check
+  /// @param quantity the quantity to check, user needs to have at least this amount
+  /// @param isSingleToken qualifier on if we are checking for a unique ERC721 tokenID or not
+  /// @return bool true if the user holds the tokens
   function _isERC721Entitled(
     address contractAddress,
     address user,
@@ -361,6 +407,11 @@ contract TokenEntitlement is
     return false;
   }
 
+  /// @notice checks if a user holds the necessary ERC20 tokens
+  /// @param contractAddress the contract address to check
+  /// @param user the user to check
+  /// @param quantity the quantity to check, user needs to have at least this amount
+  /// @return bool true if the user holds the tokens
   function _isERC20Entitled(
     address contractAddress,
     address user,
@@ -374,6 +425,10 @@ contract TokenEntitlement is
     return false;
   }
 
+  /// @notice checks if a role has a permission
+  /// @param roleId the role id to check
+  /// @param permission the permission to check
+  /// @return bool true if the role has the permission
   function _validateRolePermission(
     uint256 roleId,
     bytes32 permission

@@ -167,6 +167,7 @@ contract SpaceFactory is
     emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceNetworkId);
   }
 
+  /// @inheritdoc ISpaceFactory
   function addOwnerPermissions(
     string[] calldata _permissions
   ) external onlyOwner {
@@ -183,6 +184,7 @@ contract SpaceFactory is
     }
   }
 
+  /// @inheritdoc ISpaceFactory
   function getTokenIdByNetworkId(
     string calldata spaceNetworkId
   ) external view returns (uint256) {
@@ -190,6 +192,15 @@ contract SpaceFactory is
     return tokenByHash[_networkHash];
   }
 
+  /// @inheritdoc ISpaceFactory
+  function getSpaceAddressByNetworkId(
+    string calldata spaceNetworkId
+  ) external view returns (address) {
+    bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
+    return spaceByHash[_networkHash];
+  }
+
+  /// @inheritdoc ISpaceFactory
   function getOwnerPermissions() external view returns (string[] memory) {
     return ownerPermissions;
   }

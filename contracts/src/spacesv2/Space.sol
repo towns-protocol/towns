@@ -39,7 +39,6 @@ contract Space is
   uint256 public roleCount;
   mapping(uint256 => DataTypes.Role) public rolesById;
   mapping(uint256 => bytes32[]) internal permissionsByRoleId;
-  mapping(uint256 => bool) internal roleAssigned;
 
   mapping(bytes32 => DataTypes.Channel) public channelsByHash;
   bytes32[] public channels;

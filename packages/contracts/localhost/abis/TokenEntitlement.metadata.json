@@ -520,14 +520,75 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to add the role to",
+            "roleId": "id of the role to add"
+          }
+        },
+        "getEntitlementDataByRoleId(uint256)": {
+          "params": {
+            "roleId": "the roleId to fetch the entitlement data for"
+          },
+          "returns": {
+            "_0": "entitlementData array for the role"
+          }
+        },
+        "getUserRoles(address)": {
+          "params": {
+            "user": "the user to fetch the roles for"
+          },
+          "returns": {
+            "_0": "roles array of all the roles for the user"
+          }
+        },
+        "isEntitled(string,address,bytes32)": {
+          "params": {
+            "channelId": "id of the channel to check, if empty string, checks space",
+            "permission": "the permission to check",
+            "user": "address of the user to check"
+          },
+          "returns": {
+            "_0": "whether the user is entitled to the permission"
+          }
+        },
         "owner()": {
           "details": "Returns the address of the current owner."
         },
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
+        "removeEntitlement(uint256,bytes)": {
+          "params": {
+            "entitlementData": "abi encoded array of the data associated with that entitlement",
+            "roleId": "id of the role to remove"
+          },
+          "returns": {
+            "entitlementId": "the id that was removed"
+          }
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to remove the role from",
+            "roleId": "id of the role to remove"
+          }
+        },
         "renounceOwnership()": {
           "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
+        },
+        "setEntitlement(uint256,bytes)": {
+          "params": {
+            "entitlementData": "abi encoded array of data necessary to set the entitlement",
+            "roleId": "id of the role to gate"
+          },
+          "returns": {
+            "entitlementId": "the id that was set"
+          }
+        },
+        "setSpace(address)": {
+          "params": {
+            "_space": "address of the space"
+          }
         },
         "supportsInterface(bytes4)": {
           "details": "See {IERC165-supportsInterface}."
@@ -547,14 +608,44 @@
     "userdoc": {
       "kind": "user",
       "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "notice": "adds a role to a channel"
+        },
+        "allEntitlementIds(uint256)": {
+          "notice": "array of all the entitlementIds"
+        },
         "description()": {
           "notice": "The description of the entitlement module"
+        },
+        "entitlementsById(bytes32)": {
+          "notice": "mapping holding all the entitlements of entitlementId to Entitlement"
+        },
+        "getEntitlementDataByRoleId(uint256)": {
+          "notice": "fetches the entitlement data for a roleId"
+        },
+        "getUserRoles(address)": {
+          "notice": "fetches the roles for a given user in the space"
+        },
+        "isEntitled(string,address,bytes32)": {
+          "notice": "checks whether a user is has a given permission for a channel or a space"
         },
         "moduleType()": {
           "notice": "The type of the entitlement module"
         },
         "name()": {
           "notice": "The name of the entitlement module"
+        },
+        "removeEntitlement(uint256,bytes)": {
+          "notice": "removes an entitlement"
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "notice": "removes a role from a channel"
+        },
+        "setEntitlement(uint256,bytes)": {
+          "notice": "sets a new entitlement"
+        },
+        "setSpace(address)": {
+          "notice": "sets the address for the space that controls this entitlement"
         }
       },
       "version": 1
@@ -588,27 +679,27 @@
   },
   "sources": {
     "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x889801afb5f0939e1be870091e6ab4db30be678017a826a7b44d86838c8e6645",
+      "keccak256": "0x6ca4a63d7cecb3ecccb3ef97d2d2865e862e8f08fe06c43573c7d34489c7b936",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://970521b326ed83bb22c45b4ad1a189ba8d39842e6b690fe125888644648c0c4b",
-        "dweb:/ipfs/QmSZVfURpEDzMF7R5F4hiXPv99YmwbXH9h9dJLtj1F2waR"
+        "bzz-raw://234b1fabca9d18c5335ca9a6c05bc3188ce5a6763737a963aeddb56d4c437690",
+        "dweb:/ipfs/QmZCvTCaTDN5jqnxWVofCDT2Wqr19LymvyUxpZviwsg5yC"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0x9d9bda1dafd40523762bf3ff7ba5953de390c5020246c0f10fc61cdc40d1088d",
+      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ba499208ecb443aa3ea61eda0a82526140f57afcac51d07c4363dd8346017249",
-        "dweb:/ipfs/QmVtoyU297x8ESqYurxL1oCa7yXGapex472NRSdchJwacs"
+        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
+        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0xd9d2e9782c7e9b3fcd9f9c66c507ee97dda705ba665a90f0335096f156683b99",
+      "keccak256": "0xea5ec4896cbad3a5258ce236fa34bd4820e3970dc20da9214176f717a2e75106",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://cb8fcea66d442577c176b1f6221515d415485ec8a1bb2387d142a6a8e3a4dd60",
-        "dweb:/ipfs/QmeLbTyNuYo3zDZrehSgx6Ay8SxNjfBpf412RNTV1pvfUt"
+        "bzz-raw://dc6300b00dfa697246ec4d29f4b118b755bcdab6685c72778b6a12674175af1d",
+        "dweb:/ipfs/QmThdTNj53QgzaMEa7kCPKdd6Rztqw8oEWuMwcS5oVCzDe"
       ]
     },
     "contracts/src/spacesv2/libraries/DataTypes.sol": {

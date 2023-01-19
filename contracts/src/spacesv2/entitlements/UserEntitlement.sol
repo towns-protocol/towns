@@ -54,10 +54,13 @@ contract UserEntitlement is
     __Ownable_init();
   }
 
+  // @inheritdoc IEntitlement
   function setSpace(address _space) external onlyOwner {
     SPACE_ADDRESS = _space;
   }
 
+  /// @notice allow the contract to be upgraded while retaining state
+  /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
   ) internal override onlyOwner {}
@@ -70,7 +73,7 @@ contract UserEntitlement is
       super.supportsInterface(interfaceId);
   }
 
-  /// @inheritdoc IEntitlement
+  // @inheritdoc IEntitlement
   function isEntitled(
     string calldata channelId,
     address user,
@@ -88,6 +91,7 @@ contract UserEntitlement is
     }
   }
 
+  // @inheritdoc IEntitlement
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
@@ -119,6 +123,7 @@ contract UserEntitlement is
     entitlementIdsByRoleId[roleId].push(entitlementId);
   }
 
+  // @inheritdoc IEntitlement
   function removeEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
@@ -161,6 +166,7 @@ contract UserEntitlement is
     return entitlements;
   }
 
+  // @inheritdoc IEntitlement
   function getUserRoles(
     address user
   ) external view returns (DataTypes.Role[] memory) {
@@ -176,6 +182,7 @@ contract UserEntitlement is
     return roles;
   }
 
+  // @inheritdoc IEntitlement
   function addRoleIdToChannel(
     string calldata channelId,
     uint256 roleId
@@ -193,6 +200,7 @@ contract UserEntitlement is
     roleIdsByChannelId[_channelId].push(roleId);
   }
 
+  // @inheritdoc IEntitlement
   function removeRoleIdFromChannel(
     string calldata channelId,
     uint256 roleId
@@ -209,6 +217,9 @@ contract UserEntitlement is
     }
   }
 
+  /// @notice utility to remove an item from an array
+  /// @param array the array to remove from
+  /// @param value the value to remove
   function _removeFromArray(bytes32[] storage array, bytes32 value) internal {
     for (uint256 i = 0; i < array.length; i++) {
       if (array[i] != value) continue;
@@ -218,6 +229,11 @@ contract UserEntitlement is
     }
   }
 
+  /// @notice checks is a user is entitled to a specific channel
+  /// @param channelId the channel id
+  /// @param user the user address who we are checking for
+  /// @param permission the permission we are checking for
+  /// @return _entitled true if the user is entitled to the channel
   function _isEntitledToChannel(
     bytes32 channelId,
     address user,
@@ -256,6 +272,9 @@ contract UserEntitlement is
     }
   }
 
+  /// @notice gets all the entitlements given to a specific user
+  /// @param user the user address
+  /// @return _entitlements the entitlements
   function _getEntitlementByUser(
     address user
   ) internal view returns (Entitlement[] memory) {
@@ -271,6 +290,10 @@ contract UserEntitlement is
     return _entitlements;
   }
 
+  /// @notice checks if a user is entitled to a specific space
+  /// @param user the user address
+  /// @param permission the permission we are checking for
+  /// @return _entitled true if the user is entitled to the space
   function _isEntitledToSpace(
     address user,
     bytes32 permission
@@ -292,6 +315,10 @@ contract UserEntitlement is
     return false;
   }
 
+  /// @notice checks if a role has a specific permission
+  /// @param roleId the role id
+  /// @param permission the permission we are checking for
+  /// @return _hasPermission true if the role has the permission
   function _validateRolePermission(
     uint256 roleId,
     bytes32 permission
@@ -309,6 +336,10 @@ contract UserEntitlement is
     return false;
   }
 
+  /// @notice utility to concat two arrays
+  /// @param a the first array
+  /// @param b the second array
+  /// @return c the combined array
   function concatArrays(
     Entitlement[] memory a,
     Entitlement[] memory b

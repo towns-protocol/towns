@@ -998,17 +998,171 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
+        "addPermissionToRole(uint256,string)": {
+          "params": {
+            "permission": "the permission to add to the role",
+            "roleId": "the roleId to add the permission to"
+          }
+        },
+        "addRoleToChannel(string,address,uint256)": {
+          "params": {
+            "channelId": "the channelId to add the role to",
+            "entitlement": "the address of the entitlement that we are adding the role to",
+            "roleId": "the roleId to add to the channel"
+          }
+        },
+        "addRoleToEntitlement(uint256,(address,bytes))": {
+          "params": {
+            "entitlement": "the address of the entitlement",
+            "roleId": "the roleId to add to the entitlement"
+          }
+        },
+        "createChannel(string,string,uint256[])": {
+          "params": {
+            "channelName": "the name of the channel",
+            "channelNetworkId": "the network id of the channel linking it to the dendrite/casablanca protocol",
+            "roleIds": "the roleIds to be set as the initial roles for the channel"
+          },
+          "returns": {
+            "_0": "the channelId of the created channel"
+          }
+        },
+        "createRole(string,string[],(address,bytes)[])": {
+          "params": {
+            "entitlements": "the initial entitlements to gate the role",
+            "permissions": "the permissions to be set for the role",
+            "roleName": "the name of the role"
+          },
+          "returns": {
+            "_0": "the roleId of the created role"
+          }
+        },
+        "getChannelByHash(bytes32)": {
+          "params": {
+            "channelHash": "the hashed channelId"
+          },
+          "returns": {
+            "_0": "the Channel information"
+          }
+        },
+        "getEntitlementIdsByRoleId(uint256)": {
+          "params": {
+            "roleId": "the roleId to fetch the entitlements for"
+          },
+          "returns": {
+            "_0": "the entitlements for the role"
+          }
+        },
+        "getEntitlements()": {
+          "returns": {
+            "_0": "entitlements array"
+          }
+        },
+        "getPermissionsByRoleId(uint256)": {
+          "params": {
+            "roleId": "the roleId to fetch the permissions for"
+          },
+          "returns": {
+            "_0": "permissions array for the role"
+          }
+        },
+        "getRoleById(uint256)": {
+          "params": {
+            "roleId": "the roleId to fetch the role information for"
+          },
+          "returns": {
+            "_0": "the role information"
+          }
+        },
+        "initialize(string,string,address[])": {
+          "params": {
+            "modules": "the initial modules to be used by the space for gating",
+            "name": "the name of the space",
+            "networkId": "the network id of the space linking it to the dendrite/casablanca protocol"
+          }
+        },
+        "isEntitledToChannel(string,address,string)": {
+          "params": {
+            "channelId": "the channelId to check the permission for",
+            "permission": "the permission to check",
+            "user": "the user to check the permission for"
+          },
+          "returns": {
+            "_entitled": "whether the user is entitled to the permission in the channel"
+          }
+        },
+        "isEntitledToSpace(address,string)": {
+          "params": {
+            "permission": "the permission to check",
+            "user": "the user to check the permission for"
+          },
+          "returns": {
+            "_entitled": "whether the user is entitled to the permission in the space"
+          }
+        },
         "owner()": {
           "details": "Returns the address of the current owner."
         },
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
+        "removePermissionFromRole(uint256,string)": {
+          "params": {
+            "permission": "the permission to remove from the role",
+            "roleId": "the roleId to remove the permission from"
+          }
+        },
+        "removeRole(uint256)": {
+          "params": {
+            "roleId": "the roleId to remove"
+          }
+        },
+        "removeRoleFromChannel(string,address,uint256)": {
+          "params": {
+            "channelId": "the channelId to remove the role from",
+            "entitlement": "the address of the entitlement that we are removing the role from",
+            "roleId": "the roleId to remove from the channel"
+          }
+        },
+        "removeRoleFromEntitlement(uint256,(address,bytes))": {
+          "params": {
+            "entitlement": "the address of the entitlement to remove",
+            "roleId": "the roleId to remove the entitlement from"
+          }
+        },
         "renounceOwnership()": {
           "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
         },
+        "setChannelAccess(string,bool)": {
+          "params": {
+            "channelId": "the channelId to set the access for",
+            "disabled": "whether to make the channel disabled or not"
+          }
+        },
+        "setEntitlement(address,bool)": {
+          "params": {
+            "entitlement": "the address of the new entitlement",
+            "whitelist": "whether to set the entitlement as activated or not"
+          }
+        },
+        "setOwnerRoleId(uint256)": {
+          "params": {
+            "roleId": "the roleId to be set as the owner role id"
+          }
+        },
+        "setSpaceAccess(bool)": {
+          "params": {
+            "disabled": "whether to make the space disabled or not"
+          }
+        },
         "transferOwnership(address)": {
           "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        },
+        "updateRole(uint256,string)": {
+          "params": {
+            "roleId": "the roleId to update",
+            "roleName": "the new name of the role"
+          }
         },
         "upgradeTo(address)": {
           "details": "Upgrade the implementation of the proxy to `newImplementation`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
@@ -1023,19 +1177,73 @@
       "kind": "user",
       "methods": {
         "addPermissionToRole(uint256,string)": {
-          "notice": "***** Permission Management *****"
+          "notice": "***** Permission Management *****adds a permission to a role by roleId"
+        },
+        "addRoleToChannel(string,address,uint256)": {
+          "notice": "adds a role to a channel"
+        },
+        "addRoleToEntitlement(uint256,(address,bytes))": {
+          "notice": "adds a role to an entitlement"
+        },
+        "createChannel(string,string,uint256[])": {
+          "notice": "creates a new channel for the space"
+        },
+        "createRole(string,string[],(address,bytes)[])": {
+          "notice": "creates a new role for the space"
         },
         "getChannelByHash(bytes32)": {
-          "notice": "***** Channel Management *****"
+          "notice": "fetches the Channel information by the hashed channelId"
         },
         "getEntitlementIdsByRoleId(uint256)": {
-          "notice": "***** Entitlement Management *****"
+          "notice": "***** Entitlement Management *****gets the entitlements for a given role"
+        },
+        "getEntitlements()": {
+          "notice": "fetches all the entitlements for the space"
+        },
+        "getPermissionsByRoleId(uint256)": {
+          "notice": "fetches the permissions for a role by roleId"
+        },
+        "getRoleById(uint256)": {
+          "notice": "fetches the role information by roleId"
         },
         "getRoles()": {
-          "notice": "***** Role Management *****"
+          "notice": "***** Role Management *****fetches the all the created roles for the space"
         },
         "initialize(string,string,address[])": {
-          "notice": "***** Space Management *****"
+          "notice": "***** Space Management *****initializes a new Space"
+        },
+        "isEntitledToChannel(string,address,string)": {
+          "notice": "checks if a user is entitled to a permission in a channel"
+        },
+        "isEntitledToSpace(address,string)": {
+          "notice": "checks if a user is entitled to a permission in the space"
+        },
+        "removePermissionFromRole(uint256,string)": {
+          "notice": "removes a permission from a role by roleId"
+        },
+        "removeRole(uint256)": {
+          "notice": "removes a role by roleId"
+        },
+        "removeRoleFromChannel(string,address,uint256)": {
+          "notice": "removes a role from a channel"
+        },
+        "removeRoleFromEntitlement(uint256,(address,bytes))": {
+          "notice": "removes an entitlement from the space"
+        },
+        "setChannelAccess(string,bool)": {
+          "notice": "sets whether the channel is disabled or not"
+        },
+        "setEntitlement(address,bool)": {
+          "notice": "sets a new entitlement for the space"
+        },
+        "setOwnerRoleId(uint256)": {
+          "notice": "sets a created roleId to be the owner role id for the Space"
+        },
+        "setSpaceAccess(bool)": {
+          "notice": "sets whether the space is disabled or not"
+        },
+        "updateRole(uint256,string)": {
+          "notice": "updates a role name by roleId"
         }
       },
       "version": 1
@@ -1077,27 +1285,27 @@
       ]
     },
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0xa9ef2fb4c53fe8b8d55e91582ccb66dea5dda98644c681e79adcb6bebb04b835",
+      "keccak256": "0x3dffed00c0268c1edc6125241b4a5dc9b8b7dfdab2367d1f80cc6ec096e473e2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6daadfd2c9f60980b87c05dc070af6183a25940e1623ec4ec26b49b698059ee3",
-        "dweb:/ipfs/QmeiKetd9jPU5XngU37dkVBKu31LDNhAF3cGzZcUvRbvUo"
+        "bzz-raw://4a42fdb77446c637455fa79de8d36c97ed407e5bdaab2113d132b755238b370f",
+        "dweb:/ipfs/QmaeDPrrzyLpmRwmHwvfhtiMdVM2hZBP5ZK5oCNutSBddX"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0x9d9bda1dafd40523762bf3ff7ba5953de390c5020246c0f10fc61cdc40d1088d",
+      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ba499208ecb443aa3ea61eda0a82526140f57afcac51d07c4363dd8346017249",
-        "dweb:/ipfs/QmVtoyU297x8ESqYurxL1oCa7yXGapex472NRSdchJwacs"
+        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
+        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0xd9d2e9782c7e9b3fcd9f9c66c507ee97dda705ba665a90f0335096f156683b99",
+      "keccak256": "0xea5ec4896cbad3a5258ce236fa34bd4820e3970dc20da9214176f717a2e75106",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://cb8fcea66d442577c176b1f6221515d415485ec8a1bb2387d142a6a8e3a4dd60",
-        "dweb:/ipfs/QmeLbTyNuYo3zDZrehSgx6Ay8SxNjfBpf412RNTV1pvfUt"
+        "bzz-raw://dc6300b00dfa697246ec4d29f4b118b755bcdab6685c72778b6a12674175af1d",
+        "dweb:/ipfs/QmThdTNj53QgzaMEa7kCPKdd6Rztqw8oEWuMwcS5oVCzDe"
       ]
     },
     "contracts/src/spacesv2/libraries/DataTypes.sol": {
