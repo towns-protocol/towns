@@ -7,4 +7,5 @@ export const PATHS = {
     GETTING_STARTED: 'getting-started',
     THREADS: 'threads',
     SETTINGS: 'settings',
+    LOGIN: 'login',
 }

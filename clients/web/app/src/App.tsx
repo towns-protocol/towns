@@ -1,5 +1,5 @@
 import React from 'react'
-import { Outlet, Route, Routes } from 'react-router'
+import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
@@ -16,7 +16,8 @@ import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { TransactionEvents } from 'TransactionEvents'
 import { LoadingScreen } from 'routes/LoadingScreen'
 
-const SpaceRoutes = React.lazy(() => import('routes/SpaceRoutes'))
+const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
+const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
 const Playground = React.lazy(() => import('@components/Playground'))
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -63,12 +64,23 @@ const AllRoutes = () => {
         <Routes>
             <Route element={<AppLayout />}>
                 <Route element={<Outlet />}>
-                    <Route path="*" element={<Welcome />} />
+                    {!isAuthenticatedAndConnected && (
+                        <>
+                            <Route path={PATHS.REGISTER} element={<Welcome />} />
+                            <Route path={PATHS.LOGIN} element={<Welcome />} />
+                            <Route
+                                path={`${PATHS.SPACES}/:spaceSlug`}
+                                element={<InviteLinkLanding />}
+                            />
+                            <Route path="*" element={<RedirectToLoginWithSavedLocation />} />
+                        </>
+                    )}
+
                     {isAuthenticatedAndConnected && (
                         <>
                             <Route path={`/${PATHS.PREFERENCES}`} element={<Register isEdit />} />
                             <Route path="*" element={<AppPanelLayout />}>
-                                <Route path="*" element={<SpaceRoutes />} />
+                                <Route path="*" element={<AuthenticatedRoutes />} />
                             </Route>
                         </>
                     )}
@@ -79,6 +91,10 @@ const AllRoutes = () => {
         </Routes>
     )
 }
+
+const RedirectToLoginWithSavedLocation = () => (
+    <Navigate replace to={PATHS.LOGIN} state={{ redirectTo: window.location.pathname }} />
+)
 
 const AppLayout = () => {
     return (
