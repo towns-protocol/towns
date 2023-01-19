@@ -1,6 +1,11 @@
 import React from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { SpaceSettings } from '@components/SpaceSettings/SpaceSettings'
 import { PATHS } from 'routes'
+import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSettings'
+import { RoleSettingsPermissions } from '@components/SpaceSettings/RoleSettings/RoleSettingsPermissions'
+import { RoleSettingsMembers } from '@components/SpaceSettings/RoleSettings/RoleSettingsMembers'
+import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
@@ -12,7 +17,7 @@ import { SpacesChannel, SpacesChannelRoute } from './SpacesChannel'
 import { SpacesChannelReplies } from './SpacesChannelReplies'
 import { SpacesInvite } from './SpacesInvite'
 import { SpacesNew } from './SpacesNew'
-import { SpacesSettings } from './SpacesSettings'
+import { SpacesSettingsOld } from './SpaceSettingsOld'
 import { SpaceThreads } from './SpaceThreads'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
@@ -35,7 +40,15 @@ export const AuthenticatedRoutes = () => (
             <Route path="threads" element={<SpaceThreads />} />
             <Route path="mentions" element={<SpaceMentions />} />
             <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
-            <Route path="settings" element={<SpacesSettings />} />
+            <Route path="settings-legacy" element={<SpacesSettingsOld />} />
+            <Route path="settings" element={<SpaceSettings />}>
+                <Route path="roles/:role" element={<RoleSettings />}>
+                    <Route index path="permissions" element={<RoleSettingsPermissions />} />
+                    <Route path="members" element={<RoleSettingsMembers />} />
+                    <Route path="display" element={<RoleSettingsDisplay />} />
+                </Route>
+            </Route>
+
             <Route path="invite" element={<SpacesInvite />} />
             <Route path="channels/:channelSlug" element={<SpacesChannel />}>
                 <Route
