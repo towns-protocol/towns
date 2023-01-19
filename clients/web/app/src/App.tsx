@@ -23,8 +23,8 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 FontLoader.init()
 
 const CASABLANCA_SERVER_URL = env.VITE_CASABLANCA_SERVER_URL ?? ''
-const ZION_SPACE_ID = '!IX8l0ziEc4khEQch:node1.zion.xyz'
-const ZION_SPACE_NAME = 'zion preview 2' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
+const ZION_SPACE_ID = '!fvzsFgAvzQ5Z2RJ9:node1.zion.xyz'
+const ZION_SPACE_NAME = 'zion preview 3' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 
 export const App = () => {

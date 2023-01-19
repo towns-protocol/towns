@@ -1,5 +1,8 @@
 /* eslint-disable no-restricted-imports */
 
+import GoerliIEntitlementModuleAbi from '@harmony/contracts/goerli/abis/IEntitlementModule.abi.json'
+import GoerliSpaceAbi from '@harmony/contracts/goerli/abis/Space.abi.json'
+import GoerliTokenEntitlementAbi from '@harmony/contracts/goerli/abis/TokenEntitlement.abi.json'
 import { IEntitlementModuleShim } from './IEntitlementModuleShim'
 import LocalhostIEntitlementModuleAbi from '@harmony/contracts/localhost/abis/IEntitlementModule.abi.json'
 import LocalhostSpaceAbi from '@harmony/contracts/localhost/abis/Space.abi.json'
@@ -17,6 +20,8 @@ export class ShimFactory {
         switch (chainId) {
             case 31337:
                 return LocalhostSpaceAbi
+            case 5:
+                return GoerliSpaceAbi
             default:
                 throw new Error(`Space abi for chain id ${chainId} is not supported.`)
         }
@@ -39,6 +44,14 @@ export class ShimFactory {
                     provider,
                     signer,
                 )
+            case 5:
+                return new IEntitlementModuleShim(
+                    address,
+                    GoerliIEntitlementModuleAbi,
+                    chainId,
+                    provider,
+                    signer,
+                )
             default:
                 throw new Error(`Entitlement module for chain id ${chainId} is not supported.`)
         }
@@ -57,6 +70,14 @@ export class ShimFactory {
                 return new TokenEntitlementShim(
                     address,
                     LocalhostTokenEntitlementAbi,
+                    chainId,
+                    provider,
+                    signer,
+                )
+            case 5:
+                return new TokenEntitlementShim(
+                    address,
+                    GoerliTokenEntitlementAbi,
                     chainId,
                     provider,
                     signer,
