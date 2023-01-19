@@ -23,7 +23,6 @@ export interface ZionOpts {
     onboardingOpts?: ZionOnboardingOpts
     web3Provider?: ethers.providers.Provider
     web3Signer?: ethers.Signer
-    contractVersion?: ContractVersion // todo: remove this when contract migration is complete
 }
 
 export interface ZionAuth {

@@ -3,7 +3,6 @@ import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 
 import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
 import {
     ChannelTransactionContext,
-    ContractVersion,
     IZionServerVersions,
     SpaceProtocol,
     TransactionContext,
@@ -42,7 +41,6 @@ import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier } from '../types/web3-types'
 import { RoomIdentifier } from '../types/room-identifier'
-import { SpaceDappV1 } from './web3/SpaceDappV1'
 import { SpaceDappV2 } from './web3/SpaceDappV2'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
@@ -53,6 +51,7 @@ import { createMatrixChannel } from './matrix/CreateChannel'
 import { createMatrixSpace } from './matrix/CreateSpace'
 import { editZionMessage } from './matrix/EditMessage'
 import { enrichPowerLevels } from './matrix/PowerLevels'
+import { getContractsInfo } from './web3/IStaticContractsInfo'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
@@ -62,7 +61,6 @@ import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { getContractsInfo } from './web3/IStaticContractsInfo'
 
 /***
  * Zion Client
@@ -81,44 +79,25 @@ export class ZionClient {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
-    public councilNFT?: CouncilNFTShim
+    public councilNFT: CouncilNFTShim
     public matrixClient?: MatrixClient
     public casablancaClient?: CasablancaClient
     private _chainId: number
     private _auth?: ZionAuth
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
-        // todo: remove when v2 is default
-        //opts.contractVersion = ContractVersion.V2
         this.opts = opts
         this.name = name || ''
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.matrixClient = ZionClient.createMatrixClient(opts.matrixServerUrl, this._auth)
-
-        if (this.opts.contractVersion === ContractVersion.V2) {
-            this.spaceDapp = new SpaceDappV2(
-                this._chainId,
-                this.opts.web3Provider,
-                this.opts.web3Signer,
-            )
-        } else {
-            this.spaceDapp = new SpaceDappV1(
-                this._chainId,
-                this.opts.web3Provider,
-                this.opts.web3Signer,
-            )
-        }
-        if (this.opts.web3Provider && this.opts.web3Signer) {
-            const contractsInfo = getContractsInfo(this._chainId)
-            this.councilNFT = new CouncilNFTShim(
-                contractsInfo.council.address.councilnft,
-                contractsInfo.council.abi,
-                this._chainId,
-                this.opts.web3Provider,
-                this.opts.web3Signer,
-            )
-        }
+        const { spaceDapp, councilNFT } = this.createShims(
+            this._chainId,
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+        )
+        this.spaceDapp = spaceDapp
+        this.councilNFT = councilNFT
     }
 
     public get auth(): ZionAuth | undefined {
@@ -298,7 +277,13 @@ export class ZionClient {
         this._auth = auth
         this._chainId = chainId
         // new contracts
-        this.initializeContractShims(this._chainId, this.opts.web3Provider, this.opts.web3Signer)
+        const { spaceDapp, councilNFT } = this.createShims(
+            this._chainId,
+            this.opts.web3Provider,
+            this.opts.web3Signer,
+        )
+        this.spaceDapp = spaceDapp
+        this.councilNFT = councilNFT
         // new matrixClient
         this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
         // start it up, this begins a sync command
@@ -1210,24 +1195,24 @@ export class ZionClient {
         console.log(message, ...optionalParams)
     }
 
-    private initializeContractShims(
+    private createShims(
         chainId: number,
-        provider: ethers.providers.Provider,
-        signer: ethers.Signer,
-    ): void {
-        if (this.opts.contractVersion === ContractVersion.V2) {
-            this.spaceDapp = new SpaceDappV2(chainId, provider, signer)
-        } else {
-            this.spaceDapp = new SpaceDappV1(chainId, provider, signer)
-        }
+        provider: ethers.providers.Provider | undefined,
+        signer: ethers.Signer | undefined,
+    ): { spaceDapp: ISpaceDapp; councilNFT: CouncilNFTShim } {
+        const spaceDapp = new SpaceDappV2(chainId, provider, signer)
         const contractsInfo = getContractsInfo(chainId)
-        this.councilNFT = new CouncilNFTShim(
+        const councilNFT = new CouncilNFTShim(
             contractsInfo.council.address.councilnft,
             contractsInfo.council.abi,
             chainId,
             provider,
             signer,
         )
+        return {
+            spaceDapp,
+            councilNFT,
+        }
     }
 
     /************************************************
@@ -1317,8 +1302,11 @@ export class ZionClient {
             return this.spaceDapp.parseSpaceFactoryError(error)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
+            if (e instanceof Error) {
+                return e
+            }
             // Cannot decode error
-            console.error('[getDecodedErrorForSpaceFactory]', e)
+            console.error('[getDecodedErrorForSpaceFactory]', 'cannot decode error', e)
             return {
                 name: 'unknown',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
@@ -1333,8 +1321,11 @@ export class ZionClient {
             return await this.spaceDapp.parseSpaceError(spaceId, error)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
+            if (e instanceof Error) {
+                return e
+            }
             // Cannot decode error
-            console.error('[getDecodedErrorForSpace]', e)
+            console.error('[getDecodedErrorForSpace]', 'cannot decode error', e)
             return {
                 name: 'unknown',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
