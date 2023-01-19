@@ -48,6 +48,9 @@ export const useZionClientListener = (
             console.error('startClient: chainId is undefined')
             return
         }
+        // in the standard flow we should already be logged in, but if we're loading
+        // credentials from local host, this aligns the login status with the credentials
+        setLoginStatus(LoginStatus.LoggedIn)
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const client = clientSingleton.current!
         // make sure we're not re-starting the client

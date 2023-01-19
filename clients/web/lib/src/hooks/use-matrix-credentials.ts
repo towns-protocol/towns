@@ -1,8 +1,6 @@
-import { useEffect } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
-import { LoginStatus } from './login'
 
 /// combines the matrix credentials and login status into a single hook
 /// credentials are stored in local storage
@@ -12,15 +10,8 @@ export function useMatrixCredentials() {
     const credentials = useCredentialStore(
         (state) => state.matrixCredentialsMap[homeServerUrl] ?? undefined,
     )
-    const { loginStatus, loginError, setLoginStatus } = useMatrixStore()
-
+    const { loginStatus, loginError } = useMatrixStore()
     const isAuthenticated = credentials?.accessToken !== undefined
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            setLoginStatus(LoginStatus.LoggedIn)
-        }
-    }, [isAuthenticated, setLoginStatus])
 
     return {
         accessToken: credentials?.accessToken,
