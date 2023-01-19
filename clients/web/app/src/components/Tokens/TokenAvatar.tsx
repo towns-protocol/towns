@@ -14,7 +14,8 @@ export const TokenAvatar = (props: Partial<TokenProps>) => {
                             top: '-10%',
                             right: '-10%',
                         }}
-                        insetTop="xxs"
+                        top="none"
+                        right="none"
                         rounded="full"
                         translate="yes"
                         size="square_xxs"

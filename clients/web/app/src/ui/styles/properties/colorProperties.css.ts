@@ -76,6 +76,7 @@ export const colorProperties = defineProperties({
          * root element from within App.tsx */
         darkMode: { selector: `${darkTheme} &` },
         hover: { selector: `&:hover` },
+        active: { selector: `&:active` },
         default: { selector: `&` },
     },
     defaultCondition: 'lightMode',

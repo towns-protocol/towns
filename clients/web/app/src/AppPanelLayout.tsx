@@ -1,24 +1,26 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
-import { SpaceContextProvider, useSpaceData, useZionContext } from 'use-zion-client'
 import useEvent from 'react-use-event-hook'
+import { SpaceContextProvider, useSpaceData, useZionContext } from 'use-zion-client'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
-import { atoms } from 'ui/styles/atoms.css'
 import { Register } from 'routes/Register'
+import { atoms } from 'ui/styles/atoms.css'
 
 export const AppPanelLayout = () => {
     const spaceRoute = useMatch({ path: '/spaces/:spaceSlug', end: false })
     const needsOnboarding = useNeedsOnboarding()
+    const spaceId = spaceRoute?.params.spaceSlug ?? ''
+
     return (
         <>
             {needsOnboarding ? (
                 <Register />
             ) : (
-                <SpaceContextProvider spaceId={spaceRoute?.params.spaceSlug}>
+                <SpaceContextProvider spaceId={spaceId}>
                     <AppPanelLayoutContent />
                 </SpaceContextProvider>
             )}
@@ -31,6 +33,7 @@ export const AppPanelLayoutContent = () => {
     const messageRoute = useMatch({ path: '/messages', end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
     const spacesNewRoute = useMatch({ path: '/spaces/new', end: true })
+    const spacesSettingsRoute = useMatch({ path: '/spaces/:space/settings', end: false })
 
     const space = useSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
@@ -54,7 +57,7 @@ export const AppPanelLayoutContent = () => {
         }, 0)
     })
 
-    const displaySpacePanel = !spacesNewRoute && !!space && !homeRoute
+    const displaySpacePanel = !spacesSettingsRoute && !spacesNewRoute && !!space && !homeRoute
 
     return (
         <Stack horizontal grow position="relative">
@@ -77,7 +80,7 @@ export const AppPanelLayoutContent = () => {
                         preferredSize={sizes[1] || 320}
                         visible={displaySpacePanel}
                     >
-                        {space && !homeRoute ? <SpaceSideBar space={space} /> : <></>}
+                        {space ? <SpaceSideBar space={space} /> : <></>}
                     </Allotment.Pane>
 
                     {/* secondary side bar */}

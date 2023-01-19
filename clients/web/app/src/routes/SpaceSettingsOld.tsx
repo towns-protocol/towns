@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { PowerLevel, usePowerLevels, useSpaceId, useZionClient } from 'use-zion-client'
 import { Box, Button, Heading, Stack, TextField } from '@ui'
 
-export const SpacesSettings = () => {
+export const SpacesSettingsOld = () => {
     const { resetFullyReadMarkers, setPowerLevel } = useZionClient()
     const spaceId = useSpaceId()
     const powerLevels = usePowerLevels(spaceId)

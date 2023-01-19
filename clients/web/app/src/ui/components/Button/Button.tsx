@@ -20,9 +20,11 @@ type Props = {
     ButtonHTMLAttributes<HTMLButtonElement>,
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
 > &
-    StyleProps
+    StyleProps &
+    Pick<BoxProps, 'aspectRatio'>
 
 export const Button = ({
+    aspectRatio,
     animate = true,
     size = 'button_md',
     rounded,
@@ -36,6 +38,7 @@ export const Button = ({
     <MotionStack
         horizontal
         layout={animate}
+        aspectRatio={aspectRatio}
         as="button"
         cursor={disabled ? 'default' : 'pointer'}
         className={buttonStyle({ size, rounded })}

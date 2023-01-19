@@ -131,6 +131,8 @@ const root = createGlobalTheme(':root', {
             input_md: `${baseline * 5}px`,
             // chat input
             input_lg: `${baseline * 6}px`,
+            // chat input
+            input_xl: `${baseline * 8}px`,
         },
         button: {
             button_xs: `${baseline * 3}px`,

@@ -7,6 +7,33 @@ import { IconAtoms, iconAtoms, iconBaseStyle } from './Icon.css'
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>
 
+export const AllIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <g fill="currentColor">
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M7 9C8.10457 9 9 8.10457 9 7C9 5.89543 8.10457 5 7 5C5.89543 5 5 5.89543 5 7C5 8.10457 5.89543 9 7 9ZM7 11C9.20914 11 11 9.20914 11 7C11 4.79086 9.20914 3 7 3C4.79086 3 3 4.79086 3 7C3 9.20914 4.79086 11 7 11Z"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M7 19C8.10457 19 9 18.1046 9 17C9 15.8954 8.10457 15 7 15C5.89543 15 5 15.8954 5 17C5 18.1046 5.89543 19 7 19ZM7 21C9.20914 21 11 19.2091 11 17C11 14.7909 9.20914 13 7 13C4.79086 13 3 14.7909 3 17C3 19.2091 4.79086 21 7 21Z"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M17 9C18.1046 9 19 8.10457 19 7C19 5.89543 18.1046 5 17 5C15.8954 5 15 5.89543 15 7C15 8.10457 15.8954 9 17 9ZM17 11C19.2091 11 21 9.20914 21 7C21 4.79086 19.2091 3 17 3C14.7909 3 13 4.79086 13 7C13 9.20914 14.7909 11 17 11Z"
+            />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M17 19C18.1046 19 19 18.1046 19 17C19 15.8954 18.1046 15 17 15C15.8954 15 15 15.8954 15 17C15 18.1046 15.8954 19 17 19ZM17 21C19.2091 21 21 19.2091 21 17C21 14.7909 19.2091 13 17 13C14.7909 13 13 14.7909 13 17C13 19.2091 14.7909 21 17 21Z"
+            />
+        </g>
+    </svg>
+)
+
 export const AtIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -72,7 +99,7 @@ export const CheckIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =>
 ))
 
 export const CloseIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
             fillRule="evenodd"
             clipRule="evenodd"
@@ -93,9 +120,19 @@ export const CoinbaseWalletIcon = forwardRef<SVGSVGElement, SVGIconProps>((props
         />
     </svg>
 ))
+export const DeleteIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M9.29289 4.29289C9.48043 4.10536 9.73478 4 10 4H14C14.2652 4 14.5196 4.10536 14.7071 4.29289C14.8946 4.48043 15 4.73478 15 5V6H9V5C9 4.73478 9.10536 4.48043 9.29289 4.29289ZM7 6V5C7 4.20435 7.31607 3.44129 7.87868 2.87868C8.44129 2.31607 9.20435 2 10 2H14C14.7956 2 15.5587 2.31607 16.1213 2.87868C16.6839 3.44129 17 4.20435 17 5V6H19H21C21.5523 6 22 6.44772 22 7C22 7.55228 21.5523 8 21 8H20V19C20 19.7957 19.6839 20.5587 19.1213 21.1213C18.5587 21.6839 17.7957 22 17 22H7C6.20435 22 5.44129 21.6839 4.87868 21.1213C4.31607 20.5587 4 19.7957 4 19V8H3C2.44772 8 2 7.55228 2 7C2 6.44772 2.44772 6 3 6H5H7ZM6 8V19C6 19.2652 6.10536 19.5196 6.29289 19.7071C6.48043 19.8946 6.73478 20 7 20H17C17.2652 20 17.5196 19.8946 17.7071 19.7071C17.8946 19.5196 18 19.2652 18 19V8H6Z"
+            fill="currentColor"
+        />
+    </svg>
+))
 
 export const DownIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
             fillRule="evenodd"
             clipRule="evenodd"
@@ -708,6 +745,7 @@ const PersonAdd = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
 ))
 
 const iconMap = {
+    all: AllIcon,
     at: AtIcon,
     back: BackIcon,
     bell: BellIcon,
@@ -717,6 +755,7 @@ const iconMap = {
     check: CheckIcon,
     close: CloseIcon,
     coinbaseWallet: CoinbaseWalletIcon,
+    delete: DeleteIcon,
     down: DownIcon,
     edit: EditIcon,
     emoji: EmojiIcon,
@@ -753,7 +792,9 @@ const iconMap = {
     wand: Wand,
 } as const
 
+// this export breaks fast-refresh
 export const iconTypes = Object.keys(iconMap) as IconName[]
+
 export type IconName = keyof typeof iconMap
 
 export type IconProps = {

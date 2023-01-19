@@ -17,7 +17,7 @@ export const hiddenCheckbox = style({
     height: vars.dims.square.square_sm,
     borderRadius: vars.borderRadius.xs,
     selectors: {
-        '&:focus': {
+        '&:focus-visible': {
             outline: `2px solid ${vars.color.foreground.etherum}`,
         },
     },

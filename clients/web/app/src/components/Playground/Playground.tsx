@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios'
 import React, { useEffect, useState } from 'react'
 import { AddressPill } from '@components/AddressPill'
 import { richText } from '@components/RichText/RichTextEditor.css'
+import { SpaceTokenExample } from '@components/SpaceToken/example/SpaceTokenExample'
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
 import { UploadSpaceIcon } from '@components/Web3/CreateSpaceForm/steps/UploadSpaceIcon'
 import {
@@ -17,6 +18,7 @@ import {
     Grid,
     Heading,
     Icon,
+    IconLabelButton,
     IconName,
     Paragraph,
     Pill,
@@ -33,7 +35,6 @@ import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils'
-import { SpaceTokenExample } from '@components/SpaceToken/example/SpaceTokenExample'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -198,6 +199,10 @@ export const Playground = () => {
                     <Button tone="cta1" size="button_sm" icon="check">
                         Action
                     </Button>
+                </Box>
+                <Divider label="icon label button" />
+                <Box gap alignSelf="start" minWidth="250" alignItems="start">
+                    <IconLabelButton label="Label" icon="plus" />
                 </Box>
             </Container>
 
