@@ -9,10 +9,10 @@ import {
     IEntitlementModuleInterface as LocalhostInterface,
 } from '@harmony/contracts/localhost/typings/IEntitlementModule'
 
-import { BaseContractShimV2 } from './BaseContractShimV2'
+import { BaseContractShim } from './BaseContractShim'
 
 // todo: set GoerliSpace type when deployed to Goerli
-export class IEntitlementModuleShim extends BaseContractShimV2<
+export class IEntitlementModuleShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,

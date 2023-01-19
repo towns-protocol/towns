@@ -4,12 +4,6 @@ import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethe
 
 import { RoomIdentifier } from '../types/room-identifier'
 
-// todo: remove this when contract migration is complete
-export enum ContractVersion {
-    V1 = 'v1',
-    V2 = 'v2',
-}
-
 export enum SpaceProtocol {
     Matrix = 'matrix',
     Casablanca = 'casablanca',

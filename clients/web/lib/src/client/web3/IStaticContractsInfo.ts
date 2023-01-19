@@ -5,17 +5,12 @@ import GoerliCouncilAddress from '@harmony/contracts/goerli/addresses/council.js
 import GoerliCouncilNFTAbi from '@harmony/contracts/goerli/abis/CouncilNFT.abi.json'
 import GoerliSpaceFactoryAbi from '@harmony/contracts/goerli/abis/SpaceFactory.abi.json'
 import GoerliSpaceFactoryAddress from '@harmony/contracts/goerli/addresses/space-factory.json'
-import GoerliSpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import LocalhostCouncilAddress from '@harmony/contracts/localhost/addresses/council.json'
 import LocalhostCouncilNFTAbi from '@harmony/contracts/localhost/abis/CouncilNFT.abi.json'
 import LocalhostSpaceFactoryAbi from '@harmony/contracts/localhost/abis/SpaceFactory.abi.json'
 import LocalhostSpaceFactoryAddress from '@harmony/contracts/localhost/addresses/space-factory.json'
-import LocalhostSpaceManagerAddresses from '@harmony/contracts/localhost/addresses/space-manager.json'
 
 const goerliContractsInfo: IStaticContractsInfo = {
-    spaceManager: {
-        addresses: GoerliSpaceManagerAddresses,
-    },
     council: {
         abi: GoerliCouncilNFTAbi,
         address: GoerliCouncilAddress,
@@ -27,9 +22,6 @@ const goerliContractsInfo: IStaticContractsInfo = {
 }
 
 const localhostContractsInfo: IStaticContractsInfo = {
-    spaceManager: {
-        addresses: LocalhostSpaceManagerAddresses,
-    },
     council: {
         abi: LocalhostCouncilNFTAbi,
         address: LocalhostCouncilAddress,
@@ -41,9 +33,6 @@ const localhostContractsInfo: IStaticContractsInfo = {
 }
 
 export interface IStaticContractsInfo {
-    spaceManager: {
-        addresses: typeof LocalhostSpaceManagerAddresses | typeof GoerliSpaceManagerAddresses
-    }
     council: {
         abi: typeof LocalhostCouncilNFTAbi | typeof GoerliCouncilNFTAbi
         address: typeof LocalhostCouncilAddress | typeof GoerliCouncilAddress

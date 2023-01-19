@@ -10,13 +10,13 @@ import {
     SpaceInterface as LocalhostInterface,
 } from '@harmony/contracts/localhost/typings/Space'
 
-import { BaseContractShimV2 } from './BaseContractShimV2'
+import { BaseContractShim } from './BaseContractShim'
 
 export type { LocalhostDataTypes as SpaceDataTypes }
 export type { LocalhostInterface as SpaceInterface }
 
 // todo: set GoerliSpace type when deployed to Goerli
-export class SpaceShim extends BaseContractShimV2<
+export class SpaceShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,

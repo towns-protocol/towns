@@ -41,7 +41,7 @@ import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier } from '../types/web3-types'
 import { RoomIdentifier } from '../types/room-identifier'
-import { SpaceDappV2 } from './web3/SpaceDappV2'
+import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
@@ -1200,7 +1200,7 @@ export class ZionClient {
         provider: ethers.providers.Provider | undefined,
         signer: ethers.Signer | undefined,
     ): { spaceDapp: ISpaceDapp; councilNFT: CouncilNFTShim } {
-        const spaceDapp = new SpaceDappV2(chainId, provider, signer)
+        const spaceDapp = new SpaceDapp(chainId, provider, signer)
         const contractsInfo = getContractsInfo(chainId)
         const councilNFT = new CouncilNFTShim(
             contractsInfo.council.address.councilnft,

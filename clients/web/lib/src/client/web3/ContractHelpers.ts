@@ -1,5 +1,3 @@
-import { DataTypes } from './shims/ZionSpaceManagerShim'
-import { Permission } from './ContractTypes'
 import { SpaceDataTypes } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { ZionClient } from '../ZionClient'
@@ -21,33 +19,6 @@ export interface CreateTokenEntitlementDataInfo {
     tokenId?: number
 }
 
-// todo: v1 - remove
-function createTokenEntitlementData(
-    arg: CreateTokenEntitlementDataInfo,
-): DataTypes.ExternalTokenEntitlementStruct {
-    const externalToken: DataTypes.ExternalTokenStruct = {
-        contractAddress: arg.contractAddress,
-        quantity: arg.quantity ?? 1,
-        isSingleToken: arg.isSingleToken ?? false,
-        tokenId: arg.tokenId ?? 0,
-    }
-    const externalTokenEntitlement: DataTypes.ExternalTokenEntitlementStruct = {
-        tokens: [externalToken],
-    }
-
-    return externalTokenEntitlement
-}
-
-// todo: v1 - remove
-export function createExternalTokenEntitlements(
-    tokenAddresses: string[],
-): DataTypes.ExternalTokenEntitlementStruct[] {
-    const externalTokens: CreateTokenEntitlementDataInfo[] = tokenAddresses.map((address) => ({
-        contractAddress: address,
-    }))
-    return externalTokens.map((t) => createTokenEntitlementData(t))
-}
-
 export function createExternalTokenStruct(
     tokenAddresses: string[],
 ): SpaceFactoryDataTypes.ExternalTokenStruct[] {
@@ -60,17 +31,6 @@ export function createExternalTokenStruct(
         }),
     )
     return tokenStruct
-}
-
-// todo: v1 - remove
-export function createPermissions(
-    permissions: Permission[] | string[],
-): DataTypes.PermissionStruct[] {
-    const dataStruct: DataTypes.PermissionStruct[] = []
-    for (const p of permissions) {
-        dataStruct.push({ name: p })
-    }
-    return dataStruct
 }
 
 export async function getFilteredRolesFromSpace(

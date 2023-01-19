@@ -16,7 +16,7 @@ interface Spaces {
     [spaceId: string]: SpaceShim
 }
 
-export class SpaceDappV2 implements ISpaceDapp {
+export class SpaceDapp implements ISpaceDapp {
     private readonly chainId: number
     private readonly spaceFactory: SpaceFactoryShim
     private readonly spaces: Spaces = {}

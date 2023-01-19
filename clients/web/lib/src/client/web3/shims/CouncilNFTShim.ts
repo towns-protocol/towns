@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 
-import { BaseContractShimV2 } from './BaseContractShimV2'
+import { BaseContractShim } from './BaseContractShim'
 import {
     CouncilNFT as GoerliContract,
     CouncilNFTInterface as GoerliInterface,
@@ -10,7 +10,7 @@ import {
     CouncilNFTInterface as LocalhostInterface,
 } from '@harmony/contracts/localhost/typings/CouncilNFT'
 
-export class CouncilNFTShim extends BaseContractShimV2<
+export class CouncilNFTShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,
