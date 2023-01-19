@@ -13,8 +13,8 @@ export type PromiseOrValue<T> = T | Promise<T>
 export class BaseContractShimV2<
     T_LOCALHOST_CONTRACT extends ethers.Contract,
     T_LOCALHOST_INTERFACE extends ethers.utils.Interface,
-    T_GOERLI_CONTRACT extends ethers.Contract | undefined,
-    T_GOERLI_INTERFACE extends ethers.utils.Interface | undefined,
+    T_GOERLI_CONTRACT extends ethers.Contract,
+    T_GOERLI_INTERFACE extends ethers.utils.Interface,
 > {
     public readonly address: string
     public readonly chainId: number
@@ -111,22 +111,30 @@ export class BaseContractShimV2<
     public parseError(error: unknown): Error {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         const anyError = error as any
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const errData: BytesLike = anyError.error?.error?.error?.data
-        if (!errData) {
+        const { errorData, errorMessage } = this.getErrorData(anyError)
+        /**
+         * Return early if we have trouble extracting the error data.
+         * Don't know how to decode it.
+         */
+        if (!errorData) {
+            console.log("don't know how to extract error data")
             return {
                 name: 'unknown',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: anyError?.message,
+                message: anyError?.reason,
             }
         }
+        /**
+         * Try to decode the error data. If it fails, return the original error message.
+         */
         try {
-            const errDescription = this.write?.interface.parseError(errData)
+            const errDescription = this.interface.parseError(errorData)
             const decodedError = {
                 name: errDescription?.errorFragment.name ?? 'unknown',
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: anyError.error?.error?.error?.message,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                message: errorMessage,
             }
+            console.log('decodedError', decodedError)
             return decodedError
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
@@ -137,6 +145,37 @@ export class BaseContractShimV2<
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 message: e.message,
             }
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getErrorData(anyError: any): { errorData: BytesLike; errorMessage: string } {
+        /**
+         * Error data is nested in different places depending on whether the app is
+         * running in jest/node, or which blockchain (goerli, or anvil).
+         */
+        // Case 1: jest/node error
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        let errorData: BytesLike = anyError.error?.error?.error?.data
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        let errorMessage: string = anyError.error?.error?.error?.message
+        if (!errorData) {
+            // Case 2: Browser (goerli)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorData = anyError.error?.data?.originalError?.data
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorMessage = anyError.error?.data?.originalError?.message
+        }
+        if (!errorData) {
+            // Case 3: Browser (anvil)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorData = anyError.error?.data?.data
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorMessage = anyError.error?.data?.message
+        }
+        return {
+            errorData,
+            errorMessage,
         }
     }
 

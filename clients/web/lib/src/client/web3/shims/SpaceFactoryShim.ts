@@ -1,19 +1,22 @@
 /* eslint-disable no-restricted-imports */
 
-import { BaseContractShimV2 } from './BaseContractShimV2'
-// V2 smart contracts are not deployed to Goerli yet
-//import { SpaceFactory as GoerliContract } from '@harmony/contracts/goerli/typings/SpaceFactory'
 import {
-    DataTypes as LocalhostDataTypes,
+    SpaceFactory as GoerliContract,
+    SpaceFactoryInterface as GoerliInterface,
+} from '@harmony/contracts/goerli/typings/SpaceFactory'
+import {
     SpaceFactory as LocalhostContract,
+    DataTypes as LocalhostDataTypes,
     SpaceFactoryInterface as LocalhostInterface,
 } from '@harmony/contracts/localhost/typings/SpaceFactory'
+
+import { BaseContractShimV2 } from './BaseContractShimV2'
 
 export type { LocalhostDataTypes as SpaceFactoryDataTypes }
 
 export class SpaceFactoryShim extends BaseContractShimV2<
     LocalhostContract,
     LocalhostInterface,
-    undefined,
-    undefined
+    GoerliContract,
+    GoerliInterface
 > {}

@@ -3,10 +3,8 @@
 
 import GoerliCouncilAddress from '@harmony/contracts/goerli/addresses/council.json'
 import GoerliCouncilNFTAbi from '@harmony/contracts/goerli/abis/CouncilNFT.abi.json'
-// todo: goerli SpaceFactory is not deployed yet. Fake it for now.
-import GoerliSpaceFactoryAbi from '@harmony/contracts/localhost/abis/SpaceFactory.abi.json'
-// todo: goerli SpaceFactory is not deployed yet. Fake it for now.
-import GoerliSpaceFactoryAddress from '@harmony/contracts/localhost/addresses/space-factory.json'
+import GoerliSpaceFactoryAbi from '@harmony/contracts/goerli/abis/SpaceFactory.abi.json'
+import GoerliSpaceFactoryAddress from '@harmony/contracts/goerli/addresses/space-factory.json'
 import GoerliSpaceManagerAddresses from '@harmony/contracts/goerli/addresses/space-manager.json'
 import LocalhostCouncilAddress from '@harmony/contracts/localhost/addresses/council.json'
 import LocalhostCouncilNFTAbi from '@harmony/contracts/localhost/abis/CouncilNFT.abi.json'
