@@ -12,17 +12,17 @@
         "label": "~Start Local Dev~",
         "dependsOn": [
           "YarnInstall",
-          "StartDendrite",
-          "StartCasablanca",
-          "StartBlockchain",
+          "Dendrite",
+          "Casablanca",
+          "Anvil",
           "DeployZionGovernance",
           "WatchSharedLib",
           "WatchCasablancaClient",
           "WatchCasablancaCore",
-          "StartApp",
-          "StartSampleApp",
-          "StartUnfurlWorker",
-          "StartTokenWorker"
+          "App",
+          "SampleApp",
+          "UnfurlWorker",
+          "TokenWorker"
         ],
         // Mark as the default build task so cmd/ctrl+shift+b will create them
         "group": {
@@ -33,7 +33,7 @@
       {
         "label": "Start Anvil, Deploy Zion Governance",
         "dependsOn": [
-          "StartBlockchain",
+          "Anvil",
           "DeployZionGovernance",
         ],
         "group": {
@@ -62,7 +62,7 @@
         },
       },
       {
-        "label": "StartDendrite",
+        "label": "Dendrite",
         "type": "shell",
         "command": "./scripts/start-local-dendrite.sh",
         "isBackground": true,
@@ -72,7 +72,7 @@
         },
       },
       {
-        "label": "StartCasablanca",
+        "label": "Casablanca",
         "type": "shell",
         "command": "sleep 3 && ./scripts/start-local-casablanca.sh",
         "isBackground": true,
@@ -82,7 +82,7 @@
         },
       },
       {
-        "label": "StartBlockchain",
+        "label": "Anvil",
         "type": "shell",
         "command": "foundryup && ./scripts/start-local-blockchain.sh",
         "isBackground": true,
@@ -142,7 +142,7 @@
         }
       },
       {
-        "label": "StartApp",
+        "label": "App",
         "type": "shell",
         "command": "cd clients/web/app && yarn dev",
         "isBackground": true,
@@ -152,7 +152,7 @@
         }
       },
       {
-        "label": "StartSampleApp",
+        "label": "SampleApp",
         "type": "shell",
         "command": "cd clients/web/sample-app && yarn dev",
         "isBackground": true,
@@ -162,43 +162,43 @@
         }
       },
       {
-        "label": "Start MITM - Casablanca",
+        "label": "MITM - Casablanca",
         "type": "shell",
         "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-servers"
+          "group": "local-mitm"
         }
       },
       {
-        "label": "Start MITM - Dendrite",
+        "label": "MITM - Dendrite",
         "type": "shell",
         "command": "mitmweb -p 8009 --mode reverse:http://localhost:8008/",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-servers"
+          "group": "local-mitm"
         }
       },
       {
-        "label": "StartUnfurlWorker",
+        "label": "UnfurlWorker",
         "type": "shell",
         "command": "cd servers/workers/unfurl-worker && yarn dev:local",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-servers"
+          "group": "local-workers"
         }
       },
       {
-        "label": "StartTokenWorker",
+        "label": "TokenWorker",
         "type": "shell",
         "command": "cd servers/workers/token-worker && yarn dev:local",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-servers"
+          "group": "local-workers"
         }
       },
       {
