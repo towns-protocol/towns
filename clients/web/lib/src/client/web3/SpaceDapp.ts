@@ -10,8 +10,6 @@ import { SpaceInfo } from './SpaceInfo'
 import { keccak256 } from 'ethers/lib/utils'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
-//import GoerliSpaceAbi from '@harmony/contracts/goerli/abis/Space.abi.json'
-
 interface Spaces {
     [spaceId: string]: SpaceShim
 }
@@ -217,6 +215,7 @@ export class SpaceDapp implements ISpaceDapp {
                 space.read.disabled(),
             ])
             return {
+                address: space.address,
                 networkId: spaceId,
                 name,
                 owner,
