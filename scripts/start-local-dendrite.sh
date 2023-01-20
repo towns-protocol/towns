@@ -3,7 +3,7 @@
 usage()
 {
 cat << EOF
-usage: $0 PARAM [-wpp|--with-postgres-persist] [-was|--with-appservice] [-naz|--no-authz] [-h|--help]
+usage: $0 PARAM [-wpp|--with-postgres-persist] [-was|--with-appservice] [-h|--help]
 
 This script does foo.
 
@@ -13,14 +13,12 @@ OPTIONS:
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
    -was|--with-appservice   Start Dendrite with appservice
    -spg|--skip-postgres   Dont start postgres at all
-   -naz|--no-authz   Disable authorization aka gating checks
 EOF
 }
 
 WITH_APPSERVICE="${1:-no}"
 WITH_POSTGRES_PERSIST="${2:-no}"
 SKIP_POSTGRES="${3:-no}"
-NO_AUTHZ="${4:-with-authz}"
 
 while [ ! $# -eq 0 ]; do
     case "$1" in
@@ -32,9 +30,6 @@ while [ ! $# -eq 0 ]; do
             ;;
         -spg | --skip-postgres)
             SKIP_POSTGRES='skip-postgres'
-            ;;
-        -naz | --no-authz)
-            NO_AUTHZ='no-authz'
             ;;
         -h | --help)
             usage
@@ -102,5 +97,5 @@ then
   ./run_single.sh 0 dendrite.with_appservice.yaml
 else
    cd ${LOCAL_TEST_DIR}
-  ./run_single.sh 0 dendrite.yaml ${NO_AUTHZ}
+  ./run_single.sh 0 dendrite.yaml
 fi

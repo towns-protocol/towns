@@ -8,18 +8,10 @@ echo "Running from ${TEST_DIR}"
 
 I=$1
 DENDRITE_YAML="${2:-dendrite.yaml}"
-ENABLE_AUTHZ="${3:-with-authz}"
 
 SCRIPT_DIR="$(dirname "$PWD")"
 
 NODE_DIR="${TEST_DIR}/node${I}"
-
-if [ ${ENABLE_AUTHZ} == "with-authz" ]
-then
-  ENABLE_AUTHZ="--enable-authz"
-else
-  ENABLE_AUTHZ=""
-fi
 
 echo "Running node ${I} from ${NODE_DIR}"
 
@@ -32,4 +24,3 @@ ${SCRIPT_DIR}/dendrite/bin/dendrite-monolith-server \
   --really-enable-open-registration \
   --http-bind-address ":$((8008 + $I))" \
   --https-bind-address ":$((8448 + $I))" \
-  ${ENABLE_AUTHZ} \
