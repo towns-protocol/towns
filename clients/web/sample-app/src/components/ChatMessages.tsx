@@ -160,7 +160,7 @@ const MissingMembershipInfo = (props: { onJoinRoom: () => void }) => (
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
         case ZTEvent.RoomMessage:
-            return `${event.content.sender.displayName}: ${event.content.body}`
+            return `${event.sender.displayName}: ${event.content.body}`
         default:
             return event.fallbackContent
     }

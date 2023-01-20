@@ -13,7 +13,7 @@ export const useScrollDownOnNewMessage = (
         for (let i = messages.length; i >= 0; i--) {
             const m = getIsRoomMessageContent(messages[i])
             if (m) {
-                return m?.sender.id === userId ? messages[i].eventId : undefined
+                return messages[i].sender.id === userId ? messages[i].eventId : undefined
             }
         }
     }, [messages, userId])

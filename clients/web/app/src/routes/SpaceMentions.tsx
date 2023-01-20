@@ -66,9 +66,9 @@ const MentionBox = (props: { mention: MentionResult }) => {
                         mention.thread ? `Thread in` : ``
                     } #${mention.channel.label.toLowerCase()}`}
                     timestamp={mention.event.originServerTs}
-                    userId={content.sender.id}
-                    avatar={content.sender.avatarUrl}
-                    name={content.sender.displayName}
+                    userId={mention.event.sender.id}
+                    avatar={mention.event.sender.avatarUrl}
+                    name={mention.event.sender.displayName}
                 >
                     <RichTextPreview
                         content={getMessageBody(mention.event.eventId, content)}

@@ -298,12 +298,17 @@ export function useMatrixTimelines(client?: MatrixClient) {
 
 export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     const { content, error } = toZionContent(event)
-    const fbc = `${event.getType()} ${getFallbackContent(event, content, error)}`
     const sender = {
         id: event.getSender(),
         displayName: event.sender?.rawDisplayName ?? event.getSender(),
-        avatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
+        avatarUrl: event.sender?.getMxcAvatarUrl() ?? undefined,
     }
+    const fbc = `${event.getType()} ${getFallbackContent(
+        event,
+        sender.displayName,
+        content,
+        error,
+    )}`
     // console.log("!!!! to event", event.getId(), fbc);
     return {
         eventId: event.getId(),
@@ -372,11 +377,6 @@ function toZionContent(event: MatrixEvent): {
             return {
                 content: {
                     kind: eventType,
-                    sender: {
-                        id: event.getSender(),
-                        displayName: event.sender?.rawDisplayName ?? event.getSender(),
-                        avatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
-                    },
                     targetEventId: targetEventId,
                     reaction: reaction,
                 },
@@ -479,7 +479,7 @@ function toZionContent(event: MatrixEvent): {
             }
         }
         case ZTEvent.RoomMessage: {
-            if (!event.getSender() || !content.msgtype) {
+            if (!content.msgtype) {
                 return {
                     error: `${describe()} has no sender, or msgtype`,
                 }
@@ -487,11 +487,6 @@ function toZionContent(event: MatrixEvent): {
             return {
                 content: {
                     kind: eventType,
-                    sender: {
-                        id: event.getSender(),
-                        displayName: event.sender?.rawDisplayName ?? event.getSender(),
-                        avatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
-                    },
                     inReplyTo: event.replyEventId,
                     body: content.body as string,
                     msgType: content.msgtype,
@@ -508,19 +503,9 @@ function toZionContent(event: MatrixEvent): {
                 },
             }
         case ZTEvent.RoomRedaction: {
-            if (!event.getSender()) {
-                return {
-                    error: `${describe()} has no sender`,
-                }
-            }
             return {
                 content: {
                     kind: eventType,
-                    sender: {
-                        id: event.getSender(),
-                        displayName: event.sender?.rawDisplayName ?? event.getSender(),
-                        avatarUrl: event.sender.getMxcAvatarUrl() ?? undefined,
-                    },
                     inReplyTo: event.replyEventId,
                     content: content,
                 },
@@ -568,6 +553,7 @@ function toZionContent(event: MatrixEvent): {
 
 function getFallbackContent(
     event: MatrixEvent,
+    senderDisplayName: string,
     content?: TimelineEvent_OneOf,
     error?: string,
 ): string {
@@ -580,7 +566,7 @@ function getFallbackContent(
     const eventType = event.getType()
     switch (content.kind) {
         case ZTEvent.Reaction:
-            return `${content.sender.displayName} reacted with ${content.reaction} to ${content.targetEventId}`
+            return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
         case ZTEvent.RoomAvatar:
             return `url: ${content.url ?? 'undefined'}`
         case ZTEvent.RoomCanonicalAlias: {
@@ -605,11 +591,11 @@ function getFallbackContent(
             return `[${content.membership}] name: ${name} avatar: ${avatar}`
         }
         case ZTEvent.RoomMessage:
-            return `${content.sender.displayName}: ${content.body}`
+            return `${senderDisplayName}: ${content.body}`
         case ZTEvent.RoomName:
             return `newValue: ${content.name}`
         case ZTEvent.RoomRedaction:
-            return `${content.sender.displayName}: ~Redacted~`
+            return `${senderDisplayName}: ~Redacted~`
         case ZTEvent.RoomPowerLevels:
             return `${eventType}`
         case ZTEvent.SpaceChild:
@@ -743,7 +729,7 @@ function addThreadStat(
     updated.isParticipating =
         updated.isParticipating ||
         updated.userIds.has(userId) ||
-        updated.parentMessageContent?.sender.id === userId ||
+        updated.parentEvent?.sender.id === userId ||
         event.isMentioned
     return updated
 }
@@ -798,7 +784,7 @@ function addReaction(event: TimelineEvent, entry?: MessageReactions): MessageRea
         return entry ?? {}
     }
     const reactionName = content.reaction
-    const senderId = content.sender.id
+    const senderId = event.sender.id
     return {
         ...entry,
         [reactionName]: {
@@ -825,7 +811,7 @@ function removeReaction(
         return reactions
     }
     const reactionName = content.reaction
-    const senderId = content.sender.id
+    const senderId = event.sender.id
     const updated = { ...reactions[roomId] }
     const entry = updated[parentId]
     if (entry) {
@@ -948,7 +934,10 @@ function getRoomMessageContent(event?: TimelineEvent): RoomMessageEvent | undefi
 }
 
 function getMessageSenderId(event: TimelineEvent): string | undefined {
-    return getRoomMessageContent(event)?.sender.id
+    if (!getRoomMessageContent(event)) {
+        return undefined
+    }
+    return event.sender.id
 }
 
 function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {

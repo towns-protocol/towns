@@ -35,13 +35,13 @@ function generateEvent(content: MessageContent) {
         isLocalPending: false,
         content: {
             kind: ZTEvent.RoomMessage,
-            sender: {
-                id: 'sender-id',
-                displayName: 'beavis',
-            },
             body: content.body,
             msgType: content.msgtype,
             content,
+        },
+        sender: {
+            id: 'sender-id',
+            displayName: 'beavis',
         },
     }
 }

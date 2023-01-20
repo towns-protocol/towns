@@ -79,7 +79,7 @@ describe('userProfileHooks', () => {
                     </div>
                     <div data-testid="messageSender">
                         {roomMessages[0]?.content?.kind === 'm.room.message'
-                            ? roomMessages[0].content.sender.displayName
+                            ? roomMessages[0].sender.displayName
                             : 'none'}
                     </div>
                     <div data-testid="allMessages">

@@ -68,7 +68,7 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
     const isUnread =
         fullyReadMarker?.isUnread === true &&
         (events.at(-1)?.originServerTs ?? 0) >= fullyReadMarker.eventOriginServerTs
-    const userIds = [...new Set<string>(events.map((e) => e.content.sender.id))]
+    const userIds = [...new Set<string>(events.map((e) => e.sender.id))]
     const message = truncate(threadStats.parentMessageContent.body, { length: 128 })
 
     return (

@@ -45,7 +45,7 @@ export function Mentions(): JSX.Element {
 function formatMention(mention: MentionResult): string {
     switch (mention.event.content?.kind) {
         case ZTEvent.RoomMessage:
-            return `${mention.event.content?.sender.displayName}: ${mention.event.content?.body}`
+            return `${mention.event.sender.displayName}: ${mention.event.content?.body}`
         default:
             return mention.event.fallbackContent
     }

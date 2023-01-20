@@ -58,11 +58,6 @@ export type TimelineEvent_OneOf =
 
 export interface ReactionEvent {
     kind: ZTEvent.Reaction
-    sender: {
-        displayName: string
-        avatarUrl?: string
-        id: string
-    }
     targetEventId: string
     reaction: string
 }
@@ -122,11 +117,6 @@ export interface RoomMemberEvent {
 
 export interface RoomMessageEvent {
     kind: ZTEvent.RoomMessage
-    sender: {
-        displayName: string
-        avatarUrl?: string
-        id: string
-    }
     inReplyTo?: string
     body: string
     msgType: string
@@ -145,11 +135,6 @@ export interface RoomPowerLevelsEvent extends PowerLevels {
 
 export interface RoomRedactionEvent {
     kind: ZTEvent.RoomRedaction
-    sender: {
-        displayName: string
-        avatarUrl?: string
-        id: string
-    }
     inReplyTo?: string
     content: IContent // room messages have lots of representations
 }

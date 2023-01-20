@@ -35,7 +35,7 @@ export const MessageThread = (props: {
             messages.reduce(
                 (users, m) => {
                     if (m.content?.kind === ZTEvent.RoomMessage) {
-                        const sender = m.content.sender
+                        const sender = m.sender
                         if (sender.id !== profile?.userId) {
                             users[sender.id] = sender.displayName
                         }

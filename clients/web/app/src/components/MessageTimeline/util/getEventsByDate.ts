@@ -212,7 +212,7 @@ export const getEventsByDate = (
                     !DEBUG_SINGLE &&
                     prevEvent &&
                     prevEvent.type === RenderEventType.UserMessages &&
-                    prevEvent.events[0].content.sender.id === event.content.sender.id &&
+                    prevEvent.events[0].sender.id === event.sender.id &&
                     (index > 1 || !isThread)
                 ) {
                     prevEvent.events.push(event)

@@ -92,7 +92,7 @@ function isMentioned(event: MatrixEvent, myUserId: string): boolean {
 function isCountedAsUnreadZTEvent(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
         case ZTEvent.RoomMessage:
-            return event.content?.sender.id !== myUserId
+            return event.sender.id !== myUserId
         default:
             return false
     }

@@ -27,7 +27,7 @@ function toDummyThreadStats(event?: TimelineEvent) {
     }
     return {
         replyCount: 0,
-        userIds: new Set<string>(content?.sender.id ? [content?.sender.id] : []),
+        userIds: new Set<string>(event.sender.id ? [event.sender.id] : []),
         latestTs: event.originServerTs,
         parentId: event.eventId,
         parentEvent: event,

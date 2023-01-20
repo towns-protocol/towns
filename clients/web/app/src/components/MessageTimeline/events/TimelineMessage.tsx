@@ -16,7 +16,7 @@ type Props = {
 
 export const TimelineMessage = React.memo((props: Props) => {
     const { event, eventContent, displayContext } = props
-    const { sender } = eventContent
+    const { sender } = event
 
     const timelineContext = useContext(MessageTimelineContext)
 
@@ -42,7 +42,7 @@ export const TimelineMessage = React.memo((props: Props) => {
     const displayName = user?.name ?? sender.displayName
     const avatarUrl = user?.avatarUrl ?? sender.avatarUrl
 
-    const isOwn = event.content?.kind == ZTEvent.RoomMessage && event.content.sender.id === userId
+    const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 
     const isEditing = event.eventId === timelineActions.editingMessageId
     const isRelativeDate = type === MessageTimelineType.Thread
