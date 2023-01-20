@@ -63,6 +63,9 @@
         ]
     },
     "syncpack": {
+        "dev": true,
+        "prod": true,
+        "peer": true,
         "indent": "    ",
         "sortFirst": [
             "name",
@@ -76,6 +79,21 @@
             "main",
             "types",
             "scripts"
+        ],
+        "versionGroups": [
+            {
+                "dependencies": [
+                    "siwe"
+                ],
+                "packages": [
+                    "siwe-worker"
+                ],
+                "dependencyTypes": [
+                    "dependencies",
+                    "devDependencies",
+                    "peerDependencies"
+                ]
+            }
         ],
         "workspace": false
     },

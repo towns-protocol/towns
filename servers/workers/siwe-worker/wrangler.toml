@@ -1,0 +1,46 @@
+main = "./src/index.ts"
+name = "siwe-worker"
+compatibility_date = "2023-01-18"
+# compatibility_date = "2022-07-26"
+node_compat=true
+account_id="9840f8a36a817b103e00e29a0e2bad6f"
+minify = true
+
+routes = [
+    "siwe-proxy.zion.xyz/authorize", "siwe-proxy.zion.xyz/"
+]
+
+[build]
+command = "yarn build"
+
+[dev]
+ip = "localhost"
+port = 8005
+local_protocol = "http"
+
+[vars]
+# VAR_NAME = "some_value"
+
+# The necessary secrets are:
+# AUTH_SECRET
+#
+# for local development, you can add these in .dev.vars
+#
+# For production, you can add these in the Cloudflare dashboard or run
+# `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# for staging, the secrets must be deployed behind the staging flag
+# `echo <VALUE> | wrangler secret put <NAME> --env staging`
+# OR
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+
+# staging routes
+# yarn publish:stage
+[env.staging]
+workers_dev = true
+# vars = { ENVIRONMENT = "staging" } # [vars] access, not secrets
+
+# production routes
+# yarn publish:prod
+[env.production]
+route = { pattern = "siwe-proxy.zion.xyz", custom_domain = true }
+# vars = { ENVIRONMENT = "production" }
