@@ -23,6 +23,7 @@ import {
     UserEvent,
     createClient,
 } from 'matrix-js-sdk'
+import { LocalStorageCryptoStore } from 'matrix-js-sdk/lib/crypto/store/localStorage-crypto-store'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -1227,6 +1228,7 @@ export class ZionClient {
                 userId: auth.userId,
                 deviceId: auth.deviceId,
                 useAuthorizationHeader: true,
+                cryptoStore: new LocalStorageCryptoStore(global.localStorage),
             })
         } else {
             return createClient({
