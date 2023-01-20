@@ -15,12 +15,12 @@ export function useAuth() {
         _connect({ connector: connectors[0] })
     }, [_connect, connectors])
 
-    const login = useCallback(() => {
-        loginWithWallet(loginMsgToSign)
+    const login = useCallback(async () => {
+        await loginWithWallet(loginMsgToSign)
     }, [loginWithWallet])
 
-    const register = useCallback(() => {
-        registerWallet(registerWalletMsgToSign)
+    const register = useCallback(async () => {
+        await registerWallet(registerWalletMsgToSign)
     }, [registerWallet])
 
     const logout = useCallback(async () => {
