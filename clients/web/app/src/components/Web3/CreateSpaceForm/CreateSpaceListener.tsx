@@ -1,5 +1,4 @@
 import { Address, useAccount, useContractEvent } from 'wagmi'
-import { Abi } from 'abitype'
 import { ethers } from 'ethers'
 import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 
@@ -8,37 +7,47 @@ type ListenerProps = {
     contractAddress: string
 }
 
-export const CreateSpaceEventListener = ({ eventsAbi, contractAddress }: ListenerProps) => {
+export const CreateSpaceEventListener = ({ contractAddress }: ListenerProps) => {
     const { address } = useAccount()
-    const iface = new ethers.utils.Interface(eventsAbi as string)
     const setMintedTokenAddress = useCreateSpaceFormStore((s) => s.setMintedTokenAddress)
+    const abi = [
+        {
+            anonymous: false,
+            inputs: [
+                {
+                    indexed: true,
+                    internalType: 'address',
+                    name: 'spaceAddress',
+                    type: 'address',
+                },
+                {
+                    indexed: true,
+                    internalType: 'address',
+                    name: 'owner',
+                    type: 'address',
+                },
+                {
+                    indexed: false,
+                    internalType: 'string',
+                    name: 'spaceNetworkId',
+                    type: 'string',
+                },
+            ],
+            name: 'SpaceCreated',
+            type: 'event',
+        },
+    ] as const
 
     useContractEvent({
         address: contractAddress as Address,
-        abi: eventsAbi as Abi,
-        eventName: 'CreateSpace',
-        listener: async (data, owner, eventData) => {
+        abi: abi,
+        eventName: 'SpaceCreated',
+        listener: async (spaceAddress, owner, _spaceNetworkId) => {
             if (owner !== address) {
                 return
             }
-            const _owner = owner as Address
 
-            const eData = eventData as unknown as {
-                data: string
-                topics: string[]
-                getTransaction: () => Promise<ethers.providers.TransactionResponse>
-            }
-
-            console.log('[CreatSpace] Event Emitted: ', {
-                data,
-                owner,
-                parseLog: iface.parseLog({ data: eData.data, topics: eData.topics }),
-                decodeLog: iface.decodeEventLog('CreateSpace', eData.data, eData.topics),
-                eventData,
-                eventDataTransaction: await eData.getTransaction(), // can retrieve the `from` address in case we remove owner (msgSender()) from event signature
-            })
-
-            setMintedTokenAddress(_owner) // replace with contract address
+            setMintedTokenAddress(spaceAddress)
         },
     })
 
