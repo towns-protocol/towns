@@ -32,6 +32,7 @@
     "plugin:testing-library/react"
   ],
   "rules": {
+    "curly": "warn",
     "@typescript-eslint/no-base-to-string": "error",
     "@typescript-eslint/no-unused-vars": ["warn", { "args": "none" }],
     "import/no-named-as-default-member": "off",

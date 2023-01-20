@@ -75,7 +75,9 @@ export const CardOpener = (props: Props) => {
     }, [])
 
     useEffect(() => {
-        if (!triggerRef) return
+        if (!triggerRef) {
+            return
+        }
         const domRect = triggerRef.getBoundingClientRect()
         setTriggerRect(domRect)
     }, [triggerRef, active, bounds])
@@ -98,7 +100,9 @@ export const CardOpener = (props: Props) => {
 
     // handles cancelling of overlay
     useEffect(() => {
-        if (!active) return
+        if (!active) {
+            return
+        }
         const onGlobalClick = (e: MouseEvent) => {
             if (trigger === 'contextmenu') {
                 // prevents system context to popup when cancelling

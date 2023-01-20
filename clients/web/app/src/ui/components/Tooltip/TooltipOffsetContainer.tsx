@@ -52,7 +52,9 @@ export const TooltipOffsetContainer = (props: OffsetContainerProps) => {
     }, [props.containerBounds])
 
     const style = useMemo(() => {
-        if (!triggerRect) return undefined
+        if (!triggerRect) {
+            return undefined
+        }
 
         const baseStyle = {
             // pointerEvent:  "none",

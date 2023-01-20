@@ -10,7 +10,9 @@ export const usePersistScrollPosition = (
     const handleContainerResize = useEvent((e: ResizeObserverEntry[]) => {
         const el = e[0]
 
-        if (!el) return
+        if (!el) {
+            return
+        }
 
         const height = el.contentRect.height
         const diff = sizeRef.current - height

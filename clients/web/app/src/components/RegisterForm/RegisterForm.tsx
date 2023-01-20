@@ -56,7 +56,9 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     })
 
     useEffect(() => {
-        if (!isEdit) return
+        if (!isEdit) {
+            return
+        }
         reset(defaultValues)
     }, [reset, defaultValues, isEdit])
 

@@ -70,7 +70,9 @@ let isInit = false
 
 export const FontLoader = {
     init() {
-        if (isInit) return
+        if (isInit) {
+            return
+        }
         isInit = true
         fontSettings.forEach((f) => {
             const font = new FontFace(f.fontFamily, f.src, f.fontDescription)

@@ -41,10 +41,16 @@ export const GiphyPicker = () => {
     // giphy api can return string or number for size
     // but matrix types only allow for number
     function checkSize(gifySize?: string | number): number | undefined {
-        if (!gifySize) return undefined
-        if (typeof gifySize === 'number') return gifySize
+        if (!gifySize) {
+            return undefined
+        }
+        if (typeof gifySize === 'number') {
+            return gifySize
+        }
         const asNum = +gifySize
-        if (isNaN(asNum)) return undefined
+        if (isNaN(asNum)) {
+            return undefined
+        }
         return asNum
     }
 

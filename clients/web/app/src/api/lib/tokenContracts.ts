@@ -95,7 +95,9 @@ async function getLocalHostTokens(
     const tokens: TokenProps[] = []
     if (zionTokenAddress) {
         const balance = await getLocalZionTokenBalance(zionTokenAddress, wallet)
-        if (balance > 0) tokens.push(mapZionTokenToTokenProps(zionTokenAddress))
+        if (balance > 0) {
+            tokens.push(mapZionTokenToTokenProps(zionTokenAddress))
+        }
     }
     return {
         tokens,

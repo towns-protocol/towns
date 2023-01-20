@@ -24,7 +24,9 @@ export async function sleepUntil<T, R>(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function invariant(cond: any, message: string): asserts cond {
-    if (!cond) throw new Error(message)
+    if (!cond) {
+        throw new Error(message)
+    }
 }
 
 export function staticAssertNever(x: never): never {

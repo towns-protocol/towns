@@ -63,7 +63,9 @@ export function GiphySearchContextProvider({ children }: { children?: JSX.Elemen
     )
 
     useEffect(() => {
-        if (!optedIn) return
+        if (!optedIn) {
+            return
+        }
 
         const fetchTrendingSearches = async () => {
             try {

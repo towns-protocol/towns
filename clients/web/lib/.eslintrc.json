@@ -15,6 +15,7 @@
     ],
     "plugins": ["@typescript-eslint", "prettier", "lodash"],
     "rules": {
+        "curly": "warn",
         "lodash/import-scope": [1, "method"],
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-base-to-string": "error",

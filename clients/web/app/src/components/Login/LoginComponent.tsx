@@ -176,7 +176,9 @@ export const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
                         setRegistrationStatus(ButtonStatus.Register)
                     }
                 } catch (reason: unknown) {
-                    if (!cancelled) console.warn(reason)
+                    if (!cancelled) {
+                        console.warn(reason)
+                    }
                 }
             })()
         }

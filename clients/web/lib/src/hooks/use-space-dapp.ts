@@ -8,7 +8,9 @@ export const useSpaceDapp = ({ chain, provider }: Pick<IWeb3Context, 'chain' | '
     const [spaceDapp, setSpaceDapp] = useState<ISpaceDapp>()
 
     useEffect(() => {
-        if (!chain || !provider) return
+        if (!chain || !provider) {
+            return
+        }
         setSpaceDapp(new SpaceDapp(chain.id, provider, provider?.getSigner()))
     }, [chain, provider])
 

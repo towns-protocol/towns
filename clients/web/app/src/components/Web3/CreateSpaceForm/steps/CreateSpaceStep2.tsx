@@ -45,7 +45,9 @@ const TokenList = (props: Partial<UseFormReturn>) => {
         removeToken(contractAddress)
     }
 
-    if (!tokens.length) return null
+    if (!tokens.length) {
+        return null
+    }
 
     return (
         <>

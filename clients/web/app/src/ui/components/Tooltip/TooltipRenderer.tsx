@@ -53,7 +53,9 @@ export const TooltipRenderer = (props: Props) => {
     const [triggerRef, setTriggerRef] = useState<HTMLElement | null>(null)
 
     const onMouseEnter = useEvent(() => {
-        if (!triggerRef) return
+        if (!triggerRef) {
+            return
+        }
         const domRect = triggerRef.getBoundingClientRect()
         setTriggerRect(domRect)
         if (trigger === Trigger.hover) {
@@ -80,7 +82,9 @@ export const TooltipRenderer = (props: Props) => {
 
     // handles cancelling of tooltip
     useEffect(() => {
-        if (!active) return
+        if (!active) {
+            return
+        }
 
         const onGlobalClick = (e: MouseEvent) => {
             if (trigger === 'contextmenu') {
@@ -131,7 +135,9 @@ export const TooltipRenderer = (props: Props) => {
     )
 
     useEffect(() => {
-        if (!triggerRef) return
+        if (!triggerRef) {
+            return
+        }
         const domRect = triggerRef.getBoundingClientRect()
         setTriggerRect(domRect)
     }, [triggerRef])

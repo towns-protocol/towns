@@ -110,7 +110,9 @@ export const TokenList = ({
     })
 
     useEffect(() => {
-        if (!data?.tokens) return
+        if (!data?.tokens) {
+            return
+        }
         const unique = uniqBy(
             [...getCachedTokensForWallet().tokens, ...data.tokens],
             'contractAddress',

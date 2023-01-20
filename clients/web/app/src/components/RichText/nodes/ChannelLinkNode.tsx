@@ -122,7 +122,9 @@ export const createChannelLinkTransformer = (channels: Channel[]): TextMatchTran
             // But using $createChannelLinkNode in ChannelMentionPlugin, can't get the content to render in timeline
             const labelWithoutHash = match[1].replace('#', '')
             const ch = channels.find((c) => c.label === labelWithoutHash)
-            if (!ch) return
+            if (!ch) {
+                return
+            }
             const linkNode = $createChannelLinkNode(ch)
             textNode.replace(linkNode)
         },

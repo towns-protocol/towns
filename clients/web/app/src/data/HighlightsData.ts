@@ -86,7 +86,9 @@ function getRandomReactions() {
 }
 
 function getRandomReplies() {
-    if (randNumber({ max: 10 }) < 5) return undefined
+    if (randNumber({ max: 10 }) < 5) {
+        return undefined
+    }
     const replies = randNumber({ min: 4, max: 35 })
     const numUsers = Math.max(1, Math.min(3, Math.floor(replies / 7)))
     const randomizedUsers = userIndex.slice().sort(() => Math.random() - 0.5)
@@ -99,7 +101,9 @@ function getRandomReplies() {
 }
 
 function getRandomLink() {
-    if (randNumber({ max: 10 }) < 7) return undefined
+    if (randNumber({ max: 10 }) < 7) {
+        return undefined
+    }
     return {
         title: 'Zion Protocol V2',
         href: 'mirror.xyz/editions/0xaf89C5E115Ab3437fCDFKJ.f',

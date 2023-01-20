@@ -60,7 +60,9 @@ export const SpaceOwnerLanding = () => {
     })
 
     function onCopy() {
-        if (copyWasClicked) return
+        if (copyWasClicked) {
+            return
+        }
         setCopyWasClicked(true)
         copy(inviteUrl)
 

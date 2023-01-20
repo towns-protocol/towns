@@ -24,7 +24,9 @@ export const useChannelCreationRoles = (spaceNetworkId?: string) => {
         ['channelRoles', spaceNetworkId],
         () => {
             console.log(spaceNetworkId)
-            if (!client || !spaceNetworkId) return Promise.resolve([])
+            if (!client || !spaceNetworkId) {
+                return Promise.resolve([])
+            }
             return getFilteredRolesFromSpace(client, spaceNetworkId)
         },
         {

@@ -152,7 +152,9 @@ export const CreateChannelForm = (props: Props) => {
 
                             {roles?.map((role) => {
                                 const id = role.roleId?.toNumber().toString()
-                                if (!id) return null
+                                if (!id) {
+                                    return null
+                                }
                                 return (
                                     <Box
                                         padding="md"
