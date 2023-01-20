@@ -11,12 +11,12 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
         return {
             kind: 'user-profile',
             bNeedsAvatar:
-                this.user.avatarUrl === null ||
-                this.user.avatarUrl === undefined ||
+                this.user?.avatarUrl === null ||
+                this.user?.avatarUrl === undefined ||
                 this.user.avatarUrl === '',
             bNeedsDisplayName:
-                this.user.displayName === null ||
-                this.user.displayName === undefined ||
+                this.user?.displayName === null ||
+                this.user?.displayName === undefined ||
                 this.user.displayName === '' ||
                 this.userId.indexOf(this.user.displayName) >= 0,
         }
@@ -35,13 +35,16 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
     }
 
     start() {
-        this.user.on(UserEvent.DisplayName, this.onUserUpdatedCB)
-        this.user.on(UserEvent.AvatarUrl, this.onUserUpdatedCB)
+        if (!this.user) {
+            throw new Error('OnboardingStep_UserProfile::UserId is undefined')
+        }
+        this.user?.on(UserEvent.DisplayName, this.onUserUpdatedCB)
+        this.user?.on(UserEvent.AvatarUrl, this.onUserUpdatedCB)
     }
 
     stop() {
-        this.user.off(UserEvent.DisplayName, this.onUserUpdatedCB)
-        this.user.off(UserEvent.AvatarUrl, this.onUserUpdatedCB)
+        this.user?.off(UserEvent.DisplayName, this.onUserUpdatedCB)
+        this.user?.off(UserEvent.AvatarUrl, this.onUserUpdatedCB)
     }
 
     private onUserUpdatedCB = () => {
