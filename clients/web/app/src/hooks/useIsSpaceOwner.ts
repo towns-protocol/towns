@@ -14,7 +14,7 @@ export function useIsSpaceOwner() {
         ['spaceOwner', hasSpaceId, hasClient],
         async () => {
             if (hasClient && hasSpaceId) {
-                return client.getSpaceInfoBySpaceId(spaceId.networkId)
+                return (await client.getSpaceInfoBySpaceId(spaceId.networkId)) || null
             }
         },
         {

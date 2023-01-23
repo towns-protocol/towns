@@ -222,6 +222,7 @@ const root = createGlobalTheme(':root', {
         sm: `${13}px`,
         md: `${15}px`,
         lg: `${18}px`,
+        display: `${120}px`,
         // note: before setting the naming, figure the sizes we actually use
         h1: `${72}px`,
         h2: `${48}px`,

@@ -1,21 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { LoginStatus, WalletStatus, useZionClient } from 'use-zion-client'
+import React from 'react'
 import { useAuth } from 'hooks/useAuth'
+import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { LoginButton } from './LoginButton/LoginButton'
 import { ButtonTooltip } from './LoginButton/Tooltip/ButtonTooltip'
-
-export enum ButtonStatus {
-    ConnectRequired = 'wallet.connect',
-    ConnectError = 'wallet.connect.error',
-    ConnectProgress = 'wallet.connect.progress',
-    ConnectSuccess = 'wallet.connect.success',
-    ConnectUnlock = 'wallet.unlock.unlock',
-    ConnectUnlockTimeout = 'wallet.unlock.timeout',
-    Login = 'login.required',
-    LoginProgress = 'login.progress',
-    LoginSuccess = 'login.sucess',
-    Register = 'signup.Register',
-}
 
 export const LoginComponent = () => {
     const {
@@ -38,156 +25,65 @@ export const LoginComponent = () => {
         loginError,
     })
 
-    // retrieve the connection and login status synchronously
-    const _preliminaryStatus = getButtonStatus(walletStatus, loginStatus)
-    // if newly connected but yet not logged in check further (async) if the address is registred
-    const { registrationStatus } = useCheckRegistrationStatusWhen(
-        _preliminaryStatus === ButtonStatus.ConnectSuccess,
-    )
-    // actual state of the button based on connection AND registration
-    const status = registrationStatus ?? _preliminaryStatus
+    const {
+        status,
+        onClick: onButtonClick,
+        isSpinning,
+    } = useSignupButton({
+        walletStatus,
+        loginStatus,
+        connect,
+        register,
+        login,
+    })
 
     const buttonLabel = getButtonLabel(status)
     const tooltipMessage = getTooltipMessage(status)
-    const isSpinning = getIsSpinning(status)
-    const onButtonClick = useButtonClick(status, {
-        connect,
-        login,
-        register,
-    })
 
     return (
         <ButtonTooltip message={loginError ? loginError.message : tooltipMessage}>
-            <LoginButton label={buttonLabel} loading={isSpinning} onClick={onButtonClick} />
+            <LoginButton
+                label={buttonLabel}
+                loading={isSpinning}
+                icon="metamask"
+                onClick={onButtonClick}
+            />
         </ButtonTooltip>
     )
 }
 
-const useButtonClick = (
-    status: ButtonStatus,
-    actions: {
-        connect: () => void
-        login: () => void
-        register: () => void
-    },
-) => {
-    const { connect, login, register } = actions
-
-    return useCallback(() => {
-        switch (status) {
-            case ButtonStatus.ConnectRequired:
-            case ButtonStatus.ConnectError:
-                return connect()
-            case ButtonStatus.Login:
-                return login()
-            case ButtonStatus.Register:
-                return register()
-        }
-    }, [connect, login, register, status])
-}
-
-const getButtonLabel = (status: ButtonStatus) => {
+const getButtonLabel = (status: SignupButtonStatus) => {
     switch (status) {
         default:
             return 'Connect'
-        case ButtonStatus.ConnectRequired:
-        case ButtonStatus.ConnectError:
+        case SignupButtonStatus.ConnectRequired:
+        case SignupButtonStatus.ConnectError:
             return 'Connect'
-        case ButtonStatus.Login:
-        case ButtonStatus.LoginProgress:
+        case SignupButtonStatus.Login:
+        case SignupButtonStatus.LoginProgress:
             return 'Login'
-        case ButtonStatus.Register:
+        case SignupButtonStatus.Register:
             return 'Register'
     }
 }
 
-const getTooltipMessage = (status: ButtonStatus) => {
+const getTooltipMessage = (status: SignupButtonStatus) => {
     switch (status) {
-        case ButtonStatus.ConnectUnlock:
-        case ButtonStatus.ConnectUnlockTimeout:
+        case SignupButtonStatus.ConnectUnlock:
+        case SignupButtonStatus.ConnectUnlockTimeout:
             return 'please unlock your wallet before proceeding'
-        case ButtonStatus.ConnectRequired:
+        case SignupButtonStatus.ConnectRequired:
             return ''
-        case ButtonStatus.ConnectError:
+        case SignupButtonStatus.ConnectError:
             return 'something went wrong, please make sure your wallet is unlocked'
-        case ButtonStatus.Login:
-        case ButtonStatus.LoginProgress:
+        case SignupButtonStatus.Login:
+        case SignupButtonStatus.LoginProgress:
             return ''
-        case ButtonStatus.Register:
+        case SignupButtonStatus.Register:
             return 'register a new account'
         default:
             return ''
     }
-}
-
-const getIsSpinning = (status: ButtonStatus) => {
-    return [
-        ButtonStatus.ConnectUnlock,
-        ButtonStatus.ConnectUnlockTimeout,
-        ButtonStatus.ConnectProgress,
-        ButtonStatus.LoginProgress,
-    ].includes(status)
-}
-
-const getButtonStatus = (walletStatus: WalletStatus, loginStatus: LoginStatus) => {
-    switch (walletStatus) {
-        default:
-        case WalletStatus.Disconnected: {
-            return ButtonStatus.ConnectRequired
-        }
-        case WalletStatus.Connected: {
-            if (loginStatus === LoginStatus.LoggingIn) {
-                return ButtonStatus.LoginProgress
-            } else if (loginStatus === LoginStatus.LoggedOut) {
-                return ButtonStatus.ConnectSuccess
-            } else {
-                return ButtonStatus.LoginSuccess
-            }
-        }
-        case WalletStatus.Connecting: {
-            return ButtonStatus.ConnectUnlock
-        }
-        case WalletStatus.Reconnecting: {
-            return ButtonStatus.ConnectUnlockTimeout
-        }
-    }
-}
-
-/**
- * async registration check fired once the wallet is unlocked
- **/
-export const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
-    const { getIsWalletIdRegistered } = useZionClient()
-    const [registrationStatus, setRegistrationStatus] = useState<ButtonStatus>()
-
-    useEffect(() => {
-        let cancelled = false
-        if (!needsCheck) {
-            // skip if not in a position to check if the wallet is registered
-            setRegistrationStatus(undefined)
-        } else {
-            // async registration check
-            ;(async () => {
-                try {
-                    const isRegistered = await getIsWalletIdRegistered()
-                    if (isRegistered) {
-                        setRegistrationStatus(ButtonStatus.Login)
-                    } else {
-                        setRegistrationStatus(ButtonStatus.Register)
-                    }
-                } catch (reason: unknown) {
-                    if (!cancelled) {
-                        console.warn(reason)
-                    }
-                }
-            })()
-        }
-        return () => {
-            cancelled = true
-        }
-    }, [getIsWalletIdRegistered, needsCheck])
-
-    return { registrationStatus }
 }
 
 export default LoginComponent

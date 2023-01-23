@@ -13,6 +13,7 @@ import {
 import { vars } from 'ui/styles/vars.css'
 import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
+import { PATHS } from 'routes'
 
 const placeholders = {
     names: [
@@ -91,8 +92,13 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                 } catch (e: unknown) {
                     console.warn(e)
                 }
-                console.log('navigate away 2')
-                navigate('/')
+
+                // if we came from a space invite link, redirect back to the space
+                if (window.location.pathname.includes(PATHS.SPACES)) {
+                    navigate(window.location.pathname, { replace: true })
+                } else {
+                    navigate('/', { replace: true })
+                }
             })()
         },
         [

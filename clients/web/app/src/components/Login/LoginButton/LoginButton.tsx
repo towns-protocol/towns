@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { FadeIn } from '@components/Transitions'
 import { Button } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
+import { vars } from 'ui/styles/vars.css'
 import { ButtonSpinner } from './Spinner/ButtonSpinner'
 
 export const LoginButton = (props: {
@@ -10,15 +11,19 @@ export const LoginButton = (props: {
     loading?: boolean
     icon?: IconName
     onClick: () => void
+    tone?: keyof typeof vars.color.background
 }) => {
     const hasSpinner = useDeferredLoading(props.loading)
 
     return (
         <AnimatePresence mode="wait">
-            <Button minWidth="250" onClick={props.onClick}>
-                <FadeIn layout key="metamaks">
-                    <Icon type="metamask" />
-                </FadeIn>
+            <Button minWidth="250" tone={props.tone} onClick={props.onClick}>
+                {props.icon && (
+                    <FadeIn layout key="metamaks">
+                        <Icon type="metamask" />
+                    </FadeIn>
+                )}
+
                 <FadeIn layout key={props.label}>
                     {props.label}
                 </FadeIn>
