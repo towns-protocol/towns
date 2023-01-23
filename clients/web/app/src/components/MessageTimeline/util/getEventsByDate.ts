@@ -7,9 +7,7 @@ import {
     TimelineEvent,
     ZTEvent,
 } from 'use-zion-client'
-
-/// render selectable, unRead aware, aggregated replies in the main timeline
-const ENABLE_SERGE_MODE = true
+import { ExperimentsState } from 'store/experimentsStore'
 
 export enum RenderEventType {
     UserMessages = 'UserMessages',
@@ -144,6 +142,7 @@ export const getEventsByDate = (
     events: TimelineEvent[],
     fullyReadMarker?: FullyReadMarker,
     isThread?: boolean,
+    experiments?: ExperimentsState,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
     const result = events.reduce(
@@ -195,7 +194,7 @@ export const getEventsByDate = (
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
                 if (!isThread && event.threadParentId) {
-                    if (!ENABLE_SERGE_MODE) {
+                    if (!experiments?.enableInlineThreadUpdates) {
                         // serge mode is disabled
                     } else {
                         if (prevEvent && prevEvent.type === RenderEventType.ThreadUpdate) {

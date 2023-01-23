@@ -2,6 +2,7 @@ import { default as React, createContext, useCallback, useContext, useMemo, useR
 import { FullyReadMarker, MessageType, useFullyReadMarker } from 'use-zion-client'
 import { Box, Divider, VList } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
+import { useExperimentsStore } from 'store/experimentsStore'
 import { DateDivider } from './events/DateDivider'
 import { NewDivider } from './events/NewDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
@@ -35,6 +36,7 @@ export const MessageTimeline = (props: Props) => {
     }, [timelineContext?.events])
 
     const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
+    const experiments = useExperimentsStore()
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                                  initialize variables
@@ -53,8 +55,9 @@ export const MessageTimeline = (props: Props) => {
                 events,
                 fullyReadPersisted,
                 timelineContext?.type === MessageTimelineType.Thread,
+                experiments,
             ),
-        [events, fullyReadPersisted, timelineContext?.type],
+        [events, fullyReadPersisted, timelineContext?.type, experiments],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
