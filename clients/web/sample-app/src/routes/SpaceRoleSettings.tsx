@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react'
 
 export enum MembershipRequirement {
     Everyone = 'Everyone',
-    ZionToken = 'ZionNFT',
+    CouncilNFT = 'CouncilNFT',
+    ZioneerNFT = 'ZioneerNFT',
 }
 
 interface Props {
@@ -21,9 +22,13 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
                     setMembershipRequirement(MembershipRequirement.Everyone)
                     props.onChangeValue(MembershipRequirement.Everyone)
                     break
-                case MembershipRequirement.ZionToken:
-                    setMembershipRequirement(MembershipRequirement.ZionToken)
-                    props.onChangeValue(MembershipRequirement.ZionToken)
+                case MembershipRequirement.CouncilNFT:
+                    setMembershipRequirement(MembershipRequirement.CouncilNFT)
+                    props.onChangeValue(MembershipRequirement.CouncilNFT)
+                    break
+                case MembershipRequirement.ZioneerNFT:
+                    setMembershipRequirement(MembershipRequirement.ZioneerNFT)
+                    props.onChangeValue(MembershipRequirement.ZioneerNFT)
                     break
                 default:
                     console.error('Unknown membership requirement')
@@ -48,11 +53,19 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
                 <input
                     readOnly
                     type="radio"
-                    value={MembershipRequirement.ZionToken}
+                    value={MembershipRequirement.CouncilNFT}
                     name="membershipRequirement"
-                    checked={membershipRequirement === MembershipRequirement.ZionToken}
+                    checked={membershipRequirement === MembershipRequirement.CouncilNFT}
                 />{' '}
-                Zion NFT
+                Council NFT
+                <input
+                    readOnly
+                    type="radio"
+                    value={MembershipRequirement.ZioneerNFT}
+                    name="membershipRequirement"
+                    checked={membershipRequirement === MembershipRequirement.ZioneerNFT}
+                />{' '}
+                Zioneer NFT
             </fieldset>
         </div>
     )

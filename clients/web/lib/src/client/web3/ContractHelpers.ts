@@ -3,20 +3,20 @@ import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { ZionClient } from '../ZionClient'
 import { getContractsInfo } from './IStaticContractsInfo'
 
-export function getZionTokenAddress(chainId: number): string {
+export function getCouncilNftAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
-    return contractInfo.council.address.councilnft
+    return contractInfo.councilNft.address.councilnft
 }
 
-// todo: v1 - remove
-export interface CreateTokenEntitlementDataInfo {
-    contractAddress: string
-    quantity?: number
-    isSingleToken?: boolean
-    tokenId?: number
+export function getZioneerNftAddress(chainId: number): string {
+    const contractInfo = getContractsInfo(chainId)
+    if (!contractInfo) {
+        throw new Error(`Contract info for chainId ${chainId} is not found.`)
+    }
+    return contractInfo.zioneerNft.address.zioneer
 }
 
 export function createExternalTokenStruct(

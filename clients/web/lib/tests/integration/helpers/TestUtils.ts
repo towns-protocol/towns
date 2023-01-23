@@ -8,7 +8,7 @@ import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 import {
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
-    getZionTokenAddress,
+    getCouncilNftAddress,
 } from 'use-zion-client/src/client/web3/ContractHelpers'
 
 import { EventTimeline } from 'matrix-js-sdk'
@@ -140,8 +140,8 @@ export function createTestSpaceWithZionMemberRole(
         }
     }
 
-    const zionTokenAddress = getZionTokenAddress(client.chainId)
-    const tokens = createExternalTokenStruct([zionTokenAddress])
+    const councilNftAddress = getCouncilNftAddress(client.chainId)
+    const tokens = createExternalTokenStruct([councilNftAddress])
     const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
         roleName: 'Member',
         permissions: tokenGrantedPermissions,

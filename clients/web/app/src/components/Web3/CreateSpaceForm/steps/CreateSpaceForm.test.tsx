@@ -55,10 +55,8 @@ const Wrapper = () => {
     )
 }
 
-const {
-    createTransactionSpy: createSpaceTransactionWithMemberRoleSpy,
-    useMockedCreateTransaction,
-} = mockCreateTransactionWithSpy('createSpaceTransactionWithMemberRole')
+const { createTransactionSpy: createSpaceTransactionWithRoleSpy, useMockedCreateTransaction } =
+    mockCreateTransactionWithSpy('createSpaceTransactionWithRole')
 
 const useMockedCreateSpaceTransaction = (
     ...args: typeof zionClient.useCreateSpaceTransaction['arguments']
@@ -301,11 +299,12 @@ describe('CreateSpaceStep1', () => {
         })
 
         await waitFor(async () => {
-            return expect(createSpaceTransactionWithMemberRoleSpy).toHaveBeenCalledWith(
+            return expect(createSpaceTransactionWithRoleSpy).toHaveBeenCalledWith(
                 {
                     name: 'sample space',
                     visibility: 'public',
                 },
+                'Member',
                 [], // tokens
                 [], // token permissions
                 [zionClient.Permission.Read, zionClient.Permission.Write], // everyone permissions
@@ -349,11 +348,12 @@ describe('CreateSpaceStep1', () => {
         fireEvent.click(nextButton)
 
         await waitFor(async () => {
-            return expect(createSpaceTransactionWithMemberRoleSpy).toHaveBeenCalledWith(
+            return expect(createSpaceTransactionWithRoleSpy).toHaveBeenCalledWith(
                 {
                     name: 'sample space',
                     visibility: 'public',
                 },
+                'Member',
                 ['0x123'], // tokens
                 [zionClient.Permission.Read, zionClient.Permission.Write], // token permissions
                 [], // everyone permissions

@@ -85,7 +85,7 @@ export const CreateSpaceForm = (props: Props) => {
         error,
         transactionHash,
         transactionStatus,
-        createSpaceTransactionWithMemberRole,
+        createSpaceTransactionWithRole,
     } = useCreateSpaceTransaction()
 
     const [wentBackAfterAttemptingCreation, setWentBackAfterAttemptingCreation] = useState(false)
@@ -142,13 +142,14 @@ export const CreateSpaceForm = (props: Props) => {
             // iconUrl: step2.spaceIcon as string,
         }
 
-        await createSpaceTransactionWithMemberRole(
+        await createSpaceTransactionWithRole(
             createSpaceInfo,
+            'Member',
             tokens,
             tokenGrantedPermissions,
             everyonePermissions,
         )
-    }, [createSpaceTransactionWithMemberRole])
+    }, [createSpaceTransactionWithRole])
 
     const onSubmit = useCallback(async () => {
         if (isLast) {

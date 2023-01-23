@@ -13,7 +13,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getZionTokenAddress } from '../../src/client/web3/ContractHelpers'
+import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -26,7 +26,7 @@ describe('useCreateChannelTransaction', () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
-        const zionTokenAddress = chainId ? getZionTokenAddress(chainId) : undefined
+        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
         await provider.fundWallet()
@@ -51,7 +51,7 @@ describe('useCreateChannelTransaction', () => {
         const TestComponent = () => {
             const { getRolesFromSpace } = useRolesAndPermissions()
             const {
-                createSpaceTransactionWithMemberRole,
+                createSpaceTransactionWithRole,
                 data: spaceId,
                 transactionStatus: createSpaceTxStatus,
             } = useCreateSpaceTransaction()
@@ -85,20 +85,21 @@ describe('useCreateChannelTransaction', () => {
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    if (zionTokenAddress) {
-                        await createSpaceTransactionWithMemberRole(
+                    if (councilNftAddress) {
+                        await createSpaceTransactionWithRole(
                             {
                                 name: spaceName,
                                 visibility: RoomVisibility.Public,
                             },
-                            [zionTokenAddress],
+                            'Test Role',
+                            [councilNftAddress],
                             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
                         )
                     }
                 }
 
                 void handleClick()
-            }, [createSpaceTransactionWithMemberRole])
+            }, [createSpaceTransactionWithRole])
 
             // callback to create a channel with zion token entitlement
             const onClickCreateChannel = useCallback(() => {

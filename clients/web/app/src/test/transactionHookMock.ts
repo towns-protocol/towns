@@ -52,7 +52,7 @@ const failedWithMatrixPermissionContext = {
     error: { name: 'M_FORBIDDEN', message: 'some error' },
 }
 
-type TransactionFnNames = 'createSpaceTransactionWithMemberRole' | 'createChannelTransaction'
+type TransactionFnNames = 'createSpaceTransactionWithRole' | 'createChannelTransaction'
 
 type UseMockTransactionReturn = {
     isLoading: boolean
@@ -63,7 +63,7 @@ type UseMockTransactionReturn = {
 }
 
 export type UseMockCreateSpaceReturn = UseMockTransactionReturn & {
-    createSpaceTransactionWithMemberRole: Mock
+    createSpaceTransactionWithRole: Mock
 }
 
 export type UseMockCreateChannelReturn = UseMockTransactionReturn & {
@@ -127,10 +127,10 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
             transactionStatus,
         }
 
-        if (transactionFunctionName === 'createSpaceTransactionWithMemberRole') {
+        if (transactionFunctionName === 'createSpaceTransactionWithRole') {
             return {
                 ...txData,
-                createSpaceTransactionWithMemberRole: createTransactionMockFn,
+                createSpaceTransactionWithRole: createTransactionMockFn,
             }
         } else {
             return {

@@ -19,7 +19,8 @@ import {
     RoomIdentifier,
     RoomVisibility,
     TransactionStatus,
-    getZionTokenAddress,
+    getCouncilNftAddress,
+    getZioneerNftAddress,
     useCreateSpaceTransaction,
     useWeb3Context,
     useZionClient,
@@ -48,7 +49,7 @@ export const CreateSpaceForm = (props: Props) => {
         transactionHash,
         transactionStatus,
         error,
-        createSpaceTransactionWithMemberRole,
+        createSpaceTransactionWithRole,
     } = useCreateSpaceTransaction()
     const { onClick } = props
 
@@ -57,9 +58,15 @@ export const CreateSpaceForm = (props: Props) => {
         [isLoading, spaceName.length],
     )
 
-    const zionTokenAddress = useMemo(() => {
+    const councilNftAddress = useMemo(() => {
         if (chainId) {
-            return getZionTokenAddress(chainId)
+            return getCouncilNftAddress(chainId)
+        }
+    }, [chainId])
+
+    const zioneerNftAddress = useMemo(() => {
+        if (chainId) {
+            return getZioneerNftAddress(chainId)
         }
     }, [chainId])
 
@@ -123,40 +130,54 @@ export const CreateSpaceForm = (props: Props) => {
     }, [])
 
     const onClickCreateSpace = useCallback(async () => {
-        if (!zionTokenAddress) {
-            console.error('Cannot create space. No zion token address.')
+        if (!councilNftAddress) {
+            console.error('Cannot create space. No council NFT address.')
+            return undefined
+        }
+        if (!zioneerNftAddress) {
+            console.error('Cannot create space. No Zioneer NFT address.')
             return undefined
         }
 
-        const tokenAddresses =
-            membershipRequirement === MembershipRequirement.ZionToken ? [zionTokenAddress] : []
-        const tokenGrantedPermissions: Permission[] =
-            membershipRequirement === MembershipRequirement.ZionToken
-                ? [Permission.Read, Permission.Write]
-                : []
-        const everyonePermissions: Permission[] =
-            membershipRequirement === MembershipRequirement.Everyone
-                ? [Permission.Read, Permission.Write]
-                : []
+        let tokenAddresses: string[] = []
+        let tokenGrantedPermissions: Permission[] = []
+        let everyonePermissions: Permission[] = []
+        switch (membershipRequirement) {
+            case MembershipRequirement.Everyone:
+                everyonePermissions = [Permission.Read, Permission.Write]
+                break
+            case MembershipRequirement.CouncilNFT:
+                tokenAddresses = [councilNftAddress]
+                tokenGrantedPermissions = [Permission.Read, Permission.Write]
+                break
+            case MembershipRequirement.ZioneerNFT:
+                tokenAddresses = [zioneerNftAddress]
+                tokenGrantedPermissions = [Permission.Read, Permission.Write]
+                break
+            default:
+                throw new Error('Unhandled membership requirement')
+        }
 
         const createSpaceInfo: CreateSpaceInfo = {
             name: spaceName,
             visibility,
             disableEncryption: encrypted === 'no',
         }
-        await createSpaceTransactionWithMemberRole(
+        await createSpaceTransactionWithRole(
             createSpaceInfo,
+            'Member',
             tokenAddresses,
             tokenGrantedPermissions,
             everyonePermissions,
         )
     }, [
-        createSpaceTransactionWithMemberRole,
-        encrypted,
+        councilNftAddress,
+        zioneerNftAddress,
         membershipRequirement,
         spaceName,
         visibility,
-        zionTokenAddress,
+        encrypted,
+        createSpaceTransactionWithRole,
     ])
 
     useEffect(() => {
@@ -225,8 +246,8 @@ export const CreateSpaceForm = (props: Props) => {
                                 value={visibility}
                                 onChange={onChangeVisibility}
                             >
-                                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
                                 <MenuItem value={RoomVisibility.Public}>public</MenuItem>
+                                <MenuItem value={RoomVisibility.Private}>private</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

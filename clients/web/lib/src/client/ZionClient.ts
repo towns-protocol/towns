@@ -1204,8 +1204,8 @@ export class ZionClient {
         const spaceDapp = new SpaceDapp(chainId, provider, signer)
         const contractsInfo = getContractsInfo(chainId)
         const councilNFT = new CouncilNFTShim(
-            contractsInfo.council.address.councilnft,
-            contractsInfo.council.abi,
+            contractsInfo.councilNft.address.councilnft,
+            contractsInfo.councilNft.abi,
             chainId,
             provider,
             signer,

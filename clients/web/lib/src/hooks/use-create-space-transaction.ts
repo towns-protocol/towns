@@ -28,9 +28,10 @@ export function useCreateSpaceTransaction() {
         }
     }, [transactionContext])
 
-    const createSpaceTransactionWithMemberRole = useCallback(
+    const createSpaceTransactionWithRole = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
+            roleName: string,
             tokenAddresses: string[],
             memberPermissions: Permission[],
             everyonePermissions: Permission[] = [],
@@ -45,7 +46,7 @@ export function useCreateSpaceTransaction() {
             let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
             if (tokenAddresses.length) {
                 tokenEntitlement = {
-                    roleName: 'Member',
+                    roleName,
                     permissions: memberPermissions,
                     tokens: createExternalTokenStruct(tokenAddresses),
                     users: [],
@@ -91,6 +92,6 @@ export function useCreateSpaceTransaction() {
         error,
         transactionHash,
         transactionStatus,
-        createSpaceTransactionWithMemberRole,
+        createSpaceTransactionWithRole,
     }
 }
