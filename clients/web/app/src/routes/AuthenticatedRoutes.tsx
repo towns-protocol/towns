@@ -9,7 +9,6 @@ import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/Role
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
-import { SpaceCreate } from './SpaceCreate'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome } from './SpaceHome'
 import { SpaceMentions } from './SpaceMentions'
@@ -34,7 +33,6 @@ export const AuthenticatedRoutes = () => (
         <Route path="me" element={<MeIndex />} />
         <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
         <Route path="spaces/new" element={<SpacesNew />} />
-        <Route path="spaces/create" element={<SpaceCreate />} />
         <Route path="spaces/:spaceSlug">
             <Route index element={<SpaceHome />} />
             <Route path="threads" element={<SpaceThreads />} />
