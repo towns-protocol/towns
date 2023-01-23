@@ -11,7 +11,6 @@ import { PATHS } from 'routes'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
-import { SpaceCreate } from './SpaceCreate'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome } from './SpaceHome'
 import { HomeHighlights } from './SpaceHomeHilights'
@@ -35,7 +34,6 @@ export const SpaceRoutes = () => (
             <Route index element={<InvitesIndex />} />
         </Route>
         <Route path="spaces/new" element={<SpacesNew />} />
-        <Route path="spaces/create" element={<SpaceCreate />} />
         <Route path="spaces/:spaceSlug">
             <Route path="settings" element={<SpaceSettings />}>
                 <Route path="roles/:role" element={<RoleSettings />}>

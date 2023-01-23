@@ -214,7 +214,7 @@ describe('CreateSpaceStep1', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-room-id/')
+                expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-room-id/getting-started')
             },
             { timeout: 10000 },
         )

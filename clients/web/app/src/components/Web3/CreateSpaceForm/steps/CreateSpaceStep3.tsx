@@ -19,7 +19,7 @@ export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
     const createdSpaceId = useCreateSpaceFormStore((s) => s.createdSpaceId)
 
     const onAnimationComplete = useCallback(() => {
-        navigate(`/${PATHS.SPACES}/${createdSpaceId}/`)
+        navigate(`/${PATHS.SPACES}/${createdSpaceId}/${PATHS.GETTING_STARTED}`)
     }, [createdSpaceId, navigate])
 
     const { eventsAbi, contractAddress } = useMemo(() => {
