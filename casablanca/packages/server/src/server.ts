@@ -8,6 +8,7 @@ import {
     GetEventStreamResult,
     SignerContext,
     SyncStreamsParams,
+    StreamExistsParams,
     SyncStreamsResult,
     ZionServiceInterface,
 } from '@zion/core'
@@ -53,5 +54,9 @@ export class ZionServer implements ZionServiceInterface {
         return {
             streams: await this.store.readNewEvents(params.syncPositions, params.timeoutMs || 0),
         }
+    }
+
+    async streamExists(params: StreamExistsParams): Promise<boolean> {
+        return await this.store.streamExists(params.streamId)
     }
 }

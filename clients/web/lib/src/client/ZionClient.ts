@@ -329,14 +329,14 @@ export class ZionClient {
         }
         const rpcClient = makeZionRpcClient(this.opts.casablancaServerUrl)
         this.casablancaClient = new CasablancaClient(context, rpcClient)
-        try {
-            await this.casablancaClient.loadExistingUser()
-        } catch (error) {
-            if ((error as Error).message !== 'Stream not found') {
-                throw error
-            }
+        // TODO - long-term the app should already know if user exists via cookie
+        const userExists = await this.casablancaClient.userExists()
+        if (!userExists) {
             await this.casablancaClient.createNewUser()
+        } else {
+            await this.casablancaClient.loadExistingUser()
         }
+
         void this.casablancaClient.startSync()
     }
 

@@ -152,6 +152,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.initUserStream(streamId, userStream)
     }
 
+    async userExists(): Promise<boolean> {
+        logCall('userExists', this.address)
+        assert(this.userStreamId === undefined, 'streamId must not be set')
+        const streamId = makeUserStreamId(this.address)
+
+        return await this.rpcClient.streamExists({ streamId })
+    }
+
     async createSpace(spaceId?: string): Promise<{ streamId: string }> {
         spaceId = spaceId ?? makeUniqueSpaceStreamId()
         logCall('createSpace', this.address, spaceId)

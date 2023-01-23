@@ -244,8 +244,13 @@ export interface SyncStreamsParams {
 export interface StreamsAndCookies {
     [streamId: string]: StreamAndCookie
 }
+
 export interface SyncStreamsResult {
     streams: StreamsAndCookies
+}
+
+export interface StreamExistsParams {
+    streamId: string
 }
 
 export class ZionServicePrototype {
@@ -270,6 +275,10 @@ export class ZionServicePrototype {
     }
 
     async syncStreams(params: SyncStreamsParams): Promise<SyncStreamsResult> {
+        throw new Error('Do not use service prototype')
+    }
+
+    async streamExists(params: StreamExistsParams): Promise<boolean> {
         throw new Error('Do not use service prototype')
     }
 }
