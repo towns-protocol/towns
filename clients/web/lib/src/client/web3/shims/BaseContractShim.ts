@@ -20,8 +20,8 @@ export class BaseContractShim<
     public readonly chainId: number
     public readonly abi: ethers.ContractInterface
     public readonly contractInterface: ethers.utils.Interface
-    private readonly provider: ethers.providers.Provider | undefined
-    private readonly signer: ethers.Signer | undefined
+    public readonly provider: ethers.providers.Provider | undefined
+    public readonly signer: ethers.Signer | undefined
     private eventsContract?: ethers.Contract
     private readContract?: ethers.Contract
     private writeContract?: ethers.Contract

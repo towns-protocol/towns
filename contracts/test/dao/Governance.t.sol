@@ -20,8 +20,9 @@ contract GovernanceTest is Test {
 
   address deployer = address(this);
   address zero = address(0);
-  address bob = address(0x1);
-  address alice = address(0x2);
+  address alice = address(0x1);
+  address bob = address(0x2);
+  address charlie = address(0x3);
 
   function setUp() public {
     coreVoting = new ZionDao(
@@ -41,6 +42,12 @@ contract GovernanceTest is Test {
 
     // setup zioneer nft
     zioneer = new Zioneer("Zioneer", "ZNR", "https://znr.com/");
+
+    // insert eth into the Zioneer contract to be rewarded to zioneer NFT mintees
+    (bool success, ) = address(zioneer).call{value: 5 ether}("");
+    
+    require(success, "failed to insert eth into zioneer contract");
+
 
     // deploy zioneer vault
     vaultBase = new ZioneerVault(zioneer);
@@ -69,17 +76,22 @@ contract GovernanceTest is Test {
     coreVoting.setOwner(address(timelock));
   }
 
+  // adding these 2 here since the test contract is the mintee at times,
+  // which makes it entitled to the mintee reward
+  receive() external payable {}
+  fallback() external payable {}
+
   function testMint() public {
     zioneer.setAllowed(address(this), true);
-    zioneer.mintTo(address(this));
-    assertEq(zioneer.balanceOf(address(this)), 1);
+    zioneer.mintTo(alice);
+    assertEq(zioneer.balanceOf(address(alice)), 1);
   }
 
   function testVault() public {
     zioneer.setAllowed(address(this), true);
-    zioneer.mintTo(address(this));
-    assertEq(zioneer.balanceOf(address(this)), 1);
-    assertEq(vault.queryVotePower(address(this), 0, ""), 1);
+    zioneer.mintTo(address(alice));
+    assertEq(zioneer.balanceOf(address(alice)), 1);
+    assertEq(vault.queryVotePower(address(alice), 0, ""), 1);
   }
 
   function testCreateProposal() public {
@@ -87,9 +99,9 @@ contract GovernanceTest is Test {
     zioneer.setAllowed(address(coreVoting), true);
 
     // mint nft so I can create a proposal
-    zioneer.mintTo(address(this));
     zioneer.mintTo(address(alice));
-    assertEq(zioneer.balanceOf(address(this)), 1);
+    zioneer.mintTo(address(charlie));
+    assertEq(zioneer.balanceOf(address(charlie)), 1);
 
     // pass the voting vaults
     address[] memory votingVaults = new address[](1);
@@ -109,7 +121,10 @@ contract GovernanceTest is Test {
 
     vm.roll(2);
 
+
+
     // create proposal
+    vm.prank(charlie);
     coreVoting.proposal(
       votingVaults,
       vaultData,

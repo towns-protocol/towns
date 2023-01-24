@@ -121,3 +121,5 @@ export {
 } from './client/web3/ContractHelpers'
 
 export { staticAssertNever } from './utils/zion-utils'
+
+export * from './client/web3/ZioneerNFT'

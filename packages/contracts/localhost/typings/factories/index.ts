@@ -11,3 +11,4 @@ export { SpaceFactory__factory } from "./SpaceFactory__factory";
 export { TokenEntitlement__factory } from "./TokenEntitlement__factory";
 export { ZionRoleManager__factory } from "./ZionRoleManager__factory";
 export { ZionSpaceManager__factory } from "./ZionSpaceManager__factory";
+export { Zioneer__factory } from "./Zioneer__factory";

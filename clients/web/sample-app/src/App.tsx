@@ -7,6 +7,7 @@ import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
 import { useSampleAppStore } from 'store/store'
+import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Home } from './routes/Home'
 import { Main } from './components/Main'
 import { NotFound } from './routes/NotFound'
@@ -40,6 +41,7 @@ export const App = () => {
                     initialSyncLimit={100}
                 >
                     <Routes>
+                        <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
                         <Route element={<Main />}>
                             <Route element={<AuthenticatedContent />}>
                                 <Route index element={<Home />} />

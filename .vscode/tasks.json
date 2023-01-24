@@ -15,7 +15,7 @@
           "Dendrite",
           "Casablanca",
           "Anvil",
-          "DeployZionGovernance",
+          "DeployAllContracts",
           "WatchSharedLib",
           "WatchCasablancaClient",
           "WatchCasablancaCore",
@@ -31,15 +31,27 @@
         },
       },
       {
-        "label": "Start Anvil, Deploy Zion Governance",
+        "label": "Start Anvil, Deploy All Contracts",
         "dependsOn": [
+          "DeployAllContracts",
           "Anvil",
-          "DeployZionGovernance",
         ],
         "group": {
           "kind": "build",
           "isDefault": false
         },
+      },
+      {
+        "label": "DeployAllContracts",
+        "dependsOn": [
+          "DeployZionGovernance",
+          "DeployDAOContracts"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": false
+        },
+        "dependsOrder": "sequence"
       },
       {
         "label": "FoundryUp",
@@ -95,6 +107,16 @@
         "label": "DeployZionGovernance",
         "type": "shell",
         "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-zion-governance-contracts.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        },
+      },
+      {
+        "label": "DeployDAOContracts",
+        "type": "shell",
+        "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-dao-contracts.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

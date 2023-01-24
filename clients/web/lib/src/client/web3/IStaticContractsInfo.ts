@@ -6,11 +6,13 @@ import GoerliCouncilNFTAbi from '@harmony/contracts/goerli/abis/CouncilNFT.abi.j
 import GoerliSpaceFactoryAbi from '@harmony/contracts/goerli/abis/SpaceFactory.abi.json'
 import GoerliSpaceFactoryAddress from '@harmony/contracts/goerli/addresses/space-factory.json'
 import GoerliZioneerNFTAddress from '@harmony/contracts/goerli/addresses/zioneer.json'
+import GoerliZioneerNFTAbi from '@harmony/contracts/goerli/abis/Zioneer.abi.json'
 import LocalhostCouncilAddress from '@harmony/contracts/localhost/addresses/council.json'
 import LocalhostCouncilNFTAbi from '@harmony/contracts/localhost/abis/CouncilNFT.abi.json'
 import LocalhostSpaceFactoryAbi from '@harmony/contracts/localhost/abis/SpaceFactory.abi.json'
 import LocalhostSpaceFactoryAddress from '@harmony/contracts/localhost/addresses/space-factory.json'
 import LocalhostZioneerNFTAddress from '@harmony/contracts/localhost/addresses/zioneer.json'
+import LocalhostZioneerNFTAbi from '@harmony/contracts/localhost/abis/Zioneer.abi.json'
 
 const goerliContractsInfo: IStaticContractsInfo = {
     councilNft: {
@@ -22,6 +24,7 @@ const goerliContractsInfo: IStaticContractsInfo = {
         address: GoerliSpaceFactoryAddress,
     },
     zioneerNft: {
+        abi: GoerliZioneerNFTAbi,
         address: GoerliZioneerNFTAddress,
     },
 }
@@ -36,6 +39,7 @@ const localhostContractsInfo: IStaticContractsInfo = {
         address: LocalhostSpaceFactoryAddress,
     },
     zioneerNft: {
+        abi: LocalhostZioneerNFTAbi,
         address: LocalhostZioneerNFTAddress,
     },
 }
@@ -50,6 +54,7 @@ export interface IStaticContractsInfo {
         address: typeof LocalhostSpaceFactoryAddress | typeof GoerliSpaceFactoryAddress
     }
     zioneerNft: {
+        abi: typeof LocalhostZioneerNFTAbi | typeof GoerliZioneerNFTAbi
         address: typeof LocalhostZioneerNFTAddress | typeof GoerliZioneerNFTAddress
     }
 }
