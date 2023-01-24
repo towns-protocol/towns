@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 
 import { useNavigate } from 'react-router'
-import { Membership, SpaceData, useSpaceData, useZionClient } from 'use-zion-client'
+import { Membership, SpaceData, useZionClient } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useRetryUntilResolved } from 'hooks/useRetryUntilResolved'
+import { SpaceJoin } from '@components/Web3/SpaceJoin'
+import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
-    const space = useSpaceData()
+    const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
     const spaceId = space?.id
     const navigate = useNavigate()
     const channels = useMemo(
@@ -66,23 +68,45 @@ export const SpaceHome = () => {
         hasSyncedChannels,
     ])
 
+    // TODO: check how the default space fulfills this condition
+    if (space && space.membership !== Membership.Join) {
+        return (
+            <Container>
+                <JoinDefaultSpace space={space} />
+            </Container>
+        )
+    }
+
+    // space is on chain, but user has no matrix data, indicating they have landed via an invite link
+    if (chainSpace && !space) {
+        return (
+            <Container>
+                <SpaceJoin chainSpace={chainSpace} />
+                <TimelineShimmer />
+            </Container>
+        )
+    }
+
+    return (
+        <Container>
+            <Box absoluteFill padding grow overflow="hidden">
+                <TimelineShimmer />
+            </Box>
+        </Container>
+    )
+}
+
+const Container = (props: { children: React.ReactNode }) => {
     return (
         <Stack horizontal grow justifyContent="center" basis="1200">
             <LiquidContainer fullbleed position="relative">
-                {/* useMyMembership() seems to resolve slightly slower than 'space', using space.membership avoids unwanted flash of content   */}
-                {space && space.membership !== Membership.Join ? (
-                    <JoinSpace space={space} />
-                ) : (
-                    <Box absoluteFill padding grow overflow="hidden">
-                        <TimelineShimmer />
-                    </Box>
-                )}
+                {props.children}
             </LiquidContainer>
         </Stack>
     )
 }
 
-const JoinSpace = (props: { space: SpaceData }) => {
+const JoinDefaultSpace = (props: { space: SpaceData }) => {
     const { space } = props
     const { joinRoom } = useZionClient()
     const joinSpace = useCallback(() => {

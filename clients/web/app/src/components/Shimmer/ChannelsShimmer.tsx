@@ -4,7 +4,7 @@ import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 
 export const ChannelsShimmer = () => {
     return (
-        <Stack gap="md" padding="md">
+        <Stack gap="md" padding="md" data-testid="channel-shimmer">
             {Array(6)
                 .fill(undefined)
                 .map((_, i) => i)

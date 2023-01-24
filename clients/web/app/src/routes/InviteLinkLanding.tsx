@@ -1,35 +1,13 @@
 import React from 'react'
-import { NavLink, Navigate, useLocation } from 'react-router-dom'
-import { useProvider } from 'wagmi'
-import { useSpaceDapp } from 'use-zion-client'
-import { ethers } from 'ethers'
-import { useQuery } from '@tanstack/react-query'
+import { NavLink, Navigate } from 'react-router-dom'
 import { Box, Icon, Stack, Text } from '@ui'
 import { useQueryParams } from 'hooks/useQueryParam'
-import { env } from 'utils'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { useAuth } from 'hooks/useAuth'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
-
-const useSpaceInfo = (spaceId: string) => {
-    const chainId = env.IS_DEV ? 31337 : 5
-    const provider = useProvider<ethers.providers.Web3Provider>({ chainId })
-    const spaceDapp = useSpaceDapp({
-        chainId,
-        provider,
-    })
-
-    return useQuery(
-        ['spaceDapp', spaceId],
-        () => {
-            return spaceDapp?.getSpaceInfo(spaceId)
-        },
-        {
-            enabled: !!spaceDapp,
-        },
-    )
-}
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 
 function getButtonLabel(status: SignupButtonStatus) {
     switch (status) {
@@ -46,11 +24,10 @@ function getButtonLabel(status: SignupButtonStatus) {
 }
 
 const InviteLinkLanding = () => {
-    const { pathname } = useLocation()
-    const spaceId = decodeURIComponent(pathname.split('/').pop() || '')
+    const spaceId = useSpaceIdFromPathname()
     const { invite } = useQueryParams('invite')
     const isInvite = invite != undefined
-    const { data } = useSpaceInfo(spaceId)
+    const { data } = useContractSpaceInfo(spaceId)
 
     const { walletStatus, connect, loginStatus, login, register } = useAuth()
 
@@ -77,7 +54,7 @@ const InviteLinkLanding = () => {
             {data ? (
                 <Stack centerContent gap="md" paddingBottom="lg">
                     <SpaceIcon
-                        spaceId={spaceId}
+                        spaceId={data.networkId}
                         width="250"
                         height="250"
                         firstLetterOfSpaceName={data.name[0]}

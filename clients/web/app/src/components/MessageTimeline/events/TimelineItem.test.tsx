@@ -49,39 +49,37 @@ function generateEvent(content: MessageContent) {
 const Wrapper = ({ events }: { events: MessageContent[] }) => {
     return (
         <TestApp>
-            <BrowserRouter>
-                <MessageTimelineContext.Provider
-                    value={{
-                        userId: '',
-                        spaceId: {
-                            slug: '',
-                            networkId: '',
-                            protocol: SpaceProtocol.Matrix,
-                        },
-                        channels: [],
-                        channelId: {
-                            slug: '',
-                            networkId: '',
-                            protocol: SpaceProtocol.Matrix,
-                        },
-                        events: [],
-                        messageRepliesMap: {},
-                        messageReactionsMap: {},
-                        timelineActions: {
-                            editingMessageId: '',
-                            onSelectEditingMessage: () => null,
-                            onCancelEditingMessage: () => null,
-                        },
-                        handleReaction: () => null,
-                        sendReadReceipt: () => new Promise(() => null),
-                        type: MessageTimelineType.Channel,
-                        members: [],
-                        membersMap: {},
-                    }}
-                >
-                    <MessageTimelineItem itemData={generateMessage(events)} />
-                </MessageTimelineContext.Provider>
-            </BrowserRouter>
+            <MessageTimelineContext.Provider
+                value={{
+                    userId: '',
+                    spaceId: {
+                        slug: '',
+                        networkId: '',
+                        protocol: SpaceProtocol.Matrix,
+                    },
+                    channels: [],
+                    channelId: {
+                        slug: '',
+                        networkId: '',
+                        protocol: SpaceProtocol.Matrix,
+                    },
+                    events: [],
+                    messageRepliesMap: {},
+                    messageReactionsMap: {},
+                    timelineActions: {
+                        editingMessageId: '',
+                        onSelectEditingMessage: () => null,
+                        onCancelEditingMessage: () => null,
+                    },
+                    handleReaction: () => null,
+                    sendReadReceipt: () => new Promise(() => null),
+                    type: MessageTimelineType.Channel,
+                    members: [],
+                    membersMap: {},
+                }}
+            >
+                <MessageTimelineItem itemData={generateMessage(events)} />
+            </MessageTimelineContext.Provider>
         </TestApp>
     )
 }

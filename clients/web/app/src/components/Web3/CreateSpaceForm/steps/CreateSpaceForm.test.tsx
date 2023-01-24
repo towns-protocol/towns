@@ -48,9 +48,7 @@ vi.mock('../CreateSpaceListener', () => {
 const Wrapper = () => {
     return (
         <TestApp>
-            <MemoryRouter>
-                <SpacesNew />
-            </MemoryRouter>
+            <SpacesNew />
         </TestApp>
     )
 }

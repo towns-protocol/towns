@@ -138,6 +138,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
             minWidth="600"
             as="form"
             autoCorrect="off"
+            data-testid="register-form"
             onSubmit={handleSubmit(onSubmit)}
         >
             <TextField

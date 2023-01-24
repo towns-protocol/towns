@@ -2,14 +2,18 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Zion from 'use-zion-client'
 import { afterEach, vi } from 'vitest'
+import { MemoryRouter } from 'react-router'
+import { BrowserRouter } from 'react-router-dom'
 
 type TestAppProps = {
     children: JSX.Element
     zionContextProviderProps?: React.ComponentProps<typeof Zion.ZionContextProvider>
+    Router?: typeof MemoryRouter | typeof BrowserRouter
 }
 
 export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
+    const Router = props.Router || MemoryRouter
     const queryClient = new QueryClient({
         logger: {
             log: console.log,
@@ -31,7 +35,7 @@ export const TestApp = (props: TestAppProps) => {
                 casablancaServerUrl=""
                 {...props.zionContextProviderProps}
             >
-                {props.children}
+                <Router>{props.children}</Router>
             </Zion.ZionContextProvider>
         </QueryClientProvider>
     )

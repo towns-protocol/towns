@@ -2,13 +2,15 @@ import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import useEvent from 'react-use-event-hook'
-import { SpaceContextProvider, useSpaceData, useZionContext } from 'use-zion-client'
+import { SpaceContextProvider, useZionContext } from 'use-zion-client'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { Register } from 'routes/Register'
 import { atoms } from 'ui/styles/atoms.css'
+import { ChannelsShimmer } from '@components/Shimmer'
+import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 
 export const AppPanelLayout = () => {
     const spaceRoute = useMatch({ path: '/spaces/:spaceSlug', end: false })
@@ -35,7 +37,7 @@ export const AppPanelLayoutContent = () => {
     const spacesNewRoute = useMatch({ path: '/spaces/new', end: true })
     const spacesSettingsRoute = useMatch({ path: '/spaces/:space/settings', end: false })
 
-    const space = useSpaceData()
+    const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
     const { onSizesChange, sizes } = usePersistPanes(config)
 
@@ -57,7 +59,8 @@ export const AppPanelLayoutContent = () => {
         }, 0)
     })
 
-    const displaySpacePanel = !spacesSettingsRoute && !spacesNewRoute && !!space && !homeRoute
+    const displaySpacePanel =
+        !spacesSettingsRoute && !spacesNewRoute && !!(chainSpace || space) && !homeRoute
 
     return (
         <Stack horizontal grow position="relative">
@@ -73,14 +76,14 @@ export const AppPanelLayoutContent = () => {
                         <MainSideBar expanded={isSpacesExpanded} onExpandClick={onExpandSpaces} />
                     </Allotment.Pane>
 
-                    {/* left-side side-bar goes here */}
+                    {/* channel side-bar goes here */}
                     <Allotment.Pane
                         minSize={180}
                         maxSize={320}
                         preferredSize={sizes[1] || 320}
                         visible={displaySpacePanel}
                     >
-                        {space ? <SpaceSideBar space={space} /> : <></>}
+                        {space ? <SpaceSideBar space={space} /> : <ChannelsShimmer />}
                     </Allotment.Pane>
 
                     {/* secondary side bar */}

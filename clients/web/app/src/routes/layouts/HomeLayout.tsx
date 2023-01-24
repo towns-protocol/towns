@@ -3,7 +3,7 @@ import { Outlet, useMatch, useResolvedPath } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { Box, Heading, SizeBox } from '@ui'
 import { Stack } from 'ui/components/Stack/Stack'
-import { LiquidContainer } from './SpacesIndex'
+import { LiquidContainer } from '../SpacesIndex'
 
 export const HomeLayout = () => (
     <Stack horizontal grow justifyContent="center" paddingY="lg" basis="1200">

@@ -57,7 +57,7 @@ export const SpaceSideBar = (props: Props) => {
     }, 0)
 
     return (
-        <SideBar>
+        <SideBar data-testid="space-sidebar">
             <Stack padding position="relative" background="level2" width="100%" aspectRatio="1/1">
                 <SettingsGear spaceId={space.id} spaceName={space.name} onSettings={onSettings} />
             </Stack>

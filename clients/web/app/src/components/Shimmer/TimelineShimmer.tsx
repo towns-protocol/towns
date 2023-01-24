@@ -4,7 +4,7 @@ import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 
 export const TimelineShimmer = () => {
     return (
-        <Box absoluteFill padding>
+        <Box absoluteFill padding data-testid="timeline-shimmer">
             <Stack grow>
                 <Stack gap="lg" padding="sm">
                     <Box grow horizontal paddingBottom="sm">

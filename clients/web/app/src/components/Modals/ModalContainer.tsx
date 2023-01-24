@@ -6,7 +6,8 @@ export const ModalContainer = (props: { children: React.ReactNode; onHide: () =>
     const root = useContext(RootLayerContext).rootLayerRef?.current
 
     if (!root) {
-        throw new Error(`no root context declared for use of modal`)
+        console.error(`no root context declared for use of modal`)
+        return null
     }
 
     return createPortal(
