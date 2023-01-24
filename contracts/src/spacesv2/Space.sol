@@ -406,6 +406,11 @@ contract Space is
     address _user,
     string calldata _permission
   ) external view returns (bool _entitled) {
+    // check that a _channelId is not empty
+    if (bytes(_channelId).length == 0) {
+      revert Errors.InvalidParameters();
+    }
+
     for (uint256 i = 0; i < entitlements.length; i++) {
       if (
         _isEntitled(_channelId, _user, bytes32(abi.encodePacked(_permission)))

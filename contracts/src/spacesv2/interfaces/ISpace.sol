@@ -48,6 +48,14 @@ interface ISpace {
     uint256[] memory roleIds
   ) external returns (bytes32);
 
+  /// @notice updates a channel name
+  /// @param channelId the channelId to update
+  /// @param channelName the new name of the channel
+  function updateChannel(
+    string calldata channelId,
+    string memory channelName
+  ) external;
+
   /// ***** Role Management *****
   /// @notice fetches the all the created roles for the space
   function getRoles() external view returns (DataTypes.Role[] memory);

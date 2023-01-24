@@ -960,7 +960,7 @@
         9699
       ],
       "Ownable": [
-        66132
+        66154
       ],
       "PermissionTypes": [
         10488
@@ -1129,7 +1129,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 6444,
-        "sourceUnit": 66133,
+        "sourceUnit": 66155,
         "symbolAliases": [
           {
             "foreign": {
@@ -1137,7 +1137,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 66132,
+              "referencedDeclaration": 66154,
               "src": "353:7:26",
               "typeDescriptions": {}
             },
@@ -1833,7 +1833,7 @@
                     "1267:9:26"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 66051,
+                  "referencedDeclaration": 66073,
                   "src": "1267:9:26"
                 },
                 "nodeType": "ModifierInvocation",
@@ -8651,7 +8651,7 @@
                 "811:7:26"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 66132,
+              "referencedDeclaration": 66154,
               "src": "811:7:26"
             },
             "id": 5824,
@@ -8681,8 +8681,8 @@
         "linearizedBaseContracts": [
           6443,
           13030,
-          66132,
-          76248
+          66154,
+          76270
         ],
         "name": "ZionRoleManager",
         "nameLocation": "792:15:26",
