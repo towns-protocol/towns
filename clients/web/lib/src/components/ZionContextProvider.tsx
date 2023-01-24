@@ -61,14 +61,16 @@ interface Props {
     initialSyncLimit?: number
     chainId?: number
     children: JSX.Element
+    alchemyKey?: string
 }
 
 const DEFAULT_INITIAL_SYNC_LIMIT = 20
 
 export function ZionContextProvider(props: Props): JSX.Element {
+    const { alchemyKey, ...contextProps } = props
     return (
-        <Web3ContextProvider>
-            <ContextImpl {...props}></ContextImpl>
+        <Web3ContextProvider alchemyKey={alchemyKey}>
+            <ContextImpl {...contextProps}></ContextImpl>
         </Web3ContextProvider>
     )
 }

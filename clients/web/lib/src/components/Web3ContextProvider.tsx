@@ -6,6 +6,7 @@ import { goerli, localhost, foundry } from '@wagmi/core/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { WalletStatus } from '../types/web3-types'
+import { alchemyProvider } from 'wagmi/providers/alchemy'
 
 export interface IWeb3Context {
     provider?: ethers.providers.Web3Provider
@@ -31,15 +32,23 @@ export function useWeb3Context(): IWeb3Context {
 
 interface Props {
     children: JSX.Element
+    alchemyKey?: string
 }
 
 export function Web3ContextProvider(props: Props): JSX.Element {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const wagmiClient = useRef<any>()
+
     if (!wagmiClient.current) {
+        const providers = [publicProvider({ priority: 1 })]
+
+        if (props.alchemyKey) {
+            providers.push(alchemyProvider({ apiKey: props.alchemyKey, priority: 0 }))
+        }
+
         const { chains, provider, webSocketProvider } = configureChains(
-            [goerli, foundry, localhost],
-            [publicProvider()], // todo, add more providers see: https://github.com/HereNotThere/harmony/issues/460
+            [goerli, localhost, foundry],
+            providers,
         )
         const client = createClient({
             autoConnect: true,

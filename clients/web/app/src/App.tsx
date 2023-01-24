@@ -33,6 +33,7 @@ export const App = () => {
 
     return (
         <ZionContextProvider
+            alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
             homeServerUrl={homeserverUrl}
