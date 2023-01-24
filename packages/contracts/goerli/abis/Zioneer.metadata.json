@@ -691,11 +691,11 @@
   },
   "sources": {
     "contracts/src/dao/Zioneer.sol": {
-      "keccak256": "0xd8a92a8bf2e5e30ae5a569c4ab1fe3a68f0cc7485306910b12061b8af3b4b293",
+      "keccak256": "0xe62a65d2f06dd1f050b1ab45a5aa6e7a1d96526b3e37f3caff6ba5adcffa290f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4d2abff9460724c4bc974b53fc752beae88c1acfe31921672e9164ca4641dbe3",
-        "dweb:/ipfs/QmUGNMHHiqDnS8ZL7dpjyKgSq3r6jRiZeZsJz8tUU2geQG"
+        "bzz-raw://ffaa6510574468870c33a099104885e117d3d681d1fbc87af69d44dd24e07ae0",
+        "dweb:/ipfs/QmYmFMTn8RR6opduzmVa9ai2JuP5Wz1GxYzBZHo2FJuUee"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

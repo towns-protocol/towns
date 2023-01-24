@@ -24,7 +24,7 @@ contract CreateSpace is Script {
     string[] memory _permissions = new string[](0);
 
     vm.startBroadcast();
-    address space = spaceFactory.createSpace(
+    spaceFactory.createSpace(
       "moonbirds",
       "!7evmpuHDDgkady6u:goerli",
       "ipfs://QmZion",

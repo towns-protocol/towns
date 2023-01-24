@@ -17,11 +17,6 @@
       },
       {
         "inputs": [],
-        "name": "QuantityNotFound",
-        "type": "error"
-      },
-      {
-        "inputs": [],
         "name": "RoleAlreadyExists",
         "type": "error"
       },
@@ -134,25 +129,6 @@
         "type": "function"
       },
       {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "name": "allEntitlementIds",
-        "outputs": [
-          {
-            "internalType": "bytes32",
-            "name": "",
-            "type": "bytes32"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [],
         "name": "description",
         "outputs": [
@@ -163,41 +139,6 @@
           }
         ],
         "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "contractAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "quantity",
-                "type": "uint256"
-              },
-              {
-                "internalType": "bool",
-                "name": "isSingleToken",
-                "type": "bool"
-              },
-              {
-                "internalType": "uint256[]",
-                "name": "tokenIds",
-                "type": "uint256[]"
-              }
-            ],
-            "internalType": "struct DataTypes.ExternalToken[]",
-            "name": "tokens",
-            "type": "tuple[]"
-          }
-        ],
-        "name": "encodeExternalTokens",
-        "outputs": [],
-        "stateMutability": "pure",
         "type": "function"
       },
       {
@@ -611,14 +552,8 @@
         "addRoleIdToChannel(string,uint256)": {
           "notice": "adds a role to a channel"
         },
-        "allEntitlementIds(uint256)": {
-          "notice": "array of all the entitlementIds"
-        },
         "description()": {
           "notice": "The description of the entitlement module"
-        },
-        "entitlementsById(bytes32)": {
-          "notice": "mapping holding all the entitlements of entitlementId to Entitlement"
         },
         "getEntitlementDataByRoleId(uint256)": {
           "notice": "fetches the entitlement data for a roleId"
@@ -653,7 +588,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": "TokenEntitlement"
+      "contracts/src/spacesv2/entitlements/UserEntitlement.sol": "UserEntitlement"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -678,12 +613,12 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x6ca4a63d7cecb3ecccb3ef97d2d2865e862e8f08fe06c43573c7d34489c7b936",
+    "contracts/src/spacesv2/entitlements/UserEntitlement.sol": {
+      "keccak256": "0x44dd91f18587e8164ddd027298b8073fdf7fdce08fb5c0e8cb9e0ab4082582a9",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://234b1fabca9d18c5335ca9a6c05bc3188ce5a6763737a963aeddb56d4c437690",
-        "dweb:/ipfs/QmZCvTCaTDN5jqnxWVofCDT2Wqr19LymvyUxpZviwsg5yC"
+        "bzz-raw://c47e1eed912cb7e01b09d6c507331b33ee831a4d90d84d2cfdab73f818039ee7",
+        "dweb:/ipfs/QmaxwXVPEfF2BuDt2EEN4J3nGgtJXnj5t4bZofQwG1V7NE"
       ]
     },
     "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
@@ -716,6 +651,14 @@
       "urls": [
         "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
         "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/Utils.sol": {
+      "keccak256": "0xb27a26f1156b750b8986b79160f50c61e566b73c55ea3924301ac8637a5a6c9f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a89f6b6ffeff675130c64973988d0e2118953399cbac55fe2e2e26cbd3b11fb7",
+        "dweb:/ipfs/QmbQf71y4Qxiax3hnfuwSpCP2ermtSSDcizGfaHTPrTsSK"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol": {
@@ -804,38 +747,6 @@
       "urls": [
         "bzz-raw://92ad7e572cf44e6b4b37631b44b62f9eb9fb1cf14d9ce51c1504d5dc7ccaf758",
         "dweb:/ipfs/QmcnbqX85tsWnUXPmtuPLE4SczME2sJaTfmqEFkuAJvWhy"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol": {
-      "keccak256": "0x6392f2cfe3a5ee802227fe7a2dfd47096d881aec89bddd214b35c5b46d3cd941",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://bd9c47a375639888e726a99da718890ba16d17d7ad9eacb0ccc892d46d1b3ee0",
-        "dweb:/ipfs/Qmb41W5RUjy2sWg49A2rMnxekSeEk6SvGyJL5tyCCSr7un"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
-      "keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
-        "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
-      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
-        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
-      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
-        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
       ]
     }
   },

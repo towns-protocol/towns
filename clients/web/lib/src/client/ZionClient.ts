@@ -330,6 +330,7 @@ export class ZionClient {
         const rpcClient = makeZionRpcClient(this.opts.casablancaServerUrl)
         this.casablancaClient = new CasablancaClient(context, rpcClient)
         // TODO - long-term the app should already know if user exists via cookie
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         const userExists = await this.casablancaClient.userExists()
         if (!userExists) {
             await this.casablancaClient.createNewUser()

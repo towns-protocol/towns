@@ -270,6 +270,25 @@ export default [
         "type": "string"
       }
     ],
+    "name": "getSpaceAddressByNetworkId",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "spaceNetworkId",
+        "type": "string"
+      }
+    ],
     "name": "getTokenIdByNetworkId",
     "outputs": [
       {
