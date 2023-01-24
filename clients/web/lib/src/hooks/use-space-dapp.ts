@@ -11,7 +11,9 @@ export const useSpaceDapp = ({
     chainId: number | undefined
 }) => {
     const spaceDapp = useMemo<ISpaceDapp | undefined>(
-        () => (chainId && new SpaceDapp(chainId, provider, provider?.getSigner())) || undefined,
+        () =>
+            (chainId && provider && new SpaceDapp(chainId, provider, provider?.getSigner?.())) ||
+            undefined,
         [chainId, provider],
     )
     return spaceDapp
