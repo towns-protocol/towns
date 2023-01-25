@@ -56,7 +56,7 @@ export const LoginComponent = () => {
 const getButtonLabel = (status: SignupButtonStatus) => {
     switch (status) {
         default:
-            return 'Connec wallet'
+            return 'Connect wallet'
         case SignupButtonStatus.ConnectRequired:
         case SignupButtonStatus.ConnectError:
             return 'Connect wallet'
