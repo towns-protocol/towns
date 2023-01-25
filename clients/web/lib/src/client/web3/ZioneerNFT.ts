@@ -3,6 +3,14 @@ import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 
 import { ZioneerNFTShim } from './shims/ZioneerNFTShim'
 
+export interface ZioneerNFTContractState {
+    allowedAddressesList: string[]
+    contractBalance: BigNumber
+    mintReward: BigNumber
+    contractAddress: string
+    owner: string
+}
+
 export class ZioneerNFT {
     private readonly contractsInfo: IStaticContractsInfo
     private readonly provider: ethers.providers.Provider | undefined
@@ -45,7 +53,7 @@ export class ZioneerNFT {
         return this.zioneerNFTShim.write.withdraw(address)
     }
 
-    public async getContractState() {
+    public async getContractState(): Promise<ZioneerNFTContractState> {
         if (!this.provider) {
             throw new Error('No provider')
         }
@@ -71,9 +79,3 @@ export class ZioneerNFT {
         }
     }
 }
-
-type ZioneerNFTContractStatePromise = ReturnType<ZioneerNFT['getContractState']>
-
-export type ZioneerNFTContractState = ZioneerNFTContractStatePromise extends Promise<infer U>
-    ? U
-    : ZioneerNFTContractStatePromise
