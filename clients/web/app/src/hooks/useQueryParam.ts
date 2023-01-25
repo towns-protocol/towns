@@ -1,7 +1,8 @@
 import { useSearchParams } from 'react-router-dom'
 import { env } from 'utils'
 
-export function useQueryParams(...keys: string[]) {
+// a helper function for adding query params in local development i.e. to test a feature or bypass some other UI
+export function useDevOnlyQueryParams(...keys: string[]) {
     const [searchParams] = useSearchParams()
     if (!env.IS_DEV) {
         return {}

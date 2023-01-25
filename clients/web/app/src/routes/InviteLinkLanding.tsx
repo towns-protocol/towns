@@ -1,7 +1,6 @@
 import React from 'react'
-import { NavLink, Navigate } from 'react-router-dom'
+import { NavLink, Navigate, useSearchParams } from 'react-router-dom'
 import { Box, Icon, Stack, Text } from '@ui'
-import { useQueryParams } from 'hooks/useQueryParam'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { useAuth } from 'hooks/useAuth'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -25,8 +24,8 @@ function getButtonLabel(status: SignupButtonStatus) {
 
 const InviteLinkLanding = () => {
     const spaceId = useSpaceIdFromPathname()
-    const { invite } = useQueryParams('invite')
-    const isInvite = invite != undefined
+    const [searchParams] = useSearchParams()
+    const isInvite = searchParams.get('invite') != undefined
     const { data } = useContractSpaceInfo(spaceId)
 
     const { walletStatus, connect, loginStatus, login, register } = useAuth()

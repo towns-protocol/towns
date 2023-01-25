@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { useSpaceDapp } from 'use-zion-client'
-import { useNetwork, useProvider } from 'wagmi'
-import { ethers } from 'ethers'
+import { useSpaceDapp, useWeb3Context } from 'use-zion-client'
 import { PROD_CHAIN_ID, env } from 'utils'
 
 // Grab the space info without requiring matrix client to be initialized
 export const useContractSpaceInfo = (spaceId: string | undefined) => {
-    const network = useNetwork()
+    const { provider, chain } = useWeb3Context()
 
-    const chainId = env.IS_DEV ? network.chain?.id : PROD_CHAIN_ID
-    const provider = useProvider<ethers.providers.Web3Provider>({ chainId })
+    const chainId = env.IS_DEV ? chain?.id : PROD_CHAIN_ID
+
     const spaceDapp = useSpaceDapp({
         chainId,
         provider,

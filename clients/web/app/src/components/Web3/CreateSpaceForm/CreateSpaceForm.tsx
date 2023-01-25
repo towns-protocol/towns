@@ -9,7 +9,7 @@ import {
     useCreateSpaceTransaction,
 } from 'use-zion-client'
 import { Box, Button, Heading, Text } from '@ui'
-import { useQueryParams } from 'hooks/useQueryParam'
+import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { TransactionUIStatesType, useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { StoredTransactionType } from 'store/transactionsStore'
@@ -78,7 +78,7 @@ const Header = (props: HeaderProps) => {
 
 export const CreateSpaceForm = (props: Props) => {
     const { onCreateSpace } = props
-    const { step } = useQueryParams('step')
+    const { step } = useDevOnlyQueryParams('step')
     const startAt = step && (step as number) > 0 ? (step as number) - 1 : 0
     const {
         data: roomId,
