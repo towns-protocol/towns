@@ -59,7 +59,9 @@ describe('sendMessageHooks', () => {
             const channelId = useChannelId()
             const timeline = useChannelTimeline()
             const messagesOrRedactions = timeline.filter(
-                (x) => x.eventType === ZTEvent.RoomMessage || x.eventType === ZTEvent.RoomRedaction,
+                (x) =>
+                    x.content?.kind === ZTEvent.RoomMessage ||
+                    x.content?.kind === ZTEvent.RoomRedaction,
             )
             // send message
             const onClickSendMessage = useCallback(() => {

@@ -32,8 +32,8 @@ export function ChatMessages(props: Props): JSX.Element {
     // issue: https://github.com/HereNotThere/harmony/issues/443
     const canLoadMore =
         timeline.length > 1 &&
-        timeline[0].eventType !== ZTEvent.RoomCreate &&
-        timeline[1].eventType !== ZTEvent.RoomCreate
+        timeline[0].content?.kind !== ZTEvent.RoomCreate &&
+        timeline[1].content?.kind !== ZTEvent.RoomCreate
 
     const onTextChanged = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setCurrentMessage(event.target.value)

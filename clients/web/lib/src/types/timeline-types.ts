@@ -1,10 +1,4 @@
-import {
-    EventType as MatrixEventType,
-    HistoryVisibility,
-    IContent,
-    JoinRule,
-    RestrictedAllowType,
-} from 'matrix-js-sdk'
+import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
 import { Channel, Membership, Mention, PowerLevels } from './matrix-types'
 import { RoomIdentifier } from './room-identifier'
 
@@ -151,7 +145,6 @@ export interface SpaceParentEvent {
 
 export interface TimelineEvent {
     eventId: string
-    eventType: MatrixEventType | string
     originServerTs: number
     updatedServerTs?: number
     content?: TimelineEvent_OneOf

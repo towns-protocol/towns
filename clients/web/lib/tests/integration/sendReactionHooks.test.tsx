@@ -57,7 +57,8 @@ describe('sendReactionHooks', () => {
             const timeline = useChannelTimeline()
             const reactions = useChannelReactions()
             const messages = timeline.filter(
-                (x) => x.eventType === ZTEvent.RoomMessage || x.eventType === ZTEvent.Reaction,
+                (x) =>
+                    x.content?.kind === ZTEvent.RoomMessage || x.content?.kind === ZTEvent.Reaction,
             )
             const onSendReaction = useCallback(() => {
                 void sendReaction(channelId, messages[0].eventId, '👍')

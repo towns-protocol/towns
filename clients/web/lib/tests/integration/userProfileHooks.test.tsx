@@ -83,7 +83,9 @@ describe('userProfileHooks', () => {
                             : 'none'}
                     </div>
                     <div data-testid="allMessages">
-                        {timeline.map((m) => `${m.eventType} ${m.fallbackContent}`).join('\n')}
+                        {timeline
+                            .map((m) => `${m.content?.kind ?? 'none'} ${m.fallbackContent}`)
+                            .join('\n')}
                     </div>
                 </>
             )

@@ -312,7 +312,6 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     // console.log("!!!! to event", event.getId(), fbc);
     return {
         eventId: event.getId(),
-        eventType: event.getType(),
         originServerTs: event.getTs(),
         updatedServerTs: event.replacingEvent()?.getTs(),
         content: content,
@@ -338,7 +337,6 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     const eventId = prev.eventId.startsWith('$') ? prev.eventId : next.eventId
     return {
         eventId: eventId,
-        eventType: next.eventType,
         originServerTs: prev.originServerTs,
         updatedServerTs: next.originServerTs,
         content: {
