@@ -1,8 +1,12 @@
 import React, { useContext } from 'react'
 import { createPortal } from 'react-dom'
-import { Box, RootLayerContext } from '@ui'
+import { Box, BoxProps, RootLayerContext } from '@ui'
 
-export const ModalContainer = (props: { children: React.ReactNode; onHide: () => void }) => {
+export const ModalContainer = (props: {
+    children: React.ReactNode
+    onHide: () => void
+    minWidth?: BoxProps['minWidth']
+}) => {
     const root = useContext(RootLayerContext).rootLayerRef?.current
 
     if (!root) {
@@ -24,7 +28,7 @@ export const ModalContainer = (props: { children: React.ReactNode; onHide: () =>
                     border
                     rounded="md"
                     background="level1"
-                    minWidth="600"
+                    minWidth={props.minWidth || '600'}
                     pointerEvents="auto"
                 >
                     {props.children}

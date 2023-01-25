@@ -4,6 +4,7 @@ import * as Zion from 'use-zion-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
+import { MainLayout } from 'MainLayout'
 
 type TestAppProps = {
     children: JSX.Element
@@ -28,16 +29,18 @@ export const TestApp = (props: TestAppProps) => {
         },
     })
     return (
-        <QueryClientProvider client={queryClient}>
-            <Zion.ZionContextProvider
-                primaryProtocol={Zion.SpaceProtocol.Matrix}
-                homeServerUrl=""
-                casablancaServerUrl=""
-                {...props.zionContextProviderProps}
-            >
-                <Router>{props.children}</Router>
-            </Zion.ZionContextProvider>
-        </QueryClientProvider>
+        <MainLayout>
+            <QueryClientProvider client={queryClient}>
+                <Zion.ZionContextProvider
+                    primaryProtocol={Zion.SpaceProtocol.Matrix}
+                    homeServerUrl=""
+                    casablancaServerUrl=""
+                    {...props.zionContextProviderProps}
+                >
+                    <Router>{props.children}</Router>
+                </Zion.ZionContextProvider>
+            </QueryClientProvider>
+        </MainLayout>
     )
 }
 

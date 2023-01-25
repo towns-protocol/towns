@@ -83,7 +83,27 @@ export const AppPanelLayoutContent = () => {
                         preferredSize={sizes[1] || 320}
                         visible={displaySpacePanel}
                     >
-                        {space ? <SpaceSideBar space={space} /> : <ChannelsShimmer />}
+                        {space ? (
+                            <SpaceSideBar space={space} />
+                        ) : (
+                            <>
+                                <Stack
+                                    padding
+                                    centerContent
+                                    position="relative"
+                                    width="100%"
+                                    aspectRatio="4/3"
+                                >
+                                    <Box
+                                        rounded="full"
+                                        background="level2"
+                                        width="100"
+                                        height="100"
+                                    />
+                                </Stack>
+                                <ChannelsShimmer />
+                            </>
+                        )}
                     </Allotment.Pane>
 
                     {/* secondary side bar */}

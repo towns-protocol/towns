@@ -5,7 +5,6 @@ import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
-import { MainLayout } from 'MainLayout'
 import { SpaceHome } from './SpaceHome'
 
 vi.mock('react-router', async () => {
@@ -16,19 +15,17 @@ vi.mock('react-router', async () => {
 
 const Wrapper = () => {
     return (
-        <MainLayout>
-            <TestApp>
-                <Lib.SpaceContextProvider
-                    spaceId={{
-                        protocol: Lib.SpaceProtocol.Matrix,
-                        slug: 'some-slug',
-                        networkId: 'some-network',
-                    }}
-                >
-                    <SpaceHome />
-                </Lib.SpaceContextProvider>
-            </TestApp>
-        </MainLayout>
+        <TestApp>
+            <Lib.SpaceContextProvider
+                spaceId={{
+                    protocol: Lib.SpaceProtocol.Matrix,
+                    slug: 'some-slug',
+                    networkId: 'some-network',
+                }}
+            >
+                <SpaceHome />
+            </Lib.SpaceContextProvider>
+        </TestApp>
     )
 }
 

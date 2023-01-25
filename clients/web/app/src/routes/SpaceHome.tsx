@@ -79,9 +79,13 @@ export const SpaceHome = () => {
 
     // space is on chain, but user has no matrix data, indicating they have landed via an invite link
     if (chainSpace && !space) {
+        const joinData = {
+            name: chainSpace.name,
+            networkId: chainSpace.networkId,
+        }
         return (
             <Container>
-                <SpaceJoin chainSpace={chainSpace} />
+                <SpaceJoin joinData={joinData} />
                 <TimelineShimmer />
             </Container>
         )

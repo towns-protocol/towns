@@ -5,6 +5,7 @@ export const ToneName = {
     Accent: 'accent',
     CTA1: 'cta1',
     CTA2: 'cta2',
+    Error: 'error',
     ENS: 'etherum',
     Positive: 'positive',
     Negative: 'negative',
@@ -18,6 +19,7 @@ const tone = {
     [ToneName.Accent]: Figma.Colors.Blue,
     [ToneName.CTA1]: Figma.Colors.Orange,
     [ToneName.CTA2]: Figma.Colors.Purple,
+    [ToneName.Error]: Figma.Colors.Error,
     // forms
     [ToneName.Positive]: Figma.Colors.Green,
     [ToneName.Negative]: Figma.Colors.Yellow,

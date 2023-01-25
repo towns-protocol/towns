@@ -26,5 +26,6 @@ export const Figma = {
         ENSBlue: '#18A0FB',
         Green: '#1FED8A',
         Yellow: '#FFCF55',
+        Error: '#FC8282',
     },
 } as const

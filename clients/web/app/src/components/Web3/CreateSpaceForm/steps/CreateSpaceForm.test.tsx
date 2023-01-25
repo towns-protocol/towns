@@ -3,7 +3,6 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
-import { MemoryRouter } from 'react-router-dom'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
 import { TestApp } from 'test/testUtils'

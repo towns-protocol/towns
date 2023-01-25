@@ -4,6 +4,7 @@ import { vars } from 'ui/styles/vars.css'
 const fontSizeVariants = {
     h1: {
         fontSize: vars.fontSize.h1,
+        marginTop: '1rem', // I don't know
     },
     display: {
         fontSize: vars.fontSize.display,

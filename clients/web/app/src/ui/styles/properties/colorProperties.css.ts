@@ -67,6 +67,10 @@ const background = {
         background: vars.color.tone.etherum,
         color: vars.color.text.onTone,
     },
+    [ToneName.Error]: {
+        background: vars.color.tone.error,
+        color: vars.color.text.onTone,
+    },
 } as const
 
 export const colorProperties = defineProperties({

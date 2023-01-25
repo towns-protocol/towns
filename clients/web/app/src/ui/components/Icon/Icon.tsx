@@ -787,10 +787,29 @@ const Manifesto = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
         />
     </svg>
 ))
+const Alert = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="34"
+        height="34"
+        viewBox="0 0 34 34"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M16.625 3.5C9.16916 3.5 3.125 9.54416 3.125 17C3.125 24.4558 9.16916 30.5 16.625 30.5C24.0808 30.5 30.125 24.4558 30.125 17C30.125 9.54416 24.0808 3.5 16.625 3.5ZM0.125 17C0.125 7.8873 7.5123 0.5 16.625 0.5C25.7377 0.5 33.125 7.8873 33.125 17C33.125 26.1127 25.7377 33.5 16.625 33.5C7.5123 33.5 0.125 26.1127 0.125 17ZM16.625 9.5C17.4534 9.5 18.125 10.1716 18.125 11V17C18.125 17.8284 17.4534 18.5 16.625 18.5C15.7966 18.5 15.125 17.8284 15.125 17V11C15.125 10.1716 15.7966 9.5 16.625 9.5ZM16.625 21.5C15.7966 21.5 15.125 22.1716 15.125 23C15.125 23.8284 15.7966 24.5 16.625 24.5H16.64C17.4684 24.5 18.14 23.8284 18.14 23C18.14 22.1716 17.4684 21.5 16.64 21.5H16.625Z"
+            fill="currentColor"
+        />
+    </svg>
+))
 
 const iconMap = {
     all: AllIcon,
     at: AtIcon,
+    alert: Alert,
     back: BackIcon,
     bell: BellIcon,
     bold: BoldIcon,

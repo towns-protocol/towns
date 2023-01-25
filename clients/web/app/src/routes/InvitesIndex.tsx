@@ -1,27 +1,25 @@
 import React, { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useInviteData, useZionClient } from 'use-zion-client'
-import { Box, Stack } from '@ui'
-import { AcceptRoomInviteForm } from '@components/Web3'
+import { SpaceJoin } from '@components/Web3/SpaceJoin'
 
 export const InvitesIndex = () => {
     const { inviteSlug } = useParams()
-    const { leaveRoom, joinRoom } = useZionClient()
+    const { leaveRoom } = useZionClient()
     const navigate = useNavigate()
     const invite = useInviteData(inviteSlug)
 
-    const onAccept = useCallback(async () => {
+    const onSuccessfulJoin = useCallback(async () => {
         if (!invite?.id) {
-            console.error('onAccept Room Invite, space?.id undefined')
             return
         }
-        await joinRoom(invite.id)
         navigate(
             invite.isSpaceRoom
                 ? '/spaces/' + invite.id.slug + '/'
-                : '/' + invite.spaceParentId?.slug + '/channels/' + invite.id.slug + '/',
+                : // TODO: we don't have UI for channel invites so we should either remove this or refactor once channel flow is done
+                  '/' + invite.spaceParentId?.slug + '/channels/' + invite.id.slug + '/',
         )
-    }, [invite, joinRoom, navigate])
+    }, [invite, navigate])
 
     const onDecline = useCallback(async () => {
         if (!invite?.id) {
@@ -36,29 +34,14 @@ export const InvitesIndex = () => {
         <>
             {invite ? (
                 <>
-                    <Stack
-                        borderBottom
-                        grow
-                        alignItems="center"
-                        paddingBottom="none"
-                        position="relative"
-                        maxHeight="400"
-                    >
-                        <Box
-                            position="relative"
-                            width="100%"
-                            height="100%"
-                            alignItems="center"
-                            padding="lg"
-                            gap="md"
-                        >
-                            <AcceptRoomInviteForm
-                                spaceName={invite.name}
-                                onAcceptInviteClicked={onAccept}
-                                onDeclineInviteClicked={onDecline}
-                            />
-                        </Box>
-                    </Stack>
+                    <SpaceJoin
+                        joinData={{
+                            name: invite.name,
+                            networkId: invite.id?.networkId,
+                        }}
+                        onCancel={onDecline}
+                        onSuccessfulJoin={onSuccessfulJoin}
+                    />
                 </>
             ) : (
                 <p>Invite &quot;{inviteSlug}&quot; not found</p>
