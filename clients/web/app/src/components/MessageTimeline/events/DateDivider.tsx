@@ -12,21 +12,20 @@ export const DateDivider = React.forwardRef<HTMLElement, Props>((props, ref) => 
                 horizontal
                 gap
                 alignItems="center"
-                paddingX="lg"
-                height="x4"
+                height="x6"
                 position="absolute"
                 width="100%"
                 color={borderColor}
             >
-                <Box grow borderBottom={borderColor} />
+                <Box grow borderBottom={borderColor} paddingTop="md" />
                 {!!isNew && (
                     <Box color="negative">
                         <Paragraph size="sm">NEW</Paragraph>
                     </Box>
                 )}
             </Box>
-            <Box centerContent top="md" display="block" position="sticky" zIndex="ui" ref={ref}>
-                <Box centerContent color={isNew ? 'negative' : 'gray2'}>
+            <Box centerContent top="none" display="block" position="sticky" zIndex="ui" ref={ref}>
+                <Box centerContent color={isNew ? 'negative' : 'gray2'} paddingY="md">
                     <Box
                         paddingY="sm"
                         paddingX="md"
