@@ -28,7 +28,7 @@ export const SpaceThreads = () => {
         identityFn: (t: ThreadResult) => t.thread.parentId,
     })
 
-    return userId && spaceId ? (
+    return userId && spaceId && threads.length > 0 ? (
         <Stack grow horizontal>
             <Stack grow background="level1">
                 {threads.map(({ thread, channel }) => {
