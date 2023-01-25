@@ -43,9 +43,10 @@ export const LoginComponent = () => {
     return (
         <ButtonTooltip message={loginError ? loginError.message : tooltipMessage}>
             <LoginButton
+                tone="cta1"
                 label={buttonLabel}
                 loading={isSpinning}
-                icon="metamask"
+                icon="wallet"
                 onClick={onButtonClick}
             />
         </ButtonTooltip>
@@ -55,10 +56,10 @@ export const LoginComponent = () => {
 const getButtonLabel = (status: SignupButtonStatus) => {
     switch (status) {
         default:
-            return 'Connect'
+            return 'Connec wallet'
         case SignupButtonStatus.ConnectRequired:
         case SignupButtonStatus.ConnectError:
-            return 'Connect'
+            return 'Connect wallet'
         case SignupButtonStatus.Login:
         case SignupButtonStatus.LoginProgress:
             return 'Login'

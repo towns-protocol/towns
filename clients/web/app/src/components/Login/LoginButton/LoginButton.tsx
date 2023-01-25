@@ -17,10 +17,10 @@ export const LoginButton = (props: {
 
     return (
         <AnimatePresence mode="wait">
-            <Button minWidth="250" tone={props.tone} onClick={props.onClick}>
+            <Button minWidth="200" tone={props.tone} onClick={props.onClick}>
                 {props.icon && (
-                    <FadeIn layout key="metamaks">
-                        <Icon type="metamask" />
+                    <FadeIn layout key="wallet">
+                        <Icon type="wallet" />
                     </FadeIn>
                 )}
 
