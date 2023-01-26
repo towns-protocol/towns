@@ -2,7 +2,7 @@
 
 import { Membership, RoomVisibility } from '../../src/types/matrix-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
@@ -58,34 +58,48 @@ describe('sendMessageHooks', () => {
             const { sendMessage, editMessage, redactEvent } = useZionClient()
             const channelId = useChannelId()
             const timeline = useChannelTimeline()
-            const messagesOrRedactions = timeline.filter(
-                (x) =>
-                    x.content?.kind === ZTEvent.RoomMessage ||
-                    x.content?.kind === ZTEvent.RoomRedaction,
+            const [msgSent, setMsgSent] = React.useState(false)
+            const [msgEdited, setMsgEdited] = React.useState(false)
+
+            const messagesOrRedactions = useMemo(
+                () =>
+                    timeline.filter(
+                        (x) =>
+                            x.content?.kind === ZTEvent.RoomMessage ||
+                            x.content?.kind === ZTEvent.RoomRedaction,
+                    ),
+                [timeline],
             )
             // send message
             const onClickSendMessage = useCallback(() => {
-                void sendMessage(janesChannelId, 'hello jane')
+                void (async () => {
+                    await sendMessage(janesChannelId, 'hello jane')
+                    setMsgSent(true)
+                })()
             }, [sendMessage])
             // edit message
             const onEdit = useCallback(() => {
-                void editMessage(
-                    channelId,
-                    'hello jane gm!',
-                    {
-                        originalEventId: messagesOrRedactions[1].eventId,
-                    },
-                    undefined,
-                )
+                void (async () => {
+                    console.log(`onEdit`, messagesOrRedactions[1].eventId)
+                    await editMessage(
+                        channelId,
+                        'hello jane gm!',
+                        {
+                            originalEventId: messagesOrRedactions[1].eventId,
+                        },
+                        undefined,
+                    )
+                    setMsgEdited(true)
+                })()
             }, [channelId, editMessage, messagesOrRedactions])
             // redact message
             const onRedact = useCallback(() => {
                 void redactEvent(channelId, messagesOrRedactions[1].eventId)
             }, [channelId, messagesOrRedactions, redactEvent])
             // format for easy reading
-            function formatMessage(e: TimelineEvent) {
+            const formatMessage = useCallback((e: TimelineEvent) => {
                 return `${e.fallbackContent} eventId: ${e.eventId}`
-            }
+            }, [])
             return (
                 <>
                     <RegisterAndJoinSpace spaceId={janesSpaceId} channelId={janesChannelId} />
@@ -97,6 +111,11 @@ describe('sendMessageHooks', () => {
                             ? formatMessage(messagesOrRedactions[0])
                             : 'empty'}
                     </div>
+                    <div data-testid="msgSent">{msgSent ? 'message sent' : 'message not sent'}</div>
+                    <div data-testid="msgEdited">
+                        {msgEdited ? 'message edited' : 'message not edited'}
+                    </div>
+
                     <div data-testid="message1">
                         {messagesOrRedactions.length > 1
                             ? formatMessage(messagesOrRedactions[1])
@@ -121,6 +140,8 @@ describe('sendMessageHooks', () => {
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
         const channelMembership = screen.getByTestId('channelMembership')
+        const msgSent = screen.getByTestId('msgSent')
+        const msgEdited = screen.getByTestId('msgEdited')
         const message0 = screen.getByTestId('message0')
         const message1 = screen.getByTestId('message1')
         const sendMessageButton = screen.getByRole('button', {
@@ -149,6 +170,13 @@ describe('sendMessageHooks', () => {
         )
         // have bob send a message to jane
         fireEvent.click(sendMessageButton)
+
+        // wait for the event to be sent
+        await waitFor(
+            () => expect(msgSent).toHaveTextContent('message sent'),
+            TestConstants.DefaultWaitForTimeout,
+        )
+
         // expect it to render as well
         await waitFor(
             () => expect(message1).toHaveTextContent('hello jane'),
@@ -170,7 +198,11 @@ describe('sendMessageHooks', () => {
         )
         // edit the event
         fireEvent.click(editButton)
-        // expect the event to be edited
+        // wait for the event to be edited
+        await waitFor(
+            () => expect(msgEdited).toHaveTextContent('message edited'),
+            TestConstants.DefaultWaitForTimeout,
+        )
         await waitFor(
             () => expect(message1).toHaveTextContent('hello jane gm!'),
             TestConstants.DefaultWaitForTimeout,

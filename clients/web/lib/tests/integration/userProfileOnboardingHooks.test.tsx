@@ -6,6 +6,7 @@ import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { RegisterWallet } from './helpers/TestComponents'
 import { LoginStatus } from '../../src/hooks/login'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TestConstants } from './helpers/TestConstants'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -14,6 +15,9 @@ describe('userProfileOnboardingHooks', () => {
     test('user sees own non-null profile on first launch', async () => {
         // create provider
         const aliceProvider = new ZionTestWeb3Provider()
+        const network = await aliceProvider.getNetwork()
+        const chainId = network.chainId
+
         // create a veiw for alice
         const TestUserProfileOnLaunch = () => {
             const myProfile = useMyProfile()
@@ -31,12 +35,14 @@ describe('userProfileOnboardingHooks', () => {
             </ZionTestApp>,
         )
         // get our test elements
+        await waitFor(
+            () => expect(screen.getByTestId('clientRunning')).toHaveTextContent('true'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         const myProfileName = screen.getByTestId('myProfileName')
         const loginStatus = screen.getByTestId('loginStatus')
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
-        // get alices chain id
-        const network = await aliceProvider.getNetwork()
-        const chainId = network.chainId
+
         // verify alice userid is rendering
         await waitFor(() =>
             expect(myProfileName).toHaveTextContent(

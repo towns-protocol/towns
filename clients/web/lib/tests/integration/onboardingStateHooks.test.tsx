@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -20,9 +20,10 @@ describe('onboardingStateHooks', () => {
             const { onboardingState } = useZionContext()
             const myProfile = useMyProfile()
             const [seenStates, setSeenStates] = useState<string[]>([])
+            const [avatarSet, setAvatarSet] = useState(false)
             useEffect(() => {
                 setSeenStates((prev) => [...prev, onboardingState.kind])
-            }, [onboardingState])
+            }, [onboardingState.kind])
 
             const onClickSetDisplayName = useCallback(() => {
                 void (async () => {
@@ -33,8 +34,16 @@ describe('onboardingStateHooks', () => {
             const onClickSetAvatarUrl = useCallback(() => {
                 void (async () => {
                     await setAvatarUrl('bob.png')
+                    setAvatarSet(true)
                 })()
             }, [setAvatarUrl])
+
+            const onboardingStateString = useMemo(
+                () => toString(onboardingState),
+                [onboardingState],
+            )
+
+            const myProfileString = useMemo(() => toString(myProfile), [myProfile])
 
             return (
                 <>
@@ -42,8 +51,9 @@ describe('onboardingStateHooks', () => {
                     <button onClick={onClickSetDisplayName}>Set Display Name</button>
                     <button onClick={onClickSetAvatarUrl}>Set Avatar Url</button>
                     <div data-testid="seenStates">{seenStates.join(',')}</div>
-                    <div data-testid="onboardingState">{toString(onboardingState)}</div>
-                    <div data-testid="myProfile">{toString(myProfile)}</div>
+                    <div data-testid="onboardingState">{onboardingStateString}</div>
+                    <div data-testid="myProfile">{myProfileString}</div>
+                    <div data-testid="avatarSet">{avatarSet ? 'true' : 'false'}</div>
                 </>
             )
         }
@@ -56,6 +66,7 @@ describe('onboardingStateHooks', () => {
         // get our test elements
         const onboardingState = screen.getByTestId('onboardingState')
         const seenStates = screen.getByTestId('seenStates')
+        const avatarSet = screen.getByTestId('avatarSet')
         const setDisplayName = screen.getByRole('button', {
             name: 'Set Display Name',
         })
@@ -72,10 +83,14 @@ describe('onboardingStateHooks', () => {
         // check needs avatar
         await waitFor(() => expect(onboardingState).toHaveTextContent('bNeedsDisplayName: false'))
         // full state hasn't updated, we retrigger user-profile but with different params
-        await waitFor(() => expect(seenStates).toHaveTextContent('user-profile,user-profile'))
+        await waitFor(() => expect(seenStates).toHaveTextContent('user-profile'))
         // set avatar
         fireEvent.click(setAvatarUrl)
         // and all states have been seen
+        await waitFor(() => expect(avatarSet).toHaveTextContent('true'))
+        await waitFor(() => expect(seenStates).toHaveTextContent('toast'))
+        // Toast moves to done in 1 second
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         await waitFor(() => expect(seenStates).toHaveTextContent('done'))
     }) // end test with bob
 }) // end describe

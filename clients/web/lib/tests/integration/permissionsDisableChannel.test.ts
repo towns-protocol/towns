@@ -9,7 +9,6 @@ import {
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 
@@ -26,13 +25,16 @@ describe('disable channel', () => {
         await bob.fundWallet()
 
         // create a space with token entitlement to write
-        const roomId = (await createTestSpaceWithZionMemberRole(bob, [
+        const roomId = await createTestSpaceWithZionMemberRole(bob, [
             Permission.Read,
             Permission.Write,
-        ])) as RoomIdentifier
+        ])
+        if (roomId === undefined) throw new Error('roomId should be defined')
+        if (tokenGrantedUser.matrixUserId === undefined)
+            throw new Error('alice.matrixUserId should be defined')
 
         // invite user to join the space by first checking if they can read.
-        await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId as string)
+        await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId)
         await tokenGrantedUser.joinRoom(roomId)
 
         /** Act */
@@ -65,18 +67,21 @@ describe('disable channel', () => {
         // create all the users for the test
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         await bob.fundWallet()
-        const roomId = (await createTestSpaceWithEveryoneRole(
+        const roomId = await createTestSpaceWithEveryoneRole(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Private,
             },
-        )) as RoomIdentifier
+        )
+        if (roomId === undefined) throw new Error('roomId should be defined')
+        if (alice.matrixUserId === undefined)
+            throw new Error('alice.matrixUserId should be defined')
 
         /** Act */
 
-        await bob.inviteUser(roomId, alice.matrixUserId as string)
+        await bob.inviteUser(roomId, alice.matrixUserId)
         await alice.joinRoom(roomId)
 
         // set space access off, disabling space in ZionSpaceManager
@@ -96,7 +101,7 @@ describe('disable channel', () => {
         await bob.setSpaceAccess(roomId.networkId, false)
 
         /** Assert */
-        await bob.inviteUser(roomId, alice.matrixUserId as string)
+        await bob.inviteUser(roomId, alice.matrixUserId)
         await waitFor(
             () => expect(alice.joinRoom(roomId)).resolves.toBeDefined(),
             TestConstants.DoubleDefaultWaitForTimeout,

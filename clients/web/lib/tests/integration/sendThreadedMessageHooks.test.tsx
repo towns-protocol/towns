@@ -6,7 +6,7 @@ import {
     ThreadStats,
     TimelineEvent,
 } from '../../src/types/timeline-types'
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {
     createTestChannelWithSpaceRoles,
@@ -90,8 +90,13 @@ describe('sendThreadedMessageHooks', () => {
             const spaceNotifications = useSpaceNotificationCounts(spaceId)
             const channel_1_fullyRead = useFullyReadMarker(channel_1)
             const channel_2_fullyRead = useFullyReadMarker(channel_2)
+            const [unreadInProgress, setUnreadInProgress] = React.useState(0)
 
-            const channel_2_threadRoot = Object.values(threadRoots).at(0)
+            const channel_2_threadRoot = useMemo(
+                () => Object.values(threadRoots).at(0),
+                [threadRoots],
+            )
+
             const channel_2_thread = useTimelineThread(
                 channel_2,
                 channel_2_threadRoot?.thread.parentId,
@@ -102,30 +107,42 @@ describe('sendThreadedMessageHooks', () => {
             )
 
             const sendInitialMessages = useCallback(() => {
-                void sendMessage(channel_1, 'hello jane in channel_1')
-                void sendMessage(channel_2, 'hello jane in channel_2')
+                void (async () => {
+                    await sendMessage(channel_1, 'hello jane in channel_1')
+                    await sendMessage(channel_2, 'hello jane in channel_2')
+                    console.log(`sendInitialMessages finished`)
+                })()
             }, [sendMessage])
 
             const editChannel2Message1 = useCallback(() => {
-                if (!channel_2_threadRoot) {
-                    throw new Error('no channel_2_threadRoot')
-                }
-                const channelId = channel_2_threadRoot.channel.id
-                const messageId = channel_2_threadRoot.thread.parentId
-                void editMessage(
-                    channelId,
-                    'hello jane old friend in channel_2',
-                    {
-                        originalEventId: messageId,
-                    },
-                    undefined,
-                )
+                void (async () => {
+                    if (!channel_2_threadRoot) {
+                        throw new Error('no channel_2_threadRoot')
+                    }
+                    const channelId = channel_2_threadRoot.channel.id
+                    const messageId = channel_2_threadRoot.thread.parentId
+                    await editMessage(
+                        channelId,
+                        'hello jane old friend in channel_2',
+                        {
+                            originalEventId: messageId,
+                        },
+                        undefined,
+                    )
+                    console.log(`editChannel2Message1 finished`)
+                })()
             }, [editMessage, channel_2_threadRoot])
 
             const markAllAsRead = useCallback(() => {
-                void sendReadReceipt(channel_1_fullyRead!)
-                void sendReadReceipt(channel_2_fullyRead!)
-                void sendReadReceipt(channel_2_thread_fullyRead!)
+                console.log(`markAllAsRead started`)
+                void (async () => {
+                    setUnreadInProgress((prev) => prev + 1)
+                    await sendReadReceipt(channel_1_fullyRead!)
+                    await sendReadReceipt(channel_2_fullyRead!)
+                    await sendReadReceipt(channel_2_thread_fullyRead!)
+                    setUnreadInProgress((prev) => prev - 1)
+                    console.log(`markAllAsRead done`)
+                })()
             }, [
                 channel_1_fullyRead,
                 channel_2_fullyRead,
@@ -133,41 +150,51 @@ describe('sendThreadedMessageHooks', () => {
                 sendReadReceipt,
             ])
 
-            const formatThreadParent = (t: ThreadStats) => {
+            const formatThreadParent = useCallback((t: ThreadStats) => {
                 return `replyCount: (${t.replyCount}) parentId: (${t.parentId}) message: (${
                     t.parentMessageContent?.body ?? ''
                 })`
-            }
+            }, [])
 
-            const formatThreadRoot = (t: ThreadResult) => {
-                const mentions = t.fullyReadMarker?.mentions ?? 0
-                return (
-                    `channel: (${
-                        t.channel.label
-                    }) isUnread: (${t.isUnread.toString()}) mentions: (${mentions}) ` +
-                    formatThreadParent(t.thread)
-                )
-            }
+            const formatThreadRoot = useCallback(
+                (t: ThreadResult) => {
+                    const mentions = t.fullyReadMarker?.mentions ?? 0
+                    return (
+                        `channel: (${
+                            t.channel.label
+                        }) isUnread: (${t.isUnread.toString()}) mentions: (${mentions}) ` +
+                        formatThreadParent(t.thread)
+                    )
+                },
+                [formatThreadParent],
+            )
 
             const formatMessage = useCallback(
                 (e: TimelineEvent) => {
                     const replyCount = channelThreadStats[e.eventId]?.replyCount
                     const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
-                    return `${e.fallbackContent} ${replyCountStr}`
+                    return `${e.fallbackContent} ${replyCountStr} content: ${JSON.stringify(
+                        e.content,
+                    )}`
                 },
                 [channelThreadStats],
             )
-            const formatThreadStats = (k: string, v: ThreadStats) => {
+            const formatThreadStats = useCallback((k: string, v: ThreadStats) => {
                 return `${k} (replyCount:${v.replyCount} userIds:${[...v.userIds].join(',')})`
-            }
+            }, [])
 
-            const formatFullyReadMarker = (m?: FullyReadMarker) => {
+            const formatFullyReadMarker = useCallback((m?: FullyReadMarker) => {
                 return m === undefined
                     ? 'undefined'
                     : `isUnread:${m.isUnread.toString()} eventId:${
                           m.eventId
                       } mentions:${m.mentions.toString()}`
-            }
+            }, [])
+
+            const threadRootsContent = useMemo(
+                () => threadRoots.map((t) => formatThreadRoot(t)).join('\n'),
+                [formatThreadRoot, threadRoots],
+            )
 
             return (
                 <>
@@ -189,25 +216,28 @@ describe('sendThreadedMessageHooks', () => {
                     <div data-testid="channel_2_thread_fullyRead">
                         {formatFullyReadMarker(channel_2_thread_fullyRead)}
                     </div>
-                    <div data-testid="threadRoots">
-                        {threadRoots.map((t) => formatThreadRoot(t)).join('\n')}
-                    </div>
+                    <div data-testid="threadRoots">{threadRootsContent}</div>
                     <div data-testid="channel2ThreadParent">
                         {channel_2_thread?.parent
                             ? formatThreadParent(channel_2_thread.parent)
-                            : 'undefined'}
+                            : undefined}
                     </div>
                     <div data-testid="channel2ThreadMessages">
-                        {channel_2_thread?.messages?.map((e) => formatMessage(e)).join('\n') ?? ''}
+                        {channel_2_thread?.messages
+                            ?.map((e, i) => `message-${i}: ${formatMessage(e)}`)
+                            .join('\n') ?? ''}
                     </div>
                     <div data-testid="channelMessages">
-                        {channelTimeline.map((event) => formatMessage(event)).join('\n')}
+                        {channelTimeline
+                            .map((event, i) => `message-${i} ${formatMessage(event)}`)
+                            .join('\n')}
                     </div>
                     <div data-testid="channelThreadStats">
                         {Object.entries(channelThreadStats)
                             .map((kv) => formatThreadStats(kv[0], kv[1]))
                             .join('\n')}
                     </div>
+                    <div data-testid="unreadInProgress">{unreadInProgress}</div>
                 </>
             )
         }
@@ -232,7 +262,7 @@ describe('sendThreadedMessageHooks', () => {
         const channel_2_fullyRead = screen.getByTestId('channel_2_fullyRead')
         const channel_2_thread_fullyRead = screen.getByTestId('channel_2_thread_fullyRead')
         const threadRoots = screen.getByTestId('threadRoots')
-        const sendInitialMessages = screen.getByRole('button', {
+        const sendInitialMessagesButton = screen.getByRole('button', {
             name: 'sendInitialMessages',
         })
         const editChannel2Message1 = screen.getByRole('button', {
@@ -243,12 +273,19 @@ describe('sendThreadedMessageHooks', () => {
         // - bob joins the space and both channels
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         await waitFor(() => expect(joinComplete).toHaveTextContent('true'))
+        const unreadInProgress = screen.getByTestId('unreadInProgress')
+
         // - bob renders channel_1
         await waitFor(() => expect(channelMessages).toHaveTextContent('m.room.create'))
+
+        // - bob sends a message in each channel
+        fireEvent.click(sendInitialMessagesButton)
+
         // - jane sends messages
         await act(async () => {
             await jane.sendMessage(channel_1, 'hello channel_1')
             await jane.sendMessage(channel_2, 'hello channel_2')
+            console.log(`jane hello channels sent`)
         })
         const channel_1_message_0 = jane
             .getRoom(channel_1)!
@@ -265,8 +302,6 @@ describe('sendThreadedMessageHooks', () => {
             () => expect(channelMessages).toHaveTextContent('hello channel_1'),
             TestConstants.DefaultWaitForTimeout,
         )
-        // - bob sends a message in each channel
-        fireEvent.click(sendInitialMessages)
 
         // - jane replies to janes's message in channel_1 creating channel_1.thread
         await act(async () => {
@@ -389,5 +424,6 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('mentions:0'))
         await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('mentions:0'))
         await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('mentions:0'))
+        await waitFor(() => expect(unreadInProgress).toHaveTextContent('0'))
     })
 })

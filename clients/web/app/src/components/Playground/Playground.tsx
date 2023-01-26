@@ -227,7 +227,6 @@ export const Playground = () => {
             </Container>
 
             <Container label="Avatars">
-                {}
                 <Avatar size="avatar_lg" />
                 <Avatar size="avatar_md" />
                 <Avatar size="avatar_sm" />
@@ -270,7 +269,7 @@ export const Playground = () => {
                 <Divider label="padding" />
                 <Grid columns={2} gap="none">
                     {Object.keys(vars.space).map((b) => (
-                        <>
+                        <div key={b.toString()}>
                             <Box horizontal paddingY="sm">
                                 <Box
                                     horizontal
@@ -285,7 +284,7 @@ export const Playground = () => {
                             <Box justifyContent="center">
                                 <Box>{b}</Box>
                             </Box>
-                        </>
+                        </div>
                     ))}
                 </Grid>
 
@@ -293,7 +292,7 @@ export const Playground = () => {
 
                 <Grid columns={2}>
                     {Object.keys(vars.space).map((b) => (
-                        <>
+                        <div key={b.toString()}>
                             <Box horizontal>
                                 <Box
                                     border
@@ -311,7 +310,7 @@ export const Playground = () => {
                             <Box>
                                 <Box>{b}</Box>
                             </Box>
-                        </>
+                        </div>
                     ))}
                 </Grid>
                 <Divider label="direction" />
@@ -402,7 +401,7 @@ export const Playground = () => {
                             name="pills"
                             register={register}
                             pills={['abcd', '1234']}
-                            renderPill={(arg) => <Pill>{arg}</Pill>}
+                            renderPill={(arg) => <Pill key={arg}>{arg}</Pill>}
                         />
                     )}
                 </FormRender>

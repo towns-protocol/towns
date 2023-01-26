@@ -10,7 +10,7 @@ import {
 import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
-import { waitFor } from '@testing-library/dom'
+import { act, waitFor } from '@testing-library/react'
 
 describe('userProfile', () => {
     // usefull for debugging or running against cloud servers
@@ -63,22 +63,30 @@ describe('userProfile', () => {
             avatarUrl: bobsViewOfAlice?.getMxcAvatarUrl(),
         })
         // alice updates her profile
-        await alice.setDisplayName("Alice's your aunt")
-        await alice.setAvatarUrl('https://example.com/alice.png')
+        await act(async () => {
+            await alice.setDisplayName("Alice's your aunt")
+            await alice.setAvatarUrl('https://example.com/alice.png')
+        })
         // bob should see alices new user name
-        await waitFor(() =>
-            expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name).toBe(
-                "Alice's your aunt",
-            ),
+        await waitFor(
+            () =>
+                expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name).toBe(
+                    "Alice's your aunt",
+                ),
+            TestConstants.DefaultWaitForTimeout,
         )
         // alice should see bob's profile photo
-        await waitFor(() =>
-            expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.getMxcAvatarUrl()).toBe(
-                'https://example.com/alice.png',
-            ),
+        await waitFor(
+            () =>
+                expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.getMxcAvatarUrl()).toBe(
+                    'https://example.com/alice.png',
+                ),
+            TestConstants.DefaultWaitForTimeout,
         )
         // send a message
-        await bob.sendMessage(roomId, 'hello')
+        await act(async () => {
+            await bob.sendMessage(roomId, 'hello')
+        })
         // alice should see the message
         await waitFor(
             () =>

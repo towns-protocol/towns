@@ -5,6 +5,7 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { useZionContext } from '../../src/components/ZionContextProvider'
+import { TestConstants } from './helpers/TestConstants'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -40,6 +41,9 @@ describe('onboardedStateHooksTest', () => {
         // get our test elements
         const seenStates = screen.getByTestId('seenStates')
         // wait for client to be running
-        await waitFor(() => expect(seenStates).toHaveTextContent('none,loading,toast,done'))
+        await waitFor(
+            () => expect(seenStates).toHaveTextContent('none,loading,toast,done'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
     }) // end test with bob
 }) // end describe

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { LoginStatus } from '../../../src/hooks/login'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionAuth } from '../../../src/client/ZionClientTypes'
@@ -16,16 +16,21 @@ export const RegisterWallet = () => {
     const { walletStatus } = useWeb3Context()
     const { loginStatus, loginError, userId } = useMatrixCredentials()
     const { clientRunning, registerWallet } = useZionClient()
+    const registeringWallet = useRef(false)
+    const [registeredWallet, setRegisteredWallet] = useState(false)
 
     useEffect(() => {
-        if (walletStatus === WalletStatus.Connected) {
+        if (walletStatus === WalletStatus.Connected && !registeringWallet.current) {
+            registeringWallet.current = true
             void (async () => {
                 await registerWallet('login...')
+                setRegisteredWallet(true)
             })()
         }
     }, [registerWallet, walletStatus])
     return (
         <>
+            <div data-testid="registeredWallet">{String(registeredWallet)}</div>
             <div data-testid="userId">{userId}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
@@ -39,10 +44,14 @@ export const LoginWithWallet = () => {
     const { walletStatus } = useWeb3Context()
     const { loginStatus, loginError } = useMatrixStore()
     const { clientRunning, loginWithWallet } = useZionClient()
+    const logingInWithWallet = useRef(false)
+
     useEffect(() => {
-        if (walletStatus === WalletStatus.Connected) {
+        if (walletStatus === WalletStatus.Connected && !logingInWithWallet.current) {
+            logingInWithWallet.current = true
             void (async () => {
                 await loginWithWallet('login...')
+                logingInWithWallet.current = false
             })()
         }
     }, [loginWithWallet, walletStatus])
@@ -98,11 +107,15 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
     const { clientRunning, joinRoom } = useZionClient()
     const mySpaceMembership = useMyMembership(spaceId)
     const myChannelMembership = useMyMembership(channelId)
+    const [joinComplete, setJoinComplete] = React.useState(false)
+    const joiningRooms = useRef(false)
     useEffect(() => {
-        if (clientRunning) {
+        if (clientRunning && !joiningRooms.current) {
+            joiningRooms.current = true
             void (async () => {
-                await joinRoom(spaceId)
-                await joinRoom(channelId)
+                await Promise.all([joinRoom(spaceId), joinRoom(channelId)])
+                setJoinComplete(true)
+                joiningRooms.current = false
             })()
         }
     }, [channelId, clientRunning, joinRoom, spaceId])
@@ -111,6 +124,7 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
             <RegisterWallet />
             <div data-testid="spaceMembership"> {mySpaceMembership} </div>
             <div data-testid="channelMembership"> {myChannelMembership} </div>
+            <div data-testid="joinComplete">{joinComplete ? 'true' : 'false'}</div>
         </>
     )
 }
@@ -119,13 +133,14 @@ export const RegisterAndJoin = (props: { roomIds: RoomIdentifier[] }) => {
     const { roomIds } = props
     const { clientRunning, joinRoom } = useZionClient()
     const [joinComplete, setJoinComplete] = React.useState(false)
+    const joiningRooms = useRef(false)
     useEffect(() => {
-        if (clientRunning) {
+        if (clientRunning && !joiningRooms.current) {
+            joiningRooms.current = true
             void (async () => {
-                for (const roomId of roomIds) {
-                    await joinRoom(roomId)
-                }
+                await Promise.all(roomIds.map(async (roomId) => joinRoom(roomId)))
                 setJoinComplete(true)
+                joiningRooms.current = false
             })()
         }
     }, [clientRunning, joinRoom, roomIds])
