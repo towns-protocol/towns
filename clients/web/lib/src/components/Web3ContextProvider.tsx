@@ -32,6 +32,7 @@ export function useWeb3Context(): IWeb3Context {
 
 interface Props {
     children: JSX.Element
+    chain?: Chain
     alchemyKey?: string
 }
 
@@ -67,6 +68,6 @@ export function Web3ContextProvider(props: Props): JSX.Element {
 }
 
 export function ContextImpl(props: Props): JSX.Element {
-    const web3 = useWeb3()
+    const web3 = useWeb3(props.chain)
     return <Web3Context.Provider value={web3}>{props.children}</Web3Context.Provider>
 }

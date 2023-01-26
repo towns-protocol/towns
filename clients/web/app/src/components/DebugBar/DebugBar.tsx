@@ -26,16 +26,15 @@ function areSynced(homeserverUrl: string, chainName: string) {
     const serverIsLocal = homeserverUrl.includes('localhost')
     const chainIsLocal = chainName.toLowerCase().includes('foundry')
     const localSync = serverIsLocal && chainIsLocal
-    const nonLocalSync = !serverIsLocal && !chainIsLocal
-    let platform = !chainName ? 'Not connected' : 'Mismatch'
+    // the chain for the deployed app
+    const prodSync = !serverIsLocal && !chainIsLocal && chainName.toLowerCase().includes('goerli')
+    const serverName = serverIsLocal ? 'local' : 'zion.xyz'
+    const platform = !chainName
+        ? `Not connected | server:${serverName}`
+        : `wallet: ${chainName} | server:${serverName}`
 
-    if (localSync) {
-        platform = 'foundry/local'
-    } else if (nonLocalSync) {
-        platform = 'goerli/zion.xyz'
-    }
     return {
-        synced: localSync || nonLocalSync,
+        synced: localSync || prodSync,
         platform,
     }
 }
@@ -92,7 +91,8 @@ const DebugModal = ({
     onClearUrl,
     platform,
 }: ModalProps) => {
-    const { chain, accounts, provider } = useWeb3Context()
+    const { accounts, provider } = useWeb3Context()
+    const { chain } = useNetwork()
     const { chainId } = useZionClient()
 
     const { switchNetwork } = useSwitchNetwork({
@@ -116,9 +116,11 @@ const DebugModal = ({
                     Server: {homeserverUrl}
                 </Text>
                 <Text strong size="sm">
-                    Chain: {chain?.name || 'Not connected'}
+                    Wallet Chain: {chain?.name || 'Not connected'}
                 </Text>
-
+                <Text strong size="sm">
+                    App chain: {homeserverUrl === HomeServerUrl.REMOTE ? 'goerli' : 'foundry'}
+                </Text>
                 {chain?.name && (
                     <>
                         <Divider />
@@ -231,7 +233,9 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
                 <Box>
                     {synced && (
                         <Box
-                            background={platform.includes('foundry') ? 'etherum' : 'cta1'}
+                            background={
+                                platform.toLowerCase().includes('foundry') ? 'etherum' : 'cta1'
+                            }
                             rounded="full"
                             style={{ width: '15px', height: '15px' }}
                         />
@@ -248,7 +252,8 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
                 </Box>
 
                 <Text strong as="span" size="sm">
-                    {platform}&nbsp;{' '}
+                    {platform}&nbsp; | app using:{' '}
+                    {homeserverUrl === HomeServerUrl.REMOTE ? 'goerli' : 'foundry'}
                 </Text>
 
                 {hasUrl() && (

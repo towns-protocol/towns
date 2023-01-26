@@ -17,6 +17,7 @@ import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/matrix-types'
 import { makeRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
 import { Web3ContextProvider } from './Web3ContextProvider'
+import { Chain } from 'wagmi'
 
 export interface IZionContext {
     client?: ZionClient
@@ -60,6 +61,7 @@ interface Props {
     defaultSpaceAvatarSrc?: string // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
     initialSyncLimit?: number
     chainId?: number
+    chain?: Chain
     children: JSX.Element
     alchemyKey?: string
 }
@@ -67,9 +69,9 @@ interface Props {
 const DEFAULT_INITIAL_SYNC_LIMIT = 20
 
 export function ZionContextProvider(props: Props): JSX.Element {
-    const { alchemyKey, ...contextProps } = props
+    const { alchemyKey, chain, ...contextProps } = props
     return (
-        <Web3ContextProvider alchemyKey={alchemyKey}>
+        <Web3ContextProvider alchemyKey={alchemyKey} chain={chain}>
             <ContextImpl {...contextProps}></ContextImpl>
         </Web3ContextProvider>
     )

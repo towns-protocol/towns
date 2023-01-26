@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { ethers } from 'ethers'
-import { useAccount, useNetwork, useSignMessage } from 'wagmi'
+import { useAccount, useNetwork, useSignMessage, Chain } from 'wagmi'
 import { IWeb3Context } from '../../components/Web3ContextProvider'
 import { WalletStatus } from '../../types/web3-types'
 
@@ -10,12 +10,17 @@ interface IWeb3ProviderWrapper {
 }
 
 /// web3 grabs some of the wagmi data for convience, please feel free to use wagmi directly
-export function useWeb3(): IWeb3Context {
+export function useWeb3(chain?: Chain): IWeb3Context {
     const { address, connector, isConnected, status } = useAccount()
-    const { chain: activeChain, chains } = useNetwork()
+    const { chain: walletChain, chains } = useNetwork()
     const { signMessageAsync } = useSignMessage()
 
     const provider = useRef<IWeb3ProviderWrapper>()
+
+    // allowing app to pass in chain allows to load on correct chain per env regardless of user wallet settings
+    // they are able to login w/out swapping networks
+    // we still need guards for transactions
+    const activeChain = chain || walletChain
 
     /// aellis 10.19.2022 note, we use wagmi for nearly everything,
     /// but we use the window.ethereum object for instanciating the contracts
