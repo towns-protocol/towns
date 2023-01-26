@@ -3,16 +3,20 @@ import { Avatar, Stack } from '@ui'
 import { avatarSizes } from 'ui/components/Avatar/avatarProperties.css'
 
 type Props = {
-    userIds: string[]
+    users: {
+        avatarUrl?: string
+        userId?: string
+        displayName?: string
+    }[]
     size?: keyof typeof avatarSizes
 }
 
 export const AvatarStack = (props: Props) => {
-    const { size = 'avatar_md', userIds } = props
+    const { size = 'avatar_md', users } = props
     return (
         <Stack horizontal>
-            {userIds.map((id) => (
-                <Avatar stacked key={id} src={`/placeholders/nft_${id}.png`} size={size} />
+            {users.map((u) => (
+                <Avatar stacked key={u.userId ?? u.avatarUrl} src={u.avatarUrl} size={size} />
             ))}
         </Stack>
     )

@@ -1,5 +1,7 @@
+import { firstBy } from 'thenby'
 import {
     FullyReadMarker,
+    Membership,
     RoomCreateEvent,
     RoomMemberEvent,
     RoomMessageEncryptedEvent,
@@ -14,6 +16,7 @@ export enum RenderEventType {
     Message = 'Message',
     EncryptedMessage = 'EncryptedMessage',
     RoomMember = 'RoomMember',
+    AccumulatedRoomMembers = 'AccumulatedRoomMembers',
     RoomCreate = 'RoomCreate',
     FullyRead = 'FullyRead',
     ThreadUpdate = 'ThreadUpdate',
@@ -53,6 +56,12 @@ export interface RoomMemberRenderEvent extends BaseEvent {
     type: RenderEventType.RoomMember
     key: string
     event: ZRoomMemberEvent
+}
+export interface AccumulatedRoomMemberRenderEvent extends BaseEvent {
+    type: RenderEventType.AccumulatedRoomMembers
+    membershipType: Membership
+    key: string
+    events: ZRoomMemberEvent[]
 }
 
 export interface RoomCreateRenderEvent extends BaseEvent {
@@ -111,6 +120,7 @@ export type DateGroup = {
 export type RenderEvent =
     | UserMessagesRenderEvent
     | RoomMemberRenderEvent
+    | AccumulatedRoomMemberRenderEvent
     | RoomCreateRenderEvent
     | FullyReadRenderEvent
     | MessageRenderEvent
@@ -145,6 +155,7 @@ export const getEventsByDate = (
     experiments?: ExperimentsState,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
+
     const result = events.reduce(
         (result, event: TimelineEvent, index) => {
             const { dateGroups } = result
@@ -229,11 +240,28 @@ export const getEventsByDate = (
                     event,
                 })
             } else if (isRoomMember(event)) {
-                renderEvents.push({
-                    type: RenderEventType.RoomMember,
-                    key: event.eventId,
-                    event,
-                })
+                let accumulatedEvents = renderEvents.find(
+                    (e) =>
+                        e.type === RenderEventType.AccumulatedRoomMembers &&
+                        e.membershipType === event.content.membership,
+                ) as AccumulatedRoomMemberRenderEvent | undefined
+
+                if (!accumulatedEvents) {
+                    accumulatedEvents = {
+                        type: RenderEventType.AccumulatedRoomMembers,
+                        membershipType: event.content.membership,
+                        key: event.eventId,
+                        events: [],
+                    }
+
+                    renderEvents.push(accumulatedEvents)
+                }
+                const hasDupe = accumulatedEvents.events.some(
+                    (e) => e.content.userId === event.content.userId,
+                )
+                if (!hasDupe) {
+                    accumulatedEvents.events.push(event)
+                }
             } else if (isRoomCreate(event)) {
                 renderEvents.push({
                     type: RenderEventType.RoomCreate,
@@ -249,6 +277,17 @@ export const getEventsByDate = (
     )
 
     result.dateGroups = result.dateGroups.filter((g) => !!g.events.length)
+
+    // let status events always display right under the date for clarity
+    // another model would be to group accumulate consecutive events for a very
+    // active and granular timeline
+    result.dateGroups.forEach((g) =>
+        g.events.sort(
+            firstBy((e: RenderEvent) => e.type !== RenderEventType.RoomCreate).thenBy(
+                (e) => e.type !== RenderEventType.AccumulatedRoomMembers,
+            ),
+        ),
+    )
 
     return result.dateGroups
 }

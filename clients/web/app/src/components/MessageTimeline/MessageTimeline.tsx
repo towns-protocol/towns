@@ -30,6 +30,8 @@ type Props = {
 export const MessageTimeline = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const channelId = timelineContext?.channelId
+    const channelName = timelineContext?.channels.find((c) => c.id.slug === channelId?.slug)?.label
+    const userId = timelineContext?.userId
 
     const events = useMemo(() => {
         return timelineContext?.events ?? []
@@ -49,15 +51,11 @@ export const MessageTimeline = (props: Props) => {
 
     const fullyReadPersisted = fullyPersistedRef.current
 
+    const isThread = timelineContext?.type === MessageTimelineType.Thread
+
     const dateGroups = useMemo(
-        () =>
-            getEventsByDate(
-                events,
-                fullyReadPersisted,
-                timelineContext?.type === MessageTimelineType.Thread,
-                experiments,
-            ),
-        [events, fullyReadPersisted, timelineContext?.type, experiments],
+        () => getEventsByDate(events, fullyReadPersisted, isThread, experiments),
+        [events, fullyReadPersisted, isThread, experiments],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -192,7 +190,12 @@ export const MessageTimeline = (props: Props) => {
                         }
                     />
                 ) : (
-                    <MessageTimelineItem itemData={r.item} highlight={r.id === props.highlightId} />
+                    <MessageTimelineItem
+                        itemData={r.item}
+                        highlight={r.id === props.highlightId}
+                        userId={userId}
+                        channelName={channelName}
+                    />
                 )
             }}
         />

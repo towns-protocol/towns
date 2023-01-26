@@ -1,9 +1,7 @@
 import { motion } from 'framer-motion'
-import React, { useMemo } from 'react'
-import { firstBy } from 'thenby'
-import { useMyProfile, useSpaceMembers } from 'use-zion-client'
-import { notUndefined } from 'ui/utils/utils'
+import React from 'react'
 import { Box, Paragraph, Text } from '@ui'
+import { useNameSequence } from 'hooks/useNameSequence'
 import { getNativeEmojiFromName } from './Reactions'
 
 export const ReactionTootip = ({
@@ -44,35 +42,3 @@ export const ReactionTootip = ({
 }
 
 const MotionBox = motion(Box)
-
-const useNameSequence = (users: Record<string, { eventId: string }>) => {
-    const { membersMap } = useSpaceMembers()
-    const displayName = useMyProfile()?.displayName
-
-    return useMemo(() => {
-        return Array.from(Object.keys(users))
-            .map((u) => {
-                const name = membersMap[u]?.name
-                if (!name) {
-                    return undefined
-                } else if (name === displayName) {
-                    return 'You'
-                } else {
-                    return `${name}`
-                }
-            })
-            .filter(notUndefined)
-            .sort(firstBy((a) => a !== 'You'))
-            .reduce((str, name, index, arr) => {
-                return `${str} ${name}${
-                    // nothing to add for single names or last name
-                    arr.length <= 1 || index === arr.length - 1
-                        ? ``
-                        : // "and" for next to last
-                        index === arr.length - 2
-                        ? `, and `
-                        : `, `
-                }`
-            }, '')
-    }, [displayName, membersMap, users])
-}

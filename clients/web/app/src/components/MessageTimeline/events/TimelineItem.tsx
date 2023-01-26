@@ -1,13 +1,19 @@
 import React from 'react'
 import { staticAssertNever } from 'use-zion-client'
 import { Stack } from '@ui'
+import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
+import { AccumulatedRoomMemberEvent } from './AccumulatedRoomMemberEvent'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
-import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
 import { TimelineThreadUpdates } from './TimelineThreadUpdates'
 
-export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: boolean }) => {
-    const { itemData, highlight: isHighlight } = props
+export const MessageTimelineItem = (props: {
+    itemData: RenderEvent
+    highlight?: boolean
+    channelName?: string
+    userId?: string
+}) => {
+    const { itemData, highlight: isHighlight, channelName, userId } = props
 
     switch (itemData.type) {
         case RenderEventType.UserMessages: {
@@ -35,6 +41,17 @@ export const MessageTimelineItem = (props: { itemData: RenderEvent; highlight?: 
                     eventContent={e.content}
                     displayContext={displayContext}
                     key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}`}
+                />
+            )
+        }
+
+        case RenderEventType.AccumulatedRoomMembers: {
+            return (
+                <AccumulatedRoomMemberEvent
+                    event={itemData}
+                    key={itemData.key}
+                    channelName={channelName}
+                    userId={userId}
                 />
             )
         }
