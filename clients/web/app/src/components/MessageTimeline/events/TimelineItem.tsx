@@ -6,6 +6,7 @@ import { AccumulatedRoomMemberEvent } from './AccumulatedRoomMemberEvent'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
 import { TimelineThreadUpdates } from './TimelineThreadUpdates'
+import { TimelineChannelCreateEvent } from './TimelineChannelCreatedEvent'
 
 export const MessageTimelineItem = (props: {
     itemData: RenderEvent
@@ -61,7 +62,7 @@ export const MessageTimelineItem = (props: {
         }
 
         case RenderEventType.RoomCreate: {
-            return <TimelineGenericEvent event={itemData.event} key={itemData.event.eventId} />
+            return <TimelineChannelCreateEvent event={itemData.event} channelName={channelName} />
         }
 
         case RenderEventType.ThreadUpdate: {
