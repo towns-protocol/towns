@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { waitFor } from '@testing-library/dom'
+
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
@@ -8,9 +10,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { TestConstants } from './helpers/TestConstants'
 import { ZTEvent } from '../../src/types/timeline-types'
-import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/matrix-types'
 
 describe('sendReaction', () => {
@@ -45,18 +45,24 @@ describe('sendReaction', () => {
         // bob sends a message to the room
         await bob.sendMessage(channelId, 'Hello, world from Bob!')
 
-        // grab the event
-        const event = alice.getRoom(channelId)?.getLiveTimeline().getEvents().at(-1)
+        // wait for alice to receive the message
+        await waitFor(async () => {
+            // TODO - matrixUserId should be fixed as CB users wont have it
+            const event = await alice.getLatestEvent(channelId, alice.matrixUserId!)
+            // TODO - need to merge ZTEvent into a common type for both marix and CB
+            expect(event?.content?.kind === ZTEvent.RoomMessage).toEqual(true)
+        })
 
-        event && (await alice.sendReaction(channelId, event.getId(), '👍'))
+        // alice grabs the message
+        const event = await alice.getLatestEvent(channelId, alice.matrixUserId!)
 
-        // bob should receive the reaction
-        await waitFor(
-            () =>
-                expect(
-                    bob.getRoom(channelId)?.getLiveTimeline().getEvents().at(-1)?.getType(),
-                ).toBe(ZTEvent.Reaction),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        // alice sends a reaction
+        event && (await alice.sendReaction(channelId, event.eventId, '👍'))
+
+        // wait for bob to receive the reaction
+        await waitFor(async () => {
+            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+            expect(e?.content?.kind === ZTEvent.Reaction).toEqual(true)
+        })
     }) // end test
 }) // end describe

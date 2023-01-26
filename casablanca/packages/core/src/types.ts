@@ -107,7 +107,7 @@ export type SpaceStreamPayload = JoinableStreamPayload | CreateChannelPayload | 
 // Payloads specific to channel stream
 export interface MessagePayload {
     kind: 'message'
-    text?: string // TODO: rename to content
+    text: string // TODO: rename to content
 }
 
 export type ChannelStreamPayload = JoinableStreamPayload | MessagePayload

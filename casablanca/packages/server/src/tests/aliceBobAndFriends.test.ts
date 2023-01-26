@@ -64,7 +64,7 @@ class TestDriver {
     }
 
     channelNewMessage(channelId: string, message: FullEvent): void {
-        const text = (message.base.payload as MessagePayload).text!
+        const text = JSON.parse((message.base.payload as MessagePayload).text).text!
         this.log(`channelNewMessage channelId=${channelId} message=${text}`, this.expected)
         if (this.expected?.delete(text)) {
             this.log(`channelNewMessage expected message Received, text=${text}`)

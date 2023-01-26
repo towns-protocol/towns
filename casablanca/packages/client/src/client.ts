@@ -356,9 +356,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             streamId,
             {
                 kind: 'message',
-                text,
+                text: JSON.stringify({ type: 'text', text: text }),
             },
             'sendMessage',
+        )
+    }
+
+    async sendReaction(streamId: string, eventId: string, reaction: string): Promise<void> {
+        return this.makeEventAndAddToStream(
+            streamId,
+            {
+                kind: 'message',
+                text: JSON.stringify({ type: 'reaction', text: reaction, event_id: eventId }),
+            },
+            'sendReaction',
         )
     }
 

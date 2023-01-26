@@ -37,7 +37,7 @@ import { NewSession, newLoginSession, newRegisterSession } from '../hooks/use-ma
 import { SignerContext, publicKeyToBuffer } from '@zion/core'
 
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
-import { FullyReadMarker } from '../types/timeline-types'
+import { FullyReadMarker, TimelineEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier } from '../types/web3-types'
@@ -61,7 +61,8 @@ import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
 import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom } from '../store/use-matrix-store'
-import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
+import { toZionEventFromCBEvent, toZionRoomFromStream } from './casablanca/CasablancaUtils'
+import { toEvent } from '../hooks/ZionContext/useMatrixTimelines'
 
 /***
  * Zion Client
@@ -873,7 +874,12 @@ export class ZionClient {
                 }
                 break
             case SpaceProtocol.Casablanca:
-                throw new Error('sendReaction not implemented for Casablanca')
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                await this.casablancaClient.sendReaction(roomId.networkId, eventId, reaction)
+                console.log('sendReaction')
+                break
             default:
                 staticAssertNever(roomId)
         }
@@ -1057,6 +1063,46 @@ export class ZionClient {
                 return this.matrixClient.getRoom(roomId.networkId) ?? undefined
             case SpaceProtocol.Casablanca:
                 throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
+    }
+
+    /************************************************
+     * getLatestEvent
+     ************************************************/
+    public async getLatestEvent(
+        roomId: RoomIdentifier,
+        userId: string,
+    ): Promise<TimelineEvent | undefined> {
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                const event = this.matrixClient
+                    .getRoom(roomId.networkId)
+                    ?.getLiveTimeline()
+                    .getEvents()
+                    .at(-1)
+                if (event) {
+                    return toEvent(event, userId)
+                } else {
+                    return undefined
+                }
+            }
+            case SpaceProtocol.Casablanca: {
+                if (!this.casablancaClient) {
+                    throw new Error('casablanca client is undefined')
+                }
+                const stream = await this.casablancaClient.waitForStream(roomId.networkId)
+                const event = Array.from(stream.rollup.events)[stream.rollup.events.size - 1][1]
+                if (event) {
+                    return toZionEventFromCBEvent(event)
+                } else {
+                    return undefined
+                }
+            }
             default:
                 staticAssertNever(roomId)
         }
