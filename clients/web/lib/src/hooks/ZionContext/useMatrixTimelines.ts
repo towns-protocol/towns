@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Membership, Mention } from '../../types/matrix-types'
 import {
     ClientEvent,
+    EventType as MatrixEventType,
     HistoryVisibility,
     IRoomTimelineData,
     JoinRule,
@@ -360,10 +361,10 @@ function toZionContent(event: MatrixEvent): {
         return `${event.getType()} id: ${event.getId()}`
     }
     const content = event.getContent()
-    const eventType = event.getType() as ZTEvent
+    const eventType = event.getType()
 
     switch (eventType) {
-        case ZTEvent.Reaction: {
+        case MatrixEventType.Reaction: {
             const relation = event.getRelation()
             const targetEventId = relation?.event_id
             const reaction = relation?.key
@@ -374,31 +375,31 @@ function toZionContent(event: MatrixEvent): {
             }
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.Reaction,
                     targetEventId: targetEventId,
                     reaction: reaction,
                 },
             }
         }
-        case ZTEvent.RoomAvatar:
+        case MatrixEventType.RoomAvatar:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomAvatar,
                     url: content.url as string,
                 },
             }
-        case ZTEvent.RoomCanonicalAlias:
+        case MatrixEventType.RoomCanonicalAlias:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomCanonicalAlias,
                     alias: content.alias as string,
                     altAliases: content.alt_aliases as string[] | undefined,
                 },
             }
-        case ZTEvent.RoomCreate:
+        case MatrixEventType.RoomCreate:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomCreate,
                     creator: content.creator as string,
                     predecessor: content.predecessor as {
                         event_id: string
@@ -407,11 +408,11 @@ function toZionContent(event: MatrixEvent): {
                     type: content.type as string | undefined,
                 },
             }
-        case ZTEvent.RoomEncryption: {
+        case MatrixEventType.RoomEncryption: {
             const content = event.getContent<IRoomEncryption>()
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomEncryption,
                     roomEncryption: {
                         algorithm: content.algorithm,
                         rotationPeriodMs: content.rotation_period_ms,
@@ -420,13 +421,13 @@ function toZionContent(event: MatrixEvent): {
                 },
             }
         }
-        case ZTEvent.RoomMessageEncrypted:
+        case MatrixEventType.RoomMessageEncrypted:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomMessageEncrypted,
                 },
             }
-        case ZTEvent.RoomHistoryVisibility: {
+        case MatrixEventType.RoomHistoryVisibility: {
             const visibility = content.history_visibility as HistoryVisibility
             if (!visibility) {
                 return {
@@ -435,29 +436,29 @@ function toZionContent(event: MatrixEvent): {
             }
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomHistoryVisibility,
                     historyVisibility: visibility,
                 },
             }
         }
-        case ZTEvent.RoomJoinRules:
+        case MatrixEventType.RoomJoinRules:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomJoinRules,
                     joinRule: content.join_rule as JoinRule,
                     allow: content.allow as
                         | { room_id: string; type: RestrictedAllowType }[]
                         | undefined,
                 },
             }
-        case ZTEvent.RoomName:
+        case MatrixEventType.RoomName:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomName,
                     name: content.name as string,
                 },
             }
-        case ZTEvent.RoomMember: {
+        case MatrixEventType.RoomMember: {
             const memberId = event.getStateKey()
             if (!memberId) {
                 return {
@@ -466,7 +467,7 @@ function toZionContent(event: MatrixEvent): {
             }
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomMember,
                     userId: memberId,
                     avatarUrl: content.avatar_url,
                     displayName: content.displayname,
@@ -476,7 +477,7 @@ function toZionContent(event: MatrixEvent): {
                 },
             }
         }
-        case ZTEvent.RoomMessage: {
+        case MatrixEventType.RoomMessage: {
             if (!content.msgtype) {
                 return {
                     error: `${describe()} has no sender, or msgtype`,
@@ -484,7 +485,7 @@ function toZionContent(event: MatrixEvent): {
             }
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomMessage,
                     inReplyTo: event.replyEventId,
                     body: content.body as string,
                     msgType: content.msgtype,
@@ -493,23 +494,23 @@ function toZionContent(event: MatrixEvent): {
                 },
             }
         }
-        case ZTEvent.RoomPowerLevels:
+        case MatrixEventType.RoomPowerLevels:
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomPowerLevels,
                     ...enrichPowerLevels(content),
                 },
             }
-        case ZTEvent.RoomRedaction: {
+        case MatrixEventType.RoomRedaction: {
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.RoomRedaction,
                     inReplyTo: event.replyEventId,
                     content: content,
                 },
             }
         }
-        case ZTEvent.SpaceChild: {
+        case MatrixEventType.SpaceChild: {
             const childId = event.getStateKey()
             if (!childId) {
                 return {
@@ -518,12 +519,12 @@ function toZionContent(event: MatrixEvent): {
             }
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.SpaceChild,
                     childId: childId,
                 },
             }
         }
-        case ZTEvent.SpaceParent: {
+        case MatrixEventType.SpaceParent: {
             const parentId = event.getStateKey()
             if (!parentId) {
                 return {
@@ -532,7 +533,7 @@ function toZionContent(event: MatrixEvent): {
             }
             return {
                 content: {
-                    kind: eventType,
+                    kind: ZTEvent.SpaceParent,
                     parentId: parentId,
                 },
             }

@@ -80,14 +80,16 @@ describe('userProfile', () => {
         // send a message
         await bob.sendMessage(roomId, 'hello')
         // alice should see the message
-        await waitFor(() =>
-            expect(
-                alice
-                    .getRoom(roomId)
-                    ?.getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
-            ).toBeDefined(),
+        await waitFor(
+            () =>
+                expect(
+                    alice
+                        .getRoom(roomId)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
+                ).toBeDefined(),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
         // get the message
         const message = alice

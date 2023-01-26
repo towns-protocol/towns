@@ -60,7 +60,7 @@ describe('userProfileHooks', () => {
             const myProfile = useMyProfile()
             const alicesMemberInfo = useMember(alicesSpaceId, alice.matrixUserId)
             const timeline = useChannelTimeline()
-            const roomMessages = timeline.filter((x) => x.eventType === ZTEvent.RoomMessage)
+            const roomMessages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             const onClickSetProfileInfo = useCallback(() => {
                 void (async () => {
                     await setDisplayName("Bob's your uncle")
