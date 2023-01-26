@@ -7,13 +7,18 @@
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithEveryoneRole,
+    getTestPrimaryProtocol,
+    registerAndStartClients,
+} from './helpers/TestUtils'
 
-import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/matrix-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
+import { ZTEvent } from '../../src/types/timeline-types'
 
 describe('sendAMessage', () => {
     // test:
@@ -30,69 +35,62 @@ describe('sendAMessage', () => {
         console.log(`!!!!!! bob creates space`)
         // bob needs funds to create a space
         await bob.fundWallet()
-        // bob creates a space
-        const roomId = (await createTestSpaceWithEveryoneRole(
+        // create a space
+        const spaceId = (await createTestSpaceWithEveryoneRole(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: bob.makeUniqueName(),
-                visibility: RoomVisibility.Private,
+                visibility: RoomVisibility.Public,
+                spaceProtocol: getTestPrimaryProtocol(),
             },
-        )) as RoomIdentifier
+        ))!
+        // create a channel
+        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
+            roleIds: [],
+        })) as RoomIdentifier
 
-        // bob invites everyone else to the room
-        for (let i = 1; i < numClients; i++) {
-            console.log(`!!!!!! bob invites client ${i}`)
-            const client = clients[`client_${i}`]
-            await bob.inviteUser(roomId, client.matrixUserId!)
-            // wait for client to see the invite
-            await waitFor(() => expect(client.getRoom(roomId)).toBeDefined())
-        }
+        console.log("bob's spaceId", { spaceId, channelId })
 
         // everyone joins the room
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} joins room`)
             const client = clients[`client_${i}`]
-            await client.joinRoom(roomId)
+            await client.joinRoom(channelId)
         }
 
         // bob sends a message to the room
         console.log(`!!!!!! bob sends message`)
-        await bob.sendMessage(roomId, 'Hello Alice!')
+        await bob.sendMessage(channelId, 'Hello Alice!')
 
         // everyone should receive the message
         for (let i = 0; i < numClients; i++) {
             console.log(`!!!!!! client ${i} waits for message`)
             const client = clients[`client_${i}`]
-            await waitFor(() =>
+            await waitFor(async () => {
+                const event = await client.getLatestEvent(channelId, client.matrixUserId!)
                 expect(
-                    client
-                        .getRoom(roomId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .find((event: MatrixEvent) => event.getContent()?.body === 'Hello Alice!'),
-                ).toBeDefined(),
-            )
+                    event?.content?.kind === ZTEvent.RoomMessage &&
+                        event?.content?.body === 'Hello Alice!',
+                )
+            })
         }
         // everyone sends a message to the room
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} sends a message`)
             const client = clients[`client_${i}`]
-            await client.sendMessage(roomId, `Hello Bob! from ${client.matrixUserId!}`)
+            await client.sendMessage(channelId, `Hello Bob! from ${client.matrixUserId!}`)
             // bob should receive the message
-            await waitFor(() =>
+            await waitFor(async () => {
+                const event = await bob.getLatestEvent(channelId, bob.matrixUserId!)
                 expect(
-                    bob
-                        .getRoom(roomId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .find(
-                            (event: MatrixEvent) =>
-                                event.getContent()?.body ===
-                                `Hello Bob! from ${client.matrixUserId!}`,
-                        ),
-                ).toBeDefined(),
-            )
+                    event?.content?.kind === ZTEvent.RoomMessage &&
+                        event?.content?.body === `Hello Bob! from ${client.matrixUserId!}`,
+                )
+            })
         }
     }) // end test
 }) // end describe
