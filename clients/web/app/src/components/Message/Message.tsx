@@ -4,15 +4,19 @@ import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Reactions } from '@components/Reactions/Reactions'
 import { MessageThreadButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
-import { useHover } from 'hooks/useHover'
-import { useHandleReaction } from 'hooks/useReactions'
-import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
 import { useFocused } from 'hooks/useFocused'
+import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
+import { useHandleReaction } from 'hooks/useReactions'
+import { AvatarProps } from 'ui/components/Avatar/Avatar'
+import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
+import { CardOpener } from 'ui/components/Overlay/CardOpener'
+import { ProfileCard } from '@components/ProfileCard/ProfileCard'
 import { MessageContextMenu } from './MessageContextMenu'
 
 type Props = {
     userId?: string | null
+    senderId?: string
     avatar?: string
     avatarSize?: AvatarAtoms['size']
     name: string
@@ -43,6 +47,7 @@ export type MessageProps = Props
 export const Message = (props: Props) => {
     const {
         userId,
+        senderId,
         eventId,
         avatar,
         avatarSize = 'avatar_md',
@@ -89,6 +94,8 @@ export const Message = (props: Props) => {
         }
     }, [canReply, onOpenMessageThread, eventId])
 
+    const AvatartComponent = isActive ? ActiveAvatar : Avatar
+
     return (
         <Stack
             horizontal
@@ -103,7 +110,16 @@ export const Message = (props: Props) => {
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
             <Box minWidth="x8">
                 {displayContext !== 'tail' ? (
-                    <Avatar src={avatar} size={avatarSize} insetY="xxs" />
+                    senderId ? (
+                        <AvatartComponent
+                            src={avatar}
+                            size={avatarSize}
+                            insetY="xxs"
+                            userId={senderId}
+                        />
+                    ) : (
+                        <></>
+                    )
                 ) : (
                     <>
                         {!isRelativeDate && isActive && (
@@ -224,4 +240,13 @@ const useMessageBackground = (isEditing?: boolean, isActive?: boolean, isHighlig
     const style = backgroundTransitionEnabled ? { transition: `background 1s ease` } : undefined
 
     return { onTransitionEnd, style, background }
+}
+
+const ActiveAvatar = (props: AvatarProps & { userId: string }) => {
+    const { src, size, userId } = props
+    return (
+        <CardOpener placement="horizontal" render={<ProfileCard userId={userId} />} trigger="click">
+            {({ triggerProps }) => <Avatar src={src} size={size} insetY="xxs" {...triggerProps} />}
+        </CardOpener>
+    )
 }

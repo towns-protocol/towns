@@ -166,12 +166,8 @@ const SettingsGear = (props: {
             <CardOpener
                 tabIndex={0}
                 trigger="click"
-                placement="topRight"
-                render={
-                    <Box padding>
-                        <SpaceSettingsCard spaceId={spaceId} spaceName={spaceName} />
-                    </Box>
-                }
+                placement="horizontal"
+                render={<SpaceSettingsCard spaceId={spaceId} spaceName={spaceName} />}
                 layoutId="settings"
             >
                 {({ triggerProps }) => (

@@ -3,7 +3,7 @@ import React from 'react'
 import { useMatrixCredentials, useMyProfile } from 'use-zion-client'
 import { ProfileSettingsCard } from '@components/Cards/ProfileSettingsCard'
 import { FadeIn } from '@components/Transitions'
-import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { Avatar, Paragraph, Stack } from '@ui'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 
 type Props = {
@@ -18,20 +18,18 @@ export const ProfileCardButton = (props: Props) => {
     return !isAuthenticated ? null : (
         <CardOpener
             tabIndex={0}
-            placement="topRight"
+            placement="horizontal"
             layoutId="topbar"
             render={
-                <Box horizontal paddingY="md">
-                    <ProfileSettingsCard
-                        userId={userId ?? ''}
-                        username={username ?? ''}
-                        avatarUrl={myProfile?.avatarUrl}
-                        displayName={myProfile?.displayName}
-                    />
-                </Box>
+                <ProfileSettingsCard
+                    userId={userId ?? ''}
+                    username={username ?? ''}
+                    avatarUrl={myProfile?.avatarUrl}
+                    displayName={myProfile?.displayName}
+                />
             }
         >
-            {({ triggerProps }) => (
+            {({ triggerProps: { ref, ...triggerProps } }) => (
                 <>
                     <MotionStack
                         horizontal
@@ -46,7 +44,7 @@ export const ProfileCardButton = (props: Props) => {
                         overflow="hidden"
                         {...triggerProps}
                     >
-                        <Avatar src={myProfile?.avatarUrl} size="avatar_x4" />
+                        <Avatar src={myProfile?.avatarUrl} size="avatar_x4" ref={ref} />
                         <AnimatePresence>
                             {isExpanded && (
                                 <FadeIn>

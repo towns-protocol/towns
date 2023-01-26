@@ -19,6 +19,8 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 
     const isValid = !!user
 
+    const userAddress = isValid ? user.userId.match(/0x[a-f0-9]{40}/i)?.[0] ?? '' : ''
+
     return (
         <Stack grow height="100%" overflow="hidden">
             <Panel label="Profile" onClose={onClose}>
@@ -40,17 +42,18 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                                 <Paragraph strong size="lg">
                                     {user.name}
                                 </Paragraph>
-                                <Stack horizontal gap="sm" alignItems="center">
-                                    <Stack>
-                                        <Text truncate size="md" color="gray2">
-                                            {shortAddress(user.userId)}
-                                        </Text>
+                                {userAddress && (
+                                    <Stack horizontal gap="sm" alignItems="center">
+                                        <Stack>
+                                            <Text truncate size="md" color="gray2">
+                                                {shortAddress(userAddress)}
+                                            </Text>
+                                        </Stack>
+                                        <Stack>
+                                            <Icon type="copy" color="gray2" size="square_xs" />
+                                        </Stack>
                                     </Stack>
-                                    <Stack>
-                                        <Icon type="copy" color="gray2" size="square_xs" />
-                                    </Stack>
-                                </Stack>
-                                <Stack />
+                                )}
                             </Stack>
                         </Stack>
 

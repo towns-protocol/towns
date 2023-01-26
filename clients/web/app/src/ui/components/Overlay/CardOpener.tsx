@@ -5,7 +5,7 @@ import { RootLayerContext } from '../Tooltip/OverlayPortal'
 import { CardOpenerContext } from './CardOpenerContext'
 import { OverlayContainer } from './CardOverlayContainer'
 
-export type Placement = 'topLeft' | 'topRight' | 'pointer'
+export type Placement = 'vertical' | 'horizontal' | 'pointer'
 
 const Trigger = {
     click: 'click',
@@ -15,7 +15,7 @@ const Trigger = {
 type Props = {
     layoutId?: string
     placement?: Placement
-    margin?: { x: number; y: number }
+    // margin?: { x: number; y: number }
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
     trigger?: typeof Trigger[keyof typeof Trigger]
@@ -47,7 +47,7 @@ export const CardOpener = (props: Props) => {
         children,
         render,
         trigger = Trigger.click,
-        placement = 'topRight',
+        placement = 'horizontal',
         onClose,
         tabIndex,
     } = props
@@ -196,7 +196,6 @@ export const CardOpener = (props: Props) => {
                 render &&
                 createPortal(
                     <OverlayContainer
-                        margin={props.margin}
                         containerRef={containerRef}
                         render={render}
                         triggerRect={triggerRect}

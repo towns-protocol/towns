@@ -16,7 +16,7 @@ export const EmojiPickerButton = (props: Props) => {
     return (
         <CardOpener
             tabIndex={props.tabIndex}
-            placement="topLeft"
+            placement="vertical"
             render={
                 <Box paddingY="lg">
                     <EmojiPickerContainer onEmojiSelect={onSelectEmoji} />

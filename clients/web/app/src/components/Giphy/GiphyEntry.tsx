@@ -23,7 +23,7 @@ export const GiphyContainer = () => {
     }, [setInputValue])
 
     return (
-        <CardOpener placement="topLeft" render={<GiphyPicker />} onClose={onCardClose}>
+        <CardOpener placement="vertical" render={<GiphyPicker />} onClose={onCardClose}>
             {({ triggerProps: { onClick: clickCb, ...rest } }) => (
                 <IconButton
                     icon="gif"

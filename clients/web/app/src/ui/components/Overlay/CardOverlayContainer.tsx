@@ -12,21 +12,12 @@ type OffsetContainerProps = {
     hitPosition: [number, number] | undefined
     animatePresence?: boolean
     containerRef: React.MutableRefObject<HTMLDivElement | null>
-    margin?: { x: number; y: number }
 }
 
 const DEBUG = false
-const defaultMargin = { x: 0, y: 0 } as const
 
 export const OverlayContainer = (props: OffsetContainerProps) => {
-    const {
-        triggerRect,
-        hitPosition,
-        render,
-        placement,
-        containerRef,
-        margin = defaultMargin,
-    } = props
+    const { triggerRect, hitPosition, render, placement, containerRef } = props
     const ref = useRef<HTMLDivElement>(null)
     containerRef.current = ref.current
 
@@ -38,9 +29,21 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
     // use debounced value to avoid flickering
     const size = useDebounce(undeferredSize, 100)
 
+    const safeArea = useMemo(
+        () => ({
+            left: 0,
+            top: 0,
+            right: window.innerWidth,
+            bottom: window.innerHeight,
+        }),
+        [],
+    )
+
     const isContainerEmpty = size.height === 0
 
     const styles = useMemo(() => {
+        const margin = 16
+
         const anchorStyle: { [key: string]: number | string | undefined } = {
             position: 'absolute',
             border: DEBUG ? `1px solid green` : undefined,
@@ -58,23 +61,38 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
                 containerStyle,
             }
         }
-        if (placement === 'topLeft') {
-            anchorStyle.top = triggerRect.top - margin.y
+        if (placement === 'vertical') {
+            anchorStyle.top = triggerRect.top
             const topDiff = Math.max(0, (size.height ?? 0) - anchorStyle.top)
             containerStyle.bottom = -topDiff
 
-            anchorStyle.left = triggerRect.right - margin.x
+            anchorStyle.left = triggerRect.right
             const leftDiff = Math.max(0, (size.width ?? 0) - anchorStyle.left)
             containerStyle.right = leftDiff
         }
 
-        if (placement === 'topRight') {
-            anchorStyle.top = triggerRect.top - margin.y
-            const topDiff = Math.max(0, (size.height ?? 0) - anchorStyle.top)
-            containerStyle.bottom = -topDiff
+        if (placement === 'horizontal') {
+            anchorStyle.top = triggerRect.top
 
-            anchorStyle.left = triggerRect.right - margin.x
-            containerStyle.left = 0
+            const diff = Math.max(0, anchorStyle.top + size.height - safeArea.bottom + margin)
+
+            // readjust vertically so the bottom doesn't go outside the screen
+            containerStyle.top = 0 - diff
+
+            const anchorRight = triggerRect.right + margin
+            const fitsRight = anchorRight + size.width < safeArea.right
+
+            const anchorLeft = triggerRect.left - margin
+            const fitsLeft = anchorLeft - size.width > safeArea.left
+
+            // ideally align horizontally on the right
+            if (fitsRight || !fitsLeft) {
+                anchorStyle.left = anchorRight
+                containerStyle.left = 0
+            } else {
+                anchorStyle.left = anchorLeft
+                containerStyle.right = 0
+            }
         }
 
         if (placement === 'pointer' && hitPosition) {
@@ -86,7 +104,7 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
             anchorStyle,
             containerStyle,
         }
-    }, [hitPosition, isContainerEmpty, margin.x, margin.y, placement, size, triggerRect])
+    }, [hitPosition, isContainerEmpty, placement, safeArea, size, triggerRect])
 
     return (
         <>
