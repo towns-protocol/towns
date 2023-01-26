@@ -5,6 +5,7 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { useAuth } from 'hooks/useAuth'
+import { shortAddress } from 'ui/utils/utils'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -49,9 +50,7 @@ export const ProfileSettingsCard = (props: Props) => {
                 </Box>
                 <Stack grow gap fontWeight="strong" color="default">
                     <Paragraph>{displayName && displayName}</Paragraph>
-                    <Paragraph color="gray2">
-                        {username && shortenAddress(username, 6, 2)}
-                    </Paragraph>
+                    <Paragraph color="gray2">{username && shortAddress(username)}</Paragraph>
                 </Stack>
             </Stack>
             <Divider />
@@ -72,10 +71,4 @@ export const ProfileSettingsCard = (props: Props) => {
             </MenuItem>
         </Card>
     )
-}
-
-export const shortenAddress = (s: string, charsStart = 6, charsEnd = 2, delimiter = '..') => {
-    return (s?.length ?? 0) <= charsStart + delimiter.length + charsEnd
-        ? s
-        : `${s.substring(0, charsStart)}${delimiter}${s.substring(s.length - charsEnd)}`
 }

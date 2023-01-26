@@ -1,5 +1,5 @@
 import { rand, randHexaDecimal, randNumber, randUser } from '@ngneat/falso'
-import { shortenAddress } from '@components/Cards/ProfileSettingsCard'
+import { shortAddress } from 'ui/utils/utils'
 
 /**
  * simplified representation of a user
@@ -31,7 +31,7 @@ export const getFakeUserData = (index?: number): UserData => {
         avatarSrc: `/placeholders/nft_${index + 1}.png`,
         displayName: r.username,
         role: rand(['Founder', 'Moderator', 'Council Member']),
-        address: shortenAddress(`0x${randHexaDecimal({ length: 42 }).join('')}`),
+        address: shortAddress(`0x${randHexaDecimal({ length: 42 }).join('')}`),
     }
 }
 
