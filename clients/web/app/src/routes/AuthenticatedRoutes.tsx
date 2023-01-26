@@ -18,6 +18,7 @@ import { SpacesInvite } from './SpacesInvite'
 import { SpacesNew } from './SpacesNew'
 import { SpacesSettingsOld } from './SpaceSettingsOld'
 import { SpaceThreads } from './SpaceThreads'
+import { SpaceProfilePanel } from './SpacesProfilePanel'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -35,8 +36,12 @@ export const AuthenticatedRoutes = () => (
         <Route path="spaces/new" element={<SpacesNew />} />
         <Route path="spaces/:spaceSlug">
             <Route index element={<SpaceHome />} />
-            <Route path="threads" element={<SpaceThreads />} />
-            <Route path="mentions" element={<SpaceMentions />} />
+            <Route path="threads" element={<SpaceThreads />}>
+                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            </Route>
+            <Route path="mentions" element={<SpaceMentions />}>
+                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            </Route>
             <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
             <Route path="settings-legacy" element={<SpacesSettingsOld />} />
             <Route path="settings" element={<SpaceSettings />}>
@@ -53,6 +58,7 @@ export const AuthenticatedRoutes = () => (
                     path="replies/:messageId"
                     element={<SpacesChannelReplies parentRoute=".." />}
                 />
+                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
             </Route>
             <Route element={<SpacesChannelRoute />}>
                 <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />

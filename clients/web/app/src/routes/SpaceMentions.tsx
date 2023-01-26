@@ -1,50 +1,69 @@
 import { RelationType } from 'matrix-js-sdk'
 import React from 'react'
-import { Outlet } from 'react-router'
 import { NavLink } from 'react-router-dom'
-import { MentionResult, useSpaceId, useSpaceMentions } from 'use-zion-client'
+import {
+    MentionResult,
+    useMatrixCredentials,
+    useSpaceId,
+    useSpaceMembers,
+    useSpaceMentions,
+} from 'use-zion-client'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/Message'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
+import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
+    const { userId } = useMatrixCredentials()
     const mentions = useSpaceMentions()
 
-    return mentions.length ? (
-        <Stack grow horizontal>
-            <Stack grow gap>
-                <Stack>
-                    {mentions.map((m, index, mentions) => {
-                        return (
-                            m.type === 'mention' && <MentionBox mention={m} key={m.event.eventId} />
-                        )
-                    })}
-                </Stack>
+    return (
+        <CentralPanelLayout>
+            <Stack absoluteFill overflowY="scroll">
+                {mentions.length ? (
+                    <Stack grow gap>
+                        <Stack>
+                            {mentions.map((m, index, mentions) => {
+                                return (
+                                    m.type === 'mention' && (
+                                        <MentionBox
+                                            mention={m}
+                                            key={m.event.eventId}
+                                            userId={userId}
+                                        />
+                                    )
+                                )
+                            })}
+                        </Stack>
+                    </Stack>
+                ) : (
+                    <Stack centerContent grow>
+                        <Stack centerContent gap="lg" width="250">
+                            <Box padding="md" color="gray2" background="level2" rounded="sm">
+                                <Icon type="at" size="square_sm" />
+                            </Box>
+                            <Heading level={3}>No mentions yet</Heading>
+                            <Paragraph textAlign="center" color="gray2">
+                                {`Whenever someone "@" mentions you, it'll show up here.`}
+                            </Paragraph>
+                        </Stack>
+                    </Stack>
+                )}
             </Stack>
-            <Outlet />
-        </Stack>
-    ) : (
-        <Stack centerContent grow>
-            <Stack centerContent gap="lg" width="250">
-                <Box padding="md" color="gray2" background="level2" rounded="sm">
-                    <Icon type="at" size="square_sm" />
-                </Box>
-                <Heading level={3}>No mentions yet</Heading>
-                <Paragraph textAlign="center" color="gray2">
-                    {`Whenever someone "@" mentions you, it'll show up here.`}
-                </Paragraph>
-            </Stack>
-        </Stack>
+        </CentralPanelLayout>
     )
 }
 
-const MentionBox = (props: { mention: MentionResult }) => {
-    const { mention } = props
+const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
+    const { mention, userId } = props
     const { slug: spaceSlug } = useSpaceId() ?? {}
     const { slug: channelSlug } = mention.channel.id
 
     const content = getIsRoomMessageContent(mention.event)
+
+    const { membersMap } = useSpaceMembers()
+    const user = membersMap[mention.event.sender.id]
 
     if (!content) {
         return null
@@ -66,9 +85,9 @@ const MentionBox = (props: { mention: MentionResult }) => {
                         mention.thread ? `Thread in` : ``
                     } #${mention.channel.label.toLowerCase()}`}
                     timestamp={mention.event.originServerTs}
-                    userId={mention.event.sender.id}
-                    avatar={mention.event.sender.avatarUrl}
-                    name={mention.event.sender.displayName}
+                    userId={userId}
+                    avatar={user.avatarUrl}
+                    name={user.name}
                 >
                     <RichTextPreview
                         content={getMessageBody(mention.event.eventId, content)}

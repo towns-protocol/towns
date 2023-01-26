@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { WindowedMessageThread } from '@components/MessageThread'
+import { MessageThreadPanel } from '@components/MessageThread/MessageThreadPanel'
 import { Box } from '@ui'
 
 export const SpacesChannelReplies = (props: {
@@ -27,8 +27,8 @@ export const SpacesChannelReplies = (props: {
             {isValid ? (
                 <>
                     <Box grow padding="lg">
-                        <Box absoluteFill padding gap paddingBottom="lg" position="relative">
-                            <WindowedMessageThread
+                        <Box absoluteFill gap paddingBottom="lg" position="relative">
+                            <MessageThreadPanel
                                 key={messageId}
                                 messageId={messageId}
                                 highlightId={highlightId}
@@ -45,5 +45,3 @@ export const SpacesChannelReplies = (props: {
         </Box>
     )
 }
-
-export default SpacesChannelReplies

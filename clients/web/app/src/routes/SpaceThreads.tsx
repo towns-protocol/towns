@@ -1,5 +1,4 @@
 import React from 'react'
-import { Outlet } from 'react-router'
 import { firstBy } from 'thenby'
 import {
     ChannelContextProvider,
@@ -8,9 +7,10 @@ import {
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-zion-client'
-import { usePersistOrder } from 'hooks/usePersistOrder'
-import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { MessageThread } from '@components/MessageThread/MessageThread'
+import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
+import { usePersistOrder } from 'hooks/usePersistOrder'
+import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
     return threads.sort(
@@ -28,36 +28,42 @@ export const SpaceThreads = () => {
         identityFn: (t: ThreadResult) => t.thread.parentId,
     })
 
-    return userId && spaceId && threads.length > 0 ? (
-        <Stack grow horizontal>
-            <Stack grow background="level1">
-                {threads.map(({ thread, channel }) => {
-                    return (
-                        <ChannelContextProvider key={thread.parentId} channelId={channel.id}>
-                            <MessageThread
-                                userId={userId}
-                                parentId={thread.parentId}
-                                channelId={channel.id}
-                                channelLabel={channel.label}
-                                spaceId={spaceId}
-                            />
-                        </ChannelContextProvider>
-                    )
-                })}
-            </Stack>
-            <Outlet />
-        </Stack>
-    ) : (
-        <Stack centerContent grow>
-            <Stack centerContent gap="lg" width="250">
-                <Box padding="md" color="gray2" background="level2" rounded="sm">
-                    <Icon type="threads" size="square_sm" />
-                </Box>
-                <Heading level={3}>No threads yet</Heading>
-                <Paragraph textAlign="center" color="gray2">
-                    Threads help you keep track of conversations you engage with.
-                </Paragraph>
-            </Stack>
-        </Stack>
+    return (
+        <CentralPanelLayout>
+            {userId && spaceId && threads.length > 0 ? (
+                <Stack absoluteFill overflowY="scroll">
+                    <Stack gap="lg" padding="lg">
+                        {threads.map(({ thread, channel }) => {
+                            return (
+                                <ChannelContextProvider
+                                    key={thread.parentId}
+                                    channelId={channel.id}
+                                >
+                                    <MessageThread
+                                        userId={userId}
+                                        parentId={thread.parentId}
+                                        channelId={channel.id}
+                                        channelLabel={channel.label}
+                                        spaceId={spaceId}
+                                    />
+                                </ChannelContextProvider>
+                            )
+                        })}
+                    </Stack>
+                </Stack>
+            ) : (
+                <Stack centerContent grow absoluteFill>
+                    <Stack centerContent gap="lg" width="250">
+                        <Box padding="md" color="gray2" background="level2" rounded="sm">
+                            <Icon type="threads" size="square_sm" />
+                        </Box>
+                        <Heading level={3}>No threads yet</Heading>
+                        <Paragraph textAlign="center" color="gray2">
+                            Threads help you keep track of conversations you engage with.
+                        </Paragraph>
+                    </Stack>
+                </Stack>
+            )}
+        </CentralPanelLayout>
     )
 }

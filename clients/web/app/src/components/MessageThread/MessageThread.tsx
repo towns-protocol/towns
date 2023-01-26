@@ -64,21 +64,21 @@ export const MessageThread = (props: {
             channelId={channelId}
             threadParentId={parentId}
         >
-            <Stack gap padding>
+            <Stack gap>
                 <Box>
                     <Paragraph size="lg" color="default">
                         #{channelLabel.toLocaleLowerCase()}
                     </Paragraph>
                     {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                 </Box>
-                <Stack scroll grow border rounded="sm" background="level2" boxShadow="card">
+                <Stack scroll grow rounded="sm" background="level2" boxShadow="card">
                     {/* {parentMessage && parentMessageContent && (
                         <TimelineMessage
                             event={parentMessage}
                             eventContent={parentMessageContent}
                         />
                     )} */}
-                    <Stack borderTop>
+                    <Stack>
                         <MessageTimeline />
                         <Box padding>
                             <RichTextEditor
