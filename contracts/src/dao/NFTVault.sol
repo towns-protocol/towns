@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import {IVotingVault} from "council/interfaces/IVotingVault.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
-contract ZioneerVault is IVotingVault {
+contract NFTVault is IVotingVault {
   IERC721 public immutable token;
 
   constructor(IERC721 _token) {

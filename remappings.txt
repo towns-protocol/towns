@@ -8,3 +8,4 @@ murky/=lib/murky/src/
 openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 solmate/=lib/solmate/src/
+contracts/=contracts/

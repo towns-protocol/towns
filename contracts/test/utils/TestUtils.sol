@@ -75,4 +75,16 @@ contract TestUtils is Test {
   ) public pure returns (bool) {
     return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
   }
+
+  function _createAccounts(
+    uint256 amount
+  ) internal view returns (address[] memory) {
+    address[] memory accounts = new address[](amount);
+
+    for (uint256 i = 0; i < amount; i++) {
+      accounts[i] = _randomAddress();
+    }
+
+    return accounts;
+  }
 }
