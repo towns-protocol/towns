@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import { CreateSpaceInfo, SendMessageOptions } from 'types/matrix-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
 
@@ -17,6 +18,7 @@ export interface ZionOpts {
     onboardingOpts?: ZionOnboardingOpts
     web3Provider?: ethers.providers.Provider
     web3Signer?: ethers.Signer
+    eventHandlers?: ZionClientEventHandlers
 }
 
 export interface ZionAuth {
@@ -79,4 +81,11 @@ export interface TransactionContext<T> {
 
 export interface ChannelTransactionContext extends TransactionContext<RoomIdentifier> {
     parentSpaceId: string | undefined
+}
+
+export type ZionClientEventHandlers = {
+    onCreateSpace?: (createSpaceInfo: CreateSpaceInfo, roomIdentifier: RoomIdentifier) => void
+    onInviteUser?: (roomId: RoomIdentifier, userId: string) => void
+    onJoinRoom?: (roomId: RoomIdentifier) => void
+    onSendMessage?: (roomId: RoomIdentifier, sendMessageOptions?: SendMessageOptions) => void
 }

@@ -77,6 +77,7 @@ import { toEvent } from '../hooks/ZionContext/useMatrixTimelines'
  * the zion client will wrap the underlying matrix and casablanca clients and
  * ensure correct zion protocol business logic
  */
+
 export class ZionClient {
     public readonly opts: ZionOpts
     public readonly name: string
@@ -389,7 +390,10 @@ export class ZionClient {
         }
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateSpaceTransaction(txContext)
-            return rxContext?.data
+            if (rxContext.data) {
+                this.opts.eventHandlers?.onCreateSpace?.(createSpaceInfo, rxContext.data)
+            }
+            return rxContext.data
         }
         // Something went wrong. Don't return a room identifier.
         return undefined
@@ -770,7 +774,13 @@ export class ZionClient {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return inviteMatrixUser({ matrixClient: this.matrixClient, userId, roomId })
+                await inviteMatrixUser({
+                    matrixClient: this.matrixClient,
+                    userId,
+                    roomId,
+                })
+                this.opts.eventHandlers?.onInviteUser?.(roomId, userId)
+                return
             case SpaceProtocol.Casablanca:
                 throw new Error('inviteUser not implemented for Casablanca')
             default:
@@ -809,9 +819,12 @@ export class ZionClient {
                     throw new Error('matrix client is undefined')
                 }
                 const matrixRoom = await joinMatrixRoom({ matrixClient: this.matrixClient, roomId })
-                return toZionRoom(matrixRoom)
+                const zionRoom = toZionRoom(matrixRoom)
+                this.opts.eventHandlers?.onJoinRoom?.(zionRoom.id)
+                return zionRoom
             }
             case SpaceProtocol.Casablanca: {
+                // TODO: not doing event handlers here since Casablanca is not part of alpha
                 if (!this.casablancaClient) {
                     throw new Error('Casablanca client not initialized')
                 }
@@ -837,7 +850,10 @@ export class ZionClient {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return sendMatrixMessage(this.matrixClient, roomId, message, options)
+                await sendMatrixMessage(this.matrixClient, roomId, message, options)
+
+                this.opts.eventHandlers?.onSendMessage?.(roomId, options)
+                return
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
                     throw new Error('Casablanca client not initialized')

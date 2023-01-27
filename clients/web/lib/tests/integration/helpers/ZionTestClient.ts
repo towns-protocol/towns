@@ -13,10 +13,15 @@ import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-i
 import { createUserIdFromEthereumAddress, UserIdentifier } from '../../../src/types/user-identifier'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
-import { ZionAuth, SpaceProtocol } from '../../../src/client/ZionClientTypes'
+import {
+    ZionAuth,
+    SpaceProtocol,
+    ZionClientEventHandlers,
+} from '../../../src/client/ZionClientTypes'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
+    eventHandlers?: ZionClientEventHandlers
 }
 
 export class ZionTestClient extends ZionClient {
@@ -59,6 +64,7 @@ export class ZionTestClient extends ZionClient {
                 initialSyncLimit: 20,
                 web3Signer: provider.wallet,
                 web3Provider: provider,
+                eventHandlers: props?.eventHandlers,
             },
             chainId,
             name,
