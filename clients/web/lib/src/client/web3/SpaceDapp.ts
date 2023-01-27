@@ -1,17 +1,35 @@
 import { ContractTransaction, ethers } from 'ethers'
-import { EntitlementModuleType, Permission } from './ContractTypes'
+import { EntitlementModuleType, Permission, RoleDetails } from './ContractTypes'
 import { EventsContractInfo, ISpaceDapp } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
+import { TokenDataTypes, TokenEntitlementShim } from './shims/TokenEntitlementShim'
+import {
+    decodeExternalTokens,
+    decodeUsers,
+    encodeExternalTokens,
+    encodeUsers,
+} from './ContractHelpers'
 
 import { ShimFactory } from './shims/ShimFactory'
 import { SpaceInfo } from './SpaceInfo'
+import { UserEntitlementShim } from './shims/UserEntitlementShim'
 import { keccak256 } from 'ethers/lib/utils'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
 interface Spaces {
     [spaceId: string]: SpaceShim
+}
+
+interface Entitlements {
+    tokenEntitlement: TokenEntitlementShim | undefined
+    userEntitlement: UserEntitlementShim | undefined
+}
+
+interface EntitlementDetails {
+    tokens: TokenDataTypes.ExternalTokenStruct[]
+    users: string[]
 }
 
 export class SpaceDapp implements ISpaceDapp {
@@ -112,21 +130,11 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error('User entitlement moodule address not found.')
         }
 
-        const abiCoder = ethers.utils.defaultAbiCoder
         // create the entitlements array
         const entitlements: SpaceDataTypes.EntitlementStruct[] = []
         if (tokens.length) {
             // create the token entitlement
-            const tokenEntitlementShim = ShimFactory.createTokenEntitlement(
-                tokenModuleAddress,
-                this.chainId,
-                this.provider,
-                this.signer,
-            )
-            const tokenData = tokenEntitlementShim.contractInterface.encodeFunctionData(
-                'encodeExternalTokens',
-                [tokens],
-            )
+            const tokenData = encodeExternalTokens(tokens)
             const tokenEntitlement: SpaceDataTypes.EntitlementStruct = {
                 module: tokenModuleAddress,
                 data: tokenData,
@@ -135,10 +143,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
         // create the user entitlement
         if (users.length) {
-            if (!userModuleAddress) {
-                throw new Error('User entitlement moodule address not found.')
-            }
-            const userData = abiCoder.encode(['string[]'], users)
+            const userData = encodeUsers(users)
             const userEntitlement: SpaceDataTypes.EntitlementStruct = {
                 module: userModuleAddress,
                 data: userData,
@@ -169,6 +174,29 @@ export class SpaceDapp implements ISpaceDapp {
             )
         }
         return this.spaces[spaceId]
+    }
+
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails> {
+        const space = await this.getSpace(spaceId)
+        if (!space?.read) {
+            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        }
+        const [role, permissions, entitlementDetails] = await Promise.all([
+            space.read.getRoleById(roleId),
+            space.read.getPermissionsByRoleId(roleId),
+            this.getEntitlementDetails(space, roleId),
+        ])
+        const roleName = role.name
+        const perms = permissions.map((permission) => {
+            return ethers.utils.parseBytes32String(permission) as Permission
+        })
+        return {
+            id: roleId,
+            name: roleName,
+            permissions: perms,
+            tokens: entitlementDetails.tokens,
+            users: entitlementDetails.users,
+        }
     }
 
     public async getRoles(spaceId: string): Promise<SpaceDataTypes.RoleStructOutput[]> {
@@ -289,5 +317,122 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with networkId "${spaceId}" is not deployed properly.`)
         }
         return space.write.setChannelAccess(channelId, disabled)
+    }
+
+    private async getEntitlementDetails(
+        space: SpaceShim,
+        roleId: number,
+    ): Promise<EntitlementDetails> {
+        let rawTokenDetails: TokenDataTypes.ExternalTokenStruct[][] = []
+        let rawUserDetails: string[][] = []
+        // Get entitlement details.
+        const entitlements = await this.createEntitlementShims(space)
+        if (entitlements.tokenEntitlement && entitlements.userEntitlement) {
+            // Case 1: both token and user entitlements are defined.
+            ;[rawTokenDetails, rawUserDetails] = await Promise.all([
+                this.getTokenEntitlementDetails(roleId, entitlements.tokenEntitlement),
+                this.getUserEntitlementDetails(roleId, entitlements.userEntitlement),
+            ])
+        } else if (entitlements.tokenEntitlement) {
+            // Case 2: only token entitlement is defined.
+            rawTokenDetails = await this.getTokenEntitlementDetails(
+                roleId,
+                entitlements.tokenEntitlement,
+            )
+        } else if (entitlements.userEntitlement) {
+            // Case 3: only user entitlement is defined.
+            rawUserDetails = await this.getUserEntitlementDetails(
+                roleId,
+                entitlements.userEntitlement,
+            )
+        }
+        // Verify that we have only one token and one user entitlement.
+        // The app only requires one at the moment.
+        // In the future we might want to support more.
+        if (rawTokenDetails.length > 1) {
+            throw new Error('More than one token entitlement not supported at the moment.')
+        }
+        if (rawUserDetails.length > 1) {
+            throw new Error('More than one user entitlement not supported at the moment.')
+        }
+        // Return the entitlement details.
+        const tokens: TokenDataTypes.ExternalTokenStruct[] = rawTokenDetails.length
+            ? rawTokenDetails[0]
+            : []
+        const users: string[] = rawUserDetails.length ? rawUserDetails[0] : []
+        return {
+            tokens,
+            users,
+        }
+    }
+
+    private async createEntitlementShims(space: SpaceShim): Promise<Entitlements> {
+        const entitlementAddresses = await space.read.getEntitlements()
+        let tokenEntitlement: TokenEntitlementShim | undefined = undefined
+        let userEntitlement: UserEntitlementShim | undefined = undefined
+        for (const address of entitlementAddresses) {
+            const entitlementModule = ShimFactory.createEntitlementModule(
+                address,
+                this.chainId,
+                this.provider,
+                this.signer,
+            )
+            const moduleType = await entitlementModule.read?.moduleType()
+            switch (moduleType) {
+                case EntitlementModuleType.TokenEntitlement:
+                    tokenEntitlement = ShimFactory.createTokenEntitlement(
+                        address,
+                        space.chainId,
+                        space.provider,
+                        space.signer,
+                    )
+                    break
+                case EntitlementModuleType.UserEntitlement:
+                    userEntitlement = ShimFactory.createUserEntitlement(
+                        address,
+                        space.chainId,
+                        space.provider,
+                        space.signer,
+                    )
+                    break
+                default:
+                    throw new Error(`Unknown entitlement module type: ${moduleType}`)
+            }
+        }
+
+        return {
+            tokenEntitlement,
+            userEntitlement,
+        }
+    }
+
+    private async getTokenEntitlementDetails(
+        roleId: number,
+        tokenEntitlement: TokenEntitlementShim,
+    ): Promise<TokenDataTypes.ExternalTokenStruct[][]> {
+        // a token-gated entitlement can have multiple tokens OR together, or AND together.
+        // the first dimensions are the ORs; the second dimensions are the ANDs.
+        const details: TokenDataTypes.ExternalTokenStruct[][] = []
+        const encodedTokens = await tokenEntitlement.read.getEntitlementDataByRoleId(roleId)
+        for (const t of encodedTokens) {
+            const tokens = decodeExternalTokens(t)
+            details.push(tokens)
+        }
+        return details
+    }
+
+    private async getUserEntitlementDetails(
+        roleId: number,
+        userEntitlement: UserEntitlementShim,
+    ): Promise<string[][]> {
+        // a user-gated entitlement has multiple user arrays OR together or AND together.
+        // the first dimensions are the ORs; the second dimensions are the ANDs.
+        const details: string[][] = []
+        const encodedUsers = await userEntitlement.read.getEntitlementDataByRoleId(roleId)
+        for (const u of encodedUsers) {
+            const users = decodeUsers(u)
+            details.push(users)
+        }
+        return details
     }
 }

@@ -1,3 +1,5 @@
+import { TokenDataTypes } from './shims/TokenEntitlementShim'
+
 /**
  * Todo: Should generate and publish from our solidity contract definition.
  */
@@ -20,4 +22,12 @@ export enum Permission {
 export enum EntitlementModuleType {
     TokenEntitlement = 'TokenEntitlement',
     UserEntitlement = 'UserEntitlement',
+}
+
+export interface RoleDetails {
+    id: number
+    name: string
+    permissions: Permission[]
+    tokens: TokenDataTypes.ExternalTokenStruct[]
+    users: string[]
 }

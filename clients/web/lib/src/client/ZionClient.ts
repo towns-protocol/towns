@@ -709,7 +709,7 @@ export class ZionClient {
         let transaction: ContractTransaction | undefined = undefined
         let receipt: ContractReceipt | undefined = undefined
         let roleIdentifier: RoleIdentifier | undefined = undefined
-        let roleId: string | undefined = undefined
+        let roleId: number | undefined = undefined
         let roleName: string | undefined = undefined
         try {
             transaction = await this.spaceDapp.createRole(
@@ -721,14 +721,14 @@ export class ZionClient {
             )
             receipt = await transaction.wait()
         } catch (err) {
-            const decodedError = this.getDecodedErrorForSpace(spaceNetworkId, err)
+            const decodedError = await this.getDecodedErrorForSpace(spaceNetworkId, err)
             console.error('[createRole] failed', decodedError)
             throw decodedError
         } finally {
             if (receipt?.status === 1) {
                 // Successful created the role on-chain.
-                console.log('[createRoleWithEntitlementData] success', receipt?.logs[0].topics[2])
-                roleId = BigNumber.from(receipt?.logs[0].topics[2]).toString()
+                console.log('[createRole] success', receipt?.logs[0].topics[2])
+                roleId = BigNumber.from(receipt?.logs[0].topics[2]).toNumber()
                 // John: how can we best decode this 32 byte hex string to a human readable string ?
                 roleName = receipt?.logs[0].topics[3]
                 roleIdentifier = { roleId, name: roleName, spaceNetworkId }
@@ -751,7 +751,7 @@ export class ZionClient {
             transaction = await this.spaceDapp.setSpaceAccess(spaceNetworkId, disabled)
             receipt = await transaction.wait()
         } catch (err) {
-            const decodedError = this.getDecodedErrorForSpace(spaceNetworkId, err)
+            const decodedError = await this.getDecodedErrorForSpace(spaceNetworkId, err)
             console.error('[setSpaceAccess] failed', decodedError)
             throw decodedError
         } finally {

@@ -13,9 +13,7 @@ import {
 import { BaseContractShim } from './BaseContractShim'
 
 export type { LocalhostDataTypes as SpaceDataTypes }
-export type { LocalhostInterface as SpaceInterface }
 
-// todo: set GoerliSpace type when deployed to Goerli
 export class SpaceShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,

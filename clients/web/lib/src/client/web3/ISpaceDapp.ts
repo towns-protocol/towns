@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-imports */
 
 import { ContractTransaction, ethers } from 'ethers'
-import { Permission } from './ContractTypes'
+import { Permission, RoleDetails } from './ContractTypes'
 import { SpaceDataTypes } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
@@ -33,6 +33,7 @@ export interface ISpaceDapp {
         users: string[],
     ): Promise<ContractTransaction>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
+    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails>
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
     getSpaceFactoryEventsContractInfo: () => EventsContractInfo
     getSpaceEventsContractInfo: (spaceId: string) => Promise<EventsContractInfo>

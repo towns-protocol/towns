@@ -6,12 +6,14 @@ import {
 } from '@harmony/contracts/goerli/typings/TokenEntitlement'
 import {
     TokenEntitlement as LocalhostContract,
+    DataTypes as LocalhostDataTypes,
     TokenEntitlementInterface as LocalhostInterface,
 } from '@harmony/contracts/localhost/typings/TokenEntitlement'
 
 import { BaseContractShim } from './BaseContractShim'
 
-// todo: set GoerliSpace type when deployed to Goerli
+export type { LocalhostDataTypes as TokenDataTypes }
+
 export class TokenEntitlementShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,

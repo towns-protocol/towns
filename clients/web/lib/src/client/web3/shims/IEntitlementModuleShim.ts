@@ -11,7 +11,6 @@ import {
 
 import { BaseContractShim } from './BaseContractShim'
 
-// todo: set GoerliSpace type when deployed to Goerli
 export class IEntitlementModuleShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,

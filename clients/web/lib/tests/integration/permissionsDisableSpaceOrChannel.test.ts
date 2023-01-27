@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
@@ -13,6 +14,79 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 
 describe('disable channel', () => {
+    test('Space owner is allowed to disable space access', async () => {
+        /** Arrange */
+
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const spaceNetworkId: string | undefined = roomId?.networkId
+        /** Act */
+        // set space access off, disabling space in ZionSpaceManager
+        const success: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId as string,
+            true,
+        )
+
+        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
+
+        /** Assert */
+        expect(success).toEqual(true)
+        expect(spaceInfo?.disabled).toEqual(true)
+        expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
+    })
+
+    test('Space owner is allowed to re-enable disabled space access', async () => {
+        /** Arrange */
+
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const spaceNetworkId: string | undefined = roomId?.networkId
+        /** Act */
+        // set space access off, disabling space in ZionSpaceManager
+        const disabled: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId as string,
+            true,
+        )
+        // set space access on, re-enabling space in ZionSpaceManager
+        const enabled: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId as string,
+            false,
+        )
+        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
+
+        /** Assert */
+        expect(disabled).toEqual(true)
+        expect(enabled).toEqual(true)
+        expect(spaceInfo?.disabled).toEqual(false)
+        expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
+    })
+
+    test('Space member is not allowed to disable space access', async () => {
+        /** Arrange */
+
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        await alice.fundWallet()
+        await bob.fundWallet()
+
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
+        const spaceNetworkId: string | undefined = roomId?.networkId
+        /** Act */
+        // set space access off, disabling space in ZionSpaceManager
+        const error = await getError<Error>(async function () {
+            await bob.setSpaceAccess(spaceNetworkId as string, true)
+        })
+
+        /* Assert */
+        // check that the returned error wasn't that no error was thrown.
+        expect(error).not.toBeInstanceOf(NoThrownError)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(error).toHaveProperty('name', CONTRACT_ERROR.NotAllowed)
+    })
+
     test('Channel member cant sync disabled room messages', async () => {
         /** Arrange */
 
@@ -29,9 +103,12 @@ describe('disable channel', () => {
             Permission.Read,
             Permission.Write,
         ])
-        if (roomId === undefined) throw new Error('roomId should be defined')
-        if (tokenGrantedUser.matrixUserId === undefined)
+        if (roomId === undefined) {
+            throw new Error('roomId should be defined')
+        }
+        if (tokenGrantedUser.matrixUserId === undefined) {
             throw new Error('alice.matrixUserId should be defined')
+        }
 
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId)
@@ -75,9 +152,12 @@ describe('disable channel', () => {
                 visibility: RoomVisibility.Private,
             },
         )
-        if (roomId === undefined) throw new Error('roomId should be defined')
-        if (alice.matrixUserId === undefined)
+        if (roomId === undefined) {
+            throw new Error('roomId should be defined')
+        }
+        if (alice.matrixUserId === undefined) {
             throw new Error('alice.matrixUserId should be defined')
+        }
 
         /** Act */
 

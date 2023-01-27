@@ -7,7 +7,7 @@ export enum WalletStatus {
     Disconnected = 'disconnected',
 }
 export interface RoleIdentifier {
-    roleId: string
+    roleId: number
     name: string
     spaceNetworkId: string
 }

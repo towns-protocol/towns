@@ -173,6 +173,11 @@ export class BaseContractShim<
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             errorMessage = anyError.error?.data?.message
         }
+        if (!errorData) {
+            // Case 4: Unknown
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            errorMessage = anyError.message
+        }
         return {
             errorData,
             errorMessage,

@@ -9,6 +9,8 @@ interface WorkThreadInfo {
 }
 
 export class TestConstants {
+    public static readonly EveryoneAddress = '0x0000000000000000000000000000000000000001'
+
     // Private keys to use for the test wallet
     // number of private keys for wallet with nft must be == number of private keys for wallet without nft
     private static privateKeysForWalletWithNft = [

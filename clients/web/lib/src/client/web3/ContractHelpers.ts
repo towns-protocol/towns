@@ -1,7 +1,13 @@
 import { SpaceDataTypes } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
+import { TokenDataTypes } from './shims/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
+import { ethers } from 'ethers'
 import { getContractsInfo } from './IStaticContractsInfo'
+
+const UserAddressesEncoding = 'address[]'
+const ExternalTokenEncoding =
+    'tuple(address contractAddress, uint256 quantity, bool isSingleToken, uint256[] tokenIds)[]'
 
 export function getCouncilNftAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)
@@ -51,4 +57,41 @@ export async function getFilteredRolesFromSpace(
         }
     }
     return filteredRoles
+}
+
+export function encodeExternalTokens(tokens: SpaceFactoryDataTypes.ExternalTokenStruct[]): string {
+    const abiCoder = ethers.utils.defaultAbiCoder
+    const encodedData = abiCoder.encode([ExternalTokenEncoding], [tokens])
+    return encodedData
+}
+
+export function decodeExternalTokens(encodedData: string): TokenDataTypes.ExternalTokenStruct[] {
+    const abiCoder = ethers.utils.defaultAbiCoder
+    const decodedData = abiCoder.decode(
+        [ExternalTokenEncoding],
+        encodedData,
+    ) as TokenDataTypes.ExternalTokenStruct[][]
+    let t: TokenDataTypes.ExternalTokenStruct[] = []
+    if (decodedData.length) {
+        // decoded value is in element 0 of the array
+        t = decodedData[0]
+    }
+    return t
+}
+
+export function encodeUsers(users: string[]): string {
+    const abiCoder = ethers.utils.defaultAbiCoder
+    const encodedData = abiCoder.encode([UserAddressesEncoding], [users])
+    return encodedData
+}
+
+export function decodeUsers(encodedData: string): string[] {
+    const abiCoder = ethers.utils.defaultAbiCoder
+    const decodedData = abiCoder.decode([UserAddressesEncoding], encodedData) as string[][]
+    let u: string[] = []
+    if (decodedData.length) {
+        // decoded value is in element 0 of the array
+        u = decodedData[0]
+    }
+    return u
 }
