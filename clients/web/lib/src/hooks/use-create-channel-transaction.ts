@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { CreateChannelInfo } from '../types/matrix-types'
 import { RoomIdentifier } from '../types/room-identifier'
@@ -46,13 +46,15 @@ export function useCreateChannelTransaction() {
         [createChannelTransaction, waitForCreateChannelTransaction],
     )
 
-    console.log('useCreateChannelTransaction', 'states', {
-        isLoading,
-        data,
-        error,
-        transactionStatus,
-        transactionHash,
-    })
+    useEffect(() => {
+        console.log('useCreateChannelTransaction', 'states', {
+            isLoading,
+            data,
+            error,
+            transactionStatus,
+            transactionHash,
+        })
+    }, [data, error, isLoading, transactionHash, transactionStatus])
 
     return {
         isLoading,
