@@ -1,6 +1,4 @@
 import { Chain, useNetwork, useSwitchNetwork } from 'wagmi'
-import { foundry } from 'wagmi/chains'
-import { PROD_CHAIN_ID, env } from 'utils'
 import { useCorrectChainForServer } from './useCorrectChainForServer'
 
 type Props = {
