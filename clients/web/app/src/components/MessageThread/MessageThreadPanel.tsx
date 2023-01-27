@@ -8,8 +8,9 @@ import {
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Panel, Stack } from '@ui'
+import { Box, Panel, Paragraph, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
+import { atoms } from 'ui/styles/atoms.css'
 
 type Props = {
     messageId: string
@@ -33,7 +34,16 @@ export const MessageThreadPanel = (props: Props) => {
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
         sendReply(value, channelId, options)
     }
-
+    const panelLabel = (
+        <Paragraph>
+            Thread{' '}
+            {channelLabel ? (
+                <>
+                    in <span className={atoms({ color: 'default' })}>#{channelLabel}</span>
+                </>
+            ) : null}
+        </Paragraph>
+    )
     return (
         <MessageTimelineWrapper
             spaceId={spaceId}
@@ -41,10 +51,7 @@ export const MessageThreadPanel = (props: Props) => {
             threadParentId={messageId}
             events={messagesWithParent}
         >
-            <Panel
-                label={`Thread ${channelLabel ? `in #${channelLabel}` : ``}`}
-                onClose={props.onClose}
-            >
+            <Panel label={panelLabel} onClose={props.onClose}>
                 <Stack grow overflow="hidden">
                     <MessageTimeline highlightId={props.highlightId} />
                 </Stack>

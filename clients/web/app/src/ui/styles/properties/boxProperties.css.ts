@@ -6,6 +6,7 @@ export const border = {
     none: `none`,
     default: `1px solid ${vars.color.background.level3}`,
     faint: `1px solid ${vars.color.background.level2}`,
+    level4: `1px solid ${vars.color.background.level4}`,
     quote: `2px solid ${vars.color.background.level3}`,
     accent: `1px solid ${vars.color.background.etherum}`,
     strong: `2px solid ${vars.color.text.default}`,

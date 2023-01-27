@@ -54,10 +54,13 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                                         </Stack>
                                     </Stack>
                                 )}
+                                <Paragraph>Bio</Paragraph>
+                                <Paragraph>
+                                    {`Please come back when I have written my bio. It shouldn't be more thans a few
+                    lines written in a way that makes you want to know more about me.`}
+                                </Paragraph>
                             </Stack>
                         </Stack>
-
-                        <Stack paddingBottom="lg" paddingX="lg" />
                     </>
                 ) : (
                     <Paragraph>Profile not found</Paragraph>

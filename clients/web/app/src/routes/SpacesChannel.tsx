@@ -9,12 +9,13 @@ import {
     useMyMembership,
     useZionClient,
 } from 'use-zion-client'
-import { ChannelHeader } from '@components/ChannelHeader'
+import { ChannelIntro } from '@components/ChannelIntro'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
-import { Box, Button } from '@ui'
+import { Box, Button, Stack } from '@ui'
+import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpacesChannel = () => {
@@ -81,6 +82,15 @@ const SpacesChannelComponent = () => {
                 </Box>
             ) : (
                 <Box grow absoluteFill height="100%" justifyContent="end">
+                    <ChannelHeader channel={channel} spaceId={spaceId} />
+
+                    {/* 
+                        /!\ keep
+                        spacer allowing the header to always stick to the top 
+                        in case the timeline is smaller than the screen
+                    */}
+                    <Stack grow />
+
                     <MessageTimelineWrapper
                         key={channelId.slug}
                         spaceId={spaceId}
@@ -88,7 +98,7 @@ const SpacesChannelComponent = () => {
                         events={channelMessages}
                     >
                         <MessageTimeline
-                            header={<ChannelHeader name={channel.label} />}
+                            header={<ChannelIntro name={channel.label} />}
                             highlightId={messageId || highlightId}
                         />
                     </MessageTimelineWrapper>

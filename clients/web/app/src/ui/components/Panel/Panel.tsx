@@ -10,11 +10,13 @@ export const Panel = (props: {
         <Stack overflow="hidden" maxHeight="100%">
             <Stack
                 horizontal
-                padding="md"
+                shrink
+                paddingX="md"
                 background="level2"
-                minHeight="x8"
+                height="x8"
                 alignItems="center"
                 color="gray1"
+                justifySelf="start"
             >
                 <Stack grow color="gray2">
                     {props.label}
