@@ -47,11 +47,15 @@ function triggerZionClientEvent(state: MatrixStoreStates, event: ZionClientEvent
 
 export function toZionRoom(r: MatrixRoom): Room {
     const { members, membersMap } = toZionMembers(r)
+
+    // if user is invited to room, r.getMyMembership() always returns "invite" until browser refresh, even if they accept and join room
+    // once they're in membersMap, their status is set to join
+    const myMembership = membersMap[r.myUserId]?.membership ?? (r.getMyMembership() as Membership)
     return {
         id: makeRoomIdentifier(r.roomId),
         name: r.name,
-        membership: r.getMyMembership() as Membership,
-        inviter: r.getMyMembership() === Membership.Invite ? r.guessDMUserId() : undefined,
+        membership: myMembership,
+        inviter: myMembership === Membership.Invite ? r.guessDMUserId() : undefined,
         members: members,
         membersMap: membersMap,
         isSpaceRoom: r.isSpaceRoom(),
