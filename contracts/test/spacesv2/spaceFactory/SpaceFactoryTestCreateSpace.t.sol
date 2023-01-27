@@ -7,15 +7,15 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
 import {SpaceFactory} from "contracts/src/spacesv2/SpaceFactory.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 
 import {Mock721, MockERC20} from "contracts/test/spacesv2/mocks/MockToken.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract SpaceFactoryTestCreateSpace is BaseSetup {
+contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
   function setUp() external {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
   }
 
   function testUpdateImplementation() external {

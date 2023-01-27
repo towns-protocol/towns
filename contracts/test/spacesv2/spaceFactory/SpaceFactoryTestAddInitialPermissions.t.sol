@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {Errors} from "contracts/src/spacesv2/libraries/Errors.sol";
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 
-contract SpaceFactoryTestAddPermissions is BaseSetup {
+contract SpaceFactoryTestAddPermissions is SpaceBaseSetup {
   function setUp() external {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
   }
 
   function testRevertPermissionAlreadyExists() external {

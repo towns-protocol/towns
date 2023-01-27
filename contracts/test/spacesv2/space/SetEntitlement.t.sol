@@ -5,7 +5,7 @@ import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
 import {Errors} from "contracts/src/spacesv2/libraries/Errors.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -13,12 +13,12 @@ import {MockEntitlement} from "contracts/test/spacesv2/mocks/MockEntitlement.sol
 
 import {console} from "forge-std/console.sol";
 
-contract SetEntitlementTest is BaseSetup {
+contract SetEntitlementTest is SpaceBaseSetup {
   MockEntitlement public implementation;
   address public entitlementAddress;
 
   function setUp() public {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
 
     implementation = new MockEntitlement();
     entitlementAddress = address(new ERC1967Proxy(address(implementation), ""));

@@ -6,6 +6,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "AddressNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ChannelAlreadyRegistered",
     "type": "error"
   },
@@ -26,6 +31,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "EntitlementAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "EntitlementAlreadyWhitelisted",
     "type": "error"
   },
@@ -36,12 +46,22 @@ export default [
   },
   {
     "inputs": [],
+    "name": "EntitlementNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "EntitlementNotWhitelisted",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "InvalidParameters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "MissingOwnerPermission",
     "type": "error"
   },
   {
@@ -71,7 +91,17 @@ export default [
   },
   {
     "inputs": [],
+    "name": "OwnerPermissionNotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "PermissionAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "QuantityNotFound",
     "type": "error"
   },
   {
@@ -82,6 +112,11 @@ export default [
   {
     "inputs": [],
     "name": "RoleDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RoleIsAssignedToEntitlement",
     "type": "error"
   },
   {

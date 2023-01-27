@@ -5,14 +5,14 @@ import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
 import {Errors} from "contracts/src/spacesv2/libraries/Errors.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract RemoveRoleFromEntitlementTest is BaseSetup {
+contract RemoveRoleFromEntitlementTest is SpaceBaseSetup {
   function setUp() public {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
   }
 
   function testRevertIfRemovingOwnerRole() external {

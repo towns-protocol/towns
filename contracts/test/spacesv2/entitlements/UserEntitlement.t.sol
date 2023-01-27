@@ -10,19 +10,19 @@ import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
 
 // Contracts
 import {Space} from "contracts/src/spacesv2/Space.sol";
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 import {UserEntitlement} from "contracts/src/spacesv2/entitlements/UserEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract UserEntitlementTest is BaseSetup {
+contract UserEntitlementTest is SpaceBaseSetup {
   address internal entitlementAddress;
   UserEntitlement internal implementation;
   UserEntitlement internal userEntitlement;
 
   function setUp() public {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
     implementation = new UserEntitlement();
     entitlementAddress = address(
       new ERC1967Proxy(

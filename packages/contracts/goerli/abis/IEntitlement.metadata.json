@@ -1,0 +1,377 @@
+{
+  "compiler": {
+    "version": "0.8.17+commit.8df45f5f"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "addRoleIdToChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "description",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getEntitlementDataByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes[]",
+            "name": "",
+            "type": "bytes[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          }
+        ],
+        "name": "getUserRoles",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.Role[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "permission",
+            "type": "bytes32"
+          }
+        ],
+        "name": "isEntitled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "moduleType",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "removeEntitlement",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeRoleIdFromChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "entitlementData",
+            "type": "bytes"
+          }
+        ],
+        "name": "setEntitlement",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_space",
+            "type": "address"
+          }
+        ],
+        "name": "setSpace",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to add the role to",
+            "roleId": "id of the role to add"
+          }
+        },
+        "getEntitlementDataByRoleId(uint256)": {
+          "params": {
+            "roleId": "the roleId to fetch the entitlement data for"
+          },
+          "returns": {
+            "_0": "entitlementData array for the role"
+          }
+        },
+        "getUserRoles(address)": {
+          "params": {
+            "user": "the user to fetch the roles for"
+          },
+          "returns": {
+            "_0": "roles array of all the roles for the user"
+          }
+        },
+        "isEntitled(string,address,bytes32)": {
+          "params": {
+            "channelId": "id of the channel to check, if empty string, checks space",
+            "permission": "the permission to check",
+            "user": "address of the user to check"
+          },
+          "returns": {
+            "_0": "whether the user is entitled to the permission"
+          }
+        },
+        "removeEntitlement(uint256,bytes)": {
+          "params": {
+            "entitlementData": "abi encoded array of the data associated with that entitlement",
+            "roleId": "id of the role to remove"
+          },
+          "returns": {
+            "_0": "entitlementId the id that was removed"
+          }
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to remove the role from",
+            "roleId": "id of the role to remove"
+          }
+        },
+        "setEntitlement(uint256,bytes)": {
+          "params": {
+            "entitlementData": "abi encoded array of data necessary to set the entitlement",
+            "roleId": "id of the role to gate"
+          },
+          "returns": {
+            "_0": "entitlementId the id that was set"
+          }
+        },
+        "setSpace(address)": {
+          "params": {
+            "_space": "address of the space"
+          }
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "notice": "adds a role to a channel"
+        },
+        "description()": {
+          "notice": "The description of the entitlement module"
+        },
+        "getEntitlementDataByRoleId(uint256)": {
+          "notice": "fetches the entitlement data for a roleId"
+        },
+        "getUserRoles(address)": {
+          "notice": "fetches the roles for a given user in the space"
+        },
+        "isEntitled(string,address,bytes32)": {
+          "notice": "checks whether a user is has a given permission for a channel or a space"
+        },
+        "moduleType()": {
+          "notice": "The type of the entitlement module"
+        },
+        "name()": {
+          "notice": "The name of the entitlement module"
+        },
+        "removeEntitlement(uint256,bytes)": {
+          "notice": "removes an entitlement"
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "notice": "removes a role from a channel"
+        },
+        "setEntitlement(uint256,bytes)": {
+          "notice": "sets a new entitlement"
+        },
+        "setSpace(address)": {
+          "notice": "sets the address for the space that controls this entitlement"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/spacesv2/interfaces/IEntitlement.sol": "IEntitlement"
+    },
+    "evmVersion": "london",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@opengsn/=node_modules/@opengsn/",
+      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":contracts/=contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":murky/=lib/murky/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":solmate/=lib/solmate/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
+      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
+        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
+      ]
+    },
+    "contracts/src/spacesv2/libraries/DataTypes.sol": {
+      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
+      "license": "Apache-20",
+      "urls": [
+        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
+        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
+      ]
+    }
+  },
+  "version": 1
+}

@@ -1,34 +1,39 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
+import "contracts/test/utils/TestUtils.sol";
 
-import {Merkle} from "murky/Merkle.sol";
+import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {IERC721Receiver} from "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import {MerkleHelper} from "contracts/test/spaces/MerkleHelper.sol";
 import {CouncilNFT} from "contracts/src/council/CouncilNFT.sol";
 
-contract NFTTest is Test, MerkleHelper {
+import {console} from "forge-std/console.sol";
+
+contract NFTTest is TestUtils {
   using stdStorage for StdStorage;
-  using Strings for uint256;
 
   CouncilNFT private nft;
-  Merkle private merkle;
+  MerkleTree private merkle;
 
   uint256 private NFT_PRICE = 0.08 ether;
   uint256 private NFT_SUPPLY = 2500;
 
-  bytes32[] private allowlistData;
+  bytes32[][] private treeData;
+
+  address[] accounts;
+  uint256[] allowances;
 
   function setUp() public {
-    //initialize the test data
-    _initPositionsAllowances();
-    allowlistData = _generateAllowlistData();
-
     //generate a merkle root from the allowlisted users test data
-    merkle = new Merkle();
-    bytes32 root = merkle.getRoot(allowlistData);
+    (accounts, allowances) = _mockWhitelist(10);
+
+    merkle = new MerkleTree();
+    (bytes32 root, bytes32[][] memory tree) = merkle.constructTree(
+      accounts,
+      allowances
+    );
+    treeData = tree;
 
     //deploy the nft
     nft = new CouncilNFT("Zion", "zion", "baseUri", root);
@@ -70,62 +75,60 @@ contract NFTTest is Test, MerkleHelper {
   }
 
   /// if user is waitlisted only (allowance = 0), minting should fail if in allowlist minting period
-  function testFailAllowlistMintOnlyWaitlisted() public {
-    address testingAddress = waitlist1;
+  function testRevertAllowlistMintOnlyWaitlisted() public {
+    uint256 position = _findAllowancePosition(0);
+    address account = accounts[position];
+    uint256 allowance = allowances[position];
 
-    uint256 position = userPositionMap[testingAddress];
-    uint256 allowance = userAllowanceMap[testingAddress];
+    bytes32[] memory proof = merkle.getProof(treeData, position);
 
-    bytes32[] memory proof = merkle.getProof(allowlistData, position);
-    nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
+    vm.expectRevert("Not allowed to mint yet");
+    nft.privateMint{value: NFT_PRICE}(account, allowance, proof);
   }
 
   /// if the proof generation is invalid, the test should fail
-  function testFailAllowlistMintBadProof() public {
-    address testingAddress = waitlist1;
+  function testRevertAllowlistMintBadProof() public {
+    uint256 position = _randomUint256();
+    uint256 allowance = _randomUint256() % 2;
 
-    uint256 position = userPositionMap[waitlist1];
-    uint256 allowance = 55; //random number
+    bytes32[] memory proof = merkle.getProof(treeData, position);
 
-    bytes32[] memory proof = merkle.getProof(allowlistData, position);
-    nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
+    vm.expectRevert("Not allowed to mint yet");
+    nft.privateMint{value: NFT_PRICE}(_randomAddress(), allowance, proof);
   }
 
   /// if the minting period is in the waitlist, waitlisted users should be able to mint
   function testWaitlistMintWaitlisted() public {
     nft.startWaitlistMint();
 
-    address testingAddress = waitlist1;
+    uint256 position = _findAllowancePosition(0);
+    address account = accounts[position];
+    uint256 allowance = allowances[position];
 
-    uint256 position = userPositionMap[testingAddress];
-    uint256 allowance = userAllowanceMap[testingAddress];
-
-    bytes32[] memory proof = merkle.getProof(allowlistData, position);
-    nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
+    bytes32[] memory proof = merkle.getProof(treeData, position);
+    nft.privateMint{value: NFT_PRICE}(account, allowance, proof);
   }
 
   //if the minting period is in the waitlist, allowlisted users should *still* be able to mint
   function testWaitlistMintAllowlisted() public {
     nft.startWaitlistMint();
 
-    address testingAddress = allowlist1;
+    uint256 position = _findAllowancePosition(1);
+    address account = accounts[position];
+    uint256 allowance = allowances[position];
 
-    uint256 position = userPositionMap[testingAddress];
-    uint256 allowance = userAllowanceMap[testingAddress];
-
-    bytes32[] memory proof = merkle.getProof(allowlistData, position);
-    nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
+    bytes32[] memory proof = merkle.getProof(treeData, position);
+    nft.privateMint{value: NFT_PRICE}(account, allowance, proof);
   }
 
   /// if the user is on the allowlist, they should be able to mint immediately
   function testAllowlistMint() public {
-    address testingAddress = allowlist1;
+    uint256 position = _findAllowancePosition(1);
+    address account = accounts[position];
+    uint256 allowance = allowances[position];
 
-    uint256 position = userPositionMap[testingAddress];
-    uint256 allowance = userAllowanceMap[testingAddress];
-
-    bytes32[] memory proof = merkle.getProof(allowlistData, position);
-    nft.privateMint{value: NFT_PRICE}(testingAddress, allowance, proof);
+    bytes32[] memory proof = merkle.getProof(treeData, position);
+    nft.privateMint{value: NFT_PRICE}(account, allowance, proof);
   }
 
   /// if the total supply has been minted, further mints should fail
@@ -238,6 +241,33 @@ contract NFTTest is Test, MerkleHelper {
     vm.startPrank(address(0x55));
     nft.withdrawPayments(payable(address(0x55)));
     vm.stopPrank();
+  }
+
+  function _findAllowancePosition(
+    uint256 allowanceType
+  ) internal view returns (uint256) {
+    uint256 position = 0;
+    for (uint256 i = 0; i < allowances.length; i++) {
+      if (allowances[i] == allowanceType) {
+        position = i;
+        break;
+      }
+    }
+    return position;
+  }
+
+  function _mockWhitelist(
+    uint256 amount
+  ) internal view returns (address[] memory, uint256[] memory) {
+    address[] memory _addresses = new address[](amount);
+    uint256[] memory _allowances = new uint256[](amount);
+
+    for (uint256 i = 0; i < amount; i++) {
+      _addresses[i] = _randomAddress();
+      _allowances[i] = _randomUint256() % 2;
+    }
+
+    return (_addresses, _allowances);
   }
 }
 

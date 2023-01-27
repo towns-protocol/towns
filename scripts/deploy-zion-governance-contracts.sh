@@ -2,7 +2,6 @@
 cd contracts/
 yarn clean
 source .env.localhost
-make deploy-anvil contract=DeployZionSpaceManager
 make deploy-anvil contract=DeployCouncil
 make deploy-anvil contract=DeploySpaces
 

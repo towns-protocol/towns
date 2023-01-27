@@ -11,14 +11,14 @@ import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
 // Contracts
 import {Space} from "contracts/src/spacesv2/Space.sol";
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 import {TokenEntitlement} from "contracts/src/spacesv2/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Mock721, Mock1155, MockERC20} from "contracts/test/spacesv2/mocks/MockToken.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract TokenEntitlementTest is BaseSetup {
+contract TokenEntitlementTest is SpaceBaseSetup {
   address internal entitlementAddress;
   TokenEntitlement internal implementation;
   TokenEntitlement internal tokenEntitlement;
@@ -27,7 +27,7 @@ contract TokenEntitlementTest is BaseSetup {
   MockERC20 mockToken3 = new MockERC20();
 
   function setUp() public {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
     implementation = new TokenEntitlement();
     entitlementAddress = address(
       new ERC1967Proxy(

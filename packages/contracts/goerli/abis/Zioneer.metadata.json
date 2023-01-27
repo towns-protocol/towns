@@ -665,7 +665,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/dao/Zioneer.sol": "Zioneer"
+      "contracts/src/governance/tokens/Zioneer.sol": "Zioneer"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -691,7 +691,7 @@
     ]
   },
   "sources": {
-    "contracts/src/dao/Zioneer.sol": {
+    "contracts/src/governance/tokens/Zioneer.sol": {
       "keccak256": "0xe62a65d2f06dd1f050b1ab45a5aa6e7a1d96526b3e37f3caff6ba5adcffa290f",
       "license": "Apache-2.0",
       "urls": [

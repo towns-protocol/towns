@@ -5,15 +5,15 @@ import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
 import {Errors} from "contracts/src/spacesv2/libraries/Errors.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 import {MockEntitlement} from "contracts/test/spacesv2/mocks/MockEntitlement.sol";
 
-contract CreateRoleTest is BaseSetup {
+contract CreateRoleTest is SpaceBaseSetup {
   MockEntitlement public mockEntitlement;
 
   function setUp() external {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
     mockEntitlement = new MockEntitlement();
   }
 

@@ -7,9 +7,10 @@ contract MerkleTree {
   // tree levels to the next power of 2, missing nodes will default to a value of
   // 0.
   function constructTree(
-    address[] memory members
+    address[] memory members,
+    uint256[] memory claimAmounts
   ) external pure returns (bytes32 root, bytes32[][] memory tree) {
-    require(members.length != 0);
+    require(members.length != 0 && members.length == claimAmounts.length);
     // Determine tree height.
     uint256 height = 0;
     {
@@ -25,7 +26,7 @@ contract MerkleTree {
     bytes32[] memory nodes = tree[0] = new bytes32[](members.length);
     for (uint256 i = 0; i < members.length; ++i) {
       // Leaf hashes are inverted to prevent second preimage attacks.
-      nodes[i] = ~keccak256(abi.encode(members[i]));
+      nodes[i] = keccak256(abi.encodePacked(members[i], claimAmounts[i]));
     }
     // Build up subsequent layers until we arrive at the root hash.
     // Each parent node is the hash of the two children below it.
@@ -53,9 +54,9 @@ contract MerkleTree {
 
   // Given a merkle tree and a member index (leaf node index), generate a proof.
   // The proof is simply the list of sibling nodes/hashes leading up to the root.
-  function createProof(
-    uint256 memberIndex,
-    bytes32[][] memory tree
+  function getProof(
+    bytes32[][] memory tree,
+    uint256 memberIndex
   ) external pure returns (bytes32[] memory proof) {
     uint256 leafIndex = memberIndex;
     uint256 height = tree.length;

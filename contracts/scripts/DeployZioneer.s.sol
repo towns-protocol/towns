@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.17;
 
-import {Zioneer} from "../src/dao/Zioneer.sol";
+import {Zioneer} from "contracts/src/governance/tokens/Zioneer.sol";
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 import {console} from "forge-std/console.sol";
 

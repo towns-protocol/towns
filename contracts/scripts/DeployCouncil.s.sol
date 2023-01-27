@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
-import {console} from "forge-std/console.sol";
 import {CouncilNFT} from "../src/council/CouncilNFT.sol";
+import {console} from "forge-std/console.sol";
 import "murky/Merkle.sol";
 
 contract DeployCouncil is ScriptUtils {

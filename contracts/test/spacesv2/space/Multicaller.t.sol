@@ -5,7 +5,7 @@ import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
 import {Errors} from "contracts/src/spacesv2/libraries/Errors.sol";
 import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
 
-import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
+import {SpaceBaseSetup} from "contracts/test/spacesv2/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 import {MultiCaller} from "contracts/src/spacesv2/MultiCaller.sol";
 
@@ -15,11 +15,11 @@ contract SimpleMultiCall is MultiCaller {
   }
 }
 
-contract MultiCallerTest is BaseSetup {
+contract MultiCallerTest is SpaceBaseSetup {
   SimpleMultiCall internal simpleMultiCall;
 
   function setUp() external {
-    BaseSetup.init();
+    SpaceBaseSetup.init();
     simpleMultiCall = new SimpleMultiCall();
   }
 

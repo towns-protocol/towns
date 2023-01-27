@@ -1,14 +1,14 @@
 /* eslint-disable no-restricted-imports */
 
-import GoerliIEntitlementModuleAbi from '@harmony/contracts/goerli/abis/IEntitlementModule.abi.json' assert { type: 'json' }
+import GoerliIEntitlementModuleAbi from '@harmony/contracts/goerli/abis/IEntitlement.abi.json' assert { type: 'json' }
 import GoerliSpaceAbi from '@harmony/contracts/goerli/abis/Space.abi.json' assert { type: 'json' }
 import GoerliTokenEntitlementAbi from '@harmony/contracts/goerli/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 import GoerliUserEntitlementAbi from '@harmony/contracts/goerli/abis/UserEntitlement.abi.json' assert { type: 'json' }
-import LocalhostIEntitlementModuleAbi from '@harmony/contracts/localhost/abis/IEntitlementModule.abi.json' assert { type: 'json' }
-import LocalhostSpaceAbi from '@harmony/contracts/localhost/abis/Space.abi.json' assert { type: 'json' }
-import LocalhostTokenEntitlementAbi from '@harmony/contracts/localhost/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 import LocalhostUserEntitlementAbi from '@harmony/contracts/localhost/abis/UserEntitlement.abi.json' assert { type: 'json' }
 import { IEntitlementModuleShim } from './IEntitlementModuleShim'
+import LocalhostIEntitlementModuleAbi from '@harmony/contracts/localhost/abis/IEntitlement.abi.json'
+import LocalhostSpaceAbi from '@harmony/contracts/localhost/abis/Space.abi.json'
+import LocalhostTokenEntitlementAbi from '@harmony/contracts/localhost/abis/TokenEntitlement.abi.json'
 import { TokenEntitlementShim } from './TokenEntitlementShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
 import { ethers } from 'ethers'

@@ -1,13 +1,13 @@
 /* eslint-disable no-restricted-imports */
 
 import {
-    IEntitlementModule as GoerliContract,
-    IEntitlementModuleInterface as GoerliInterface,
-} from '@harmony/contracts/goerli/typings/IEntitlementModule'
+    IEntitlement as GoerliContract,
+    IEntitlementInterface as GoerliInterface,
+} from '@harmony/contracts/goerli/typings/IEntitlement'
 import {
-    IEntitlementModule as LocalhostContract,
-    IEntitlementModuleInterface as LocalhostInterface,
-} from '@harmony/contracts/localhost/typings/IEntitlementModule'
+    IEntitlement as LocalhostContract,
+    IEntitlementInterface as LocalhostInterface,
+} from '@harmony/contracts/localhost/typings/IEntitlement'
 
 import { BaseContractShim } from './BaseContractShim'
 

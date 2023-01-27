@@ -12,6 +12,11 @@
       },
       {
         "inputs": [],
+        "name": "AddressNotFound",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "ChannelAlreadyRegistered",
         "type": "error"
       },
@@ -32,6 +37,11 @@
       },
       {
         "inputs": [],
+        "name": "EntitlementAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "EntitlementAlreadyWhitelisted",
         "type": "error"
       },
@@ -42,12 +52,22 @@
       },
       {
         "inputs": [],
+        "name": "EntitlementNotFound",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "EntitlementNotWhitelisted",
         "type": "error"
       },
       {
         "inputs": [],
         "name": "InvalidParameters",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MissingOwnerPermission",
         "type": "error"
       },
       {
@@ -77,7 +97,17 @@
       },
       {
         "inputs": [],
+        "name": "OwnerPermissionNotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "PermissionAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "QuantityNotFound",
         "type": "error"
       },
       {
@@ -88,6 +118,11 @@
       {
         "inputs": [],
         "name": "RoleDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "RoleIsAssignedToEntitlement",
         "type": "error"
       },
       {
@@ -119,7 +154,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spaces/libraries/Errors.sol": "Errors"
+      "contracts/src/spacesv2/libraries/Errors.sol": "Errors"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -145,12 +180,12 @@
     ]
   },
   "sources": {
-    "contracts/src/spaces/libraries/Errors.sol": {
-      "keccak256": "0x9a941e4fc071bba09676638161d691f9d5e0cef3270d4eeb8d97c1fd091e08b5",
+    "contracts/src/spacesv2/libraries/Errors.sol": {
+      "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b33c1d41f30be06a7dd4c4308320703bf217a568a53a22b6af7f1390fd5bc580",
-        "dweb:/ipfs/QmXLCmvmkTmyGs8HGGF9McFX7vCG8Pxsu4xHorgkSPYiW6"
+        "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
+        "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
       ]
     }
   },
