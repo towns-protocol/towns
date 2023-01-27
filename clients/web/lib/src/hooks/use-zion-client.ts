@@ -32,6 +32,7 @@ import { useMemo } from 'react'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
+import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -134,7 +135,7 @@ export function useZionClient(): ZionClientImpl {
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),
         sendReaction: useWithCatch(client?.sendReaction),
-        sendReadReceipt,
+        sendReadReceipt: useWithCatch(sendReadReceipt),
         setPowerLevel: useWithCatch(client?.setPowerLevel),
         syncSpace: useWithCatch(client?.syncSpace),
         setDisplayName: useWithCatch(client?.setDisplayName),
@@ -142,24 +143,63 @@ export function useZionClient(): ZionClientImpl {
     }
 }
 
+// Map all objects with a name property to an MatrixError
+export function isMatrixError(err: unknown): err is MatrixError {
+    return (err as Error).name !== undefined && typeof (err as Error).name === 'string'
+}
+
+// Used to satisfy RETRY_BACKOFF_RATELIMIT, which doesn't actually look at it
+const dummyMatrixEvent = new MatrixEvent()
+
 const useWithCatch = <T extends Array<unknown>, U>(
     fn?: (...args: T) => Promise<U | undefined>,
     event: ZionClientEvent | undefined = undefined,
-) => {
+): ((...args: T) => Promise<U | undefined>) => {
     const { triggerZionClientEvent } = useMatrixStore()
     const client = useZionContext().client
     return useMemo(
         () =>
             async (...args: T): Promise<U | undefined> => {
                 if (fn && client) {
-                    try {
-                        const value = await fn.apply(client, args)
-                        if (event) {
-                            triggerZionClientEvent(event)
+                    let retryCount = 0
+                    // Loop until success, or MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1
+                    // MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1 when retryCount > 4
+                    // eslint-disable-next-line no-constant-condition
+                    while (true) {
+                        try {
+                            const value = await fn.apply(client, args)
+                            if (event) {
+                                triggerZionClientEvent(event)
+                            }
+                            if (retryCount > 0) {
+                                console.log(`useWithCatch succeeded after ${retryCount} retries`)
+                            }
+                            return value
+                        } catch (err) {
+                            if (isMatrixError(err)) {
+                                const retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
+                                    dummyMatrixEvent,
+                                    retryCount,
+                                    err,
+                                )
+                                if (retryDelay >= 0) {
+                                    console.log(`MatrixError retrying, waiting ${retryDelay}`)
+                                    await new Promise((resolve) => setTimeout(resolve, retryDelay))
+                                    retryCount++
+                                    continue
+                                }
+                                console.log(
+                                    `MatrixError reached limit, giving up`,
+                                    retryCount,
+                                    retryDelay,
+                                    err,
+                                )
+                            } else {
+                                // Not a MatrixError, just give up
+                                console.error('Not a MatrixError', err)
+                            }
+                            return
                         }
-                        return value
-                    } catch (ex) {
-                        console.error('Error', ex)
                     }
                 } else {
                     console.log('useZionClient: Not logged in')
