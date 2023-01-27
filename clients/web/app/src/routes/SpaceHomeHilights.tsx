@@ -1,12 +1,12 @@
 import React, { useContext, useMemo } from 'react'
-import { useSpaceId } from 'use-zion-client'
+import { ThreadStats, useSpaceId } from 'use-zion-client'
 import { MessageInput } from '@components/MessageInput/MessageInput'
 import { Reactions } from '@components/Reactions'
-import { Replies } from '@components/Replies'
 import { Avatar, BackgroundImage, Box, Grid, Paragraph, Stack } from '@ui'
 import { Message, fakeMessages } from 'data/HighlightsData'
 import { fakeUserCache } from 'data/UserData'
 import { SizeContext } from 'ui/hooks/useSizeContext'
+import { RepliesButton } from '@components/Replies/MessageReplies'
 
 const colSpanMap = {
     4: 3,
@@ -79,6 +79,14 @@ const Placeholder = (props: PlaceholderProps) => {
 
     const user = fakeUserCache[message.userId]
 
+    const thread: ThreadStats = {
+        replyCount: 3,
+        userIds: new Set([message.userId]),
+        latestTs: 0,
+        parentId: '0',
+        isParticipating: false,
+    }
+
     return (
         <Box
             border
@@ -120,7 +128,7 @@ const Placeholder = (props: PlaceholderProps) => {
                     )}
                     {message.replies && (
                         <Stack horizontal>
-                            <Replies replies={message.replies} />
+                            <RepliesButton threadStats={thread} eventId="0" />
                         </Stack>
                     )}
                     {message.reactions && <Reactions reactions={message.reactions} />}

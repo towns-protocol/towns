@@ -2,7 +2,7 @@ import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Reactions } from '@components/Reactions/Reactions'
-import { MessageThreadButton } from '@components/Replies/MessageReplies'
+import { RepliesButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
 import { useFocused } from 'hooks/useFocused'
 import { useHover } from 'hooks/useHover'
@@ -190,7 +190,7 @@ export const Message = (props: Props) => {
 
                     {replies && eventId && (
                         <Stack horizontal>
-                            <MessageThreadButton eventId={eventId} threadStats={replies} />
+                            <RepliesButton eventId={eventId} threadStats={replies} />
                         </Stack>
                     )}
                 </Stack>
