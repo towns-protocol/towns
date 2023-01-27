@@ -18,10 +18,13 @@ const shorthands = {
     grow: [{ flexGrow: 'x1' }, { flexGrow: 'x0' }],
     shrink: [{ flexShrink: 'x1' }, { flexShrink: 'x0' }],
     padding: [{ padding: 'md' }, { padding: 'none' }],
+    paddingX: [{ paddingX: 'md' }, { paddingX: 'none' }],
+    paddingY: [{ paddingY: 'md' }, { paddingY: 'none' }],
     gap: [{ gap: 'md' }, { gap: 'none' }],
     horizontal: [{ flexDirection: 'row' }, { flexDirection: 'column' }],
     centerContent: [{ justifyContent: 'center', alignItems: 'center' }],
     absoluteFill: [{ position: 'absoluteFill' }, {}],
+    transition: [{ transition: 'default' }, { transition: 'none' }],
 } as const
 
 const shorhandAttributes = new Set(Object.keys(shorthands))

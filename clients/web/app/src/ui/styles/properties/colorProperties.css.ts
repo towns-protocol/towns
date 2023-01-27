@@ -27,9 +27,13 @@ const background = {
         background: vars.color.background.level4,
         color: vars.color.text.gray1,
     },
-    overlay: {
-        background: vars.color.background.overlay,
-        color: vars.color.text.inverted,
+    transparentBright: {
+        background: vars.color.overlay.transparentBright,
+        color: vars.color.overlay.black,
+    },
+    transparentDark: {
+        background: vars.color.overlay.transparentDark,
+        color: vars.color.overlay.white,
     },
     inverted: {
         background: vars.color.background.inverted,

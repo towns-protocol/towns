@@ -27,6 +27,13 @@ const tone = {
     [ToneName.ENS]: Figma.Colors.ENSBlue,
 } as const
 
+const overlay = {
+    white: Figma.Colors.White,
+    black: Figma.Colors.Black,
+    transparentBright: `rgba(255,255,255,0.5)`,
+    transparentDark: `rgba(0,0,0,0.5)`,
+}
+
 const html = {
     inherit: 'inherit',
     initial: 'initial',
@@ -41,8 +48,6 @@ const light = (() => {
         level2: Figma.LightMode.Level2,
         level3: Figma.LightMode.Level3,
         level4: Figma.LightMode.Level4,
-        /** opacity overlay, highlighting content undependently of parent layer layers */
-        overlay: `rgba(255,255,255,0.5)`,
         inverted: Figma.DarkMode.Level1,
     } as const
 
@@ -66,6 +71,7 @@ const light = (() => {
         layer,
         text,
         shadow,
+        overlay,
         foreground: {
             ...text,
             ...tone,
@@ -86,8 +92,6 @@ const dark = (() => {
         level2: Figma.DarkMode.Level2,
         level3: Figma.DarkMode.Level3,
         level4: Figma.DarkMode.Level4,
-        /** opacity overlay, highlighting content undependently of parent layer background */
-        overlay: `rgba(255,255,255,0.5)`,
         inverted: Figma.DarkMode.Secondary,
     } as const
 
@@ -111,6 +115,7 @@ const dark = (() => {
         layer,
         text,
         shadow,
+        overlay,
         foreground: {
             ...text,
             ...tone,

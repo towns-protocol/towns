@@ -68,6 +68,12 @@ export const flexGrow = {
 
 export const boxProperties = defineProperties({
     ...responsivePropertiesMixin,
+    conditions: {
+        ...responsivePropertiesMixin.conditions,
+        hover: { selector: `&:hover` },
+        active: { selector: `&:active` },
+        default: { selector: `&` },
+    },
     properties: {
         // display
         display: [
@@ -82,10 +88,20 @@ export const boxProperties = defineProperties({
         ],
         visibility: ['visible', 'hidden'],
 
+        opacity: {
+            transparent: 0,
+            opaque: 1,
+        },
+
+        transition: {
+            default: `all 200ms ease`,
+            none: `none`,
+        },
+
         pointerEvents: ['all', 'auto', 'none'],
 
-        // size
         aspectRatio: aspectRatio,
+
         boxShadow: {
             avatar: `0 4px 4px ${vars.color.shadow.medium}`,
             card: `0 0 40px ${vars.color.shadow.medium}`,

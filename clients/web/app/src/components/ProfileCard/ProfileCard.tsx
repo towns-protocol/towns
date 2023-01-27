@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useSpaceData, useSpaceMembers } from 'use-zion-client'
-import { Avatar, BackgroundImage, Card, Paragraph, Stack } from '@ui'
+import { BackgroundImage, Card, Paragraph, Stack } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { shortAddress } from 'ui/utils/utils'
 
@@ -26,13 +26,34 @@ export const ProfileCard = (props: Props) => {
         <Card padding gap minWidth="300">
             <Stack horizontal gap>
                 <Link to={`profile/${userId}/`} onClick={context.closeCard}>
-                    <Stack>
-                        <BackgroundImage
-                            src={user.avatarUrl}
-                            width="x10"
-                            aspectRatio="1/1"
-                            rounded="full"
-                        />
+                    <Stack
+                        width="x10"
+                        aspectRatio="1/1"
+                        position="relative"
+                        rounded="full"
+                        overflow="hidden"
+                    >
+                        <BackgroundImage absoluteFill src={user.avatarUrl} />
+                        <Stack
+                            absoluteFill
+                            centerContent
+                            padding
+                            background="transparentDark"
+                            opacity={{
+                                default: 'transparent',
+                                hover: 'opaque',
+                            }}
+                            transition="default"
+                        >
+                            <Paragraph
+                                strong
+                                textAlign="center"
+                                textTransform="uppercase"
+                                size="sm"
+                            >
+                                View Profile
+                            </Paragraph>
+                        </Stack>
                     </Stack>
                 </Link>
                 <Stack justifyContent="center" gap="sm">
@@ -50,7 +71,8 @@ export const ProfileCard = (props: Props) => {
                     Bio
                 </Paragraph>
                 <Paragraph size="sm" color="gray1">
-                    Born and raised degen
+                    {`Please come back when I have written my bio. It shouldn't be more thans a few
+                    lines written in a way that makes you want to know more about me.`}
                 </Paragraph>
             </Stack>
         </Card>
