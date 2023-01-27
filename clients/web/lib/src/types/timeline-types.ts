@@ -115,6 +115,7 @@ export interface RoomMessageEvent {
     body: string
     msgType: string
     mentions: Mention[]
+    replacedMsgId?: string
     content: IContent // room messages have lots of representations
 }
 

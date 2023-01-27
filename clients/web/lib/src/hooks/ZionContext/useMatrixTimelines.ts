@@ -489,6 +489,10 @@ function toZionContent(event: MatrixEvent): {
                     inReplyTo: event.replyEventId,
                     body: content.body as string,
                     msgType: content.msgtype,
+                    replacedMsgId:
+                        content['m.relates_to']?.rel_type === RelationType.Replace
+                            ? content['m.relates_to']?.event_id
+                            : undefined,
                     content: content,
                     mentions: (content['mentions'] as Mention[]) ?? [],
                 },

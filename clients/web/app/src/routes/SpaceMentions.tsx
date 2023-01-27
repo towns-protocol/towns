@@ -1,4 +1,3 @@
-import { RelationType } from 'matrix-js-sdk'
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import {
@@ -91,7 +90,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                 >
                     <RichTextPreview
                         content={getMessageBody(mention.event.eventId, content)}
-                        edited={content.content['m.relates_to']?.rel_type === RelationType.Replace}
+                        edited={content.replacedMsgId !== undefined}
                     />
                 </Message>
             </Box>

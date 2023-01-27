@@ -1,6 +1,5 @@
 import React from 'react'
 import { Channel, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
-import { RelationType } from 'matrix-js-sdk'
 import { LINK } from '@lexical/markdown'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
@@ -63,7 +62,7 @@ export const MessageZionText = ({ eventContent, event, members, channels }: Prop
         <>
             <RichTextPreview
                 content={getMessageBody(event.eventId, eventContent)}
-                edited={eventContent.content['m.relates_to']?.rel_type === RelationType.Replace}
+                edited={eventContent.replacedMsgId !== undefined}
                 members={members}
                 channels={channels}
             />
