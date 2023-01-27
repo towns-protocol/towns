@@ -1,3 +1,5 @@
+import { useProvider } from 'wagmi'
+
 export enum WalletStatus {
     Connected = 'connected',
     Reconnecting = 'reconnecting',
@@ -9,3 +11,5 @@ export interface RoleIdentifier {
     name: string
     spaceNetworkId: string
 }
+
+export type TProvider = ReturnType<typeof useProvider>

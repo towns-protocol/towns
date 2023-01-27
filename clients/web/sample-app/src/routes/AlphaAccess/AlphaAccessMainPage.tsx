@@ -2,26 +2,26 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { ZioneerNFT, ZioneerNFTContractState, useWeb3Context } from 'use-zion-client'
 import { ethers } from 'ethers'
 
+import { useSigner } from 'wagmi'
 import { ContractState } from './ContractState'
 import { TransactionReport, TransactionReports } from './TransactionReports'
 import { validateEthFromString } from './validateEthFromString'
 
 export const AlphaAccessMainPage = () => {
     const { provider, chain } = useWeb3Context()
+    const { data: signer } = useSigner()
 
     const [contractState, setContractState] = useState<ZioneerNFTContractState | null>(null)
 
     const [loading, setLoading] = useState(false)
 
     const zioneerNFT = useMemo(() => {
-        if (!provider || !chain) {
+        if (!provider || !chain || !signer) {
             return null
         }
 
-        const signer = provider.getSigner()
-
         return new ZioneerNFT(chain.id, provider, signer)
-    }, [provider, chain])
+    }, [provider, chain, signer])
 
     const handleRefetchContractState = useCallback(async () => {
         const refetched = await zioneerNFT?.getContractState()

@@ -36,7 +36,7 @@ export interface ISpaceDapp {
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
     getSpaceFactoryEventsContractInfo: () => EventsContractInfo
     getSpaceEventsContractInfo: (spaceId: string) => Promise<EventsContractInfo>
-    getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
+    getSpaceInfo: (spaceId: string, requireSigner?: boolean) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (
         spaceId: string,

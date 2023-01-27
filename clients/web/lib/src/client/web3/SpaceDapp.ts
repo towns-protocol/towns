@@ -149,8 +149,8 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.createRole(roleName, permissions, entitlements)
     }
 
-    public async getSpace(spaceId: string): Promise<SpaceShim | undefined> {
-        if (!this.provider || !this.signer) {
+    public async getSpace(spaceId: string, requireSigner = true): Promise<SpaceShim | undefined> {
+        if (!this.provider || (requireSigner && !this.signer)) {
             throw new Error('Provider or signer is not set.')
         }
         if (!this.spaces[spaceId]) {
@@ -206,8 +206,11 @@ export class SpaceDapp implements ISpaceDapp {
         }
     }
 
-    public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
-        const space = await this.getSpace(spaceId)
+    public async getSpaceInfo(
+        spaceId: string,
+        requireSigner = true,
+    ): Promise<SpaceInfo | undefined> {
+        const space = await this.getSpace(spaceId, requireSigner)
         if (space?.read) {
             const [name, owner, disabled] = await Promise.all([
                 space.read.name(),

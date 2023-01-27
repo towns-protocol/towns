@@ -147,7 +147,7 @@ describe('useCreateChannelTransaction', () => {
         }
         // render it
         render(
-            <ZionTestApp provider={provider} chainId={chainId}>
+            <ZionTestApp provider={provider}>
                 <>
                     <RegisterWallet />
                     <TestComponent />

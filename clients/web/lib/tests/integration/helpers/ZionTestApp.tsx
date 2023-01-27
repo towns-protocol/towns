@@ -4,7 +4,7 @@ import { useConnect } from 'wagmi'
 import { ZionOnboardingOpts, SpaceProtocol } from '../../../src/client/ZionClientTypes'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
-
+import { foundry } from 'wagmi/chains'
 interface Props {
     provider: ZionTestWeb3Provider
     primaryProtocol?: SpaceProtocol
@@ -26,7 +26,6 @@ export const ZionTestApp = (props: Props) => {
         defaultSpaceName,
         defaultSpaceAvatarSrc,
         initialSyncLimit,
-        chainId,
         children,
     } = props
     // pull environment variables from the process
@@ -55,7 +54,7 @@ export const ZionTestApp = (props: Props) => {
             defaultSpaceName={defaultSpaceName}
             defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}
             initialSyncLimit={initialSyncLimit}
-            chainId={chainId}
+            chain={foundry}
         >
             <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import { TProvider } from 'types/web3-types'
 import { CreateSpaceInfo, SendMessageOptions } from 'types/matrix-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
@@ -16,7 +17,7 @@ export interface ZionOpts {
     casablancaServerUrl: string
     initialSyncLimit: number
     onboardingOpts?: ZionOnboardingOpts
-    web3Provider?: ethers.providers.Provider
+    web3Provider?: TProvider
     web3Signer?: ethers.Signer
     eventHandlers?: ZionClientEventHandlers
 }

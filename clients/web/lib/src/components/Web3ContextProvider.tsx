@@ -1,15 +1,14 @@
 import React, { createContext, useContext, useRef } from 'react'
-import { ethers } from 'ethers'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
 import { WagmiConfig, createClient, configureChains, Chain, Address } from 'wagmi'
 import { goerli, localhost, foundry } from '@wagmi/core/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { WalletStatus } from '../types/web3-types'
+import { TProvider, WalletStatus } from '../types/web3-types'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 
 export interface IWeb3Context {
-    provider?: ethers.providers.Web3Provider
+    provider?: TProvider
     sign: (message: string, walletAddress: string) => Promise<string | undefined>
     accounts: Address[]
     chain?: Chain & {

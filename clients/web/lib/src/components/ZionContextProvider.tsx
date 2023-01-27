@@ -60,7 +60,6 @@ interface Props {
     defaultSpaceName?: string // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
     defaultSpaceAvatarSrc?: string // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
     initialSyncLimit?: number
-    chainId?: number
     chain?: Chain
     children: JSX.Element
     alchemyKey?: string
@@ -90,7 +89,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         defaultSpaceName,
         defaultSpaceAvatarSrc,
         initialSyncLimit,
-        chainId,
     } = props
 
     const { client } = useZionClientListener(
@@ -100,7 +98,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
         onboardingOpts,
         signer,
-        chainId,
     )
     useContentAwareTimelineDiff(client?.matrixClient)
     const { spaceIds, invitedToIds } = useSpacesIds(client)

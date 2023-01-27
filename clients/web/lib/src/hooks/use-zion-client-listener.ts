@@ -6,6 +6,7 @@ import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { ZionOnboardingOpts, SpaceProtocol } from '../client/ZionClientTypes'
 import { LoginStatus } from './login'
+import { useSigner } from 'wagmi'
 
 export const useZionClientListener = (
     primaryProtocol: SpaceProtocol,
@@ -14,7 +15,6 @@ export const useZionClientListener = (
     initialSyncLimit: number,
     onboardingOpts?: ZionOnboardingOpts,
     signer?: ethers.Signer,
-    _chainId?: number, // allow testing because web3context is not populated in tests
 ) => {
     const { provider, chain } = useWeb3Context()
     const { setLoginStatus } = useMatrixStore()
@@ -22,24 +22,31 @@ export const useZionClientListener = (
     const matrixCredentials = matrixCredentialsMap[matrixServerUrl]
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
-    const chainId = chain?.id ?? _chainId // web3context chainId takes precedence.
+    const chainId = chain?.id
+    const { data: wagmiSigner } = useSigner()
 
     if (!clientSingleton.current) {
-        clientSingleton.current = new ZionClient(
-            {
-                primaryProtocol,
-                matrixServerUrl,
-                casablancaServerUrl,
-                initialSyncLimit,
-                onboardingOpts,
-                web3Provider: provider,
-                web3Signer: signer ?? provider?.getSigner(),
-            },
-            chainId,
-        )
+        const _signer = signer || wagmiSigner
+        if (_signer) {
+            clientSingleton.current = new ZionClient(
+                {
+                    primaryProtocol,
+                    matrixServerUrl,
+                    casablancaServerUrl,
+                    initialSyncLimit,
+                    onboardingOpts,
+                    web3Provider: provider,
+                    web3Signer: _signer,
+                },
+                chainId,
+            )
+        }
     }
 
     const startClient = useCallback(async () => {
+        if (!clientSingleton.current) {
+            return
+        }
         if (!matrixCredentials) {
             console.error('startClient: accessToken, userId, or deviceId is undefined')
             return
@@ -51,8 +58,7 @@ export const useZionClientListener = (
         // in the standard flow we should already be logged in, but if we're loading
         // credentials from local host, this aligns the login status with the credentials
         setLoginStatus(LoginStatus.LoggedIn)
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const client = clientSingleton.current!
+        const client = clientSingleton.current
         // make sure we're not re-starting the client
         if (client.auth?.accessToken === matrixCredentials.accessToken) {
             if (client.chainId != chainId) {
@@ -87,8 +93,15 @@ export const useZionClientListener = (
             setLoginStatus(LoginStatus.LoggedOut)
             setMatrixCredentials(matrixServerUrl, null)
         }
-        /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-    }, [chainId, matrixCredentials, matrixServerUrl, setLoginStatus, setMatrixCredentials])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        chainId,
+        matrixCredentials,
+        matrixServerUrl,
+        setLoginStatus,
+        setMatrixCredentials,
+        wagmiSigner, // if signer is not passed in, clientSingleton.current will only be created if wagmiSigner, so we need to watch it
+    ])
 
     useEffect(() => {
         if (matrixCredentials) {

@@ -40,7 +40,7 @@ import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
 import { FullyReadMarker, TimelineEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
-import { RoleIdentifier } from '../types/web3-types'
+import { RoleIdentifier, TProvider } from '../types/web3-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
@@ -1261,7 +1261,7 @@ export class ZionClient {
 
     private createShims(
         chainId: number,
-        provider: ethers.providers.Provider | undefined,
+        provider: TProvider | undefined,
         signer: ethers.Signer | undefined,
     ): { spaceDapp: ISpaceDapp; councilNFT: CouncilNFTShim } {
         const spaceDapp = new SpaceDapp(chainId, provider, signer)
