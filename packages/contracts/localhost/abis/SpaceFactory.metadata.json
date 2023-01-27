@@ -614,11 +614,11 @@
       ]
     },
     "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x6ca4a63d7cecb3ecccb3ef97d2d2865e862e8f08fe06c43573c7d34489c7b936",
+      "keccak256": "0x663991f174301859a3fb47a6037d68de8724f3b90b91f7626436fd4f6a7a8619",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://234b1fabca9d18c5335ca9a6c05bc3188ce5a6763737a963aeddb56d4c437690",
-        "dweb:/ipfs/QmZCvTCaTDN5jqnxWVofCDT2Wqr19LymvyUxpZviwsg5yC"
+        "bzz-raw://57b97974bbd5dfdd80970146b1d10863e6f1f8c3991cd1d63847c0cdcc3de900",
+        "dweb:/ipfs/QmZWssTJ2SRQvHnN2uCRJUw3NW4KReNNodJy1GVvzqJVGk"
       ]
     },
     "contracts/src/spacesv2/entitlements/UserEntitlement.sol": {

@@ -81,6 +81,32 @@ contract BaseSetup is TestUtils {
     return Space(_space).createChannel(channelName, channelNetworkId, roleIds);
   }
 
+  function createFuzzySpace(
+    string memory _spaceName,
+    string memory _spaceNetworkId,
+    string memory _spaceMetadata
+  ) internal returns (address) {
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
+        roleName: "",
+        permissions: new string[](0),
+        tokens: new DataTypes.ExternalToken[](0),
+        users: new address[](0)
+      });
+
+    string[] memory _permissions = new string[](0);
+
+    address space = spaceFactory.createSpace(
+      _spaceName,
+      _spaceNetworkId,
+      _spaceMetadata,
+      _permissions,
+      _entitlementData
+    );
+
+    return space;
+  }
+
   function createSimpleSpace() internal returns (address) {
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({

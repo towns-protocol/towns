@@ -6,6 +6,7 @@ import {IEntitlement} from "../interfaces/IEntitlement.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {Errors} from "../libraries/Errors.sol";
@@ -319,28 +320,45 @@ contract TokenEntitlement is
       uint256[] memory tokenIds = tokens[i].tokenIds;
       bool isSingleToken = tokens[i].isSingleToken;
 
-      if (
-        _isERC721Entitled(
+      // check if the contract is an ERC721
+      if (_validateInterfaceId(contractAddress, type(IERC721).interfaceId)) {
+        entitled = _isERC721Entitled(
           contractAddress,
           user,
           quantity,
           isSingleToken,
           tokenIds
-        ) ||
-        _isERC20Entitled(contractAddress, user, quantity) ||
-        _isERC1155Entitled(
-          contractAddress,
-          user,
-          quantity,
-          isSingleToken,
-          tokenIds
-        )
-      ) {
-        entitled = true;
-      } else {
-        entitled = false;
-        break;
+        );
+
+        // if the user is entitled, we can skip to the next token
+        if (entitled) continue;
       }
+
+      // check if the contract is an ERC1155
+      if (_validateInterfaceId(contractAddress, type(IERC1155).interfaceId)) {
+        entitled = _isERC1155Entitled(
+          contractAddress,
+          user,
+          quantity,
+          isSingleToken,
+          tokenIds
+        );
+
+        // if the user is entitled, we can skip to the next token
+        if (entitled) continue;
+      }
+
+      // check if the contract is an ERC20
+      entitled = _isERC20Entitled(
+        contractAddress,
+        user,
+        quantity,
+        isSingleToken,
+        tokenIds
+      );
+
+      // if the user is not entitled, cancel the loop
+      if (!entitled) break;
     }
 
     return entitled;
@@ -390,9 +408,9 @@ contract TokenEntitlement is
     if (isSingleToken) {
       for (uint256 i = 0; i < tokenIds.length; i++) {
         try IERC721(contractAddress).ownerOf(tokenIds[i]) returns (
-          address owner
+          address _result
         ) {
-          if (owner == user) {
+          if (_result == user) {
             return true;
           }
         } catch {}
@@ -415,8 +433,13 @@ contract TokenEntitlement is
   function _isERC20Entitled(
     address contractAddress,
     address user,
-    uint256 quantity
+    uint256 quantity,
+    bool isSingleToken,
+    uint256[] memory tokenIds
   ) internal view returns (bool) {
+    if (isSingleToken) return false;
+    if (tokenIds.length > 0) return false;
+
     try IERC20(contractAddress).balanceOf(user) returns (uint256 balance) {
       if (balance >= quantity) {
         return true;
@@ -444,5 +467,18 @@ contract TokenEntitlement is
     }
 
     return false;
+  }
+
+  function _validateInterfaceId(
+    address contractAddress,
+    bytes4 interfaceId
+  ) internal view returns (bool) {
+    try IERC165(contractAddress).supportsInterface(interfaceId) returns (
+      bool _result
+    ) {
+      return _result;
+    } catch {
+      return false;
+    }
   }
 }

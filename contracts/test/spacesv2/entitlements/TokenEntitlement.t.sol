@@ -14,7 +14,7 @@ import {Space} from "contracts/src/spacesv2/Space.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 import {TokenEntitlement} from "contracts/src/spacesv2/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Mock721, Mock1155} from "contracts/test/spacesv2/mocks/MockToken.sol";
+import {Mock721, Mock1155, MockERC20} from "contracts/test/spacesv2/mocks/MockToken.sol";
 
 import {console} from "forge-std/console.sol";
 
@@ -24,6 +24,7 @@ contract TokenEntitlementTest is BaseSetup {
   TokenEntitlement internal tokenEntitlement;
   Mock721 mockToken = new Mock721();
   Mock1155 mockToken2 = new Mock1155();
+  MockERC20 mockToken3 = new MockERC20();
 
   function setUp() public {
     BaseSetup.init();
@@ -210,6 +211,92 @@ contract TokenEntitlementTest is BaseSetup {
         bytes32(abi.encodePacked(Permissions.Read))
       )
     );
+  }
+
+  function testMultipleTokens() external {
+    address owner = _randomAddress();
+    address collector = _randomAddress();
+    address hodler = _randomAddress();
+
+    string memory roleName = "Member";
+    string memory permission = Permissions.Read;
+
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
+        roleName: roleName,
+        permissions: new string[](1),
+        tokens: new DataTypes.ExternalToken[](2),
+        users: new address[](0)
+      });
+
+    _entitlementData.permissions[0] = permission;
+    _entitlementData.tokens[0] = DataTypes.ExternalToken({
+      contractAddress: address(mockToken),
+      quantity: 1,
+      isSingleToken: false,
+      tokenIds: new uint256[](0)
+    });
+    _entitlementData.tokens[1] = DataTypes.ExternalToken({
+      contractAddress: address(mockToken3),
+      quantity: 100,
+      isSingleToken: false,
+      tokenIds: new uint256[](0)
+    });
+
+    vm.prank(owner);
+    address _space = createSpaceWithEntitlements(_entitlementData);
+
+    // collector doesn't have anything yet
+    assertFalse(Space(_space).isEntitledToSpace(collector, Permissions.Read));
+
+    // mint nft to collector
+    mockToken.mintTo(collector);
+
+    // collector should not be entitled yet
+    assertFalse(Space(_space).isEntitledToSpace(collector, Permissions.Read));
+
+    // mint 100 tokens to collector
+    mockToken3.mint(collector, 100);
+
+    // collector should be entitled now
+    assertTrue(Space(_space).isEntitledToSpace(collector, Permissions.Read));
+
+    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+
+    // create another role with the same permission
+    DataTypes.ExternalToken[]
+      memory _externalTokens = new DataTypes.ExternalToken[](1);
+    _externalTokens[0] = DataTypes.ExternalToken({
+      contractAddress: address(mockToken),
+      quantity: 1,
+      isSingleToken: false,
+      tokenIds: new uint256[](0)
+    });
+
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({
+      module: address(_tokenEntitlement),
+      data: abi.encode(_externalTokens)
+    });
+
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = "OnlyCollector";
+
+    vm.prank(owner);
+    Space(_space).createRole("Member2", _permissions, _entitlements);
+
+    // collector should be entitled to the new permission because the nft is owned
+    assertTrue(Space(_space).isEntitledToSpace(collector, "OnlyCollector"));
+
+    assertFalse(Space(_space).isEntitledToSpace(hodler, "OnlyCollector"));
+
+    // mint nft to hodler
+    mockToken.mintTo(hodler);
+    assertTrue(Space(_space).isEntitledToSpace(hodler, "OnlyCollector"));
+    // should not be read
+    assertFalse(Space(_space).isEntitledToSpace(hodler, Permissions.Read));
   }
 
   function testSet1155EntitlementAny() external {

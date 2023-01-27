@@ -407,6 +407,7 @@
     "remappings": [
       ":@opengsn/=node_modules/@opengsn/",
       ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":contracts/=contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",

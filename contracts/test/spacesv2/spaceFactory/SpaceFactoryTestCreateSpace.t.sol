@@ -9,7 +9,7 @@ import {SpaceFactory} from "contracts/src/spacesv2/SpaceFactory.sol";
 import {Space} from "contracts/src/spacesv2/Space.sol";
 import {BaseSetup} from "contracts/test/spacesv2/BaseSetup.sol";
 
-import {Mock721} from "contracts/test/spacesv2/mocks/MockToken.sol";
+import {Mock721, MockERC20} from "contracts/test/spacesv2/mocks/MockToken.sol";
 
 import {console} from "forge-std/console.sol";
 
@@ -47,6 +47,68 @@ contract SpaceFactoryTestCreateSpace is BaseSetup {
         tokens: new DataTypes.ExternalToken[](0),
         users: new address[](0)
       })
+    );
+  }
+
+  function testCreateSpaceWithERC20Token() external {
+    address spaceOwner1 = _randomAddress();
+    address spaceOwner2 = _randomAddress();
+    address hodler = _randomAddress();
+    string memory permission = "TokenHodler";
+    string memory roleName = "Hodler";
+
+    MockERC20 token = new MockERC20();
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
+        roleName: roleName,
+        permissions: new string[](1),
+        tokens: new DataTypes.ExternalToken[](1),
+        users: new address[](0)
+      });
+
+    _entitlementData.permissions[0] = permission;
+    _entitlementData.tokens[0] = DataTypes.ExternalToken({
+      contractAddress: address(token),
+      quantity: 100,
+      isSingleToken: false,
+      tokenIds: new uint256[](0)
+    });
+
+    vm.prank(spaceOwner1);
+    address space1 = createFuzzySpace("space1", "space1networkId", "ipfs://");
+
+    vm.prank(spaceOwner2);
+    address space2 = createSpaceWithEntitlements(_entitlementData);
+
+    assertTrue(Space(space2).isEntitledToSpace(spaceOwner2, Permissions.Owner));
+    assertFalse(
+      Space(space2).isEntitledToSpace(spaceOwner1, Permissions.Owner)
+    );
+    assertFalse(Space(space2).isEntitledToSpace(hodler, permission));
+
+    token.mint(hodler, 100);
+
+    assertTrue(Space(space2).isEntitledToSpace(hodler, permission));
+    assertFalse(Space(space1).isEntitledToSpace(hodler, permission));
+  }
+
+  function testRevertIfInvalidSpaceOwner() external {
+    address spaceOwner1 = _randomAddress();
+    address spaceOwner2 = _randomAddress();
+
+    vm.prank(spaceOwner1);
+    address space1 = createFuzzySpace("space1", "space1networkId", "ipfs://");
+
+    vm.prank(spaceOwner2);
+    address space2 = createFuzzySpace("space2", "space2networkId", "ipfs://");
+
+    assertTrue(Space(space1).isEntitledToSpace(spaceOwner1, Permissions.Owner));
+    assertFalse(
+      Space(space1).isEntitledToSpace(spaceOwner2, Permissions.Owner)
+    );
+    assertTrue(Space(space2).isEntitledToSpace(spaceOwner2, Permissions.Owner));
+    assertFalse(
+      Space(space2).isEntitledToSpace(spaceOwner1, Permissions.Owner)
     );
   }
 

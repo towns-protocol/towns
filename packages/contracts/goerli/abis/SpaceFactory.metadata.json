@@ -577,6 +577,7 @@
     "remappings": [
       ":@opengsn/=node_modules/@opengsn/",
       ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":contracts/=contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -597,11 +598,11 @@
       ]
     },
     "contracts/src/spacesv2/Space.sol": {
-      "keccak256": "0x3dffed00c0268c1edc6125241b4a5dc9b8b7dfdab2367d1f80cc6ec096e473e2",
+      "keccak256": "0xda994fabc1a188ae2ce12a06e9c8167439546c78cc16dfc99b637467449b79fb",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4a42fdb77446c637455fa79de8d36c97ed407e5bdaab2113d132b755238b370f",
-        "dweb:/ipfs/QmaeDPrrzyLpmRwmHwvfhtiMdVM2hZBP5ZK5oCNutSBddX"
+        "bzz-raw://4beda58b1aaca764a5c1c5da846b091918dea314b9392610b02856f15c4b6da7",
+        "dweb:/ipfs/QmVN1N7nQmx9i5nvUzQhe8yMfeU6EexjKbMakffWGPBg9d"
       ]
     },
     "contracts/src/spacesv2/SpaceFactory.sol": {
@@ -613,11 +614,11 @@
       ]
     },
     "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x6ca4a63d7cecb3ecccb3ef97d2d2865e862e8f08fe06c43573c7d34489c7b936",
+      "keccak256": "0x663991f174301859a3fb47a6037d68de8724f3b90b91f7626436fd4f6a7a8619",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://234b1fabca9d18c5335ca9a6c05bc3188ce5a6763737a963aeddb56d4c437690",
-        "dweb:/ipfs/QmZCvTCaTDN5jqnxWVofCDT2Wqr19LymvyUxpZviwsg5yC"
+        "bzz-raw://57b97974bbd5dfdd80970146b1d10863e6f1f8c3991cd1d63847c0cdcc3de900",
+        "dweb:/ipfs/QmZWssTJ2SRQvHnN2uCRJUw3NW4KReNNodJy1GVvzqJVGk"
       ]
     },
     "contracts/src/spacesv2/entitlements/UserEntitlement.sol": {
@@ -637,11 +638,11 @@
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0xea5ec4896cbad3a5258ce236fa34bd4820e3970dc20da9214176f717a2e75106",
+      "keccak256": "0x9afec06b6b99184d72769c404fa5c615c8c90b1ba842dd498f06f29e675e73bc",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://dc6300b00dfa697246ec4d29f4b118b755bcdab6685c72778b6a12674175af1d",
-        "dweb:/ipfs/QmThdTNj53QgzaMEa7kCPKdd6Rztqw8oEWuMwcS5oVCzDe"
+        "bzz-raw://523fac84a119aa80a1b3e36d53057cb39b70d0be85b3e5c693076a734c560617",
+        "dweb:/ipfs/QmcDrxZYzB3qV6d5h31Ti4hEdZDGxMaow2NnMuPJCKoqi7"
       ]
     },
     "contracts/src/spacesv2/interfaces/ISpaceFactory.sol": {

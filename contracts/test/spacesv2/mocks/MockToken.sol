@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {ERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
+import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract Mock721 is ERC721 {
   uint256 tokenId;
@@ -24,5 +25,13 @@ contract Mock1155 is ERC1155 {
     tokenId++;
     _mint(to, tokenId, tokenType, "");
     return tokenId;
+  }
+}
+
+contract MockERC20 is ERC20 {
+  constructor() ERC20("MockERC20", "MERC20") {}
+
+  function mint(address to, uint256 amount) external {
+    _mint(to, amount);
   }
 }
