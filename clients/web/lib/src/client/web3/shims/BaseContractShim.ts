@@ -3,8 +3,8 @@
 import { BytesLike, ethers } from 'ethers'
 import { GOERLI, LOCALHOST_CHAIN_ID } from '../Web3Constants'
 
-import GoerliEventsAbi from '@harmony/contracts/goerli/abis/Events.abi.json'
-import LocalhostEventsAbi from '@harmony/contracts/localhost/abis/Events.abi.json'
+import GoerliEventsAbi from '@harmony/contracts/goerli/abis/Events.abi.json' assert { type: 'json' }
+import LocalhostEventsAbi from '@harmony/contracts/localhost/abis/Events.abi.json' assert { type: 'json' }
 
 export type PromiseOrValue<T> = T | Promise<T>
 

@@ -31,6 +31,7 @@ export class TestConstants {
 
     public static DefaultWaitForTimeout: waitForOptions = { timeout: 5000 }
     public static DoubleDefaultWaitForTimeout: waitForOptions = { timeout: 10000 }
+    public static DecaDefaultWaitForTimeout: waitForOptions = { timeout: 50000 }
 
     public static init() {
         const network = process.env.ETHERS_NETWORK!

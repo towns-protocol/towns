@@ -55,6 +55,6 @@
         "vite-plugin-eslint": "^1.8.1",
         "vite-plugin-node-stdlib-browser": "^0.1.1",
         "vite-tsconfig-paths": "^4.0.3",
-        "vitest": "^0.26.2"
+        "vitest": "^0.28.2"
     }
 }

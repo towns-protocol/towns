@@ -97,7 +97,7 @@ describe('userProfile', () => {
                         .getEvents()
                         .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
                 ).toBeDefined(),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
         // get the message
         const message = alice
