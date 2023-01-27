@@ -67,7 +67,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             log(message)
             done.runAndDone(() => {
                 const payload = message.base.payload as MessagePayload
-                expect(parseText(payload.text)).toBe('Hello, again!')
+                expect(payload.text).toBe('Hello, again!')
             })
         }
 
@@ -109,10 +109,6 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         return 'done'
     }
 
-    function parseText(text: string): string {
-        return JSON.parse(text).text
-    }
-
     test('bobTalksToHimself' + testSuffix, async () => {
         const done = makeDonePromise()
 
@@ -121,7 +117,7 @@ describe('BobAndAliceSendAMessageViaClient', () => {
             log(message)
             done.runAndDone(() => {
                 const payload = message.base.payload as MessagePayload
-                expect(parseText(payload.text)).toBe('Hello, world!')
+                expect(payload.text).toBe('Hello, world!')
             })
         }
 
@@ -180,11 +176,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, message: FullEvent): void => {
             const payload = message.base.payload as MessagePayload
-            log('channelNewMessage', 'Bob Initial Message', channelId, parseText(payload.text))
+            log('channelNewMessage', 'Bob Initial Message', channelId, payload.text)
             bobSelfHello.runAndDone(() => {
                 // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(parseText(payload.text)).toBe('Hello, world from Bob!')
+                expect(payload.text).toBe('Hello, world from Bob!')
             })
         })
 
@@ -216,11 +212,11 @@ describe('BobAndAliceSendAMessageViaClient', () => {
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, message: FullEvent): void => {
             const payload = message.base.payload as MessagePayload
-            log('channelNewMessage', 'Bob Initial Message', channelId, parseText(payload.text))
+            log('channelNewMessage', 'Bob Initial Message', channelId, payload.text)
             bobSelfHello.runAndDone(() => {
                 // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(parseText(payload.text)).toBe('Hello, world from Bob!')
+                expect(payload.text).toBe('Hello, world from Bob!')
             })
         })
 
@@ -259,16 +255,16 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         alicesClient.on('channelNewMessage', (channelId: string, message: FullEvent): void => {
             const payload = message.base.payload as MessagePayload
-            log('channelNewMessage', 'Alice', channelId, parseText(payload.text))
+            log('channelNewMessage', 'Alice', channelId, payload.text)
             aliceGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
                 // @ts-ignore
-                expect(parseText(payload.text)).toBeOneOf(conversation)
-                if (parseText(payload.text) === 'Hello, Alice!') {
+                expect(payload.text).toBeOneOf(conversation)
+                if (payload.text === 'Hello, Alice!') {
                     alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                } else if (parseText(payload.text) === 'Weather nice?') {
+                } else if (payload.text === 'Weather nice?') {
                     alicesClient.sendMessage(channelId, 'Sun and rain!')
-                } else if (parseText(payload.text) === 'Coffee or tea?') {
+                } else if (payload.text === 'Coffee or tea?') {
                     alicesClient.sendMessage(channelId, 'Both!')
                     aliceGetsMessage.done()
                 }
@@ -277,16 +273,16 @@ describe('BobAndAliceSendAMessageViaClient', () => {
 
         bobsClient.on('channelNewMessage', (channelId: string, message: FullEvent): void => {
             const payload = message.base.payload as MessagePayload
-            log('channelNewMessage', 'Bob', channelId, parseText(payload.text))
+            log('channelNewMessage', 'Bob', channelId, payload.text)
             bobGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
                 // @ts-ignore
-                expect(parseText(payload.text)).toBeOneOf(conversation)
-                if (parseText(payload.text) === 'Hello, Bob!') {
+                expect(payload.text).toBeOneOf(conversation)
+                if (payload.text === 'Hello, Bob!') {
                     bobsClient.sendMessage(channelId, 'Weather nice?')
-                } else if (parseText(payload.text) === 'Sun and rain!') {
+                } else if (payload.text === 'Sun and rain!') {
                     bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                } else if (parseText(payload.text) === 'Both!') {
+                } else if (payload.text === 'Both!') {
                     bobGetsMessage.done()
                 }
             })

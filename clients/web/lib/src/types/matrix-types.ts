@@ -182,6 +182,10 @@ interface SendZionTextMessageOptions {
     }[]
 }
 
+export interface SendZionReactionOptions {
+    targetEventId: string
+}
+
 export type SendMessageOptions =
     | SendTextMessageOptions
     | SendWenMoonOptions

@@ -3,8 +3,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Stream } from '@zion/client'
 import { FullEvent } from '@zion/core'
-import { TimelineEvent, TimelineEvent_OneOf, ZTEvent } from '../../types/timeline-types'
-import { MessageType, Room } from '../../types/matrix-types'
+import {
+    ReactionEvent,
+    RoomMessageEvent,
+    TimelineEvent,
+    TimelineEvent_OneOf,
+    ZTEvent,
+} from '../../types/timeline-types'
+import { Room } from '../../types/matrix-types'
 import { makeCasablancaStreamIdentifier } from '../../types/room-identifier'
 
 export function toZionRoomFromStream(stream: Stream): Room {
@@ -20,34 +26,33 @@ export function toZionRoomFromStream(stream: Stream): Room {
     }
 }
 
-function getContent(event: FullEvent): TimelineEvent_OneOf | undefined {
+function getEventContent(event: FullEvent): TimelineEvent_OneOf | undefined {
     switch (event.base.payload.kind) {
+        // cb type message
         case 'message': {
-            const text = JSON.parse(event.base.payload.text)
-            if (text.type === 'reaction') {
-                return {
-                    kind: ZTEvent.Reaction,
-                    targetEventId: text.event_id,
-                    reaction: text.text,
-                }
-            } else if (text.type === 'text') {
-                return {
-                    kind: ZTEvent.RoomMessage,
-                    body: text.text,
-                    msgType: MessageType.Text,
-                    mentions: [],
-                    content: {},
-                }
+            const msgEvent = JSON.parse(event.base.payload.text)
+            switch (msgEvent.kind) {
+                case ZTEvent.Reaction:
+                    return {
+                        kind: msgEvent.kind,
+                        reaction: msgEvent.reaction,
+                        targetEventId: msgEvent.targetEventId,
+                    } as ReactionEvent
+                case ZTEvent.RoomMessage:
+                    return {
+                        kind: msgEvent.kind,
+                        body: msgEvent.body,
+                        msgType: msgEvent.msgType,
+                        mentions: [],
+                        content: [],
+                    } as RoomMessageEvent
             }
-            break
         }
-        default:
-            break
     }
     return undefined
 }
 
-export function toZionEventFromCBEvent(event: FullEvent): TimelineEvent {
+export function toZionEventFromCsbEvent(event: FullEvent): TimelineEvent {
     const sender = {
         id: event.base.creatorAddress,
         displayName: '',
@@ -57,7 +62,7 @@ export function toZionEventFromCBEvent(event: FullEvent): TimelineEvent {
     return {
         eventId: event.hash,
         originServerTs: 0,
-        content: getContent(event),
+        content: getEventContent(event),
         fallbackContent: '',
         isLocalPending: false,
         isMentioned: false,

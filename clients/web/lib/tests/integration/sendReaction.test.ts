@@ -49,8 +49,10 @@ describe('sendReaction', () => {
         await waitFor(async () => {
             // TODO - matrixUserId should be fixed as CB users wont have it
             const event = await alice.getLatestEvent(channelId, alice.matrixUserId!)
-            // TODO - need to merge ZTEvent into a common type for both marix and CB
-            expect(event?.content?.kind === ZTEvent.RoomMessage).toEqual(true)
+            expect(
+                event?.content?.kind === ZTEvent.RoomMessage &&
+                    event?.content?.body === 'Hello, world from Bob!',
+            ).toEqual(true)
         })
 
         // alice grabs the message
@@ -62,7 +64,9 @@ describe('sendReaction', () => {
         // wait for bob to receive the reaction
         await waitFor(async () => {
             const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
-            expect(e?.content?.kind === ZTEvent.Reaction).toEqual(true)
+            expect(e?.content?.kind === ZTEvent.Reaction && e?.content?.reaction === '👍').toEqual(
+                true,
+            )
         })
     }) // end test
 }) // end describe
