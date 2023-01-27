@@ -16,6 +16,8 @@ import { StoredTransactionType } from 'store/transactionsStore'
 import { TransactionButton } from '@components/TransactionButton'
 import { useSaveTransactionOnCreation } from 'hooks/useSaveTransactionOnSuccess'
 import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
@@ -42,7 +44,8 @@ type HeaderProps = {
 const Header = (props: HeaderProps) => {
     const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError } = props
     const { isAbleToInteract } = transactionUIState
-
+    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
+    const isDisabled = !isTransactionNetwork && isLast
     return (
         <>
             <Box flexDirection="row" justifyContent="spaceBetween" paddingY="lg">
@@ -60,13 +63,25 @@ const Header = (props: HeaderProps) => {
                     )}
 
                     <MotionBox layout paddingLeft="sm" width={!isAbleToInteract ? '250' : 'auto'}>
-                        <TransactionButton formId={formId} transactionUIState={transactionUIState}>
+                        <TransactionButton
+                            formId={formId}
+                            transactionUIState={transactionUIState}
+                            disabled={isDisabled}
+                        >
                             {isLast && <MotionText layout>Mint</MotionText>}
                             {!isLast && <MotionText layout>Next</MotionText>}
                         </TransactionButton>
                     </MotionBox>
                 </Box>
             </Box>
+            {isDisabled && (
+                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
+                    <RequireTransactionNetworkMessage
+                        postCta="to mint a space."
+                        switchNetwork={switchNetwork}
+                    />
+                </Box>
+            )}
             {hasError && (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <ErrorMessageText message="There was an error with the transaction. Please try again" />

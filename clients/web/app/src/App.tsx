@@ -1,7 +1,6 @@
 import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
-import { foundry, goerli } from 'wagmi/chains'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
 import { QueryProvider } from 'api/queryClient'
@@ -13,9 +12,10 @@ import { Welcome } from 'routes/Welcome'
 import { AppPanelLayout } from 'routes/layouts/AppPanelLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
-import { HomeServerUrl, useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { TransactionEvents } from 'TransactionEvents'
 import { LoadingScreen } from 'routes/LoadingScreen'
+import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -31,8 +31,7 @@ const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary 
 
 export const App = () => {
     const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
-    // prod is always interacting with goerli, allow to swap to foundry for local dev
-    const chain = !env.IS_DEV ? goerli : homeserverUrl === HomeServerUrl.REMOTE ? goerli : foundry
+    const chain = useCorrectChainForServer()
     return (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}

@@ -1,13 +1,14 @@
 import React from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
 import { TestApp } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
+import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { EVERYONE, TOKEN_HOLDERS } from '../constants'
 
@@ -59,7 +60,11 @@ const useMockedCreateSpaceTransaction = (
     ...args: typeof zionClient.useCreateSpaceTransaction['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateSpaceReturn
 
-describe('CreateSpaceStep1', () => {
+describe('<CreateSpaceForm />', () => {
+    beforeEach(() => {
+        vi.resetAllMocks()
+    })
+
     test('renders the form', async () => {
         render(<Wrapper />)
         const title = screen.getByText('Create Space')
@@ -178,6 +183,12 @@ describe('CreateSpaceStep1', () => {
         const navigateSpy = vi.fn()
         vi.spyOn(router, 'useNavigate').mockReturnValue((args) => navigateSpy(args))
 
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isTransactionNetwork: true,
+            name: 'whatever',
+            switchNetwork: () => null,
+        })
+
         await act(() => {
             useCreateSpaceFormStore.setState({
                 step1: {
@@ -228,6 +239,12 @@ describe('CreateSpaceStep1', () => {
         const navigateSpy = vi.fn()
         vi.spyOn(router, 'useNavigate').mockReturnValue((args) => navigateSpy(args))
 
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isTransactionNetwork: true,
+            name: 'whatever',
+            switchNetwork: () => null,
+        })
+
         await act(() => {
             useCreateSpaceFormStore.setState({
                 step1: {
@@ -258,12 +275,55 @@ describe('CreateSpaceStep1', () => {
         expect(navigateSpy).not.toHaveBeenCalled()
     }, 10000)
 
+    test('Step 3: cannot perform mint action if on the wrong network', async () => {
+        vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(
+            useMockedCreateSpaceTransaction,
+        )
+
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isTransactionNetwork: false,
+            name: 'whatever',
+            switchNetwork: () => null,
+        })
+
+        await act(() => {
+            useCreateSpaceFormStore.setState({
+                step1: {
+                    membershipType: EVERYONE,
+                    tokens: [],
+                },
+                step2: {
+                    spaceIconUrl: 'http://whatever.com?jpg',
+                    spaceName: 'sample space',
+                },
+            })
+        })
+
+        // render
+        render(<Wrapper />)
+        const nextButton = screen.getByTestId('create-space-next-button')
+
+        fireEvent.click(nextButton)
+        await screen.findByTestId('space-icon')
+        fireEvent.click(nextButton)
+
+        // on 3rd step
+        await screen.findByTestId('space-form-3')
+        expect(nextButton).toBeDisabled()
+        expect(screen.getByText(/switch to/gi)).toBeInTheDocument()
+    }, 10000)
+
     test('If space membership is for everyone, token permissions should be [] and everyone permissions should be [Read,Write]', async () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(
             useMockedCreateSpaceTransaction,
         )
 
         vi.spyOn(router, 'useNavigate').mockReturnValue(() => vi.fn())
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isTransactionNetwork: true,
+            name: 'whatever',
+            switchNetwork: () => null,
+        })
 
         // form state when user has selected everyone (no tokens) //
         await act(() => {

@@ -12,6 +12,8 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useSaveTransactionOnCreation } from 'hooks/useSaveTransactionOnSuccess'
 import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 
 type Props = {
     spaceId: RoomIdentifier
@@ -57,6 +59,8 @@ export const CreateChannelForm = (props: Props) => {
     } = useCreateChannelTransaction()
     const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
     const { isAbleToInteract } = transactionUIState
+    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
+    const isDisabled = !isTransactionNetwork
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -217,12 +221,22 @@ export const CreateChannelForm = (props: Props) => {
                             </Button>
 
                             <TransactionButton
+                                disabled={isDisabled}
                                 transactionUIState={transactionUIState}
                                 transactingText="Creating channel"
                             >
                                 Create
                             </TransactionButton>
                         </Box>
+
+                        {isDisabled && (
+                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                                <RequireTransactionNetworkMessage
+                                    postCta="to create a channel."
+                                    switchNetwork={switchNetwork}
+                                />
+                            </Box>
+                        )}
                     </>
                 )
             }}
