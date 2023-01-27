@@ -65,3 +65,6 @@ turbo-*.log
 # Local dendrite contract addresses
 servers/dendrite/zion/**/localhost/addresses/*.json
 servers/dendrite/dendrite.*yaml
+
+# siwe-worker bundle
+servers/workers/siwe-worker/worker/bundle.js
