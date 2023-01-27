@@ -27,9 +27,6 @@ done
 # Move typings to the dendrite folder
 mkdir -p $TYPINGS_DIR
 
-# Create space manager v1 typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/ZionSpaceManager.sol/ZionSpaceManager.abi.json --pkg "zion_${CHAIN}" --type "zion_space_manager_${CHAIN}" --out "servers/dendrite/zion/contracts/zion_${CHAIN}/zion_space_manager_${CHAIN}.go"
-
 # Create space factory v2 typings
 mkdir -p "servers/dendrite/zion/contracts/${CHAIN}_space_factory"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi out/SpaceFactory.sol/SpaceFactory.abi.json --pkg "${CHAIN}_space_factory" --type "${CHAIN}_space_factory" --out "servers/dendrite/zion/contracts/${CHAIN}_space_factory/${CHAIN}_space_factory.go"
