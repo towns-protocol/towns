@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { useSpaceMembers } from 'use-zion-client'
 import { shortAddress } from 'ui/utils/utils'
 import { BackgroundImage, Icon, Panel, Paragraph, Stack, Text } from '@ui'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const { profileId } = useParams()
@@ -42,20 +43,9 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                                 <Paragraph strong size="lg">
                                     {user.name}
                                 </Paragraph>
-                                {userAddress && (
-                                    <Stack horizontal gap="sm" alignItems="center">
-                                        <Stack>
-                                            <Text truncate size="md" color="gray2">
-                                                {shortAddress(userAddress)}
-                                            </Text>
-                                        </Stack>
-                                        <Stack>
-                                            <Icon type="copy" color="gray2" size="square_xs" />
-                                        </Stack>
-                                    </Stack>
-                                )}
+                                {userAddress && <ClipboardCopy label={shortAddress(userAddress)} />}
                                 <Paragraph>Bio</Paragraph>
-                                <Paragraph>
+                                <Paragraph color="gray1">
                                     {`Please come back when I have written my bio. It shouldn't be more thans a few
                     lines written in a way that makes you want to know more about me.`}
                                 </Paragraph>

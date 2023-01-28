@@ -79,6 +79,8 @@ const root = createGlobalTheme(':root', {
 
             /** 80px */
             x10: `${baseline * 10}px`,
+            /** 120px */
+            x15: `${baseline * 15}px`,
             /** 160px */
             x20: `${baseline * 20}px`,
             /** 320px */
@@ -101,6 +103,9 @@ const root = createGlobalTheme(':root', {
             '50vh': `50vh`,
             '75vh': `75vh`,
             '100vh': `100vh`,
+            '25%': `25%`,
+            '50%': `50%`,
+            '75%': `75%`,
             '100%': `100%`,
             '1': '1px',
             '2': '2px',
