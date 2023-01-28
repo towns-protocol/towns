@@ -86,8 +86,12 @@ describe('Zion event handlers test', () => {
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
+
+        if (!bob.matrixUserId) {
+            throw new Error('bob.matrixUserId is undefined')
+        }
         // alice invites bob to the room
-        await alice.inviteUser(roomId, bob.matrixUserId!)
+        await alice.inviteUser(roomId, bob.matrixUserId)
 
         expect(eventHandlerResult).toBeDefined()
         expect(eventHandlerResult?.roomId).toEqual(roomId)
@@ -126,8 +130,13 @@ describe('Zion event handlers test', () => {
         if (!roomId) {
             throw new Error('roomId is undefined')
         }
+
+        if (!bob.matrixUserId) {
+            throw new Error('bob.matrixUserId is undefined')
+        }
+
         // alice invites bob to the room
-        await alice.inviteUser(roomId, bob.matrixUserId!)
+        await alice.inviteUser(roomId, bob.matrixUserId)
 
         await waitFor(
             () => expect(bob.getRoom(roomId)).toBeDefined(),
