@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useConnect } from 'wagmi'
 import { ZionOnboardingOpts, SpaceProtocol } from '../../../src/client/ZionClientTypes'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
@@ -69,9 +69,11 @@ interface AutoConnectProps {
 /// go ahead and connect to the wallet automatically, so we don't have to do it in every test
 const ZionWalletAutoConnect = (props: AutoConnectProps) => {
     const { connect, connectors, error, status, data } = useConnect()
+    const connected = useRef(false)
     // automatically connect to the wallet if it's available
     useEffect(() => {
-        if (connectors.length > 0) {
+        if (connectors.length > 0 && !connected.current) {
+            connected.current = true
             console.log('ZionTestApp: connecting to wallet')
             connect({ connector: connectors[0] })
         }
