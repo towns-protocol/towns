@@ -28,7 +28,7 @@ import { ZionClient } from '../client/ZionClient'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -69,6 +69,7 @@ interface ZionClientImpl {
     getIsWalletIdRegistered: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
+    isRoomEncrypted: (roomId: RoomIdentifier) => boolean | undefined
     joinRoom: (roomId: RoomIdentifier) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier) => Promise<void>
     logout: () => Promise<void>
@@ -101,6 +102,10 @@ export function useZionClient(): ZionClientImpl {
     const logout = useLogout()
     const sendReadReceipt = useSendReadReceipt(client)
     const resetFullyReadMarkers = useResetFullyReadMarkers()
+    const isRoomEncrypted = useCallback(
+        (roomId: RoomIdentifier) => client?.isRoomEncrypted(roomId),
+        [client],
+    )
 
     return {
         chainId: client?.chainId,
@@ -125,6 +130,7 @@ export function useZionClient(): ZionClientImpl {
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
+        isRoomEncrypted,
         joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
         loginWithWallet,
