@@ -29,5 +29,14 @@
       "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/clients/web/lib/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
+    {
+      "name": "Launch App to Chrome",
+      "url": "http://localhost:3000",
+      "request": "launch",
+      "type": "chrome",
+      "preLaunchTask": "App",
+      "webRoot": "${workspaceFolder}/clients/web/app",
+      "userDataDir": "${workspaceFolder}/.vscode/vscode-chrome-debug-userdatadir"
+    },
   ]
 }
