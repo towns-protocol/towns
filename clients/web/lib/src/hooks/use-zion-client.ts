@@ -123,7 +123,7 @@ export function useZionClient(): ZionClientImpl {
         createChannel: useWithCatch(client?.createChannel, ZionClientEvent.NewChannel),
         createChannelTransaction: useWithCatch(client?.createChannelTransaction),
         waitForCreateChannelTransaction: useWithCatch(
-            client?.waitForCreateSpaceTransaction,
+            client?.waitForCreateChannelTransaction,
             ZionClientEvent.NewChannel,
         ),
         editMessage: useWithCatch(client?.editMessage),
