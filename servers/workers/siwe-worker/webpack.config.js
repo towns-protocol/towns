@@ -1,8 +1,9 @@
 const path = require('path')
 //const { WranglerJsCompatWebpackPlugin } = require('wranglerjs-compat-webpack-plugin')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 
 module.exports = {
+	target: 'node',
 	// ...
 	entry: {
 		bundle: path.join(__dirname, './src/index.ts'),
@@ -33,11 +34,7 @@ module.exports = {
 	},
 	optimization: {
 		emitOnErrors: false,
-		minimizer: [
-			new UglifyJsPlugin({
-				uglifyOptions: { annotations: false, compress: true },
-				parallel: true,
-			}),
-		],
+		minimize: true,
+		minimizer: [new TerserPlugin()],
 	},
 }
