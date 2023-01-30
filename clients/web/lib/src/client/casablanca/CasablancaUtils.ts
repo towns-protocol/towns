@@ -43,6 +43,7 @@ function getEventContent(event: FullEvent): TimelineEvent_OneOf | undefined {
                         kind: msgEvent.kind,
                         body: msgEvent.body,
                         msgType: msgEvent.msgType,
+                        inReplyTo: msgEvent.inReplyTo,
                         replacedMsgId: msgEvent.replacedMsgId,
                         mentions: [],
                         content: [],

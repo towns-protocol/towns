@@ -33,6 +33,7 @@ export async function sendCsbMessage(
                 kind: kind,
                 body: message,
                 msgType: msgOptions?.messageType ?? MessageType.Text,
+                inReplyTo: msgOptions?.threadId,
                 mentions: [],
                 content: {}, // start deprecating matrix IContent
                 replacedMsgId: editOptions?.originalEventId,
