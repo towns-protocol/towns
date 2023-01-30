@@ -13,7 +13,7 @@
     },
     "dependencies": {
         "@zion/core": "workspace:^",
-        "axios": "^1.1.3",
+        "axios": "^1.2.6",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
         "json-rpc-2.0": "^1.4.1",
