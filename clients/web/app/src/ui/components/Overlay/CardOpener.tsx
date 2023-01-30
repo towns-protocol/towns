@@ -3,9 +3,8 @@ import { createPortal } from 'react-dom'
 import useEvent from 'react-use-event-hook'
 import { RootLayerContext } from '../Tooltip/OverlayPortal'
 import { CardOpenerContext } from './CardOpenerContext'
+import { Placement } from './types'
 import { OverlayContainer } from './CardOverlayContainer'
-
-export type Placement = 'vertical' | 'horizontal' | 'pointer'
 
 const Trigger = {
     click: 'click',

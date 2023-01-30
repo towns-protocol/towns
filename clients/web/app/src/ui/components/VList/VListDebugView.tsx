@@ -1,6 +1,6 @@
 import React from 'react'
-import { Box } from '@ui'
-import { ItemCacheMap } from './VList'
+import { Box } from '../Box/Box'
+import { ItemCacheMap } from './types'
 
 type P<T> = {
     enabled?: boolean

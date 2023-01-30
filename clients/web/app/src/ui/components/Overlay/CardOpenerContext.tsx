@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { Placement } from './CardOpener'
+import { Placement } from './types'
 
 type CardOpenerContextType = {
     placement: Placement

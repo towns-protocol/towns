@@ -1,7 +1,7 @@
 import { clsx } from 'clsx'
 import React from 'react'
-import { Box, BoxProps } from '@ui'
-import { FieldTone } from '../Field'
+import { Box, BoxProps } from 'ui/components/Box/Box'
+import { FieldTone } from '../types'
 import * as styles from './FieldOutline.css'
 
 type Props = {

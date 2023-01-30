@@ -1,10 +1,10 @@
 import React from 'react'
-import { Box, Stack } from '@ui'
+import { Box } from '../Box/Box'
 
 export const TypeaheadMenu = (props: { children: React.ReactNode }) => {
     return (
         <Box border position="relative">
-            <Stack
+            <Box
                 border
                 bottom="x4"
                 overflow="scroll"
@@ -17,7 +17,7 @@ export const TypeaheadMenu = (props: { children: React.ReactNode }) => {
                 background="level2"
             >
                 {props.children}
-            </Stack>
+            </Box>
         </Box>
     )
 }

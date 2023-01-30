@@ -1,7 +1,6 @@
 import React from 'react'
-import { Box, Paragraph } from '..'
-import { BoxProps } from '../Box/Box'
-import { ParagraphProps } from '../Text/Paragraph'
+import { Box, BoxProps } from '../Box/Box'
+import { Paragraph, ParagraphProps } from '../Text/Paragraph'
 
 export const Divider = ({
     label,

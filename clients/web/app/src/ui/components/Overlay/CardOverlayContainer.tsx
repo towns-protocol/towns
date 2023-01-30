@@ -3,7 +3,7 @@ import useDebounce from 'hooks/useDebounce'
 import { useSize } from 'ui/hooks/useSize'
 
 import { Box } from '../Box/Box'
-import { Placement } from './CardOpener'
+import { Placement } from './types'
 
 type OffsetContainerProps = {
     placement: Placement

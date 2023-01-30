@@ -1,6 +1,8 @@
 import { TypeaheadOption } from '@lexical/react/LexicalTypeaheadMenuPlugin'
 import React from 'react'
-import { Box, Stack, Text } from '@ui'
+import { Stack } from 'ui/components/Stack/Stack'
+import { Box } from 'ui/components/Box/Box'
+import { Text } from 'ui/components/Text/Text'
 
 export const TypeaheadMenuItem = <T extends TypeaheadOption>(props: {
     index: number

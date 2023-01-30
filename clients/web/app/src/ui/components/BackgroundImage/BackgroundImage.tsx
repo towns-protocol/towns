@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, BoxProps } from '@ui'
+import { Box, BoxProps } from '../Box/Box'
 import { BackgroundContainerStyle, BackgroundVariantProps } from './BackgroundImage.css'
 
 type Props = {

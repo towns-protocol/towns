@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react'
-import { BoxProps } from '@ui'
+import { BoxProps } from '../Box/Box'
 import { Text } from './Text'
 import { TextSprinkles } from './Text.css'
 

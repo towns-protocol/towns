@@ -1,19 +1,14 @@
-import { emojis } from '@emoji-mart/data'
 import { EmojiData } from 'emoji-mart'
 import React, { Suspense, useCallback } from 'react'
 import { MessageReactions, useZionContext } from 'use-zion-client'
+import { Box } from 'ui/components/Box/Box'
+import { Text } from 'ui/components/Text/Text'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
-import { Box, Stack, Text, TooltipRenderer } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
+import { TooltipRenderer } from 'ui/components/Tooltip/TooltipRenderer'
+import { Stack } from 'ui/components/Stack/Stack'
 import { ReactionTootip } from './ReactionTooltip'
-
-type Emojis = { [key: string]: typeof emojis[keyof typeof emojis] }
-
-export const getNativeEmojiFromName = (name: string, skinIndex = 0) => {
-    const emoji = (emojis as Emojis)?.[name]
-    const skin = emoji?.skins[skinIndex < emoji.skins.length ? skinIndex : 0]
-    return skin?.native ?? name
-}
+import { getNativeEmojiFromName } from './ReactionConstants'
 
 type Props = {
     reactions: MessageReactions
@@ -129,7 +124,7 @@ const Reaction = (props: {
         >
             {({ triggerProps }) => (
                 <Box paddingX="xs" {...triggerProps} horizontal>
-                    <Stack
+                    <Box
                         horizontal
                         centerContent
                         position="relative"
@@ -143,7 +138,7 @@ const Reaction = (props: {
                     >
                         <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
                         <Text size="sm">{Object.keys(users).length}</Text>
-                    </Stack>
+                    </Box>
                 </Box>
             )}
         </TooltipRenderer>

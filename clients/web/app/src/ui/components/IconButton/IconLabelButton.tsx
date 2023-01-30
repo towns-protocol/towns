@@ -1,5 +1,8 @@
 import React, { forwardRef } from 'react'
-import { Box, BoxProps, IconButton, IconName, Text } from '@ui'
+import { Box, BoxProps } from '../Box/Box'
+import { IconName } from '../Icon/Icon'
+import { Text } from '../Text/Text'
+import { IconButton } from './IconButton'
 
 type Props = { label: string; icon?: IconName } & Omit<BoxProps, 'size'>
 

@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react'
-import { Box, BoxProps } from '@ui'
+import { Box, BoxProps } from '../Box/Box'
 
 type Props = {
     value?: string | number | JSX.Element | false

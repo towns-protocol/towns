@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { forwardRef } from 'react'
-import { Box, BoxProps } from '@ui'
+import { Box, BoxProps } from '../Box/Box'
 import { TextSprinkles, fontStyles, truncateParentStyle, truncateTextStyle } from './Text.css'
 
 type ParagraphProps = {

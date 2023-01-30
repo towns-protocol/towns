@@ -1,5 +1,5 @@
-import { default as React, createContext, useCallback, useContext, useMemo, useRef } from 'react'
 import { FullyReadMarker, MessageType, useFullyReadMarker } from 'use-zion-client'
+import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react'
 import { Box, Divider, VList } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { useExperimentsStore } from 'store/experimentsStore'

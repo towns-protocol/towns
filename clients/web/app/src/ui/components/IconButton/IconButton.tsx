@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react'
-import { Box, BoxProps } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
+import { Box, BoxProps } from '../Box/Box'
 import { IconAtoms } from '../Icon/Icon.css'
 import * as styles from './IconButton.css'
 

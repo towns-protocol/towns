@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { InputHTMLAttributes, forwardRef } from 'react'
-import { Box } from '@ui'
+import { Box } from '../Box/Box'
 import { Field, FieldBaseProps } from '../_internal/Field/Field'
 import * as styles from './TextField.css'
 

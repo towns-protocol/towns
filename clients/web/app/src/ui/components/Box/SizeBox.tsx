@@ -1,7 +1,7 @@
 import useResizeObserver from '@react-hook/resize-observer'
 import React, { RefObject, useLayoutEffect, useRef, useState } from 'react'
-import { Box, BoxProps } from '@ui'
 import { Size, SizeContext } from 'ui/hooks/useSizeContext'
+import { Box, BoxProps } from './Box'
 
 /**
  * Box providing size context

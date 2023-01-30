@@ -1,6 +1,7 @@
 import React from 'react'
-import { Stack, Text } from '@ui'
+import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
+import { Text } from 'ui/components/Text/Text'
 
 export type FieldLabelProps = {
     label?: string

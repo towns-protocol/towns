@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
 import React from 'react'
-import { Box, Paragraph, Text } from '@ui'
 import { useNameSequence } from 'hooks/useNameSequence'
-import { getNativeEmojiFromName } from './Reactions'
+import { Box } from 'ui/components/Box/Box'
+import { Paragraph } from 'ui/components/Text/Paragraph'
+import { Text } from 'ui/components/Text/Text'
+import { getNativeEmojiFromName } from './ReactionConstants'
 
 export const ReactionTootip = ({
     userIds: users,

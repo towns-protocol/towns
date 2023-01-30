@@ -8,7 +8,7 @@ import React, {
     useRef,
 } from 'react'
 import { useSize } from 'ui/hooks/useSize'
-import { ItemCacheMap, ItemSize } from './VList'
+import { ItemCacheMap, ItemSize } from './types'
 import * as styles from './VList.css'
 
 interface Props<T> {

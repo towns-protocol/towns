@@ -8,7 +8,7 @@ import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { Text } from 'ui/components/Text/Text'
 import { UploadInput } from 'ui/components/Form/Upload'
 import { Icon } from '@ui'
-import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline'
+import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 
 async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
     return new Promise((resolve, reject) => {

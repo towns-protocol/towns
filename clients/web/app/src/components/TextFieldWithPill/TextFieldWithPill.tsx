@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { clsx } from 'clsx'
 import { Box } from '@ui'
-import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline'
+import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 import { baseFieldStyles, textFieldStyle } from './TextFieldWithPill.css'
 
 type Props<PillPayload> = {

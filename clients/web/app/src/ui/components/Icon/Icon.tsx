@@ -1,8 +1,7 @@
 import { clsx } from 'clsx'
 import React, { forwardRef } from 'react'
 import { vars } from 'ui/styles/vars.css'
-import { Box } from '..'
-import { BoxProps } from '../Box/Box'
+import { Box, BoxProps } from '../Box/Box'
 import { IconAtoms, iconAtoms, iconBaseStyle } from './Icon.css'
 
 type SVGIconProps = React.SVGProps<SVGSVGElement>

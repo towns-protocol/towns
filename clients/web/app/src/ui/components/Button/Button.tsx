@@ -1,7 +1,7 @@
 import { Variants, motion } from 'framer-motion'
 import React, { ButtonHTMLAttributes } from 'react'
-import { Box, BoxProps } from '@ui'
 import { vars } from 'ui/styles/vars.css'
+import { Box, BoxProps } from '../Box/Box'
 import { Icon, IconName } from '../Icon'
 import { ButtonStyleVariants, buttonStyle } from './Button.css'
 

@@ -1,10 +1,12 @@
 import React from 'react'
 import { Controller, UseFormReturn } from 'react-hook-form'
 import { clsx } from 'clsx'
-import { Box, Stack, Text } from '@ui'
+import { Stack } from 'ui/components/Stack/Stack'
+import { Box } from 'ui/components/Box/Box'
+import { Text } from 'ui/components/Text/Text'
 import * as style from './RadioSelect/RadioSelect.css'
 import * as fieldStyles from '../../_internal/Field/Field.css'
-import { FieldOutline } from '../../_internal/Field/FieldOutline'
+import { FieldOutline } from '../../_internal/Field/FieldOutline/FieldOutline'
 
 type Props = {
     value: string

@@ -1,18 +1,13 @@
 import React, { AllHTMLAttributes, ReactNode } from 'react'
-import { BoxProps, Stack } from '@ui'
+import { BoxProps } from 'ui/components/Box/Box'
 import { Icon, IconName } from 'ui/components/Icon'
-import { ToneName } from 'ui/styles/themes'
+import { Stack } from 'ui/components/Stack/Stack'
 import * as styles from './Field.css'
 import { FieldLabel } from './FieldLabel'
-import { FieldOutline } from './FieldOutline'
+import { FieldOutline } from './FieldOutline/FieldOutline'
+import { FieldTone } from './types'
 
 type FormElementProps = AllHTMLAttributes<HTMLFormElement>
-
-export type FieldTone =
-    | typeof ToneName.Positive
-    | typeof ToneName.Negative
-    | typeof ToneName.Neutral
-    | typeof ToneName.ENS
 
 export type FieldBaseProps = {
     /** color tone to be applied to the border typically for warnings */

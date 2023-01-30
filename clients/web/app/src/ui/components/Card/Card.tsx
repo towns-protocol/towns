@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react'
-import { Stack } from '@ui'
-import { StackProps } from '../Stack/Stack'
+import { Stack, StackProps } from '../Stack/Stack'
 import { ArrowHead } from './CardArrowHead'
 
 type Props = {

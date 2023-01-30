@@ -11,10 +11,20 @@ import { useViewport } from './hooks/useViewport'
 import * as styles from './VList.css'
 import { useDebugView } from './VListDebugView'
 import { VListItem, useInitCacheItem as useDefaultItemSettings } from './VListItem'
+import { ItemSize } from './types'
 
 const DEBUG = false
 const DEFAULT_VIEW_MARGIN = 400
 const PADDING = 16
+
+const Debug = {
+    TopLevel: `color:#39f`,
+    Measuring: `color:#393`,
+    Layout: `color:#3ac`,
+    Viewport: `color:#099`,
+    Critical: `color:#f50`,
+    Secondary: `color:#444`,
+} as const
 
 interface Props<T> {
     list: T[]
@@ -25,23 +35,6 @@ interface Props<T> {
     groupIds?: string[]
     debug?: boolean
 }
-
-export type ItemSize = {
-    isMeasured: boolean
-    height: number
-    y?: number
-}
-
-export type ItemCacheMap = Map<string, ItemSize>
-
-const Debug = {
-    TopLevel: `color:#39f`,
-    Measuring: `color:#393`,
-    Layout: `color:#3ac`,
-    Viewport: `color:#099`,
-    Critical: `color:#f50`,
-    Secondary: `color:#444`,
-} as const
 
 export function VList<T extends { id: string }>(props: Props<T>) {
     const { esimtateItemSize, highlightId, groupIds, viewMargin = DEFAULT_VIEW_MARGIN } = props

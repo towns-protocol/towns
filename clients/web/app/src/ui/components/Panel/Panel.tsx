@@ -1,5 +1,6 @@
 import React from 'react'
-import { IconButton, Stack } from '@ui'
+import { IconButton } from '../IconButton/IconButton'
+import { Stack } from '../Stack/Stack'
 
 export const Panel = (props: {
     children: React.ReactNode

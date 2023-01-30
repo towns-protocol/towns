@@ -1,6 +1,7 @@
 import React from 'react'
-import { Avatar, Stack } from '@ui'
 import { avatarSizes } from 'ui/components/Avatar/avatarProperties.css'
+import { Avatar } from '../Avatar/Avatar'
+import { Stack } from '../Stack/Stack'
 
 type Props = {
     users: {
