@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useNavigate, useParams } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { useSpaceMembers } from 'use-zion-client'
 import { shortAddress } from 'ui/utils/utils'
-import { BackgroundImage, Icon, Panel, Paragraph, Stack, Text } from '@ui'
+import { BackgroundImage, Panel, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
