@@ -33,7 +33,6 @@ import {
     SendMessageOptions,
     SendTextMessageOptions,
 } from '../types/matrix-types'
-import { NewSession, newLoginSession, newRegisterSession } from '../hooks/use-matrix-wallet-sign-in'
 import { SignerContext, publicKeyToBuffer } from '@zion/core'
 
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
@@ -64,6 +63,7 @@ import { toZionRoom } from '../store/use-matrix-store'
 import { toZionEventFromCsbEvent, toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { toEvent } from '../hooks/ZionContext/useMatrixTimelines'
 import { sendCsbMessage } from './casablanca/SendMessage'
+import { newLoginSession, newRegisterSession, NewSession } from '../hooks/session'
 
 /***
  * Zion Client
