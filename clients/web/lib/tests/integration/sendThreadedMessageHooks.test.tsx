@@ -85,7 +85,7 @@ describe('sendThreadedMessageHooks', () => {
         const TestChannelComponent = () => {
             const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
             const threadRoots = useSpaceThreadRoots()
-            const channelTimeline = useChannelTimeline()
+            const { timeline: channelTimeline } = useChannelTimeline()
             const channelThreadStats = useChannelThreadStats()
             const spaceNotifications = useSpaceNotificationCounts(spaceId)
             const channel_1_fullyRead = useFullyReadMarker(channel_1)

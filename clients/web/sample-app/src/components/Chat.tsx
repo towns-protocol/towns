@@ -22,7 +22,7 @@ export function Chat(props: Props): JSX.Element {
     const { inviteUser, leaveRoom, joinRoom, sendMessage } = useZionClient()
     const [showInviteForm, setShowInviteForm] = useState<boolean>(false)
     const navigate = useNavigate()
-    const timeline = useChannelTimeline()
+    const { timeline } = useChannelTimeline()
     const [joinFailed, setJoinFailed] = useState(false)
 
     const onClickSettings = useCallback(() => {

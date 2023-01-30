@@ -57,7 +57,7 @@ describe('sendMessageHooks', () => {
         const TestRoomMessages = () => {
             const { sendMessage, editMessage, redactEvent } = useZionClient()
             const channelId = useChannelId()
-            const timeline = useChannelTimeline()
+            const { timeline } = useChannelTimeline()
             const [msgSent, setMsgSent] = React.useState(false)
             const [msgEdited, setMsgEdited] = React.useState(false)
 

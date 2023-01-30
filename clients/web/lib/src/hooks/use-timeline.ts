@@ -4,9 +4,9 @@ import { RoomIdentifier } from '../types/room-identifier'
 
 const EMPTY_TIMELINE: TimelineEvent[] = []
 
-export function useTimeline(roomId?: RoomIdentifier): TimelineEvent[] {
+export function useTimeline(roomId?: RoomIdentifier) {
     const timeline = useTimelineStore((state: TimelineStoreStates) =>
         roomId ? state.timelines[roomId.networkId] : undefined,
     )
-    return timeline ?? EMPTY_TIMELINE
+    return { timeline: timeline ?? EMPTY_TIMELINE }
 }

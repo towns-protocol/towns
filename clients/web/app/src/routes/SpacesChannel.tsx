@@ -50,7 +50,7 @@ const SpacesChannelComponent = () => {
     const { spaceId, channelId, channel } = useChannelData()
 
     const myMembership = useMyMembership(channelId)
-    const channelMessages = useChannelTimeline()
+    const { timeline: channelMessages } = useChannelTimeline()
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {

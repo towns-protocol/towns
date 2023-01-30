@@ -10,7 +10,7 @@ export function useTimelineThread(
     eventId?: string,
 ): { messages: TimelineEvent[]; parent: ThreadStats | undefined } {
     const dummyThreadStatCache = useRef<Record<string, ThreadStats>>({})
-    return useTimelineStore((state: TimelineStoreStates) =>
+    const { messages, parent } = useTimelineStore((state: TimelineStoreStates) =>
         eventId
             ? {
                   parent:
@@ -23,6 +23,8 @@ export function useTimelineThread(
               }
             : { parent: undefined, messages: EMPTY_TIMELINE },
     )
+
+    return { messages, parent }
 }
 
 function toDummyThreadStats(

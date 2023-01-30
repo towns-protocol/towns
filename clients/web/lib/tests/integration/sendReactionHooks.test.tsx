@@ -54,7 +54,7 @@ describe('sendReactionHooks', () => {
         const TestRoomMessages = () => {
             const { sendReaction } = useZionClient()
             const channelId = useChannelId()
-            const timeline = useChannelTimeline()
+            const { timeline } = useChannelTimeline()
             const reactions = useChannelReactions()
             const messages = timeline.filter(
                 (x) =>

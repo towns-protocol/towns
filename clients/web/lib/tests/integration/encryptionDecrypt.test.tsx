@@ -50,7 +50,7 @@ describe('canDecryptMessages', () => {
             const [isRegistration, setIsRegistration] = useState(true)
             const [isLoggingBackIn, setIsLoggingBackIn] = useState(false)
 
-            const timeline = useChannelTimeline()
+            const { timeline } = useChannelTimeline()
 
             function onLogout() {
                 setIsRegistration(false)

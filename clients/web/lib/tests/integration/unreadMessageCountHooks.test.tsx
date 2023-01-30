@@ -63,7 +63,7 @@ describe('unreadMessageCountHooks', () => {
             const spaceHasUnread = spaceUnreads[janesSpaceId.networkId]
             const mySpaceMembership = useMyMembership(janesSpaceId)
             const myChannelMembership = useMyMembership(janesChannelId)
-            const timeline = useChannelTimeline()
+            const { timeline } = useChannelTimeline()
             const messages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             // handle join
             const onClickJoinSpace = useCallback(() => {

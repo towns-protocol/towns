@@ -50,7 +50,7 @@ describe('messageHistoryHooks', () => {
         // create a veiw for alice
         const TestComponent = () => {
             const { scrollback } = useZionClient()
-            const timeline = useChannelTimeline()
+            const { timeline } = useChannelTimeline()
             const onClickScrollback = useCallback(() => {
                 void scrollback(channelId, 30)
             }, [scrollback])
