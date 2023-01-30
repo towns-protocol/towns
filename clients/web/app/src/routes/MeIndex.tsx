@@ -1,42 +1,59 @@
-import React from 'react'
-import { useMatrixCredentials, useMyProfile, useServerVersions } from 'use-zion-client'
+import React, { useMemo } from 'react'
+import {
+    createUserIdFromString,
+    useMatrixCredentials,
+    useMyProfile,
+    useServerVersions,
+} from 'use-zion-client'
+import { UserProfile } from '@components/UserProfile/UserProfile'
+import { Panel } from '@ui'
 import { Stack } from 'ui/components/Stack/Stack'
-import { LiquidContainer } from './SpacesIndex'
 
 export const MeIndex = () => {
     const { isAuthenticated, username, userId } = useMatrixCredentials()
     const myProfile = useMyProfile()
     const serverVersions = useServerVersions()
-    if (!myProfile) {
-        return <>&quot;404&quot;</>
-    }
+
+    const isValid = !!myProfile
+    const userAddress = isValid
+        ? createUserIdFromString(myProfile.userId)?.accountAddress
+        : undefined
+    const info = useMemo(
+        () => [
+            {
+                title: `User ID`,
+                content: userId ?? `??`,
+            },
+            {
+                title: `Username`,
+                content: username ?? `??`,
+            },
+            {
+                title: `Authenticated`,
+                content: isAuthenticated ? `yes` : `no`,
+            },
+            {
+                title: `Server version`,
+                content: serverVersions?.release_version ?? `??`,
+            },
+        ],
+        [isAuthenticated, serverVersions?.release_version, userId, username],
+    )
+
     return (
-        <Stack horizontal grow justifyContent="center" basis="1200">
-            <LiquidContainer fullbleed position="relative">
-                <Stack padding gap="lg" width="600">
-                    <Stack gap="md">
-                        <p>
-                            IsAuthenticated: <strong>{String(isAuthenticated)}</strong>
-                        </p>
-                        <p>
-                            DisplayName: <strong>{myProfile.displayName}</strong>
-                        </p>
-                        <p>
-                            AvatarUrl: <strong>{myProfile.avatarUrl}</strong>
-                        </p>
-                        <p>
-                            UserName: <strong>{username}</strong>
-                        </p>
-                        <p>
-                            UserId: <strong>{userId}</strong>
-                        </p>
-                        <p>
-                            Release Version:{' '}
-                            <strong>{serverVersions?.release_version ?? '??'}</strong>
-                        </p>
-                    </Stack>
-                </Stack>
-            </LiquidContainer>
-        </Stack>
+        <Panel label="Profile" paddingX="lg">
+            <Stack paddingX="sm" gap="lg" width="600">
+                {myProfile ? (
+                    <UserProfile
+                        displayName={myProfile.displayName}
+                        avatarUrl={myProfile.avatarUrl}
+                        userAddress={userAddress}
+                        info={info}
+                    />
+                ) : (
+                    <>profile not found</>
+                )}
+            </Stack>
+        </Panel>
     )
 }

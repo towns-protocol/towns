@@ -1,18 +1,21 @@
 import React from 'react'
+import { BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
 
 export const Panel = (props: {
     children: React.ReactNode
     label?: React.ReactNode | string
+    paddingX?: BoxProps['padding']
     onClose?: () => void
 }) => {
+    const { paddingX = 'md' } = props
     return (
-        <Stack overflow="hidden" maxHeight="100%">
+        <Stack overflow="scroll" maxHeight="100%">
             <Stack
                 horizontal
-                shrink
-                paddingX="md"
+                shrink={false}
+                paddingX={paddingX}
                 background="level2"
                 height="x8"
                 alignItems="center"
