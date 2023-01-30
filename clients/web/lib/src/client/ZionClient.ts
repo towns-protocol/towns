@@ -905,7 +905,7 @@ export class ZionClient {
                     ZTEvent.Reaction,
                     roomId,
                     reaction,
-                    {},
+                    undefined,
                     { targetEventId: eventId },
                 )
                 console.log('sendReaction')
@@ -916,7 +916,7 @@ export class ZionClient {
     }
 
     /************************************************
-     * sendMessage
+     * editMessage
      *************************************************/
     public async editMessage(
         roomId: RoomIdentifier,
@@ -937,7 +937,18 @@ export class ZionClient {
                     msgOptions,
                 )
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+                if (!this.casablancaClient) {
+                    throw new Error('casablanca client is undefined')
+                }
+                return await sendCsbMessage(
+                    this.casablancaClient,
+                    ZTEvent.RoomMessage,
+                    roomId,
+                    message,
+                    msgOptions,
+                    undefined,
+                    options,
+                )
             default:
                 staticAssertNever(roomId)
         }
@@ -1101,6 +1112,7 @@ export class ZionClient {
     /************************************************
      * getLatestEvent
      ************************************************/
+    // TODO - rename to getLatestMessage and change csb case to filter
     public async getLatestEvent(
         roomId: RoomIdentifier,
         userId: string,
@@ -1114,6 +1126,7 @@ export class ZionClient {
                     .getRoom(roomId.networkId)
                     ?.getLiveTimeline()
                     .getEvents()
+                    .filter((x) => x.getType() === 'm.room.message')
                     .at(-1)
                 if (event) {
                     return toEvent(event, userId)

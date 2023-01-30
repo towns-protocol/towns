@@ -5,7 +5,12 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../types/timeline-types'
-import { MessageType, SendMessageOptions, SendZionReactionOptions } from '../../types/matrix-types'
+import {
+    EditMessageOptions,
+    MessageType,
+    SendMessageOptions,
+    SendZionReactionOptions,
+} from '../../types/matrix-types'
 import { CasablancaStreamIdentifier } from '../../types/room-identifier'
 
 /** treat message as a reply to parentId if specified */
@@ -16,6 +21,7 @@ export async function sendCsbMessage(
     message: string,
     msgOptions?: SendMessageOptions,
     rcnOptions?: SendZionReactionOptions,
+    editOptions?: EditMessageOptions,
 ): Promise<void> {
     const sendEvent = async function (e: TimelineEvent_OneOf): Promise<void> {
         return await casablancaClient.sendMessage(roomId.networkId, JSON.stringify(e))
@@ -29,6 +35,7 @@ export async function sendCsbMessage(
                 msgType: msgOptions?.messageType ?? MessageType.Text,
                 mentions: [],
                 content: {}, // start deprecating matrix IContent
+                replacedMsgId: editOptions?.originalEventId,
             } as RoomMessageEvent
             return await sendEvent(event)
         }

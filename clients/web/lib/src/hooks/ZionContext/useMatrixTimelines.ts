@@ -93,13 +93,13 @@ export function useMatrixTimelines(client?: MatrixClient) {
 
         const replaceEvent = (
             roomId: string,
-            replacingId: string,
+            replacedMsgId: string,
             timelineEvent: TimelineEvent,
         ) => {
             setState((state) => {
                 const timeline = state.timelines[roomId] ?? []
                 const eventIndex = timeline.findIndex(
-                    (e: TimelineEvent) => e.eventId === replacingId,
+                    (e: TimelineEvent) => e.eventId === replacedMsgId,
                 )
                 if (eventIndex === -1) {
                     return state
@@ -112,7 +112,7 @@ export function useMatrixTimelines(client?: MatrixClient) {
                     ? state.threads[roomId]?.[threadParentId]
                     : undefined
                 const threadEventIndex =
-                    threadTimeline?.findIndex((e) => e.eventId === replacingId) ?? -1
+                    threadTimeline?.findIndex((e) => e.eventId === replacedMsgId) ?? -1
 
                 return {
                     timelines: replaceTimelineEvent(
@@ -215,13 +215,11 @@ export function useMatrixTimelines(client?: MatrixClient) {
         ) => {
             const roomId = eventRoom.roomId
             const timelineEvent = toEvent(event, userId)
+            const replacedMsgId = getReplacedMessageId(event)
             if (removed) {
                 removeEvent(roomId, timelineEvent.eventId)
-            } else if (event.isRelation(RelationType.Replace)) {
-                const replacingId = event.getWireContent()['m.relates_to']?.event_id
-                if (replacingId) {
-                    replaceEvent(roomId, replacingId, timelineEvent)
-                }
+            } else if (replacedMsgId !== undefined) {
+                replaceEvent(roomId, replacedMsgId, timelineEvent)
             } else if (toStartOfTimeline) {
                 prependEvent(roomId, timelineEvent)
             } else {
@@ -489,10 +487,7 @@ function toZionContent(event: MatrixEvent): {
                     inReplyTo: event.replyEventId,
                     body: content.body as string,
                     msgType: content.msgtype,
-                    replacedMsgId:
-                        content['m.relates_to']?.rel_type === RelationType.Replace
-                            ? content['m.relates_to']?.event_id
-                            : undefined,
+                    replacedMsgId: getReplacedMessageId(event),
                     content: content,
                     mentions: (content['mentions'] as Mention[]) ?? [],
                 },
@@ -552,6 +547,14 @@ function toZionContent(event: MatrixEvent): {
                 error: `${describe()} unhandled`,
             }
     }
+}
+
+function getReplacedMessageId(event: MatrixEvent): string | undefined {
+    if (event.isRelation(RelationType.Replace)) {
+        const c = event.getWireContent()
+        return c['m.relates_to']?.event_id
+    }
+    return undefined
 }
 
 function getFallbackContent(

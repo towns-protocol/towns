@@ -67,7 +67,7 @@ describe('sendAMessage', () => {
         await bob.sendMessage(channelId, 'Hello Alice!')
 
         // everyone should receive the message
-        for (let i = 1; i < numClients; i++) {
+        for (let i = 0; i < numClients; i++) {
             console.log(`!!!!!! client ${i} waits for message`)
             const client = clients[`client_${i}`]
             await waitFor(async () => {
