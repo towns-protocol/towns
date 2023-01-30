@@ -80,7 +80,6 @@
         "@vanilla-extract/sprinkles": "^1.5.0",
         "@vanilla-extract/vite-plugin": "^3.7.1",
         "@vitejs/plugin-react": "^3.0.1",
-        "babel-loader": "^9.1.0",
         "clsx": "^1.2.1",
         "eslint": "^8.30.0",
         "eslint-config-react-app": "^7.0.1",
