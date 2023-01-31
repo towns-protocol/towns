@@ -1,68 +1,65 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { waitFor } from '@testing-library/dom'
-import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/matrix-types'
-import { RoomIdentifier } from '../../src/types/room-identifier'
-import { TestConstants } from './helpers/TestConstants'
+import { ZTEvent } from '../../src/types/timeline-types'
 import {
-    createTestSpaceWithZionMemberRole,
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithEveryoneRole,
+    getTestPrimaryProtocol,
     registerAndStartClients,
-    registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
 describe('mentions', () => {
     test('send and receive a mention', async () => {
         // create clients
-        // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
-        const { bob } = await registerAndStartClients(['bob'])
+        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         // bob needs funds to create a space
         await bob.fundWallet()
-        // bob creates a public room
-        const roomId = (await createTestSpaceWithZionMemberRole(
+        // create a space
+        const spaceId = (await createTestSpaceWithEveryoneRole(
             bob,
             [Permission.Read, Permission.Write],
-            [],
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
+                spaceProtocol: getTestPrimaryProtocol(),
             },
-        )) as RoomIdentifier
-        // alice joins the room
-        await alice.joinRoom(roomId)
+        ))!
+        // create a channel
+        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
+            roleIds: [],
+        }))!
+
+        console.log("bob's spaceId", { spaceId, channelId })
+
+        await alice.joinRoom(channelId)
+        const bobDisplayName = bob.getUser(bob.getUserId()!)?.displayName ?? 'bob'
         // alice sends a wenmoon message
-        await alice.sendMessage(roomId, 'Hi @bob', {
+        await alice.sendMessage(channelId, 'Hi @bob', {
             mentions: [
                 {
                     userId: bob.getUserId()!,
-                    displayName: bob.getUser(bob.getUserId()!)?.displayName ?? 'bob',
+                    displayName: bobDisplayName,
                 },
             ],
         })
+
         // bob should receive the message
-        await waitFor(() =>
+        await waitFor(async () => {
+            // TODO - matrixUserId should be fixed as CB users wont have it
+            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
             expect(
-                bob
-                    .getRoom(roomId)
-                    ?.getLiveTimeline()
-                    .getEvents()
-                    .find(
-                        (event: MatrixEvent) =>
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                            event.getContent()?.body === 'Hi @bob',
-                    ),
-            ).toBeDefined(),
-        )
-
-        const event = bob
-            .getRoom(roomId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .find((event: MatrixEvent) => event.getContent()?.body === 'Hi @bob')
-
-        expect(event?.getContent()?.['mentions']).toBeDefined()
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        expect(event?.getContent()?.['mentions']?.[0].userId).toEqual(bob.getUserId()!)
+                e?.content?.kind === ZTEvent.RoomMessage &&
+                    e?.content?.body === 'Hi @bob' &&
+                    e?.content?.mentions != undefined &&
+                    e?.content?.mentions.length > 0 &&
+                    e?.content?.mentions[0].userId === bob.getUserId() &&
+                    e?.content?.mentions[0].displayName === bobDisplayName,
+            ).toEqual(true)
+        })
     }) // end test
 }) // end describe

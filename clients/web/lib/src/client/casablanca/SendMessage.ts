@@ -27,14 +27,18 @@ export async function sendCsbMessage(
         return await casablancaClient.sendMessage(roomId.networkId, JSON.stringify(e))
     }
 
+    if (msgOptions && !msgOptions?.messageType) {
+        msgOptions.messageType = MessageType.Text
+    }
+
     switch (kind) {
         case ZTEvent.RoomMessage: {
             const event = {
                 kind: kind,
                 body: message,
-                msgType: msgOptions?.messageType ?? MessageType.Text,
+                msgType: msgOptions?.messageType,
                 inReplyTo: msgOptions?.threadId,
-                mentions: [],
+                mentions: msgOptions?.messageType === MessageType.Text ? msgOptions.mentions : [],
                 content: {}, // start deprecating matrix IContent
                 replacedMsgId: editOptions?.originalEventId,
             } as RoomMessageEvent

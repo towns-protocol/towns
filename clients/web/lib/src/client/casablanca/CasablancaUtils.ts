@@ -10,7 +10,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../types/timeline-types'
-import { Room } from '../../types/matrix-types'
+import { Mention, Room } from '../../types/matrix-types'
 import { makeCasablancaStreamIdentifier } from '../../types/room-identifier'
 
 export function toZionRoomFromStream(stream: Stream): Room {
@@ -45,7 +45,7 @@ function getEventContent(event: FullEvent): TimelineEvent_OneOf | undefined {
                         msgType: msgEvent.msgType,
                         inReplyTo: msgEvent.inReplyTo,
                         replacedMsgId: msgEvent.replacedMsgId,
-                        mentions: [],
+                        mentions: msgEvent.mentions as Mention[],
                         content: [],
                     } as RoomMessageEvent
             }
