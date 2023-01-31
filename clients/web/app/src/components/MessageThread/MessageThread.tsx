@@ -20,7 +20,7 @@ export const MessageThread = (props: {
     spaceId: RoomIdentifier
 }) => {
     const { parentId, spaceId, channelId, channelLabel } = props
-    const { parent, messages } = useTimelineThread(channelId, parentId)
+    const { parent, messages, decryptionAttempts } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
 
     const { sendReply } = useSendReply(parentId)
@@ -60,6 +60,7 @@ export const MessageThread = (props: {
     return parentMessage ? (
         <MessageTimelineWrapper
             events={[parentMessage, ...messages]}
+            decryptionAttempts={decryptionAttempts}
             spaceId={spaceId}
             channelId={channelId}
             threadParentId={parentId}

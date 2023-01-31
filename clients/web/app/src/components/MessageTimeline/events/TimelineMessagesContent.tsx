@@ -1,5 +1,12 @@
 import React from 'react'
-import { Channel, MessageType, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
+import {
+    Channel,
+    DecryptionAttempt,
+    MessageType,
+    RoomMember,
+    RoomMessageEvent,
+    TimelineEvent,
+} from 'use-zion-client'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { MessageZionText } from '../../MessageZionText/MessageZionText'
 
@@ -8,10 +15,11 @@ type Props = {
     eventContent: RoomMessageEvent
     members: RoomMember[]
     channels: Channel[]
+    decryptionAttempt?: DecryptionAttempt
 }
 
 export const TimelineMessageContent = (props: Props) => {
-    const { eventContent, event, members, channels } = props
+    const { eventContent, event, members, channels, decryptionAttempt } = props
 
     switch (eventContent.msgType) {
         case MessageType.Image: {
@@ -31,6 +39,7 @@ export const TimelineMessageContent = (props: Props) => {
                     event={event}
                     members={members}
                     channels={channels}
+                    decryptionAttempt={decryptionAttempt}
                 />
             )
         }

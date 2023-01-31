@@ -1,6 +1,7 @@
 import React, { createContext, useMemo } from 'react'
 import {
     Channel,
+    DecryptionAttempt,
     RoomIdentifier,
     TimelineEvent,
     useMatrixCredentials,
@@ -26,6 +27,7 @@ export const MessageTimelineContext = createContext<{
     threadParentId?: string
     channels: Channel[]
     events: TimelineEvent[]
+    decryptionAttempts: Record<string, DecryptionAttempt>
     type: MessageTimelineType
     messageRepliesMap: ReturnType<typeof useTimelineThreadStats>
     messageReactionsMap: ReturnType<typeof useTimelineReactions>
@@ -41,9 +43,10 @@ export const MessageTimelineWrapper = (props: {
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
     events: TimelineEvent[]
+    decryptionAttempts: Record<string, DecryptionAttempt>
     threadParentId?: string
 }) => {
-    const { spaceId, channelId, events, threadParentId } = props
+    const { spaceId, channelId, events, threadParentId, decryptionAttempts } = props
     const { userId } = useMatrixCredentials()
     const { sendReadReceipt } = useZionClient()
     const type = threadParentId ? MessageTimelineType.Thread : MessageTimelineType.Channel
@@ -69,6 +72,7 @@ export const MessageTimelineWrapper = (props: {
             threadParentId,
             channels,
             events,
+            decryptionAttempts,
             isChannelEncrypted,
             messageRepliesMap,
             messageReactionsMap,
@@ -86,6 +90,7 @@ export const MessageTimelineWrapper = (props: {
         threadParentId,
         channels,
         events,
+        decryptionAttempts,
         isChannelEncrypted,
         messageRepliesMap,
         messageReactionsMap,

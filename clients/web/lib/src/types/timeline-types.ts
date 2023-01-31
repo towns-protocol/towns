@@ -206,3 +206,11 @@ export interface FullyReadMarker {
     // possible future extensions
     // muted: boolean
 }
+
+/// our app's attempt to get matrix to do the right thing
+export interface DecryptionAttempt {
+    eventId: string
+    lastAttemptedAt: number
+    promise?: Promise<void>
+    retry: () => Promise<void> | undefined
+}

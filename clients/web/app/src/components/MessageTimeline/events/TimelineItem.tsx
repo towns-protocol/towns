@@ -7,6 +7,7 @@ import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
 import { TimelineThreadUpdates } from './TimelineThreadUpdates'
 import { TimelineChannelCreateEvent } from './TimelineChannelCreatedEvent'
+import { TimelineEncryptedEvent } from './TimelineEncryptedEvent'
 
 export const MessageTimelineItem = (props: {
     itemData: RenderEvent
@@ -72,7 +73,7 @@ export const MessageTimelineItem = (props: {
         }
 
         case RenderEventType.EncryptedMessage: {
-            return <TimelineGenericEvent event={itemData.event} key={itemData.event.eventId} />
+            return <TimelineEncryptedEvent event={itemData.event} key={itemData.event.eventId} />
         }
 
         case RenderEventType.FullyRead: {

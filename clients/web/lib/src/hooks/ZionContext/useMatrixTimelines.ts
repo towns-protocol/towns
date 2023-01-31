@@ -586,7 +586,7 @@ function getFallbackContent(
                 content.roomEncryption.rotationPeriodMs?.toString() ?? 'N/A'
             } rotationMsgs: ${content.roomEncryption.rotationPeriodMsgs?.toString() ?? 'N/A'}`
         case ZTEvent.RoomMessageEncrypted:
-            return `~Encrypted Message~`
+            return `Decrypting...`
         case ZTEvent.RoomHistoryVisibility:
             return `newValue: ${content.historyVisibility}`
         case ZTEvent.RoomJoinRules:

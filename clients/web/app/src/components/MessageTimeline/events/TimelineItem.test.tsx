@@ -64,6 +64,7 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                         protocol: SpaceProtocol.Matrix,
                     },
                     events: [],
+                    decryptionAttempts: {},
                     messageRepliesMap: {},
                     messageReactionsMap: {},
                     timelineActions: {

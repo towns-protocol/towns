@@ -1,14 +1,19 @@
-import { RoomIdentifier } from '../types/room-identifier'
-import { ThreadStats, TimelineEvent, ZTEvent } from '../types/timeline-types'
-import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
 import { useRef } from 'react'
+import { RoomIdentifier } from '../types/room-identifier'
+import { DecryptionAttempt, ThreadStats, TimelineEvent, ZTEvent } from '../types/timeline-types'
+import { TimelineStoreStates, useTimelineStore } from '../store/use-timeline-store'
+import { useTimelineRedecryptor } from './use-timeline-redecryptor'
 
 const EMPTY_TIMELINE: TimelineEvent[] = []
 
 export function useTimelineThread(
     roomId: RoomIdentifier,
     eventId?: string,
-): { messages: TimelineEvent[]; parent: ThreadStats | undefined } {
+): {
+    messages: TimelineEvent[]
+    parent: ThreadStats | undefined
+    decryptionAttempts: Record<string, DecryptionAttempt>
+} {
     const dummyThreadStatCache = useRef<Record<string, ThreadStats>>({})
     const { messages, parent } = useTimelineStore((state: TimelineStoreStates) =>
         eventId
@@ -24,7 +29,9 @@ export function useTimelineThread(
             : { parent: undefined, messages: EMPTY_TIMELINE },
     )
 
-    return { messages, parent }
+    const decryptionAttempts = useTimelineRedecryptor(roomId, messages)
+
+    return { messages, parent, decryptionAttempts }
 }
 
 function toDummyThreadStats(
