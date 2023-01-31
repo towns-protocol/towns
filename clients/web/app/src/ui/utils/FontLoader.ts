@@ -52,12 +52,14 @@ export const fontSettings = [
         src: "url('/fonts/MangoGrotesque-Black.ttf')",
         styles: {
             letterSpacing: '0',
+            fontDisplay: 'optional',
         },
         fontDescription: {
             weight: 'bold',
             style: 'normal',
         },
         targets: ['h1', 'h2'],
+
         capSize: {
             trimTop: '-0.2em',
             trimBottom: '-0.35em',
@@ -77,6 +79,7 @@ export const FontLoader = {
         fontSettings.forEach((f) => {
             const font = new FontFace(f.fontFamily, f.src, f.fontDescription)
             document.fonts.add(font)
+            font.load()
         })
     },
 }
