@@ -984,13 +984,14 @@ export class ZionClient {
     /************************************************
      * syncSpace
      *************************************************/
-    public async syncSpace(spaceId: RoomIdentifier) {
+    public async syncSpace(spaceId: RoomIdentifier, walletAddress?: string) {
         switch (spaceId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return syncMatrixSpace(this.matrixClient, spaceId)
+
+                return syncMatrixSpace(this.matrixClient, this.spaceDapp, spaceId, walletAddress)
             case SpaceProtocol.Casablanca:
                 throw new Error('not implemented')
             default:
