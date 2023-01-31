@@ -190,8 +190,8 @@ jobs:
 
     integration-tests-done:
         name: Integration tests passed
-    # Tak: reminder to turn it back on https://linear.app/hnt-labs/issue/HNT-531/refresh-dendrite-fork
-    #    needs: [initial-tests-done, upgrade_test]
+        # Tak: reminder to turn it back on https://linear.app/hnt-labs/issue/HNT-531/refresh-dendrite-fork
+        #    needs: [initial-tests-done, upgrade_test]
         needs: [initial-tests-done]
         runs-on: ubuntu-latest
         if: ${{ !cancelled() }} # Run this even if prior jobs were skipped

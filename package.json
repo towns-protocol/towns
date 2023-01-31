@@ -33,10 +33,10 @@
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",
         "@types/node": "^18.11.18",
-        "eslint": "^8.30.0",
-        "eslint-config-prettier": "^8.5.0",
+        "eslint": "^8.33.0",
+        "eslint-config-prettier": "^8.6.0",
         "eslint-plugin-mocha": "^10.1.0",
-        "eslint-plugin-n": "^15.6.0",
+        "eslint-plugin-n": "^15.6.1",
         "eslint-plugin-prettier": "^4.2.1",
         "husky": "^8.0.1",
         "lint-staged": "^13.0.3",
