@@ -18,6 +18,10 @@ import {
     SpaceProtocol,
     ZionClientEventHandlers,
 } from '../../../src/client/ZionClientTypes'
+import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
+import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
+import { TimelineEvent, ZTEvent } from '../../../src/types/timeline-types'
+import { staticAssertNever } from '../../../src/utils/zion-utils'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
@@ -229,5 +233,48 @@ export class ZionTestClient extends ZionClient {
 
     public async isUserRegistered(): Promise<boolean> {
         return await super.isUserRegistered(this.userIdentifier.matrixUserIdLocalpart)
+    }
+
+    /************************************************
+     * getLatestEvent
+     ************************************************/
+    public async getLatestEvent(
+        roomId: RoomIdentifier,
+        userId: string,
+        eventType = ZTEvent.RoomMessage,
+    ): Promise<TimelineEvent | undefined> {
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                const events = this.matrixClient
+                    .getRoom(roomId.networkId)
+                    ?.getLiveTimeline()
+                    .getEvents()
+                    .map((e) => toEvent(e, userId))
+                if (events) {
+                    return events.filter((e) => e?.content?.kind === eventType).at(-1)
+                } else {
+                    return undefined
+                }
+            }
+            case SpaceProtocol.Casablanca: {
+                if (!this.casablancaClient) {
+                    throw new Error('casablanca client is undefined')
+                }
+                const stream = await this.casablancaClient.waitForStream(roomId.networkId)
+                const events = Array.from(stream.rollup.events.values()).map((e) =>
+                    toZionEventFromCsbEvent(e),
+                )
+                if (events) {
+                    return events.filter((e) => e?.content?.kind === eventType).at(-1)
+                } else {
+                    return undefined
+                }
+            }
+            default:
+                staticAssertNever(roomId)
+        }
     }
 }

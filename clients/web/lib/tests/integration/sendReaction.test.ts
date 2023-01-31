@@ -63,7 +63,7 @@ describe('sendReaction', () => {
 
         // wait for bob to receive the reaction
         await waitFor(async () => {
-            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!, ZTEvent.Reaction)
             expect(e?.content?.kind === ZTEvent.Reaction && e?.content?.reaction === '👍').toEqual(
                 true,
             )
