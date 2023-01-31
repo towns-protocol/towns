@@ -164,6 +164,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
   }
 
   function testSet1155EntitlementSingle() external {
+    Mock1155 _mock1155Token = new Mock1155();
     address _bob = _randomAddress();
 
     DataTypes.ExternalToken[] memory tokens = new DataTypes.ExternalToken[](1);
@@ -172,7 +173,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     permissions[0] = Permissions.Read;
 
     uint256 tokenType = 1;
-    mockToken2.mintTo(_bob, tokenType);
+    _mock1155Token.mintTo(_bob, tokenType);
 
     uint256[] memory tokenTypes = new uint256[](1);
     tokenTypes[0] = tokenType;
@@ -195,6 +196,26 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     address _space = createSpaceWithEntitlements(_entitlementData);
 
     address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    DataTypes.Role[] memory _roles = Space(_space).getRoles();
+
+    // find moderator role
+    uint256 _moderatorRoleId;
+    for (uint256 i = 0; i < _roles.length; i++) {
+      if (
+        keccak256(abi.encodePacked(_roles[i].name)) ==
+        keccak256(abi.encodePacked("Moderator"))
+      ) {
+        _moderatorRoleId = _roles[i].roleId;
+      }
+    }
+
+    tokens[0].contractAddress = address(_mock1155Token);
+    DataTypes.Entitlement memory _entitlement = DataTypes.Entitlement(
+      _tokenEntitlement,
+      abi.encode(tokens)
+    );
+
+    Space(_space).addRoleToEntitlement(_moderatorRoleId, _entitlement);
 
     assertTrue(
       IEntitlement(_tokenEntitlement).isEntitled(

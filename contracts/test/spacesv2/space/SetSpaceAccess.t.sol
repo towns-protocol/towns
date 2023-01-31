@@ -32,8 +32,6 @@ contract SetSpaceAccessTest is SpaceBaseSetup {
     Space(_space).setSpaceAccess(true);
     assertTrue(Space(_space).disabled());
 
-    Space(_space).transferOwnership(_randomAddress());
-
     vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).setEntitlement(_randomAddress(), true);
   }

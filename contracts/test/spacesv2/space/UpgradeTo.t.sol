@@ -37,7 +37,7 @@ contract UpgradeToTest is SpaceBaseSetup {
 contract SpaceV2 is Space {
   address[] public items;
 
-  function addItem(address _item) external onlyOwner {
+  function addItem(address _item) external {
     items.push(_item);
   }
 }

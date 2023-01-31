@@ -69,14 +69,7 @@ contract SetOwnerRoleIdTest is SpaceBaseSetup {
       data: ""
     });
 
-    uint256 _newRoleId = Space(_space).createRole(
-      _roleName,
-      _permissions,
-      _roleEntitlements
-    );
-
-    Space(_space).setOwnerRoleId(_newRoleId);
-
-    assertEq(Space(_space).ownerRoleId(), _newRoleId);
+    vm.expectRevert(Errors.OwnerPermissionNotAllowed.selector);
+    Space(_space).createRole(_roleName, _permissions, _roleEntitlements);
   }
 }

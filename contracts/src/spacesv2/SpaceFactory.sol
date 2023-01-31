@@ -162,7 +162,7 @@ contract SpaceFactory is
       _extraEntitlements
     );
 
-    Space(_spaceAddress).transferOwnership(_msgSender());
+    Space(_spaceAddress).renounceOwnership();
 
     emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceNetworkId);
   }

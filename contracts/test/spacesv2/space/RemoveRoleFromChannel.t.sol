@@ -29,9 +29,17 @@ contract RemoveRoleFromChannelTest is SpaceBaseSetup {
   function testRevertIfEntitlementNotWhitelisted() external {
     address _space = createSimpleSpace();
 
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     Space(_space).removeRoleFromChannel(
-      "random_channel",
+      channelNetworkId,
       _randomAddress(),
       _randomUint256()
     );
@@ -41,9 +49,17 @@ contract RemoveRoleFromChannelTest is SpaceBaseSetup {
     address _space = createSimpleSpace();
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).removeRoleFromChannel(
-      "random_channel",
+      channelNetworkId,
       _userEntitlement,
       _randomUint256()
     );
@@ -76,8 +92,12 @@ contract RemoveRoleFromChannelTest is SpaceBaseSetup {
     Space(_space).createChannel(channelName, channelNetworkId, roleIds);
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
-    Space(_space).addRoleToChannel(channelName, _userEntitlement, _roleId);
+    Space(_space).addRoleToChannel(channelNetworkId, _userEntitlement, _roleId);
 
-    Space(_space).removeRoleFromChannel(channelName, _userEntitlement, _roleId);
+    Space(_space).removeRoleFromChannel(
+      channelNetworkId,
+      _userEntitlement,
+      _roleId
+    );
   }
 }

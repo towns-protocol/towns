@@ -16,11 +16,19 @@ contract AddRoleToChannelTest is SpaceBaseSetup {
   function testRevertIfNotAllowedByPermissions() external {
     address _space = createSimpleSpace();
 
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+
     vm.expectRevert(Errors.NotAllowed.selector);
 
     vm.prank(_randomAddress());
     Space(_space).addRoleToChannel(
-      "random_channel",
+      channelNetworkId,
       _randomAddress(),
       _randomUint256()
     );
@@ -29,9 +37,17 @@ contract AddRoleToChannelTest is SpaceBaseSetup {
   function testRevertIfEntitlementNotWhitelisted() external {
     address _space = createSimpleSpace();
 
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+
     vm.expectRevert(Errors.EntitlementNotWhitelisted.selector);
     Space(_space).addRoleToChannel(
-      "random_channel",
+      channelNetworkId,
       _randomAddress(),
       _randomUint256()
     );
@@ -41,9 +57,17 @@ contract AddRoleToChannelTest is SpaceBaseSetup {
     address _space = createSimpleSpace();
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).addRoleToChannel(
-      "random_channel",
+      channelNetworkId,
       _userEntitlement,
       _randomUint256()
     );
@@ -74,6 +98,6 @@ contract AddRoleToChannelTest is SpaceBaseSetup {
     Space(_space).createChannel(channelName, channelNetworkId, roleIds);
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
-    Space(_space).addRoleToChannel(channelName, _userEntitlement, _roleId);
+    Space(_space).addRoleToChannel(channelNetworkId, _userEntitlement, _roleId);
   }
 }
