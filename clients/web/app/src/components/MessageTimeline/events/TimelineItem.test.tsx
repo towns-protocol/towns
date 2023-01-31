@@ -56,6 +56,7 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                         networkId: '',
                         protocol: SpaceProtocol.Matrix,
                     },
+                    isChannelEncrypted: false,
                     channels: [],
                     channelId: {
                         slug: '',

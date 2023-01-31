@@ -30,6 +30,7 @@ type Props = {
 export const MessageTimeline = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const channelId = timelineContext?.channelId
+    const isChannelEncrypted = timelineContext?.isChannelEncrypted
     const channelName = timelineContext?.channels.find((c) => c.id.slug === channelId?.slug)?.label
     const userId = timelineContext?.userId
 
@@ -195,6 +196,7 @@ export const MessageTimeline = (props: Props) => {
                         highlight={r.id === props.highlightId}
                         userId={userId}
                         channelName={channelName}
+                        channelEncrypted={isChannelEncrypted}
                     />
                 )
             }}

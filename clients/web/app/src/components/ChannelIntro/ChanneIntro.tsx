@@ -4,10 +4,11 @@ import { Box, Icon, Paragraph, Stack } from '@ui'
 type Props = {
     name?: string
     description?: string
+    channelEncrypted?: boolean
 }
 
 export const ChannelIntro = (props: Props) => {
-    const { name = 'general', description } = props
+    const { name = 'general', description, channelEncrypted: isChannelEncrypted } = props
 
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
@@ -16,9 +17,13 @@ export const ChannelIntro = (props: Props) => {
                     <Icon type="tag" color="gray2" background="level3" size="square_lg" />
                 </Box>
                 <Stack justifyContent="spaceBetween" paddingY="sm">
-                    <Paragraph>{name}</Paragraph>
-                    <Paragraph color="gray1">
-                        {description ? description : `Welcome to the #${name} channel`}
+                    <Paragraph color="gray1">{name}</Paragraph>
+                    <Paragraph color="gray2">
+                        {description
+                            ? description
+                            : `Welcome to the #${name}${
+                                  isChannelEncrypted ? `, an end-to-end encrypted channel` : ``
+                              }`}
                     </Paragraph>
                 </Stack>
             </Stack>

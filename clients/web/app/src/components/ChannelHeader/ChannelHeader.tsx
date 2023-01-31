@@ -1,5 +1,5 @@
 import React from 'react'
-import { Channel, RoomIdentifier } from 'use-zion-client'
+import { Channel, RoomIdentifier, useZionClient } from 'use-zion-client'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { Icon, Paragraph, Stack } from '@ui'
 
@@ -10,6 +10,8 @@ type Props = {
 
 export const ChannelHeader = (props: Props) => {
     const { channel, spaceId } = props
+    const { isRoomEncrypted } = useZionClient()
+    const isEncrypted = isRoomEncrypted(channel.id)
 
     return (
         <Stack
@@ -24,7 +26,7 @@ export const ChannelHeader = (props: Props) => {
             overflow="hidden"
             shrink={false}
         >
-            <Icon type="unlock" background="level2" size="square_lg" />
+            <Icon type={isEncrypted ? 'lock' : 'unlock'} background="level2" size="square_lg" />
             <Stack horizontal gap alignItems="end">
                 <Paragraph strong size="lg">
                     {channel.label}

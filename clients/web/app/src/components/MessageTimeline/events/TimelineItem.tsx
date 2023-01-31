@@ -12,9 +12,10 @@ export const MessageTimelineItem = (props: {
     itemData: RenderEvent
     highlight?: boolean
     channelName?: string
+    channelEncrypted?: boolean
     userId?: string
 }) => {
-    const { itemData, highlight: isHighlight, channelName, userId } = props
+    const { itemData, channelEncrypted, highlight: isHighlight, channelName, userId } = props
 
     switch (itemData.type) {
         case RenderEventType.UserMessages: {
@@ -51,6 +52,7 @@ export const MessageTimelineItem = (props: {
                 <AccumulatedRoomMemberEvent
                     event={itemData}
                     key={itemData.key}
+                    channelEncrypted={channelEncrypted}
                     channelName={channelName}
                     userId={userId}
                 />

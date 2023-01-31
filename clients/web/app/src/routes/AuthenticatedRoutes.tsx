@@ -20,6 +20,7 @@ import { SpacesSettingsOld } from './SpaceSettingsOld'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
 import { SpaceMembers } from './SpaceMembers'
+import { ChannelInfoPanel } from './SpaceChannelInfoPanel'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -63,6 +64,7 @@ export const AuthenticatedRoutes = () => (
                     element={<SpacesChannelReplies parentRoute=".." />}
                 />
                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                <Route path="info" element={<ChannelInfoPanel />} />
             </Route>
             <Route element={<SpacesChannelRoute />}>
                 <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />

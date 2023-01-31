@@ -28,9 +28,16 @@ export const ChannelSettingsCard = (props: Props) => {
         navigate('/')
     })
 
+    const onInfoClick = useEvent(() => {
+        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/info`)
+    })
+
     return (
         <Box position="relative">
             <Card border paddingY="sm" width="300" fontSize="md">
+                <MenuItem icon="help" onClick={onInfoClick}>
+                    Info
+                </MenuItem>
                 <MenuItem icon="invite" onClick={onInviteClick}>
                     Invite
                 </MenuItem>

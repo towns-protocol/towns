@@ -45,9 +45,11 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
 const SpacesChannelComponent = () => {
     const { messageId } = useParams()
 
-    const { joinRoom, sendMessage } = useZionClient()
+    const { joinRoom, sendMessage, isRoomEncrypted } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
+
+    const isChannelEncrypted = channel && isRoomEncrypted(channel.id)
 
     const myMembership = useMyMembership(channelId)
     const { timeline: channelMessages } = useChannelTimeline()
@@ -98,7 +100,12 @@ const SpacesChannelComponent = () => {
                         events={channelMessages}
                     >
                         <MessageTimeline
-                            header={<ChannelIntro name={channel.label} />}
+                            header={
+                                <ChannelIntro
+                                    name={channel.label}
+                                    channelEncrypted={isChannelEncrypted}
+                                />
+                            }
                             highlightId={messageId || highlightId}
                         />
                     </MessageTimelineWrapper>

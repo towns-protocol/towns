@@ -22,6 +22,7 @@ export const MessageTimelineContext = createContext<{
     userId: string
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
+    isChannelEncrypted?: boolean
     threadParentId?: string
     channels: Channel[]
     events: TimelineEvent[]
@@ -51,6 +52,10 @@ export const MessageTimelineWrapper = (props: {
     const messageReactionsMap = useTimelineReactions(channelId)
     const timelineActions = useTimelineMessageEditing()
     const handleReaction = useHandleReaction(channelId)
+
+    const { isRoomEncrypted } = useZionClient()
+    const isChannelEncrypted = isRoomEncrypted(channelId)
+
     const { membersMap, members } = useSpaceMembers()
 
     const value = useMemo(() => {
@@ -64,6 +69,7 @@ export const MessageTimelineWrapper = (props: {
             threadParentId,
             channels,
             events,
+            isChannelEncrypted,
             messageRepliesMap,
             messageReactionsMap,
             timelineActions,
@@ -80,6 +86,7 @@ export const MessageTimelineWrapper = (props: {
         threadParentId,
         channels,
         events,
+        isChannelEncrypted,
         messageRepliesMap,
         messageReactionsMap,
         timelineActions,

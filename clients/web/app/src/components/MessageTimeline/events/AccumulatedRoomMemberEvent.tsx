@@ -8,10 +8,11 @@ import { AccumulatedRoomMemberRenderEvent } from '../util/getEventsByDate'
 type Props = {
     event: AccumulatedRoomMemberRenderEvent
     channelName?: string
+    channelEncrypted?: boolean
     userId?: string
 }
 export const AccumulatedRoomMemberEvent = (props: Props) => {
-    const { event, channelName, userId } = props
+    const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
     const users = useMemo(
         () =>
             uniqBy(
@@ -26,7 +27,10 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
     )
 
     const message = useMemo(() => {
-        const verb = `${event.membershipType === 'join' ? 'joined' : 'left'} #${channelName}`
+        const includesUser = event.events.some((e) => e.content.userId === userId)
+        const verb = `${event.membershipType === 'join' ? 'joined' : 'left'} #${channelName}${
+            includesUser && isChannelEncrypted ? ', an end-to-end encrypted channel' : ''
+        }`
         const names = getNameListFromArray(
             event.events
                 .map((e) => (e.content.userId === userId ? 'you' : e.content.displayName))
@@ -34,7 +38,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             verb,
         )
         return names
-    }, [channelName, event.events, event.membershipType, userId])
+    }, [channelName, event.events, event.membershipType, isChannelEncrypted, userId])
 
     return (
         <Stack centerContent horizontal gap="sm" paddingX="lg" paddingY="md" color="gray2">
@@ -45,8 +49,6 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
 }
 
 const getNameListFromArray = (names: string[], verb: string, maxLength = 3) => {
-    // names = names.filter(Boolean)
-
     if (!names.length) {
         return ''
     }
