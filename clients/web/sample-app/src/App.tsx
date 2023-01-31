@@ -1,7 +1,7 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
-import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { QueryProvider, SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
@@ -40,33 +40,35 @@ export const App = () => {
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}
                 >
-                    <Routes>
-                        <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
-                        <Route element={<Main />}>
-                            <Route element={<AuthenticatedContent />}>
-                                <Route index element={<Home />} />
-                                <Route path="spaces/new" element={<SpacesNew />} />
-                                <Route path="spaces/:spaceSlug" element={<Spaces />}>
-                                    <Route index element={<SpacesIndex />} />
-                                    <Route path="settings" element={<RoomSettings />} />
-                                    <Route path="invite" element={<SpaceInvite />} />
-                                    <Route path="channels/new" element={<SpacesNewChannel />} />
-                                    <Route path="channels/:channelSlug" element={<Channels />}>
-                                        <Route index element={<ChannelsIndex />} />
+                    <QueryProvider>
+                        <Routes>
+                            <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
+                            <Route element={<Main />}>
+                                <Route element={<AuthenticatedContent />}>
+                                    <Route index element={<Home />} />
+                                    <Route path="spaces/new" element={<SpacesNew />} />
+                                    <Route path="spaces/:spaceSlug" element={<Spaces />}>
+                                        <Route index element={<SpacesIndex />} />
                                         <Route path="settings" element={<RoomSettings />} />
+                                        <Route path="invite" element={<SpaceInvite />} />
+                                        <Route path="channels/new" element={<SpacesNewChannel />} />
+                                        <Route path="channels/:channelSlug" element={<Channels />}>
+                                            <Route index element={<ChannelsIndex />} />
+                                            <Route path="settings" element={<RoomSettings />} />
+                                        </Route>
+                                        <Route path="threads" element={<Threads />} />
+                                        <Route
+                                            path="threads/:channelSlug/:threadParentId"
+                                            element={<Thread />}
+                                        />
+                                        <Route path="mentions" element={<Mentions />} />
                                     </Route>
-                                    <Route path="threads" element={<Threads />} />
-                                    <Route
-                                        path="threads/:channelSlug/:threadParentId"
-                                        element={<Thread />}
-                                    />
-                                    <Route path="mentions" element={<Mentions />} />
+                                    <Route path="web3" element={<Web3 />} />
+                                    <Route path="*" element={<NotFound />} />
                                 </Route>
-                                <Route path="web3" element={<Web3 />} />
-                                <Route path="*" element={<NotFound />} />
                             </Route>
-                        </Route>
-                    </Routes>
+                        </Routes>
+                    </QueryProvider>
                 </ZionContextProvider>
             </Container>
         </ThemeProvider>

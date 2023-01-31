@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef } from 'react'
-import { useConnect } from 'wagmi'
-import { ZionOnboardingOpts, SpaceProtocol } from '../../../src/client/ZionClientTypes'
+import { SpaceProtocol, ZionOnboardingOpts } from '../../../src/client/ZionClientTypes'
+
+import { TestQueryClientProvider } from './TestQueryClientProvider'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
+import { useConnect } from 'wagmi'
+
 interface Props {
     provider: ZionTestWeb3Provider
     primaryProtocol?: SpaceProtocol
@@ -56,7 +59,9 @@ export const ZionTestApp = (props: Props) => {
             initialSyncLimit={initialSyncLimit}
             chain={foundry}
         >
-            <ZionWalletAutoConnect children={children} />
+            <TestQueryClientProvider>
+                <ZionWalletAutoConnect children={children} />
+            </TestQueryClientProvider>
         </ZionContextProvider>
     )
 }

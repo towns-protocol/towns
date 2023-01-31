@@ -4,7 +4,7 @@ import { UseFormReturn } from 'react-hook-form'
 import { useWeb3Context } from 'use-zion-client'
 import { Box, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
 import { UploadSpaceIcon } from '@components/Web3/CreateSpaceForm/steps/UploadSpaceIcon'
-import { getCachedTokensForWallet } from 'api/lib/tokenContracts'
+import { useCachedTokensForWallet } from 'api/lib/tokenContracts'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { TokenAvatar } from '../../../Tokens/TokenAvatar'
@@ -33,6 +33,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
     const { setError, clearErrors } = props
     const tokens = useCreateSpaceFormStore((state) => state.step1.tokens)
     const removeToken = useCreateSpaceFormStore((state) => state.removeToken)
+    const { getCachedTokensForWallet } = useCachedTokensForWallet()
     function handleClick(contractAddress: string) {
         if (tokens.length === 1) {
             setError?.('tokens', {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useRolesAndPermissions } from 'use-zion-client'
+import { useRoles } from 'use-zion-client'
 
 interface Role {
     name: string
@@ -17,15 +17,14 @@ interface Props {
 
 export function ChannelRoleSettings(props: Props): JSX.Element {
     const [roles, setRoles] = useState<RolesSettings>({})
-    const { getRolesFromSpace } = useRolesAndPermissions()
+    const { spaceRoles } = useRoles(props.spaceId)
 
     useEffect(
         function () {
             async function load() {
-                const rolesFromSpace = await getRolesFromSpace(props.spaceId)
                 const initialRoles: RolesSettings = {}
-                if (rolesFromSpace) {
-                    for (const r of rolesFromSpace) {
+                if (spaceRoles) {
+                    for (const r of spaceRoles) {
                         initialRoles[r.name] = {
                             name: r.name,
                             isSelected: false,
@@ -38,7 +37,7 @@ export function ChannelRoleSettings(props: Props): JSX.Element {
 
             load()
         },
-        [getRolesFromSpace, props.spaceId],
+        [props.spaceId, spaceRoles],
     )
 
     const onChangeRole = useCallback(

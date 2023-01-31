@@ -17,7 +17,7 @@ import {
     RoomVisibility,
     TransactionStatus,
     useCreateChannelTransaction,
-    useRolesAndPermissions,
+    useRoles,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
@@ -34,7 +34,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
     const [encrypted, setEncrypted] = useState<'yes' | 'no'>('yes')
     const [roles, setRoles] = useState<RolesSettings>({})
-    const { getRolesFromSpace } = useRolesAndPermissions()
+    const { spaceRoles } = useRoles(props.parentSpaceId.networkId)
     const { onClick, parentSpaceId } = props
     const {
         isLoading,
@@ -73,7 +73,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
         }
 
         // Use the roles from the parent space to create the channel
-        const spaceRoles = await getRolesFromSpace(parentSpaceId.networkId)
         if (spaceRoles) {
             for (const r of spaceRoles) {
                 if (roles[r.name]?.isSelected) {

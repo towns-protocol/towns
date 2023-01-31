@@ -18,7 +18,7 @@ import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
-import { useRolesAndPermissions } from '../../src/hooks/use-roles-and-permissions'
+import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 
 describe('useCreateChannelTransaction', () => {
@@ -49,12 +49,12 @@ describe('useCreateChannelTransaction', () => {
         }
 
         const TestComponent = () => {
-            const { getRolesFromSpace } = useRolesAndPermissions()
             const {
                 createSpaceTransactionWithRole,
                 data: spaceId,
                 transactionStatus: createSpaceTxStatus,
             } = useCreateSpaceTransaction()
+            const spaceNetworkId = spaceId?.networkId ? spaceId.networkId : ''
             const {
                 createChannelTransaction,
                 isLoading: isLoadingChannel,
@@ -63,25 +63,19 @@ describe('useCreateChannelTransaction', () => {
                 transactionStatus: createChannelTxStatus,
                 transactionHash: createChannelTxHash,
             } = useCreateChannelTransaction()
-
             // Use the roles from the parent space to create the channel
-            const spaceRoles = useMemo(() => {
-                const spaceRoles: number[] = []
-
-                const getSpaceRoles = async () => {
-                    if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
-                        const roles = await getRolesFromSpace(spaceId.networkId)
-                        if (roles) {
-                            for (const r of roles) {
-                                spaceRoles.push(r.roleId.toNumber())
-                            }
+            const { spaceRoles } = useRoles(spaceNetworkId)
+            const roleIds = useMemo(() => {
+                const roleIds: number[] = []
+                if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
+                    if (spaceRoles) {
+                        for (const r of spaceRoles) {
+                            roleIds.push(r.roleId.toNumber())
                         }
                     }
                 }
-
-                void getSpaceRoles()
-                return spaceRoles
-            }, [getRolesFromSpace, spaceId, createSpaceTxStatus])
+                return roleIds
+            }, [spaceId, createSpaceTxStatus, spaceRoles])
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
@@ -108,7 +102,7 @@ describe('useCreateChannelTransaction', () => {
                         name: channelName,
                         visibility: RoomVisibility.Public,
                         parentSpaceId,
-                        roleIds: spaceRoles,
+                        roleIds,
                     }
                     await createChannelTransaction(createRoomInfo)
                 }
@@ -116,7 +110,7 @@ describe('useCreateChannelTransaction', () => {
                 if (spaceId) {
                     void handleClick(spaceId)
                 }
-            }, [createChannelTransaction, spaceId, spaceRoles])
+            }, [createChannelTransaction, roleIds, spaceId])
 
             console.log('TestComponent', 'createChannelTransactionStates', {
                 isLoadingChannel,

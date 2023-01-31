@@ -1,10 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, ContractMetadataResponse } from '@token-worker/types'
 import { erc20ABI } from '@wagmi/core'
 import { ethers } from 'ethers'
 import { TokenProps } from '@components/Tokens/types'
-import { queryClient } from 'api/queryClient'
 import { env, hasVitalkTokensParam } from 'utils'
 import { axiosClient } from '../apiClient'
 
@@ -49,6 +48,7 @@ export function useTokenContractsForAddress({
     all = false,
     chainId,
 }: UseTokenContractsForAdress) {
+    const queryClient = useQueryClient()
     return useQuery(
         [queryKey, pageKey],
         () =>
@@ -57,7 +57,7 @@ export function useTokenContractsForAddress({
                 : getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
         {
             onSuccess: (data) => {
-                const cached = getCachedTokensForWallet()
+                const cached = getCachedTokensForWallet(queryClient)
                 queryClient.setQueryData<CachedData>([queryKeyAll], {
                     previousPageKey: cached.nextPageKey,
                     nextPageKey: data.nextPageKey,
@@ -73,7 +73,14 @@ export function useTokenContractsForAddress({
     )
 }
 
-export function getCachedTokensForWallet(): CachedData {
+export function useCachedTokensForWallet() {
+    const queryClient = useQueryClient()
+    return {
+        getCachedTokensForWallet: () => getCachedTokensForWallet(queryClient),
+    }
+}
+
+function getCachedTokensForWallet(queryClient: QueryClient): CachedData {
     const cached = queryClient.getQueryData<CachedData>([queryKeyAll])
     return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
 }

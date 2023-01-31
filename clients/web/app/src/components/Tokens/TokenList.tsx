@@ -4,7 +4,7 @@ import { getCouncilNftAddress } from 'use-zion-client'
 import uniqBy from 'lodash/uniqBy'
 import { Box, Button, Checkbox, Text, TextField, VList } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { getCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
+import { useCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
 import { env, hasVitalkTokensParam } from 'utils'
@@ -90,6 +90,7 @@ export const TokenList = ({
         [chainId],
     )
 
+    const { getCachedTokensForWallet } = useCachedTokensForWallet()
     const [results, setResults] = React.useState<TokenPropsForVList[]>([])
     const [search, setSearch] = React.useState('')
     const selectedTokens = watch('tokens')
