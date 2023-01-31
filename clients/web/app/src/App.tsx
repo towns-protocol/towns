@@ -1,7 +1,6 @@
 import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
-import Gleap from 'gleap'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
 import { QueryProvider } from 'api/queryClient'
@@ -17,9 +16,6 @@ import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { TransactionEvents } from 'TransactionEvents'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
-
-// Please make sure to call this method only once!
-Gleap.initialize('u3f4iNS7F5sZ3jg8ScX0F20mqbHKS5u1')
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))

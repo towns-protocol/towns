@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import Gleap from 'gleap'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { Box, Card } from '@ui'
@@ -37,10 +36,6 @@ export const SpaceSettingsCard = (props: Props) => {
         closeCard()
     }, [closeCard, navigate, spaceId.slug])
 
-    const onFeedback = useCallback(() => {
-        Gleap.startFeedbackFlow('bugreporting', true)
-    }, [])
-
     return (
         <Box position="relative">
             <Card border width="300" fontSize="md" paddingY="sm" role="navigation">
@@ -55,10 +50,6 @@ export const SpaceSettingsCard = (props: Props) => {
                 </MenuItem>
                 <MenuItem color="secondary" icon="logout" onClick={onLeaveClick}>
                     Leave {props.spaceName}
-                </MenuItem>
-
-                <MenuItem color="secondary" icon="logout" onClick={onFeedback}>
-                    Feedback (file bug)
                 </MenuItem>
             </Card>
         </Box>
