@@ -80,6 +80,12 @@ jobs:
             - name: Install node dependencies
               run: yarn install --immutable
 
+            - name: Maintain Turbo build cache
+              uses: actions/cache@v3
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ hashFiles('node_modules/.cache/turbo') }}
+
             - name: Syncpack
               run: yarn syncpack:check
 
