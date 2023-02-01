@@ -1,6 +1,7 @@
+import { checkPrimeSync } from 'crypto'
 import { Env, worker } from '../src/index'
 
-const FAKE_SERVER_URL = 'http://fakeserver.com'
+const FAKE_SERVER_URL = 'http://localhost'
 const AUTH_TOKEN = 'Zm9v'
 
 const GOOD_SIG =
@@ -15,6 +16,9 @@ const GOOD_SIWE_MSG = {
 	nonce: '4gBymylmAjlqGOPpI',
 	issuedAt: '2023-01-13T00:15:43.293Z',
 }
+
+const SPACE_ID = '!D0VFbAuDoMFGpn0T:node1.zion.xyz'
+const CHAIN_ID = 5
 
 const BAD_SIG =
 	'0xBAD969ec6cee0bd295be2ae4d9af1e759d6154738511bd0ad78825737c1c583e5d900166658ecb49a82c81cfbae53b23e8defa842fa56ed1312ae6be8f20afda6cb1c'
@@ -31,14 +35,13 @@ const BAD_SIWE_MSG = {
 }
 
 function generateRequest(
-	urlArray: string[],
+	route: string,
 	method = 'GET',
 	body = {} as BodyInit,
 	headers = {},
 ): [Request, Env] {
-	const urls = urlArray.map((url) => encodeURIComponent(url)).join('&url=')
-	const url = `${FAKE_SERVER_URL}?url=${urls}`
-
+	const url = `${FAKE_SERVER_URL}${route}`
+	console.log(`env `, getMiniflareBindings())
 	return [new Request(url, { method, headers, body }), getMiniflareBindings()]
 }
 
@@ -46,9 +49,14 @@ describe('siwe auth handler', () => {
 	test('pass auth with good sig', async () => {
 		const result = await worker.fetch(
 			...generateRequest(
-				[''],
-				'PUT',
-				JSON.stringify({ message: GOOD_SIWE_MSG, signature: GOOD_SIG }) as BodyInit,
+				'/',
+				'POST',
+				JSON.stringify({
+					message: GOOD_SIWE_MSG,
+					signature: GOOD_SIG,
+					spaceId: SPACE_ID,
+					chainId: CHAIN_ID,
+				}) as BodyInit,
 				{
 					Authorization: `Bearer ${AUTH_TOKEN}`,
 				},
@@ -56,7 +64,6 @@ describe('siwe auth handler', () => {
 		)
 
 		expect(result.status).toBe(200)
-
 		const text = await result.text()
 		expect(text).toBe('OK')
 	})
@@ -64,9 +71,14 @@ describe('siwe auth handler', () => {
 	test('fail auth with bad sig', async () => {
 		const result = await worker.fetch(
 			...generateRequest(
-				[''],
-				'PUT',
-				JSON.stringify({ message: GOOD_SIWE_MSG, signature: BAD_SIG }) as BodyInit,
+				'/',
+				'POST',
+				JSON.stringify({
+					message: GOOD_SIWE_MSG,
+					signature: BAD_SIG,
+					spaceId: SPACE_ID,
+					chainId: CHAIN_ID,
+				}) as BodyInit,
 				{
 					Authorization: `Bearer ${AUTH_TOKEN}`,
 				},
@@ -82,9 +94,14 @@ describe('siwe auth handler', () => {
 	test('fail auth with bad msg', async () => {
 		const result = await worker.fetch(
 			...generateRequest(
-				[''],
-				'PUT',
-				JSON.stringify({ message: BAD_SIWE_MSG, signature: GOOD_SIG }) as BodyInit,
+				'/',
+				'POST',
+				JSON.stringify({
+					message: BAD_SIWE_MSG,
+					signature: GOOD_SIG,
+					spaceId: SPACE_ID,
+					chainId: CHAIN_ID,
+				}) as BodyInit,
 				{
 					Authorization: `Bearer ${AUTH_TOKEN}`,
 				},
