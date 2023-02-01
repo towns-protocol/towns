@@ -12,14 +12,6 @@ export async function editZionMessage(
     options: EditMessageOptions,
     msgOptions: SendTextMessageOptions | undefined,
 ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-    const cb = function (err: any, res: any) {
-        console.log('editZionMessage:done')
-        if (err) {
-            console.error(err)
-        }
-    }
-
     let content = {
         body: message,
         msgtype: MessageType.Text,
@@ -41,5 +33,5 @@ export async function editZionMessage(
     }
 
     // send as edit
-    await matrixClient.sendEvent(roomId.networkId, 'm.room.message', content, '', cb)
+    await matrixClient.sendEvent(roomId.networkId, 'm.room.message', content, '')
 }

@@ -113,18 +113,22 @@ export function useSyncSpaceHierarchies(
         }
         const onRoomTimelineEvent = (
             event: MatrixEvent,
-            eventRoom: MatrixRoom,
-            toStartOfTimeline: boolean,
+            eventRoom: MatrixRoom | undefined,
+            toStartOfTimeline: boolean | undefined,
             removed: boolean,
             data: IRoomTimelineData,
         ) => {
-            if (!spaceIds.find((s) => s.networkId === eventRoom.roomId)) {
+            const eventRoomId = event.getRoomId() ?? eventRoom?.roomId
+            if (!eventRoomId) {
+                return
+            }
+            if (!spaceIds.find((s) => s.networkId === eventRoomId)) {
                 return
             }
             const eventType = event.getType()
             if (eventType === EventType.SpaceChild) {
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
-                enqueueSpaceId(eventRoom.roomId)
+                enqueueSpaceId(eventRoomId)
             }
         }
         matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)

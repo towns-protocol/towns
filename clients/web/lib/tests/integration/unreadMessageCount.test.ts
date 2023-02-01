@@ -110,7 +110,7 @@ describe('unreadMessageCount', () => {
         await waitFor(() => expect(alice.getRoom(spaceId)).toBeDefined())
         // initially we have 1 unread messages for space and each channel
         await waitFor(
-            () => expect(countFor(spaceId.networkId)).toBeUndefined(), // we don't get notifications for invites
+            () => expect(countFor(spaceId.networkId)).toBe(0), // we don't get notifications for invites
             TestConstants.DefaultWaitForTimeout,
         )
         // alice joins the room

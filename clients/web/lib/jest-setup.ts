@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/extend-expect'
-import { request as matrixRequest } from 'matrix-js-sdk'
+import { AutoDiscovery } from 'matrix-js-sdk'
 import { TestConstants } from './tests/integration/helpers/TestConstants'
 import { ZionTestClient } from './tests/integration/helpers/ZionTestClient'
 import Olm from '@matrix-org/olm'
-import request from 'request'
+import fetch from 'node-fetch'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
 
@@ -26,7 +26,9 @@ beforeAll(async () => {
         asyncUtilTimeout: 5000, // default is 1000
     })
     // set up required global for the matrix client to allow us to make http requests
-    matrixRequest(request)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    AutoDiscovery.setFetchFn(fetchForTests)
+    global.fetch = fetchForTests
 })
 
 afterEach(() => {
@@ -39,3 +41,23 @@ afterAll(() => {
     global.localStorage.clear()
     global.sessionStorage.clear()
 })
+
+/// aellis 1.29.2023 not sure if i'm doing this right, but it seems to work
+/// matrix uses global.fetch, which doesn't exist outside the browser
+/// and... the types don't match up.
+async function fetchForTests(
+    resource: URL | RequestInfo,
+    options?: RequestInit | undefined,
+): ReturnType<typeof global.fetch> {
+    if (typeof resource === 'string') {
+        // do nothing
+    } else if (resource instanceof URL) {
+        resource = resource.toString()
+    } else {
+        resource = resource.url
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+    const retval = await fetch(resource, options as any)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return retval as unknown as ReturnType<typeof global.fetch>
+}

@@ -51,13 +51,17 @@ export function useSpaces(
         // subscribe to changes
         const onRoomTimelineEvent = (
             event: MatrixEvent,
-            room: MatrixRoom,
-            toStartOfTimeline: boolean,
+            eventRoom: MatrixRoom | undefined,
+            toStartOfTimeline: boolean | undefined,
             removed: boolean,
             data: IRoomTimelineData,
         ) => {
+            const eventRoomId = event.getRoomId() ?? eventRoom?.roomId
+            if (!eventRoomId) {
+                return
+            }
             // if the room is a space update our spaces
-            if (spaceIds.find((s) => s.networkId === room.roomId)) {
+            if (spaceIds.find((s) => s.networkId === eventRoomId)) {
                 const eventType = event.getType()
                 if (
                     eventType === EventType.RoomCreate ||

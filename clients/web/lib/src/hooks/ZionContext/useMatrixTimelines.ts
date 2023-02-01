@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Membership, Mention } from '../../types/matrix-types'
+import { getIdForMatrixEvent, Membership, Mention } from '../../types/matrix-types'
 import {
     ClientEvent,
     EventType as MatrixEventType,
@@ -207,13 +207,16 @@ export function useMatrixTimelines(client?: MatrixClient) {
 
         const onRoomTimelineEvent = (
             event: MatrixEvent,
-            eventRoom: MatrixRoom,
-            toStartOfTimeline: boolean,
+            eventRoom: MatrixRoom | undefined,
+            toStartOfTimeline: boolean | undefined,
             removed: boolean,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             data: IRoomTimelineData,
         ) => {
-            const roomId = eventRoom.roomId
+            const roomId = event.getRoomId() ?? eventRoom?.roomId
+            if (!roomId) {
+                return
+            }
             const timelineEvent = toEvent(event, userId)
             const replacedMsgId = getReplacedMessageId(event)
             if (removed) {
@@ -234,11 +237,12 @@ export function useMatrixTimelines(client?: MatrixClient) {
         }
 
         const onEventDecrypted = (event: MatrixEvent) => {
+            const eventId = event.getId()
             const roomId = event.getRoomId()
-            if (!roomId) {
+            if (!eventId || !roomId) {
                 return
             }
-            replaceEvent(roomId, event.getId(), toEvent(event, userId))
+            replaceEvent(roomId, eventId, toEvent(event, userId))
         }
 
         const onRoomRedaction = (event: MatrixEvent, eventRoom: MatrixRoom) => {
@@ -296,10 +300,11 @@ export function useMatrixTimelines(client?: MatrixClient) {
 }
 
 export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
-    const { content, error } = toZionContent(event)
+    const eventId = getIdForMatrixEvent(event)
+    const { content, error } = toZionContent(eventId, event)
     const sender = {
-        id: event.getSender(),
-        displayName: event.sender?.rawDisplayName ?? event.getSender(),
+        id: event.getSender() ?? 'UnknownSenderId',
+        displayName: event.sender?.rawDisplayName ?? event.getSender() ?? 'Unknown',
         avatarUrl: event.sender?.getMxcAvatarUrl() ?? undefined,
     }
     const fbc = `${event.getType()} ${getFallbackContent(
@@ -310,12 +315,12 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     )}`
     // console.log("!!!! to event", event.getId(), fbc);
     return {
-        eventId: event.getId(),
+        eventId: eventId,
         originServerTs: event.getTs(),
         updatedServerTs: event.replacingEvent()?.getTs(),
         content: content,
         fallbackContent: fbc,
-        isLocalPending: event.getId().startsWith('~'),
+        isLocalPending: eventId.startsWith('~'),
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
@@ -351,12 +356,15 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     }
 }
 
-function toZionContent(event: MatrixEvent): {
+function toZionContent(
+    eventId: string,
+    event: MatrixEvent,
+): {
     content?: TimelineEvent_OneOf
     error?: string
 } {
     const describe = () => {
-        return `${event.getType()} id: ${event.getId()}`
+        return `${event.getType()} id: ${eventId}`
     }
     const content = event.getContent()
     const eventType = event.getType()

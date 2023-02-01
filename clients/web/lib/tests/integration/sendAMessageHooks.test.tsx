@@ -98,6 +98,11 @@ describe('sendMessageHooks', () => {
             }, [channelId, messagesOrRedactions, redactEvent])
             // format for easy reading
             const formatMessage = useCallback((e: TimelineEvent) => {
+                if (e.content?.kind === ZTEvent.RoomMessage) {
+                    return `${e.content.body} eventId: ${e.eventId} isLocalPending: ${
+                        e.isLocalPending ? 'true' : 'false'
+                    }`
+                }
                 return `${e.fallbackContent} eventId: ${e.eventId}`
             }, [])
             return (
@@ -196,6 +201,8 @@ describe('sendMessageHooks', () => {
                 ).toBe('hello jane'),
             TestConstants.DefaultWaitForTimeout,
         )
+        // expect the message to "flush" out of local pending state
+        await waitFor(() => expect(message1).not.toHaveTextContent('isLocalPending: true'))
         // edit the event
         fireEvent.click(editButton)
         // wait for the event to be edited

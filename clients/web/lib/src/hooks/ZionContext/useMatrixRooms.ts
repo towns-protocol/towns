@@ -57,28 +57,32 @@ export function useMatrixRooms(client?: MatrixClient): Record<string, Room | und
         }
         const onRoomTimelineEvent = (
             event: MatrixEvent,
-            room: MatrixRoom,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            toStartOfTimeline: boolean,
+            room: MatrixRoom | undefined,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            toStartOfTimeline: boolean | undefined,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             removed: boolean,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             data: IRoomTimelineData,
         ) => {
             // if the room is a space update our spaces
-
+            const eventRoomId = event.getRoomId()
+            if (!eventRoomId) {
+                return
+            }
             const eventType = event.getType()
             if (
                 eventType === EventType.RoomCreate ||
                 eventType === EventType.RoomName ||
                 eventType === EventType.RoomAvatar
             ) {
-                updateState(room.roomId)
+                updateState(eventRoomId)
             } else if (
                 eventType === EventType.RoomMember &&
                 event.getStateKey() === client.getUserId()
             ) {
-                updateState(room.roomId)
+                updateState(eventRoomId)
             }
         }
 

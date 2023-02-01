@@ -13,7 +13,7 @@ export function useTimelineRedecryptor(roomId?: RoomIdentifier, timeline?: Timel
     )
 
     const retryRedecryptEvent = useCallback(
-        (matrixEvent: MatrixEvent) => {
+        (eventId: string, matrixEvent: MatrixEvent) => {
             const promise = matrixClient?.decryptEventIfNeeded(matrixEvent, {
                 isRetry: true,
                 emit: true,
@@ -22,12 +22,12 @@ export function useTimelineRedecryptor(roomId?: RoomIdentifier, timeline?: Timel
             setDecryptionAttempts((prev) => {
                 return {
                     ...prev,
-                    [matrixEvent.getId()]: {
-                        eventId: matrixEvent.getId(),
+                    [eventId]: {
+                        eventId: eventId,
                         lastAttemptedAt: Date.now(),
                         promise,
-                        retry: () => retryRedecryptEvent(matrixEvent),
-                    },
+                        retry: () => retryRedecryptEvent(eventId, matrixEvent),
+                    } satisfies DecryptionAttempt,
                 }
             })
             return promise
@@ -53,19 +53,19 @@ export function useTimelineRedecryptor(roomId?: RoomIdentifier, timeline?: Timel
                     const matrixEvent = matrixClient
                         .getRoom(roomId.networkId)
                         ?.findEventById(event.eventId)
-                    return matrixEvent ? [matrixEvent] : []
+                    return matrixEvent ? [{ eventId: event.eventId, matrixEvent: matrixEvent }] : []
                 })
-                .map((matrixEvent) => {
-                    console.log('attempting to re-decrypt event', matrixEvent.getId())
+                .map((x) => {
+                    console.log('attempting to re-decrypt event', x.eventId)
                     return {
-                        eventId: matrixEvent.getId(),
+                        eventId: x.eventId,
                         lastAttemptedAt: Date.now(),
-                        promise: matrixClient?.decryptEventIfNeeded(matrixEvent, {
+                        promise: matrixClient?.decryptEventIfNeeded(x.matrixEvent, {
                             isRetry: true,
                             emit: true,
                             forceRedecryptIfUntrusted: true,
                         }),
-                        retry: () => retryRedecryptEvent(matrixEvent),
+                        retry: () => retryRedecryptEvent(x.eventId, x.matrixEvent),
                     }
                 })
                 .reduce((acc, attempt) => {

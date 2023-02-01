@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { IAbortablePromise, UserEvent } from 'matrix-js-sdk'
 import { ObState_Loading } from './IOnboardingState'
 import { IOnboardingStep, OnboardingStepEvent } from './IOnboardingStep'
 

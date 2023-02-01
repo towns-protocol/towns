@@ -10,7 +10,7 @@ import {
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { Mention } from '../../types/matrix-types'
+import { getIdForMatrixEvent, Mention } from '../../types/matrix-types'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
 import { ZionAccountDataType, SpaceProtocol } from '../../client/ZionClientTypes'
@@ -184,7 +184,7 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                             : {
                                   channelId: makeRoomIdentifier(room.roomId),
                                   threadParentId: isThread ? id : undefined,
-                                  eventId: events[0].getId(),
+                                  eventId: getIdForMatrixEvent(events[0]),
                                   eventOriginServerTs: events[0].getTs(),
                                   isUnread: true,
                                   markedUnreadAtTs: Date.now(),
@@ -194,7 +194,7 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                         if (!entry.isUnread) {
                             entry = {
                                 ...entry,
-                                eventId: events[0].getId(),
+                                eventId: getIdForMatrixEvent(events[0]),
                                 isUnread: true,
                                 markedUnreadAtTs: Date.now(),
                                 mentions: mentions,

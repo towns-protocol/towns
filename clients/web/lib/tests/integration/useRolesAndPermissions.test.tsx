@@ -183,10 +183,11 @@ describe('useRoles', () => {
         // click button to create the space
         // this will create the space and then the role
         fireEvent.click(createSpaceButton)
+
         // wait for the space name to render
         await waitFor(
             () => within(spaceElement).getByText(spaceName),
-            TestConstants.DefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
 
         /* Assert */

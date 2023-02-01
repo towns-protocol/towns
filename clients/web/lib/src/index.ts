@@ -44,7 +44,6 @@ export { useSpacesFromContract, useSpaceFromContract } from './hooks/use-spaces-
 export { useTimelineReactions } from './hooks/use-timeline-reactions'
 export { useTimelineThread } from './hooks/use-timeline-thread'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
-export { toEvent } from './hooks/ZionContext/useMatrixTimelines' // todo this doesn't need to be exposed  https://linear.app/hnt-labs/issue/HNT-44/client-update-usefixmemessagethread-implementation
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
 

@@ -293,7 +293,7 @@ describe('sendThreadedMessageHooks', () => {
             .getEvents()
             .find((e) => e.getContent()?.body === 'hello channel_1')!
         await waitFor(
-            () => expect(channel_1_message_0.getId().startsWith('~')).toBe(false),
+            () => expect(channel_1_message_0.getId()!.startsWith('~')).toBe(false),
             TestConstants.DefaultWaitForTimeout,
         )
 
@@ -352,7 +352,7 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(
             () =>
                 expect(threadRoots).toHaveTextContent(
-                    `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.getId()})`,
+                    `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.getId()!})`,
                 ),
             TestConstants.DefaultWaitForTimeout,
         )

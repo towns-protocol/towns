@@ -64,7 +64,7 @@ export function useMember(roomId?: RoomIdentifier, userId?: string): RoomMember 
         const onRoomMembership = (
             event: MatrixEvent,
             member: MatrixRoomMember,
-            oldMembership: string | null,
+            oldMembership?: string | null,
         ) => {
             if (member.userId === userId && event.getRoomId() === roomId.networkId) {
                 updateState(member)

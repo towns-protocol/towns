@@ -1,5 +1,5 @@
 import { SpaceProtocol } from '../client/ZionClientTypes'
-import { HistoryVisibility, IContent } from 'matrix-js-sdk'
+import { HistoryVisibility, IContent, MatrixEvent } from 'matrix-js-sdk'
 import { MatrixRoomIdentifier, RoomIdentifier } from './room-identifier'
 
 export enum RoomVisibility {
@@ -218,4 +218,18 @@ export interface PowerLevelDefinition {
     description: string
     default: number
     parent?: string
+}
+
+export function getIdForMatrixEvent(event: MatrixEvent): string {
+    const eventId = event.getId()
+    if (eventId) {
+        return eventId
+    }
+    console.warn('getIdForMatrixEvent: event has no id', {
+        type: event.getType(),
+        content: event.getContent(),
+    })
+    // this should never??? happen, but if it does, we need to generate a unique id
+    // for things to run, so we'll use the local timestamp and a random number
+    return `UnknownId_${event.localTimestamp}_${Math.floor(Math.random() * 4095).toString(16)}`
 }

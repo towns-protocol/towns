@@ -19,7 +19,7 @@ export function useUser(userId?: string): User | undefined {
         const onUserUpdated = (event: MatrixEvent | undefined, theUser: MatrixUser) => {
             setUser({
                 userId: theUser.userId,
-                displayName: theUser.displayName,
+                displayName: theUser.displayName ?? 'Unknown',
                 avatarUrl: theUser.avatarUrl,
                 presence: theUser.presence,
                 lastPresenceTs: theUser.lastPresenceTs,

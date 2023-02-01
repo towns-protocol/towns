@@ -55,15 +55,8 @@ export async function sendMatrixMessage(
 ): Promise<void> {
     const content = getMessageContent(message, options ?? {})
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-    const cb = function (err: any, res: any) {
-        if (err) {
-            console.error(err)
-        }
-    }
-
     if (!options?.threadId) {
-        await matrixClient.sendEvent(roomId.networkId, 'm.room.message', content, '', cb)
+        await matrixClient.sendEvent(roomId.networkId, 'm.room.message', content, '')
     } else {
         // send as reply
         await matrixClient.sendEvent(
@@ -79,7 +72,6 @@ export async function sendMatrixMessage(
                 },
             },
             '',
-            cb,
         )
     }
 }

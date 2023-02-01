@@ -43,13 +43,17 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
         }
         const onRoomTimelineEvent = (
             event: MatrixEvent,
-            room: MatrixRoom,
-            toStartOfTimeline: boolean,
+            eventRoom: MatrixRoom | undefined,
+            toStartOfTimeline: boolean | undefined,
             removed: boolean,
             data: IRoomTimelineData,
         ) => {
+            const eventRoomId = event.getRoomId() ?? eventRoom?.roomId
+            if (!eventRoomId) {
+                return
+            }
             // if the room is a space update our spaces
-            if (roomId.networkId == room.roomId) {
+            if (roomId.networkId === eventRoomId) {
                 const eventType = event.getType()
                 if (eventType === EventType.RoomPowerLevels) {
                     updateState()

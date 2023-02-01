@@ -189,7 +189,7 @@ const useWithCatch = <T extends Array<unknown>, U>(
                                     err,
                                 )
                                 if (retryDelay >= 0) {
-                                    console.log(`MatrixError retrying, waiting ${retryDelay}`)
+                                    console.log(`MatrixError`, { retryDelay, err })
                                     await new Promise((resolve) => setTimeout(resolve, retryDelay))
                                     retryCount++
                                     continue
