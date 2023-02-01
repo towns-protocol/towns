@@ -90,11 +90,11 @@ export const TokenList = ({
         [chainId],
     )
 
-    const { getCachedTokensForWallet } = useCachedTokensForWallet()
+    const cachedTokensForWallet = useCachedTokensForWallet()
     const [results, setResults] = React.useState<TokenPropsForVList[]>([])
     const [search, setSearch] = React.useState('')
     const selectedTokens = watch('tokens')
-    const [page, setPage] = useState(getCachedTokensForWallet().previousPageKey || '')
+    const [page, setPage] = useState(cachedTokensForWallet.previousPageKey || '')
     const loadMore = (pageKey: string) => {
         setPage(pageKey)
     }
@@ -114,17 +114,13 @@ export const TokenList = ({
         if (!data?.tokens) {
             return
         }
-        const unique = uniqBy(
-            [...getCachedTokensForWallet().tokens, ...data.tokens],
-            'contractAddress',
-        )
+        const unique = uniqBy([...cachedTokensForWallet.tokens, ...data.tokens], 'contractAddress')
         const _results = searchArrayOfData(unique, search).map((res) => ({
             ...res,
             id: res.contractAddress,
         }))
         setResults(_results)
-        // do not depend on cached data
-    }, [search, data])
+    }, [data?.tokens, cachedTokensForWallet, search])
 
     function handleClick(contractAddress: string) {
         const _selectedTokens = selectedTokens.filter((token: string) => token !== contractAddress)
@@ -136,7 +132,7 @@ export const TokenList = ({
             {!selectedTokens.length ? null : (
                 <Box display="flex" flexDirection="row" gap="md" paddingY="md">
                     {selectedTokens.map((contractAddress: string) => {
-                        const token = getCachedTokensForWallet().tokens.find(
+                        const token = cachedTokensForWallet.tokens.find(
                             (t) => t.contractAddress === contractAddress,
                         )
                         return (

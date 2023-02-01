@@ -1,8 +1,9 @@
-import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, ContractMetadataResponse } from '@token-worker/types'
 import { erc20ABI } from '@wagmi/core'
 import { ethers } from 'ethers'
+import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
 import { env, hasVitalkTokensParam } from 'utils'
 import { axiosClient } from '../apiClient'
@@ -49,19 +50,19 @@ export function useTokenContractsForAddress({
     chainId,
 }: UseTokenContractsForAdress) {
     const queryClient = useQueryClient()
+    const cachedTokensForWallet = useCachedTokensForWallet()
     return useQuery(
-        [queryKey, pageKey],
+        [queryKey, pageKey, cachedTokensForWallet],
         () =>
             chainId === 31337
                 ? getLocalHostTokens(wallet, zionTokenAddress, pageKey, all)
                 : getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
         {
             onSuccess: (data) => {
-                const cached = getCachedTokensForWallet(queryClient)
                 queryClient.setQueryData<CachedData>([queryKeyAll], {
-                    previousPageKey: cached.nextPageKey,
+                    previousPageKey: cachedTokensForWallet.nextPageKey,
                     nextPageKey: data.nextPageKey,
-                    tokens: [...cached.tokens, ...data.tokens],
+                    tokens: [...cachedTokensForWallet.tokens, ...data.tokens],
                 })
             },
             refetchOnMount: false,
@@ -75,14 +76,11 @@ export function useTokenContractsForAddress({
 
 export function useCachedTokensForWallet() {
     const queryClient = useQueryClient()
-    return {
-        getCachedTokensForWallet: () => getCachedTokensForWallet(queryClient),
-    }
-}
 
-function getCachedTokensForWallet(queryClient: QueryClient): CachedData {
-    const cached = queryClient.getQueryData<CachedData>([queryKeyAll])
-    return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
+    return useMemo(() => {
+        const cached = queryClient.getQueryData<CachedData>([queryKeyAll])
+        return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
+    }, [queryClient])
 }
 
 const fetchVitalikTokens = hasVitalkTokensParam()

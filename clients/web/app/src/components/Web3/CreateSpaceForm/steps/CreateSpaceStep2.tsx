@@ -33,7 +33,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
     const { setError, clearErrors } = props
     const tokens = useCreateSpaceFormStore((state) => state.step1.tokens)
     const removeToken = useCreateSpaceFormStore((state) => state.removeToken)
-    const { getCachedTokensForWallet } = useCachedTokensForWallet()
+    const cachedTokensForWallet = useCachedTokensForWallet()
     function handleClick(contractAddress: string) {
         if (tokens.length === 1) {
             setError?.('tokens', {
@@ -63,7 +63,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
                 data-testid="step-2-avatars"
             >
                 {tokens.map((contractAddress: string) => {
-                    const token = getCachedTokensForWallet().tokens.find(
+                    const token = cachedTokensForWallet.tokens.find(
                         (t) => t.contractAddress === contractAddress,
                     )
                     return (
