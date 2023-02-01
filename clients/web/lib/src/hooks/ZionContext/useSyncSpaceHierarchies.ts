@@ -11,6 +11,7 @@ import { toZionSpaceChild } from '../../store/use-matrix-store'
 import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/matrix-types'
 import { RoomIdentifier } from '../../types/room-identifier'
+import { ZTEvent } from '../../types/timeline-types'
 
 // the spaces are just tacked on to the matrix design system,
 // child events should be treated like state events, but they are not,
@@ -126,7 +127,7 @@ export function useSyncSpaceHierarchies(
                 return
             }
             const eventType = event.getType()
-            if (eventType === EventType.SpaceChild) {
+            if (eventType === EventType.SpaceChild || eventType === ZTEvent.BlockchainTransaction) {
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
             }

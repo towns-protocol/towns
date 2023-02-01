@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/matrix-types'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
@@ -20,6 +20,10 @@ import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
+import { useTransactionStore } from '../../src/store/use-transactions-store'
+import { useZionClient } from '../../src/hooks/use-zion-client'
+import { ZTEvent } from '../../src/types/timeline-types'
+import { MatrixEvent, RoomEvent } from 'matrix-js-sdk'
 
 describe('useCreateChannelTransaction', () => {
     test('user can create channel', async () => {
@@ -49,6 +53,7 @@ describe('useCreateChannelTransaction', () => {
         }
 
         const TestComponent = () => {
+            const { client } = useZionClient()
             const {
                 createSpaceTransactionWithRole,
                 data: spaceId,
@@ -65,6 +70,30 @@ describe('useCreateChannelTransaction', () => {
             } = useCreateChannelTransaction()
             // Use the roles from the parent space to create the channel
             const { spaceRoles } = useRoles(spaceNetworkId)
+            const transactions = useTransactionStore((state) => state.transactions)
+
+            const numberOfSavedTransactions = useRef(0)
+            const numberOfChannelBlockchainEvents = useRef(0)
+
+            useEffect(() => {
+                Object.keys(transactions).forEach(() => {
+                    numberOfSavedTransactions.current += 1
+                })
+            }, [transactions])
+
+            useEffect(() => {
+                function onBlockchainTransaction(event: MatrixEvent) {
+                    if (event.getType() === ZTEvent.BlockchainTransaction) {
+                        numberOfChannelBlockchainEvents.current += 1
+                    }
+                }
+                client?.matrixClient?.on(RoomEvent.Timeline, onBlockchainTransaction)
+
+                return () => {
+                    client?.matrixClient?.off(RoomEvent.Timeline, onBlockchainTransaction)
+                }
+            }, [client])
+
             const roleIds = useMemo(() => {
                 const roleIds: number[] = []
                 if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
@@ -134,6 +163,12 @@ describe('useCreateChannelTransaction', () => {
                                     </ChannelContextProvider>
                                 )}
                             </div>
+                            <div data-testid="saved-transactions">
+                                {numberOfSavedTransactions.current}
+                            </div>
+                            <div data-testid="channel-blockchain-events">
+                                {numberOfChannelBlockchainEvents.current}
+                            </div>
                         </>
                     </SpaceContextProvider>
                 </>
@@ -152,6 +187,8 @@ describe('useCreateChannelTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         const spaceElement = screen.getByTestId('spaces')
         const channelElement = screen.getByTestId('channel')
+        const transactionsNumber = screen.getByTestId('saved-transactions')
+        const blockchainEvents = screen.getByTestId('channel-blockchain-events')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -165,6 +202,7 @@ describe('useCreateChannelTransaction', () => {
         )
         // click button to create the space
         fireEvent.click(createSpaceButton)
+        await waitFor(() => expect(transactionsNumber).toHaveTextContent('1'))
         // wait for the space name to render
         await waitFor(
             () => within(spaceElement).getByText(spaceName),
@@ -174,6 +212,8 @@ describe('useCreateChannelTransaction', () => {
         /* Act */
         // click button to create the channel
         fireEvent.click(createChannelButton)
+        await waitFor(() => expect(transactionsNumber).toHaveTextContent('2'))
+        await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
         /* Assert */
         await waitFor(

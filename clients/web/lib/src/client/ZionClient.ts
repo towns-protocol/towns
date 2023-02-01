@@ -63,7 +63,7 @@ import { toZionRoom } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendCsbMessage } from './casablanca/SendMessage'
 import { newLoginSession, newRegisterSession, NewSession } from '../hooks/session'
-
+import { toUtf8String } from 'ethers/lib/utils.js'
 /***
  * Zion Client
  * mostly a "passthrough" abstraction that hides the underlying MatrixClient
@@ -430,6 +430,7 @@ export class ZionClient {
                 memberEntitlements,
                 everyonePermissions,
             )
+
             console.log(`[createSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createSpaceTransaction] error', err)
@@ -624,7 +625,12 @@ export class ZionClient {
 
             transaction = context.transaction
             roomId = context.data
-            receipt = await transaction.wait()
+            // provider.waitForTransaction resolves more quickly than transaction.wait(), why?
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            // copy tx.wait() behavior - it throws an error if tx fails
+            if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            }
             console.log(
                 '[waitForCreateChannelTransaction] createChannel receipt completed' /*, receipt */,
             )
@@ -1283,6 +1289,15 @@ export class ZionClient {
                 baseUrl: baseUrl,
             })
         }
+    }
+
+    /*
+     * Error when web3Provider.waitForTransaction receipt has a status of 0
+     */
+    private async throwTransactionError(receipt: ContractReceipt) {
+        const code = await this.opts.web3Provider?.call(receipt, receipt.blockNumber)
+        const reason = toUtf8String(`0x${code?.substring(138) || ''}`)
+        throw new Error(reason)
     }
 
     private async onErrorLeaveSpaceRoomAndDecodeError(

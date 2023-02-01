@@ -7,6 +7,7 @@ import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useZionClient } from './use-zion-client'
+import { StoredTransactionType, useTransactionStore } from '../store/use-transactions-store'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -65,10 +66,22 @@ export function useCreateSpaceTransaction() {
                 tokenEntitlement,
                 everyonePermissions,
             )
+
             setTransactionContext(txContext)
 
             if (txContext?.status === TransactionStatus.Pending) {
                 // No error and transaction is pending
+                // Save it to local storage so we can track it
+                if (txContext.transaction && txContext.data) {
+                    useTransactionStore.getState().storeTransaction({
+                        hash: txContext.transaction?.hash as `0x${string}`,
+                        type: StoredTransactionType.CreateSpace,
+                        data: {
+                            spaceId: txContext.data,
+                        },
+                    })
+                }
+
                 // Wait for transaction to be mined
                 const rxContext = await waitForCreateSpaceTransaction(txContext)
                 setTransactionContext(rxContext)

@@ -16,6 +16,7 @@ import {
 } from 'matrix-js-sdk'
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import {
+    BlockchainTransaction,
     MessageReactions,
     RoomMessageEvent,
     ThreadStats,
@@ -546,6 +547,22 @@ function toZionContent(
             }
         }
 
+        case ZTEvent.BlockchainTransaction: {
+            const hash = event.getStateKey()
+            if (!hash) {
+                return {
+                    error: `${describe()} has no state key`,
+                }
+            }
+
+            return {
+                content: {
+                    kind: ZTEvent.BlockchainTransaction,
+                    content: content as BlockchainTransaction['content'],
+                },
+            }
+        }
+
         default:
             console.log(`Unhandled Room.timeline event`, event.getType(), {
                 event: event,
@@ -616,6 +633,8 @@ function getFallbackContent(
             return `childId: ${content.childId}`
         case ZTEvent.SpaceParent:
             return `parentId: ${content.parentId}`
+        case ZTEvent.BlockchainTransaction:
+            return `blockchainTransaction: ${content.content.hash}`
         default:
             staticAssertNever(content)
             return `Unreachable ${eventType}`

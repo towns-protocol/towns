@@ -27,6 +27,7 @@ export enum ZTEvent {
     RoomRedaction = 'm.room.redaction',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
+    BlockchainTransaction = 'towns.blockchain.transaction',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -46,6 +47,7 @@ export type TimelineEvent_OneOf =
     | RoomPowerLevelsEvent
     | SpaceChildEvent
     | SpaceParentEvent
+    | BlockchainTransaction
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
@@ -213,4 +215,9 @@ export interface DecryptionAttempt {
     lastAttemptedAt: number
     promise?: Promise<void>
     retry: () => Promise<void> | undefined
+}
+
+export interface BlockchainTransaction {
+    kind: ZTEvent.BlockchainTransaction
+    content: IContent & { transactionType: string; hash: string }
 }

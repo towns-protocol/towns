@@ -12,9 +12,7 @@ import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { TransactionUIStatesType, useTransactionUIStates } from 'hooks/useTransactionStatus'
-import { StoredTransactionType } from 'store/transactionsStore'
 import { TransactionButton } from '@components/TransactionButton'
-import { useSaveTransactionOnCreation } from 'hooks/useSaveTransactionOnSuccess'
 import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
@@ -174,13 +172,6 @@ export const CreateSpaceForm = (props: Props) => {
         }
         goNext()
     }, [createSpace, goNext, isLast])
-
-    useSaveTransactionOnCreation({
-        hash: transactionHash,
-        data: roomId?.slug,
-        type: StoredTransactionType.CreateChannel,
-        status: transactionStatus,
-    })
 
     const onSuccessfulTransaction = useCallback(() => {
         roomId && onCreateSpace(roomId, Membership.Join)

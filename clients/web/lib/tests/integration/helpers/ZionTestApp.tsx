@@ -58,10 +58,9 @@ export const ZionTestApp = (props: Props) => {
             defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}
             initialSyncLimit={initialSyncLimit}
             chain={foundry}
+            QueryClientProvider={TestQueryClientProvider}
         >
-            <TestQueryClientProvider>
-                <ZionWalletAutoConnect children={children} />
-            </TestQueryClientProvider>
+            <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>
     )
 }

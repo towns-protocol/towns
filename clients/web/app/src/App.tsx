@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
-import { QueryProvider, SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -12,7 +13,6 @@ import { AppPanelLayout } from 'routes/layouts/AppPanelLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
 import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
-import { TransactionEvents } from 'TransactionEvents'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 
@@ -31,6 +31,7 @@ const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary 
 export const App = () => {
     const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
     const chain = useCorrectChainForServer()
+
     return (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
@@ -44,11 +45,10 @@ export const App = () => {
             initialSyncLimit={100}
             chain={chain}
         >
-            <QueryProvider>
+            <>
                 <>{env.IS_DEV && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
-                <TransactionEvents />
                 <AllRoutes />
-            </QueryProvider>
+            </>
         </ZionContextProvider>
     )
 }

@@ -50,6 +50,8 @@ export { useZionClient } from './hooks/use-zion-client'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
 export { useMatrixStore } from './store/use-matrix-store'
 export { useTimelineStore } from './store/use-timeline-store'
+export { TxnsEventEmitter, useOnTransactionEmitted } from './store/use-transactions-store'
+export type { EmittedTransaction } from './store/use-transactions-store'
 
 export type {
     Channel,

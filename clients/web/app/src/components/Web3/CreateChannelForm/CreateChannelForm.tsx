@@ -7,9 +7,7 @@ import { TransactionButton } from '@components/TransactionButton'
 import { useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { useChannelCreationRoles } from 'hooks/useContractRoles'
 import { PATHS } from 'routes'
-import { StoredTransactionType } from 'store/transactionsStore'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { useSaveTransactionOnCreation } from 'hooks/useSaveTransactionOnSuccess'
 import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
@@ -88,13 +86,6 @@ export const CreateChannelForm = (props: Props) => {
             event.preventDefault()
         }
     }, [])
-
-    useSaveTransactionOnCreation({
-        hash: transactionHash,
-        data: channelId?.slug,
-        type: StoredTransactionType.CreateChannel,
-        status: transactionStatus,
-    })
 
     const onSuccessfulTransaction = useCallback(() => {
         channelId && onCreateChannel(channelId)

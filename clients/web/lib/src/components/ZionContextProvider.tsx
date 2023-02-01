@@ -18,6 +18,8 @@ import { Room, SpaceHierarchies, SpaceItem } from '../types/matrix-types'
 import { makeRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { Chain } from 'wagmi'
+import { useTransactionListener } from '../hooks/use-transaction-listener'
+import { QueryProvider } from './QueryProvider'
 
 export interface IZionContext {
     client?: ZionClient
@@ -63,16 +65,22 @@ interface Props {
     chain?: Chain
     children: JSX.Element
     alchemyKey?: string
+    QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
 }
 
 const DEFAULT_INITIAL_SYNC_LIMIT = 20
 
-export function ZionContextProvider(props: Props): JSX.Element {
+export function ZionContextProvider({
+    QueryClientProvider = QueryProvider,
+    ...props
+}: Props): JSX.Element {
     const { alchemyKey, chain, ...contextProps } = props
     return (
-        <Web3ContextProvider alchemyKey={alchemyKey} chain={chain}>
-            <ContextImpl {...contextProps}></ContextImpl>
-        </Web3ContextProvider>
+        <QueryClientProvider>
+            <Web3ContextProvider alchemyKey={alchemyKey} chain={chain}>
+                <ContextImpl {...contextProps}></ContextImpl>
+            </Web3ContextProvider>
+        </QueryClientProvider>
     )
 }
 
@@ -121,6 +129,8 @@ const ContextImpl = (props: Props): JSX.Element => {
     const syncError = useSyncErrorHandler(homeServerUrl, client)
 
     useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
+
+    useTransactionListener(client, homeServerUrl)
 
     return (
         <ZionContext.Provider

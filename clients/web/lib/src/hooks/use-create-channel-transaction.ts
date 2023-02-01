@@ -4,6 +4,7 @@ import { CreateChannelInfo } from '../types/matrix-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
 import { useZionClient } from './use-zion-client'
+import { StoredTransactionType, useTransactionStore } from '../store/use-transactions-store'
 
 /**
  * Combine Matrix channel creation and Smart Contract channel
@@ -38,6 +39,17 @@ export function useCreateChannelTransaction() {
             setTransactionContext(txContext)
             if (txContext?.status === TransactionStatus.Pending) {
                 // No error and transaction is pending
+                // save it to local storage so we can track it
+                if (txContext.transaction && txContext.data) {
+                    useTransactionStore.getState().storeTransaction({
+                        hash: txContext.transaction?.hash as `0x${string}`,
+                        type: StoredTransactionType.CreateChannel,
+                        data: {
+                            parentSpaceId: txContext.parentSpaceId,
+                            spaceId: txContext.data,
+                        },
+                    })
+                }
                 // Wait for transaction to be mined
                 const rxContext = await waitForCreateChannelTransaction(txContext)
                 setTransactionContext(rxContext)
