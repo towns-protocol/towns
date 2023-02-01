@@ -16,6 +16,7 @@ import {
 
 import { StatusCodes } from 'http-status-codes'
 import { SiweMessage } from 'siwe'
+import { Buffer } from 'buffer'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
@@ -231,6 +232,10 @@ export function useMatrixWalletSignIn() {
                                     )
 
                                     if (response.access_token) {
+                                        // set zion_siwe cookie on successful registration
+                                        document.cookie = setZionSiweCookie(
+                                            authData as AuthenticationData,
+                                        )
                                         authenticationSuccess(response)
                                     } else {
                                         authenticationError({
@@ -486,4 +491,14 @@ export function createMessageToSign(args: {
     console.log(`[createMessageToSign][siweMessage.prepareMessage]`, messageToSign)
 
     return messageToSign
+}
+
+function setZionSiweCookie(auth: AuthenticationData): string {
+    const cookie = {
+        name: 'zion_siwe',
+        value: Buffer.from(`${auth.signature}'-'${auth.message}`).toString('base64'),
+        path: '/',
+        secure: 'true',
+    }
+    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}`
 }
