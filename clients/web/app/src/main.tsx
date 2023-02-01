@@ -1,4 +1,10 @@
 import 'allotment/dist/style.css'
+// Only load Sentry in production
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import * as Sentry from '@sentry/react'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import { BrowserTracing } from '@sentry/tracing'
+
 import React, { Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -25,6 +31,21 @@ if (env.IS_DEV) {
 
     window.addEventListener('error', showErrorOverlay)
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
+} else {
+    Sentry.init({
+        dsn: 'https://a5bc2df7099a4adbadd6ff1f87c7b66a@o327188.ingest.sentry.io/4504600696061952',
+        // Set tracesSampleRate to 1.0 to capture 100%
+        // of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: 1.0,
+        // This sets the sample rate to be 10%. You may want this to be 100% while
+        // in development and sample at a lower rate in production
+        replaysSessionSampleRate: 0.1,
+        // If the entire session is not sampled, use the below sample rate to sample
+        // sessions when an error occurs.
+        replaysOnErrorSampleRate: 1.0,
+        integrations: [new Sentry.Replay(), new BrowserTracing()],
+    })
 }
 
 const node = document.getElementById('root')

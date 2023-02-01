@@ -33,7 +33,7 @@ export default defineConfig({
         eslintPlugin(),
         vanillaExtractPlugin(),
         visualizer({ filename: 'dist/stats.html' }),
-        sourcemaps(),
+        sourcemaps({ exclude: '**/@sentry/**/*.js' }),
     ],
     server: {
         port: 3000,
