@@ -71,7 +71,7 @@ contract Space is
 
   /// @inheritdoc ISpace
   function setSpaceAccess(bool _disabled) external {
-    _isAllowed("", Permissions.Owner);
+    _isOwner("");
     disabled = _disabled;
   }
 
@@ -584,6 +584,16 @@ contract Space is
     entitlementIdsByRoleId[_roleId].push(entitlementId);
 
     IEntitlement(_entitlement).setEntitlement(_roleId, _entitlementData);
+  }
+
+  function _isOwner(string memory _channelId) internal view {
+    if (
+      _isEntitled(_channelId, _msgSender(), bytes32(abi.encodePacked("Owner")))
+    ) {
+      return;
+    } else {
+      revert Errors.NotAllowed();
+    }
   }
 
   function _isAllowed(

@@ -1442,16 +1442,16 @@
     "id": 2667,
     "exportedSymbols": {
       "ERC721": [
-        60200
+        60225
       ],
       "Ownable": [
-        56669
+        56694
       ],
       "ReentrancyGuard": [
-        57164
+        57189
       ],
       "Strings": [
-        61127
+        61152
       ],
       "Zioneer": [
         2666
@@ -1480,7 +1480,7 @@
         "file": "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 2667,
-        "sourceUnit": 60201,
+        "sourceUnit": 60226,
         "symbolAliases": [
           {
             "foreign": {
@@ -1488,7 +1488,7 @@
               "name": "ERC721",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 60200,
+              "referencedDeclaration": 60225,
               "src": "72:6:15",
               "typeDescriptions": {}
             },
@@ -1506,7 +1506,7 @@
         "file": "openzeppelin-contracts/contracts/access/Ownable.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 2667,
-        "sourceUnit": 56670,
+        "sourceUnit": 56695,
         "symbolAliases": [
           {
             "foreign": {
@@ -1514,7 +1514,7 @@
               "name": "Ownable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 56669,
+              "referencedDeclaration": 56694,
               "src": "153:7:15",
               "typeDescriptions": {}
             },
@@ -1532,7 +1532,7 @@
         "file": "openzeppelin-contracts/contracts/utils/Strings.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 2667,
-        "sourceUnit": 61128,
+        "sourceUnit": 61153,
         "symbolAliases": [
           {
             "foreign": {
@@ -1540,7 +1540,7 @@
               "name": "Strings",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 61127,
+              "referencedDeclaration": 61152,
               "src": "230:7:15",
               "typeDescriptions": {}
             },
@@ -1558,7 +1558,7 @@
         "file": "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 2667,
-        "sourceUnit": 57165,
+        "sourceUnit": 57190,
         "symbolAliases": [
           {
             "foreign": {
@@ -1566,7 +1566,7 @@
               "name": "ReentrancyGuard",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 57164,
+              "referencedDeclaration": 57189,
               "src": "306:15:15",
               "typeDescriptions": {}
             },
@@ -1593,7 +1593,7 @@
                 "457:7:15"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 61127,
+              "referencedDeclaration": 61152,
               "src": "457:7:15"
             },
             "typeName": {
@@ -2135,7 +2135,7 @@
                     "1134:6:15"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 60200,
+                  "referencedDeclaration": 60225,
                   "src": "1134:6:15"
                 },
                 "nodeType": "ModifierInvocation",
@@ -2576,7 +2576,7 @@
                       "name": "_mint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 59856,
+                      "referencedDeclaration": 59881,
                       "src": "1461:5:15",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$",
@@ -2781,7 +2781,7 @@
                     "1269:12:15"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 57129,
+                  "referencedDeclaration": 57154,
                   "src": "1269:12:15"
                 },
                 "nodeType": "ModifierInvocation",
@@ -3089,7 +3089,7 @@
                     "1686:9:15"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 56588,
+                  "referencedDeclaration": 56613,
                   "src": "1686:9:15"
                 },
                 "nodeType": "ModifierInvocation",
@@ -3668,7 +3668,7 @@
                     "2026:9:15"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 56588,
+                  "referencedDeclaration": 56613,
                   "src": "2026:9:15"
                 },
                 "nodeType": "ModifierInvocation",
@@ -3770,7 +3770,7 @@
                         "name": "ownerOf",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 59401,
+                        "referencedDeclaration": 59426,
                         "src": "2181:7:15",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_internal_view$_t_uint256_$returns$_t_address_$",
@@ -4080,7 +4080,7 @@
                                 "memberLocation": "2351:8:15",
                                 "memberName": "toString",
                                 "nodeType": "MemberAccess",
-                                "referencedDeclaration": 60957,
+                                "referencedDeclaration": 60982,
                                 "src": "2343:16:15",
                                 "typeDescriptions": {
                                   "typeIdentifier": "t_function_internal_pure$_t_uint256_$returns$_t_string_memory_ptr_$bound_to$_t_uint256_$",
@@ -4213,7 +4213,7 @@
               ]
             },
             "baseFunctions": [
-              59460
+              59485
             ],
             "functionSelector": "c87b56dd",
             "implemented": true,
@@ -5240,7 +5240,7 @@
                     "2586:9:15"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 56588,
+                  "referencedDeclaration": 56613,
                   "src": "2586:9:15"
                 },
                 "nodeType": "ModifierInvocation",
@@ -5333,7 +5333,7 @@
                 "414:6:15"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 60200,
+              "referencedDeclaration": 60225,
               "src": "414:6:15"
             },
             "id": 2349,
@@ -5348,7 +5348,7 @@
                 "422:7:15"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 56669,
+              "referencedDeclaration": 56694,
               "src": "422:7:15"
             },
             "id": 2351,
@@ -5363,7 +5363,7 @@
                 "431:15:15"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 57164,
+              "referencedDeclaration": 57189,
               "src": "431:15:15"
             },
             "id": 2353,
@@ -5377,14 +5377,14 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
           2666,
-          57164,
-          56669,
-          60200,
-          60486,
-          60316,
-          61657,
-          61669,
-          60838
+          57189,
+          56694,
+          60225,
+          60511,
+          60341,
+          61682,
+          61694,
+          60863
         ],
         "name": "Zioneer",
         "nameLocation": "403:7:15",
