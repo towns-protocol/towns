@@ -101,14 +101,14 @@ jobs:
             - name: Build contract types
               run: ./scripts/build-contract-types.sh localhost --frozen
 
+            - name: Start dendrite
+              run: ./scripts/start-local-dendrite.sh --skip-postgres &
+
             - name: Start anvil
               run: anvil &
 
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
-
-            - name: Start dendrite
-              run: ./scripts/start-local-dendrite.sh --skip-postgres &
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql

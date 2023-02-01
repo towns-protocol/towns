@@ -16,7 +16,7 @@
         "csb:test": "yarn workspaces foreach --all --include \"@zion/**\" --verbose run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
         "csb:test-remote": "yarn workspace @zion/server run test-remote",
         "csb:wait": "yarn workspace @zion/server run wait",
-        "drt:wait": "wait-on tcp:8008 --timeout=400000 --verbose",
+        "drt:wait": "wait-on tcp:8008 --timeout=400000 --i=5000 --verbose",
         "lint": "turbo lint",
         "postinstall": "husky install",
         "prepare": "husky install",
