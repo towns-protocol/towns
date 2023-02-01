@@ -96,7 +96,6 @@ export const CreateSpaceForm = (props: Props) => {
     const {
         data: roomId,
         error,
-        transactionHash,
         transactionStatus,
         createSpaceTransactionWithRole,
     } = useCreateSpaceTransaction()
