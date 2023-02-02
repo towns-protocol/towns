@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useAccount, useNetwork, useSignMessage, Chain, useProvider } from 'wagmi'
 import { IWeb3Context } from '../../components/Web3ContextProvider'
 import { WalletStatus } from '../../types/web3-types'
@@ -12,8 +12,9 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     // allowing app to pass in chain allows to load on correct chain per env regardless of user wallet settings
     // they are able to login w/out swapping networks
     // we still need guards for transactions
-    const activeChain = chain || walletChain
+    const activeChain = useMemo(() => chain || walletChain, [chain, walletChain])
     const provider = useProvider({ chainId: activeChain?.id })
+    const accounts = useMemo(() => (address ? [address] : []), [address])
 
     const sign = useCallback(
         async (message: string): Promise<string | undefined> => {
@@ -37,7 +38,7 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     return {
         provider,
         sign: sign,
-        accounts: address ? [address] : [],
+        accounts,
         chain: activeChain,
         chains: chains,
         isConnected: isConnected,

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { LoginButton } from './LoginButton/LoginButton'
@@ -17,13 +17,15 @@ export const LoginComponent = () => {
         connectLoading,
     } = useAuth()
 
-    console.log('LoginComponent wagmi info:', {
-        walletStatus,
-        error: connectError,
-        isLoading: connectLoading,
-        pendingConnector,
-        loginError,
-    })
+    useEffect(() => {
+        console.log('LoginComponent wagmi info:', {
+            walletStatus,
+            error: connectError,
+            isLoading: connectLoading,
+            pendingConnector,
+            loginError,
+        })
+    }, [connectError, connectLoading, loginError, pendingConnector, walletStatus])
 
     const {
         status,
