@@ -57,7 +57,9 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@v3
               with:
-                  go-version: '1.19.2' # The Go version to download (if necessary) and use.
+                  go-version: '1.19.5' # Dendrite won't build on 1.20 yet, "The version of quic-go you're using can't be built on Go 1.20 yet. For more details, please see https://github.com/lucas-clemente/quic-go/wiki/quic-go-and-Go-versions."
+                  cache: true
+                  cache-dependency-path: 'servers/**/go.sum'
 
             - name: Cancel previous runs
               uses: styfle/cancel-workflow-action@0.11.0
