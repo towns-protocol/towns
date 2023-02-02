@@ -1,5 +1,5 @@
 import { Client as CasablancaClient } from '@zion/client'
-import { CreateSpaceInfo } from '../../types/matrix-types'
+import { CreateSpaceInfo } from '../../types/zion-types'
 import { SpaceProtocol } from '../../client/ZionClientTypes'
 import {
     CasablancaStreamIdentifier,

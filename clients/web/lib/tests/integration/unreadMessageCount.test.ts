@@ -10,11 +10,12 @@ import {
 
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
 import { TestConstants } from './helpers/TestConstants'
-import { sleep } from '../../src/utils/zion-utils'
+import { sleep, staticAssertNever } from '../../src/utils/zion-utils'
 import { waitFor } from '@testing-library/dom'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 /// matrix notification counts are broken during sync, but they should work
 /// between syncs. This test is to make sure that the counts are correct
@@ -86,13 +87,20 @@ describe('unreadMessageCount', () => {
             await initialSync
         }
 
-        const countFor = (roomId: string) => {
+        const countFor = (roomId: RoomIdentifier) => {
             if (!alice.matrixClient) {
                 throw new Error('alice matrix client is not defined')
             }
-            return alice.matrixClient
-                .getRoom(roomId)
-                ?.getUnreadNotificationCount(NotificationCountType.Total)
+            switch (roomId.protocol) {
+                case SpaceProtocol.Matrix:
+                    return alice.matrixClient
+                        .getRoom(roomId.networkId)
+                        ?.getUnreadNotificationCount(NotificationCountType.Total)
+                case SpaceProtocol.Casablanca:
+                    throw new Error('casablanca not implemented')
+                default:
+                    staticAssertNever(roomId)
+            }
         }
 
         ////// Stop alice /////
@@ -107,10 +115,10 @@ describe('unreadMessageCount', () => {
         await startAlice()
 
         // ali should see the room
-        await waitFor(() => expect(alice.getRoom(spaceId)).toBeDefined())
+        await waitFor(() => expect(alice.getRoomData(spaceId)).toBeDefined())
         // initially we have 1 unread messages for space and each channel
         await waitFor(
-            () => expect(countFor(spaceId.networkId)).toBe(0), // we don't get notifications for invites
+            () => expect(countFor(spaceId)).toBe(0), // we don't get notifications for invites
             TestConstants.DefaultWaitForTimeout,
         )
         // alice joins the room
@@ -119,15 +127,15 @@ describe('unreadMessageCount', () => {
         await alice.joinRoom(channel_2)
         // expect our membership to be join
         await waitFor(
-            () => expect(alice.getRoom(spaceId)?.getMyMembership()).toBe('join'),
+            () => expect(alice.getRoomData(spaceId)?.membership).toBe('join'),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
-            () => expect(alice.getRoom(channel_1)?.getMyMembership()).toBe('join'),
+            () => expect(alice.getRoomData(channel_1)?.membership).toBe('join'),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
-            () => expect(alice.getRoom(channel_2)?.getMyMembership()).toBe('join'),
+            () => expect(alice.getRoomData(channel_2)?.membership).toBe('join'),
             TestConstants.DefaultWaitForTimeout,
         )
 
@@ -141,16 +149,13 @@ describe('unreadMessageCount', () => {
         await startAlice()
 
         // che our counts
+        await waitFor(() => expect(countFor(spaceId)).toBe(1), TestConstants.DefaultWaitForTimeout)
         await waitFor(
-            () => expect(countFor(spaceId.networkId)).toBe(1),
+            () => expect(countFor(channel_1)).toBe(2),
             TestConstants.DefaultWaitForTimeout,
         )
         await waitFor(
-            () => expect(countFor(channel_1.networkId)).toBe(2),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(countFor(channel_2.networkId)).toBe(1),
+            () => expect(countFor(channel_2)).toBe(1),
             TestConstants.DefaultWaitForTimeout,
         )
         // start clearing the notifications
@@ -164,15 +169,12 @@ describe('unreadMessageCount', () => {
 
         // and see the update
         await waitFor(
-            () => expect(countFor(channel_1.networkId)).toBe(0),
+            () => expect(countFor(channel_1)).toBe(0),
             TestConstants.DefaultWaitForTimeout,
         )
         // clear
         await alice.sendReadReceipt(spaceId)
         // and see the update
-        await waitFor(
-            () => expect(countFor(spaceId.networkId)).toBe(0),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(countFor(spaceId)).toBe(0), TestConstants.DefaultWaitForTimeout)
     }) // end test
 }) // end describe

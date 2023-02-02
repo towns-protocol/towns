@@ -1,5 +1,5 @@
 import { useZionContext } from '../components/ZionContextProvider'
-import { Membership } from '../types/matrix-types'
+import { Membership } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { useMembership } from './use-membership'
 

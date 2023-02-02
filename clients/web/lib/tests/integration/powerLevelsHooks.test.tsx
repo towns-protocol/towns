@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import React, { useCallback, useEffect } from 'react'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import {

@@ -19,7 +19,7 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoin } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -288,12 +288,10 @@ describe('sendThreadedMessageHooks', () => {
             console.log(`jane hello channels sent`)
         })
         const channel_1_message_0 = jane
-            .getRoom(channel_1)!
-            .getLiveTimeline()
-            .getEvents()
-            .find((e) => e.getContent()?.body === 'hello channel_1')!
+            .getEvents_TypedRoomMessage(channel_1)!
+            .find((e) => e.content.body === 'hello channel_1')!
         await waitFor(
-            () => expect(channel_1_message_0.getId()!.startsWith('~')).toBe(false),
+            () => expect(channel_1_message_0.eventId.startsWith('~')).toBe(false),
             TestConstants.DefaultWaitForTimeout,
         )
 
@@ -306,7 +304,7 @@ describe('sendThreadedMessageHooks', () => {
         // - jane replies to janes's message in channel_1 creating channel_1.thread
         await act(async () => {
             await jane.sendMessage(channel_1, 'hello thread in channel_1', {
-                threadId: channel_1_message_0.getId(),
+                threadId: channel_1_message_0.eventId,
             })
         })
         // - bob sees thread stats on chanel_1.message_1
@@ -317,7 +315,7 @@ describe('sendThreadedMessageHooks', () => {
         // - jane messages again
         await act(async () => {
             await jane.sendMessage(channel_1, 'hello again in channel_1', {
-                threadId: channel_1_message_0.getId(),
+                threadId: channel_1_message_0.eventId,
             })
         })
         // - bob sees thread stats on chanel_1.message_1
@@ -330,29 +328,25 @@ describe('sendThreadedMessageHooks', () => {
             () =>
                 expect(
                     jane
-                        .getRoom(channel_2)!
-                        .getLiveTimeline()
-                        .getEvents()
-                        .find((e) => e.getContent()?.body === 'hello jane in channel_2'),
+                        .getEvents_TypedRoomMessage(channel_2)!
+                        .find((e) => e.content.body === 'hello jane in channel_2'),
                 ).toBeDefined(),
             TestConstants.DefaultWaitForTimeout,
         )
         const channel_2_message_1 = jane
-            .getRoom(channel_2)!
-            .getLiveTimeline()
-            .getEvents()
-            .find((e) => e.getContent()?.body === 'hello jane in channel_2')!
+            .getEvents_TypedRoomMessage(channel_2)!
+            .find((e) => e.content.body === 'hello jane in channel_2')!
 
         await act(async () => {
             await jane.sendMessage(channel_2, 'hello thread in channel_2', {
-                threadId: channel_2_message_1.getId(),
+                threadId: channel_2_message_1.eventId,
             })
         })
         // -- bob should see the channel_2.thread in his thread list
         await waitFor(
             () =>
                 expect(threadRoots).toHaveTextContent(
-                    `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.getId()!})`,
+                    `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.eventId})`,
                 ),
             TestConstants.DefaultWaitForTimeout,
         )
@@ -408,7 +402,7 @@ describe('sendThreadedMessageHooks', () => {
                 mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
             })
             await jane.sendMessage(channel_2, 'hello thread in channel_2 @bob', {
-                threadId: channel_2_message_1.getId(),
+                threadId: channel_2_message_1.eventId,
                 mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
             })
         })

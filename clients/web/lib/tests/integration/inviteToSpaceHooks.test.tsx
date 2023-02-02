@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomVisibility, SpaceItem } from '../../src/types/matrix-types'
+import { Membership, RoomVisibility, SpaceItem } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,

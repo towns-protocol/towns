@@ -1,5 +1,5 @@
 import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
-import { Channel, Membership, Mention, PowerLevels } from './matrix-types'
+import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { RoomIdentifier } from './room-identifier'
 
 /**************************************************************************

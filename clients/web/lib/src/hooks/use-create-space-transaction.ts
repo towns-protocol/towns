@@ -1,7 +1,7 @@
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
 import { useCallback, useMemo, useState } from 'react'
 
-import { CreateSpaceInfo } from '../types/matrix-types'
+import { CreateSpaceInfo } from '../types/zion-types'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'

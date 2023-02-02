@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useSpaceData } from './use-space-data'
-import { Channel } from '../types/matrix-types'
+import { Channel } from '../types/zion-types'
 
 export function useChannels() {
     // this would be much more effecient if it was saved off in the useMatrixTimelines hook...

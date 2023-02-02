@@ -9,7 +9,7 @@ import {
     useZionContext,
 } from 'use-zion-client'
 
-import { SpaceChild, SpaceItem } from 'use-zion-client/dist/types/matrix-types'
+import { SpaceChild, SpaceItem } from 'use-zion-client/dist/types/zion-types'
 import React, { useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 

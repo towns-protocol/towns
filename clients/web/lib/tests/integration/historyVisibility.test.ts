@@ -2,7 +2,8 @@
 import { waitFor } from '@testing-library/react'
 import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { sleep } from '../../src/utils/zion-utils'
 import {
     createTestSpaceWithEveryoneRole,
@@ -33,10 +34,8 @@ describe('historyVisibility', () => {
         await waitFor(() =>
             expect(
                 bob
-                    .getRoom(roomId)!
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === "I'm John!"),
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content.body === "I'm John!"),
             ).toBeDefined(),
         )
 
@@ -48,61 +47,65 @@ describe('historyVisibility', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // alice joins the room
         await alice.joinRoom(roomId)
-        // alice should eventually see the room
-        await waitFor(() => expect(alice.getRoom(roomId)).toBeDefined())
-        // get the room
-        const room = alice.getRoom(roomId)!
+        if (roomId.protocol === SpaceProtocol.Matrix) {
+            // alice should eventually see the room
+            await waitFor(() => expect(alice.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
+            // get the room
+            const room = alice.matrixClient!.getRoom(roomId.networkId)!
 
-        await sleep(1)
+            await sleep(1)
 
-        console.log(
-            'room.getLiveTimeline().getEvents()',
-            room
+            console.log(
+                'room.getLiveTimeline().getEvents()',
+                room
+                    .getLiveTimeline()
+                    .getEvents()
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                    .map((event: MatrixEvent) => `${event.getType()} ${event.getContent().body}`),
+            )
+
+            const events = room
                 .getLiveTimeline()
                 .getEvents()
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                .map((event: MatrixEvent) => `${event.getType()} ${event.getContent().body}`),
-        )
+                .filter((event: MatrixEvent) => event.getType() === 'm.room.encrypted')
 
-        const events = room
-            .getLiveTimeline()
-            .getEvents()
-            .filter((event: MatrixEvent) => event.getType() === 'm.room.encrypted')
+            for (const event of events) {
+                await alice.matrixClient!.decryptEventIfNeeded(event, {
+                    isRetry: true,
+                    emit: true,
+                    forceRedecryptIfUntrusted: true,
+                })
+            }
 
-        for (const event of events) {
-            await alice.matrixClient!.decryptEventIfNeeded(event, {
-                isRetry: true,
-                emit: true,
-                forceRedecryptIfUntrusted: true,
-            })
+            console.log(
+                'room.getLiveTimeline().getEvents() after decrypting',
+                room
+                    .getLiveTimeline()
+                    .getEvents()
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                    .map((event: MatrixEvent) => `${event.getType()} ${event.getContent().body}`),
+            )
+
+            // and we should see the message
+            await waitFor(() =>
+                expect(
+                    room
+                        .getLiveTimeline()
+                        .getEvents()
+                        .find((event: MatrixEvent) => event.getContent().body === 'Hello World!'),
+                ).toBeDefined(),
+            )
+
+            await waitFor(() =>
+                expect(
+                    room
+                        .getLiveTimeline()
+                        .getEvents()
+                        .find((event: MatrixEvent) => event.getContent().body === "I'm John!"),
+                ).toBeDefined(),
+            )
+        } else {
+            expect(false) // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
         }
-
-        console.log(
-            'room.getLiveTimeline().getEvents() after decrypting',
-            room
-                .getLiveTimeline()
-                .getEvents()
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                .map((event: MatrixEvent) => `${event.getType()} ${event.getContent().body}`),
-        )
-
-        // and we should see the message
-        await waitFor(() =>
-            expect(
-                room
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === 'Hello World!'),
-            ).toBeDefined(),
-        )
-
-        await waitFor(() =>
-            expect(
-                room
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === "I'm John!"),
-            ).toBeDefined(),
-        )
     })
 })

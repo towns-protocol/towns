@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback } from 'react'
 import {

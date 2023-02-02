@@ -20,12 +20,16 @@ import {
 } from '../../../src/client/ZionClientTypes'
 import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
 import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
-import { TimelineEvent, ZTEvent } from '../../../src/types/timeline-types'
+import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../../src/types/timeline-types'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
     eventHandlers?: ZionClientEventHandlers
+}
+
+export type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
+    content: RoomMessageEvent
 }
 
 export class ZionTestClient extends ZionClient {
@@ -235,46 +239,70 @@ export class ZionTestClient extends ZionClient {
         return await super.isUserRegistered(this.userIdentifier.matrixUserIdLocalpart)
     }
 
+    public async waitForStream(roomId: RoomIdentifier): Promise<void> {
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                return
+            case SpaceProtocol.Casablanca:
+                await this.casablancaClient?.waitForStream(roomId.networkId)
+                return
+            default:
+                staticAssertNever(roomId)
+        }
+    }
     /************************************************
      * getLatestEvent
      ************************************************/
-    public async getLatestEvent(
-        roomId: RoomIdentifier,
-        userId: string,
-        eventType = ZTEvent.RoomMessage,
-    ): Promise<TimelineEvent | undefined> {
+    public getEvents(roomId: RoomIdentifier, eventType?: ZTEvent): TimelineEvent[] {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                const events = this.matrixClient
-                    .getRoom(roomId.networkId)
-                    ?.getLiveTimeline()
-                    .getEvents()
-                    .map((e) => toEvent(e, userId))
-                if (events) {
-                    return events.filter((e) => e?.content?.kind === eventType).at(-1)
-                } else {
-                    return undefined
+                const userId = this.matrixClient.getUserId()
+                if (!userId) {
+                    throw new Error('userId is undefined')
                 }
+                const events =
+                    this.matrixClient
+                        .getRoom(roomId.networkId)
+                        ?.getLiveTimeline()
+                        .getEvents()
+                        .map((e) => toEvent(e, userId)) ?? []
+                if (eventType) {
+                    return events.filter((e) => e?.content?.kind === eventType)
+                }
+                return events
             }
             case SpaceProtocol.Casablanca: {
                 if (!this.casablancaClient) {
                     throw new Error('casablanca client is undefined')
                 }
-                const stream = await this.casablancaClient.waitForStream(roomId.networkId)
-                const events = Array.from(stream.rollup.events.values()).map((e) =>
+                const stream = this.casablancaClient.stream(roomId.networkId)
+                const events = Array.from(stream?.rollup.events.values() ?? []).map((e) =>
                     toZionEventFromCsbEvent(e),
                 )
-                if (events) {
-                    return events.filter((e) => e?.content?.kind === eventType).at(-1)
-                } else {
-                    return undefined
+                if (eventType) {
+                    return events.filter((e) => e?.content?.kind === eventType)
                 }
+                return events
             }
             default:
                 staticAssertNever(roomId)
         }
+    }
+
+    public getEvents_TypedRoomMessage(roomId: RoomIdentifier): ZRoomMessageEvent[] {
+        const events = this.getEvents(roomId, ZTEvent.RoomMessage)
+        return events.map((e) => e as ZRoomMessageEvent)
+    }
+
+    public async getLatestEvent(
+        roomId: RoomIdentifier,
+        eventType: ZTEvent | undefined = ZTEvent.RoomMessage,
+    ): Promise<TimelineEvent | undefined> {
+        await this.waitForStream(roomId)
+        const events = this.getEvents(roomId, eventType)
+        return events.at(-1)
     }
 }

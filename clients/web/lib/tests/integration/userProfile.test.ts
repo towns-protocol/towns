@@ -7,7 +7,6 @@ import {
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
-import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { act, waitFor } from '@testing-library/react'
@@ -36,31 +35,29 @@ describe('userProfile', () => {
         await alice.joinRoom(roomId)
         // alice should see bob's user name
         await waitFor(() =>
-            expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.name).toBe(
-                "Bob's your uncle",
-            ),
+            expect(alice.getRoomMember(roomId, bob.matrixUserId!)?.name).toBe("Bob's your uncle"),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(alice.getRoom(roomId)?.getMember(bob.matrixUserId!)?.getMxcAvatarUrl()).toBe(
+            expect(alice.getRoomMember(roomId, bob.matrixUserId!)?.avatarUrl).toBe(
                 'https://example.com/bob.png',
             ),
         )
         // log alice's view of bob
-        const alicesViewOfBob = alice.getRoom(roomId)?.getMember(bob.matrixUserId!)
+        const alicesViewOfBob = alice.getRoomMember(roomId, bob.matrixUserId!)
         console.log('alice sees bob as', {
             name: alicesViewOfBob?.name,
             disambiguate: alicesViewOfBob?.disambiguate,
             rawDisplayName: alicesViewOfBob?.rawDisplayName,
-            avatarUrl: alicesViewOfBob?.getMxcAvatarUrl(),
+            avatarUrl: alicesViewOfBob?.avatarUrl,
         })
         // log bob's view of alice
-        const bobsViewOfAlice = bob.getRoom(roomId)?.getMember(alice.matrixUserId!)
+        const bobsViewOfAlice = bob.getRoomMember(roomId, alice.matrixUserId!)
         console.log('bob sees alice as', {
             name: bobsViewOfAlice?.name,
             disambiguate: bobsViewOfAlice?.disambiguate,
             rawDisplayName: bobsViewOfAlice?.rawDisplayName,
-            avatarUrl: bobsViewOfAlice?.getMxcAvatarUrl(),
+            avatarUrl: bobsViewOfAlice?.avatarUrl,
         })
         // alice updates her profile
         await act(async () => {
@@ -70,7 +67,7 @@ describe('userProfile', () => {
         // bob should see alices new user name
         await waitFor(
             () =>
-                expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.name).toBe(
+                expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.name).toBe(
                     "Alice's your aunt",
                 ),
             TestConstants.DefaultWaitForTimeout,
@@ -78,7 +75,7 @@ describe('userProfile', () => {
         // alice should see bob's profile photo
         await waitFor(
             () =>
-                expect(bob.getRoom(roomId)?.getMember(alice.matrixUserId!)?.getMxcAvatarUrl()).toBe(
+                expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.avatarUrl).toBe(
                     'https://example.com/alice.png',
                 ),
             TestConstants.DefaultWaitForTimeout,
@@ -92,20 +89,16 @@ describe('userProfile', () => {
             () =>
                 expect(
                     alice
-                        .getRoom(roomId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .find((event: MatrixEvent) => event.getContent()?.body === 'hello'),
+                        .getEvents_TypedRoomMessage(roomId)
+                        .find((event) => event.content.body === 'hello'),
                 ).toBeDefined(),
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // get the message
         const message = alice
-            .getRoom(roomId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .find((event: MatrixEvent) => event.getContent()?.body === 'hello')
+            .getEvents_TypedRoomMessage(roomId)
+            .find((event) => event.content.body === 'hello')
         // sender?
-        expect(message?.sender?.rawDisplayName).toBe("Bob's your uncle")
+        expect(message?.sender?.displayName).toBe("Bob's your uncle")
     }) // end test
 }) // end describe

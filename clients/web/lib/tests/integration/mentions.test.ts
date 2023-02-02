@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
@@ -50,8 +50,7 @@ describe('mentions', () => {
 
         // bob should receive the message
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+            const e = await bob.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage &&
                     e?.content?.body === 'Hi @bob' &&

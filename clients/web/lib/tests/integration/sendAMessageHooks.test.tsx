@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import React, { useCallback, useMemo } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
@@ -190,15 +190,9 @@ describe('sendMessageHooks', () => {
         // expect jane to recieve the message
         await waitFor(
             () =>
-                expect(
-                    jane
-                        .getRoom(janesChannelId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .filter((e) => e.getType() === 'm.room.message')
-                        .at(-1)
-                        ?.getContent().body,
-                ).toBe('hello jane'),
+                expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
+                    'hello jane',
+                ),
             TestConstants.DefaultWaitForTimeout,
         )
         // expect the message to "flush" out of local pending state
@@ -217,15 +211,9 @@ describe('sendMessageHooks', () => {
         // expect jane to see the edited event
         await waitFor(
             () =>
-                expect(
-                    jane
-                        .getRoom(janesChannelId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .filter((e) => e.getType() === 'm.room.message')
-                        .at(-1)
-                        ?.getContent().body,
-                ).toBe('hello jane gm!'),
+                expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
+                    'hello jane gm!',
+                ),
             TestConstants.DefaultWaitForTimeout,
         )
         // redact the event

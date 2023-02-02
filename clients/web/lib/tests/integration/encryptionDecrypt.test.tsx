@@ -6,7 +6,7 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import { TimelineEvent } from '../../src/types/timeline-types'
 import { LoginWithWallet, RegisterAndJoinSpace } from './helpers/TestComponents'
 import {
@@ -135,15 +135,9 @@ describe('canDecryptMessages', () => {
 
         // expect jane to recieve the message
         await waitFor(() =>
-            expect(
-                jane
-                    .getRoom(janesChannelId)
-                    ?.getLiveTimeline()
-                    .getEvents()
-                    .filter((e) => e.getType() === 'm.room.message')
-                    .at(-1)
-                    ?.getContent().body,
-            ).toBe('hello jane'),
+            expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
+                'hello jane',
+            ),
         )
 
         // expect to render

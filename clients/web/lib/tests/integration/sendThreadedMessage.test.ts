@@ -8,7 +8,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { ZTEvent } from '../../src/types/timeline-types'
 
@@ -47,13 +47,13 @@ describe('sendThreadedMessage', () => {
         // wait for alice to receive the message
         await waitFor(async () => {
             // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await alice.getLatestEvent(channelId, alice.matrixUserId!)
+            const e = await alice.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage && e?.content?.body === 'Hello Alice!',
             ).toEqual(true)
         })
         // event
-        const event = await alice.getLatestEvent(channelId, alice.matrixUserId!)
+        const event = await alice.getLatestEvent(channelId)
         // assert assumptions
         expect(event?.threadParentId).toBeUndefined()
         // alice sends a threaded reply room
@@ -61,7 +61,7 @@ describe('sendThreadedMessage', () => {
         // bob should receive the message & thread id should be set to parent event id
         await waitFor(async () => {
             // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+            const e = await bob.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage &&
                     e?.content?.body === 'Hello Bob!' &&

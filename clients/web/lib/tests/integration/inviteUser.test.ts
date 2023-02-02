@@ -9,7 +9,7 @@ import {
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('inviteUser', () => {
     // test:
@@ -31,19 +31,19 @@ describe('inviteUser', () => {
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.matrixUserId!)
         await waitFor(
-            () => expect(bob.getRoom(roomId)?.getMembers().length == 1),
+            () => expect(bob.getRoomData(roomId)?.members.length == 1),
             TestConstants.DefaultWaitForTimeout,
         )
         // alice should expect an invite to the room
         await waitFor(
-            () => expect(alice.getRoom(roomId)).toBeDefined(),
+            () => expect(alice.getRoomData(roomId)).toBeDefined(),
             TestConstants.DefaultWaitForTimeout,
         )
 
         // alice joins the room
         await alice.joinRoom(roomId)
         await waitFor(
-            () => expect(bob.getRoom(roomId)?.getMembers().length == 2),
+            () => expect(bob.getRoomData(roomId)?.members.length == 2),
             TestConstants.DefaultWaitForTimeout,
         )
     }) // end test

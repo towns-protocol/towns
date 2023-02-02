@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMemo } from 'react'
-import { Membership } from '../types/matrix-types'
+import { Membership } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { useMember } from './use-member'
 

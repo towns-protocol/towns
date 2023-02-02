@@ -1,5 +1,5 @@
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import { Membership, Room, RoomMember, SpaceChild } from '../types/matrix-types'
+import { Membership, Room, RoomMember, SpaceChild } from '../types/zion-types'
 import { makeRoomIdentifier, makeMatrixRoomIdentifier } from '../types/room-identifier'
 import create, { SetState } from 'zustand'
 
@@ -69,7 +69,9 @@ function toZionMembers(r: MatrixRoom): {
     const members: RoomMember[] = r.getMembersWithMembership(Membership.Join).map((x) => ({
         userId: x.userId,
         name: x.name,
+        rawDisplayName: x.rawDisplayName,
         membership: Membership.Join,
+        disambiguate: x.disambiguate,
         avatarUrl: x.getMxcAvatarUrl() ?? undefined,
     }))
 

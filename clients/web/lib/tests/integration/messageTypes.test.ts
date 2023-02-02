@@ -5,7 +5,7 @@ import {
     MessageType,
     RoomVisibility,
     ZionTextMessageContent,
-} from '../../src/types/matrix-types'
+} from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestSpaceWithZionMemberRole,
@@ -14,7 +14,6 @@ import {
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
 
-import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
@@ -48,13 +47,8 @@ describe('messageTypes', () => {
             () =>
                 expect(
                     bob
-                        .getRoom(roomId)
-                        ?.getLiveTimeline()
-                        .getEvents()
-                        .find(
-                            (event: MatrixEvent) =>
-                                event.getContent().msgtype === MessageType.WenMoon,
-                        ),
+                        .getEvents_TypedRoomMessage(roomId)
+                        .find((event) => event.content.msgType === MessageType.WenMoon),
                 ).toBeDefined(),
             TestConstants.DefaultWaitForTimeout,
         )
@@ -100,16 +94,16 @@ describe('messageTypes', () => {
 
         await waitFor(() => {
             const imageMessage = bob
-                .getRoom(roomId)
-                ?.getLiveTimeline()
-                .getEvents()
-                .find((event: MatrixEvent) => event.getContent().msgtype === MessageType.Image)
+                .getEvents_TypedRoomMessage(roomId)
+                .find((event) => event.content?.msgType === MessageType.Image)
 
             expect(imageMessage).toBeDefined()
-            expect(imageMessage?.getContent<ImageMessageContent>().url).toBe(IMAGE_MSG_CONTENT.url)
-            expect(imageMessage?.getContent<ImageMessageContent>().info?.thumbnail_info?.size).toBe(
-                30,
+            expect((imageMessage?.content.content as ImageMessageContent).url).toBe(
+                IMAGE_MSG_CONTENT.url,
             )
+            expect(
+                (imageMessage?.content.content as ImageMessageContent).info?.thumbnail_info?.size,
+            ).toBe(30)
         }, TestConstants.DefaultWaitForTimeout)
     })
 
@@ -145,15 +139,13 @@ describe('messageTypes', () => {
 
         await waitFor(() => {
             const zionTextMessage = bob
-                .getRoom(roomId)
-                ?.getLiveTimeline()
-                .getEvents()
-                .find((event: MatrixEvent) => event.getContent().msgtype === MessageType.ZionText)
+                .getEvents_TypedRoomMessage(roomId)
+                .find((event) => event.content.msgType === MessageType.ZionText)
 
             expect(zionTextMessage).toBeDefined()
-            expect(zionTextMessage?.getContent<ZionTextMessageContent>().attachments?.[0]).toEqual(
-                expect.objectContaining({ url: 'https://example.com' }),
-            )
+            expect(
+                (zionTextMessage?.content.content as ZionTextMessageContent).attachments?.[0],
+            ).toEqual(expect.objectContaining({ url: 'https://example.com' }))
         }, TestConstants.DefaultWaitForTimeout)
     })
 }) // end describe

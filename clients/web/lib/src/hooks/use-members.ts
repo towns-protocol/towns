@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useRoom } from './use-room'
-import { RoomMember } from '../types/matrix-types'
+import { RoomMember } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 
 /**

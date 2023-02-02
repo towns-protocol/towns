@@ -1,4 +1,4 @@
-import { User } from '../types/matrix-types'
+import { User } from '../types/zion-types'
 import { useMatrixCredentials } from './use-matrix-credentials'
 import { useUser } from './use-user'
 

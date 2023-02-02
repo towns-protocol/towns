@@ -9,7 +9,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
 import { ZionClient } from '../../client/ZionClient'
-import { SpaceHierarchies } from '../../types/matrix-types'
+import { SpaceHierarchies } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZTEvent } from '../../types/timeline-types'
 

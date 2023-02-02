@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
@@ -140,9 +140,7 @@ describe('sendReactionHooks', () => {
         // expect jane to recieve the message
         await waitFor(
             () =>
-                expect(
-                    jane.getRoom(janesChannelId)?.getLiveTimeline().getEvents().at(-1)?.getType(),
-                ).toBe(ZTEvent.Reaction),
+                expect(jane.getEvents(janesChannelId).at(-1)?.content?.kind).toBe(ZTEvent.Reaction),
             TestConstants.DefaultWaitForTimeout,
         )
     })

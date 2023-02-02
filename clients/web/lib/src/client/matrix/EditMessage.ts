@@ -1,5 +1,5 @@
 import { MatrixClient, RelationType } from 'matrix-js-sdk'
-import { EditMessageOptions, MessageType, SendTextMessageOptions } from '../../types/matrix-types'
+import { EditMessageOptions, MessageType, SendTextMessageOptions } from '../../types/zion-types'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
 /**

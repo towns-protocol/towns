@@ -2,7 +2,7 @@ import {
     CreateChannelInfo,
     CreateSpaceInfo,
     RoomVisibility,
-} from 'use-zion-client/src/types/matrix-types'
+} from 'use-zion-client/src/types/zion-types'
 import { Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 import {

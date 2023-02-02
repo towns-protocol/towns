@@ -16,7 +16,6 @@ import {
     EventType,
     MatrixClient,
     MatrixError,
-    Room as MatrixRoom,
     PendingEventOrdering,
     RelationType,
     User,
@@ -30,9 +29,11 @@ import {
     EditMessageOptions,
     PowerLevel,
     PowerLevels,
+    Room,
+    RoomMember,
     SendMessageOptions,
     SendTextMessageOptions,
-} from '../types/matrix-types'
+} from '../types/zion-types'
 import { SignerContext, publicKeyToBuffer } from '@zion/core'
 
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
@@ -1015,13 +1016,25 @@ export class ZionClient {
      * getPowerLevels
      ************************************************/
     public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
-        const room = this.getRoom(roomId)
-        if (!room) {
-            throw new Error(`Room ${roomId.networkId} not found`)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                const room = this.matrixClient?.getRoom(roomId.networkId)
+                if (!room) {
+                    throw new Error(`Room ${roomId.networkId} not found`)
+                }
+                const powerLevelsEvent = room.currentState.getStateEvents(
+                    EventType.RoomPowerLevels,
+                    '',
+                )
+                const powerLevels = powerLevelsEvent ? powerLevelsEvent.getContent() : {}
+                return enrichPowerLevels(powerLevels)
+            }
+            case SpaceProtocol.Casablanca: {
+                throw new Error('not implemented')
+            }
+            default:
+                staticAssertNever(roomId)
         }
-        const powerLevelsEvent = room.currentState.getStateEvents(EventType.RoomPowerLevels, '')
-        const powerLevels = powerLevelsEvent ? powerLevelsEvent.getContent() : {}
-        return enrichPowerLevels(powerLevels)
     }
 
     /************************************************
@@ -1099,20 +1112,35 @@ export class ZionClient {
     }
 
     /************************************************
-     * getRoom
+     * getRoomData
      ************************************************/
-    public getRoom(roomId: RoomIdentifier): MatrixRoom | undefined {
+    public getRoomData(roomId: RoomIdentifier): Room | undefined {
         switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
+            case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return this.matrixClient.getRoom(roomId.networkId) ?? undefined
-            case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+                const matrixRoom = this.matrixClient.getRoom(roomId.networkId)
+                return matrixRoom ? toZionRoom(matrixRoom) : undefined
+            }
+            case SpaceProtocol.Casablanca: {
+                if (!this.casablancaClient) {
+                    throw new Error('casablanca client is undefined')
+                }
+                const stream = this.casablancaClient.stream(roomId.networkId)
+                return stream ? toZionRoomFromStream(stream) : undefined
+            }
             default:
                 staticAssertNever(roomId)
         }
+    }
+
+    /************************************************
+     * getRoomMember
+     * **********************************************/
+    public getRoomMember(roomId: RoomIdentifier, userId: string): RoomMember | undefined {
+        const roomData = this.getRoomData(roomId)
+        return roomData?.members.find((x) => x.userId === userId)
     }
 
     /************************************************

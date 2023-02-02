@@ -1,6 +1,6 @@
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { CreateSpaceInfo, RoomVisibility } from '../../src/types/matrix-types'
+import { CreateSpaceInfo, RoomVisibility } from '../../src/types/zion-types'
 import {
     createExternalTokenStruct,
     getCouncilNftAddress,
@@ -139,7 +139,7 @@ describe('Zion event handlers test', () => {
         await alice.inviteUser(roomId, bob.matrixUserId)
 
         await waitFor(
-            () => expect(bob.getRoom(roomId)).toBeDefined(),
+            () => expect(bob.getRoomData(roomId)).toBeDefined(),
             TestConstants.DefaultWaitForTimeout,
         )
         // bob joins the room

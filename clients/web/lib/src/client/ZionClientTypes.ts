@@ -2,7 +2,7 @@
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { TProvider } from 'types/web3-types'
-import { CreateSpaceInfo, SendMessageOptions } from 'types/matrix-types'
+import { CreateSpaceInfo, SendMessageOptions } from 'types/zion-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
 

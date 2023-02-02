@@ -1,7 +1,7 @@
 import { useChannelContext } from '../components/ChannelContextProvider'
 import { useMemo } from 'react'
 import { useSpaceData } from './use-space-data'
-import { ChannelData } from '../types/matrix-types'
+import { ChannelData } from '../types/zion-types'
 
 export function useChannelData(): ChannelData {
     const { channelId, spaceId } = useChannelContext()

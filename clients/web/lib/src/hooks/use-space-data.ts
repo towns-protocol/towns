@@ -8,9 +8,8 @@ import {
     SpaceData,
     SpaceHierarchies,
     SpaceHierarchy,
-} from '../types/matrix-types'
+} from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
-import { toZionRoom } from '../store/use-matrix-store'
 import { useZionClient } from './use-zion-client'
 import { useRoom } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -75,12 +74,12 @@ export function useInvites(): InviteData[] {
         () =>
             invitedToIds
                 .map((id) => {
-                    const room = client?.getRoom(id)
+                    const room = client?.getRoomData(id)
                     if (!room) {
                         return undefined
                     }
                     return formatInvite(
-                        toZionRoom(room),
+                        room,
                         getParentSpaceId(id.networkId, spaceHierarchies),
                         '/placeholders/nft_29.png',
                     )

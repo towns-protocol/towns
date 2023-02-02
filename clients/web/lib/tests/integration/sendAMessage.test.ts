@@ -15,7 +15,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { ZTEvent } from '../../src/types/timeline-types'
@@ -71,7 +71,7 @@ describe('sendAMessage', () => {
             console.log(`!!!!!! client ${i} waits for message`)
             const client = clients[`client_${i}`]
             await waitFor(async () => {
-                const event = await client.getLatestEvent(channelId, client.matrixUserId!)
+                const event = await client.getLatestEvent(channelId)
                 expect(
                     event?.content?.kind === ZTEvent.RoomMessage &&
                         event?.content?.body === 'Hello Alice!',
@@ -85,7 +85,7 @@ describe('sendAMessage', () => {
             await client.sendMessage(channelId, `Hello Bob! from ${client.matrixUserId!}`)
             // bob should receive the message
             await waitFor(async () => {
-                const event = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+                const event = await bob.getLatestEvent(channelId)
                 expect(
                     event?.content?.kind === ZTEvent.RoomMessage &&
                         event?.content?.body === `Hello Bob! from ${client.matrixUserId!}`,

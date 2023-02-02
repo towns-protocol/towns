@@ -18,7 +18,7 @@ export const RoomSettings = () => {
     const targetId = channelSlug || spaceSlug
     const roomId = targetId ? makeRoomIdentifier(targetId) : undefined
     const room = useRoom(roomId)
-    const matrixRoom = roomId ? client?.getRoom(roomId) : undefined
+    const matrixRoom = roomId ? client?.matrixClient?.getRoom(roomId.networkId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 
     const powerLevels = usePowerLevels(room?.id)

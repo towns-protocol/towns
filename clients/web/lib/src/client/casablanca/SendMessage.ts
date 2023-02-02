@@ -10,7 +10,7 @@ import {
     MessageType,
     SendMessageOptions,
     SendZionReactionOptions,
-} from '../../types/matrix-types'
+} from '../../types/zion-types'
 import { CasablancaStreamIdentifier } from '../../types/room-identifier'
 
 /** treat message as a reply to parentId if specified */

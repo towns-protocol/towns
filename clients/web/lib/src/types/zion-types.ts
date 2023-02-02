@@ -105,7 +105,9 @@ export interface User {
 export interface RoomMember {
     userId: string
     name: string
+    rawDisplayName: string
     membership: Membership
+    disambiguate: boolean
     avatarUrl?: string
 }
 

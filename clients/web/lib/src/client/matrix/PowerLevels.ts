@@ -1,5 +1,5 @@
 import { powerLevelDefinitions } from '../../data/power-level-definitions'
-import { PowerLevel, PowerLevelDefinition, PowerLevels } from '../../types/matrix-types'
+import { PowerLevel, PowerLevelDefinition, PowerLevels } from '../../types/zion-types'
 
 export function enrichPowerLevels(levels?: Record<string, unknown>): PowerLevels {
     const userPowers = levels ? (levels['users'] as Record<string, number>) : {}

@@ -12,17 +12,18 @@ export type MatrixSpaceHierarchy = {
 }
 
 export async function syncMatrixSpace(
-    client: MatrixClient,
+    matrixClient: MatrixClient,
     spaceDapp: ISpaceDapp,
     spaceId: MatrixRoomIdentifier,
     walletAddress?: string,
 ): Promise<MatrixSpaceHierarchy | undefined> {
-    const userId = client.getUserId()
+    const userId = matrixClient.getUserId()
     if (!userId) {
         throw new Error('syncing space error: no userId')
     }
     const networkId = spaceId.networkId
-    const matrixRoom = client.getRoom(networkId) || new MatrixRoom(networkId, client, userId)
+    const matrixRoom =
+        matrixClient.getRoom(networkId) || new MatrixRoom(networkId, matrixClient, userId)
     const roomHierarchy = new RoomHierarchy(matrixRoom)
 
     const address = walletAddress || getAccount()?.address

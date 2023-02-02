@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { registerAndStartClients } from './helpers/TestUtils'
 
 /// Matrix rooms take a second before the client lib recognizes that they are encrypted 🤡

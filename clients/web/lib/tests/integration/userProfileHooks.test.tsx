@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { Membership, RoomVisibility } from '../../src/types/matrix-types'
+import { Membership, RoomMember, RoomVisibility } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
@@ -14,7 +14,6 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { RoomMember } from 'matrix-js-sdk'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZTEvent } from '../../src/types/timeline-types'
@@ -148,9 +147,8 @@ describe('userProfileHooks', () => {
             () =>
                 expect(
                     alice
-                        .getRoom(alicesChannelId)
-                        ?.getMembers()
-                        .some((x: RoomMember) => x.name === "Bob's your uncle"),
+                        .getRoomData(alicesChannelId)
+                        ?.members.some((x: RoomMember) => x.name === "Bob's your uncle"),
                 ).toBe(true),
             TestConstants.DefaultWaitForTimeout,
         )

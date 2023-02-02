@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 

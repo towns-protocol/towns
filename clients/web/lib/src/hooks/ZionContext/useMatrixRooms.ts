@@ -12,7 +12,7 @@ import {
 } from 'matrix-js-sdk'
 import { useEffect, useState } from 'react'
 import { toZionRoom } from '../../store/use-matrix-store'
-import { Room } from '../../types/matrix-types'
+import { Room } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
 
 export function useMatrixRooms(client?: MatrixClient): Record<string, Room | undefined> {

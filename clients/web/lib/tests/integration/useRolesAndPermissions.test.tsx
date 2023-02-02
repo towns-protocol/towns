@@ -6,7 +6,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { BigNumber } from 'ethers'
 import { RegisterWallet } from './helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
 import { TestConstants } from './helpers/TestConstants'

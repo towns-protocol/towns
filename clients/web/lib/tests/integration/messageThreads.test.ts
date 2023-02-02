@@ -5,8 +5,6 @@ import {
     registerAndStartClients,
     registerLoginAndStartClient,
 } from './helpers/TestUtils'
-
-import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
@@ -34,30 +32,23 @@ describe('messageThreads', () => {
         await waitFor(() =>
             expect(
                 bob
-                    .getRoom(roomId)
-                    ?.timeline.find(
-                        (event: MatrixEvent) => event.event.content?.body === 'hi Bob!',
-                    ),
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content?.body === 'hi Bob!'),
             ).toBeDefined(),
         )
 
         // get the message id
         const messageId = bob
-            .getRoom(roomId)!
-            .timeline.find((event: MatrixEvent) => event.event.content?.body === 'hi Bob!')!.event
-            .event_id
+            .getEvents_TypedRoomMessage(roomId)!
+            .find((event) => event.content?.body === 'hi Bob!')!.eventId
         // bob sends a threaded message
         await bob.sendMessage(roomId, 'hi Alice!', { threadId: messageId })
         // alice should receive the message
         await waitFor(() =>
             expect(
                 alice
-                    .getRoom(roomId)
-                    ?.timeline.find(
-                        (event: MatrixEvent) =>
-                            event.event.content &&
-                            event.event.content['m.relates_to']?.event_id === messageId,
-                    ),
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content && event.content.inReplyTo === messageId),
             ).toBeDefined(),
         )
     }) // end test - send a threaded message

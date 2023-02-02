@@ -5,7 +5,7 @@ import { publicKeyToBuffer, SignerContext } from '@zion/core'
 import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
@@ -63,8 +63,7 @@ describe('casablanca', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const event = await alice.getLatestEvent(channelId, alice.matrixUserId!)
+            const event = await alice.getLatestEvent(channelId)
             // TODO - need to merge ZTEvent into a common type for both marix and CB
             expect(
                 event?.content?.kind === ZTEvent.RoomMessage &&

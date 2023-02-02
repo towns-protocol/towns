@@ -1,7 +1,7 @@
 import { MatrixEvent, UserEvent, User as MatrixUser } from 'matrix-js-sdk'
 import { useEffect, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-import { User } from '../types/matrix-types'
+import { User } from '../types/zion-types'
 
 export function useUser(userId?: string): User | undefined {
     const { client } = useZionContext()

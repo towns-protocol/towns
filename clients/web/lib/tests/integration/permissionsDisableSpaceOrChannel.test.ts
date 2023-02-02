@@ -9,7 +9,7 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
-import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 

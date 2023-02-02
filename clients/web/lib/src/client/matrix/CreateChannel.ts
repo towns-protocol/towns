@@ -6,7 +6,7 @@ import {
     Visibility,
 } from 'matrix-js-sdk'
 import { sleepUntil } from '../../utils/zion-utils'
-import { CreateChannelInfo, RoomVisibility } from '../../types/matrix-types'
+import { CreateChannelInfo, RoomVisibility } from '../../types/zion-types'
 import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
 export async function createMatrixChannel(

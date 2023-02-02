@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { getIdForMatrixEvent, Membership, Mention } from '../../types/matrix-types'
+import { getIdForMatrixEvent, Membership, Mention } from '../../types/zion-types'
 import {
     ClientEvent,
     EventType as MatrixEventType,

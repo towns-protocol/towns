@@ -73,9 +73,9 @@ export type {
     SpaceItem,
     MessageContent,
     ZionTextMessageContent,
-} from './types/matrix-types'
+} from './types/zion-types'
 
-export { Membership, MessageType, RoomVisibility } from './types/matrix-types'
+export { Membership, MessageType, RoomVisibility } from './types/zion-types'
 
 export type { RoomIdentifier } from './types/room-identifier'
 export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'

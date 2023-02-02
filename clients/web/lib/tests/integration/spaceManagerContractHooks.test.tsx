@@ -5,7 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
-import { RoomVisibility } from 'use-zion-client/src/types/matrix-types'
+import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'

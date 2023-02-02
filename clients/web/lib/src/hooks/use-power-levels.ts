@@ -1,17 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import {
-    ClientEvent,
-    EventType,
-    IRoomTimelineData,
-    MatrixEvent,
-    Room as MatrixRoom,
-    RoomEvent,
-} from 'matrix-js-sdk'
+import { ClientEvent, EventType, MatrixEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import { useEffect, useState } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-import { PowerLevels } from '../types/matrix-types'
+import { PowerLevels } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { enrichPowerLevels } from '../client/matrix/PowerLevels'
+import { SpaceProtocol } from '../client/ZionClientTypes'
 
 export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels => {
     const { client } = useZionContext()
@@ -19,13 +12,16 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
     const [powerLevels, setPowerLevels] = useState<PowerLevels>(enrichPowerLevels())
 
     useEffect(() => {
+        if (roomId?.protocol !== SpaceProtocol.Matrix) {
+            return
+        }
         // precondition
         if (!matrixClient || !roomId) {
             return
         }
         // helpers
         const updateState = () => {
-            const matrixRoom = client.getRoom(roomId)
+            const matrixRoom = matrixClient.getRoom(roomId.networkId)
             const powerLevelsEvent = matrixRoom?.currentState.getStateEvents(
                 EventType.RoomPowerLevels,
                 '',
@@ -41,13 +37,7 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
                 updateState()
             }
         }
-        const onRoomTimelineEvent = (
-            event: MatrixEvent,
-            eventRoom: MatrixRoom | undefined,
-            toStartOfTimeline: boolean | undefined,
-            removed: boolean,
-            data: IRoomTimelineData,
-        ) => {
+        const onRoomTimelineEvent = (event: MatrixEvent, eventRoom: MatrixRoom | undefined) => {
             const eventRoomId = event.getRoomId() ?? eventRoom?.roomId
             if (!eventRoomId) {
                 return
@@ -69,6 +59,6 @@ export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels 
             matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
             setPowerLevels(enrichPowerLevels())
         }
-    }, [client, matrixClient, roomId])
+    }, [matrixClient, roomId])
     return powerLevels
 }

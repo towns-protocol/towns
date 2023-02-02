@@ -8,7 +8,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RoomVisibility } from '../../src/types/matrix-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { ZTEvent } from '../../src/types/timeline-types'
 
@@ -46,8 +46,7 @@ describe('editMessage', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await alice.getLatestEvent(channelId, alice.matrixUserId!)
+            const e = await alice.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage && e?.content?.body === 'Hello Balice!',
             ).toEqual(true)
@@ -55,15 +54,14 @@ describe('editMessage', () => {
 
         // this is hack to ensure csb cache loads bob's message in bob's client
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+            const e = await bob.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage && e?.content?.body === 'Hello Balice!',
             ).toEqual(true)
         })
 
         // bob get the last message
-        const event = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+        const event = await bob.getLatestEvent(channelId)
         expect(
             event?.content?.kind === ZTEvent.RoomMessage &&
                 event?.content?.body === 'Hello Balice!',
@@ -79,7 +77,7 @@ describe('editMessage', () => {
 
         // bob should see the edited msg.
         await waitFor(async () => {
-            const e = await bob.getLatestEvent(channelId, bob.matrixUserId!)
+            const e = await bob.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage &&
                     e?.content?.body === 'Hello Alice!' &&
@@ -89,8 +87,7 @@ describe('editMessage', () => {
 
         // wait for alice to receive the edited message
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await alice.getLatestEvent(channelId, alice.matrixUserId!)
+            const e = await alice.getLatestEvent(channelId)
             expect(
                 e?.content?.kind === ZTEvent.RoomMessage &&
                     e?.content?.body === 'Hello Alice!' &&

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
-import { Membership } from '../../types/matrix-types'
+import { Membership } from '../../types/zion-types'
 import { ClientEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import isEqual from 'lodash/isEqual'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'

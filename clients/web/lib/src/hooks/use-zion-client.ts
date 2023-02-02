@@ -15,7 +15,7 @@ import {
     Room,
     SendMessageOptions,
     SendTextMessageOptions,
-} from '../types/matrix-types'
+} from '../types/zion-types'
 
 import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
 import { FullyReadMarker } from '../types/timeline-types'

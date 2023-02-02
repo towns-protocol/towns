@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
-import { SpaceHierarchies } from '../../types/matrix-types'
+import { SpaceHierarchies } from '../../types/zion-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { useTimelineStore } from '../../store/use-timeline-store'
 import { RoomIdentifier } from '../../types/room-identifier'

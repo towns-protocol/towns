@@ -10,7 +10,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../types/timeline-types'
-import { Mention, Room } from '../../types/matrix-types'
+import { Mention, Room } from '../../types/zion-types'
 import { makeCasablancaStreamIdentifier } from '../../types/room-identifier'
 
 export function toZionRoomFromStream(stream: Stream): Room {

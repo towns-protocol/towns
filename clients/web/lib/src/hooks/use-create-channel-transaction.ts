@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { CreateChannelInfo } from '../types/matrix-types'
+import { CreateChannelInfo } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
 import { useZionClient } from './use-zion-client'

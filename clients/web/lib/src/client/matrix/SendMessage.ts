@@ -5,7 +5,7 @@ import {
     SendMessageOptions,
     ImageMessageContent,
     ZionTextMessageContent,
-} from '../../types/matrix-types'
+} from '../../types/zion-types'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
 
 function getMessageContent(message: string, options: SendMessageOptions): MessageContent {
