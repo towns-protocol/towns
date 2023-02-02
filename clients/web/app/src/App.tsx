@@ -38,7 +38,7 @@ export const App = () => {
             primaryProtocol={SpaceProtocol.Matrix}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
             homeServerUrl={homeserverUrl}
-            defaultSpaceId={ZION_SPACE_ID}
+            defaultSpaceId={env.IS_DEV ? undefined : ZION_SPACE_ID}
             defaultSpaceName={ZION_SPACE_NAME}
             defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
             onboardingOpts={{ skipAvatar: true }}
