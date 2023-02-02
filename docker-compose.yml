@@ -1,0 +1,16 @@
+version: "3.4"
+services:
+  postgres-dendrite:
+    container_name: postgres-dendrite
+    image: postgres:14
+    restart: always
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_PASSWORD: itsasecret
+      POSTGRES_USER: dendrite
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dendrite"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

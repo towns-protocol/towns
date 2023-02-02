@@ -11,91 +11,70 @@ OPTIONS:
    PARAM        The param
    -h|--help    Show this message
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
-   -was|--with-appservice   Start Dendrite with appservice
    -spg|--skip-postgres   Dont start postgres at all
 EOF
 }
 
-WITH_APPSERVICE="${1:-no}"
-WITH_POSTGRES_PERSIST="${2:-no}"
-SKIP_POSTGRES="${3:-no}"
+# Set constants
+SCRIPT_DIR=$PWD
+LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 
-while [ ! $# -eq 0 ]; do
-    case "$1" in
-        -wpp | --with-postgres-persist)
-            WITH_POSTGRES_PERSIST='with-postgres-persist'
+# Parse command line arguments
+WITH_POSTGRES_PERSIST=""
+SKIP_POSTGRES=""
+
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -wpp | --with-postgres-persist )  
+            WITH_POSTGRES_PERSIST="with-postgres-persist"
             ;;
-        -was | --with-appservice)
-            WITH_APPSERVICE='with-appservice'
+        -spg | --skip-postgres )  
+            SKIP_POSTGRES="skip-postgres"
             ;;
-        -spg | --skip-postgres)
-            SKIP_POSTGRES='skip-postgres'
-            ;;
-        -h | --help)
+        -h | --help )
             usage
             exit
             ;;
-        *)
+        * )                     
             usage
-            exit
+            exit 1
             ;;
     esac
     shift
 done
-
-DENDRITE_POSTGRES_IMAGE="dendrite-test-postgres"
-
-SCRIPT_DIR=$PWD
-
-LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 
 pushd ${LOCAL_TEST_DIR}
 ./build.sh
 ./deploy.sh
 popd
 
-if [ ${SKIP_POSTGRES} == "skip-postgres" ]; then
+# helper function to start postgres in the background
+start_postgres_in_bg()
+{
+  echo "starting postgres in background"
+  docker compose up -d postgres-dendrite
+}
+
+if [ "${SKIP_POSTGRES}" == "skip-postgres" ]; then
   echo "Skipping postgres"
 else 
-  if [ ${WITH_POSTGRES_PERSIST} == "with-postgres-persist" ]; then
-    if [ ! "$(docker ps -q -f name=${DENDRITE_POSTGRES_IMAGE})" ]; then
-      echo "Using persistent postgres"
-        docker run \
-            --name ${DENDRITE_POSTGRES_IMAGE} \
-            -p 127.0.0.1:5432:5432 \
-            -e POSTGRES_USER=dendrite \
-            -e POSTGRES_PASSWORD=itsasecret \
-            -e POSTGRES_DB=dendrite \
-            -d postgres
-    else
-      echo "postgres already running"
-      fi
+  if [ "${WITH_POSTGRES_PERSIST}" == "with-postgres-persist" ]; then
+    echo "Using persistent postgres"
+    start_postgres_in_bg
+
   else
     echo "Using ephemeral postgres"
-    docker rm -f ${DENDRITE_POSTGRES_IMAGE}
-    docker run \
-        --name ${DENDRITE_POSTGRES_IMAGE} \
-        -p 127.0.0.1:5432:5432 \
-        -e POSTGRES_USER=dendrite \
-        -e POSTGRES_PASSWORD=itsasecret \
-        -e POSTGRES_DB=dendrite \
-        -d postgres
-    # Remove the database on EXIT
-    trap "docker rm -f ${DENDRITE_POSTGRES_IMAGE}" EXIT
+    start_postgres_in_bg # start postgres in the background so it can be restarted
+    docker compose restart postgres-dendrite # restart postgres to clear the data
   fi
+
   # Wait for postgres to be ready
-  until docker exec -it dendrite-test-postgres psql -U dendrite -c '\l'; do
+  until docker exec postgres-dendrite psql -U dendrite -c '\l'; do
     sleep 1
   done
   echo >&2 "$(date +%Y%m%dt%H%M%S) Postgres is up"
 fi
 
-if [ ${WITH_APPSERVICE} == "with-appservice" ]
-then
-  ${SCRIPT_DIR}/scripts/deploy-appservice-config.sh
-  cd ${LOCAL_TEST_DIR}
-  ./run_single.sh 0 dendrite.with_appservice.yaml
-else
-   cd ${LOCAL_TEST_DIR}
-  ./run_single.sh 0 dendrite.yaml
-fi
+cd ${LOCAL_TEST_DIR}
+./run_single.sh 0 dendrite.yaml
