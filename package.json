@@ -93,6 +93,19 @@
                     "devDependencies",
                     "peerDependencies"
                 ]
+            },
+            {
+                "dependencies": [
+                    "itty-router"
+                ],
+                "packages": [
+                    "gateway-worker"
+                ],
+                "dependencyTypes": [
+                    "dependencies",
+                    "devDependencies",
+                    "peerDependencies"
+                ]
             }
         ],
         "workspace": false

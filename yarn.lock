@@ -12013,6 +12013,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"gateway-worker@workspace:servers/workers/gateway-worker":
+  version: 0.0.0-use.local
+  resolution: "gateway-worker@workspace:servers/workers/gateway-worker"
+  dependencies:
+    "@cloudflare/workers-types": ^4.20221111.1
+    "@types/jest": ^29.4.0
+    "@typescript-eslint/eslint-plugin": ^5.49.0
+    "@typescript-eslint/parser": ^5.49.0
+    buffer: ^6.0.3
+    eslint: ^8.33.0
+    itty-router: ^3.0.11
+    jest: ^29.4.1
+    jest-environment-miniflare: ^2.11.0
+    miniflare: ^2.11.0
+    prettier: ^2.8.1
+    ts-jest: ^29.0.5
+    typescript: ^4.9.4
+    wrangler: ^2.9.0
+  languageName: unknown
+  linkType: soft
+
 "gauge@npm:^4.0.3":
   version: 4.0.4
   resolution: "gauge@npm:4.0.4"
@@ -13450,6 +13471,13 @@ __metadata:
   version: 2.6.6
   resolution: "itty-router@npm:2.6.6"
   checksum: 2117cba792e7a131f12af8e4f18ed7fddf643d632a440f235e4a3478eac4e4158272a859d160969e0d76e96f5a8659bd090f714afabdb95cffb7964c29d4a89f
+  languageName: node
+  linkType: hard
+
+"itty-router@npm:^3.0.11":
+  version: 3.0.11
+  resolution: "itty-router@npm:3.0.11"
+  checksum: 1c453ffe2070fa48ff42cc529f33d2f090b037127b81b2245f7c73dfc00f6d2281ea99b7a4d955dc5744415f2f51c0fc4820aec454aa56ccf3ef2724baa6c4ae
   languageName: node
   linkType: hard
 
