@@ -82,12 +82,13 @@ jobs:
             - name: Install node dependencies
               run: yarn install --immutable
 
-            - name: Restore Turbo build cache
-              id: restore-turbo-cache
-              uses: actions/cache/restore@v3
+            - name: Maintain Turbo cache
+              uses: actions/cache@v3
               with:
                   path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
 
             - name: Syncpack
               run: yarn syncpack:check
@@ -151,9 +152,3 @@ jobs:
                   SLACK_ICON_EMOJI: ':boom:'
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
-
-            - name: Save Turbo build cache
-              uses: actions/cache/save@v3
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo
