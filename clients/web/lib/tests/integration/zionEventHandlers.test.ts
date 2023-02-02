@@ -187,4 +187,44 @@ describe('Zion event handlers test', () => {
 
         expect(eventHandlerResult?.roomId).toEqual(roomId)
     })
+
+    test('onLogin', async () => {
+        const authEvents = {
+            loggedIn: false,
+        }
+
+        const { alice } = await registerAndStartClients(['alice'], {
+            eventHandlers: {
+                onLogin: () => {
+                    authEvents.loggedIn = true
+                },
+            },
+        })
+
+        expect(authEvents.loggedIn).toBe(false)
+
+        await alice.loginWallet()
+
+        expect(authEvents.loggedIn).toBe(true)
+    })
+
+    test('onLogout', async () => {
+        const authEvents = {
+            loggedOut: false,
+        }
+
+        const { alice } = await registerAndStartClients(['alice'], {
+            eventHandlers: {
+                onLogout: () => {
+                    authEvents.loggedOut = true
+                },
+            },
+        })
+
+        expect(authEvents.loggedOut).toBe(false)
+
+        await alice.logout()
+
+        expect(authEvents.loggedOut).toBe(true)
+    })
 })

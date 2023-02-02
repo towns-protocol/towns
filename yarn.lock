@@ -12,6 +12,64 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@amplitude/analytics-browser@npm:1.6.8":
+  version: 1.6.8
+  resolution: "@amplitude/analytics-browser@npm:1.6.8"
+  dependencies:
+    "@amplitude/analytics-client-common": ^0.5.2
+    "@amplitude/analytics-core": ^0.11.2
+    "@amplitude/analytics-types": ^0.14.0
+    "@amplitude/ua-parser-js": ^0.7.31
+    tslib: ^2.4.1
+  checksum: faff24dce07cab8658fd8763101cf9b7b354dd2197773be214157dda59db6affd94ba4471e8b2874e5e17cf679740c8fe0ba83ea99b1464bfe7ff5de1d2bd054
+  languageName: node
+  linkType: hard
+
+"@amplitude/analytics-client-common@npm:^0.5.2":
+  version: 0.5.2
+  resolution: "@amplitude/analytics-client-common@npm:0.5.2"
+  dependencies:
+    "@amplitude/analytics-connector": ^1.4.5
+    "@amplitude/analytics-core": ^0.11.2
+    "@amplitude/analytics-types": ^0.14.0
+    tslib: ^2.4.1
+  checksum: 27c97ce0f2d111f67ac4f109173f5ab6932cf1643139d75c45b375b9d4e2c62b0886bb836d3893778e791699ccc701c4546aee8d17c7a850d43a98bf055669c8
+  languageName: node
+  linkType: hard
+
+"@amplitude/analytics-connector@npm:^1.4.5":
+  version: 1.4.6
+  resolution: "@amplitude/analytics-connector@npm:1.4.6"
+  dependencies:
+    "@amplitude/ua-parser-js": 0.7.31
+  checksum: 0a2acfa54e02b405e1b66ec522aa5802f938f525ad0e81a864f9370b53a3a18f166962d891a5372c12938ec7c3fbbb3453304261845bd57e5617963c8285c2dc
+  languageName: node
+  linkType: hard
+
+"@amplitude/analytics-core@npm:^0.11.2":
+  version: 0.11.2
+  resolution: "@amplitude/analytics-core@npm:0.11.2"
+  dependencies:
+    "@amplitude/analytics-types": ^0.14.0
+    tslib: ^2.4.1
+  checksum: 27e349f5e26f2e1675f3ceb94679a7fb68bc798c901afed6e4544a88bc2e582373a615429fc73d56800960a9325fad05bd130bb360e82f6b5ffef208d9abb830
+  languageName: node
+  linkType: hard
+
+"@amplitude/analytics-types@npm:^0.14.0":
+  version: 0.14.0
+  resolution: "@amplitude/analytics-types@npm:0.14.0"
+  checksum: 23972f7869b1020d86a6b1d427b003e6bfed6ffae37dd755a86b7d78310568b381b0b7d8970ba468894efb6d775e3b885ed8ac4548d6c15413ed02548dfa9d00
+  languageName: node
+  linkType: hard
+
+"@amplitude/ua-parser-js@npm:0.7.31, @amplitude/ua-parser-js@npm:^0.7.31":
+  version: 0.7.31
+  resolution: "@amplitude/ua-parser-js@npm:0.7.31"
+  checksum: c72e7c8656dd77a6c2ece9e3817929022aeadf731470e53fecddce03232d87977fd5b09d76c570a2a5bed97f5dd463fe6379aac7a6c4b2d2393f14486d385eec
+  languageName: node
+  linkType: hard
+
 "@ampproject/remapping@npm:^2.1.0":
   version: 2.2.0
   resolution: "@ampproject/remapping@npm:2.2.0"
@@ -12326,6 +12384,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "harmonyweb@workspace:clients/web/app"
   dependencies:
+    "@amplitude/analytics-browser": 1.6.8
     "@emoji-mart/data": ^1.0.6
     "@emoji-mart/react": ^1.0.1
     "@giphy/js-fetch-api": ^4.4.0
@@ -20334,6 +20393,13 @@ __metadata:
   version: 2.4.1
   resolution: "tslib@npm:2.4.1"
   checksum: 19480d6e0313292bd6505d4efe096a6b31c70e21cf08b5febf4da62e95c265c8f571f7b36fcc3d1a17e068032f59c269fab3459d6cd3ed6949eafecf64315fca
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.4.1":
+  version: 2.5.0
+  resolution: "tslib@npm:2.5.0"
+  checksum: ae3ed5f9ce29932d049908ebfdf21b3a003a85653a9a140d614da6b767a93ef94f460e52c3d787f0e4f383546981713f165037dc2274df212ea9f8a4541004e1
   languageName: node
   linkType: hard
 

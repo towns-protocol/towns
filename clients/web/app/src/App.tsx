@@ -14,6 +14,7 @@ import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
 import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { LoadingScreen } from 'routes/LoadingScreen'
+import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
@@ -45,10 +46,10 @@ export const App = () => {
             initialSyncLimit={100}
             chain={chain}
         >
-            <>
+            <AnalyticsProvider>
                 <>{env.IS_DEV && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
                 <AllRoutes />
-            </>
+            </AnalyticsProvider>
         </ZionContextProvider>
     )
 }

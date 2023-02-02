@@ -9,6 +9,7 @@ import {
     TransactionStatus,
     ZionAccountDataType,
     ZionAuth,
+    ZionClientEventHandlers,
     ZionOpts,
 } from './ZionClientTypes'
 import {
@@ -88,6 +89,7 @@ export class ZionClient {
     public casablancaClient?: CasablancaClient
     private _chainId: number
     private _auth?: ZionAuth
+    private _eventHandlers?: ZionClientEventHandlers
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
         this.opts = opts
@@ -102,6 +104,7 @@ export class ZionClient {
         )
         this.spaceDapp = spaceDapp
         this.councilNFT = councilNFT
+        this._eventHandlers = opts.eventHandlers
     }
 
     public get auth(): ZionAuth | undefined {
@@ -158,6 +161,10 @@ export class ZionClient {
                 )
             }
         }
+
+        this._eventHandlers?.onLogout?.({
+            userId: this._auth?.userId as string,
+        })
 
         this._auth = undefined
         this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
@@ -250,6 +257,10 @@ export class ZionClient {
         if (!access_token || !device_id || !user_id) {
             throw new Error('failed to login')
         }
+
+        this._eventHandlers?.onLogin?.({
+            userId: user_id as string,
+        })
 
         return {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -392,7 +403,7 @@ export class ZionClient {
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateSpaceTransaction(txContext)
             if (rxContext.data) {
-                this.opts.eventHandlers?.onCreateSpace?.(createSpaceInfo, rxContext.data)
+                this._eventHandlers?.onCreateSpace?.(createSpaceInfo, rxContext.data)
             }
             return rxContext.data
         }
@@ -786,7 +797,7 @@ export class ZionClient {
                     userId,
                     roomId,
                 })
-                this.opts.eventHandlers?.onInviteUser?.(roomId, userId)
+                this._eventHandlers?.onInviteUser?.(roomId, userId)
                 return
             case SpaceProtocol.Casablanca:
                 throw new Error('inviteUser not implemented for Casablanca')
@@ -827,7 +838,7 @@ export class ZionClient {
                 }
                 const matrixRoom = await joinMatrixRoom({ matrixClient: this.matrixClient, roomId })
                 const zionRoom = toZionRoom(matrixRoom)
-                this.opts.eventHandlers?.onJoinRoom?.(zionRoom.id)
+                this._eventHandlers?.onJoinRoom?.(zionRoom.id)
                 return zionRoom
             }
             case SpaceProtocol.Casablanca: {
@@ -859,7 +870,7 @@ export class ZionClient {
                 }
                 await sendMatrixMessage(this.matrixClient, roomId, message, options)
 
-                this.opts.eventHandlers?.onSendMessage?.(roomId, options)
+                this._eventHandlers?.onSendMessage?.(roomId, options)
                 return
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
@@ -1425,5 +1436,9 @@ export class ZionClient {
                 message: e.message,
             }
         }
+    }
+
+    public setEventHandlers(eventHandlers: ZionClientEventHandlers) {
+        this._eventHandlers = eventHandlers
     }
 }

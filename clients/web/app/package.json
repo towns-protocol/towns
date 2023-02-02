@@ -14,6 +14,7 @@
         "test:unit": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_MATRIX_HOMESERVER_URL=http://fake.com VITE_CASABLANCA_SERVER_URL=http://fake.com VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake vitest"
     },
     "dependencies": {
+        "@amplitude/analytics-browser": "1.6.8",
         "@emoji-mart/data": "^1.0.6",
         "@emoji-mart/react": "^1.0.1",
         "@giphy/js-fetch-api": "^4.4.0",
