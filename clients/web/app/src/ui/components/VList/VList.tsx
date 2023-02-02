@@ -162,7 +162,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             const correction = referenceItemY - visualCue.current.y
             visualCue.current.y = referenceItemY
             if (correction) {
-                scrollContainerRef.current?.scrollBy({ top: correction })
+                scrollContainerRef.current?.scrollBy?.({ top: correction })
                 DEBUG && console.log(`%capply scroll correction ${correction}`, Debug.Viewport)
             }
         }

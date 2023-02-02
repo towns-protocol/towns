@@ -110,8 +110,7 @@ describe('<CreateSpaceForm />', () => {
         expect(everyoneRadio).toBeChecked()
     }, 10000)
 
-    // I cannot get this to fail locally but it alwas fails on CI
-    // TODO: investigate VList
+    // Evan 2.2.23 Doesn't fail in local, still fails in CI
     test.skip('Step 2: if tokens are selected, can delete all but 1 token', async () => {
         render(<Wrapper />)
         const nextButton = screen.getByTestId('create-space-next-button')
@@ -122,7 +121,7 @@ describe('<CreateSpaceForm />', () => {
             expect(screen.getByDisplayValue(TOKEN_HOLDERS)).toBeChecked()
         })
 
-        const checkboxes = await screen.findAllByRole('checkbox')
+        let checkboxes = await screen.findAllByTestId('checkbox-tokens')
 
         fireEvent.click(checkboxes[0])
         fireEvent.click(checkboxes[1])
@@ -144,6 +143,23 @@ describe('<CreateSpaceForm />', () => {
             tokens = await within(tokenContainer).findAllByRole('button')
             expect(tokens).toHaveLength(1)
         })
+
+        // now go back to step 1 and make sure token is still selected
+        fireEvent.click(screen.getByRole('button', { name: 'Prev' }))
+
+        await waitFor(() => {
+            expect(screen.getByDisplayValue(TOKEN_HOLDERS)).toBeChecked()
+        })
+
+        expect(useCreateSpaceFormStore.getState().step1.tokens.length).toBe(1)
+        checkboxes = await screen.findAllByTestId('checkbox-tokens')
+        const match = checkboxes.find(
+            (t) =>
+                (t as HTMLInputElement).value ===
+                useCreateSpaceFormStore.getState().step1.tokens[0],
+        )
+
+        expect(match).toBeChecked()
     }, 10000)
 
     test('Step 2: cannot proceed if no space name or space icon', async () => {
@@ -369,14 +385,18 @@ describe('<CreateSpaceForm />', () => {
         })
     }, 10000)
 
-    // always fails in CI, cannot reproduce locally
-    // TODO: investigate VList
+    // Evan 2.2.23 Doesn't fail in local, still fails in CI
     test.skip('If space membership is for token holders, token permissions should be [Read,Write] and everyone permissions should be []', async () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(
             useMockedCreateSpaceTransaction,
         )
 
         vi.spyOn(router, 'useNavigate').mockReturnValue(() => vi.fn())
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isTransactionNetwork: true,
+            name: 'whatever',
+            switchNetwork: () => null,
+        })
 
         // form state when user has selected tokens
         await act(() => {
@@ -402,19 +422,28 @@ describe('<CreateSpaceForm />', () => {
 
         // on 3rd step
         await screen.findByTestId('space-form-3')
-        fireEvent.click(nextButton)
+        fireEvent.click(screen.getByTestId('create-space-next-button'))
 
         await waitFor(async () => {
-            return expect(createSpaceTransactionWithRoleSpy).toHaveBeenCalledWith(
-                {
-                    name: 'sample space',
-                    visibility: 'public',
-                },
-                'Member',
-                ['0x123'], // tokens
-                [zionClient.Permission.Read, zionClient.Permission.Write], // token permissions
-                [], // everyone permissions
-            )
+            await screen.findByText('Creating Space')
         })
+
+        await waitFor(
+            async () => {
+                return expect(createSpaceTransactionWithRoleSpy).toHaveBeenCalledWith(
+                    {
+                        name: 'sample space',
+                        visibility: 'public',
+                    },
+                    'Member',
+                    ['0x123'], // tokens
+                    [zionClient.Permission.Read, zionClient.Permission.Write], // token permissions
+                    [], // everyone permissions
+                )
+            },
+            {
+                timeout: 10000,
+            },
+        )
     }, 10000)
 })

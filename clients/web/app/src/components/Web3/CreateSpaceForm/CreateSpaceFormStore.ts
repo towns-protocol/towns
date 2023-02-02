@@ -10,7 +10,8 @@ const withMock =
 interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void
     setStep2: (step1: CreateSpaceFormState['step2']) => void
-    removeToken: (token: string) => void
+    toggleToken: (token: string) => void
+    clearTokens: () => void
     reset: () => void
     setCreatedSpaceId: (createdSpaceId: string) => void
     setMintedTokenAddress: (mintedTokenAddress: Address) => void
@@ -45,9 +46,15 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
             ...state,
             step2,
         })),
-    removeToken: (token: string) =>
+    toggleToken: (token: string) =>
         set((state) => {
-            const tokens = state.step1.tokens.filter((t) => t !== token)
+            let tokens
+
+            if (state.step1.tokens.includes(token)) {
+                tokens = state.step1.tokens.filter((t) => t !== token)
+            } else {
+                tokens = [...state.step1.tokens, token]
+            }
 
             return {
                 ...state,
@@ -57,6 +64,7 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
                 },
             }
         }),
+    clearTokens: () => set((state) => ({ ...state, step1: { ...state.step1, tokens: [] } })),
     setCreatedSpaceId: (createdSpaceId: string) => set({ createdSpaceId }),
     setMintedTokenAddress: (mintedTokenAddress: Address) => set({ mintedTokenAddress }),
     reset: () => set(initialState),

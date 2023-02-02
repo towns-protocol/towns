@@ -9,7 +9,7 @@ import { env, hasVitalkTokensParam } from 'utils'
 import { axiosClient } from '../apiClient'
 
 const queryKey = 'tokenContractsForAddress'
-const queryKeyAll = 'tokenContractsForAddressAll'
+const queryKeyPaginatedAggregation = 'tokenContractsForAddressAll'
 
 type CachedData = {
     previousPageKey?: string
@@ -21,7 +21,7 @@ type UseTokenContractsForAdress = {
     wallet: string
     zionTokenAddress: string | null
     enabled: boolean
-    pageKey: string
+    pageKey?: string
     all: boolean
     chainId: number | undefined
 }
@@ -41,6 +41,8 @@ const zSchema: z.ZodType<ContractMetadataResponse> = z.object({
     ownedNftsContract: z.array(zContractData),
 })
 
+// Get the tokens in a user's wallet
+// If the `all` flag is set, it will return all tokens, otherwise it will return a paginated list
 export function useTokenContractsForAddress({
     wallet,
     zionTokenAddress,
@@ -50,20 +52,25 @@ export function useTokenContractsForAddress({
     chainId,
 }: UseTokenContractsForAdress) {
     const queryClient = useQueryClient()
-    const cachedTokensForWallet = useCachedTokensForWallet()
+    const _queryKey = useMemo(() => (all ? [queryKey] : [queryKey, pageKey]), [all, pageKey])
     return useQuery(
-        [queryKey, pageKey, cachedTokensForWallet],
+        _queryKey,
         () =>
             chainId === 31337
                 ? getLocalHostTokens(wallet, zionTokenAddress, pageKey, all)
                 : getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
         {
             onSuccess: (data) => {
-                queryClient.setQueryData<CachedData>([queryKeyAll], {
-                    previousPageKey: cachedTokensForWallet.nextPageKey,
-                    nextPageKey: data.nextPageKey,
-                    tokens: [...cachedTokensForWallet.tokens, ...data.tokens],
-                })
+                if (!all) {
+                    queryClient.setQueryData<CachedData>(
+                        [queryKeyPaginatedAggregation],
+                        (prevState) => ({
+                            previousPageKey: prevState?.nextPageKey,
+                            nextPageKey: data.nextPageKey,
+                            tokens: [...(prevState?.tokens || []), ...data.tokens],
+                        }),
+                    )
+                }
             },
             refetchOnMount: false,
             refetchOnWindowFocus: false,
@@ -74,16 +81,20 @@ export function useTokenContractsForAddress({
     )
 }
 
-export function useCachedTokensForWallet() {
+// Grab the tokens from the existing query
+// If the useTokenContractsForAddress() hook was called as a paginated list, the `fromPaginatedAggregation` will return an aggregated list of all tokens from each paginated query
+export function useCachedTokensForWallet(fromPaginatedAggregation = false) {
     const queryClient = useQueryClient()
 
     return useMemo(() => {
-        const cached = queryClient.getQueryData<CachedData>([queryKeyAll])
+        const cached = fromPaginatedAggregation
+            ? queryClient.getQueryData<CachedData>([queryKeyPaginatedAggregation])
+            : queryClient.getQueryData<CachedData>([queryKey])
         return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
-    }, [queryClient])
+    }, [fromPaginatedAggregation, queryClient])
 }
 
-const fetchVitalikTokens = hasVitalkTokensParam()
+const fetchVitalikTokens = env.IS_DEV && hasVitalkTokensParam()
 
 async function getLocalHostTokens(
     wallet: string,
@@ -92,7 +103,7 @@ async function getLocalHostTokens(
     all = false,
 ) {
     // to test with a big list of tokens, add ?vitalikTokens to the url
-    if (env.IS_DEV && fetchVitalikTokens) {
+    if (fetchVitalikTokens) {
         return getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all)
     }
 
@@ -111,7 +122,8 @@ async function getLocalHostTokens(
 }
 
 const GOERLI = 'eth-goerli'
-const NETWORK = GOERLI
+const MAINNET = 'eth-mainnet'
+const NETWORK = fetchVitalikTokens ? MAINNET : GOERLI
 
 async function getTokenContractsForAddress(
     wallet: string,

@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { getCouncilNftAddress } from 'use-zion-client'
 import uniqBy from 'lodash/uniqBy'
-import { Box, Button, Checkbox, Text, TextField, VList } from '@ui'
+import { Box, Checkbox, Text, TextField, VList } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { useCachedTokensForWallet, useTokenContractsForAddress } from 'api/lib/tokenContracts'
+import { useTokenContractsForAddress } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
 import { env, hasVitalkTokensParam } from 'utils'
+import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -77,35 +78,25 @@ type TokenListProps = {
 
 type TokenPropsForVList = TokenProps & { id: string }
 
-export const TokenList = ({
-    isChecked,
-    register,
-    setValue,
-    watch,
-    chainId,
-    wallet,
-}: TokenListProps) => {
+const hasVitalikParams = hasVitalkTokensParam()
+
+export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListProps) => {
     const zionTokenAddress = useMemo(
         () => (chainId ? getCouncilNftAddress(chainId) : null),
         [chainId],
     )
 
-    const cachedTokensForWallet = useCachedTokensForWallet()
     const [results, setResults] = React.useState<TokenPropsForVList[]>([])
     const [search, setSearch] = React.useState('')
-    const selectedTokens = watch('tokens')
-    const [page, setPage] = useState(cachedTokensForWallet.previousPageKey || '')
-    const loadMore = (pageKey: string) => {
-        setPage(pageKey)
-    }
+    const selectedTokens = useCreateSpaceFormStore((state) => state.step1.tokens)
+    const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
 
     // NOTE: on Goerli, this is only going to return the Zion token, even if it is not in user's wallet
     // Fetching tokens via worker is only for local dev for now, until the worker is deployed (pending auth flow)
-    const { data, isFetching, isLoading, isError } = useTokenContractsForAddress({
-        wallet: hasVitalkTokensParam() ? 'vitalik.eth' : wallet,
+    const { data, isLoading, isError } = useTokenContractsForAddress({
+        wallet: hasVitalikParams ? 'vitalik.eth' : wallet,
         zionTokenAddress,
-        enabled: Boolean(zionTokenAddress),
-        pageKey: page,
+        enabled: true,
         all: true,
         chainId,
     })
@@ -114,39 +105,49 @@ export const TokenList = ({
         if (!data?.tokens) {
             return
         }
-        const unique = uniqBy([...cachedTokensForWallet.tokens, ...data.tokens], 'contractAddress')
+        const unique = uniqBy(data.tokens, 'contractAddress')
         const _results = searchArrayOfData(unique, search).map((res) => ({
             ...res,
             id: res.contractAddress,
         }))
         setResults(_results)
-    }, [data?.tokens, cachedTokensForWallet, search])
+    }, [data?.tokens, search])
 
-    function handleClick(contractAddress: string) {
-        const _selectedTokens = selectedTokens.filter((token: string) => token !== contractAddress)
-        setValue('tokens', _selectedTokens)
-    }
+    // react-hook-form isn't playing nicely with VList
+    // so we're tracking tokens in the store, and manually updating the form value for correct schema validation
+    useEffect(() => {
+        setValue('tokens', selectedTokens, { shouldValidate: true })
+    }, [selectedTokens, setValue])
+
+    const onTokenClick = useCallback(
+        (contractAddress: string) => {
+            toggleToken(contractAddress)
+        },
+        [toggleToken],
+    )
 
     return (
         <Box paddingTop="md" cursor="default">
-            {!selectedTokens.length ? null : (
-                <Box display="flex" flexDirection="row" gap="md" paddingY="md">
-                    {selectedTokens.map((contractAddress: string) => {
-                        const token = cachedTokensForWallet.tokens.find(
-                            (t) => t.contractAddress === contractAddress,
-                        )
-                        return (
-                            <TokenAvatar
-                                key={contractAddress}
-                                imgSrc={token?.imgSrc || ''}
-                                label={token?.label || ''}
-                                contractAddress={contractAddress}
-                                onClick={handleClick}
-                            />
-                        )
-                    })}
-                </Box>
-            )}
+            {!selectedTokens.length
+                ? null
+                : data && (
+                      <Box display="flex" flexDirection="row" gap="md" paddingY="md">
+                          {selectedTokens.map((contractAddress: string) => {
+                              const token = data.tokens.find(
+                                  (t) => t.contractAddress === contractAddress,
+                              )
+                              return (
+                                  <TokenAvatar
+                                      key={contractAddress}
+                                      imgSrc={token?.imgSrc || ''}
+                                      label={token?.label || ''}
+                                      contractAddress={contractAddress}
+                                      onClick={onTokenClick}
+                                  />
+                              )
+                          })}
+                      </Box>
+                  )}
 
             <TextField
                 background="level3"
@@ -183,7 +184,8 @@ export const TokenList = ({
                                         width="100%"
                                         value={item.contractAddress}
                                         label={<TokenCheckboxLabel {...item} />}
-                                        register={register}
+                                        checked={selectedTokens.includes(item.contractAddress)}
+                                        onChange={() => onTokenClick(item.contractAddress)}
                                     />
                                 </Box>
                             )
@@ -191,19 +193,6 @@ export const TokenList = ({
                     />
 
                     {isLoading && <Loader />}
-
-                    {data?.nextPageKey && (
-                        <Box paddingY="md">
-                            <Button
-                                type="button"
-                                animate={false}
-                                onClick={() => loadMore(data?.nextPageKey || '')}
-                            >
-                                {isFetching && <ButtonSpinner />}
-                                Load more
-                            </Button>
-                        </Box>
-                    )}
                 </Box>
             )}
         </Box>

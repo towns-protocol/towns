@@ -32,9 +32,11 @@ const schema = z.object({
 const TokenList = (props: Partial<UseFormReturn>) => {
     const { setError, clearErrors } = props
     const tokens = useCreateSpaceFormStore((state) => state.step1.tokens)
-    const removeToken = useCreateSpaceFormStore((state) => state.removeToken)
+    const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
     const cachedTokensForWallet = useCachedTokensForWallet()
-    function handleClick(contractAddress: string) {
+    function handleClick(contractAddress: string, e: React.MouseEvent) {
+        e.preventDefault()
+
         if (tokens.length === 1) {
             setError?.('tokens', {
                 type: 'required',
@@ -43,7 +45,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
             setTimeout(() => clearErrors?.(['tokens']), 3000)
             return
         }
-        removeToken(contractAddress)
+        toggleToken(contractAddress)
     }
 
     if (!tokens.length) {

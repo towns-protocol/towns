@@ -23,7 +23,7 @@ export const TokenAvatar = (props: Partial<TokenProps>) => {
                         icon="close"
                         background="level4"
                         color="default"
-                        onClick={() => onClick(contractAddress)}
+                        onClick={(e) => onClick(contractAddress, e)}
                     />
                 )}
             </Box>

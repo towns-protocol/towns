@@ -12,10 +12,12 @@ type Props = {
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
     readOnly?: boolean
     disabled?: boolean
+    checked?: boolean
 } & Partial<UseFormReturn>
 
 export const Checkbox = (props: Props) => {
     const { name, label, value, register, width } = props
+    const { onChange, ...registerProps } = register?.(name) || {}
     const _value =
         !value && typeof label === 'string' ? label.replace(' ', '').toLowerCase() : value
     return (
@@ -32,13 +34,15 @@ export const Checkbox = (props: Props) => {
                 <Box paddingRight="md">{label}</Box>
                 <Box className={style.checkboxWrapper}>
                     <input
+                        data-testid={`checkbox-${name}`}
                         className={style.hiddenCheckbox}
                         type="checkbox"
                         value={_value}
                         readOnly={props.readOnly}
                         disabled={props.disabled}
-                        onChange={props.onChange}
-                        {...register?.(name)}
+                        {...registerProps}
+                        checked={props.checked}
+                        onChange={props.onChange ?? onChange}
                     />
                     <CheckIcon className={style.svg} />
                 </Box>

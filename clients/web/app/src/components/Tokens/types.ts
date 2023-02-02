@@ -1,5 +1,7 @@
+import React from 'react'
+
 export interface TokenProps extends TokenData {
-    onClick?: (contractAddress: string) => void
+    onClick?: (contractAddress: string, e: React.MouseEvent) => void
 }
 
 export interface TokenData {

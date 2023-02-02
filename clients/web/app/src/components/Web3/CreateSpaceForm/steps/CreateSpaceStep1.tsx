@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import * as z from 'zod'
 import { useWeb3Context, useZionClient } from 'use-zion-client'
+import { UseFormReturn } from 'react-hook-form'
 import { Box, ErrorMessage, FormRender, Heading, RadioCard } from '@ui'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
@@ -39,6 +40,22 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
     const { accounts } = useWeb3Context()
     const wallet = accounts[0]
 
+    const onEveryoneClick = useCallback((formProps: UseFormReturn) => {
+        formProps.setValue(MEMBERSHIP_TYPE, EVERYONE, {
+            shouldValidate: true,
+        })
+        formProps.setValue(TOKENS, [], {
+            shouldValidate: true,
+        })
+        useCreateSpaceFormStore.getState().clearTokens()
+    }, [])
+
+    const onTokensClick = useCallback((formProps: UseFormReturn) => {
+        formProps.setValue(MEMBERSHIP_TYPE, TOKEN_HOLDERS, {
+            shouldValidate: true,
+        })
+    }, [])
+
     return (
         <FormRender<CreateSpaceFormState['step1']>
             id={id}
@@ -65,14 +82,7 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                                 value={EVERYONE}
                                 title="Everyone"
                                 description="Anyone with the space link may join your space"
-                                onClick={() => {
-                                    formProps.setValue(MEMBERSHIP_TYPE, EVERYONE, {
-                                        shouldValidate: true,
-                                    })
-                                    formProps.setValue(TOKENS, [], {
-                                        shouldValidate: true,
-                                    })
-                                }}
+                                onClick={() => onEveryoneClick(formProps)}
                                 {...formProps}
                             />
                         </Box>
@@ -82,11 +92,7 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                             value={TOKEN_HOLDERS}
                             title="Token holders"
                             description="People who hold a specific token may join your space"
-                            onClick={() =>
-                                formProps.setValue(MEMBERSHIP_TYPE, TOKEN_HOLDERS, {
-                                    shouldValidate: true,
-                                })
-                            }
+                            onClick={() => onTokensClick(formProps)}
                             {...formProps}
                         >
                             {() => {
