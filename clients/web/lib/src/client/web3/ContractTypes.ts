@@ -24,6 +24,12 @@ export enum EntitlementModuleType {
     UserEntitlement = 'UserEntitlement',
 }
 
+export interface EntitlementModule {
+    address: string
+    moduleType: EntitlementModuleType
+    name: string
+}
+
 export interface RoleDetails {
     id: number
     name: string

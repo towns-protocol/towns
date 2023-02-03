@@ -1,5 +1,4 @@
 import { SpaceDataTypes } from './shims/SpaceShim'
-import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
 import { ethers } from 'ethers'
@@ -27,16 +26,36 @@ export function getZioneerNftAddress(chainId: number): string {
 
 export function createExternalTokenStruct(
     tokenAddresses: string[],
-): SpaceFactoryDataTypes.ExternalTokenStruct[] {
-    const tokenStruct: SpaceFactoryDataTypes.ExternalTokenStruct[] = tokenAddresses.map(
-        (address) => ({
-            contractAddress: address,
-            isSingleToken: false,
-            quantity: 1,
-            tokenIds: [],
-        }),
-    )
+): TokenDataTypes.ExternalTokenStruct[] {
+    const tokenStruct: TokenDataTypes.ExternalTokenStruct[] = tokenAddresses.map((address) => ({
+        contractAddress: address,
+        isSingleToken: false,
+        quantity: 1,
+        tokenIds: [],
+    }))
     return tokenStruct
+}
+
+export function createTokenEntitlementStruct(
+    moduleAddress: string,
+    tokens: TokenDataTypes.ExternalTokenStruct[],
+): SpaceDataTypes.EntitlementStruct {
+    const data = encodeExternalTokens(tokens)
+    return {
+        module: moduleAddress,
+        data,
+    }
+}
+
+export function createUserEntitlementStruct(
+    moduleAddress: string,
+    users: string[],
+): SpaceDataTypes.EntitlementStruct {
+    const data = encodeUsers(users)
+    return {
+        module: moduleAddress,
+        data,
+    }
 }
 
 export async function getFilteredRolesFromSpace(
@@ -59,7 +78,7 @@ export async function getFilteredRolesFromSpace(
     return filteredRoles
 }
 
-export function encodeExternalTokens(tokens: SpaceFactoryDataTypes.ExternalTokenStruct[]): string {
+export function encodeExternalTokens(tokens: TokenDataTypes.ExternalTokenStruct[]): string {
     const abiCoder = ethers.utils.defaultAbiCoder
     const encodedData = abiCoder.encode([ExternalTokenEncoding], [tokens])
     return encodedData

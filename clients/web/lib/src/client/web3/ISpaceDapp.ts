@@ -2,13 +2,24 @@
 
 import { ContractTransaction, ethers } from 'ethers'
 import { Permission, RoleDetails } from './ContractTypes'
+
 import { SpaceDataTypes } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
+import { TokenDataTypes } from './shims/TokenEntitlementShim'
 
 export interface EventsContractInfo {
     abi: ethers.ContractInterface
     address: string
+}
+
+export interface UpdateRoleParams {
+    spaceId: string
+    roleId: number
+    roleName: string
+    permissions: Permission[]
+    tokens: TokenDataTypes.ExternalTokenStruct[]
+    users: string[]
 }
 
 export interface ISpaceDapp {
@@ -47,6 +58,7 @@ export interface ISpaceDapp {
     ) => Promise<boolean>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
+    updateRole: (params: UpdateRoleParams) => Promise<ContractTransaction>
     setSpaceAccess: (spaceId: string, disabled: boolean) => Promise<ContractTransaction>
     setChannelAccess: (
         spaceId: string,

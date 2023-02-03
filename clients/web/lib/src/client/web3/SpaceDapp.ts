@@ -1,21 +1,21 @@
-import { ContractTransaction, ethers } from 'ethers'
-import { EntitlementModuleType, Permission, RoleDetails } from './ContractTypes'
-import { EventsContractInfo, ISpaceDapp } from './ISpaceDapp'
+import { BigNumber, ContractTransaction, ethers } from 'ethers'
+import { EntitlementModule, EntitlementModuleType, Permission, RoleDetails } from './ContractTypes'
+import { EventsContractInfo, ISpaceDapp, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
 import { TokenDataTypes, TokenEntitlementShim } from './shims/TokenEntitlementShim'
 import {
+    createTokenEntitlementStruct,
+    createUserEntitlementStruct,
     decodeExternalTokens,
     decodeUsers,
-    encodeExternalTokens,
-    encodeUsers,
 } from './ContractHelpers'
 
 import { ShimFactory } from './shims/ShimFactory'
 import { SpaceInfo } from './SpaceInfo'
 import { UserEntitlementShim } from './shims/UserEntitlementShim'
-import { keccak256 } from 'ethers/lib/utils'
+import { BytesLike, keccak256 } from 'ethers/lib/utils'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
 interface Spaces {
@@ -27,7 +27,7 @@ interface Entitlements {
     userEntitlement: UserEntitlementShim | undefined
 }
 
-interface EntitlementDetails {
+interface EntitlementData {
     tokens: TokenDataTypes.ExternalTokenStruct[]
     users: string[]
 }
@@ -103,23 +103,16 @@ export class SpaceDapp implements ISpaceDapp {
         }
 
         // figure out the addresses for each entitlement module
-        const entitlementAddresses = await space.read.getEntitlements()
+        const entitlementModules = await space.getEntitlementModules()
         let tokenModuleAddress = ''
         let userModuleAddress = ''
-        for (const address of entitlementAddresses) {
-            const entitlementModule = ShimFactory.createEntitlementModule(
-                address,
-                this.chainId,
-                this.provider,
-                this.signer,
-            )
-            const moduleType = await entitlementModule.read?.moduleType()
-            switch (moduleType) {
+        for (const module of entitlementModules) {
+            switch (module.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
-                    tokenModuleAddress = address
+                    tokenModuleAddress = module.address
                     break
                 case EntitlementModuleType.UserEntitlement:
-                    userModuleAddress = address
+                    userModuleAddress = module.address
                     break
             }
         }
@@ -134,20 +127,12 @@ export class SpaceDapp implements ISpaceDapp {
         const entitlements: SpaceDataTypes.EntitlementStruct[] = []
         if (tokens.length) {
             // create the token entitlement
-            const tokenData = encodeExternalTokens(tokens)
-            const tokenEntitlement: SpaceDataTypes.EntitlementStruct = {
-                module: tokenModuleAddress,
-                data: tokenData,
-            }
+            const tokenEntitlement = createTokenEntitlementStruct(tokenModuleAddress, tokens)
             entitlements.push(tokenEntitlement)
         }
         // create the user entitlement
         if (users.length) {
-            const userData = encodeUsers(users)
-            const userEntitlement: SpaceDataTypes.EntitlementStruct = {
-                module: userModuleAddress,
-                data: userData,
-            }
+            const userEntitlement = createUserEntitlementStruct(userModuleAddress, users)
             entitlements.push(userEntitlement)
         }
         // create the role
@@ -183,17 +168,14 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const [role, permissions, entitlementDetails] = await Promise.all([
             space.read.getRoleById(roleId),
-            space.read.getPermissionsByRoleId(roleId),
+            space.getPermissionsByRoleId(roleId),
             this.getEntitlementDetails(space, roleId),
         ])
         const roleName = role.name
-        const perms = permissions.map((permission) => {
-            return ethers.utils.parseBytes32String(permission) as Permission
-        })
         return {
             id: roleId,
             name: roleName,
-            permissions: perms,
+            permissions: permissions,
             tokens: entitlementDetails.tokens,
             users: entitlementDetails.users,
         }
@@ -212,8 +194,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
-        const permissions = space.read.getPermissionsByRoleId(roleId)
-        return (await permissions).map((permission) => permission as Permission)
+        return space.getPermissionsByRoleId(roleId)
     }
 
     public getSpaceFactoryEventsContractInfo(): EventsContractInfo {
@@ -319,10 +300,204 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.setChannelAccess(channelId, disabled)
     }
 
+    public async updateRole(params: UpdateRoleParams): Promise<ContractTransaction> {
+        const space = await this.getSpace(params.spaceId)
+        if (!space?.write) {
+            throw new Error(`Space with networkId "${params.spaceId}" is not deployed properly.`)
+        }
+        const encodedCallData: BytesLike[] = []
+        // update any role name changes
+        const roleDetails = await this.getRole(params.spaceId, params.roleId)
+        if (roleDetails.name !== params.roleName) {
+            encodedCallData.push(this.encodeRoleNameChanges(space, params))
+        }
+        // update any permission changes
+        const encodePermissionChanges = this.encodePermissionChanges(space, roleDetails, params)
+        for (const p of encodePermissionChanges) {
+            encodedCallData.push(p)
+        }
+        // update any entitlement changes
+        const encodeEntitlementChanges = await this.encodeEntitlementChanges(space, params)
+        for (const entitlement of encodeEntitlementChanges) {
+            encodedCallData.push(entitlement)
+        }
+        // invoke the multicall transaction
+        return space.write.multicall(encodedCallData)
+    }
+
+    private encodeRoleNameChanges(space: SpaceShim, params: UpdateRoleParams): string {
+        return space.interface.encodeFunctionData('updateRole', [
+            BigNumber.from(params.roleId),
+            params.roleName,
+        ])
+    }
+
+    private encodePermissionChanges(
+        space: SpaceShim,
+        roleDetails: RoleDetails,
+        params: UpdateRoleParams,
+    ): BytesLike[] {
+        const encodedCallData: BytesLike[] = []
+        // remove current permissions
+        for (const p of roleDetails.permissions) {
+            const removePermission = space.interface.encodeFunctionData(
+                'removePermissionFromRole',
+                [params.roleId, p],
+            )
+            encodedCallData.push(removePermission)
+        }
+        // replace with new permissions
+        for (const p of params.permissions) {
+            const addPermission = space.interface.encodeFunctionData('addPermissionToRole', [
+                params.roleId,
+                p,
+            ])
+            encodedCallData.push(addPermission)
+        }
+        return encodedCallData
+    }
+
+    private async encodeEntitlementChanges(
+        space: SpaceShim,
+        params: UpdateRoleParams,
+    ): Promise<BytesLike[]> {
+        const encodedCallData: BytesLike[] = []
+        // get current entitlements for the role
+        const [modules, currentEntitlements] = await Promise.all([
+            space.getEntitlementModules(),
+            this.getEntitlementDetails(space, params.roleId),
+        ])
+        // remove current entitlements
+        const encodeRemoveRoleFromEntitlement = this.encodeRemoveRoleFromEntitlement(
+            space,
+            params.roleId,
+            modules,
+            currentEntitlements,
+        )
+        for (const e of encodeRemoveRoleFromEntitlement) {
+            encodedCallData.push(e)
+        }
+        // replace with new entitlements
+        const encodeAddRoleToEntitlement = this.encodeAddRoleToEntitlement(
+            space,
+            params.roleId,
+            modules,
+            {
+                tokens: params.tokens,
+                users: params.users,
+            },
+        )
+        for (const e of encodeAddRoleToEntitlement) {
+            encodedCallData.push(e)
+        }
+        // assembled multi-call data to replace entitlements
+        return encodedCallData
+    }
+
+    private encodeAddRoleToEntitlement(
+        space: SpaceShim,
+        roleId: number,
+        modules: EntitlementModule[],
+        entitlements: EntitlementData,
+    ): BytesLike[] {
+        const encodedCallData: BytesLike[] = []
+        for (const m of modules) {
+            switch (m.moduleType) {
+                case EntitlementModuleType.TokenEntitlement:
+                    {
+                        // contract execution will revert if the tokens array is empty
+                        if (entitlements.tokens.length) {
+                            const entitlement = createTokenEntitlementStruct(
+                                m.address,
+                                entitlements.tokens,
+                            )
+                            const addRole = space.interface.encodeFunctionData(
+                                'addRoleToEntitlement',
+                                [roleId, entitlement],
+                            )
+                            encodedCallData.push(addRole)
+                        }
+                    }
+                    break
+                case EntitlementModuleType.UserEntitlement:
+                    {
+                        // contract execution will revert if the users array is empty
+                        if (entitlements.users.length) {
+                            const entitlement = createUserEntitlementStruct(
+                                m.address,
+                                entitlements.users,
+                            )
+                            const removeRole = space.interface.encodeFunctionData(
+                                'addRoleToEntitlement',
+                                [roleId, entitlement],
+                            )
+                            encodedCallData.push(removeRole)
+                        }
+                    }
+                    break
+                default:
+                    throw new Error(
+                        `Unsupported entitlement module type: ${m.moduleType as string}`,
+                    )
+            }
+        }
+        return encodedCallData
+    }
+
+    private encodeRemoveRoleFromEntitlement(
+        space: SpaceShim,
+        roleId: number,
+        modules: EntitlementModule[],
+        entitlements: EntitlementData,
+    ): BytesLike[] {
+        const data: BytesLike[] = []
+        for (const m of modules) {
+            switch (m.moduleType) {
+                case EntitlementModuleType.TokenEntitlement:
+                    {
+                        // contract execution will revert if the tokens array is empty
+                        if (entitlements.tokens.length) {
+                            const entitlement = createTokenEntitlementStruct(
+                                m.address,
+                                entitlements.tokens,
+                            )
+                            const removeRole = space.interface.encodeFunctionData(
+                                'removeRoleFromEntitlement',
+                                [roleId, entitlement],
+                            )
+                            data.push(removeRole)
+                        }
+                    }
+                    break
+                case EntitlementModuleType.UserEntitlement:
+                    {
+                        // contract execution will revert if the users array is empty
+                        if (entitlements.users.length) {
+                            const entitlement = createUserEntitlementStruct(
+                                m.address,
+                                entitlements.users,
+                            )
+                            const removeRole = space.interface.encodeFunctionData(
+                                'removeRoleFromEntitlement',
+                                [roleId, entitlement],
+                            )
+                            data.push(removeRole)
+                        }
+                    }
+                    break
+                default:
+                    throw new Error(
+                        `Unsupported entitlement module type: ${m.moduleType as string}`,
+                    )
+            }
+        }
+        return data
+    }
+
     private async getEntitlementDetails(
         space: SpaceShim,
         roleId: number,
-    ): Promise<EntitlementDetails> {
+    ): Promise<EntitlementData> {
         let rawTokenDetails: TokenDataTypes.ExternalTokenStruct[][] = []
         let rawUserDetails: string[][] = []
         // Get entitlement details.

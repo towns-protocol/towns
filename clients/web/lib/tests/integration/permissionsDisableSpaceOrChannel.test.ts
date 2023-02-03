@@ -44,19 +44,16 @@ describe('disable channel', () => {
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
-        const spaceNetworkId: string | undefined = roomId?.networkId
+        if (!roomId) {
+            throw new Error('roomId should be defined')
+        }
+        const spaceNetworkId = roomId.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
-        const disabled: boolean | undefined = await alice.setSpaceAccess(
-            spaceNetworkId as string,
-            true,
-        )
+        const disabled: boolean | undefined = await alice.setSpaceAccess(spaceNetworkId, true)
         // set space access on, re-enabling space in ZionSpaceManager
-        const enabled: boolean | undefined = await alice.setSpaceAccess(
-            spaceNetworkId as string,
-            false,
-        )
-        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
+        const enabled: boolean | undefined = await alice.setSpaceAccess(spaceNetworkId, false)
+        const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId)
 
         /** Assert */
         expect(disabled).toEqual(true)
