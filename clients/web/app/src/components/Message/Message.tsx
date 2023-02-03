@@ -94,8 +94,6 @@ export const Message = (props: Props) => {
         }
     }, [canReply, onOpenMessageThread, eventId])
 
-    const AvatartComponent = isActive ? ActiveAvatar : Avatar
-
     return (
         <Stack
             horizontal
@@ -111,7 +109,8 @@ export const Message = (props: Props) => {
             <Box minWidth="x8">
                 {displayContext !== 'tail' ? (
                     senderId ? (
-                        <AvatartComponent
+                        <AvatarComponent
+                            isActive={isActive}
                             src={avatar}
                             size={avatarSize}
                             insetY="xxs"
@@ -240,6 +239,14 @@ const useMessageBackground = (isEditing?: boolean, isActive?: boolean, isHighlig
     const style = backgroundTransitionEnabled ? { transition: `background 1s ease` } : undefined
 
     return { onTransitionEnd, style, background }
+}
+
+const AvatarComponent = (props: AvatarProps & { userId?: string; isActive: boolean }) => {
+    const { userId, isActive, ...avatarProps } = props
+    if (isActive && userId) {
+        return <ActiveAvatar {...avatarProps} userId={userId} />
+    }
+    return <Avatar {...avatarProps} />
 }
 
 const ActiveAvatar = (props: AvatarProps & { userId: string }) => {
