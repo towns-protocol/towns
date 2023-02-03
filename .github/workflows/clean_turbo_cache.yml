@@ -1,3 +1,5 @@
+name: 'Clean Turbo Cache'
+
 on:
   schedule:
     # Daily cleanup of turbo cache
