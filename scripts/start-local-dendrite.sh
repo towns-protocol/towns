@@ -56,6 +56,13 @@ start_postgres_in_bg()
   docker compose up -d postgres-dendrite
 }
 
+remove_postgres_container()
+{
+  echo "removing postgres container"
+  docker stop postgres-dendrite
+  docker rm postgres-dendrite
+}
+
 if [ "${SKIP_POSTGRES}" == "skip-postgres" ]; then
   echo "Skipping postgres"
 else 
@@ -65,8 +72,9 @@ else
 
   else
     echo "Using ephemeral postgres"
-    start_postgres_in_bg # start postgres in the background so it can be restarted
-    docker compose restart postgres-dendrite # restart postgres to clear the data
+    remove_postgres_container
+    start_postgres_in_bg 
+    trap remove_postgres_container EXIT
   fi
 
   # Wait for postgres to be ready
