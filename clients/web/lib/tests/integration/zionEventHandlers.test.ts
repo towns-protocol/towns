@@ -182,11 +182,29 @@ describe('Zion event handlers test', () => {
         expect(eventHandlerResult?.roomId).toEqual(roomId)
     })
 
+    test('onRegister', async () => {
+        const authEvents = {
+            registered: false,
+        }
+
+        await registerAndStartClients(['alice'], {
+            eventHandlers: {
+                onRegister: () => {
+                    authEvents.registered = true
+                },
+            },
+        })
+
+        expect(authEvents.registered).toBe(true)
+    })
+
     test('onLogin', async () => {
         const authEvents = {
             loggedIn: false,
         }
 
+        // registration will log in the user
+        // log out first, and then test re-login
         const { alice } = await registerAndStartClients(['alice'], {
             eventHandlers: {
                 onLogin: () => {
@@ -194,6 +212,8 @@ describe('Zion event handlers test', () => {
                 },
             },
         })
+
+        await alice.logout()
 
         expect(authEvents.loggedIn).toBe(false)
 

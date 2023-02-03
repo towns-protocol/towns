@@ -221,6 +221,9 @@ export class ZionClient {
         if (!access_token || !device_id || !user_id) {
             throw new Error('failed to register')
         }
+        this._eventHandlers?.onRegister?.({
+            userId: user_id,
+        })
         return {
             accessToken: access_token,
             deviceId: device_id,

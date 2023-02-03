@@ -91,4 +91,5 @@ export type ZionClientEventHandlers = {
     onSendMessage?: (roomId: RoomIdentifier, sendMessageOptions?: SendMessageOptions) => void
     onLogin?: (auth: { userId: string }) => void
     onLogout?: (auth: { userId: string }) => void
+    onRegister?: (auth: { userId: string }) => void
 }
