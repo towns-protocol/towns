@@ -72,7 +72,7 @@ export const AppPanelLayoutContent = () => {
                     onChange={onSizesChange}
                 >
                     {/* left-side side-bar goes here */}
-                    <Allotment.Pane minSize={65} maxSize={65} preferredSize={sizes[0] || 65}>
+                    <Allotment.Pane minSize={65} maxSize={320} preferredSize={sizes[0] || 65}>
                         <MainSideBar expanded={isSpacesExpanded} onExpandClick={onExpandSpaces} />
                     </Allotment.Pane>
 
