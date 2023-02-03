@@ -16,7 +16,6 @@ import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './TestConstants'
-import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
 
@@ -110,21 +109,6 @@ async function _fundWallet(walletToFund: ethers.Wallet, amount = 0.1): Promise<b
     })
     await result.wait()
     return true
-}
-
-export function createBasicTestSpace(
-    client: ZionClient,
-    createSpaceInfo: CreateSpaceInfo,
-): Promise<RoomIdentifier | undefined> {
-    const emptyPermissions: Permission[] = []
-    const emptyTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
-    const spaceEntitlementData: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
-        roleName: '',
-        permissions: emptyPermissions,
-        tokens: emptyTokens,
-        users: [],
-    }
-    return client.createSpace(createSpaceInfo, spaceEntitlementData, emptyPermissions)
 }
 
 export function createTestSpaceWithZionMemberRole(

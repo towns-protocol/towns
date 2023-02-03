@@ -5,23 +5,27 @@ import {
     LoginTypePublicKeyEthereum,
     RegisterRequest,
 } from '../../../src/hooks/login'
+import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../../src/types/timeline-types'
+import {
+    SpaceProtocol,
+    TransactionStatus,
+    ZionAuth,
+    ZionClientEventHandlers,
+} from '../../../src/client/ZionClientTypes'
+import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
 
+import { CreateSpaceInfo } from '../../../src/types/zion-types'
+import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
+import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'
-import { createUserIdFromEthereumAddress, UserIdentifier } from '../../../src/types/user-identifier'
 import { ethers } from 'ethers'
 import { makeUniqueName } from './TestUtils'
-import {
-    ZionAuth,
-    SpaceProtocol,
-    ZionClientEventHandlers,
-} from '../../../src/client/ZionClientTypes'
-import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
-import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
-import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../../src/types/timeline-types'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
+import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
+import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
@@ -89,6 +93,30 @@ export class ZionTestClient extends ZionClient {
 
         // add ourselves to the list of all clients
         ZionTestClient.allClients.push(this)
+    }
+
+    /************************************************
+     * createSpace for testing
+     *************************************************/
+    public async createSpace(
+        createSpaceInfo: CreateSpaceInfo,
+        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        everyonePermissions: Permission[],
+    ): Promise<RoomIdentifier | undefined> {
+        const txContext = await this.createSpaceTransaction(
+            createSpaceInfo,
+            memberEntitlements,
+            everyonePermissions,
+        )
+        if (txContext.error) {
+            throw txContext.error
+        }
+        if (txContext.status === TransactionStatus.Pending) {
+            const rxContext = await this.waitForCreateSpaceTransaction(txContext)
+            return rxContext.data
+        }
+        // Something went wrong. Don't return a room identifier.
+        return undefined
     }
 
     /// log a message to the console with the user's name and part of the wallet address

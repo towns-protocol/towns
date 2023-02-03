@@ -384,30 +384,6 @@ export class ZionClient {
         await this.stopCasablancaClient()
     }
 
-    /************************************************
-     * createSpace
-     *************************************************/
-    public async createSpace(
-        createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
-        everyonePermissions: Permission[],
-    ): Promise<RoomIdentifier | undefined> {
-        const txContext = await this.createSpaceTransaction(
-            createSpaceInfo,
-            memberEntitlements,
-            everyonePermissions,
-        )
-        if (txContext.error) {
-            throw txContext.error
-        }
-        if (txContext.status === TransactionStatus.Pending) {
-            const rxContext = await this.waitForCreateSpaceTransaction(txContext)
-            return rxContext.data
-        }
-        // Something went wrong. Don't return a room identifier.
-        return undefined
-    }
-
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
