@@ -6,14 +6,14 @@ pragma solidity 0.8.17;
 /* Libraries */
 import {console} from "forge-std/console.sol";
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
-import {Permissions} from "contracts/src/spacesv2/libraries/Permissions.sol";
+import {Permissions} from "contracts/src/libraries/Permissions.sol";
 
 /* Contracts */
-import {Space} from "contracts/src/spacesv2/Space.sol";
-import {SpaceOwner} from "contracts/src/spacesv2/SpaceOwner.sol";
-import {SpaceFactory} from "contracts/src/spacesv2/SpaceFactory.sol";
-import {UserEntitlement} from "contracts/src/spacesv2/entitlements/UserEntitlement.sol";
-import {TokenEntitlement} from "contracts/src/spacesv2/entitlements/TokenEntitlement.sol";
+import {Space} from "contracts/src/core/spaces/Space.sol";
+import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
+import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
+import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeploySpaces is ScriptUtils {

@@ -112,6 +112,19 @@
           {
             "indexed": true,
             "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          }
+        ],
+        "name": "Minted",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
             "name": "previousOwner",
             "type": "address"
           },
@@ -626,6 +639,13 @@
     ],
     "devdoc": {
       "author": "HNT Labs",
+      "events": {
+        "Minted(address)": {
+          "params": {
+            "recipient": "the address that receives the NFT"
+          }
+        }
+      },
       "kind": "dev",
       "methods": {
         "mint(address)": {
@@ -700,6 +720,11 @@
           }
         ]
       },
+      "events": {
+        "Minted(address)": {
+          "notice": "emitted when an NFT is minted"
+        }
+      },
       "kind": "user",
       "methods": {
         "MINT_PRICE()": {
@@ -742,7 +767,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/council/CouncilNFT.sol": "CouncilNFT"
+      "contracts/src/core/tokens/CouncilNFT.sol": "CouncilNFT"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -768,28 +793,12 @@
     ]
   },
   "sources": {
-    "contracts/src/council/CouncilNFT.sol": {
-      "keccak256": "0x41115345c1b873b0438e71ce22d026be4ef65fa1d1a09101ecb49d7cc23229fd",
+    "contracts/src/core/tokens/CouncilNFT.sol": {
+      "keccak256": "0x36792fd8015ff82119eb263cc4134e9dc9ca65c2787a0e82dbc14b42b4a3d039",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a6e63498b1fd063d5b22746347b3160dc097f0d1d1e6e88fe660bbfad2b50ea0",
-        "dweb:/ipfs/QmckANMuB9M2rjGPpxHkoFNynym5htzUVnSgXM6VLBewPf"
-      ]
-    },
-    "contracts/src/council/libraries/CouncilErrors.sol": {
-      "keccak256": "0x5e7ef03bdac9b2acca7cc67467765787e5387c533fb99807d761d639d78a1949",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://a8afb26af4a9b7cb160ac10f822f591efdfcf74423ff58289264f1205cb8f578",
-        "dweb:/ipfs/QmXYwWyy2bJSps8nUeLBss7wCY4zUJzDotaqh4tZUMu6jc"
-      ]
-    },
-    "contracts/src/council/libraries/CouncilEvents.sol": {
-      "keccak256": "0x8aaeb1b2e207af77f4a2991319bd40355d55a4dafad0291c63d9a2767cbbc4ca",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://1cfaad4621e80c43319ce12c07acdf75693a8fb28d17cd97ddfd1f8936b09e97",
-        "dweb:/ipfs/QmXwNeZDJ2zhjjoPGtyTaKrLagCf3D4RVx543PWHwtnxpB"
+        "bzz-raw://33b7a08b2c68ffdbb4674586392c10faf442ee6d6a505adad326cf06df7c1f0d",
+        "dweb:/ipfs/QmfEzexksFcqqLNjoc9XyH6qAGP3ENPf5HT5Uc7kyQBxQn"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

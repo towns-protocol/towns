@@ -303,12 +303,14 @@ export interface CouncilNFTInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
+    "Minted(address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Minted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
@@ -336,6 +338,13 @@ export type ApprovalForAllEvent = TypedEvent<
 >;
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
+
+export interface MintedEventObject {
+  recipient: string;
+}
+export type MintedEvent = TypedEvent<[string], MintedEventObject>;
+
+export type MintedEventFilter = TypedEventFilter<MintedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -779,6 +788,11 @@ export interface CouncilNFT extends BaseContract {
       operator?: PromiseOrValue<string> | null,
       approved?: null
     ): ApprovalForAllEventFilter;
+
+    "Minted(address)"(
+      recipient?: PromiseOrValue<string> | null
+    ): MintedEventFilter;
+    Minted(recipient?: PromiseOrValue<string> | null): MintedEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,

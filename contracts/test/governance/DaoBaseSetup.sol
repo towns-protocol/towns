@@ -18,12 +18,12 @@ import {Treasury} from "council/features/Treasury.sol";
 import {LockingVault} from "council/vaults/LockingVault.sol";
 import {GSCVault} from "council/vaults/GSCVault.sol";
 
-import {Dao} from "contracts/src/governance/Dao.sol";
-import {SimpleProxy} from "contracts/src/governance/utils/SimpleProxy.sol";
-import {NFTVault} from "contracts/src/governance/vaults/NFTVault.sol";
+import {Dao} from "contracts/src/core/governance/Dao.sol";
+import {SimpleProxy} from "contracts/src/misc/SimpleProxy.sol";
+import {NFTVault} from "contracts/src/core/governance/vaults/NFTVault.sol";
 
-import {Fuel} from "contracts/src/governance/tokens/Fuel.sol";
-import {SpaceOwner} from "contracts/src/spacesv2/SpaceOwner.sol";
+import {Fuel} from "contracts/src/core/tokens/Fuel.sol";
+import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 
 contract DaoBaseSetup is TestUtils {
   Dao dao;

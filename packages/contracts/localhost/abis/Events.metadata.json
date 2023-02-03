@@ -131,7 +131,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/libraries/Events.sol": "Events"
+      "contracts/src/libraries/Events.sol": "Events"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -157,7 +157,7 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/libraries/Events.sol": {
+    "contracts/src/libraries/Events.sol": {
       "keccak256": "0xf85630e7cf615f44c0e40ae2bc54fe617c7fb0ed9f5b5f2be305c1b893929281",
       "license": "Apache-2.0",
       "urls": [

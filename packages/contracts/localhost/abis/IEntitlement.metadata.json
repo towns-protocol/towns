@@ -330,7 +330,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/interfaces/IEntitlement.sol": "IEntitlement"
+      "contracts/src/interfaces/IEntitlement.sol": "IEntitlement"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -356,15 +356,15 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
+    "contracts/src/interfaces/IEntitlement.sol": {
+      "keccak256": "0x05a317a8b059f6c79085102299c9e9cb706a8f3facdea86b8ed872831a77d192",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
-        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
+        "bzz-raw://9771d94c5863ca975b15d3a8b6cfd3040a4573da31e4f08b38f5fe9418f0e2a8",
+        "dweb:/ipfs/QmfBkooY6ahi6nYLnJmLwvkSdw7CuJfwfSnH187i27sX6o"
       ]
     },
-    "contracts/src/spacesv2/libraries/DataTypes.sol": {
+    "contracts/src/libraries/DataTypes.sol": {
       "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
       "license": "Apache-20",
       "urls": [

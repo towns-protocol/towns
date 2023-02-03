@@ -653,7 +653,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": "TokenEntitlement"
+      "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": "TokenEntitlement"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -679,23 +679,23 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x663991f174301859a3fb47a6037d68de8724f3b90b91f7626436fd4f6a7a8619",
+    "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
+      "keccak256": "0x8de35cb114ed38f0f6696a9d710b61472608a4a42020a052a75b576e5bd763ff",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://57b97974bbd5dfdd80970146b1d10863e6f1f8c3991cd1d63847c0cdcc3de900",
-        "dweb:/ipfs/QmZWssTJ2SRQvHnN2uCRJUw3NW4KReNNodJy1GVvzqJVGk"
+        "bzz-raw://9db4223c3f424cb6e55d2ccd12e3c9f38e2d2d4b14fb24daee8ca7bc29e15248",
+        "dweb:/ipfs/QmP2iXkXmF3CBCWCXVK5njNcsiTJFWjFiX9JcnJuGgqfxG"
       ]
     },
-    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
+    "contracts/src/interfaces/IEntitlement.sol": {
+      "keccak256": "0x05a317a8b059f6c79085102299c9e9cb706a8f3facdea86b8ed872831a77d192",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
-        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
+        "bzz-raw://9771d94c5863ca975b15d3a8b6cfd3040a4573da31e4f08b38f5fe9418f0e2a8",
+        "dweb:/ipfs/QmfBkooY6ahi6nYLnJmLwvkSdw7CuJfwfSnH187i27sX6o"
       ]
     },
-    "contracts/src/spacesv2/interfaces/ISpace.sol": {
+    "contracts/src/interfaces/ISpace.sol": {
       "keccak256": "0x9afec06b6b99184d72769c404fa5c615c8c90b1ba842dd498f06f29e675e73bc",
       "license": "Apache-2.0",
       "urls": [
@@ -703,7 +703,7 @@
         "dweb:/ipfs/QmcDrxZYzB3qV6d5h31Ti4hEdZDGxMaow2NnMuPJCKoqi7"
       ]
     },
-    "contracts/src/spacesv2/libraries/DataTypes.sol": {
+    "contracts/src/libraries/DataTypes.sol": {
       "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
       "license": "Apache-20",
       "urls": [
@@ -711,7 +711,7 @@
         "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
       ]
     },
-    "contracts/src/spacesv2/libraries/Errors.sol": {
+    "contracts/src/libraries/Errors.sol": {
       "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
       "license": "Apache-2.0",
       "urls": [

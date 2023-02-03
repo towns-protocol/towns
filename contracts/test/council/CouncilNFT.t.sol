@@ -6,7 +6,7 @@ import "contracts/test/utils/TestUtils.sol";
 import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {IERC721Receiver} from "openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol";
-import {CouncilNFT} from "contracts/src/council/CouncilNFT.sol";
+import {CouncilNFT} from "contracts/src/core/tokens/CouncilNFT.sol";
 
 import {console} from "forge-std/console.sol";
 

@@ -45,6 +45,63 @@ export default [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "points",
+        "type": "uint256"
+      }
+    ],
+    "name": "PointsClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "Staked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "Withdraw",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "claimPoints",
     "outputs": [],
@@ -106,7 +163,7 @@ export default [
             "type": "uint256"
           }
         ],
-        "internalType": "struct CouncilDataTypes.StakedToken[]",
+        "internalType": "struct CouncilStaking.StakedToken[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -163,7 +220,7 @@ export default [
                 "type": "uint256"
               }
             ],
-            "internalType": "struct CouncilDataTypes.StakedToken[]",
+            "internalType": "struct CouncilStaking.StakedToken[]",
             "name": "stakedTokens",
             "type": "tuple[]"
           },
@@ -178,7 +235,7 @@ export default [
             "type": "uint256"
           }
         ],
-        "internalType": "struct CouncilDataTypes.Staker",
+        "internalType": "struct CouncilStaking.Staker",
         "name": "",
         "type": "tuple"
       }

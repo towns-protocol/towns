@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Script.sol";
 
-import {Space} from "contracts/src/spacesv2/Space.sol";
-import {SpaceFactory} from "contracts/src/spacesv2/SpaceFactory.sol";
-import {DataTypes} from "contracts/src/spacesv2/libraries/DataTypes.sol";
+import {Space} from "contracts/src/core/spaces/Space.sol";
+import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
 
 contract CreateSpace is Script {
   SpaceFactory public spaceFactory;

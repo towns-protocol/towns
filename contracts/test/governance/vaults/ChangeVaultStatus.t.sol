@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import {DaoBaseSetup} from "contracts/test/governance/DaoBaseSetup.sol";
 import {CoreVoting} from "council/CoreVoting.sol";
-import {Dao} from "contracts/src/governance/Dao.sol";
-import {NFTVault} from "contracts/src/governance/vaults/NFTVault.sol";
-import {Mock721} from "contracts/test/spacesv2/mocks/MockToken.sol";
+import {Dao} from "contracts/src/core/governance/Dao.sol";
+import {NFTVault} from "contracts/src/core/governance/vaults/NFTVault.sol";
+import {Mock721} from "contracts/src/mocks/MockToken.sol";
 
 contract ChangeVaultStatusTest is DaoBaseSetup {
   function setUp() public {

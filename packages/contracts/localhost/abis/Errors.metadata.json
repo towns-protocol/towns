@@ -154,7 +154,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/libraries/Errors.sol": "Errors"
+      "contracts/src/libraries/Errors.sol": "Errors"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -180,7 +180,7 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/libraries/Errors.sol": {
+    "contracts/src/libraries/Errors.sol": {
       "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
       "license": "Apache-2.0",
       "urls": [
