@@ -1,0 +1,56 @@
+name: Release
+on:
+    push:
+        branches:
+            - main
+            - 'ci/**'
+jobs:
+    check:
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Cancel previous runs
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v3
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Build
+              run: yarn build
+              env:
+                  NODE_OPTIONS: --max_old_space_size=32768
+
+            - name: Sentry
+              run: make -C ./scripts setup_release
+              env:
+                  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: rtCamp/action-slack-notify@v2.2.0
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'Release Failure on ${{ github.repository }}'

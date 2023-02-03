@@ -33,7 +33,9 @@ if (env.IS_DEV) {
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
 } else {
     Sentry.init({
-        dsn: 'https://a5bc2df7099a4adbadd6ff1f87c7b66a@o327188.ingest.sentry.io/4504600696061952',
+        dsn:
+            env.VITE_SENTRY_DSN ||
+            'https://a5bc2df7099a4adbadd6ff1f87c7b66a@o327188.ingest.sentry.io/4504600696061952',
         // Set tracesSampleRate to 1.0 to capture 100%
         // of transactions for performance monitoring.
         // We recommend adjusting this value in production
@@ -45,6 +47,7 @@ if (env.IS_DEV) {
         // sessions when an error occurs.
         replaysOnErrorSampleRate: 1.0,
         integrations: [new Sentry.Replay(), new BrowserTracing()],
+        release: env.VITE_APP_RELEASE_VERSION,
     })
 }
 
