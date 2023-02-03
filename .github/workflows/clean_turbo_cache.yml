@@ -3,7 +3,7 @@ name: 'Clean Turbo Cache'
 on:
   schedule:
     # Daily cleanup of turbo cache
-    - cron:  0,15,30,45 * * * *
+    - cron:  0 0 * * *
     
 jobs:
   cleanup:
