@@ -12,7 +12,7 @@ import { Welcome } from 'routes/Welcome'
 import { AppPanelLayout } from 'routes/layouts/AppPanelLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
-import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { HomeServerUrl, useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
@@ -39,7 +39,7 @@ export const App = () => {
             primaryProtocol={SpaceProtocol.Matrix}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
             homeServerUrl={homeserverUrl}
-            defaultSpaceId={env.IS_DEV ? undefined : ZION_SPACE_ID}
+            defaultSpaceId={homeserverUrl === HomeServerUrl.REMOTE ? ZION_SPACE_ID : undefined}
             defaultSpaceName={ZION_SPACE_NAME}
             defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
             onboardingOpts={{ skipAvatar: true }}
