@@ -2,7 +2,7 @@
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { TProvider } from 'types/web3-types'
-import { CreateSpaceInfo, SendMessageOptions } from 'types/zion-types'
+import { SendMessageOptions } from 'types/zion-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
 
@@ -85,7 +85,7 @@ export interface ChannelTransactionContext extends TransactionContext<RoomIdenti
 }
 
 export type ZionClientEventHandlers = {
-    onCreateSpace?: (createSpaceInfo: CreateSpaceInfo, roomIdentifier: RoomIdentifier) => void
+    onCreateSpace?: (roomId: RoomIdentifier) => void
     onInviteUser?: (roomId: RoomIdentifier, userId: string) => void
     onJoinRoom?: (roomId: RoomIdentifier) => void
     onSendMessage?: (roomId: RoomIdentifier, sendMessageOptions?: SendMessageOptions) => void

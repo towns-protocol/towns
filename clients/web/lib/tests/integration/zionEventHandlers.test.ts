@@ -1,6 +1,6 @@
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { CreateSpaceInfo, RoomVisibility } from '../../src/types/zion-types'
+import { RoomVisibility } from '../../src/types/zion-types'
 import {
     createExternalTokenStruct,
     getCouncilNftAddress,
@@ -14,19 +14,14 @@ describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {
         let eventHandlerResult:
             | {
-                  createSpaceInfo: CreateSpaceInfo
                   roomIdentifier: RoomIdentifier
               }
             | undefined
 
         const { alice } = await registerAndStartClients(['alice'], {
             eventHandlers: {
-                onCreateSpace: (
-                    _createSpaceInfo: CreateSpaceInfo,
-                    _roomIdentifier: RoomIdentifier,
-                ): void => {
+                onCreateSpace: (_roomIdentifier: RoomIdentifier): void => {
                     eventHandlerResult = {
-                        createSpaceInfo: _createSpaceInfo,
                         roomIdentifier: _roomIdentifier,
                     }
                 },
@@ -48,7 +43,6 @@ describe('Zion event handlers test', () => {
         await alice.createSpace(createSpaceInfo, tokenEntitlement, [])
 
         expect(eventHandlerResult).toBeDefined()
-        expect(eventHandlerResult?.createSpaceInfo).toEqual(createSpaceInfo)
         expect(eventHandlerResult?.roomIdentifier).toBeDefined()
         expect(eventHandlerResult?.roomIdentifier.networkId).toBeDefined()
     })

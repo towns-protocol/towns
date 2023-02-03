@@ -402,9 +402,6 @@ export class ZionClient {
         }
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateSpaceTransaction(txContext)
-            if (rxContext.data) {
-                this._eventHandlers?.onCreateSpace?.(createSpaceInfo, rxContext.data)
-            }
             return rxContext.data
         }
         // Something went wrong. Don't return a room identifier.
@@ -484,6 +481,12 @@ export class ZionClient {
 
         if (receipt?.status === 1) {
             console.log('[waitForCreateSpaceTransaction] success', roomId)
+            if (roomId) {
+                // emiting the event here, because the web app calls different
+                // functions to create a space, and this is the only place
+                // that all different functions go through
+                this._eventHandlers?.onCreateSpace?.(roomId)
+            }
             return {
                 data: roomId,
                 status: TransactionStatus.Success,
@@ -500,6 +503,7 @@ export class ZionClient {
             )
         }
         console.error('[waitForCreateSpaceTransaction] failed', error)
+
         return {
             data: roomId,
             status: TransactionStatus.Failed,

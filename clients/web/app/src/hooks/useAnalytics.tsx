@@ -44,10 +44,8 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     }, [])
 
     const onCreateSpace = useCallback(
-        (createSpaceInfo: CreateSpaceInfo, roomIdentifier: RoomIdentifier) => {
+        (roomIdentifier: RoomIdentifier) => {
             analytics.track('create_space', {
-                name: createSpaceInfo.name,
-                visibility: createSpaceInfo.visibility,
                 protocol: roomIdentifier.protocol,
                 slug: roomIdentifier.slug,
                 networkId: roomIdentifier.networkId,
