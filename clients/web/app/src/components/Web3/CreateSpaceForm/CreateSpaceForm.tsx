@@ -135,9 +135,9 @@ export const CreateSpaceForm = (props: Props) => {
         const { step1, step2 } = useCreateSpaceFormStore.getState()
 
         const { membershipType, tokens } = step1
-        const { spaceIconUrl, spaceName } = step2
+        const { spaceName } = step2
 
-        if (!membershipType || !spaceName || !spaceIconUrl || !spaceName) {
+        if (!membershipType || !spaceName || !spaceName) {
             return
         }
 
@@ -150,8 +150,6 @@ export const CreateSpaceForm = (props: Props) => {
         const createSpaceInfo: CreateSpaceInfo = {
             name: spaceName,
             visibility: RoomVisibility.Public,
-            // TODO
-            // iconUrl: step2.spaceIcon as string,
         }
 
         await createSpaceTransactionWithRole(

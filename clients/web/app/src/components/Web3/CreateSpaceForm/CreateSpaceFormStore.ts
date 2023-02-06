@@ -24,7 +24,6 @@ let initialState: CreateSpaceFormState = {
     },
     step2: {
         spaceName: null,
-        spaceIconUrl: null,
     },
     createdSpaceId: null,
     mintedTokenAddress: null,

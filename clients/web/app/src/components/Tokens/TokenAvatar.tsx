@@ -1,13 +1,14 @@
 import React from 'react'
 import { Avatar, Box, IconButton, Text } from '@ui'
+import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { TokenProps } from './types'
 
-export const TokenAvatar = (props: Partial<TokenProps>) => {
-    const { imgSrc, label, contractAddress, onClick } = props
+export const TokenAvatar = (props: Partial<TokenProps> & { size: AvatarProps['size'] }) => {
+    const { imgSrc, label, contractAddress, onClick, size } = props
     return (
         <Box alignItems="center" maxWidth="x6" data-testid="token-avatar">
             <Box position="relative">
-                <Avatar src={imgSrc || '/placeholders/nft_5.png'} size="avatar_md" />
+                <Avatar src={imgSrc || '/placeholders/nft_5.png'} size={size} />
                 {onClick && contractAddress && (
                     <IconButton
                         style={{

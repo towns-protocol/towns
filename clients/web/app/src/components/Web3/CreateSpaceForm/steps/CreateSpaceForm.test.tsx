@@ -162,7 +162,7 @@ describe('<CreateSpaceForm />', () => {
         expect(match).toBeChecked()
     }, 10000)
 
-    test('Step 2: cannot proceed if no space name or space icon', async () => {
+    test('Step 2: cannot proceed if no space name', async () => {
         await act(() => {
             useCreateSpaceFormStore.setState({
                 step1: {
@@ -170,7 +170,6 @@ describe('<CreateSpaceForm />', () => {
                     tokens: [],
                 },
                 step2: {
-                    spaceIconUrl: null,
                     spaceName: null,
                 },
             })
@@ -179,13 +178,10 @@ describe('<CreateSpaceForm />', () => {
 
         const nextButton = screen.getByTestId('create-space-next-button')
         fireEvent.click(nextButton)
-        await screen.findByTestId('space-icon')
+        await screen.findByTestId('space-form-name-field')
 
         fireEvent.click(nextButton)
 
-        await waitFor(() => {
-            return screen.findByText(/please choose an icon for your space./i)
-        })
         await waitFor(async () => {
             return screen.findByText(/please enter a name for your space./i)
         })
@@ -212,7 +208,6 @@ describe('<CreateSpaceForm />', () => {
                     tokens: [],
                 },
                 step2: {
-                    spaceIconUrl: 'http://whatever.com?jpg',
                     spaceName: 'sample space',
                 },
             })
@@ -223,7 +218,7 @@ describe('<CreateSpaceForm />', () => {
         const nextButton = screen.getByTestId('create-space-next-button')
 
         fireEvent.click(nextButton)
-        await screen.findByTestId('space-icon')
+        await screen.findByTestId('space-form-name-field')
         fireEvent.click(nextButton)
 
         // on 3rd step
@@ -268,7 +263,6 @@ describe('<CreateSpaceForm />', () => {
                     tokens: [],
                 },
                 step2: {
-                    spaceIconUrl: 'http://whatever.com?jpg',
                     spaceName: 'sample space',
                 },
             })
@@ -279,7 +273,7 @@ describe('<CreateSpaceForm />', () => {
         const nextButton = screen.getByTestId('create-space-next-button')
 
         fireEvent.click(nextButton)
-        await screen.findByTestId('space-icon')
+        await screen.findByTestId('space-form-name-field')
         fireEvent.click(nextButton)
 
         // on 3rd step
@@ -309,7 +303,6 @@ describe('<CreateSpaceForm />', () => {
                     tokens: [],
                 },
                 step2: {
-                    spaceIconUrl: 'http://whatever.com?jpg',
                     spaceName: 'sample space',
                 },
             })
@@ -320,7 +313,7 @@ describe('<CreateSpaceForm />', () => {
         const nextButton = screen.getByTestId('create-space-next-button')
 
         fireEvent.click(nextButton)
-        await screen.findByTestId('space-icon')
+        await screen.findByTestId('space-form-name-field')
         fireEvent.click(nextButton)
 
         // on 3rd step
@@ -349,7 +342,6 @@ describe('<CreateSpaceForm />', () => {
                     tokens: [],
                 },
                 step2: {
-                    spaceIconUrl: 'http://whatever.com?jpg',
                     spaceName: 'sample space',
                 },
             })
@@ -360,7 +352,7 @@ describe('<CreateSpaceForm />', () => {
         const nextButton = screen.getByTestId('create-space-next-button')
 
         fireEvent.click(nextButton)
-        await screen.findByTestId('space-icon')
+        await screen.findByTestId('space-form-name-field')
         fireEvent.click(nextButton)
 
         // on 3rd step
@@ -406,7 +398,6 @@ describe('<CreateSpaceForm />', () => {
                     tokens: ['0x123'],
                 },
                 step2: {
-                    spaceIconUrl: 'http://whatever.com?jpg',
                     spaceName: 'sample space',
                 },
             })
@@ -417,7 +408,7 @@ describe('<CreateSpaceForm />', () => {
         const nextButton = screen.getByTestId('create-space-next-button')
 
         fireEvent.click(nextButton)
-        await screen.findByTestId('space-icon')
+        await screen.findByTestId('space-form-name-field')
         fireEvent.click(nextButton)
 
         // on 3rd step

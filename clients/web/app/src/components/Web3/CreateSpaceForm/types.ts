@@ -8,7 +8,6 @@ export interface CreateSpaceFormState {
     }
     step2: {
         [SPACE_NAME]: string | null
-        [SPACE_ICON_URL]: string | null
     }
     createdSpaceId: string | null
     mintedTokenAddress: Address | null

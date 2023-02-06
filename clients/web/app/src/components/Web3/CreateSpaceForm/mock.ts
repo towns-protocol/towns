@@ -80,7 +80,6 @@ export const StoreMockForManualSubmissionsNotToBeUsedInTests: CreateSpaceFormSta
     },
     step2: {
         spaceName: randProductName().toLowerCase(),
-        spaceIconUrl: 'https://picsum.photos/400',
     },
     createdSpaceId: null,
     mintedTokenAddress: null,

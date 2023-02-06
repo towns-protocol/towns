@@ -9,6 +9,7 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 import { FadeIn } from '@components/Transitions'
 import { env, hasVitalkTokensParam } from 'utils'
 import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
+import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -27,7 +28,7 @@ export const searchArrayOfData = (array: TokenProps[], query: string): TokenProp
 const TokenCheckboxLabel = ({ imgSrc, label, contractAddress }: TokenProps) => {
     return (
         <Box flexDirection="row" alignItems="center" paddingY="sm">
-            <TokenAvatar imgSrc={imgSrc} />
+            <TokenAvatar size="avatar_x4" imgSrc={imgSrc} />
             <Box paddingX="md">
                 <Text>{label}</Text>
             </Box>
@@ -142,6 +143,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                                       imgSrc={token?.imgSrc || ''}
                                       label={token?.label || ''}
                                       contractAddress={contractAddress}
+                                      size="avatar_md"
                                       onClick={onTokenClick}
                                   />
                               )
@@ -171,7 +173,13 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                 </Box>
             )}
             {isChecked && (
-                <Box paddingTop="md" minHeight="100" maxHeight="500">
+                <Box padding="md" minHeight="100" maxHeight="500" background="level3" rounded="sm">
+                    <Box paddingBottom="md">
+                        <Text textTransform="uppercase" color="gray2">
+                            {' '}
+                            Your wallet{' '}
+                        </Text>
+                    </Box>
                     <VList<TokenPropsForVList>
                         list={results}
                         viewMargin={200}
