@@ -127,7 +127,12 @@ export function useSyncSpaceHierarchies(
                 return
             }
             const eventType = event.getType()
-            if (eventType === EventType.SpaceChild || eventType === ZTEvent.BlockchainTransaction) {
+            if (
+                eventType === EventType.SpaceChild ||
+                // - a ZTEvent.BlockchainTransaction is fired when a blockchain transaction stored in user's local storage resolves - it's not a Matrix Event
+                // - we should sync again when this happens
+                eventType === ZTEvent.BlockchainTransaction
+            ) {
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
             }

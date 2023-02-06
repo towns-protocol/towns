@@ -4,7 +4,8 @@ import { CreateChannelInfo } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
 import { useZionClient } from './use-zion-client'
-import { StoredTransactionType, useTransactionStore } from '../store/use-transactions-store'
+import { useTransactionStore } from '../store/use-transactions-store'
+import { BlockchainTransactionType } from '../types/web3-types'
 
 /**
  * Combine Matrix channel creation and Smart Contract channel
@@ -43,7 +44,7 @@ export function useCreateChannelTransaction() {
                 if (txContext.transaction && txContext.data) {
                     useTransactionStore.getState().storeTransaction({
                         hash: txContext.transaction?.hash as `0x${string}`,
-                        type: StoredTransactionType.CreateChannel,
+                        type: BlockchainTransactionType.CreateChannel,
                         data: {
                             parentSpaceId: txContext.parentSpaceId,
                             spaceId: txContext.data,

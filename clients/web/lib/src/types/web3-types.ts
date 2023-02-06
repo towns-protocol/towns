@@ -1,4 +1,5 @@
-import { useProvider } from 'wagmi'
+import { Address, useProvider } from 'wagmi'
+import { RoomIdentifier } from './room-identifier'
 
 export enum WalletStatus {
     Connected = 'connected',
@@ -13,3 +14,17 @@ export interface RoleIdentifier {
 }
 
 export type TProvider = ReturnType<typeof useProvider>
+
+export enum BlockchainTransactionType {
+    CreateSpace = 'createSpace',
+    CreateChannel = 'createChannel',
+}
+
+export type BlockchainTransaction = {
+    hash: Address
+    data?: {
+        parentSpaceId?: string
+        spaceId: RoomIdentifier
+    }
+    type: BlockchainTransactionType
+}

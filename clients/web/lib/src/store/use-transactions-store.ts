@@ -1,33 +1,18 @@
-import { RoomIdentifier } from 'types/room-identifier'
-import { Address } from 'wagmi'
 import create from 'zustand'
 import { persist } from 'zustand/middleware'
 import EventEmitter from 'events'
 import { useEffect } from 'react'
+import { BlockchainTransaction } from '../types/web3-types'
 
-export enum StoredTransactionType {
-    CreateSpace = 'createSpace',
-    CreateChannel = 'createChannel',
-}
-
-export type StoredTransaction = {
-    hash: Address
-    data?: {
-        parentSpaceId?: string
-        spaceId: RoomIdentifier
-    }
-    type: StoredTransactionType
-}
-
-export type EmittedTransaction = StoredTransaction & {
+export type EmittedTransaction = BlockchainTransaction & {
     isSuccess: boolean
 }
 
 interface TransactionsState {
     transactions: {
-        [hash: string]: StoredTransaction
+        [hash: string]: BlockchainTransaction
     }
-    storeTransaction: (transaction: StoredTransaction) => void
+    storeTransaction: (transaction: BlockchainTransaction) => void
     deleteAndEmitTransaction: (hash: string, isSuccess: boolean) => void
 }
 

@@ -7,7 +7,8 @@ import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useZionClient } from './use-zion-client'
-import { StoredTransactionType, useTransactionStore } from '../store/use-transactions-store'
+import { useTransactionStore } from '../store/use-transactions-store'
+import { BlockchainTransactionType } from '../types/web3-types'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -75,7 +76,7 @@ export function useCreateSpaceTransaction() {
                 if (txContext.transaction && txContext.data) {
                     useTransactionStore.getState().storeTransaction({
                         hash: txContext.transaction?.hash as `0x${string}`,
-                        type: StoredTransactionType.CreateSpace,
+                        type: BlockchainTransactionType.CreateSpace,
                         data: {
                             spaceId: txContext.data,
                         },

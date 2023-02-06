@@ -1,13 +1,10 @@
-import {
-    useTransactionStore,
-    StoredTransaction,
-    StoredTransactionType,
-} from '../store/use-transactions-store'
+import { useTransactionStore } from '../store/use-transactions-store'
 import { ZionClient } from 'client/ZionClient'
 import { useCredentialStore } from '../store/use-credential-store'
 import { waitForTransaction } from '@wagmi/core'
 import { useQueries } from '@tanstack/react-query'
-import { ZTEvent } from '../types/timeline-types'
+import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
+import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-types'
 
 export const useTransactionListener = (client: ZionClient | undefined, homeServerUrl: string) => {
     const transactions = useTransactionStore((state) => state.transactions)
@@ -42,24 +39,22 @@ export const useTransactionListener = (client: ZionClient | undefined, homeServe
     })
 }
 
-async function onSuccessfulTransaction(client: ZionClient, transaction: StoredTransaction) {
+async function onSuccessfulTransaction(client: ZionClient, transaction: BlockchainTransaction) {
     if (!transaction.data) {
         return
     }
     switch (transaction.type) {
-        case StoredTransactionType.CreateChannel:
+        case BlockchainTransactionType.CreateChannel:
             if (!transaction.data.parentSpaceId || !client.matrixClient) {
                 return
             }
 
             try {
+                const content: BlockchainTransactionEvent['content'] = transaction
                 await client.matrixClient.sendStateEvent(
                     transaction.data.parentSpaceId,
                     ZTEvent.BlockchainTransaction,
-                    {
-                        transactionType: transaction.type,
-                        hash: transaction.hash,
-                    },
+                    content,
                     transaction.hash, // need unique state_key
                 )
             } catch (error) {

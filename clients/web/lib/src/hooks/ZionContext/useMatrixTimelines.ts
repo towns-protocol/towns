@@ -16,7 +16,7 @@ import {
 } from 'matrix-js-sdk'
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import {
-    BlockchainTransaction,
+    BlockchainTransactionEvent,
     MessageReactions,
     RoomMessageEvent,
     ThreadStats,
@@ -558,7 +558,7 @@ function toZionContent(
             return {
                 content: {
                     kind: ZTEvent.BlockchainTransaction,
-                    content: content as BlockchainTransaction['content'],
+                    content: content as BlockchainTransactionEvent['content'],
                 },
             }
         }

@@ -1,6 +1,7 @@
 import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matrix-js-sdk'
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { RoomIdentifier } from './room-identifier'
+import { BlockchainTransaction } from './web3-types'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -27,7 +28,7 @@ export enum ZTEvent {
     RoomRedaction = 'm.room.redaction',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
-    BlockchainTransaction = 'towns.blockchain.transaction',
+    BlockchainTransaction = 'blockchain.transaction',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -47,7 +48,7 @@ export type TimelineEvent_OneOf =
     | RoomPowerLevelsEvent
     | SpaceChildEvent
     | SpaceParentEvent
-    | BlockchainTransaction
+    | BlockchainTransactionEvent
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
@@ -217,7 +218,7 @@ export interface DecryptionAttempt {
     retry: () => Promise<void> | undefined
 }
 
-export interface BlockchainTransaction {
+export interface BlockchainTransactionEvent {
     kind: ZTEvent.BlockchainTransaction
-    content: IContent & { transactionType: string; hash: string }
+    content: BlockchainTransaction
 }
