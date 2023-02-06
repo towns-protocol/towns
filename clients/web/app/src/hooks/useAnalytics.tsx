@@ -1,12 +1,6 @@
 import React, { createContext, useCallback, useEffect, useState } from 'react'
 import * as amplitudeLib from '@amplitude/analytics-browser'
-import {
-    CreateSpaceInfo,
-    MessageType,
-    RoomIdentifier,
-    SendMessageOptions,
-    useZionClient,
-} from 'use-zion-client'
+import { MessageType, RoomIdentifier, SendMessageOptions, useZionClient } from 'use-zion-client'
 import { env } from '../utils/environment'
 
 interface Analytics {
