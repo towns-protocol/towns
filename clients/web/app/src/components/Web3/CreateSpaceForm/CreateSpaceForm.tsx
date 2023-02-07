@@ -2,18 +2,20 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     CreateSpaceInfo,
-    Membership,
+    EmittedTransaction,
     Permission,
-    RoomIdentifier,
     RoomVisibility,
     useCreateSpaceTransaction,
+    useOnTransactionEmitted,
+    useZionClient,
 } from 'use-zion-client'
+import shallow from 'zustand/shallow'
 import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { TransactionUIStatesType, useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { TransactionButton } from '@components/TransactionButton'
-import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
+import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
@@ -25,10 +27,6 @@ import { EVERYONE, TOKEN_HOLDERS } from './constants'
 
 const MotionBox = motion(Box)
 const MotionText = motion(Text)
-
-interface Props {
-    onCreateSpace: (roomId: RoomIdentifier, membership: Membership) => void
-}
 
 type HeaderProps = {
     formId: string
@@ -89,14 +87,15 @@ const Header = (props: HeaderProps) => {
     )
 }
 
-export const CreateSpaceForm = (props: Props) => {
-    const { onCreateSpace } = props
+export const CreateSpaceForm = () => {
+    const { spaceDapp } = useZionClient()
     const { step } = useDevOnlyQueryParams('step')
     const startAt = step && (step as number) > 0 ? (step as number) - 1 : 0
     const {
         data: roomId,
         error,
         transactionStatus,
+        transactionHash,
         createSpaceTransactionWithRole,
     } = useCreateSpaceTransaction()
 
@@ -170,14 +169,41 @@ export const CreateSpaceForm = (props: Props) => {
         goNext()
     }, [createSpace, goNext, isLast])
 
-    const onSuccessfulTransaction = useCallback(() => {
-        roomId && onCreateSpace(roomId, Membership.Join)
-    }, [roomId, onCreateSpace])
+    const onTransactionCreated = useCallback(() => {
+        roomId && useCreateSpaceFormStore.getState().setCreatedSpaceId(roomId.networkId)
+    }, [roomId])
 
-    useOnSuccessfulTransaction({
-        status: transactionStatus,
-        callback: onSuccessfulTransaction,
+    const { createdSpaceId, setMintedTokenAddress } = useCreateSpaceFormStore(
+        (state) => ({
+            createdSpaceId: state.createdSpaceId,
+            setMintedTokenAddress: state.setMintedTokenAddress,
+        }),
+        shallow,
+    )
+
+    const onTransactionEmitted = useCallback(
+        async (args: EmittedTransaction) => {
+            const spaceId = args.data?.spaceId
+            if (spaceId && spaceDapp) {
+                // TODO: spaceDapp typing is inferred as `any`
+                const spaceInfo = await spaceDapp.getSpaceInfo(spaceId.networkId)
+                if (spaceInfo && spaceInfo.networkId === createdSpaceId) {
+                    setMintedTokenAddress(spaceInfo.address)
+                }
+            }
+        },
+        [createdSpaceId, setMintedTokenAddress, spaceDapp],
+    )
+
+    // listen for when transaction is created
+    useOnTransactionStages({
+        transactionHash,
+        transactionStatus,
+        onCreate: onTransactionCreated,
     })
+
+    // listen for when transaction is emitted from store
+    useOnTransactionEmitted(onTransactionEmitted)
 
     return (
         <Box>

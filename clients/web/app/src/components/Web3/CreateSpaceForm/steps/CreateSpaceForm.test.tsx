@@ -23,24 +23,32 @@ vi.mock('use-zion-client', async () => {
         ...((await vi.importActual('use-zion-client')) as Record<string, unknown>),
         useZionClient: () => ({
             spaceDapp: {
-                getSpaceFactoryEventsContractInfo: () => {
+                getSpaceInfo: () => {
                     return {
-                        abi: 'some abi',
-                        address: '0x',
+                        address: '0x111',
+                        networkId: 'some-room-id',
+                        name: 'test space',
+                        owner: '0x222',
+                        disabled: false,
                     }
                 },
             },
         }),
-    }
-})
-
-vi.mock('../CreateSpaceListener', () => {
-    return {
-        CreateSpaceEventListener: () => {
-            React.useEffect(() => {
-                useCreateSpaceFormStore.getState().setMintedTokenAddress('0x1234')
-            }, [])
-            return null
+        useOnTransactionEmitted: (callback: (args: zionClient.EmittedTransaction) => void) => {
+            callback({
+                isSuccess: true,
+                hash: '0x777',
+                data: {
+                    spaceId: {
+                        networkId: 'some-room-id',
+                        slug: 'some-room-id',
+                        protocol: zionClient.SpaceProtocol.Matrix,
+                    },
+                },
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                //@ts-ignore
+                type: 'createSapce',
+            })
         },
     }
 })

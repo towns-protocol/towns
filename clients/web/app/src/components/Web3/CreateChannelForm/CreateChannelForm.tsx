@@ -8,7 +8,7 @@ import { useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { useChannelCreationRoles } from 'hooks/useContractRoles'
 import { PATHS } from 'routes'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { useOnSuccessfulTransaction } from 'hooks/useOnSuccessfulTransaction'
+import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
@@ -91,9 +91,10 @@ export const CreateChannelForm = (props: Props) => {
         channelId && onCreateChannel(channelId)
     }, [channelId, onCreateChannel])
 
-    useOnSuccessfulTransaction({
-        status: transactionStatus,
-        callback: onSuccessfulTransaction,
+    useOnTransactionStages({
+        transactionStatus,
+        transactionHash,
+        onSuccess: onSuccessfulTransaction,
     })
 
     return (

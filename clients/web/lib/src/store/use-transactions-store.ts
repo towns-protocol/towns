@@ -1,7 +1,7 @@
 import create from 'zustand'
 import { persist } from 'zustand/middleware'
 import EventEmitter from 'events'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { BlockchainTransaction } from '../types/web3-types'
 
 export type EmittedTransaction = BlockchainTransaction & {
@@ -52,10 +52,14 @@ export const TxnsEventEmitter = Object.freeze({
 })
 
 export const useOnTransactionEmitted = (callback: (args: EmittedTransaction) => void) => {
+    const cbRef = useRef(callback)
+    cbRef.current = callback
+
     useEffect(() => {
-        TxnsEventEmitter.on(callback)
+        const cb = (args: EmittedTransaction) => cbRef.current(args)
+        TxnsEventEmitter.on(cb)
         return () => {
-            TxnsEventEmitter.off(callback)
+            TxnsEventEmitter.off(cb)
         }
-    }, [callback])
+    }, [])
 }
