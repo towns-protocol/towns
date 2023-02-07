@@ -4,6 +4,7 @@ import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
 import {
     ChannelTransactionContext,
     IZionServerVersions,
+    RoleTransactionContext,
     SpaceProtocol,
     TransactionContext,
     TransactionStatus,
@@ -697,48 +698,99 @@ export class ZionClient {
         return this.spaceDapp.getSpaceInfo(spaceNetworkId)
     }
 
-    /************************************************
-     * createRole
-     *************************************************/
-    public async createRole(
+    public async createRoleTransaction(
         spaceNetworkId: string,
-        name: string,
+        roleName: string,
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
-    ): Promise<RoleIdentifier | undefined> {
+    ): Promise<RoleTransactionContext> {
         let transaction: ContractTransaction | undefined = undefined
-        let receipt: ContractReceipt | undefined = undefined
-        let roleIdentifier: RoleIdentifier | undefined = undefined
-        let roleId: number | undefined = undefined
-        let roleName: string | undefined = undefined
+        let error: Error | undefined = undefined
         try {
             transaction = await this.spaceDapp.createRole(
                 spaceNetworkId,
-                name,
+                roleName,
                 permissions,
                 tokens,
                 users,
             )
-            receipt = await transaction.wait()
+            console.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            const decodedError = await this.getDecodedErrorForSpace(spaceNetworkId, err)
-            console.error('[createRole] failed', decodedError)
-            throw decodedError
-        } finally {
-            if (receipt?.status === 1) {
-                // Successful created the role on-chain.
-                console.log('[createRole] success', receipt?.logs[0].topics[2])
-                roleId = BigNumber.from(receipt?.logs[0].topics[2]).toNumber()
-                // John: how can we best decode this 32 byte hex string to a human readable string ?
-                roleName = receipt?.logs[0].topics[3]
-                roleIdentifier = { roleId, name: roleName, spaceNetworkId }
+            console.error('[createRoleTransaction] error', err)
+            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        return {
+            transaction,
+            spaceNetworkId,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: undefined,
+            error,
+        }
+    }
+
+    public async waitForCreateRoleTransaction(
+        context: RoleTransactionContext | undefined,
+    ): Promise<TransactionContext<RoleIdentifier>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForCreateRoleTransaction] transaction is undefined')
+            }
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            }
+            console.log(
+                '[waitForCreateRoleTransaction] createRoleTransaction receipt completed' /*, receipt */,
+            )
+        } catch (err) {
+            console.error('[waitForCreateRoleTransaction] error', err)
+            if (err instanceof Error) {
+                error = err
             } else {
-                // On-chain role creation failed.
-                console.error('[createRole] failed')
+                error = new Error('create role failed with an unknown error')
             }
         }
-        return roleIdentifier
+
+        if (receipt?.status === 1 && context?.spaceNetworkId) {
+            // Successfully created the role on-chain.
+            console.log('[waitForCreateRoleTransaction] success', receipt.logs[0].topics[2])
+            const roleId = BigNumber.from(receipt.logs[0].topics[2]).toNumber()
+            // John: how can we best decode this 32 byte hex string to a human readable string ?
+            const roleName = receipt?.logs[0].topics[3]
+            const roleIdentifier: RoleIdentifier = {
+                roleId,
+                name: roleName,
+                spaceNetworkId: context.spaceNetworkId,
+            }
+            return {
+                data: roleIdentifier,
+                status: TransactionStatus.Success,
+                transaction,
+                receipt,
+            }
+        }
+
+        // got here without success
+        if (!error) {
+            // If we don't have an error from the transaction, create one
+            error = new Error('Failed to create role')
+        }
+        console.error('[waitForCreateRoleTransaction] failed', error)
+        return {
+            data: undefined,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        }
     }
 
     /************************************************
@@ -1316,7 +1368,7 @@ export class ZionClient {
     /*
      * Error when web3Provider.waitForTransaction receipt has a status of 0
      */
-    private async throwTransactionError(receipt: ContractReceipt) {
+    private async throwTransactionError(receipt: ContractReceipt): Promise<Error> {
         const code = await this.opts.web3Provider?.call(receipt, receipt.blockNumber)
         const reason = toUtf8String(`0x${code?.substring(138) || ''}`)
         throw new Error(reason)

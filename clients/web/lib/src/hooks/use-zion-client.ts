@@ -4,6 +4,7 @@
 import {
     ChannelTransactionContext,
     IZionServerVersions,
+    RoleTransactionContext,
     TransactionContext,
     ZionClientEvent,
 } from '../client/ZionClientTypes'
@@ -33,6 +34,7 @@ import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
+import { RoleIdentifier } from 'types/web3-types'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -60,6 +62,16 @@ interface ZionClientImpl {
     waitForCreateChannelTransaction: (
         context: ChannelTransactionContext | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    createRoleTransaction: (
+        spaceNetworkId: string,
+        name: string,
+        permissions: Permission[],
+        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        users: string[],
+    ) => Promise<RoleTransactionContext | undefined>
+    waitForCreateRoleTransaction: (
+        context: RoleTransactionContext | undefined,
+    ) => Promise<TransactionContext<RoleIdentifier> | undefined>
     editMessage: (
         roomId: RoomIdentifier,
         message: string,
@@ -126,6 +138,8 @@ export function useZionClient(): ZionClientImpl {
             client?.waitForCreateChannelTransaction,
             ZionClientEvent.NewChannel,
         ),
+        createRoleTransaction: useWithCatch(client?.createRoleTransaction),
+        waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),

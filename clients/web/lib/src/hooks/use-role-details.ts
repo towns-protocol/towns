@@ -1,3 +1,4 @@
+import { QueryKeyRoles } from './query-keys'
 import { useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -5,7 +6,6 @@ import { useZionContext } from '../components/ZionContextProvider'
 /**
  * Convience function to get space role details.
  */
-
 export function useRoleDetails(spaceId: string, roleId: number) {
     const { client } = useZionContext()
     const isEnabled = spaceId.length > 0 && roleId > 0
@@ -28,7 +28,7 @@ export function useRoleDetails(spaceId: string, roleId: number) {
     } = useQuery(
         // unique keys per query so that React Query
         // can manage the cache for us.
-        ['spaceRoles', spaceId, 'roles', roleId],
+        [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByRoleId, roleId],
         // query that does the data fetching.
         () => getRole(spaceId, roleId),
         // options for the query.

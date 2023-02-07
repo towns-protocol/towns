@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { TProvider } from 'types/web3-types'
 import { SendMessageOptions } from 'types/zion-types'
+import { RoleIdentifier, TProvider } from 'types/web3-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
 
@@ -82,6 +82,10 @@ export interface TransactionContext<T> {
 
 export interface ChannelTransactionContext extends TransactionContext<RoomIdentifier> {
     parentSpaceId: string | undefined
+}
+
+export interface RoleTransactionContext extends TransactionContext<RoleIdentifier> {
+    spaceNetworkId: string | undefined
 }
 
 export type ZionClientEventHandlers = {

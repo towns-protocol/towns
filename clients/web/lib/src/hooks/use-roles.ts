@@ -1,25 +1,43 @@
+import { useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { QueryKeyRoles } from './query-keys'
 import { getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
-import { useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useZionContext } from '../components/ZionContextProvider'
 
 /**
  * Convience function to get space roles.
  */
-
 export function useRoles(_spaceId: string | undefined) {
     const spaceId = _spaceId && _spaceId.length > 0 ? _spaceId : ''
+    const queryClient = useQueryClient()
     const { client } = useZionContext()
 
     // function to get the roles for any space.
     const getRolesFromSpace = useCallback(
-        async function (networkId: string) {
-            if (!client || !networkId) {
+        async function (spaceNetworkId: string) {
+            if (!client || !spaceNetworkId) {
                 return undefined
             }
-            return await getFilteredRolesFromSpace(client, networkId)
+            return await getFilteredRolesFromSpace(client, spaceNetworkId)
         },
         [client],
+    )
+
+    useEffect(
+        function () {
+            const prefetchRoles = async function () {
+                if (spaceId) {
+                    await queryClient.prefetchQuery({
+                        queryKey: [QueryKeyRoles.BySpaceId, spaceId],
+                        queryFn: () => getRolesFromSpace(spaceId),
+                        staleTime: 10 * 1000, // only prefetch if older than 10 seconds
+                    })
+                }
+            }
+            void prefetchRoles()
+        },
+        [getRolesFromSpace, queryClient, spaceId],
     )
 
     const {
@@ -29,7 +47,7 @@ export function useRoles(_spaceId: string | undefined) {
     } = useQuery(
         // unique key per query so that React Query
         // can manage the cache for us.
-        ['spaceRoles', spaceId],
+        [QueryKeyRoles.BySpaceId, spaceId],
         // query function that does the data fetching.
         () => getRolesFromSpace(spaceId),
         // options for the query.

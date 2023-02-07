@@ -16,6 +16,7 @@ import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/ty
 
 import { CreateSpaceInfo } from '../../../src/types/zion-types'
 import { Permission } from '../../../src/client/web3/ContractTypes'
+import { RoleIdentifier } from '../../../src/types/web3-types'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionClient } from '../../../src/client/ZionClient'
@@ -113,6 +114,34 @@ export class ZionTestClient extends ZionClient {
         }
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateSpaceTransaction(txContext)
+            return rxContext.data
+        }
+        // Something went wrong. Don't return a room identifier.
+        return undefined
+    }
+
+    /************************************************
+     * createRole for testing
+     *************************************************/
+    public async createRole(
+        spaceNetworkId: string,
+        roleName: string,
+        permissions: Permission[],
+        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        users: string[],
+    ): Promise<RoleIdentifier | undefined> {
+        const txContext = await this.createRoleTransaction(
+            spaceNetworkId,
+            roleName,
+            permissions,
+            tokens,
+            users,
+        )
+        if (txContext.error) {
+            throw txContext.error
+        }
+        if (txContext.status === TransactionStatus.Pending) {
+            const rxContext = await this.waitForCreateRoleTransaction(txContext)
             return rxContext.data
         }
         // Something went wrong. Don't return a room identifier.
