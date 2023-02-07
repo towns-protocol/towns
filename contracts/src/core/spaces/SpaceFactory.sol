@@ -3,7 +3,6 @@ pragma solidity 0.8.17;
 
 /** Interfaces */
 import {ISpaceFactory} from "contracts/src/interfaces/ISpaceFactory.sol";
-import {ISpaceOwner} from "contracts/src/interfaces/ISpaceOwner.sol";
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
 
 /** Libraries */
@@ -23,6 +22,7 @@ import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UU
 import {TokenEntitlement} from "./entitlements/TokenEntitlement.sol";
 import {UserEntitlement} from "./entitlements/UserEntitlement.sol";
 import {Space} from "./Space.sol";
+import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 
 contract SpaceFactory is
   Initializable,
@@ -42,6 +42,11 @@ contract SpaceFactory is
   string[] public ownerPermissions;
   mapping(bytes32 => address) public spaceByHash;
   mapping(bytes32 => uint256) public tokenByHash;
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
 
   function initialize(
     address _space,
@@ -102,8 +107,8 @@ contract SpaceFactory is
     }
 
     // mint space nft to owner
-    uint256 _tokenId = ISpaceOwner(SPACE_TOKEN_ADDRESS).mintTo(
-      _msgSender(),
+    uint256 _tokenId = SpaceOwner(SPACE_TOKEN_ADDRESS).mintTo(
+      address(this),
       spaceMetadata
     );
 
@@ -136,7 +141,13 @@ contract SpaceFactory is
         SPACE_IMPLEMENTATION_ADDRESS,
         abi.encodeCall(
           Space.initialize,
-          (spaceName, spaceNetworkId, _entitlements)
+          (
+            spaceName,
+            spaceNetworkId,
+            _entitlements,
+            SPACE_TOKEN_ADDRESS,
+            _tokenId
+          )
         )
       )
     );
@@ -162,7 +173,11 @@ contract SpaceFactory is
       _extraEntitlements
     );
 
-    Space(_spaceAddress).renounceOwnership();
+    SpaceOwner(SPACE_TOKEN_ADDRESS).transferFrom(
+      address(this),
+      _msgSender(),
+      _tokenId
+    );
 
     emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceNetworkId);
   }

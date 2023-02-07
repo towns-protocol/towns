@@ -5,6 +5,7 @@ pragma solidity 0.8.17;
 import {ISpace} from "contracts/src/interfaces/ISpace.sol";
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 //libraries
 import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
@@ -15,13 +16,13 @@ import {Permissions} from "contracts/src/libraries/Permissions.sol";
 
 //contracts
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {MultiCaller} from "contracts/src/misc/MultiCaller.sol";
 
 contract Space is
   Initializable,
-  OwnableUpgradeable,
+  ContextUpgradeable,
   UUPSUpgradeable,
   MultiCaller,
   ISpace
@@ -30,6 +31,8 @@ contract Space is
   string public networkId;
   bool public disabled;
   uint256 public ownerRoleId;
+  address public token;
+  uint256 public tokenId;
 
   mapping(address => bool) public hasEntitlement;
   mapping(address => bool) public defaultEntitlements;
@@ -50,17 +53,26 @@ contract Space is
 
   /// ***** Space Management *****
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   /// @inheritdoc ISpace
   function initialize(
     string memory _name,
     string memory _networkId,
-    address[] memory _entitlements
+    address[] memory _entitlements,
+    address _token,
+    uint256 _tokenId
   ) external initializer {
     __UUPSUpgradeable_init();
-    __Ownable_init();
+    __Context_init();
 
     name = _name;
     networkId = _networkId;
+    token = _token;
+    tokenId = _tokenId;
 
     // whitelist modules
     for (uint256 i = 0; i < _entitlements.length; i++) {
@@ -70,8 +82,13 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
+  function owner() public view returns (address) {
+    return IERC721(token).ownerOf(tokenId);
+  }
+
+  /// @inheritdoc ISpace
   function setSpaceAccess(bool _disabled) external {
-    _isOwner("");
+    if (!_isOwner()) revert Errors.NotAllowed();
     disabled = _disabled;
   }
 
@@ -230,10 +247,7 @@ contract Space is
 
     for (uint256 i = 0; i < _permissions.length; i++) {
       // only allow contract owner to add permission owner to role
-      if (
-        _msgSender() != owner() &&
-        Utils.isEqual(_permissions[i], Permissions.Owner)
-      ) {
+      if (!_isOwner() && Utils.isEqual(_permissions[i], Permissions.Owner)) {
         revert Errors.OwnerPermissionNotAllowed();
       }
 
@@ -516,6 +530,11 @@ contract Space is
       revert Errors.RoleDoesNotExist();
     }
 
+    // check not adding entitlements to owner role
+    if (_roleId == ownerRoleId) {
+      revert Errors.NotAllowed();
+    }
+
     _addRoleToEntitlement(_roleId, _entitlement.module, _entitlement.data);
   }
 
@@ -586,14 +605,8 @@ contract Space is
     IEntitlement(_entitlement).setEntitlement(_roleId, _entitlementData);
   }
 
-  function _isOwner(string memory _channelId) internal view {
-    if (
-      _isEntitled(_channelId, _msgSender(), bytes32(abi.encodePacked("Owner")))
-    ) {
-      return;
-    } else {
-      revert Errors.NotAllowed();
-    }
+  function _isOwner() internal view returns (bool) {
+    return IERC721(token).ownerOf(tokenId) == _msgSender();
   }
 
   function _isAllowed(
@@ -601,7 +614,7 @@ contract Space is
     string memory _permission
   ) internal view {
     if (
-      _msgSender() == owner() ||
+      _isOwner() ||
       (!disabled &&
         _isEntitled(
           _channelId,

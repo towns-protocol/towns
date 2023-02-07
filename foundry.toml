@@ -3,7 +3,7 @@ solc = "0.8.17"
 src = "contracts"
 test = "contracts/test"
 out = "contracts/out"
-cache-path = "contracts/cache"
+cache_path = "contracts/cache"
 libs = ["node_modules", "lib"]
 verbosity = 3
 fs_permissions = [{ access = "read-write", path = "./packages"}, { access = "read-write", path = "./servers/dendrite"}]

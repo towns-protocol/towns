@@ -19,7 +19,7 @@ import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitl
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 
 contract SpaceFactoryTestInitialize is TestUtils {
-  SpaceFactory internal spaceFactory;
+  SpaceFactory internal _spaceFactory;
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
@@ -31,23 +31,8 @@ contract SpaceFactoryTestInitialize is TestUtils {
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();
-    spaceFactory = new SpaceFactory();
+    _spaceFactory = new SpaceFactory();
     initialPermissions.push("Read");
-  }
-
-  function testInitialize() external {
-    spaceFactory.initialize(
-      address(spaceImplementation),
-      address(tokenImplementation),
-      address(userImplementation),
-      address(spaceToken),
-      initialPermissions
-    );
-
-    assertEq(
-      address(spaceFactory.TOKEN_IMPLEMENTATION_ADDRESS()),
-      address(tokenImplementation)
-    );
   }
 
   function testUpgradeTo() external {
@@ -55,9 +40,9 @@ contract SpaceFactoryTestInitialize is TestUtils {
 
     address spaceFactoryAddress = address(
       new ERC1967Proxy(
-        address(spaceFactory),
+        address(_spaceFactory),
         abi.encodeCall(
-          spaceFactory.initialize,
+          _spaceFactory.initialize,
           (
             address(spaceImplementation),
             address(tokenImplementation),
@@ -69,11 +54,11 @@ contract SpaceFactoryTestInitialize is TestUtils {
       )
     );
     spaceToken.setFactory(spaceFactoryAddress);
-    spaceFactory = SpaceFactory(spaceFactoryAddress);
+    _spaceFactory = SpaceFactory(spaceFactoryAddress);
 
     SpaceFactoryV2 spaceFactoryV2Implementation = new SpaceFactoryV2();
 
-    spaceFactory.upgradeTo(address(spaceFactoryV2Implementation));
+    _spaceFactory.upgradeTo(address(spaceFactoryV2Implementation));
 
     SpaceFactoryV2 spaceFactoryV2 = SpaceFactoryV2(spaceFactoryAddress);
 

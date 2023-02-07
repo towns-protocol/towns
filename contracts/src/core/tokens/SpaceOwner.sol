@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.17;
 
-import {ISpaceOwner} from "contracts/src/interfaces/ISpaceOwner.sol";
-
 import {Errors} from "contracts/src/libraries/Errors.sol";
 
 import {ERC721URIStorage, ERC721} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract SpaceOwner is Ownable, ERC721URIStorage, ISpaceOwner {
+contract SpaceOwner is Ownable, ERC721URIStorage {
   address public FACTORY_ADDRESS;
 
   uint256 public tokenSupply;

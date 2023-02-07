@@ -115,4 +115,66 @@ contract RemoveRoleTest is SpaceBaseSetup {
     vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).removeRole(ownerRoleId);
   }
+
+  function testAddNewEntitlementToOwnerRole() external {
+    address _notTokenHolder = _randomAddress();
+    address _tokenHolder = _randomAddress();
+
+    // create space with _tokenHolder as owner
+    vm.prank(_tokenHolder);
+    address _space = createSimpleSpace();
+    address _userEntitlementModule = Space(_space).getEntitlements()[1];
+
+    // Create entitlement with modify space permissions
+    address[] memory _users = new address[](1);
+    _users[0] = _notTokenHolder;
+    DataTypes.Entitlement[]
+      memory _newEntitlementsI = new DataTypes.Entitlement[](1);
+    string[] memory _spacePermissions = new string[](1);
+    _spacePermissions[0] = Permissions.ModifySpacePermissions;
+    _newEntitlementsI[0] = DataTypes.Entitlement({
+      module: _userEntitlementModule,
+      data: abi.encode(_users)
+    });
+
+    // add to system for _notTokenHOlder
+    vm.prank(_tokenHolder);
+    Space(_space).createRole(
+      "ModifySpacePermissions",
+      _spacePermissions,
+      _newEntitlementsI
+    );
+
+    // see that "ModifySpacePermissions" was granted
+    assertTrue(
+      Space(_space).isEntitledToSpace(
+        _notTokenHolder,
+        Permissions.ModifySpacePermissions
+      )
+    );
+
+    // grab owner role
+    uint256 ownerRoleId = Space(_space).ownerRoleId();
+
+    // create entitlement for _notTokenHolder
+    DataTypes.Entitlement memory _newEntitlementII = DataTypes.Entitlement({
+      module: _userEntitlementModule,
+      data: abi.encode(_users)
+    });
+
+    // See _notTokenHolder does not have owner permissions
+    assertFalse(
+      Space(_space).isEntitledToSpace(_notTokenHolder, Permissions.Owner)
+    );
+
+    // Have _notTokenHolder elevate themselves to owner by adding themself to owner role
+    vm.prank(_notTokenHolder);
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).addRoleToEntitlement(ownerRoleId, _newEntitlementII);
+
+    // See _notTokenHolder does not have owner permissions
+    assertFalse(
+      Space(_space).isEntitledToSpace(_notTokenHolder, Permissions.Owner)
+    );
+  }
 }

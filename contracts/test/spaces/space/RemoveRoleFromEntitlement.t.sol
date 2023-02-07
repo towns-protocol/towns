@@ -17,7 +17,7 @@ contract RemoveRoleFromEntitlementTest is SpaceBaseSetup {
 
   function testRevertIfRemovingOwnerRole() external {
     address _space = createSimpleSpace();
-    address _owner = Space(_space).owner();
+    address _owner = spaceToken.ownerOf(Space(_space).tokenId());
     uint256 _ownerRoleId = Space(_space).ownerRoleId();
 
     address _userEntitlement = getSpaceUserEntitlement(_space);

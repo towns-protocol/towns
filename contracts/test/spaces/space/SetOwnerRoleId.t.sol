@@ -55,21 +55,4 @@ contract SetOwnerRoleIdTest is SpaceBaseSetup {
     vm.expectRevert(Errors.MissingOwnerPermission.selector);
     Space(_space).setOwnerRoleId(_newRoleId);
   }
-
-  function testSetOwnerRoleId() external {
-    address _space = createSimpleSpace();
-
-    string memory _roleName = "NewOwner";
-    string[] memory _permissions = spaceFactory.getOwnerPermissions();
-
-    DataTypes.Entitlement[]
-      memory _roleEntitlements = new DataTypes.Entitlement[](1);
-    _roleEntitlements[0] = DataTypes.Entitlement({
-      module: address(0),
-      data: ""
-    });
-
-    vm.expectRevert(Errors.OwnerPermissionNotAllowed.selector);
-    Space(_space).createRole(_roleName, _permissions, _roleEntitlements);
-  }
 }

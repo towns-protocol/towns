@@ -12,8 +12,14 @@ interface ISpace {
   function initialize(
     string memory name,
     string memory networkId,
-    address[] memory modules
+    address[] memory modules,
+    address token,
+    uint256 tokenId
   ) external;
+
+  /// @notice fetches the Space owner
+  /// @return the address of the Space owner
+  function owner() external view returns (address);
 
   /// @notice sets whether the space is disabled or not
   /// @param disabled whether to make the space disabled or not

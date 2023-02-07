@@ -270,6 +270,8 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     vm.prank(creator);
     address spaceAddress = createSimpleSpace();
 
-    assertEq(Space(spaceAddress).owner(), address(0));
+    assertTrue(
+      Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner)
+    );
   }
 }
