@@ -61,6 +61,8 @@ export const SpaceSideBar = (props: Props) => {
         return m.thread && m.unread ? count + 1 : count
     }, 0)
 
+    const { data: canCreateChannel } = useHasPermission(Permission.AddRemoveChannels)
+
     return (
         <SideBar data-testid="space-sidebar">
             <SpaceSideBarHeader space={space} onSettings={onSettings} />
@@ -101,12 +103,14 @@ export const SpaceSideBar = (props: Props) => {
                             <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
                         </ModalContainer>
                     )}
-                    <ActionNavItem
-                        icon="plus"
-                        id="newChannel"
-                        label="Create channel"
-                        onClick={onShow}
-                    />
+                    {canCreateChannel && (
+                        <ActionNavItem
+                            icon="plus"
+                            id="newChannel"
+                            label="Create channel"
+                            onClick={onShow}
+                        />
+                    )}
                 </>
             </Stack>
         </SideBar>
