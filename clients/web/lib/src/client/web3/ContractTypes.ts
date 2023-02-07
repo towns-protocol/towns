@@ -17,6 +17,7 @@ export enum Permission {
     AddRemoveChannels = 'AddRemoveChannels',
     ModifySpacePermissions = 'ModifySpacePermissions',
     ModifyChannelDefaults = 'ModifyChannelDefaults',
+    Owner = 'Owner',
 }
 
 export enum EntitlementModuleType {

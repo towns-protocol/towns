@@ -5,6 +5,7 @@ import useEvent from 'react-use-event-hook'
 import {
     Membership,
     MentionResult,
+    Permission,
     RoomIdentifier,
     SpaceData,
     useMyMembership,
@@ -20,7 +21,7 @@ import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Icon, IconName, Paragraph, Stack } from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
-import { useIsSpaceOwner } from 'hooks/useIsSpaceOwner'
+import { useHasPermission } from 'hooks/useHasPermission'
 import { PATHS } from 'routes'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
@@ -36,7 +37,7 @@ export const SpaceSideBar = (props: Props) => {
     const navigate = useNavigate()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
-    const { data: isOwner } = useIsSpaceOwner()
+    const { data: isOwner } = useHasPermission(Permission.Owner)
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
