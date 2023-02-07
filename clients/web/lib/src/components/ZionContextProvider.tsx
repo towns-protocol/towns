@@ -22,7 +22,8 @@ import { useTransactionListener } from '../hooks/use-transaction-listener'
 import { QueryProvider } from './QueryProvider'
 
 export interface IZionContext {
-    client?: ZionClient
+    client?: ZionClient /// only set when user is authenticated with matrix
+    clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     rooms: Record<string, Room | undefined>
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceIds: RoomIdentifier[] // ordered list of space ids
@@ -99,7 +100,7 @@ const ContextImpl = (props: Props): JSX.Element => {
         initialSyncLimit,
     } = props
 
-    const { client } = useZionClientListener(
+    const { client, clientSingleton } = useZionClientListener(
         primaryProtocol,
         homeServerUrl,
         casablancaServerUrl,
@@ -136,6 +137,7 @@ const ContextImpl = (props: Props): JSX.Element => {
         <ZionContext.Provider
             value={{
                 client,
+                clientSingleton,
                 rooms,
                 invitedToIds,
                 spaceIds,

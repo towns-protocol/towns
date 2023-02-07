@@ -115,5 +115,6 @@ export const useZionClientListener = (
 
     return {
         client: clientRef,
+        clientSingleton: clientSingleton.current,
     }
 }
