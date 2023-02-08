@@ -9,9 +9,7 @@ import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
 
 contract AddRoleToEntitlementTest is SpaceBaseSetup {
-  function setUp() public {
-    SpaceBaseSetup.init();
-  }
+  function setUp() public {}
 
   function testRevertIfRoleIdDoesNotExist() external {
     address _space = createSimpleSpace();

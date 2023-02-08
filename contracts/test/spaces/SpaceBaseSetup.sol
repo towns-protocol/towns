@@ -5,6 +5,7 @@ import "../utils/TestUtils.sol";
 
 /** Interfaces */
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /** Libraries */
 import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
@@ -18,7 +19,7 @@ import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 
-contract SpaceBaseSetup is TestUtils {
+contract SpaceBaseSetup is TestUtils, ERC721Holder {
   SpaceFactory internal spaceFactory;
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
@@ -27,7 +28,7 @@ contract SpaceBaseSetup is TestUtils {
 
   string[] public initialPermissions;
 
-  function init() internal {
+  constructor() {
     spaceToken = new SpaceOwner("Space Token", "ZION");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();

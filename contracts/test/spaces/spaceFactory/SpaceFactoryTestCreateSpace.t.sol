@@ -14,9 +14,7 @@ import {Mock721, MockERC20} from "contracts/src/mocks/MockToken.sol";
 import {console} from "forge-std/console.sol";
 
 contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
-  function setUp() external {
-    SpaceBaseSetup.init();
-  }
+  function setUp() external {}
 
   function testUpdateImplementation() external {
     address space = _randomAddress();

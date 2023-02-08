@@ -101,7 +101,7 @@ export interface SpaceInterface extends utils.Interface {
     "roleCount()": FunctionFragment;
     "rolesById(uint256)": FunctionFragment;
     "setChannelAccess(string,bool)": FunctionFragment;
-    "setEntitlement(address,bool)": FunctionFragment;
+    "setEntitlementModule(address,bool)": FunctionFragment;
     "setOwnerRoleId(uint256)": FunctionFragment;
     "setSpaceAccess(bool)": FunctionFragment;
     "token()": FunctionFragment;
@@ -150,7 +150,7 @@ export interface SpaceInterface extends utils.Interface {
       | "roleCount"
       | "rolesById"
       | "setChannelAccess"
-      | "setEntitlement"
+      | "setEntitlementModule"
       | "setOwnerRoleId"
       | "setSpaceAccess"
       | "token"
@@ -311,7 +311,7 @@ export interface SpaceInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
-    functionFragment: "setEntitlement",
+    functionFragment: "setEntitlementModule",
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
@@ -450,7 +450,7 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setEntitlement",
+    functionFragment: "setEntitlementModule",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -727,8 +727,8 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    setEntitlement(
-      _entitlement: PromiseOrValue<string>,
+    setEntitlementModule(
+      _entitlementModule: PromiseOrValue<string>,
       _whitelist: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -949,8 +949,8 @@ export interface Space extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  setEntitlement(
-    _entitlement: PromiseOrValue<string>,
+  setEntitlementModule(
+    _entitlementModule: PromiseOrValue<string>,
     _whitelist: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -1171,8 +1171,8 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setEntitlement(
-      _entitlement: PromiseOrValue<string>,
+    setEntitlementModule(
+      _entitlementModule: PromiseOrValue<string>,
       _whitelist: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1415,8 +1415,8 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    setEntitlement(
-      _entitlement: PromiseOrValue<string>,
+    setEntitlementModule(
+      _entitlementModule: PromiseOrValue<string>,
       _whitelist: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1631,8 +1631,8 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    setEntitlement(
-      _entitlement: PromiseOrValue<string>,
+    setEntitlementModule(
+      _entitlementModule: PromiseOrValue<string>,
       _whitelist: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

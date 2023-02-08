@@ -11,9 +11,7 @@ import {Space} from "contracts/src/core/spaces/Space.sol";
 import {console} from "forge-std/console.sol";
 
 contract SetSpaceAccessTest is SpaceBaseSetup {
-  function setUp() public {
-    SpaceBaseSetup.init();
-  }
+  function setUp() public {}
 
   function testRevertIfNotAllowed() external {
     address _space = createSimpleSpace();
@@ -34,6 +32,6 @@ contract SetSpaceAccessTest is SpaceBaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).setEntitlement(_randomAddress(), true);
+    Space(_space).setEntitlementModule(_randomAddress(), true);
   }
 }

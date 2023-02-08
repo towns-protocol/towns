@@ -345,6 +345,40 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
+          }
+        ],
+        "name": "onERC721Received",
+        "outputs": [
+          {
+            "internalType": "bytes4",
+            "name": "",
+            "type": "bytes4"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "owner",
         "outputs": [
@@ -526,6 +560,9 @@
             "_spaceAddress": "The address of the new space"
           }
         },
+        "onERC721Received(address,address,uint256,bytes)": {
+          "details": "See {IERC721Receiver-onERC721Received}. Always returns `IERC721Receiver.onERC721Received.selector`."
+        },
         "owner()": {
           "details": "Returns the address of the current owner."
         },
@@ -603,19 +640,19 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xa3e84c1976f0c977163c6c4ab033d7249e16b2a177b4b8d0dd8f8a2c6efdae36",
+      "keccak256": "0x4bcdf58152f766a4d03763d59eb744aef69445ce4a82e5456633551c0804eacd",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://876312f517fe68efdd10573deb91a94a7680a0d522a5fda59ec4a59bf19e4557",
-        "dweb:/ipfs/QmRPPUt56iTr8FfSyC7bvt3W1YUwpdQqaXPDRTTDiaBjLq"
+        "bzz-raw://d5cfb9affbd3a6da3f58ed343744f2b4bedd657582304726b83c20a7f57af3ac",
+        "dweb:/ipfs/QmYDZnKFxiG3YNQxvbVQuSSg18P8s7MtNGycK4TE4AwZgP"
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
-      "keccak256": "0xbb6bee3c6fd69fb0946d6c2b912d0e9c9a4665e1d6cc1da086c6cd06b4e7f05b",
+      "keccak256": "0xf3340a3c1b9f1f245e2acb670a7b1ac6816121d7724996f7782ce3647ea4df33",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f52638ed6b7ea5097b85512635044b4befcdd239e3883c21f6f8ebdb9af1881f",
-        "dweb:/ipfs/QmW72izVVMqc5CUQd4kggDrjxoX1vhLVDBAFRTLfoegwc8"
+        "bzz-raw://4472932ab1fe683bd6d3d0e9b91771cb7952c8fa9c6458538317e0d96ab75fb4",
+        "dweb:/ipfs/QmcXzbhT5QwQXs1kAeGPKv5DWw5Vs1MNaNrWfeEbKBetfL"
       ]
     },
     "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
@@ -635,11 +672,11 @@
       ]
     },
     "contracts/src/core/tokens/SpaceOwner.sol": {
-      "keccak256": "0x8f667d69752a7c64c1d021219b6d764fb5d6e971a835f3c44a11cbb454456835",
+      "keccak256": "0x2f493a0008619ae97fe59a6e0b03157177db02c77184d331cd1d3f8ab7a522a8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://975241a876fb295b87c0723d84a49bdaf5595a35a94a9f659fce53ab96499ab0",
-        "dweb:/ipfs/QmRsHUdg3Hy3KrsonDcuuNfr9hKfj5UgPQc4AYCNggBhaf"
+        "bzz-raw://80ab0ea13bac0e03a5e6b185f6be3fec3693f4880a94d3f7aa69e15979f4c792",
+        "dweb:/ipfs/QmZpUFruxGa7CKRnbYHAGrTaqYCcLVsgwTcK1hvcy5LTqi"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
@@ -651,11 +688,11 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0xb427d062ebc87863b0d23553bd1aeefcda5f97c8d340e9a48e204f79ce6ab600",
+      "keccak256": "0x05cc4fc8cb0790cb33e6880925a22184fd3e04aff649acea7f5da1c907a08b94",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c4ae87d04fae9b938eeca9a12cc4e37d6f63755eed74c31e4f7cd6398c2fbe0a",
-        "dweb:/ipfs/QmPWbKjqSAgBuz2YX6FVhg1gTLog7qwzmZspm2FnYcJNQP"
+        "bzz-raw://fa4b0c799731003e7bffcc0fc2a707c2f69e5e7a308b74df0dea0a7eaf6b90f2",
+        "dweb:/ipfs/QmbLoyDP8GApftReVWEVT89kxYzaHRMA8h1An7N8Tug7Zs"
       ]
     },
     "contracts/src/interfaces/ISpaceFactory.sol": {
@@ -768,6 +805,22 @@
       "urls": [
         "bzz-raw://0e8109ef362b9426afb526a9280cb2de559c50fa2649b03b2cbc0ce4a7f9826c",
         "dweb:/ipfs/QmcC2XjeAHw6rgTywXDFNZt6qGv4ddTv6EhdkxYFXEoMAk"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC721/IERC721ReceiverUpgradeable.sol": {
+      "keccak256": "0xbb2ed8106d94aeae6858e2551a1e7174df73994b77b13ebd120ccaaef80155f5",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://8bc3c6a456dba727d8dd9fd33420febede490abb49a07469f61d2a3ace66a95a",
+        "dweb:/ipfs/QmVAWtEVj7K5AbvgJa9Dz22KiDq9eoptCjnVZqsTMtKXyd"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC721/utils/ERC721HolderUpgradeable.sol": {
+      "keccak256": "0xb7f90ab8af7dae0bd4acfa088f9e606ea039110face097ca7c8beef563f71e90",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://e980a0ad8d2f81f38d378994a80d46dbb0c46efed9799d6272f69b177e1f0f3c",
+        "dweb:/ipfs/QmdgyvytrBV9RC6v8ojAnU9nFE1zPicdbGqHGskbopyHyn"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol": {

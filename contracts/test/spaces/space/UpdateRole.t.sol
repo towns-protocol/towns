@@ -9,9 +9,7 @@ import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
 
 contract UpdateRoleTest is SpaceBaseSetup {
-  function setUp() external {
-    SpaceBaseSetup.init();
-  }
+  function setUp() external {}
 
   function testUpdateRole() external {
     address _space = createSimpleSpace();

@@ -9,9 +9,7 @@ import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
 
 contract SetOwnerRoleIdTest is SpaceBaseSetup {
-  function setUp() public {
-    SpaceBaseSetup.init();
-  }
+  function setUp() public {}
 
   function testRevertIfNotOwner() external {
     address _space = createSimpleSpace();
@@ -26,7 +24,7 @@ contract SetOwnerRoleIdTest is SpaceBaseSetup {
   function testSetOwnerRoleId() external {
     address _space = createSimpleSpace();
 
-    string memory _roleName = "new-owner";
+    string memory _roleName = "NewOwner";
     string[] memory _permissions = new string[](2);
     _permissions[0] = "Vote";
     _permissions[1] = "Veto";

@@ -28,8 +28,6 @@ contract TokenEntitlementTest is SpaceBaseSetup {
   uint256 tokenId;
 
   function setUp() public {
-    SpaceBaseSetup.init();
-
     vm.prank(address(spaceFactory));
     tokenId = spaceToken.mintTo(address(this), "");
 

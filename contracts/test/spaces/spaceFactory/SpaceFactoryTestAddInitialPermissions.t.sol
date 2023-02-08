@@ -5,9 +5,7 @@ import {Errors} from "contracts/src/libraries/Errors.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 
 contract SpaceFactoryTestAddPermissions is SpaceBaseSetup {
-  function setUp() external {
-    SpaceBaseSetup.init();
-  }
+  function setUp() external {}
 
   function testRevertPermissionAlreadyExists() external {
     string[] memory _permissions = new string[](1);

@@ -14,7 +14,6 @@ contract UpgradeToTest is SpaceBaseSetup {
   TokenV2 public tokenV2;
 
   function setUp() public {
-    SpaceBaseSetup.init();
     spaceV2 = new SpaceV2();
     tokenV2 = new TokenV2();
   }

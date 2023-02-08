@@ -900,7 +900,7 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "_entitlement",
+            "name": "_entitlementModule",
             "type": "address"
           },
           {
@@ -909,7 +909,7 @@
             "type": "bool"
           }
         ],
-        "name": "setEntitlement",
+        "name": "setEntitlementModule",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1207,9 +1207,9 @@
             "disabled": "whether to make the channel disabled or not"
           }
         },
-        "setEntitlement(address,bool)": {
+        "setEntitlementModule(address,bool)": {
           "params": {
-            "entitlement": "the address of the new entitlement",
+            "entitlementModule": "the address of the new entitlement",
             "whitelist": "whether to set the entitlement as activated or not"
           }
         },
@@ -1312,8 +1312,8 @@
         "setChannelAccess(string,bool)": {
           "notice": "sets whether the channel is disabled or not"
         },
-        "setEntitlement(address,bool)": {
-          "notice": "sets a new entitlement for the space"
+        "setEntitlementModule(address,bool)": {
+          "notice": "sets a new entitlement module for the space"
         },
         "setOwnerRoleId(uint256)": {
           "notice": "sets a created roleId to be the owner role id for the Space"
@@ -1360,11 +1360,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xa3e84c1976f0c977163c6c4ab033d7249e16b2a177b4b8d0dd8f8a2c6efdae36",
+      "keccak256": "0x4bcdf58152f766a4d03763d59eb744aef69445ce4a82e5456633551c0804eacd",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://876312f517fe68efdd10573deb91a94a7680a0d522a5fda59ec4a59bf19e4557",
-        "dweb:/ipfs/QmRPPUt56iTr8FfSyC7bvt3W1YUwpdQqaXPDRTTDiaBjLq"
+        "bzz-raw://d5cfb9affbd3a6da3f58ed343744f2b4bedd657582304726b83c20a7f57af3ac",
+        "dweb:/ipfs/QmYDZnKFxiG3YNQxvbVQuSSg18P8s7MtNGycK4TE4AwZgP"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
@@ -1376,11 +1376,11 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0xb427d062ebc87863b0d23553bd1aeefcda5f97c8d340e9a48e204f79ce6ab600",
+      "keccak256": "0x05cc4fc8cb0790cb33e6880925a22184fd3e04aff649acea7f5da1c907a08b94",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c4ae87d04fae9b938eeca9a12cc4e37d6f63755eed74c31e4f7cd6398c2fbe0a",
-        "dweb:/ipfs/QmPWbKjqSAgBuz2YX6FVhg1gTLog7qwzmZspm2FnYcJNQP"
+        "bzz-raw://fa4b0c799731003e7bffcc0fc2a707c2f69e5e7a308b74df0dea0a7eaf6b90f2",
+        "dweb:/ipfs/QmbLoyDP8GApftReVWEVT89kxYzaHRMA8h1An7N8Tug7Zs"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {

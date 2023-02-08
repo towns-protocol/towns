@@ -11,9 +11,7 @@ import {Space} from "contracts/src/core/spaces/Space.sol";
 import {console} from "forge-std/console.sol";
 
 contract CreateChannelTest is SpaceBaseSetup {
-  function setUp() external {
-    SpaceBaseSetup.init();
-  }
+  function setUp() external {}
 
   function testCreateChannelWithNonExistentRole() external {
     address _space = createSimpleSpace();

@@ -46,6 +46,8 @@ contract Space is
   mapping(bytes32 => DataTypes.Channel) public channelsByHash;
   bytes32[] public channels;
 
+  string internal constant IN_SPACE = "";
+
   /**
    * @dev Added to allow future versions to add new variables in case this contract becomes
    *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
@@ -53,7 +55,7 @@ contract Space is
   uint256[49] private __gap;
 
   modifier onlySpaceOwner() {
-    _isAllowed("", Permissions.Owner);
+    _isAllowed(IN_SPACE, Permissions.Owner);
     _;
   }
 
@@ -140,7 +142,7 @@ contract Space is
     string calldata channelNetworkId,
     bool disableChannel
   ) external {
-    _isAllowed("", Permissions.AddRemoveChannels);
+    _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
     bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
 
@@ -155,9 +157,9 @@ contract Space is
     string calldata channelNetworkId,
     string calldata channelName
   ) external {
-    Utils.validateName(channelName);
+    _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
-    _isAllowed("", Permissions.AddRemoveChannels);
+    Utils.validateName(channelName);
 
     bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
 
@@ -179,7 +181,7 @@ contract Space is
     string memory channelNetworkId,
     uint256[] memory roleIds
   ) external returns (bytes32) {
-    _isAllowed("", Permissions.AddRemoveChannels);
+    _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
     Utils.validateName(channelName);
 
@@ -249,7 +251,7 @@ contract Space is
     string[] memory _permissions,
     DataTypes.Entitlement[] memory _entitlements
   ) external returns (uint256) {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     Utils.validateLength(_roleName);
 
@@ -270,23 +272,27 @@ contract Space is
       permissionsByRoleId[newRoleId].push(_permission);
     }
 
-    // loop through entitlements and set entitlement data for role
+    // loop through entitlement modules and set entitlement data for role
     for (uint256 i = 0; i < _entitlements.length; i++) {
-      address _entitlement = _entitlements[i].module;
+      address _entitlementModule = _entitlements[i].module;
       bytes memory _entitlementData = _entitlements[i].data;
 
       // check for empty address or data
-      if (_entitlement == address(0) || _entitlementData.length == 0) {
+      if (_entitlementModule == address(0) || _entitlementData.length == 0) {
         continue;
       }
 
       // check if entitlement is valid
-      if (hasEntitlement[_entitlement] == false) {
+      if (hasEntitlement[_entitlementModule] == false) {
         revert Errors.EntitlementNotWhitelisted();
       }
 
       // set entitlement data for role
-      _addRoleToEntitlement(newRoleId, _entitlement, _entitlementData);
+      _addRoleToEntitlementModule(
+        newRoleId,
+        _entitlementModule,
+        _entitlementData
+      );
     }
 
     emit Events.RoleCreated(_msgSender(), newRoleId, _roleName, networkId);
@@ -295,8 +301,8 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
-  function updateRole(uint256 _roleId, string calldata _roleName) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+  function updateRole(uint256 _roleId, string memory _roleName) external {
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     Utils.validateLength(_roleName);
 
@@ -321,7 +327,7 @@ contract Space is
 
   /// @inheritdoc ISpace
   function removeRole(uint256 _roleId) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     // check not removing owner role
     if (_roleId == ownerRoleId) {
@@ -359,7 +365,7 @@ contract Space is
     uint256 _roleId,
     string memory _permission
   ) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     // cannot add owner permission to role
     if (Utils.isEqual(_permission, Permissions.Owner)) {
@@ -396,7 +402,7 @@ contract Space is
     uint256 _roleId,
     string memory _permission
   ) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     if (Utils.isEqual(_permission, Permissions.Owner)) {
       revert Errors.NotAllowed();
@@ -427,7 +433,7 @@ contract Space is
     address _entitlement,
     address _newEntitlement
   ) external {
-    _isAllowed("", Permissions.Owner);
+    _isAllowed(IN_SPACE, Permissions.Owner);
 
     if (_entitlement == address(0) || _newEntitlement == address(0)) {
       revert Errors.InvalidParameters();
@@ -511,7 +517,9 @@ contract Space is
     string calldata _permission
   ) external view returns (bool _entitled) {
     for (uint256 i = 0; i < entitlements.length; i++) {
-      if (_isEntitled("", _user, bytes32(abi.encodePacked(_permission)))) {
+      if (
+        _isEntitled(IN_SPACE, _user, bytes32(abi.encodePacked(_permission)))
+      ) {
         _entitled = true;
       }
     }
@@ -527,23 +535,26 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
-  function setEntitlement(address _entitlement, bool _whitelist) external {
-    _isAllowed("", Permissions.Owner);
+  function setEntitlementModule(
+    address _entitlementModule,
+    bool _whitelist
+  ) external {
+    _isAllowed(IN_SPACE, Permissions.Owner);
 
     // validate entitlement interface
-    _validateEntitlementInterface(_entitlement);
+    _validateEntitlementInterface(_entitlementModule);
 
     // check if entitlement already exists
-    if (_whitelist && hasEntitlement[_entitlement]) {
+    if (_whitelist && hasEntitlement[_entitlementModule]) {
       revert Errors.EntitlementAlreadyWhitelisted();
     }
 
     // check if removing a default entitlement
-    if (!_whitelist && defaultEntitlements[_entitlement]) {
+    if (!_whitelist && defaultEntitlements[_entitlementModule]) {
       revert Errors.NotAllowed();
     }
 
-    _setEntitlement(_entitlement, _whitelist);
+    _setEntitlement(_entitlementModule, _whitelist);
   }
 
   /// @inheritdoc ISpace
@@ -551,7 +562,7 @@ contract Space is
     uint256 _roleId,
     DataTypes.Entitlement calldata _entitlement
   ) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     // check not removing owner role
     if (_roleId == ownerRoleId) {
@@ -594,7 +605,7 @@ contract Space is
     uint256 _roleId,
     DataTypes.Entitlement memory _entitlement
   ) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
 
     if (!hasEntitlement[_entitlement.module]) {
       revert Errors.EntitlementNotWhitelisted();
@@ -610,7 +621,11 @@ contract Space is
       revert Errors.NotAllowed();
     }
 
-    _addRoleToEntitlement(_roleId, _entitlement.module, _entitlement.data);
+    _addRoleToEntitlementModule(
+      _roleId,
+      _entitlement.module,
+      _entitlement.data
+    );
   }
 
   /// @inheritdoc ISpace
@@ -657,7 +672,7 @@ contract Space is
   }
 
   /// ***** Internal *****
-  function _addRoleToEntitlement(
+  function _addRoleToEntitlementModule(
     uint256 _roleId,
     address _entitlement,
     bytes memory _entitlementData

@@ -13,7 +13,6 @@ contract CreateRoleTest is SpaceBaseSetup {
   MockEntitlement public mockEntitlement;
 
   function setUp() external {
-    SpaceBaseSetup.init();
     mockEntitlement = new MockEntitlement();
   }
 
@@ -93,7 +92,7 @@ contract CreateRoleTest is SpaceBaseSetup {
     Space(_space).createRole(_roleName, _permissions, _entitlements);
 
     // whitelist new entitlement
-    Space(_space).setEntitlement(address(mockEntitlement), true);
+    Space(_space).setEntitlementModule(address(mockEntitlement), true);
 
     _entitlements[0] = DataTypes.Entitlement({
       module: address(mockEntitlement),

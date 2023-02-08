@@ -18,8 +18,6 @@ contract SetEntitlementTest is SpaceBaseSetup {
   address public entitlementAddress;
 
   function setUp() public {
-    SpaceBaseSetup.init();
-
     implementation = new MockEntitlement();
     entitlementAddress = address(new ERC1967Proxy(address(implementation), ""));
   }
@@ -30,13 +28,13 @@ contract SetEntitlementTest is SpaceBaseSetup {
     address _userEntitlement = getSpaceUserEntitlement(_space);
 
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).setEntitlement(_userEntitlement, false);
+    Space(_space).setEntitlementModule(_userEntitlement, false);
   }
 
   function testSetEntitlement() external {
     address _space = createSimpleSpace();
 
-    Space(_space).setEntitlement(entitlementAddress, true);
+    Space(_space).setEntitlementModule(entitlementAddress, true);
 
     assertTrue(Space(_space).hasEntitlement(entitlementAddress));
   }
@@ -47,9 +45,9 @@ contract SetEntitlementTest is SpaceBaseSetup {
       new ERC1967Proxy(address(new MockEntitlement()), "")
     );
 
-    Space(_space).setEntitlement(_randomEntitlement, true);
-    Space(_space).setEntitlement(entitlementAddress, true);
-    Space(_space).setEntitlement(entitlementAddress, false);
+    Space(_space).setEntitlementModule(_randomEntitlement, true);
+    Space(_space).setEntitlementModule(entitlementAddress, true);
+    Space(_space).setEntitlementModule(entitlementAddress, false);
 
     assertFalse(Space(_space).hasEntitlement(entitlementAddress));
 
@@ -68,10 +66,10 @@ contract SetEntitlementTest is SpaceBaseSetup {
   function testRevertIfEntitlementAlreadyWhitelisted() external {
     address _space = createSimpleSpace();
 
-    Space(_space).setEntitlement(entitlementAddress, true);
+    Space(_space).setEntitlementModule(entitlementAddress, true);
 
     vm.expectRevert(Errors.EntitlementAlreadyWhitelisted.selector);
-    Space(_space).setEntitlement(entitlementAddress, true);
+    Space(_space).setEntitlementModule(entitlementAddress, true);
   }
 
   function testRevertIfNotAllowedToSetEntitlement() external {
@@ -79,7 +77,7 @@ contract SetEntitlementTest is SpaceBaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).setEntitlement(entitlementAddress, true);
+    Space(_space).setEntitlementModule(entitlementAddress, true);
   }
 
   function testRevertIfNotSupported() external {
@@ -91,7 +89,7 @@ contract SetEntitlementTest is SpaceBaseSetup {
     );
 
     vm.expectRevert(Errors.EntitlementModuleNotSupported.selector);
-    Space(_space).setEntitlement(unsupportedProxy, true);
+    Space(_space).setEntitlementModule(unsupportedProxy, true);
   }
 }
 

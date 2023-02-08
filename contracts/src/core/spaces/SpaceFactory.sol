@@ -18,6 +18,7 @@ import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Init
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ERC721HolderUpgradeable} from "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
 import {TokenEntitlement} from "./entitlements/TokenEntitlement.sol";
 import {UserEntitlement} from "./entitlements/UserEntitlement.sol";
@@ -28,6 +29,7 @@ contract SpaceFactory is
   Initializable,
   OwnableUpgradeable,
   ReentrancyGuardUpgradeable,
+  ERC721HolderUpgradeable,
   UUPSUpgradeable,
   ISpaceFactory
 {
@@ -64,6 +66,7 @@ contract SpaceFactory is
     __UUPSUpgradeable_init();
     __Ownable_init();
     __ReentrancyGuard_init();
+    __ERC721Holder_init();
 
     SPACE_IMPLEMENTATION_ADDRESS = _space;
     TOKEN_IMPLEMENTATION_ADDRESS = _tokenEntitlement;

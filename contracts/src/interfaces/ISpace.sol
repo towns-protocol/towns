@@ -168,10 +168,13 @@ interface ISpace {
   /// @return entitlements array
   function getEntitlements() external view returns (address[] memory);
 
-  /// @notice sets a new entitlement for the space
-  /// @param entitlement the address of the new entitlement
+  /// @notice sets a new entitlement module for the space
+  /// @param entitlementModule the address of the new entitlement
   /// @param whitelist whether to set the entitlement as activated or not
-  function setEntitlement(address entitlement, bool whitelist) external;
+  function setEntitlementModule(
+    address entitlementModule,
+    bool whitelist
+  ) external;
 
   /// @notice removes an entitlement from the space
   /// @param roleId the roleId to remove the entitlement from

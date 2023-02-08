@@ -19,7 +19,6 @@ contract MultiCallerTest is SpaceBaseSetup {
   SimpleMultiCall internal simpleMultiCall;
 
   function setUp() external {
-    SpaceBaseSetup.init();
     simpleMultiCall = new SimpleMultiCall();
   }
 

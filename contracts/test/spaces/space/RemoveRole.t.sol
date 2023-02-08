@@ -9,9 +9,7 @@ import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
 
 contract RemoveRoleTest is SpaceBaseSetup {
-  function setUp() external {
-    SpaceBaseSetup.init();
-  }
+  function setUp() external {}
 
   function testRemoveRole() external {
     address _moderator = _randomAddress();
@@ -140,7 +138,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // add to system for _notTokenHOlder
     vm.prank(_tokenHolder);
     Space(_space).createRole(
-      "modify-space-permissions",
+      "ModifySpacePermissions",
       _spacePermissions,
       _newEntitlementsI
     );
@@ -208,7 +206,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     vm.prank(_tokenHolder);
     vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).createRole(
-      "owner-2",
+      "OwnerII",
       _spacePermissions,
       _newOwnerEntitlements
     );
@@ -243,7 +241,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // add to system for _channelAccessor
     vm.prank(_tokenHolder);
     uint256 readRoleID = Space(_space).createRole(
-      "read",
+      "Read",
       _spacePermissions,
       _newEntitlementsI
     );

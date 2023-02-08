@@ -11,9 +11,7 @@ import {Space} from "contracts/src/core/spaces/Space.sol";
 import {console} from "forge-std/console.sol";
 
 contract RemoveRoleFromEntitlementTest is SpaceBaseSetup {
-  function setUp() public {
-    SpaceBaseSetup.init();
-  }
+  function setUp() public {}
 
   function testRevertIfRemovingOwnerRole() external {
     address _space = createSimpleSpace();

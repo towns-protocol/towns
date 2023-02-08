@@ -27,7 +27,7 @@ contract SpaceOwner is Ownable, ERC721URIStorage {
   ) external onlyFactory returns (uint256) {
     uint256 tokenId = tokenSupply;
 
-    _mint(to, tokenId);
+    _safeMint(to, tokenId);
     _setTokenURI(tokenId, tokenURI);
     tokenSupply++;
 

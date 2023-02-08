@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "contracts/test/utils/TestUtils.sol";
+import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 import {Errors} from "contracts/src/libraries/Errors.sol";
 
 import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 
-contract SpaceOwnerTestMintTo is TestUtils {
+contract SpaceOwnerTestMintTo is TestUtils, ERC721Holder {
   SpaceOwner internal spaceOwner;
 
   function setUp() public {

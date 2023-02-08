@@ -894,7 +894,7 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_entitlement",
+        "name": "_entitlementModule",
         "type": "address"
       },
       {
@@ -903,7 +903,7 @@ export default [
         "type": "bool"
       }
     ],
-    "name": "setEntitlement",
+    "name": "setEntitlementModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
