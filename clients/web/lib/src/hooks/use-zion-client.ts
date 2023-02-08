@@ -93,8 +93,8 @@ interface ZionClientImpl {
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
     isRoomEncrypted: (roomId: RoomIdentifier) => boolean | undefined
-    joinRoom: (roomId: RoomIdentifier) => Promise<Room | undefined>
-    leaveRoom: (roomId: RoomIdentifier) => Promise<void>
+    joinRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<Room | undefined>
+    leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
     loginWithWallet: (statement: string) => Promise<void>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>

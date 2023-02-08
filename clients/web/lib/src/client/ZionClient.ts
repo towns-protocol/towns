@@ -29,6 +29,7 @@ import {
     CreateChannelInfo,
     CreateSpaceInfo,
     EditMessageOptions,
+    Membership,
     PowerLevel,
     PowerLevels,
     Room,
@@ -43,7 +44,7 @@ import { FullyReadMarker, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier, TProvider } from '../types/web3-types'
-import { RoomIdentifier } from '../types/room-identifier'
+import { makeMatrixRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
 import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
@@ -521,11 +522,19 @@ export class ZionClient {
      *************************************************/
     public async createChannelRoom(createInfo: CreateChannelInfo): Promise<RoomIdentifier> {
         switch (createInfo.parentSpaceId.protocol) {
-            case SpaceProtocol.Matrix:
+            case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return createMatrixChannel(this.matrixClient, createInfo)
+                const roomId = await createMatrixChannel(this.matrixClient, createInfo)
+                // a channel creator always joins the channel, so we set the membership status
+                await this.setChannelMembershipDataOnSpace({
+                    spaceId: createInfo.parentSpaceId,
+                    channelNetworkId: roomId.networkId,
+                    membershipStatus: Membership.Join,
+                })
+                return roomId
+            }
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
                     throw new Error("createChannel: Casablanca client doesn't exist")
@@ -932,15 +941,23 @@ export class ZionClient {
     /************************************************
      * leave
      * ************************************************/
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    public async leave(roomId: RoomIdentifier): Promise<void> {
+    public async leave(roomId: RoomIdentifier, parentNetworkId?: string): Promise<void> {
         switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
+            case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
                 await this.matrixClient.leave(roomId.networkId)
+
+                const spaceId = parentNetworkId ? makeMatrixRoomIdentifier(parentNetworkId) : roomId
+                const channelNetworkId = parentNetworkId ? roomId.networkId : undefined
+                await this.setChannelMembershipDataOnSpace({
+                    spaceId,
+                    channelNetworkId,
+                    membershipStatus: Membership.Leave,
+                })
                 break
+            }
             case SpaceProtocol.Casablanca:
                 throw new Error('leave not implemented for Casablanca')
             default:
@@ -953,7 +970,7 @@ export class ZionClient {
      * at the time of writing, both spaces and channels are
      * identified by a room id, this function handls joining both
      *************************************************/
-    public async joinRoom(roomId: RoomIdentifier) {
+    public async joinRoom(roomId: RoomIdentifier, parentNetworkId?: string) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
@@ -961,6 +978,16 @@ export class ZionClient {
                 }
                 const matrixRoom = await joinMatrixRoom({ matrixClient: this.matrixClient, roomId })
                 const zionRoom = toZionRoom(matrixRoom)
+
+                const spaceId = parentNetworkId ? makeMatrixRoomIdentifier(parentNetworkId) : roomId
+                const channelNetworkId = parentNetworkId ? roomId.networkId : undefined
+
+                await this.setChannelMembershipDataOnSpace({
+                    spaceId,
+                    channelNetworkId,
+                    membershipStatus: Membership.Join,
+                })
+
                 this._eventHandlers?.onJoinRoom?.(zionRoom.id)
                 return zionRoom
             }
@@ -1245,6 +1272,91 @@ export class ZionClient {
         }
     }
 
+    private getAllChannelMembershipsFromSpace(roomId: RoomIdentifier): Record<string, Membership> {
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                const room = this.matrixClient?.getRoom(roomId.networkId)
+                const content: Record<string, Membership> | undefined = room
+                    ?.getAccountData(ZionAccountDataType.Membership)
+                    ?.getContent()
+                if (content) {
+                    return content
+                }
+                return {}
+            }
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(roomId)
+        }
+    }
+
+    /************************************************
+     * getAccountDataRoomMembership
+     * gets membership status for room even if user is not current member of room
+     * ************************************************/
+    public getChannelMembershipFromSpace(
+        spaceId: RoomIdentifier,
+        channelNetworkId: string,
+    ): Membership | undefined {
+        return this.getAllChannelMembershipsFromSpace(spaceId)[channelNetworkId]
+    }
+
+    /************************************************
+     * setRoomStatus
+     * Set a membership status for room (space or channel) in space's account data
+     ************************************************/
+    private async setChannelMembershipDataOnSpace({
+        spaceId,
+        channelNetworkId: channelId,
+        membershipStatus,
+    }: {
+        spaceId: RoomIdentifier
+        channelNetworkId?: string
+        membershipStatus: Membership
+    }) {
+        switch (spaceId.protocol) {
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                const room = this.matrixClient?.getRoom(spaceId.networkId)
+                // safeguard against non space rooms or trying to set data before the room DAG is loaded, which can cause issues with tests - historyVisiblity.test.ts
+                if (!room?.isSpaceRoom()) {
+                    console.warn(
+                        '[setChannelMembershipDataOnSpace] isSpaceRoom() check did not pass, not setting room data',
+                        room,
+                    )
+                    return
+                }
+
+                const currentData = this.getAllChannelMembershipsFromSpace(spaceId)
+                const newData = {
+                    ...currentData,
+                    [channelId ?? spaceId.networkId]: membershipStatus,
+                }
+
+                try {
+                    return this.matrixClient.setRoomAccountData(
+                        spaceId.networkId,
+                        ZionAccountDataType.Membership,
+                        newData,
+                    )
+                } catch (error) {
+                    console.error(
+                        '[setAccountDataRoomMembershipStatus] setting account data',
+                        error,
+                    )
+                }
+                return
+            }
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                staticAssertNever(spaceId)
+        }
+    }
+
     /************************************************
      * getRoomData
      ************************************************/
@@ -1489,7 +1601,7 @@ export class ZionClient {
         error: unknown,
     ): Promise<Error> {
         if (channelRoomId) {
-            await this.leave(channelRoomId)
+            await this.leave(channelRoomId, parentSpaceId)
         }
         /**
          *  Wallet rejection

@@ -57,6 +57,7 @@ export enum ZionClientEvent {
 
 export enum ZionAccountDataType {
     FullyRead = 'zion.fullyRead',
+    Membership = 'zion.membership',
 }
 
 export interface IZionServerVersions {

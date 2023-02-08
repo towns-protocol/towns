@@ -2,7 +2,7 @@ import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import useEvent from 'react-use-event-hook'
-import { SpaceContextProvider, useZionContext } from 'use-zion-client'
+import { AutojoinChannels, SpaceContextProvider, useZionContext } from 'use-zion-client'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
@@ -23,7 +23,10 @@ export const AppPanelLayout = () => {
                 <Register />
             ) : (
                 <SpaceContextProvider spaceId={spaceId}>
-                    <AppPanelLayoutContent />
+                    <>
+                        <AutojoinChannels />
+                        <AppPanelLayoutContent />
+                    </>
                 </SpaceContextProvider>
             )}
         </>
