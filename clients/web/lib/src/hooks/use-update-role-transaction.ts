@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Permission } from '../client/web3/ContractTypes'
 import { QueryKeyRoles } from './query-keys'
-import { RoleIdentifier } from '../types/web3-types'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
@@ -11,12 +10,12 @@ import { useZionClient } from './use-zion-client'
 /**
  * Hook to create a role with a transaction.
  */
-export function useCreateRoleTransaction() {
+export function useUpdateRoleTransaction() {
     const [transactionContext, setTransactionContext] = useState<
-        TransactionContext<RoleIdentifier> | undefined
+        TransactionContext<void> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { createRoleTransaction, waitForCreateRoleTransaction } = useZionClient()
+    const { updateRoleTransaction, waitForUpdateRoleTransaction } = useZionClient()
     const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
@@ -29,10 +28,11 @@ export function useCreateRoleTransaction() {
         }
     }, [transactionContext])
 
-    // create a new role
-    const _createRoleTransaction = useCallback(
+    // update role with new permissions, tokens, and users
+    const _updateRoleTransaction = useCallback(
         async function (
             spaceNetworkId: string,
+            roleId: number,
             roleName: string,
             permissions: Permission[],
             tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
@@ -45,15 +45,16 @@ export function useCreateRoleTransaction() {
 
             isTransacting.current = true
             try {
-                const loading: TransactionContext<RoleIdentifier> = {
+                const loading: TransactionContext<void> = {
                     status: TransactionStatus.Pending,
                     transaction: undefined,
                     receipt: undefined,
                     data: undefined,
                 }
                 setTransactionContext(loading)
-                const txContext = await createRoleTransaction(
+                const txContext = await updateRoleTransaction(
                     spaceNetworkId,
+                    roleId,
                     roleName,
                     permissions,
                     tokens,
@@ -65,12 +66,14 @@ export function useCreateRoleTransaction() {
                         // todo: add to the transaction store
                     }
                     // Wait for transaction to be mined
-                    const rxContext = await waitForCreateRoleTransaction(txContext)
+                    const rxContext = await waitForUpdateRoleTransaction(txContext)
                     setTransactionContext(rxContext)
                     if (rxContext?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries([
                             QueryKeyRoles.BySpaceId,
                             spaceNetworkId,
+                            QueryKeyRoles.ByRoleId,
+                            roleId,
                         ])
                     }
                 }
@@ -78,11 +81,11 @@ export function useCreateRoleTransaction() {
                 isTransacting.current = false
             }
         },
-        [createRoleTransaction, queryClient, waitForCreateRoleTransaction],
+        [queryClient, updateRoleTransaction, waitForUpdateRoleTransaction],
     )
 
     useEffect(() => {
-        console.log('useCreateRoleTransaction', 'states', {
+        console.log('useUpdateRoleTransaction', 'states', {
             isLoading,
             data,
             error,
@@ -97,6 +100,6 @@ export function useCreateRoleTransaction() {
         error,
         transactionHash,
         transactionStatus,
-        createRoleTransaction: _createRoleTransaction,
+        updateRoleTransaction: _updateRoleTransaction,
     }
 }

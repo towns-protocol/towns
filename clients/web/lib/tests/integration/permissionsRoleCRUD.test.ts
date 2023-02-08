@@ -367,20 +367,20 @@ describe('create role', () => {
             throw new Error('roomId is undefined')
         }
         // get current role details
-        const spaceId = roomId.networkId
-        const roles = await getFilteredRolesFromSpace(alice, spaceId)
+        const spaceNetworkId = roomId.networkId
+        const roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         if (roles.length !== 1) {
             throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
         }
         const roleId = roles[0].roleId.toNumber()
-        const roleDetails = await alice.spaceDapp.getRole(spaceId, roleId)
+        const roleDetails = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
 
         /** Act */
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
         const transaction = await alice.spaceDapp.updateRole({
-            spaceId,
+            spaceNetworkId,
             roleId,
             roleName: newRoleName,
             permissions: newPermissions,
@@ -391,7 +391,7 @@ describe('create role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        const actual = await alice.spaceDapp.getRole(spaceId, roleId)
+        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
         expect(actual.name).toEqual(newRoleName)
         expect(actual.permissions.length).toEqual(newPermissions.length)
         expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
@@ -406,13 +406,13 @@ describe('create role', () => {
             throw new Error('roomId is undefined')
         }
         // get current role details
-        const spaceId = roomId.networkId
-        const roles = await getFilteredRolesFromSpace(alice, spaceId)
+        const spaceNetworkId = roomId.networkId
+        const roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         if (roles.length !== 1) {
             throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
         }
         const roleId = roles[0].roleId.toNumber()
-        const roleDetails = await alice.spaceDapp.getRole(spaceId, roleId)
+        const roleDetails = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
 
         /** Act */
         // change the role details
@@ -422,7 +422,7 @@ describe('create role', () => {
         // test space was created with council token. replace with zioneer token
         const newTokens = createExternalTokenStruct([zioneerNftAddress])
         const transaction = await alice.spaceDapp.updateRole({
-            spaceId,
+            spaceNetworkId,
             roleId,
             roleName: newRoleName,
             permissions: newPermissions,
@@ -433,7 +433,7 @@ describe('create role', () => {
         try {
             receipt = await transaction.wait()
         } catch (e) {
-            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -441,7 +441,7 @@ describe('create role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        const actual = await alice.spaceDapp.getRole(spaceId, roleId)
+        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
         expect(actual.name).toEqual(newRoleName)
         expect(actual.permissions.length).toEqual(newPermissions.length)
         expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
@@ -479,8 +479,8 @@ describe('create role', () => {
             throw new Error('moderatorRoleId is undefined')
         }
         // get current role details for the Moderator role and the Member role
-        const spaceId = roomId.networkId
-        let roles = await getFilteredRolesFromSpace(alice, spaceId)
+        const spaceNetworkId = roomId.networkId
+        let roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         if (roles.length !== 2) {
             throw new Error(`Expected to find 2 roles in space, but found ${roles.length}`)
         }
@@ -517,7 +517,7 @@ describe('create role', () => {
             users: newModeratorUsers,
         }
         const transaction = await alice.spaceDapp.updateRole({
-            spaceId,
+            spaceNetworkId,
             roleId: newModeratorRole.id,
             roleName: newModeratorRole.name,
             permissions: newModeratorRole.permissions,
@@ -528,7 +528,7 @@ describe('create role', () => {
         try {
             receipt = await transaction.wait()
         } catch (e) {
-            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -536,9 +536,9 @@ describe('create role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        roles = await getFilteredRolesFromSpace(alice, spaceId)
+        roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         for (const role of roles) {
-            const actual = await alice.spaceDapp.getRole(spaceId, role.roleId.toNumber())
+            const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId.toNumber())
             if (role.name === 'Member') {
                 // this is the role we are not updating
                 // assert that they have not changed

@@ -301,13 +301,15 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     public async updateRole(params: UpdateRoleParams): Promise<ContractTransaction> {
-        const space = await this.getSpace(params.spaceId)
+        const space = await this.getSpace(params.spaceNetworkId)
         if (!space?.write) {
-            throw new Error(`Space with networkId "${params.spaceId}" is not deployed properly.`)
+            throw new Error(
+                `Space with networkId "${params.spaceNetworkId}" is not deployed properly.`,
+            )
         }
         const encodedCallData: BytesLike[] = []
         // update any role name changes
-        const roleDetails = await this.getRole(params.spaceId, params.roleId)
+        const roleDetails = await this.getRole(params.spaceNetworkId, params.roleId)
         if (roleDetails.name !== params.roleName) {
             encodedCallData.push(this.encodeRoleNameChanges(space, params))
         }

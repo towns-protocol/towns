@@ -781,7 +781,95 @@ export class ZionClient {
         // got here without success
         if (!error) {
             // If we don't have an error from the transaction, create one
-            error = new Error('Failed to create role')
+            error = new Error('create role failed')
+        }
+        console.error('[waitForCreateRoleTransaction] failed', error)
+        return {
+            data: undefined,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        }
+    }
+
+    public async updateRoleTransaction(
+        spaceNetworkId: string,
+        roleId: number,
+        roleName: string,
+        permissions: Permission[],
+        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        users: string[],
+    ): Promise<TransactionContext<void>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+        try {
+            transaction = await this.spaceDapp.updateRole({
+                spaceNetworkId,
+                roleId,
+                roleName,
+                permissions,
+                tokens,
+                users,
+            })
+            console.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[updateRoleTransaction] error', err)
+            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: undefined,
+            error,
+        }
+    }
+
+    public async waitForUpdateRoleTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForUpdateRoleTransaction] transaction is undefined')
+            }
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            }
+            console.log(
+                '[waitForUpdateRoleTransaction] updateRole transaction completed' /*, receipt */,
+            )
+        } catch (err) {
+            console.error('[waitForUpdateRoleTransaction] error', err)
+            if (err instanceof Error) {
+                error = err
+            } else {
+                error = new Error('update role failed with an unknown error')
+            }
+        }
+
+        if (receipt?.status === 1) {
+            // Successfully updated the role on-chain.
+            console.log('[waitForUpdateRoleTransaction] success')
+            return {
+                data: undefined,
+                status: TransactionStatus.Success,
+                transaction,
+                receipt,
+            }
+        }
+
+        // got here without success
+        if (!error) {
+            // If we don't have an error from the transaction, create one
+            error = new Error('update role failed')
         }
         console.error('[waitForCreateRoleTransaction] failed', error)
         return {

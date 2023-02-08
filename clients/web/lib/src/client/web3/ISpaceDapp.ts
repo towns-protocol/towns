@@ -14,7 +14,7 @@ export interface EventsContractInfo {
 }
 
 export interface UpdateRoleParams {
-    spaceId: string
+    spaceNetworkId: string
     roleId: number
     roleName: string
     permissions: Permission[]

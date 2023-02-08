@@ -64,7 +64,7 @@ interface ZionClientImpl {
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
-        name: string,
+        roleName: string,
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
@@ -72,6 +72,17 @@ interface ZionClientImpl {
     waitForCreateRoleTransaction: (
         context: RoleTransactionContext | undefined,
     ) => Promise<TransactionContext<RoleIdentifier> | undefined>
+    updateRoleTransaction: (
+        spaceNetworkId: string,
+        roleId: number,
+        roleName: string,
+        permissions: Permission[],
+        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        users: string[],
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForUpdateRoleTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     editMessage: (
         roomId: RoomIdentifier,
         message: string,
@@ -140,6 +151,8 @@ export function useZionClient(): ZionClientImpl {
         ),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),
         waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
+        updateRoleTransaction: useWithCatch(client?.updateRoleTransaction),
+        waitForUpdateRoleTransaction: useWithCatch(client?.waitForUpdateRoleTransaction),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),
