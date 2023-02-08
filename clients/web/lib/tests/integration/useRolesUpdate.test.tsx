@@ -297,6 +297,7 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
                     return (
                         <div key={role.roleId.toNumber()}>
                             <RoleDetailsComponent
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 spaceId={spaceNetworkId!}
                                 roleId={role.roleId.toNumber()}
                             />

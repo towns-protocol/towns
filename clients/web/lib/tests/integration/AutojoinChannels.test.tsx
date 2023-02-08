@@ -147,10 +147,7 @@ describe('<AutojoinChannels />', () => {
         })
 
         // wait for the space child count to change
-        await waitFor(
-            () => expect(spaceChildCount).toHaveTextContent('2'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'))
 
         // bob should auto join this channel too
         await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(2))
@@ -169,10 +166,7 @@ describe('<AutojoinChannels />', () => {
         })
 
         // out of 3 channels, bob should only be in 2
-        await waitFor(
-            () => expect(spaceChildCount).toHaveTextContent('3'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('3'))
         await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(2))
 
         // TODO: test banning when implemented
