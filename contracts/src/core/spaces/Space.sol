@@ -490,6 +490,10 @@ contract Space is
     }
   }
 
+  function getChannels() external view returns (bytes32[] memory) {
+    return channels;
+  }
+
   /// @inheritdoc ISpace
   function getEntitlements() external view returns (address[] memory) {
     return entitlements;

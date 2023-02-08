@@ -161,6 +161,9 @@ interface ISpace {
     string calldata permission
   ) external view returns (bool);
 
+  /// @notice fetches all the channels for the space
+  function getChannels() external view returns (bytes32[] memory);
+
   /// @notice fetches all the entitlements for the space
   /// @return entitlements array
   function getEntitlements() external view returns (address[] memory);

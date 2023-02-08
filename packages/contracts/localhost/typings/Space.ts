@@ -77,6 +77,7 @@ export interface SpaceInterface extends utils.Interface {
     "disabled()": FunctionFragment;
     "entitlements(uint256)": FunctionFragment;
     "getChannelByHash(bytes32)": FunctionFragment;
+    "getChannels()": FunctionFragment;
     "getEntitlementByModuleType(string)": FunctionFragment;
     "getEntitlementIdsByRoleId(uint256)": FunctionFragment;
     "getEntitlements()": FunctionFragment;
@@ -125,6 +126,7 @@ export interface SpaceInterface extends utils.Interface {
       | "disabled"
       | "entitlements"
       | "getChannelByHash"
+      | "getChannels"
       | "getEntitlementByModuleType"
       | "getEntitlementIdsByRoleId"
       | "getEntitlements"
@@ -212,6 +214,10 @@ export interface SpaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getChannelByHash",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getChannels",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getEntitlementByModuleType",
@@ -372,6 +378,10 @@ export interface SpaceInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getChannelByHash",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getChannels",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -610,6 +620,8 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[DataTypes.ChannelStructOutput]>;
 
+    getChannels(overrides?: CallOverrides): Promise<[string[]]>;
+
     getEntitlementByModuleType(
       _moduleType: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -832,6 +844,8 @@ export interface Space extends BaseContract {
     overrides?: CallOverrides
   ): Promise<DataTypes.ChannelStructOutput>;
 
+  getChannels(overrides?: CallOverrides): Promise<string[]>;
+
   getEntitlementByModuleType(
     _moduleType: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -1051,6 +1065,8 @@ export interface Space extends BaseContract {
       _channelHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<DataTypes.ChannelStructOutput>;
+
+    getChannels(overrides?: CallOverrides): Promise<string[]>;
 
     getEntitlementByModuleType(
       _moduleType: PromiseOrValue<string>,
@@ -1294,6 +1310,8 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getChannels(overrides?: CallOverrides): Promise<BigNumber>;
+
     getEntitlementByModuleType(
       _moduleType: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1507,6 +1525,8 @@ export interface Space extends BaseContract {
       _channelHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    getChannels(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getEntitlementByModuleType(
       _moduleType: PromiseOrValue<string>,
