@@ -23,21 +23,13 @@ contract SetOwnerRoleIdTest is SpaceBaseSetup {
     Space(_space).setOwnerRoleId(_newRoleId);
   }
 
-  function testRevertIfNotValidRoleId() external {
-    address _space = createSimpleSpace();
-
-    uint256 _invalidRoleId = _randomUint256();
-
-    vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).setOwnerRoleId(_invalidRoleId);
-  }
-
-  function testRevertIfMissingOwnerPermission() external {
+  function testSetOwnerRoleId() external {
     address _space = createSimpleSpace();
 
     string memory _roleName = "NewOwner";
-    string[] memory _permissions = new string[](1);
+    string[] memory _permissions = new string[](2);
     _permissions[0] = "Vote";
+    _permissions[1] = "Veto";
 
     DataTypes.Entitlement[]
       memory _roleEntitlements = new DataTypes.Entitlement[](1);
@@ -46,13 +38,13 @@ contract SetOwnerRoleIdTest is SpaceBaseSetup {
       data: ""
     });
 
-    uint256 _newRoleId = Space(_space).createRole(
+    uint256 newRoleId = Space(_space).createRole(
       _roleName,
       _permissions,
       _roleEntitlements
     );
 
-    vm.expectRevert(Errors.MissingOwnerPermission.selector);
-    Space(_space).setOwnerRoleId(_newRoleId);
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).setOwnerRoleId(newRoleId);
   }
 }

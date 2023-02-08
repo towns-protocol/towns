@@ -24,7 +24,6 @@ library Errors {
   error ChannelDoesNotExist();
   error PermissionAlreadyExists();
   error NotAllowed();
-  error OwnerPermissionNotAllowed();
   error MissingOwnerPermission();
   error RoleDoesNotExist();
   error RoleAlreadyExists();

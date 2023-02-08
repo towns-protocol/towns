@@ -62,11 +62,6 @@
       },
       {
         "inputs": [],
-        "name": "OwnerPermissionNotAllowed",
-        "type": "error"
-      },
-      {
-        "inputs": [],
         "name": "PermissionAlreadyExists",
         "type": "error"
       },
@@ -1282,11 +1277,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x5a29c46f94aff9ed6e2dfbd8d1ad10ff619b7432634e1db84c05f186b4b8cf5d",
+      "keccak256": "0x1721927b56e90a0cb8139c01e627a8617ef48eb58882e9d2cf40ae3afd9f42e9",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0625e39046369f43c9afad46a66d9ffbac73f7e47bad421637ba6b879dd953b0",
-        "dweb:/ipfs/QmavrFAhzibMJfcr1EBHLGNi9pHQLWYcjEms6JTnSxg6Qg"
+        "bzz-raw://4d4d8fbc21e28d918bf68fdc91d1543b3937c762a5bec3bdbc901db5a4177067",
+        "dweb:/ipfs/QmWiYG8eR4aCdybPjXhcP3ycioCyn7RN8wYuxbgKRABivi"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
@@ -1314,11 +1309,11 @@
       ]
     },
     "contracts/src/libraries/Errors.sol": {
-      "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
+      "keccak256": "0xa58c2c12ba0d81501a37a360097b07288341c582efee3787179f7ec7edc0509a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
-        "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
+        "bzz-raw://9ef8c5a09ded0537b7c631ff38c1ee1a9eb6071cd2dfdcbbdbb8ff50fcf388ff",
+        "dweb:/ipfs/QmTy1iNZfz69MCJwE1U9aDR4ZyKXujhmYUVrVjakSYFd8R"
       ]
     },
     "contracts/src/libraries/Events.sol": {

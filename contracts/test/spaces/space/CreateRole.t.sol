@@ -53,7 +53,7 @@ contract CreateRoleTest is SpaceBaseSetup {
     _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
 
     vm.prank(_moderator);
-    vm.expectRevert(Errors.OwnerPermissionNotAllowed.selector);
+    vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).createRole(_roleName, _permissions, _entitlements);
   }
 

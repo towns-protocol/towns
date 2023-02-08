@@ -97,11 +97,6 @@
       },
       {
         "inputs": [],
-        "name": "OwnerPermissionNotAllowed",
-        "type": "error"
-      },
-      {
-        "inputs": [],
         "name": "PermissionAlreadyExists",
         "type": "error"
       },
@@ -181,11 +176,11 @@
   },
   "sources": {
     "contracts/src/libraries/Errors.sol": {
-      "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
+      "keccak256": "0xa58c2c12ba0d81501a37a360097b07288341c582efee3787179f7ec7edc0509a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
-        "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
+        "bzz-raw://9ef8c5a09ded0537b7c631ff38c1ee1a9eb6071cd2dfdcbbdbb8ff50fcf388ff",
+        "dweb:/ipfs/QmTy1iNZfz69MCJwE1U9aDR4ZyKXujhmYUVrVjakSYFd8R"
       ]
     }
   },

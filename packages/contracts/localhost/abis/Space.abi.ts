@@ -56,11 +56,6 @@ export default [
   },
   {
     "inputs": [],
-    "name": "OwnerPermissionNotAllowed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "PermissionAlreadyExists",
     "type": "error"
   },

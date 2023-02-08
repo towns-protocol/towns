@@ -177,4 +177,45 @@ contract RemoveRoleTest is SpaceBaseSetup {
       Space(_space).isEntitledToSpace(_notTokenHolder, Permissions.Owner)
     );
   }
+
+  function testHaveMultipleOwners() external {
+    address _notTokenHolder = _randomAddress();
+    address _tokenHolder = _randomAddress();
+
+    vm.prank(_tokenHolder);
+    address _space = createSimpleSpace();
+    address _userEntitlementModule = Space(_space).getEntitlements()[1];
+
+    // see that original token holder has owner rights
+    assertTrue(
+      Space(_space).isEntitledToSpace(_tokenHolder, Permissions.Owner)
+    );
+
+    // Create entitlement with owner permissions
+    address[] memory _users = new address[](1);
+    _users[0] = _notTokenHolder;
+    DataTypes.Entitlement[]
+      memory _newOwnerEntitlements = new DataTypes.Entitlement[](1);
+    string[] memory _spacePermissions = new string[](2);
+    _spacePermissions[0] = Permissions.Owner;
+    _spacePermissions[1] = Permissions.ModifySpacePermissions;
+    _newOwnerEntitlements[0] = DataTypes.Entitlement({
+      module: _userEntitlementModule,
+      data: abi.encode(_users)
+    });
+
+    // add to system
+    vm.prank(_tokenHolder);
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).createRole(
+      "OwnerII",
+      _spacePermissions,
+      _newOwnerEntitlements
+    );
+
+    // see that "OwnerII" has ownership rights
+    assertFalse(
+      Space(_space).isEntitledToSpace(_notTokenHolder, Permissions.Owner)
+    );
+  }
 }

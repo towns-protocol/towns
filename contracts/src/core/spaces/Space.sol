@@ -94,13 +94,14 @@ contract Space is
 
   /// @inheritdoc ISpace
   function setOwnerRoleId(uint256 _roleId) external {
-    _isAllowed("", Permissions.Owner);
+    if (!_isOwner()) revert Errors.NotAllowed();
+    if (_ownerRoleIsSet()) revert Errors.NotAllowed();
 
     if (rolesById[_roleId].roleId == 0) {
       revert Errors.RoleDoesNotExist();
     }
 
-    // check if new role id has the owner permission
+    // check the role has the owner permission
     bool hasOwnerPermission = false;
     for (uint256 i = 0; i < permissionsByRoleId[_roleId].length; i++) {
       if (
@@ -247,8 +248,10 @@ contract Space is
 
     for (uint256 i = 0; i < _permissions.length; i++) {
       // only allow contract owner to add permission owner to role
-      if (!_isOwner() && Utils.isEqual(_permissions[i], Permissions.Owner)) {
-        revert Errors.OwnerPermissionNotAllowed();
+      if (
+        _ownerRoleIsSet() && Utils.isEqual(_permissions[i], Permissions.Owner)
+      ) {
+        revert Errors.NotAllowed();
       }
 
       bytes32 _permission = bytes32(abi.encodePacked(_permissions[i]));
@@ -658,6 +661,10 @@ contract Space is
         _entitled = true;
       }
     }
+  }
+
+  function _ownerRoleIsSet() internal view returns (bool) {
+    return ownerRoleId != 0;
   }
 
   function _validateEntitlementInterface(
