@@ -422,6 +422,25 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "_moduleType",
+            "type": "string"
+          }
+        ],
+        "name": "getEntitlementByModuleType",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint256",
             "name": "_roleId",
             "type": "uint256"
@@ -964,6 +983,24 @@
         "inputs": [
           {
             "internalType": "address",
+            "name": "_entitlement",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_newEntitlement",
+            "type": "address"
+          }
+        ],
+        "name": "upgradeEntitlement",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
             "name": "newImplementation",
             "type": "address"
           }
@@ -1043,6 +1080,15 @@
           },
           "returns": {
             "_0": "the Channel information"
+          }
+        },
+        "getEntitlementByModuleType(string)": {
+          "details": "if two entitlements have the same name it will return the last one in the array",
+          "params": {
+            "moduleType": "the module type to fetch the entitlement for"
+          },
+          "returns": {
+            "_0": "the entitlement address"
           }
         },
         "getEntitlementIdsByRoleId(uint256)": {
@@ -1167,6 +1213,11 @@
           "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
         }
       },
+      "stateVariables": {
+        "__gap": {
+          "details": "Added to allow future versions to add new variables in case this contract becomes      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps"
+        }
+      },
       "version": 1
     },
     "userdoc": {
@@ -1189,6 +1240,9 @@
         },
         "getChannelByHash(bytes32)": {
           "notice": "fetches the Channel information by the hashed channelId"
+        },
+        "getEntitlementByModuleType(string)": {
+          "notice": "gets an entitlement address by its module type"
         },
         "getEntitlementIdsByRoleId(uint256)": {
           "notice": "***** Entitlement Management *****gets the entitlements for a given role"
@@ -1243,6 +1297,9 @@
         },
         "updateRole(uint256,string)": {
           "notice": "updates a role name by roleId"
+        },
+        "upgradeEntitlement(address,address)": {
+          "notice": "***** Entitlement Management *****"
         }
       },
       "version": 1
@@ -1277,27 +1334,27 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x1721927b56e90a0cb8139c01e627a8617ef48eb58882e9d2cf40ae3afd9f42e9",
+      "keccak256": "0x3f44af47bf9d3c07b73b92bf55f07fecc7fedf4aab523d94e0dd743ee1048fcb",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4d4d8fbc21e28d918bf68fdc91d1543b3937c762a5bec3bdbc901db5a4177067",
-        "dweb:/ipfs/QmWiYG8eR4aCdybPjXhcP3ycioCyn7RN8wYuxbgKRABivi"
+        "bzz-raw://aed71a7072d19ca00ac4df513abfcfb02870a1e3caa469e449b949a3bb38dbe8",
+        "dweb:/ipfs/QmbGXjhtgy5q1gUgSB5u35FNAgKyeGd1bihNaWn31i4eMB"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
-      "keccak256": "0x05a317a8b059f6c79085102299c9e9cb706a8f3facdea86b8ed872831a77d192",
+      "keccak256": "0x6b5d1e8985e580580e397fead521e06f7359027b1ea323644497b5be2ec1869c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9771d94c5863ca975b15d3a8b6cfd3040a4573da31e4f08b38f5fe9418f0e2a8",
-        "dweb:/ipfs/QmfBkooY6ahi6nYLnJmLwvkSdw7CuJfwfSnH187i27sX6o"
+        "bzz-raw://f045ea541b26bb122347aac6267a55b1c6a3f5078d57aa7dac7353cedc953d26",
+        "dweb:/ipfs/QmRcnuqysKijmgNPsKC1LKnP3WVjV8ZsWPx778bNnsB7L7"
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x061935623fee614239ae36af6dc26cf183a252f11ad9a896a4db00f02d1d3871",
+      "keccak256": "0xd4f15ec5b5f5f9b73b1f68d08a910b347feb9ab5851ccf0b19b658e1bbcbd106",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://19ab58f82b97404fcaa7201f7814263a7b89837f0799440bed3224cc7bf5dcc4",
-        "dweb:/ipfs/QmSvuUGZ3WrSJTFHAHVx1q5nciHdsj2YLP4JxvA9ahmGy5"
+        "bzz-raw://66cb790912f689021039fc6365be0b16868458f00e694fcc2895c1c3b9dff9d3",
+        "dweb:/ipfs/QmTLPEdsafJNYmNnh6rrs8AzTjTsGChJAXgEJXA3YffSH5"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
@@ -1325,11 +1382,11 @@
       ]
     },
     "contracts/src/libraries/Permissions.sol": {
-      "keccak256": "0x041510f19d4c4409f07a2371e53863f21c51d11f20d1c5d36898b25da80acfed",
+      "keccak256": "0x1deeb80ca3a7d77dee37efa3165db7404c122d902b633257432c0367cb4b04ef",
       "license": "UNLICENSED",
       "urls": [
-        "bzz-raw://b3fdf833d428ec8bab778017fb475eb70ee652746058e46cd07c0da07dcb660f",
-        "dweb:/ipfs/QmTVN4fe7FnrrL9o9DZbxZUwVbBTjrScybaGiW8V9oYhuR"
+        "bzz-raw://c725f8146a3b2accc2bef98936013b7be45198bb33755cf34640525757b90673",
+        "dweb:/ipfs/QmUjGiqNXAUmCNycFeZy1oicZyc6EgVmeCfAbMgSqDSwPy"
       ]
     },
     "contracts/src/libraries/Utils.sol": {

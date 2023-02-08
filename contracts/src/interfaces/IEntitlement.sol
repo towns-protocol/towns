@@ -13,6 +13,8 @@ interface IEntitlement {
   /// @notice The description of the entitlement module
   function description() external view returns (string memory);
 
+  function initialize(address _tokenAddress, uint256 _tokenId) external;
+
   /// @notice sets the address for the space that controls this entitlement
   /// @param _space address of the space
   function setSpace(address _space) external;

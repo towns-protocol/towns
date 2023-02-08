@@ -2,18 +2,19 @@
 pragma solidity ^0.8.0;
 
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
 
 import {ERC165Upgradeable} from "openzeppelin-contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract MockEntitlement is
   Initializable,
   ERC165Upgradeable,
-  OwnableUpgradeable,
+  ContextUpgradeable,
   UUPSUpgradeable,
   IEntitlement
 {
@@ -21,10 +22,27 @@ contract MockEntitlement is
   string public constant description = "Entitlement for kicks";
   string public constant moduleType = "MockEntitlement";
 
-  function initialize() public initializer {
+  address public TOKEN_ADDRESS;
+  uint256 public TOKEN_ID;
+
+  modifier onlyOwner() {
+    require(
+      IERC721(TOKEN_ADDRESS).ownerOf(TOKEN_ID) == _msgSender(),
+      "Space: only owner"
+    );
+    _;
+  }
+
+  function initialize(
+    address _tokenAddress,
+    uint256 _tokenId
+  ) public initializer {
     __UUPSUpgradeable_init();
     __ERC165_init();
-    __Ownable_init();
+    __Context_init();
+
+    TOKEN_ADDRESS = _tokenAddress;
+    TOKEN_ID = _tokenId;
   }
 
   function _authorizeUpgrade(

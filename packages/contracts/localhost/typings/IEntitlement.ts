@@ -41,6 +41,7 @@ export interface IEntitlementInterface extends utils.Interface {
     "description()": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
     "getUserRoles(address)": FunctionFragment;
+    "initialize(address,uint256)": FunctionFragment;
     "isEntitled(string,address,bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
@@ -56,6 +57,7 @@ export interface IEntitlementInterface extends utils.Interface {
       | "description"
       | "getEntitlementDataByRoleId"
       | "getUserRoles"
+      | "initialize"
       | "isEntitled"
       | "moduleType"
       | "name"
@@ -80,6 +82,10 @@ export interface IEntitlementInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getUserRoles",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "isEntitled",
@@ -127,6 +133,7 @@ export interface IEntitlementInterface extends utils.Interface {
     functionFragment: "getUserRoles",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "moduleType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -192,6 +199,12 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[DataTypes.RoleStructOutput[]]>;
 
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     isEntitled(
       channelId: PromiseOrValue<string>,
       user: PromiseOrValue<string>,
@@ -245,6 +258,12 @@ export interface IEntitlement extends BaseContract {
     overrides?: CallOverrides
   ): Promise<DataTypes.RoleStructOutput[]>;
 
+  initialize(
+    _tokenAddress: PromiseOrValue<string>,
+    _tokenId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   isEntitled(
     channelId: PromiseOrValue<string>,
     user: PromiseOrValue<string>,
@@ -297,6 +316,12 @@ export interface IEntitlement extends BaseContract {
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<DataTypes.RoleStructOutput[]>;
+
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     isEntitled(
       channelId: PromiseOrValue<string>,
@@ -354,6 +379,12 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     isEntitled(
       channelId: PromiseOrValue<string>,
       user: PromiseOrValue<string>,
@@ -406,6 +437,12 @@ export interface IEntitlement extends BaseContract {
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     isEntitled(

@@ -17,6 +17,11 @@
       },
       {
         "inputs": [],
+        "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "QuantityNotFound",
         "type": "error"
       },
@@ -76,25 +81,6 @@
           {
             "indexed": true,
             "internalType": "address",
-            "name": "previousOwner",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
             "name": "implementation",
             "type": "address"
           }
@@ -110,6 +96,32 @@
             "internalType": "address",
             "name": "",
             "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOKEN_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOKEN_ID",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
           }
         ],
         "stateMutability": "view",
@@ -280,7 +292,18 @@
         "type": "function"
       },
       {
-        "inputs": [],
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
         "name": "initialize",
         "outputs": [],
         "stateMutability": "nonpayable",
@@ -343,19 +366,6 @@
       },
       {
         "inputs": [],
-        "name": "owner",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
           {
@@ -405,13 +415,6 @@
           }
         ],
         "name": "removeRoleIdFromChannel",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "renounceOwnership",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -470,19 +473,6 @@
           }
         ],
         "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -552,9 +542,6 @@
             "_0": "whether the user is entitled to the permission"
           }
         },
-        "owner()": {
-          "details": "Returns the address of the current owner."
-        },
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
@@ -573,9 +560,6 @@
             "roleId": "id of the role to remove"
           }
         },
-        "renounceOwnership()": {
-          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
-        },
         "setEntitlement(uint256,bytes)": {
           "params": {
             "entitlementData": "abi encoded array of data necessary to set the entitlement",
@@ -593,14 +577,16 @@
         "supportsInterface(bytes4)": {
           "details": "See {IERC165-supportsInterface}."
         },
-        "transferOwnership(address)": {
-          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
-        },
         "upgradeTo(address)": {
           "details": "Upgrade the implementation of the proxy to `newImplementation`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
         },
         "upgradeToAndCall(address,bytes)": {
           "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
+        }
+      },
+      "stateVariables": {
+        "__gap": {
+          "details": "Added to allow future versions to add new variables in case this contract becomes      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps"
         }
       },
       "version": 1
@@ -680,27 +666,27 @@
   },
   "sources": {
     "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x8de35cb114ed38f0f6696a9d710b61472608a4a42020a052a75b576e5bd763ff",
+      "keccak256": "0x5be95c6fa63a7e581de7107905f11bfc1e8b46c4778fb76da35ec031d528d9b5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9db4223c3f424cb6e55d2ccd12e3c9f38e2d2d4b14fb24daee8ca7bc29e15248",
-        "dweb:/ipfs/QmP2iXkXmF3CBCWCXVK5njNcsiTJFWjFiX9JcnJuGgqfxG"
+        "bzz-raw://c31caedddd31297b87edca48a8b09fbd89ebb7efb43b30e25ed9c41c3ceba4e0",
+        "dweb:/ipfs/QmSTYvR5SyYmnLeMLJh8RXREQNVa24yrMLvjEa86BLzR6x"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
-      "keccak256": "0x05a317a8b059f6c79085102299c9e9cb706a8f3facdea86b8ed872831a77d192",
+      "keccak256": "0x6b5d1e8985e580580e397fead521e06f7359027b1ea323644497b5be2ec1869c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9771d94c5863ca975b15d3a8b6cfd3040a4573da31e4f08b38f5fe9418f0e2a8",
-        "dweb:/ipfs/QmfBkooY6ahi6nYLnJmLwvkSdw7CuJfwfSnH187i27sX6o"
+        "bzz-raw://f045ea541b26bb122347aac6267a55b1c6a3f5078d57aa7dac7353cedc953d26",
+        "dweb:/ipfs/QmRcnuqysKijmgNPsKC1LKnP3WVjV8ZsWPx778bNnsB7L7"
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x061935623fee614239ae36af6dc26cf183a252f11ad9a896a4db00f02d1d3871",
+      "keccak256": "0xd4f15ec5b5f5f9b73b1f68d08a910b347feb9ab5851ccf0b19b658e1bbcbd106",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://19ab58f82b97404fcaa7201f7814263a7b89837f0799440bed3224cc7bf5dcc4",
-        "dweb:/ipfs/QmSvuUGZ3WrSJTFHAHVx1q5nciHdsj2YLP4JxvA9ahmGy5"
+        "bzz-raw://66cb790912f689021039fc6365be0b16868458f00e694fcc2895c1c3b9dff9d3",
+        "dweb:/ipfs/QmTLPEdsafJNYmNnh6rrs8AzTjTsGChJAXgEJXA3YffSH5"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
@@ -717,14 +703,6 @@
       "urls": [
         "bzz-raw://9ef8c5a09ded0537b7c631ff38c1ee1a9eb6071cd2dfdcbbdbb8ff50fcf388ff",
         "dweb:/ipfs/QmTy1iNZfz69MCJwE1U9aDR4ZyKXujhmYUVrVjakSYFd8R"
-      ]
-    },
-    "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol": {
-      "keccak256": "0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://d7fc8396619de513c96b6e00301b88dd790e83542aab918425633a5f7297a15a",
-        "dweb:/ipfs/QmXbP4kiZyp7guuS7xe8KaybnwkRPGrBc2Kbi3vhcTfpxb"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/interfaces/draft-IERC1822Upgradeable.sol": {

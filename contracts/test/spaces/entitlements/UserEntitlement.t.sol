@@ -20,14 +20,22 @@ contract UserEntitlementTest is SpaceBaseSetup {
   address internal entitlementAddress;
   UserEntitlement internal implementation;
   UserEntitlement internal userEntitlement;
+  uint256 tokenId;
 
   function setUp() public {
     SpaceBaseSetup.init();
+
+    vm.prank(address(spaceFactory));
+    tokenId = spaceToken.mintTo(address(this), "");
+
     implementation = new UserEntitlement();
     entitlementAddress = address(
       new ERC1967Proxy(
         address(implementation),
-        abi.encodeCall(UserEntitlement.initialize, ())
+        abi.encodeCall(
+          UserEntitlement.initialize,
+          (address(spaceToken), tokenId)
+        )
       )
     );
     userEntitlement = UserEntitlement(entitlementAddress);

@@ -25,14 +25,22 @@ contract TokenEntitlementTest is SpaceBaseSetup {
   Mock721 mockToken = new Mock721();
   Mock1155 mockToken2 = new Mock1155();
   MockERC20 mockToken3 = new MockERC20();
+  uint256 tokenId;
 
   function setUp() public {
     SpaceBaseSetup.init();
+
+    vm.prank(address(spaceFactory));
+    tokenId = spaceToken.mintTo(address(this), "");
+
     implementation = new TokenEntitlement();
     entitlementAddress = address(
       new ERC1967Proxy(
         address(implementation),
-        abi.encodeCall(TokenEntitlement.initialize, ())
+        abi.encodeCall(
+          TokenEntitlement.initialize,
+          (address(spaceToken), tokenId)
+        )
       )
     );
     tokenEntitlement = TokenEntitlement(entitlementAddress);
@@ -41,6 +49,10 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
   function testUpgradeTo() external {
     TokenEntitlementv2 implementation2 = new TokenEntitlementv2();
+
+    vm.prank(_randomAddress());
+    vm.expectRevert(Errors.NotAllowed.selector);
+    TokenEntitlement(entitlementAddress).upgradeTo(address(implementation2));
 
     TokenEntitlement(entitlementAddress).upgradeTo(address(implementation2));
 

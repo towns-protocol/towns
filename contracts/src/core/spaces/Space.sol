@@ -46,6 +46,12 @@ contract Space is
   mapping(bytes32 => DataTypes.Channel) public channelsByHash;
   bytes32[] public channels;
 
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
+
   modifier onlySpaceOwner() {
     _isAllowed("", Permissions.Owner);
     _;
@@ -409,12 +415,47 @@ contract Space is
   }
 
   /// ***** Entitlement Management *****
+  function upgradeEntitlement(
+    address _entitlement,
+    address _newEntitlement
+  ) external {
+    _isAllowed("", Permissions.Owner);
+
+    if (_entitlement == address(0) || _newEntitlement == address(0)) {
+      revert Errors.InvalidParameters();
+    }
+
+    if (!hasEntitlement[_entitlement]) {
+      revert Errors.EntitlementNotWhitelisted();
+    }
+
+    try UUPSUpgradeable(_entitlement).upgradeTo(_newEntitlement) {} catch {
+      revert Errors.InvalidParameters();
+    }
+  }
 
   /// @inheritdoc ISpace
   function getEntitlementIdsByRoleId(
     uint256 _roleId
   ) external view returns (bytes32[] memory) {
     return entitlementIdsByRoleId[_roleId];
+  }
+
+  /// @inheritdoc ISpace
+  function getEntitlementByModuleType(
+    string memory _moduleType
+  ) external view returns (address) {
+    address _entitlement;
+
+    for (uint256 i = 0; i < entitlements.length; i++) {
+      if (
+        Utils.isEqual(IEntitlement(entitlements[i]).moduleType(), _moduleType)
+      ) {
+        _entitlement = entitlements[i];
+      }
+    }
+
+    return _entitlement;
   }
 
   /// @inheritdoc ISpace
@@ -456,7 +497,7 @@ contract Space is
 
   /// @inheritdoc ISpace
   function setEntitlement(address _entitlement, bool _whitelist) external {
-    _isAllowed("", Permissions.ModifySpacePermissions);
+    _isAllowed("", Permissions.Owner);
 
     // validate entitlement interface
     _validateEntitlementInterface(_entitlement);

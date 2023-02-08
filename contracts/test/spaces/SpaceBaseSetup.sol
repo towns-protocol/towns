@@ -70,6 +70,7 @@ contract SpaceBaseSetup is TestUtils {
     initialPermissions.push(Permissions.AddRemoveChannels);
     initialPermissions.push(Permissions.ModifySpacePermissions);
     initialPermissions.push(Permissions.ModifyChannelDefaults);
+    initialPermissions.push(Permissions.Upgrade);
   }
 
   function createSimpleChannel(address _space) internal returns (bytes32) {

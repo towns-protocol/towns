@@ -109,6 +109,14 @@ interface ISpace {
     uint256 roleId
   ) external view returns (bytes32[] memory);
 
+  /// @notice upgrades an entitlement module implementation
+  /// @param _entitlement the current entitlement address
+  /// @param _newEntitlement the new entitlement address
+  function upgradeEntitlement(
+    address _entitlement,
+    address _newEntitlement
+  ) external;
+
   /// @notice removes a permission from a role by roleId
   /// @param roleId the roleId to remove the permission from
   /// @param permission the permission to remove from the role
@@ -124,6 +132,14 @@ interface ISpace {
   function getEntitlementIdsByRoleId(
     uint256 roleId
   ) external view returns (bytes32[] memory);
+
+  /// @notice gets an entitlement address by its module type
+  /// @param moduleType the module type to fetch the entitlement for
+  /// @return the entitlement address
+  /// @dev if two entitlements have the same name it will return the last one in the array
+  function getEntitlementByModuleType(
+    string memory moduleType
+  ) external view returns (address);
 
   /// @notice checks if a user is entitled to a permission in a channel
   /// @param channelId the channelId to check the permission for

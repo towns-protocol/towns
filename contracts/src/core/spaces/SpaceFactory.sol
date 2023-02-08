@@ -43,6 +43,12 @@ contract SpaceFactory is
   mapping(bytes32 => address) public spaceByHash;
   mapping(bytes32 => uint256) public tokenByHash;
 
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -119,7 +125,10 @@ contract SpaceFactory is
     address _tokenEntitlement = address(
       new ERC1967Proxy(
         TOKEN_IMPLEMENTATION_ADDRESS,
-        abi.encodeCall(TokenEntitlement.initialize, ())
+        abi.encodeCall(
+          TokenEntitlement.initialize,
+          (SPACE_TOKEN_ADDRESS, _tokenId)
+        )
       )
     );
 
@@ -127,7 +136,10 @@ contract SpaceFactory is
     address _userEntitlement = address(
       new ERC1967Proxy(
         USER_IMPLEMENTATION_ADDRESS,
-        abi.encodeCall(UserEntitlement.initialize, ())
+        abi.encodeCall(
+          UserEntitlement.initialize,
+          (SPACE_TOKEN_ADDRESS, _tokenId)
+        )
       )
     );
 

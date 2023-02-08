@@ -15,4 +15,5 @@ library Permissions {
   string public constant AddRemoveChannels = "AddRemoveChannels";
   string public constant ModifySpacePermissions = "ModifySpacePermissions";
   string public constant ModifyChannelDefaults = "ModifyChannelDefaults";
+  string public constant Upgrade = "Upgrade";
 }

@@ -3,6 +3,7 @@ pragma solidity 0.8.17;
 
 import {ISpace} from "contracts/src/interfaces/ISpace.sol";
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 import {Errors} from "contracts/src/libraries/Errors.sol";
 import {Utils} from "contracts/src/libraries/Utils.sol";
@@ -10,23 +11,19 @@ import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
 
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165Upgradeable} from "openzeppelin-contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract UserEntitlement is
   Initializable,
   ERC165Upgradeable,
-  OwnableUpgradeable,
+  ContextUpgradeable,
   UUPSUpgradeable,
   IEntitlement
 {
-  string public constant name = "User Entitlement";
-  string public constant description = "Entitlement for users";
-  string public constant moduleType = "UserEntitlement";
-
   address public SPACE_ADDRESS;
-
-  uint256 entitlementCount;
+  address public TOKEN_ADDRESS;
+  uint256 public TOKEN_ID;
 
   struct Entitlement {
     uint256 roleId;
@@ -40,18 +37,40 @@ contract UserEntitlement is
   mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
   mapping(address => bytes32[]) entitlementIdsByUser;
 
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
+
+  string public constant name = "User Entitlement";
+  string public constant description = "Entitlement for users";
+  string public constant moduleType = "UserEntitlement";
+
   modifier onlySpace() {
-    require(
-      _msgSender() == owner() || _msgSender() == SPACE_ADDRESS,
-      "Space: only space"
-    );
+    if (_msgSender() != SPACE_ADDRESS) {
+      revert Errors.NotAllowed();
+    }
     _;
   }
 
-  function initialize() public initializer {
+  modifier onlyOwner() {
+    if (IERC721(TOKEN_ADDRESS).ownerOf(TOKEN_ID) != _msgSender()) {
+      revert Errors.NotAllowed();
+    }
+    _;
+  }
+
+  function initialize(
+    address _tokenAddress,
+    uint256 _tokenId
+  ) public initializer {
     __UUPSUpgradeable_init();
     __ERC165_init();
-    __Ownable_init();
+    __Context_init();
+
+    TOKEN_ADDRESS = _tokenAddress;
+    TOKEN_ID = _tokenId;
   }
 
   // @inheritdoc IEntitlement
@@ -63,7 +82,7 @@ contract UserEntitlement is
   /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlyOwner {}
+  ) internal override onlySpace {}
 
   function supportsInterface(
     bytes4 interfaceId

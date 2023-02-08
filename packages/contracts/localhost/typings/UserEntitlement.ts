@@ -43,24 +43,23 @@ export declare namespace DataTypes {
 export interface UserEntitlementInterface extends utils.Interface {
   functions: {
     "SPACE_ADDRESS()": FunctionFragment;
+    "TOKEN_ADDRESS()": FunctionFragment;
+    "TOKEN_ID()": FunctionFragment;
     "addRoleIdToChannel(string,uint256)": FunctionFragment;
     "description()": FunctionFragment;
     "entitlementsById(bytes32)": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
     "getUserRoles(address)": FunctionFragment;
-    "initialize()": FunctionFragment;
+    "initialize(address,uint256)": FunctionFragment;
     "isEntitled(string,address,bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
-    "owner()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "removeEntitlement(uint256,bytes)": FunctionFragment;
     "removeRoleIdFromChannel(string,uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
     "setEntitlement(uint256,bytes)": FunctionFragment;
     "setSpace(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
   };
@@ -68,6 +67,8 @@ export interface UserEntitlementInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "SPACE_ADDRESS"
+      | "TOKEN_ADDRESS"
+      | "TOKEN_ID"
       | "addRoleIdToChannel"
       | "description"
       | "entitlementsById"
@@ -77,15 +78,12 @@ export interface UserEntitlementInterface extends utils.Interface {
       | "isEntitled"
       | "moduleType"
       | "name"
-      | "owner"
       | "proxiableUUID"
       | "removeEntitlement"
       | "removeRoleIdFromChannel"
-      | "renounceOwnership"
       | "setEntitlement"
       | "setSpace"
       | "supportsInterface"
-      | "transferOwnership"
       | "upgradeTo"
       | "upgradeToAndCall"
   ): FunctionFragment;
@@ -94,6 +92,11 @@ export interface UserEntitlementInterface extends utils.Interface {
     functionFragment: "SPACE_ADDRESS",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "TOKEN_ADDRESS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "TOKEN_ID", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "addRoleIdToChannel",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
@@ -116,7 +119,7 @@ export interface UserEntitlementInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values?: undefined
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "isEntitled",
@@ -131,7 +134,6 @@ export interface UserEntitlementInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
@@ -143,10 +145,6 @@ export interface UserEntitlementInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "removeRoleIdFromChannel",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "setEntitlement",
@@ -161,10 +159,6 @@ export interface UserEntitlementInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "upgradeTo",
     values: [PromiseOrValue<string>]
   ): string;
@@ -177,6 +171,11 @@ export interface UserEntitlementInterface extends utils.Interface {
     functionFragment: "SPACE_ADDRESS",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "TOKEN_ADDRESS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "TOKEN_ID", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "addRoleIdToChannel",
     data: BytesLike
@@ -201,7 +200,6 @@ export interface UserEntitlementInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "moduleType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
@@ -215,20 +213,12 @@ export interface UserEntitlementInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setEntitlement",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setSpace", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
@@ -241,14 +231,12 @@ export interface UserEntitlementInterface extends utils.Interface {
     "AdminChanged(address,address)": EventFragment;
     "BeaconUpgraded(address)": EventFragment;
     "Initialized(uint8)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
     "Upgraded(address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
@@ -279,18 +267,6 @@ export interface InitializedEventObject {
 export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
-}
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
-
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface UpgradedEventObject {
   implementation: string;
@@ -328,6 +304,10 @@ export interface UserEntitlement extends BaseContract {
   functions: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
+    TOKEN_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+
+    TOKEN_ID(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     addRoleIdToChannel(
       channelId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
@@ -358,6 +338,8 @@ export interface UserEntitlement extends BaseContract {
     ): Promise<[DataTypes.RoleStructOutput[]]>;
 
     initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -372,8 +354,6 @@ export interface UserEntitlement extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<[string]>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
     removeEntitlement(
@@ -385,10 +365,6 @@ export interface UserEntitlement extends BaseContract {
     removeRoleIdFromChannel(
       channelId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -408,11 +384,6 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    transferOwnership(
-      newOwner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     upgradeTo(
       newImplementation: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -426,6 +397,10 @@ export interface UserEntitlement extends BaseContract {
   };
 
   SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+  TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+  TOKEN_ID(overrides?: CallOverrides): Promise<BigNumber>;
 
   addRoleIdToChannel(
     channelId: PromiseOrValue<string>,
@@ -457,6 +432,8 @@ export interface UserEntitlement extends BaseContract {
   ): Promise<DataTypes.RoleStructOutput[]>;
 
   initialize(
+    _tokenAddress: PromiseOrValue<string>,
+    _tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -471,8 +448,6 @@ export interface UserEntitlement extends BaseContract {
 
   name(overrides?: CallOverrides): Promise<string>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
-
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
   removeEntitlement(
@@ -484,10 +459,6 @@ export interface UserEntitlement extends BaseContract {
   removeRoleIdFromChannel(
     channelId: PromiseOrValue<string>,
     roleId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -507,11 +478,6 @@ export interface UserEntitlement extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  transferOwnership(
-    newOwner: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   upgradeTo(
     newImplementation: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -525,6 +491,10 @@ export interface UserEntitlement extends BaseContract {
 
   callStatic: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+    TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+    TOKEN_ID(overrides?: CallOverrides): Promise<BigNumber>;
 
     addRoleIdToChannel(
       channelId: PromiseOrValue<string>,
@@ -555,7 +525,11 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<DataTypes.RoleStructOutput[]>;
 
-    initialize(overrides?: CallOverrides): Promise<void>;
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     isEntitled(
       channelId: PromiseOrValue<string>,
@@ -567,8 +541,6 @@ export interface UserEntitlement extends BaseContract {
     moduleType(overrides?: CallOverrides): Promise<string>;
 
     name(overrides?: CallOverrides): Promise<string>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
@@ -583,8 +555,6 @@ export interface UserEntitlement extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     setEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
@@ -601,11 +571,6 @@ export interface UserEntitlement extends BaseContract {
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    transferOwnership(
-      newOwner: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     upgradeTo(
       newImplementation: PromiseOrValue<string>,
@@ -639,15 +604,6 @@ export interface UserEntitlement extends BaseContract {
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
 
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
-    ): OwnershipTransferredEventFilter;
-
     "Upgraded(address)"(
       implementation?: PromiseOrValue<string> | null
     ): UpgradedEventFilter;
@@ -658,6 +614,10 @@ export interface UserEntitlement extends BaseContract {
 
   estimateGas: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    TOKEN_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    TOKEN_ID(overrides?: CallOverrides): Promise<BigNumber>;
 
     addRoleIdToChannel(
       channelId: PromiseOrValue<string>,
@@ -683,6 +643,8 @@ export interface UserEntitlement extends BaseContract {
     ): Promise<BigNumber>;
 
     initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -697,8 +659,6 @@ export interface UserEntitlement extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
     removeEntitlement(
@@ -710,10 +670,6 @@ export interface UserEntitlement extends BaseContract {
     removeRoleIdFromChannel(
       channelId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -733,11 +689,6 @@ export interface UserEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    transferOwnership(
-      newOwner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     upgradeTo(
       newImplementation: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -752,6 +703,10 @@ export interface UserEntitlement extends BaseContract {
 
   populateTransaction: {
     SPACE_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    TOKEN_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    TOKEN_ID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     addRoleIdToChannel(
       channelId: PromiseOrValue<string>,
@@ -777,6 +732,8 @@ export interface UserEntitlement extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -791,8 +748,6 @@ export interface UserEntitlement extends BaseContract {
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     removeEntitlement(
@@ -804,10 +759,6 @@ export interface UserEntitlement extends BaseContract {
     removeRoleIdFromChannel(
       channelId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -825,11 +776,6 @@ export interface UserEntitlement extends BaseContract {
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     upgradeTo(

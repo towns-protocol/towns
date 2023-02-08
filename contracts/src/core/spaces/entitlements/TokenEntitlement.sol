@@ -13,13 +13,13 @@ import {Errors} from "contracts/src/libraries/Errors.sol";
 
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC165Upgradeable} from "openzeppelin-contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract TokenEntitlement is
   Initializable,
   ERC165Upgradeable,
-  OwnableUpgradeable,
+  ContextUpgradeable,
   UUPSUpgradeable,
   IEntitlement
 {
@@ -36,11 +36,9 @@ contract TokenEntitlement is
     DataTypes.ExternalToken[] tokens;
   }
 
-  string public constant name = "Token Entitlement";
-  string public constant description = "Entitlement for tokens";
-  string public constant moduleType = "TokenEntitlement";
-
   address public SPACE_ADDRESS;
+  address public TOKEN_ADDRESS;
+  uint256 public TOKEN_ID;
 
   /// @notice mapping holding all the entitlements of entitlementId to Entitlement
   mapping(bytes32 => Entitlement) public entitlementsById;
@@ -51,18 +49,40 @@ contract TokenEntitlement is
   /// @notice array of all the entitlementIds
   bytes32[] public allEntitlementIds;
 
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
+
+  string public constant name = "Token Entitlement";
+  string public constant description = "Entitlement for tokens";
+  string public constant moduleType = "TokenEntitlement";
+
   modifier onlySpace() {
-    require(
-      _msgSender() == owner() || _msgSender() == SPACE_ADDRESS,
-      "Space: only space"
-    );
+    if (_msgSender() != SPACE_ADDRESS) {
+      revert Errors.NotAllowed();
+    }
     _;
   }
 
-  function initialize() public initializer {
+  modifier onlyOwner() {
+    if (IERC721(TOKEN_ADDRESS).ownerOf(TOKEN_ID) != _msgSender()) {
+      revert Errors.NotAllowed();
+    }
+    _;
+  }
+
+  function initialize(
+    address _tokenAddress,
+    uint256 _tokenId
+  ) public initializer {
     __UUPSUpgradeable_init();
     __ERC165_init();
-    __Ownable_init();
+    __Context_init();
+
+    TOKEN_ADDRESS = _tokenAddress;
+    TOKEN_ID = _tokenId;
   }
 
   // @inheritdoc IEntitlement
@@ -74,7 +94,7 @@ contract TokenEntitlement is
   /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlyOwner {}
+  ) internal override onlySpace {}
 
   function supportsInterface(
     bytes4 interfaceId

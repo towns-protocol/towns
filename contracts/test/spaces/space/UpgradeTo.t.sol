@@ -7,13 +7,16 @@ import {Permissions} from "contracts/src/libraries/Permissions.sol";
 
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
+import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 
 contract UpgradeToTest is SpaceBaseSetup {
   SpaceV2 public spaceV2;
+  TokenV2 public tokenV2;
 
   function setUp() public {
     SpaceBaseSetup.init();
     spaceV2 = new SpaceV2();
+    tokenV2 = new TokenV2();
   }
 
   function testUpgradeTo() external {
@@ -32,7 +35,27 @@ contract UpgradeToTest is SpaceBaseSetup {
     assertEq(SpaceV2(_space).items(0), _item);
     assertTrue(SpaceV2(_space).isEntitledToSpace(_creator, Permissions.Owner));
   }
+
+  function testUpgradeTokenEntitlement() external {
+    address _creator = _randomAddress();
+
+    vm.prank(_creator);
+    address _space = createSimpleSpace();
+
+    address _tokenEntitlement = Space(_space).getEntitlementByModuleType(
+      "TokenEntitlement"
+    );
+
+    vm.prank(_creator);
+    vm.expectRevert(Errors.NotAllowed.selector);
+    TokenEntitlement(_tokenEntitlement).upgradeTo(address(tokenV2));
+
+    vm.prank(_creator);
+    Space(_space).upgradeEntitlement(_tokenEntitlement, address(tokenV2));
+  }
 }
+
+contract TokenV2 is TokenEntitlement {}
 
 contract SpaceV2 is Space {
   address[] public items;
