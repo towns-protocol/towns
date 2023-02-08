@@ -603,11 +603,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xa8dba0cbb9889b83436f47e8804c945fdb68963dc2383fdc7626d1bf1038e841",
+      "keccak256": "0xa3e84c1976f0c977163c6c4ab033d7249e16b2a177b4b8d0dd8f8a2c6efdae36",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://748e2670635bb304527ecafe8ae0e6be93a75f4d45da4c97b2a1253448b9d344",
-        "dweb:/ipfs/QmVwVKo23KmgK46ByqhaKMYkaZHKdG5R9yhctgxwz85SJg"
+        "bzz-raw://876312f517fe68efdd10573deb91a94a7680a0d522a5fda59ec4a59bf19e4557",
+        "dweb:/ipfs/QmRPPUt56iTr8FfSyC7bvt3W1YUwpdQqaXPDRTTDiaBjLq"
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
@@ -667,11 +667,11 @@
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
+      "keccak256": "0xb2a3d16cef14e52cad4b76b385b95b0323fdc43f52a359713b9ee8a49872f55a",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
-        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
+        "bzz-raw://ec8a8d22a57186e1d452177f176938ddb18c0b4f3d560431955a848a4b6f1b0a",
+        "dweb:/ipfs/QmXvUggcCEefyv2yFnyra6fSH4ioymGSzGYukZfBWFm5kw"
       ]
     },
     "contracts/src/libraries/Errors.sol": {
@@ -699,11 +699,11 @@
       ]
     },
     "contracts/src/libraries/Utils.sol": {
-      "keccak256": "0x5aa3aee5134845cd64fbc2df36dc016b509524443156f3d7636339cf8463424b",
+      "keccak256": "0x0ecd26fe9fd11492c3d7e1d6e220603cc9efaa1886f9b197eaf1218636a85e0a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6bf45246ccecdc97a6811cb211856d65d11be51cbda48640fab6875eafd21557",
-        "dweb:/ipfs/QmV2N9CXHdErW8ZKLMXsyK6WgvSX9z177BhK2nnXFaEUAe"
+        "bzz-raw://8fd940c467411e4fc03a2adccaf651fbc15e1cf75b80806ffe11fe9e21146f17",
+        "dweb:/ipfs/QmbxRxTKi2t2i1YjmVP6RS4qbqpXzTzewxv6YdRrvUuUc4"
       ]
     },
     "contracts/src/misc/MultiCaller.sol": {

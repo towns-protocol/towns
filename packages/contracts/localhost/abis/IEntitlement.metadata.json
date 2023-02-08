@@ -383,11 +383,11 @@
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
+      "keccak256": "0xb2a3d16cef14e52cad4b76b385b95b0323fdc43f52a359713b9ee8a49872f55a",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
-        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
+        "bzz-raw://ec8a8d22a57186e1d452177f176938ddb18c0b4f3d560431955a848a4b6f1b0a",
+        "dweb:/ipfs/QmXvUggcCEefyv2yFnyra6fSH4ioymGSzGYukZfBWFm5kw"
       ]
     }
   },

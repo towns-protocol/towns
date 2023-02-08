@@ -10,7 +10,7 @@ pragma solidity 0.8.17;
 library DataTypes {
   struct Channel {
     string name;
-    bytes32 channelId;
+    bytes32 channelHash;
     uint256 createdAt;
     bool disabled;
   }

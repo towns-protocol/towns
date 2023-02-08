@@ -91,7 +91,7 @@ contract UserEntitlementTest is SpaceBaseSetup {
     vm.prank(_creator);
     address _space = createSimpleSpace();
 
-    string memory _roleName = "TestRole";
+    string memory _roleName = "test-role";
     string[] memory _rolePermissions = new string[](1);
     _rolePermissions[0] = "TestPermission";
 

@@ -23,7 +23,7 @@ contract UpdateChannelTest is SpaceBaseSetup {
     ) = _createSimpleChannelData();
     Space(_space).createChannel(channelName, channelNetworkId, roleIds);
 
-    string memory newChannelName = "NewChannelName";
+    string memory newChannelName = "new-channel-name";
 
     Space(_space).updateChannel(channelNetworkId, newChannelName);
 
@@ -35,38 +35,37 @@ contract UpdateChannelTest is SpaceBaseSetup {
   }
 
   function testUpdateChannelNotAllowed(
-    string memory channelName,
-    string memory channelNetworkId,
-    string memory newChannelName
+    string memory channelNetworkId
   ) external {
+    string memory channelName = "channl-2";
+
     address _space = createSimpleSpace();
 
     (, , uint256[] memory roleIds) = _createSimpleChannelData();
 
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel("channel-1", channelNetworkId, roleIds);
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).updateChannel(channelNetworkId, newChannelName);
+    Space(_space).updateChannel(channelNetworkId, channelName);
   }
 
   function testUpdateChannelDoesNotExist(string memory channelName) external {
     address _space = createSimpleSpace();
-    string memory newChannelName = "NewChannelName";
+    string memory newChannelName = "new-channel-name";
     vm.expectRevert(Errors.ChannelDoesNotExist.selector);
     Space(_space).updateChannel(channelName, newChannelName);
   }
 
   function testUpdateChannelEmptyString(
-    string memory channelName,
     string memory channelNetworkId
   ) external {
     address _space = createSimpleSpace();
     (, , uint256[] memory roleIds) = _createSimpleChannelData();
 
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel("channel-1", channelNetworkId, roleIds);
 
-    vm.expectRevert(Errors.NotAllowed.selector);
+    vm.expectRevert(Errors.NameLengthInvalid.selector);
     Space(_space).updateChannel(channelNetworkId, "");
   }
 }

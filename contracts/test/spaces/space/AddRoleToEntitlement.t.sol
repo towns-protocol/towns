@@ -33,7 +33,7 @@ contract AddRoleToEntitlementTest is SpaceBaseSetup {
     address _bob = _randomAddress();
 
     // create role
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
@@ -75,7 +75,7 @@ contract AddRoleToEntitlementTest is SpaceBaseSetup {
     address _bob = _randomAddress();
 
     // create role
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
@@ -112,7 +112,7 @@ contract AddRoleToEntitlementTest is SpaceBaseSetup {
     address _bob = _randomAddress();
 
     // create role
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "UniquePermision";
 

@@ -33,7 +33,7 @@ contract MultiCallerTest is SpaceBaseSetup {
 
   function testRevertMultiCaller() external {
     address _space = createSimpleSpace();
-    string memory _newRoleName = "NewRoleName";
+    string memory _newRoleName = "new-role-name";
 
     bytes[] memory _data = new bytes[](1);
     _data[0] = abi.encodeCall(
@@ -48,7 +48,7 @@ contract MultiCallerTest is SpaceBaseSetup {
   function testMultiCaller() external {
     address _space = createSimpleSpace();
 
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
     string[] memory _rolePermissions = new string[](1);
     _rolePermissions[0] = "Vote";
 
@@ -65,7 +65,7 @@ contract MultiCallerTest is SpaceBaseSetup {
       _roleEntitlements
     );
 
-    string memory _newRoleName = "NewRoleName";
+    string memory _newRoleName = "new-role-name";
 
     bytes[] memory _data = new bytes[](2);
     _data[0] = abi.encodeCall(

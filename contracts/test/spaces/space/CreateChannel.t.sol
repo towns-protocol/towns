@@ -49,7 +49,7 @@ contract CreateChannelTest is SpaceBaseSetup {
     _entitlements[0] = DataTypes.Entitlement({module: address(0), data: ""});
 
     uint256 _memberRoleId = Space(_space).createRole(
-      "Member",
+      "member",
       _permissions,
       _entitlements
     );
@@ -135,7 +135,7 @@ contract CreateChannelTest is SpaceBaseSetup {
     );
 
     assertEq(_channel.name, channelName);
-    assertEq(_channel.channelId, channelId);
+    assertEq(_channel.channelHash, channelId);
 
     assertTrue(
       Space(_space).isEntitledToChannel(
@@ -144,5 +144,22 @@ contract CreateChannelTest is SpaceBaseSetup {
         Permissions.Owner
       )
     );
+  }
+
+  function testCreateEmptyChannelName() external {
+    address creator = _randomAddress();
+
+    vm.prank(creator);
+    address _space = createSimpleSpace();
+
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = ("", "!7evmpuHDDgkady9u:localhost", new uint256[](0)); // Empty Name here
+
+    vm.prank(creator);
+    vm.expectRevert(Errors.NameLengthInvalid.selector);
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
   }
 }

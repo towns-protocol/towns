@@ -55,7 +55,7 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     address spaceOwner2 = _randomAddress();
     address hodler = _randomAddress();
     string memory permission = "TokenHodler";
-    string memory roleName = "Hodler";
+    string memory roleName = "hodler";
 
     MockERC20 token = new MockERC20();
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
@@ -231,7 +231,7 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
 
     DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Custom Role",
+        roleName: "custom-role",
         permissions: new string[](1),
         tokens: new DataTypes.ExternalToken[](1),
         users: new address[](1)

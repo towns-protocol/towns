@@ -24,7 +24,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Moderator",
+        roleName: "moderator",
         permissions: _spacePermissions,
         users: _users,
         tokens: new DataTypes.ExternalToken[](0)
@@ -43,7 +43,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     uint256 moderatorRoleId;
 
     for (uint256 i = 0; i < allRoles.length; i++) {
-      if (keccak256(bytes(allRoles[i].name)) == keccak256(bytes("Moderator"))) {
+      if (keccak256(bytes(allRoles[i].name)) == keccak256(bytes("moderator"))) {
         moderatorRoleId = allRoles[i].roleId;
       }
     }
@@ -94,7 +94,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Moderator",
+        roleName: "moderator",
         permissions: _spacePermissions,
         users: _users,
         tokens: new DataTypes.ExternalToken[](0)
@@ -140,7 +140,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // add to system for _notTokenHOlder
     vm.prank(_tokenHolder);
     Space(_space).createRole(
-      "ModifySpacePermissions",
+      "modify-space-permissions",
       _spacePermissions,
       _newEntitlementsI
     );
@@ -208,7 +208,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     vm.prank(_tokenHolder);
     vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).createRole(
-      "OwnerII",
+      "owner-2",
       _spacePermissions,
       _newOwnerEntitlements
     );
@@ -216,6 +216,72 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // see that "OwnerII" has ownership rights
     assertFalse(
       Space(_space).isEntitledToSpace(_notTokenHolder, Permissions.Owner)
+    );
+  }
+
+  function testChannelDisabledDoesNotGate() external {
+    address _channelAccessor = _randomAddress();
+    address _tokenHolder = _randomAddress();
+
+    // create space with _tokenHolder as owner
+    vm.prank(_tokenHolder);
+    address _space = createSimpleSpace();
+    address _userEntitlementModule = Space(_space).getEntitlements()[1];
+
+    // Create entitlement with channel read permissions
+    address[] memory _users = new address[](1);
+    _users[0] = _channelAccessor;
+    DataTypes.Entitlement[]
+      memory _newEntitlementsI = new DataTypes.Entitlement[](1);
+    string[] memory _spacePermissions = new string[](1);
+    _spacePermissions[0] = Permissions.Read;
+    _newEntitlementsI[0] = DataTypes.Entitlement({
+      module: _userEntitlementModule,
+      data: abi.encode(_users)
+    });
+
+    // add to system for _channelAccessor
+    vm.prank(_tokenHolder);
+    uint256 readRoleID = Space(_space).createRole(
+      "read",
+      _spacePermissions,
+      _newEntitlementsI
+    );
+
+    // create channel and add role to it
+    (
+      string memory channelName,
+      string memory channelNetworkId,
+      uint256[] memory roleIds
+    ) = _createSimpleChannelData();
+    vm.prank(_tokenHolder);
+    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    vm.prank(_tokenHolder);
+    Space(_space).addRoleToChannel(
+      channelNetworkId,
+      _userEntitlementModule,
+      readRoleID
+    );
+
+    // see that "Read" is active
+    assertTrue(
+      Space(_space).isEntitledToChannel(
+        channelNetworkId,
+        _channelAccessor,
+        Permissions.Read
+      )
+    );
+
+    // deactivate channel
+    vm.prank(_tokenHolder);
+    Space(_space).setChannelAccess(channelNetworkId, true);
+
+    // see that "Read" is still active
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).isEntitledToChannel(
+      channelNetworkId,
+      _channelAccessor,
+      Permissions.Read
     );
   }
 }

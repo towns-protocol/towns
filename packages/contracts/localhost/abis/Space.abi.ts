@@ -51,6 +51,16 @@ export default [
   },
   {
     "inputs": [],
+    "name": "NameContainsInvalidCharacters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NameLengthInvalid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotAllowed",
     "type": "error"
   },
@@ -149,7 +159,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "_channelNetworkId",
         "type": "string"
       },
       {
@@ -234,7 +244,7 @@ export default [
       },
       {
         "internalType": "bytes32",
-        "name": "channelId",
+        "name": "channelHash",
         "type": "bytes32"
       },
       {
@@ -391,7 +401,7 @@ export default [
           },
           {
             "internalType": "bytes32",
-            "name": "channelId",
+            "name": "channelHash",
             "type": "bytes32"
           },
           {
@@ -608,7 +618,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "_channelNetworkId",
         "type": "string"
       },
       {
@@ -776,7 +786,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "_channelNetworkId",
         "type": "string"
       },
       {
@@ -866,12 +876,12 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
         "internalType": "bool",
-        "name": "_disabled",
+        "name": "disableChannel",
         "type": "bool"
       }
     ],
@@ -954,12 +964,12 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_channelName",
+        "name": "channelName",
         "type": "string"
       }
     ],

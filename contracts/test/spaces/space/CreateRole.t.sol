@@ -28,7 +28,7 @@ contract CreateRoleTest is SpaceBaseSetup {
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Moderator",
+        roleName: "moderator",
         permissions: _spacePermissions,
         users: _users,
         tokens: new DataTypes.ExternalToken[](0)
@@ -43,7 +43,7 @@ contract CreateRoleTest is SpaceBaseSetup {
       )
     );
 
-    string memory _roleName = "Hacker";
+    string memory _roleName = "hacker";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Owner";
 
@@ -60,7 +60,7 @@ contract CreateRoleTest is SpaceBaseSetup {
   function testCreateRoleNotAllowed() external {
     address _space = createSimpleSpace();
 
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
@@ -77,7 +77,7 @@ contract CreateRoleTest is SpaceBaseSetup {
   function testCreateRoleWithEntitlements() external {
     address _space = createSimpleSpace();
 
-    string memory _roleName = "Entitled";
+    string memory _roleName = "entitled";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 
@@ -124,7 +124,7 @@ contract CreateRoleTest is SpaceBaseSetup {
   function testCreateRoleOnly() external {
     address _space = createSimpleSpace();
 
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
     string[] memory _permissions = new string[](1);
     _permissions[0] = "Vote";
 

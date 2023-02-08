@@ -41,14 +41,14 @@ export declare namespace DataTypes {
 
   export type ChannelStruct = {
     name: PromiseOrValue<string>;
-    channelId: PromiseOrValue<BytesLike>;
+    channelHash: PromiseOrValue<BytesLike>;
     createdAt: PromiseOrValue<BigNumberish>;
     disabled: PromiseOrValue<boolean>;
   };
 
   export type ChannelStructOutput = [string, string, BigNumber, boolean] & {
     name: string;
-    channelId: string;
+    channelHash: string;
     createdAt: BigNumber;
     disabled: boolean;
   };
@@ -560,7 +560,7 @@ export interface Space extends BaseContract {
     ): Promise<ContractTransaction>;
 
     addRoleToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -583,7 +583,7 @@ export interface Space extends BaseContract {
     ): Promise<
       [string, string, BigNumber, boolean] & {
         name: string;
-        channelId: string;
+        channelHash: string;
         createdAt: BigNumber;
         disabled: boolean;
       }
@@ -663,7 +663,7 @@ export interface Space extends BaseContract {
     ): Promise<ContractTransaction>;
 
     isEntitledToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -702,7 +702,7 @@ export interface Space extends BaseContract {
     ): Promise<ContractTransaction>;
 
     removeRoleFromChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -722,8 +722,8 @@ export interface Space extends BaseContract {
     ): Promise<[BigNumber, string] & { roleId: BigNumber; name: string }>;
 
     setChannelAccess(
-      _channelId: PromiseOrValue<string>,
-      _disabled: PromiseOrValue<boolean>,
+      channelNetworkId: PromiseOrValue<string>,
+      disableChannel: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -748,8 +748,8 @@ export interface Space extends BaseContract {
     tokenId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     updateChannel(
-      _channelId: PromiseOrValue<string>,
-      _channelName: PromiseOrValue<string>,
+      channelNetworkId: PromiseOrValue<string>,
+      channelName: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -784,7 +784,7 @@ export interface Space extends BaseContract {
   ): Promise<ContractTransaction>;
 
   addRoleToChannel(
-    _channelId: PromiseOrValue<string>,
+    _channelNetworkId: PromiseOrValue<string>,
     _entitlement: PromiseOrValue<string>,
     _roleId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -807,7 +807,7 @@ export interface Space extends BaseContract {
   ): Promise<
     [string, string, BigNumber, boolean] & {
       name: string;
-      channelId: string;
+      channelHash: string;
       createdAt: BigNumber;
       disabled: boolean;
     }
@@ -885,7 +885,7 @@ export interface Space extends BaseContract {
   ): Promise<ContractTransaction>;
 
   isEntitledToChannel(
-    _channelId: PromiseOrValue<string>,
+    _channelNetworkId: PromiseOrValue<string>,
     _user: PromiseOrValue<string>,
     _permission: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -924,7 +924,7 @@ export interface Space extends BaseContract {
   ): Promise<ContractTransaction>;
 
   removeRoleFromChannel(
-    _channelId: PromiseOrValue<string>,
+    _channelNetworkId: PromiseOrValue<string>,
     _entitlement: PromiseOrValue<string>,
     _roleId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -944,8 +944,8 @@ export interface Space extends BaseContract {
   ): Promise<[BigNumber, string] & { roleId: BigNumber; name: string }>;
 
   setChannelAccess(
-    _channelId: PromiseOrValue<string>,
-    _disabled: PromiseOrValue<boolean>,
+    channelNetworkId: PromiseOrValue<string>,
+    disableChannel: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -970,8 +970,8 @@ export interface Space extends BaseContract {
   tokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
   updateChannel(
-    _channelId: PromiseOrValue<string>,
-    _channelName: PromiseOrValue<string>,
+    channelNetworkId: PromiseOrValue<string>,
+    channelName: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1006,7 +1006,7 @@ export interface Space extends BaseContract {
     ): Promise<void>;
 
     addRoleToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1029,7 +1029,7 @@ export interface Space extends BaseContract {
     ): Promise<
       [string, string, BigNumber, boolean] & {
         name: string;
-        channelId: string;
+        channelHash: string;
         createdAt: BigNumber;
         disabled: boolean;
       }
@@ -1107,7 +1107,7 @@ export interface Space extends BaseContract {
     ): Promise<void>;
 
     isEntitledToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1146,7 +1146,7 @@ export interface Space extends BaseContract {
     ): Promise<void>;
 
     removeRoleFromChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1166,8 +1166,8 @@ export interface Space extends BaseContract {
     ): Promise<[BigNumber, string] & { roleId: BigNumber; name: string }>;
 
     setChannelAccess(
-      _channelId: PromiseOrValue<string>,
-      _disabled: PromiseOrValue<boolean>,
+      channelNetworkId: PromiseOrValue<string>,
+      disableChannel: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1192,8 +1192,8 @@ export interface Space extends BaseContract {
     tokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
     updateChannel(
-      _channelId: PromiseOrValue<string>,
-      _channelName: PromiseOrValue<string>,
+      channelNetworkId: PromiseOrValue<string>,
+      channelName: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1257,7 +1257,7 @@ export interface Space extends BaseContract {
     ): Promise<BigNumber>;
 
     addRoleToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1351,7 +1351,7 @@ export interface Space extends BaseContract {
     ): Promise<BigNumber>;
 
     isEntitledToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1390,7 +1390,7 @@ export interface Space extends BaseContract {
     ): Promise<BigNumber>;
 
     removeRoleFromChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1410,8 +1410,8 @@ export interface Space extends BaseContract {
     ): Promise<BigNumber>;
 
     setChannelAccess(
-      _channelId: PromiseOrValue<string>,
-      _disabled: PromiseOrValue<boolean>,
+      channelNetworkId: PromiseOrValue<string>,
+      disableChannel: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1436,8 +1436,8 @@ export interface Space extends BaseContract {
     tokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
     updateChannel(
-      _channelId: PromiseOrValue<string>,
-      _channelName: PromiseOrValue<string>,
+      channelNetworkId: PromiseOrValue<string>,
+      channelName: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1473,7 +1473,7 @@ export interface Space extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     addRoleToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1567,7 +1567,7 @@ export interface Space extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     isEntitledToChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _user: PromiseOrValue<string>,
       _permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1606,7 +1606,7 @@ export interface Space extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     removeRoleFromChannel(
-      _channelId: PromiseOrValue<string>,
+      _channelNetworkId: PromiseOrValue<string>,
       _entitlement: PromiseOrValue<string>,
       _roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1626,8 +1626,8 @@ export interface Space extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setChannelAccess(
-      _channelId: PromiseOrValue<string>,
-      _disabled: PromiseOrValue<boolean>,
+      channelNetworkId: PromiseOrValue<string>,
+      disableChannel: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1652,8 +1652,8 @@ export interface Space extends BaseContract {
     tokenId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     updateChannel(
-      _channelId: PromiseOrValue<string>,
-      _channelName: PromiseOrValue<string>,
+      channelNetworkId: PromiseOrValue<string>,
+      channelName: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

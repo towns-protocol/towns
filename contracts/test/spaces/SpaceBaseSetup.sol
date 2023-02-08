@@ -182,7 +182,7 @@ contract SpaceBaseSetup is TestUtils {
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Moderator",
+        roleName: "moderator",
         permissions: _spacePermissions,
         users: _users,
         tokens: new DataTypes.ExternalToken[](0)
@@ -193,7 +193,7 @@ contract SpaceBaseSetup is TestUtils {
     DataTypes.Role[] memory allRoles = Space(_space).getRoles();
 
     for (uint256 i = 0; i < allRoles.length; i++) {
-      if (keccak256(bytes(allRoles[i].name)) == keccak256(bytes("Moderator"))) {
+      if (keccak256(bytes(allRoles[i].name)) == keccak256(bytes("moderator"))) {
         _moderatorRoleId = allRoles[i].roleId;
       }
     }
@@ -214,10 +214,10 @@ contract SpaceBaseSetup is TestUtils {
   function createSimpleRoleWithPermission(
     address _space
   ) internal returns (uint256 _roleId) {
-    string memory _roleName = "Member";
+    string memory _roleName = "member";
 
     string[] memory _permissions = new string[](1);
-    _permissions[0] = "Vote";
+    _permissions[0] = "vote";
 
     DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
       1

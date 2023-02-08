@@ -199,7 +199,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Moderator",
+        roleName: "moderator",
         permissions: permissions,
         users: new address[](0),
         tokens: tokens
@@ -215,7 +215,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     for (uint256 i = 0; i < _roles.length; i++) {
       if (
         keccak256(abi.encodePacked(_roles[i].name)) ==
-        keccak256(abi.encodePacked("Moderator"))
+        keccak256(abi.encodePacked("moderator"))
       ) {
         _moderatorRoleId = _roles[i].roleId;
       }
@@ -251,7 +251,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     address collector = _randomAddress();
     address hodler = _randomAddress();
 
-    string memory roleName = "Member";
+    string memory roleName = "member";
     string memory permission = Permissions.Read;
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
@@ -318,7 +318,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     _permissions[0] = "OnlyCollector";
 
     vm.prank(owner);
-    Space(_space).createRole("Member2", _permissions, _entitlements);
+    Space(_space).createRole("member2", _permissions, _entitlements);
 
     // collector should be entitled to the new permission because the nft is owned
     assertTrue(Space(_space).isEntitledToSpace(collector, "OnlyCollector"));
@@ -355,7 +355,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
-        roleName: "Moderator",
+        roleName: "moderator",
         permissions: permissions,
         users: new address[](0),
         tokens: tokens

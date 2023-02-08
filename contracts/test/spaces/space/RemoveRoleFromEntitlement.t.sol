@@ -110,7 +110,7 @@ contract RemoveRoleFromEntitlementTest is SpaceBaseSetup {
       DataTypes.Entitlement(_userEntitlement, abi.encode(_bobsAddresses))
     );
 
-    assertTrue(Space(_space).isEntitledToSpace(_bob, "Vote"));
+    assertTrue(Space(_space).isEntitledToSpace(_bob, "vote"));
 
     DataTypes.Entitlement memory _entitlement;
     _entitlement.module = _userEntitlement;
@@ -119,6 +119,6 @@ contract RemoveRoleFromEntitlementTest is SpaceBaseSetup {
     // remove role from entitlement
     Space(_space).removeRoleFromEntitlement(_roleId, _entitlement);
 
-    assertFalse(Space(_space).isEntitledToSpace(_bob, "Vote"));
+    assertFalse(Space(_space).isEntitledToSpace(_bob, "vote"));
   }
 }
