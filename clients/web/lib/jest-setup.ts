@@ -23,7 +23,7 @@ beforeAll(async () => {
     await globalThis.Olm.init()
     // dom testing library config for `waitFor(...)`
     configure({
-        asyncUtilTimeout: 5000, // default is 1000
+        asyncUtilTimeout: TestConstants.DefaultWaitForTimeoutMS, // default is 1000
     })
     // set up required global for the matrix client to allow us to make http requests
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call

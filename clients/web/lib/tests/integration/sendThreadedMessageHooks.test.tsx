@@ -21,7 +21,6 @@ import { RegisterAndJoin } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelThreadStats } from '../../src/hooks/use-channel-thread-stats'
@@ -290,16 +289,10 @@ describe('sendThreadedMessageHooks', () => {
         const channel_1_message_0 = jane
             .getEvents_TypedRoomMessage(channel_1)!
             .find((e) => e.content.body === 'hello channel_1')!
-        await waitFor(
-            () => expect(channel_1_message_0.eventId.startsWith('~')).toBe(false),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channel_1_message_0.eventId.startsWith('~')).toBe(false))
 
         // - bob renders channel_1
-        await waitFor(
-            () => expect(channelMessages).toHaveTextContent('hello channel_1'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelMessages).toHaveTextContent('hello channel_1'))
 
         // - jane replies to janes's message in channel_1 creating channel_1.thread
         await act(async () => {
@@ -308,9 +301,8 @@ describe('sendThreadedMessageHooks', () => {
             })
         })
         // - bob sees thread stats on chanel_1.message_1
-        await waitFor(
-            () => expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:1)'),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:1)'),
         )
         // - jane messages again
         await act(async () => {
@@ -319,19 +311,16 @@ describe('sendThreadedMessageHooks', () => {
             })
         })
         // - bob sees thread stats on chanel_1.message_1
-        await waitFor(
-            () => expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:2)'),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:2)'),
         )
         // - jane replies to bobs's message in channel_2 creating channel_2.thread
-        await waitFor(
-            () =>
-                expect(
-                    jane
-                        .getEvents_TypedRoomMessage(channel_2)!
-                        .find((e) => e.content.body === 'hello jane in channel_2'),
-                ).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                jane
+                    .getEvents_TypedRoomMessage(channel_2)!
+                    .find((e) => e.content.body === 'hello jane in channel_2'),
+            ).toBeDefined(),
         )
         const channel_2_message_1 = jane
             .getEvents_TypedRoomMessage(channel_2)!
@@ -343,42 +332,28 @@ describe('sendThreadedMessageHooks', () => {
             })
         })
         // -- bob should see the channel_2.thread in his thread list
-        await waitFor(
-            () =>
-                expect(threadRoots).toHaveTextContent(
-                    `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.eventId})`,
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(threadRoots).toHaveTextContent(
+                `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.eventId})`,
+            ),
         )
         // -- bob should not see the channel_1.thread in his thread list
-        await waitFor(
-            () => expect(threadRoots).not.toHaveTextContent(`channel: (channel_1)`),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(threadRoots).not.toHaveTextContent(`channel: (channel_1)`))
         // -- bob should see the thread root message in is thread list
-        await waitFor(
-            () => expect(threadRoots).toHaveTextContent(`hello jane in channel_2`),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(threadRoots).toHaveTextContent(`hello jane in channel_2`))
         // -- bob edits is message in channel_2
         fireEvent.click(editChannel2Message1)
         // -- bob sees thread root updated
-        await waitFor(
-            () => expect(threadRoots).toHaveTextContent(`hello jane old friend in channel_2`),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(threadRoots).toHaveTextContent(`hello jane old friend in channel_2`),
         )
         // -- and the thread parent (different hook)
-        await waitFor(
-            () =>
-                expect(channel2ThreadParent).toHaveTextContent(
-                    'hello jane old friend in channel_2',
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(channel2ThreadParent).toHaveTextContent('hello jane old friend in channel_2'),
         )
         // -- and the thread messages
-        await waitFor(
-            () => expect(channel2ThreadMessages).toHaveTextContent('hello thread in channel_2'),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(channel2ThreadMessages).toHaveTextContent('hello thread in channel_2'),
         )
         // todo...
         // -- bob should see unread markers in channels and threads

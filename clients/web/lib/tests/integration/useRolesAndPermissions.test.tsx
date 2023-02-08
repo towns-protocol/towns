@@ -217,10 +217,7 @@ describe('useRoles', () => {
             name: 'Create Role',
         })
         // wait for the client to be running
-        await waitFor(
-            () => within(clientRunning).getByText('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => within(clientRunning).getByText('true'))
 
         /* Act */
         // click button to create the space
@@ -255,10 +252,7 @@ describe('useRoles', () => {
 }) // end describe
 
 async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
-    await waitFor(
-        () => within(htmlElement).getByText(`roleName:${roleName}`),
-        TestConstants.DefaultWaitForTimeout,
-    )
+    await waitFor(() => within(htmlElement).getByText(`roleName:${roleName}`))
 }
 
 async function assertPermissions(
@@ -270,9 +264,7 @@ async function assertPermissions(
     const expected = permissions.map((permission) => `${roleName}:permission:${permission}`)
     const allPermissions: Promise<HTMLElement>[] = []
     for (const p of expected) {
-        allPermissions.push(
-            waitFor(() => within(htmlElement).getByText(p), TestConstants.DefaultWaitForTimeout),
-        )
+        allPermissions.push(waitFor(() => within(htmlElement).getByText(p)))
     }
     await Promise.all(allPermissions)
 }
@@ -283,13 +275,9 @@ async function assertNft(
     nftAddress: string,
     quantity: number,
 ) {
-    await waitFor(
-        () => within(htmlElement).getByText(`${roleName}:nftAddress:${nftAddress}`),
-        TestConstants.DefaultWaitForTimeout,
-    )
-    await waitFor(
-        () => within(htmlElement).getByText(`${roleName}:${nftAddress}:quantity:${quantity}`),
-        TestConstants.DefaultWaitForTimeout,
+    await waitFor(() => within(htmlElement).getByText(`${roleName}:nftAddress:${nftAddress}`))
+    await waitFor(() =>
+        within(htmlElement).getByText(`${roleName}:${nftAddress}:quantity:${quantity}`),
     )
 }
 
@@ -303,9 +291,7 @@ async function assertUsers(htmlElement: HTMLElement, roleName: string, users: st
     const expected = users.map((user) => `${roleName}:user:${user}`)
     const allUsers: Promise<HTMLElement>[] = []
     for (const p of expected) {
-        allUsers.push(
-            waitFor(() => within(htmlElement).getByText(p), TestConstants.DefaultWaitForTimeout),
-        )
+        allUsers.push(waitFor(() => within(htmlElement).getByText(p)))
     }
     await Promise.all(allUsers)
 }

@@ -50,25 +50,21 @@ describe('write messages', () => {
         }
         expect(consoleErrorSpy).toHaveBeenCalled()
 
-        await waitFor(
-            () =>
-                expect(
-                    alice
-                        .getEvents_TypedRoomMessage(roomId)
-                        .find((event) => event.content.body === 'Hello tokenGrantedUser!'),
-                ).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                alice
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content.body === 'Hello tokenGrantedUser!'),
+            ).toBeDefined(),
         )
 
         // bob should not receive the message
-        await waitFor(
-            () =>
-                expect(
-                    bob
-                        .getEvents_TypedRoomMessage(roomId)
-                        .find((event) => event.content.body === 'Hello Bob!'),
-                ).toBeUndefined(),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                bob
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content.body === 'Hello Bob!'),
+            ).toBeUndefined(),
         )
     })
 
@@ -106,19 +102,13 @@ describe('write messages', () => {
         /** Assert */
 
         // user should expect an invite to the room
-        await waitFor(
-            () => expect(tokenGrantedUser.getRoomData(roomId)).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(tokenGrantedUser.getRoomData(roomId)).toBeDefined())
 
         // call scrollback
         await tokenGrantedUser.scrollback(roomId, 30)
 
         // we should get more events
-        await waitFor(
-            () => expect(tokenGrantedUser.getEvents(roomId).length).toBeGreaterThan(20),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(tokenGrantedUser.getEvents(roomId).length).toBeGreaterThan(20))
     })
 
     test('Channel member can write messages', async () => {
@@ -158,14 +148,12 @@ describe('write messages', () => {
 
         /** Assert */
 
-        await waitFor(
-            () =>
-                expect(
-                    bob
-                        .getEvents_TypedRoomMessage(roomId)
-                        .find((event) => event.content?.body === 'Hello Bob!'),
-                ).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                bob
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content?.body === 'Hello Bob!'),
+            ).toBeDefined(),
         )
     })
 })

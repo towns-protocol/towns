@@ -14,7 +14,6 @@ import { LoginStatus } from '../../src/hooks/login'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useMatrixStore } from '../../src/store/use-matrix-store'
@@ -119,59 +118,29 @@ describe('defaultSpaceIdHooks', () => {
         const registerButton = screen.getByRole('button', { name: 'Register' })
         const joinButton = screen.getByRole('button', { name: 'Join' })
         // wait for our wallet to get unlocked
-        await waitFor(
-            () => expect(isConnected).toHaveTextContent(true.toString()),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
         // click the register button
         fireEvent.click(registerButton)
         // expect our status to change to logged in
-        await waitFor(
-            () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // wait for the client to boot up, this is async
-        await waitFor(
-            () => expect(clientRunning).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // expect our default space to sync, even though we haven't joined it
-        await waitFor(
-            () => expect(spaceName).toHaveTextContent('janes space (fake default)'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceName).toHaveTextContent('janes space (fake default)'))
         // expect our room membership to be empty
         expect(roomMembership).toHaveTextContent('')
         expect(spaceMembership).toHaveTextContent('')
         // click the register button
         fireEvent.click(joinButton)
         // expect our room membership to be populated
-        await waitFor(
-            () => expect(roomMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(spaceMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(roomMembership).toHaveTextContent(Membership.Join))
+        await waitFor(() => expect(spaceMembership).toHaveTextContent(Membership.Join))
         // expect our default room to sync
-        await waitFor(
-            () => expect(spaceRoomName).toHaveTextContent('janes space'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceRoomName).toHaveTextContent('janes space'))
         // expect our default space to sync
-        await waitFor(
-            () => expect(spaceName).toHaveTextContent('janes space'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceName).toHaveTextContent('janes space'))
         // check for public channels...
-        await waitFor(
-            () => expect(channelsCount).toHaveTextContent('1'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelName).toHaveTextContent('janes channel'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelsCount).toHaveTextContent('1'))
+        await waitFor(() => expect(channelName).toHaveTextContent('janes channel'))
     })
 })

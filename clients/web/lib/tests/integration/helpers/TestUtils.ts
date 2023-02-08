@@ -26,6 +26,17 @@ export function assert(condition: any, msg?: string): asserts condition {
     }
 }
 
+export function parseOptInt(value?: string): number | undefined {
+    if (value === undefined) {
+        return undefined
+    }
+    const parsed = parseInt(value)
+    if (isNaN(parsed)) {
+        return undefined
+    }
+    return parsed
+}
+
 export async function registerAndStartClients(
     clientNames: string[],
     props?: ZionTestClientProps,

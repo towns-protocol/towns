@@ -15,7 +15,6 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -111,53 +110,30 @@ describe('userProfileHooks', () => {
             name: 'Set Profile Info',
         })
         // wait for client to be running
-        await waitFor(
-            () => expect(clientRunning).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // wait for the channel join
-        await waitFor(
-            () => expect(channelMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // verify alice name is rendering
-        await waitFor(
-            () => expect(alicesMemberName).toHaveTextContent("Alice's your aunt"),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(alicesMemberName).toHaveTextContent("Alice's your aunt"))
         // verify alice avatar is rendering
-        await waitFor(
-            () => expect(alicesMemberAvatar).toHaveTextContent('alice.png'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(alicesMemberAvatar).toHaveTextContent('alice.png'))
         // have bob send a message to jane
         fireEvent.click(setProfileInfoButton)
         // verify my (bob) name is rendering
-        await waitFor(
-            () => expect(myProfileName).toHaveTextContent("Bob's your uncle"),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(myProfileName).toHaveTextContent("Bob's your uncle"))
         // verify my (bob) avatar is rendering
-        await waitFor(
-            () => expect(myProfileAvatar).toHaveTextContent('bob.png'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(myProfileAvatar).toHaveTextContent('bob.png'))
         // double check that alice sees the same info
-        await waitFor(
-            () =>
-                expect(
-                    alice
-                        .getRoomData(alicesChannelId)
-                        ?.members.some((x: RoomMember) => x.name === "Bob's your uncle"),
-                ).toBe(true),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                alice
+                    .getRoomData(alicesChannelId)
+                    ?.members.some((x: RoomMember) => x.name === "Bob's your uncle"),
+            ).toBe(true),
         )
         // have alice send a message
         await alice.sendMessage(alicesChannelId, 'hello')
         // expect a result
-        await waitFor(
-            () => expect(messageSender).toHaveTextContent("Alice's your aunt"),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(messageSender).toHaveTextContent("Alice's your aunt"))
     }) // end test with bob
 }) // end describe

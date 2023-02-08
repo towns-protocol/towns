@@ -43,14 +43,12 @@ describe('messageTypes', () => {
             messageType: MessageType.WenMoon,
         })
         // bob should receive the message
-        await waitFor(
-            () =>
-                expect(
-                    bob
-                        .getEvents_TypedRoomMessage(roomId)
-                        .find((event) => event.content.msgType === MessageType.WenMoon),
-                ).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(
+                bob
+                    .getEvents_TypedRoomMessage(roomId)
+                    .find((event) => event.content.msgType === MessageType.WenMoon),
+            ).toBeDefined(),
         )
     }) // end test
 
@@ -104,7 +102,7 @@ describe('messageTypes', () => {
             expect(
                 (imageMessage?.content.content as ImageMessageContent).info?.thumbnail_info?.size,
             ).toBe(30)
-        }, TestConstants.DefaultWaitForTimeout)
+        })
     })
 
     test('send a m.ZionText message', async () => {
@@ -146,6 +144,6 @@ describe('messageTypes', () => {
             expect(
                 (zionTextMessage?.content.content as ZionTextMessageContent).attachments?.[0],
             ).toEqual(expect.objectContaining({ url: 'https://example.com' }))
-        }, TestConstants.DefaultWaitForTimeout)
+        })
     })
 }) // end describe

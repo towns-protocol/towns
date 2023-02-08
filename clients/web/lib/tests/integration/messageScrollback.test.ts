@@ -34,16 +34,10 @@ describe('messageScrollback', () => {
         //
         // alice should receive 20 messages message
         //
-        await waitFor(
-            () => expect(alice.getEvents(roomId).length).toBe(20),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(alice.getEvents(roomId).length).toBe(20))
         // call scrollback
         await alice.scrollback(roomId, 30)
         // did we get more events?
-        await waitFor(
-            () => expect(alice.getEvents(roomId).length).toBeGreaterThan(20),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(alice.getEvents(roomId).length).toBeGreaterThan(20))
     }) // end test - send a threaded message
 }) // end describe

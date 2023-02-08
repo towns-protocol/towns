@@ -196,10 +196,7 @@ describe('useCreateChannelTransaction', () => {
             name: 'Create Channel',
         })
         // wait for the client to be running
-        await waitFor(
-            () => within(clientRunning).getByText('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => within(clientRunning).getByText('true'))
         // click button to create the space
         fireEvent.click(createSpaceButton)
         await waitFor(() => expect(transactionsNumber).toHaveTextContent('1'))
@@ -216,9 +213,6 @@ describe('useCreateChannelTransaction', () => {
         await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
         /* Assert */
-        await waitFor(
-            () => within(channelElement).getByText(channelName),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => within(channelElement).getByText(channelName))
     }) // end test
 }) // end describe

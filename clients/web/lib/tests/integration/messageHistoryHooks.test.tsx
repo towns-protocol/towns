@@ -13,7 +13,6 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
@@ -85,25 +84,13 @@ describe('messageHistoryHooks', () => {
             name: 'Scrollback',
         })
         // wait for the channel join
-        await waitFor(
-            () => expect(spaceMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceMembership).toHaveTextContent(Membership.Join))
+        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // expect our message to show
-        await waitFor(
-            () => expect(messageslength).toHaveTextContent('20'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(messageslength).toHaveTextContent('20'))
         // have bob send a message to jane
         fireEvent.click(scrollbackButton)
         // expect it to render as well
-        await waitFor(
-            () => expect(messageslength).toHaveTextContent('34'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(messageslength).toHaveTextContent('34'))
     })
 })

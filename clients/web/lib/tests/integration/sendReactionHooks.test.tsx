@@ -16,7 +16,6 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelId } from '../../src/hooks/use-channel-id'
@@ -109,39 +108,22 @@ describe('sendReactionHooks', () => {
             name: 'React',
         })
         // wait for client to be running
-        await waitFor(
-            () => expect(clientRunning).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // wait for the channel join
-        await waitFor(
-            () => expect(channelMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // have jane send a message to bob
         await jane.sendMessage(janesChannelId, 'hello bob')
         // expect our message to show
-        await waitFor(
-            () => expect(message0).toHaveTextContent('hello bob'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(message0).toHaveTextContent('hello bob'))
         // have bob send a message to jane
         fireEvent.click(sendReactionButton)
         // expect it to render as well
-        await waitFor(
-            () => expect(message1).toHaveTextContent(ZTEvent.Reaction),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.Reaction))
         // expect the reaction to show in the message
-        await waitFor(
-            () => expect(message0).toHaveTextContent('reactions: (👍)'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(message0).toHaveTextContent('reactions: (👍)'))
         // expect jane to recieve the message
-        await waitFor(
-            () =>
-                expect(jane.getEvents(janesChannelId).at(-1)?.content?.kind).toBe(ZTEvent.Reaction),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(jane.getEvents(janesChannelId).at(-1)?.content?.kind).toBe(ZTEvent.Reaction),
         )
     })
 })

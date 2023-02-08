@@ -65,20 +65,14 @@ describe('userProfile', () => {
             await alice.setAvatarUrl('https://example.com/alice.png')
         })
         // bob should see alices new user name
-        await waitFor(
-            () =>
-                expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.name).toBe(
-                    "Alice's your aunt",
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.name).toBe("Alice's your aunt"),
         )
         // alice should see bob's profile photo
-        await waitFor(
-            () =>
-                expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.avatarUrl).toBe(
-                    'https://example.com/alice.png',
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.avatarUrl).toBe(
+                'https://example.com/alice.png',
+            ),
         )
         // send a message
         await act(async () => {

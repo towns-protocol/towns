@@ -13,7 +13,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
@@ -130,70 +129,37 @@ describe('inviteToSpace', () => {
         })
 
         // wait the invite to show up
-        await waitFor(
-            () => expect(allInvites).toHaveTextContent(janesSpaceId_1.networkId),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(myMembership1).toHaveTextContent(Membership.Invite),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_1.networkId))
+        await waitFor(() => expect(myMembership1).toHaveTextContent(Membership.Invite))
 
         // accept the invite
         fireEvent.click(acceptInviteButton1)
 
         // expect our sidebar to show the space
-        await waitFor(
-            () => expect(allSpaces).toHaveTextContent(janes_space_1),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(myMembership1).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(allSpaces).toHaveTextContent(janes_space_1))
+        await waitFor(() => expect(myMembership1).toHaveTextContent(Membership.Join))
 
         // have jane invite bob to the second space and channel
         await jane.inviteUser(janesSpaceId_2, bobUserId)
         await jane.inviteUser(janesChannelId_2, bobUserId)
 
         // wait for the invite to show up
-        await waitFor(
-            () => expect(allInvites).toHaveTextContent(janesSpaceId_2.networkId),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(allInvites).toHaveTextContent(janesSpaceId_2.networkId))
         // expect the space to still render
-        await waitFor(
-            () => expect(allSpaces).toHaveTextContent(janes_space_1),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(allSpaces).toHaveTextContent(janes_space_1))
 
         // accept the invites
         fireEvent.click(acceptInviteButton2)
         fireEvent.click(acceptInviteButton3)
 
         // wait for the space to show up
-        await waitFor(
-            () => expect(allSpaces).toHaveTextContent(janes_space_2),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(myMembership2).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(myMembership3).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(allSpaces).toHaveTextContent(janes_space_2))
+        await waitFor(() => expect(myMembership2).toHaveTextContent(Membership.Join))
+        await waitFor(() => expect(myMembership3).toHaveTextContent(Membership.Join))
         // expect the space to still render (regression)
-        await waitFor(
-            () => expect(allSpaces).toHaveTextContent(janes_space_1),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(allSpaces).toHaveTextContent(janes_space_1))
 
         // and the invite to go away
-        await waitFor(
-            () => expect(allInvites).toBeEmptyDOMElement(),
-            TestConstants.DefaultWaitForTimeout,
-        ) // regression, the channel invite was not removed
+        await waitFor(() => expect(allInvites).toBeEmptyDOMElement()) // regression, the channel invite was not removed
     })
 })

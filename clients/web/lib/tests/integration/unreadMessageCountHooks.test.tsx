@@ -15,7 +15,6 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { sleep } from '../../src/utils/zion-utils'
@@ -156,110 +155,53 @@ describe('unreadMessageCountHooks', () => {
             name: 'Send Message',
         })
 
-        await waitFor(
-            () => expect(clientRunning).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // join the space
         fireEvent.click(joinSpaceButton)
         // wait for space join
-        await waitFor(
-            () => expect(spaceMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceMembership).toHaveTextContent(Membership.Join))
         // check assumptions
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('undefined'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
         // get invited to the channel
         await jane.inviteUser(janesChannelId, bobId.textContent!)
         // check the count (9/28/2022 dendrite doesn't send notifications for invites)
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('undefined'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
         // join the space
         fireEvent.click(joinChannelButton)
         // wait for the channel join
-        await waitFor(
-            () => expect(channelMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // have jane send a message to bob
         await jane.sendMessage(janesChannelId, 'hello bob')
         // expect our message to show
-        await waitFor(
-            () => expect(lastMessage).toHaveTextContent('hello bob'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(lastMessage).toHaveTextContent('hello bob'))
         // check count
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
         // mark as read
         fireEvent.click(markAsReadButton)
         // check count
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         // have jane send a message to bob
         await jane.sendMessage(janesChannelId, "it's Jane!")
         // check count
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
         // send another message
         await jane.sendMessage(janesChannelId, 'rember me!')
         // sending a message doesn't reset the count
         fireEvent.click(sendMessageButton)
         // check count
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(lastMessage).toHaveTextContent('rember me!'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(lastMessage).toHaveTextContent('rember me!'))
         // send a message back
         fireEvent.click(markAsReadButton)
         // check count
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
         // have jane create a new room and invite bob
         const newRoomId = await jane.createChannel({
             name: 'janes channel',
@@ -281,9 +223,6 @@ describe('unreadMessageCountHooks', () => {
         // get invited to the channel
         await jane.inviteUser(newRoomId, bobId.textContent!)
         // the space should show the unread count, but we don't (9/28/2022 dendrite doesn't send notifications for invites)
-        await waitFor(
-            () => expect(spaceHasUnread).toHaveTextContent('false'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
     })
 })

@@ -8,7 +8,6 @@ import {
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { TestConstants } from './helpers/TestConstants'
 
 describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {
@@ -132,10 +131,7 @@ describe('Zion event handlers test', () => {
         // alice invites bob to the room
         await alice.inviteUser(roomId, bob.matrixUserId)
 
-        await waitFor(
-            () => expect(bob.getRoomData(roomId)).toBeDefined(),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(bob.getRoomData(roomId)).toBeDefined())
         // bob joins the room
         await bob.joinRoom(roomId)
 

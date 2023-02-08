@@ -16,7 +16,6 @@ import { ChannelContextProvider } from '../../src/components/ChannelContextProvi
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelId } from '../../src/hooks/use-channel-id'
@@ -155,73 +154,45 @@ describe('sendMessageHooks', () => {
         const editButton = screen.getByRole('button', { name: 'Edit' })
         const redactButton = screen.getByRole('button', { name: 'Redact' })
         // wait for client to be running
-        await waitFor(
-            () => expect(clientRunning).toHaveTextContent('true'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // wait for the channel join
-        await waitFor(
-            () => expect(channelMembership).toHaveTextContent(Membership.Join),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // have jane send a message to bob
         await act(async () => {
             await jane.sendMessage(janesChannelId, 'hello bob')
         })
         // expect our message to show
-        await waitFor(
-            () => expect(message0).toHaveTextContent('hello bob'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(message0).toHaveTextContent('hello bob'))
         // have bob send a message to jane
         fireEvent.click(sendMessageButton)
 
         // wait for the event to be sent
-        await waitFor(
-            () => expect(msgSent).toHaveTextContent('message sent'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(msgSent).toHaveTextContent('message sent'))
 
         // expect it to render as well
-        await waitFor(
-            () => expect(message1).toHaveTextContent('hello jane'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(message1).toHaveTextContent('hello jane'))
         // expect jane to recieve the message
-        await waitFor(
-            () =>
-                expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
-                    'hello jane',
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
+                'hello jane',
+            ),
         )
         // expect the message to "flush" out of local pending state
         await waitFor(() => expect(message1).not.toHaveTextContent('isLocalPending: true'))
         // edit the event
         fireEvent.click(editButton)
         // wait for the event to be edited
-        await waitFor(
-            () => expect(msgEdited).toHaveTextContent('message edited'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(message1).toHaveTextContent('hello jane gm!'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(msgEdited).toHaveTextContent('message edited'))
+        await waitFor(() => expect(message1).toHaveTextContent('hello jane gm!'))
         // expect jane to see the edited event
-        await waitFor(
-            () =>
-                expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
-                    'hello jane gm!',
-                ),
-            TestConstants.DefaultWaitForTimeout,
+        await waitFor(() =>
+            expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
+                'hello jane gm!',
+            ),
         )
         // redact the event
         fireEvent.click(redactButton)
         // exect the message to be empty
-        await waitFor(
-            () => expect(message1).toHaveTextContent('m.room.redaction'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(message1).toHaveTextContent('m.room.redaction'))
     })
 })

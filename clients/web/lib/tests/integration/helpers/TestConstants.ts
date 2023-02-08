@@ -2,6 +2,7 @@
 
 import { ethers } from 'ethers'
 import { waitForOptions } from '@testing-library/react'
+import { parseOptInt } from './TestUtils'
 
 interface WorkThreadInfo {
     workerId: number
@@ -31,9 +32,13 @@ export class TestConstants {
     private static fundedWalletsWithNft: ethers.Wallet[] = []
     private static fundedWalletsWithoutNft: ethers.Wallet[] = []
 
-    public static DefaultWaitForTimeout: waitForOptions = { timeout: 5000 }
-    public static DoubleDefaultWaitForTimeout: waitForOptions = { timeout: 10000 }
-    public static DecaDefaultWaitForTimeout: waitForOptions = { timeout: 50000 }
+    public static DefaultWaitForTimeoutMS = parseOptInt(process.env.WAIT_FOR_TIMEOUT) ?? 5000
+    public static DoubleDefaultWaitForTimeout: waitForOptions = {
+        timeout: TestConstants.DefaultWaitForTimeoutMS * 2,
+    }
+    public static DecaDefaultWaitForTimeout: waitForOptions = {
+        timeout: TestConstants.DefaultWaitForTimeoutMS * 10,
+    }
 
     public static init() {
         const network = process.env.ETHERS_NETWORK!

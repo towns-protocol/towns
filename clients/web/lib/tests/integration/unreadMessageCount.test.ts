@@ -119,25 +119,15 @@ describe('unreadMessageCount', () => {
         // initially we have 1 unread messages for space and each channel
         await waitFor(
             () => expect(countFor(spaceId)).toBe(0), // we don't get notifications for invites
-            TestConstants.DefaultWaitForTimeout,
         )
         // alice joins the room
         await alice.joinRoom(spaceId)
         await alice.joinRoom(channel_1)
         await alice.joinRoom(channel_2)
         // expect our membership to be join
-        await waitFor(
-            () => expect(alice.getRoomData(spaceId)?.membership).toBe('join'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(alice.getRoomData(channel_1)?.membership).toBe('join'),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(alice.getRoomData(channel_2)?.membership).toBe('join'),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(alice.getRoomData(spaceId)?.membership).toBe('join'))
+        await waitFor(() => expect(alice.getRoomData(channel_1)?.membership).toBe('join'))
+        await waitFor(() => expect(alice.getRoomData(channel_2)?.membership).toBe('join'))
 
         ////// Stop alice /////
         await stopAlice()
@@ -149,15 +139,9 @@ describe('unreadMessageCount', () => {
         await startAlice()
 
         // che our counts
-        await waitFor(() => expect(countFor(spaceId)).toBe(1), TestConstants.DefaultWaitForTimeout)
-        await waitFor(
-            () => expect(countFor(channel_1)).toBe(2),
-            TestConstants.DefaultWaitForTimeout,
-        )
-        await waitFor(
-            () => expect(countFor(channel_2)).toBe(1),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(countFor(spaceId)).toBe(1))
+        await waitFor(() => expect(countFor(channel_1)).toBe(2))
+        await waitFor(() => expect(countFor(channel_2)).toBe(1))
         // start clearing the notifications
         await alice.sendReadReceipt(channel_1)
 
@@ -168,13 +152,10 @@ describe('unreadMessageCount', () => {
         await startAlice()
 
         // and see the update
-        await waitFor(
-            () => expect(countFor(channel_1)).toBe(0),
-            TestConstants.DefaultWaitForTimeout,
-        )
+        await waitFor(() => expect(countFor(channel_1)).toBe(0))
         // clear
         await alice.sendReadReceipt(spaceId)
         // and see the update
-        await waitFor(() => expect(countFor(spaceId)).toBe(0), TestConstants.DefaultWaitForTimeout)
+        await waitFor(() => expect(countFor(spaceId)).toBe(0))
     }) // end test
 }) // end describe
