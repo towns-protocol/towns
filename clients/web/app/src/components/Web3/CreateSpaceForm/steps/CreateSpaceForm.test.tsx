@@ -288,7 +288,7 @@ describe('<CreateSpaceForm />', () => {
         await screen.findByTestId('space-form-3')
         fireEvent.click(nextButton)
 
-        await screen.findByText('There was an error with the transaction. Please try again')
+        await screen.findByText(/There was an error with the transaction/i)
 
         expect(navigateSpy).not.toHaveBeenCalled()
     }, 10000)

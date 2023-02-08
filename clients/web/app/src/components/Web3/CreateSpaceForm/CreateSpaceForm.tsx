@@ -23,7 +23,14 @@ import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
 import { CreateSpaceStep3 } from './steps/CreateSpaceStep3'
 import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
-import { EVERYONE, TOKEN_HOLDERS } from './constants'
+import {
+    ERROR_INVALID_PARAMETERS,
+    ERROR_NAME_CONTAINS_INVALID_CHARACTERS,
+    ERROR_NAME_LENGTH_INVALID,
+    ERROR_SPACE_ALREADY_REGISTERED,
+    EVERYONE,
+    TOKEN_HOLDERS,
+} from './constants'
 
 const MotionBox = motion(Box)
 const MotionText = motion(Text)
@@ -34,11 +41,12 @@ type HeaderProps = {
     isLast: boolean
     goPrev: () => void
     hasError: boolean
+    errorBox: React.ReactNode
     transactionUIState: TransactionUIStatesType
 }
 
 const Header = (props: HeaderProps) => {
-    const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError } = props
+    const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError, errorBox } = props
     const { isAbleToInteract } = transactionUIState
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const isDisabled = !isTransactionNetwork && isLast
@@ -78,11 +86,7 @@ const Header = (props: HeaderProps) => {
                     />
                 </Box>
             )}
-            {hasError && (
-                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
-                    <ErrorMessageText message="There was an error with the transaction. Please try again" />
-                </Box>
-            )}
+            {hasError && errorBox}
         </>
     )
 }
@@ -100,12 +104,40 @@ export const CreateSpaceForm = () => {
     } = useCreateSpaceTransaction()
 
     const [wentBackAfterAttemptingCreation, setWentBackAfterAttemptingCreation] = useState(false)
-
     const hasError = useMemo(() => {
         return Boolean(
             error && error.name !== 'ACTION_REJECTED' && !wentBackAfterAttemptingCreation,
         )
     }, [error, wentBackAfterAttemptingCreation])
+
+    const errorBox = useMemo(() => {
+        if (hasError) {
+            let errorText = ''
+            switch (error?.name) {
+                case ERROR_NAME_CONTAINS_INVALID_CHARACTERS:
+                    errorText = 'The space name contains invalid characters.'
+                    break
+                case ERROR_NAME_LENGTH_INVALID:
+                    errorText = 'The space name must be between 3 and 32 characters.'
+                    break
+                case ERROR_SPACE_ALREADY_REGISTERED:
+                    errorText = 'The space name is already registered.'
+                    break
+                case ERROR_INVALID_PARAMETERS:
+                    errorText = 'The space name is invalid.'
+                    break
+                default:
+                    errorText = 'An unknown error occurred.'
+                    break
+            }
+            const fullErrorText = `There was an error with the transaction! ${errorText} Please try again.`
+            return (
+                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
+                    <ErrorMessageText message={fullErrorText} />
+                </Box>
+            )
+        }
+    }, [error, hasError])
 
     const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(roomId))
 
@@ -213,6 +245,7 @@ export const CreateSpaceForm = () => {
                 goPrev={onPrevClick}
                 isLast={isLast}
                 hasError={hasError}
+                errorBox={errorBox}
                 transactionUIState={transactionUIState}
             />
 
