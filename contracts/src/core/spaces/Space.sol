@@ -362,7 +362,7 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
-  function addPermissionToRole(
+  function addPermissionsToRole(
     uint256 _roleId,
     string[] memory _permissions
   ) external {

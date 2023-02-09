@@ -74,7 +74,7 @@ contract MultiCallerTest is SpaceBaseSetup {
       (_roleId, _newRoleName)
     );
     _data[1] = abi.encodeCall(
-      Space(_space).addPermissionToRole,
+      Space(_space).addPermissionsToRole,
       (_roleId, _newRolePermissions)
     );
 
