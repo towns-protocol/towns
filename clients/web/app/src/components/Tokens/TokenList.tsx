@@ -9,7 +9,6 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 import { FadeIn } from '@components/Transitions'
 import { env, hasVitalkTokensParam } from 'utils'
 import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
-import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
