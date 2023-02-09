@@ -194,6 +194,7 @@ contract Space is
     // save channel info
     channelsByHash[channelHash] = DataTypes.Channel({
       name: channelName,
+      channelNetworkId: channelNetworkId,
       channelHash: channelHash,
       createdAt: block.timestamp,
       disabled: false

@@ -243,6 +243,11 @@
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "channelNetworkId",
+        "type": "string"
+      },
+      {
         "internalType": "bytes32",
         "name": "channelHash",
         "type": "bytes32"
@@ -397,6 +402,11 @@
           {
             "internalType": "string",
             "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelNetworkId",
             "type": "string"
           },
           {

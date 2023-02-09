@@ -41,13 +41,21 @@ export declare namespace DataTypes {
 
   export type ChannelStruct = {
     name: PromiseOrValue<string>;
+    channelNetworkId: PromiseOrValue<string>;
     channelHash: PromiseOrValue<BytesLike>;
     createdAt: PromiseOrValue<BigNumberish>;
     disabled: PromiseOrValue<boolean>;
   };
 
-  export type ChannelStructOutput = [string, string, BigNumber, boolean] & {
+  export type ChannelStructOutput = [
+    string,
+    string,
+    string,
+    BigNumber,
+    boolean
+  ] & {
     name: string;
+    channelNetworkId: string;
     channelHash: string;
     createdAt: BigNumber;
     disabled: boolean;
@@ -581,8 +589,9 @@ export interface Space extends BaseContract {
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, BigNumber, boolean] & {
+      [string, string, string, BigNumber, boolean] & {
         name: string;
+        channelNetworkId: string;
         channelHash: string;
         createdAt: BigNumber;
         disabled: boolean;
@@ -805,8 +814,9 @@ export interface Space extends BaseContract {
     arg0: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<
-    [string, string, BigNumber, boolean] & {
+    [string, string, string, BigNumber, boolean] & {
       name: string;
+      channelNetworkId: string;
       channelHash: string;
       createdAt: BigNumber;
       disabled: boolean;
@@ -1027,8 +1037,9 @@ export interface Space extends BaseContract {
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<
-      [string, string, BigNumber, boolean] & {
+      [string, string, string, BigNumber, boolean] & {
         name: string;
+        channelNetworkId: string;
         channelHash: string;
         createdAt: BigNumber;
         disabled: boolean;
