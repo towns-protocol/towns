@@ -22,7 +22,7 @@ LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 # Parse command line arguments
 WITH_POSTGRES_PERSIST=""
 SKIP_POSTGRES=""
-
+export DENDRITE_TRACE_INTERNAL="1"
 
 while [ "$1" != "" ]; do
     case $1 in
