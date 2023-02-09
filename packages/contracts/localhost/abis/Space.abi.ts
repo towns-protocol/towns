@@ -145,9 +145,9 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_permission",
-        "type": "string"
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
       }
     ],
     "name": "addPermissionToRole",

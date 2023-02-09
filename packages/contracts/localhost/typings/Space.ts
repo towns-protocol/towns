@@ -74,7 +74,7 @@ export declare namespace DataTypes {
 
 export interface SpaceInterface extends utils.Interface {
   functions: {
-    "addPermissionToRole(uint256,string)": FunctionFragment;
+    "addPermissionToRole(uint256,string[])": FunctionFragment;
     "addRoleToChannel(string,address,uint256)": FunctionFragment;
     "addRoleToEntitlement(uint256,(address,bytes))": FunctionFragment;
     "channels(uint256)": FunctionFragment;
@@ -172,7 +172,7 @@ export interface SpaceInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "addPermissionToRole",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(
     functionFragment: "addRoleToChannel",
@@ -563,7 +563,7 @@ export interface Space extends BaseContract {
   functions: {
     addPermissionToRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -788,7 +788,7 @@ export interface Space extends BaseContract {
 
   addPermissionToRole(
     _roleId: PromiseOrValue<BigNumberish>,
-    _permission: PromiseOrValue<string>,
+    _permissions: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1011,7 +1011,7 @@ export interface Space extends BaseContract {
   callStatic: {
     addPermissionToRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1263,7 +1263,7 @@ export interface Space extends BaseContract {
   estimateGas: {
     addPermissionToRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1479,7 +1479,7 @@ export interface Space extends BaseContract {
   populateTransaction: {
     addPermissionToRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
