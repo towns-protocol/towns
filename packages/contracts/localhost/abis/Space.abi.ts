@@ -145,12 +145,12 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_permission",
-        "type": "string"
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
       }
     ],
-    "name": "addPermissionToRole",
+    "name": "addPermissionsToRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

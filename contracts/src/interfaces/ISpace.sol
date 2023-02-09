@@ -96,10 +96,10 @@ interface ISpace {
   /// ***** Permission Management *****
   /// @notice adds a permission to a role by roleId
   /// @param roleId the roleId to add the permission to
-  /// @param permission the permission to add to the role
-  function addPermissionToRole(
+  /// @param permissions the permissions to add to the role
+  function addPermissionsToRole(
     uint256 roleId,
-    string memory permission
+    string[] memory permissions
   ) external;
 
   /// @notice fetches the permissions for a role by roleId

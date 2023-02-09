@@ -349,12 +349,12 @@ export class SpaceDapp implements ISpaceDapp {
             encodedCallData.push(removePermission)
         }
         // replace with new permissions
-        for (const p of params.permissions) {
-            const addPermission = space.interface.encodeFunctionData('addPermissionToRole', [
-                params.roleId,
-                p,
-            ])
-            encodedCallData.push(addPermission)
+        const encodedAddPermissionChanges = space.encodeAddPermissionsToRole(
+            params.roleId,
+            params.permissions,
+        )
+        for (const p of encodedAddPermissionChanges) {
+            encodedCallData.push(p)
         }
         return encodedCallData
     }
