@@ -358,7 +358,7 @@ describe('create role', () => {
         expect(roleDetails.users).toEqual(expect.arrayContaining(users))
     })
 
-    test.only('Update Everyone role with multicall', async () => {
+    test('Update Everyone role with multicall', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
@@ -379,35 +379,22 @@ describe('create role', () => {
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        try {
-            const transaction = await alice.spaceDapp.updateRole({
-                spaceNetworkId,
-                roleId,
-                roleName: newRoleName,
-                permissions: newPermissions,
-                tokens: roleDetails.tokens,
-                users: roleDetails.users,
-            })
-            const receipt = await transaction.wait()
+        const transaction = await alice.spaceDapp.updateRole({
+            spaceNetworkId,
+            roleId,
+            roleName: newRoleName,
+            permissions: newPermissions,
+            tokens: roleDetails.tokens,
+            users: roleDetails.users,
+        })
+        const receipt = await transaction.wait()
 
-            /** Assert */
-            expect(receipt?.status).toEqual(1)
-            const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
-            expect(actual.name).toEqual(newRoleName)
-            expect(actual.permissions.length).toEqual(newPermissions.length)
-            expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
-        } catch (error) {
-            const s = await alice.spaceDapp.getSpace(spaceNetworkId)
-            let e: any
-            if (s) {
-                e = s.parseError(error)
-                console.error(e)
-            } else {
-                e = error
-            }
-            console.error(e)
-            throw e
-        }
+        /** Assert */
+        expect(receipt?.status).toEqual(1)
+        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        expect(actual.name).toEqual(newRoleName)
+        expect(actual.permissions.length).toEqual(newPermissions.length)
+        expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
     })
 
     test('Update token-gated role with multicall', async () => {
@@ -464,7 +451,7 @@ describe('create role', () => {
         expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
     })
 
-    test('Update moderator role with multicall', async () => {
+    test.only('Update moderator role with multicall', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
@@ -529,19 +516,20 @@ describe('create role', () => {
             tokens: moderatorTokens,
             users: newModeratorUsers,
         }
-        const transaction = await alice.spaceDapp.updateRole({
-            spaceNetworkId,
-            roleId: newModeratorRole.id,
-            roleName: newModeratorRole.name,
-            permissions: newModeratorRole.permissions,
-            tokens: newModeratorRole.tokens,
-            users: newModeratorRole.users,
-        })
         let receipt: ContractReceipt | undefined
         try {
+            const transaction = await alice.spaceDapp.updateRole({
+                spaceNetworkId,
+                roleId: newModeratorRole.id,
+                roleName: newModeratorRole.name,
+                permissions: newModeratorRole.permissions,
+                tokens: newModeratorRole.tokens,
+                users: newModeratorRole.users,
+            })
+
             receipt = await transaction.wait()
         } catch (e) {
-            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
+            const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e

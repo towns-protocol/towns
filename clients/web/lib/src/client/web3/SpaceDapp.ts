@@ -343,7 +343,7 @@ export class SpaceDapp implements ISpaceDapp {
         // remove current permissions
         const encodedRemovedPermissionChanges = space.encodeRemovePermissionsFromRole(
             params.roleId,
-            params.permissions,
+            roleDetails.permissions,
         )
         for (const p of encodedRemovedPermissionChanges) {
             encodedCallData.push(p)
