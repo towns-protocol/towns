@@ -23,7 +23,7 @@ contract RemovePermissionRoleTest is SpaceBaseSetup {
     string[] memory permissions = new string[](1);
     permissions[0] = Permissions.Ban;
 
-    Space(_space).addPermissionToRole(_moderatorRoleId, permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId, permissions);
 
     assertTrue(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
 

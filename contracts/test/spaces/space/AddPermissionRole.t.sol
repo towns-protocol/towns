@@ -23,10 +23,10 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     string[] memory _permissions = new string[](1);
     _permissions[0] = Permissions.Ban;
 
-    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
 
     vm.expectRevert(Errors.PermissionAlreadyExists.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
   }
 
   function testRevertIfTryingToAddToNonExistentRole() external {
@@ -40,7 +40,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     _permissions[0] = Permissions.Ban;
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId + 1, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId + 1, _permissions);
   }
 
   function testRevertIfTryingToAddOwnerPermission() external {
@@ -55,10 +55,10 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
 
     vm.prank(_moderator);
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
   }
 
-  function testRevertIfNotAllowedToAddPermissionToRole() external {
+  function testRevertIfNotAllowedToaddPermissionsToRole() external {
     (
       address _space,
       ,
@@ -70,7 +70,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
   }
 
   function testAddPermissionRole() external {
@@ -84,7 +84,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     _permissions[0] = Permissions.Ban;
 
     // Add permission to role
-    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
 
     // Check permission was added
     bytes32[] memory currentPermissions = Space(_space).getPermissionsByRoleId(
