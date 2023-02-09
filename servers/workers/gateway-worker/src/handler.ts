@@ -8,8 +8,39 @@ const CDN_CGI_PATH = 'cdn-cgi/image'
 const CDN_CGI_PATH_ID = 'cdn-cgi/imagedelivery'
 const IMAGE_OPTIONS_REGEX = '(=|,)+'
 const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
+const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
+const CACHE_TTL = 5
 
 const router = Router()
+
+router.get('/space-icon-bypass/:id', async (request, env) => {
+    const { pathname } = new URL(request.url)
+    const pathSplit = pathname.split('/')
+    const spaceId: string = pathSplit[pathSplit.length - 1]
+
+    if (spaceId === undefined) {
+        return new Response('spaceId error', { status: 400 })
+    }
+    // John's note: bypass CF image resizing worker that uses a custom
+    // Worker cache key and does not support cache purge
+    // without fetching from a different Zone than the
+    // originating request.
+    // see: https://community.cloudflare.com/t/purging-image-resizing-cached-images/436250/5
+    // and https://developers.cloudflare.com/images/image-resizing/url-format/#caching
+    const destinationURL = new URL(
+        [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'),
+    )
+
+    const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
+    try {
+        const response = await fetch(newRequest)
+        return response
+    } catch (error) {
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 500,
+        })
+    }
+})
 
 // /space-icon/<space_id>/<IMAGE_OPTIONS>
 // see https://developers.cloudflare.com/images/image-resizing/url-format/
@@ -50,8 +81,15 @@ router.get('/space-icon/:id+', async (request, env) => {
 
     const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
     try {
-        const response = await fetch(newRequest)
-        return response
+        // cache this fetch for max of CACHE_TTL seconds before revalidation
+        const response = await fetch(newRequest, { cf: { cacheTtl: CACHE_TTL } })
+        // clone response so it's no longer immutable
+        const newResponse = new Response(response.body, response)
+        // cache on client, but prefer revalidation when served
+        // https://developers.cloudflare.com/cache/about/cache-control/#revalidation
+        newResponse.headers.delete('Cache-Control')
+        newResponse.headers.set('Cache-Control', 'public, no-cache')
+        return newResponse
     } catch (error) {
         return new Response(JSON.stringify({ error: (error as Error).message }), {
             status: 500,
