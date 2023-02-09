@@ -640,11 +640,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xef4a9d2f989c99c22699d874f4c6cbec084b352c355ceb68e702056f4e6155d5",
+      "keccak256": "0x00873a3b85c142f4fd4cff123671013180d0eb7744c0bfefc32e531c548f2c60",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e7e24cd7997cd6b8034637a5ecb63b344451c80066a797b27f2134c8870db58d",
-        "dweb:/ipfs/QmWsUgz4cogbyttfT7JjFXDG78ExzfPxkRsTGb7Cuu7iid"
+        "bzz-raw://a51d3e206d47f5e69c6afb40bc3f7422b11533efae593a49fa8165ef504556de",
+        "dweb:/ipfs/QmVep63eEE2ZqmdXg5cdPQG3JMvPCxUfrU2PvoFVHsrySx"
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
