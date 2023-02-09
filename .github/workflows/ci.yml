@@ -96,8 +96,6 @@ jobs:
 
             - name: Build
               run: yarn build
-              env:
-                  NODE_OPTIONS: --max_old_space_size=32768
 
             - name: Lint
               run: yarn lint

@@ -43,8 +43,6 @@ jobs:
 
             - name: Build
               run: yarn build
-              env:
-                  NODE_OPTIONS: --max_old_space_size=32768
 
             - name: Sentry
               run: make -C ./scripts setup_release
