@@ -20,10 +20,13 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
-    Space(_space).addPermissionToRole(_moderatorRoleId, Permissions.Ban);
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.Ban;
+
+    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
 
     vm.expectRevert(Errors.PermissionAlreadyExists.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId, Permissions.Ban);
+    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
   }
 
   function testRevertIfTryingToAddToNonExistentRole() external {
@@ -33,8 +36,11 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.Ban;
+
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId + 1, Permissions.Ban);
+    Space(_space).addPermissionToRole(_moderatorRoleId + 1, _permissions);
   }
 
   function testRevertIfTryingToAddOwnerPermission() external {
@@ -44,9 +50,12 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.Owner;
+
     vm.prank(_moderator);
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId, Permissions.Owner);
+    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
   }
 
   function testRevertIfNotAllowedToAddPermissionToRole() external {
@@ -56,9 +65,12 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.Ban;
+
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).addPermissionToRole(_moderatorRoleId, Permissions.Ban);
+    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
   }
 
   function testAddPermissionRole() external {
@@ -68,8 +80,11 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.Ban;
+
     // Add permission to role
-    Space(_space).addPermissionToRole(_moderatorRoleId, Permissions.Ban);
+    Space(_space).addPermissionToRole(_moderatorRoleId, _permissions);
 
     // Check permission was added
     bytes32[] memory currentPermissions = Space(_space).getPermissionsByRoleId(

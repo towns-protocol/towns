@@ -65,6 +65,8 @@ contract MultiCallerTest is SpaceBaseSetup {
     );
 
     string memory _newRoleName = "new-role-name";
+    string[] memory _newRolePermissions = new string[](1);
+    _newRolePermissions[0] = "Veto";
 
     bytes[] memory _data = new bytes[](2);
     _data[0] = abi.encodeCall(
@@ -73,7 +75,7 @@ contract MultiCallerTest is SpaceBaseSetup {
     );
     _data[1] = abi.encodeCall(
       Space(_space).addPermissionToRole,
-      (_roleId, "Veto")
+      (_roleId, _newRolePermissions)
     );
 
     Space(_space).multicall(_data);
