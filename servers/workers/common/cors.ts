@@ -7,9 +7,11 @@ const onRenderOrigin = (origin: string): string | undefined => {
 }
 
 const corsHeaders = (origin: string) => ({
-    'Access-Control-Allow-Headers': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers':
+        'Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization, Cache-Control',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS, POST',
     'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
 })
 
 const checkOrigin = (request: Request) => {
