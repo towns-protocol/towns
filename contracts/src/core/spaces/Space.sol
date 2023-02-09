@@ -421,14 +421,14 @@ contract Space is
 
       // check if permission exists
       for (uint256 j = 0; j < permissionsByRoleId[_roleId].length; j++) {
-        if (permissionsByRoleId[_roleId][i] != _permissionHash) continue;
+        if (permissionsByRoleId[_roleId][j] != _permissionHash) continue;
 
         // remove permission from role
-        permissionsByRoleId[_roleId][i] = permissionsByRoleId[_roleId][
+        permissionsByRoleId[_roleId][j] = permissionsByRoleId[_roleId][
           permissionsByRoleId[_roleId].length - 1
         ];
         permissionsByRoleId[_roleId].pop();
-        return;
+        break;
       }
     }
   }

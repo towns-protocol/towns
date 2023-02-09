@@ -451,7 +451,7 @@ describe('create role', () => {
         expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
     })
 
-    test.only('Update moderator role with multicall', async () => {
+    test('Update moderator role with multicall', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
