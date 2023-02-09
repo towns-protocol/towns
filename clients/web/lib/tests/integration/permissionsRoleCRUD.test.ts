@@ -358,7 +358,7 @@ describe('create role', () => {
         expect(roleDetails.users).toEqual(expect.arrayContaining(users))
     })
 
-    test('Update Everyone role with multicall', async () => {
+    test.only('Update Everyone role with multicall', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
@@ -379,22 +379,35 @@ describe('create role', () => {
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const transaction = await alice.spaceDapp.updateRole({
-            spaceNetworkId,
-            roleId,
-            roleName: newRoleName,
-            permissions: newPermissions,
-            tokens: roleDetails.tokens,
-            users: roleDetails.users,
-        })
-        const receipt = await transaction.wait()
+        try {
+            const transaction = await alice.spaceDapp.updateRole({
+                spaceNetworkId,
+                roleId,
+                roleName: newRoleName,
+                permissions: newPermissions,
+                tokens: roleDetails.tokens,
+                users: roleDetails.users,
+            })
+            const receipt = await transaction.wait()
 
-        /** Assert */
-        expect(receipt?.status).toEqual(1)
-        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
-        expect(actual.name).toEqual(newRoleName)
-        expect(actual.permissions.length).toEqual(newPermissions.length)
-        expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
+            /** Assert */
+            expect(receipt?.status).toEqual(1)
+            const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+            expect(actual.name).toEqual(newRoleName)
+            expect(actual.permissions.length).toEqual(newPermissions.length)
+            expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
+        } catch (error) {
+            const s = await alice.spaceDapp.getSpace(spaceNetworkId)
+            let e: any
+            if (s) {
+                e = s.parseError(error)
+                console.error(e)
+            } else {
+                e = error
+            }
+            console.error(e)
+            throw e
+        }
     })
 
     test('Update token-gated role with multicall', async () => {
