@@ -3,4 +3,4 @@
 cache_persist = false
 
 [vars]
-AUTH_SECRET="my-secret"
+AUTH_SECRET="foo"

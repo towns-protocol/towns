@@ -51,6 +51,13 @@ export const worker = {
             return new Response('Unauthorised', { status: 401, headers: withCorsHeaders(request) })
         }
         console.log(`request: ${JSON.stringify(request)}`)
-        return handleRequest(request, env)
+        const corsHeaders = withCorsHeaders(request)
+        const resp = await handleRequest(request, env)
+        const clone = resp.clone()
+        for (const [key, value] of Object.entries(corsHeaders)) {
+            clone.headers.set(key, value)
+        }
+
+        return clone
     },
 }
