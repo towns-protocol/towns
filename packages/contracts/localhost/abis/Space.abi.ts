@@ -150,7 +150,7 @@ export default [
         "type": "string[]"
       }
     ],
-    "name": "addPermissionToRole",
+    "name": "addPermissionsToRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
