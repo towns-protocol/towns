@@ -20,8 +20,9 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
-    string[] memory _permissions = new string[](1);
+    string[] memory _permissions = new string[](2);
     _permissions[0] = Permissions.Ban;
+    _permissions[1] = Permissions.Ping;
 
     Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
 
@@ -36,8 +37,9 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
-    string[] memory _permissions = new string[](1);
+    string[] memory _permissions = new string[](2);
     _permissions[0] = Permissions.Ban;
+    _permissions[1] = Permissions.Ping;
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
     Space(_space).addPermissionsToRole(_moderatorRoleId + 1, _permissions);

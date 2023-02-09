@@ -121,7 +121,8 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // create space with _tokenHolder as owner
     vm.prank(_tokenHolder);
     address _space = createSimpleSpace();
-    address _userEntitlementModule = Space(_space).getEntitlements()[1];
+    DataTypes.EntitlementModule memory _userEntitlementModule = Space(_space)
+      .getEntitlementModules()[1];
 
     // Create entitlement with modify space permissions
     address[] memory _users = new address[](1);
@@ -131,7 +132,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.ModifySpacePermissions;
     _newEntitlementsI[0] = DataTypes.Entitlement({
-      module: _userEntitlementModule,
+      module: _userEntitlementModule.module,
       data: abi.encode(_users)
     });
 
@@ -156,7 +157,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
 
     // create entitlement for _notTokenHolder
     DataTypes.Entitlement memory _newEntitlementII = DataTypes.Entitlement({
-      module: _userEntitlementModule,
+      module: _userEntitlementModule.module,
       data: abi.encode(_users)
     });
 
@@ -182,7 +183,8 @@ contract RemoveRoleTest is SpaceBaseSetup {
 
     vm.prank(_tokenHolder);
     address _space = createSimpleSpace();
-    address _userEntitlementModule = Space(_space).getEntitlements()[1];
+    DataTypes.EntitlementModule memory _userEntitlementModule = Space(_space)
+      .getEntitlementModules()[1];
 
     // see that original token holder has owner rights
     assertTrue(
@@ -198,7 +200,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     _spacePermissions[0] = Permissions.Owner;
     _spacePermissions[1] = Permissions.ModifySpacePermissions;
     _newOwnerEntitlements[0] = DataTypes.Entitlement({
-      module: _userEntitlementModule,
+      module: _userEntitlementModule.module,
       data: abi.encode(_users)
     });
 
@@ -224,7 +226,8 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // create space with _tokenHolder as owner
     vm.prank(_tokenHolder);
     address _space = createSimpleSpace();
-    address _userEntitlementModule = Space(_space).getEntitlements()[1];
+    DataTypes.EntitlementModule memory _userEntitlementModule = Space(_space)
+      .getEntitlementModules()[1];
 
     // Create entitlement with channel read permissions
     address[] memory _users = new address[](1);
@@ -234,7 +237,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.Read;
     _newEntitlementsI[0] = DataTypes.Entitlement({
-      module: _userEntitlementModule,
+      module: _userEntitlementModule.module,
       data: abi.encode(_users)
     });
 
@@ -257,7 +260,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     vm.prank(_tokenHolder);
     Space(_space).addRoleToChannel(
       channelNetworkId,
-      _userEntitlementModule,
+      _userEntitlementModule.module,
       readRoleID
     );
 

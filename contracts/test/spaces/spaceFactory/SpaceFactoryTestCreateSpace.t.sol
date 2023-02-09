@@ -190,7 +190,8 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
     address spaceAddress = spaceFactory.spaceByHash(spaceHash);
 
-    address[] memory entitlements = Space(spaceAddress).getEntitlements();
+    DataTypes.EntitlementModule[] memory entitlements = Space(spaceAddress)
+      .getEntitlementModules();
 
     assertEq(entitlements.length, 2);
   }

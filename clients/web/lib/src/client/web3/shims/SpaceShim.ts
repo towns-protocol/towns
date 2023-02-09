@@ -25,23 +25,45 @@ export class SpaceShim extends BaseContractShim<
 > {
     public async getEntitlementModules(): Promise<EntitlementModule[]> {
         const modules: EntitlementModule[] = []
-        const entitlementAddresses = await this.read.getEntitlements()
-        for (const address of entitlementAddresses) {
-            const entitlementModule = ShimFactory.createEntitlementModule(
-                address,
-                this.chainId,
-                this.provider,
-                this.signer,
-            )
-            const [moduleType, name] = await Promise.all([
-                entitlementModule.read.moduleType(),
-                entitlementModule.read.name(),
-            ])
-            modules.push({
-                address,
-                moduleType: moduleType as EntitlementModuleType,
-                name,
-            })
+        switch (this.chainId) {
+            case 31337:
+                {
+                    const localhostSpace = this.read as LocalhostContract
+                    const entitlementModules = await localhostSpace.getEntitlementModules()
+                    for (const m of entitlementModules) {
+                        modules.push({
+                            address: m.module,
+                            moduleType: m.moduleType as EntitlementModuleType,
+                            name: m.name,
+                        })
+                    }
+                }
+                break
+            case 5:
+                {
+                    const goerliSpace = this.read as GoerliContract
+                    const entitlementAddresses = await goerliSpace.getEntitlements()
+                    for (const address of entitlementAddresses) {
+                        const entitlementModule = ShimFactory.createEntitlementModule(
+                            address,
+                            this.chainId,
+                            this.provider,
+                            this.signer,
+                        )
+                        const [moduleType, name] = await Promise.all([
+                            entitlementModule.read.moduleType(),
+                            entitlementModule.read.name(),
+                        ])
+                        modules.push({
+                            address,
+                            moduleType: moduleType as EntitlementModuleType,
+                            name,
+                        })
+                    }
+                }
+                break
+            default:
+                throw new Error(`Unsupported chainId ${this.chainId}`)
         }
         return modules
     }

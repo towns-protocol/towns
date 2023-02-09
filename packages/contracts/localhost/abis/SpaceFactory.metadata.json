@@ -640,11 +640,19 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
+<<<<<<< HEAD
       "keccak256": "0x00873a3b85c142f4fd4cff123671013180d0eb7744c0bfefc32e531c548f2c60",
       "license": "Apache-2.0",
       "urls": [
         "bzz-raw://a51d3e206d47f5e69c6afb40bc3f7422b11533efae593a49fa8165ef504556de",
         "dweb:/ipfs/QmVep63eEE2ZqmdXg5cdPQG3JMvPCxUfrU2PvoFVHsrySx"
+=======
+      "keccak256": "0xcc04d61b5f0e166b77bf324ae93ffd7d88af590dae6a44af78207bda62336d6a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://bbc3a9d201042b79047f92deb870da7e13af1907f468ce5c6cd3d13ed62844c6",
+        "dweb:/ipfs/QmZyHasCXtxREWDb57oTJVz3ZLRtBnzy46sZLXdAw1bUsN"
+>>>>>>> main
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
@@ -688,11 +696,19 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
+<<<<<<< HEAD
       "keccak256": "0x7eeef224b80fde1f4f6a700804125ea9ac80f3baf2cf581db26ff5fd456dc617",
       "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0907dea967ec81b3dabdf9bf0c79029ad7bda8fbf97b358eec315bd1639528ef",
         "dweb:/ipfs/QmUQYuQvToFeH46KjFfmvw3BijkbrG4dMATQaoKg4oudtH"
+=======
+      "keccak256": "0x62f7e7afea3330c30d616fb915cdd58d3c21d52bc9b3d3d04bfba691bbc564da",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e8db81a4dbf693165c830d3fe1ac34254a319b82933794427c67b7ea7bd60271",
+        "dweb:/ipfs/QmWCpJqcVe16qGZBRC5bmLEJooxm8N5aep8XQRZqjZYhu4"
+>>>>>>> main
       ]
     },
     "contracts/src/interfaces/ISpaceFactory.sol": {
@@ -704,11 +720,11 @@
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x20aaa270bef695e9140ea39e3c61747987617d70dc783a7b80484b990e33dd28",
+      "keccak256": "0xb197af32e239bb8b7830e881ec6897cc8999c506e5eb5767a9392044714ac8aa",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://d53673e9721e4d334e9041f84e2797d229351a96988c189d100ff04e4347e816",
-        "dweb:/ipfs/QmdH4wwD3oek8N2JZrkC8JPmrpGvGV4CSYU4tutguB5xB5"
+        "bzz-raw://d623ea6245d5a24e23b51f58d6b95fb07f2e08619fdc945b99d09d3794cc3dc6",
+        "dweb:/ipfs/QmQomUMxCQ5ks4T176YQdHzqMiXE44J1Vqwmb5HRnLxFj6"
       ]
     },
     "contracts/src/libraries/Errors.sol": {

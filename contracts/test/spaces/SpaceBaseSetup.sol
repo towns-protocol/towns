@@ -231,13 +231,13 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   function getSpaceUserEntitlement(
     address _space
   ) internal view returns (address) {
-    address[] memory entitlements = Space(_space).getEntitlements();
+    DataTypes.EntitlementModule[] memory entitlements = Space(_space)
+      .getEntitlementModules();
+
     address userEntitlement;
     for (uint256 i = 0; i < entitlements.length; i++) {
-      if (
-        _isEqual(IEntitlement(entitlements[i]).moduleType(), "UserEntitlement")
-      ) {
-        userEntitlement = entitlements[i];
+      if (_isEqual(entitlements[i].moduleType, "UserEntitlement")) {
+        userEntitlement = entitlements[i].module;
       }
     }
 
@@ -247,13 +247,13 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   function getSpaceTokenEntitlement(
     address _space
   ) internal view returns (address) {
-    address[] memory entitlements = Space(_space).getEntitlements();
+    DataTypes.EntitlementModule[] memory entitlements = Space(_space)
+      .getEntitlementModules();
+
     address tokenEntitlement;
     for (uint256 i = 0; i < entitlements.length; i++) {
-      if (
-        _isEqual(IEntitlement(entitlements[i]).moduleType(), "TokenEntitlement")
-      ) {
-        tokenEntitlement = entitlements[i];
+      if (_isEqual(entitlements[i].moduleType, "TokenEntitlement")) {
+        tokenEntitlement = entitlements[i].module;
       }
     }
 

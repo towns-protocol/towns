@@ -165,8 +165,11 @@ interface ISpace {
   function getChannels() external view returns (bytes32[] memory);
 
   /// @notice fetches all the entitlements for the space
-  /// @return entitlements array
-  function getEntitlements() external view returns (address[] memory);
+  /// @return entitlement modules array
+  function getEntitlementModules()
+    external
+    view
+    returns (DataTypes.EntitlementModule[] memory);
 
   /// @notice sets a new entitlement module for the space
   /// @param entitlementModule the address of the new entitlement
