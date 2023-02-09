@@ -617,19 +617,11 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-<<<<<<< HEAD
-      "keccak256": "0x7eeef224b80fde1f4f6a700804125ea9ac80f3baf2cf581db26ff5fd456dc617",
+      "keccak256": "0x001ac75a9ef472e1fcd4857c0d02a633f1da4bb3f9d0975ddf052c0447c6592a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0907dea967ec81b3dabdf9bf0c79029ad7bda8fbf97b358eec315bd1639528ef",
-        "dweb:/ipfs/QmUQYuQvToFeH46KjFfmvw3BijkbrG4dMATQaoKg4oudtH"
-=======
-      "keccak256": "0x62f7e7afea3330c30d616fb915cdd58d3c21d52bc9b3d3d04bfba691bbc564da",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://e8db81a4dbf693165c830d3fe1ac34254a319b82933794427c67b7ea7bd60271",
-        "dweb:/ipfs/QmWCpJqcVe16qGZBRC5bmLEJooxm8N5aep8XQRZqjZYhu4"
->>>>>>> main
+        "bzz-raw://cac8e6c50b0a4c50474ae25df18c2b4a78884b16d595c61ea86b4689e51ee14c",
+        "dweb:/ipfs/QmRJ8SRLbYzP97mSPGL1ZJbvGiBeHuQ9kfwDKt9rFyL3n9"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
