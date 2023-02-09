@@ -26,6 +26,13 @@ library DataTypes {
     bytes data;
   }
 
+  struct EntitlementModule {
+    string name;
+    address module;
+    string moduleType;
+    bool enabled;
+  }
+
   struct ExternalToken {
     address contractAddress;
     uint256 quantity;

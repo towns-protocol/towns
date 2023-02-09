@@ -486,12 +486,34 @@
   },
   {
     "inputs": [],
-    "name": "getEntitlements",
+    "name": "getEntitlementModules",
     "outputs": [
       {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "moduleType",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "enabled",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DataTypes.EntitlementModule[]",
+        "name": "_entitlementModules",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",

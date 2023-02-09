@@ -544,21 +544,14 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     private async createEntitlementShims(space: SpaceShim): Promise<Entitlements> {
-        const entitlementAddresses = await space.read.getEntitlements()
+        const modules = await space.getEntitlementModules()
         let tokenEntitlement: TokenEntitlementShim | undefined = undefined
         let userEntitlement: UserEntitlementShim | undefined = undefined
-        for (const address of entitlementAddresses) {
-            const entitlementModule = ShimFactory.createEntitlementModule(
-                address,
-                this.chainId,
-                this.provider,
-                this.signer,
-            )
-            const moduleType = await entitlementModule.read?.moduleType()
-            switch (moduleType) {
+        for (const m of modules) {
+            switch (m.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
                     tokenEntitlement = ShimFactory.createTokenEntitlement(
-                        address,
+                        m.address,
                         space.chainId,
                         space.provider,
                         space.signer,
@@ -566,14 +559,16 @@ export class SpaceDapp implements ISpaceDapp {
                     break
                 case EntitlementModuleType.UserEntitlement:
                     userEntitlement = ShimFactory.createUserEntitlement(
-                        address,
+                        m.address,
                         space.chainId,
                         space.provider,
                         space.signer,
                     )
                     break
                 default:
-                    throw new Error(`Unknown entitlement module type: ${moduleType}`)
+                    throw new Error(
+                        `Unsupported entitlement module type: ${m.moduleType as string}`,
+                    )
             }
         }
 

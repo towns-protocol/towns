@@ -51,11 +51,12 @@ contract SetEntitlementTest is SpaceBaseSetup {
 
     assertFalse(Space(_space).hasEntitlement(entitlementAddress));
 
-    address[] memory entitlements = Space(_space).getEntitlements();
+    DataTypes.EntitlementModule[] memory entitlements = Space(_space)
+      .getEntitlementModules();
     bool found = false;
 
     for (uint256 i = 0; i < entitlements.length; i++) {
-      if (entitlements[i] != entitlementAddress) continue;
+      if (entitlements[i].module != entitlementAddress) continue;
       found = true;
       break;
     }

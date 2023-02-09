@@ -531,8 +531,25 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
-  function getEntitlements() external view returns (address[] memory) {
-    return entitlements;
+  function getEntitlementModules()
+    external
+    view
+    returns (DataTypes.EntitlementModule[] memory _entitlementModules)
+  {
+    _entitlementModules = new DataTypes.EntitlementModule[](
+      entitlements.length
+    );
+
+    for (uint256 i = 0; i < entitlements.length; i++) {
+      IEntitlement _entitlementModule = IEntitlement(entitlements[i]);
+
+      _entitlementModules[i] = DataTypes.EntitlementModule({
+        name: _entitlementModule.name(),
+        module: entitlements[i],
+        moduleType: _entitlementModule.moduleType(),
+        enabled: hasEntitlement[entitlements[i]]
+      });
+    }
   }
 
   /// @inheritdoc ISpace

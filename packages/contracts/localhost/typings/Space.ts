@@ -61,6 +61,20 @@ export declare namespace DataTypes {
     disabled: boolean;
   };
 
+  export type EntitlementModuleStruct = {
+    name: PromiseOrValue<string>;
+    module: PromiseOrValue<string>;
+    moduleType: PromiseOrValue<string>;
+    enabled: PromiseOrValue<boolean>;
+  };
+
+  export type EntitlementModuleStructOutput = [
+    string,
+    string,
+    string,
+    boolean
+  ] & { name: string; module: string; moduleType: string; enabled: boolean };
+
   export type RoleStruct = {
     roleId: PromiseOrValue<BigNumberish>;
     name: PromiseOrValue<string>;
@@ -88,7 +102,7 @@ export interface SpaceInterface extends utils.Interface {
     "getChannels()": FunctionFragment;
     "getEntitlementByModuleType(string)": FunctionFragment;
     "getEntitlementIdsByRoleId(uint256)": FunctionFragment;
-    "getEntitlements()": FunctionFragment;
+    "getEntitlementModules()": FunctionFragment;
     "getPermissionsByRoleId(uint256)": FunctionFragment;
     "getRoleById(uint256)": FunctionFragment;
     "getRoles()": FunctionFragment;
@@ -137,7 +151,7 @@ export interface SpaceInterface extends utils.Interface {
       | "getChannels"
       | "getEntitlementByModuleType"
       | "getEntitlementIdsByRoleId"
-      | "getEntitlements"
+      | "getEntitlementModules"
       | "getPermissionsByRoleId"
       | "getRoleById"
       | "getRoles"
@@ -236,7 +250,7 @@ export interface SpaceInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getEntitlements",
+    functionFragment: "getEntitlementModules",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -401,7 +415,7 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getEntitlements",
+    functionFragment: "getEntitlementModules",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -641,7 +655,13 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
-    getEntitlements(overrides?: CallOverrides): Promise<[string[]]>;
+    getEntitlementModules(
+      overrides?: CallOverrides
+    ): Promise<
+      [DataTypes.EntitlementModuleStructOutput[]] & {
+        _entitlementModules: DataTypes.EntitlementModuleStructOutput[];
+      }
+    >;
 
     getPermissionsByRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
@@ -866,7 +886,9 @@ export interface Space extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string[]>;
 
-  getEntitlements(overrides?: CallOverrides): Promise<string[]>;
+  getEntitlementModules(
+    overrides?: CallOverrides
+  ): Promise<DataTypes.EntitlementModuleStructOutput[]>;
 
   getPermissionsByRoleId(
     _roleId: PromiseOrValue<BigNumberish>,
@@ -1089,7 +1111,9 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string[]>;
 
-    getEntitlements(overrides?: CallOverrides): Promise<string[]>;
+    getEntitlementModules(
+      overrides?: CallOverrides
+    ): Promise<DataTypes.EntitlementModuleStructOutput[]>;
 
     getPermissionsByRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
@@ -1333,7 +1357,7 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getEntitlements(overrides?: CallOverrides): Promise<BigNumber>;
+    getEntitlementModules(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPermissionsByRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
@@ -1549,7 +1573,9 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getEntitlements(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    getEntitlementModules(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getPermissionsByRoleId(
       _roleId: PromiseOrValue<BigNumberish>,
