@@ -156,7 +156,7 @@
             "type": "string[]"
           }
         ],
-        "name": "addPermissionToRole",
+        "name": "addPermissionsToRole",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -775,12 +775,12 @@
             "type": "uint256"
           },
           {
-            "internalType": "string",
-            "name": "_permission",
-            "type": "string"
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
           }
         ],
-        "name": "removePermissionFromRole",
+        "name": "removePermissionsFromRole",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1065,7 +1065,7 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
-        "addPermissionToRole(uint256,string[])": {
+        "addPermissionsToRole(uint256,string[])": {
           "params": {
             "permissions": "the permissions to add to the role",
             "roleId": "the roleId to add the permission to"
@@ -1187,9 +1187,9 @@
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
-        "removePermissionFromRole(uint256,string)": {
+        "removePermissionsFromRole(uint256,string[])": {
           "params": {
-            "permission": "the permission to remove from the role",
+            "permissions": "the permissions to remove from the role",
             "roleId": "the roleId to remove the permission from"
           }
         },
@@ -1256,7 +1256,7 @@
     "userdoc": {
       "kind": "user",
       "methods": {
-        "addPermissionToRole(uint256,string[])": {
+        "addPermissionsToRole(uint256,string[])": {
           "notice": "***** Permission Management *****adds a permission to a role by roleId"
         },
         "addRoleToChannel(string,address,uint256)": {
@@ -1307,7 +1307,7 @@
         "owner()": {
           "notice": "fetches the Space owner"
         },
-        "removePermissionFromRole(uint256,string)": {
+        "removePermissionsFromRole(uint256,string[])": {
           "notice": "removes a permission from a role by roleId"
         },
         "removeRole(uint256)": {
@@ -1370,11 +1370,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x2b765f6b4ccf059bbd5142d41abdffe972d04b00d08c49154154f8989301a01c",
+      "keccak256": "0xef4a9d2f989c99c22699d874f4c6cbec084b352c355ceb68e702056f4e6155d5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a51e7395bc50017c8136f898675864d96ac148b6e7031568a311090699879ded",
-        "dweb:/ipfs/QmU54Lzrczr9pypTFE6CvME4v1nvpySaFQ4wpR3o79DpfJ"
+        "bzz-raw://e7e24cd7997cd6b8034637a5ecb63b344451c80066a797b27f2134c8870db58d",
+        "dweb:/ipfs/QmWsUgz4cogbyttfT7JjFXDG78ExzfPxkRsTGb7Cuu7iid"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
@@ -1386,11 +1386,11 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x2ba0c1a0ae10ce480fab03ab3ad4a853aa9b013e2b6eadc3ec00279dfef84b19",
+      "keccak256": "0x7eeef224b80fde1f4f6a700804125ea9ac80f3baf2cf581db26ff5fd456dc617",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8fce9f7ec859d19a2057e52aab0ba59d7fae088afcbd059de4d92495267df079",
-        "dweb:/ipfs/QmerPwMxoAFBdj6iUjpDpkWzq9hCw6vHp96oka5pavoGMM"
+        "bzz-raw://0907dea967ec81b3dabdf9bf0c79029ad7bda8fbf97b358eec315bd1639528ef",
+        "dweb:/ipfs/QmUQYuQvToFeH46KjFfmvw3BijkbrG4dMATQaoKg4oudtH"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {

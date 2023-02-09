@@ -74,7 +74,7 @@ export declare namespace DataTypes {
 
 export interface SpaceInterface extends utils.Interface {
   functions: {
-    "addPermissionToRole(uint256,string[])": FunctionFragment;
+    "addPermissionsToRole(uint256,string[])": FunctionFragment;
     "addRoleToChannel(string,address,uint256)": FunctionFragment;
     "addRoleToEntitlement(uint256,(address,bytes))": FunctionFragment;
     "channels(uint256)": FunctionFragment;
@@ -102,7 +102,7 @@ export interface SpaceInterface extends utils.Interface {
     "owner()": FunctionFragment;
     "ownerRoleId()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
-    "removePermissionFromRole(uint256,string)": FunctionFragment;
+    "removePermissionsFromRole(uint256,string[])": FunctionFragment;
     "removeRole(uint256)": FunctionFragment;
     "removeRoleFromChannel(string,address,uint256)": FunctionFragment;
     "removeRoleFromEntitlement(uint256,(address,bytes))": FunctionFragment;
@@ -123,7 +123,7 @@ export interface SpaceInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "addPermissionToRole"
+      | "addPermissionsToRole"
       | "addRoleToChannel"
       | "addRoleToEntitlement"
       | "channels"
@@ -151,7 +151,7 @@ export interface SpaceInterface extends utils.Interface {
       | "owner"
       | "ownerRoleId"
       | "proxiableUUID"
-      | "removePermissionFromRole"
+      | "removePermissionsFromRole"
       | "removeRole"
       | "removeRoleFromChannel"
       | "removeRoleFromEntitlement"
@@ -171,7 +171,7 @@ export interface SpaceInterface extends utils.Interface {
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "addPermissionToRole",
+    functionFragment: "addPermissionsToRole",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(
@@ -290,8 +290,8 @@ export interface SpaceInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "removePermissionFromRole",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
+    functionFragment: "removePermissionsFromRole",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(
     functionFragment: "removeRole",
@@ -354,7 +354,7 @@ export interface SpaceInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "addPermissionToRole",
+    functionFragment: "addPermissionsToRole",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -439,7 +439,7 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "removePermissionFromRole",
+    functionFragment: "removePermissionsFromRole",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "removeRole", data: BytesLike): Result;
@@ -561,7 +561,7 @@ export interface Space extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    addPermissionToRole(
+    addPermissionsToRole(
       _roleId: PromiseOrValue<BigNumberish>,
       _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -699,9 +699,9 @@ export interface Space extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
-    removePermissionFromRole(
+    removePermissionsFromRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -786,7 +786,7 @@ export interface Space extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  addPermissionToRole(
+  addPermissionsToRole(
     _roleId: PromiseOrValue<BigNumberish>,
     _permissions: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -922,9 +922,9 @@ export interface Space extends BaseContract {
 
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
-  removePermissionFromRole(
+  removePermissionsFromRole(
     _roleId: PromiseOrValue<BigNumberish>,
-    _permission: PromiseOrValue<string>,
+    _permissions: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1009,7 +1009,7 @@ export interface Space extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    addPermissionToRole(
+    addPermissionsToRole(
       _roleId: PromiseOrValue<BigNumberish>,
       _permissions: PromiseOrValue<string>[],
       overrides?: CallOverrides
@@ -1145,9 +1145,9 @@ export interface Space extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
-    removePermissionFromRole(
+    removePermissionsFromRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1261,7 +1261,7 @@ export interface Space extends BaseContract {
   };
 
   estimateGas: {
-    addPermissionToRole(
+    addPermissionsToRole(
       _roleId: PromiseOrValue<BigNumberish>,
       _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1389,9 +1389,9 @@ export interface Space extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
-    removePermissionFromRole(
+    removePermissionsFromRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1477,7 +1477,7 @@ export interface Space extends BaseContract {
   };
 
   populateTransaction: {
-    addPermissionToRole(
+    addPermissionsToRole(
       _roleId: PromiseOrValue<BigNumberish>,
       _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1605,9 +1605,9 @@ export interface Space extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    removePermissionFromRole(
+    removePermissionsFromRole(
       _roleId: PromiseOrValue<BigNumberish>,
-      _permission: PromiseOrValue<string>,
+      _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
