@@ -341,12 +341,12 @@ export class SpaceDapp implements ISpaceDapp {
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
         // remove current permissions
-        for (const p of roleDetails.permissions) {
-            const removePermission = space.interface.encodeFunctionData(
-                'removePermissionFromRole',
-                [params.roleId, p],
-            )
-            encodedCallData.push(removePermission)
+        const encodedRemovedPermissionChanges = space.encodeRemovePermissionsFromRole(
+            params.roleId,
+            roleDetails.permissions,
+        )
+        for (const p of encodedRemovedPermissionChanges) {
+            encodedCallData.push(p)
         }
         // replace with new permissions
         const encodedAddPermissionChanges = space.encodeAddPermissionsToRole(

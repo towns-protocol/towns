@@ -797,12 +797,12 @@
             "type": "uint256"
           },
           {
-            "internalType": "string",
-            "name": "_permission",
-            "type": "string"
+            "internalType": "string[]",
+            "name": "_permissions",
+            "type": "string[]"
           }
         ],
-        "name": "removePermissionFromRole",
+        "name": "removePermissionsFromRole",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1209,9 +1209,9 @@
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
-        "removePermissionFromRole(uint256,string)": {
+        "removePermissionsFromRole(uint256,string[])": {
           "params": {
-            "permission": "the permission to remove from the role",
+            "permissions": "the permissions to remove from the role",
             "roleId": "the roleId to remove the permission from"
           }
         },
@@ -1329,7 +1329,7 @@
         "owner()": {
           "notice": "fetches the Space owner"
         },
-        "removePermissionFromRole(uint256,string)": {
+        "removePermissionsFromRole(uint256,string[])": {
           "notice": "removes a permission from a role by roleId"
         },
         "removeRole(uint256)": {
@@ -1392,11 +1392,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xcc04d61b5f0e166b77bf324ae93ffd7d88af590dae6a44af78207bda62336d6a",
+      "keccak256": "0x4f4c7deb21df9ab33bfa75aebbe50e58815056c35fd9ec072c05598a68ca55c7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://bbc3a9d201042b79047f92deb870da7e13af1907f468ce5c6cd3d13ed62844c6",
-        "dweb:/ipfs/QmZyHasCXtxREWDb57oTJVz3ZLRtBnzy46sZLXdAw1bUsN"
+        "bzz-raw://9d69bdb4a59bf6aba788074a2c683faf16f1a617c615b9455adc0563226174a6",
+        "dweb:/ipfs/QmUHJaBwdzCZUxuWPBW11X6gT97iCZPEpaayvGbzgYdP34"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
@@ -1408,11 +1408,11 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x62f7e7afea3330c30d616fb915cdd58d3c21d52bc9b3d3d04bfba691bbc564da",
+      "keccak256": "0x001ac75a9ef472e1fcd4857c0d02a633f1da4bb3f9d0975ddf052c0447c6592a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e8db81a4dbf693165c830d3fe1ac34254a319b82933794427c67b7ea7bd60271",
-        "dweb:/ipfs/QmWCpJqcVe16qGZBRC5bmLEJooxm8N5aep8XQRZqjZYhu4"
+        "bzz-raw://cac8e6c50b0a4c50474ae25df18c2b4a78884b16d595c61ea86b4689e51ee14c",
+        "dweb:/ipfs/QmRJ8SRLbYzP97mSPGL1ZJbvGiBeHuQ9kfwDKt9rFyL3n9"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {

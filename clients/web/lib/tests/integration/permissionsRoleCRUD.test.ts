@@ -516,19 +516,20 @@ describe('create role', () => {
             tokens: moderatorTokens,
             users: newModeratorUsers,
         }
-        const transaction = await alice.spaceDapp.updateRole({
-            spaceNetworkId,
-            roleId: newModeratorRole.id,
-            roleName: newModeratorRole.name,
-            permissions: newModeratorRole.permissions,
-            tokens: newModeratorRole.tokens,
-            users: newModeratorRole.users,
-        })
         let receipt: ContractReceipt | undefined
         try {
+            const transaction = await alice.spaceDapp.updateRole({
+                spaceNetworkId,
+                roleId: newModeratorRole.id,
+                roleName: newModeratorRole.name,
+                permissions: newModeratorRole.permissions,
+                tokens: newModeratorRole.tokens,
+                users: newModeratorRole.users,
+            })
+
             receipt = await transaction.wait()
         } catch (e) {
-            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
+            const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e
