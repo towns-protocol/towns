@@ -119,10 +119,10 @@ interface ISpace {
 
   /// @notice removes a permission from a role by roleId
   /// @param roleId the roleId to remove the permission from
-  /// @param permission the permission to remove from the role
-  function removePermissionFromRole(
+  /// @param permissions the permissions to remove from the role
+  function removePermissionsFromRole(
     uint256 roleId,
-    string memory permission
+    string[] memory permissions
   ) external;
 
   /// ***** Entitlement Management *****
