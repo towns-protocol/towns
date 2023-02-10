@@ -132,7 +132,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.ModifySpacePermissions;
     _newEntitlementsI[0] = DataTypes.Entitlement({
-      module: _userEntitlementModule.module,
+      module: _userEntitlementModule.moduleAddress,
       data: abi.encode(_users)
     });
 
@@ -157,7 +157,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
 
     // create entitlement for _notTokenHolder
     DataTypes.Entitlement memory _newEntitlementII = DataTypes.Entitlement({
-      module: _userEntitlementModule.module,
+      module: _userEntitlementModule.moduleAddress,
       data: abi.encode(_users)
     });
 
@@ -200,7 +200,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     _spacePermissions[0] = Permissions.Owner;
     _spacePermissions[1] = Permissions.ModifySpacePermissions;
     _newOwnerEntitlements[0] = DataTypes.Entitlement({
-      module: _userEntitlementModule.module,
+      module: _userEntitlementModule.moduleAddress,
       data: abi.encode(_users)
     });
 
@@ -237,7 +237,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     string[] memory _spacePermissions = new string[](1);
     _spacePermissions[0] = Permissions.Read;
     _newEntitlementsI[0] = DataTypes.Entitlement({
-      module: _userEntitlementModule.module,
+      module: _userEntitlementModule.moduleAddress,
       data: abi.encode(_users)
     });
 
@@ -260,7 +260,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     vm.prank(_tokenHolder);
     Space(_space).addRoleToChannel(
       channelNetworkId,
-      _userEntitlementModule.module,
+      _userEntitlementModule.moduleAddress,
       readRoleID
     );
 

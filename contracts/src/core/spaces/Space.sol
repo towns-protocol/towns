@@ -557,7 +557,7 @@ contract Space is
 
       _entitlementModules[i] = DataTypes.EntitlementModule({
         name: _entitlementModule.name(),
-        module: entitlements[i],
+        moduleAddress: entitlements[i],
         moduleType: _entitlementModule.moduleType(),
         enabled: hasEntitlement[entitlements[i]]
       });

@@ -56,7 +56,7 @@ contract SetEntitlementTest is SpaceBaseSetup {
     bool found = false;
 
     for (uint256 i = 0; i < entitlements.length; i++) {
-      if (entitlements[i].module != entitlementAddress) continue;
+      if (entitlements[i].moduleAddress != entitlementAddress) continue;
       found = true;
       break;
     }

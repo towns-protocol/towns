@@ -237,7 +237,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     address userEntitlement;
     for (uint256 i = 0; i < entitlements.length; i++) {
       if (_isEqual(entitlements[i].moduleType, "UserEntitlement")) {
-        userEntitlement = entitlements[i].module;
+        userEntitlement = entitlements[i].moduleAddress;
       }
     }
 
@@ -253,7 +253,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     address tokenEntitlement;
     for (uint256 i = 0; i < entitlements.length; i++) {
       if (_isEqual(entitlements[i].moduleType, "TokenEntitlement")) {
-        tokenEntitlement = entitlements[i].module;
+        tokenEntitlement = entitlements[i].moduleAddress;
       }
     }
 

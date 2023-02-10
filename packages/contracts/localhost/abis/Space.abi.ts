@@ -497,7 +497,7 @@ export default [
           },
           {
             "internalType": "address",
-            "name": "module",
+            "name": "moduleAddress",
             "type": "address"
           },
           {

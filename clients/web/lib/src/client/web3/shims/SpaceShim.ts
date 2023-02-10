@@ -32,7 +32,7 @@ export class SpaceShim extends BaseContractShim<
                     const entitlementModules = await localhostSpace.getEntitlementModules()
                     for (const m of entitlementModules) {
                         modules.push({
-                            address: m.module,
+                            address: m.moduleAddress,
                             moduleType: m.moduleType as EntitlementModuleType,
                             name: m.name,
                         })

@@ -28,7 +28,7 @@ library DataTypes {
 
   struct EntitlementModule {
     string name;
-    address module;
+    address moduleAddress;
     string moduleType;
     bool enabled;
   }

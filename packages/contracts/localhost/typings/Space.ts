@@ -63,7 +63,7 @@ export declare namespace DataTypes {
 
   export type EntitlementModuleStruct = {
     name: PromiseOrValue<string>;
-    module: PromiseOrValue<string>;
+    moduleAddress: PromiseOrValue<string>;
     moduleType: PromiseOrValue<string>;
     enabled: PromiseOrValue<boolean>;
   };
@@ -73,7 +73,12 @@ export declare namespace DataTypes {
     string,
     string,
     boolean
-  ] & { name: string; module: string; moduleType: string; enabled: boolean };
+  ] & {
+    name: string;
+    moduleAddress: string;
+    moduleType: string;
+    enabled: boolean;
+  };
 
   export type RoleStruct = {
     roleId: PromiseOrValue<BigNumberish>;
