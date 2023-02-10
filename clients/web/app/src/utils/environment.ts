@@ -27,6 +27,7 @@ const envSchema = z.object({
     VITE_TOKEN_SERVER_URL: z.string().url(),
     VITE_MATRIX_HOMESERVER_URL: z.string().url(),
     VITE_UNFURL_SERVER_URL: z.string().url(),
+    VITE_GATEWAY_URL: z.string().url(),
     VITE_CASABLANCA_SERVER_URL: z.string().url().nullish(), // for now, we're allowing nullish values for casablanca URL
     VITE_AUTH_WORKER_HEADER_SECRET: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_GIPHY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?

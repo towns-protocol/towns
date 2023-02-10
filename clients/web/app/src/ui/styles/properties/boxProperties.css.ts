@@ -10,6 +10,7 @@ export const border = {
     quote: `2px solid ${vars.color.background.level3}`,
     accent: `1px solid ${vars.color.background.etherum}`,
     strong: `2px solid ${vars.color.text.default}`,
+    strongLevel1: `2px solid ${vars.color.background.level1}`,
     inverted: `1px solid ${vars.color.text.inverted}`,
     negative: `0.5px solid ${vars.color.background.negative}`,
 } as const
