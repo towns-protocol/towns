@@ -41,8 +41,9 @@ export interface ISpaceDapp {
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
     ): Promise<ContractTransaction>
+    deleteRole(spaceId: string, roleId: number): Promise<ContractTransaction>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
-    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails>
+    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | undefined>
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
     getSpace: (spaceId: string, requireSigner?: boolean) => Promise<SpaceShim | undefined>
     getSpaceFactoryEventsContractInfo: () => EventsContractInfo

@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { BigNumber, ContractReceipt } from 'ethers'
-import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
+import {
+    CONTRACT_ERROR,
+    NoThrownError,
+    getError,
+    MatrixError,
+    MAXTRIX_ERROR,
+} from './helpers/ErrorUtils'
 import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/ContractTypes'
 import {
     createExternalTokenStruct,
@@ -20,6 +26,7 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
 import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
+import { Room, RoomVisibility } from '../../src/types/zion-types'
 
 describe('create role', () => {
     test('Space owner is allowed create new role', async () => {
@@ -145,10 +152,15 @@ describe('create role', () => {
             tokens,
             users,
         )
+
         /** Assert */
-        expect(roleIdentifier?.roleId).toBeDefined()
-        expect(roleIdentifier2?.roleId).toBeDefined()
-        expect(roleIdentifier2?.roleId).not.toEqual(roleIdentifier?.roleId)
+        expect(roleIdentifier).toBeDefined()
+        expect(roleIdentifier2).toBeDefined()
+        if (roleIdentifier && roleIdentifier2) {
+            expect(roleIdentifier.roleId).toBeDefined()
+            expect(roleIdentifier2.roleId).toBeDefined()
+            expect(roleIdentifier2.roleId).not.toEqual(roleIdentifier?.roleId)
+        }
     })
 
     test('Space owner is allowed create new role', async () => {
@@ -204,12 +216,15 @@ describe('create role', () => {
         //console.log(roleDetails)
 
         /** Assert */
-        expect(roleDetails.id).toEqual(roleId.roleId)
-        expect(roleDetails.name).toEqual(roleName)
-        expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
-        expect(roleDetails.permissions.length).toEqual(permissions.length)
-        expect(roleDetails.tokens.length).toEqual(0)
-        expect(roleDetails.users.length).toEqual(0)
+        expect(roleDetails).toBeDefined()
+        if (roleDetails) {
+            expect(roleDetails.id).toEqual(roleId.roleId)
+            expect(roleDetails.name).toEqual(roleName)
+            expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
+            expect(roleDetails.permissions.length).toEqual(permissions.length)
+            expect(roleDetails.tokens.length).toEqual(0)
+            expect(roleDetails.users.length).toEqual(0)
+        }
     })
 
     test('Get details of token member role', async () => {
@@ -236,12 +251,15 @@ describe('create role', () => {
         /** Assert */
         const councilNftAddress = getCouncilNftAddress(alice.chainId)
         const expectedToken = createExternalTokenStruct([councilNftAddress])[0]
-        expect(roleDetails.tokens.length).toEqual(1)
-        expect(roleDetails.tokens[0].contractAddress).toEqual(expectedToken.contractAddress)
-        expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedToken.isSingleToken)
-        expect(roleDetails.tokens[0].tokenIds).toEqual(expectedToken.tokenIds)
-        expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
-        expect(roleDetails.permissions.length).toEqual(permissions.length)
+        expect(roleDetails).toBeDefined()
+        if (roleDetails) {
+            expect(roleDetails.tokens.length).toEqual(1)
+            expect(roleDetails.tokens[0].contractAddress).toEqual(expectedToken.contractAddress)
+            expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedToken.isSingleToken)
+            expect(roleDetails.tokens[0].tokenIds).toEqual(expectedToken.tokenIds)
+            expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
+            expect(roleDetails.permissions.length).toEqual(permissions.length)
+        }
     })
 
     test('Get details of Everyone role', async () => {
@@ -266,12 +284,15 @@ describe('create role', () => {
         console.log(roleDetails)
 
         /** Assert */
-        expect(roleDetails.name).toEqual('Everyone')
-        expect(roleDetails.tokens.length).toEqual(0)
-        expect(roleDetails.users.length).toEqual(1)
-        expect(roleDetails.users[0]).toEqual(TestConstants.EveryoneAddress)
-        expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
-        expect(roleDetails.permissions.length).toEqual(permissions.length)
+        expect(roleDetails).toBeDefined()
+        if (roleDetails) {
+            expect(roleDetails.name).toEqual('Everyone')
+            expect(roleDetails.tokens.length).toEqual(0)
+            expect(roleDetails.users.length).toEqual(1)
+            expect(roleDetails.users[0]).toEqual(TestConstants.EveryoneAddress)
+            expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
+            expect(roleDetails.permissions.length).toEqual(permissions.length)
+        }
     })
 
     test('Get details of role with token entitlement', async () => {
@@ -307,18 +328,25 @@ describe('create role', () => {
         console.log(roleDetails)
 
         /** Assert */
-        expect(roleDetails.id).toEqual(roleId.roleId)
-        expect(roleDetails.tokens.length).toEqual(2)
-        expect(roleDetails.tokens[0].contractAddress).toEqual(expectedCouncilToken.contractAddress)
-        expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedCouncilToken.isSingleToken)
-        expect(roleDetails.tokens[0].tokenIds).toEqual(expectedCouncilToken.tokenIds)
-        let quantity = roleDetails.tokens[0].quantity as BigNumber
-        expect(quantity.toNumber()).toEqual(expectedCouncilToken.quantity)
-        expect(roleDetails.tokens[1].contractAddress).toEqual(expectedZioneerToken.contractAddress)
-        expect(roleDetails.tokens[1].isSingleToken).toEqual(expectedZioneerToken.isSingleToken)
-        quantity = roleDetails.tokens[1].quantity as BigNumber
-        expect(quantity.toNumber()).toEqual(expectedZioneerToken.quantity)
-        expect(roleDetails.tokens[1].tokenIds).toEqual(expectedZioneerToken.tokenIds)
+        expect(roleDetails).toBeDefined()
+        if (roleDetails) {
+            expect(roleDetails.id).toEqual(roleId.roleId)
+            expect(roleDetails.tokens.length).toEqual(2)
+            expect(roleDetails.tokens[0].contractAddress).toEqual(
+                expectedCouncilToken.contractAddress,
+            )
+            expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedCouncilToken.isSingleToken)
+            expect(roleDetails.tokens[0].tokenIds).toEqual(expectedCouncilToken.tokenIds)
+            let quantity = roleDetails.tokens[0].quantity as BigNumber
+            expect(quantity.toNumber()).toEqual(expectedCouncilToken.quantity)
+            expect(roleDetails.tokens[1].contractAddress).toEqual(
+                expectedZioneerToken.contractAddress,
+            )
+            expect(roleDetails.tokens[1].isSingleToken).toEqual(expectedZioneerToken.isSingleToken)
+            quantity = roleDetails.tokens[1].quantity as BigNumber
+            expect(quantity.toNumber()).toEqual(expectedZioneerToken.quantity)
+            expect(roleDetails.tokens[1].tokenIds).toEqual(expectedZioneerToken.tokenIds)
+        }
     })
 
     test('Get details of role with user entitlement', async () => {
@@ -353,9 +381,12 @@ describe('create role', () => {
         //console.log(roleDetails)
 
         /** Assert */
-        expect(roleDetails.id).toEqual(roleId.roleId)
-        expect(roleDetails.users.length).toEqual(2)
-        expect(roleDetails.users).toEqual(expect.arrayContaining(users))
+        expect(roleDetails).toBeDefined()
+        if (roleDetails) {
+            expect(roleDetails.id).toEqual(roleId.roleId)
+            expect(roleDetails.users.length).toEqual(2)
+            expect(roleDetails.users).toEqual(expect.arrayContaining(users))
+        }
     })
 
     test('Update Everyone role with multicall', async () => {
@@ -374,6 +405,9 @@ describe('create role', () => {
         }
         const roleId = roles[0].roleId.toNumber()
         const roleDetails = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        if (!roleDetails) {
+            throw new Error('roleDetails is undefined')
+        }
 
         /** Act */
         // change the role details
@@ -392,9 +426,12 @@ describe('create role', () => {
         /** Assert */
         expect(receipt?.status).toEqual(1)
         const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
-        expect(actual.name).toEqual(newRoleName)
-        expect(actual.permissions.length).toEqual(newPermissions.length)
-        expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
+        expect(actual).toBeDefined()
+        if (actual) {
+            expect(actual.name).toEqual(newRoleName)
+            expect(actual.permissions.length).toEqual(newPermissions.length)
+            expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
+        }
     })
 
     test('Update token-gated role with multicall', async () => {
@@ -413,6 +450,9 @@ describe('create role', () => {
         }
         const roleId = roles[0].roleId.toNumber()
         const roleDetails = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        if (!roleDetails) {
+            throw new Error('roleDetails is undefined')
+        }
 
         /** Act */
         // change the role details
@@ -433,7 +473,7 @@ describe('create role', () => {
         try {
             receipt = await transaction.wait()
         } catch (e) {
-            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
+            const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -442,13 +482,15 @@ describe('create role', () => {
         /** Assert */
         expect(receipt?.status).toEqual(1)
         const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
-        expect(actual.name).toEqual(newRoleName)
-        expect(actual.permissions.length).toEqual(newPermissions.length)
-        expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
-        expect(actual.tokens.length).toEqual(newTokens.length)
-        const actualTokenAddresses = actual.tokens.map((t) => t.contractAddress)
-        const expectedTokenAddresses = newTokens.map((t) => t.contractAddress)
-        expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
+        if (actual) {
+            expect(actual.name).toEqual(newRoleName)
+            expect(actual.permissions.length).toEqual(newPermissions.length)
+            expect(actual.permissions).toEqual(expect.arrayContaining(newPermissions))
+            expect(actual.tokens.length).toEqual(newTokens.length)
+            const actualTokenAddresses = actual.tokens.map((t) => t.contractAddress)
+            const expectedTokenAddresses = newTokens.map((t) => t.contractAddress)
+            expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
+        }
     })
 
     test('Update moderator role with multicall', async () => {
@@ -540,18 +582,286 @@ describe('create role', () => {
         roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         for (const role of roles) {
             const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId.toNumber())
-            if (role.name === 'Member') {
-                // this is the role we are not updating
-                // assert that they have not changed
-                assertRoleEquals(actual, expectedMemberRole)
-            } else if (role.name === moderatorRoleName) {
-                // this is the role we are updating
-                // assert that they have been updated
-                assertRoleEquals(actual, newModeratorRole)
-            } else {
-                throw new Error(`Unexpected role name: ${role.name}`)
+            expect(actual).toBeDefined()
+            if (actual) {
+                if (role.name === 'Member') {
+                    // this is the role we are not updating
+                    // assert that they have not changed
+                    assertRoleEquals(actual, expectedMemberRole)
+                } else if (role.name === moderatorRoleName) {
+                    // this is the role we are updating
+                    // assert that they have been updated
+                    assertRoleEquals(actual, newModeratorRole)
+                } else {
+                    throw new Error(`Unexpected role name: ${role.name}`)
+                }
             }
         }
+    })
+
+    test('Delete token-gated role with a channel using it', async () => {
+        /** Arrange */
+        const { alice } = await registerAndStartClients(['alice'])
+        const bobWithNft = await registerLoginAndStartClient(
+            'bobWithNft',
+            TestConstants.getWalletWithNft(),
+        )
+        if (!bobWithNft.walletAddress) {
+            throw new Error('bobWithNft.walletAddress is undefined')
+        }
+        const newRoleName = 'newRole1'
+        const newPermissions = [Permission.Read, Permission.Write]
+        const newNftAddress = getCouncilNftAddress(alice.chainId)
+        const newTokens = createExternalTokenStruct([newNftAddress])
+        const newUsers: string[] = []
+        // create a new test space
+        await alice.fundWallet()
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        if (!roomId) {
+            throw new Error('roomId is undefined')
+        }
+        const spaceId = roomId.networkId
+        // create a new role
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            spaceId,
+            newRoleName,
+            newPermissions,
+            newTokens,
+            newUsers,
+        )
+        if (!roleIdentifier) {
+            throw new Error('roleIdentifier is undefined')
+        }
+        const roleId = roleIdentifier.roleId
+        // create a channel with the role
+        const channel = await alice.createChannel({
+            name: 'test_channel',
+            visibility: RoomVisibility.Public,
+            parentSpaceId: roomId,
+            roleIds: [roleId],
+        })
+        if (!channel) {
+            throw new Error('channel is undefined')
+        }
+        // sanity check: bob joins the space successfully
+        await bobWithNft.joinRoom(channel, spaceId)
+        // bob leaves the room so that we can delete the role, and test
+        // that bob can no longer join the room
+        await bobWithNft.leave(channel, spaceId)
+
+        /** Act */
+        let receipt: ContractReceipt | undefined
+        let rejoinedRoom: Room | undefined
+        try {
+            // delete the role
+            const transaction = await alice.spaceDapp.deleteRole(spaceId, roleIdentifier.roleId)
+            receipt = await transaction.wait()
+        } catch (e) {
+            // unexpected error. fail the test.
+            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            console.error(error)
+            throw error
+        }
+        // bob tries to join the room again
+        // expect that bob cannot join the room
+        const error = await getError<MatrixError>(async function () {
+            rejoinedRoom = await bobWithNft.joinRoom(channel, spaceId)
+        })
+
+        /** Assert */
+        // verify transaction was successful
+        expect(receipt?.status).toEqual(1)
+        // verfy bob cannot join the room
+        expect(rejoinedRoom).toBeUndefined()
+        // verify error was thrown.
+        expect(error).not.toBeInstanceOf(NoThrownError)
+        expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+        // verify role is deleted
+        const actual = await alice.spaceDapp.getRole(spaceId, roleId)
+        expect(actual).toBeUndefined()
+        // verify bob is still entitled to the space
+        expect(
+            await bobWithNft.spaceDapp.isEntitledToSpace(
+                spaceId,
+                bobWithNft.walletAddress,
+                Permission.Read,
+            ),
+        ).toBe(true)
+        // verify bob is no longer entitled to the channel
+        expect(
+            await bobWithNft.spaceDapp.isEntitledToChannel(
+                spaceId,
+                channel.networkId,
+                bobWithNft.walletAddress,
+                Permission.Read,
+            ),
+        ).toBe(false)
+    })
+
+    test('Delete user-gated role with a channel using it', async () => {
+        /** Arrange */
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        if (!bob.walletAddress) {
+            throw new Error('bob.walletAddress is undefined')
+        }
+        const newRoleName = 'newRole1'
+        const newPermissions = [Permission.Read, Permission.Write]
+        const newTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        // add bob to the users list
+        const newUsers: string[] = [bob.walletAddress]
+        // create a new test space
+        await alice.fundWallet()
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        if (!roomId) {
+            throw new Error('roomId is undefined')
+        }
+        const spaceId = roomId.networkId
+        // create a new role
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            spaceId,
+            newRoleName,
+            newPermissions,
+            newTokens,
+            newUsers,
+        )
+        if (!roleIdentifier) {
+            throw new Error('roleIdentifier is undefined')
+        }
+        const roleId = roleIdentifier.roleId
+        // create a channel with the role
+        const channel = await alice.createChannel({
+            name: 'test_channel',
+            visibility: RoomVisibility.Public,
+            parentSpaceId: roomId,
+            roleIds: [roleId],
+        })
+        if (!channel) {
+            throw new Error('channel is undefined')
+        }
+        // sanity check: bob joins the space successfully
+        await bob.joinRoom(channel, spaceId)
+        // bob leaves the room so that we can delete the role, and test
+        // that bob can no longer join the room
+        await bob.leave(channel, spaceId)
+
+        /** Act */
+        let receipt: ContractReceipt | undefined
+        let rejoinedRoom: Room | undefined
+        try {
+            // delete the role
+            const transaction = await alice.spaceDapp.deleteRole(spaceId, roleIdentifier.roleId)
+            receipt = await transaction.wait()
+        } catch (e) {
+            // unexpected error. fail the test.
+            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            console.error(error)
+            throw error
+        }
+        // bob tries to join the room again
+        // expect that bob cannot join the room
+        const error = await getError<MatrixError>(async function () {
+            rejoinedRoom = await bob.joinRoom(channel, spaceId)
+        })
+
+        /** Assert */
+        // verify transaction was successful
+        expect(receipt?.status).toEqual(1)
+        // verfy bob cannot join the room
+        expect(rejoinedRoom).toBeUndefined()
+        // verify error was thrown.
+        expect(error).not.toBeInstanceOf(NoThrownError)
+        expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+        // verify role is deleted
+        const actual = await alice.spaceDapp.getRole(spaceId, roleId)
+        expect(actual).toBeUndefined()
+        // verify bob is not entitled to the space
+        expect(
+            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.walletAddress, Permission.Read),
+        ).toBe(false)
+        // verify bob is no longer entitled to the channel
+        expect(
+            await bob.spaceDapp.isEntitledToChannel(
+                spaceId,
+                channel.networkId,
+                bob.walletAddress,
+                Permission.Read,
+            ),
+        ).toBe(false)
+    })
+
+    test('Delete a role with no channels using it', async () => {
+        /** Arrange */
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        if (!alice.walletAddress) {
+            throw new Error('alice.walletAddress is undefined')
+        }
+        if (!bob.walletAddress) {
+            throw new Error('bob.walletAddress is undefined')
+        }
+        const newRoleName = 'newRole1'
+        const newPermissions = [Permission.Read, Permission.Write]
+        const newTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        // add bob to the users list
+        const newUsers: string[] = [bob.walletAddress]
+        // create a new test space
+        await alice.fundWallet()
+        const roomId = await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        if (!roomId) {
+            throw new Error('roomId is undefined')
+        }
+        const spaceId = roomId.networkId
+        // create a new role
+        const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
+            spaceId,
+            newRoleName,
+            newPermissions,
+            newTokens,
+            newUsers,
+        )
+        if (!roleIdentifier) {
+            throw new Error('roleIdentifier is undefined')
+        }
+        const roleId = roleIdentifier.roleId
+
+        /** Act */
+        let receipt: ContractReceipt | undefined
+        try {
+            // delete the role
+            const transaction = await alice.spaceDapp.deleteRole(spaceId, roleIdentifier.roleId)
+            receipt = await transaction.wait()
+        } catch (e) {
+            // unexpected error. fail the test.
+            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            console.error(error)
+            throw error
+        }
+
+        /** Assert */
+        // verify transaction was successful
+        expect(receipt?.status).toEqual(1)
+        // verify role is deleted
+        const actual = await alice.spaceDapp.getRole(spaceId, roleId)
+        expect(actual).toBeUndefined()
+        // verify alice is not affected
+        expect(
+            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.walletAddress, Permission.Read),
+        ).toBe(true)
+        expect(
+            await alice.spaceDapp.isEntitledToSpace(spaceId, alice.walletAddress, Permission.Write),
+        ).toBe(true)
+        // verify bob is not entitled to the space
+        expect(
+            await bob.spaceDapp.isEntitledToSpace(spaceId, bob.walletAddress, Permission.Read),
+        ).toBe(false)
     })
 })
 

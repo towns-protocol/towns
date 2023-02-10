@@ -38,3 +38,9 @@ export interface RoleDetails {
     tokens: TokenDataTypes.ExternalTokenStruct[]
     users: string[]
 }
+
+export interface Channel {
+    name: string
+    channelNetworkId: string
+    disabled: boolean
+}

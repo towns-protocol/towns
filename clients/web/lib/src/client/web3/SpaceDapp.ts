@@ -161,7 +161,7 @@ export class SpaceDapp implements ISpaceDapp {
         return this.spaces[spaceId]
     }
 
-    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails> {
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | undefined> {
         const space = await this.getSpace(spaceId)
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
@@ -171,6 +171,11 @@ export class SpaceDapp implements ISpaceDapp {
             space.getPermissionsByRoleId(roleId),
             this.getEntitlementDetails(space, roleId),
         ])
+        // cannot find the role
+        if (!role || role.roleId.toNumber() === 0) {
+            return undefined
+        }
+        // found the role. return the details
         const roleName = role.name
         return {
             id: roleId,
@@ -300,6 +305,45 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.setChannelAccess(channelId, disabled)
     }
 
+    public async deleteRole(spaceId: string, roleId: number): Promise<ContractTransaction> {
+        const space = await this.getSpace(spaceId)
+        if (!space?.write) {
+            throw new Error(`Cannot find Space with networkId "${spaceId}"`)
+        }
+        const encodedCallData: BytesLike[] = []
+        const [modules, roleDetails] = await Promise.all([
+            space.getEntitlementModules(),
+            this.getRole(spaceId, roleId),
+        ])
+        if (!roleDetails) {
+            throw new Error(
+                `Role with spaceNetworkId "${spaceId}", roleId: "${roleId}" is not found.`,
+            )
+        }
+        // delete role from the channels
+        const encodedDeleteRoleFromChannels = await this.encodeDeleteRoleFromChannels(
+            space,
+            modules,
+            roleDetails,
+        )
+        for (const c of encodedDeleteRoleFromChannels) {
+            encodedCallData.push(c)
+        }
+        // delete role from the entitlements
+        const encodedDeleteRoleFromEntitlements = await this.encodeDeleteRoleFromEntitlements(
+            space,
+            modules,
+            roleDetails.id,
+        )
+        for (const e of encodedDeleteRoleFromEntitlements) {
+            encodedCallData.push(e)
+        }
+        // finally, delete the role
+        encodedCallData.push(this.encodeRoleDelete(space, roleId))
+        // invoke the multicall transaction
+        return space.write.multicall(encodedCallData)
+    }
+
     public async updateRole(params: UpdateRoleParams): Promise<ContractTransaction> {
         const space = await this.getSpace(params.spaceNetworkId)
         if (!space?.write) {
@@ -307,19 +351,24 @@ export class SpaceDapp implements ISpaceDapp {
                 `Space with networkId "${params.spaceNetworkId}" is not deployed properly.`,
             )
         }
-        const encodedCallData: BytesLike[] = []
         // update any role name changes
         const roleDetails = await this.getRole(params.spaceNetworkId, params.roleId)
+        if (!roleDetails) {
+            throw new Error(
+                `Role with spaceNetworkId "${params.spaceNetworkId}", roleId: "${params.roleId}" is not found.`,
+            )
+        }
+        const encodedCallData: BytesLike[] = []
         if (roleDetails.name !== params.roleName) {
-            encodedCallData.push(this.encodeRoleNameChanges(space, params))
+            encodedCallData.push(this.encodeRoleNameUpdate(space, params))
         }
         // update any permission changes
-        const encodePermissionChanges = this.encodePermissionChanges(space, roleDetails, params)
+        const encodePermissionChanges = this.encodePermissionUpdate(space, roleDetails, params)
         for (const p of encodePermissionChanges) {
             encodedCallData.push(p)
         }
         // update any entitlement changes
-        const encodeEntitlementChanges = await this.encodeEntitlementChanges(space, params)
+        const encodeEntitlementChanges = await this.encodeEntitlementsUpdate(space, params)
         for (const entitlement of encodeEntitlementChanges) {
             encodedCallData.push(entitlement)
         }
@@ -327,14 +376,84 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.multicall(encodedCallData)
     }
 
-    private encodeRoleNameChanges(space: SpaceShim, params: UpdateRoleParams): string {
+    private async encodeDeleteRoleFromChannels(
+        space: SpaceShim,
+        modules: EntitlementModule[],
+        roleDetails: RoleDetails,
+    ): Promise<BytesLike[]> {
+        const encodedCallData: BytesLike[] = []
+        const channels = await space.getChannels()
+        // get the module addresses because we need to call the removeRoleIdFromChannel
+        let tokenModuleAddress: string | undefined
+        let userModuleAddress: string | undefined
+        for (const m of modules) {
+            switch (m.moduleType) {
+                case EntitlementModuleType.TokenEntitlement:
+                    tokenModuleAddress = m.address
+                    break
+                case EntitlementModuleType.UserEntitlement:
+                    userModuleAddress = m.address
+                    break
+                default:
+                    throw new Error(`Unsupported module type: ${m.moduleType as string}`)
+            }
+        }
+        for (const c of channels) {
+            if (roleDetails.tokens.length > 0 && tokenModuleAddress) {
+                encodedCallData.push(
+                    space.interface.encodeFunctionData('removeRoleFromChannel', [
+                        c.channelNetworkId,
+                        tokenModuleAddress,
+                        roleDetails.id,
+                    ]),
+                )
+            } else if (roleDetails.users.length > 0 && userModuleAddress) {
+                encodedCallData.push(
+                    space.interface.encodeFunctionData('removeRoleFromChannel', [
+                        c.channelNetworkId,
+                        userModuleAddress,
+                        roleDetails.id,
+                    ]),
+                )
+            }
+        }
+        // return all the encoded function calls to remove the role from the channels
+        return encodedCallData
+    }
+
+    private async encodeDeleteRoleFromEntitlements(
+        space: SpaceShim,
+        modules: EntitlementModule[],
+        roleId: number,
+    ): Promise<BytesLike[]> {
+        const encodedCallData: BytesLike[] = []
+        // get current entitlements for the role
+        const currentEntitlements = await this.getEntitlementDetails(space, roleId)
+        // remove current entitlements
+        const encodeRemoveRoleFromEntitlement = this.encodeRemoveRoleFromEntitlement(
+            space,
+            roleId,
+            modules,
+            currentEntitlements,
+        )
+        for (const e of encodeRemoveRoleFromEntitlement) {
+            encodedCallData.push(e)
+        }
+        return encodedCallData
+    }
+
+    private encodeRoleDelete(space: SpaceShim, roleId: number): string {
+        return space.interface.encodeFunctionData('removeRole', [BigNumber.from(roleId)])
+    }
+
+    private encodeRoleNameUpdate(space: SpaceShim, params: UpdateRoleParams): string {
         return space.interface.encodeFunctionData('updateRole', [
             BigNumber.from(params.roleId),
             params.roleName,
         ])
     }
 
-    private encodePermissionChanges(
+    private encodePermissionUpdate(
         space: SpaceShim,
         roleDetails: RoleDetails,
         params: UpdateRoleParams,
@@ -356,10 +475,11 @@ export class SpaceDapp implements ISpaceDapp {
         for (const p of encodedAddPermissionChanges) {
             encodedCallData.push(p)
         }
+        // return all the encoded function calls to update the permissions
         return encodedCallData
     }
 
-    private async encodeEntitlementChanges(
+    private async encodeEntitlementsUpdate(
         space: SpaceShim,
         params: UpdateRoleParams,
     ): Promise<BytesLike[]> {
@@ -392,7 +512,7 @@ export class SpaceDapp implements ISpaceDapp {
         for (const e of encodeAddRoleToEntitlement) {
             encodedCallData.push(e)
         }
-        // assembled multi-call data to replace entitlements
+        // return all the encoded function calls to update the entitlements
         return encodedCallData
     }
 
@@ -443,6 +563,7 @@ export class SpaceDapp implements ISpaceDapp {
                     )
             }
         }
+        // return all the encoded function calls to add the role to the entitlements
         return encodedCallData
     }
 
@@ -452,7 +573,7 @@ export class SpaceDapp implements ISpaceDapp {
         modules: EntitlementModule[],
         entitlements: EntitlementData,
     ): BytesLike[] {
-        const data: BytesLike[] = []
+        const encodedCallData: BytesLike[] = []
         for (const m of modules) {
             switch (m.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
@@ -467,7 +588,7 @@ export class SpaceDapp implements ISpaceDapp {
                                 'removeRoleFromEntitlement',
                                 [roleId, entitlement],
                             )
-                            data.push(removeRole)
+                            encodedCallData.push(removeRole)
                         }
                     }
                     break
@@ -483,7 +604,7 @@ export class SpaceDapp implements ISpaceDapp {
                                 'removeRoleFromEntitlement',
                                 [roleId, entitlement],
                             )
-                            data.push(removeRole)
+                            encodedCallData.push(removeRole)
                         }
                     }
                     break
@@ -493,7 +614,8 @@ export class SpaceDapp implements ISpaceDapp {
                     )
             }
         }
-        return data
+        // return all the encoded function calls to remove the role from the entitlements
+        return encodedCallData
     }
 
     private async getEntitlementDetails(

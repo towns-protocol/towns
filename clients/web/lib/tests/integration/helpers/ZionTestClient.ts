@@ -56,6 +56,9 @@ export class ZionTestClient extends ZionClient {
     public get matrixUserId(): string | undefined {
         return this.auth?.userId
     }
+    public get walletAddress(): string | undefined {
+        return this.userIdentifier?.accountAddress
+    }
 
     constructor(
         chainId: number,

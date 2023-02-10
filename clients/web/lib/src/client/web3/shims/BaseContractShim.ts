@@ -121,7 +121,7 @@ export class BaseContractShim<
             return {
                 name: 'unknown',
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                message: anyError?.reason,
+                message: anyError,
             }
         }
         /**

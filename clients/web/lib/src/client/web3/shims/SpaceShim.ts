@@ -10,7 +10,7 @@ import {
     SpaceInterface as LocalhostInterface,
 } from '@harmony/contracts/localhost/typings/Space'
 import { BytesLike, ethers } from 'ethers'
-import { EntitlementModule, EntitlementModuleType, Permission } from '../ContractTypes'
+import { Channel, EntitlementModule, EntitlementModuleType, Permission } from '../ContractTypes'
 
 import { BaseContractShim } from './BaseContractShim'
 import { ShimFactory } from './ShimFactory'
@@ -66,6 +66,35 @@ export class SpaceShim extends BaseContractShim<
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
         return modules
+    }
+
+    public async getChannels(): Promise<Channel[]> {
+        const channels: Channel[] = []
+        switch (this.chainId) {
+            case 31337:
+                {
+                    const localhostSpace = this.read as LocalhostContract
+                    const channelHashes = await localhostSpace.getChannels()
+                    const channelPromises: Promise<LocalhostDataTypes.ChannelStruct>[] = []
+                    for (const hash of channelHashes) {
+                        channelPromises.push(localhostSpace.channelsByHash(hash))
+                    }
+                    const channelData = await Promise.all(channelPromises)
+                    for (const channel of channelData) {
+                        channels.push({
+                            name: channel.name as string,
+                            channelNetworkId: channel.channelNetworkId as string,
+                            disabled: channel.disabled as boolean,
+                        })
+                    }
+                }
+                break
+            case 5:
+                throw new Error('Not implemented')
+            default:
+                throw new Error(`Unsupported chainId ${this.chainId}`)
+        }
+        return channels
     }
 
     public async getPermissionsByRoleId(roleId: number): Promise<Permission[]> {
