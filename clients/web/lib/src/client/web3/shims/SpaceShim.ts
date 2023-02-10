@@ -69,8 +69,19 @@ export class SpaceShim extends BaseContractShim<
     }
 
     public async getPermissionsByRoleId(roleId: number): Promise<Permission[]> {
-        const permissions = await this.read.getPermissionsByRoleId(roleId)
-        return this.decodePermissionsBytes(permissions)
+        switch (this.chainId) {
+            case 31337: {
+                const localhostSpace = this.read as LocalhostContract
+                return localhostSpace.getPermissionsByRoleId(roleId) as Promise<Permission[]>
+            }
+            case 5: {
+                const goerliSpace = this.read as GoerliContract
+                const permissions = await goerliSpace.getPermissionsByRoleId(roleId)
+                return this.decodePermissionsBytes(permissions)
+            }
+            default:
+                throw new Error(`Unsupported chainId: ${this.chainId}`)
+        }
     }
 
     public encodeAddPermissionsToRole(roleId: number, permissions: Permission[]): BytesLike[] {
