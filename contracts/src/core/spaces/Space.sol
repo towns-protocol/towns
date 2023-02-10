@@ -396,8 +396,16 @@ contract Space is
   /// @inheritdoc ISpace
   function getPermissionsByRoleId(
     uint256 _roleId
-  ) external view override returns (bytes32[] memory) {
-    return permissionsByRoleId[_roleId];
+  ) external view override returns (string[] memory) {
+    uint256 permissionsLength = permissionsByRoleId[_roleId].length;
+
+    string[] memory _permissions = new string[](permissionsLength);
+
+    for (uint256 i = 0; i < permissionsLength; i++) {
+      _permissions[i] = Utils.bytes32ToString(permissionsByRoleId[_roleId][i]);
+    }
+
+    return _permissions;
   }
 
   /// @inheritdoc ISpace

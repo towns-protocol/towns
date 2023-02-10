@@ -344,10 +344,11 @@ contract UserEntitlement is
   ) internal view returns (bool) {
     ISpace space = ISpace(SPACE_ADDRESS);
 
-    bytes32[] memory permissions = space.getPermissionsByRoleId(roleId);
+    string[] memory permissions = space.getPermissionsByRoleId(roleId);
+    uint256 length = permissions.length;
 
-    for (uint256 i = 0; i < permissions.length; i++) {
-      if (permissions[i] == permission) {
+    for (uint256 i = 0; i < length; i++) {
+      if (bytes32(abi.encodePacked(permissions[i])) == permission) {
         return true;
       }
     }

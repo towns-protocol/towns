@@ -76,6 +76,10 @@ contract TestUtils is Test {
     return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
   }
 
+  function _isEqual(bytes32 s1, bytes32 s2) public pure returns (bool) {
+    return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
+  }
+
   function _createAccounts(
     uint256 amount
   ) internal view returns (address[] memory) {

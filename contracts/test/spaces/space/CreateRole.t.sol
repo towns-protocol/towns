@@ -139,14 +139,17 @@ contract CreateRoleTest is SpaceBaseSetup {
     );
 
     DataTypes.Role memory _role = Space(_space).getRoleById(_roleId);
-    bytes32[] memory _rolePermissions = Space(_space).getPermissionsByRoleId(
+    string[] memory _rolePermissions = Space(_space).getPermissionsByRoleId(
       _roleId
     );
 
     assertEq(_role.roleId, _roleId);
     assertEq(_role.name, _roleName);
     for (uint256 i = 0; i < _rolePermissions.length; i++) {
-      assertEq(_rolePermissions[i], bytes32(abi.encodePacked(_permissions[i])));
+      assertEq(
+        bytes32(abi.encodePacked(_rolePermissions[i])),
+        bytes32(abi.encodePacked(_permissions[i]))
+      );
     }
   }
 }

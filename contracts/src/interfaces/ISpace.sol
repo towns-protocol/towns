@@ -107,7 +107,7 @@ interface ISpace {
   /// @return permissions array for the role
   function getPermissionsByRoleId(
     uint256 roleId
-  ) external view returns (bytes32[] memory);
+  ) external view returns (string[] memory);
 
   /// @notice upgrades an entitlement module implementation
   /// @param _entitlement the current entitlement address

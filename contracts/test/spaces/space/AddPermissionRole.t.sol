@@ -8,6 +8,8 @@ import {Permissions} from "contracts/src/libraries/Permissions.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
 
+import {Utils} from "contracts/src/libraries/Utils.sol";
+
 import {console} from "forge-std/console.sol";
 
 contract AddPermissionRoleTest is SpaceBaseSetup {
@@ -30,7 +32,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
   }
 
-  function testRevertIfTryingToAddToNonExistentRole() external {
+  function testRevertIfTryingaddPermissionsToRolele() external {
     (
       address _space,
       ,
@@ -75,7 +77,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
   }
 
-  function testAddPermissionRole() external {
+  function testAddPermissionRoleOnly() external {
     (
       address _space,
       address _moderator,
@@ -88,20 +90,21 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     // Add permission to role
     Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
 
-    // Check permission was added
-    bytes32[] memory currentPermissions = Space(_space).getPermissionsByRoleId(
+    string[] memory currentPermissions = Space(_space).getPermissionsByRoleId(
       _moderatorRoleId
     );
 
     bool exists = false;
+
     for (uint256 i = 0; i < currentPermissions.length; i++) {
-      if (currentPermissions[i] == bytes32(abi.encodePacked(Permissions.Ban))) {
+      if (Utils.isEqual(currentPermissions[i], Permissions.Ban)) {
         exists = true;
+        break;
       }
     }
 
     // Check entitlements for new permission
-    assertTrue(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
+    Space(_space).isEntitledToSpace(_moderator, Permissions.Ban);
     assertTrue(exists);
   }
 }

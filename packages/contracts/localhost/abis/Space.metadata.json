@@ -536,9 +536,9 @@
         "name": "getPermissionsByRoleId",
         "outputs": [
           {
-            "internalType": "bytes32[]",
+            "internalType": "string[]",
             "name": "",
-            "type": "bytes32[]"
+            "type": "string[]"
           }
         ],
         "stateMutability": "view",
@@ -1392,11 +1392,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x4f4c7deb21df9ab33bfa75aebbe50e58815056c35fd9ec072c05598a68ca55c7",
+      "keccak256": "0x47e4d244d4dbced1a422bd7d9f6bf1fafa2a49c2fc60ebd1a366aef5f0ee1f6e",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9d69bdb4a59bf6aba788074a2c683faf16f1a617c615b9455adc0563226174a6",
-        "dweb:/ipfs/QmUHJaBwdzCZUxuWPBW11X6gT97iCZPEpaayvGbzgYdP34"
+        "bzz-raw://4a7fae2d6aa26297f2f9596150ec48b1a2b4c13c08217dda48bc05315321301e",
+        "dweb:/ipfs/QmNkwAedd5XxrNejaaQwHKy42pz5vsYR9o6x7FrsKehJUw"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
@@ -1408,11 +1408,11 @@
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x001ac75a9ef472e1fcd4857c0d02a633f1da4bb3f9d0975ddf052c0447c6592a",
+      "keccak256": "0x4b92a3f0f6e844f45d38e7290a598a94c494b1cb2092135582f4c03eb6cfdd36",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://cac8e6c50b0a4c50474ae25df18c2b4a78884b16d595c61ea86b4689e51ee14c",
-        "dweb:/ipfs/QmRJ8SRLbYzP97mSPGL1ZJbvGiBeHuQ9kfwDKt9rFyL3n9"
+        "bzz-raw://7dd22ef283e378372098e28b6111f49561dd0667284434209e6356bd5717f51f",
+        "dweb:/ipfs/QmUvh1eUHuV6aU4xgiah7tCr2C8g9TQvpMkEgsTahQ7BtY"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
@@ -1448,11 +1448,11 @@
       ]
     },
     "contracts/src/libraries/Utils.sol": {
-      "keccak256": "0x0ecd26fe9fd11492c3d7e1d6e220603cc9efaa1886f9b197eaf1218636a85e0a",
+      "keccak256": "0x081e8719e15f3faded611219ec47e3ef7f0e941500782eb29c873f984700a08c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8fd940c467411e4fc03a2adccaf651fbc15e1cf75b80806ffe11fe9e21146f17",
-        "dweb:/ipfs/QmbxRxTKi2t2i1YjmVP6RS4qbqpXzTzewxv6YdRrvUuUc4"
+        "bzz-raw://c3b19e2bbf9e4b6f47f20293418228d7d7554dd9f4468fdff5a5c71f0f01663f",
+        "dweb:/ipfs/QmRjTHXphKZYTk8LCCCJ9H8sC4LLbomFs1qnKD447PCacE"
       ]
     },
     "contracts/src/misc/MultiCaller.sol": {

@@ -530,9 +530,9 @@ export default [
     "name": "getPermissionsByRoleId",
     "outputs": [
       {
-        "internalType": "bytes32[]",
+        "internalType": "string[]",
         "name": "",
-        "type": "bytes32[]"
+        "type": "string[]"
       }
     ],
     "stateMutability": "view",

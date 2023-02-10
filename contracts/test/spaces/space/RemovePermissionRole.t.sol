@@ -31,13 +31,13 @@ contract RemovePermissionRoleTest is SpaceBaseSetup {
 
     assertFalse(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
 
-    bytes32[] memory _permissions = Space(_space).getPermissionsByRoleId(
+    string[] memory _permissions = Space(_space).getPermissionsByRoleId(
       _moderatorRoleId
     );
     bool _found = false;
 
     for (uint256 i = 0; i < _permissions.length; i++) {
-      if (_isEqual(_bytes32ToString(_permissions[i]), Permissions.Ban)) {
+      if (_isEqual(_permissions[i], Permissions.Ban)) {
         _found = true;
         break;
       }

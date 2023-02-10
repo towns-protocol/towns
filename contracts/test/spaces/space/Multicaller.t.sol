@@ -82,7 +82,7 @@ contract MultiCallerTest is SpaceBaseSetup {
 
     DataTypes.Role memory _role = Space(_space).getRoleById(_roleId);
 
-    bytes32[] memory _permissions = Space(_space).getPermissionsByRoleId(
+    string[] memory _permissions = Space(_space).getPermissionsByRoleId(
       _roleId
     );
 
