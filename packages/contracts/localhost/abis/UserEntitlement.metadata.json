@@ -156,6 +156,30 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "entitlementIdsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "bytes32",
             "name": "",
             "type": "bytes32"
@@ -358,6 +382,30 @@
         "name": "removeRoleIdFromChannel",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "roleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -601,11 +649,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/entitlements/UserEntitlement.sol": {
-      "keccak256": "0xc9628353f14f9708e9e91dac43eb8485354366f672fd12645ecac181e344598b",
+      "keccak256": "0x393725c8859f5336c2d7ad98558ce977b26cbb012857db101f545cc7c93bd23a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0cbe0abd84c50ac06d420c033314f1b1b973d1402f97f68ce38681069db11093",
-        "dweb:/ipfs/QmQqbfvuuZvCJwvPFr4GaCUkdBbNf3ysHVWvr4BNEHUxEE"
+        "bzz-raw://976108d58ba7d343fee1cf483f636cb5370d53ac25e509ec5df36c1512d178c4",
+        "dweb:/ipfs/QmSgbmULL2UeLyxJ2nKMSYR4ziwGo7C4Gm2tnfxjAFdE9R"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {

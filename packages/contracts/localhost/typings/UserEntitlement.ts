@@ -47,6 +47,7 @@ export interface UserEntitlementInterface extends utils.Interface {
     "TOKEN_ID()": FunctionFragment;
     "addRoleIdToChannel(string,uint256)": FunctionFragment;
     "description()": FunctionFragment;
+    "entitlementIdsByRoleId(uint256,uint256)": FunctionFragment;
     "entitlementsById(bytes32)": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
     "getUserRoles(address)": FunctionFragment;
@@ -57,6 +58,7 @@ export interface UserEntitlementInterface extends utils.Interface {
     "proxiableUUID()": FunctionFragment;
     "removeEntitlement(uint256,bytes)": FunctionFragment;
     "removeRoleIdFromChannel(string,uint256)": FunctionFragment;
+    "roleIdsByChannelId(bytes32,uint256)": FunctionFragment;
     "setEntitlement(uint256,bytes)": FunctionFragment;
     "setSpace(address)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
@@ -71,6 +73,7 @@ export interface UserEntitlementInterface extends utils.Interface {
       | "TOKEN_ID"
       | "addRoleIdToChannel"
       | "description"
+      | "entitlementIdsByRoleId"
       | "entitlementsById"
       | "getEntitlementDataByRoleId"
       | "getUserRoles"
@@ -81,6 +84,7 @@ export interface UserEntitlementInterface extends utils.Interface {
       | "proxiableUUID"
       | "removeEntitlement"
       | "removeRoleIdFromChannel"
+      | "roleIdsByChannelId"
       | "setEntitlement"
       | "setSpace"
       | "supportsInterface"
@@ -104,6 +108,10 @@ export interface UserEntitlementInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "description",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "entitlementIdsByRoleId",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "entitlementsById",
@@ -147,6 +155,10 @@ export interface UserEntitlementInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "roleIdsByChannelId",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setEntitlement",
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
   ): string;
@@ -185,6 +197,10 @@ export interface UserEntitlementInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "entitlementIdsByRoleId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "entitlementsById",
     data: BytesLike
   ): Result;
@@ -210,6 +226,10 @@ export interface UserEntitlementInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "removeRoleIdFromChannel",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "roleIdsByChannelId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -316,6 +336,12 @@ export interface UserEntitlement extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<[string]>;
 
+    entitlementIdsByRoleId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
     entitlementsById(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -368,6 +394,12 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    roleIdsByChannelId(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     setEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
@@ -409,6 +441,12 @@ export interface UserEntitlement extends BaseContract {
   ): Promise<ContractTransaction>;
 
   description(overrides?: CallOverrides): Promise<string>;
+
+  entitlementIdsByRoleId(
+    arg0: PromiseOrValue<BigNumberish>,
+    arg1: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string>;
 
   entitlementsById(
     arg0: PromiseOrValue<BytesLike>,
@@ -462,6 +500,12 @@ export interface UserEntitlement extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  roleIdsByChannelId(
+    arg0: PromiseOrValue<BytesLike>,
+    arg1: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   setEntitlement(
     roleId: PromiseOrValue<BigNumberish>,
     entitlementData: PromiseOrValue<BytesLike>,
@@ -503,6 +547,12 @@ export interface UserEntitlement extends BaseContract {
     ): Promise<void>;
 
     description(overrides?: CallOverrides): Promise<string>;
+
+    entitlementIdsByRoleId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     entitlementsById(
       arg0: PromiseOrValue<BytesLike>,
@@ -555,6 +605,12 @@ export interface UserEntitlement extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    roleIdsByChannelId(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     setEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
@@ -627,6 +683,12 @@ export interface UserEntitlement extends BaseContract {
 
     description(overrides?: CallOverrides): Promise<BigNumber>;
 
+    entitlementIdsByRoleId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     entitlementsById(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -673,6 +735,12 @@ export interface UserEntitlement extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    roleIdsByChannelId(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     setEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       entitlementData: PromiseOrValue<BytesLike>,
@@ -715,6 +783,12 @@ export interface UserEntitlement extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    entitlementIdsByRoleId(
+      arg0: PromiseOrValue<BigNumberish>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     entitlementsById(
       arg0: PromiseOrValue<BytesLike>,
@@ -760,6 +834,12 @@ export interface UserEntitlement extends BaseContract {
       channelId: PromiseOrValue<string>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    roleIdsByChannelId(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     setEntitlement(

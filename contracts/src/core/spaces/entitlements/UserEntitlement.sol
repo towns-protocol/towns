@@ -33,8 +33,8 @@ contract UserEntitlement is
   }
 
   mapping(bytes32 => Entitlement) public entitlementsById;
-  mapping(bytes32 => uint256[]) roleIdsByChannelId;
-  mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
+  mapping(bytes32 => uint256[]) public roleIdsByChannelId;
+  mapping(uint256 => bytes32[]) public entitlementIdsByRoleId;
   mapping(address => bytes32[]) entitlementIdsByUser;
 
   /**

@@ -43,9 +43,9 @@ contract TokenEntitlement is
   /// @notice mapping holding all the entitlements of entitlementId to Entitlement
   mapping(bytes32 => Entitlement) public entitlementsById;
   /// @notice mapping of all the roles for a given channelId
-  mapping(bytes32 => uint256[]) roleIdsByChannelId;
+  mapping(bytes32 => uint256[]) public roleIdsByChannelId;
   /// @notice mapping of all the entitlements for a given roleId
-  mapping(uint256 => bytes32[]) entitlementIdsByRoleId;
+  mapping(uint256 => bytes32[]) public entitlementIdsByRoleId;
   /// @notice array of all the entitlementIds
   bytes32[] public allEntitlementIds;
 

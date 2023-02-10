@@ -215,6 +215,30 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "entitlementIdsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "bytes32",
             "name": "",
             "type": "bytes32"
@@ -422,6 +446,30 @@
       {
         "inputs": [
           {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "roleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint256",
             "name": "roleId",
             "type": "uint256"
@@ -603,6 +651,9 @@
         "description()": {
           "notice": "The description of the entitlement module"
         },
+        "entitlementIdsByRoleId(uint256,uint256)": {
+          "notice": "mapping of all the entitlements for a given roleId"
+        },
         "entitlementsById(bytes32)": {
           "notice": "mapping holding all the entitlements of entitlementId to Entitlement"
         },
@@ -626,6 +677,9 @@
         },
         "removeRoleIdFromChannel(string,uint256)": {
           "notice": "removes a role from a channel"
+        },
+        "roleIdsByChannelId(bytes32,uint256)": {
+          "notice": "mapping of all the roles for a given channelId"
         },
         "setEntitlement(uint256,bytes)": {
           "notice": "sets a new entitlement"
@@ -666,11 +720,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x0a987e0522f0ddce68d8f5423d38d4576630a2a439bce9a65d3730141de53658",
+      "keccak256": "0xa13ae14566d9f5ebf54c9f43b429e3e507ac11a55b77d7977dd392a61e3e546a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6db6df3fb3fbdf405ea16072200d7979d4168e05e9a206151160c60dcc18e7d1",
-        "dweb:/ipfs/QmdrNzssuTfyQiE2nR875CntS2FhMfhzDu5k4CHxhDaDgP"
+        "bzz-raw://0cf47a25adc055af5d7e89615b5d4adeed8c50507c06b5d5b848c7a5437733a1",
+        "dweb:/ipfs/QmWiQkesoVNmXUCfc25brhu36E2RCqJ745voo4XFPFBeb1"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
