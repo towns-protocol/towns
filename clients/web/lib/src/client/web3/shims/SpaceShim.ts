@@ -106,39 +106,6 @@ export class SpaceShim extends BaseContractShim<
         return encodedCallData
     }
 
-    public encodeRemovePermissionsFromRole(roleId: number, permissions: Permission[]): BytesLike[] {
-        const encodedCallData: BytesLike[] = []
-        switch (this.chainId) {
-            case 31337:
-                {
-                    const localhostSpace = this.interface as LocalhostInterface
-                    encodedCallData.push(
-                        localhostSpace.encodeFunctionData('removePermissionsFromRole', [
-                            roleId,
-                            permissions,
-                        ]),
-                    )
-                }
-                break
-            case 5:
-                {
-                    const goerliSpace = this.interface as GoerliInterface
-                    for (const p of permissions) {
-                        const addPermission = goerliSpace.encodeFunctionData(
-                            'removePermissionFromRole',
-                            [roleId, p],
-                        )
-                        encodedCallData.push(addPermission)
-                    }
-                }
-                break
-            default:
-                throw new Error(`Unsupported chainId: ${this.chainId}`)
-        }
-
-        return encodedCallData
-    }
-
     private decodePermissionsBytes(_permissions: BytesLike[]): Permission[] {
         const permissions = _permissions.map((permission) => {
             return ethers.utils.parseBytes32String(permission) as Permission

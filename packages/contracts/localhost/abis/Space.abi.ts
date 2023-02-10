@@ -791,12 +791,12 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "string[]",
-        "name": "_permissions",
-        "type": "string[]"
+        "internalType": "string",
+        "name": "_permission",
+        "type": "string"
       }
     ],
-    "name": "removePermissionsFromRole",
+    "name": "removePermissionFromRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

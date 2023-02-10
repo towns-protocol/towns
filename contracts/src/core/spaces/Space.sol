@@ -401,35 +401,33 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
-  function removePermissionsFromRole(
+  function removePermissionFromRole(
     uint256 _roleId,
-    string[] memory _permissions
+    string memory _permission
   ) external {
     _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+
+    if (Utils.isEqual(_permission, Permissions.Owner)) {
+      revert Errors.NotAllowed();
+    }
 
     // check if role exists
     if (rolesById[_roleId].roleId == 0) {
       revert Errors.RoleDoesNotExist();
     }
 
-    for (uint256 i = 0; i < _permissions.length; i++) {
-      if (Utils.isEqual(_permissions[i], Permissions.Owner)) {
-        revert Errors.NotAllowed();
-      }
+    bytes32 _permissionHash = bytes32(abi.encodePacked(_permission));
 
-      bytes32 _permissionHash = bytes32(abi.encodePacked(_permissions[i]));
+    // check if permission exists
+    for (uint256 i = 0; i < permissionsByRoleId[_roleId].length; i++) {
+      if (permissionsByRoleId[_roleId][i] != _permissionHash) continue;
 
-      // check if permission exists
-      for (uint256 j = 0; j < permissionsByRoleId[_roleId].length; j++) {
-        if (permissionsByRoleId[_roleId][j] != _permissionHash) continue;
-
-        // remove permission from role
-        permissionsByRoleId[_roleId][j] = permissionsByRoleId[_roleId][
-          permissionsByRoleId[_roleId].length - 1
-        ];
-        permissionsByRoleId[_roleId].pop();
-        break;
-      }
+      // remove permission from role
+      permissionsByRoleId[_roleId][i] = permissionsByRoleId[_roleId][
+        permissionsByRoleId[_roleId].length - 1
+      ];
+      permissionsByRoleId[_roleId].pop();
+      return;
     }
   }
 

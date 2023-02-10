@@ -13,7 +13,7 @@ import {console} from "forge-std/console.sol";
 contract RemovePermissionRoleTest is SpaceBaseSetup {
   function setUp() external {}
 
-  function testremovePermissionsFromRole() external {
+  function testRemovePermissionFromRole() external {
     (
       address _space,
       address _moderator,
@@ -27,7 +27,7 @@ contract RemovePermissionRoleTest is SpaceBaseSetup {
 
     assertTrue(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
 
-    Space(_space).removePermissionsFromRole(_moderatorRoleId, permissions);
+    Space(_space).removePermissionFromRole(_moderatorRoleId, Permissions.Ban);
 
     assertFalse(Space(_space).isEntitledToSpace(_moderator, Permissions.Ban));
 
@@ -53,37 +53,31 @@ contract RemovePermissionRoleTest is SpaceBaseSetup {
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
-    string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.Ban;
-
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).removePermissionsFromRole(_moderatorRoleId + 1, permissions);
+    Space(_space).removePermissionFromRole(
+      _moderatorRoleId + 1,
+      Permissions.Ban
+    );
   }
 
-  function testRevertIfNotAllowedToremovePermissionsFromRole() external {
+  function testRevertIfNotAllowedToRemovePermissionFromRole() external {
     (
       address _space,
       ,
       uint256 _moderatorRoleId
     ) = createSpaceWithModeratorEntitlements();
 
-    string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.Ban;
-
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).removePermissionsFromRole(_moderatorRoleId, permissions);
+    Space(_space).removePermissionFromRole(_moderatorRoleId, Permissions.Ban);
   }
 
   function testRevertIfTryingtoRemoveOwnerPermission() external {
     (address _space, , ) = createSpaceWithModeratorEntitlements();
 
-    string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.Owner;
-
     uint256 ownerRoleId = Space(_space).ownerRoleId();
 
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).removePermissionsFromRole(ownerRoleId, permissions);
+    Space(_space).removePermissionFromRole(ownerRoleId, Permissions.Owner);
   }
 }
