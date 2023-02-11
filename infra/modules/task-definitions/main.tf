@@ -79,11 +79,6 @@ resource "aws_ecs_task_definition" "postgres" {
     host_path = "/mnt/zion-root/postgres/data"
   }
 
-  volume {
-    name = "postgres-init"
-    host_path = "/mnt/zion-root/postgres/create_db.sh"
-  }
-
   tags = module.global_constants.tags
 }
 

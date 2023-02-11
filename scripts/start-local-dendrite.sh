@@ -12,6 +12,7 @@ OPTIONS:
    -h|--help    Show this message
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
    -spg|--skip-postgres   Dont start postgres at all
+   -dco|--docker-compose-only  Start dendrite from docker-compose instead of source
 EOF
 }
 
@@ -22,6 +23,7 @@ LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 # Parse command line arguments
 WITH_POSTGRES_PERSIST=""
 SKIP_POSTGRES=""
+DOCKER_COMPOSE_ONLY=""
 export DENDRITE_TRACE_INTERNAL="1"
 
 while [ "$1" != "" ]; do
@@ -31,6 +33,9 @@ while [ "$1" != "" ]; do
             ;;
         -spg | --skip-postgres )  
             SKIP_POSTGRES="skip-postgres"
+            ;;
+        -dco | --docker-compose-only )
+            DOCKER_COMPOSE_ONLY="docker-compose-only"
             ;;
         -h | --help )
             usage
@@ -44,10 +49,8 @@ while [ "$1" != "" ]; do
     shift
 done
 
-pushd ${LOCAL_TEST_DIR}
-./build.sh
-./deploy.sh
-popd
+cd ${LOCAL_TEST_DIR}
+
 
 # helper function to start postgres in the background
 start_postgres_in_bg()
@@ -84,5 +87,12 @@ else
   echo >&2 "$(date +%Y%m%dt%H%M%S) Postgres is up"
 fi
 
-cd ${LOCAL_TEST_DIR}
-./run_single.sh 0 dendrite.yaml
+if [ "${DOCKER_COMPOSE_ONLY}" == "docker-compose-only" ]; then
+  echo "Starting dendrite from docker-compose"
+  docker compose up dendrite
+else
+  echo "Starting dendrite from source"
+  ./build.sh
+  ./deploy.sh
+  ./run_single.sh 0 dendrite.yaml
+fi

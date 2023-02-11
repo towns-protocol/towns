@@ -12,7 +12,8 @@
         "label": "~Start Local Dev~",
         "dependsOn": [
           "YarnInstall",
-          "Dendrite",
+          "Dendrite (from source)",
+          // "Dendrite (from docker compose)",
           "Casablanca",
           "Anvil",
           "DeployAllContracts",
@@ -74,9 +75,19 @@
         },
       },
       {
-        "label": "Dendrite",
+        "label": "Dendrite (from source)",
         "type": "shell",
         "command": "./scripts/start-local-dendrite.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        },
+      },
+      {
+        "label": "Dendrite (from docker compose)",
+        "type": "shell",
+        "command": "./scripts/start-local-dendrite.sh --docker-compose-only",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
