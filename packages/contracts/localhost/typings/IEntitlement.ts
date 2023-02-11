@@ -40,6 +40,7 @@ export interface IEntitlementInterface extends utils.Interface {
     "addRoleIdToChannel(string,uint256)": FunctionFragment;
     "description()": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
+    "getRoleIdsByChannelId(string)": FunctionFragment;
     "getUserRoles(address)": FunctionFragment;
     "initialize(address,uint256)": FunctionFragment;
     "isEntitled(string,address,bytes32)": FunctionFragment;
@@ -56,6 +57,7 @@ export interface IEntitlementInterface extends utils.Interface {
       | "addRoleIdToChannel"
       | "description"
       | "getEntitlementDataByRoleId"
+      | "getRoleIdsByChannelId"
       | "getUserRoles"
       | "initialize"
       | "isEntitled"
@@ -78,6 +80,10 @@ export interface IEntitlementInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getEntitlementDataByRoleId",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRoleIdsByChannelId",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getUserRoles",
@@ -127,6 +133,10 @@ export interface IEntitlementInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getEntitlementDataByRoleId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRoleIdsByChannelId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -194,6 +204,11 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]]>;
+
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -253,6 +268,11 @@ export interface IEntitlement extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string[]>;
 
+  getRoleIdsByChannelId(
+    channelId: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
   getUserRoles(
     user: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -311,6 +331,11 @@ export interface IEntitlement extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string[]>;
+
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
 
     getUserRoles(
       user: PromiseOrValue<string>,
@@ -374,6 +399,11 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -431,6 +461,11 @@ export interface IEntitlement extends BaseContract {
 
     getEntitlementDataByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

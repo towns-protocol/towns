@@ -120,7 +120,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
@@ -214,6 +214,25 @@ export default [
         "internalType": "bytes[]",
         "name": "",
         "type": "bytes[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "channelNetworkId",
+        "type": "string"
+      }
+    ],
+    "name": "getRoleIdsByChannelId",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -364,7 +383,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {

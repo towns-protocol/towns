@@ -131,7 +131,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelId",
+            "name": "channelNetworkId",
             "type": "string"
           },
           {
@@ -287,6 +287,25 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          }
+        ],
+        "name": "getRoleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -429,7 +448,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelId",
+            "name": "channelNetworkId",
             "type": "string"
           },
           {
@@ -558,12 +577,6 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
-        "addRoleIdToChannel(string,uint256)": {
-          "params": {
-            "channelId": "id of the channel to add the role to",
-            "roleId": "id of the role to add"
-          }
-        },
         "getEntitlementDataByRoleId(uint256)": {
           "params": {
             "roleId": "the roleId to fetch the entitlement data for"
@@ -602,12 +615,6 @@
             "entitlementId": "the id that was removed"
           }
         },
-        "removeRoleIdFromChannel(string,uint256)": {
-          "params": {
-            "channelId": "id of the channel to remove the role from",
-            "roleId": "id of the role to remove"
-          }
-        },
         "setEntitlement(uint256,bytes)": {
           "params": {
             "entitlementData": "abi encoded array of data necessary to set the entitlement",
@@ -642,9 +649,6 @@
     "userdoc": {
       "kind": "user",
       "methods": {
-        "addRoleIdToChannel(string,uint256)": {
-          "notice": "adds a role to a channel"
-        },
         "allEntitlementIds(uint256)": {
           "notice": "array of all the entitlementIds"
         },
@@ -674,9 +678,6 @@
         },
         "removeEntitlement(uint256,bytes)": {
           "notice": "removes an entitlement"
-        },
-        "removeRoleIdFromChannel(string,uint256)": {
-          "notice": "removes a role from a channel"
         },
         "roleIdsByChannelId(bytes32,uint256)": {
           "notice": "mapping of all the roles for a given channelId"
@@ -720,19 +721,19 @@
   },
   "sources": {
     "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0xa13ae14566d9f5ebf54c9f43b429e3e507ac11a55b77d7977dd392a61e3e546a",
+      "keccak256": "0x6b4f3c743eb4ea1409dc0cdffe2129e33735cb1b88e9cfa28aa61ac264ea6b77",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0cf47a25adc055af5d7e89615b5d4adeed8c50507c06b5d5b848c7a5437733a1",
-        "dweb:/ipfs/QmWiQkesoVNmXUCfc25brhu36E2RCqJ745voo4XFPFBeb1"
+        "bzz-raw://dc84f3b8599605e64bdef0f86088181bc17471808e2dfaaeaf21a2f910b28f81",
+        "dweb:/ipfs/QmToShmsfbrhTiqgERRXfu6GDknrVVjaQ3FasJdKcfUhAh"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
-      "keccak256": "0x6b5d1e8985e580580e397fead521e06f7359027b1ea323644497b5be2ec1869c",
+      "keccak256": "0xfcbba0cf78c5cefba11d2582ff19d83bbc47ebb6d6798f0be8631b2366040d95",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f045ea541b26bb122347aac6267a55b1c6a3f5078d57aa7dac7353cedc953d26",
-        "dweb:/ipfs/QmRcnuqysKijmgNPsKC1LKnP3WVjV8ZsWPx778bNnsB7L7"
+        "bzz-raw://168de1370319df9b5f98683793a5fb13f7cf1690a190771cd3e46e3e6b2164c4",
+        "dweb:/ipfs/QmUotoQLNjPJCLxiLFpGRt1bppaNMPQg3rF6QuJhFdhaDe"
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {

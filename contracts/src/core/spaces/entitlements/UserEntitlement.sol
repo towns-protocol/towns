@@ -37,12 +37,6 @@ contract UserEntitlement is
   mapping(uint256 => bytes32[]) public entitlementIdsByRoleId;
   mapping(address => bytes32[]) entitlementIdsByUser;
 
-  /**
-   * @dev Added to allow future versions to add new variables in case this contract becomes
-   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-   */
-  uint256[49] private __gap;
-
   string public constant name = "User Entitlement";
   string public constant description = "Entitlement for users";
   string public constant moduleType = "UserEntitlement";
@@ -171,6 +165,14 @@ contract UserEntitlement is
   }
 
   // @inheritdoc IEntitlement
+  function getRoleIdsByChannelId(
+    string calldata channelNetworkId
+  ) external view returns (uint256[] memory) {
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    return roleIdsByChannelId[_channelHash];
+  }
+
+  // @inheritdoc IEntitlement
   function getEntitlementDataByRoleId(
     uint256 roleId
   ) external view returns (bytes[] memory) {
@@ -203,12 +205,12 @@ contract UserEntitlement is
 
   // @inheritdoc IEntitlement
   function addRoleIdToChannel(
-    string calldata channelId,
+    string calldata channelNetworkId,
     uint256 roleId
   ) external onlySpace {
-    bytes32 _channelId = keccak256(abi.encodePacked(channelId));
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
 
-    uint256[] memory roles = roleIdsByChannelId[_channelId];
+    uint256[] memory roles = roleIdsByChannelId[_channelHash];
 
     for (uint256 i = 0; i < roles.length; i++) {
       if (roles[i] == roleId) {
@@ -216,17 +218,17 @@ contract UserEntitlement is
       }
     }
 
-    roleIdsByChannelId[_channelId].push(roleId);
+    roleIdsByChannelId[_channelHash].push(roleId);
   }
 
   // @inheritdoc IEntitlement
   function removeRoleIdFromChannel(
-    string calldata channelId,
+    string calldata channelNetworkId,
     uint256 roleId
   ) external onlySpace {
-    bytes32 _channelId = keccak256(abi.encodePacked(channelId));
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
 
-    uint256[] storage roleIds = roleIdsByChannelId[_channelId];
+    uint256[] storage roleIds = roleIdsByChannelId[_channelHash];
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       if (roleIds[i] != roleId) continue;
@@ -249,17 +251,17 @@ contract UserEntitlement is
   }
 
   /// @notice checks is a user is entitled to a specific channel
-  /// @param channelId the channel id
+  /// @param channelHash the channel id hash
   /// @param user the user address who we are checking for
   /// @param permission the permission we are checking for
   /// @return _entitled true if the user is entitled to the channel
   function _isEntitledToChannel(
-    bytes32 channelId,
+    bytes32 channelHash,
     address user,
     bytes32 permission
   ) internal view returns (bool _entitled) {
     // get role ids mapped to channel
-    uint256[] memory channelRoleIds = roleIdsByChannelId[channelId];
+    uint256[] memory channelRoleIds = roleIdsByChannelId[channelHash];
 
     // get all entitlements for a everyone address
     Entitlement[] memory everyone = _getEntitlementByUser(
@@ -375,4 +377,10 @@ contract UserEntitlement is
     }
     return c;
   }
+
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
 }

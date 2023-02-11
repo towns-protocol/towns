@@ -85,6 +85,26 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     }
   }
 
+  function testGetRoleIdsByChannelId() external {
+    uint256 roleId = _randomUint256();
+    string memory channelId = "some-channel";
+
+    tokenEntitlement.addRoleIdToChannel(channelId, roleId);
+
+    uint256[] memory _roleIds = tokenEntitlement.getRoleIdsByChannelId(
+      channelId
+    );
+
+    bool found = false;
+    for (uint256 i = 0; i < _roleIds.length; i++) {
+      if (_roleIds[i] == roleId) {
+        found = true;
+      }
+    }
+
+    assertTrue(found);
+  }
+
   function testRevertIfAddRoleToChannel() external {
     uint256 roleId = _randomUint256();
     string memory channelId = "some-channel";

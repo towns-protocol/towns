@@ -49,12 +49,6 @@ contract TokenEntitlement is
   /// @notice array of all the entitlementIds
   bytes32[] public allEntitlementIds;
 
-  /**
-   * @dev Added to allow future versions to add new variables in case this contract becomes
-   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-   */
-  uint256[49] private __gap;
-
   string public constant name = "Token Entitlement";
   string public constant description = "Entitlement for tokens";
   string public constant moduleType = "TokenEntitlement";
@@ -182,6 +176,14 @@ contract TokenEntitlement is
   }
 
   // @inheritdoc IEntitlement
+  function getRoleIdsByChannelId(
+    string calldata channelNetworkId
+  ) external view returns (uint256[] memory) {
+    bytes32 _channelId = keccak256(abi.encodePacked(channelNetworkId));
+    return roleIdsByChannelId[_channelId];
+  }
+
+  // @inheritdoc IEntitlement
   function getEntitlementDataByRoleId(
     uint256 roleId
   ) external view returns (bytes[] memory) {
@@ -215,12 +217,12 @@ contract TokenEntitlement is
 
   // @inheritdoc IEntitlement
   function addRoleIdToChannel(
-    string calldata channelId,
+    string calldata channelNetworkId,
     uint256 roleId
   ) external onlySpace {
-    bytes32 _channelId = keccak256(abi.encodePacked(channelId));
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
 
-    uint256[] memory roleIds = roleIdsByChannelId[_channelId];
+    uint256[] memory roleIds = roleIdsByChannelId[_channelHash];
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       if (roleIds[i] == roleId) {
@@ -228,16 +230,16 @@ contract TokenEntitlement is
       }
     }
 
-    roleIdsByChannelId[_channelId].push(roleId);
+    roleIdsByChannelId[_channelHash].push(roleId);
   }
 
   // @inheritdoc IEntitlement
   function removeRoleIdFromChannel(
-    string calldata channelId,
+    string calldata channelNetworkId,
     uint256 roleId
   ) external onlySpace {
-    bytes32 _channelId = keccak256(abi.encodePacked(channelId));
-    uint256[] storage roleIds = roleIdsByChannelId[_channelId];
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    uint256[] storage roleIds = roleIdsByChannelId[_channelHash];
 
     for (uint256 i = 0; i < roleIds.length; i++) {
       if (roleIds[i] != roleId) continue;
@@ -502,4 +504,10 @@ contract TokenEntitlement is
       return false;
     }
   }
+
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
 }

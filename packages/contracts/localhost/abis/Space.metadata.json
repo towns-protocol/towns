@@ -1400,11 +1400,11 @@
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
-      "keccak256": "0x6b5d1e8985e580580e397fead521e06f7359027b1ea323644497b5be2ec1869c",
+      "keccak256": "0xfcbba0cf78c5cefba11d2582ff19d83bbc47ebb6d6798f0be8631b2366040d95",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f045ea541b26bb122347aac6267a55b1c6a3f5078d57aa7dac7353cedc953d26",
-        "dweb:/ipfs/QmRcnuqysKijmgNPsKC1LKnP3WVjV8ZsWPx778bNnsB7L7"
+        "bzz-raw://168de1370319df9b5f98683793a5fb13f7cf1690a190771cd3e46e3e6b2164c4",
+        "dweb:/ipfs/QmUotoQLNjPJCLxiLFpGRt1bppaNMPQg3rF6QuJhFdhaDe"
       ]
     },
     "contracts/src/interfaces/ISpace.sol": {

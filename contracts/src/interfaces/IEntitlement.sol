@@ -64,6 +64,13 @@ interface IEntitlement {
     bytes32 permission
   ) external view returns (bool);
 
+  /// @notice fetches the roleIds for a given channel
+  /// @param channelId the channel to fetch the roleIds for
+  /// @return roleIds array of all the roleIds for the channel
+  function getRoleIdsByChannelId(
+    string calldata channelId
+  ) external view returns (uint256[] memory);
+
   /// @notice fetches the entitlement data for a roleId
   /// @param roleId the roleId to fetch the entitlement data for
   /// @return entitlementData array for the role

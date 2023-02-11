@@ -97,6 +97,12 @@ contract MockEntitlement is
     return;
   }
 
+  function getRoleIdsByChannelId(
+    string calldata
+  ) external pure returns (uint256[] memory roleIds) {
+    return new uint256[](0);
+  }
+
   function getEntitlementDataByRoleId(
     uint256
   ) external pure returns (bytes[] memory) {
