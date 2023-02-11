@@ -5,12 +5,15 @@ import {
     useMatrixCredentials,
     useMyProfile,
     useServerVersions,
+    useZionContext,
 } from 'use-zion-client'
 
 export const Me = () => {
     const { userId } = useMatrixCredentials()
     const myProfile = useMyProfile()
-    const serverVersions = useServerVersions()
+    const { homeServerUrl: homeserverUrl } = useZionContext()
+
+    const { serverVersions } = useServerVersions({ homeserverUrl })
     const userIdentifier = useMemo(() => {
         return userId ? createUserIdFromString(userId) : undefined
     }, [userId])

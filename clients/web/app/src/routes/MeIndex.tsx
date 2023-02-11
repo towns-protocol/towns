@@ -8,11 +8,14 @@ import {
 import { UserProfile } from '@components/UserProfile/UserProfile'
 import { Panel } from '@ui'
 import { Stack } from 'ui/components/Stack/Stack'
+import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 
 export const MeIndex = () => {
     const { isAuthenticated, username, userId } = useMatrixCredentials()
     const myProfile = useMyProfile()
-    const serverVersions = useServerVersions()
+    const { homeserverUrl } = useMatrixHomeServerUrl()
+
+    const { serverVersions } = useServerVersions({ homeserverUrl })
 
     const isValid = !!myProfile
     const userAddress = isValid
@@ -34,10 +37,10 @@ export const MeIndex = () => {
             },
             {
                 title: `Server version`,
-                content: serverVersions?.release_version ?? `??`,
+                content: serverVersions ?? `??`,
             },
         ],
-        [isAuthenticated, serverVersions?.release_version, userId, username],
+        [isAuthenticated, serverVersions, userId, username],
     )
 
     return (

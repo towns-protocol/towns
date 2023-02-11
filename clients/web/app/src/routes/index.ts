@@ -8,4 +8,5 @@ export const PATHS = {
     THREADS: 'threads',
     SETTINGS: 'settings',
     LOGIN: 'login',
+    VERSIONS: 'versions',
 }

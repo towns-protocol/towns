@@ -19,6 +19,8 @@ import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
+const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
+
 const Playground = React.lazy(() => import('@components/Playground'))
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -75,6 +77,7 @@ const AllRoutes = () => {
                                 path={`${PATHS.SPACES}/:spaceSlug`}
                                 element={<InviteLinkLanding />}
                             />
+                            <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
                             <Route path="*" element={<RedirectToLoginWithSavedLocation />} />
                         </>
                     )}
