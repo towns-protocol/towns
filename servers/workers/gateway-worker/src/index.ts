@@ -53,7 +53,7 @@ export const worker = {
         console.log(`request: ${JSON.stringify(request)}`)
         const corsHeaders = withCorsHeaders(request)
         const resp = await handleRequest(request, env)
-        const clone = resp.clone()
+        const clone = new Response(resp.body, resp)
         for (const [key, value] of Object.entries(corsHeaders)) {
             clone.headers.set(key, value)
         }

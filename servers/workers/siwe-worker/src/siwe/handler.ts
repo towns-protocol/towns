@@ -10,11 +10,10 @@ export async function verifySiweMessage(
 	provider: ethers.providers.StaticJsonRpcProvider,
 	verify = true,
 ): Promise<Response> {
-	const { message, signature, spaceId, chainId } = (await request.json()) as {
+	const { message, signature, spaceId } = (await request.json()) as {
 		message: string
 		signature: string
 		spaceId: string
-		chainId: number
 	}
 	const siweMessage = new SiweMessage(message as string)
 	await siweMessage.verify({ signature: signature as string })
@@ -25,7 +24,7 @@ export async function verifySiweMessage(
 	const isSpaceOwner = await verifySpaceOwner(
 		spaceId as string,
 		siweMessage.address,
-		chainId,
+		siweMessage.chainId,
 		provider,
 	)
 	if (isSpaceOwner) {

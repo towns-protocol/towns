@@ -54,9 +54,11 @@ export function useMatrixWalletSignIn() {
 
     const authenticationSuccess = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        function (response: IAuthData) {
+        function (response: IAuthData, authData: AuthenticationData) {
             const { access_token, device_id, user_id } = response
             if (access_token && device_id && user_id) {
+                // set zion_siwe cookie on successful registration
+                document.cookie = setZionSiweCookie(authData)
                 setMatrixCredentials(homeServer, {
                     accessToken: access_token,
                     deviceId: device_id,
@@ -232,11 +234,10 @@ export function useMatrixWalletSignIn() {
                                     )
 
                                     if (response.access_token) {
-                                        // set zion_siwe cookie on successful registration
-                                        document.cookie = setZionSiweCookie(
+                                        authenticationSuccess(
+                                            response,
                                             authData as AuthenticationData,
                                         )
-                                        authenticationSuccess(response)
                                     } else {
                                         authenticationError({
                                             code: StatusCodes.UNAUTHORIZED,
@@ -354,7 +355,7 @@ export function useMatrixWalletSignIn() {
 
                                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                                         if (response.access_token) {
-                                            authenticationSuccess(response as IAuthData)
+                                            authenticationSuccess(response as IAuthData, auth)
                                         } else {
                                             authenticationError({
                                                 code: StatusCodes.UNAUTHORIZED,
@@ -496,7 +497,7 @@ export function createMessageToSign(args: {
 function setZionSiweCookie(auth: AuthenticationData): string {
     const cookie = {
         name: 'zion_siwe',
-        value: Buffer.from(`${auth.signature}'-'${auth.message}`).toString('base64'),
+        value: Buffer.from(`${auth.signature}__@@__${auth.message}`).toString('base64'),
         path: '/',
         secure: 'true',
     }

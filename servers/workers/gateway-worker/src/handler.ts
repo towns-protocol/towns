@@ -105,17 +105,21 @@ router.post('/space-icon/:id', async (request, env) => {
         const cookie = await handleCookie(request.clone())
         const encodedCookie = Buffer.from(cookie, 'base64')
         const decodedCookie = encodedCookie.toString('utf8')
-        const [signature, message] = decodedCookie.split('-')
-        const messageJSON = JSON.parse(message)
+        const [signature, message] = decodedCookie.split('__@@__')
+
+        if (!signature || !message) {
+            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
+                status: 400,
+            })
+        }
 
         const newBody = {
-            signature: signature,
-            message: JSON.stringify(messageJSON),
-            chainId: messageJSON?.chainID || 5,
-            spaceId: spaceId,
+            signature,
+            message,
+            spaceId,
         }
         const newRequestInit = {
-            method: 'PUT',
+            method: 'POST',
             body: JSON.stringify(newBody),
         }
         const newRequest = new Request(new Request(request.clone(), newRequestInit))
