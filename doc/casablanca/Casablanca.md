@@ -19,11 +19,11 @@ Casablanca clients connect to nodes and fetch conversation data, post new messag
 
 The Towns chat app provides spaces (a.k.a. Towns) for communities. Each space contains channels. User can post messages to channels, invite other users to join, and so on. Permissions for spaces and channels are provided by smart contracts deployed to popular blockchains. This design allows novel crypto-native community entitlements. For example, community spaces can be gated by DAO membership or by NFT ownership.
 
-The Casablanca backend stores conversation data in streams. Each space has a `space` stream. Each channel has a `channel` stream. Each user has its own `user` stream. These are the only 3 types of streams accepted by the system.
+The backend stores conversation data in streams. Each space has a `space` stream. Each channel has a `channel` stream. Each user has its own `user` stream. These are the only 3 types of streams accepted by the system.
 
-Nodes expose stream-level APIs to clients. I.e. create stream, add event, read stream, etc. Casablanca client implements chat logic on top of this abstraction.
+Nodes expose stream-level APIs to clients. For example, the API allows clients to create streams, add events, read streams, etc. The client implements chat logic on top of this abstraction.
 
-Streams are partitioned into chunks for storage purposes. Each chunk is replicated to N nodes for redundancy and availability purposes. N is currently set to 5. This way each node on network stores some subset of chunk replicas. As chunk gets full, new chunk is allocated for the stream, chunk replicas are placed on random set of nodes, and new updates to the stream are written to the new chunk.
+Streams are partitioned into chunks for storage purposes. Each chunk is copied to N nodes for redundancy and availability purposes. N is currently set to 5. This way each node in the network stores some subset of chunk copies. As a chunk gets full, a new chunk is allocated for the stream. Chunk copies are stored on a random set of nodes, and new updates to the stream are written to the new chunk.
 
 Stream consists of events. Event is a basic update unit for the stream. Events contain payloads of various type, such as `message`, `join`, `invite`, `leave`, etc.
 
