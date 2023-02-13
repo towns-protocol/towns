@@ -5,21 +5,21 @@ Serge Khorun (serge@hntlabs.com)
 
 # Overview
 
-Casablanca is a code name for the web3 backend developed by HNT Labs for Towns chat app. It includes Node Network, Protocol and Client Library.
+"Casablanca" is a code name for the web3 backend developed by HNT Labs for the Towns chat app. It includes a Node Network, Protocol and Client Library.
 
-Casablanca network consists of nodes run by independent operators. All nodes are homogeneous, i.e. perform same duties. Each node runs Casablanca node software that provides: 
-* Casablanca Chain - private POS blockchain
+The Casablanca network consists of nodes run by independent operators. All nodes are homogeneous, i.e. perform same duties. Each node runs Casablanca node software that provides: 
+* Casablanca Chain - a private proof-of-stake blockchain
 * Storage Pool - storage for chat data
-* Workflow logic for chat application
+* Workflow logic for the chat application
 * Validation for blockchain and chat data
 
 There will be hundreds, and then thousands of nodes.
 
-Casablanca clients connect to nodes using protocol and fetch conversation data, post new messages, etc. to implement chat app.
+Casablanca clients connect to nodes and fetch conversation data, post new messages, etc.
 
-Towns chat app provides spaces (a.k.a. Towns) for communities. Each space contains channels. User can post messages to channels, invite other users to join and so on. Permissions for spaces and channels are provided by smart contracts deployed to popular blockchains. This design allows novel crypto-native community entitlements: i.e. it's possible to gate community space by DAO membership or by NFT ownership.
+The Towns chat app provides spaces (a.k.a. Towns) for communities. Each space contains channels. User can post messages to channels, invite other users to join, and so on. Permissions for spaces and channels are provided by smart contracts deployed to popular blockchains. This design allows novel crypto-native community entitlements. For example, community spaces can be gated by DAO membership or by NFT ownership.
 
-Casablanca backend stores conversation data in streams. Each space has a `space` stream. Each channel has `channel` stream. Each user has own `user` stream. These are the only 3 types of streams accepted by the system.
+The Casablanca backend stores conversation data in streams. Each space has a `space` stream. Each channel has a `channel` stream. Each user has its own `user` stream. These are the only 3 types of streams accepted by the system.
 
 Nodes expose stream-level APIs to clients. I.e. create stream, add event, read stream, etc. Casablanca client implements chat logic on top of this abstraction.
 
