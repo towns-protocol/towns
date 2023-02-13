@@ -1,3 +1,6 @@
+Casablanca
+==========
+
 Serge Khorun (serge@hntlabs.com)
 
 # Overview
@@ -120,7 +123,7 @@ Multiple clients can append new events to the stream simultaneously. In this cas
 
 Due to this design events in a stream form *connected directed acyclic graph* (DAG). This design allows fast stream updates, but creates additional complexity for managing canonical stream view. For example, client can send a "side chain" of events that alter conversation too far in the past. Nodes have provisions for rejecting such updates from the canonical view of the steam. Due to this DAG “tries” to converge to just a chain as long as there are not that many simultaneous appends (More below TODO: section link)
 
-> [!note] Alternative design would be to require streams to be strongly ordered. This would naturally limit potential update rate, making app unable to timely post new messages if conversation is very popular. 
+> NOTE: Alternative design would be to require streams to be strongly ordered. This would naturally limit potential update rate, making app unable to timely post new messages if conversation is very popular. 
 
 For storage purposes streams are partitioned into the chunks.
 
@@ -147,7 +150,7 @@ Each chunk has a unique id. Blockchain contains mapping of chunk_id => set of st
 
 To access a chunk, a chunk record is retrieved from the blockchain. Node addresses are mapped to ENR records. ENR records contain ess_ip and ess_port for communication with node. 
 
-> [!note] Current version of specification introduces replicated chunks. In the future chunks can also be erasure-encoded.
+> NOTE: Current version of specification introduces replicated chunks. In the future chunks can also be erasure-encoded.
 
 ## Chunk Allocation
 
@@ -161,7 +164,7 @@ In practice it's safe since if chunk creation tx doesn't make it to the block fo
 
 For client and nodes not participating in the transaction directly there is a delay before creation tx for both stream and chunk is committed on chain and thus stream and chunk can be discovered by their ids. Client and node code should handle situation when stream and chunk are discovered through other means (for example, client receives invite to join freshly create channel), but not yet discoverable on chain by waiting for two blocks to advance before giving up.
 
-To reason about what should be in the chunk, chunk is sealed by node by special [[#Drain Events|drain event]]. I.e. chunk sealing drain event indicates end of the chunk. Events in the next chunk reference this last event and cannot reference other events in the preceding chunk.  
+To reason about what should be in the chunk, chunk is sealed by node by special [drain event](#drain-events). I.e. chunk sealing drain event indicates end of the chunk. Events in the next chunk reference this last event and cannot reference other events in the preceding chunk.  
 
 ## Rebalancing
 
@@ -189,18 +192,18 @@ Nodes should prioritize downloading of chunks that have smallest number of `live
 
 When new node joins storage pool, its local storage is empty. To perform it's fair share of work in need to receive some chunk replicas, so load on all nodes in the network is equal.
 
-Rebalancer ([[#Rebalancing]]) notices new nodes and move some chunks to it through rebalancing process.  During each rebalancing period limited number of chunks is moved to the new node to avoid overwhelming it and giving it a chance to complete transfer in the grace period. 
+[Rebalancer](#rebalancing) notices new nodes and move some chunks to it through rebalancing process.  During each rebalancing period limited number of chunks is moved to the new node to avoid overwhelming it and giving it a chance to complete transfer in the grace period. 
 
 
 ## Voluntarily Leaving Storage Pool
 
-Node can voluntarily leave Casablanca Network by unstacking. Unstacking consists of two periods: during *grace period* node continues to receive rewards and unstacking decision can be reversed by node operator.  After *grace period*  is over, node stop receiving rewards and *evacuation period* starts. During *evacuation period* node does not receive rewards, but must stay online to avoid slashing. At the start of *evacuation period* node is marked as `leaving` and rebalancing process described in [[#Rebalancing]] marks batches of node's chunks replicas as `leaving`.  Replicas are marked in batches to avoid overload of the node.
+Node can voluntarily leave Casablanca Network by unstacking. Unstacking consists of two periods: during *grace period* node continues to receive rewards and unstacking decision can be reversed by node operator.  After *grace period*  is over, node stop receiving rewards and *evacuation period* starts. During *evacuation period* node does not receive rewards, but must stay online to avoid slashing. At the start of *evacuation period* node is marked as `leaving` and [rebalancing process](#rebalancing) marks batches of node's chunks replicas as `leaving`.  Replicas are marked in batches to avoid overload of the node.
 
 Once all chunks are transfered, node can leave network without slash penalty.
 
 ## Involuntarily Leaving Storage Pool
 
-If node is unavailable for extended period of time, it is declared as `dead` (see [[#Validation of Stream Storage]]). Rebalancer ([[#Rebalancing]]) notices `dead` node and marks all node's chunk replicas as `dead` which leads to allocation of the `new` replicas.
+If node is unavailable for extended period of time, it is declared as `dead` (see [#Validation of Stream Storage](#validation-of-stream-storage)). [Rebalancer](#rebalancing) notices `dead` node and marks all node's chunk replicas as `dead` which leads to allocation of the `new` replicas.
 
 Node being `dead` incurs slash penalty. If node comes back from the `dead`, its chunks are marked as `alive` again. 
 
@@ -214,7 +217,7 @@ To mitigate malicious node behaviors client periodically drops connection to the
 
 ## Drain Events
 
-There are situations when it's desirable to have only one leaf event in the stream to simplify reasoning. For example, [[#Chunk Allocation|chunk sealing]], [[#Snapshot Events|snapshots]] or [[#Entitlements|entitlement update]].
+There are situations when it's desirable to have only one leaf event in the stream to simplify reasoning. For example, [chunk sealing](#chunk-allocation), [snapshots](#snapshot-events) or [entitlement update](#entitlements).
 
 These types of events designated as `drain` events. Once such event is produced, all subsequents events should reference it or its descendants. Node rejects new events that reference events proceeding to last drain event, and client should regenerate such events with new leaf hashes and resend them.
 
@@ -224,7 +227,7 @@ Streams are loosely append-only. Although it's possible to generate event which 
 
 There is a desire to discard old events since old messages are less valuable in the context of the chat application and there is a need to limit cost for the free streams. But administrative events, such as `join`, `leave`, `set stream name` can't be freely discarded without state loss.
 
-To address this `snapshot` events are introduced. Preceding events are "rolled up", for example `join` and `leave` events are rolled up into the `membership roster`.  Snapshot event is [[#Drain Events|drain event]]. Snapshot event includes a copy of stream inception event.
+To address this `snapshot` events are introduced. Preceding events are "rolled up", for example `join` and `leave` events are rolled up into the `membership roster`.  Snapshot event is [rain event](#drain-events). Snapshot event includes a copy of stream inception event.
 
 Once snapshot event is added to the stream, preceding events can be safely garbage collected.
 
@@ -236,7 +239,7 @@ Snapshot event is produced by the node. It follows normal validation logic for o
 
 Nodes hosting given stream rotate the duty of publishing latest leaf hashes on chain based on the number of new events. 
 
-Lets say [[#Global Settings|setting]] is set to publish every 100 events, nodes A, B, C, D, E host last chunk of the stream S and node E just sent tx with new leaf hashes. Then node A must sent tx after 100 new events, node B after 200 new events, node C after 300 new events and so on. Node be must send tx on schedule even if node A fails to send its tx. This prevents malicious node from stalling the process. Missing to send the tx is slashable offence.
+Lets say [setting](#global-settings) is set to publish every 100 events, nodes A, B, C, D, E host last chunk of the stream S and node E just sent tx with new leaf hashes. Then node A must sent tx after 100 new events, node B after 200 new events, node C after 300 new events and so on. Node be must send tx on schedule even if node A fails to send its tx. This prevents malicious node from stalling the process. Missing to send the tx is slashable offence.
 
 Node that must send out tx at the current round is called the `leader`. Leader node queries hashes of new events from the other nodes and selects leaf hashes that are present on the majority of nodes (i.e. on the 3 out of 5 in the example above). Then other nodes sign the message that they have these hashes and leader submits new "latest leaf hashes tx". Transaction contains the leaf hashes and signatures of the leader (by definition) and at least of the other 2 nodes (in case of replication set to 5).
 
@@ -248,13 +251,13 @@ Casablanca network is secured by stakes. Node operators place stakes on external
 
 Exact staking size, penalties and rewards are controlled by DAO.
 
-All nodes periodically receive same reward that covers periodic reward set by DAO as network setting and average expended [[#Gas]].
+All nodes periodically receive same reward that covers periodic reward set by DAO as network setting and average expended [gas](#gas).
 
 ## Validation of Stream Creation
 
 Validation largely happens in the same way as on Ethereum network with custom extensions to recognize and validate `latest leaf hash` transactions and to periodically test node's availability:
 
-As client sends new events for the given stream to the node, node broadcasts these updates to other nodes hosting this steam. These events are not yet *canonicalized*. Periodically node creates a transaction that contain latest known leaf hashes (see [[#Stream Update Process]]) to canonicalize latest events. Such transaction does not include hashes of all new events, only of the leaf new events: since all non-leaf events are by definition referenced by leaf events, committing hashes of latest leaf events is enough to canonicalize all preceding events in the stream.
+As client sends new events for the given stream to the node, node broadcasts these updates to other nodes hosting this steam. These events are not yet *canonicalized*. Periodically node creates a transaction that contain latest known leaf hashes (see [#Stream Update Process](#stream-update-process)) to canonicalize latest events. Such transaction does not include hashes of all new events, only of the leaf new events: since all non-leaf events are by definition referenced by leaf events, committing hashes of latest leaf events is enough to canonicalize all preceding events in the stream.
 
 Then validation follows normal Ethereum approach:
 
@@ -262,7 +265,7 @@ Then validation follows normal Ethereum approach:
 * Block proposer builds the current block and checks if transition described in transaction is valid by running same checks as node that sent transaction to the mempool.
 * Other nodes receive the new beacon block. Validators re-execute check locally and attest if block is valid.
 
->[!note] There are throughput challenges here: both block proposer and validators need to re-execute checks to validate proposed stream updates. This naturally puts a limit on home many "leaf hashes updated" transactions can be put in the each block. Initially this can be mitigated by reducing update frequency for each individual stream. Then there are two avenues for mitigating this: 
+> NOTE: There are throughput challenges here: both block proposer and validators need to re-execute checks to validate proposed stream updates. This naturally puts a limit on home many "leaf hashes updated" transactions can be put in the each block. Initially this can be mitigated by reducing update frequency for each individual stream. Then there are two avenues for mitigating this: 
 >* Partitioning of duties. Specifically, when Beacon chain gets sharding, Casablanca can just reuse it.
 >* Vouching schemas where each transaction is not validated by all participants, but later statistically validated with sampling and transaction proposer is penalized if bay transaction is found. This is possible to implement in Casablanca since all transactions are proposed by staking nodes.
 
@@ -272,11 +275,11 @@ Each epoch, using RANDAO some nodes are designated as scrubbers and some chunks 
 
 Scrubbers read chunks and cast votes about chunk availability in form of transactions. If the time period some node gets too many negative votes, penalty is issued against it's stake.
 
-If node is unavailable for extended period of time, it is declared `dead` and chunks hosted on it are replicated to other nodes ([[#Rebalancing]]).
+If node is unavailable for extended period of time, it is declared `dead` and chunks hosted on it are replicated to other nodes ([Rebalancing](#rebalancing)).
 
-All settings for this process are controlled by [[#Global Settings]].
+All settings for this process are controlled by [Global Settings](#global-settings).
 
->[!TODO] TODO: design specifics to mitigate malicious behaviors when nodes are not storing data and always try to read it from other replicas. Possible mitigations: making each event replica unique for each node, so they can't read from the other node; "black outs" when replica  is scrubbed so other nodes do not server this replica during black out, etc.
+> TODO: design specifics to mitigate malicious behaviors when nodes are not storing data and always try to read it from other replicas. Possible mitigations: making each event replica unique for each node, so they can't read from the other node; "black outs" when replica  is scrubbed so other nodes do not server this replica during black out, etc.
 
 
 # Identity
@@ -296,17 +299,17 @@ Once corresponding event is the stream user is allowed to perform the action. Fo
 
 To detect changing entitlements periodic entitlement check are run on the stream's roaster. Detected changes are reflected in the stream by appending new events.
 
-Streams and nodes to run these checks are selected using RANDAO similar to [[#Validation of Stream Storage|scrubbing]] based on [[#Global Settings|settings]].
+Streams and nodes to run these checks are selected using RANDAO similar to [scrubbing](#validation-of-stream-storage) based on [settings](#global-settings).
 
 This design means that there is a grace period when user does not have an entitlement anymore but still can perform the entitled action.
 
 To address needs of the moderators bans and kicks are implemented by separate events and take the force immediately. Banned users cannot rejoin the stream even if the still have or reacquire the entitlement. 
 
->[!TODO] TODO: more about joins and entitlements for different roles, etc.
+> TODO: more about joins and entitlements for different roles, etc.
 
->[!TODO] TODO: more client and server chat workflows
+> TODO: more client and server chat workflows
 
->[!TODO] TODO: `fuel` scenarios
+> TODO: `fuel` scenarios
 
 
 
@@ -320,7 +323,7 @@ Nodes pay gas fees to post transactions. Average gas fees are returned as part o
 
 # FAQ
 
->[!TODO] TODO
+> TODO
 
 
 
