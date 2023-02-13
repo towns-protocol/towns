@@ -6,6 +6,10 @@ const fontSizeVariants = {
         fontSize: vars.fontSize.h1,
         marginTop: '1rem', // I don't know
     },
+    h2: {
+        fontSize: vars.fontSize.h2,
+        marginTop: '0.5rem',
+    },
     display: {
         fontSize: vars.fontSize.display,
         marginTop: '2rem', // I don't know
@@ -15,6 +19,7 @@ const fontSizeVariants = {
 export const LetterStyles = recipe({
     base: {
         fontFamily: 'TitleFont',
+        marginTop: '0.3rem',
         fontSize: vars.fontSize.lg,
     },
     defaultVariants: {},

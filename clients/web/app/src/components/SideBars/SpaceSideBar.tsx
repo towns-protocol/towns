@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { matchPath, useLocation, useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import {
     Membership,
@@ -26,6 +26,8 @@ import { PATHS } from 'routes'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { shortAddress } from 'ui/utils/utils'
+import { SpaceIcon } from '@components/SpaceIcon'
+import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { SideBar } from './_SideBar'
 
 type Props = {
@@ -122,6 +124,9 @@ const SpaceSideBarHeader = (props: {
     onSettings: (spaceId: RoomIdentifier) => void
 }) => {
     const { space, onSettings } = props
+    const currentChannelId = useChannelIdFromPathname()
+    const { pathname } = useLocation()
+
     const { members } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id.networkId)
 
@@ -139,6 +144,25 @@ const SpaceSideBarHeader = (props: {
             '_blank',
             'noopener,noreferrer',
         )
+    })
+
+    const onTokenClick = useEvent(() => {
+        const currentSpacePathWithoutInfo = matchPath(
+            `${PATHS.SPACES}/:spaceSlug/:current`,
+            pathname,
+        )
+
+        let path
+
+        if (currentChannelId) {
+            path = `/spaces/${space.id.slug}/channels/${currentChannelId}/info`
+        } else if (currentSpacePathWithoutInfo) {
+            path = `/spaces/${space.id.slug}/${currentSpacePathWithoutInfo?.params.current}/info`
+        }
+
+        if (path) {
+            navigate(path)
+        }
     })
 
     const hasName = !!space.name
@@ -168,8 +192,20 @@ const SpaceSideBarHeader = (props: {
                         onSettings={onSettings}
                     />
                 </Box>
-                <Box grow>
-                    <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />
+                <Box grow onClick={onTokenClick}>
+                    {space ? (
+                        <SpaceIcon
+                            cursor="pointer"
+                            width="x15"
+                            aspectRatio="1/1"
+                            letterFontSize="h2"
+                            background="level1"
+                            spaceId={space.id.networkId}
+                            firstLetterOfSpaceName={space.name[0]}
+                        />
+                    ) : (
+                        <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />
+                    )}
                 </Box>
                 {hasName && (
                     <Stack centerContent width="100%">

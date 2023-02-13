@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, BoxProps, Text } from '@ui'
 import { useGetSpaceIcon } from 'api/lib/spaceIcon'
-import { useUploadImageStore } from '@components/UploadImage/UploadImage'
+import { useUploadImageStore } from '@components/UploadImage/useUploadImageStore'
 import { LetterStyles, LetterStylesVariantProps } from './SpaceIcon.css'
 
 const ImageVariants = {
@@ -12,15 +12,18 @@ const ImageVariants = {
     thumbnail300: 'thumbnail300',
 } as const
 
+export type ImageVariant = typeof ImageVariants[keyof typeof ImageVariants]
+
 type Props = {
     spaceId: string
     firstLetterOfSpaceName: string
     letterFontSize?: LetterStylesVariantProps
-    variant?: typeof ImageVariants[keyof typeof ImageVariants]
+    variant?: ImageVariant
 } & BoxProps
 
 const MotionBox = motion(Box)
 
+// Primitive for grabbing a space icon image with a fallback to first letter of space name
 export const SpaceIcon = (props: Props) => {
     const {
         spaceId,
@@ -29,19 +32,20 @@ export const SpaceIcon = (props: Props) => {
         variant = ImageVariants.thumbnail300,
         ...boxProps
     } = props
-    const renderKey = useUploadImageStore((state) => state.renderKey)
+    const renderKey = useUploadImageStore((state) => state.renderKeys[spaceId])
 
-    // TODO: we have cache issues with using the worker. Eventually we should use the worker and serve cached images. `base64` should be the img.src
-    // for now we are using this to verify that an image exists for this space
+    // leveraging react query cache to check an image exists, trigger rerenders on upload and other UI
     const {
-        // data: { base64 } = {},
         isLoading: requestIsLoading,
         isSuccess,
         failureCount,
     } = useGetSpaceIcon({
         spaceId,
-        useBypassUrl: true,
     })
+
+    // - we could return the Image from useGetSpaceIcon() and set that as img.src but the hook should only need to check a single "public"  variant. Passing all the variants results in addl. 404s if the image doesn't exist
+    // - if for some reason we start seeing issues where CF is creating a "public" variant much faster than the others, resulting in 404 for IMAGE_DELIVERY_URL, then we consider passing variant to hook
+    // - this is mainly only an issue for an uploading user, not the vast majority of users
     const IMAGE_DELIVERY_URL = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${spaceId}/${variant}`
 
     const [imageLoading, setImageLoading] = useState<boolean>(true)

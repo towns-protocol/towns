@@ -17,7 +17,7 @@ export const ClipboardCopy = (props: { label: string; clipboardContent?: string 
                 clearTimeout(timeout)
             }
         }
-    })
+    }, [copied])
     return (
         <Stack
             horizontal

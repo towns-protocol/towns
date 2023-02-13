@@ -3,9 +3,9 @@ import { RoomIdentifier, useSpaceNotificationCounts } from 'use-zion-client'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { SpaceNavTooltip } from '@components/Tooltips/SpaceNavTooltip'
 import { Badge, Box, ButtonText, Dot, Icon, TooltipRenderer } from '@ui'
-import { Avatar } from 'ui/components/Avatar/Avatar'
 import { IconName } from 'ui/components/Icon'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { SpaceIcon } from '@components/SpaceIcon'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -70,9 +70,19 @@ export const SpaceNavItem = (props: Props) => {
                     {...triggerProps}
                 >
                     {avatar && (
-                        <Avatar animate src={avatar} size="avatar_x4" type="space">
+                        <Box position="relative">
+                            <SpaceIcon
+                                width="x4"
+                                minWidth="x4"
+                                aspectRatio="1/1"
+                                spaceId={id.networkId}
+                                background="level1"
+                                rounded="xs"
+                                variant="thumbnail100"
+                                firstLetterOfSpaceName={name[0]}
+                            />
                             {newMessages && <Dot position="bottomRight" />}
-                        </Avatar>
+                        </Box>
                     )}
 
                     {icon && (

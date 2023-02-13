@@ -1,6 +1,5 @@
 import React, { ChangeEvent, useMemo } from 'react'
 import { UseFormReturn } from 'react-hook-form'
-import create from 'zustand'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 
 import { Box, BoxProps } from 'ui/components/Box/Box'
@@ -12,6 +11,7 @@ import { SpaceIcon } from '@components/SpaceIcon'
 import { vars } from 'ui/styles/vars.css'
 import { useSpaceIconUpload } from 'api/lib/spaceIcon'
 import { Spinner } from '@components/Spinner'
+import { env } from 'utils'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 
 async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
@@ -23,19 +23,10 @@ async function getImageDimensions(src: string): Promise<{ width: number; height:
     })
 }
 
-export const useUploadImageStore = create<{
-    renderKey: number
-    setRenderKey: () => void
-}>((set) => ({
-    renderKey: Date.now(),
-    setRenderKey: () => set(() => ({ renderKey: Date.now() })),
-}))
-
 const MIN_DIMENSION = 400
 const MAX_SIZE = 5000000
 
 type Props = {
-    formPropName: string
     spaceId: string
     spaceName: string
     isOwner: boolean
@@ -47,12 +38,14 @@ const config: BoxProps = {
     rounded: 'full',
 }
 
+const FORM_FIELD_NAME = 'spaceIconUpload'
+
 export const UploadImage = (props: Props) => {
-    const { setError, register, clearErrors, formPropName: name, spaceId, isOwner } = props
+    const { setError, register, clearErrors, spaceId, isOwner } = props
     const ref = React.useRef<HTMLInputElement>(null)
     const _spaceId = useMemo(() => spaceId, [spaceId])
 
-    const { mutate: upload, isLoading } = useSpaceIconUpload()
+    const { mutate: upload, isLoading } = useSpaceIconUpload(spaceId)
     const [feedbackMesasge, setFeedbackMessage] = React.useState<string | null>(null)
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
@@ -60,10 +53,10 @@ export const UploadImage = (props: Props) => {
         if (files && files.length > 0) {
             const url = URL.createObjectURL(files[0])
             const { width, height } = await getImageDimensions(url)
-            clearErrors?.([name])
+            clearErrors?.([FORM_FIELD_NAME])
 
             if (files[0].size > MAX_SIZE) {
-                setError?.(name, {
+                setError?.(FORM_FIELD_NAME, {
                     type: 'required',
                     message: 'Upload an image less than 5MB',
                 })
@@ -71,7 +64,7 @@ export const UploadImage = (props: Props) => {
             }
 
             if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
-                setError?.(name, {
+                setError?.(FORM_FIELD_NAME, {
                     type: 'required',
                     message: `Image is too small. Please upload an image with a minimum height & width of ${MIN_DIMENSION}px.`,
                 })
@@ -101,7 +94,7 @@ export const UploadImage = (props: Props) => {
     }
 
     return (
-        <Box position="relative" {...config}>
+        <Box position="relative">
             <Box className={isLoading ? loadingStyles : ''}>
                 <SpaceIcon
                     spaceId={_spaceId}
@@ -147,20 +140,24 @@ export const UploadImage = (props: Props) => {
                             }}
                         />
                     </Box>
-                    <UploadInput
-                        name={name}
-                        className={[fieldStyles.field, srOnlyClass]}
-                        ref={ref}
-                        register={register}
-                        accept="image/*"
-                        onChange={onChange}
-                    />
-                    <FieldOutline tone="etherum" rounded="full" />
-                    <Box centerContent paddingTop="md">
-                        <Text textAlign="center" size="sm">
-                            {feedbackMesasge}
-                        </Text>
+                    <Box position="absolute" {...config}>
+                        <UploadInput
+                            name={FORM_FIELD_NAME}
+                            className={[fieldStyles.field, srOnlyClass]}
+                            ref={ref}
+                            register={register}
+                            accept="image/*"
+                            onChange={onChange}
+                        />
+                        <FieldOutline tone="etherum" rounded="full" />
                     </Box>
+                    {feedbackMesasge && (
+                        <Box centerContent paddingTop="md" width={config.width}>
+                            <Text textAlign="center" size="sm">
+                                {feedbackMesasge}
+                            </Text>
+                        </Box>
+                    )}
                 </>
             )}
         </Box>
@@ -185,13 +182,7 @@ export const UploadImageDebugger = () => {
             <FormRender onSubmit={() => undefined}>
                 {(props) => (
                     <>
-                        <UploadImage
-                            {...props}
-                            isOwner
-                            formPropName="upload"
-                            spaceId={spaceId}
-                            spaceName="Test space"
-                        />
+                        <UploadImage {...props} isOwner spaceId={spaceId} spaceName="Test space" />
                     </>
                 )}
             </FormRender>

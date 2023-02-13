@@ -29,7 +29,7 @@ export const ChannelSettingsCard = (props: Props) => {
     })
 
     const onInfoClick = useEvent(() => {
-        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/info`)
+        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/info?channel`)
     })
 
     return (

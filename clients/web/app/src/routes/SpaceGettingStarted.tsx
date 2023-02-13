@@ -6,6 +6,7 @@ import { BackgroundGrid } from '@components/BackgroundGrid'
 import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'
 import { PATHS } from 'routes'
 import { useHasPermission } from 'hooks/useHasPermission'
+import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceGettingStarted = () => {
     const space = useSpaceData()
@@ -23,11 +24,13 @@ export const SpaceGettingStarted = () => {
     }, [owner, isLoading, navigate, space?.id?.slug])
 
     return (
-        <Stack>
-            <BackgroundGrid />
-            <Stack position="relative">
-                <SpaceOwnerLanding />
+        <CentralPanelLayout>
+            <Stack>
+                <BackgroundGrid />
+                <Stack position="relative">
+                    <SpaceOwnerLanding />
+                </Stack>
             </Stack>
-        </Stack>
+        </CentralPanelLayout>
     )
 }

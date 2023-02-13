@@ -20,7 +20,7 @@ import { SpacesSettingsOld } from './SpaceSettingsOld'
 import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
 import { SpaceMembers } from './SpaceMembers'
-import { ChannelInfoPanel } from './SpaceChannelInfoPanel'
+import { InfoPanelWrapper } from './InfoPanel'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -40,12 +40,20 @@ export const AuthenticatedRoutes = () => (
             <Route index element={<SpaceHome />} />
             <Route path="threads" element={<SpaceThreads />}>
                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                <Route path="info" element={<InfoPanelWrapper />} />
             </Route>
+
             <Route path="mentions" element={<SpaceMentions />}>
                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                <Route path="info" element={<InfoPanelWrapper />} />
             </Route>
-            <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />} />
+
+            <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
+                <Route path="info" element={<InfoPanelWrapper />} />
+            </Route>
+
             <Route path="settings-legacy" element={<SpacesSettingsOld />} />
+
             <Route path="settings" element={<SpaceSettings />}>
                 <Route path="roles/:role" element={<RoleSettings />}>
                     <Route index path="permissions" element={<RoleSettingsPermissions />} />
@@ -55,17 +63,21 @@ export const AuthenticatedRoutes = () => (
             </Route>
 
             <Route path="invite" element={<SpacesInvite />} />
+
             <Route path="members" element={<SpaceMembers />}>
                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                <Route path="info" element={<InfoPanelWrapper />} />
             </Route>
+
             <Route path="channels/:channelSlug" element={<SpacesChannel />}>
                 <Route
                     path="replies/:messageId"
                     element={<SpacesChannelReplies parentRoute=".." />}
                 />
                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                <Route path="info" element={<ChannelInfoPanel />} />
+                <Route path="info" element={<InfoPanelWrapper />} />
             </Route>
+
             <Route element={<SpacesChannelRoute />}>
                 <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
             </Route>

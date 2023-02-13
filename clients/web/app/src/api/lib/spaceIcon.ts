@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
-import { useUploadImageStore } from '@components/UploadImage/UploadImage'
+import { useUploadImageStore } from '@components/UploadImage/useUploadImageStore'
 import { Buffer } from 'buffer'
 
 type PostVars = {
@@ -35,14 +35,17 @@ async function uploadIcon(args: PostVars) {
     })
 }
 
-export function useSpaceIconUpload() {
+export function useSpaceIconUpload(spaceId: string) {
     const queryClient = useQueryClient()
     return useMutation(uploadIcon, {
         onSuccess: (data) => {
             console.log(`[useSpaceIconUpload] upload success `, data)
+            // on a successful upload, update all our read queries to start the retry behavior
+            useUploadImageStore.getState().setUploadRetryBehavior(true)
+
             // Optional: returning this will cause the mutation state to stay in loading state while this query updates
             // on a brand new space icon upload, this can take a minute+ to resolve (up to cloudflare to generate images)
-            queryClient.invalidateQueries([queryKeys.spaceIcon])
+            queryClient.invalidateQueries([queryKeys.spaceIcon, spaceId])
         },
         onError: (error) => {
             console.error(`[useSpaceIconUpload] upload error `, error)
@@ -57,6 +60,8 @@ const defaultImageFormatConfig: CloudflareUrlFormat = {
     fit: 'scale-down',
 }
 
+// Uses gateway worker to fetch images. Not using this b/c of cache issues, and likely we don't need this after all b/c we are able to get dynamic variants directly from imagedelivery.net
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getSpaceIcon(
     spaceId: string,
     useBypassUrl: boolean,
@@ -83,7 +88,6 @@ async function getSpaceIcon(
     const res = await axiosClient.get(URL, {
         responseType: 'arraybuffer',
         headers: {
-            Authorization: `Bearer Zm9v`,
             'Cache-Control': 'no-cache',
         },
     })
@@ -97,32 +101,47 @@ async function getSpaceIcon(
     }
 }
 
-export function useGetSpaceIcon({
-    spaceId,
-    useBypassUrl,
-    imageFormatConfig,
-}: {
-    spaceId: string
-    useBypassUrl: boolean
-    imageFormatConfig?: CloudflareUrlFormat
-}) {
+async function checkForImage(spaceId: string) {
+    // just check the public default variant
+    const IMAGE_DELIVERY_URL = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${spaceId}/public`
+    const image = new Image()
+    image.src = IMAGE_DELIVERY_URL
+
+    const promise = new Promise<boolean>((resolve, reject) => {
+        image.onload = () => {
+            resolve(true)
+        }
+        image.onerror = (error) => {
+            reject(error)
+        }
+    })
+
+    return promise
+}
+
+export function useGetSpaceIcon({ spaceId }: { spaceId: string }) {
+    const hasUploadRetryBehavior = useUploadImageStore((state) => state.hasUploadRetryBehavior)
+
     return useQuery(
-        [queryKeys.spaceIcon, spaceId],
-        () => getSpaceIcon(spaceId, useBypassUrl, imageFormatConfig),
+        [queryKeys.spaceIcon, spaceId, { hasUploadRetryBehavior }],
+        () => checkForImage(spaceId),
         {
             refetchOnMount: false,
+            refetchOnReconnect: false,
             refetchOnWindowFocus: false,
+            staleTime: 1000 * 60 * 60 * 5, // 5 hours
             refetchInterval: 1000 * 60 * 60 * 5, // 5 hours
             onSuccess: () => {
-                useUploadImageStore.getState().setRenderKey()
+                useUploadImageStore.getState().setRenderKey(spaceId)
             },
-            // most spaces are likely to have an image, so in most cases retry won't be necessary
-            // but when a space has no attached image we can retry a few times
-            //
-            // this is especially relevant in the uploading flow - the user will upload the image, this query is invalidated and refetched,
-            // but the image isn't available yet so we retry up to 5 times, probably the image is ready by then
             retryDelay: 1000 * 30,
             retry: (failureCount, _error) => {
+                // typical user loading app doesn't need to retry for the space image - it either exists or it doesn't
+                if (!hasUploadRetryBehavior) {
+                    return false
+                }
+                // but if the owner uploads an image, the `hasUploadRetryBehavior` will cause a new query to be kicked off
+                // and we want to retry up to X times to give the image time to be generated and updated all instances of the image component
                 if (failureCount < 5) {
                     return true
                 }

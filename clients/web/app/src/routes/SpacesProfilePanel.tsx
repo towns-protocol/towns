@@ -2,15 +2,22 @@ import React from 'react'
 import { useNavigate, useParams } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { createUserIdFromString, useSpaceMembers } from 'use-zion-client'
-import { Panel, Paragraph, Stack } from '@ui'
+import { useSearchParams } from 'react-router-dom'
+import { Box, Button, Panel, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
+    const [search] = useSearchParams()
+    const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId } = useParams()
     const navigate = useNavigate()
 
     const onClose = useEvent(() => {
         navigate('..')
+    })
+
+    const onBack = useEvent(() => {
+        navigate(-1)
     })
 
     const { membersMap } = useSpaceMembers()
@@ -48,6 +55,22 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                     <Stack padding>
                         <Paragraph>Profile not found</Paragraph>
                     </Stack>
+                )}
+
+                {cameFromSpaceInfoPanel && (
+                    <Box centerContent>
+                        <Button
+                            width="auto"
+                            tone="none"
+                            size="button_sm"
+                            style={{
+                                boxShadow: 'none',
+                            }}
+                            onClick={onBack}
+                        >
+                            <Text color="cta1">Back to space info</Text>
+                        </Button>
+                    </Box>
                 )}
             </Panel>
         </Stack>
