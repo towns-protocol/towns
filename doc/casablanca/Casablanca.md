@@ -47,14 +47,14 @@ Data is stored in EVM smart contracts with custom extensions.
 As a stream grows, nodes hosting this stream periodically commit last known leaf hashes to Casablanca Chain. This *canonicalizes* these new events. 
 
 Proof-of-Stake validation logic is extended to validate stream data as well:
-* Client sends new event to a node to append it to a stream. Node runs validity and permission check and, if event is accepted, broadcasts it to the other nodes hosting this stream and commits it to the local storage.
-* Periodically node posts transaction that contains last known leaf hashes for updated stream.
-* Block proposer builds the current block and checks if transition described in transaction is valid by running same checks as node that sent transaction to the mempool.
-* Other nodes receive the new beacon block. Validators re-execute check locally and attest if block is valid.
+* When a client sends a new event to a node to append it to a stream, the node runs validity and permission checks. If the event is accepted, the node broadcasts it to the other nodes hosting this stream and commits it to local storage.
+* Periodically, nodes posts transactions that contain the last known leaf hashes for the updated stream.
+* A block proposer builds the current block and checks if the transition described in a transaction is valid by running same the checks as the node that sent the transaction to the mempool.
+* Other nodes receive the new beacon block. Validators re-execute the check locally and attest whether the block is valid.
 
-On top of that validators are tasked with periodic scrubbing of other nodes to ensure that they retain stream data they must host and are available.
+On top of that, validators are tasked with periodic scrubbing of other nodes to ensure that they retain stream data they must host and are available.
 
-Casablanca Chain is secured by stakes bridged from mainnet (or other major blockchain). Rewards and slashes are transferred from Casablanca Chain back to mainnet.
+Casablanca Chain is secured by stakes bridged from the Ethereum mainnet (or other major blockchains). Rewards and slashes are transferred from Casablanca Chain back to the mainnet.
 
 
 # Design Considerations
