@@ -8,7 +8,7 @@ Serge Khorun (serge@hntlabs.com)
 "Casablanca" is a code name for the web3 backend developed by HNT Labs for the Towns chat app. It includes a Node Network, Protocol and Client Library.
 
 The Casablanca network consists of nodes run by independent operators. All nodes are homogeneous, i.e. perform same duties. Each node runs Casablanca node software that provides: 
-* Casablanca Chain - a private proof-of-stake blockchain
+* Casablanca Chain - a proof-of-stake blockchain
 * Storage Pool - storage for chat data
 * Workflow logic for the chat application
 * Validation for blockchain and chat data
