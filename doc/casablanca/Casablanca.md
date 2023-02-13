@@ -31,19 +31,20 @@ For example, to post a new message in a channel, the client app creates an event
 
 All events are cryptographically signed. All events include the hash of the previous event in the signed data. This inclusion allows the backend and client to validate all events in the stream up to inception event. When two or more clients sign and send in new events simultaneously, branching in the stream may occur. Events that succeed such branches must include all known 'leaf' hashes. In other words, branching is allowed, but there are provisions to actively eliminate it.
 
-When new event is sent to the node to be added to the stream, receiving node runs permission check to determine if event creator, as determined by the signature, has the right to post event with such payload to the given stream. 
+When a client sends a new event to the node to be added to the stream, the receiving node runs a permission check to determine if the event creator, as determined by the signature, has the right to post the event with that specific payload to the given stream. 
 
-Permissions (entitlements) are provided by smart contracts running on external block chains, i.e. mainnet, Polygon, etc. Node reads entitlements from smart contract to check if operation encoded in the new event sent by the user is permitted. Other roles, such as owner, moderator and so on are recorded in these smart contracts as well. For example, if space is gates by specific NFT, user should be NFT holder to join. If user A bans user B, user A should have moderator permission. 
+Permissions (entitlements) are provided by smart contracts running on external blockchains, e.g. Ethereum mainnet, Polygon, etc. A node reads entitlements from smart contracts to check if the operation encoded in the new event sent by the user is permitted. Other roles, such as owner, moderator and so on are recorded in these smart contracts as well. For example, if a space is gated by a specific NFT, the user should be an NFT holder in order to join. If user A bans user B from a space, user A should have moderator permission and user B should not be the owner of the space.
 
-All nodes run Casablanca Chain - private blockchain based on Ethereum software. Casablanca Chain contains:
-* List of nodes
-* List of all streams in the system
+All nodes run Casablanca Chain, a blockchain constructed by a fork of Ethereum software. The Casablanca Chain contains:
+* A list of nodes
+* A list of all streams in the system
     * Chunk info for each stream
-    * List of replicas containing given chunk
-    * Last known leaf hashes for stream
+    * A list of chunk copies
+    * The last known leaf hashes for each stream
+
 Data is stored in EVM smart contracts with custom extensions.
 
-As stream grows, nodes hosting this stream periodically commit last known leaf hashes to Casablanca Chain. This *canonicalizes* these new events. 
+As a stream grows, nodes hosting this stream periodically commit last known leaf hashes to Casablanca Chain. This *canonicalizes* these new events. 
 
 Proof-of-Stake validation logic is extended to validate stream data as well:
 * Client sends new event to a node to append it to a stream. Node runs validity and permission check and, if event is accepted, broadcasts it to the other nodes hosting this stream and commits it to the local storage.
