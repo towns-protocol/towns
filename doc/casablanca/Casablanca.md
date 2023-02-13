@@ -25,11 +25,11 @@ Nodes expose stream-level APIs to clients. For example, the API allows clients t
 
 Streams are partitioned into chunks for storage purposes. Each chunk is copied to N nodes for redundancy and availability purposes. N is currently set to 5. This way each node in the network stores some subset of chunk copies. As a chunk gets full, a new chunk is allocated for the stream. Chunk copies are stored on a random set of nodes, and new updates to the stream are written to the new chunk.
 
-Stream consists of events. Event is a basic update unit for the stream. Events contain payloads of various type, such as `message`, `join`, `invite`, `leave`, etc.
+A stream consists of events. An event is a basic update unit for the stream. Events contain payloads of various types, such as `message`, `join`, `invite`, `leave`, etc.
 
-For example, to post new message in a channel, client app creates event with payload `message` and sends it to the node, once event is accepted and stored into the stream's chunk, it is delivered to other client apps currently listening to this conversation. 
+For example, to post a new message in a channel, the client app creates an event with the payload `message` and sends it to the node. Once the event is accepted by the node and stored into the stream's chunk, it is delivered to other client apps currently listening to this conversation. 
 
-All events are cryptographically signed. All events include hash of the previous event in the signed data. I.e. if hash of the last event in the stream is known, it's possible to validate all events in the stream up to inception event. Some branching in the stream may occur if two or more clients sign and send in new events simultaneously, in such succeeding event should include all known 'leaf' hashes. In other words, branching is allowed, but there are provisions to actively eliminate it.
+All events are cryptographically signed. All events include the hash of the previous event in the signed data. This inclusion allows the backend and client to validate all events in the stream up to inception event. When two or more clients sign and send in new events simultaneously, branching in the stream may occur. Events that succeed such branches must include all known 'leaf' hashes. In other words, branching is allowed, but there are provisions to actively eliminate it.
 
 When new event is sent to the node to be added to the stream, receiving node runs permission check to determine if event creator, as determined by the signature, has the right to post event with such payload to the given stream. 
 
