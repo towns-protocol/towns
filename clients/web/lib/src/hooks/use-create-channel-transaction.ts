@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateChannelInfo } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
-import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
-import { useZionClient } from './use-zion-client'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { BlockchainTransactionType } from '../types/web3-types'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Combine Matrix channel creation and Smart Contract channel
@@ -16,6 +16,7 @@ export function useCreateChannelTransaction() {
     const [transactionContext, setTransactionContext] = useState<
         TransactionContext<RoomIdentifier> | undefined
     >(undefined)
+    const isTransacting = useRef<boolean>(false)
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -35,25 +36,35 @@ export function useCreateChannelTransaction() {
                 receipt: undefined,
                 data: undefined,
             }
-            setTransactionContext(loading)
-            const txContext = await createChannelTransaction(createInfo)
-            setTransactionContext(txContext)
-            if (txContext?.status === TransactionStatus.Pending) {
-                // No error and transaction is pending
-                // save it to local storage so we can track it
-                if (txContext.transaction && txContext.data) {
-                    useTransactionStore.getState().storeTransaction({
-                        hash: txContext.transaction?.hash as `0x${string}`,
-                        type: BlockchainTransactionType.CreateChannel,
-                        data: {
-                            parentSpaceId: txContext.parentSpaceId,
-                            spaceId: txContext.data,
-                        },
-                    })
+            if (isTransacting.current) {
+                // Transaction already in progress
+                return
+            }
+
+            isTransacting.current = true
+            try {
+                setTransactionContext(loading)
+                const txContext = await createChannelTransaction(createInfo)
+                setTransactionContext(txContext)
+                if (txContext?.status === TransactionStatus.Pending) {
+                    // No error and transaction is pending
+                    // save it to local storage so we can track it
+                    if (txContext.transaction && txContext.data) {
+                        useTransactionStore.getState().storeTransaction({
+                            hash: txContext.transaction?.hash as `0x${string}`,
+                            type: BlockchainTransactionType.CreateChannel,
+                            data: {
+                                parentSpaceId: txContext.parentSpaceId,
+                                spaceId: txContext.data,
+                            },
+                        })
+                    }
+                    // Wait for transaction to be mined
+                    const rxContext = await waitForCreateChannelTransaction(txContext)
+                    setTransactionContext(rxContext)
                 }
-                // Wait for transaction to be mined
-                const rxContext = await waitForCreateChannelTransaction(txContext)
-                setTransactionContext(rxContext)
+            } finally {
+                isTransacting.current = false
             }
         },
         [createChannelTransaction, waitForCreateChannelTransaction],

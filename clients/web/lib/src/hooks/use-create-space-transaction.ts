@@ -1,14 +1,14 @@
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
+import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
-import { useZionClient } from './use-zion-client'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { BlockchainTransactionType } from '../types/web3-types'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -19,6 +19,7 @@ export function useCreateSpaceTransaction() {
     const [transactionContext, setTransactionContext] = useState<
         TransactionContext<RoomIdentifier> | undefined
     >(undefined)
+    const isTransacting = useRef<boolean>(false)
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -38,54 +39,64 @@ export function useCreateSpaceTransaction() {
             memberPermissions: Permission[],
             everyonePermissions: Permission[] = [],
         ): Promise<void> {
-            const loading: TransactionContext<RoomIdentifier> = {
-                status: TransactionStatus.Pending,
-                transaction: undefined,
-                receipt: undefined,
-                data: undefined,
-            }
-            setTransactionContext(loading)
-            let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
-            if (tokenAddresses.length) {
-                tokenEntitlement = {
-                    roleName,
-                    permissions: memberPermissions,
-                    tokens: createExternalTokenStruct(tokenAddresses),
-                    users: [],
-                }
-            } else {
-                tokenEntitlement = {
-                    roleName: '',
-                    permissions: [],
-                    tokens: [],
-                    users: [],
-                }
+            if (isTransacting.current) {
+                // Transaction already in progress
+                return
             }
 
-            const txContext = await createSpaceTransaction(
-                createInfo,
-                tokenEntitlement,
-                everyonePermissions,
-            )
-
-            setTransactionContext(txContext)
-
-            if (txContext?.status === TransactionStatus.Pending) {
-                // No error and transaction is pending
-                // Save it to local storage so we can track it
-                if (txContext.transaction && txContext.data) {
-                    useTransactionStore.getState().storeTransaction({
-                        hash: txContext.transaction?.hash as `0x${string}`,
-                        type: BlockchainTransactionType.CreateSpace,
-                        data: {
-                            spaceId: txContext.data,
-                        },
-                    })
+            isTransacting.current = true
+            try {
+                const loading: TransactionContext<RoomIdentifier> = {
+                    status: TransactionStatus.Pending,
+                    transaction: undefined,
+                    receipt: undefined,
+                    data: undefined,
+                }
+                setTransactionContext(loading)
+                let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
+                if (tokenAddresses.length) {
+                    tokenEntitlement = {
+                        roleName,
+                        permissions: memberPermissions,
+                        tokens: createExternalTokenStruct(tokenAddresses),
+                        users: [],
+                    }
+                } else {
+                    tokenEntitlement = {
+                        roleName: '',
+                        permissions: [],
+                        tokens: [],
+                        users: [],
+                    }
                 }
 
-                // Wait for transaction to be mined
-                const rxContext = await waitForCreateSpaceTransaction(txContext)
-                setTransactionContext(rxContext)
+                const txContext = await createSpaceTransaction(
+                    createInfo,
+                    tokenEntitlement,
+                    everyonePermissions,
+                )
+
+                setTransactionContext(txContext)
+
+                if (txContext?.status === TransactionStatus.Pending) {
+                    // No error and transaction is pending
+                    // Save it to local storage so we can track it
+                    if (txContext.transaction && txContext.data) {
+                        useTransactionStore.getState().storeTransaction({
+                            hash: txContext.transaction?.hash as `0x${string}`,
+                            type: BlockchainTransactionType.CreateSpace,
+                            data: {
+                                spaceId: txContext.data,
+                            },
+                        })
+                    }
+
+                    // Wait for transaction to be mined
+                    const rxContext = await waitForCreateSpaceTransaction(txContext)
+                    setTransactionContext(rxContext)
+                }
+            } finally {
+                isTransacting.current = false
             }
         },
         [createSpaceTransaction, waitForCreateSpaceTransaction],
