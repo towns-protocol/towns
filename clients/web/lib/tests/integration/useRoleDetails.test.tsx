@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Permission, RoleDetails } from '../../src/client/web3/ContractTypes'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
@@ -7,43 +8,25 @@ import { RegisterWallet } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
-import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
-import { useUpdateRoleTransaction } from '../../src/hooks/use-update-role-transaction'
 
 /**
  * This test suite tests the useRoles hook.
  */
-describe('useRoles', () => {
-    test('create a new space role', async () => {
+describe('useRoleDetails', () => {
+    test('create a space and get its role details', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const roleName = 'Test Role'
         const permissions = [Permission.Read, Permission.Write]
-        const moderatorRoleName = 'Moderator'
-        const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
-        const moderatorTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
-        const moderatorUsers = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
-        const updatedModeratorUsers = [
-            '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-            '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
-        ]
-        const updatedModeratorPermissions = [
-            Permission.Read,
-            Permission.Write,
-            Permission.Ban,
-            Permission.Redact,
-            Permission.AddRemoveChannels,
-        ]
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {
             throw new Error('chainId is undefined')
@@ -61,14 +44,6 @@ describe('useRoles', () => {
                         roleName={roleName}
                         permissions={permissions}
                         councilNftAddress={councilNftAddress}
-                        newRolePermissions={moderatorPermissions}
-                        newRoleName={moderatorRoleName}
-                        newRoleTokens={moderatorTokens}
-                        newRoleUsers={moderatorUsers}
-                        updatedRoleName={moderatorRoleName} // no change
-                        updatedRolePermissions={updatedModeratorPermissions} // updated
-                        updatedRoleTokens={moderatorTokens} // no change
-                        updatedRoleUsers={updatedModeratorUsers} // updated
                     />
                 </>
             </ZionTestApp>,
@@ -85,34 +60,23 @@ describe('useRoles', () => {
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
-        const createRoleButton = screen.getByRole('button', {
-            name: 'Create Role',
-        })
-        const updateRoleButton = screen.getByRole('button', {
-            name: 'Update Role',
-        })
+
+        /* Act */
         // click button to create the space
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
         await waitFor(() => within(spaceElement).getByText(spaceName))
-        // click button to create the role
-        fireEvent.click(createRoleButton)
-        await waitFor(() => within(rolesElement).getByText(`roleName:${moderatorRoleName}`))
-
-        /* Act */
-        // click button to update the role
-        fireEvent.click(updateRoleButton)
 
         /* Assert */
-        // verify the moderator role name has not changed
-        await assertRoleName(rolesElement, moderatorRoleName)
-        // verify the moderator permissions has changed
-        await assertPermissions(rolesElement, moderatorRoleName, updatedModeratorPermissions)
-        // verify the moderator user has changed
-        await assertUsers(rolesElement, moderatorRoleName, updatedModeratorUsers)
-        // verify token entitlement has not changed
-        assertNoNft(rolesElement, moderatorRoleName, councilNftAddress)
+        // verify the role name, permissions, token entitlements for the space.
+        // in the test components, each field is tagged with this pattern <roleName>:<field>:<value>.
+        // verify the role name.
+        await assertRoleName(rolesElement, roleName)
+        // verify the permissions
+        await assertPermissions(rolesElement, roleName, permissions)
+        // verify the token entitlement
+        await assertNft(rolesElement, roleName, councilNftAddress, 1)
     }) // end test
 }) // end describe
 
@@ -122,20 +86,9 @@ function TestComponent(args: {
     roleName: string
     permissions: Permission[]
     councilNftAddress: string | undefined
-    newRoleName: string
-    newRolePermissions: Permission[]
-    newRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
-    newRoleUsers: string[]
-    updatedRoleName: string
-    updatedRolePermissions: Permission[]
-    updatedRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
-    updatedRoleUsers: string[]
 }): JSX.Element {
     const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
-    const { createRoleTransaction, data: roleIdentifier } = useCreateRoleTransaction()
-    const { updateRoleTransaction } = useUpdateRoleTransaction()
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
-    const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
@@ -151,6 +104,7 @@ function TestComponent(args: {
                 )
             }
         }
+
         void handleClick()
     }, [
         args.councilNftAddress,
@@ -159,46 +113,10 @@ function TestComponent(args: {
         args.spaceName,
         createSpaceTransactionWithRole,
     ])
-    // handle click to create a role
-    const onClickCreateRole = useCallback(() => {
-        const handleClick = async () => {
-            await createRoleTransaction(
-                spaceNetworkId,
-                args.newRoleName,
-                args.newRolePermissions,
-                args.newRoleTokens,
-                args.newRoleUsers,
-            )
-        }
-        void handleClick()
-    }, [
-        args.newRolePermissions,
-        args.newRoleName,
-        args.newRoleTokens,
-        args.newRoleUsers,
-        createRoleTransaction,
-        spaceNetworkId,
-    ])
-    // handle click to update a role
-    const onClickUpdateRole = useCallback(() => {
-        const handleClick = async () => {
-            await updateRoleTransaction(
-                spaceNetworkId,
-                roleId,
-                args.updatedRoleName,
-                args.updatedRolePermissions,
-                args.updatedRoleTokens,
-                args.updatedRoleUsers,
-            )
-        }
-        void handleClick()
-    }, [args, spaceNetworkId, roleId, updateRoleTransaction])
     // the view
     return (
         <>
             <button onClick={onClickCreateSpace}>Create Space</button>
-            <button onClick={onClickCreateRole}>Create Role</button>
-            <button onClick={onClickUpdateRole}>Update Role</button>
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />
@@ -297,7 +215,6 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
                     return (
                         <div key={role.roleId.toNumber()}>
                             <RoleDetailsComponent
-                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                 spaceId={spaceNetworkId!}
                                 roleId={role.roleId.toNumber()}
                             />
@@ -349,17 +266,14 @@ async function assertPermissions(
     await Promise.all(allPermissions)
 }
 
-function assertNoNft(htmlElement: HTMLElement, roleName: string, nftAddress: string) {
-    expect(
-        within(htmlElement).queryByText(`${roleName}:nftAddress:${nftAddress}`),
-    ).not.toBeInTheDocument()
-}
-
-async function assertUsers(htmlElement: HTMLElement, roleName: string, users: string[]) {
-    const expected = users.map((user) => `${roleName}:user:${user}`)
-    const allUsers: Promise<HTMLElement>[] = []
-    for (const p of expected) {
-        allUsers.push(waitFor(() => within(htmlElement).getByText(p)))
-    }
-    await Promise.all(allUsers)
+async function assertNft(
+    htmlElement: HTMLElement,
+    roleName: string,
+    nftAddress: string,
+    quantity: number,
+) {
+    await waitFor(() => within(htmlElement).getByText(`${roleName}:nftAddress:${nftAddress}`))
+    await waitFor(() =>
+        within(htmlElement).getByText(`${roleName}:${nftAddress}:quantity:${quantity}`),
+    )
 }
