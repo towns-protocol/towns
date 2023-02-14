@@ -5,7 +5,8 @@ const MATRIX_HOMESERVER_URL = 'MATRIX_HOMESERVER_URL'
 
 export enum HomeServerUrl {
     LOCAL = 'http://localhost:8008',
-    REMOTE = 'https://node1.zion.xyz',
+
+    REMOTE = 'https://node1.towns.com',
 }
 
 export type UseHomeServerUrlReturn = ReturnType<typeof useMatrixHomeServerUrl>
