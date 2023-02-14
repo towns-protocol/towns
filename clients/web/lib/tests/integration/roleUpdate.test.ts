@@ -182,6 +182,7 @@ describe('update role', () => {
             permissions: moderatorPermissions,
             tokens: moderatorTokens,
             users: newModeratorUsers,
+            channels: [],
         }
         let receipt: ContractReceipt | undefined
         try {

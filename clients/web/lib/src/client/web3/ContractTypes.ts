@@ -37,6 +37,7 @@ export interface RoleDetails {
     permissions: Permission[]
     tokens: TokenDataTypes.ExternalTokenStruct[]
     users: string[]
+    channels: Channel[]
 }
 
 export interface Channel {

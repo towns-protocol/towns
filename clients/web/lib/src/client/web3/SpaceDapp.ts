@@ -1,5 +1,11 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
-import { EntitlementModule, EntitlementModuleType, Permission, RoleDetails } from './ContractTypes'
+import {
+    Channel,
+    EntitlementModule,
+    EntitlementModuleType,
+    Permission,
+    RoleDetails,
+} from './ContractTypes'
 import { EventsContractInfo, ISpaceDapp, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
@@ -22,7 +28,7 @@ interface Spaces {
     [spaceId: string]: SpaceShim
 }
 
-interface Entitlements {
+interface EntitlementShims {
     tokenEntitlement: TokenEntitlementShim | undefined
     userEntitlement: UserEntitlementShim | undefined
 }
@@ -166,10 +172,12 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
-        const [role, permissions, entitlementDetails] = await Promise.all([
+        const entitlementShims = await this.createEntitlementShims(space)
+        const [role, permissions, entitlementDetails, channels] = await Promise.all([
             space.read.getRoleById(roleId),
             space.getPermissionsByRoleId(roleId),
-            this.getEntitlementDetails(space, roleId),
+            this.getEntitlementDetails(space, entitlementShims, roleId),
+            this.getChannelsWithRole(space, entitlementShims, roleId),
         ])
         // cannot find the role
         if (!role || role.roleId.toNumber() === 0) {
@@ -183,6 +191,7 @@ export class SpaceDapp implements ISpaceDapp {
             permissions: permissions,
             tokens: entitlementDetails.tokens,
             users: entitlementDetails.users,
+            channels,
         }
     }
 
@@ -428,13 +437,18 @@ export class SpaceDapp implements ISpaceDapp {
     ): Promise<BytesLike[]> {
         const encodedCallData: BytesLike[] = []
         // get current entitlements for the role
-        const currentEntitlements = await this.getEntitlementDetails(space, roleId)
+        const entitlementShims = await this.createEntitlementShims(space)
+        const entitlementsDetails = await this.getEntitlementDetails(
+            space,
+            entitlementShims,
+            roleId,
+        )
         // remove current entitlements
         const encodeRemoveRoleFromEntitlement = this.encodeRemoveRoleFromEntitlement(
             space,
             roleId,
             modules,
-            currentEntitlements,
+            entitlementsDetails,
         )
         for (const e of encodeRemoveRoleFromEntitlement) {
             encodedCallData.push(e)
@@ -485,9 +499,10 @@ export class SpaceDapp implements ISpaceDapp {
     ): Promise<BytesLike[]> {
         const encodedCallData: BytesLike[] = []
         // get current entitlements for the role
+        const entitlementShims = await this.createEntitlementShims(space)
         const [modules, currentEntitlements] = await Promise.all([
             space.getEntitlementModules(),
-            this.getEntitlementDetails(space, params.roleId),
+            this.getEntitlementDetails(space, entitlementShims, params.roleId),
         ])
         // remove current entitlements
         const encodeRemoveRoleFromEntitlement = this.encodeRemoveRoleFromEntitlement(
@@ -620,29 +635,29 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async getEntitlementDetails(
         space: SpaceShim,
+        entitlementShims: EntitlementShims,
         roleId: number,
     ): Promise<EntitlementData> {
         let rawTokenDetails: TokenDataTypes.ExternalTokenStruct[][] = []
         let rawUserDetails: string[][] = []
         // Get entitlement details.
-        const entitlements = await this.createEntitlementShims(space)
-        if (entitlements.tokenEntitlement && entitlements.userEntitlement) {
+        if (entitlementShims.tokenEntitlement && entitlementShims.userEntitlement) {
             // Case 1: both token and user entitlements are defined.
             ;[rawTokenDetails, rawUserDetails] = await Promise.all([
-                this.getTokenEntitlementDetails(roleId, entitlements.tokenEntitlement),
-                this.getUserEntitlementDetails(roleId, entitlements.userEntitlement),
+                this.getTokenEntitlementDetails(roleId, entitlementShims.tokenEntitlement),
+                this.getUserEntitlementDetails(roleId, entitlementShims.userEntitlement),
             ])
-        } else if (entitlements.tokenEntitlement) {
+        } else if (entitlementShims.tokenEntitlement) {
             // Case 2: only token entitlement is defined.
             rawTokenDetails = await this.getTokenEntitlementDetails(
                 roleId,
-                entitlements.tokenEntitlement,
+                entitlementShims.tokenEntitlement,
             )
-        } else if (entitlements.userEntitlement) {
+        } else if (entitlementShims.userEntitlement) {
             // Case 3: only user entitlement is defined.
             rawUserDetails = await this.getUserEntitlementDetails(
                 roleId,
-                entitlements.userEntitlement,
+                entitlementShims.userEntitlement,
             )
         }
         // Verify that we have only one token and one user entitlement.
@@ -665,7 +680,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
     }
 
-    private async createEntitlementShims(space: SpaceShim): Promise<Entitlements> {
+    private async createEntitlementShims(space: SpaceShim): Promise<EntitlementShims> {
         const modules = await space.getEntitlementModules()
         let tokenEntitlement: TokenEntitlementShim | undefined = undefined
         let userEntitlement: UserEntitlementShim | undefined = undefined
@@ -728,5 +743,69 @@ export class SpaceDapp implements ISpaceDapp {
             details.push(users)
         }
         return details
+    }
+
+    private async getChannelsWithRole(
+        space: SpaceShim,
+        entitlementShims: EntitlementShims,
+        roleId: number,
+    ): Promise<Channel[]> {
+        const uniqueChannelIds = new Set<string>()
+        // get all the channels from the space
+        const allChannels = await space.getChannels()
+        // for each channel, check with each entitlement if the role is in the channel
+        const tokenEntitlement = entitlementShims.tokenEntitlement
+        const userEntitlement = entitlementShims.userEntitlement
+        for (const c of allChannels) {
+            // check if the role is in the token entitlement for that channel
+            let roleIds = await tokenEntitlement?.getRoleIdsByChannelId(c.channelNetworkId)
+            if (roleIds) {
+                if (this.isRoleIdInArray(roleIds, roleId)) {
+                    uniqueChannelIds.add(c.channelNetworkId)
+                    continue
+                }
+            }
+            // check if the role is in the user entitlement for that channel
+            roleIds = await userEntitlement?.getRoleIdsByChannelId(c.channelNetworkId)
+            if (roleIds) {
+                if (this.isRoleIdInArray(roleIds, roleId)) {
+                    uniqueChannelIds.add(c.channelNetworkId)
+                    continue
+                }
+            }
+        }
+        // get details for each channel
+        const channelPromises: Promise<Channel | undefined>[] = []
+        for (const c of uniqueChannelIds.values()) {
+            channelPromises.push(this.getChannelDetails(space, c))
+        }
+        const channelDetails = await Promise.all(channelPromises)
+        // return only channels with details
+        return channelDetails.filter((c) => c !== undefined) as Channel[]
+    }
+
+    private isRoleIdInArray(roleIds: BigNumber[], roleId: number): boolean {
+        for (const r of roleIds) {
+            if (r.eq(roleId)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private async getChannelDetails(
+        space: SpaceShim,
+        channelNetworkId: string,
+    ): Promise<Channel | undefined> {
+        const channelHash = keccak256(toUtf8Bytes(channelNetworkId))
+        const channel = await space.read?.channelsByHash(channelHash)
+        if (channel) {
+            return {
+                channelNetworkId,
+                name: channel.name,
+                disabled: channel.disabled,
+            }
+        }
+        return undefined
     }
 }
