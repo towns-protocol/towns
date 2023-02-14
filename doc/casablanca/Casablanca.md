@@ -65,19 +65,19 @@ Since any node can disappear from the network at any time, stored data needs to 
 
 ## Consensus
 
-Blockchains achieve consensus in distributed untrusted environment.
+Blockchains achieve consensus in a distributed untrusted environment.
 
-In traditional distributed storage systems consensus is achieved using consensus algorithms such as Paxos, or, lately, Raft. In blockchain-based systems blockchain provides consensus, so there is no need for using additional consensus algorithms.
+In traditional distributed storage systems, consensus is achieved using consensus algorithms such as Paxos, or, lately, Raft. In blockchain-based systems, the blockchain provides consensus, so there is no need for using additional consensus algorithms.
 
-Unlike traditional systems, in blockchain system nodes can be actively malicious. While this appears to be a critical difference, in practice due to software bugs, hardware problems, data corruptions and networking issues, traditional distributed storage systems have to treat nodes as unreliable and “untrusted”, if not actively malicious.
+Unlike traditional systems, in a blockchain system nodes can be actively malicious. While this appears to be a critical difference, in practice due to software bugs, hardware problems, data corruptions and networking issues, traditional distributed storage systems have to treat nodes as unreliable and “untrusted”, if not actively malicious.
 
 ## Time
 
-It’s challenging to keep clocks synchronized in the distributed system. To provide a coarse unit of timing and sequencing blockchain block number is used as a time-stamping primitive. As such, nodes can reject new objects/events/transactions which are stamped as being from the future or too far from the past.
+It’s challenging to keep clocks synchronized in a distributed system. To provide a coarse unit of timing and sequencing, blockchain block number is used as a time-stamping primitive. As such, nodes can reject new objects/events/transactions which are stamped as being from the future or too far from the past.
 
 ## Randomness
 
-Beacon chain provides a new random number every epoch through the RAMDAO mechanism. So it’s possible to perform random, but deterministic operations every epoch, such as choosing storage nodes for new chunks, etc.
+The beacon chain provides a new random number every epoch through the RANDAO mechanism. So it’s possible to perform random, but deterministic operations every epoch, such as choosing storage nodes for new chunks, etc.
 
 ## Global Settings
 
