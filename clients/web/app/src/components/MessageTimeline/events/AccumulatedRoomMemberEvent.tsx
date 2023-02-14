@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
+import { useZionClient } from 'use-zion-client'
 import { AvatarStack, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
@@ -13,7 +14,8 @@ type Props = {
 }
 export const AccumulatedRoomMemberEvent = (props: Props) => {
     const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
-    const users = useMemo(
+    const { client } = useZionClient()
+    const avatarUsers = useMemo(
         () =>
             uniqBy(
                 event.events.map((e) => ({
@@ -22,8 +24,17 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     userId: e.content.userId,
                 })),
                 (e) => e.userId,
-            ),
-        [event.events],
+            )
+                .filter(({ userId: _userId }) => userId !== _userId)
+                .map((e) => {
+                    // e.content.avatarUrl contains outdated avatarUrl in the case user has changed their avatar
+                    const _user = client?.getUser(e.userId)
+                    return {
+                        ...e,
+                        avatarUrl: _user?.avatarUrl,
+                    }
+                }),
+        [client, event.events, userId],
     )
 
     const message = useMemo(() => {
@@ -33,7 +44,12 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         }`
         const names = getNameListFromArray(
             event.events
-                .map((e) => (e.content.userId === userId ? 'you' : e.content.displayName))
+                .map((e, index) => {
+                    if (e.content.userId === userId) {
+                        return index === 0 ? 'You' : 'you'
+                    }
+                    return e.content.displayName
+                })
                 .filter(notUndefined),
             verb,
         )
@@ -42,7 +58,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
 
     return (
         <Stack centerContent horizontal gap="sm" paddingX="lg" paddingY="md" color="gray2">
-            <AvatarStack users={users} size="avatar_xs" />
+            <AvatarStack users={avatarUsers} size="avatar_xs" />
             <Paragraph>{message}</Paragraph>
         </Stack>
     )
