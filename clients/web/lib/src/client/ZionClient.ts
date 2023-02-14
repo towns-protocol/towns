@@ -890,6 +890,79 @@ export class ZionClient {
         }
     }
 
+    public async deleteRoleTransaction(
+        spaceNetworkId: string,
+        roleId: number,
+    ): Promise<TransactionContext<void>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+        try {
+            transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId)
+            console.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[deleteRoleTransaction] error', err)
+            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: undefined,
+            error,
+        }
+    }
+
+    public async waitForDeleteRoleTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForDeleteRoleTransaction] transaction is undefined')
+            }
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            }
+            console.log(
+                '[waitForDeleteRoleTransaction] deleteRole transaction completed' /*, receipt */,
+            )
+        } catch (err) {
+            console.error('[waitForDeleteRoleTransaction] error', err)
+            if (err instanceof Error) {
+                error = err
+            } else {
+                error = new Error(`delete role failed: ${JSON.stringify(err)}`)
+            }
+            console.error('[waitForDeleteRoleTransaction] failed', error)
+        }
+
+        if (receipt?.status === 1) {
+            // Successfully updated the role on-chain.
+            console.log('[waitForDeleteRoleTransaction] success')
+            return {
+                data: undefined,
+                status: TransactionStatus.Success,
+                transaction,
+                receipt,
+            }
+        }
+
+        // got here without success
+        return {
+            data: undefined,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        }
+    }
+
     /************************************************
      * setSpaceAccess
      *************************************************/

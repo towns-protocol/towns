@@ -83,6 +83,13 @@ interface ZionClientImpl {
     waitForUpdateRoleTransaction: (
         context: TransactionContext<void> | undefined,
     ) => Promise<TransactionContext<void> | undefined>
+    deleteRoleTransaction: (
+        spaceNetworkId: string,
+        roleId: number,
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForDeleteRoleTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     editMessage: (
         roomId: RoomIdentifier,
         message: string,
@@ -153,6 +160,8 @@ export function useZionClient(): ZionClientImpl {
         waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
         updateRoleTransaction: useWithCatch(client?.updateRoleTransaction),
         waitForUpdateRoleTransaction: useWithCatch(client?.waitForUpdateRoleTransaction),
+        deleteRoleTransaction: useWithCatch(client?.deleteRoleTransaction),
+        waitForDeleteRoleTransaction: useWithCatch(client?.waitForDeleteRoleTransaction),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletIdRegistered,
         getServerVersions: useWithCatch(client?.getServerVersions),

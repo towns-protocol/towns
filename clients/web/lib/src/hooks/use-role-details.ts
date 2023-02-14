@@ -1,13 +1,15 @@
 import { QueryKeyRoles } from './query-keys'
 import { useCallback } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useZionContext } from '../components/ZionContextProvider'
 
 /**
  * Convience function to get space role details.
  */
+
 export function useRoleDetails(spaceId: string, roleId: number) {
     const { client } = useZionContext()
+    const queryClient = useQueryClient()
     const isEnabled = spaceId.length > 0 && roleId > 0
 
     const getRole = useCallback(
@@ -32,8 +34,19 @@ export function useRoleDetails(spaceId: string, roleId: number) {
         // query that does the data fetching.
         () => getRole(spaceId, roleId),
         // options for the query.
-        // query will not execute until the flag is true.
-        { enabled: isEnabled },
+        {
+            // query will not execute until the flag is true.
+            enabled: isEnabled,
+            onError: () => {
+                // on error, remove the query from the cache to force an update.
+                queryClient.removeQueries([
+                    QueryKeyRoles.BySpaceId,
+                    spaceId,
+                    QueryKeyRoles.ByRoleId,
+                    roleId,
+                ])
+            },
+        },
     )
 
     return {
