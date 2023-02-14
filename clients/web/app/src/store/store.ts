@@ -10,6 +10,8 @@ interface AppState {
     setIsWindowFocused: (isWindowActive: boolean) => void
     setChannelmessageInput: (id: string, value: string) => void
     channelMessageInputMap: { [inputId: string]: string }
+    dismissedGettingStartedMap: { [spaceId: string]: string }
+    setDismissedGettingStarted: (spaceId: string) => void
 }
 
 export const useStore = create(
@@ -26,6 +28,12 @@ export const useStore = create(
             },
 
             channelMessageInputMap: {},
+            dismissedGettingStartedMap: {},
+            setDismissedGettingStarted: (spacedId) => {
+                const _map = get().dismissedGettingStartedMap
+                _map[spacedId] = spacedId
+                set(() => ({ dismissedGettingStartedMap: _map }))
+            },
             setChannelmessageInput: (id, value) => {
                 const userInput = get().channelMessageInputMap
                 userInput[id] = value

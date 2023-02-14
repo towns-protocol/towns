@@ -11,8 +11,9 @@ export const ActionNavItem = (props: {
     icon?: IconName
     highlight?: boolean
     onClick?: (e: React.MouseEvent) => void
+    children?: React.ReactNode
 }) => {
-    const { icon, id, link, highlight: isHighlight, label, badge, onClick } = props
+    const { icon, id, link, highlight: isHighlight, label, badge, onClick, children } = props
     return (
         <NavItem to={link} id={id} exact={false} cursor="pointer" onClick={onClick}>
             {icon && (
@@ -33,6 +34,7 @@ export const ActionNavItem = (props: {
             <Stack horizontal grow justifyContent="end">
                 {badge}
             </Stack>
+            {children}
         </NavItem>
     )
 }

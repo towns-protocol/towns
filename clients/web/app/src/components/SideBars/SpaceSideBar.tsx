@@ -19,7 +19,7 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Icon, IconName, Paragraph, Stack } from '@ui'
+import { Badge, Box, Button, ButtonText, Icon, IconName, Paragraph, Stack } from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { PATHS } from 'routes'
@@ -28,7 +28,9 @@ import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { shortAddress } from 'ui/utils/utils'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
+import { useStore } from 'store/store'
 import { SideBar } from './_SideBar'
+import { buttonText, buttonTextParent } from './SpaceSideBar.css'
 
 type Props = {
     space: SpaceData
@@ -40,6 +42,8 @@ export const SpaceSideBar = (props: Props) => {
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
     const { data: isOwner } = useHasPermission(Permission.Owner)
+    const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
+    const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
@@ -65,19 +69,34 @@ export const SpaceSideBar = (props: Props) => {
 
     const { data: canCreateChannel } = useHasPermission(Permission.AddRemoveChannels)
 
+    const onRemoveGettingStarted = useCallback(
+        (e: React.MouseEvent) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setDismissedGettingStarted(space.id.networkId)
+        },
+        [setDismissedGettingStarted, space.id.networkId],
+    )
+
     return (
         <SideBar data-testid="space-sidebar">
             <SpaceSideBarHeader space={space} onSettings={onSettings} />
             <Stack paddingY="md">
                 {membership === Membership.Join && (
                     <>
-                        {isOwner && (
-                            <ActionNavItem
-                                icon="wand"
-                                id="getting-started"
-                                label="Getting Started"
-                                link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
-                            />
+                        {isOwner && !dismissedGettingStartedMap[space.id.networkId] && (
+                            <Box className={buttonTextParent}>
+                                <ActionNavItem
+                                    icon="wand"
+                                    id="getting-started"
+                                    label="Getting Started"
+                                    link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
+                                >
+                                    <Button className={buttonText} onClick={onRemoveGettingStarted}>
+                                        <Icon type="close" />
+                                    </Button>
+                                </ActionNavItem>
+                            </Box>
                         )}
 
                         <ActionNavItem
