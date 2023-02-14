@@ -87,12 +87,9 @@ Some settings are controlled by DAO and are stored in the smart contract on the 
 
 ## Blockchain and Reality
 
-Basic design principle of the system is that blockchain describes how reality should look like and participants (nodes) work to bring reality they observe in compliance with blockchain records. If they fail to do so, their stakes get slashed.
+A basic design principle of the system is that the blockchain describes what reality should look like, and nodes work to bring what they observe into compliance with blockchain records. If they fail to do so, their stakes get slashed.
 
-For example, a node can be assigned to host replica of a specific chunk. Blockchain is updated to reflect this fact. Node has some time to replicate data from other nodes. If validation run detects absence of chunk replica on the node later, node’s stake is partially slashed.
-
-
-
+For example, a node can be assigned to host a copy of a specific chunk. This assignment is stored on-chain. The node has some time to copy this chunk from other nodes. If the validation process detects the absence of the chunk copy on the node later, the node’s stake is partially slashed.
 
 # Events and Streams
 
