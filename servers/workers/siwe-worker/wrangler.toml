@@ -1,8 +1,6 @@
 main = "./src/index.ts"
 name = "siwe-worker"
 compatibility_date = "2023-01-18"
-# compatibility_date = "2022-07-26"
-node_compat=true
 account_id="9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
 
@@ -12,7 +10,6 @@ port = 8005
 local_protocol = "http"
 
 [vars]
-# VAR_NAME = "some_value"
 ENVIRONMENT = "development"
 VERIFY = "true"
 
@@ -33,11 +30,11 @@ VERIFY = "true"
 # yarn publish:stage
 [env.staging]
 workers_dev = true
-routes = [{ pattern = "siwe-worker-staging.zion.xyz", custom_domain = true }]
+routes = [{ pattern = "siwe-worker-staging.zion.xyz", custom_domain = true }, { pattern = "siwe-worker-staging.towns.com", custom_domain = true } ]
 vars = { ENVIRONMENT = "staging", VERIFY = "true" } # [vars] access, not secrets
 
 # production routes
 # yarn publish:prod
 [env.production]
-route = { pattern = "siwe-worker.zion.xyz", custom_domain = true }
+route = [{ pattern = "siwe-worker.zion.xyz", custom_domain = true }, { pattern = "siwe-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "production", VERIFY = "true" }

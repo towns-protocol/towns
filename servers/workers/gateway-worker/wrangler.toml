@@ -1,7 +1,6 @@
 name = "gateway-worker"
 main = "src/index.ts"
 compatibility_date = "2023-01-20"
-node_compat=true
 account_id="9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
 
@@ -11,7 +10,6 @@ port = 8004
 local_protocol = "http"
 
 [vars]
-# VAR_NAME = "some_value"
 ENVIRONMENT = "development"
 CF_API = "https://api.cloudflare.com/client/v4/accounts"
 IMAGE_SERVICE = "https://images.zion.xyz"
@@ -34,7 +32,7 @@ ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"
 # yarn publish:stage
 [env.staging]
 workers_dev = true
-routes = [{ pattern = "gateway-worker-staging.zion.xyz", custom_domain = true }]
+routes = [{ pattern = "gateway-worker-staging.zion.xyz", custom_domain = true }, { pattern = "gateway-worker-staging.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "staging", CF_API = "https://api.cloudflare.com/client/v4/accounts", IMAGE_SERVICE = "https://images.zion.xyz", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
 
 services = [ {binding = "authz", service = "siwe-worker-staging", environment = "production"} ]
@@ -42,7 +40,7 @@ services = [ {binding = "authz", service = "siwe-worker-staging", environment = 
 # production routes
 # yarn publish:prod
 [env.production]
-routes = [{ pattern = "gateway-worker.zion.xyz", custom_domain = true }]
+routes = [{ pattern = "gateway-worker.zion.xyz", custom_domain = true }, { pattern = "gateway-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts", IMAGE_SERVICE = "https://images.zion.xyz", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
 
 services = [ {binding = "authz", service = "siwe-worker", environment = "production"} ]

@@ -1,16 +1,14 @@
 main = "./src/index.ts"
 name = "unfurl-worker"
-compatibility_date = "2022-07-26"
-node_compat=true
-type="javascript"
+compatibility_date = "2023-01-18"
 # wrangler should be source of truth https://developers.cloudflare.com/workers/wrangler/configuration/#source-of-truth, so defining custom_domain here even though it causes issue in our use case:
 # We are using a custom domain which is a subdomain of a zone that has no content, yet (zion.xyz). 
 # This causes `wrangler dev` to fail https://github.com/cloudflare/wrangler2/issues/2149
 # But `wrangler dev --local` (which is what our VSCode task uses) and publishing work fine. 
 # If you really need `wrangler dev` for some reason, remove the following line temporarily
 # keeping zone_id for reference
-zone_id = "26d0d19e0a900688cc377ceb7ec0413d"
 account_id="9840f8a36a817b103e00e29a0e2bad6f"
+minify=true
 
 # this is for tests, so it gets used even though wrangler CLI says otherwise
 [miniflare]
@@ -41,11 +39,12 @@ local_protocol = "http"
 # staging routes
 # yarn publish:stage
 [env.staging]
+routes = [{ pattern = "unfurl-worker-staging.towns.com", custom_domain = true }]
 workers_dev = true
-# vars = { ENVIRONMENT = "staging" } # [vars] access, not secrets
+vars = { ENVIRONMENT = "staging" }
 
 # production routes
 # yarn publish:prod
 [env.production]
-route = { pattern = "unfurl-proxy.zion.xyz", custom_domain = true }
-# vars = { ENVIRONMENT = "production" }
+routes = [{ pattern = "unfurl-worker.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production" }

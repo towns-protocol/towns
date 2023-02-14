@@ -43,8 +43,8 @@ router.get('/space-icon-bypass/:id', async (request, env) => {
 })
 
 // /space-icon/<space_id>/<IMAGE_OPTIONS>
-// see https://developers.cloudflare.com/images/image-resizing/url-format/
-// for IMAGE_OPTIONS available
+// see https://developers.cloudflare.com/images/cloudflare-images/transform/flexible-variants/
+// i.e. https://imagedelivery.net/<ACCOUNT_HASH>/<IMAGE_ID>/w=400,sharpen=3
 router.get('/space-icon/:id+', async (request, env) => {
     const { pathname } = new URL(request.url)
     const pathSplit = pathname.split('/')
