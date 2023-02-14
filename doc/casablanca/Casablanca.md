@@ -83,8 +83,7 @@ The beacon chain provides a new random number every epoch through the RANDAO mec
 
 All nodes maintain the same configuration parameters that can be updated based on the future block number a-la Ethereum fork settings.
 
-In addition to that there are settings that are controlled by DAO and are stored in the smart contract on the Casablanca Chain.
-
+Some settings are controlled by DAO and are stored in the smart contract on the Casablanca Chain.
 
 ## Blockchain and Reality
 
