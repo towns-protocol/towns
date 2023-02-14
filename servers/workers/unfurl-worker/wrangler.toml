@@ -1,6 +1,7 @@
 main = "./src/index.ts"
 name = "unfurl-worker"
 compatibility_date = "2023-01-18"
+node_compat=true
 # wrangler should be source of truth https://developers.cloudflare.com/workers/wrangler/configuration/#source-of-truth, so defining custom_domain here even though it causes issue in our use case:
 # We are using a custom domain which is a subdomain of a zone that has no content, yet (zion.xyz). 
 # This causes `wrangler dev` to fail https://github.com/cloudflare/wrangler2/issues/2149
