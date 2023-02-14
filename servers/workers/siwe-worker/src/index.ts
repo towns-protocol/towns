@@ -6,15 +6,6 @@ import {
 	getOptionsResponse,
 } from '../../common'
 
-const GOERLI_RPC_URL = 'https://eth-goerli.g.alchemy.com/v2/'
-const LOCALHOST_RPC_URL = 'http://localhost:8545'
-
-const providerMap = new Map<string, string>([
-	['development', LOCALHOST_RPC_URL],
-	['staging', GOERLI_RPC_URL],
-	['production', GOERLI_RPC_URL],
-])
-
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -45,7 +36,6 @@ export const worker = {
 		// See CPU startup time issues
 		// https://github.com/cloudflare/wrangler2/issues/2519
 		// https://github.com/cloudflare/wrangler2/issues/2152
-		const { ethers } = require('ethers')
 		const { verifySiweMessage } = require('./siwe/handler')
 		if (isOptionsRequest(request)) {
 			return getOptionsResponse(request)
@@ -63,16 +53,7 @@ export const worker = {
 		}
 
 		try {
-			// Need to setup provider with skipFetchSetup flag
-			// See issue: https://github.com/ethers-io/ethers.js/issues/1886
-			const provider = new ethers.providers.StaticJsonRpcProvider({
-				url:
-					env.ENVIRONMENT == 'development'
-						? providerMap.get(env.ENVIRONMENT)
-						: providerMap.get(env.ENVIRONMENT) + env.ALCHEMY_API_KEY,
-				skipFetchSetup: true,
-			})
-			const response = await verifySiweMessage(request, provider, env.VERIFY === 'true')
+			const response = await verifySiweMessage(request, env, env.VERIFY === 'true')
 			return response
 		} catch (e) {
 			console.log(`error: `, e)

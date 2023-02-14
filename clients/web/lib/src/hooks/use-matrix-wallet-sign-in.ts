@@ -500,6 +500,7 @@ function setZionSiweCookie(auth: AuthenticationData): string {
         value: Buffer.from(`${auth.signature}__@@__${auth.message}`).toString('base64'),
         path: '/',
         secure: 'true',
+        sameSite: 'lax',
     }
-    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}`
+    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}; sameSite=${cookie.sameSite};`
 }
