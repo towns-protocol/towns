@@ -11,7 +11,6 @@ import { SpaceIcon } from '@components/SpaceIcon'
 import { vars } from 'ui/styles/vars.css'
 import { useSpaceIconUpload } from 'api/lib/spaceIcon'
 import { Spinner } from '@components/Spinner'
-import { env } from 'utils'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 
 async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
