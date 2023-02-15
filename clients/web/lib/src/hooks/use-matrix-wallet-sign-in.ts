@@ -495,12 +495,21 @@ export function createMessageToSign(args: {
 }
 
 function setZionSiweCookie(auth: AuthenticationData): string {
+    const hostname = window.location.hostname
+    let domain
+    if (hostname.includes('localhost')) {
+        domain = 'localhost'
+    } else {
+        domain = `.${hostname.split('.').slice(-2).join('.')}`
+    }
     const cookie = {
         name: 'zion_siwe',
         value: Buffer.from(`${auth.signature}__@@__${auth.message}`).toString('base64'),
+        domain,
         path: '/',
         secure: 'true',
         sameSite: 'lax',
     }
-    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}; sameSite=${cookie.sameSite};`
+    // this doesn't work for onrender.com preview environments, which requires domain to equal hostname
+    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}; sameSite=${cookie.sameSite}; domain=${cookie.domain};`
 }
