@@ -1,0 +1,215 @@
+import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
+import {
+    createTestSpaceWithEveryoneRole,
+    createTestSpaceWithZionMemberRole,
+    registerAndStartClients,
+} from 'use-zion-client/tests/integration/helpers/TestUtils'
+
+import { MatrixError } from 'matrix-js-sdk'
+import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
+import { RoomVisibility } from '../../src/types/zion-types'
+import { ZTEvent } from '../../src/types/timeline-types'
+import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
+import { waitFor } from '@testing-library/dom'
+
+describe('redact messages', () => {
+    test('member can redact own messages', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice } = await registerAndStartClients(['alice'])
+        await alice.fundWallet()
+        // create a space
+        const spaceId = await createTestSpaceWithZionMemberRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        if (!spaceId) {
+            throw new Error('spaceId is undefined')
+        }
+        // create a channel for reading and writing
+        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
+        const channelId = await alice.createChannel({
+            name: 'test channel',
+            visibility: RoomVisibility.Public,
+            parentSpaceId: spaceId,
+            roleIds: [roles[0].roleId.toNumber()],
+        })
+        if (!channelId) {
+            throw new Error('channelId is undefined')
+        }
+
+        /** Act */
+        // alice sends a message to the room
+        const message = 'Hello me, myself, and alice!'
+        await alice.sendMessage(channelId, message)
+        const messageEvent = await alice.getLatestEvent(channelId, ZTEvent.RoomMessage)
+        if (!messageEvent) {
+            throw new Error('Failed to get message event')
+        }
+        // redact the message
+        const error = await getError<Error>(async function () {
+            await alice.redactEvent(channelId, messageEvent.eventId)
+        })
+
+        /** Assert */
+        // verify that no error was thrown for redaction
+        expect(error).toBeInstanceOf(NoThrownError)
+        // verify that the message is redacted
+        await waitFor(() =>
+            expect(
+                alice
+                    .getEvents_TypedRoomMessage(channelId)
+                    .find((event) => event.content.body === message),
+            ).toBeUndefined(),
+        )
+    })
+
+    test("member cannot redact other's messages", async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        await alice.fundWallet()
+        // create a space with entitlement to read and write
+        const spaceId = await createTestSpaceWithEveryoneRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        if (!spaceId) {
+            throw new Error('spaceId is undefined')
+        }
+        // create a channel for reading and writing
+        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
+        const channelId = await alice.createChannel({
+            name: 'test channel',
+            visibility: RoomVisibility.Public,
+            parentSpaceId: spaceId,
+            roleIds: [roles[0].roleId.toNumber()],
+            // todo: enable encryption for 2 party exchange when it is supported
+            // without disabling encryption, bob is unable to send a message. fails with error:
+            // "Room !jjHj6Ju6cAJjzPwS:localhost was previously configured to use encryption,
+            // but is no longer. Perhaps the homeserver is hiding the configuration event."
+            disableEncryption: true,
+        })
+        if (!channelId) {
+            throw new Error('channelId is undefined')
+        }
+        // invite user to join the channel
+        if (!bob.matrixUserId) {
+            throw new Error('Failed to get bob matrix user id')
+        }
+        await alice.inviteUser(channelId, bob.matrixUserId)
+        await bob.joinRoom(channelId)
+
+        /** Act */
+        // alice sends a message in the channel
+        const message = 'Hello I am alice!'
+        await alice.sendMessage(channelId, message)
+        // use a scrollback to get the message event
+        await bob.scrollback(channelId, 30)
+        const messageEvent = bob
+            .getEvents_TypedRoomMessage(channelId)
+            .find((event) => event.content.body === message)
+        if (!messageEvent) {
+            throw new Error('Failed to get message event')
+        }
+        // bob tries to redact alice's message
+        const error = await getError<MatrixError>(async function () {
+            await bob.redactEvent(channelId, messageEvent.eventId)
+        })
+
+        /** Assert */
+        // verify that error was thrown for redaction
+        expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
+        // verify that the message is NOT redacted
+        expect(
+            alice
+                .getEvents_TypedRoomMessage(channelId)
+                .find((event) => event.content.body === message),
+        ).toBeDefined()
+    })
+
+    test("moderator can redact other's messages", async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        await alice.fundWallet()
+        // create a space with entitlement to read and write
+        const spaceId = await createTestSpaceWithEveryoneRole(alice, [
+            Permission.Read,
+            Permission.Write,
+        ])
+        if (!spaceId) {
+            throw new Error('spaceId is undefined')
+        }
+        // get the roles for channel creation later
+        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
+        // create the moderator role with the permission to redact messages
+        const permissions = [Permission.Read, Permission.Write, Permission.Redact]
+        // add bob to the moderator role
+        if (!bob.walletAddress) {
+            throw new Error('Failed to get bob wallet address')
+        }
+        const users: string[] = [bob.walletAddress]
+        const moderatorRoleId = await alice.createRole(
+            spaceId.networkId,
+            'moderator',
+            permissions,
+            [],
+            users,
+        )
+        if (!moderatorRoleId) {
+            throw new Error('Failed to create moderator role')
+        }
+        // create a channel for reading and writing
+        const channelId = await alice.createChannel({
+            name: 'test channel',
+            visibility: RoomVisibility.Public,
+            parentSpaceId: spaceId,
+            // add the space role and the moderator role to the channel
+            roleIds: [roles[0].roleId.toNumber(), moderatorRoleId.roleId],
+            // todo: enable encryption for 2 party exchange when it is supported
+            // without disabling encryption, bob is unable to send a message. fails with error:
+            // "Room !jjHj6Ju6cAJjzPwS:localhost was previously configured to use encryption,
+            // but is no longer. Perhaps the homeserver is hiding the configuration event."
+            disableEncryption: true,
+        })
+        if (!channelId) {
+            throw new Error('channelId is undefined')
+        }
+        // invite user to join the channel
+        if (!bob.matrixUserId) {
+            throw new Error('Failed to get bob matrix user id')
+        }
+        await alice.inviteUser(channelId, bob.matrixUserId)
+        await bob.joinRoom(channelId)
+
+        /** Act */
+        // alice sends a message in the channel
+        const message = 'Hello I am alice!'
+        await alice.sendMessage(channelId, message)
+        // use a scrollback to get the message event
+        await bob.scrollback(channelId, 30)
+        const messageEvent = bob
+            .getEvents_TypedRoomMessage(channelId)
+            .find((event) => event.content.body === message)
+        if (!messageEvent) {
+            throw new Error('Failed to get message event')
+        }
+        // bob tries to redact alice's message
+        const error = await getError<Error>(async function () {
+            await bob.redactEvent(channelId, messageEvent.eventId)
+        })
+
+        /** Assert */
+        // verify that NO error was thrown for redaction
+        expect(error).toBeInstanceOf(NoThrownError)
+        // use a scrollback to refresh the message events
+        await alice.scrollback(channelId, 30)
+        // verify that the message is redacted
+        expect(
+            alice
+                .getEvents_TypedRoomMessage(channelId)
+                .find((event) => event.content.body === message),
+        ).toBeUndefined()
+    })
+})

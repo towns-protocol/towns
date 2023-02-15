@@ -25,6 +25,9 @@ export async function createMatrixChannel(
         is_direct: false,
         initial_state: makeInitialState(homeServerUrl, createInfo, createInfo.disableEncryption),
         room_version: '10',
+        power_level_content_override: {
+            redact: 0, // permission to redact messages is enforced on the server through entitlement checks
+        },
     }
     // create the room
     const response = await matrixClient.createRoom(options)
