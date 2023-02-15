@@ -41,7 +41,7 @@ export function makeRoomIdentifierFromSlug(slug: string): RoomIdentifier {
 export function makeMatrixRoomIdentifier(roomId: string): MatrixRoomIdentifier {
     return {
         protocol: SpaceProtocol.Matrix,
-        slug: encodeURIComponent(roomId.replace('.com', '-c0m-')), // TODO - this should be using matrixClient.getRoomIdForAlias, but didn't want to add another async loop here just yet
+        slug: encodeURIComponent(roomId), // TODO - this should be using matrixClient.getRoomIdForAlias, but didn't want to add another async loop here just yet
         networkId: roomId,
     }
 }
