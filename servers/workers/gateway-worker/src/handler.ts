@@ -98,11 +98,13 @@ router.get('/space-icon/:id+', async (request, env) => {
 })
 
 router.post('/space-icon/:id', async (request, env) => {
-    // spaceId should not include any file suffix
-    const spaceId = request.params.id.split('.')[0]
+    // spaceId is <id>:node1.towns.com
+    // should include full node name b/c the siwe-worker requires it to verify space ownership
+    const spaceId = request.params.id
 
     if (env.ENVIRONMENT !== 'development') {
         const cookie = await handleCookie(request.clone())
+        console.log(`cookie: ${cookie}`)
         const encodedCookie = Buffer.from(cookie, 'base64')
         const decodedCookie = encodedCookie.toString('utf8')
         const [signature, message] = decodedCookie.split('__@@__')
@@ -134,7 +136,7 @@ router.post('/space-icon/:id', async (request, env) => {
     const copyRequest: Request = request.clone()
     const formData = await copyRequest.formData()
     const formId: string | null = formData.get('id')
-    if ((formId as string).split('.')[0] !== spaceId) {
+    if ((formId as string) !== spaceId) {
         return new Response(JSON.stringify({ error: 'id mismatch' }), {
             status: 400,
         })

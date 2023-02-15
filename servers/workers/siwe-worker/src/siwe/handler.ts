@@ -27,7 +27,6 @@ export async function verifySiweMessage(
 	}
 	const siweMessage = new SiweMessage(message as string)
 	await siweMessage.verify({ signature: signature as string })
-
 	if (!verify) {
 		return new Response(`OK`)
 	}
@@ -45,7 +44,6 @@ export async function verifySiweMessage(
 		},
 		network,
 	)
-
 	const isSpaceOwner = await verifySpaceOwner(
 		spaceId as string,
 		siweMessage.address,
