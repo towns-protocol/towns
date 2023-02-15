@@ -67,7 +67,7 @@ export function useDeleteRoleTransaction() {
     )
 
     useEffect(() => {
-        console.log('useUpdateRoleTransaction', 'states', {
+        console.log('useDeleteRoleTransaction', 'states', {
             isLoading,
             data,
             error,
