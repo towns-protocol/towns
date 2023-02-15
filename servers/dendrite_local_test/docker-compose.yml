@@ -6,7 +6,7 @@ services:
     image: postgres:14
     restart: always
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_PASSWORD: itsasecret
       POSTGRES_USER: dendrite
@@ -49,7 +49,7 @@ services:
     environment:
         BLOCKCHAIN_PROVIDER_URL: https://goerli.infura.io/v3/888e72a42bbd4ae996b3707864dd8c88
         CHAIN_ID: 31337
-        DATABASE_CONNECTION_STRING: postgresql://dendrite:itsasecret@postgres-dendrite:5432/dendrite?sslmode=disable
+        DATABASE_CONNECTION_STRING: postgresql://dendrite:itsasecret@host.docker.internal:5432/dendrite?sslmode=disable
         SERVER_NAME: localhost
 
     ##### PROD-LIKE CONFIGURATION #####
