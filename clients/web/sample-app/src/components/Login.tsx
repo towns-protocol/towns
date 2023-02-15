@@ -171,7 +171,7 @@ export function Login(): JSX.Element {
 export function Profile() {
     const { homeServerUrl } = useZionContext()
     const { saveHomeServerUrl } = useSampleAppStore()
-    const servers = useRef(['http://localhost:8008', 'https://node1.zion.xyz'])
+    const servers = useRef(['http://localhost:8008', 'https://node1.towns.com'])
     if (homeServerUrl && !servers.current.includes(homeServerUrl)) {
         servers.current.push(homeServerUrl)
     }

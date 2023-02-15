@@ -294,5 +294,5 @@ mitmweb -p 8009 --mode reverse:http://localhost:8008/
 Then change the jest config in jest-setup.ts to point to 8009
 
 ```
-process.env.HOMESERVER = "http://localhost:8009"; // "https://node1.zion.xyz";
+process.env.HOMESERVER = "http://localhost:8009"; // "https://node1.towns.com";
 ```
