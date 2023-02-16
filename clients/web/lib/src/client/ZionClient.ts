@@ -686,7 +686,7 @@ export class ZionClient {
      *************************************************/
     public isEntitled(
         spaceId: string,
-        channelId: string,
+        channelId: string | undefined,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
