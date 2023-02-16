@@ -29,8 +29,8 @@ export abstract class IOnboardingStep<T = IOnboardingState> extends TypedEventEm
     get opts(): ZionOnboardingOpts | undefined {
         return this.client.opts.onboardingOpts
     }
-    get user(): MatrixUser | undefined {
-        const user = this.client.getUser(this.userId)
+    get matrixUser(): MatrixUser | undefined {
+        const user = this.client.matrixClient?.getUser(this.userId)
         return user ?? undefined
     }
     abstract get state(): T

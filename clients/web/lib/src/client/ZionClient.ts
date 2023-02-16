@@ -20,7 +20,6 @@ import {
     MatrixError,
     PendingEventOrdering,
     RelationType,
-    User,
     UserEvent,
     createClient,
 } from 'matrix-js-sdk'
@@ -36,8 +35,13 @@ import {
     RoomMember,
     SendMessageOptions,
     SendTextMessageOptions,
+    User,
 } from '../types/zion-types'
-import { SignerContext, publicKeyToBuffer } from '@zion/core'
+import {
+    SignerContext,
+    publicKeyToBuffer,
+    isUserStreamId as isCasablancaUserStreamId,
+} from '@zion/core'
 
 import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
 import { FullyReadMarker, ZTEvent } from '../types/timeline-types'
@@ -63,7 +67,7 @@ import { sendMatrixMessage } from './matrix/SendMessage'
 import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
 import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
-import { toZionRoom } from '../store/use-matrix-store'
+import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendCsbMessage } from './casablanca/SendMessage'
 import { newLoginSession, newRegisterSession, NewSession } from '../hooks/session'
@@ -1465,12 +1469,17 @@ export class ZionClient {
     /************************************************
      * getUser
      ************************************************/
-    public getUser(userId: string): User | null {
-        // todo casablanca look for user in casablanca
-        if (!this.matrixClient) {
-            throw new Error('matrix client is undefined')
+    public getUser(userId: string): User | undefined {
+        if (isCasablancaUserStreamId(userId)) {
+            // todo casablanca look for user in casablanca
+            throw new Error('not implemented')
+        } else {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
+            }
+            const matrixUser = this.matrixClient.getUser(userId)
+            return matrixUser ? toZionUser(matrixUser) : undefined
         }
-        return this.matrixClient.getUser(userId)
     }
 
     /************************************************

@@ -11,14 +11,14 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
         return {
             kind: 'user-profile',
             bNeedsAvatar:
-                this.user?.avatarUrl === null ||
-                this.user?.avatarUrl === undefined ||
-                this.user.avatarUrl === '',
+                this.matrixUser?.avatarUrl === null ||
+                this.matrixUser?.avatarUrl === undefined ||
+                this.matrixUser.avatarUrl === '',
             bNeedsDisplayName:
-                this.user?.displayName === null ||
-                this.user?.displayName === undefined ||
-                this.user.displayName === '' ||
-                this.userId.indexOf(this.user.displayName) >= 0,
+                this.matrixUser?.displayName === null ||
+                this.matrixUser?.displayName === undefined ||
+                this.matrixUser.displayName === '' ||
+                this.userId.indexOf(this.matrixUser.displayName) >= 0,
         }
     }
 
@@ -35,16 +35,16 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
     }
 
     start() {
-        if (!this.user) {
+        if (!this.matrixUser) {
             throw new Error('OnboardingStep_UserProfile::UserId is undefined')
         }
-        this.user?.on(UserEvent.DisplayName, this.onUserUpdatedCB)
-        this.user?.on(UserEvent.AvatarUrl, this.onUserUpdatedCB)
+        this.matrixUser?.on(UserEvent.DisplayName, this.onUserUpdatedCB)
+        this.matrixUser?.on(UserEvent.AvatarUrl, this.onUserUpdatedCB)
     }
 
     stop() {
-        this.user?.off(UserEvent.DisplayName, this.onUserUpdatedCB)
-        this.user?.off(UserEvent.AvatarUrl, this.onUserUpdatedCB)
+        this.matrixUser?.off(UserEvent.DisplayName, this.onUserUpdatedCB)
+        this.matrixUser?.off(UserEvent.AvatarUrl, this.onUserUpdatedCB)
     }
 
     private onUserUpdatedCB = () => {

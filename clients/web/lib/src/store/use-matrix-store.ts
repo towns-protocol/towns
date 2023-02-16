@@ -1,9 +1,9 @@
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import { Membership, Room, RoomMember, SpaceChild } from '../types/zion-types'
+import { Membership, Room, RoomMember, SpaceChild, User } from '../types/zion-types'
 import { makeRoomIdentifier, makeMatrixRoomIdentifier } from '../types/room-identifier'
 import create, { SetState } from 'zustand'
 
-import { Room as MatrixRoom } from 'matrix-js-sdk'
+import { Room as MatrixRoom, User as MatrixUser } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { ZionClientEvent } from '../client/ZionClientTypes'
 
@@ -93,5 +93,16 @@ export function toZionSpaceChild(r: IHierarchyRoom): SpaceChild {
         worldReadable: r.world_readable,
         guestCanJoin: r.guest_can_join,
         numjoinedMembers: r.num_joined_members,
+    }
+}
+
+export function toZionUser(theUser: MatrixUser): User {
+    return {
+        userId: theUser.userId,
+        displayName: theUser.displayName ?? 'Unknown',
+        avatarUrl: theUser.avatarUrl,
+        presence: theUser.presence,
+        lastPresenceTs: theUser.lastPresenceTs,
+        currentlyActive: theUser.currentlyActive,
     }
 }
