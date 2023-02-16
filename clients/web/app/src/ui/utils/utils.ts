@@ -29,4 +29,4 @@ export const isForbiddenError = (error: Error): boolean => {
 }
 
 export const getInviteUrl = (spaceId: RoomIdentifier | undefined) =>
-    `${window.location.host}/${PATHS.SPACES}/${spaceId?.slug}?invite`
+    `${window.location.host}/${PATHS.SPACES}/${spaceId?.slug}/?invite`
