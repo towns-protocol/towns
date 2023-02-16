@@ -14,11 +14,6 @@ export const SpaceSettingsCard = (props: Props) => {
 
     const { closeCard } = useCardOpenerContext()
 
-    const onInviteClick = useCallback(() => {
-        navigate(`/spaces/${spaceId.slug}/invite`)
-        closeCard()
-    }, [closeCard, navigate, spaceId.slug])
-
     const { leaveRoom } = useZionClient()
     const onLeaveClick = useCallback(async () => {
         await leaveRoom(spaceId)
@@ -39,9 +34,6 @@ export const SpaceSettingsCard = (props: Props) => {
     return (
         <Box position="relative">
             <Card border width="300" fontSize="md" paddingY="sm" role="navigation">
-                <MenuItem selected icon="invite" tabIndex={0} onClick={onInviteClick}>
-                    Invite
-                </MenuItem>
                 <MenuItem icon="settings" onClick={onSettingsClick}>
                     Space Manager (WIP)
                 </MenuItem>

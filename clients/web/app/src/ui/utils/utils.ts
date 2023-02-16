@@ -1,3 +1,6 @@
+import { RoomIdentifier } from 'use-zion-client'
+import { PATHS } from 'routes'
+
 export const toPx = (value?: string | number) => (typeof value === 'number' ? `${value}px` : value)
 
 export const notUndefined = <T>(x: T | undefined): x is T => {
@@ -24,3 +27,6 @@ export const isRejectionError = (error: Error): boolean => {
 export const isForbiddenError = (error: Error): boolean => {
     return error.name === 'M_FORBIDDEN'
 }
+
+export const getInviteUrl = (spaceId: RoomIdentifier | undefined) =>
+    `${window.location.host}/${PATHS.SPACES}/${spaceId?.slug}?invite`

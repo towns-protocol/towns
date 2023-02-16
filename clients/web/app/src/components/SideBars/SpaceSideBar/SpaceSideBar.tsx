@@ -29,8 +29,9 @@ import { shortAddress } from 'ui/utils/utils'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
-import { SideBar } from './_SideBar'
-import { buttonText, buttonTextParent } from './SpaceSideBar.css'
+import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
+import { SideBar } from '../_SideBar'
+import { buttonText, buttonTextParent, copySpaceLink, spaceIconContainer } from './SpaceSideBar.css'
 
 type Props = {
     space: SpaceData
@@ -200,11 +201,9 @@ const SpaceSideBarHeader = (props: {
                 width="100%"
                 gap="lg"
                 shrink={false}
-                style={{
-                    background: `linear-gradient(180deg, #222026FF 0%, #151418FF 100%)`,
-                }}
+                className={spaceIconContainer}
             >
-                <Box padding position="topLeft">
+                <Box padding="sm" position="topLeft">
                     <SettingsGear
                         spaceId={space.id}
                         spaceName={space.name}
@@ -225,6 +224,9 @@ const SpaceSideBarHeader = (props: {
                     ) : (
                         <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />
                     )}
+                </Box>
+                <Box padding="sm" position="topRight" className={copySpaceLink}>
+                    <CopySpaceLink spaceId={space.id} />
                 </Box>
                 {hasName && (
                     <Stack centerContent width="100%">
@@ -366,6 +368,7 @@ const SettingsGear = (props: {
             >
                 {({ triggerProps }) => (
                     <Box
+                        padding="xs"
                         color={{ hover: 'default', default: 'gray2' }}
                         onClick={onSettingClick}
                         {...triggerProps}

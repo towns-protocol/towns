@@ -11,6 +11,7 @@ import { FadeIn } from '@components/Transitions'
 import { useChannelCreationRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
+import { getInviteUrl } from 'ui/utils/utils'
 import { childStyle, contentStyle, copiedStyle, headerStyle } from './SpaceOwnerLanding.css'
 
 type InviteCardProps = {
@@ -45,7 +46,7 @@ export const SpaceOwnerLanding = () => {
     const navigate = useNavigate()
     const [, copy] = useCopyToClipboard()
     const [copyWasClicked, setCopyWasClicked] = React.useState(false)
-    const inviteUrl = `${window.location.host}/${PATHS.SPACES}/${space?.id.slug}?invite`
+    const inviteUrl = getInviteUrl(space?.id)
     const { data: roles } = useChannelCreationRoles(space?.id.networkId)
     const hasEveryoneRole = roles?.find((role) => role.name === 'Everyone')
     const hasMemberRole = roles?.find((role) => role.name === 'Member')

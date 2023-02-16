@@ -1,20 +1,12 @@
 import React from 'react'
-import useEvent from 'react-use-event-hook'
 import { RoomIdentifier, useChannelMembers } from 'use-zion-client'
-import { useNavigate } from 'react-router-dom'
-import { Avatar, Box, IconButton, Paragraph, Stack } from '@ui'
+import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 
 export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: RoomIdentifier }) => {
-    const { spaceId, channelId } = props
+    const { spaceId } = props
 
     const { members } = useChannelMembers()
-
-    const navigate = useNavigate()
-
-    const onInviteClick = useEvent((e: React.MouseEvent) => {
-        e.preventDefault()
-        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/settings`)
-    })
 
     return (
         <Stack horizontal border="level4" background="level3" rounded="sm" height="height_lg">
@@ -26,8 +18,16 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
                 </Stack>
                 <Paragraph size="sm">{members.length}</Paragraph>
             </Stack>
+
             <Box centerContent paddingX="xs" borderLeft="level4">
-                <IconButton icon="personAdd" size="square_sm" onClick={onInviteClick} />
+                <CopySpaceLink
+                    spaceId={spaceId}
+                    align="right"
+                    offsetTop="md"
+                    background={{
+                        default: 'level3',
+                    }}
+                />
             </Box>
         </Stack>
     )

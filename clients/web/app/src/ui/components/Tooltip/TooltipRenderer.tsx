@@ -16,6 +16,7 @@ type Props = {
     placement?: Placement
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
+    keepOpenOnTriggerRefClick?: boolean
     trigger?: typeof Trigger[keyof typeof Trigger]
 }
 
@@ -44,6 +45,7 @@ export const TooltipRenderer = (props: Props) => {
         children,
         placement = 'vertical',
         render,
+        keepOpenOnTriggerRefClick,
     } = props
 
     const containerRef = useRef<HTMLDivElement>(null)
@@ -99,11 +101,20 @@ export const TooltipRenderer = (props: Props) => {
             const isClickOutside =
                 overlayContainer && clickedNode && !overlayContainer.contains(clickedNode)
 
+            const isClickOnTriggerRef =
+                triggerRef && clickedNode && triggerRef.contains(clickedNode)
+
             if (KEEP_OPEN_ON_CLICK_INSIDE) {
                 // in some cases you might want to keep the popup open even when
                 // clicking inside - there's no such case at the moment but could
                 // become handy
                 if (isClickOutside) {
+                    setActive(false)
+                }
+            }
+            // keep open when clicking again on the trigger. Edge case, used by CopySpaceLink
+            else if (keepOpenOnTriggerRefClick) {
+                if (!isClickOnTriggerRef) {
                     setActive(false)
                 }
             } else {
@@ -122,7 +133,7 @@ export const TooltipRenderer = (props: Props) => {
             window.removeEventListener('click', onGlobalClick)
             window.removeEventListener('contextmenu', onGlobalClick)
         }
-    }, [active, trigger])
+    }, [active, keepOpenOnTriggerRefClick, trigger, triggerRef])
 
     const onClick = useCallback(
         (e: React.MouseEvent) => {

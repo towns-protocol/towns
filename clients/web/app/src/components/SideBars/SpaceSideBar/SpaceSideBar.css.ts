@@ -16,3 +16,22 @@ export const buttonText = style({
         },
     },
 })
+
+export const spaceIconContainer = style({
+    background: `linear-gradient(180deg, #222026FF 0%, #151418FF 100%)`,
+})
+
+export const spaceUrlText = style({
+    color: vars.color.foreground.gray2,
+})
+
+export const copySpaceLink = style({
+    transition: `opacity 120ms ease`,
+    opacity: 0,
+
+    selectors: {
+        [`${spaceIconContainer}:hover &`]: {
+            opacity: 1,
+        },
+    },
+})
