@@ -102,7 +102,7 @@ export class ZionClient {
         this.name = name || ''
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        this.matrixClient = ZionClient.createMatrixClient(opts.matrixServerUrl, this._auth)
+        this.matrixClient = ZionClient.createMatrixClient(opts, this._auth)
         const { spaceDapp, councilNFT } = this.createShims(
             this._chainId,
             this.opts.web3Provider,
@@ -127,7 +127,7 @@ export class ZionClient {
      * getServerVersions
      *************************************************/
     public async getServerVersions() {
-        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         const version = await matrixClient.getVersions()
         // TODO casablanca, return server versions
         return version as IZionServerVersions
@@ -137,7 +137,7 @@ export class ZionClient {
      * isUserRegistered
      *************************************************/
     public async isUserRegistered(username: string): Promise<boolean> {
-        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         const isAvailable = await matrixClient.isUsernameAvailable(username)
         // If the username is available, then it is not yet registered.
         return isAvailable === false
@@ -173,7 +173,7 @@ export class ZionClient {
         })
 
         this._auth = undefined
-        this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
+        this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth)
     }
 
     /************************************************
@@ -206,7 +206,7 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already registered')
         }
-        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         return await newRegisterSession(matrixClient, walletAddress)
     }
 
@@ -219,7 +219,7 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already registered')
         }
-        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         const { access_token, device_id, user_id } = await matrixClient.registerRequest(
             request,
             LoginTypePublicKey,
@@ -245,7 +245,7 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already logged in')
         }
-        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         return await newLoginSession(matrixClient)
     }
 
@@ -258,7 +258,7 @@ export class ZionClient {
         if (this.auth) {
             throw new Error('already logged in')
         }
-        const matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl)
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const { access_token, device_id, user_id } = await matrixClient.login(LoginTypePublicKey, {
             auth,
@@ -309,7 +309,7 @@ export class ZionClient {
         this.spaceDapp = spaceDapp
         this.councilNFT = councilNFT
         // new matrixClient
-        this.matrixClient = ZionClient.createMatrixClient(this.opts.matrixServerUrl, this._auth)
+        this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth)
         // start it up, this begins a sync command
         if (!this.matrixClient.crypto) {
             await loadOlm()
@@ -1630,10 +1630,10 @@ export class ZionClient {
      * createMatrixClient
      * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
-    private static createMatrixClient(baseUrl: string, auth?: ZionAuth): MatrixClient {
+    private static createMatrixClient(opts: ZionOpts, auth?: ZionAuth): MatrixClient {
         if (auth) {
             return createClient({
-                baseUrl: baseUrl,
+                baseUrl: opts.matrixServerUrl,
                 accessToken: auth.accessToken,
                 userId: auth.userId,
                 deviceId: auth.deviceId,
@@ -1642,7 +1642,7 @@ export class ZionClient {
             })
         } else {
             return createClient({
-                baseUrl: baseUrl,
+                baseUrl: opts.matrixServerUrl,
             })
         }
     }
