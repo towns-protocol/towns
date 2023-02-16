@@ -43,7 +43,7 @@ resource "aws_network_interface" "zion-docker-host-nic" {
 
 resource "aws_instance" "zion-docker-host-instance" {
   ami           = data.aws_ami.ecs_host_ami.id
-  instance_type = "t2.large"
+  instance_type = "t2.xlarge"
 
   # TODO: pass node name or instance name as variable (to include the zion node name in the instance name)
   tags = merge(module.global_constants.tags, {Name = "${module.global_constants.environment}-zion-docker-host-instance"})

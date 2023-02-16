@@ -62,16 +62,6 @@ resource "aws_ecs_task_definition" "postgres" {
       containerPath = "/docker-entrypoint-initdb.d/20-create-db.sh",
       sourceVolume = "postgres-init"
     }]
-
-    logConfiguration = {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": local.postgres_log_group_name,  
-        "awslogs-region": module.global_constants.region, 
-        "awslogs-stream-prefix": "ecs"
-      }
-    }
-
   }])
 
   volume {
@@ -139,16 +129,6 @@ resource "aws_ecs_task_definition" "dendrite" {
       containerPath = "/var/dendrite/media",
       sourceVolume = "dendrite-media"
     }]
-
-    logConfiguration = {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": local.dendrite_log_group_name,  
-        "awslogs-region": module.global_constants.region,
-        "awslogs-stream-prefix": "ecs"
-      }
-    }
-
   }])
 
   volume {
