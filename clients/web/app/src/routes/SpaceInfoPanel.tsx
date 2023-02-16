@@ -26,7 +26,7 @@ export const SpaceInfoPanel = () => {
     const { data } = useContractSpaceInfo(space?.id?.networkId)
     const address = data?.address ?? ''
     const navigate = useNavigate()
-    const isOwner = useHasPermission(Permission.Owner)
+    const { data: isOwner } = useHasPermission(Permission.Owner)
     const { homeserverUrl } = useMatrixHomeServerUrl()
 
     const matrixUserOwner = useMemo(() => {
