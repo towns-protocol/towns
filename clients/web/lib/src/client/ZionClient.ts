@@ -1232,6 +1232,9 @@ export class ZionClient {
         }
     }
 
+    /************************************************
+     * sendReaction
+     *************************************************/
     public async sendReaction(
         roomId: RoomIdentifier,
         eventId: string,
@@ -1276,6 +1279,43 @@ export class ZionClient {
         }
     }
 
+    /************************************************
+     * canSendToDevice
+     *************************************************/
+    public canSendToDeviceMessage(userId: string) {
+        if (isCasablancaUserStreamId(userId)) {
+            // todo casablanca look for user in casablanca
+            throw new Error('not implemented')
+        } else {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
+            }
+
+            const devices = this.matrixClient.getStoredDevicesForUser(userId)
+            return devices.length > 0
+        }
+    }
+
+    /************************************************
+     * sendToDevice
+     *************************************************/
+    public async sendToDeviceMessage(userId: string, type: string, content: object) {
+        if (isCasablancaUserStreamId(userId)) {
+            // todo casablanca look for user in casablanca
+            throw new Error('not implemented')
+        } else {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
+            }
+
+            const devices = this.matrixClient.getStoredDevicesForUser(userId)
+            const devicesInfo = devices.map((d) => ({ userId: userId, deviceInfo: d }))
+            await this.matrixClient.encryptAndSendToDevices(devicesInfo, {
+                type,
+                content,
+            })
+        }
+    }
     /************************************************
      * editMessage
      *************************************************/
