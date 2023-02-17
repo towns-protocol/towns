@@ -113,7 +113,8 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
         if (clientRunning && !joiningRooms.current) {
             joiningRooms.current = true
             void (async () => {
-                await Promise.all([joinRoom(spaceId), joinRoom(channelId)])
+                await joinRoom(spaceId)
+                await joinRoom(channelId)
                 setJoinComplete(true)
                 joiningRooms.current = false
             })()

@@ -55,6 +55,12 @@ describe('sendAMessage', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
+        // everyone joins the space
+        for (let i = 1; i < numClients; i++) {
+            console.log(`!!!!!! client ${i} joins room`)
+            const client = clients[`client_${i}`]
+            await client.joinRoom(spaceId)
+        }
         // everyone joins the room
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} joins room`)

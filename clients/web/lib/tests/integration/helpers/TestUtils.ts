@@ -191,7 +191,7 @@ export async function createTestChannelWithSpaceRoles(
 }
 
 export function getTestPrimaryProtocol(): SpaceProtocol {
-    return process.env.PRIMARY_PROTOCOL && process.env.PRIMARY_PROTOCOL == 'casablanca'
+    return process.env.PRIMARY_PROTOCOL && process.env.PRIMARY_PROTOCOL === 'casablanca'
         ? SpaceProtocol.Casablanca
         : SpaceProtocol.Matrix
 }

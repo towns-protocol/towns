@@ -21,6 +21,7 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { TestConstants } from './helpers/TestConstants'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -154,7 +155,10 @@ describe('sendMessageHooks', () => {
         const editButton = screen.getByRole('button', { name: 'Edit' })
         const redactButton = screen.getByRole('button', { name: 'Redact' })
         // wait for client to be running
-        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
+        await waitFor(
+            () => expect(clientRunning).toHaveTextContent('true'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // wait for the channel join
         await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // have jane send a message to bob

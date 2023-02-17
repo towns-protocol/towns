@@ -51,6 +51,7 @@ export class ZionTestClient extends ZionClient {
         console.log('========= ZionTestClient: cleanup done =========')
     }
 
+    public props?: ZionTestClientProps
     public provider: ZionTestWeb3Provider
     public delegateWallet: ethers.Wallet
     public get matrixUserId(): string | undefined {
@@ -86,6 +87,7 @@ export class ZionTestClient extends ZionClient {
             chainId,
             name,
         )
+        this.props = props
         // initialize our provider that wraps our wallet and chain communication
         this.provider = provider
         // matrix user identifier
