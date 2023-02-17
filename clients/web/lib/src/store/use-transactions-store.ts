@@ -18,21 +18,20 @@ interface TransactionsState {
 
 export const useTransactionStore = create(
     persist<TransactionsState>(
-        (set, get) => ({
+        (set) => ({
             transactions: {},
             storeTransaction: (transaction) =>
                 set((state) => {
                     return {
                         transactions: {
                             ...state.transactions,
-                            [transaction.hash]: get().transactions[transaction.hash] ?? transaction,
+                            [transaction.hash]: transaction,
                         },
                     }
                 }),
             deleteAndEmitTransaction: (hash, isSuccess) =>
                 set((state) => {
-                    const transactions = { ...state.transactions }
-                    const { [hash]: toEmit, ...rest } = transactions
+                    const { [hash]: toEmit, ...rest } = { ...state.transactions }
                     TxnsEventEmitter.emitTransaction({ ...toEmit, isSuccess })
                     return { ...state, transactions: rest }
                 }),

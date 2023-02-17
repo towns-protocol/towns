@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
 import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/zion-types'
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
@@ -25,7 +25,7 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, RoomEvent } from 'matrix-js-sdk'
 
-describe('useCreateChannelTransaction', () => {
+describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
@@ -72,19 +72,24 @@ describe('useCreateChannelTransaction', () => {
             const { spaceRoles } = useRoles(spaceNetworkId)
             const transactions = useTransactionStore((state) => state.transactions)
 
-            const numberOfSavedTransactions = useRef(0)
-            const numberOfChannelBlockchainEvents = useRef(0)
+            const [seenTransactions, setSeenTransactions] = useState<Record<string, undefined>>({})
+            const [numberOfChannelBlockchainEvents, setNumberOfChannelBlockchainEvents] =
+                useState(0)
 
             useEffect(() => {
-                Object.keys(transactions).forEach(() => {
-                    numberOfSavedTransactions.current += 1
+                setSeenTransactions((t) => {
+                    const newState = { ...t }
+                    Object.keys(transactions).forEach((tx) => {
+                        newState[tx] = undefined
+                    })
+                    return newState
                 })
             }, [transactions])
 
             useEffect(() => {
                 function onBlockchainTransaction(event: MatrixEvent) {
                     if (event.getType() === ZTEvent.BlockchainTransaction) {
-                        numberOfChannelBlockchainEvents.current += 1
+                        setNumberOfChannelBlockchainEvents((t) => t + 1)
                     }
                 }
                 client?.matrixClient?.on(RoomEvent.Timeline, onBlockchainTransaction)
@@ -141,13 +146,22 @@ describe('useCreateChannelTransaction', () => {
                 }
             }, [createChannelTransaction, roleIds, spaceId])
 
-            console.log('TestComponent', 'createChannelTransactionStates', {
-                isLoadingChannel,
+            useEffect(() => {
+                console.log('useCreateChannelTransactionHook', 'createChannelTransactionStates', {
+                    isLoadingChannel,
+                    channelId,
+                    createChannelError,
+                    createChannelTxStatus,
+                    createChannelTxHash,
+                })
+            }, [
                 channelId,
                 createChannelError,
-                createChannelTxStatus,
                 createChannelTxHash,
-            })
+                createChannelTxStatus,
+                isLoadingChannel,
+            ])
+
             // the view
             return (
                 <>
@@ -163,11 +177,12 @@ describe('useCreateChannelTransaction', () => {
                                     </ChannelContextProvider>
                                 )}
                             </div>
-                            <div data-testid="saved-transactions">
-                                {numberOfSavedTransactions.current}
+                            <div data-testid="transactions">{Object.keys(transactions).length}</div>
+                            <div data-testid="seen-transactions">
+                                {Object.keys(seenTransactions).length}
                             </div>
                             <div data-testid="channel-blockchain-events">
-                                {numberOfChannelBlockchainEvents.current}
+                                {numberOfChannelBlockchainEvents}
                             </div>
                         </>
                     </SpaceContextProvider>
@@ -187,7 +202,8 @@ describe('useCreateChannelTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         const spaceElement = screen.getByTestId('spaces')
         const channelElement = screen.getByTestId('channel')
-        const transactionsNumber = screen.getByTestId('saved-transactions')
+        const transactions = screen.getByTestId('transactions')
+        const transactionsNumber = screen.getByTestId('seen-transactions')
         const blockchainEvents = screen.getByTestId('channel-blockchain-events')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
@@ -210,6 +226,7 @@ describe('useCreateChannelTransaction', () => {
         // click button to create the channel
         fireEvent.click(createChannelButton)
         await waitFor(() => expect(transactionsNumber).toHaveTextContent('2'))
+        await waitFor(() => expect(transactions).toHaveTextContent('0'))
         await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
         /* Assert */
