@@ -640,11 +640,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x67b78a5f9cd5d0ac7566c4a64179798e74fb7cae6b426805c391321a8980a1e1",
+      "keccak256": "0xb9167208891835b0042feda44f7c1d8446cf0b71e8f1c60b7bfc5c77919de8a5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://fe8c227edee73083a11fbd48a85e2c1db9fd96f9d9bc81bb7425e50d5f961831",
-        "dweb:/ipfs/QmRPLAjBpsYUEWuhT6F95McoTNSsMbv1DxnhdCYA8Fro8x"
+        "bzz-raw://2a56095a369ef0eb6bad7f901193c83b3cb66e1f8e8d100bdd9c2c1d1227a080",
+        "dweb:/ipfs/QmVZo8ZKu6bdciZScK1qzMrFPnMUn2UNt8NUwaEfEyiDnC"
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
@@ -728,11 +728,11 @@
       ]
     },
     "contracts/src/libraries/Permissions.sol": {
-      "keccak256": "0x1deeb80ca3a7d77dee37efa3165db7404c122d902b633257432c0367cb4b04ef",
+      "keccak256": "0x415fccf42703c4bb28f0d037af0a58e77df45b246b5dd464a1d661ffeb8038d1",
       "license": "UNLICENSED",
       "urls": [
-        "bzz-raw://c725f8146a3b2accc2bef98936013b7be45198bb33755cf34640525757b90673",
-        "dweb:/ipfs/QmUjGiqNXAUmCNycFeZy1oicZyc6EgVmeCfAbMgSqDSwPy"
+        "bzz-raw://3751df3359652f46f908da9e807339a842a0c1c0fa006cdd073095c3e40658b3",
+        "dweb:/ipfs/QmRyfNWaPaFpfRbJ2cMZLXi3cc1iVXce1me6EqbR2HZATo"
       ]
     },
     "contracts/src/libraries/Utils.sol": {

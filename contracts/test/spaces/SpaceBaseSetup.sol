@@ -65,12 +65,9 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     initialPermissions.push(Permissions.Ban);
     initialPermissions.push(Permissions.Ping);
     initialPermissions.push(Permissions.PinMessage);
-    initialPermissions.push(Permissions.ModifyChannelPermissions);
-    initialPermissions.push(Permissions.ModifyProfile);
     initialPermissions.push(Permissions.Owner);
     initialPermissions.push(Permissions.AddRemoveChannels);
-    initialPermissions.push(Permissions.ModifySpacePermissions);
-    initialPermissions.push(Permissions.ModifyChannelDefaults);
+    initialPermissions.push(Permissions.ModifySpaceSettings);
     initialPermissions.push(Permissions.Upgrade);
   }
 
@@ -179,7 +176,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     _users[0] = _moderator;
 
     string[] memory _spacePermissions = new string[](1);
-    _spacePermissions[0] = Permissions.ModifySpacePermissions;
+    _spacePermissions[0] = Permissions.ModifySpaceSettings;
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({

@@ -252,7 +252,7 @@ contract Space is
     string[] memory _permissions,
     DataTypes.Entitlement[] memory _entitlements
   ) external returns (uint256) {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     Utils.validateLength(_roleName);
 
@@ -303,7 +303,7 @@ contract Space is
 
   /// @inheritdoc ISpace
   function updateRole(uint256 _roleId, string memory _roleName) external {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     Utils.validateLength(_roleName);
 
@@ -328,7 +328,7 @@ contract Space is
 
   /// @inheritdoc ISpace
   function removeRole(uint256 _roleId) external {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     // check not removing owner role
     if (_roleId == ownerRoleId) {
@@ -366,7 +366,7 @@ contract Space is
     uint256 _roleId,
     string[] memory _permissions
   ) external {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     // check if role exists
     if (rolesById[_roleId].roleId == 0) {
@@ -413,7 +413,7 @@ contract Space is
     uint256 _roleId,
     string[] memory _permissions
   ) external {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     // check if role exists
     if (rolesById[_roleId].roleId == 0) {
@@ -592,7 +592,7 @@ contract Space is
     uint256 _roleId,
     DataTypes.Entitlement calldata _entitlement
   ) external {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     // check not removing owner role
     if (_roleId == ownerRoleId) {
@@ -635,7 +635,7 @@ contract Space is
     uint256 _roleId,
     DataTypes.Entitlement memory _entitlement
   ) external {
-    _isAllowed(IN_SPACE, Permissions.ModifySpacePermissions);
+    _isAllowed(IN_SPACE, Permissions.ModifySpaceSettings);
 
     if (!hasEntitlement[_entitlement.module]) {
       revert Errors.EntitlementNotWhitelisted();

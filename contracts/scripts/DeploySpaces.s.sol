@@ -98,12 +98,9 @@ contract DeploySpaces is ScriptUtils {
     initialPermissions.push(Permissions.Ban);
     initialPermissions.push(Permissions.Ping);
     initialPermissions.push(Permissions.PinMessage);
-    initialPermissions.push(Permissions.ModifyChannelPermissions);
-    initialPermissions.push(Permissions.ModifyProfile);
     initialPermissions.push(Permissions.Owner);
     initialPermissions.push(Permissions.AddRemoveChannels);
-    initialPermissions.push(Permissions.ModifySpacePermissions);
-    initialPermissions.push(Permissions.ModifyChannelDefaults);
+    initialPermissions.push(Permissions.ModifySpaceSettings);
     initialPermissions.push(Permissions.Upgrade);
   }
 }

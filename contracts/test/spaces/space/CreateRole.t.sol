@@ -23,7 +23,7 @@ contract CreateRoleTest is SpaceBaseSetup {
     _users[0] = _moderator;
 
     string[] memory _spacePermissions = new string[](1);
-    _spacePermissions[0] = Permissions.ModifySpacePermissions;
+    _spacePermissions[0] = Permissions.ModifySpaceSettings;
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
@@ -38,7 +38,7 @@ contract CreateRoleTest is SpaceBaseSetup {
     assertTrue(
       Space(_space).isEntitledToSpace(
         _moderator,
-        Permissions.ModifySpacePermissions
+        Permissions.ModifySpaceSettings
       )
     );
 

@@ -18,7 +18,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     _users[0] = _moderator;
 
     string[] memory _spacePermissions = new string[](1);
-    _spacePermissions[0] = Permissions.ModifySpacePermissions;
+    _spacePermissions[0] = Permissions.ModifySpaceSettings;
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
@@ -33,7 +33,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     assertTrue(
       Space(_space).isEntitledToSpace(
         _moderator,
-        Permissions.ModifySpacePermissions
+        Permissions.ModifySpaceSettings
       )
     );
 
@@ -69,7 +69,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     assertFalse(
       Space(_space).isEntitledToSpace(
         _moderator,
-        Permissions.ModifySpacePermissions
+        Permissions.ModifySpaceSettings
       )
     );
   }
@@ -88,7 +88,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     _users[0] = _moderator;
 
     string[] memory _spacePermissions = new string[](1);
-    _spacePermissions[0] = Permissions.ModifySpacePermissions;
+    _spacePermissions[0] = Permissions.ModifySpaceSettings;
 
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
@@ -103,7 +103,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     assertTrue(
       Space(_space).isEntitledToSpace(
         _moderator,
-        Permissions.ModifySpacePermissions
+        Permissions.ModifySpaceSettings
       )
     );
 
@@ -130,7 +130,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     DataTypes.Entitlement[]
       memory _newEntitlementsI = new DataTypes.Entitlement[](1);
     string[] memory _spacePermissions = new string[](1);
-    _spacePermissions[0] = Permissions.ModifySpacePermissions;
+    _spacePermissions[0] = Permissions.ModifySpaceSettings;
     _newEntitlementsI[0] = DataTypes.Entitlement({
       module: _userEntitlementModule.moduleAddress,
       data: abi.encode(_users)
@@ -139,16 +139,16 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // add to system for _notTokenHOlder
     vm.prank(_tokenHolder);
     Space(_space).createRole(
-      "ModifySpacePermissions",
+      "ModifySpaceSettings",
       _spacePermissions,
       _newEntitlementsI
     );
 
-    // see that "ModifySpacePermissions" was granted
+    // see that "ModifySpaceSettings" was granted
     assertTrue(
       Space(_space).isEntitledToSpace(
         _notTokenHolder,
-        Permissions.ModifySpacePermissions
+        Permissions.ModifySpaceSettings
       )
     );
 
@@ -198,7 +198,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
       memory _newOwnerEntitlements = new DataTypes.Entitlement[](1);
     string[] memory _spacePermissions = new string[](2);
     _spacePermissions[0] = Permissions.Owner;
-    _spacePermissions[1] = Permissions.ModifySpacePermissions;
+    _spacePermissions[1] = Permissions.ModifySpaceSettings;
     _newOwnerEntitlements[0] = DataTypes.Entitlement({
       module: _userEntitlementModule.moduleAddress,
       data: abi.encode(_users)

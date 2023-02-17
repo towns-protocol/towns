@@ -84,7 +84,7 @@ describe('create role', () => {
 
         const roomId = await createTestSpaceWithZionMemberRole(bob, [
             Permission.Read,
-            Permission.ModifySpacePermissions,
+            Permission.ModifySpaceSettings,
         ])
         if (!roomId) {
             throw new Error('roomId is undefined')
