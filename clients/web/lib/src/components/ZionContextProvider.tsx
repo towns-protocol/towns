@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { ethers } from 'ethers'
 import { ZionClient } from '../client/ZionClient'
-import { ZionOnboardingOpts, SpaceProtocol } from '../client/ZionClientTypes'
+import { ZionOpts } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import { useOnboardingState } from '../hooks/ZionContext/useOnboardingState'
@@ -52,24 +51,16 @@ export function useZionContext(): IZionContext {
     return context
 }
 
-interface Props {
-    primaryProtocol: SpaceProtocol
-    homeServerUrl: string
-    casablancaServerUrl: string
-    onboardingOpts?: ZionOnboardingOpts
+interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
-    signer?: ethers.Signer // only used for testing, when the signer is a local in memory wallet
     defaultSpaceId?: string
     defaultSpaceName?: string // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
     defaultSpaceAvatarSrc?: string // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
-    initialSyncLimit?: number
     chain?: Chain
     children: JSX.Element
     alchemyKey?: string
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
 }
-
-const DEFAULT_INITIAL_SYNC_LIMIT = 20
 
 export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
@@ -88,26 +79,14 @@ export function ZionContextProvider({
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
     const {
-        primaryProtocol,
-        homeServerUrl,
-        casablancaServerUrl,
-        onboardingOpts,
+        matrixServerUrl,
         enableSpaceRootUnreads,
-        signer,
         defaultSpaceId,
         defaultSpaceName,
         defaultSpaceAvatarSrc,
-        initialSyncLimit,
     } = props
 
-    const { client, clientSingleton } = useZionClientListener(
-        primaryProtocol,
-        homeServerUrl,
-        casablancaServerUrl,
-        initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
-        onboardingOpts,
-        signer,
-    )
+    const { client, clientSingleton } = useZionClientListener(props)
     useContentAwareTimelineDiff(client?.matrixClient)
     const { spaceIds, invitedToIds } = useSpacesIds(client)
     const { spaces } = useSpaces(client, spaceIds)
@@ -127,11 +106,11 @@ const ContextImpl = (props: Props): JSX.Element => {
     const rooms = useMatrixRooms(client?.matrixClient)
     useMatrixTimelines(client?.matrixClient)
     const onboardingState = useOnboardingState(client)
-    const syncError = useSyncErrorHandler(homeServerUrl, client)
+    const syncError = useSyncErrorHandler(matrixServerUrl, client)
 
     useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
 
-    useTransactionListener(client, homeServerUrl)
+    useTransactionListener(client, matrixServerUrl)
 
     return (
         <ZionContext.Provider
@@ -146,7 +125,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaces,
                 spaceHierarchies,
                 onboardingState,
-                homeServerUrl,
+                homeServerUrl: matrixServerUrl,
                 defaultSpaceId: convertedDefaultSpaceId,
                 defaultSpaceName,
                 defaultSpaceAvatarSrc,

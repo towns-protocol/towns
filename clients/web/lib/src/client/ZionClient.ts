@@ -88,6 +88,8 @@ import { toUtf8String } from 'ethers/lib/utils.js'
  * ensure correct zion protocol business logic
  */
 
+const DEFAULT_INITIAL_SYNC_LIMIT = 20
+
 export class ZionClient {
     public readonly opts: ZionOpts
     public readonly name: string
@@ -322,7 +324,7 @@ export class ZionClient {
         // start matrixClient
         await this.matrixClient.startClient({
             pendingEventOrdering: PendingEventOrdering.Chronological,
-            initialSyncLimit: this.opts.initialSyncLimit,
+            initialSyncLimit: this.opts.initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
         })
         // wait for the sync to complete
         const initialSync = new Promise<string>((resolve, reject) => {

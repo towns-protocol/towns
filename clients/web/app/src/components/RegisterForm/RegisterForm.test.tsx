@@ -41,7 +41,7 @@ const Mock = ({ children }: any) => {
     return (
         <Zion.ZionContextProvider
             primaryProtocol={Zion.SpaceProtocol.Matrix}
-            homeServerUrl=""
+            matrixServerUrl=""
             casablancaServerUrl=""
             defaultSpaceId=""
             defaultSpaceName=""

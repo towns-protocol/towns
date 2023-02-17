@@ -49,10 +49,10 @@ export const ZionTestApp = (props: Props) => {
     return (
         <ZionContextProvider
             primaryProtocol={primaryProtocol}
-            homeServerUrl={homeServerUrl}
+            matrixServerUrl={homeServerUrl}
             casablancaServerUrl={casablancaServerUrl}
             onboardingOpts={onboardingOpts}
-            signer={provider.wallet}
+            web3Signer={provider.wallet}
             defaultSpaceId={defaultSpaceId}
             defaultSpaceName={defaultSpaceName}
             defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}

@@ -40,7 +40,7 @@ export const App = () => {
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
-            homeServerUrl={homeserverUrl}
+            matrixServerUrl={homeserverUrl}
             defaultSpaceId={homeserverUrl === HomeServerUrl.REMOTE ? ZION_SPACE_ID : undefined}
             defaultSpaceName={ZION_SPACE_NAME}
             defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}

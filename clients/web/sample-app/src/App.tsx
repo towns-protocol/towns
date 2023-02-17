@@ -35,7 +35,7 @@ export const App = () => {
                 <ZionContextProvider
                     enableSpaceRootUnreads
                     primaryProtocol={SpaceProtocol.Matrix}
-                    homeServerUrl={homeServerUrl}
+                    matrixServerUrl={homeServerUrl}
                     casablancaServerUrl={CASABLANCA_SERVER_URL}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}

@@ -15,7 +15,7 @@ export interface ZionOpts {
     primaryProtocol: SpaceProtocol
     matrixServerUrl: string
     casablancaServerUrl: string
-    initialSyncLimit: number
+    initialSyncLimit?: number
     onboardingOpts?: ZionOnboardingOpts
     web3Provider?: TProvider
     web3Signer?: ethers.Signer

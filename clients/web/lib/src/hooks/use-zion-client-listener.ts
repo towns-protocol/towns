@@ -1,41 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ethers } from 'ethers'
 import { ZionClient } from '../client/ZionClient'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
-import { ZionOnboardingOpts, SpaceProtocol } from '../client/ZionClientTypes'
+import { ZionOpts } from '../client/ZionClientTypes'
 import { LoginStatus } from './login'
 import { useSigner } from 'wagmi'
 
-export const useZionClientListener = (
-    primaryProtocol: SpaceProtocol,
-    matrixServerUrl: string,
-    casablancaServerUrl: string,
-    initialSyncLimit: number,
-    onboardingOpts?: ZionOnboardingOpts,
-    signer?: ethers.Signer,
-) => {
+export const useZionClientListener = (opts: ZionOpts) => {
     const { provider, chain } = useWeb3Context()
     const { setLoginStatus } = useMatrixStore()
     const { matrixCredentialsMap, setMatrixCredentials } = useCredentialStore()
-    const matrixCredentials = matrixCredentialsMap[matrixServerUrl]
+    const matrixCredentials = matrixCredentialsMap[opts.matrixServerUrl]
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
     const chainId = chain?.id
     const { data: wagmiSigner } = useSigner()
 
     if (!clientSingleton.current) {
-        const _signer = signer || wagmiSigner
+        const _signer = opts.web3Signer || wagmiSigner
+        const _provider = opts.web3Provider || provider
         if (_signer) {
             clientSingleton.current = new ZionClient(
                 {
-                    primaryProtocol,
-                    matrixServerUrl,
-                    casablancaServerUrl,
-                    initialSyncLimit,
-                    onboardingOpts,
-                    web3Provider: provider,
+                    ...opts,
+                    web3Provider: _provider,
                     web3Signer: _signer,
                 },
                 chainId,
@@ -91,13 +80,13 @@ export const useZionClientListener = (
                 console.log('error while logging out', e)
             }
             setLoginStatus(LoginStatus.LoggedOut)
-            setMatrixCredentials(matrixServerUrl, null)
+            setMatrixCredentials(opts.matrixServerUrl, null)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         chainId,
         matrixCredentials,
-        matrixServerUrl,
+        opts.matrixServerUrl,
         setLoginStatus,
         setMatrixCredentials,
         wagmiSigner, // if signer is not passed in, clientSingleton.current will only be created if wagmiSigner, so we need to watch it
