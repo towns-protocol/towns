@@ -8,8 +8,8 @@ output "backend_state_lock_table_name" {
   sensitive = true
 }
 
-output "hosted_zone_name" {
-  value = "zion.xyz" 
+output "primary_hosted_zone_name" {
+  value = "towns.com" 
   sensitive = true
 }
 

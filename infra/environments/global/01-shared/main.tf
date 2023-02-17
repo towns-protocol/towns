@@ -20,10 +20,19 @@ module "global_constants" {
   source = "../../../modules/global-constants"
 }
 
-module "route_53_hosted_zone" {
-  source           = "../../../modules/route-53-hosted-zone"
-  hosted_zone_name = module.global_constants.hosted_zone_name
-  environment      = terraform.workspace == "global" ? "global" : ""
+resource "aws_acm_certificate" "primary_hosted_zone_cert" {
+  domain_name       = module.global_constants.primary_hosted_zone_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  subject_alternative_names = [
+    "*.${module.global_constants.primary_hosted_zone_name}"
+  ]
+
+  tags = merge(module.global_constants.tags, { Name = module.global_constants.primary_hosted_zone_name })
 }
 
 module "ecs_iam" {

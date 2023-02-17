@@ -6,23 +6,8 @@ locals {
   ecs_cluster_name = "${module.global_constants.environment}-${var.zion_node_name}-zion-ecs-cluster"
 }
 
-data "aws_route53_zone" "primary_hosted_zone" {
-  name = module.global_constants.hosted_zone_name
-}
-
-# TODO: want to make this a multi domain certificate. then we can pull it out and pass it in
-module "acm" {
-  source = "terraform-aws-modules/acm/aws"
-  version = "~> 4.0"
-
-  domain_name = var.zion_node_dns_name
-  zone_id = data.aws_route53_zone.primary_hosted_zone.id
-
-  subject_alternative_names = [] 
-
-  wait_for_validation = true
-
-  tags = merge(module.global_constants.tags, {Name = var.zion_node_dns_name})
+data "aws_acm_certificate" "primary_hosted_zone_cert" {
+  domain = module.global_constants.primary_hosted_zone_name
 }
 
 module "zion_alb_sg" {
@@ -72,14 +57,6 @@ module "zion_internal_sg" {
 
 }
 
-resource "aws_route53_record" "zion_node_dns_record" {
-  zone_id = data.aws_route53_zone.primary_hosted_zone.zone_id
-  type = "CNAME"
-  ttl = 30 # TODO: revert to 600 after stabilized
-  records = [ module.zion_alb.lb_dns_name ]
-  name = var.zion_node_dns_name
-}
-
 module "task_definitions" {
   source      = "../task-definitions"
 }
@@ -112,7 +89,7 @@ module "zion_alb" {
     {
       port               = 443
       protocol           = "HTTPS"
-      certificate_arn    = module.acm.acm_certificate_arn
+      certificate_arn    = data.aws_acm_certificate.primary_hosted_zone_cert.arn
       action_type        = "forward"
       target_group_index = 0
     },
@@ -165,4 +142,7 @@ resource "aws_ecs_service" "zion-dendrite-service" {
   deployment_minimum_healthy_percent = 0 
   # TODO: this will create downtime. Is there a better way?
   deployment_maximum_percent = 200
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }

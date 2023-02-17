@@ -3,11 +3,6 @@ variable "zion_node_name" {
   type = string
 }
 
-variable "zion_node_dns_name" {
-  description = "The dns record name of the zion node"
-  type = string
-}
-
 variable "vpc_id" {
   description = "The vpc id"
   type = string

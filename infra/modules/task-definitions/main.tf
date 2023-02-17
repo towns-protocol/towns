@@ -34,6 +34,10 @@ resource "aws_ecs_task_definition" "postgres" {
 
   requires_compatibilities = ["EC2"]
 
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
+
   container_definitions = jsonencode([{
     name  = "postgres"
     image = "postgres:14"
@@ -47,20 +51,17 @@ resource "aws_ecs_task_definition" "postgres" {
       # TODO: how do we get these environment variables to be secrets?
       {
         name = "POSTGRES_PASSWORD"
-        value = "itsasecret"
+        value = ""
       },
       {
         name = "POSTGRES_USER"
-        value = "dendrite"
+        value = ""
       }
     ]
 
     mountPoints = [{
       containerPath = "/var/lib/postgresql/data"
       sourceVolume = "postgres-data"
-    }, {
-      containerPath = "/docker-entrypoint-initdb.d/20-create-db.sh",
-      sourceVolume = "postgres-init"
     }]
   }])
 
@@ -75,6 +76,10 @@ resource "aws_ecs_task_definition" "postgres" {
 resource "aws_ecs_task_definition" "dendrite" {
   family = "${module.global_constants.environment}-zion-dendrite" 
 
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
+
   network_mode = "bridge"
 
   task_role_arn         = data.aws_iam_role.ecs_task_execution_role.arn
@@ -87,7 +92,7 @@ resource "aws_ecs_task_definition" "dendrite" {
 
   container_definitions = jsonencode([{
     name  = "dendrite"
-    image = "docker.io/herenotthere/dendrite-monolith:1.0.31"
+    image = "docker.io/herenotthere/dendrite-monolith:latest"
     essential = true
     portMappings = [{
       containerPort = 8008
@@ -98,24 +103,20 @@ resource "aws_ecs_task_definition" "dendrite" {
       # TODO: swap this one with AWS secret management service
       {
         name = "DATABASE_CONNECTION_STRING"
-        value = "postgresql://dendrite:itsasecret@172.17.0.1:5432/dendrite?sslmode=disable"
+        value = ""
       },
       {
         name = "SERVER_NAME",
-        value = "node1.zion.xyz"
+        value = ""
       },
       {
         name = "CHAIN_ID",
-        value = "5"
+        value = ""
       },
       # TODO: swap this one with AWS secret management service
       {
         name = "BLOCKCHAIN_PROVIDER_URL",
-        value = "https://goerli.infura.io/v3/29b17e8631ca4c969a3972ac5a30daa2"
-      },
-      {
-        name = "ENABLE_AUTHZ",
-        value = "false"
+        value = ""
       }
     ]
 

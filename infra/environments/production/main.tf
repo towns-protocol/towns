@@ -35,10 +35,6 @@ module "vpc" {
   tags = module.global_constants.tags
 }
 
-module "misc_dns_records" {
-  source = "./dns"
-}
-
 module "zion_node" {
   source = "../../modules/zion-node"
 
@@ -46,5 +42,4 @@ module "zion_node" {
   vpc_cidr_block = module.vpc.vpc_cidr_block
   vpc_id = module.vpc.vpc_id
   zion_node_name = "node1"
-  zion_node_dns_name = "node1.${module.global_constants.hosted_zone_name}"
 }
