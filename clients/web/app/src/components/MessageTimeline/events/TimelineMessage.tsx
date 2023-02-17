@@ -32,7 +32,6 @@ export const TimelineMessage = React.memo((props: Props) => {
         channelId,
         spaceId,
         handleReaction,
-        decryptionAttempts,
         type,
         messageRepliesMap,
         messageReactionsMap,
@@ -55,7 +54,6 @@ export const TimelineMessage = React.memo((props: Props) => {
             : undefined
 
     const reactions = messageReactionsMap[event.eventId]
-    const decryptionAttempt = decryptionAttempts[event.eventId]
 
     return !event ? null : (
         <Message
@@ -92,7 +90,6 @@ export const TimelineMessage = React.memo((props: Props) => {
                     eventContent={eventContent}
                     members={members}
                     channels={channels}
-                    decryptionAttempt={decryptionAttempt}
                 />
             )}
         </Message>

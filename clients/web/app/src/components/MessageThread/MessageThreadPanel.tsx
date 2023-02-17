@@ -22,7 +22,7 @@ export const MessageThreadPanel = (props: Props) => {
 
     const channelLabel = useChannelData().channel?.label
     const { messageId } = props
-    const { parent, messages, decryptionAttempts } = useTimelineThread(channelId, messageId)
+    const { parent, messages } = useTimelineThread(channelId, messageId)
     const parentMessage = parent?.parentEvent
 
     const messagesWithParent = useMemo(() => {
@@ -50,7 +50,6 @@ export const MessageThreadPanel = (props: Props) => {
             channelId={channelId}
             threadParentId={messageId}
             events={messagesWithParent}
-            decryptionAttempts={decryptionAttempts}
         >
             <Panel label={panelLabel} onClose={props.onClose}>
                 <Stack grow overflow="hidden">

@@ -52,7 +52,7 @@ const SpacesChannelComponent = () => {
     const isChannelEncrypted = channel && isRoomEncrypted(channel.id)
 
     const myMembership = useMyMembership(channelId)
-    const { timeline: channelMessages, decryptionAttempts } = useChannelTimeline()
+    const { timeline: channelMessages } = useChannelTimeline()
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
@@ -98,7 +98,6 @@ const SpacesChannelComponent = () => {
                         spaceId={spaceId}
                         channelId={channelId}
                         events={channelMessages}
-                        decryptionAttempts={decryptionAttempts}
                     >
                         <MessageTimeline
                             header={

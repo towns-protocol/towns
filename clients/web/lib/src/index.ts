@@ -86,7 +86,6 @@ export type { RoomIdentifier } from './types/room-identifier'
 export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'
 
 export type {
-    DecryptionAttempt,
     FullyReadMarker,
     MentionResult,
     MessageReactions,

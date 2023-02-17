@@ -1,19 +1,12 @@
-import { formatDistance } from 'date-fns'
 import React from 'react'
-import {
-    Channel,
-    DecryptionAttempt,
-    RoomMember,
-    RoomMessageEvent,
-    TimelineEvent,
-} from 'use-zion-client'
+import { Channel, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
 import { LINK } from '@lexical/markdown'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
-import { Button, Paragraph, Stack } from '@ui'
+import { Paragraph, Stack } from '@ui'
 import { useUnfurlContent } from '../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
@@ -23,7 +16,6 @@ type Props = {
     eventContent: RoomMessageEvent
     members: RoomMember[]
     channels: Channel[]
-    decryptionAttempt?: DecryptionAttempt
 }
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
@@ -56,13 +48,7 @@ function getUrls(body: string) {
     return [...new Set(Array.from(body.matchAll(regexp), (m) => m[2]))]
 }
 
-export const MessageZionText = ({
-    eventContent,
-    event,
-    members,
-    channels,
-    decryptionAttempt,
-}: Props) => {
+export const MessageZionText = ({ eventContent, event, members, channels }: Props) => {
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
 
@@ -72,8 +58,6 @@ export const MessageZionText = ({
     })
 
     const invalidContent = isError || !Array.isArray(unfurledContent)
-    const lastDecryptedAt = decryptionAttempt?.lastAttemptedAt
-    const retryDecryption = decryptionAttempt?.retry
 
     return (
         <>
@@ -92,23 +76,7 @@ export const MessageZionText = ({
                   ))}
             {eventContent.msgType === 'm.bad.encrypted' ? (
                 <Stack cellSpacing="md">
-                    {lastDecryptedAt && (
-                        <Stack>
-                            <Paragraph>
-                                Last Decripted At:{' '}
-                                {formatDistance(lastDecryptedAt, Date.now(), {
-                                    addSuffix: true,
-                                })}
-                            </Paragraph>
-                        </Stack>
-                    )}
-                    {retryDecryption && (
-                        <Stack horizontal paddingY="sm">
-                            <Button size="button_xs" rounded="md" onClick={retryDecryption}>
-                                Retry
-                            </Button>
-                        </Stack>
-                    )}
+                    <Paragraph>Reaching out to online users for keys...</Paragraph>
                 </Stack>
             ) : null}
         </>
