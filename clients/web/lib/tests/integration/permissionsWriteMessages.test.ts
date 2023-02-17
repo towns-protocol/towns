@@ -104,9 +104,6 @@ describe('write messages', () => {
         // user should expect an invite to the room
         await waitFor(() => expect(tokenGrantedUser.getRoomData(roomId)).toBeDefined())
 
-        // call scrollback
-        await tokenGrantedUser.scrollback(roomId, 30)
-
         // we should get more events
         await waitFor(() => expect(tokenGrantedUser.getEvents(roomId).length).toBeGreaterThan(20))
     })
@@ -142,9 +139,6 @@ describe('write messages', () => {
 
         // user sends a message to the room
         await tokenGrantedUser.sendMessage(roomId, 'Hello Bob!')
-
-        await bob.scrollback(roomId, 30)
-        await tokenGrantedUser.scrollback(roomId, 30)
 
         /** Assert */
 
