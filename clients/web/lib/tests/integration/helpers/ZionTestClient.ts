@@ -75,8 +75,10 @@ export class ZionTestClient extends ZionClient {
             {
                 primaryProtocol:
                     props?.primaryProtocol ??
-                    (process.env.PRIMARY_PROTOCOL as SpaceProtocol) ??
-                    SpaceProtocol.Matrix,
+                    (process.env.PRIMARY_PROTOCOL &&
+                        process.env.PRIMARY_PROTOCOL === SpaceProtocol.Casablanca)
+                        ? SpaceProtocol.Casablanca
+                        : SpaceProtocol.Matrix,
                 matrixServerUrl: process.env.HOMESERVER!,
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 initialSyncLimit: 20,

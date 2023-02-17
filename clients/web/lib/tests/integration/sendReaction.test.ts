@@ -5,7 +5,6 @@ import { waitFor } from '@testing-library/dom'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
-    getTestPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 
@@ -27,7 +26,6 @@ describe('sendReaction', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: getTestPrimaryProtocol(),
             },
         ))!
         // create a channel

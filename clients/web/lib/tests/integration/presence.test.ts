@@ -2,7 +2,6 @@
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
-    getTestPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -23,7 +22,6 @@ describe('presence', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: getTestPrimaryProtocol(),
             },
         ))!
         // create a channel

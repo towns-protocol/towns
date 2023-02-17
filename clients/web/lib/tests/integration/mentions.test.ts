@@ -6,7 +6,6 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
-    getTestPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 
@@ -23,7 +22,6 @@ describe('mentions', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: getTestPrimaryProtocol(),
             },
         ))!
         // create a channel

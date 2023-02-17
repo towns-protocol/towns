@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {
-    createTestSpaceWithEveryoneRole,
-    getTestPrimaryProtocol,
-    registerAndStartClients,
-} from './helpers/TestUtils'
+import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { waitFor } from '@testing-library/dom'
@@ -24,7 +20,6 @@ describe('inviteUser', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: getTestPrimaryProtocol(),
             },
         ))!
         // bob invites alice to the room

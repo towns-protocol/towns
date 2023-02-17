@@ -3,14 +3,13 @@
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
-    getTestPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
-import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
+import { RoomMessageEvent } from '../../src/types/timeline-types'
 
 describe('editMessage', () => {
     // test: editMessage
@@ -26,7 +25,6 @@ describe('editMessage', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: getTestPrimaryProtocol(),
             },
         ))!
         // create a channel

@@ -3,7 +3,6 @@
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
-    getTestPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 
@@ -27,7 +26,6 @@ describe('sendThreadedMessage', () => {
             {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Public,
-                spaceProtocol: getTestPrimaryProtocol(),
             },
         ))!
         // create a channel
