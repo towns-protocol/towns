@@ -42,9 +42,14 @@ describe('redact messages', () => {
         // alice sends a message to the room
         const message = 'Hello me, myself, and alice!'
         await alice.sendMessage(channelId, message)
+        await waitFor(async () => {
+            const event = await alice.getLatestEvent(channelId, ZTEvent.RoomMessage)
+            expect(event).toBeDefined()
+            expect(event?.isLocalPending).toBe(false)
+        })
         const messageEvent = await alice.getLatestEvent(channelId, ZTEvent.RoomMessage)
         if (!messageEvent) {
-            throw new Error('Failed to get message event')
+            throw new Error(`Failed to get message event ${alice.getEventsDescription(channelId)}`)
         }
         // redact the message
         const error = await getError<Error>(async function () {
@@ -84,11 +89,6 @@ describe('redact messages', () => {
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
             roleIds: [roles[0].roleId.toNumber()],
-            // todo: enable encryption for 2 party exchange when it is supported
-            // without disabling encryption, bob is unable to send a message. fails with error:
-            // "Room !jjHj6Ju6cAJjzPwS:localhost was previously configured to use encryption,
-            // but is no longer. Perhaps the homeserver is hiding the configuration event."
-            disableEncryption: true,
         })
         if (!channelId) {
             throw new Error('channelId is undefined')
@@ -104,13 +104,18 @@ describe('redact messages', () => {
         // alice sends a message in the channel
         const message = 'Hello I am alice!'
         await alice.sendMessage(channelId, message)
-        // use a scrollback to get the message event
-        await bob.scrollback(channelId, 30)
+        await waitFor(() =>
+            expect(
+                bob
+                    .getEvents_TypedRoomMessage(channelId)
+                    .find((event) => event.content.body === message),
+            ).toBeDefined(),
+        )
         const messageEvent = bob
             .getEvents_TypedRoomMessage(channelId)
             .find((event) => event.content.body === message)
         if (!messageEvent) {
-            throw new Error('Failed to get message event')
+            throw new Error(`Failed to get message event ${bob.getEventsDescription(channelId)}`)
         }
         // bob tries to redact alice's message
         const error = await getError<MatrixError>(async function () {
@@ -167,11 +172,6 @@ describe('redact messages', () => {
             parentSpaceId: spaceId,
             // add the space role and the moderator role to the channel
             roleIds: [roles[0].roleId.toNumber(), moderatorRoleId.roleId],
-            // todo: enable encryption for 2 party exchange when it is supported
-            // without disabling encryption, bob is unable to send a message. fails with error:
-            // "Room !jjHj6Ju6cAJjzPwS:localhost was previously configured to use encryption,
-            // but is no longer. Perhaps the homeserver is hiding the configuration event."
-            disableEncryption: true,
         })
         if (!channelId) {
             throw new Error('channelId is undefined')
@@ -188,12 +188,18 @@ describe('redact messages', () => {
         const message = 'Hello I am alice!'
         await alice.sendMessage(channelId, message)
         // use a scrollback to get the message event
-        await bob.scrollback(channelId, 30)
+        await waitFor(() =>
+            expect(
+                bob
+                    .getEvents_TypedRoomMessage(channelId)
+                    .find((event) => event.content.body === message),
+            ).toBeDefined(),
+        )
         const messageEvent = bob
             .getEvents_TypedRoomMessage(channelId)
             .find((event) => event.content.body === message)
         if (!messageEvent) {
-            throw new Error('Failed to get message event')
+            throw new Error(`Failed to get message event: ${bob.getEventsDescription(channelId)}`)
         }
         // bob tries to redact alice's message
         const error = await getError<Error>(async function () {
@@ -203,13 +209,13 @@ describe('redact messages', () => {
         /** Assert */
         // verify that NO error was thrown for redaction
         expect(error).toBeInstanceOf(NoThrownError)
-        // use a scrollback to refresh the message events
-        await alice.scrollback(channelId, 30)
         // verify that the message is redacted
-        expect(
-            alice
-                .getEvents_TypedRoomMessage(channelId)
-                .find((event) => event.content.body === message),
-        ).toBeUndefined()
+        await waitFor(() =>
+            expect(
+                alice
+                    .getEvents_TypedRoomMessage(channelId)
+                    .find((event) => event.content.body === message),
+            ).toBeUndefined(),
+        )
     })
 })

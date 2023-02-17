@@ -365,4 +365,13 @@ export class ZionTestClient extends ZionClient {
         const events = this.getEvents(roomId, eventType)
         return events.at(-1)
     }
+
+    public logEvents(roomId: RoomIdentifier) {
+        console.log(`events for ${roomId.networkId}`, this.getEventsDescription(roomId))
+    }
+
+    public getEventsDescription(roomId: RoomIdentifier): string {
+        const events = this.getEvents(roomId)
+        return events.map((e) => `${e.fallbackContent}`).join('\n')
+    }
 }
