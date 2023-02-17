@@ -6,7 +6,7 @@ import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { ZTEvent } from '../../src/types/timeline-types'
+import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
@@ -63,12 +63,12 @@ describe('casablanca', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            const event = await alice.getLatestEvent(channelId)
+            const event = await alice.getLatestEvent<RoomMessageEvent>(
+                channelId,
+                ZTEvent.RoomMessage,
+            )
             // TODO - need to merge ZTEvent into a common type for both marix and CB
-            expect(
-                event?.content?.kind === ZTEvent.RoomMessage &&
-                    event?.content?.body === 'Hello, world from Bob!',
-            ).toEqual(true)
+            expect(event?.content?.body === 'Hello, world from Bob!').toEqual(true)
         })
     })
 })

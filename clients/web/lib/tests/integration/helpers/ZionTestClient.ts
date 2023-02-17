@@ -5,7 +5,12 @@ import {
     LoginTypePublicKeyEthereum,
     RegisterRequest,
 } from '../../../src/hooks/login'
-import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../../src/types/timeline-types'
+import {
+    RoomMessageEvent,
+    TimelineEvent,
+    TimelineEvent_OneOf,
+    ZTEvent,
+} from '../../../src/types/timeline-types'
 import {
     SpaceProtocol,
     TransactionStatus,
@@ -31,10 +36,6 @@ import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/Casablan
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
     eventHandlers?: ZionClientEventHandlers
-}
-
-export type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
-    content: RoomMessageEvent
 }
 
 export class ZionTestClient extends ZionClient {
@@ -155,7 +156,7 @@ export class ZionTestClient extends ZionClient {
     }
 
     /// log a message to the console with the user's name and part of the wallet address
-    protected log(message: string, ...optionalParams: unknown[]) {
+    public log(message: string, ...optionalParams: unknown[]) {
         console.log(`${this.getLoggingIdentifier()}`, message, ...optionalParams)
     }
 
@@ -316,7 +317,7 @@ export class ZionTestClient extends ZionClient {
     /************************************************
      * getLatestEvent
      ************************************************/
-    public getEvents(roomId: RoomIdentifier, eventType?: ZTEvent): TimelineEvent[] {
+    public getEvents(roomId: RoomIdentifier): TimelineEvent[] {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
@@ -332,9 +333,6 @@ export class ZionTestClient extends ZionClient {
                         ?.getLiveTimeline()
                         .getEvents()
                         .map((e) => toEvent(e, userId)) ?? []
-                if (eventType) {
-                    return events.filter((e) => e?.content?.kind === eventType)
-                }
                 return events
             }
             case SpaceProtocol.Casablanca: {
@@ -345,9 +343,6 @@ export class ZionTestClient extends ZionClient {
                 const events = Array.from(stream?.rollup.events.values() ?? []).map((e) =>
                     toZionEventFromCsbEvent(e),
                 )
-                if (eventType) {
-                    return events.filter((e) => e?.content?.kind === eventType)
-                }
                 return events
             }
             default:
@@ -355,17 +350,35 @@ export class ZionTestClient extends ZionClient {
         }
     }
 
-    public getEvents_TypedRoomMessage(roomId: RoomIdentifier): ZRoomMessageEvent[] {
-        const events = this.getEvents(roomId, ZTEvent.RoomMessage)
-        return events.map((e) => e as ZRoomMessageEvent)
+    public getEventsOfType(roomId: RoomIdentifier, eventType: ZTEvent): TimelineEvent[] {
+        return this.getEvents(roomId).filter((e) => e?.content?.kind === eventType)
     }
 
-    public async getLatestEvent(
+    public getEvents_Typed<T extends TimelineEvent_OneOf>(
         roomId: RoomIdentifier,
-        eventType: ZTEvent | undefined = ZTEvent.RoomMessage,
-    ): Promise<TimelineEvent | undefined> {
+        eventType: T['kind'], // I can force you to pass the right type, but can't figure it out at runtime 🙈
+    ): (Omit<TimelineEvent, 'content'> & {
+        content: T
+    })[] {
+        const events = this.getEventsOfType(roomId, eventType)
+        return events.map((e) => e as Omit<TimelineEvent, 'content'> & { content: T })
+    }
+
+    public getEvents_TypedRoomMessage(roomId: RoomIdentifier) {
+        return this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
+    }
+
+    public async getLatestEvent<T extends TimelineEvent_OneOf>(
+        roomId: RoomIdentifier,
+        eventType: T['kind'] | undefined = ZTEvent.RoomMessage,
+    ): Promise<
+        | (Omit<TimelineEvent, 'content'> & {
+              content: T
+          })
+        | undefined
+    > {
         await this.waitForStream(roomId)
-        const events = this.getEvents(roomId, eventType)
+        const events = this.getEvents_Typed(roomId, eventType)
         return events.at(-1)
     }
 
@@ -375,6 +388,6 @@ export class ZionTestClient extends ZionClient {
 
     public getEventsDescription(roomId: RoomIdentifier): string {
         const events = this.getEvents(roomId)
-        return events.map((e) => `${e.fallbackContent}`).join('\n')
+        return events.map((e) => `${e.fallbackContent} : ${e.eventId}`).join('\n')
     }
 }

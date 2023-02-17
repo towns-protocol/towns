@@ -10,7 +10,7 @@ import {
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
-import { ZTEvent } from '../../src/types/timeline-types'
+import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 
 describe('editMessage', () => {
     // test: editMessage
@@ -46,26 +46,19 @@ describe('editMessage', () => {
 
         // wait for alice to receive the message
         await waitFor(async () => {
-            const e = await alice.getLatestEvent(channelId)
-            expect(
-                e?.content?.kind === ZTEvent.RoomMessage && e?.content?.body === 'Hello Balice!',
-            ).toEqual(true)
+            const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            expect(e?.content?.body === 'Hello Balice!').toEqual(true)
         })
 
         // this is hack to ensure csb cache loads bob's message in bob's client
         await waitFor(async () => {
-            const e = await bob.getLatestEvent(channelId)
-            expect(
-                e?.content?.kind === ZTEvent.RoomMessage && e?.content?.body === 'Hello Balice!',
-            ).toEqual(true)
+            const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+            expect(e?.content?.body === 'Hello Balice!').toEqual(true)
         })
 
         // bob get the last message
-        const event = await bob.getLatestEvent(channelId)
-        expect(
-            event?.content?.kind === ZTEvent.RoomMessage &&
-                event?.content?.body === 'Hello Balice!',
-        ).toEqual(true)
+        const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+        expect(event?.content?.body === 'Hello Balice!').toEqual(true)
 
         // bob sends edited message to the room
         await bob.editMessage(
@@ -77,21 +70,17 @@ describe('editMessage', () => {
 
         // bob should see the edited msg.
         await waitFor(async () => {
-            const e = await bob.getLatestEvent(channelId)
+            const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
             expect(
-                e?.content?.kind === ZTEvent.RoomMessage &&
-                    e?.content?.body === 'Hello Alice!' &&
-                    e?.content?.replacedMsgId === event?.eventId,
+                e?.content?.body === 'Hello Alice!' && e?.content?.replacedMsgId === event?.eventId,
             ).toEqual(true)
         })
 
         // wait for alice to receive the edited message
         await waitFor(async () => {
-            const e = await alice.getLatestEvent(channelId)
+            const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
             expect(
-                e?.content?.kind === ZTEvent.RoomMessage &&
-                    e?.content?.body === 'Hello Alice!' &&
-                    e?.content?.replacedMsgId === event?.eventId,
+                e?.content?.body === 'Hello Alice!' && e?.content?.replacedMsgId === event?.eventId,
             ).toEqual(true)
         })
     }) // end test
