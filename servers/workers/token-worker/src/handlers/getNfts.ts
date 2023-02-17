@@ -1,12 +1,12 @@
 import { withCorsHeaders } from '../../../common'
 import { throwCustomError } from '../router'
-import { AccurateNftResponse, ContractMetadataResponse, RequestWithAlchemyConfig } from '../types'
+import { GetNftsAlchemyResponse, GetNftsResponse, RequestWithAlchemyConfig } from '../types'
 
 const fetchAlchemyNfts = async (
     rpcUrl: string,
     wallet: string,
     pageKey: string,
-): Promise<AccurateNftResponse> => {
+): Promise<GetNftsAlchemyResponse> => {
     const response = await fetch(
         `${rpcUrl}/getNFTs?owner=${wallet}&pageKey=${pageKey}&filters[]=SPAM`,
     )
@@ -26,7 +26,7 @@ export const getNftsForOwner = async (request: RequestWithAlchemyConfig) => {
 
     const pageKey = query?.pageKey || ''
 
-    let json: AccurateNftResponse | ContractMetadataResponse = await fetchAlchemyNfts(
+    let json: GetNftsAlchemyResponse | GetNftsResponse = await fetchAlchemyNfts(
         rpcUrl,
         wallet,
         pageKey,
@@ -50,7 +50,7 @@ export const getNftsForOwner = async (request: RequestWithAlchemyConfig) => {
     return new Response(body, { headers })
 }
 
-function getContractMetadata(response: AccurateNftResponse): ContractMetadataResponse {
+function getContractMetadata(response: GetNftsAlchemyResponse): GetNftsResponse {
     const { ownedNfts, ...rest } = response
     return {
         ...rest,

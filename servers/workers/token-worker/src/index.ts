@@ -4,6 +4,7 @@ import {
     getOptionsResponse,
     isOptionsRequest,
 } from '../../common'
+import { getContractMetadata } from './handlers/getContractMetadata'
 import { getNftsForOwner } from './handlers/getNfts'
 import { router } from './router'
 import { Env, RequestWithAlchemyConfig } from './types'
@@ -22,6 +23,11 @@ const withNetwork = async (request: RequestWithAlchemyConfig, env: Env) => {
 }
 
 router
+    // get high-level metadata for a contract/collection
+    // https://docs.alchemy.com/reference/getcontractmetadata
+    .get('/api/getContractMetadata/:network', withNetwork, getContractMetadata)
+    // get all NFTs for a wallet
+    // https://docs.alchemy.com/reference/getnfts
     .get('/api/getNftsForOwner/:network/:wallet', withNetwork, getNftsForOwner)
     .get('*', () => new Response('Not found', { status: 404 }))
 

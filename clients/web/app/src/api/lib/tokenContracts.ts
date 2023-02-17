@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { ContractMetadata, ContractMetadataResponse } from '@token-worker/types'
+import { ContractMetadata, GetNftsResponse } from '@token-worker/types'
 import { erc20ABI } from '@wagmi/core'
 import { ethers } from 'ethers'
 import { useMemo } from 'react'
@@ -34,7 +34,7 @@ const zContractData: z.ZodType<ContractMetadata> = z.object({
     imageUrl: z.string().optional(),
 })
 
-const zSchema: z.ZodType<ContractMetadataResponse> = z.object({
+const zSchema: z.ZodType<GetNftsResponse> = z.object({
     blockHash: z.string(),
     totalCount: z.number(),
     pageKey: z.string().optional(),

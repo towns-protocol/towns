@@ -1,8 +1,8 @@
 import { randProductName, randTextRange } from '@ngneat/falso'
-import { ContractMetadataResponse } from '@token-worker/types'
+import { GetNftsResponse } from '@token-worker/types'
 import { CreateSpaceFormState } from './types'
 
-export const MOCK_CONTRACT_METADATA_RESPONSE: ContractMetadataResponse = {
+export const MOCK_CONTRACT_METADATA_RESPONSE: GetNftsResponse = {
     pageKey:
         'MHgwMDcwM2Y5YjExZjJhYzAyZDM5MWExMWU3Yjk3YzZlZTgwY2Q4NTYzOjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwNTpmYWxzZQ==',
     totalCount: 25434,

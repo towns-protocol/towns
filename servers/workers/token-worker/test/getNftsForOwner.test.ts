@@ -5,7 +5,7 @@ const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
 const GET_NFTS_PATH = '/v2/fake_key/getNFTs?owner=vitalik.eth&pageKey=&filters[]=SPAM'
 const GET_NFTS_PAGE_2 = '/v2/fake_key/getNFTs?owner=vitalik.eth&pageKey=b&filters[]=SPAM'
 
-describe('token worker', () => {
+describe('getNftsForOwner()', () => {
     test('Returns unauthorized if not authorized request', async () => {
         const bindings = getMiniflareBindings()
         const response = await tokenDefaultExport.fetch(
