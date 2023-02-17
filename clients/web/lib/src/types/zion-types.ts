@@ -128,6 +128,12 @@ export interface CreateChannelInfo {
     disableEncryption?: boolean
 }
 
+export interface UpdateChannelInfo {
+    parentSpaceId: RoomIdentifier
+    channelId: RoomIdentifier
+    updatedChannelName: string
+}
+
 /// use to send different types of messages, e.g. text, emoji, image, etc.
 /// currently unsupported: Emote = "m.emote", Notice = "m.notice", File = "m.file", Audio = "m.audio", Location = "m.location", Video = "m.video",
 export enum MessageType {

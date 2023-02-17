@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { SendMessageOptions } from 'types/zion-types'
+import { SendMessageOptions, UpdateChannelInfo } from 'types/zion-types'
 import { RoleIdentifier, TProvider } from 'types/web3-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
@@ -53,6 +53,7 @@ export interface Space {
 export enum ZionClientEvent {
     NewChannel = 'ZionClient.NewChannel',
     NewSpace = 'ZionClient.NewSpace',
+    UpdatedChannel = 'ZionClient.UpdatedChannel',
 }
 
 export enum ZionAccountDataType {
@@ -84,6 +85,8 @@ export interface TransactionContext<T> {
 export interface ChannelTransactionContext extends TransactionContext<RoomIdentifier> {
     parentSpaceId: string | undefined
 }
+
+export type ChannelUpdateTransactionContext = TransactionContext<UpdateChannelInfo>
 
 export interface RoleTransactionContext extends TransactionContext<RoleIdentifier> {
     spaceNetworkId: string | undefined

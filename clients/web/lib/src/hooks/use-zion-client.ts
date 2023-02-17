@@ -3,6 +3,7 @@
 
 import {
     ChannelTransactionContext,
+    ChannelUpdateTransactionContext,
     IZionServerVersions,
     RoleTransactionContext,
     TransactionContext,
@@ -16,25 +17,26 @@ import {
     Room,
     SendMessageOptions,
     SendTextMessageOptions,
+    UpdateChannelInfo,
 } from '../types/zion-types'
+import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
+import { useCallback, useMemo } from 'react'
 
 import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
 import { FullyReadMarker } from '../types/timeline-types'
 import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { Permission } from '../client/web3/ContractTypes'
+import { RoleIdentifier } from 'types/web3-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { DataTypes as SpaceFactoryDataTypes } from '@harmony/contracts/localhost/typings/SpaceFactory'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
-import { useCallback, useMemo } from 'react'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
-import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
-import { RoleIdentifier } from 'types/web3-types'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -62,6 +64,12 @@ interface ZionClientImpl {
     waitForCreateChannelTransaction: (
         context: ChannelTransactionContext | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    updateChannelTransaction: (
+        updateChannelInfo: UpdateChannelInfo,
+    ) => Promise<ChannelUpdateTransactionContext | undefined>
+    waitForUpdateChannelTransaction: (
+        context: ChannelUpdateTransactionContext | undefined,
+    ) => Promise<ChannelUpdateTransactionContext | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
         roleName: string,
@@ -155,6 +163,11 @@ export function useZionClient(): ZionClientImpl {
         waitForCreateChannelTransaction: useWithCatch(
             client?.waitForCreateChannelTransaction,
             ZionClientEvent.NewChannel,
+        ),
+        updateChannelTransaction: useWithCatch(client?.updateChannelTransaction),
+        waitForUpdateChannelTransaction: useWithCatch(
+            client?.waitForUpdateChannelTransaction,
+            ZionClientEvent.UpdatedChannel,
         ),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),
         waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),

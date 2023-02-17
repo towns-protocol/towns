@@ -6,7 +6,7 @@ import {
     Permission,
     RoleDetails,
 } from './ContractTypes'
-import { EventsContractInfo, ISpaceDapp, UpdateRoleParams } from './ISpaceDapp'
+import { EventsContractInfo, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
@@ -351,6 +351,17 @@ export class SpaceDapp implements ISpaceDapp {
         encodedCallData.push(this.encodeRoleDelete(space, roleId))
         // invoke the multicall transaction
         return space.write.multicall(encodedCallData)
+    }
+
+    public async updateChannel(params: UpdateChannelParams): Promise<ContractTransaction> {
+        const space = await this.getSpace(params.spaceNetworkId)
+        if (!space?.write) {
+            throw new Error(
+                `Space with networkId "${params.spaceNetworkId}" is not deployed properly.`,
+            )
+        }
+        // update any channel name changes
+        return space.write.updateChannel(params.channelNetworkId, params.channelName)
     }
 
     public async updateRole(params: UpdateRoleParams): Promise<ContractTransaction> {

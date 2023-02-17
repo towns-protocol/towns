@@ -3,6 +3,7 @@ import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 
 import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
 import {
     ChannelTransactionContext,
+    ChannelUpdateTransactionContext,
     IZionServerVersions,
     RoleTransactionContext,
     SpaceProtocol,
@@ -35,6 +36,7 @@ import {
     RoomMember,
     SendMessageOptions,
     SendTextMessageOptions,
+    UpdateChannelInfo,
     User,
 } from '../types/zion-types'
 import {
@@ -681,6 +683,115 @@ export class ZionClient {
         }
     }
 
+    public async updateChannelTransaction(
+        updateChannelInfo: UpdateChannelInfo,
+    ): Promise<ChannelUpdateTransactionContext> {
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+        try {
+            transaction = await this.spaceDapp.updateChannel({
+                spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
+                channelNetworkId: updateChannelInfo.channelId.networkId,
+                channelName: updateChannelInfo.updatedChannelName,
+            })
+            console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[updateChannelTransaction] error', err)
+            error = await this.spaceDapp.parseSpaceError(
+                updateChannelInfo.parentSpaceId.networkId,
+                err,
+            )
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: updateChannelInfo,
+            error,
+        }
+    }
+
+    public async waitForUpdateChannelTransaction(
+        context: ChannelUpdateTransactionContext | undefined,
+    ): Promise<ChannelUpdateTransactionContext> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForUpdateChannelTransaction] transaction is undefined')
+            }
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            }
+        } catch (err) {
+            console.error('[waitForUpdateChannelTransaction] waitForTransaction error', err)
+            if (err instanceof Error) {
+                error = err
+            } else {
+                error = new Error(`update channel failed: ${JSON.stringify(err)}`)
+            }
+        }
+
+        // Successfully updated the channel on-chain.
+        if (receipt?.status === 1) {
+            console.log('[waitForUpdateChannelTransaction] success')
+            // now update the channel name in the matrix room
+            try {
+                if (!context?.data) {
+                    throw new Error('[waitForUpdateChannelTransaction] context?.data is undefined')
+                }
+                await this.updateChannelRoom(context.data)
+                return {
+                    data: context.data,
+                    status: TransactionStatus.Success,
+                    transaction,
+                    receipt,
+                    error,
+                }
+            } catch (err) {
+                console.error('[waitForUpdateChannelTransaction] updateChannelRoom error', err)
+                if (err instanceof Error) {
+                    error = err
+                } else {
+                    error = new Error(`update channel failed: ${JSON.stringify(err)}`)
+                }
+            }
+        }
+
+        // got here without success
+        return {
+            data: context?.data,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        }
+    }
+
+    public async updateChannelRoom(updateChannelInfo: UpdateChannelInfo): Promise<void> {
+        switch (updateChannelInfo.channelId.protocol) {
+            case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                // update the matrix room
+                await this.matrixClient.setRoomName(
+                    updateChannelInfo.channelId.networkId,
+                    updateChannelInfo.updatedChannelName,
+                )
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('Casablanca not supported yet')
+            default:
+                staticAssertNever(updateChannelInfo.channelId)
+        }
+    }
+
     /************************************************
      * isEntitled
      *************************************************/
@@ -768,7 +879,7 @@ export class ZionClient {
             if (err instanceof Error) {
                 error = err
             } else {
-                error = new Error('create role failed with an unknown error')
+                error = new Error(`create role failed: ${JSON.stringify(err)}`)
             }
         }
 
@@ -792,11 +903,6 @@ export class ZionClient {
         }
 
         // got here without success
-        if (!error) {
-            // If we don't have an error from the transaction, create one
-            error = new Error('create role failed')
-        }
-        console.error('[waitForCreateRoleTransaction] failed', error)
         return {
             data: undefined,
             status: TransactionStatus.Failed,
@@ -864,7 +970,7 @@ export class ZionClient {
             if (err instanceof Error) {
                 error = err
             } else {
-                error = new Error('update role failed with an unknown error')
+                error = new Error(`update role failed: ${JSON.stringify(err)}`)
             }
         }
 
@@ -880,11 +986,6 @@ export class ZionClient {
         }
 
         // got here without success
-        if (!error) {
-            // If we don't have an error from the transaction, create one
-            error = new Error('update role failed')
-        }
-        console.error('[waitForCreateRoleTransaction] failed', error)
         return {
             data: undefined,
             status: TransactionStatus.Failed,
