@@ -1157,9 +1157,22 @@ export class ZionClient {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                const matrixRoom = await joinMatrixRoom({ matrixClient: this.matrixClient, roomId })
+                const matrixRoom = await joinMatrixRoom({
+                    matrixClient: this.matrixClient,
+                    roomId,
+                })
                 const zionRoom = toZionRoom(matrixRoom)
 
+                if (!parentNetworkId && !matrixRoom.isSpaceRoom()) {
+                    const parentEvents = matrixRoom.currentState.getStateEvents(
+                        EventType.SpaceParent,
+                    )
+                    if (parentEvents.length > 0) {
+                        parentNetworkId = parentEvents[0].getStateKey()
+                    } else {
+                        console.error('no parent event found')
+                    }
+                }
                 const spaceId = parentNetworkId ? makeMatrixRoomIdentifier(parentNetworkId) : roomId
                 const channelNetworkId = parentNetworkId ? roomId.networkId : undefined
 
