@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import {
@@ -9,15 +9,21 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { Link } from 'react-router-dom'
-import { Avatar, Box, Panel, Paragraph, Stack } from '@ui'
+import { randParagraph } from '@ngneat/falso'
+import { Avatar, Box, BoxProps, Button, ButtonText, Panel, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { UploadImage } from '@components/UploadImage/UploadImage'
 import { useHasPermission } from 'hooks/useHasPermission'
+import { TextArea } from 'ui/components/TextArea/TextArea'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
-const MdGap = ({ children }: { children: JSX.Element }) => <Box gap="md">{children}</Box>
+const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
+    <Box gap="md" {...boxProps}>
+        {children}
+    </Box>
+)
 
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
@@ -28,6 +34,9 @@ export const SpaceInfoPanel = () => {
     const navigate = useNavigate()
     const { data: isOwner } = useHasPermission(Permission.Owner)
     const { homeserverUrl } = useMatrixHomeServerUrl()
+    const [isEdit, setIsEdit] = useState(false)
+    const [description, setDescription] = useState(randParagraph())
+    const textAreaRef = useRef<HTMLTextAreaElement>(null)
 
     const matrixUserOwner = useMemo(() => {
         if (!client?.matrixClient || !data?.owner || !chainId) {
@@ -46,6 +55,22 @@ export const SpaceInfoPanel = () => {
 
     const onClose = useEvent(() => {
         navigate('..')
+    })
+
+    const onEdit = useEvent(() => {
+        setIsEdit(true)
+        setTimeout(() => {
+            textAreaRef.current?.focus()
+        })
+    })
+    const onCancel = useEvent(() => setIsEdit(false))
+    const onSave = useEvent(() => {
+        console.log('save')
+        if (!textAreaRef.current) {
+            return
+        }
+        setDescription(textAreaRef.current.value)
+        setIsEdit(false)
     })
 
     return (
@@ -69,6 +94,49 @@ export const SpaceInfoPanel = () => {
 
                     <MdGap>
                         <ClipboardCopy clipboardContent={address} label={shortAddress(address)} />
+                    </MdGap>
+
+                    <MdGap>
+                        <>
+                            <Box horizontal justifyContent="spaceBetween">
+                                <Paragraph strong>About</Paragraph>{' '}
+                                {/* TODO: update for proper role */}
+                                {isOwner &&
+                                    (isEdit ? (
+                                        <Box horizontal gap="sm">
+                                            <Button size="inline" tone="none" onClick={onCancel}>
+                                                <ButtonText color="cta1" size="sm">
+                                                    Cancel
+                                                </ButtonText>
+                                            </Button>
+                                            <Button size="inline" tone="none" onClick={onSave}>
+                                                <ButtonText color="gray1" size="sm">
+                                                    Save
+                                                </ButtonText>
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <Button size="inline" tone="none" onClick={onEdit}>
+                                            <ButtonText color="gray1" size="sm">
+                                                Edit
+                                            </ButtonText>
+                                        </Button>
+                                    ))}
+                            </Box>
+                            {isEdit ? (
+                                <TextArea
+                                    ref={textAreaRef}
+                                    paddingY="md"
+                                    background="level2"
+                                    defaultValue={description}
+                                    height="150"
+                                    maxLength={400}
+                                    style={{ paddingRight: '2.5rem' }}
+                                />
+                            ) : (
+                                <Paragraph color="gray2">{description}</Paragraph>
+                            )}
+                        </>
                     </MdGap>
 
                     <MdGap>

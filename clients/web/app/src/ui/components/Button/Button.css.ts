@@ -1,4 +1,5 @@
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes'
+import { atoms } from 'ui/styles/atoms.css'
 import { vars } from 'ui/styles/vars.css'
 
 export const buttonStyle = recipe({
@@ -28,6 +29,15 @@ export const buttonStyle = recipe({
             },
         },
         size: {
+            inline: {
+                padding: atoms({ padding: 'none' }),
+                selectors: {
+                    '&:hover:enabled': {
+                        transition: 'none',
+                        boxShadow: `none`,
+                    },
+                },
+            },
             button_xs: {
                 fontSize: vars.fontSize.sm,
                 height: vars.dims.button.button_xs,

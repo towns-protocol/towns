@@ -50,9 +50,13 @@ export type FieldBaseProps = {
     width?: BoxProps['width']
     /** horizontal padding of the input */
     paddingX?: BoxProps['paddingX']
+    /** vertical padding of the input */
+    paddingY?: BoxProps['paddingY']
+    /** max length of the input */
+    maxLength?: FormElementProps['maxLength']
 }
 
-type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus'
+type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'
 
 interface FieldRenderProps extends Pick<FieldBaseProps, PassthroughProps> {
     background: BoxProps['background']
@@ -89,6 +93,7 @@ export const Field = (props: Props) => {
         after,
         before,
         width,
+        paddingY,
         paddingX = 'md',
         ...inputProps
     } = props
@@ -116,6 +121,7 @@ export const Field = (props: Props) => {
                 position="relative"
                 alignItems="center"
                 paddingX={paddingX}
+                paddingY={paddingY}
                 gap="sm"
                 borderRadius="sm"
                 color={inputColor}
