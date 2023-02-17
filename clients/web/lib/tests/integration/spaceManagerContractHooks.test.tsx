@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -32,7 +30,7 @@ describe('spaceManagerContractHooks', () => {
             const { chainId } = useZionClient()
             const zionTokenAddress = chainId ? getCouncilNftAddress(chainId) : undefined
             const {
-                createSpaceTransactionWithRole: createSpaceTransactionWithRole,
+                createSpaceTransactionWithRole,
                 isLoading,
                 data,
                 error,
@@ -41,6 +39,8 @@ describe('spaceManagerContractHooks', () => {
             } = useCreateSpaceTransaction()
             // spaces
             const { spaces } = useSpacesFromContract()
+
+            const [createdSpace, setCreatedSpace] = useState<boolean>(false)
             // callback to create a space
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
@@ -53,9 +53,15 @@ describe('spaceManagerContractHooks', () => {
                         [],
                         [],
                     )
+                    console.log('spaceManagerContractHooks onClickCreateSpace', spaceName)
+
+                    setCreatedSpace(true)
                 }
                 void handleClick()
             }, [createSpaceTransactionWithRole])
+            const [createSpaceWithZionMemberRole, setCreateSpaceWithZionMemberRole] =
+                useState<boolean>(false)
+
             // callback to create a space with zion token entitlement
             const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
                 const handleClick = async () => {
@@ -69,18 +75,27 @@ describe('spaceManagerContractHooks', () => {
                             [zionTokenAddress],
                             [Permission.Read, Permission.Write],
                         )
+                        console.log(
+                            'spaceManagerContractHooks createSpaceTransactionWithRole',
+                            tokenGatedSpaceName,
+                        )
+                        setCreateSpaceWithZionMemberRole(true)
+                    } else {
+                        console.warn('No zion token address found')
                     }
                 }
                 void handleClick()
             }, [createSpaceTransactionWithRole, zionTokenAddress])
 
-            console.log('TestComponent', 'render', {
-                isLoading,
-                data,
-                error,
-                transactionStatus,
-                transactionHash,
-            })
+            useEffect(() => {
+                console.log('TestComponent', 'render', {
+                    isLoading,
+                    data,
+                    error,
+                    transactionStatus,
+                    transactionHash,
+                })
+            }, [data, error, isLoading, transactionHash, transactionStatus])
 
             // the view
             return (
@@ -90,6 +105,10 @@ describe('spaceManagerContractHooks', () => {
                     <button onClick={onClickCreateSpaceWithZionMemberRole}>
                         Create Token-Gated Space
                     </button>
+                    <div data-testid="createdSpace">{createdSpace ? 'true' : 'false'}</div>
+                    <div data-testid="spaceWithZionMemberRole">
+                        {createSpaceWithZionMemberRole ? 'true' : 'false'}
+                    </div>
                     <div data-testid="spaces">{spaces.map((x) => x.name).join(', ')}</div>
                 </>
             )
@@ -108,11 +127,19 @@ describe('spaceManagerContractHooks', () => {
         const createTokenGatedSpaceButton = screen.getByRole('button', {
             name: 'Create Token-Gated Space',
         })
+        const createdSpace = screen.getByTestId('createdSpace')
+        const spaceWithZionMemberRole = screen.getByTestId('spaceWithZionMemberRole')
         const spaceElement = screen.getByTestId('spaces')
         // verify alice name is rendering
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // click the button
         fireEvent.click(createSpaceButton)
+        // did the button complete
+        await waitFor(
+            () => expect(createdSpace).toHaveTextContent('true'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+
         // did we make a space?
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
@@ -120,6 +147,12 @@ describe('spaceManagerContractHooks', () => {
         )
         // now with a token
         fireEvent.click(createTokenGatedSpaceButton)
+        // did the button complete
+        await waitFor(
+            () => expect(spaceWithZionMemberRole).toHaveTextContent('true'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+
         // did we make a space?
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(tokenGatedSpaceName),
