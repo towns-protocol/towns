@@ -75,6 +75,10 @@ import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendCsbMessage } from './casablanca/SendMessage'
 import { newLoginSession, newRegisterSession, NewSession } from '../hooks/session'
 import { toUtf8String } from 'ethers/lib/utils.js'
+import {
+    MatrixDecryptionExtension,
+    MatrixDecryptionExtensionDelegate,
+} from './matrix/MatrixDecryptionExtensions'
 /***
  * Zion Client
  * mostly a "passthrough" abstraction that hides the underlying MatrixClient
@@ -91,12 +95,13 @@ import { toUtf8String } from 'ethers/lib/utils.js'
 
 const DEFAULT_INITIAL_SYNC_LIMIT = 20
 
-export class ZionClient {
+export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
     public councilNFT: CouncilNFTShim
     public matrixClient?: MatrixClient
+    public matrixDecryptionExtension?: MatrixDecryptionExtension
     public casablancaClient?: CasablancaClient
     private _chainId: number
     private _auth?: ZionAuth
@@ -320,6 +325,7 @@ export class ZionClient {
             await loadOlm()
         }
         await this.matrixClient.initCrypto()
+        this.matrixDecryptionExtension = new MatrixDecryptionExtension(this.matrixClient, this)
         // disable log...
         this.matrixClient.setGlobalErrorOnUnknownDevices(false)
         // start matrixClient
@@ -373,6 +379,7 @@ export class ZionClient {
      * stopMatrixClient
      *************************************************/
     public stopMatrixClient() {
+        this.matrixDecryptionExtension?.stop()
         this.matrixClient?.stopClient()
         this.matrixClient?.removeAllListeners()
         this.matrixClient = undefined
