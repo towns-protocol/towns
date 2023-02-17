@@ -81,6 +81,7 @@ export class ZionTestClient extends ZionClient {
                 web3Signer: provider.wallet,
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
+                isTesting: true,
             },
             chainId,
             name,

@@ -59,6 +59,7 @@ export const ZionTestApp = (props: Props) => {
             initialSyncLimit={initialSyncLimit}
             chain={foundry}
             QueryClientProvider={TestQueryClientProvider}
+            isTesting={true}
         >
             <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>

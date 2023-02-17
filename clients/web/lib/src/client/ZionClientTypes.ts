@@ -20,6 +20,7 @@ export interface ZionOpts {
     web3Provider?: TProvider
     web3Signer?: ethers.Signer
     eventHandlers?: ZionClientEventHandlers
+    isTesting?: boolean
 }
 
 export interface ZionAuth {
