@@ -37,7 +37,7 @@ export const MeIndex = () => {
             },
             {
                 title: `Server version`,
-                content: serverVersions ?? `??`,
+                content: serverVersions ? JSON.stringify(serverVersions) : `??`,
             },
         ],
         [isAuthenticated, serverVersions, userId, username],
