@@ -116,3 +116,5 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
 
     return <AnalyticsContext.Provider value={analytics}>{children}</AnalyticsContext.Provider>
 }
+
+export const useAnalytics = () => React.useContext(AnalyticsContext)
