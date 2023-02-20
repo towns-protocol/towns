@@ -452,7 +452,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
 
         const devicesInfo = devices.map((d) => ({ userId: requesteeId, deviceInfo: d }))
 
-        console.log('FOUND_TD MDE::_startLookingForKeys - sending request', {
+        console.log('MDE::_startLookingForKeys - sending request', {
             to: requesteeId,
             from: this.matrixClient.getUserId(),
         })
