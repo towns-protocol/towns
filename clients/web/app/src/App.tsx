@@ -69,27 +69,33 @@ const AllRoutes = () => {
         <Routes>
             <Route element={<AppLayout />}>
                 <Route element={<Outlet />}>
-                    {!isAuthenticatedAndConnected && (
-                        <>
-                            <Route path={PATHS.REGISTER} element={<Welcome />} />
-                            <Route path={PATHS.LOGIN} element={<Welcome />} />
-                            <Route
-                                path={`${PATHS.SPACES}/:spaceSlug`}
-                                element={<InviteLinkLanding />}
-                            />
-                            <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
-                            <Route path="*" element={<RedirectToLoginWithSavedLocation />} />
-                        </>
-                    )}
+                    <>
+                        <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
+                        {!isAuthenticatedAndConnected && (
+                            <>
+                                <Route path={PATHS.REGISTER} element={<Welcome />} />
+                                <Route path={PATHS.LOGIN} element={<Welcome />} />
+                                <Route
+                                    path={`${PATHS.SPACES}/:spaceSlug`}
+                                    element={<InviteLinkLanding />}
+                                />
 
-                    {isAuthenticatedAndConnected && (
-                        <>
-                            <Route path={`/${PATHS.PREFERENCES}`} element={<Register isEdit />} />
-                            <Route path="*" element={<AppPanelLayout />}>
-                                <Route path="*" element={<AuthenticatedRoutes />} />
-                            </Route>
-                        </>
-                    )}
+                                <Route path="*" element={<RedirectToLoginWithSavedLocation />} />
+                            </>
+                        )}
+
+                        {isAuthenticatedAndConnected && (
+                            <>
+                                <Route
+                                    path={`/${PATHS.PREFERENCES}`}
+                                    element={<Register isEdit />}
+                                />
+                                <Route path="*" element={<AppPanelLayout />}>
+                                    <Route path="*" element={<AuthenticatedRoutes />} />
+                                </Route>
+                            </>
+                        )}
+                    </>
                 </Route>
                 <Route path="/playground" element={<Playground />} />
                 <Route path="/playground/*" element={<PlaygroundRoutes />} />
