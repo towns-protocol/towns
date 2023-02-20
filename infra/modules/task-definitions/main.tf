@@ -4,7 +4,6 @@ module global_constants {
 
 locals {
   dendrite_log_group_name = "/${module.global_constants.environment}/ecs/zion/dendrite"
-  postgres_log_group_name = "/${module.global_constants.environment}/ecs/zion/postgres"
 }
 
 data "aws_iam_role" "ecs_task_execution_role" {
@@ -13,63 +12,6 @@ data "aws_iam_role" "ecs_task_execution_role" {
 
 resource "aws_cloudwatch_log_group" "dendrite_log_group" {
   name = local.dendrite_log_group_name
-  tags = module.global_constants.tags
-}
-
-resource "aws_cloudwatch_log_group" "postgres_log_group" {
-  name = local.postgres_log_group_name
-  tags = module.global_constants.tags
-}
-
-resource "aws_ecs_task_definition" "postgres" {
-  family = "${module.global_constants.environment}-zion-postgres" 
-
-  network_mode = "bridge"
-
-  task_role_arn         = data.aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn    = data.aws_iam_role.ecs_task_execution_role.arn
-
-  cpu                      = 512
-  memory                   = 1024
-
-  requires_compatibilities = ["EC2"]
-
-  lifecycle {
-    ignore_changes = [container_definitions]
-  }
-
-  container_definitions = jsonencode([{
-    name  = "postgres"
-    image = "postgres:14"
-    essential = true
-    portMappings = [{
-      containerPort = 5432
-      hostPort = 5432
-    }]
-
-    environment = [
-      # TODO: how do we get these environment variables to be secrets?
-      {
-        name = "POSTGRES_PASSWORD"
-        value = ""
-      },
-      {
-        name = "POSTGRES_USER"
-        value = ""
-      }
-    ]
-
-    mountPoints = [{
-      containerPath = "/var/lib/postgresql/data"
-      sourceVolume = "postgres-data"
-    }]
-  }])
-
-  volume {
-    name = "postgres-data"
-    host_path = "/mnt/zion-root/postgres/data"
-  }
-
   tags = module.global_constants.tags
 }
 

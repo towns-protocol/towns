@@ -127,13 +127,6 @@ module "docker_ec2_host" {
   depends_on = [aws_ecs_cluster.zion-ecs-cluster]
 }
 
-resource "aws_ecs_service" "zion-postgres-service" {
-  name            = "${module.global_constants.environment}-zion-postgres-service"
-  cluster         = aws_ecs_cluster.zion-ecs-cluster.id
-  task_definition = module.task_definitions.postgres_task_definition_arn
-  desired_count   = 1
-}
-
 resource "aws_ecs_service" "zion-dendrite-service" {
   name            = "${module.global_constants.environment}-zion-dendrite-service"
   cluster         = aws_ecs_cluster.zion-ecs-cluster.id
