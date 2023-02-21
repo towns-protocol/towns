@@ -1,7 +1,8 @@
 import { QueryKeyRoles } from './query-keys'
-import { useCallback } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useZionContext } from '../components/ZionContextProvider'
+import { RoleDetails } from '../client/web3/ContractTypes'
 
 /**
  * Convience function to get space role details.
@@ -54,4 +55,58 @@ export function useRoleDetails(spaceId: string, roleId: number) {
         roleDetails,
         error,
     }
+}
+
+export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
+    const { client } = useZionContext()
+    const isEnabled = client && spaceId.length > 0 && roleIds.length > 0
+
+    const getRole = useCallback(
+        async function (spaceId: string, roleId: number) {
+            if (!client) {
+                return undefined
+            }
+
+            const role = await client.spaceDapp.getRole(spaceId, roleId)
+            return role
+        },
+        [client],
+    )
+
+    const queryData = useQueries({
+        queries: roleIds.map((roleId) => {
+            return {
+                queryKey: [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByRoleId, roleId],
+                queryFn: () => getRole(spaceId, roleId),
+                enabled: isEnabled,
+                retry: false,
+            }
+        }),
+    })
+
+    return useMemo<{
+        data: RoleDetails[] | undefined
+        isLoading: boolean
+    }>(() => {
+        if (!queryData.length) {
+            return {
+                data: undefined,
+                isLoading: true,
+            }
+        }
+
+        if (queryData.every((token) => token.isFetched)) {
+            return {
+                data: queryData
+                    .map((token) => token.data)
+                    .filter((data): data is RoleDetails => !!data),
+                isLoading: false,
+            }
+        }
+
+        return {
+            data: undefined,
+            isLoading: true,
+        }
+    }, [queryData])
 }
