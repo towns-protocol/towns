@@ -70,37 +70,44 @@ export declare namespace DataTypes {
 
 export interface SpaceFactoryInterface extends utils.Interface {
   functions: {
+    "GATE_TOKEN_ADDRESS()": FunctionFragment;
     "SPACE_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "SPACE_TOKEN_ADDRESS()": FunctionFragment;
     "TOKEN_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "USER_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "addOwnerPermissions(string[])": FunctionFragment;
     "createSpace(string,string,string,string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": FunctionFragment;
+    "gatingEnabled()": FunctionFragment;
     "getOwnerPermissions()": FunctionFragment;
     "getSpaceAddressByNetworkId(string)": FunctionFragment;
     "getTokenIdByNetworkId(string)": FunctionFragment;
-    "initialize(address,address,address,address,string[])": FunctionFragment;
+    "initialize(address,address,address,address,address,string[])": FunctionFragment;
     "onERC721Received(address,address,uint256,bytes)": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerPermissions(uint256)": FunctionFragment;
+    "paused()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
+    "setGatingEnabled(bool)": FunctionFragment;
+    "setPaused(bool)": FunctionFragment;
     "spaceByHash(bytes32)": FunctionFragment;
     "tokenByHash(bytes32)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "updateImplementations(address,address,address)": FunctionFragment;
+    "updateImplementations(address,address,address,address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "GATE_TOKEN_ADDRESS"
       | "SPACE_IMPLEMENTATION_ADDRESS"
       | "SPACE_TOKEN_ADDRESS"
       | "TOKEN_IMPLEMENTATION_ADDRESS"
       | "USER_IMPLEMENTATION_ADDRESS"
       | "addOwnerPermissions"
       | "createSpace"
+      | "gatingEnabled"
       | "getOwnerPermissions"
       | "getSpaceAddressByNetworkId"
       | "getTokenIdByNetworkId"
@@ -108,8 +115,11 @@ export interface SpaceFactoryInterface extends utils.Interface {
       | "onERC721Received"
       | "owner"
       | "ownerPermissions"
+      | "paused"
       | "proxiableUUID"
       | "renounceOwnership"
+      | "setGatingEnabled"
+      | "setPaused"
       | "spaceByHash"
       | "tokenByHash"
       | "transferOwnership"
@@ -118,6 +128,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
       | "upgradeToAndCall"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "GATE_TOKEN_ADDRESS",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "SPACE_IMPLEMENTATION_ADDRESS",
     values?: undefined
@@ -149,6 +163,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "gatingEnabled",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getOwnerPermissions",
     values?: undefined
   ): string;
@@ -163,6 +181,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "initialize",
     values: [
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
@@ -184,6 +203,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     functionFragment: "ownerPermissions",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
@@ -191,6 +211,14 @@ export interface SpaceFactoryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setGatingEnabled",
+    values: [PromiseOrValue<boolean>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setPaused",
+    values: [PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
     functionFragment: "spaceByHash",
@@ -209,6 +237,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
   ): string;
@@ -221,6 +250,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "GATE_TOKEN_ADDRESS",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "SPACE_IMPLEMENTATION_ADDRESS",
     data: BytesLike
@@ -246,6 +279,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "gatingEnabled",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getOwnerPermissions",
     data: BytesLike
   ): Result;
@@ -267,6 +304,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     functionFragment: "ownerPermissions",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
@@ -275,6 +313,11 @@ export interface SpaceFactoryInterface extends utils.Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setGatingEnabled",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "setPaused", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "spaceByHash",
     data: BytesLike
@@ -302,6 +345,8 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "BeaconUpgraded(address)": EventFragment;
     "Initialized(uint8)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "Paused(address)": EventFragment;
+    "Unpaused(address)": EventFragment;
     "Upgraded(address)": EventFragment;
   };
 
@@ -309,6 +354,8 @@ export interface SpaceFactoryInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
@@ -352,6 +399,20 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
+export interface PausedEventObject {
+  account: string;
+}
+export type PausedEvent = TypedEvent<[string], PausedEventObject>;
+
+export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
+export interface UnpausedEventObject {
+  account: string;
+}
+export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
+
+export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
+
 export interface UpgradedEventObject {
   implementation: string;
 }
@@ -386,6 +447,8 @@ export interface SpaceFactory extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    GATE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+
     SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
     SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
@@ -408,6 +471,8 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    gatingEnabled(overrides?: CallOverrides): Promise<[boolean]>;
+
     getOwnerPermissions(overrides?: CallOverrides): Promise<[string[]]>;
 
     getSpaceAddressByNetworkId(
@@ -425,6 +490,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _spaceToken: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -444,9 +510,21 @@ export interface SpaceFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    paused(overrides?: CallOverrides): Promise<[boolean]>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setGatingEnabled(
+      _gatingEnabled: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setPaused(
+      _paused: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -469,6 +547,7 @@ export interface SpaceFactory extends BaseContract {
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -483,6 +562,8 @@ export interface SpaceFactory extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  GATE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
@@ -506,6 +587,8 @@ export interface SpaceFactory extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  gatingEnabled(overrides?: CallOverrides): Promise<boolean>;
+
   getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
 
   getSpaceAddressByNetworkId(
@@ -523,6 +606,7 @@ export interface SpaceFactory extends BaseContract {
     _tokenEntitlement: PromiseOrValue<string>,
     _userEntitlement: PromiseOrValue<string>,
     _spaceToken: PromiseOrValue<string>,
+    _gateToken: PromiseOrValue<string>,
     _permissions: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -542,9 +626,21 @@ export interface SpaceFactory extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  paused(overrides?: CallOverrides): Promise<boolean>;
+
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setGatingEnabled(
+    _gatingEnabled: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setPaused(
+    _paused: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -567,6 +663,7 @@ export interface SpaceFactory extends BaseContract {
     _space: PromiseOrValue<string>,
     _tokenEntitlement: PromiseOrValue<string>,
     _userEntitlement: PromiseOrValue<string>,
+    _gateToken: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -582,6 +679,8 @@ export interface SpaceFactory extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    GATE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
     SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
@@ -604,6 +703,8 @@ export interface SpaceFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    gatingEnabled(overrides?: CallOverrides): Promise<boolean>;
+
     getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
 
     getSpaceAddressByNetworkId(
@@ -621,6 +722,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _spaceToken: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
@@ -640,9 +742,21 @@ export interface SpaceFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    paused(overrides?: CallOverrides): Promise<boolean>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
+
+    setGatingEnabled(
+      _gatingEnabled: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setPaused(
+      _paused: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     spaceByHash(
       arg0: PromiseOrValue<BytesLike>,
@@ -663,6 +777,7 @@ export interface SpaceFactory extends BaseContract {
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -707,6 +822,12 @@ export interface SpaceFactory extends BaseContract {
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
 
+    "Paused(address)"(account?: null): PausedEventFilter;
+    Paused(account?: null): PausedEventFilter;
+
+    "Unpaused(address)"(account?: null): UnpausedEventFilter;
+    Unpaused(account?: null): UnpausedEventFilter;
+
     "Upgraded(address)"(
       implementation?: PromiseOrValue<string> | null
     ): UpgradedEventFilter;
@@ -716,6 +837,8 @@ export interface SpaceFactory extends BaseContract {
   };
 
   estimateGas: {
+    GATE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
     SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
     SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
@@ -738,6 +861,8 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    gatingEnabled(overrides?: CallOverrides): Promise<BigNumber>;
+
     getOwnerPermissions(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSpaceAddressByNetworkId(
@@ -755,6 +880,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _spaceToken: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -774,9 +900,21 @@ export interface SpaceFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    paused(overrides?: CallOverrides): Promise<BigNumber>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setGatingEnabled(
+      _gatingEnabled: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setPaused(
+      _paused: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -799,6 +937,7 @@ export interface SpaceFactory extends BaseContract {
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -815,6 +954,10 @@ export interface SpaceFactory extends BaseContract {
   };
 
   populateTransaction: {
+    GATE_TOKEN_ADDRESS(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     SPACE_IMPLEMENTATION_ADDRESS(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -845,6 +988,8 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    gatingEnabled(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getOwnerPermissions(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -864,6 +1009,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _spaceToken: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       _permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -883,9 +1029,21 @@ export interface SpaceFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setGatingEnabled(
+      _gatingEnabled: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setPaused(
+      _paused: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -908,6 +1066,7 @@ export interface SpaceFactory extends BaseContract {
       _space: PromiseOrValue<string>,
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
+      _gateToken: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

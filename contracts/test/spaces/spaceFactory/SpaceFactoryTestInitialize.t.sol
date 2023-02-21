@@ -17,6 +17,7 @@ import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
+import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
 
 contract SpaceFactoryTestInitialize is TestUtils {
   SpaceFactory internal _spaceFactory;
@@ -24,9 +25,11 @@ contract SpaceFactoryTestInitialize is TestUtils {
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
   SpaceOwner internal spaceToken;
+  Pioneer internal pioneer;
   string[] public initialPermissions;
 
   function setUp() public {
+    pioneer = new Pioneer("Pioneer", "PNR", "");
     spaceToken = new SpaceOwner("Space Token", "ZION");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
@@ -48,6 +51,7 @@ contract SpaceFactoryTestInitialize is TestUtils {
             address(tokenImplementation),
             address(userImplementation),
             address(spaceToken),
+            address(pioneer),
             initialPermissions
           )
         )

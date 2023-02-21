@@ -4,6 +4,7 @@ pragma solidity 0.8.17;
 /** Interfaces */
 import {ISpaceFactory} from "contracts/src/interfaces/ISpaceFactory.sol";
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 /** Libraries */
 import {Permissions} from "contracts/src/libraries/Permissions.sol";
@@ -19,6 +20,7 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/access/Owna
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {ERC721HolderUpgradeable} from "openzeppelin-contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import {TokenEntitlement} from "./entitlements/TokenEntitlement.sol";
 import {UserEntitlement} from "./entitlements/UserEntitlement.sol";
@@ -28,6 +30,7 @@ import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 contract SpaceFactory is
   Initializable,
   OwnableUpgradeable,
+  PausableUpgradeable,
   ReentrancyGuardUpgradeable,
   ERC721HolderUpgradeable,
   UUPSUpgradeable,
@@ -40,16 +43,12 @@ contract SpaceFactory is
   address public TOKEN_IMPLEMENTATION_ADDRESS;
   address public USER_IMPLEMENTATION_ADDRESS;
   address public SPACE_TOKEN_ADDRESS;
+  address public GATE_TOKEN_ADDRESS;
 
+  bool public gatingEnabled;
   string[] public ownerPermissions;
   mapping(bytes32 => address) public spaceByHash;
   mapping(bytes32 => uint256) public tokenByHash;
-
-  /**
-   * @dev Added to allow future versions to add new variables in case this contract becomes
-   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-   */
-  uint256[49] private __gap;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -61,10 +60,12 @@ contract SpaceFactory is
     address _tokenEntitlement,
     address _userEntitlement,
     address _spaceToken,
+    address _gateToken,
     string[] memory _permissions
   ) external initializer {
     __UUPSUpgradeable_init();
     __Ownable_init();
+    __Pausable_init();
     __ReentrancyGuard_init();
     __ERC721Holder_init();
 
@@ -72,6 +73,8 @@ contract SpaceFactory is
     TOKEN_IMPLEMENTATION_ADDRESS = _tokenEntitlement;
     USER_IMPLEMENTATION_ADDRESS = _userEntitlement;
     SPACE_TOKEN_ADDRESS = _spaceToken;
+    GATE_TOKEN_ADDRESS = _gateToken;
+    gatingEnabled = false;
 
     for (uint256 i = 0; i < _permissions.length; i++) {
       ownerPermissions.push(_permissions[i]);
@@ -82,13 +85,15 @@ contract SpaceFactory is
   function updateImplementations(
     address _space,
     address _tokenEntitlement,
-    address _userEntitlement
-  ) external onlyOwner {
+    address _userEntitlement,
+    address _gateToken
+  ) external onlyOwner whenPaused {
     if (_space != address(0)) SPACE_IMPLEMENTATION_ADDRESS = _space;
     if (_tokenEntitlement != address(0))
       TOKEN_IMPLEMENTATION_ADDRESS = _tokenEntitlement;
     if (_userEntitlement != address(0))
       USER_IMPLEMENTATION_ADDRESS = _userEntitlement;
+    if (_gateToken != address(0)) GATE_TOKEN_ADDRESS = _gateToken;
   }
 
   /// @inheritdoc ISpaceFactory
@@ -98,7 +103,9 @@ contract SpaceFactory is
     string calldata spaceMetadata,
     string[] calldata _everyonePermissions,
     DataTypes.CreateSpaceExtraEntitlements calldata _extraEntitlements
-  ) external nonReentrant returns (address _spaceAddress) {
+  ) external nonReentrant whenNotPaused returns (address _spaceAddress) {
+    _validateGatingEnabled();
+
     // validate space name
     Utils.validateName(spaceName);
 
@@ -197,10 +204,22 @@ contract SpaceFactory is
     emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceNetworkId);
   }
 
+  function setGatingEnabled(bool _gatingEnabled) external onlyOwner whenPaused {
+    gatingEnabled = _gatingEnabled;
+  }
+
+  function setPaused(bool _paused) external onlyOwner {
+    if (_paused) {
+      _pause();
+    } else {
+      _unpause();
+    }
+  }
+
   /// @inheritdoc ISpaceFactory
   function addOwnerPermissions(
     string[] calldata _permissions
-  ) external onlyOwner {
+  ) external onlyOwner whenPaused {
     // check permission doesn't already exist
     for (uint256 i = 0; i < _permissions.length; i++) {
       for (uint256 j = 0; j < ownerPermissions.length; j++) {
@@ -335,7 +354,21 @@ contract SpaceFactory is
     );
   }
 
+  function _validateGatingEnabled() internal view {
+    if (
+      gatingEnabled && IERC721(GATE_TOKEN_ADDRESS).balanceOf(_msgSender()) == 0
+    ) {
+      revert Errors.NotAllowed();
+    }
+  }
+
   function _authorizeUpgrade(
     address newImplementation
   ) internal override onlyOwner {}
+
+  /**
+   * @dev Added to allow future versions to add new variables in case this contract becomes
+   *      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+   */
+  uint256[49] private __gap;
 }

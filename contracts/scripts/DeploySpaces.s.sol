@@ -12,6 +12,7 @@ import {Permissions} from "contracts/src/libraries/Permissions.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
 import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
 import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -22,12 +23,14 @@ contract DeploySpaces is ScriptUtils {
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
   SpaceOwner internal spaceToken;
+  Pioneer internal pioneer;
   string[] public initialPermissions;
 
   function run() external {
     _createInitialOwnerPermissions();
 
     vm.startBroadcast();
+    pioneer = new Pioneer("Pioneer", "PNR", "");
     spaceToken = new SpaceOwner("Space Owner", "SPACE");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
@@ -44,6 +47,7 @@ contract DeploySpaces is ScriptUtils {
             address(tokenImplementation),
             address(userImplementation),
             address(spaceToken),
+            address(pioneer),
             initialPermissions
           )
         )
@@ -61,6 +65,7 @@ contract DeploySpaces is ScriptUtils {
 
   function _logAddresses() internal view {
     console.log("--- Deployed Spaces ---");
+    console.log("Pioneer Token: ", address(pioneer));
     console.log("Space Token: ", address(spaceToken));
     console.log("Space: ", address(spaceImplementation));
     console.log("Token Entitlement: ", address(tokenImplementation));
@@ -88,6 +93,9 @@ contract DeploySpaces is ScriptUtils {
 
     vm.writeJson(vm.toString(address(spaceToken)), path, ".spaceToken");
     vm.writeJson(vm.toString(address(spaceToken)), goPath, ".spaceToken");
+
+    vm.writeJson(vm.toString(address(pioneer)), path, ".pioneerToken");
+    vm.writeJson(vm.toString(address(pioneer)), goPath, ".pioneerToken");
   }
 
   function _createInitialOwnerPermissions() internal {

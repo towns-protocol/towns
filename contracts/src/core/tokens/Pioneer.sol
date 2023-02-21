@@ -6,13 +6,17 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-contract Zioneer is ERC721, Ownable, ReentrancyGuard {
+contract Pioneer is ERC721, Ownable, ReentrancyGuard {
   using Strings for uint256;
+
+  event SetAllowed(address indexed user, bool allow);
 
   error NotAllowed();
   error NonExistentTokenURI();
   error MaxSupplyReached();
   error InsufficientBalance();
+  error AlreadyAllowed();
+  error AlreadyMinted();
 
   string public baseURI;
   uint256 public currentTokenId;
@@ -23,12 +27,9 @@ contract Zioneer is ERC721, Ownable, ReentrancyGuard {
   // keep track of who can mint new tokens
   mapping(address => bool) public allowed;
 
-  // a public array of the allowed addresses
-  address[] public allowedAddressesList;
-
   // keep track of token URIs
   modifier onlyAllowed() {
-    if (!allowed[msg.sender]) revert NotAllowed();
+    if (!allowed[_msgSender()]) revert NotAllowed();
     _;
   }
 
@@ -38,6 +39,7 @@ contract Zioneer is ERC721, Ownable, ReentrancyGuard {
     string memory baseURI_
   ) ERC721(name_, symbol_) {
     baseURI = baseURI_;
+    allowed[_msgSender()] = true;
   }
 
   // mint a new token
@@ -45,6 +47,7 @@ contract Zioneer is ERC721, Ownable, ReentrancyGuard {
     address to
   ) external onlyAllowed nonReentrant returns (uint256) {
     if (to == address(0)) revert NotAllowed();
+    if (balanceOf(to) > 0) revert AlreadyMinted();
 
     uint256 newTokenId = ++currentTokenId;
 
@@ -77,6 +80,10 @@ contract Zioneer is ERC721, Ownable, ReentrancyGuard {
     mintReward = _mintReward;
   }
 
+  function setBaseURI(string memory _baseURI) external onlyOwner {
+    baseURI = _baseURI;
+  }
+
   function tokenURI(
     uint256 tokenId
   ) public view virtual override returns (string memory) {
@@ -89,39 +96,17 @@ contract Zioneer is ERC721, Ownable, ReentrancyGuard {
         : "";
   }
 
-  function allowedAddressesListLength() external view returns (uint256) {
-    return allowedAddressesList.length;
-  }
-
   // set allowed addresses
   function setAllowed(address user, bool allow) external onlyOwner {
-    if (user == address(0)) revert NotAllowed();
+    if (user == address(0)) {
+      revert NotAllowed();
+    }
 
     if (allowed[user] == allow) {
-      // if no change is necessary, do nothing
-
-      // otherwise we would push the same address twice,
-      // or enter the loop for no reason
-      return;
+      revert AlreadyAllowed();
     }
 
     allowed[user] = allow;
-
-    if (allow) {
-      allowedAddressesList.push(user);
-    } else {
-      // remove the address from the array
-      // by swapping it with the last element
-      // and then popping the last element
-      for (uint256 i = 0; i < allowedAddressesList.length; i++) {
-        if (allowedAddressesList[i] == user) {
-          allowedAddressesList[i] = allowedAddressesList[
-            allowedAddressesList.length - 1
-          ];
-          allowedAddressesList.pop();
-          break;
-        }
-      }
-    }
+    emit SetAllowed(user, allow);
   }
 }

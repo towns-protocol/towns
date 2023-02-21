@@ -3,22 +3,26 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import {Zioneer} from "contracts/src/core/tokens/Zioneer.sol";
+import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
-contract ZioneerTest is Test {
+contract PioneerTest is TestUtils {
   using stdStorage for StdStorage;
 
-  address bob = address(0x1);
-  address alice = address(0x2);
+  address bob;
+  address alice;
 
-  Zioneer private nft;
+  Pioneer private nft;
 
   uint256 constant INITIAL_CONTRACT_BALANCE = 5 ether;
 
   function setUp() public {
-    nft = new Zioneer("Zioneer", "ZNE", "https://zioneer.io/");
-    // insert eth into the Zioneer contract to be rewarded to zioneer NFT mintees
+    bob = _randomAddress();
+    alice = _randomAddress();
+
+    nft = new Pioneer("Pioneer", "ZNE", "https://zioneer.io/");
+    // insert eth into the Pioneer contract to be rewarded to zioneer NFT mintees
     (bool success, ) = address(nft).call{value: 5 ether}("");
     require(success, "failed to insert eth into zioneer contract");
   }
@@ -31,42 +35,30 @@ contract ZioneerTest is Test {
     }
   }
 
-  // helper method that copies the allowedAddressesList array from the Zioneer contract
-  function copyAllowedAddressesList(
-    Zioneer z
-  ) internal view returns (address[] memory) {
-    uint256 length = z.allowedAddressesListLength();
-    address[] memory allowedAddresses = new address[](length);
-    for (uint256 i = 0; i < length; i++) {
-      allowedAddresses[i] = z.allowedAddressesList(i);
-    }
-    return allowedAddresses;
-  }
-
   function testMint() public {
-    vm.expectRevert(Zioneer.NotAllowed.selector);
+    address _minter = _randomAddress();
+
+    vm.prank(_minter);
+    vm.expectRevert(Pioneer.NotAllowed.selector);
     nft.mintTo(bob);
 
-    nft.setAllowed(address(this), true);
+    nft.setAllowed(_minter, true);
     nft.mintTo(bob);
     assertEq(nft.balanceOf(bob), 1);
   }
 
   function testMaxSupplyReached() public {
-    nft.setAllowed(address(this), true);
-
     uint256 slot = stdstore.target(address(nft)).sig("currentTokenId()").find();
     bytes32 loc = bytes32(slot);
     bytes32 mockedCurrentTokenId = bytes32(abi.encode(10000));
     vm.store(address(nft), loc, mockedCurrentTokenId);
 
-    vm.expectRevert(Zioneer.MaxSupplyReached.selector);
+    vm.expectRevert(Pioneer.MaxSupplyReached.selector);
     nft.mintTo(bob);
   }
 
   function testMintZeroAddress() public {
-    nft.setAllowed(address(this), true);
-    vm.expectRevert(Zioneer.NotAllowed.selector);
+    vm.expectRevert(Pioneer.NotAllowed.selector);
     nft.mintTo(address(0));
   }
 
@@ -128,7 +120,7 @@ contract ZioneerTest is Test {
     assertEq(bob.balance, 0);
 
     // minting to bob
-    nft.setAllowed(address(this), true);
+
     nft.mintTo(bob);
 
     // bob's balance is 0.1 eth due to the rewarding
@@ -143,23 +135,37 @@ contract ZioneerTest is Test {
     assertEq(bob.balance, 0);
 
     // minting to bob
-    nft.setAllowed(address(this), true);
-    nft.mintTo(bob);
-    nft.mintTo(bob);
     nft.mintTo(bob);
 
     // bob's balance is 0.3 eth due to the rewarding
-    assertEq(bob.balance, 0.3 ether);
+    assertEq(bob.balance, 0.1 ether);
 
     // plus he still has the nft
-    assertEq(nft.balanceOf(bob), 3);
+    assertEq(nft.balanceOf(bob), 1);
+  }
+
+  function testRevertIfMintingMultiple() public {
+    // first, bob's balance is 0
+    assertEq(bob.balance, 0);
+
+    // minting to bob
+    nft.mintTo(bob);
+
+    // bob's balance is 0.3 eth due to the rewarding
+    assertEq(bob.balance, 0.1 ether);
+
+    // plus he still has the nft
+    assertEq(nft.balanceOf(bob), 1);
+
+    // minting to bob again
+    vm.expectRevert(Pioneer.AlreadyMinted.selector);
+    nft.mintTo(bob);
   }
 
   function testMintRewardAfterSetMintReward() public {
     // first, bob's balance is 0
     assertEq(bob.balance, 0);
 
-    nft.setAllowed(address(this), true);
     nft.setMintReward(0.2 ether);
     nft.mintTo(bob);
 
@@ -174,7 +180,6 @@ contract ZioneerTest is Test {
     // first, bob's balance is 0
     assertEq(bob.balance, 0);
 
-    nft.setAllowed(address(this), true);
     nft.setMintReward(0 ether);
     nft.mintTo(bob);
 
@@ -196,7 +201,6 @@ contract ZioneerTest is Test {
     ERC721 nonPayable = new ERC721("Not Payable", "NP");
 
     // minting to non-payable contract
-    nft.setAllowed(address(this), true);
 
     // this should fail because the recipient is not payable
     nft.mintTo(address(nonPayable));
@@ -209,98 +213,27 @@ contract ZioneerTest is Test {
   */
 
   function testSetAllowedInitialState() public {
-    address[] memory currentAllowedAddressesList = copyAllowedAddressesList(
-      nft
-    );
-    address[] memory expectedAllowedAddresses = new address[](0);
-
-    assertEq(nft.allowed(address(this)), false);
-    assertEq(nft.allowedAddressesListLength(), 0);
-    assertEqArray(currentAllowedAddressesList, expectedAllowedAddresses);
+    assertEq(nft.allowed(address(this)), true);
   }
 
   function testSetAllowedOneAddress() public {
-    nft.setAllowed(address(this), true);
-    address[] memory currentAllowedAddressesList = copyAllowedAddressesList(
-      nft
-    );
-    address[] memory expectedAllowedAddresses = new address[](1);
-    expectedAllowedAddresses[0] = address(this);
-
     assertEq(nft.allowed(address(this)), true);
-    assertEq(nft.allowedAddressesListLength(), 1);
-    assertEqArray(currentAllowedAddressesList, expectedAllowedAddresses);
   }
 
   function testSetAllowedAddSameAddressTwice() public {
-    nft.setAllowed(address(this), true);
-    nft.setAllowed(address(this), true);
-    address[] memory currentAllowedAddressesList = copyAllowedAddressesList(
-      nft
-    );
-    address[] memory expectedAllowedAddresses = new address[](1);
-    expectedAllowedAddresses[0] = address(this);
-
     assertEq(nft.allowed(address(this)), true);
-    assertEq(nft.allowedAddressesListLength(), 1);
-    assertEqArray(currentAllowedAddressesList, expectedAllowedAddresses);
   }
 
   function testSetAllowedAddThenRemove() public {
-    nft.setAllowed(address(this), true);
     nft.setAllowed(address(this), false);
-    address[] memory currentAllowedAddressesList = copyAllowedAddressesList(
-      nft
-    );
-    address[] memory expectedAllowedAddresses = new address[](0);
-
     assertEq(nft.allowed(address(this)), false);
-    assertEq(nft.allowedAddressesListLength(), 0);
-    assertEqArray(currentAllowedAddressesList, expectedAllowedAddresses);
   }
 
   function testSetAllowedAddMultiple() public {
-    nft.setAllowed(address(this), true);
     nft.setAllowed(address(alice), true);
     nft.setAllowed(address(bob), true);
-    address[] memory currentAllowedAddressesList = copyAllowedAddressesList(
-      nft
-    );
-    address[] memory expectedAllowedAddresses = new address[](3);
-    expectedAllowedAddresses[0] = address(this);
-    expectedAllowedAddresses[1] = address(alice);
-    expectedAllowedAddresses[2] = address(bob);
 
-    assertEq(nft.allowed(address(this)), true);
     assertEq(nft.allowed(address(alice)), true);
     assertEq(nft.allowed(address(bob)), true);
-    assertEq(nft.allowedAddressesListLength(), 3);
-    assertEqArray(currentAllowedAddressesList, expectedAllowedAddresses);
-  }
-
-  function testSetAllowedAddAndRemoveMultiple() public {
-    nft.setAllowed(address(this), true); // [this]
-    nft.setAllowed(address(alice), true); // [this, alice]
-    nft.setAllowed(address(bob), true); // [this, alice, bob]
-    nft.setAllowed(address(bob), true); // [this, alice, bob] (no change)
-    nft.setAllowed(address(alice), false); // [this, bob]
-    nft.setAllowed(address(alice), false); // [this, bob] (no change)
-    nft.setAllowed(address(this), false); // [bob]
-    nft.setAllowed(address(this), true); // [bob, this]
-    nft.setAllowed(address(alice), true); // [bob, this, alice]
-    nft.setAllowed(address(this), false); // [bob, alice]
-
-    address[] memory currentAllowedAddressesList = copyAllowedAddressesList(
-      nft
-    );
-    address[] memory expectedAllowedAddresses = new address[](2);
-    expectedAllowedAddresses[0] = address(bob);
-    expectedAllowedAddresses[1] = address(alice);
-
-    assertEq(nft.allowed(address(this)), false);
-    assertEq(nft.allowed(address(alice)), true);
-    assertEq(nft.allowed(address(bob)), true);
-    assertEq(nft.allowedAddressesListLength(), 2);
-    assertEqArray(currentAllowedAddressesList, expectedAllowedAddresses);
   }
 }

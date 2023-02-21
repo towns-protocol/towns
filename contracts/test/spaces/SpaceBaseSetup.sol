@@ -16,6 +16,7 @@ import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC19
 import {Space} from "contracts/src/core/spaces/Space.sol";
 import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
 import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 
@@ -25,11 +26,15 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
   SpaceOwner internal spaceToken;
-
+  Pioneer internal pioneer;
   string[] public initialPermissions;
 
+  // to receive eth from pioneer contract
+  receive() external payable {}
+
   constructor() {
-    spaceToken = new SpaceOwner("Space Token", "ZION");
+    pioneer = new Pioneer("Pioneer", "PNR", "");
+    spaceToken = new SpaceOwner("Space Token", "SPACE");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();
@@ -47,6 +52,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
             address(tokenImplementation),
             address(userImplementation),
             address(spaceToken),
+            address(pioneer),
             initialPermissions
           )
         )
@@ -54,6 +60,10 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     );
 
     spaceToken.setFactory(spaceFactoryAddress);
+
+    // add eth to pioneer contract
+    vm.deal(address(pioneer), 1 ether);
+
     spaceFactory = SpaceFactory(spaceFactoryAddress);
   }
 
@@ -116,7 +126,6 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
       });
 
     string[] memory _permissions = new string[](0);
-
     address space = spaceFactory.createSpace(
       "zion",
       "!7evmpuHDDgkady9u:goerli",

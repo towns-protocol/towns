@@ -23,6 +23,7 @@ contract UpgradeImplementation is Script {
     spaceFactory.updateImplementations(
       address(0),
       address(tokenEntitlement),
+      address(0),
       address(0)
     );
     vm.stopBroadcast();

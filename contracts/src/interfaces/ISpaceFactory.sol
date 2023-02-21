@@ -7,7 +7,8 @@ interface ISpaceFactory {
   function updateImplementations(
     address space,
     address tokenEntitlement,
-    address userEntitlement
+    address userEntitlement,
+    address _gateToken
   ) external;
 
   /// @notice Creates a new space

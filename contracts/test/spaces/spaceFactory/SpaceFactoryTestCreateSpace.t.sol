@@ -20,16 +20,21 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     address space = _randomAddress();
     address tokenEntitlement = _randomAddress();
     address userEntitlement = _randomAddress();
+    address gateToken = _randomAddress();
+
+    spaceFactory.setPaused(true);
 
     spaceFactory.updateImplementations(
       space,
       tokenEntitlement,
-      userEntitlement
+      userEntitlement,
+      gateToken
     );
 
     assertEq(spaceFactory.SPACE_IMPLEMENTATION_ADDRESS(), space);
     assertEq(spaceFactory.TOKEN_IMPLEMENTATION_ADDRESS(), tokenEntitlement);
     assertEq(spaceFactory.USER_IMPLEMENTATION_ADDRESS(), userEntitlement);
+    assertEq(spaceFactory.GATE_TOKEN_ADDRESS(), gateToken);
   }
 
   function testRevertIfNoSpaceNetworkId() external {
@@ -110,7 +115,54 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     );
   }
 
+  function testRevertIfCreateSimpleSpaceWithoutNFT() external {
+    DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
+      .CreateSpaceExtraEntitlements({
+        roleName: "",
+        permissions: new string[](0),
+        tokens: new DataTypes.ExternalToken[](0),
+        users: new address[](0)
+      });
+
+    string[] memory _permissions = new string[](0);
+
+    spaceFactory.setPaused(true);
+    spaceFactory.setGatingEnabled(true);
+    spaceFactory.setPaused(false);
+
+    vm.expectRevert(Errors.NotAllowed.selector);
+    vm.prank(_randomAddress());
+    spaceFactory.createSpace(
+      "zion",
+      "!7evmpuHDDgkady9u:goerli",
+      "ipfs://QmZion",
+      _permissions,
+      _entitlementData
+    );
+  }
+
+  function testRevertCreateSimpleSpaceIfPaused() external {
+    spaceFactory.setPaused(true);
+
+    vm.expectRevert("Pausable: paused");
+    address spaceAddress = createSimpleSpace();
+    bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
+    assertEq(spaceFactory.spaceByHash(spaceHash), spaceAddress);
+  }
+
   function testCreateSimpleSpace() external {
+    address spaceAddress = createSimpleSpace();
+    bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
+    assertEq(spaceFactory.spaceByHash(spaceHash), spaceAddress);
+  }
+
+  function testCreateSimpleSpaceWithGatingEnabled() external {
+    spaceFactory.setPaused(true);
+    spaceFactory.setGatingEnabled(true);
+    spaceFactory.setPaused(false);
+
+    pioneer.mintTo(address(this));
+
     address spaceAddress = createSimpleSpace();
     bytes32 spaceHash = keccak256(bytes("!7evmpuHDDgkady9u:goerli"));
     assertEq(spaceFactory.spaceByHash(spaceHash), spaceAddress);

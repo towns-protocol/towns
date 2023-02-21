@@ -34,6 +34,7 @@ contract DeploySpacesUpgrade is ScriptUtils {
     SpaceFactory(spaceFactoryAddress).updateImplementations(
       address(newSpace),
       address(0),
+      address(0),
       address(0)
     );
 

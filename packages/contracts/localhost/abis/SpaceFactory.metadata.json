@@ -27,6 +27,11 @@
       },
       {
         "inputs": [],
+        "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "PermissionAlreadyExists",
         "type": "error"
       },
@@ -103,6 +108,32 @@
         "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Paused",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Unpaused",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
             "indexed": true,
             "internalType": "address",
             "name": "implementation",
@@ -111,6 +142,19 @@
         ],
         "name": "Upgraded",
         "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "GATE_TOKEN_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
@@ -262,6 +306,19 @@
       },
       {
         "inputs": [],
+        "name": "gatingEnabled",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "getOwnerPermissions",
         "outputs": [
           {
@@ -331,6 +388,11 @@
           {
             "internalType": "address",
             "name": "_spaceToken",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_gateToken",
             "type": "address"
           },
           {
@@ -412,6 +474,19 @@
       },
       {
         "inputs": [],
+        "name": "paused",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
           {
@@ -426,6 +501,32 @@
       {
         "inputs": [],
         "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "_gatingEnabled",
+            "type": "bool"
+          }
+        ],
+        "name": "setGatingEnabled",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bool",
+            "name": "_paused",
+            "type": "bool"
+          }
+        ],
+        "name": "setPaused",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -497,6 +598,11 @@
             "internalType": "address",
             "name": "_userEntitlement",
             "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_gateToken",
+            "type": "address"
           }
         ],
         "name": "updateImplementations",
@@ -565,6 +671,9 @@
         },
         "owner()": {
           "details": "Returns the address of the current owner."
+        },
+        "paused()": {
+          "details": "Returns true if the contract is paused, and false otherwise."
         },
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
@@ -648,11 +757,11 @@
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
-      "keccak256": "0xf3340a3c1b9f1f245e2acb670a7b1ac6816121d7724996f7782ce3647ea4df33",
+      "keccak256": "0xbdd5811427ee1e98f09227978dadc54038cdc73750289e4df91ed66fa9e2483c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4472932ab1fe683bd6d3d0e9b91771cb7952c8fa9c6458538317e0d96ab75fb4",
-        "dweb:/ipfs/QmcXzbhT5QwQXs1kAeGPKv5DWw5Vs1MNaNrWfeEbKBetfL"
+        "bzz-raw://bede28b2fc228ae725afb712dd7d8ce9444d844795ebb3e398c9657b7ddeeaf8",
+        "dweb:/ipfs/QmUibSvLCVHpMfe2PbzQV9qJERsNnjacRmozLnGgHG6N6R"
       ]
     },
     "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
@@ -696,11 +805,11 @@
       ]
     },
     "contracts/src/interfaces/ISpaceFactory.sol": {
-      "keccak256": "0x1a159d5d622c05ce926a23067bd1b22d3bfa3af27b5738e38aa36c0cdd1caa0b",
+      "keccak256": "0x0cd808c52450ec1cd875ea41498033144b294a67124bcf0e0e17f978482ecf52",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c831ed9e0b3ac0baf2eaf785f4074ec44be8b0b996b9786ca45a03072a32ad83",
-        "dweb:/ipfs/QmUs3Nor6tsqusyyN3w2ptrpdJH4c7HnEiqnC25jUdxBtr"
+        "bzz-raw://fecf7f9d9f032f6bc37bbd5001db43b21cc4267ca30a06793235202f23263b8b",
+        "dweb:/ipfs/QmeavSsDYNbjnz6ij3U3mwga6UYyFNrXPP6ckjH9uPa4sK"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
@@ -797,6 +906,14 @@
       "urls": [
         "bzz-raw://6be1e3e05f79a714c08a446a994dba2939203092d7aa97302d7b2ab157b437fb",
         "dweb:/ipfs/QmdgBbHNijVgApRQ9UM17qds6QdhTgXxKHUoLAswA6VNyH"
+      ]
+    },
+    "lib/openzeppelin-contracts-upgradeable/contracts/security/PausableUpgradeable.sol": {
+      "keccak256": "0x40c636b4572ff5f1dc50cf22097e93c0723ee14eff87e99ac2b02636eeca1250",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://9c7d1f5e15633ab912b74c2f57e24559e66b03232300d4b27ff0f25bc452ecad",
+        "dweb:/ipfs/QmYTJkc1cntYkKQ1Tu11nBcJLakiy93Tjytc4XHELo4GmR"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol": {
