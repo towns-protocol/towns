@@ -20,6 +20,7 @@ import uniq from 'lodash/uniq'
 import { createUserIdFromString } from '../../types/user-identifier'
 import { RoomKeyRequestState } from 'matrix-js-sdk/lib/crypto/OutgoingRoomKeyRequestManager'
 import { TypedEventEmitter } from 'matrix-js-sdk/lib/models/typed-event-emitter'
+import throttle from 'lodash/throttle'
 
 /**
  * If I have messages that I can't decrypt (which happens all the time in normal use cases,
@@ -114,12 +115,13 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
 > {
     roomRecords: Record<string, RoomRecord> = {}
     priorityRoomId?: string
+    private matrixClient: MatrixClient
     private receivedToDeviceEventsQueue: ProcessingQueue<MatrixEvent>
     private receivedToDeviceProcessersMap: Record<
         string,
         (event: MatrixEvent, senderId: string) => Promise<void>
     >
-    private matrixClient: MatrixClient
+    private throttledStartLookingForKeys: () => void
     private delgate: MatrixDecryptionExtensionDelegate
     private clientRunning = true
 
@@ -148,6 +150,16 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             delayMs: 10,
         })
 
+        this.throttledStartLookingForKeys = throttle(
+            () => {
+                this.startLookingForKeys()
+            },
+            150,
+            {
+                trailing: true,
+            },
+        )
+
         if (!matrixClient.crypto) {
             throw new Error('MDE::constructor - crypto not enabled')
         }
@@ -173,13 +185,12 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         // listen for unable to decrypt events
         matrixClient.on(MatrixEventEvent.Decrypted, (event, err) => {
             if (event.isDecryptionFailure()) {
-                console.log('MDE::onDecryptionFailure', {
-                    eventId: event.getId(),
-                    err,
-                })
                 const roomId = event.getRoomId()
                 if (!roomId) {
-                    console.log("MDE::onDecryptionFailure - event doesn't have a roomId")
+                    console.log("MDE::onDecryptionFailure - event doesn't have a roomId", {
+                        eventId: event.getId(),
+                        err: err,
+                    })
                     return
                 }
                 if (!this.roomRecords[roomId]) {
@@ -189,7 +200,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 if (roomRecord.decryptionFailures.indexOf(event) === -1) {
                     roomRecord.decryptionFailures.push(event)
                 }
-                this.startLookingForKeys()
+                this.throttledStartLookingForKeys()
             }
         })
 
@@ -198,7 +209,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             UserEvent.CurrentlyActive,
             (event: MatrixEvent | undefined, user: MatrixUser) => {
                 if (user.currentlyActive) {
-                    this.startLookingForKeys()
+                    this.throttledStartLookingForKeys()
                 }
             },
         )
@@ -206,7 +217,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         // listen for new devices
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         matrixClient.on(CryptoEvent.DevicesUpdated, (users: string[], initialFetch: boolean) => {
-            this.startLookingForKeys()
+            this.throttledStartLookingForKeys()
         })
 
         // listen for extended key requests
