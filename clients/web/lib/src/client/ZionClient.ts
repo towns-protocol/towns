@@ -23,7 +23,7 @@ import {
     RelationType,
     UserEvent,
     createClient,
-    MemoryCryptoStore,
+    IndexedDBCryptoStore,
 } from 'matrix-js-sdk'
 import { LocalStorageCryptoStore } from 'matrix-js-sdk/lib/crypto/store/localStorage-crypto-store'
 import {
@@ -1475,11 +1475,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * isRoomEncrypted
      ************************************************/
-    public isRoomEncrypted(roomId: RoomIdentifier): boolean {
+    public isRoomEncrypted(roomId: RoomIdentifier): boolean | undefined {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
+                    return undefined
                 }
                 return this.matrixClient.isRoomEncrypted(roomId.networkId)
             case SpaceProtocol.Casablanca:
@@ -1796,16 +1796,24 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     private static createMatrixClient(opts: ZionOpts, auth?: ZionAuth): MatrixClient {
         if (auth) {
+            // just *accessing* indexedDB throws an exception in firefox with indexeddb disabled.
+            let indexedDB: IDBFactory | undefined
+            try {
+                indexedDB = global.indexedDB
+                // eslint-disable-next-line no-empty
+            } catch (e) {}
             return createClient({
                 baseUrl: opts.matrixServerUrl,
                 accessToken: auth.accessToken,
                 userId: auth.userId,
                 deviceId: auth.deviceId,
                 useAuthorizationHeader: true,
-                cryptoStore:
-                    opts.isTesting === true
-                        ? new MemoryCryptoStore()
-                        : new LocalStorageCryptoStore(global.localStorage),
+                cryptoStore: indexedDB
+                    ? new IndexedDBCryptoStore(
+                          global.indexedDB,
+                          `matrix-js-sdk:crypto:${auth.userId}`,
+                      )
+                    : new LocalStorageCryptoStore(global.localStorage), // note, local storage doesn't support key sharing
             })
         } else {
             return createClient({

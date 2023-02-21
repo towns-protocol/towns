@@ -26,7 +26,9 @@ export const MessageTimelineItem = (props: {
                         event={e}
                         eventContent={e.content}
                         displayContext={index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single'}
-                        key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}`}
+                        key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}${
+                            e.content.msgType ?? ''
+                        }`}
                     />
                 )
             })
@@ -43,7 +45,9 @@ export const MessageTimelineItem = (props: {
                     event={e}
                     eventContent={e.content}
                     displayContext={displayContext}
-                    key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}`}
+                    key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}${
+                        e.content.msgType ?? ''
+                    }`}
                 />
             )
         }

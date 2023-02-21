@@ -120,6 +120,7 @@ export interface RoomMessageEvent {
     mentions: Mention[]
     replacedMsgId?: string
     content: IContent // room messages have lots of representations
+    wireContent: IContent
 }
 
 export interface RoomNameEvent {

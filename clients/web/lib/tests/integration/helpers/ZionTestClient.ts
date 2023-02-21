@@ -85,7 +85,6 @@ export class ZionTestClient extends ZionClient {
                 web3Signer: provider.wallet,
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
-                isTesting: true,
             },
             chainId,
             name,
@@ -323,11 +322,11 @@ export class ZionTestClient extends ZionClient {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
+                    return []
                 }
                 const userId = this.matrixClient.getUserId()
                 if (!userId) {
-                    throw new Error('userId is undefined')
+                    return []
                 }
                 const events =
                     this.matrixClient
@@ -385,7 +384,7 @@ export class ZionTestClient extends ZionClient {
     }
 
     public logEvents(roomId: RoomIdentifier) {
-        console.log(`events for ${roomId.networkId}`, this.getEventsDescription(roomId))
+        this.log(`events for ${roomId.networkId}`, this.getEventsDescription(roomId))
     }
 
     public getEventsDescription(roomId: RoomIdentifier): string {

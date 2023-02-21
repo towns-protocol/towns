@@ -498,6 +498,7 @@ function toZionContent(
                     msgType: content.msgtype,
                     replacedMsgId: getReplacedMessageId(event),
                     content: content,
+                    wireContent: event.getWireContent(),
                     mentions: (content['mentions'] as Mention[]) ?? [],
                 },
             }

@@ -46,7 +46,8 @@ function getEventContent(event: FullEvent): TimelineEvent_OneOf | undefined {
                         inReplyTo: msgEvent.inReplyTo,
                         replacedMsgId: msgEvent.replacedMsgId,
                         mentions: msgEvent.mentions as Mention[],
-                        content: [],
+                        content: {},
+                        wireContent: {},
                     } as RoomMessageEvent
             }
         }

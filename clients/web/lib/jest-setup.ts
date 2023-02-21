@@ -8,6 +8,8 @@ import Olm from '@matrix-org/olm'
 import fetch from 'node-fetch'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
+import 'fake-indexeddb/auto'
+import { IDBFactory } from 'fake-indexeddb'
 
 process.env.NODE_ENV = 'test'
 process.env.HOMESERVER = 'http://localhost:8008' // OR "https://node1.towns.com";
@@ -40,6 +42,7 @@ afterAll(() => {
     // clear storage
     global.localStorage.clear()
     global.sessionStorage.clear()
+    indexedDB = new IDBFactory()
 })
 
 /// aellis 1.29.2023 not sure if i'm doing this right, but it seems to work

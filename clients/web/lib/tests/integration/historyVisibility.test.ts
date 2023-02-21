@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { waitFor } from '@testing-library/react'
-import { MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { sleep } from '../../src/utils/zion-utils'
 import { TestConstants } from './helpers/TestConstants'
 import {
     createTestChannelWithSpaceRoles,
@@ -51,11 +48,9 @@ describe('historyVisibility', () => {
         await john.sendMessage(roomId, "I'm John!")
 
         await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content.body === "I'm John!"),
-            ).toBeDefined(),
+            expect(bob.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm John!",
+            ),
         )
 
         await john.logout()
@@ -68,92 +63,62 @@ describe('historyVisibility', () => {
         // alice joins the room
         await alice.joinRoom(spaceId)
         await alice.joinRoom(roomId)
-        if (roomId.protocol === SpaceProtocol.Matrix) {
-            // alice should eventually see the room
-            await waitFor(() => expect(alice.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
-            // get the room
-            const alicesRoom = alice.matrixClient!.getRoom(roomId.networkId)!
 
-            await sleep(1)
-
-            // await decryptRoom(alice, bob, alicesRoom, 2)
-
-            // and we should see the message
-            await waitFor(
-                () =>
-                    expect(
-                        alicesRoom
-                            .getLiveTimeline()
-                            .getEvents()
-                            .find(
-                                (event: MatrixEvent) => event.getContent().body === 'Hello World!',
-                            ),
-                    ).toBeDefined(),
-                TestConstants.DoubleDefaultWaitForTimeout,
-            )
-
-            await waitFor(() =>
-                expect(
-                    alicesRoom
-                        .getLiveTimeline()
-                        .getEvents()
-                        .find((event: MatrixEvent) => event.getContent().body === "I'm John!"),
-                ).toBeDefined(),
-            )
-        } else {
-            expect(false) // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
-        }
-
-        await alice.sendMessage(roomId, "I'm Alice!")
-
-        await alice.logout()
-
-        await john.loginWalletAndStartClient()
-
-        await waitFor(() => expect(john.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
-        const johnsRoom = john.matrixClient!.getRoom(roomId.networkId)!
-
-        //await decryptRoom(john, bob, johnsRoom, 3)
-        //
-        console.log(
-            'johns room',
-            johnsRoom
-                .getLiveTimeline()
-                .getEvents()
-                .map(
-                    (event: MatrixEvent) =>
-                        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                        `${event.getType()} ${event.getContent().body ?? ''}`,
-                ),
-        )
         // and we should see the message
         await waitFor(
             () =>
                 expect(
-                    johnsRoom
-                        .getLiveTimeline()
-                        .getEvents()
-                        .find((event: MatrixEvent) => event.getContent().body === 'Hello World!'),
-                ).toBeDefined(),
+                    alice.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
+                ).toContain('Hello World!'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
         await waitFor(() =>
-            expect(
-                johnsRoom
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === "I'm John!"),
-            ).toBeDefined(),
+            expect(alice.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm John!",
+            ),
+        )
+
+        await alice.sendMessage(roomId, "I'm Alice!")
+
+        await waitFor(() =>
+            expect(bob.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm Alice!",
+            ),
+        )
+
+        await alice.logout()
+
+        await john.loginWalletAndStartClient()
+        await waitFor(() => expect(john.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
+        //
+        john.logEvents(roomId)
+        // and we should see the message
+        await waitFor(
+            () =>
+                expect(
+                    john.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
+                ).toContain('Hello World!'),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
 
         await waitFor(() =>
-            expect(
-                johnsRoom
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === "I'm Alice!"),
-            ).toBeDefined(),
+            expect(john.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm John!",
+            ),
+        )
+
+        await waitFor(
+            () =>
+                expect(
+                    john.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
+                ).toContain("I'm Alice!"),
+            {
+                onTimeout: (e) => {
+                    john.logEvents(roomId)
+                    return e
+                },
+            },
         )
 
         // create a new client with same wallet, but different deviceId/auth
@@ -169,35 +134,25 @@ describe('historyVisibility', () => {
 
         expect(alice2.auth?.deviceId).not.toEqual(alice.auth?.deviceId)
         await waitFor(() => expect(alice2.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
-        const alice2sRoom = john.matrixClient!.getRoom(roomId.networkId)!
 
         await waitFor(
             () =>
                 expect(
-                    alice2sRoom
-                        .getLiveTimeline()
-                        .getEvents()
-                        .find((event: MatrixEvent) => event.getContent().body === 'Hello World!'),
-                ).toBeDefined(),
+                    alice2.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
+                ).toContain('Hello World!'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
         await waitFor(() =>
-            expect(
-                alice2sRoom
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === "I'm John!"),
-            ).toBeDefined(),
+            expect(alice2.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm John!",
+            ),
         )
 
         await waitFor(() =>
-            expect(
-                alice2sRoom
-                    .getLiveTimeline()
-                    .getEvents()
-                    .find((event: MatrixEvent) => event.getContent().body === "I'm Alice!"),
-            ).toBeDefined(),
+            expect(alice2.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm Alice!",
+            ),
         )
     })
 })

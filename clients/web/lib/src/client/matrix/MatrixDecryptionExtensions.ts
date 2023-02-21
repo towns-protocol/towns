@@ -11,14 +11,13 @@ import {
     EventType,
 } from 'matrix-js-sdk'
 import {
-    Crypto,
     CryptoEvent,
+    IMegolmSessionData,
     IncomingRoomKeyRequest,
     IRoomKeyRequestBody,
 } from 'matrix-js-sdk/lib/crypto'
 import uniq from 'lodash/uniq'
 import { createUserIdFromString } from '../../types/user-identifier'
-import { RoomKeyRequestState } from 'matrix-js-sdk/lib/crypto/OutgoingRoomKeyRequestManager'
 import { TypedEventEmitter } from 'matrix-js-sdk/lib/models/typed-event-emitter'
 import throttle from 'lodash/throttle'
 
@@ -39,7 +38,7 @@ const MAX_CONCURRENT_ROOM_KEY_REQUESTS = 2
 /// how long to wait for a response to a room key request
 const KEY_REQUEST_TIMEOUT_MS = 2000
 /// how many events to include in the same to-device message
-const MAX_EVENTS_PER_REQUEST = 20
+const MAX_EVENTS_PER_REQUEST = 64
 
 const DECRYPTION_OPTIONS = {
     isRetry: true,
@@ -54,6 +53,22 @@ export interface MatrixDecryptionExtensionDelegate {
         user: string,
         permission: Permission,
     ): Promise<boolean>
+}
+
+/// copy from node_modules/matrix-js-sdk/src/crypto/algorithms/megolm.ts
+interface IMessage {
+    type: string
+    content: {
+        algorithm: string
+        room_id: string
+        sender_key?: string
+        sender_claimed_ed25519_key?: string
+        session_id: string
+        session_key: string
+        chain_index: number
+        forwarding_curve25519_key_chain?: string[]
+        'org.matrix.msc3061.shared_history': boolean
+    }
 }
 
 enum TownsToDeviceMessageType {
@@ -164,10 +179,6 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             throw new Error('MDE::constructor - crypto not enabled')
         }
 
-        matrixClient.crypto.registerEventHandlers(
-            this as Parameters<Crypto['registerEventHandlers']>[0],
-        )
-
         // listen for encrypted events
         matrixClient.on(RoomEvent.Timeline, (event) => {
             if (event.getType() === MatrixEventType.RoomMessageEncrypted) {
@@ -204,7 +215,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             }
         })
 
-        // listen for online members
+        // listen for "currently_active" members (in go `time.Since(p.LastActiveTS.Time()).Minutes() < 5`)
         matrixClient.on(
             UserEvent.CurrentlyActive,
             (event: MatrixEvent | undefined, user: MatrixUser) => {
@@ -213,6 +224,13 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 }
             },
         )
+        // listen for "online" members (in go `p.Presence == "online"`)
+        matrixClient.on(UserEvent.Presence, (event: MatrixEvent | undefined, user: MatrixUser) => {
+            console.log('MDE::onPresence', { user: user.presence })
+            if (user.presence === 'online') {
+                this.throttledStartLookingForKeys()
+            }
+        })
 
         // listen for new devices
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -345,13 +363,16 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             .filter(
                 (member) =>
                     // filter out ourselves unless we have more than one device online
-                    (member.userId !== this.matrixClient.getUserId() || myDevices.length >= 2) &&
-                    // find currently active members
-                    member.user?.currentlyActive === true,
+                    ((member.userId !== this.matrixClient.getUserId() || myDevices.length >= 2) &&
+                        // find currently active OR 'online' members
+                        // seems like there's bugs in the dendrite presence clearing logic
+                        // we'll get lastActiveTS updates that are over 2 hours old but the user is still online
+                        member.user?.currentlyActive === true) ||
+                    member.user?.presence === 'online',
             )
             .map((member) => member.userId)
 
-        console.log('MDE::_startLookingForKeys 1', {
+        console.log('MDE::_startLookingForKeys', {
             roomId: roomId,
             myId: this.matrixClient.getUserId(),
             myDevices: myDevices.map((e) => e.deviceId),
@@ -521,8 +542,6 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             })
             return
         }
-        // await any pending decryption or start decription
-        await this.matrixClient.decryptEventIfNeeded(event)
         // double check the key source (aellis full disclosure, not sure if this is needed)
         if (event.isKeySourceUntrusted()) {
             console.error('got key sharing request from untrusted source', {
@@ -547,13 +566,17 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         const { roomId } = response
         const roomRecord = this.roomRecords[roomId]
         if (!roomRecord) {
-            console.warn('MDE::processToDeviceKeyRequest - room record not found')
+            console.warn('MDE::processToDeviceKeyResponse - room record not found')
             return
         }
         if (!roomRecord.requests?.[senderId]) {
-            console.warn('MDE::processToDeviceKeyRequest - no request found for sender')
+            console.warn('MDE::processToDeviceKeyResponse - no request found for sender', {
+                senderId,
+                content: event.getContent(),
+            })
             return
         }
+        console.log('MDE::processToDeviceKeyResponse', { response })
         roomRecord.requests[senderId].response = response
         // wait for any pending decryption
         await Promise.all([roomRecord.decryptionFailures.map((e) => e.getDecryptionPromise())])
@@ -652,17 +675,17 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         }
 
         // look to see if we can be any good
-        let hasLocalKeysForEvents = false
+        let hasLocalKeysForEvents: string | undefined = undefined
         for (const eventContent of events) {
             const hasKeys = await this.hasKeysForEventWith(roomId, eventContent)
             if (hasKeys) {
-                hasLocalKeysForEvents = true
+                hasLocalKeysForEvents = eventContent.session_id
                 break
             }
         }
 
         if (!hasLocalKeysForEvents) {
-            console.warn(
+            console.info(
                 'MDE::processToDeviceKeyRequest got key sharing request for unknown events',
                 {
                     roomId,
@@ -674,14 +697,16 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             return
         }
 
+        console.info('MDE::processToDeviceKeyRequest responding to key request', {
+            fromUserId,
+            foundSessionId: hasLocalKeysForEvents,
+        })
+
         // prepare to encrypt for this room
         // not sure why this isn't an async call, or why we really need to
         // do this in the first place, but it seems to gather some devices
         // that we need to send the response to, especially when sending keys to yourself
         this.matrixClient.prepareToEncrypt(room)
-
-        // give the prepareToEncrypt call a chance to finish
-        await Promise.resolve()
 
         // aellis 02/2023 we could probably just package up the requested keys and send them
         // this is helpful for the case where the requesting user doesn't have any keys, which
@@ -697,28 +722,49 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             return
         }
 
-        const content = event.getContent<IRoomKeyRequestBody>()
+        const content = event.getContent<Partial<IMessage['content']>>()
+        if (
+            !content.room_id ||
+            !content.session_key ||
+            !content.session_id ||
+            !content.algorithm ||
+            !content.sender_key
+        ) {
+            console.error('MDE::processToDeviceForwardedRoomKey key event is missing fields')
+            return
+        }
+
         const senderKey = event.getSenderKey()
+        const sessionId = content.session_id
+        console.log('MDE::processToDeviceForwardedRoomKey', { sessionId, senderId })
         if (!senderKey) {
             console.error('MDE::processToDeviceForwardedRoomKey - no sender key')
             return
         }
 
+        const events = this.roomRecords[content.room_id]?.decryptionFailures.filter(
+            (e) => e.getWireContent().session_id === content.session_id && e.isDecryptionFailure(),
+        )
+
         // does this key match one of my decryption failures?
-        if (
-            !this.roomRecords[content.room_id]?.decryptionFailures.find(
-                (e) =>
-                    e.getWireContent().session_id === content.session_id && e.isDecryptionFailure(),
-            )
-        ) {
+        if (!events.length) {
             // if not, and but we don't have the key locally,
             // check to see if it's from someone we poked, if so we process it anyway
-            const hasKey = await this.hasKeysForEventWith(content.room_id, content)
+            const hasKey = await this.hasKeysForEventWith(content.room_id, {
+                algorithm: content.algorithm,
+                session_id: content.session_id,
+                sender_key: content.sender_key,
+            })
             if (!hasKey && this.roomRecords[content.room_id]?.requests?.[senderId] !== undefined) {
                 console.log(
                     "MDE::processToDeviceForwardedRoomKey Didn't explicitly request a key, but processing it anyway since we don't have it already",
+                    { sessionId, senderId },
                 )
             } else {
+                console.log("MDE::processToDeviceForwardedRoomKey We don't need this key", {
+                    sessionId,
+                    senderId,
+                })
                 return
             }
         }
@@ -730,41 +776,27 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             senderKey,
         )
         if (!deviceInfo) {
-            console.error('MDE::processToDeviceForwardedRoomKey no device info??')
+            // ignore to prevent randos from spamming us with keys
+            console.error('MDE::processToDeviceForwardedRoomKey no device info ??')
             return
         }
-        // get or create (fake) an outgoing key request so that olm will accept it when it comes in
-        const outReq = await this.matrixClient?.crypto?.cryptoStore.getOrAddOutgoingRoomKeyRequest({
-            requestId: Date().toString(),
-            recipients: [
-                {
-                    userId: senderId,
-                    deviceId: deviceInfo.deviceId,
-                },
-            ],
-            requestBody: {
-                room_id: content.room_id,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                algorithm: content.algorithm,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                session_id: content.session_id,
-                sender_key: senderKey,
-            },
-            state: RoomKeyRequestState.Sent,
-        })
-        if (outReq && outReq.state === RoomKeyRequestState.Unsent) {
-            console.log('MDE::processToDeviceForwardedRoomKey faking sent state')
-            await this.matrixClient.crypto?.cryptoStore.updateOutgoingRoomKeyRequest(
-                outReq.requestId,
-                outReq.state,
-                { state: RoomKeyRequestState.Sent },
-            )
+
+        const keysClaimed: Record<string, string> = content.sender_claimed_ed25519_key
+            ? {
+                  ed25519: content.sender_claimed_ed25519_key,
+              }
+            : {}
+        const room_key: IMegolmSessionData = {
+            algorithm: content.algorithm,
+            room_id: content.room_id,
+            session_id: content.session_id,
+            sender_key: content.sender_key,
+            session_key: content.session_key,
+            sender_claimed_keys: keysClaimed,
+            forwarding_curve25519_key_chain: content.forwarding_curve25519_key_chain ?? [],
         }
 
-        // redispatch the event, since it was ignored the first time
-        // since we registered ourself as an event emmitter with the matrix crypto object,
-        // we can just re-emit the event from here and it will be picked up by the crypto code
-        this.emit(ClientEvent.ToDeviceEvent, event)
+        await this.matrixClient.crypto?.importRoomKeys([room_key])
     }
 }
 
