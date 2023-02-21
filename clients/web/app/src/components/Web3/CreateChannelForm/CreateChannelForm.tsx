@@ -1,7 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
-import { RoomIdentifier, RoomVisibility, useCreateChannelTransaction } from 'use-zion-client'
+import {
+    RoomIdentifier,
+    RoomVisibility,
+    useCreateChannelTransaction,
+    useMultipleRoleDetails,
+} from 'use-zion-client'
 import { z } from 'zod'
 import { useNavigate } from 'react-router'
+import { ContractMetadata } from '@token-worker/types'
 import { Box, Button, Checkbox, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { useTransactionUIStates } from 'hooks/useTransactionStatus'
@@ -12,6 +18,9 @@ import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { Spinner } from '@components/Spinner'
+import { useRoleTokensMetatdata } from 'api/lib/collectionMetadata'
+import { TokenAvatar } from '@components/Tokens'
 
 type Props = {
     spaceId: RoomIdentifier
@@ -45,9 +54,58 @@ const defaultValues = {
 
 const channelNameRegEx = new RegExp(/^[a-zA-Z0-9 _-]+$/)
 
+const TokenCheckboxLabel = (props: {
+    spaceId: RoomIdentifier
+    tokenAddresses: string[]
+    label: string
+}) => {
+    const { data } = useRoleTokensMetatdata(props.spaceId, props.tokenAddresses)
+
+    return (
+        <Box>
+            <Box>{props.label}</Box>
+
+            {!data ? (
+                <Box visibility="hidden">
+                    <TokenAvatar size="avatar_md" />
+                </Box>
+            ) : !data.length ? null : (
+                <Box horizontal gap="lg" paddingTop="md">
+                    {data
+                        .filter((token): token is ContractMetadata => !!token)
+                        .map((token) => {
+                            return (
+                                <TokenAvatar
+                                    data-testid="create-channel-token-avatar"
+                                    key={token.address}
+                                    imgSrc={token.imageUrl}
+                                    size="avatar_md"
+                                    label={token.name}
+                                />
+                            )
+                        })}
+                </Box>
+            )}
+        </Box>
+    )
+}
+
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
     const { data: roles } = useChannelCreationRoles(props.spaceId.networkId)
+    const roledIds = useMemo(() => roles?.map((r) => r.roleId?.toNumber()) ?? [], [roles])
+    const { data: _rolesDetails } = useMultipleRoleDetails(props.spaceId.networkId, roledIds)
+    const rolesWithDetails = useMemo(
+        () =>
+            _rolesDetails?.map((role) => {
+                return {
+                    ...role,
+                    tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
+                }
+            }),
+        [_rolesDetails],
+    )
+
     const {
         createChannelTransaction,
         error: transactionError,
@@ -115,8 +173,12 @@ export const CreateChannelForm = (props: Props) => {
         >
             {({ register, formState, setValue, getValues }) => {
                 const { onChange: onNameChange, ...restOfNameProps } = register(FormStateKeys.name)
-                return (
-                    <>
+                return !rolesWithDetails ? (
+                    <Stack centerContent height="250">
+                        <Spinner />
+                    </Stack>
+                ) : (
+                    <Stack>
                         <Stack>
                             <TextField
                                 autoFocus
@@ -146,23 +208,25 @@ export const CreateChannelForm = (props: Props) => {
                                 <Text strong>Which roles have access to this channel</Text>
                             </Box>
 
-                            {roles?.map((role) => {
-                                const id = role.roleId?.toNumber().toString()
-                                if (!id) {
-                                    return null
-                                }
+                            {rolesWithDetails?.map((role) => {
                                 return (
                                     <Box
                                         padding="md"
                                         background="level2"
                                         borderRadius="sm"
-                                        key={id}
+                                        key={role.id}
                                     >
                                         <Checkbox
                                             width="100%"
                                             name={FormStateKeys.roleIds}
-                                            label={role.name}
-                                            value={id}
+                                            label={
+                                                <TokenCheckboxLabel
+                                                    label={role.name}
+                                                    spaceId={props.spaceId}
+                                                    tokenAddresses={role.tokenAddresses}
+                                                />
+                                            }
+                                            value={role.id.toString()}
                                             register={register}
                                         />
                                     </Box>
@@ -229,7 +293,7 @@ export const CreateChannelForm = (props: Props) => {
                                 />
                             </Box>
                         )}
-                    </>
+                    </Stack>
                 )
             }}
         </FormRender>

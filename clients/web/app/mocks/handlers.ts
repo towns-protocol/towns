@@ -1,6 +1,6 @@
 import { rest } from 'msw'
 import { unfurl } from './unfurl'
-import { tokenCollections } from './token-collections'
+import { getContractMetadataMock, tokenCollections } from './token-collections'
 import { env } from '../src/utils'
 
 export const browserHandlers = [
@@ -12,10 +12,31 @@ export const browserHandlers = [
 
 export const testHandlers = [
     ...browserHandlers,
+    // TOKEN WORKER ///////////////
+    rest.options(
+        `${env.VITE_TOKEN_SERVER_URL || ''}/api/*
+    `,
+        (_, res, ctx) => res(ctx.status(200), ctx.json({})),
+    ),
+
     rest.get(`${env.VITE_TOKEN_SERVER_URL || ''}/api/getNftsForOwner/*/*`, (req, res, ctx) => {
         const data = tokenCollections()
         return res(ctx.status(200), ctx.json(data))
     }),
+
+    rest.get(
+        `${env.VITE_TOKEN_SERVER_URL || ''}/api/getContractMetadata/eth-goerli`,
+        (req, res, ctx) => {
+            const address = req.url.searchParams.get('contractAddress')
+            if (!address) {
+                throw new Error('no address provided')
+            }
+            const data = getContractMetadataMock[address]
+            return res(ctx.status(200), ctx.json(data))
+        },
+    ),
+    // END TOKEN WORKER ///////////////
+
     // if dev doesn't have this env var set and starts the app there's a bunch of weird errors in browser
     // even though this mock is only called in tests so defaulting to empty string
     rest.get(env.VITE_UNFURL_SERVER_URL || '', (req, res, ctx) => {

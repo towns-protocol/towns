@@ -8,6 +8,7 @@ import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
 import { CreateChannelForm } from '.'
+import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../../../mocks/token-collections'
 
 const Wrapper = ({
     onCreateChannel = vi.fn(),
@@ -53,6 +54,42 @@ const useMockedCreateChannelTransaction = (
     ...args: typeof zionClient.useCreateChannelTransaction['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateChannelReturn
 
+vi.mock('use-zion-client', async () => {
+    const actual = (await vi.importActual('use-zion-client')) as typeof zionClient
+    return {
+        ...actual,
+        useMultipleRoleDetails: () => {
+            return {
+                data: [
+                    {
+                        id: 7,
+                        name: 'Everyone',
+                        permissions: ['Read', 'Write'],
+                        tokens: [],
+                        users: ['0x1'],
+                        channels: [],
+                    },
+                    {
+                        id: 8,
+                        name: 'Member',
+                        permissions: ['Read', 'Write'],
+                        tokens: [
+                            {
+                                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[0],
+                            },
+                            {
+                                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[1],
+                            },
+                        ],
+                        users: [],
+                        channels: [],
+                    },
+                ],
+            }
+        },
+    }
+})
+
 describe('CreateChannelForm', () => {
     beforeEach(() => {
         vi.resetAllMocks()
@@ -90,6 +127,13 @@ describe('CreateChannelForm', () => {
 
         expect(everyoneCheckbox).toHaveAttribute('name', 'roleIds')
         expect(memberCheckbox).toHaveAttribute('value', '8')
+
+        await waitFor(() => {
+            expect(screen.getByText(/sudolets/gi)).toBeInTheDocument()
+        })
+        await waitFor(() => {
+            expect(screen.getByText(/Daisen.fi Investor Pass/gi)).toBeInTheDocument()
+        })
     })
 
     test('requires name and role for submission', async () => {
@@ -111,7 +155,7 @@ describe('CreateChannelForm', () => {
         )
 
         render(<Wrapper />)
-        const submitButton = screen.getByRole('button', { name: /create/i })
+        const submitButton = await screen.findByRole('button', { name: /create/i })
         fireEvent.click(submitButton)
 
         await waitFor(() => {

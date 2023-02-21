@@ -5,8 +5,9 @@ import { erc20ABI } from '@wagmi/core'
 import { ethers } from 'ethers'
 import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
-import { env, hasVitalkTokensParam } from 'utils'
+import { env } from 'utils'
 import { axiosClient } from '../apiClient'
+import { NETWORK, fetchVitalikTokens } from './utils'
 
 const queryKey = 'tokenContractsForAddress'
 const queryKeyPaginatedAggregation = 'tokenContractsForAddressAll'
@@ -94,8 +95,6 @@ export function useCachedTokensForWallet(fromPaginatedAggregation = false) {
     }, [fromPaginatedAggregation, queryClient])
 }
 
-const fetchVitalikTokens = env.IS_DEV && hasVitalkTokensParam()
-
 async function getLocalHostTokens(
     wallet: string,
     zionTokenAddress: string | null,
@@ -120,10 +119,6 @@ async function getLocalHostTokens(
         nextPageKey: undefined,
     }
 }
-
-const GOERLI = 'eth-goerli'
-const MAINNET = 'eth-mainnet'
-const NETWORK = fetchVitalikTokens ? MAINNET : GOERLI
 
 async function getTokenContractsForAddress(
     wallet: string,
