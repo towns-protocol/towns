@@ -137,6 +137,12 @@ global:
       max_idle_conns: 32
       conn_max_lifetime: -1
 
+  sentry:
+    enabled: true
+    dsn: https://21c6aa87be2d4b6f8e691982392fb4d9@o327188.ingest.sentry.io/4504720094986240
+    environment: localhost-chainId:31337
+
+
 # Configuration for the Appservice API.
 app_service_api:
   internal_api:

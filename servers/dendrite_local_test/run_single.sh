@@ -15,6 +15,8 @@ NODE_DIR="${TEST_DIR}/node${I}"
 
 echo "Running node ${I} from ${NODE_DIR}"
 
+echo "Running dendrite config ${DENDRITE_YAML}"
+
 cd ${NODE_DIR}
 
 ${SCRIPT_DIR}/dendrite/bin/dendrite \
