@@ -65,24 +65,23 @@ describe('spaceManagerContractHooks', () => {
             // callback to create a space with zion token entitlement
             const onClickCreateSpaceWithZionMemberRole = useCallback(() => {
                 const handleClick = async () => {
-                    if (zionTokenAddress) {
-                        await createSpaceTransactionWithRole(
-                            {
-                                name: tokenGatedSpaceName,
-                                visibility: RoomVisibility.Public,
-                            },
-                            'Zion Role',
-                            [zionTokenAddress],
-                            [Permission.Read, Permission.Write],
-                        )
-                        console.log(
-                            'spaceManagerContractHooks createSpaceTransactionWithRole',
-                            tokenGatedSpaceName,
-                        )
-                        setCreateSpaceWithZionMemberRole(true)
-                    } else {
-                        console.warn('No zion token address found')
+                    if (!zionTokenAddress) {
+                        throw new Error('No zion token address')
                     }
+                    await createSpaceTransactionWithRole(
+                        {
+                            name: tokenGatedSpaceName,
+                            visibility: RoomVisibility.Public,
+                        },
+                        'Zion Role',
+                        [zionTokenAddress],
+                        [Permission.Read, Permission.Write],
+                    )
+                    console.log(
+                        'spaceManagerContractHooks createSpaceTransactionWithRole',
+                        tokenGatedSpaceName,
+                    )
+                    setCreateSpaceWithZionMemberRole(true)
                 }
                 void handleClick()
             }, [createSpaceTransactionWithRole, zionTokenAddress])

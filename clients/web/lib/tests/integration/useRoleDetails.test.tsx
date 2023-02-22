@@ -31,7 +31,7 @@ describe('useRoleDetails', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        const councilNftAddress = getCouncilNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -85,24 +85,22 @@ function TestComponent(args: {
     spaceName: string
     roleName: string
     permissions: Permission[]
-    councilNftAddress: string | undefined
+    councilNftAddress: string
 }): JSX.Element {
     const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            if (args.councilNftAddress) {
-                await createSpaceTransactionWithRole(
-                    {
-                        name: args.spaceName,
-                        visibility: RoomVisibility.Public,
-                    },
-                    args.roleName,
-                    [args.councilNftAddress],
-                    args.permissions,
-                )
-            }
+            await createSpaceTransactionWithRole(
+                {
+                    name: args.spaceName,
+                    visibility: RoomVisibility.Public,
+                },
+                args.roleName,
+                [args.councilNftAddress],
+                args.permissions,
+            )
         }
 
         void handleClick()

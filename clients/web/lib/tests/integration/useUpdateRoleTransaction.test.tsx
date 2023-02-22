@@ -18,6 +18,7 @@ import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateRoleTransaction } from '../../src/hooks/use-update-role-transaction'
+import { TestConstants } from './helpers/TestConstants'
 
 /**
  * This test suite tests the useRoles hook.
@@ -48,7 +49,7 @@ describe('useUpdateRoleTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        const councilNftAddress = getCouncilNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -95,10 +96,16 @@ describe('useUpdateRoleTransaction', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceName))
+        await waitFor(
+            () => within(spaceElement).getByText(spaceName),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // click button to create the role
         fireEvent.click(createRoleButton)
-        await waitFor(() => within(rolesElement).getByText(`roleName:${moderatorRoleName}`))
+        await waitFor(
+            () => within(rolesElement).getByText(`roleName:${moderatorRoleName}`),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
 
         /* Act */
         // click button to update the role
@@ -121,7 +128,7 @@ function TestComponent(args: {
     spaceName: string
     roleName: string
     permissions: Permission[]
-    councilNftAddress: string | undefined
+    councilNftAddress: string
     newRoleName: string
     newRolePermissions: Permission[]
     newRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
@@ -139,17 +146,15 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            if (args.councilNftAddress) {
-                await createSpaceTransactionWithRole(
-                    {
-                        name: args.spaceName,
-                        visibility: RoomVisibility.Public,
-                    },
-                    args.roleName,
-                    [args.councilNftAddress],
-                    args.permissions,
-                )
-            }
+            await createSpaceTransactionWithRole(
+                {
+                    name: args.spaceName,
+                    visibility: RoomVisibility.Public,
+                },
+                args.roleName,
+                [args.councilNftAddress],
+                args.permissions,
+            )
         }
         void handleClick()
     }, [

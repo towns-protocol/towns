@@ -15,6 +15,7 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
+import { TestConstants } from './helpers/TestConstants'
 
 /**
  * This test suite tests the useRoles hook.
@@ -35,7 +36,7 @@ describe('useRoleDetails', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        const councilNftAddress = getCouncilNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -69,8 +70,14 @@ describe('useRoleDetails', () => {
         // this will create 2 spaces with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceNameA))
-        await waitFor(() => within(spaceElement).getByText(spaceNameB))
+        await waitFor(
+            () => within(spaceElement).getByText(spaceNameA),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        await waitFor(
+            () => within(spaceElement).getByText(spaceNameB),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
 
         const rolesElement = screen.getAllByTestId('rolesElement')
 
@@ -99,33 +106,31 @@ function TestComponentMultiple(args: {
     spaceNames: string[]
     roleName: string[]
     permissions: Permission[][]
-    councilNftAddress: string | undefined
+    councilNftAddress: string
 }): JSX.Element {
     const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            if (args.councilNftAddress) {
-                await createSpaceTransactionWithRole(
-                    {
-                        name: args.spaceNames[0],
-                        visibility: RoomVisibility.Public,
-                    },
-                    args.roleName[0],
-                    [args.councilNftAddress],
-                    args.permissions[0],
-                )
+            await createSpaceTransactionWithRole(
+                {
+                    name: args.spaceNames[0],
+                    visibility: RoomVisibility.Public,
+                },
+                args.roleName[0],
+                [args.councilNftAddress],
+                args.permissions[0],
+            )
 
-                await createSpaceTransactionWithRole(
-                    {
-                        name: args.spaceNames[1],
-                        visibility: RoomVisibility.Public,
-                    },
-                    args.roleName[1],
-                    [args.councilNftAddress],
-                    args.permissions[1],
-                )
-            }
+            await createSpaceTransactionWithRole(
+                {
+                    name: args.spaceNames[1],
+                    visibility: RoomVisibility.Public,
+                },
+                args.roleName[1],
+                [args.councilNftAddress],
+                args.permissions[1],
+            )
         }
 
         void handleClick()

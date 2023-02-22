@@ -39,7 +39,7 @@ describe('useUpdateChannelTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        const councilNftAddress = getCouncilNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -101,7 +101,7 @@ function TestComponent(args: {
     spaceRoleName: string
     channelName: string
     permissions: Permission[]
-    nftAddress: string | undefined
+    nftAddress: string
     updatedChannelName: string
 }): JSX.Element {
     const {
@@ -129,17 +129,15 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            if (args.nftAddress) {
-                await createSpaceTransactionWithRole(
-                    {
-                        name: args.spaceName,
-                        visibility: RoomVisibility.Public,
-                    },
-                    args.spaceRoleName,
-                    [args.nftAddress],
-                    args.permissions,
-                )
-            }
+            await createSpaceTransactionWithRole(
+                {
+                    name: args.spaceName,
+                    visibility: RoomVisibility.Public,
+                },
+                args.spaceRoleName,
+                [args.nftAddress],
+                args.permissions,
+            )
         }
         void handleClick()
     }, [

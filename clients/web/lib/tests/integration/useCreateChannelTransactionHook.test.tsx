@@ -30,7 +30,10 @@ describe('useCreateChannelTransactionHook', () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const chainId = (await provider.getNetwork()).chainId
-        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        if (!chainId) {
+            throw new Error('chainId is undefined')
+        }
+        const councilNftAddress = getCouncilNftAddress(chainId)
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
         await provider.fundWallet()
@@ -113,17 +116,15 @@ describe('useCreateChannelTransactionHook', () => {
 
             const onClickCreateSpace = useCallback(() => {
                 const handleClick = async () => {
-                    if (councilNftAddress) {
-                        await createSpaceTransactionWithRole(
-                            {
-                                name: spaceName,
-                                visibility: RoomVisibility.Public,
-                            },
-                            'Test Role',
-                            [councilNftAddress],
-                            [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
-                        )
-                    }
+                    await createSpaceTransactionWithRole(
+                        {
+                            name: spaceName,
+                            visibility: RoomVisibility.Public,
+                        },
+                        'Test Role',
+                        [councilNftAddress],
+                        [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
+                    )
                 }
 
                 void handleClick()
