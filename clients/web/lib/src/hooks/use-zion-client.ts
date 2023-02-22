@@ -77,6 +77,14 @@ interface ZionClientImpl {
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
     ) => Promise<RoleTransactionContext | undefined>
+    addRoleToChannelTransaction: (
+        spaceNetworkId: string,
+        channelNetworkId: string,
+        roleId: number,
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForAddRoleToChannelTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     waitForCreateRoleTransaction: (
         context: RoleTransactionContext | undefined,
     ) => Promise<TransactionContext<RoleIdentifier> | undefined>
@@ -171,6 +179,10 @@ export function useZionClient(): ZionClientImpl {
         ),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),
         waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
+        waitForAddRoleToChannelTransaction: useWithCatch(
+            client?.waitForAddRoleToChannelTransaction,
+        ),
+        addRoleToChannelTransaction: useWithCatch(client?.addRoleToChannelTransaction),
         updateRoleTransaction: useWithCatch(client?.updateRoleTransaction),
         waitForUpdateRoleTransaction: useWithCatch(client?.waitForUpdateRoleTransaction),
         deleteRoleTransaction: useWithCatch(client?.deleteRoleTransaction),

@@ -922,6 +922,39 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
     }
 
+    public async addRoleToChannelTransaction(
+        spaceNetworkId: string,
+        channelNetworkId: string,
+        roleId: number,
+    ): Promise<TransactionContext<void>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+        // check that entitlement address exists
+        const space = await this.spaceDapp.getSpace(spaceNetworkId)
+        if (!space?.read || !space?.write) {
+            throw new Error(`Space with networkId "${spaceNetworkId}" is not found.`)
+        }
+        try {
+            transaction = await this.spaceDapp.addRoleToChannel(
+                spaceNetworkId,
+                channelNetworkId,
+                roleId,
+            )
+            console.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            console.error('[addRoleToChannelTransaction] error', err)
+            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: undefined,
+            error,
+        }
+    }
+
     public async updateRoleTransaction(
         spaceNetworkId: string,
         roleId: number,
@@ -952,6 +985,51 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
             data: undefined,
+            error,
+        }
+    }
+
+    public async waitForAddRoleToChannelTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            if (!context?.transaction) {
+                throw new Error('[waitForAddRoleToChannelTransaction] transaction is undefined')
+            }
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            }
+            console.log('[waitForAddRoleToChannelTransaction] transaction completed' /*, receipt */)
+        } catch (err) {
+            console.error('[waitForAddRoleToChannelTransaction] error', err)
+            if (err instanceof Error) {
+                error = err
+            } else {
+                error = new Error('add role to channel failed with an unknown error')
+            }
+        }
+
+        if (receipt?.status === 1) {
+            console.log('[waitForAddRoleToChannelTransaction] success')
+            return {
+                data: undefined,
+                status: TransactionStatus.Success,
+                transaction,
+                receipt,
+            }
+        }
+
+        return {
+            data: undefined,
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
             error,
         }
     }

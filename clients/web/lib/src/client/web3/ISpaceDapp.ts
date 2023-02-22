@@ -27,6 +27,11 @@ export interface UpdateRoleParams {
 }
 
 export interface ISpaceDapp {
+    addRoleToChannel: (
+        spaceId: string,
+        channelNetworkId: string,
+        roleId: number,
+    ) => Promise<ContractTransaction>
     createSpace: (
         spaceName: string,
         spaceNetworkId: string,
@@ -51,6 +56,10 @@ export interface ISpaceDapp {
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
     getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | undefined>
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
+    getRolesByChannel: (
+        spaceId: string,
+        channelNetworkId: string,
+    ) => Promise<SpaceDataTypes.RoleStructOutput[]>
     getSpace: (spaceId: string, requireSigner?: boolean) => Promise<SpaceShim | undefined>
     getSpaceFactoryEventsContractInfo: () => EventsContractInfo
     getSpaceEventsContractInfo: (spaceId: string) => Promise<EventsContractInfo>

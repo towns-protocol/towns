@@ -1,0 +1,388 @@
+import { Permission, RoleDetails } from '../../src/client/web3/ContractTypes'
+import React, { useCallback, useEffect, useRef, useMemo } from 'react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+
+import { BigNumber } from 'ethers'
+import { RegisterWallet } from './helpers/TestComponents'
+import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
+import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
+import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import { ZionTestApp } from './helpers/ZionTestApp'
+import { useChannelData } from '../../src/hooks/use-channel-data'
+import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
+import { makeUniqueName } from './helpers/TestUtils'
+import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
+import { useRoleDetails } from '../../src/hooks/use-role-details'
+import { useRoles } from '../../src/hooks/use-roles'
+import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
+import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
+import { RoomIdentifier } from '../../dist'
+import { TestConstants } from './helpers/TestConstants'
+
+/**
+ * This test suite tests the useAddRolesToChannel hook.
+ */
+describe('useAddRolesToChannel', () => {
+    test('add a role to a channel', async () => {
+        /* Arrange */
+        const provider = new ZionTestWeb3Provider()
+        const spaceName = makeUniqueName('alice')
+        const channelName = 'foochannel'
+        const roleName = 'Test Role'
+        const permissions = [Permission.Read, Permission.Write]
+        const chainId = (await provider.getNetwork()).chainId
+        if (!chainId) {
+            throw new Error('chainId is undefined')
+        }
+        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        // create a view for alice
+        // make sure alice has some funds
+        await provider.fundWallet()
+        render(
+            <ZionTestApp provider={provider}>
+                <>
+                    <RegisterWallet />
+                    <TestComponent
+                        spaceName={spaceName}
+                        channelName={channelName}
+                        roleName={roleName}
+                        permissions={permissions}
+                        councilNftAddress={councilNftAddress}
+                    />
+                </>
+            </ZionTestApp>,
+        )
+        const clientRunning = screen.getByTestId('clientRunning')
+        // wait for the client to be running
+        await waitFor(() => within(clientRunning).getByText('true'))
+        if (!councilNftAddress) {
+            throw new Error('councilNftAddress is undefined')
+        }
+        // get our test elements
+        const spaceElement = screen.getByTestId('spacesElement')
+        const channelElement = screen.getByTestId('channelElement')
+        const rolesElement = screen.getByTestId('rolesElement')
+        const addedRoleToChannelElement = screen.getByTestId('added-role-transaction')
+        const createSpaceButton = screen.getByRole('button', {
+            name: 'Create Space',
+        })
+        const createChannelButton = screen.getByRole('button', {
+            name: 'Create Channel',
+        })
+        const addRoleToChannelButton = screen.getByRole('button', {
+            name: 'Add Role To Channel',
+        })
+        /* Act */
+        // click button to create the space
+        // this will create the space with no roles
+        fireEvent.click(createSpaceButton)
+        await waitFor(
+            () => within(spaceElement).getByText(spaceName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+        fireEvent.click(createChannelButton)
+        // wait for the space name to render
+        // wait for the channel name to render
+        await waitFor(
+            () => within(channelElement).getByText(channelName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+        // click button to add Test role to channel
+        fireEvent.click(addRoleToChannelButton)
+        await waitFor(
+            () => expect(addedRoleToChannelElement).toHaveTextContent('true'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+        /* Assert */
+        await assertRoleChannel(rolesElement, roleName)
+    }) // end test
+}) // end describe
+
+// helper function to create a test component
+function TestComponent(args: {
+    spaceName: string
+    channelName: string
+    roleName: string
+    permissions: Permission[]
+    councilNftAddress: string | undefined
+}): JSX.Element {
+    const {
+        createSpaceTransactionWithRole,
+        data: spaceId,
+        isLoading: isLoadingSpace,
+        transactionStatus: createSpaceTxStatus,
+    } = useCreateSpaceTransaction()
+    const {
+        createChannelTransaction,
+        data: channelId,
+        isLoading: isLoadingChannel,
+        error: createChannelError,
+        transactionStatus: createChannelTxStatus,
+        transactionHash: createChannelTxHash,
+    } = useCreateChannelTransaction()
+    const { addRoleToChannelTransaction, transactionStatus: addRoleToChannelTxStatus } =
+        useAddRoleToChannelTransaction()
+    const spaceNetworkId = spaceId ? spaceId.networkId : ''
+    const { spaceRoles } = useRoles(spaceNetworkId)
+
+    const addedRoleToChannel = useRef('false')
+
+    useEffect(() => {
+        if (addRoleToChannelTxStatus === TransactionStatus.Success) {
+            console.log(`useEffect::addRoleToChannelTxStatus: `, addRoleToChannelTxStatus)
+            addedRoleToChannel.current = 'true'
+        }
+    }, [addRoleToChannelTxStatus])
+
+    const roleIds = useMemo(() => {
+        const roleIds: number[] = []
+        if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
+            if (spaceRoles) {
+                console.log(`spaceRoles: `, spaceRoles)
+                for (const r of spaceRoles) {
+                    roleIds.push(r.roleId.toNumber())
+                }
+            }
+        }
+        return roleIds
+    }, [spaceId, createSpaceTxStatus, spaceRoles])
+    // handle click to create a space
+    const onClickCreateSpace = useCallback(() => {
+        const handleClick = async () => {
+            if (args.councilNftAddress) {
+                await createSpaceTransactionWithRole(
+                    {
+                        name: args.spaceName,
+                        visibility: RoomVisibility.Public,
+                    },
+                    args.roleName,
+                    [args.councilNftAddress],
+                    args.permissions,
+                )
+            }
+        }
+        void handleClick()
+    }, [
+        args.councilNftAddress,
+        args.permissions,
+        args.roleName,
+        args.spaceName,
+        createSpaceTransactionWithRole,
+    ])
+
+    console.log('TestComponent', 'createChannelTransactionStates', {
+        isLoadingChannel,
+        channelId,
+        createChannelError,
+        createChannelTxStatus,
+        createChannelTxHash,
+    })
+    // handle click to create a channel
+    const onClickCreateChannel = useCallback(() => {
+        const handleClick = async (parentSpaceId: RoomIdentifier) => {
+            await createChannelTransaction({
+                name: args.channelName,
+                visibility: RoomVisibility.Public,
+                parentSpaceId,
+                roleIds: [],
+            })
+        }
+        if (!isLoadingSpace && spaceId) {
+            void handleClick(spaceId as RoomIdentifier)
+        }
+        console.log(`onClickCreateChannel: spaceId: `, spaceId?.networkId)
+    }, [createChannelTransaction, args.channelName, isLoadingSpace, spaceId])
+
+    // handle click to update a role
+    const onClickAddRoleToChannel = useCallback(() => {
+        const handleClick = async () => {
+            await addRoleToChannelTransaction(
+                spaceNetworkId,
+                channelId?.networkId as string,
+                roleIds[0],
+            )
+        }
+        if (!isLoadingChannel && channelId) {
+            void handleClick()
+        }
+    }, [addRoleToChannelTransaction, roleIds, channelId, spaceNetworkId, isLoadingChannel])
+    // the view
+    return (
+        <>
+            <button onClick={onClickCreateSpace}>Create Space</button>
+            <button onClick={onClickCreateChannel}>Create Channel</button>
+            <button onClick={onClickAddRoleToChannel}>Add Role To Channel</button>
+            <SpaceContextProvider spaceId={spaceId}>
+                <>
+                    <SpacesComponent />
+                    <div data-testid="channelElement">
+                        {channelId && (
+                            <ChannelContextProvider channelId={channelId}>
+                                <ChannelsComponent channelId={channelId} />
+                            </ChannelContextProvider>
+                        )}
+                    </div>
+                    <div data-testid="added-role-transaction">
+                        addedRoleToChannel:{addedRoleToChannel.current}
+                    </div>
+                    <div>
+                        <RolesComponent spaceNetworkId={spaceNetworkId} />
+                    </div>
+                </>
+            </SpaceContextProvider>
+        </>
+    )
+}
+
+function SpacesComponent(): JSX.Element {
+    // spaces
+    const { spaces } = useSpacesFromContract()
+    return (
+        <div data-testid="spacesElement">
+            {spaces.map((element) => (
+                <div key={element.key}>{element.name}</div>
+            ))}
+        </div>
+    )
+}
+
+function ChannelsComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Element {
+    // channel data
+    const { channel } = useChannelData()
+    return (
+        <div data-testid="channel">
+            {channel && (
+                <ChannelContextProvider channelId={channelId}>
+                    <>
+                        <div key={channel.id.networkId}>{channel.label}</div>{' '}
+                    </>
+                </ChannelContextProvider>
+            )}
+        </div>
+    )
+}
+
+function RoleDetailsComponent({
+    spaceId,
+    roleId,
+}: {
+    spaceId: string
+    roleId: number
+}): JSX.Element {
+    const { isLoading, roleDetails, error } = useRoleDetails(spaceId, roleId)
+    useEffect(() => {
+        console.log(`RoleDetailsComponent:`, {
+            isLoading,
+            error,
+        })
+        printRoleDetails(roleDetails)
+    }, [isLoading, roleDetails, error])
+    return (
+        <div>
+            {!isLoading && (
+                <div key={`${spaceId}_${roleId}`}>
+                    <div>roleId:{roleDetails?.id}</div>
+                    <div>roleName:{roleDetails?.name}</div>
+                    <div>
+                        {/* permissions in the role */}
+                        {roleDetails?.permissions.map((permission) => (
+                            <div key={permission}>
+                                {roleDetails?.name}:permission:{permission}
+                            </div>
+                        ))}
+                    </div>
+                    <div>
+                        {/* tokens in the role */}
+                        {roleDetails?.tokens.map((token) => {
+                            const nftAddress = token.contractAddress as string
+                            const quantity = (token.quantity as BigNumber).toNumber()
+                            return (
+                                <div key={nftAddress}>
+                                    <div>
+                                        {roleDetails?.name}:nftAddress:{nftAddress}
+                                    </div>
+                                    <div>
+                                        {roleDetails?.name}:{nftAddress}:quantity:{quantity}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                    <div>
+                        {/* users in the role */}
+                        {roleDetails?.users.map((user) => {
+                            return (
+                                <div key={user}>
+                                    <div>
+                                        {roleDetails?.name}:user:{user}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined }): JSX.Element {
+    const { isLoading, spaceRoles, error } = useRoles(spaceNetworkId)
+    useEffect(() => {
+        console.log(`RolesComponent:`, {
+            isLoading,
+            error,
+        })
+        printRoleStruct(spaceRoles)
+    }, [error, isLoading, spaceRoles])
+    return (
+        <div data-testid="rolesElement">
+            {spaceRoles &&
+                spaceRoles.map((role) => {
+                    return (
+                        <div key={role.roleId.toNumber()}>
+                            <RoleDetailsComponent
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                spaceId={spaceNetworkId!}
+                                roleId={role.roleId.toNumber()}
+                            />
+                        </div>
+                    )
+                })}
+        </div>
+    )
+}
+
+/**
+ * Print helper functions
+ */
+function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
+    if (roles) {
+        for (const role of roles) {
+            console.log({
+                roleId: role.roleId.toNumber(),
+                name: role.name,
+            })
+        }
+    }
+}
+
+function printRoleDetails(roleDetails: RoleDetails | undefined) {
+    if (roleDetails) {
+        console.log(roleDetails)
+    }
+}
+
+/**
+ * Assert helper functions
+ */
+async function assertRoleChannel(htmlElement: HTMLElement, roleName: string) {
+    await waitFor(
+        () => within(htmlElement).getByText(`roleName:${roleName}`),
+        TestConstants.DoubleDefaultWaitForTimeout,
+    )
+}

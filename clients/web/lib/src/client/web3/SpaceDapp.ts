@@ -167,7 +167,46 @@ export class SpaceDapp implements ISpaceDapp {
         return this.spaces[spaceId]
     }
 
-    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | undefined> {
+    public async addRoleToChannel(
+        spaceId: string,
+        channelNetworkId: string,
+        roleId: number,
+    ): Promise<ContractTransaction> {
+        const encodedCallData: BytesLike[] = []
+        const space = await this.getSpace(spaceId)
+        if (!space?.write) {
+            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        }
+        const entitlementShims = await this.createEntitlementShims(space)
+        const entitlementDetails = await this.getEntitlementDetails(space, entitlementShims, roleId)
+        let userEntitlement: string | undefined
+        let tokenEntitlement: string | undefined
+        if (entitlementDetails?.users.length > 0) {
+            // add roleId to user entitlement address for channel
+            userEntitlement = entitlementShims?.userEntitlement?.address
+            encodedCallData.push(
+                space.interface.encodeFunctionData('addRoleToChannel', [
+                    channelNetworkId,
+                    userEntitlement as string,
+                    BigNumber.from(roleId),
+                ]),
+            )
+        }
+        if (entitlementDetails?.tokens.length > 0) {
+            // add roleId to token entitlement address for channel
+            tokenEntitlement = entitlementShims?.tokenEntitlement?.address
+            encodedCallData.push(
+                space.interface.encodeFunctionData('addRoleToChannel', [
+                    channelNetworkId,
+                    tokenEntitlement as string,
+                    roleId,
+                ]),
+            )
+        }
+        return space.write.multicall(encodedCallData, { gasLimit: 100000 })
+    }
+
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails> {
         const space = await this.getSpace(spaceId)
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
@@ -179,12 +218,8 @@ export class SpaceDapp implements ISpaceDapp {
             this.getEntitlementDetails(space, entitlementShims, roleId),
             this.getChannelsWithRole(space, entitlementShims, roleId),
         ])
-        // cannot find the role
-        if (!role || role.roleId.toNumber() === 0) {
-            return undefined
-        }
         // found the role. return the details
-        const roleName = role.name
+        const roleName: string | undefined = role?.name
         return {
             id: roleId,
             name: roleName,
@@ -201,6 +236,22 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         return space.read.getRoles()
+    }
+
+    public async getRolesByChannel(
+        spaceId: string,
+        channelNetworkId: string,
+    ): Promise<SpaceDataTypes.RoleStructOutput[]> {
+        const space = await this.getSpace(spaceId)
+        if (!space?.read) {
+            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        }
+        const channelHash = keccak256(toUtf8Bytes(channelNetworkId))
+        const channelAddress = await space.read?.getChannelByHash(channelHash)
+        if (!channelAddress) {
+            throw new Error(`Channel with networkId "${channelNetworkId}" is not found.`)
+        }
+        return this.getUniqueRolesByChannel(space, channelNetworkId)
     }
 
     public async getPermissionsByRoleId(spaceId: string, roleId: number): Promise<Permission[]> {
@@ -819,4 +870,51 @@ export class SpaceDapp implements ISpaceDapp {
         }
         return undefined
     }
+
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+    private async getUniqueRolesByChannel(
+        space: SpaceShim,
+        channelNetworkId: string,
+    ): Promise<SpaceDataTypes.RoleStructOutput[]> {
+        const roleIds: number[] = []
+        // get entitlement contracts for the space
+        const entitlementShim = await this.createEntitlementShims(space)
+        let tokenEntitlements: any
+        let userEntitlements: any
+        if (entitlementShim.tokenEntitlement && entitlementShim.userEntitlement) {
+            tokenEntitlements = entitlementShim.tokenEntitlement
+            userEntitlements = entitlementShim.userEntitlement
+        } else if (entitlementShim.tokenEntitlement) {
+            tokenEntitlements = entitlementShim.tokenEntitlement
+        } else if (entitlementShim.userEntitlement) {
+            userEntitlements = entitlementShim.userEntitlement
+        }
+        // get the role ids for the channel
+        const roles: SpaceDataTypes.RoleStructOutput[] = []
+
+        let channelRoleIds: BigNumber[] = await tokenEntitlements?.read?.getRoleIdsByChannelId(
+            channelNetworkId,
+        )
+        roleIds.push(
+            ...channelRoleIds.map((id) => {
+                return id.toNumber()
+            }),
+        )
+
+        channelRoleIds = await userEntitlements?.read?.getRoleIdsByChannelId(channelNetworkId)
+        roleIds.push(
+            ...channelRoleIds.map((id) => {
+                return id.toNumber()
+            }),
+        )
+        const uniqueRoleIds = [...new Set(roleIds)]
+        for (const roleId of uniqueRoleIds) {
+            const role = await space.read?.getRoleById(roleId)
+            if (role) {
+                roles.push(role)
+            }
+        }
+        return roles
+    }
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 }

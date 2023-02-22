@@ -57,6 +57,64 @@ export function useRoleDetails(spaceId: string, roleId: number) {
     }
 }
 
+export function useRoleDetailsByChannel(spaceId: string, channelId: string, roleId: number) {
+    const { client } = useZionContext()
+    const queryClient = useQueryClient()
+    const isEnabled = spaceId.length > 0 && roleId > 0 && channelId.length > 0
+
+    const getRole = useCallback(
+        async function (spaceId: string, roleId: number) {
+            if (!client || !isEnabled) {
+                return undefined
+            }
+            const role = await client.spaceDapp.getRole(spaceId, roleId)
+            return role
+        },
+        [client, isEnabled],
+    )
+
+    const {
+        isLoading,
+        data: roleDetails,
+        error,
+    } = useQuery(
+        // unique keys per query so that React Query
+        // can manage the cache for us.
+        [
+            QueryKeyRoles.BySpaceId,
+            spaceId,
+            QueryKeyRoles.ByChannelId,
+            channelId,
+            QueryKeyRoles.ByRoleId,
+            roleId,
+        ],
+        // query that does the data fetching.
+        () => getRole(spaceId, roleId),
+        // options for the query.
+        {
+            // query will not execute until the flag is true.
+            enabled: isEnabled,
+            onError: () => {
+                // on error, remove the query from the cache to force an update.
+                queryClient.removeQueries([
+                    QueryKeyRoles.BySpaceId,
+                    spaceId,
+                    QueryKeyRoles.ByChannelId,
+                    channelId,
+                    QueryKeyRoles.ByRoleId,
+                    roleId,
+                ])
+            },
+        },
+    )
+
+    return {
+        isLoading,
+        roleDetails,
+        error,
+    }
+}
+
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const { client } = useZionContext()
     const isEnabled = client && spaceId.length > 0 && roleIds.length > 0
