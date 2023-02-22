@@ -1,6 +1,11 @@
 export default [
   {
     "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
     "name": "AddRoleFailed",
     "type": "error"
   },
@@ -46,12 +51,17 @@ export default [
   },
   {
     "inputs": [],
-    "name": "NotAllowed",
+    "name": "NameContainsInvalidCharacters",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "OwnerPermissionNotAllowed",
+    "name": "NameLengthInvalid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotAllowed",
     "type": "error"
   },
   {
@@ -120,25 +130,6 @@ export default [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "implementation",
         "type": "address"
       }
@@ -154,12 +145,12 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_permission",
-        "type": "string"
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
       }
     ],
-    "name": "addPermissionToRole",
+    "name": "addPermissionsToRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -168,7 +159,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "_channelNetworkId",
         "type": "string"
       },
       {
@@ -252,8 +243,13 @@ export default [
         "type": "string"
       },
       {
+        "internalType": "string",
+        "name": "channelNetworkId",
+        "type": "string"
+      },
+      {
         "internalType": "bytes32",
-        "name": "channelId",
+        "name": "channelHash",
         "type": "bytes32"
       },
       {
@@ -409,8 +405,13 @@ export default [
             "type": "string"
           },
           {
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          },
+          {
             "internalType": "bytes32",
-            "name": "channelId",
+            "name": "channelHash",
             "type": "bytes32"
           },
           {
@@ -427,6 +428,38 @@ export default [
         "internalType": "struct DataTypes.Channel",
         "name": "",
         "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getChannels",
+    "outputs": [
+      {
+        "internalType": "bytes32[]",
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_moduleType",
+        "type": "string"
+      }
+    ],
+    "name": "getEntitlementByModuleType",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -453,12 +486,34 @@ export default [
   },
   {
     "inputs": [],
-    "name": "getEntitlements",
+    "name": "getEntitlementModules",
     "outputs": [
       {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "moduleAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "moduleType",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "enabled",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DataTypes.EntitlementModule[]",
+        "name": "_entitlementModules",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -475,9 +530,9 @@ export default [
     "name": "getPermissionsByRoleId",
     "outputs": [
       {
-        "internalType": "bytes32[]",
+        "internalType": "string[]",
         "name": "",
-        "type": "bytes32[]"
+        "type": "string[]"
       }
     ],
     "stateMutability": "view",
@@ -574,6 +629,16 @@ export default [
         "internalType": "address[]",
         "name": "_entitlements",
         "type": "address[]"
+      },
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_tokenId",
+        "type": "uint256"
       }
     ],
     "name": "initialize",
@@ -585,7 +650,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "_channelNetworkId",
         "type": "string"
       },
       {
@@ -726,12 +791,12 @@ export default [
         "type": "uint256"
       },
       {
-        "internalType": "string",
-        "name": "_permission",
-        "type": "string"
+        "internalType": "string[]",
+        "name": "_permissions",
+        "type": "string[]"
       }
     ],
-    "name": "removePermissionFromRole",
+    "name": "removePermissionsFromRole",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -753,7 +818,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "_channelNetworkId",
         "type": "string"
       },
       {
@@ -804,13 +869,6 @@ export default [
   },
   {
     "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "roleCount",
     "outputs": [
       {
@@ -850,12 +908,12 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
         "internalType": "bool",
-        "name": "_disabled",
+        "name": "disableChannel",
         "type": "bool"
       }
     ],
@@ -868,7 +926,7 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_entitlement",
+        "name": "_entitlementModule",
         "type": "address"
       },
       {
@@ -877,7 +935,7 @@ export default [
         "type": "bool"
       }
     ],
-    "name": "setEntitlement",
+    "name": "setEntitlementModule",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -909,28 +967,41 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "token",
+    "outputs": [
       {
         "internalType": "address",
-        "name": "newOwner",
+        "name": "",
         "type": "address"
       }
     ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokenId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelId",
+        "name": "channelNetworkId",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_channelName",
+        "name": "channelName",
         "type": "string"
       }
     ],
@@ -953,6 +1024,24 @@ export default [
       }
     ],
     "name": "updateRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_entitlement",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_newEntitlement",
+        "type": "address"
+      }
+    ],
+    "name": "upgradeEntitlement",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

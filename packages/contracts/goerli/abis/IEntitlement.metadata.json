@@ -58,6 +58,25 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "getRoleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -84,6 +103,24 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -238,6 +275,14 @@
             "_0": "entitlementData array for the role"
           }
         },
+        "getRoleIdsByChannelId(string)": {
+          "params": {
+            "channelId": "the channel to fetch the roleIds for"
+          },
+          "returns": {
+            "_0": "roleIds array of all the roleIds for the channel"
+          }
+        },
         "getUserRoles(address)": {
           "params": {
             "user": "the user to fetch the roles for"
@@ -300,6 +345,9 @@
         "getEntitlementDataByRoleId(uint256)": {
           "notice": "fetches the entitlement data for a roleId"
         },
+        "getRoleIdsByChannelId(string)": {
+          "notice": "fetches the roleIds for a given channel"
+        },
         "getUserRoles(address)": {
           "notice": "fetches the roles for a given user in the space"
         },
@@ -330,7 +378,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/interfaces/IEntitlement.sol": "IEntitlement"
+      "contracts/src/interfaces/IEntitlement.sol": "IEntitlement"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -356,20 +404,20 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
+    "contracts/src/interfaces/IEntitlement.sol": {
+      "keccak256": "0xfcbba0cf78c5cefba11d2582ff19d83bbc47ebb6d6798f0be8631b2366040d95",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
-        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
+        "bzz-raw://168de1370319df9b5f98683793a5fb13f7cf1690a190771cd3e46e3e6b2164c4",
+        "dweb:/ipfs/QmUotoQLNjPJCLxiLFpGRt1bppaNMPQg3rF6QuJhFdhaDe"
       ]
     },
-    "contracts/src/spacesv2/libraries/DataTypes.sol": {
-      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
+    "contracts/src/libraries/DataTypes.sol": {
+      "keccak256": "0x104f117867fff56e6dbb76bfb32a256d440ce9ed7cb471c14d128168aef3077c",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
-        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
+        "bzz-raw://0066af83357bf22785d319c2c5a3b800230a3802eebf6b0046238da41a9b8977",
+        "dweb:/ipfs/QmZLF5ojD13isvBueA2B7c4yik92Ygce5EBG6jPmHQVCXA"
       ]
     }
   },

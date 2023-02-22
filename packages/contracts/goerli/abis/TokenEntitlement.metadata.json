@@ -17,6 +17,11 @@
       },
       {
         "inputs": [],
+        "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "QuantityNotFound",
         "type": "error"
       },
@@ -76,25 +81,6 @@
           {
             "indexed": true,
             "internalType": "address",
-            "name": "previousOwner",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
             "name": "implementation",
             "type": "address"
           }
@@ -116,10 +102,36 @@
         "type": "function"
       },
       {
+        "inputs": [],
+        "name": "TOKEN_ADDRESS",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "TOKEN_ID",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelId",
+            "name": "channelNetworkId",
             "type": "string"
           },
           {
@@ -203,6 +215,30 @@
       {
         "inputs": [
           {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "entitlementIdsByRoleId",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "bytes32",
             "name": "",
             "type": "bytes32"
@@ -251,6 +287,25 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "channelNetworkId",
+            "type": "string"
+          }
+        ],
+        "name": "getRoleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256[]",
+            "name": "",
+            "type": "uint256[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "user",
             "type": "address"
@@ -280,7 +335,18 @@
         "type": "function"
       },
       {
-        "inputs": [],
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_tokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_tokenId",
+            "type": "uint256"
+          }
+        ],
         "name": "initialize",
         "outputs": [],
         "stateMutability": "nonpayable",
@@ -343,19 +409,6 @@
       },
       {
         "inputs": [],
-        "name": "owner",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
         "name": "proxiableUUID",
         "outputs": [
           {
@@ -395,7 +448,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelId",
+            "name": "channelNetworkId",
             "type": "string"
           },
           {
@@ -410,10 +463,27 @@
         "type": "function"
       },
       {
-        "inputs": [],
-        "name": "renounceOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "roleIdsByChannelId",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
@@ -476,19 +546,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "newImplementation",
             "type": "address"
           }
@@ -520,12 +577,6 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
-        "addRoleIdToChannel(string,uint256)": {
-          "params": {
-            "channelId": "id of the channel to add the role to",
-            "roleId": "id of the role to add"
-          }
-        },
         "getEntitlementDataByRoleId(uint256)": {
           "params": {
             "roleId": "the roleId to fetch the entitlement data for"
@@ -552,9 +603,6 @@
             "_0": "whether the user is entitled to the permission"
           }
         },
-        "owner()": {
-          "details": "Returns the address of the current owner."
-        },
         "proxiableUUID()": {
           "details": "Implementation of the ERC1822 {proxiableUUID} function. This returns the storage slot used by the implementation. It is used to validate the implementation's compatibility when performing an upgrade. IMPORTANT: A proxy pointing at a proxiable contract should not be considered proxiable itself, because this risks bricking a proxy that upgrades to it, by delegating to itself until out of gas. Thus it is critical that this function revert if invoked through a proxy. This is guaranteed by the `notDelegated` modifier."
         },
@@ -566,15 +614,6 @@
           "returns": {
             "entitlementId": "the id that was removed"
           }
-        },
-        "removeRoleIdFromChannel(string,uint256)": {
-          "params": {
-            "channelId": "id of the channel to remove the role from",
-            "roleId": "id of the role to remove"
-          }
-        },
-        "renounceOwnership()": {
-          "details": "Leaves the contract without owner. It will not be possible to call `onlyOwner` functions anymore. Can only be called by the current owner. NOTE: Renouncing ownership will leave the contract without an owner, thereby removing any functionality that is only available to the owner."
         },
         "setEntitlement(uint256,bytes)": {
           "params": {
@@ -593,9 +632,6 @@
         "supportsInterface(bytes4)": {
           "details": "See {IERC165-supportsInterface}."
         },
-        "transferOwnership(address)": {
-          "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
-        },
         "upgradeTo(address)": {
           "details": "Upgrade the implementation of the proxy to `newImplementation`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
         },
@@ -603,19 +639,24 @@
           "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
         }
       },
+      "stateVariables": {
+        "__gap": {
+          "details": "Added to allow future versions to add new variables in case this contract becomes      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps"
+        }
+      },
       "version": 1
     },
     "userdoc": {
       "kind": "user",
       "methods": {
-        "addRoleIdToChannel(string,uint256)": {
-          "notice": "adds a role to a channel"
-        },
         "allEntitlementIds(uint256)": {
           "notice": "array of all the entitlementIds"
         },
         "description()": {
           "notice": "The description of the entitlement module"
+        },
+        "entitlementIdsByRoleId(uint256,uint256)": {
+          "notice": "mapping of all the entitlements for a given roleId"
         },
         "entitlementsById(bytes32)": {
           "notice": "mapping holding all the entitlements of entitlementId to Entitlement"
@@ -638,8 +679,8 @@
         "removeEntitlement(uint256,bytes)": {
           "notice": "removes an entitlement"
         },
-        "removeRoleIdFromChannel(string,uint256)": {
-          "notice": "removes a role from a channel"
+        "roleIdsByChannelId(bytes32,uint256)": {
+          "notice": "mapping of all the roles for a given channelId"
         },
         "setEntitlement(uint256,bytes)": {
           "notice": "sets a new entitlement"
@@ -653,7 +694,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": "TokenEntitlement"
+      "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": "TokenEntitlement"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -679,52 +720,44 @@
     ]
   },
   "sources": {
-    "contracts/src/spacesv2/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x663991f174301859a3fb47a6037d68de8724f3b90b91f7626436fd4f6a7a8619",
+    "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
+      "keccak256": "0x6b4f3c743eb4ea1409dc0cdffe2129e33735cb1b88e9cfa28aa61ac264ea6b77",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://57b97974bbd5dfdd80970146b1d10863e6f1f8c3991cd1d63847c0cdcc3de900",
-        "dweb:/ipfs/QmZWssTJ2SRQvHnN2uCRJUw3NW4KReNNodJy1GVvzqJVGk"
+        "bzz-raw://dc84f3b8599605e64bdef0f86088181bc17471808e2dfaaeaf21a2f910b28f81",
+        "dweb:/ipfs/QmToShmsfbrhTiqgERRXfu6GDknrVVjaQ3FasJdKcfUhAh"
       ]
     },
-    "contracts/src/spacesv2/interfaces/IEntitlement.sol": {
-      "keccak256": "0xe0f48b62526411c4418b9067d2051d70584e2e2ae1846365a8d8a497b5ab09e8",
+    "contracts/src/interfaces/IEntitlement.sol": {
+      "keccak256": "0xfcbba0cf78c5cefba11d2582ff19d83bbc47ebb6d6798f0be8631b2366040d95",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f3142207020b0b70815c6f373679c0f8010ce04a2f975fd4b4692378ed2b1276",
-        "dweb:/ipfs/QmfFt3A7A9moaDMMyC95EAk7Zyw31QMiukt5qZCHYiGh6s"
+        "bzz-raw://168de1370319df9b5f98683793a5fb13f7cf1690a190771cd3e46e3e6b2164c4",
+        "dweb:/ipfs/QmUotoQLNjPJCLxiLFpGRt1bppaNMPQg3rF6QuJhFdhaDe"
       ]
     },
-    "contracts/src/spacesv2/interfaces/ISpace.sol": {
-      "keccak256": "0x9afec06b6b99184d72769c404fa5c615c8c90b1ba842dd498f06f29e675e73bc",
+    "contracts/src/interfaces/ISpace.sol": {
+      "keccak256": "0x4b92a3f0f6e844f45d38e7290a598a94c494b1cb2092135582f4c03eb6cfdd36",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://523fac84a119aa80a1b3e36d53057cb39b70d0be85b3e5c693076a734c560617",
-        "dweb:/ipfs/QmcDrxZYzB3qV6d5h31Ti4hEdZDGxMaow2NnMuPJCKoqi7"
+        "bzz-raw://7dd22ef283e378372098e28b6111f49561dd0667284434209e6356bd5717f51f",
+        "dweb:/ipfs/QmUvh1eUHuV6aU4xgiah7tCr2C8g9TQvpMkEgsTahQ7BtY"
       ]
     },
-    "contracts/src/spacesv2/libraries/DataTypes.sol": {
-      "keccak256": "0x237c717bcaf3aae77594766b6c556efe3d232bc91da78a2c9025e48b7e4a2b6b",
+    "contracts/src/libraries/DataTypes.sol": {
+      "keccak256": "0x104f117867fff56e6dbb76bfb32a256d440ce9ed7cb471c14d128168aef3077c",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://cac72e2d89c882e54c0c6037a262ff1e1bb4018e5d9f88902a87b811f7f365cd",
-        "dweb:/ipfs/QmYuBFtACWfw5L4EUT3dGXi6Ebd1dCnXXJ3srL6g9GEt7Z"
+        "bzz-raw://0066af83357bf22785d319c2c5a3b800230a3802eebf6b0046238da41a9b8977",
+        "dweb:/ipfs/QmZLF5ojD13isvBueA2B7c4yik92Ygce5EBG6jPmHQVCXA"
       ]
     },
-    "contracts/src/spacesv2/libraries/Errors.sol": {
-      "keccak256": "0x7fbea1e71e13246ee976a84c61ec064e3a162cda4990f8e682cf6ebd7eb458f0",
+    "contracts/src/libraries/Errors.sol": {
+      "keccak256": "0xa58c2c12ba0d81501a37a360097b07288341c582efee3787179f7ec7edc0509a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e4a7ba8c1110d9313bb8c9c85655668708ab9e9cdd0b3d658efcc5f58d7ecbe1",
-        "dweb:/ipfs/QmchX59AAaHBzr8gz7ULshVro3Z8gMcYAcF5qpjFKgD5kU"
-      ]
-    },
-    "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol": {
-      "keccak256": "0x247c62047745915c0af6b955470a72d1696ebad4352d7d3011aef1a2463cd888",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://d7fc8396619de513c96b6e00301b88dd790e83542aab918425633a5f7297a15a",
-        "dweb:/ipfs/QmXbP4kiZyp7guuS7xe8KaybnwkRPGrBc2Kbi3vhcTfpxb"
+        "bzz-raw://9ef8c5a09ded0537b7c631ff38c1ee1a9eb6071cd2dfdcbbdbb8ff50fcf388ff",
+        "dweb:/ipfs/QmTy1iNZfz69MCJwE1U9aDR4ZyKXujhmYUVrVjakSYFd8R"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/interfaces/draft-IERC1822Upgradeable.sol": {
@@ -808,27 +841,27 @@
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155.sol": {
-      "keccak256": "0x6392f2cfe3a5ee802227fe7a2dfd47096d881aec89bddd214b35c5b46d3cd941",
+      "keccak256": "0x622b1e5ba6b160cfccda15953f5040355fbd91428247decde191eb978eaafc39",
       "license": "MIT",
       "urls": [
-        "bzz-raw://bd9c47a375639888e726a99da718890ba16d17d7ad9eacb0ccc892d46d1b3ee0",
-        "dweb:/ipfs/Qmb41W5RUjy2sWg49A2rMnxekSeEk6SvGyJL5tyCCSr7un"
+        "bzz-raw://a4db206433c87f5f161267e9d6908f0762c59a367c72c47e8676e2613791fd52",
+        "dweb:/ipfs/QmbDmK1NGJqZyaYEmz8S1gGLCPyRAqYciwamMtk8thshEW"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol": {
-      "keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
+      "keccak256": "0x00c839ff53d07d19db2e7cfa1e5133f9ee90a8d64b0e2e57f50446a2d1a3a0e0",
       "license": "MIT",
       "urls": [
-        "bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
-        "dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+        "bzz-raw://3dac621d015a68a5251b1e5d41dda0faf252699bf6e8bcf46a958b29964d9dd1",
+        "dweb:/ipfs/QmP9axjgZv4cezAhALoTemM62sdLtMDJ9MGTxECnNwHgSJ"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
-      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "keccak256": "0x41bbb2c41036ca64b2f6c9e973e8cfaa113ebc42af86702cd0d267f915a7e886",
       "license": "MIT",
       "urls": [
-        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
-        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+        "bzz-raw://6bf6699c55e82c7af6ae90b61ea9643ca0c905097da9a31269319f1b5a2a696a",
+        "dweb:/ipfs/QmRJZa2UmWcRo6W8JnuomwzfjVtAS21QC8HKggxBhoPsU4"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {

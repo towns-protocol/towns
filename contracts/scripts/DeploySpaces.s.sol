@@ -30,7 +30,7 @@ contract DeploySpaces is ScriptUtils {
     _createInitialOwnerPermissions();
 
     vm.startBroadcast();
-    pioneer = new Pioneer("Pioneer", "PNR", "");
+    pioneer = new Pioneer("Pioneer", "PIONEER", "");
     spaceToken = new SpaceOwner("Space Owner", "SPACE");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();

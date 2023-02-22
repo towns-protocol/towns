@@ -1,11 +1,6 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
-import {
-    Channel,
-    EntitlementModule,
-    EntitlementModuleType,
-    Permission,
-    RoleDetails,
-} from './ContractTypes'
+import { BytesLike, keccak256 } from 'ethers/lib/utils'
+import { Channel, EntitlementModuleType, Permission, RoleDetails } from './ContractTypes'
 import { EventsContractInfo, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
@@ -21,7 +16,6 @@ import {
 import { ShimFactory } from './shims/ShimFactory'
 import { SpaceInfo } from './SpaceInfo'
 import { UserEntitlementShim } from './shims/UserEntitlementShim'
-import { BytesLike, keccak256 } from 'ethers/lib/utils'
 import { toUtf8Bytes } from '@ethersproject/strings'
 
 interface Spaces {
@@ -109,16 +103,16 @@ export class SpaceDapp implements ISpaceDapp {
         }
 
         // figure out the addresses for each entitlement module
-        const entitlementModules = await space.getEntitlementModules()
+        const entitlementModules = await space.read.getEntitlementModules()
         let tokenModuleAddress = ''
         let userModuleAddress = ''
         for (const module of entitlementModules) {
             switch (module.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
-                    tokenModuleAddress = module.address
+                    tokenModuleAddress = module.moduleAddress
                     break
                 case EntitlementModuleType.UserEntitlement:
-                    userModuleAddress = module.address
+                    userModuleAddress = module.moduleAddress
                     break
             }
         }
@@ -376,7 +370,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const encodedCallData: BytesLike[] = []
         const [modules, roleDetails] = await Promise.all([
-            space.getEntitlementModules(),
+            space.read.getEntitlementModules(),
             this.getRole(spaceId, roleId),
         ])
         if (!roleDetails) {
@@ -453,7 +447,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async encodeDeleteRoleFromChannels(
         space: SpaceShim,
-        modules: EntitlementModule[],
+        modules: SpaceDataTypes.EntitlementModuleStructOutput[],
         roleDetails: RoleDetails,
     ): Promise<BytesLike[]> {
         const encodedCallData: BytesLike[] = []
@@ -464,13 +458,13 @@ export class SpaceDapp implements ISpaceDapp {
         for (const m of modules) {
             switch (m.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
-                    tokenModuleAddress = m.address
+                    tokenModuleAddress = m.moduleAddress
                     break
                 case EntitlementModuleType.UserEntitlement:
-                    userModuleAddress = m.address
+                    userModuleAddress = m.moduleAddress
                     break
                 default:
-                    throw new Error(`Unsupported module type: ${m.moduleType as string}`)
+                    throw new Error(`Unsupported module type: ${m.moduleType}`)
             }
         }
         for (const c of channels) {
@@ -498,7 +492,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async encodeDeleteRoleFromEntitlements(
         space: SpaceShim,
-        modules: EntitlementModule[],
+        modules: SpaceDataTypes.EntitlementModuleStructOutput[],
         roleId: number,
     ): Promise<BytesLike[]> {
         const encodedCallData: BytesLike[] = []
@@ -540,21 +534,19 @@ export class SpaceDapp implements ISpaceDapp {
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
         // remove current permissions
-        const encodedRemovedPermissionChanges = space.encodeRemovePermissionsFromRole(
-            params.roleId,
-            roleDetails.permissions,
+        encodedCallData.push(
+            space.interface.encodeFunctionData('removePermissionsFromRole', [
+                params.roleId,
+                roleDetails.permissions,
+            ]),
         )
-        for (const p of encodedRemovedPermissionChanges) {
-            encodedCallData.push(p)
-        }
         // replace with new permissions
-        const encodedAddPermissionChanges = space.encodeAddPermissionsToRole(
-            params.roleId,
-            params.permissions,
+        encodedCallData.push(
+            space.interface.encodeFunctionData('addPermissionsToRole', [
+                params.roleId,
+                params.permissions,
+            ]),
         )
-        for (const p of encodedAddPermissionChanges) {
-            encodedCallData.push(p)
-        }
         // return all the encoded function calls to update the permissions
         return encodedCallData
     }
@@ -567,7 +559,7 @@ export class SpaceDapp implements ISpaceDapp {
         // get current entitlements for the role
         const entitlementShims = await this.createEntitlementShims(space)
         const [modules, currentEntitlements] = await Promise.all([
-            space.getEntitlementModules(),
+            space.read.getEntitlementModules(),
             this.getEntitlementDetails(space, entitlementShims, params.roleId),
         ])
         // remove current entitlements
@@ -600,7 +592,7 @@ export class SpaceDapp implements ISpaceDapp {
     private encodeAddRoleToEntitlement(
         space: SpaceShim,
         roleId: number,
-        modules: EntitlementModule[],
+        modules: SpaceDataTypes.EntitlementModuleStructOutput[],
         entitlements: EntitlementData,
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
@@ -611,7 +603,7 @@ export class SpaceDapp implements ISpaceDapp {
                         // contract execution will revert if the tokens array is empty
                         if (entitlements.tokens.length) {
                             const entitlement = createTokenEntitlementStruct(
-                                m.address,
+                                m.moduleAddress,
                                 entitlements.tokens,
                             )
                             const addRole = space.interface.encodeFunctionData(
@@ -627,7 +619,7 @@ export class SpaceDapp implements ISpaceDapp {
                         // contract execution will revert if the users array is empty
                         if (entitlements.users.length) {
                             const entitlement = createUserEntitlementStruct(
-                                m.address,
+                                m.moduleAddress,
                                 entitlements.users,
                             )
                             const removeRole = space.interface.encodeFunctionData(
@@ -639,9 +631,7 @@ export class SpaceDapp implements ISpaceDapp {
                     }
                     break
                 default:
-                    throw new Error(
-                        `Unsupported entitlement module type: ${m.moduleType as string}`,
-                    )
+                    throw new Error(`Unsupported entitlement module type: ${m.moduleType}`)
             }
         }
         // return all the encoded function calls to add the role to the entitlements
@@ -651,7 +641,7 @@ export class SpaceDapp implements ISpaceDapp {
     private encodeRemoveRoleFromEntitlement(
         space: SpaceShim,
         roleId: number,
-        modules: EntitlementModule[],
+        modules: SpaceDataTypes.EntitlementModuleStructOutput[],
         entitlements: EntitlementData,
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
@@ -662,7 +652,7 @@ export class SpaceDapp implements ISpaceDapp {
                         // contract execution will revert if the tokens array is empty
                         if (entitlements.tokens.length) {
                             const entitlement = createTokenEntitlementStruct(
-                                m.address,
+                                m.moduleAddress,
                                 entitlements.tokens,
                             )
                             const removeRole = space.interface.encodeFunctionData(
@@ -678,7 +668,7 @@ export class SpaceDapp implements ISpaceDapp {
                         // contract execution will revert if the users array is empty
                         if (entitlements.users.length) {
                             const entitlement = createUserEntitlementStruct(
-                                m.address,
+                                m.moduleAddress,
                                 entitlements.users,
                             )
                             const removeRole = space.interface.encodeFunctionData(
@@ -690,9 +680,7 @@ export class SpaceDapp implements ISpaceDapp {
                     }
                     break
                 default:
-                    throw new Error(
-                        `Unsupported entitlement module type: ${m.moduleType as string}`,
-                    )
+                    throw new Error(`Unsupported entitlement module type: ${m.moduleType}`)
             }
         }
         // return all the encoded function calls to remove the role from the entitlements
@@ -747,14 +735,14 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     private async createEntitlementShims(space: SpaceShim): Promise<EntitlementShims> {
-        const modules = await space.getEntitlementModules()
+        const modules = await space.read.getEntitlementModules()
         let tokenEntitlement: TokenEntitlementShim | undefined = undefined
         let userEntitlement: UserEntitlementShim | undefined = undefined
         for (const m of modules) {
             switch (m.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
                     tokenEntitlement = ShimFactory.createTokenEntitlement(
-                        m.address,
+                        m.moduleAddress,
                         space.chainId,
                         space.provider,
                         space.signer,
@@ -762,16 +750,14 @@ export class SpaceDapp implements ISpaceDapp {
                     break
                 case EntitlementModuleType.UserEntitlement:
                     userEntitlement = ShimFactory.createUserEntitlement(
-                        m.address,
+                        m.moduleAddress,
                         space.chainId,
                         space.provider,
                         space.signer,
                     )
                     break
                 default:
-                    throw new Error(
-                        `Unsupported entitlement module type: ${m.moduleType as string}`,
-                    )
+                    throw new Error(`Unsupported entitlement module type: ${m.moduleType}`)
             }
         }
 
@@ -824,7 +810,7 @@ export class SpaceDapp implements ISpaceDapp {
         const userEntitlement = entitlementShims.userEntitlement
         for (const c of allChannels) {
             // check if the role is in the token entitlement for that channel
-            let roleIds = await tokenEntitlement?.getRoleIdsByChannelId(c.channelNetworkId)
+            let roleIds = await tokenEntitlement?.read.getRoleIdsByChannelId(c.channelNetworkId)
             if (roleIds) {
                 if (this.isRoleIdInArray(roleIds, roleId)) {
                     uniqueChannelIds.add(c.channelNetworkId)
@@ -832,7 +818,7 @@ export class SpaceDapp implements ISpaceDapp {
                 }
             }
             // check if the role is in the user entitlement for that channel
-            roleIds = await userEntitlement?.getRoleIdsByChannelId(c.channelNetworkId)
+            roleIds = await userEntitlement?.read.getRoleIdsByChannelId(c.channelNetworkId)
             if (roleIds) {
                 if (this.isRoleIdInArray(roleIds, roleId)) {
                     uniqueChannelIds.add(c.channelNetworkId)
@@ -895,8 +881,8 @@ export class SpaceDapp implements ISpaceDapp {
         // get the role ids for the channel
         const roles: SpaceDataTypes.RoleStructOutput[] = []
         const [tokenRoleIds, userRoleIds] = await Promise.all([
-            tokenEntitlements?.getRoleIdsByChannelId(channelNetworkId),
-            userEntitlements?.getRoleIdsByChannelId(channelNetworkId),
+            tokenEntitlements?.read?.getRoleIdsByChannelId(channelNetworkId),
+            userEntitlements?.read?.getRoleIdsByChannelId(channelNetworkId),
         ])
         if (tokenRoleIds) {
             for (const r of tokenRoleIds) {

@@ -40,7 +40,9 @@ export interface IEntitlementInterface extends utils.Interface {
     "addRoleIdToChannel(string,uint256)": FunctionFragment;
     "description()": FunctionFragment;
     "getEntitlementDataByRoleId(uint256)": FunctionFragment;
+    "getRoleIdsByChannelId(string)": FunctionFragment;
     "getUserRoles(address)": FunctionFragment;
+    "initialize(address,uint256)": FunctionFragment;
     "isEntitled(string,address,bytes32)": FunctionFragment;
     "moduleType()": FunctionFragment;
     "name()": FunctionFragment;
@@ -55,7 +57,9 @@ export interface IEntitlementInterface extends utils.Interface {
       | "addRoleIdToChannel"
       | "description"
       | "getEntitlementDataByRoleId"
+      | "getRoleIdsByChannelId"
       | "getUserRoles"
+      | "initialize"
       | "isEntitled"
       | "moduleType"
       | "name"
@@ -78,8 +82,16 @@ export interface IEntitlementInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getRoleIdsByChannelId",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getUserRoles",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "isEntitled",
@@ -124,9 +136,14 @@ export interface IEntitlementInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getRoleIdsByChannelId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getUserRoles",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "moduleType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -187,10 +204,21 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string[]]>;
 
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber[]]>;
+
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[DataTypes.RoleStructOutput[]]>;
+
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     isEntitled(
       channelId: PromiseOrValue<string>,
@@ -240,10 +268,21 @@ export interface IEntitlement extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string[]>;
 
+  getRoleIdsByChannelId(
+    channelId: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber[]>;
+
   getUserRoles(
     user: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<DataTypes.RoleStructOutput[]>;
+
+  initialize(
+    _tokenAddress: PromiseOrValue<string>,
+    _tokenId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   isEntitled(
     channelId: PromiseOrValue<string>,
@@ -293,10 +332,21 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string[]>;
 
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber[]>;
+
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<DataTypes.RoleStructOutput[]>;
+
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     isEntitled(
       channelId: PromiseOrValue<string>,
@@ -349,9 +399,20 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     isEntitled(
@@ -403,9 +464,20 @@ export interface IEntitlement extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getRoleIdsByChannelId(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getUserRoles(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      _tokenAddress: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     isEntitled(

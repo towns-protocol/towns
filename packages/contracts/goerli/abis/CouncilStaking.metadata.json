@@ -51,6 +51,63 @@
         "type": "event"
       },
       {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "points",
+            "type": "uint256"
+          }
+        ],
+        "name": "PointsClaimed",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Staked",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "Withdraw",
+        "type": "event"
+      },
+      {
         "inputs": [],
         "name": "claimPoints",
         "outputs": [],
@@ -112,7 +169,7 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct CouncilDataTypes.StakedToken[]",
+            "internalType": "struct CouncilStaking.StakedToken[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -169,7 +226,7 @@
                     "type": "uint256"
                   }
                 ],
-                "internalType": "struct CouncilDataTypes.StakedToken[]",
+                "internalType": "struct CouncilStaking.StakedToken[]",
                 "name": "stakedTokens",
                 "type": "tuple[]"
               },
@@ -184,7 +241,7 @@
                 "type": "uint256"
               }
             ],
-            "internalType": "struct CouncilDataTypes.Staker",
+            "internalType": "struct CouncilStaking.Staker",
             "name": "",
             "type": "tuple"
           }
@@ -267,6 +324,26 @@
     ],
     "devdoc": {
       "author": "HNT Labs",
+      "events": {
+        "PointsClaimed(address,uint256)": {
+          "params": {
+            "points": "the points claimed by the user",
+            "user": "the wallet"
+          }
+        },
+        "Staked(address,uint256)": {
+          "params": {
+            "tokenId": "the ids of the tokens being staked",
+            "user": "the staker"
+          }
+        },
+        "Withdraw(address,uint256)": {
+          "params": {
+            "tokenId": "the ids of the tokens being removed",
+            "user": "the unstaker"
+          }
+        }
+      },
       "kind": "dev",
       "methods": {
         "owner()": {
@@ -300,6 +377,17 @@
           }
         ]
       },
+      "events": {
+        "PointsClaimed(address,uint256)": {
+          "notice": "emitted when points are claimed"
+        },
+        "Staked(address,uint256)": {
+          "notice": "emitted when tokens are staked"
+        },
+        "Withdraw(address,uint256)": {
+          "notice": "emitted when tokens are withdrawn"
+        }
+      },
       "kind": "user",
       "methods": {
         "claimPoints()": {
@@ -312,7 +400,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/council/CouncilStaking.sol": "CouncilStaking"
+      "contracts/src/core/council/CouncilStaking.sol": "CouncilStaking"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -338,36 +426,12 @@
     ]
   },
   "sources": {
-    "contracts/src/council/CouncilStaking.sol": {
-      "keccak256": "0xfc8a6deb7279a3f6f1bcc267abceba36558fff083381f8f8177ab55a31808c88",
+    "contracts/src/core/council/CouncilStaking.sol": {
+      "keccak256": "0xc09900ea97ea8559d1c48d621e068167de0379dca0ee402216d8950416ed0083",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3dfd083256309932697a1d982778c904f98561ca347706dca998fb74b293c518",
-        "dweb:/ipfs/QmNqQq1m3Umz4h8sN8WpzheJwYB2rFZcZeUmU8yiFb4Ts5"
-      ]
-    },
-    "contracts/src/council/libraries/CouncilDataTypes.sol": {
-      "keccak256": "0xb56faf3d9aa03a8f6fbf6d048dbbd3ab4c0b4e6a5ed8952f5051db12940814a2",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b02ca5bd98053dc514447f7cebbc6ada03bc572a11a4ba680790173c1163f457",
-        "dweb:/ipfs/QmcU1YayjuNSNDDuaFVUEihgCJJyz2nbL6YiYVUGfWqsKu"
-      ]
-    },
-    "contracts/src/council/libraries/CouncilErrors.sol": {
-      "keccak256": "0x5e7ef03bdac9b2acca7cc67467765787e5387c533fb99807d761d639d78a1949",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://a8afb26af4a9b7cb160ac10f822f591efdfcf74423ff58289264f1205cb8f578",
-        "dweb:/ipfs/QmXYwWyy2bJSps8nUeLBss7wCY4zUJzDotaqh4tZUMu6jc"
-      ]
-    },
-    "contracts/src/council/libraries/CouncilEvents.sol": {
-      "keccak256": "0x8aaeb1b2e207af77f4a2991319bd40355d55a4dafad0291c63d9a2767cbbc4ca",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://1cfaad4621e80c43319ce12c07acdf75693a8fb28d17cd97ddfd1f8936b09e97",
-        "dweb:/ipfs/QmXwNeZDJ2zhjjoPGtyTaKrLagCf3D4RVx543PWHwtnxpB"
+        "bzz-raw://e25d5750fa33e1238a79b248a0ab5ba108467f4ff5ca947925e5ccd43b069a7f",
+        "dweb:/ipfs/QmaHhD9xmq9Mhr9xEFZyHcMJGTAdKg292iwBxpjSi2FX69"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
@@ -395,11 +459,11 @@
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
-      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "keccak256": "0x41bbb2c41036ca64b2f6c9e973e8cfaa113ebc42af86702cd0d267f915a7e886",
       "license": "MIT",
       "urls": [
-        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
-        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+        "bzz-raw://6bf6699c55e82c7af6ae90b61ea9643ca0c905097da9a31269319f1b5a2a696a",
+        "dweb:/ipfs/QmRJZa2UmWcRo6W8JnuomwzfjVtAS21QC8HKggxBhoPsU4"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/Context.sol": {

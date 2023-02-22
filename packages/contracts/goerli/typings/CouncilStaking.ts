@@ -27,7 +27,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace CouncilDataTypes {
+export declare namespace CouncilStaking {
   export type StakedTokenStruct = {
     staker: PromiseOrValue<string>;
     tokenId: PromiseOrValue<BigNumberish>;
@@ -40,19 +40,19 @@ export declare namespace CouncilDataTypes {
 
   export type StakerStruct = {
     amountStaked: PromiseOrValue<BigNumberish>;
-    stakedTokens: CouncilDataTypes.StakedTokenStruct[];
+    stakedTokens: CouncilStaking.StakedTokenStruct[];
     timeOfLastUpdate: PromiseOrValue<BigNumberish>;
     unclaimedPoints: PromiseOrValue<BigNumberish>;
   };
 
   export type StakerStructOutput = [
     BigNumber,
-    CouncilDataTypes.StakedTokenStructOutput[],
+    CouncilStaking.StakedTokenStructOutput[],
     BigNumber,
     BigNumber
   ] & {
     amountStaked: BigNumber;
-    stakedTokens: CouncilDataTypes.StakedTokenStructOutput[];
+    stakedTokens: CouncilStaking.StakedTokenStructOutput[];
     timeOfLastUpdate: BigNumber;
     unclaimedPoints: BigNumber;
   };
@@ -178,9 +178,15 @@ export interface CouncilStakingInterface extends utils.Interface {
 
   events: {
     "OwnershipTransferred(address,address)": EventFragment;
+    "PointsClaimed(address,uint256)": EventFragment;
+    "Staked(address,uint256)": EventFragment;
+    "Withdraw(address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "PointsClaimed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Staked"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
 
 export interface OwnershipTransferredEventObject {
@@ -194,6 +200,36 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface PointsClaimedEventObject {
+  user: string;
+  points: BigNumber;
+}
+export type PointsClaimedEvent = TypedEvent<
+  [string, BigNumber],
+  PointsClaimedEventObject
+>;
+
+export type PointsClaimedEventFilter = TypedEventFilter<PointsClaimedEvent>;
+
+export interface StakedEventObject {
+  user: string;
+  tokenId: BigNumber;
+}
+export type StakedEvent = TypedEvent<[string, BigNumber], StakedEventObject>;
+
+export type StakedEventFilter = TypedEventFilter<StakedEvent>;
+
+export interface WithdrawEventObject {
+  user: string;
+  tokenId: BigNumber;
+}
+export type WithdrawEvent = TypedEvent<
+  [string, BigNumber],
+  WithdrawEventObject
+>;
+
+export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
 
 export interface CouncilStaking extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -236,7 +272,7 @@ export interface CouncilStaking extends BaseContract {
     getStakedTokensByAddress(
       _user: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[CouncilDataTypes.StakedTokenStructOutput[]]>;
+    ): Promise<[CouncilStaking.StakedTokenStructOutput[]]>;
 
     getStakerAddressByTokenId(
       _tokenId: PromiseOrValue<BigNumberish>,
@@ -246,7 +282,7 @@ export interface CouncilStaking extends BaseContract {
     getStakerByAddress(
       _staker: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[CouncilDataTypes.StakerStructOutput]>;
+    ): Promise<[CouncilStaking.StakerStructOutput]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -286,7 +322,7 @@ export interface CouncilStaking extends BaseContract {
   getStakedTokensByAddress(
     _user: PromiseOrValue<string>,
     overrides?: CallOverrides
-  ): Promise<CouncilDataTypes.StakedTokenStructOutput[]>;
+  ): Promise<CouncilStaking.StakedTokenStructOutput[]>;
 
   getStakerAddressByTokenId(
     _tokenId: PromiseOrValue<BigNumberish>,
@@ -296,7 +332,7 @@ export interface CouncilStaking extends BaseContract {
   getStakerByAddress(
     _staker: PromiseOrValue<string>,
     overrides?: CallOverrides
-  ): Promise<CouncilDataTypes.StakerStructOutput>;
+  ): Promise<CouncilStaking.StakerStructOutput>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -334,7 +370,7 @@ export interface CouncilStaking extends BaseContract {
     getStakedTokensByAddress(
       _user: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<CouncilDataTypes.StakedTokenStructOutput[]>;
+    ): Promise<CouncilStaking.StakedTokenStructOutput[]>;
 
     getStakerAddressByTokenId(
       _tokenId: PromiseOrValue<BigNumberish>,
@@ -344,7 +380,7 @@ export interface CouncilStaking extends BaseContract {
     getStakerByAddress(
       _staker: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<CouncilDataTypes.StakerStructOutput>;
+    ): Promise<CouncilStaking.StakerStructOutput>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -377,6 +413,33 @@ export interface CouncilStaking extends BaseContract {
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
+
+    "PointsClaimed(address,uint256)"(
+      user?: PromiseOrValue<string> | null,
+      points?: null
+    ): PointsClaimedEventFilter;
+    PointsClaimed(
+      user?: PromiseOrValue<string> | null,
+      points?: null
+    ): PointsClaimedEventFilter;
+
+    "Staked(address,uint256)"(
+      user?: PromiseOrValue<string> | null,
+      tokenId?: null
+    ): StakedEventFilter;
+    Staked(
+      user?: PromiseOrValue<string> | null,
+      tokenId?: null
+    ): StakedEventFilter;
+
+    "Withdraw(address,uint256)"(
+      user?: PromiseOrValue<string> | null,
+      tokenId?: null
+    ): WithdrawEventFilter;
+    Withdraw(
+      user?: PromiseOrValue<string> | null,
+      tokenId?: null
+    ): WithdrawEventFilter;
   };
 
   estimateGas: {
