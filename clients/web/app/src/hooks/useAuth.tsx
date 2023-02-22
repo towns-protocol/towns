@@ -3,8 +3,8 @@ import { WalletStatus, useMatrixCredentials, useWeb3Context, useZionClient } fro
 import { useConnect } from 'wagmi'
 import { useAnalytics } from './useAnalytics'
 
-const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
-export const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
+const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
+export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 
 export function useAuth() {
     const { isAuthenticated, loginStatus, loginError } = useMatrixCredentials()
