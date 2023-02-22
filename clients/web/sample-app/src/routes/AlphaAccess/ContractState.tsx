@@ -31,12 +31,6 @@ export const ContractState = (props: { contractState: ZioneerNFTContractState })
 
             <h2>Allowed Addresses</h2>
 
-            {props.contractState.allowedAddressesList.map((address) => (
-                <div key={address}>{address}</div>
-            ))}
-
-            {props.contractState.allowedAddressesList.length === 0 && <div>Empty</div>}
-
             <h2>Contract ETH Balance</h2>
 
             <div>{ethers.utils.formatEther(props.contractState.contractBalance)} ETH</div>

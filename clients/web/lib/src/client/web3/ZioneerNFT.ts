@@ -4,7 +4,6 @@ import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { ZioneerNFTShim } from './shims/ZioneerNFTShim'
 
 export interface ZioneerNFTContractState {
-    allowedAddressesList: string[]
     contractBalance: BigNumber
     mintReward: BigNumber
     contractAddress: string
@@ -57,12 +56,6 @@ export class ZioneerNFT {
         if (!this.provider) {
             throw new Error('No provider')
         }
-        const allowedLength = await this.zioneerNFTShim.read.allowedAddressesListLength()
-        const allowedAddressesList: string[] = []
-        for (let i = 0; allowedLength.gt(i); i++) {
-            const address = await this.zioneerNFTShim.read.allowedAddressesList(i)
-            allowedAddressesList.push(address)
-        }
 
         const contractBalance = await this.provider.getBalance(this.zioneerNFTShim.address)
 
@@ -71,7 +64,6 @@ export class ZioneerNFT {
         const owner = await this.zioneerNFTShim.read.owner()
 
         return {
-            allowedAddressesList,
             contractBalance,
             mintReward,
             contractAddress: this.zioneerNFTShim.address,
