@@ -4,6 +4,7 @@ module global_constants {
 
 locals {
   ecs_cluster_name = "${module.global_constants.environment}-${var.zion_node_name}-zion-ecs-cluster"
+  subnet_id = var.subnets[0]
 }
 
 data "aws_acm_certificate" "primary_hosted_zone_cert" {
@@ -50,6 +51,10 @@ module "zion_internal_sg" {
       rule                     = "http-80-tcp"
       source_security_group_id = module.zion_alb_sg.security_group_id
     },
+    {
+      rule                     = "http-8080-tcp"
+      source_security_group_id = module.zion_alb_sg.security_group_id
+    }
   ]
 
   egress_cidr_blocks = ["0.0.0.0/0"] # public internet
@@ -57,8 +62,15 @@ module "zion_internal_sg" {
 
 }
 
-module "task_definitions" {
-  source      = "../task-definitions"
+# Security-group loop back rule to connect to EFS Volume
+resource "aws_security_group_rule" "ecs_loopback_rule" {
+  type                      = "ingress"
+  from_port                 = 0
+  to_port                   = 0
+  protocol                  = "-1"
+  self                      = true
+  description               = "Loopback"
+  security_group_id         = "${module.zion_internal_sg.security_group_id}"
 }
 
 module "zion_alb" {
@@ -91,11 +103,29 @@ module "zion_alb" {
       protocol           = "HTTPS"
       certificate_arn    = data.aws_acm_certificate.primary_hosted_zone_cert.arn
       action_type        = "forward"
-      target_group_index = 0
+      target_group_index = 1
     },
   ]
 
   target_groups = [
+    {
+      name      = "${module.global_constants.environment}-dendrite-tg"
+      backend_protocol = "HTTP"
+      backend_port     = 8008
+      target_type      = "ip"
+      deregistration_delay = 30
+      # stickiness = {
+      #   type = "lb_cookie"
+      #   cookie_duration = 86400
+      # }
+      # health_check = {
+      #   path                = "/_matrix/client/versions"
+      #   interval            = 30
+      #   timeout             = 5
+      #   healthy_threshold   = 2
+      #   unhealthy_threshold = 2
+      # }
+    },
     {
       name_prefix      = "zion-"
       backend_protocol = "HTTP"
@@ -121,10 +151,25 @@ resource "aws_ecs_cluster" "zion-ecs-cluster" {
 module "docker_ec2_host" {
   source = "../ec2"
   security_group_id = module.zion_internal_sg.security_group_id
-  subnet_id = var.subnets[0]
+  subnet_id = local.subnet_id
   ecs_cluster_name = local.ecs_cluster_name
 
   depends_on = [aws_ecs_cluster.zion-ecs-cluster]
+}
+
+module "dendrite_efs" {
+  source = "../efs"
+  subnet_id = local.subnet_id
+  vpc_id = var.vpc_id
+  inbound_security_groups = [
+    module.zion_internal_sg.security_group_id, 
+    var.bastion_host_security_group_id
+  ] 
+}
+
+module "task_definitions" {
+  source      = "../task-definitions"
+  dendrite_file_system_id = module.dendrite_efs.file_system_id
 }
 
 resource "aws_ecs_service" "zion-dendrite-service" {
@@ -139,3 +184,31 @@ resource "aws_ecs_service" "zion-dendrite-service" {
     ignore_changes = [task_definition]
   }
 }
+
+# resource "aws_ecs_service" "dendrite-fargate-service" {
+#   name            = "${module.global_constants.environment}-dendrite-fargate-service"
+#   cluster         = aws_ecs_cluster.zion-ecs-cluster.id
+#   task_definition = module.task_definitions.dendrite_fargate_task_definition_arn
+#   desired_count   = 1
+#   deployment_minimum_healthy_percent = 0 
+#   deployment_maximum_percent = 200
+
+#   launch_type      = "FARGATE"
+#   platform_version = "1.4.0"
+
+#   # load_balancer {
+#   #   target_group_arn = module.zion_alb.target_group_arns[0]
+#   #   container_name   = "dendrite"
+#   #   container_port   = 8008
+#   # }
+
+#   lifecycle {
+#    ignore_changes = [task_definition, desired_count]
+#  }
+
+#   network_configuration {
+#     security_groups  = [module.zion_internal_sg.security_group_id]
+#     subnets          = [local.subnet_id]
+#     assign_public_ip = true
+#   }
+# }

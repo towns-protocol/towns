@@ -38,6 +38,16 @@ module "vpc" {
   one_nat_gateway_per_az = false
 
   tags = module.global_constants.tags
+
+  enable_dns_hostnames = true
+}
+
+
+module "bastion_host" {
+  source = "../../modules/bastion-host"
+
+  subnet_id = module.vpc.public_subnets[0]
+  vpc_id = module.vpc.vpc_id
 }
 
 module "zion_node" {
@@ -47,6 +57,7 @@ module "zion_node" {
   vpc_cidr_block = module.vpc.vpc_cidr_block
   vpc_id = module.vpc.vpc_id
   zion_node_name = "node1"
+  bastion_host_security_group_id = module.bastion_host.bastion_sg_id
 }
 
 module "dendrite_node_db" {
