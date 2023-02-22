@@ -65,7 +65,7 @@ const { createTransactionSpy: createSpaceTransactionWithRoleSpy, useMockedCreate
     mockCreateTransactionWithSpy('createSpaceTransactionWithRole')
 
 const useMockedCreateSpaceTransaction = (
-    ...args: typeof zionClient.useCreateSpaceTransaction['arguments']
+    ...args: (typeof zionClient.useCreateSpaceTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateSpaceReturn
 
 describe('<CreateSpaceForm />', () => {

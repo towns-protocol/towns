@@ -51,7 +51,7 @@ const { createTransactionSpy: createChannelSpy, useMockedCreateTransaction } =
     mockCreateTransactionWithSpy('createChannelTransaction')
 
 const useMockedCreateChannelTransaction = (
-    ...args: typeof zionClient.useCreateChannelTransaction['arguments']
+    ...args: (typeof zionClient.useCreateChannelTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateChannelReturn
 
 vi.mock('use-zion-client', async () => {

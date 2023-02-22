@@ -8,7 +8,7 @@ interface Analytics {
     // it has the same arguments, but it returns an unknown type.
     // we never want to depend on the return type of the amplitude track function
     // inside our application layer. we just want to fire and forget.
-    track: (...args: Parameters<typeof amplitudeLib['track']>) => unknown
+    track: (...args: Parameters<(typeof amplitudeLib)['track']>) => unknown
 }
 
 const UNITITIALIZED_ANALYTICS: Analytics = {

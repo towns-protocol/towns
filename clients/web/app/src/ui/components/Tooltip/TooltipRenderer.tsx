@@ -17,7 +17,7 @@ type Props = {
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
     keepOpenOnTriggerRefClick?: boolean
-    trigger?: typeof Trigger[keyof typeof Trigger]
+    trigger?: (typeof Trigger)[keyof typeof Trigger]
 }
 
 type TriggerProps = {

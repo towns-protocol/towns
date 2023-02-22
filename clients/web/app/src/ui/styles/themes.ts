@@ -11,7 +11,7 @@ export const ToneName = {
     Negative: 'negative',
 } as const
 
-export type ToneNameType = typeof ToneName[keyof typeof ToneName]
+export type ToneNameType = (typeof ToneName)[keyof typeof ToneName]
 
 const tone = {
     // default

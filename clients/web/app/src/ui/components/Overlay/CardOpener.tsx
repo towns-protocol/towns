@@ -17,7 +17,7 @@ type Props = {
     // margin?: { x: number; y: number }
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
-    trigger?: typeof Trigger[keyof typeof Trigger]
+    trigger?: (typeof Trigger)[keyof typeof Trigger]
     onClose?: () => void
     tabIndex?: number
 }

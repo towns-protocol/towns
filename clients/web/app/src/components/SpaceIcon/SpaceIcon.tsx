@@ -12,7 +12,7 @@ const ImageVariants = {
     thumbnail300: 'thumbnail300',
 } as const
 
-export type ImageVariant = typeof ImageVariants[keyof typeof ImageVariants]
+export type ImageVariant = (typeof ImageVariants)[keyof typeof ImageVariants]
 
 type Props = {
     spaceId: string

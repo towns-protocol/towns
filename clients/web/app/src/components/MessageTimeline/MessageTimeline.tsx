@@ -62,7 +62,7 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered
 
-    const estimateItemHeight = useCallback((r: typeof listItems[0]) => {
+    const estimateItemHeight = useCallback((r: (typeof listItems)[0]) => {
         if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight = item.content.msgType === MessageType.Image ? 400 : 100

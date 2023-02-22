@@ -5,7 +5,7 @@ import { Paragraph, Stack, Toggle } from '@ui'
 import { useSpaceSettingsStore } from 'store/spaceSettingsStore'
 import { enabledRolePermissions, rolePermissionDescriptions } from './rolePermissions.const'
 
-type PermissionMeta = typeof rolePermissionDescriptions[typeof enabledRolePermissions[number]]
+type PermissionMeta = (typeof rolePermissionDescriptions)[(typeof enabledRolePermissions)[number]]
 
 export const RoleSettingsPermissions = () => {
     const { role: roleId = '' } = useParams()
@@ -21,7 +21,7 @@ export const RoleSettingsPermissions = () => {
 
     return (
         <Stack gap="x4" key={roleId}>
-            {enabledRolePermissions.map((permissionId: typeof enabledRolePermissions[number]) => (
+            {enabledRolePermissions.map((permissionId: (typeof enabledRolePermissions)[number]) => (
                 <RoleRow
                     id={permissionId}
                     defaultToggled={!!role?.permissions.includes(permissionId)}
