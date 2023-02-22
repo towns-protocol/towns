@@ -1,4 +1,4 @@
-import { Permission, RoleDetails } from '../../src/client/web3/ContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect, useRef, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
@@ -38,7 +38,7 @@ describe('useAddRolesToChannel', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+        const councilNftAddress = getCouncilNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -80,23 +80,14 @@ describe('useAddRolesToChannel', () => {
         // click button to create the space
         // this will create the space with no roles
         fireEvent.click(createSpaceButton)
-        await waitFor(
-            () => within(spaceElement).getByText(spaceName),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
-        fireEvent.click(createChannelButton)
         // wait for the space name to render
+        await waitFor(() => within(spaceElement).getByText(spaceName))
+        fireEvent.click(createChannelButton)
         // wait for the channel name to render
-        await waitFor(
-            () => within(channelElement).getByText(channelName),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
+        await waitFor(() => within(channelElement).getByText(`channelName:${channelName}`))
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
-        await waitFor(
-            () => expect(addedRoleToChannelElement).toHaveTextContent('true'),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
+        await waitFor(() => within(addedRoleToChannelElement).getByText(`addedRoleToChannel:true`))
         /* Assert */
         await assertRoleChannel(rolesElement, roleName)
     }) // end test
@@ -108,12 +99,11 @@ function TestComponent(args: {
     channelName: string
     roleName: string
     permissions: Permission[]
-    councilNftAddress: string | undefined
+    councilNftAddress: string
 }): JSX.Element {
     const {
         createSpaceTransactionWithRole,
         data: spaceId,
-        isLoading: isLoadingSpace,
         transactionStatus: createSpaceTxStatus,
     } = useCreateSpaceTransaction()
     const {
@@ -153,17 +143,15 @@ function TestComponent(args: {
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
-            if (args.councilNftAddress) {
-                await createSpaceTransactionWithRole(
-                    {
-                        name: args.spaceName,
-                        visibility: RoomVisibility.Public,
-                    },
-                    args.roleName,
-                    [args.councilNftAddress],
-                    args.permissions,
-                )
-            }
+            await createSpaceTransactionWithRole(
+                {
+                    name: args.spaceName,
+                    visibility: RoomVisibility.Public,
+                },
+                args.roleName,
+                [args.councilNftAddress],
+                args.permissions,
+            )
         }
         void handleClick()
     }, [
@@ -173,43 +161,47 @@ function TestComponent(args: {
         args.spaceName,
         createSpaceTransactionWithRole,
     ])
-
-    console.log('TestComponent', 'createChannelTransactionStates', {
-        isLoadingChannel,
-        channelId,
-        createChannelError,
-        createChannelTxStatus,
-        createChannelTxHash,
-    })
     // handle click to create a channel
     const onClickCreateChannel = useCallback(() => {
-        const handleClick = async (parentSpaceId: RoomIdentifier) => {
-            await createChannelTransaction({
-                name: args.channelName,
-                visibility: RoomVisibility.Public,
-                parentSpaceId,
-                roleIds: [],
-            })
+        const handleClick = async () => {
+            if (spaceId) {
+                await createChannelTransaction({
+                    name: args.channelName,
+                    visibility: RoomVisibility.Public,
+                    parentSpaceId: spaceId,
+                    roleIds: [],
+                })
+            }
         }
-        if (!isLoadingSpace && spaceId) {
-            void handleClick(spaceId as RoomIdentifier)
-        }
+        void handleClick()
         console.log(`onClickCreateChannel: spaceId: `, spaceId?.networkId)
-    }, [createChannelTransaction, args.channelName, isLoadingSpace, spaceId])
+    }, [spaceId, createChannelTransaction, args.channelName])
+
+    useEffect(() => {
+        console.log('TestComponent', 'createChannelTransactionStates', {
+            isLoadingChannel,
+            channelId,
+            createChannelError,
+            createChannelTxStatus,
+            createChannelTxHash,
+        })
+    }, [
+        channelId,
+        createChannelError,
+        createChannelTxHash,
+        createChannelTxStatus,
+        isLoadingChannel,
+    ])
 
     // handle click to update a role
     const onClickAddRoleToChannel = useCallback(() => {
         const handleClick = async () => {
-            await addRoleToChannelTransaction(
-                spaceNetworkId,
-                channelId?.networkId as string,
-                roleIds[0],
-            )
+            if (channelId) {
+                await addRoleToChannelTransaction(spaceNetworkId, channelId.networkId, roleIds[0])
+            }
         }
-        if (!isLoadingChannel && channelId) {
-            void handleClick()
-        }
-    }, [addRoleToChannelTransaction, roleIds, channelId, spaceNetworkId, isLoadingChannel])
+        void handleClick()
+    }, [addRoleToChannelTransaction, roleIds, channelId, spaceNetworkId])
     // the view
     return (
         <>
@@ -222,7 +214,7 @@ function TestComponent(args: {
                     <div data-testid="channelElement">
                         {channelId && (
                             <ChannelContextProvider channelId={channelId}>
-                                <ChannelsComponent channelId={channelId} />
+                                <ChannelComponent channelId={channelId} />
                             </ChannelContextProvider>
                         )}
                     </div>
@@ -250,7 +242,7 @@ function SpacesComponent(): JSX.Element {
     )
 }
 
-function ChannelsComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Element {
+function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Element {
     // channel data
     const { channel } = useChannelData()
     return (
@@ -258,7 +250,7 @@ function ChannelsComponent({ channelId }: { channelId: RoomIdentifier }): JSX.El
             {channel && (
                 <ChannelContextProvider channelId={channelId}>
                     <>
-                        <div key={channel.id.networkId}>{channel.label}</div>{' '}
+                        <div key={channel.id.networkId}>channelName:{channel.label}</div>{' '}
                     </>
                 </ChannelContextProvider>
             )}
@@ -278,8 +270,8 @@ function RoleDetailsComponent({
         console.log(`RoleDetailsComponent:`, {
             isLoading,
             error,
+            roleDetails,
         })
-        printRoleDetails(roleDetails)
     }, [isLoading, roleDetails, error])
     return (
         <div>
@@ -341,13 +333,13 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
     }, [error, isLoading, spaceRoles])
     return (
         <div data-testid="rolesElement">
-            {spaceRoles &&
+            {spaceNetworkId &&
+                spaceRoles &&
                 spaceRoles.map((role) => {
                     return (
                         <div key={role.roleId.toNumber()}>
                             <RoleDetailsComponent
-                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                spaceId={spaceNetworkId!}
+                                spaceId={spaceNetworkId}
                                 roleId={role.roleId.toNumber()}
                             />
                         </div>
@@ -368,12 +360,6 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
                 name: role.name,
             })
         }
-    }
-}
-
-function printRoleDetails(roleDetails: RoleDetails | undefined) {
-    if (roleDetails) {
-        console.log(roleDetails)
     }
 }
 

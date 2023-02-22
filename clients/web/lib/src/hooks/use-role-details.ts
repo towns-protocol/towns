@@ -1,8 +1,9 @@
-import { QueryKeyRoles } from './query-keys'
 import { useCallback, useMemo } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useZionContext } from '../components/ZionContextProvider'
+
+import { QueryKeyRoles } from './query-keys'
 import { RoleDetails } from '../client/web3/ContractTypes'
+import { useZionContext } from '../components/ZionContextProvider'
 
 /**
  * Convience function to get space role details.

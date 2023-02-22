@@ -92,14 +92,14 @@ describe('delete role', () => {
         /** Assert */
         // verify transaction was successful
         expect(receipt?.status).toEqual(1)
-        // verfy bob cannot join the room
+        // verify bob cannot join the room
         expect(rejoinedRoom).toBeUndefined()
         // verify error was thrown.
         expect(error).not.toBeInstanceOf(NoThrownError)
         expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)
-        expect(actual).toBeUndefined()
+        expect(actual).toBeNull()
         // verify bob is still entitled to the space
         expect(
             await bobWithNft.spaceDapp.isEntitledToSpace(
@@ -197,7 +197,7 @@ describe('delete role', () => {
         expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)
-        expect(actual).toBeUndefined()
+        expect(actual).toBeNull()
         // verify bob is not entitled to the space
         expect(
             await bob.spaceDapp.isEntitledToSpace(spaceId, bob.walletAddress, Permission.Read),
@@ -268,7 +268,7 @@ describe('delete role', () => {
         expect(receipt?.status).toEqual(1)
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)
-        expect(actual).toBeUndefined()
+        expect(actual).toBeNull()
         // verify alice is not affected
         expect(
             await alice.spaceDapp.isEntitledToSpace(spaceId, alice.walletAddress, Permission.Read),

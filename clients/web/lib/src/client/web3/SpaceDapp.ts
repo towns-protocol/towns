@@ -206,7 +206,7 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.multicall(encodedCallData, { gasLimit: 100000 })
     }
 
-    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails> {
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
         const space = await this.getSpace(spaceId)
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
@@ -218,16 +218,20 @@ export class SpaceDapp implements ISpaceDapp {
             this.getEntitlementDetails(space, entitlementShims, roleId),
             this.getChannelsWithRole(space, entitlementShims, roleId),
         ])
-        // found the role. return the details
-        const roleName: string | undefined = role?.name
-        return {
-            id: roleId,
-            name: roleName,
-            permissions: permissions,
-            tokens: entitlementDetails.tokens,
-            users: entitlementDetails.users,
-            channels,
+        if (role && role.roleId.toNumber() !== 0) {
+            // found the role. return the details
+            const roleName: string | undefined = role?.name
+            return {
+                id: roleId,
+                name: roleName,
+                permissions: permissions,
+                tokens: entitlementDetails.tokens,
+                users: entitlementDetails.users,
+                channels,
+            }
         }
+        // did not find the role
+        return null
     }
 
     public async getRoles(spaceId: string): Promise<SpaceDataTypes.RoleStructOutput[]> {
@@ -871,7 +875,6 @@ export class SpaceDapp implements ISpaceDapp {
         return undefined
     }
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
     private async getUniqueRolesByChannel(
         space: SpaceShim,
         channelNetworkId: string,
@@ -879,8 +882,8 @@ export class SpaceDapp implements ISpaceDapp {
         const roleIds: number[] = []
         // get entitlement contracts for the space
         const entitlementShim = await this.createEntitlementShims(space)
-        let tokenEntitlements: any
-        let userEntitlements: any
+        let tokenEntitlements: TokenEntitlementShim | undefined
+        let userEntitlements: UserEntitlementShim | undefined
         if (entitlementShim.tokenEntitlement && entitlementShim.userEntitlement) {
             tokenEntitlements = entitlementShim.tokenEntitlement
             userEntitlements = entitlementShim.userEntitlement
@@ -891,30 +894,33 @@ export class SpaceDapp implements ISpaceDapp {
         }
         // get the role ids for the channel
         const roles: SpaceDataTypes.RoleStructOutput[] = []
-
-        let channelRoleIds: BigNumber[] = await tokenEntitlements?.read?.getRoleIdsByChannelId(
-            channelNetworkId,
-        )
-        roleIds.push(
-            ...channelRoleIds.map((id) => {
-                return id.toNumber()
-            }),
-        )
-
-        channelRoleIds = await userEntitlements?.read?.getRoleIdsByChannelId(channelNetworkId)
-        roleIds.push(
-            ...channelRoleIds.map((id) => {
-                return id.toNumber()
-            }),
-        )
+        const [tokenRoleIds, userRoleIds] = await Promise.all([
+            tokenEntitlements?.getRoleIdsByChannelId(channelNetworkId),
+            userEntitlements?.getRoleIdsByChannelId(channelNetworkId),
+        ])
+        if (tokenRoleIds) {
+            for (const r of tokenRoleIds) {
+                roleIds.push(r.toNumber())
+            }
+        }
+        if (userRoleIds) {
+            for (const r of userRoleIds) {
+                roleIds.push(r.toNumber())
+            }
+        }
+        // get the role details for each unique role id
         const uniqueRoleIds = [...new Set(roleIds)]
+        const rolePromises: Promise<SpaceDataTypes.RoleStructOutput>[] = []
         for (const roleId of uniqueRoleIds) {
-            const role = await space.read?.getRoleById(roleId)
-            if (role) {
-                roles.push(role)
+            rolePromises.push(space.read.getRoleById(roleId))
+        }
+        const rolesById = await Promise.all(rolePromises)
+        // return only roles with details
+        for (const r of rolesById) {
+            if (r && r.roleId.toNumber() !== 0) {
+                roles.push(r)
             }
         }
         return roles
     }
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 }

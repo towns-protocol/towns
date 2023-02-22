@@ -54,7 +54,7 @@ export interface ISpaceDapp {
     ): Promise<ContractTransaction>
     deleteRole(spaceId: string, roleId: number): Promise<ContractTransaction>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
-    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | undefined>
+    getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
     getRolesByChannel: (
         spaceId: string,

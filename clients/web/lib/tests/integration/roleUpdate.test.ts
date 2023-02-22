@@ -151,7 +151,7 @@ describe('update role', () => {
         if (roles.length !== 2) {
             throw new Error(`Expected to find 2 roles in space, but found ${roles.length}`)
         }
-        let expectedMemberRole: RoleDetails | undefined
+        let expectedMemberRole: RoleDetails | undefined | null
         for (const role of roles) {
             if (role.name === 'Member') {
                 // this is the role we are not updating
@@ -160,6 +160,7 @@ describe('update role', () => {
                     roomId.networkId,
                     role.roleId.toNumber(),
                 )
+                break
             } else if (role.name === moderatorRoleName) {
                 // this is the role we are updating
                 // get the role details after it has been updated

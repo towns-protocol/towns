@@ -1,4 +1,4 @@
-import { Permission, RoleDetails } from '../../src/client/web3/ContractTypes'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
@@ -194,8 +194,8 @@ function RoleDetailsComponent({
         console.log({
             isLoading,
             error,
+            roleDetails,
         })
-        printRoleDetails(roleDetails)
     }, [error, isLoading, roleDetails])
     return (
         <div key={`${spaceId}_${roleId}`}>
@@ -253,12 +253,13 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
     }, [error, isLoading, spaceRoles])
     return (
         <div data-testid="rolesElement">
-            {spaceRoles &&
+            {spaceNetworkId &&
+                spaceRoles &&
                 spaceRoles.map((role) => {
                     return (
                         <div key={role.roleId.toNumber()}>
                             <RoleDetailsComponent
-                                spaceId={spaceNetworkId!}
+                                spaceId={spaceNetworkId}
                                 roleId={role.roleId.toNumber()}
                             />
                         </div>
@@ -279,12 +280,6 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
                 name: role.name,
             })
         }
-    }
-}
-
-function printRoleDetails(roleDetails: RoleDetails | undefined) {
-    if (roleDetails) {
-        console.log(roleDetails)
     }
 }
 
