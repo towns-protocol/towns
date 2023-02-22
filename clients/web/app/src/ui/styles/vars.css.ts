@@ -231,8 +231,8 @@ const root = createGlobalTheme(':root', {
         lg: `${18}px`,
         display: `${120}px`,
         // note: before setting the naming, figure the sizes we actually use
-        h1: `${72}px`,
-        h2: `${48}px`,
+        h1: `${56}px`,
+        h2: `${32}px`,
         h3: `${18}px`,
     } as const,
 

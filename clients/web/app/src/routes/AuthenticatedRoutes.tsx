@@ -21,6 +21,7 @@ import { SpaceThreads } from './SpaceThreads'
 import { SpaceProfilePanel } from './SpacesProfilePanel'
 import { SpaceMembers } from './SpaceMembers'
 import { InfoPanelWrapper } from './InfoPanel'
+import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -86,7 +87,7 @@ export const AuthenticatedRoutes = () => (
             path="*"
             element={
                 <CheckRedirect>
-                    <SpaceHome />
+                    <NoJoinedSpacesFallback />
                 </CheckRedirect>
             }
         />

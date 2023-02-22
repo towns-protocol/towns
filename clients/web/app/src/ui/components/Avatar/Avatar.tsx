@@ -30,7 +30,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
         type = 'user',
         stacked = false,
         border,
-        src = '/placeholders/nft_5.png',
+        src,
         ...boxProps
     } = props
 

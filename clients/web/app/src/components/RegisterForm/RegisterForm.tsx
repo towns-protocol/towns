@@ -11,7 +11,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { vars } from 'ui/styles/vars.css'
-import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, Text, TextField } from '@ui'
+import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
 
@@ -27,9 +27,9 @@ const placeholders = {
         'jimmicricket.eth',
         'looper.eth',
     ],
-    nfts: Array(20)
+    nfts: Array(3)
         .fill(0)
-        .map((_, index) => `/placeholders/nft_${index + 1}.png`),
+        .map((_, index) => `/placeholders/nft_alpha_${index + 1}.png`),
 }
 
 export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
@@ -147,7 +147,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                 background="level2"
                 label="Connected Wallet"
                 secondaryLabel="(required)"
-                description="Your wallet is your identity. It will be associated with your Zion account. You will have the option to switch wallets later."
+                description="Your wallet is your identity. It will be associated with your Towns account."
                 placeholder="0x00"
                 after={<Icon type="wallet" />}
                 {...register('walletAddress')}
@@ -162,15 +162,22 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     inputColor={isENS ? 'etherum' : undefined}
                     label="Display Name"
                     secondaryLabel="(required)"
-                    description="This is how others will see you"
+                    description="This is how others will see you."
                     placeholder="Enter a display name"
                     autoComplete="off"
                     after={isENS && <Icon type="verified" />}
                     message={<ErrorMessage errors={errors} fieldName="displayName" />}
-                    {...register('displayName', { required: 'Please enter a display name' })}
+                    {...register('displayName', {
+                        pattern: {
+                            value: /^[a-z0-9 '._-]+$/i,
+                            message:
+                                'Mostly, names can&apos;t contain punctuation. Spaces, hyphens, underscores, apostrophes and periods are fine.',
+                        },
+                        required: 'Please enter a display name.',
+                    })}
                 />
 
-                {!!placeholders.names?.length && (
+                {/* {!!placeholders.names?.length && (
                     <Box padding border rounded="sm">
                         <RadioSelect
                             label="(Optional) Set an ENS as your username:"
@@ -187,14 +194,14 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                             applyChildProps={() => register('ens', { required: false })}
                         />
                     </Box>
-                )}
+                )} */}
             </Stack>
 
             {!!placeholders.nfts.length && (
                 <RadioSelect
                     columns="60px"
-                    description="You will be able to change this per space later."
-                    label="NFT profile picture"
+                    description="This is your default profile picture."
+                    label="Profile picture"
                     render={(value, selected) => (
                         <MotionBox
                             data-testid="avatar-radio"

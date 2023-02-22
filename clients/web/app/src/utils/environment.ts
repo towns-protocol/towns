@@ -23,6 +23,7 @@ const envSchema = z.object({
     DEV: boolish,
     PROD: boolish,
     BASE_URL: baseUrlSchema,
+    VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
     VITE_TOKEN_SERVER_URL: z.string().url(),
     VITE_MATRIX_HOMESERVER_URL: z.string().url(),

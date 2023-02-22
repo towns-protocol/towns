@@ -127,7 +127,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     )
 
     return (
-        <Box paddingTop="md" cursor="default">
+        <Box paddingTop="md" cursor="default" gap="sm">
             {!selectedTokens.length
                 ? null
                 : data && (

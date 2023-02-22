@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 
 import { useNavigate } from 'react-router'
-import { Membership, SpaceData, useZionClient } from 'use-zion-client'
+import { Membership } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
-import { Box, Button, Paragraph, Stack } from '@ui'
+import { Box, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useRetryUntilResolved } from 'hooks/useRetryUntilResolved'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
@@ -68,15 +68,6 @@ export const SpaceHome = () => {
         hasSyncedChannels,
     ])
 
-    // TODO: check how the default space fulfills this condition
-    if (space && space.membership !== Membership.Join) {
-        return (
-            <Container>
-                <JoinDefaultSpace space={space} />
-            </Container>
-        )
-    }
-
     // space is on chain, but user has no matrix data, indicating they have landed via an invite link
     if (chainSpace && !space) {
         const joinData = {
@@ -107,24 +98,6 @@ const Container = (props: { children: React.ReactNode }) => {
                 {props.children}
             </LiquidContainer>
         </Stack>
-    )
-}
-
-const JoinDefaultSpace = (props: { space: SpaceData }) => {
-    const { space } = props
-    const { joinRoom } = useZionClient()
-    const joinSpace = useCallback(() => {
-        if (space.id) {
-            joinRoom(space.id)
-        }
-    }, [joinRoom, space.id])
-
-    return (
-        <Box centerContent absoluteFill>
-            <Button tone="cta1" animate={false} onClick={joinSpace}>
-                Join <Paragraph strong>{space.name}</Paragraph>
-            </Button>
-        </Box>
     )
 }
 

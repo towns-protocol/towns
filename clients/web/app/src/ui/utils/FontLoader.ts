@@ -42,6 +42,7 @@ export const fontSettings = [
         styles: {
             letterSpacing: '0',
             fontDisplay: 'optional',
+            textTransform: 'uppercase',
         },
         fontDescription: {
             weight: 'bold',

@@ -30,20 +30,6 @@ const Wrapper = () => {
 }
 
 describe('<SpaceHome />', () => {
-    test('renders timeline shimmer when no server space or contract space', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpace: undefined,
-                serverSpace: undefined,
-            }
-        })
-        render(<Wrapper />)
-        expect(screen.getByTestId('timeline-shimmer')).toBeInTheDocument()
-    })
-
     test('renders join space UI when contract space exists but server space does not', async () => {
         vi.spyOn(
             useContractAndServerSpaceDataHook,
@@ -94,7 +80,8 @@ describe('<SpaceHome />', () => {
         expect(screen.getByTestId('timeline-shimmer')).toBeInTheDocument()
     })
 
-    test('renders join button when default space exists', async () => {
+    // evan 2.22.23 TBD what we are doing with default space, we've removed it for alpha
+    test.skip('renders join button when default space exists', async () => {
         vi.spyOn(
             useContractAndServerSpaceDataHook,
             'useContractAndServerSpaceData',

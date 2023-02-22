@@ -17,8 +17,12 @@ export const SpaceSettingsCard = (props: Props) => {
     const { leaveRoom } = useZionClient()
     const onLeaveClick = useCallback(async () => {
         await leaveRoom(spaceId)
-        navigate('/')
-        closeCard()
+        // TODO: this is a hack to wait for leave to propogate and update useZionContext().spaces
+        // if you leave a space and navigate back to NoJoinedSpacesFallback, this space you are leaving still shows up
+        setTimeout(() => {
+            navigate('/')
+            closeCard()
+        }, 1000)
     }, [closeCard, leaveRoom, navigate, spaceId])
 
     const onSettingsClick = useCallback(() => {
