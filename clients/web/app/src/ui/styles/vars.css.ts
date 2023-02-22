@@ -215,12 +215,14 @@ const root = createGlobalTheme(':root', {
 
     fontVariationSettings: {
         normal: '"wdth" 100, "wght" 400, "ital" 0',
-        strong: '"wdth" 100, "wght" 900, "ital" 0',
+        medium: '"wdth" 100, "wght" 500, "ital" 0',
+        strong: '"wdth" 100, "wght" 700, "ital" 0',
     } as const,
 
     fontWeight: {
         normal: 'normal',
-        strong: '900',
+        medium: '500',
+        strong: '700',
     } as const,
 
     fontSize: {

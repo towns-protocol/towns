@@ -40,7 +40,7 @@ export const SpaceSettingsCard = (props: Props) => {
                 <MenuItem icon="settings" onClick={onSettingsLegacyClick}>
                     Settings
                 </MenuItem>
-                <MenuItem color="secondary" icon="logout" onClick={onLeaveClick}>
+                <MenuItem color="cta1" icon="logout" onClick={onLeaveClick}>
                     Leave {props.spaceName}
                 </MenuItem>
             </Card>

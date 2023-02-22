@@ -45,7 +45,7 @@ const background = {
         color: vars.color.text.onTone,
     },
     [ToneName.CTA1]: {
-        background: `linear-gradient(91.2deg, #DA3B4E 0%, #DA613B 101.62%);`,
+        background: `linear-gradient(91.2deg, #21E078 0%, #1FDBF1 101.62%);`,
         color: vars.color.text.onTone,
     },
     [ToneName.CTA2]: {

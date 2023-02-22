@@ -17,7 +17,7 @@ const tone = {
     // default
     [ToneName.Neutral]: '',
     [ToneName.Accent]: Figma.Colors.Blue,
-    [ToneName.CTA1]: Figma.Colors.Orange,
+    [ToneName.CTA1]: Figma.Colors.Green,
     [ToneName.CTA2]: Figma.Colors.Purple,
     [ToneName.Error]: Figma.Colors.Error,
     // forms
@@ -58,7 +58,7 @@ const light = (() => {
         accent: Figma.Colors.Purple,
         secondary: Figma.Colors.Orange,
         inverted: Figma.DarkMode.Primary,
-        onTone: Figma.DarkMode.Primary,
+        onTone: Figma.Colors.Black,
     }
 
     const shadow = {
@@ -102,7 +102,7 @@ const dark = (() => {
         accent: Figma.Colors.Purple,
         secondary: Figma.Colors.Orange,
         inverted: Figma.DarkMode.Level1,
-        onTone: Figma.DarkMode.Primary,
+        onTone: Figma.Colors.Black,
     } as const
 
     const shadow = {

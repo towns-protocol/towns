@@ -41,7 +41,7 @@ export const buttonStyle = recipe({
             button_xs: {
                 fontSize: vars.fontSize.sm,
                 height: vars.dims.button.button_xs,
-                fontVariationSettings: vars.fontVariationSettings.normal,
+                fontVariationSettings: vars.fontVariationSettings.medium,
                 paddingLeft: vars.space.md,
                 paddingRight: vars.space.md,
                 gap: vars.space.sm,
@@ -49,7 +49,7 @@ export const buttonStyle = recipe({
             button_sm: {
                 fontSize: vars.fontSize.sm,
                 height: vars.dims.button.button_sm,
-                fontVariationSettings: vars.fontVariationSettings.normal,
+                fontVariationSettings: vars.fontVariationSettings.medium,
                 paddingLeft: vars.space.md,
                 paddingRight: vars.space.md,
                 gap: vars.space.sm,
@@ -57,14 +57,14 @@ export const buttonStyle = recipe({
             button_md: {
                 fontSize: vars.fontSize.md,
                 height: vars.dims.button.button_md,
-                fontVariationSettings: vars.fontVariationSettings.normal,
+                fontVariationSettings: vars.fontVariationSettings.medium,
                 paddingLeft: vars.dims.baseline.x3,
                 paddingRight: vars.dims.baseline.x3,
                 gap: vars.space.sm,
             },
             button_lg: {
                 fontSize: vars.fontSize.lg,
-                fontVariationSettings: vars.fontVariationSettings.normal,
+                fontVariationSettings: vars.fontVariationSettings.medium,
                 height: vars.dims.button.button_lg,
                 padding: vars.space.md,
                 paddingLeft: vars.space.lg,

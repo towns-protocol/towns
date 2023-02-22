@@ -3,53 +3,42 @@ export const FontFamily = {
     BodyFont: 'BodyFont',
 } as const
 
-const AkkuratCapSize = {
+const BodyFontCapSize = {
     trimTop: '-0.26em',
     trimBottom: '-0.24em',
     lineHeight: '1.24em',
 }
 
-const AkkuratStyles = {
+const BodyFontStyles = {
     letterSpacing: '-0.02em',
 }
 
 export const fontSettings = [
     {
         fontFamily: FontFamily.BodyFont,
-        styles: AkkuratStyles,
-        src: "url('/fonts/AkkuratLLWeb-Regular.woff2')",
+        styles: BodyFontStyles,
+        src: "url('/fonts/fold-grotesque-variable-proportional-pro.woff2')",
         fontDescription: {
             weight: 'normal',
             style: 'normal',
         },
         targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],
-        capSize: AkkuratCapSize,
+        capSize: BodyFontCapSize,
     },
     {
         fontFamily: FontFamily.BodyFont,
-        styles: { ...AkkuratStyles },
-        src: "url('/fonts/AkkuratLLWeb-Italic.woff2')",
+        styles: { ...BodyFontStyles },
+        src: "url('/fonts/fold-grotesque-variable-italic-pro.woff2')",
         fontDescription: {
             weight: 'normal',
             style: 'italic',
         },
         targets: [],
-        capSize: AkkuratCapSize,
-    },
-    {
-        fontFamily: FontFamily.BodyFont,
-        styles: { ...AkkuratStyles },
-        src: "url('/fonts/AkkuratLLWeb-Black.woff2')",
-        fontDescription: {
-            weight: '900',
-            style: 'normal',
-        },
-        targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],
-        capSize: AkkuratCapSize,
+        capSize: BodyFontCapSize,
     },
     {
         fontFamily: FontFamily.TitleFont,
-        src: "url('/fonts/MangoGrotesque-Black.ttf')",
+        src: "url('/fonts/Byrd-Black.woff2')",
         styles: {
             letterSpacing: '0',
             fontDisplay: 'optional',
