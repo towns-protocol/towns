@@ -16,6 +16,8 @@ import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
+import { useDevice } from 'hooks/useDevice'
+import { MobileView } from 'routes/MobileView'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -33,8 +35,9 @@ const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary 
 export const App = () => {
     const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
     const chain = useCorrectChainForServer()
+    const { isMobile } = useDevice()
 
-    return (
+    return !isMobile ? (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
@@ -51,6 +54,12 @@ export const App = () => {
                 <AllRoutes />
             </AnalyticsProvider>
         </ZionContextProvider>
+    ) : (
+        <Routes>
+            <Route element={<AppLayout />}>
+                <Route path="*" element={<MobileView />} />
+            </Route>
+        </Routes>
     )
 }
 

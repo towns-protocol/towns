@@ -69,7 +69,7 @@ function AlphaLanding() {
                         Want to join Pioneer Town and be able to create new towns?
                     </Text>
                     <Text textAlign="center" color="gray2">
-                        Join the waitlist:
+                        Apply here:
                     </Text>
                     <Box horizontal centerContent>
                         <Button
