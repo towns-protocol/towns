@@ -11,18 +11,21 @@ import polyfillNode from 'rollup-plugin-polyfill-node'
 // https://vitejs.dev/config/
 export default defineConfig({
     build: {
+        target: 'esnext',
         sourcemap: true,
-        /*
         rollupOptions: {
             output: {
                 manualChunks: (id) => {
-                    if (id.includes('node_modules')) {
-                        return 'vendor'
+                    // This works around a circular dependency issue with the @wagmi package
+                    if (id.includes('@wagmi')) {
+                        return 'wagmi'
+                        // Lodash is used in many chunks, split it into one bundle
+                    } else if (id.includes('lodash')) {
+                        return 'lodash'
                     }
                 },
             },
         },
-        */
     },
     define: {
         APP_VERSION: JSON.stringify(process.env.npm_package_version),
@@ -35,7 +38,7 @@ export default defineConfig({
         checker({ typescript: true }),
         eslintPlugin(),
         vanillaExtractPlugin(),
-        visualizer({ filename: 'dist/stats.html' }),
+        visualizer({ filename: 'dist/stats.html', template: 'sunburst' }),
         sourcemaps({ exclude: '**/@sentry/**/*.js' }),
     ],
     server: {

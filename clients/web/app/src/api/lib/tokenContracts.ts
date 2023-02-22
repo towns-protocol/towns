@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, GetNftsResponse } from '@token-worker/types'
-import { erc20ABI } from '@wagmi/core'
+import { erc20ABI } from 'wagmi'
 import { ethers } from 'ethers'
 import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
