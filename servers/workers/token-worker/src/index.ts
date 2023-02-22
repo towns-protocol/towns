@@ -6,6 +6,7 @@ import {
 } from '../../common'
 import { getContractMetadata } from './handlers/getContractMetadata'
 import { getNftsForOwner } from './handlers/getNfts'
+import { isHolderOfCollection } from './handlers/isHolderOfCollection'
 import { router } from './router'
 import { Env, RequestWithAlchemyConfig } from './types'
 
@@ -22,7 +23,20 @@ const withNetwork = async (request: RequestWithAlchemyConfig, env: Env) => {
     }
 }
 
+// alchemy has different paths for some endpoints!!, need to clean this up later
+const withNetworkPrefixedWithNFT = async (request: RequestWithAlchemyConfig, env: Env) => {
+    // https://docs.alchemy.com/docs/choosing-a-web3-network
+    const url = new URL(request.url)
+    if (url.pathname.includes('eth-mainnet')) {
+        request.rpcUrl = `https://eth-mainnet.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
+    } else {
+        request.rpcUrl = `https://eth-goerli.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
+    }
+}
+
 router
+    // https://docs.alchemy.com/reference/isholderofcollection
+    .get('/api/isHolderOfCollection/:network', withNetworkPrefixedWithNFT, isHolderOfCollection)
     // get high-level metadata for a contract/collection
     // https://docs.alchemy.com/reference/getcontractmetadata
     .get('/api/getContractMetadata/:network', withNetwork, getContractMetadata)

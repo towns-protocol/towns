@@ -57,3 +57,6 @@ export type ContractMetadata = {
     tokenType?: string
     imageUrl?: string // from OpenSea data if available
 }
+
+export type IsHolderOfCollectionAlchemyResponse = { isHolderOfCollection: boolean }
+export type IsHolderOfCollectionResponse = IsHolderOfCollectionAlchemyResponse

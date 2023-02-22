@@ -6,6 +6,8 @@ import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSetting
 import { RoleSettingsPermissions } from '@components/SpaceSettings/RoleSettings/RoleSettingsPermissions'
 import { RoleSettingsMembers } from '@components/SpaceSettings/RoleSettings/RoleSettingsMembers'
 import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
+import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
+import { env } from 'utils'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
@@ -32,66 +34,72 @@ const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     return children
 }
 
-export const AuthenticatedRoutes = () => (
-    <Routes>
-        <Route path="me" element={<MeIndex />} />
-        <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
-        <Route path="spaces/new" element={<SpacesNew />} />
-        <Route path="spaces/:spaceSlug">
-            <Route index element={<SpaceHome />} />
-            <Route path="threads" element={<SpaceThreads />}>
-                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                <Route path="info" element={<InfoPanelWrapper />} />
-            </Route>
+export const AuthenticatedRoutes = () => {
+    const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
 
-            <Route path="mentions" element={<SpaceMentions />}>
-                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                <Route path="info" element={<InfoPanelWrapper />} />
-            </Route>
+    return (
+        <Routes>
+            <Route path="me" element={<MeIndex />} />
+            <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
+            {(env.IS_DEV || isHolderOfPioneerNft) && (
+                <Route path="spaces/new" element={<SpacesNew />} />
+            )}
+            <Route path="spaces/:spaceSlug">
+                <Route index element={<SpaceHome />} />
+                <Route path="threads" element={<SpaceThreads />}>
+                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                    <Route path="info" element={<InfoPanelWrapper />} />
+                </Route>
 
-            <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
-                <Route path="info" element={<InfoPanelWrapper />} />
-            </Route>
+                <Route path="mentions" element={<SpaceMentions />}>
+                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                    <Route path="info" element={<InfoPanelWrapper />} />
+                </Route>
 
-            <Route path="settings-legacy" element={<SpacesSettingsOld />} />
+                <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
+                    <Route path="info" element={<InfoPanelWrapper />} />
+                </Route>
 
-            <Route path="settings" element={<SpaceSettings />}>
-                <Route path="roles/:role" element={<RoleSettings />}>
-                    <Route index path="permissions" element={<RoleSettingsPermissions />} />
-                    <Route path="members" element={<RoleSettingsMembers />} />
-                    <Route path="display" element={<RoleSettingsDisplay />} />
+                <Route path="settings-legacy" element={<SpacesSettingsOld />} />
+
+                <Route path="settings" element={<SpaceSettings />}>
+                    <Route path="roles/:role" element={<RoleSettings />}>
+                        <Route index path="permissions" element={<RoleSettingsPermissions />} />
+                        <Route path="members" element={<RoleSettingsMembers />} />
+                        <Route path="display" element={<RoleSettingsDisplay />} />
+                    </Route>
+                </Route>
+
+                <Route path="invite" element={<SpacesInvite />} />
+
+                <Route path="members" element={<SpaceMembers />}>
+                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                    <Route path="info" element={<InfoPanelWrapper />} />
+                </Route>
+
+                <Route path="channels/:channelSlug" element={<SpacesChannel />}>
+                    <Route
+                        path="replies/:messageId"
+                        element={<SpacesChannelReplies parentRoute=".." />}
+                    />
+                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                    <Route path="info" element={<InfoPanelWrapper />} />
+                </Route>
+
+                <Route element={<SpacesChannelRoute />}>
+                    <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
                 </Route>
             </Route>
-
-            <Route path="invite" element={<SpacesInvite />} />
-
-            <Route path="members" element={<SpaceMembers />}>
-                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                <Route path="info" element={<InfoPanelWrapper />} />
-            </Route>
-
-            <Route path="channels/:channelSlug" element={<SpacesChannel />}>
-                <Route
-                    path="replies/:messageId"
-                    element={<SpacesChannelReplies parentRoute=".." />}
-                />
-                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                <Route path="info" element={<InfoPanelWrapper />} />
-            </Route>
-
-            <Route element={<SpacesChannelRoute />}>
-                <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
-            </Route>
-        </Route>
-        <Route
-            path="*"
-            element={
-                <CheckRedirect>
-                    <NoJoinedSpacesFallback />
-                </CheckRedirect>
-            }
-        />
-    </Routes>
-)
+            <Route
+                path="*"
+                element={
+                    <CheckRedirect>
+                        <NoJoinedSpacesFallback />
+                    </CheckRedirect>
+                }
+            />
+        </Routes>
+    )
+}
 
 export default AuthenticatedRoutes

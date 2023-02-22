@@ -5,6 +5,8 @@ import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SideBar } from '@components/SideBars/_SideBar'
 import { IconButton, Stack } from '@ui'
+import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
+import { env } from 'utils'
 
 type Props = {
     expanded: boolean
@@ -16,6 +18,7 @@ export const MainSideBar = (props: Props) => {
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
+    const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
 
     return (
         <SideBar paddingY="sm">
@@ -32,7 +35,14 @@ export const MainSideBar = (props: Props) => {
                         pinned={false}
                     />
                 ))}
-                <ActionNavItem id="spaces/new" link="/spaces/new" icon="plus" label="New Space" />
+                {(env.IS_DEV || isHolderOfPioneerNft) && (
+                    <ActionNavItem
+                        id="spaces/new"
+                        link="/spaces/new"
+                        icon="plus"
+                        label="New Space"
+                    />
+                )}
                 {invites.map((m, index) => (
                     <SpaceNavItem
                         isInvite
