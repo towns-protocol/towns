@@ -30,7 +30,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
         if (!matrixClient) {
             return
         }
-        console.log('USE SPACE IDS::starting effect')
+        console.log('useSpacesIds::starting effect')
         // local data
         let _invitedToIds: RoomIdentifier[] = []
         // wrap up state interaction
@@ -72,6 +72,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
                 updateSpaceAndInviteIds()
             }
         }
+
         // for some stupid reason the matrix client stores the room after sending membership events
         matrixClient.on(RoomEvent.MyMembership, onNewRoomOrMyMembership)
         matrixClient.on(ClientEvent.Room, onNewRoomOrMyMembership)

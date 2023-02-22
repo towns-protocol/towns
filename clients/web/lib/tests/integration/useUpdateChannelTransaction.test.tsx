@@ -9,7 +9,6 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -22,6 +21,7 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
+import { TestConstants } from './helpers/TestConstants'
 
 /**
  * This test suite tests the useRoles hook.
@@ -36,6 +36,7 @@ describe('useUpdateChannelTransaction', () => {
         const updatedChannelName = 'updated_channel_t'
         const permissions = [Permission.Read, Permission.Write]
         const chainId = (await provider.getNetwork()).chainId
+
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
@@ -76,18 +77,33 @@ describe('useUpdateChannelTransaction', () => {
         const updateChannelButton = screen.getByRole('button', {
             name: 'Update Channel',
         })
+        const createSpaceTxStatus = screen.getByTestId('createSpaceTxStatus')
+        const createChannelTransactionStatus = screen.getByTestId('createChannelTransactionStatus')
+        const updateChannelTransactionStatus = screen.getByTestId('updateChannelTransactionStatus')
         // click button to create the space
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
+        await waitFor(
+            () => within(createSpaceTxStatus).getByText('Success'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // wait for the space name to render
         await waitFor(() => within(spaceElement).getByText(spaceName))
         // click button to create the channel
         fireEvent.click(createChannelButton)
+        await waitFor(
+            () => within(createChannelTransactionStatus).getByText('Success'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         await waitFor(() => within(channelElement).getByText(`channelName:${channelName}`))
 
         /* Act */
         // click button to update the channel name
         fireEvent.click(updateChannelButton)
+        await waitFor(
+            () => within(updateChannelTransactionStatus).getByText('Success'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
 
         /* Assert */
         // verify the channel name has changed
@@ -109,8 +125,13 @@ function TestComponent(args: {
         transactionStatus: createSpaceTxStatus,
         createSpaceTransactionWithRole,
     } = useCreateSpaceTransaction()
-    const { data: channelId, createChannelTransaction } = useCreateChannelTransaction()
-    const { updateChannelTransaction } = useUpdateChannelTransaction()
+    const {
+        data: channelId,
+        createChannelTransaction,
+        transactionStatus: createChannelTransactionStatus,
+    } = useCreateChannelTransaction()
+    const { updateChannelTransaction, transactionStatus: updateChannelTransactionStatus } =
+        useUpdateChannelTransaction()
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     // Use the roles from the parent space to create the channel
     const { spaceRoles } = useRoles(spaceNetworkId)
@@ -172,6 +193,9 @@ function TestComponent(args: {
                     updatedChannelName: args.updatedChannelName,
                 }
                 await updateChannelTransaction(updateChannelInfo)
+                console.log('updateChannelTransaction called')
+            } else {
+                console.warn('spaceId or channelId is undefined')
             }
         }
         void handleClick()
@@ -182,13 +206,16 @@ function TestComponent(args: {
             <button onClick={onClickCreateSpace}>Create Space</button>
             <button onClick={onClickCreateChannel}>Create Channel</button>
             <button onClick={onClickUpdateChannel}>Update Channel</button>
+            <div data-testid="createSpaceTxStatus">{createSpaceTxStatus}</div>
+            <div data-testid="createChannelTransactionStatus">{createChannelTransactionStatus}</div>
+            <div data-testid="updateChannelTransactionStatus">{updateChannelTransactionStatus}</div>
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />
                     <div data-testid="channelElement">
                         {channelId && (
                             <ChannelContextProvider channelId={channelId}>
-                                <ChannelComponent channelId={channelId} />
+                                <ChannelComponent />
                             </ChannelContextProvider>
                         )}
                     </div>
@@ -210,12 +237,12 @@ function SpacesComponent(): JSX.Element {
     )
 }
 
-function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Element {
+function ChannelComponent(): JSX.Element {
     const { channel } = useChannelData()
     return (
         <div data-testid="channel">
             {channel && (
-                <ChannelContextProvider channelId={channelId}>
+                <ChannelContextProvider channelId={channel.id}>
                     <>
                         <div key={channel.id.networkId}>channelName:{channel.label}</div>{' '}
                     </>

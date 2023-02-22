@@ -15,7 +15,7 @@ do
   echo "Running node ${I} from ${NODE_DIR}"
   cd ${NODE_DIR}
   mkdir -p logs
-  ${SCRIPT_DIR}/../dendrite/bin/dendrite-monolith-server \
+  ${SCRIPT_DIR}/../dendrite/bin/dendrite \
     --tls-cert server.crt \
     --tls-key server.key \
     --config dendrite.yaml \

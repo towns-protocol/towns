@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Permission, RoleDetails } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -9,6 +8,7 @@ import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
+import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
@@ -79,7 +79,10 @@ describe('useCreateRoleTransaction', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceName))
+        await waitFor(
+            () => within(spaceElement).getByText(spaceName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         // click button to create the role
         fireEvent.click(createRoleButton)
 
