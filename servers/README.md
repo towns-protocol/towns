@@ -207,7 +207,7 @@ client_api:
 ## Build and run the server
 
 ```bash
-./bin/dendrite-monolith-server \
+./bin/dendrite \
 --tls-cert server.crt \
 --tls-key server.key \
 --config dendrite.yaml \
