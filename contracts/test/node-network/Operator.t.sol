@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
+
+//interfaces
+
+//libraries
+
+//contracts
+import "../utils/TestUtils.sol";
+
+import {Operator} from "contracts/src/core/tokens/Operator.sol";
+
+contract OperatorTest is TestUtils {
+  Operator private operator;
+
+  function setUp() external {
+    operator = new Operator();
+  }
+
+  function test_safeMint() external {
+    address owner = _randomAddress();
+    operator.safeMint(owner);
+    assertEq(operator.balanceOf(owner), 1);
+  }
+
+  function test_revertIfTryingToTransfer() external {
+    address owner = _randomAddress();
+    operator.safeMint(owner);
+
+    address to = _randomAddress();
+    uint256 tokenId = 0;
+
+    vm.prank(owner);
+    vm.expectRevert();
+    operator.safeTransferFrom(owner, to, tokenId);
+  }
+}

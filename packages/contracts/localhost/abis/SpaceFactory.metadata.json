@@ -781,11 +781,11 @@
       ]
     },
     "contracts/src/core/tokens/SpaceOwner.sol": {
-      "keccak256": "0x2f493a0008619ae97fe59a6e0b03157177db02c77184d331cd1d3f8ab7a522a8",
+      "keccak256": "0xcb817b4c111bdff913b98d9a74f41fdb9aa3998e27c1dc1b6629a4d99c745ad0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://80ab0ea13bac0e03a5e6b185f6be3fec3693f4880a94d3f7aa69e15979f4c792",
-        "dweb:/ipfs/QmZpUFruxGa7CKRnbYHAGrTaqYCcLVsgwTcK1hvcy5LTqi"
+        "bzz-raw://b83f23a2d8641acb13f44269973826a09c0a954a45a126c07c7c0afe17003609",
+        "dweb:/ipfs/QmWbFAMCfbGM8J7P8Ysw9PeKcNsUMtj5jkBMc5RXGvmDrk"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {

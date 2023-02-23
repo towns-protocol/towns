@@ -6,6 +6,10 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
+/**
+ * @title Pioneer
+ * @dev Pioneer contract
+ */
 contract Pioneer is ERC721, Ownable, ReentrancyGuard {
   using Strings for uint256;
 

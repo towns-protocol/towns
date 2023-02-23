@@ -6,6 +6,10 @@ import {Errors} from "contracts/src/libraries/Errors.sol";
 import {ERC721URIStorage, ERC721} from "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
+/**
+ * @title SpaceOwner
+ * @dev SpaceOwner contract
+ */
 contract SpaceOwner is Ownable, ERC721URIStorage {
   address public FACTORY_ADDRESS;
 
