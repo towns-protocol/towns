@@ -23,7 +23,7 @@ export async function createMatrixChannel(
         visibility: createInfo.visibility as unknown as Visibility,
         name: createInfo.name,
         is_direct: false,
-        initial_state: makeInitialState(homeServerUrl, createInfo, createInfo.disableEncryption),
+        initial_state: makeInitialState(homeServerUrl, createInfo),
         room_version: '10',
         power_level_content_override: {
             redact: 0, // permission to redact messages is enforced on the server through entitlement checks
@@ -60,7 +60,6 @@ export async function createMatrixChannel(
 function makeInitialState(
     homeServerUrl: string,
     createInfo: CreateChannelInfo,
-    bRestrictedToParentSpace?: boolean, // todo restricted joins don't work https://github.com/HereNotThere/harmony/issues/197
 ): ICreateRoomStateEvent[] {
     const initialState: ICreateRoomStateEvent[] = [
         {
@@ -95,32 +94,13 @@ function makeInitialState(
         })
     }
 
-    if (
-        createInfo.parentSpaceId &&
-        createInfo.visibility == RoomVisibility.Public &&
-        bRestrictedToParentSpace
-    ) {
-        initialState.push({
-            type: 'm.room.join_rules',
-            state_key: '',
-            content: {
-                join_rule: 'restricted',
-                allow: [
-                    {
-                        room_id: createInfo.parentSpaceId.networkId,
-                        type: 'm.room_membership',
-                    },
-                ],
-            },
-        })
-    } else {
-        initialState.push({
-            type: 'm.room.join_rules',
-            state_key: '',
-            content: {
-                join_rule: createInfo.visibility == RoomVisibility.Public ? 'public' : 'invite',
-            },
-        })
-    }
+    initialState.push({
+        type: 'm.room.join_rules',
+        state_key: '',
+        content: {
+            join_rule: createInfo.visibility == RoomVisibility.Public ? 'public' : 'invite',
+        },
+    })
+
     return initialState
 }
