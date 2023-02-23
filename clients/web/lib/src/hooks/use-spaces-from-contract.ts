@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
-import { SpaceInfo } from '../client/web3/SpaceInfo'
 import { SpaceItem } from '../types/zion-types'
 import { createUserIdFromString } from '../types/user-identifier'
 import { useMatrixCredentials } from './use-matrix-credentials'
@@ -76,7 +75,7 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
             // Wait for all the promises to resolve
             const entitledSpaces = await Promise.all(getSpaceInfoPromises)
             const spaces = entitledSpaces
-                .map((s: SpaceInfo | undefined) => {
+                .map((s) => {
                     if (s) {
                         return {
                             key: s.networkId,

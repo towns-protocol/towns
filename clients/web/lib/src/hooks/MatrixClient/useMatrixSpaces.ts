@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 import { EventType, MatrixClient, MatrixEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import { SpaceItem } from '../../types/zion-types'
-import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
+import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceProtocol } from '../../client/ZionClientTypes'
+import { useSpaceIdStore } from '../../hooks/ZionContext/useSpaceIds'
 
-export function useMatrixSpaces(
-    spaceIds: RoomIdentifier[],
-    matrixClient?: MatrixClient,
-): SpaceItem[] {
+export function useMatrixSpaces(matrixClient?: MatrixClient): SpaceItem[] {
+    const { spaceIds } = useSpaceIdStore()
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
 
     useEffect(() => {

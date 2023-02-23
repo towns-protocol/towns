@@ -12,6 +12,7 @@ import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZTEvent } from '../../types/timeline-types'
+import { useSpaceIdStore } from './useSpaceIds'
 
 // the spaces are just tacked on to the matrix design system,
 // child events should be treated like state events, but they are not,
@@ -19,9 +20,9 @@ import { ZTEvent } from '../../types/timeline-types'
 // assumes spaceIds is stable, meaning if networkId doesn't change, it will remain the same object
 export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
-    spaceIds: RoomIdentifier[],
     invitedToIds: RoomIdentifier[],
 ): { spaceHierarchies: SpaceHierarchies } {
+    const { spaceIds } = useSpaceIdStore()
     const matrixClient = client?.matrixClient
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))

@@ -25,7 +25,6 @@ export interface IZionContext {
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     rooms: Record<string, Room | undefined>
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
-    spaceIds: RoomIdentifier[] // ordered list of space ids
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
@@ -87,13 +86,12 @@ const ContextImpl = (props: Props): JSX.Element => {
     } = props
 
     const { client, clientSingleton } = useZionClientListener(props)
+    const { invitedToIds } = useSpacesIds(client)
     useContentAwareTimelineDiff(client?.matrixClient)
-    const { spaceIds, invitedToIds } = useSpacesIds(client)
-    const { spaces } = useSpaces(client, spaceIds)
-    const { spaceHierarchies } = useSyncSpaceHierarchies(client, spaceIds, invitedToIds)
+    const { spaces } = useSpaces(client)
+    const { spaceHierarchies } = useSyncSpaceHierarchies(client, invitedToIds)
     const { spaceUnreads, spaceMentions } = useSpaceUnreads(
         client,
-        spaceIds,
         spaceHierarchies,
         enableSpaceRootUnreads === true,
     )
@@ -119,7 +117,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 clientSingleton,
                 rooms,
                 invitedToIds,
-                spaceIds,
                 spaceUnreads,
                 spaceMentions,
                 spaces,

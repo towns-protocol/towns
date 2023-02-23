@@ -3,14 +3,15 @@ import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/zion-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { useTimelineStore } from '../../store/use-timeline-store'
-import { RoomIdentifier } from '../../types/room-identifier'
+import { useSpaceIdStore } from './useSpaceIds'
 
 export function useSpaceUnreads(
     client: ZionClient | undefined,
-    spaceIds: RoomIdentifier[],
     spaceHierarchies: SpaceHierarchies,
     bShowSpaceRootUnreads: boolean,
 ) {
+    const { spaceIds } = useSpaceIdStore()
+
     const [state, setState] = useState<{
         spaceUnreads: Record<string, boolean>
         spaceMentions: Record<string, number>

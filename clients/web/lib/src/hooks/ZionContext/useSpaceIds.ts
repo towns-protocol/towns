@@ -5,26 +5,31 @@ import { Membership } from '../../types/zion-types'
 import { ClientEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import isEqual from 'lodash/isEqual'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
+import create from 'zustand'
+
+export type SpaceIdStore = {
+    spaceIds: RoomIdentifier[]
+}
+
+export type SpaceIdStoreInterface = SpaceIdStore & {
+    setSpaceIds: (fn: (prev: SpaceIdStore) => SpaceIdStore) => void
+}
+
+export const useSpaceIdStore = create<SpaceIdStoreInterface>((set) => ({
+    spaceIds: [],
+    setSpaceIds: (fn: (prevState: SpaceIdStore) => SpaceIdStore) => {
+        set((state) => fn(state))
+    },
+}))
 
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
 export function useSpacesIds(client: ZionClient | undefined): {
-    spaceIds: RoomIdentifier[]
     invitedToIds: RoomIdentifier[]
 } {
     const matrixClient = client?.matrixClient
-    const cache = useRef<Record<string, RoomIdentifier>>({})
-    const [spaceIds, setSpaceIds] = useState<RoomIdentifier[]>([])
     const [invitedToIds, setInvitedToIds] = useState<RoomIdentifier[]>([])
 
-    // ensure that for the same roomId, we always return the same roomIdentifier reference
-    const getOrCreateRoomIdentifier = (roomId: string): RoomIdentifier => {
-        if (cache.current[roomId]) {
-            return cache.current[roomId]
-        }
-        const roomIdentifier = makeRoomIdentifier(roomId)
-        cache.current[roomId] = roomIdentifier
-        return roomIdentifier
-    }
+    const { setSpaceIds } = useSpaceIdStore()
 
     useEffect(() => {
         if (!matrixClient) {
@@ -38,19 +43,20 @@ export function useSpacesIds(client: ZionClient | undefined): {
             const newSpaceIds = matrixClient
                 .getRooms()
                 .filter((r) => r.isSpaceRoom() && r.getMyMembership() === Membership.Join)
-                .map((r) => getOrCreateRoomIdentifier(r.roomId))
+                .map((r) => makeRoomIdentifier(r.roomId))
 
             const newInviteIds = matrixClient
                 .getRooms()
                 .filter((r) => r.getMyMembership() === Membership.Invite)
-                .map((r) => getOrCreateRoomIdentifier(r.roomId))
+                .map((r) => makeRoomIdentifier(r.roomId))
             _invitedToIds = newInviteIds.slice()
 
             setSpaceIds((prev) => {
-                if (isEqual(prev, newSpaceIds)) {
+                console.log(`useSpacesIds::setSpaceIds`, prev.spaceIds, newSpaceIds)
+                if (isEqual(prev.spaceIds, newSpaceIds)) {
                     return prev
                 }
-                return newSpaceIds
+                return { spaceIds: newSpaceIds }
             })
 
             setInvitedToIds((prev) => {
@@ -80,7 +86,7 @@ export function useSpacesIds(client: ZionClient | undefined): {
             matrixClient.off(RoomEvent.MyMembership, onNewRoomOrMyMembership)
             matrixClient.off(ClientEvent.Room, onNewRoomOrMyMembership)
         }
-    }, [matrixClient])
+    }, [matrixClient, setSpaceIds])
 
-    return { spaceIds, invitedToIds }
+    return { invitedToIds }
 }
