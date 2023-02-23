@@ -154,5 +154,44 @@ describe('historyVisibility', () => {
                 "I'm Alice!",
             ),
         )
+
+        // have bob and john log out
+        await bob.logout()
+        await john.logout()
+
+        // have alice log into yet another client, see if she will share keys with herself
+        const alice3 = new ZionTestClient(
+            alice.chainId,
+            'alice2',
+            alice.props,
+            alice.provider,
+            alice.delegateWallet,
+        )
+
+        await alice3.loginWalletAndStartClient()
+
+        expect(alice3.auth?.deviceId).not.toEqual(alice.auth?.deviceId)
+
+        await waitFor(() => expect(alice3.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
+
+        await waitFor(
+            () =>
+                expect(
+                    alice3.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
+                ).toContain('Hello World!'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+
+        await waitFor(() =>
+            expect(alice3.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm John!",
+            ),
+        )
+
+        await waitFor(() =>
+            expect(alice3.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
+                "I'm Alice!",
+            ),
+        )
     })
 })
