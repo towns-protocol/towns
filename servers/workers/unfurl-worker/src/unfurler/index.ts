@@ -3,7 +3,7 @@ import { Image, UnfurlData } from '../types'
 import sizeOf from 'image-size'
 
 function getImage(response: Metadata): Image | undefined {
-    if (response.oEmbed && response.oEmbed.type === 'photo') {
+    if (response?.oEmbed && response.oEmbed.type === 'photo') {
         if (response.oEmbed.thumbnails?.length) {
             return response.oEmbed.thumbnails[0]
         }
@@ -72,15 +72,19 @@ async function handleRawImage(url: string): Promise<UnfurlData> {
     }
 }
 
-export async function formattedUnfurlJSData(url: string): Promise<UnfurlData> {
-    let data: UnfurlData
+export async function formattedUnfurlJSData(url: string): Promise<UnfurlData | null> {
+    let data: UnfurlData | null = null
     try {
         const query = await fetch(url, { method: 'HEAD' })
         if (query.headers.get('content-type')?.startsWith('image/')) {
             data = await handleRawImage(url)
         } else {
             const result = await unfurl(url)
-            data = handleUnfurlJSResult(url, result)
+            if (result) {
+                data = handleUnfurlJSResult(url, result)
+            } else {
+                console.warn(`formattedUnfurlJSData: no result for ${url}`)
+            }
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

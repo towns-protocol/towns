@@ -53,7 +53,7 @@ export default {
  * TODO: optimize caching with KV API https://developers.cloudflare.com/workers/runtime-apis/kv/#kv-bindings
  */
 async function unfurlLink(url: string, env: Env): Promise<UnfurlData | null> {
-    let data: UnfurlData
+    let data: UnfurlData | null = null
     if (!isUrl(url)) {
         return null
     }
