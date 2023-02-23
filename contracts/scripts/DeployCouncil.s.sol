@@ -2,12 +2,12 @@
 pragma solidity ^0.8.13;
 
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
-import {CouncilNFT} from "contracts/src/core/tokens/CouncilNFT.sol";
+import {Member} from "contracts/src/core/tokens/Member.sol";
 import {console} from "forge-std/console.sol";
 import "murky/Merkle.sol";
 
 contract DeployCouncil is ScriptUtils {
-  CouncilNFT councilNFT;
+  Member councilNFT;
   uint256 private NFT_PRICE = 0.08 ether;
 
   function run() external {
@@ -34,7 +34,7 @@ contract DeployCouncil is ScriptUtils {
       memory baseURI = "https://bafybeihuygd5wm43kmxl4pocbv5uchdrkimhfwk75qgbmtlrqsy2bwwijq.ipfs.nftstorage.link/metadata/";
 
     vm.startBroadcast();
-    councilNFT = new CouncilNFT(name, symbol, baseURI, root);
+    councilNFT = new Member(name, symbol, baseURI, root);
     councilNFT.privateMint{value: NFT_PRICE}(first, 1, m.getProof(data, 0));
     councilNFT.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
     councilNFT.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
