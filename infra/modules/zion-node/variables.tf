@@ -1,5 +1,5 @@
-variable "zion_node_name" {
-  description = "The name of the zion node"
+variable "dendrite_node_name" {
+  description = "The name of the dendrite node"
   type = string
 }
 
@@ -13,8 +13,13 @@ variable "vpc_cidr_block" {
   type = string
 }
 
-variable "subnets" {
-  description = "A list of subnets to associate with the load balancer. e.g. ['subnet-1a2b3c4d','subnet-1a2b3c4e','subnet-1a2b3c4f']"
+variable "dendrite_node_subnets" {
+  description = "A list of subnets to associate with the dendrite nodes"
+  type        = list(string)
+}
+
+variable "alb_subnets" {
+  description = "A list of subnets to associate with the application load balancer"
   type        = list(string)
 }
 
@@ -22,3 +27,10 @@ variable "bastion_host_security_group_id" {
   description = "The security group id of the bastion host"
   type = string
 }
+
+variable "dendrite_log_group_name" {
+  description = "The name of the dendrite log group"
+  type = string
+}
+
+

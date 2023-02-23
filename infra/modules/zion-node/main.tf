@@ -3,8 +3,7 @@ module global_constants {
 }
 
 locals {
-  ecs_cluster_name = "${module.global_constants.environment}-${var.zion_node_name}-zion-ecs-cluster"
-  subnet_id = var.subnets[0]
+  ecs_cluster_name = "${module.global_constants.environment}-${var.dendrite_node_name}-zion-ecs-cluster"
 }
 
 data "aws_acm_certificate" "primary_hosted_zone_cert" {
@@ -13,9 +12,6 @@ data "aws_acm_certificate" "primary_hosted_zone_cert" {
 
 module "zion_alb_sg" {
   source = "terraform-aws-modules/security-group/aws"
-
-  # TODO: eventually add node name into the alb name - or consider having a single alb that routes
-  # based on node name
 
   name        = "${module.global_constants.environment}_zion_alb_sg"
   description = "Security group zion load balancer"
@@ -41,7 +37,7 @@ module "zion_internal_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
   name        = "${module.global_constants.environment}_zion_internal_sg"
-  description = "Security group for zion ec2 servers"
+  description = "Security group for dendrite nodes"
   vpc_id      = var.vpc_id
 
 
@@ -52,7 +48,9 @@ module "zion_internal_sg" {
       source_security_group_id = module.zion_alb_sg.security_group_id
     },
     {
-      rule                     = "http-8080-tcp"
+      protocol    = "tcp"
+      from_port   = 8008
+      to_port     = 8008
       source_security_group_id = module.zion_alb_sg.security_group_id
     }
   ]
@@ -81,7 +79,7 @@ module "zion_alb" {
   load_balancer_type = "application"
 
   vpc_id = var.vpc_id
-  subnets = var.subnets
+  subnets = var.alb_subnets
   security_groups = [module.zion_alb_sg.security_group_id]
 
   http_tcp_listeners = [
@@ -103,7 +101,7 @@ module "zion_alb" {
       protocol           = "HTTPS"
       certificate_arn    = data.aws_acm_certificate.primary_hosted_zone_cert.arn
       action_type        = "forward"
-      target_group_index = 1
+      target_group_index = 0
     },
   ]
 
@@ -118,27 +116,14 @@ module "zion_alb" {
       #   type = "lb_cookie"
       #   cookie_duration = 86400
       # }
-      # health_check = {
-      #   path                = "/_matrix/client/versions"
-      #   interval            = 30
-      #   timeout             = 5
-      #   healthy_threshold   = 2
-      #   unhealthy_threshold = 2
-      # }
-    },
-    {
-      name_prefix      = "zion-"
-      backend_protocol = "HTTP"
-      backend_port     = 80
-      target_type      = "instance"
-      targets = {
-        my_target = {
-          target_id = module.docker_ec2_host.ec2_instance_id
-          port = 80
-        }
+      health_check = {
+        path                = "/_matrix/client/versions"
+        interval            = 30
+        timeout             = 6
+        healthy_threshold   = 2
+        unhealthy_threshold = 2
       }
-      # TODO: handle health checks
-    },
+    }
   ]
 
   tags = module.global_constants.tags
@@ -148,18 +133,9 @@ resource "aws_ecs_cluster" "zion-ecs-cluster" {
   name = local.ecs_cluster_name
 }
 
-module "docker_ec2_host" {
-  source = "../ec2"
-  security_group_id = module.zion_internal_sg.security_group_id
-  subnet_id = local.subnet_id
-  ecs_cluster_name = local.ecs_cluster_name
-
-  depends_on = [aws_ecs_cluster.zion-ecs-cluster]
-}
-
 module "dendrite_efs" {
   source = "../efs"
-  subnet_id = local.subnet_id
+  subnets = var.dendrite_node_subnets
   vpc_id = var.vpc_id
   inbound_security_groups = [
     module.zion_internal_sg.security_group_id, 
@@ -170,45 +146,34 @@ module "dendrite_efs" {
 module "task_definitions" {
   source      = "../task-definitions"
   dendrite_file_system_id = module.dendrite_efs.file_system_id
+  dendrite_node_name = var.dendrite_node_name
+  dendrite_log_group_name = var.dendrite_log_group_name
 }
 
-resource "aws_ecs_service" "zion-dendrite-service" {
-  name            = "${module.global_constants.environment}-zion-dendrite-service"
+resource "aws_ecs_service" "dendrite-fargate-service" {
+  name            = "${module.global_constants.environment}-dendrite-fargate-service"
   cluster         = aws_ecs_cluster.zion-ecs-cluster.id
-  task_definition = module.task_definitions.dendrite_task_definition_arn
+  task_definition = module.task_definitions.dendrite_fargate_task_definition_arn
   desired_count   = 1
   deployment_minimum_healthy_percent = 0 
-  # TODO: this will create downtime. Is there a better way?
   deployment_maximum_percent = 200
+
+  launch_type      = "FARGATE"
+  platform_version = "LATEST"
+
+  load_balancer {
+    target_group_arn = module.zion_alb.target_group_arns[0]
+    container_name   = "dendrite"
+    container_port   = 8008
+  }
+
   lifecycle {
-    ignore_changes = [task_definition]
+    ignore_changes = [task_definition, desired_count]
+  }
+
+  network_configuration {
+    security_groups  = [module.zion_internal_sg.security_group_id]
+    subnets          = var.dendrite_node_subnets
+    assign_public_ip = true
   }
 }
-
-# resource "aws_ecs_service" "dendrite-fargate-service" {
-#   name            = "${module.global_constants.environment}-dendrite-fargate-service"
-#   cluster         = aws_ecs_cluster.zion-ecs-cluster.id
-#   task_definition = module.task_definitions.dendrite_fargate_task_definition_arn
-#   desired_count   = 1
-#   deployment_minimum_healthy_percent = 0 
-#   deployment_maximum_percent = 200
-
-#   launch_type      = "FARGATE"
-#   platform_version = "1.4.0"
-
-#   # load_balancer {
-#   #   target_group_arn = module.zion_alb.target_group_arns[0]
-#   #   container_name   = "dendrite"
-#   #   container_port   = 8008
-#   # }
-
-#   lifecycle {
-#    ignore_changes = [task_definition, desired_count]
-#  }
-
-#   network_configuration {
-#     security_groups  = [module.zion_internal_sg.security_group_id]
-#     subnets          = [local.subnet_id]
-#     assign_public_ip = true
-#   }
-# }

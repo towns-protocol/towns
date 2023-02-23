@@ -1,6 +1,6 @@
-variable "subnet_id" {
-  description = "The subnet id for the efs mount target"
-  type = string
+variable "subnets" {
+  description = "The subnet ids for the efs mount targets"
+  type = list(string)
 }
 
 variable "inbound_security_groups" {

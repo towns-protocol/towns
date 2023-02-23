@@ -39,7 +39,8 @@ resource "aws_efs_backup_policy" "dendrite-file-system-backup-policy" {
 }
 
 resource "aws_efs_mount_target" "dendrite-mount-target" {
+  for_each = toset(var.subnets)
   file_system_id = aws_efs_file_system.dendrite-file-system.id
-  subnet_id      = var.subnet_id
+  subnet_id      = each.value
   security_groups = [module.efs_mount_target_security_group.security_group_id]
 }

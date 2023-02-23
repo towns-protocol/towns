@@ -50,25 +50,28 @@ module "bastion_host" {
   vpc_id = module.vpc.vpc_id
 }
 
+resource "aws_cloudwatch_log_group" "dendrite_log_group" {
+  name = "/${module.global_constants.environment}/ecs/dendrite"
+  tags = module.global_constants.tags
+}
+
 module "zion_node" {
   source = "../../modules/zion-node"
 
-  subnets = module.vpc.public_subnets
+  alb_subnets = module.vpc.public_subnets
+  dendrite_node_subnets = module.vpc.private_subnets
   vpc_cidr_block = module.vpc.vpc_cidr_block
   vpc_id = module.vpc.vpc_id
-  zion_node_name = "node1"
+  dendrite_node_name = "node1"
   bastion_host_security_group_id = module.bastion_host.bastion_sg_id
+  dendrite_log_group_name = aws_cloudwatch_log_group.dendrite_log_group.name
 }
 
 module "dendrite_node_db" {
   source = "../../modules/node-db"
 
   database_subnets = module.vpc.database_subnets
-  allowed_cidr_blocks = concat(
-    # TODO: remove public subnets once we move to fargate
-    module.vpc.public_subnets_cidr_blocks,
-    module.vpc.private_subnets_cidr_blocks
-  )
+  allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   vpc_id = module.vpc.vpc_id
   dendrite_node_name = "node1"
 }
