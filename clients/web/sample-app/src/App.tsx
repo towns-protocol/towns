@@ -25,6 +25,7 @@ import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL ?? ``
 const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
+const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 
 export const App = () => {
     const { homeServerUrl: savedHomeServerUrl } = useSampleAppStore()
@@ -34,6 +35,7 @@ export const App = () => {
             <Container maxWidth="md">
                 <ZionContextProvider
                     enableSpaceRootUnreads
+                    alchemyKey={ALCHEMY_KEY}
                     primaryProtocol={SpaceProtocol.Matrix}
                     matrixServerUrl={homeServerUrl}
                     casablancaServerUrl={CASABLANCA_SERVER_URL}

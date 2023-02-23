@@ -22,7 +22,15 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
-import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName, useNetwork } from 'wagmi'
+import {
+    useAccount,
+    useConnect,
+    useDisconnect,
+    useEnsAvatar,
+    useEnsName,
+    useNetwork,
+    useSwitchNetwork,
+} from 'wagmi'
 import { useSampleAppStore } from 'store/store'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
@@ -182,7 +190,7 @@ export function Profile() {
             // hard reload the app, somehow the matrix client
             // hangs on to the old url in crypto, so if you sign in after
             // switching it tries to upload keys to the wrong server
-            window.location.href = 'http://localhost:3001'
+            window.location.reload()
         },
         [saveHomeServerUrl],
     )
@@ -244,6 +252,19 @@ function ProfileContent() {
     const { chain: activeChain, chains } = useNetwork()
     const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
 
+    const { switchNetwork } = useSwitchNetwork({
+        onSuccess: (chain) => {
+            console.log('switched to network', chain)
+        },
+    })
+
+    const onChangeChainDropDown = useCallback(
+        (event: SelectChangeEvent) => {
+            switchNetwork?.(parseInt(event.target.value))
+        },
+        [switchNetwork],
+    )
+
     console.log('!!Profile', {
         address,
         connector,
@@ -256,10 +277,33 @@ function ProfileContent() {
         return (
             <>
                 {activeChain && (
-                    <Box sx={{ display: 'grid', marginTop: '15px', alignItems: 'Center' }}>
-                        <Typography variant="h6" component="span">
-                            Chain: <q>{activeChain.name}</q> id: {activeChain.id}
+                    <Box
+                        display="grid"
+                        alignItems="center"
+                        gridTemplateColumns="repeat(2, 1fr)"
+                        marginTop="20px"
+                    >
+                        <Typography noWrap variant="h6" component="div">
+                            Chain:
                         </Typography>
+                        <Box minWidth="120px">
+                            <FormControl fullWidth>
+                                <InputLabel id="chain-select-label" />
+                                <Select
+                                    labelId="chain-select-label"
+                                    id="chain-select"
+                                    value={activeChain.id.toString()}
+                                    onChange={onChangeChainDropDown}
+                                >
+                                    <MenuItem key="31337" value="31337">
+                                        Localhost (31337)
+                                    </MenuItem>
+                                    <MenuItem key="5" value="5">
+                                        Goerli (5)
+                                    </MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
                     </Box>
                 )}
                 {activeChain?.id === 1 && <ENSInfo address={address} />}
