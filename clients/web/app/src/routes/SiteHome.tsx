@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { TransitionLogo } from '@components/Logo/Logo'
@@ -13,7 +13,9 @@ export const SiteHome = () => (
         <Text strong>
             <b>Connect your wallet to continue</b>
         </Text>
-        <LoginComponent />
+        <Suspense>
+            <LoginComponent />
+        </Suspense>
     </SiteHomeLayout>
 )
 

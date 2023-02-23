@@ -122,3 +122,5 @@ const AppLayout = () => {
         </Stack>
     )
 }
+
+export default App

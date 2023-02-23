@@ -12,7 +12,7 @@ import { MainLayout } from 'MainLayout'
 import { env } from 'utils'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { useRootTheme } from 'hooks/useRootTheme'
-import { App } from './App'
+const App = React.lazy(() => import('./App'))
 
 if (env.IS_DEV) {
     // Register runtime-error overlay
