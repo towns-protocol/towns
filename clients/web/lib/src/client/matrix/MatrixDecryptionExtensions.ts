@@ -24,13 +24,13 @@ import throttle from 'lodash/throttle'
 /**
  * If I have messages that I can't decrypt (which happens all the time in normal use cases,
  * not to mention signing in on a new device or clearing your browser cache), I will iterate
- * though the online users and send a custom to device message requesting keys for the room.
- * When a user recieves a request for conversatinon keys, if the requesting user passes the
+ * through the online users and send a custom to-device message requesting keys for the room.
+ * When a user receives a request for conversation keys, if the requesting user passes the
  * "isEntitled" check for the space and channel, they will use the sendSharedHistoryKeys
- * functinality built for sharing keys on invite to send keys to the requestee.
- * Megaolm knows about sharing on invite, and it refuses to accept keys that weren't requested unless
+ * functionality built for sharing keys on invite to send keys to the requestee.
+ * Megolm knows about sharing on invite, and it refuses to accept keys that weren't requested unless
  * they are sent to you by the person who invited you to the space, so I create a fake key request
- * (that matches up with my actual request) to trick megaolm into accepting the keys.
+ * (that matches up with my actual request) to trick Megolm into accepting the keys.
  */
 
 /// control the number of outgoing room key requests for events that failed to decrypt
@@ -184,7 +184,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             if (event.getType() === MatrixEventType.RoomMessageEncrypted) {
                 if (event.shouldAttemptDecryption()) {
                     // not sure why matrix isn't always doing this for us, but sometimes it gets skipped
-                    // it's okay to call mulitple times, the underlying logic returns an exisitng promise
+                    // it's okay to call multiple times, the underlying logic returns an existing promise
                     // if one exists
                     // we don't need to do anything with the result, a decrypted event gets fired
                     // and it makes sense to just pick the event up there
@@ -305,7 +305,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             }
         })
 
-        // fliter out in progress or empty entries, sort by priority
+        // filter out in progress or empty entries, sort by priority
         const rooms = Object.entries(this.roomRecords)
             // add roomId to roomRecord
             .map(([roomId, roomRecord]) => {
@@ -769,7 +769,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             }
         }
 
-        // find the senders device
+        // find the sender's device
         const deviceInfo = this.matrixClient.crypto?.deviceList.getDeviceByIdentityKey(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             content.algorithm,
