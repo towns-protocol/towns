@@ -54,10 +54,13 @@ const SpaceJoinModal = (props: ModalProps) => {
                                 <Icon type="alert" color="error" size="square_lg" />
                             </Box>
                         </Box>
-                        <Box gap="lg" padding="md">
-                            <Heading level={2}>Unable to join {data.name}</Heading>
-                            <Box maxWidth="300">
-                                <Text textAlign="center" color="gray1">
+                        <Box centerContent gap="lg" padding="md" maxWidth="420">
+                            <Heading textAlign="center" level={2}>
+                                Unable to join <br /> {data.name}
+                            </Heading>
+
+                            <Box maxWidth="350" paddingTop="sm">
+                                <Text textAlign="center" color="gray2" size="lg">
                                     You don&apos;t have permission to join this space because we
                                     were unable to verify the required assets in your wallet.
                                 </Text>
@@ -67,7 +70,7 @@ const SpaceJoinModal = (props: ModalProps) => {
                             <Button
                                 animate={false}
                                 tone="cta1"
-                                minWidth="100"
+                                minWidth="200"
                                 onClick={props.onHide}
                             >
                                 <Text>OK</Text>

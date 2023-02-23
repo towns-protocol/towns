@@ -53,7 +53,7 @@ export const fontSettings = [
         capSize: {
             trimTop: '-0.2em',
             trimBottom: '-0.35em',
-            lineHeight: '1.24em',
+            lineHeight: '1.20em',
         },
     },
 ] as const
