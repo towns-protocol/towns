@@ -1,5 +1,5 @@
-import create, { SetState, StateCreator } from 'zustand'
-import { persist, PersistOptions } from 'zustand/middleware'
+import { create, StateCreator } from 'zustand'
+import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
 
 export type MatrixCredentials = {
     accessToken: string
@@ -25,7 +25,7 @@ export const useCredentialStore = create<CredentialStoreStates>(
     // John: This is a mere workaround (hack) typing the persist API to avoid
     // issue https://github.com/pmndrs/zustand/issues/650
     (persist as unknown as MyPersist)(
-        (set: SetState<CredentialStoreStates>) => ({
+        (set) => ({
             matrixCredentialsMap: {},
             setMatrixCredentials: (
                 homeServerUrl: string,
@@ -41,7 +41,7 @@ export const useCredentialStore = create<CredentialStoreStates>(
         }),
         {
             name: 'credential-store',
-            getStorage: () => localStorage,
+            storage: createJSONStorage(() => localStorage),
         },
     ),
 )

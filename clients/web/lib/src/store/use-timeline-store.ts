@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import { MessageReactions, ThreadStats, TimelineEvent } from '../types/timeline-types'
 
 /// TimelinesMap: { roomId: TimelineEvent[] }

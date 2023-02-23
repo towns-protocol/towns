@@ -1,5 +1,5 @@
 import { FullyReadMarker } from '../types/timeline-types'
-import create from 'zustand'
+import { create } from 'zustand'
 
 export type FullyReadMarkerStoreStates = {
     markers: Record<string, FullyReadMarker>

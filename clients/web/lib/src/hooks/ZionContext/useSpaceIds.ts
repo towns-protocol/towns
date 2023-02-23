@@ -5,7 +5,7 @@ import { Membership } from '../../types/zion-types'
 import { ClientEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import isEqual from 'lodash/isEqual'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
-import create from 'zustand'
+import { create } from 'zustand'
 
 export type SpaceIdStore = {
     spaceIds: RoomIdentifier[]

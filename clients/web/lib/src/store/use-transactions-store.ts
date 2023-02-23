@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import EventEmitter from 'events'
 import { useEffect, useRef } from 'react'

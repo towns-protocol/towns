@@ -9,7 +9,7 @@ import {
     useOnTransactionEmitted,
     useZionClient,
 } from 'use-zion-client'
-import shallow from 'zustand/shallow'
+import { shallow } from 'zustand/shallow'
 import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'

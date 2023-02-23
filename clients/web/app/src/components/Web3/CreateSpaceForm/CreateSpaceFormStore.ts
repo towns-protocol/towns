@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import { Address } from 'wagmi'
 import { env } from 'utils'
 import { CreateSpaceFormState } from './types'

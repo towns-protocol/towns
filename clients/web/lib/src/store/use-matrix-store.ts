@@ -1,7 +1,7 @@
 import { AuthenticationError, LoginStatus } from '../hooks/login'
 import { Membership, Room, RoomMember, SpaceChild, User } from '../types/zion-types'
 import { makeRoomIdentifier, makeMatrixRoomIdentifier } from '../types/room-identifier'
-import create, { SetState } from 'zustand'
+import { create } from 'zustand'
 
 import { Room as MatrixRoom, User as MatrixUser } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
@@ -16,7 +16,7 @@ export type MatrixStoreStates = {
     triggerZionClientEvent: (event: ZionClientEvent) => void
 }
 
-export const useMatrixStore = create<MatrixStoreStates>((set: SetState<MatrixStoreStates>) => ({
+export const useMatrixStore = create<MatrixStoreStates>((set) => ({
     isAuthenticated: false,
     loginStatus: LoginStatus.LoggedOut,
     setLoginStatus: (loginStatus: LoginStatus) =>

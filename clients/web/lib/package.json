@@ -37,7 +37,7 @@
         "node-emoji": "^1.11.0",
         "siwe": "^1.1.6",
         "wagmi": "^0.10.4",
-        "zustand": "^4.1.2"
+        "zustand": "^4.3.3"
     },
     "devDependencies": {
         "@testing-library/dom": "^9.0.0",

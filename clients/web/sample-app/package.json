@@ -37,7 +37,7 @@
         "typescript": "^4.9.4",
         "use-zion-client": "workspace:*",
         "wagmi": "^0.10.4",
-        "zustand": "^4.1.2"
+        "zustand": "^4.3.3"
     },
     "devDependencies": {
         "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
