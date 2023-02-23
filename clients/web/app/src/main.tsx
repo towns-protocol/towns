@@ -4,6 +4,7 @@ import 'allotment/dist/style.css'
 import * as Sentry from '@sentry/react'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import { BrowserTracing } from '@sentry/tracing'
+import { ErrorBoundary } from 'react-error-boundary'
 
 import React, { Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -12,6 +13,7 @@ import { MainLayout } from 'MainLayout'
 import { env } from 'utils'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { useRootTheme } from 'hooks/useRootTheme'
+import { AppErrorFallback } from 'AppErrorFallback'
 const App = React.lazy(() => import('./App'))
 
 if (env.IS_DEV) {
@@ -63,9 +65,11 @@ const Main = () => {
         <React.StrictMode>
             <BrowserRouter>
                 <MainLayout>
-                    <Suspense fallback={<LoadingScreen />}>
-                        <App />
-                    </Suspense>
+                    <ErrorBoundary FallbackComponent={AppErrorFallback}>
+                        <Suspense fallback={<LoadingScreen />}>
+                            <App />
+                        </Suspense>
+                    </ErrorBoundary>
                 </MainLayout>
             </BrowserRouter>
         </React.StrictMode>
