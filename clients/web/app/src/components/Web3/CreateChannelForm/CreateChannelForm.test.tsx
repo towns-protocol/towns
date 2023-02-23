@@ -239,7 +239,6 @@ describe('CreateChannelForm', () => {
 
         await waitFor(async () => {
             return expect(createChannelSpy).toHaveBeenCalledWith({
-                disableEncryption: false,
                 name: 'test-channel',
                 parentSpaceId: {
                     networkId: '',

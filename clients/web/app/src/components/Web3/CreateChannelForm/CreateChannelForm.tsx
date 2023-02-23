@@ -31,25 +31,21 @@ type Props = {
 const FormStateKeys = {
     name: 'name',
     roleIds: 'roleIds',
-    disableEncryption: 'disableEncryption',
 } as const
 
 type FormState = {
     [FormStateKeys.name]: string
     [FormStateKeys.roleIds]: string[]
-    [FormStateKeys.disableEncryption]: boolean
 }
 
 const schema = z.object({
     [FormStateKeys.name]: z.string().min(1, 'Please enter a channel name'),
     [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
-    [FormStateKeys.disableEncryption]: z.boolean(),
 })
 
 const defaultValues = {
     [FormStateKeys.name]: '',
     [FormStateKeys.roleIds]: [],
-    [FormStateKeys.disableEncryption]: false,
 }
 
 const channelNameRegEx = new RegExp(/^[a-zA-Z0-9 _-]+$/)
@@ -160,13 +156,12 @@ export const CreateChannelForm = (props: Props) => {
             schema={schema}
             defaultValues={defaultValues}
             mode="onChange"
-            onSubmit={async ({ name, roleIds, disableEncryption }) => {
+            onSubmit={async ({ name, roleIds }) => {
                 const channelInfo = {
                     name: name,
                     visibility: RoomVisibility.Public,
                     parentSpaceId: props.spaceId,
                     roleIds: roleIds.map((roleId) => Number(roleId)),
-                    disableEncryption: disableEncryption,
                 }
                 await createChannelTransaction(channelInfo)
             }}
@@ -237,20 +232,6 @@ export const CreateChannelForm = (props: Props) => {
                                 errors={formState.errors}
                                 fieldName={FormStateKeys.roleIds}
                             />
-
-                            <Box padding="md" background="level2" borderRadius="sm">
-                                <Checkbox
-                                    name={FormStateKeys.disableEncryption}
-                                    width="100%"
-                                    label="Disable Encryption"
-                                    onChange={() =>
-                                        setValue(
-                                            FormStateKeys.disableEncryption,
-                                            !getValues().disableEncryption,
-                                        )
-                                    }
-                                />
-                            </Box>
 
                             {hasTransactionError && (
                                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">

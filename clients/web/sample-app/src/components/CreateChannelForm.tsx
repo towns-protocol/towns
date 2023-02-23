@@ -32,7 +32,6 @@ interface Props {
 export function CreateChannelForm(props: Props): JSX.Element {
     const [channelName, setChannelName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
-    const [encrypted, setEncrypted] = useState<'yes' | 'no'>('yes')
     const [roles, setRoles] = useState<RolesSettings>({})
     const { spaceRoles } = useRoles(props.parentSpaceId.networkId)
     const { onClick, parentSpaceId } = props
@@ -55,10 +54,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
         setVisibility(event.target.value as RoomVisibility)
     }, [])
 
-    const onChangeEncrypted = useCallback((event: SelectChangeEvent) => {
-        setEncrypted(event.target.value as 'yes' | 'no')
-    }, [])
-
     const onChangeRoles = useCallback((roles: RolesSettings) => {
         setRoles(roles)
     }, [])
@@ -69,7 +64,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
             visibility,
             parentSpaceId: parentSpaceId,
             roleIds: [],
-            disableEncryption: encrypted === 'no',
         }
 
         // Use the roles from the parent space to create the channel
@@ -149,30 +143,6 @@ export function CreateChannelForm(props: Props): JSX.Element {
                             >
                                 <MenuItem value={RoomVisibility.Public}>public</MenuItem>
                                 <MenuItem value={RoomVisibility.Private}>private</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </Box>
-                <Box
-                    display="grid"
-                    alignItems="center"
-                    gridTemplateColumns="repeat(2, 1fr)"
-                    marginTop="20px"
-                >
-                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                        Encrypted:
-                    </Typography>
-                    <Box minWidth="120px">
-                        <FormControl fullWidth>
-                            <InputLabel id="encrypted-select-label" />
-                            <Select
-                                labelId="encrypted-select-label"
-                                id="encrypted-select"
-                                value={encrypted}
-                                onChange={onChangeEncrypted}
-                            >
-                                <MenuItem value="yes">yes</MenuItem>
-                                <MenuItem value="no">no</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
