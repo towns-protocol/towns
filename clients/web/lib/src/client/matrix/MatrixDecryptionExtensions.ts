@@ -100,6 +100,8 @@ interface KeyRequestPayload {
 
 interface RoomRecord {
     decryptionFailures: MatrixEvent[]
+    isEntitled?: boolean
+    spaceId?: string
     timer?: NodeJS.Timeout
     lastRequestAt?: number
     requestingFrom?: string
@@ -128,11 +130,18 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
     private delgate: MatrixDecryptionExtensionDelegate
     private clientRunning = true
     private hasUpToDateDeviceForUser = new Set<string>()
+    private userId: string
+    private accountAddress: string
 
     constructor(matrixClient: MatrixClient, delegate: MatrixDecryptionExtensionDelegate) {
         super()
         this.matrixClient = matrixClient
         this.delgate = delegate
+        this.userId = getOrThrow(matrixClient.getUserId(), 'MDE::constructor - no userId')
+        this.accountAddress = getOrThrow(
+            createUserIdFromString(this.userId)?.accountAddress,
+            'MDE::constructor - no accountAddress',
+        )
         // mapping of event type to processors
         this.receivedToDeviceProcessersMap = {
             [TownsToDeviceMessageType.ExtendedKeyRequest]: (e, s) => {
@@ -253,12 +262,35 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         ).length
     }
 
-    private async startLookingForKeys() {
-        if (!this.clientRunning) {
-            console.log('MDE::startLookingForKeys - clientRunning is false')
-            return
-        }
+    private async checkSelfIsEntitled(): Promise<void> {
+        // make sure we're entitled to the space before asking for keys
+        for (const [roomId, roomRecord] of Object.entries(this.roomRecords)) {
+            if (roomRecord.isEntitled === undefined) {
+                const room = this.matrixClient.getRoom(roomId)
+                if (room) {
+                    const spaceId = room.isSpaceRoom()
+                        ? roomId
+                        : room.currentState
+                              .getStateEvents(EventType.SpaceParent)
+                              .at(0)
+                              ?.getStateKey()
 
+                    if (spaceId) {
+                        const channelId = roomId === spaceId ? undefined : roomId
+                        roomRecord.spaceId = spaceId
+                        roomRecord.isEntitled = await this.delgate.isEntitled(
+                            spaceId,
+                            channelId,
+                            this.accountAddress,
+                            Permission.Read,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private clenseSuccessfullyDecrypted() {
         // filter out any successful decryption events
         Object.entries(this.roomRecords).forEach(([roomId, roomRecord]) => {
             const failingCount = roomRecord.decryptionFailures.length
@@ -274,6 +306,17 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 roomRecord.decryptionFailures = stillFailing
             }
         })
+    }
+
+    private async startLookingForKeys() {
+        if (!this.clientRunning) {
+            console.log('MDE::startLookingForKeys - clientRunning is false')
+            return
+        }
+
+        await this.checkSelfIsEntitled()
+
+        this.clenseSuccessfullyDecrypted()
 
         // filter out in progress or empty entries, sort by priority
         const rooms = Object.entries(this.roomRecords)
@@ -281,6 +324,8 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             .map(([roomId, roomRecord]) => {
                 return { ...roomRecord, roomId }
             })
+            // filter out rooms that we're not entitled to
+            .filter((roomRecord) => roomRecord.isEntitled === true)
             // filter out rooms that are waiting for something
             .filter((roomRecord) => roomRecord.timer === undefined)
             // filter out rooms that have no events to look for keys for
@@ -428,9 +473,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             toDeviceIds: uniq([...seenDeviceIds, ...devices.map((d) => d.deviceId)]),
         }
 
-        const spaceId = room.isSpaceRoom()
-            ? roomId
-            : room.currentState.getStateEvents(EventType.SpaceParent).at(0)?.getStateKey()
+        const spaceId = roomRecord.spaceId
 
         if (!spaceId) {
             console.error('MDE::_startLookingForKeys - no spaceId found', { roomId })
@@ -817,4 +860,11 @@ class ProcessingQueue<TItem> {
                 })
         }
     }
+}
+
+function getOrThrow<T>(x: T | undefined | null, message: string): T {
+    if (x === undefined || x === null) {
+        throw new Error(message)
+    }
+    return x
 }
