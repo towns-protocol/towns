@@ -1,6 +1,7 @@
-import React, { createContext, useCallback, useEffect, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import * as amplitudeLib from '@amplitude/analytics-browser'
-import { MessageType, RoomIdentifier, SendMessageOptions, useZionClient } from 'use-zion-client'
+import { MessageType, RoomIdentifier, SendMessageOptions } from 'use-zion-client'
+import { ZionContext } from 'use-zion-client/dist/components/ZionContextProvider'
 import { env } from '../utils/environment'
 
 interface Analytics {
@@ -101,7 +102,11 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
         amplitudeLib.reset()
     }, [])
 
-    const { client } = useZionClient()
+    // note aellis 2/2023 this isn't the standard way to get the client from the context
+    // use useZionContext() instead, but we were crashing a lot here on local host, maybe
+    // something is trying to useAnalytics during loading or initializtion.
+    const zionContext = useContext(ZionContext)
+    const client = zionContext?.client
 
     useEffect(() => {
         client?.setEventHandlers({
