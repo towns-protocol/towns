@@ -127,6 +127,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
     private throttledStartLookingForKeys: () => void
     private delgate: MatrixDecryptionExtensionDelegate
     private clientRunning = true
+    private hasUpToDateDeviceForUser = new Set<string>()
 
     constructor(matrixClient: MatrixClient, delegate: MatrixDecryptionExtensionDelegate) {
         super()
@@ -221,6 +222,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         // listen for new devices
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         matrixClient.on(CryptoEvent.DevicesUpdated, (users: string[], initialFetch: boolean) => {
+            users.forEach((userId) => this.hasUpToDateDeviceForUser.add(userId))
             this.throttledStartLookingForKeys()
         })
 
@@ -319,7 +321,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         }
 
         if (!roomRecord.decryptionFailures.length) {
-            console.log(`MDE::_startLookingForKeys - no decryption failures for ${roomId}`)
+            console.log(`MDE::_startLookingForKeys - no decryption failures for`, { roomId })
             return
         }
 
@@ -327,27 +329,28 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             this.matrixClient.getUserId() ?? '',
         )
 
-        const onlineMemberIds = room
+        const onlineMembersWithDevies = room
             .getJoinedMembers()
             .filter(
                 (member) =>
+                    // find currently active OR 'online' members
+                    // seems like there's bugs in the dendrite presence clearing logic
+                    // we'll get lastActiveTS updates that are over 2 hours old but the user is still online
+                    (member.user?.currentlyActive === true || member.user?.presence === 'online') &&
+                    // make sure we have an up to date device list for the user
+                    this.hasUpToDateDeviceForUser.has(member.userId) &&
                     // filter out ourselves unless we have more than one device online
-                    ((member.userId !== this.matrixClient.getUserId() || myDevices.length >= 2) &&
-                        // find currently active OR 'online' members
-                        // seems like there's bugs in the dendrite presence clearing logic
-                        // we'll get lastActiveTS updates that are over 2 hours old but the user is still online
-                        member.user?.currentlyActive === true) ||
-                    member.user?.presence === 'online',
+                    (member.userId !== this.matrixClient.getUserId() || myDevices.length >= 2),
             )
             .map((member) => member.userId)
 
-        if (!onlineMemberIds.length) {
-            console.log('MDE::_startLookingForKeys - no online members')
+        if (!onlineMembersWithDevies.length) {
+            console.log('MDE::_startLookingForKeys - no online members', { roomId })
             return
         }
 
         const now = Date.now()
-        const eligableMemberIds = onlineMemberIds.filter(
+        const eligableMemberIds = onlineMembersWithDevies.filter(
             (memberId) =>
                 // find someone we haven't sent a request to in a while
                 now - (roomRecord.requests?.[memberId]?.timestamp ?? 0) >
@@ -355,7 +358,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         )
 
         if (!eligableMemberIds.length) {
-            const userWithNewDevices = onlineMemberIds.find((memberId) => {
+            const userWithNewDevices = onlineMembersWithDevies.find((memberId) => {
                 const seenDeviceIds = roomRecord.requests?.[memberId]?.toDeviceIds ?? []
                 const currentDeviceIds = this.matrixClient
                     .getStoredDevicesForUser(memberId)
@@ -363,7 +366,10 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 return currentDeviceIds.some((deviceId) => !seenDeviceIds.includes(deviceId))
             })
             if (userWithNewDevices) {
-                console.log('MDE::_startLookingForKeys - found user with new devices online')
+                console.log('MDE::_startLookingForKeys - found user with new devices online', {
+                    roomId,
+                    userWithNewDevices,
+                })
                 eligableMemberIds.push(userWithNewDevices)
             } else {
                 console.log('MDE::_startLookingForKeys - no eligable members')
@@ -394,12 +400,17 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             .find((memberId) => this.matrixClient.getStoredDevicesForUser(memberId)?.length)
 
         if (!requesteeId) {
-            console.log('MDE::_startLookingForKeys - no eligable members with devices')
+            console.log('MDE::_startLookingForKeys - no eligable members with devices', { roomId })
             return
         }
 
         console.log(
-            `MDE::_startLookingForKeys found ${eligableMemberIds.length} eligable members, sending key request to ${requesteeId}`,
+            `MDE::_startLookingForKeys found ${eligableMemberIds.length} eligable members, sending key request`,
+            {
+                to: requesteeId,
+                from: this.matrixClient.getUserId(),
+                roomId,
+            },
         )
 
         // Get the users devices,
@@ -422,7 +433,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             : room.currentState.getStateEvents(EventType.SpaceParent).at(0)?.getStateKey()
 
         if (!spaceId) {
-            console.error('MDE::_startLookingForKeys - no spaceId found')
+            console.error('MDE::_startLookingForKeys - no spaceId found', { roomId })
             return
         }
 
@@ -449,16 +460,16 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             [requesteeId]: requestRecord,
         }
         roomRecord.timer = setTimeout(() => {
-            console.log('MDE::_startLookingForKeys - key request timed out')
+            console.log('MDE::_startLookingForKeys - key request timed out', {
+                from: this.matrixClient.getUserId(),
+                to: requesteeId,
+                roomId,
+            })
             this.clearKeyRequest(roomId, requesteeId)
         }, KEY_REQUEST_TIMEOUT_MS)
 
         const devicesInfo = devices.map((d) => ({ userId: requesteeId, deviceInfo: d }))
 
-        console.log('MDE::_startLookingForKeys - sending request', {
-            to: requesteeId,
-            from: this.matrixClient.getUserId(),
-        })
         this.matrixClient
             .encryptAndSendToDevices(devicesInfo, {
                 type: TownsToDeviceMessageType.ExtendedKeyRequest,
@@ -670,6 +681,10 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             console.warn('MDE::onKeyRequest got key sharing request with no sender key')
             return
         }
+
+        // this should return a promise if the download is in progress, and skip if already downloaded
+        await this.matrixClient.crypto?.downloadKeys([fromUserId])
+
         const deviceInfo = this.matrixClient.crypto?.deviceList.getDeviceByIdentityKey(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             MEGOLM_ALGORITHM,
@@ -752,6 +767,8 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         console.info('MDE::onKeyRequest responding to key request', {
             fromUserId,
             toUserId: event.getSender(),
+            roomId,
+            numSessions: exportedSessions.length,
         })
 
         await encryptAndRespondWith({ kind: 'keys_found', roomId, sessions: exportedSessions })
