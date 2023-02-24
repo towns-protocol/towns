@@ -1,5 +1,4 @@
 name: 'Dendrite_build'
-runs-on: ubuntu-latest-8-cores
 on:
     push:
         paths:
@@ -17,13 +16,11 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    runs-on: ubuntu-latest-8-cores
-
     # Run golangci-lint
     lint:
         timeout-minutes: 15
         name: Linting
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-8-cores
         steps:
             - uses: actions/checkout@v3
             - name: Install Go
@@ -39,7 +36,7 @@ jobs:
     test:
         timeout-minutes: 15
         name: Unit tests (Go ${{ matrix.go }})
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-8-cores
         # Service containers to run with `container-job`
         services:
             # Label used to access the service container
@@ -90,7 +87,7 @@ jobs:
     build:
         name: Build for Linux
         timeout-minutes: 15
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-8-cores
         strategy:
             fail-fast: false
             matrix:
@@ -122,7 +119,7 @@ jobs:
     initial-tests-done:
         name: Initial tests passed
         needs: [lint, test, build]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-8-cores
         if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
         steps:
             - name: Check initial tests passed
@@ -195,7 +192,7 @@ jobs:
         # Tak: reminder to turn it back on https://linear.app/hnt-labs/issue/HNT-531/refresh-dendrite-fork
         #    needs: [initial-tests-done, upgrade_test]
         needs: [initial-tests-done]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-latest-8-cores
         if: ${{ !cancelled() }} # Run this even if prior jobs were skipped
         steps:
             - name: Check integration tests passed
