@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
-import { getCouncilNftAddress } from 'use-zion-client'
+import { getMemberNftAddress } from 'use-zion-client'
 import uniqBy from 'lodash/uniqBy'
 import { Box, Checkbox, Text, TextField, VList } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
@@ -82,7 +82,7 @@ const hasVitalikParams = hasVitalkTokensParam()
 
 export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListProps) => {
     const zionTokenAddress = useMemo(
-        () => (chainId ? getCouncilNftAddress(chainId) : null),
+        () => (chainId ? getMemberNftAddress(chainId) : null),
         [chainId],
     )
 

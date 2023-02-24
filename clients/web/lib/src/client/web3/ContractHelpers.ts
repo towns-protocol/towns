@@ -8,20 +8,20 @@ const UserAddressesEncoding = 'address[]'
 const ExternalTokenEncoding =
     'tuple(address contractAddress, uint256 quantity, bool isSingleToken, uint256[] tokenIds)[]'
 
-export function getCouncilNftAddress(chainId: number): string {
+export function getMemberNftAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
-    return contractInfo.councilNft.address.councilnft
+    return contractInfo.memberNft.address
 }
 
-export function getZioneerNftAddress(chainId: number): string {
+export function getPioneerNftAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
-    return contractInfo.zioneerNft.address.zioneer
+    return contractInfo.pioneerNft.address
 }
 
 export function createExternalTokenStruct(

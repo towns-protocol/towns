@@ -22,6 +22,16 @@ export default [
   },
   {
     "inputs": [],
+    "name": "AlreadyAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyMinted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "InsufficientBalance",
     "type": "error"
   },
@@ -115,6 +125,25 @@ export default [
       {
         "indexed": true,
         "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "allow",
+        "type": "bool"
+      }
+    ],
+    "name": "SetAllowed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "from",
         "type": "address"
       },
@@ -165,38 +194,6 @@ export default [
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "allowedAddressesList",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "allowedAddressesListLength",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -475,6 +472,19 @@ export default [
       }
     ],
     "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_baseURI",
+        "type": "string"
+      }
+    ],
+    "name": "setBaseURI",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

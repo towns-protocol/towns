@@ -2,7 +2,7 @@ import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/Contrac
 import {
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
-    getZioneerNftAddress,
+    getPioneerNftAddress,
 } from '../../src/client/web3/ContractHelpers'
 import {
     createTestSpaceWithEveryoneRole,
@@ -83,9 +83,9 @@ describe('update role', () => {
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const zioneerNftAddress = getZioneerNftAddress(alice.chainId)
+        const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
         // test space was created with council token. replace with zioneer token
-        const newTokens = createExternalTokenStruct([zioneerNftAddress])
+        const newTokens = createExternalTokenStruct([pioneerNftAddress])
         const transaction = await alice.spaceDapp.updateRole({
             spaceNetworkId,
             roleId,

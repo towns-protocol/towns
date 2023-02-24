@@ -19,8 +19,8 @@ import {
     RoomIdentifier,
     RoomVisibility,
     TransactionStatus,
-    getCouncilNftAddress,
-    getZioneerNftAddress,
+    getMemberNftAddress,
+    getPioneerNftAddress,
     useCreateSpaceTransaction,
     useWeb3Context,
     useZionClient,
@@ -59,13 +59,13 @@ export const CreateSpaceForm = (props: Props) => {
 
     const councilNftAddress = useMemo(() => {
         if (chainId) {
-            return getCouncilNftAddress(chainId)
+            return getMemberNftAddress(chainId)
         }
     }, [chainId])
 
-    const zioneerNftAddress = useMemo(() => {
+    const pioneerNftAddress = useMemo(() => {
         if (chainId) {
-            return getZioneerNftAddress(chainId)
+            return getPioneerNftAddress(chainId)
         }
     }, [chainId])
 
@@ -129,8 +129,8 @@ export const CreateSpaceForm = (props: Props) => {
             console.error('Cannot create space. No council NFT address.')
             return undefined
         }
-        if (!zioneerNftAddress) {
-            console.error('Cannot create space. No Zioneer NFT address.')
+        if (!pioneerNftAddress) {
+            console.error('Cannot create space. No Pioneer NFT address.')
             return undefined
         }
 
@@ -141,12 +141,12 @@ export const CreateSpaceForm = (props: Props) => {
             case MembershipRequirement.Everyone:
                 everyonePermissions = [Permission.Read, Permission.Write]
                 break
-            case MembershipRequirement.CouncilNFT:
+            case MembershipRequirement.MemberNFT:
                 tokenAddresses = [councilNftAddress]
                 tokenGrantedPermissions = [Permission.Read, Permission.Write]
                 break
-            case MembershipRequirement.ZioneerNFT:
-                tokenAddresses = [zioneerNftAddress]
+            case MembershipRequirement.PioneerNFT:
+                tokenAddresses = [pioneerNftAddress]
                 tokenGrantedPermissions = [Permission.Read, Permission.Write]
                 break
             default:
@@ -166,7 +166,7 @@ export const CreateSpaceForm = (props: Props) => {
         )
     }, [
         councilNftAddress,
-        zioneerNftAddress,
+        pioneerNftAddress,
         membershipRequirement,
         spaceName,
         visibility,

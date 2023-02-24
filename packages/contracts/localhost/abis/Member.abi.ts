@@ -1,24 +1,24 @@
-[
+export default [
   {
     "inputs": [
       {
         "internalType": "string",
-        "name": "_name",
+        "name": "name_",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_symbol",
+        "name": "symbol_",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_baseURI",
+        "name": "baseURI_",
         "type": "string"
       },
       {
         "internalType": "bytes32",
-        "name": "_root",
+        "name": "merkleRoot_",
         "type": "bytes32"
       }
     ],
@@ -32,7 +32,22 @@
   },
   {
     "inputs": [],
-    "name": "MaxSupply",
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidMintState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidProof",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "MaxSupplyReached",
     "type": "error"
   },
   {
@@ -43,6 +58,11 @@
   {
     "inputs": [],
     "name": "NonExistentTokenURI",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotAllowed",
     "type": "error"
   },
   {
@@ -62,13 +82,13 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "spender",
+        "name": "approved",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -106,8 +126,51 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum IMember.MintState",
+        "name": "prevState",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum IMember.MintState",
+        "name": "newState",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "MintStateChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "recipient",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
       }
     ],
     "name": "Minted",
@@ -150,7 +213,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -184,19 +247,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "allowlistMint",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -204,7 +254,7 @@
         "type": "address"
       }
     ],
-    "name": "alreadyMinted",
+    "name": "_hasMinted",
     "outputs": [
       {
         "internalType": "bool",
@@ -219,12 +269,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "spender",
+        "name": "to",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -271,7 +321,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_value",
         "type": "uint256"
       }
     ],
@@ -282,7 +332,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -301,12 +351,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "owner",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "",
+        "name": "operator",
         "type": "address"
       }
     ],
@@ -319,25 +369,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      }
-    ],
-    "name": "mint",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -370,7 +401,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -378,7 +409,7 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "owner",
+        "name": "",
         "type": "address"
       }
     ],
@@ -415,16 +446,22 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      }
+    ],
     "name": "publicMint",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint256",
         "name": "",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -448,7 +485,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -471,7 +508,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       },
       {
@@ -499,6 +536,19 @@
       }
     ],
     "name": "setApprovalForAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "baseURI_",
+        "type": "string"
+      }
+    ],
+    "name": "setBaseURI",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -582,7 +632,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -605,19 +655,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "waitlistMint",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address payable",
@@ -630,4 +667,4 @@
     "stateMutability": "nonpayable",
     "type": "function"
   }
-]
+] as const

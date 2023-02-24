@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ZioneerNFT, ZioneerNFTContractState, useWeb3Context } from 'use-zion-client'
+import { PioneerNFT, PioneerNFTContractState, useWeb3Context } from 'use-zion-client'
 import { ethers } from 'ethers'
 
 import { useSigner } from 'wagmi'
@@ -11,24 +11,24 @@ export const AlphaAccessMainPage = () => {
     const { provider, chain } = useWeb3Context()
     const { data: signer } = useSigner()
 
-    const [contractState, setContractState] = useState<ZioneerNFTContractState | null>(null)
+    const [contractState, setContractState] = useState<PioneerNFTContractState | null>(null)
 
     const [loading, setLoading] = useState(false)
 
-    const zioneerNFT = useMemo(() => {
+    const pioneerNFT = useMemo(() => {
         if (!provider || !chain || !signer) {
             return null
         }
 
-        return new ZioneerNFT(chain.id, provider, signer)
+        return new PioneerNFT(chain.id, provider, signer)
     }, [provider, chain, signer])
 
     const handleRefetchContractState = useCallback(async () => {
-        const refetched = await zioneerNFT?.getContractState()
+        const refetched = await pioneerNFT?.getContractState()
         if (refetched) {
             setContractState(refetched)
         }
-    }, [zioneerNFT])
+    }, [pioneerNFT])
 
     useEffect(() => {
         handleRefetchContractState()
@@ -54,7 +54,7 @@ export const AlphaAccessMainPage = () => {
     )
 
     const handleSubmitDeposit = useCallback(async () => {
-        if (!zioneerNFT) {
+        if (!pioneerNFT) {
             alert('Please sign in')
             return
         }
@@ -69,7 +69,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await zioneerNFT.deposit(parsedEther.amount)
+            const tx = await pioneerNFT.deposit(parsedEther.amount)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Deposit',
@@ -88,10 +88,10 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [depositAmountETH, handleRefetchContractState, recordTransactionReport, zioneerNFT])
+    }, [depositAmountETH, handleRefetchContractState, recordTransactionReport, pioneerNFT])
 
     const handleSubmitMintTo = useCallback(async () => {
-        if (!zioneerNFT) {
+        if (!pioneerNFT) {
             alert('Please sign in')
             return
         }
@@ -112,16 +112,16 @@ export const AlphaAccessMainPage = () => {
             return
         }
 
-        const minteeNFTBalance = await zioneerNFT.zioneerNFTShim.read.balanceOf(mintToAddress)
+        const minteeNFTBalance = await pioneerNFT.pioneerNFTShim.read.balanceOf(mintToAddress)
         if (minteeNFTBalance.gt(0)) {
-            alert('User already has a Zioneer NFT')
+            alert('User already has a Pioneer NFT')
             return
         }
 
         setLoading(true)
 
         try {
-            const tx = await zioneerNFT.zioneerNFTShim.write.mintTo(mintToAddress)
+            const tx = await pioneerNFT.pioneerNFTShim.write.mintTo(mintToAddress)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Mint',
@@ -146,11 +146,11 @@ export const AlphaAccessMainPage = () => {
         handleRefetchContractState,
         mintToAddress,
         recordTransactionReport,
-        zioneerNFT,
+        pioneerNFT,
     ])
 
     const handleSubmitSetMintReward = useCallback(async () => {
-        if (!zioneerNFT) {
+        if (!pioneerNFT) {
             alert('Please sign in')
             return
         }
@@ -165,7 +165,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await zioneerNFT.zioneerNFTShim.write.setMintReward(parsedEther.amount)
+            const tx = await pioneerNFT.pioneerNFTShim.write.setMintReward(parsedEther.amount)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Set Mint Reward',
@@ -185,10 +185,10 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [zioneerNFT, mintRewardETH, handleRefetchContractState, recordTransactionReport])
+    }, [pioneerNFT, mintRewardETH, handleRefetchContractState, recordTransactionReport])
 
     const handleSubmitSetAllowed = useCallback(async () => {
-        if (!zioneerNFT) {
+        if (!pioneerNFT) {
             alert('Please sign in')
             return
         }
@@ -201,7 +201,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await zioneerNFT.zioneerNFTShim.write.setAllowed(allowedUser, allowedState)
+            const tx = await pioneerNFT.pioneerNFTShim.write.setAllowed(allowedUser, allowedState)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Set Allowed',
@@ -222,10 +222,10 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [zioneerNFT, allowedUser, allowedState, handleRefetchContractState, recordTransactionReport])
+    }, [pioneerNFT, allowedUser, allowedState, handleRefetchContractState, recordTransactionReport])
 
     const handleSubmitWithdraw = useCallback(async () => {
-        if (!zioneerNFT) {
+        if (!pioneerNFT) {
             alert('Please sign in')
             return
         }
@@ -233,7 +233,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await zioneerNFT.withdraw()
+            const tx = await pioneerNFT.withdraw()
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Withdraw',
@@ -251,9 +251,9 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [handleRefetchContractState, recordTransactionReport, zioneerNFT])
+    }, [handleRefetchContractState, recordTransactionReport, pioneerNFT])
 
-    if (!zioneerNFT) {
+    if (!pioneerNFT) {
         return <div>Not signed in. Go back to the home page to sign in.</div>
     }
 

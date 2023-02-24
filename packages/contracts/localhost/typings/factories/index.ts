@@ -5,6 +5,8 @@ export { CouncilStaking__factory } from "./CouncilStaking__factory";
 export { Errors__factory } from "./Errors__factory";
 export { Events__factory } from "./Events__factory";
 export { IEntitlement__factory } from "./IEntitlement__factory";
+export { Member__factory } from "./Member__factory";
+export { Pioneer__factory } from "./Pioneer__factory";
 export { Space__factory } from "./Space__factory";
 export { SpaceFactory__factory } from "./SpaceFactory__factory";
 export { TokenEntitlement__factory } from "./TokenEntitlement__factory";

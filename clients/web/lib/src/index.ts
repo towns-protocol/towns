@@ -123,11 +123,11 @@ export {
 
 export { Permission } from './client/web3/ContractTypes'
 export {
-    getCouncilNftAddress,
+    getMemberNftAddress,
     getFilteredRolesFromSpace,
-    getZioneerNftAddress,
+    getPioneerNftAddress,
 } from './client/web3/ContractHelpers'
 
 export { staticAssertNever } from './utils/zion-utils'
 
-export * from './client/web3/ZioneerNFT'
+export * from './client/web3/PioneerNFT'

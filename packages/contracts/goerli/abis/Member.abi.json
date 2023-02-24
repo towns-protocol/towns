@@ -15,6 +15,11 @@
         "internalType": "string",
         "name": "baseURI_",
         "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "merkleRoot_",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "nonpayable",
@@ -22,12 +27,32 @@
   },
   {
     "inputs": [],
-    "name": "InsufficientBalance",
+    "name": "AlreadyMinted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidMintState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidProof",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "MaxSupplyReached",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "MintPriceNotPaid",
     "type": "error"
   },
   {
@@ -38,6 +63,11 @@
   {
     "inputs": [],
     "name": "NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "WithdrawTransfer",
     "type": "error"
   },
   {
@@ -96,6 +126,62 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum IMember.MintState",
+        "name": "prevState",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum IMember.MintState",
+        "name": "newState",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "MintStateChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "Minted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "previousOwner",
         "type": "address"
       },
@@ -135,8 +221,17 @@
     "type": "event"
   },
   {
-    "stateMutability": "payable",
-    "type": "fallback"
+    "inputs": [],
+    "name": "MINT_PRICE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -159,44 +254,12 @@
         "type": "address"
       }
     ],
-    "name": "allowed",
+    "name": "_hasMinted",
     "outputs": [
       {
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "allowedAddressesList",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "allowedAddressesListLength",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -258,7 +321,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_value",
         "type": "uint256"
       }
     ],
@@ -310,38 +373,6 @@
   },
   {
     "inputs": [],
-    "name": "mintReward",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      }
-    ],
-    "name": "mintTo",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "name",
     "outputs": [
       {
@@ -383,6 +414,54 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "allowance",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "proof",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "privateMint",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      }
+    ],
+    "name": "publicMint",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -447,24 +526,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "allow",
-        "type": "bool"
-      }
-    ],
-    "name": "setAllowed",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "operator",
         "type": "address"
       },
@@ -482,12 +543,26 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_mintReward",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "baseURI_",
+        "type": "string"
       }
     ],
-    "name": "setMintReward",
+    "name": "setBaseURI",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startPublicMint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startWaitlistMint",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -582,18 +657,14 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "to",
+        "internalType": "address payable",
+        "name": "payee",
         "type": "address"
       }
     ],
-    "name": "withdraw",
+    "name": "withdrawPayments",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]

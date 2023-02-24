@@ -21,6 +21,11 @@
             "internalType": "string",
             "name": "baseURI_",
             "type": "string"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "merkleRoot_",
+            "type": "bytes32"
           }
         ],
         "stateMutability": "nonpayable",
@@ -28,12 +33,32 @@
       },
       {
         "inputs": [],
-        "name": "InsufficientBalance",
+        "name": "AlreadyMinted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidMintState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "InvalidProof",
         "type": "error"
       },
       {
         "inputs": [],
         "name": "MaxSupplyReached",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "MintPriceNotPaid",
         "type": "error"
       },
       {
@@ -44,6 +69,11 @@
       {
         "inputs": [],
         "name": "NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "WithdrawTransfer",
         "type": "error"
       },
       {
@@ -102,6 +132,62 @@
           {
             "indexed": true,
             "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "enum IMember.MintState",
+            "name": "prevState",
+            "type": "uint8"
+          },
+          {
+            "indexed": true,
+            "internalType": "enum IMember.MintState",
+            "name": "newState",
+            "type": "uint8"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "MintStateChanged",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "Minted",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
             "name": "previousOwner",
             "type": "address"
           },
@@ -141,8 +227,17 @@
         "type": "event"
       },
       {
-        "stateMutability": "payable",
-        "type": "fallback"
+        "inputs": [],
+        "name": "MINT_PRICE",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
@@ -165,44 +260,12 @@
             "type": "address"
           }
         ],
-        "name": "allowed",
+        "name": "_hasMinted",
         "outputs": [
           {
             "internalType": "bool",
             "name": "",
             "type": "bool"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "name": "allowedAddressesList",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "allowedAddressesListLength",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
           }
         ],
         "stateMutability": "view",
@@ -264,7 +327,7 @@
         "outputs": [
           {
             "internalType": "uint256",
-            "name": "",
+            "name": "_value",
             "type": "uint256"
           }
         ],
@@ -316,38 +379,6 @@
       },
       {
         "inputs": [],
-        "name": "mintReward",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          }
-        ],
-        "name": "mintTo",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
         "name": "name",
         "outputs": [
           {
@@ -389,6 +420,54 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "allowance",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "proof",
+            "type": "bytes32[]"
+          }
+        ],
+        "name": "privateMint",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          }
+        ],
+        "name": "publicMint",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
         "type": "function"
       },
       {
@@ -453,24 +532,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "user",
-            "type": "address"
-          },
-          {
-            "internalType": "bool",
-            "name": "allow",
-            "type": "bool"
-          }
-        ],
-        "name": "setAllowed",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "operator",
             "type": "address"
           },
@@ -488,12 +549,26 @@
       {
         "inputs": [
           {
-            "internalType": "uint256",
-            "name": "_mintReward",
-            "type": "uint256"
+            "internalType": "string",
+            "name": "baseURI_",
+            "type": "string"
           }
         ],
-        "name": "setMintReward",
+        "name": "setBaseURI",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "startPublicMint",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "startWaitlistMint",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -588,19 +663,15 @@
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "to",
+            "internalType": "address payable",
+            "name": "payee",
             "type": "address"
           }
         ],
-        "name": "withdraw",
+        "name": "withdrawPayments",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
-      },
-      {
-        "stateMutability": "payable",
-        "type": "receive"
       }
     ],
     "devdoc": {
@@ -646,26 +717,110 @@
           "details": "See {IERC721Metadata-symbol}."
         },
         "tokenURI(uint256)": {
-          "details": "See {IERC721Metadata-tokenURI}."
+          "params": {
+            "tokenId": "the id of the token to get the tokenURI for"
+          },
+          "returns": {
+            "_0": "the tokenURI for the given tokenId"
+          }
         },
         "transferFrom(address,address,uint256)": {
           "details": "See {IERC721-transferFrom}."
         },
         "transferOwnership(address)": {
           "details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
+        },
+        "withdrawPayments(address)": {
+          "params": {
+            "payee": "the address that will receive the withdrawn ether"
+          }
         }
       },
       "version": 1
     },
     "userdoc": {
+      "errors": {
+        "AlreadyMinted()": [
+          {
+            "notice": "thrown when user tries to mint more than 1 token with same wallet"
+          }
+        ],
+        "InvalidAddress()": [
+          {
+            "notice": "thrown when the address is invalid"
+          }
+        ],
+        "InvalidMintState()": [
+          {
+            "notice": "thrown when the mint state is invalid"
+          }
+        ],
+        "InvalidProof()": [
+          {
+            "notice": "thrown when the proof is invalid"
+          }
+        ],
+        "MaxSupplyReached()": [
+          {
+            "notice": "thrown when the max supply is reached"
+          }
+        ],
+        "MintPriceNotPaid()": [
+          {
+            "notice": "thrown when an incorrect amount of ETH is sent to mint"
+          }
+        ],
+        "NonExistentTokenURI()": [
+          {
+            "notice": "thrown when a token is not minted"
+          }
+        ],
+        "NotAllowed()": [
+          {
+            "notice": "thrown when the user is not allowed to perform the action"
+          }
+        ],
+        "WithdrawTransfer()": [
+          {
+            "notice": "thrown when the withdraw payment transaction fails"
+          }
+        ]
+      },
+      "events": {
+        "MintStateChanged(address,uint8,uint8,uint256)": {
+          "notice": "emitted when the mint state is changed"
+        },
+        "Minted(address,uint256,uint256)": {
+          "notice": "emitted when an NFT is minted"
+        }
+      },
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "MINT_PRICE()": {
+          "notice": "the mint price for an individual nft"
+        },
+        "TOTAL_SUPPLY()": {
+          "notice": "the total supply of the collection"
+        },
+        "_hasMinted(address)": {
+          "notice": "mapping to track if a wallet has already minted"
+        },
+        "baseURI()": {
+          "notice": "the base uri"
+        },
+        "tokenURI(uint256)": {
+          "notice": "Get the tokenURI for the given tokenId"
+        },
+        "withdrawPayments(address)": {
+          "notice": "withdraw the balance from the contract"
+        }
+      },
       "version": 1
     }
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/core/tokens/Zioneer.sol": "Zioneer"
+      "contracts/src/core/tokens/Member.sol": "Member"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -691,12 +846,36 @@
     ]
   },
   "sources": {
-    "contracts/src/core/tokens/Zioneer.sol": {
-      "keccak256": "0xe62a65d2f06dd1f050b1ab45a5aa6e7a1d96526b3e37f3caff6ba5adcffa290f",
+    "contracts/src/core/tokens/Member.sol": {
+      "keccak256": "0xf8204bc7c30f9a7a2e3aa6f29b487b136683b0a323dd2e2e27709af0ddb62be3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ffaa6510574468870c33a099104885e117d3d681d1fbc87af69d44dd24e07ae0",
-        "dweb:/ipfs/QmYmFMTn8RR6opduzmVa9ai2JuP5Wz1GxYzBZHo2FJuUee"
+        "bzz-raw://2c48e3366f4b20cb790c964b748cb1bd7d88aa4e00a4b22a1170516566a42c91",
+        "dweb:/ipfs/QmVsHnTM93XRahBhTXHDPzcfi5hQH7xkcd3yL9AfRn3uib"
+      ]
+    },
+    "contracts/src/interfaces/IMember.sol": {
+      "keccak256": "0xe402c4f8c6fa35380bfefec9b200397a606d963b021e0914aab4f75847649a29",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c7f012c482c05559f501080ea7fee1c04b795dba85040a3cf606f83e614a4c94",
+        "dweb:/ipfs/QmVWuQ5hgRwy5VTMfjcufcuKvygwSHpSYZVmLQvPxwmdWn"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/access/AccessControl.sol": {
+      "keccak256": "0x8d29c5ce9b0d56701c1bf9dce816baa3d8665cea300abdd65e6f16314efcebc6",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://cfab8ea48d554b8e071cb977be570c78f95a018aa5f71401c512b2b93001b8a9",
+        "dweb:/ipfs/QmP73h6SJsZ857EHM2dhUURaqXbZFaJwVESryfxufvy7Hw"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
+      "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
+        "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
@@ -705,14 +884,6 @@
       "urls": [
         "bzz-raw://40fb1b5102468f783961d0af743f91b9980cf66b50d1d12009f6bb1869cea4d2",
         "dweb:/ipfs/QmYqEbJML4jB1GHbzD4cUZDtJg5wVwNm3vDJq1GbyDus8y"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol": {
-      "keccak256": "0x03a26b0ce85afee2c16f3232bd123286b849ca576778781cf6e8bbf51cb7570a",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://13a4f5cec214760f14abaedfc0a1860d80c2267386fa62dc77e8eee51ec84d71",
-        "dweb:/ipfs/QmWmEKeofHqLnNEeCivhzTepo1k5xZZqzMxyyyzNBYiYBW"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol": {
@@ -763,12 +934,28 @@
         "dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
       ]
     },
+    "lib/openzeppelin-contracts/contracts/utils/Counters.sol": {
+      "keccak256": "0xf0018c2440fbe238dd3a8732fa8e17a0f9dce84d31451dc8a32f6d62b349c9f1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://59e1c62884d55b70f3ae5432b44bb3166ad71ae3acd19c57ab6ddc3c87c325ee",
+        "dweb:/ipfs/QmezuXg5GK5oeA4F91EZhozBFekhq5TD966bHPH18cCqhu"
+      ]
+    },
     "lib/openzeppelin-contracts/contracts/utils/Strings.sol": {
       "keccak256": "0x2626d8ab3dfdad0fad630c212ad146d59473d0f48b771784c61a7c1dbbea1f3f",
       "license": "MIT",
       "urls": [
         "bzz-raw://d7c144532f1e7c76ac95fb6a8f617c1f740d7a73442a907eb60910e99dfa1fbf",
         "dweb:/ipfs/QmZsGyooD6emxB8JCuugRjnRYS2MPZEL586uuV7dgC8Jng"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/cryptography/MerkleProof.sol": {
+      "keccak256": "0xcc76dbe53154a5bbd12fdd1613a73f73f3dc7c63d813be36f7ee606f52d6a7b3",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://345232794f2cfafccfb4371e44910af9fd86f972ecace1bb6843532536590929",
+        "dweb:/ipfs/QmSnapDBk6P2JG6LJHwituQq7wMM8DawKj32APiPj5Bzpn"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol": {

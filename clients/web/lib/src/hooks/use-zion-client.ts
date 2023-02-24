@@ -22,7 +22,6 @@ import {
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { useCallback, useMemo } from 'react'
 
-import { CouncilNFTShim } from '../client/web3/shims/CouncilNFTShim'
 import { FullyReadMarker } from '../types/timeline-types'
 import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
@@ -45,7 +44,6 @@ interface ZionClientImpl {
     chainId: number | undefined
     client: ZionClient | undefined
     clientRunning: boolean
-    councilNFT: CouncilNFTShim | undefined
     spaceDapp: ISpaceDapp | undefined
     createSpaceRoom: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
@@ -157,7 +155,6 @@ export function useZionClient(): ZionClientImpl {
         chainId: client?.chainId,
         client,
         clientRunning,
-        councilNFT: client?.councilNFT,
         spaceDapp: client?.spaceDapp,
         createChannelRoom: useWithCatch(client?.createChannelRoom),
         createSpaceRoom: useWithCatch(client?.createSpaceRoom),

@@ -46,7 +46,6 @@ import {
     isUserStreamId as isCasablancaUserStreamId,
 } from '@zion/core'
 
-import { CouncilNFTShim } from './web3/shims/CouncilNFTShim'
 import { FullyReadMarker, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
@@ -62,7 +61,6 @@ import { createMatrixChannel } from './matrix/CreateChannel'
 import { createMatrixSpace } from './matrix/CreateSpace'
 import { editZionMessage } from './matrix/EditMessage'
 import { enrichPowerLevels } from './matrix/PowerLevels'
-import { getContractsInfo } from './web3/IStaticContractsInfo'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
@@ -100,7 +98,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
-    public councilNFT: CouncilNFTShim
     public matrixClient?: MatrixClient
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     public casablancaClient?: CasablancaClient
@@ -114,13 +111,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.matrixClient = ZionClient.createMatrixClient(opts, this._auth)
-        const { spaceDapp, councilNFT } = this.createShims(
+        const { spaceDapp } = this.createShims(
             this._chainId,
             this.opts.web3Provider,
             this.opts.web3Signer,
         )
         this.spaceDapp = spaceDapp
-        this.councilNFT = councilNFT
         this._eventHandlers = opts.eventHandlers
     }
 
@@ -313,13 +309,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this._auth = auth
         this._chainId = chainId
         // new contracts
-        const { spaceDapp, councilNFT } = this.createShims(
+        const { spaceDapp } = this.createShims(
             this._chainId,
             this.opts.web3Provider,
             this.opts.web3Signer,
         )
         this.spaceDapp = spaceDapp
-        this.councilNFT = councilNFT
         // new matrixClient
         this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth)
         // start it up, this begins a sync command
@@ -1855,19 +1850,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         chainId: number,
         provider: TProvider | undefined,
         signer: ethers.Signer | undefined,
-    ): { spaceDapp: ISpaceDapp; councilNFT: CouncilNFTShim } {
+    ): { spaceDapp: ISpaceDapp } {
         const spaceDapp = new SpaceDapp(chainId, provider, signer)
-        const contractsInfo = getContractsInfo(chainId)
-        const councilNFT = new CouncilNFTShim(
-            contractsInfo.councilNft.address.councilnft,
-            contractsInfo.councilNft.abi,
-            chainId,
-            provider,
-            signer,
-        )
         return {
             spaceDapp,
-            councilNFT,
         }
     }
 

@@ -1,8 +1,8 @@
 import {
     createExternalTokenStruct,
-    getCouncilNftAddress,
     getFilteredRolesFromSpace,
-    getZioneerNftAddress,
+    getMemberNftAddress,
+    getPioneerNftAddress,
 } from '../../src/client/web3/ContractHelpers'
 import {
     createTestSpaceWithEveryoneRole,
@@ -133,7 +133,7 @@ describe('get role details', () => {
         )
 
         /** Assert */
-        const councilNftAddress = getCouncilNftAddress(alice.chainId)
+        const councilNftAddress = getMemberNftAddress(alice.chainId)
         const expectedToken = createExternalTokenStruct([councilNftAddress])[0]
         expect(roleDetails).toBeDefined()
         if (roleDetails) {
@@ -188,9 +188,9 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const councilNftAddress = getCouncilNftAddress(alice.chainId)
-        const zioneerNftAddress = getZioneerNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([councilNftAddress, zioneerNftAddress])
+        const councilNftAddress = getMemberNftAddress(alice.chainId)
+        const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
+        const tokens = createExternalTokenStruct([councilNftAddress, pioneerNftAddress])
         const expectedCouncilToken = tokens[0]
         const expectedZioneerToken = tokens[1]
         const users: string[] = []

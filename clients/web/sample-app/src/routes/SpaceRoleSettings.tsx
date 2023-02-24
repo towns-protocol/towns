@@ -2,8 +2,8 @@ import React, { useCallback, useState } from 'react'
 
 export enum MembershipRequirement {
     Everyone = 'Everyone',
-    CouncilNFT = 'CouncilNFT',
-    ZioneerNFT = 'ZioneerNFT',
+    MemberNFT = 'MemberNFT',
+    PioneerNFT = 'PioneerNFT',
 }
 
 interface Props {
@@ -22,13 +22,13 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
                     setMembershipRequirement(MembershipRequirement.Everyone)
                     props.onChangeValue(MembershipRequirement.Everyone)
                     break
-                case MembershipRequirement.CouncilNFT:
-                    setMembershipRequirement(MembershipRequirement.CouncilNFT)
-                    props.onChangeValue(MembershipRequirement.CouncilNFT)
+                case MembershipRequirement.MemberNFT:
+                    setMembershipRequirement(MembershipRequirement.MemberNFT)
+                    props.onChangeValue(MembershipRequirement.MemberNFT)
                     break
-                case MembershipRequirement.ZioneerNFT:
-                    setMembershipRequirement(MembershipRequirement.ZioneerNFT)
-                    props.onChangeValue(MembershipRequirement.ZioneerNFT)
+                case MembershipRequirement.PioneerNFT:
+                    setMembershipRequirement(MembershipRequirement.PioneerNFT)
+                    props.onChangeValue(MembershipRequirement.PioneerNFT)
                     break
                 default:
                     console.error('Unknown membership requirement')
@@ -53,19 +53,19 @@ export function SpaceRoleSettings(props: Props): JSX.Element {
                 <input
                     readOnly
                     type="radio"
-                    value={MembershipRequirement.CouncilNFT}
+                    value={MembershipRequirement.MemberNFT}
                     name="membershipRequirement"
-                    checked={membershipRequirement === MembershipRequirement.CouncilNFT}
+                    checked={membershipRequirement === MembershipRequirement.MemberNFT}
                 />{' '}
-                Council NFT
+                Member NFT
                 <input
                     readOnly
                     type="radio"
-                    value={MembershipRequirement.ZioneerNFT}
+                    value={MembershipRequirement.PioneerNFT}
                     name="membershipRequirement"
-                    checked={membershipRequirement === MembershipRequirement.ZioneerNFT}
+                    checked={membershipRequirement === MembershipRequirement.PioneerNFT}
                 />{' '}
-                Zioneer NFT
+                Pioneer NFT
             </fieldset>
         </div>
     )

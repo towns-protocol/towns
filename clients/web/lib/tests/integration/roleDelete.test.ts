@@ -2,7 +2,7 @@ import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/E
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
     createExternalTokenStruct,
-    getCouncilNftAddress,
+    getMemberNftAddress,
 } from '../../src/client/web3/ContractHelpers'
 import {
     createTestSpaceWithZionMemberRole,
@@ -29,7 +29,7 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newNftAddress = getCouncilNftAddress(alice.chainId)
+        const newNftAddress = getMemberNftAddress(alice.chainId)
         const newTokens = createExternalTokenStruct([newNftAddress])
         const newUsers: string[] = []
         // create a new test space

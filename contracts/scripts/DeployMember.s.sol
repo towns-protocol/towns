@@ -6,8 +6,8 @@ import {Member} from "contracts/src/core/tokens/Member.sol";
 import {console} from "forge-std/console.sol";
 import "murky/Merkle.sol";
 
-contract DeployCouncil is ScriptUtils {
-  Member councilNFT;
+contract DeployMember is ScriptUtils {
+  Member member;
   uint256 private NFT_PRICE = 0.08 ether;
 
   function run() external {
@@ -28,36 +28,32 @@ contract DeployCouncil is ScriptUtils {
     Merkle m = new Merkle();
     bytes32 root = m.getRoot(data);
 
-    string memory name = "Zion Council";
-    string memory symbol = "ZC";
+    string memory name = "Council Member";
+    string memory symbol = "MEMBER";
     string
       memory baseURI = "https://bafybeihuygd5wm43kmxl4pocbv5uchdrkimhfwk75qgbmtlrqsy2bwwijq.ipfs.nftstorage.link/metadata/";
 
     vm.startBroadcast();
-    councilNFT = new Member(name, symbol, baseURI, root);
-    councilNFT.privateMint{value: NFT_PRICE}(first, 1, m.getProof(data, 0));
-    councilNFT.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
-    councilNFT.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
-    councilNFT.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
-    councilNFT.privateMint{value: NFT_PRICE}(fifth, 1, m.getProof(data, 4));
+    member = new Member(name, symbol, baseURI, root);
+    member.privateMint{value: NFT_PRICE}(first, 1, m.getProof(data, 0));
+    member.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
+    member.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
+    member.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
+    member.privateMint{value: NFT_PRICE}(fifth, 1, m.getProof(data, 4));
     vm.stopBroadcast();
 
     _writeJson();
 
-    console.log("Deploying Zion Council NFT: ", address(councilNFT));
+    console.log("Deploying Council Member NFT: ", address(member));
   }
 
   function _writeJson() internal {
     string memory json = "";
-    json = vm.serializeString(
-      json,
-      "councilnft",
-      vm.toString(address(councilNFT))
-    );
+    json = vm.serializeString(json, "member", vm.toString(address(member)));
     string memory path = string.concat(
       "packages/contracts/",
       _getChainName(),
-      "/addresses/council.json"
+      "/addresses/member.json"
     );
     vm.writeJson(json, path);
   }

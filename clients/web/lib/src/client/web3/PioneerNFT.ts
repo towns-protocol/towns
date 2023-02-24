@@ -1,20 +1,20 @@
 import { ethers, BigNumber } from 'ethers'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 
-import { ZioneerNFTShim } from './shims/ZioneerNFTShim'
+import { PioneerNFTShim } from './shims/PioneerNFTShim'
 
-export interface ZioneerNFTContractState {
+export interface PioneerNFTContractState {
     contractBalance: BigNumber
     mintReward: BigNumber
     contractAddress: string
     owner: string
 }
 
-export class ZioneerNFT {
+export class PioneerNFT {
     private readonly contractsInfo: IStaticContractsInfo
     private readonly provider: ethers.providers.Provider | undefined
     private readonly signer: ethers.Signer | undefined
-    public readonly zioneerNFTShim: ZioneerNFTShim
+    public readonly pioneerNFTShim: PioneerNFTShim
 
     constructor(
         chainId: number,
@@ -24,9 +24,9 @@ export class ZioneerNFT {
         this.provider = provider
         this.signer = signer
         this.contractsInfo = getContractsInfo(chainId)
-        this.zioneerNFTShim = new ZioneerNFTShim(
-            this.contractsInfo.zioneerNft.address.zioneer,
-            this.contractsInfo.zioneerNft.abi,
+        this.pioneerNFTShim = new PioneerNFTShim(
+            this.contractsInfo.pioneerNft.address,
+            this.contractsInfo.pioneerNft.abi,
             chainId,
             provider,
             signer,
@@ -39,7 +39,7 @@ export class ZioneerNFT {
         }
 
         return this.signer.sendTransaction({
-            to: this.zioneerNFTShim.address,
+            to: this.pioneerNFTShim.address,
             value: amount,
         })
     }
@@ -49,24 +49,24 @@ export class ZioneerNFT {
             throw new Error('No signer')
         }
         const address = await this.signer.getAddress()
-        return this.zioneerNFTShim.write.withdraw(address)
+        return this.pioneerNFTShim.write.withdraw(address)
     }
 
-    public async getContractState(): Promise<ZioneerNFTContractState> {
+    public async getContractState(): Promise<PioneerNFTContractState> {
         if (!this.provider) {
             throw new Error('No provider')
         }
 
-        const contractBalance = await this.provider.getBalance(this.zioneerNFTShim.address)
+        const contractBalance = await this.provider.getBalance(this.pioneerNFTShim.address)
 
-        const mintReward = await this.zioneerNFTShim.read.mintReward()
+        const mintReward = await this.pioneerNFTShim.read.mintReward()
 
-        const owner = await this.zioneerNFTShim.read.owner()
+        const owner = await this.pioneerNFTShim.read.owner()
 
         return {
             contractBalance,
             mintReward,
-            contractAddress: this.zioneerNFTShim.address,
+            contractAddress: this.pioneerNFTShim.address,
             owner,
         }
     }

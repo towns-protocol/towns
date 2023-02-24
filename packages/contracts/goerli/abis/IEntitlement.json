@@ -701,20 +701,20 @@
   },
   "ast": {
     "absolutePath": "contracts/src/interfaces/IEntitlement.sol",
-    "id": 10037,
+    "id": 10264,
     "exportedSymbols": {
       "DataTypes": [
-        10421
+        10704
       ],
       "IEntitlement": [
-        10036
+        10263
       ]
     },
     "nodeType": "SourceUnit",
     "src": "38:3142:21",
     "nodes": [
       {
-        "id": 9926,
+        "id": 10153,
         "nodeType": "PragmaDirective",
         "src": "38:23:21",
         "nodes": [],
@@ -725,23 +725,23 @@
         ]
       },
       {
-        "id": 9928,
+        "id": 10155,
         "nodeType": "ImportDirective",
         "src": "63:64:21",
         "nodes": [],
         "absolutePath": "contracts/src/libraries/DataTypes.sol",
         "file": "contracts/src/libraries/DataTypes.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 10037,
-        "sourceUnit": 10422,
+        "scope": 10264,
+        "sourceUnit": 10705,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 9927,
+              "id": 10154,
               "name": "DataTypes",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 10421,
+              "referencedDeclaration": 10704,
               "src": "71:9:21",
               "typeDescriptions": {}
             },
@@ -751,17 +751,17 @@
         "unitAlias": ""
       },
       {
-        "id": 10036,
+        "id": 10263,
         "nodeType": "ContractDefinition",
         "src": "129:3050:21",
         "nodes": [
           {
-            "id": 9934,
+            "id": 10161,
             "nodeType": "FunctionDefinition",
             "src": "205:54:21",
             "nodes": [],
             "documentation": {
-              "id": 9929,
+              "id": 10156,
               "nodeType": "StructuredDocumentation",
               "src": "156:46:21",
               "text": "@notice The name of the entitlement module"
@@ -773,23 +773,23 @@
             "name": "name",
             "nameLocation": "214:4:21",
             "parameters": {
-              "id": 9930,
+              "id": 10157,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "218:2:21"
             },
             "returnParameters": {
-              "id": 9933,
+              "id": 10160,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9932,
+                  "id": 10159,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9934,
+                  "scope": 10161,
                   "src": "244:13:21",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -798,7 +798,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9931,
+                    "id": 10158,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "244:6:21",
@@ -812,18 +812,18 @@
               ],
               "src": "243:15:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9940,
+            "id": 10167,
             "nodeType": "FunctionDefinition",
             "src": "312:60:21",
             "nodes": [],
             "documentation": {
-              "id": 9935,
+              "id": 10162,
               "nodeType": "StructuredDocumentation",
               "src": "263:46:21",
               "text": "@notice The type of the entitlement module"
@@ -835,23 +835,23 @@
             "name": "moduleType",
             "nameLocation": "321:10:21",
             "parameters": {
-              "id": 9936,
+              "id": 10163,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "331:2:21"
             },
             "returnParameters": {
-              "id": 9939,
+              "id": 10166,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9938,
+                  "id": 10165,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9940,
+                  "scope": 10167,
                   "src": "357:13:21",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -860,7 +860,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9937,
+                    "id": 10164,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "357:6:21",
@@ -874,18 +874,18 @@
               ],
               "src": "356:15:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9946,
+            "id": 10173,
             "nodeType": "FunctionDefinition",
             "src": "432:61:21",
             "nodes": [],
             "documentation": {
-              "id": 9941,
+              "id": 10168,
               "nodeType": "StructuredDocumentation",
               "src": "376:53:21",
               "text": "@notice The description of the entitlement module"
@@ -897,23 +897,23 @@
             "name": "description",
             "nameLocation": "441:11:21",
             "parameters": {
-              "id": 9942,
+              "id": 10169,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "452:2:21"
             },
             "returnParameters": {
-              "id": 9945,
+              "id": 10172,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9944,
+                  "id": 10171,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9946,
+                  "scope": 10173,
                   "src": "478:13:21",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -922,7 +922,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9943,
+                    "id": 10170,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "478:6:21",
@@ -936,13 +936,13 @@
               ],
               "src": "477:15:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9953,
+            "id": 10180,
             "nodeType": "FunctionDefinition",
             "src": "497:70:21",
             "nodes": [],
@@ -953,17 +953,17 @@
             "name": "initialize",
             "nameLocation": "506:10:21",
             "parameters": {
-              "id": 9951,
+              "id": 10178,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9948,
+                  "id": 10175,
                   "mutability": "mutable",
                   "name": "_tokenAddress",
                   "nameLocation": "525:13:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9953,
+                  "scope": 10180,
                   "src": "517:21:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -972,7 +972,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9947,
+                    "id": 10174,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "517:7:21",
@@ -986,12 +986,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 9950,
+                  "id": 10177,
                   "mutability": "mutable",
                   "name": "_tokenId",
                   "nameLocation": "548:8:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9953,
+                  "scope": 10180,
                   "src": "540:16:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1000,7 +1000,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 9949,
+                    "id": 10176,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "540:7:21",
@@ -1015,23 +1015,23 @@
               "src": "516:41:21"
             },
             "returnParameters": {
-              "id": 9952,
+              "id": 10179,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "566:0:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9959,
+            "id": 10186,
             "nodeType": "FunctionDefinition",
             "src": "688:43:21",
             "nodes": [],
             "documentation": {
-              "id": 9954,
+              "id": 10181,
               "nodeType": "StructuredDocumentation",
               "src": "571:114:21",
               "text": "@notice sets the address for the space that controls this entitlement\n @param _space address of the space"
@@ -1043,17 +1043,17 @@
             "name": "setSpace",
             "nameLocation": "697:8:21",
             "parameters": {
-              "id": 9957,
+              "id": 10184,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9956,
+                  "id": 10183,
                   "mutability": "mutable",
                   "name": "_space",
                   "nameLocation": "714:6:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9959,
+                  "scope": 10186,
                   "src": "706:14:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1062,7 +1062,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9955,
+                    "id": 10182,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "706:7:21",
@@ -1078,23 +1078,23 @@
               "src": "705:16:21"
             },
             "returnParameters": {
-              "id": 9958,
+              "id": 10185,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "730:0:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9969,
+            "id": 10196,
             "nodeType": "FunctionDefinition",
             "src": "951:111:21",
             "nodes": [],
             "documentation": {
-              "id": 9960,
+              "id": 10187,
               "nodeType": "StructuredDocumentation",
               "src": "735:213:21",
               "text": "@notice sets a new entitlement\n @param roleId id of the role to gate\n @param entitlementData abi encoded array of data necessary to set the entitlement\n @return entitlementId the id that was set"
@@ -1106,17 +1106,17 @@
             "name": "setEntitlement",
             "nameLocation": "960:14:21",
             "parameters": {
-              "id": 9965,
+              "id": 10192,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9962,
+                  "id": 10189,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "988:6:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9969,
+                  "scope": 10196,
                   "src": "980:14:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1125,7 +1125,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 9961,
+                    "id": 10188,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "980:7:21",
@@ -1138,12 +1138,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 9964,
+                  "id": 10191,
                   "mutability": "mutable",
                   "name": "entitlementData",
                   "nameLocation": "1015:15:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9969,
+                  "scope": 10196,
                   "src": "1000:30:21",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1152,7 +1152,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 9963,
+                    "id": 10190,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "1000:5:21",
@@ -1167,17 +1167,17 @@
               "src": "974:60:21"
             },
             "returnParameters": {
-              "id": 9968,
+              "id": 10195,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9967,
+                  "id": 10194,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9969,
+                  "scope": 10196,
                   "src": "1053:7:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1186,7 +1186,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 9966,
+                    "id": 10193,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "1053:7:21",
@@ -1200,18 +1200,18 @@
               ],
               "src": "1052:9:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9979,
+            "id": 10206,
             "nodeType": "FunctionDefinition",
             "src": "1292:114:21",
             "nodes": [],
             "documentation": {
-              "id": 9970,
+              "id": 10197,
               "nodeType": "StructuredDocumentation",
               "src": "1066:223:21",
               "text": "@notice removes an entitlement\n @param roleId id of the role to remove\n @param entitlementData abi encoded array of the data associated with that entitlement\n @return entitlementId the id that was removed"
@@ -1223,17 +1223,17 @@
             "name": "removeEntitlement",
             "nameLocation": "1301:17:21",
             "parameters": {
-              "id": 9975,
+              "id": 10202,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9972,
+                  "id": 10199,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "1332:6:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9979,
+                  "scope": 10206,
                   "src": "1324:14:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1242,7 +1242,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 9971,
+                    "id": 10198,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1324:7:21",
@@ -1255,12 +1255,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 9974,
+                  "id": 10201,
                   "mutability": "mutable",
                   "name": "entitlementData",
                   "nameLocation": "1359:15:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9979,
+                  "scope": 10206,
                   "src": "1344:30:21",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1269,7 +1269,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 9973,
+                    "id": 10200,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "1344:5:21",
@@ -1284,17 +1284,17 @@
               "src": "1318:60:21"
             },
             "returnParameters": {
-              "id": 9978,
+              "id": 10205,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9977,
+                  "id": 10204,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9979,
+                  "scope": 10206,
                   "src": "1397:7:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1303,7 +1303,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 9976,
+                    "id": 10203,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "1397:7:21",
@@ -1317,18 +1317,18 @@
               ],
               "src": "1396:9:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9987,
+            "id": 10214,
             "nodeType": "FunctionDefinition",
             "src": "1551:92:21",
             "nodes": [],
             "documentation": {
-              "id": 9980,
+              "id": 10207,
               "nodeType": "StructuredDocumentation",
               "src": "1410:138:21",
               "text": "@notice adds a role to a channel\n @param channelId id of the channel to add the role to\n @param roleId id of the role to add"
@@ -1340,17 +1340,17 @@
             "name": "addRoleIdToChannel",
             "nameLocation": "1560:18:21",
             "parameters": {
-              "id": 9985,
+              "id": 10212,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9982,
+                  "id": 10209,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1600:9:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9987,
+                  "scope": 10214,
                   "src": "1584:25:21",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1359,7 +1359,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9981,
+                    "id": 10208,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1584:6:21",
@@ -1372,12 +1372,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 9984,
+                  "id": 10211,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "1623:6:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9987,
+                  "scope": 10214,
                   "src": "1615:14:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1386,7 +1386,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 9983,
+                    "id": 10210,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1615:7:21",
@@ -1401,23 +1401,23 @@
               "src": "1578:55:21"
             },
             "returnParameters": {
-              "id": 9986,
+              "id": 10213,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1642:0:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 9995,
+            "id": 10222,
             "nodeType": "FunctionDefinition",
             "src": "1801:97:21",
             "nodes": [],
             "documentation": {
-              "id": 9988,
+              "id": 10215,
               "nodeType": "StructuredDocumentation",
               "src": "1647:151:21",
               "text": "@notice removes a role from a channel\n @param channelId id of the channel to remove the role from\n @param roleId id of the role to remove"
@@ -1429,17 +1429,17 @@
             "name": "removeRoleIdFromChannel",
             "nameLocation": "1810:23:21",
             "parameters": {
-              "id": 9993,
+              "id": 10220,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9990,
+                  "id": 10217,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1855:9:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9995,
+                  "scope": 10222,
                   "src": "1839:25:21",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1448,7 +1448,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9989,
+                    "id": 10216,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1839:6:21",
@@ -1461,12 +1461,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 9992,
+                  "id": 10219,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "1878:6:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 9995,
+                  "scope": 10222,
                   "src": "1870:14:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1475,7 +1475,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 9991,
+                    "id": 10218,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1870:7:21",
@@ -1490,23 +1490,23 @@
               "src": "1833:55:21"
             },
             "returnParameters": {
-              "id": 9994,
+              "id": 10221,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1897:0:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 10007,
+            "id": 10234,
             "nodeType": "FunctionDefinition",
             "src": "2226:126:21",
             "nodes": [],
             "documentation": {
-              "id": 9996,
+              "id": 10223,
               "nodeType": "StructuredDocumentation",
               "src": "1902:321:21",
               "text": "@notice checks whether a user is has a given permission for a channel or a space\n @param channelId id of the channel to check, if empty string, checks space\n @param user address of the user to check\n @param permission the permission to check\n @return whether the user is entitled to the permission"
@@ -1518,17 +1518,17 @@
             "name": "isEntitled",
             "nameLocation": "2235:10:21",
             "parameters": {
-              "id": 10003,
+              "id": 10230,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 9998,
+                  "id": 10225,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "2267:9:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10007,
+                  "scope": 10234,
                   "src": "2251:25:21",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1537,7 +1537,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 9997,
+                    "id": 10224,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "2251:6:21",
@@ -1550,12 +1550,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 10000,
+                  "id": 10227,
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "2290:4:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10007,
+                  "scope": 10234,
                   "src": "2282:12:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1564,7 +1564,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 9999,
+                    "id": 10226,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2282:7:21",
@@ -1578,12 +1578,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 10002,
+                  "id": 10229,
                   "mutability": "mutable",
                   "name": "permission",
                   "nameLocation": "2308:10:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10007,
+                  "scope": 10234,
                   "src": "2300:18:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1592,7 +1592,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 10001,
+                    "id": 10228,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "2300:7:21",
@@ -1607,17 +1607,17 @@
               "src": "2245:77:21"
             },
             "returnParameters": {
-              "id": 10006,
+              "id": 10233,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10005,
+                  "id": 10232,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10007,
+                  "scope": 10234,
                   "src": "2346:4:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1626,7 +1626,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 10004,
+                    "id": 10231,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "2346:4:21",
@@ -1640,18 +1640,18 @@
               ],
               "src": "2345:6:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 10016,
+            "id": 10243,
             "nodeType": "FunctionDefinition",
             "src": "2533:107:21",
             "nodes": [],
             "documentation": {
-              "id": 10008,
+              "id": 10235,
               "nodeType": "StructuredDocumentation",
               "src": "2356:174:21",
               "text": "@notice fetches the roleIds for a given channel\n @param channelId the channel to fetch the roleIds for\n @return roleIds array of all the roleIds for the channel"
@@ -1663,17 +1663,17 @@
             "name": "getRoleIdsByChannelId",
             "nameLocation": "2542:21:21",
             "parameters": {
-              "id": 10011,
+              "id": 10238,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10010,
+                  "id": 10237,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "2585:9:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10016,
+                  "scope": 10243,
                   "src": "2569:25:21",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -1682,7 +1682,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 10009,
+                    "id": 10236,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "2569:6:21",
@@ -1697,17 +1697,17 @@
               "src": "2563:35:21"
             },
             "returnParameters": {
-              "id": 10015,
+              "id": 10242,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10014,
+                  "id": 10241,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10016,
+                  "scope": 10243,
                   "src": "2622:16:21",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1717,7 +1717,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 10012,
+                      "id": 10239,
                       "name": "uint256",
                       "nodeType": "ElementaryTypeName",
                       "src": "2622:7:21",
@@ -1726,7 +1726,7 @@
                         "typeString": "uint256"
                       }
                     },
-                    "id": 10013,
+                    "id": 10240,
                     "nodeType": "ArrayTypeName",
                     "src": "2622:9:21",
                     "typeDescriptions": {
@@ -1739,18 +1739,18 @@
               ],
               "src": "2621:18:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 10025,
+            "id": 10252,
             "nodeType": "FunctionDefinition",
             "src": "2814:99:21",
             "nodes": [],
             "documentation": {
-              "id": 10017,
+              "id": 10244,
               "nodeType": "StructuredDocumentation",
               "src": "2644:167:21",
               "text": "@notice fetches the entitlement data for a roleId\n @param roleId the roleId to fetch the entitlement data for\n @return entitlementData array for the role"
@@ -1762,17 +1762,17 @@
             "name": "getEntitlementDataByRoleId",
             "nameLocation": "2823:26:21",
             "parameters": {
-              "id": 10020,
+              "id": 10247,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10019,
+                  "id": 10246,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "2863:6:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10025,
+                  "scope": 10252,
                   "src": "2855:14:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1781,7 +1781,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 10018,
+                    "id": 10245,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "2855:7:21",
@@ -1796,17 +1796,17 @@
               "src": "2849:24:21"
             },
             "returnParameters": {
-              "id": 10024,
+              "id": 10251,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10023,
+                  "id": 10250,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10025,
+                  "scope": 10252,
                   "src": "2897:14:21",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1816,7 +1816,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 10021,
+                      "id": 10248,
                       "name": "bytes",
                       "nodeType": "ElementaryTypeName",
                       "src": "2897:5:21",
@@ -1825,7 +1825,7 @@
                         "typeString": "bytes"
                       }
                     },
-                    "id": 10022,
+                    "id": 10249,
                     "nodeType": "ArrayTypeName",
                     "src": "2897:7:21",
                     "typeDescriptions": {
@@ -1838,18 +1838,18 @@
               ],
               "src": "2896:16:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 10035,
+            "id": 10262,
             "nodeType": "FunctionDefinition",
             "src": "3085:92:21",
             "nodes": [],
             "documentation": {
-              "id": 10026,
+              "id": 10253,
               "nodeType": "StructuredDocumentation",
               "src": "2917:165:21",
               "text": "@notice fetches the roles for a given user in the space\n @param user the user to fetch the roles for\n @return roles array of all the roles for the user"
@@ -1861,17 +1861,17 @@
             "name": "getUserRoles",
             "nameLocation": "3094:12:21",
             "parameters": {
-              "id": 10029,
+              "id": 10256,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10028,
+                  "id": 10255,
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "3120:4:21",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10035,
+                  "scope": 10262,
                   "src": "3112:12:21",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1880,7 +1880,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 10027,
+                    "id": 10254,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "3112:7:21",
@@ -1896,51 +1896,51 @@
               "src": "3106:22:21"
             },
             "returnParameters": {
-              "id": 10034,
+              "id": 10261,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 10033,
+                  "id": 10260,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 10035,
+                  "scope": 10262,
                   "src": "3152:23:21",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_struct$_Role_$10376_memory_ptr_$dyn_memory_ptr",
+                    "typeIdentifier": "t_array$_t_struct$_Role_$10659_memory_ptr_$dyn_memory_ptr",
                     "typeString": "struct DataTypes.Role[]"
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 10031,
+                      "id": 10258,
                       "nodeType": "UserDefinedTypeName",
                       "pathNode": {
-                        "id": 10030,
+                        "id": 10257,
                         "name": "DataTypes.Role",
                         "nameLocations": [
                           "3152:9:21",
                           "3162:4:21"
                         ],
                         "nodeType": "IdentifierPath",
-                        "referencedDeclaration": 10376,
+                        "referencedDeclaration": 10659,
                         "src": "3152:14:21"
                       },
-                      "referencedDeclaration": 10376,
+                      "referencedDeclaration": 10659,
                       "src": "3152:14:21",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_Role_$10376_storage_ptr",
+                        "typeIdentifier": "t_struct$_Role_$10659_storage_ptr",
                         "typeString": "struct DataTypes.Role"
                       }
                     },
-                    "id": 10032,
+                    "id": 10259,
                     "nodeType": "ArrayTypeName",
                     "src": "3152:16:21",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_struct$_Role_$10376_storage_$dyn_storage_ptr",
+                      "typeIdentifier": "t_array$_t_struct$_Role_$10659_storage_$dyn_storage_ptr",
                       "typeString": "struct DataTypes.Role[]"
                     }
                   },
@@ -1949,7 +1949,7 @@
               ],
               "src": "3151:25:21"
             },
-            "scope": 10036,
+            "scope": 10263,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -1962,11 +1962,11 @@
         "contractKind": "interface",
         "fullyImplemented": false,
         "linearizedBaseContracts": [
-          10036
+          10263
         ],
         "name": "IEntitlement",
         "nameLocation": "139:12:21",
-        "scope": 10037,
+        "scope": 10264,
         "usedErrors": []
       }
     ],

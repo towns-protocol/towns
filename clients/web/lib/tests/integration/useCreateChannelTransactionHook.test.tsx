@@ -13,7 +13,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
+import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -33,7 +33,7 @@ describe('useCreateChannelTransactionHook', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = getCouncilNftAddress(chainId)
+        const memberNftAddress = getMemberNftAddress(chainId)
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
         await provider.fundWallet()
@@ -122,7 +122,7 @@ describe('useCreateChannelTransactionHook', () => {
                             visibility: RoomVisibility.Public,
                         },
                         'Test Role',
-                        [councilNftAddress],
+                        [memberNftAddress],
                         [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
                     )
                 }

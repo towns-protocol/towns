@@ -9,6 +9,7 @@ import type {
   CallOverrides,
   ContractTransaction,
   Overrides,
+  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -27,83 +28,79 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export interface ZioneerInterface extends utils.Interface {
+export interface MemberInterface extends utils.Interface {
   functions: {
+    "MINT_PRICE()": FunctionFragment;
     "TOTAL_SUPPLY()": FunctionFragment;
-    "allowed(address)": FunctionFragment;
-    "allowedAddressesList(uint256)": FunctionFragment;
-    "allowedAddressesListLength()": FunctionFragment;
+    "_hasMinted(address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "baseURI()": FunctionFragment;
     "currentTokenId()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "mintReward()": FunctionFragment;
-    "mintTo(address)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
+    "privateMint(address,uint256,bytes32[])": FunctionFragment;
+    "publicMint(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
-    "setAllowed(address,bool)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
-    "setMintReward(uint256)": FunctionFragment;
+    "setBaseURI(string)": FunctionFragment;
+    "startPublicMint()": FunctionFragment;
+    "startWaitlistMint()": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
     "tokenURI(uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "withdraw(address)": FunctionFragment;
+    "withdrawPayments(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "MINT_PRICE"
       | "TOTAL_SUPPLY"
-      | "allowed"
-      | "allowedAddressesList"
-      | "allowedAddressesListLength"
+      | "_hasMinted"
       | "approve"
       | "balanceOf"
       | "baseURI"
       | "currentTokenId"
       | "getApproved"
       | "isApprovedForAll"
-      | "mintReward"
-      | "mintTo"
       | "name"
       | "owner"
       | "ownerOf"
+      | "privateMint"
+      | "publicMint"
       | "renounceOwnership"
       | "safeTransferFrom(address,address,uint256)"
       | "safeTransferFrom(address,address,uint256,bytes)"
-      | "setAllowed"
       | "setApprovalForAll"
-      | "setMintReward"
+      | "setBaseURI"
+      | "startPublicMint"
+      | "startWaitlistMint"
       | "supportsInterface"
       | "symbol"
       | "tokenURI"
       | "transferFrom"
       | "transferOwnership"
-      | "withdraw"
+      | "withdrawPayments"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "MINT_PRICE",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "TOTAL_SUPPLY",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "allowed",
+    functionFragment: "_hasMinted",
     values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "allowedAddressesList",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "allowedAddressesListLength",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "approve",
@@ -126,19 +123,23 @@ export interface ZioneerInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mintReward",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mintTo",
-    values: [PromiseOrValue<string>]
-  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "ownerOf",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "privateMint",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "publicMint",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -162,16 +163,20 @@ export interface ZioneerInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "setAllowed",
-    values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setApprovalForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
-    functionFragment: "setMintReward",
-    values: [PromiseOrValue<BigNumberish>]
+    functionFragment: "setBaseURI",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "startPublicMint",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "startWaitlistMint",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
@@ -195,23 +200,16 @@ export interface ZioneerInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdraw",
+    functionFragment: "withdrawPayments",
     values: [PromiseOrValue<string>]
   ): string;
 
+  decodeFunctionResult(functionFragment: "MINT_PRICE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "TOTAL_SUPPLY",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "allowed", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "allowedAddressesList",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "allowedAddressesListLength",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "_hasMinted", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "baseURI", data: BytesLike): Result;
@@ -227,11 +225,14 @@ export interface ZioneerInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mintReward", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mintTo", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "privateMint",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "publicMint", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -244,13 +245,17 @@ export interface ZioneerInterface extends utils.Interface {
     functionFragment: "safeTransferFrom(address,address,uint256,bytes)",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "setAllowed", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setApprovalForAll",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setBaseURI", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setMintReward",
+    functionFragment: "startPublicMint",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "startWaitlistMint",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -267,17 +272,24 @@ export interface ZioneerInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawPayments",
+    data: BytesLike
+  ): Result;
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
+    "MintStateChanged(address,uint8,uint8,uint256)": EventFragment;
+    "Minted(address,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MintStateChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Minted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
@@ -306,6 +318,32 @@ export type ApprovalForAllEvent = TypedEvent<
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
+export interface MintStateChangedEventObject {
+  caller: string;
+  prevState: number;
+  newState: number;
+  timestamp: BigNumber;
+}
+export type MintStateChangedEvent = TypedEvent<
+  [string, number, number, BigNumber],
+  MintStateChangedEventObject
+>;
+
+export type MintStateChangedEventFilter =
+  TypedEventFilter<MintStateChangedEvent>;
+
+export interface MintedEventObject {
+  recipient: string;
+  tokenId: BigNumber;
+  timestamp: BigNumber;
+}
+export type MintedEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  MintedEventObject
+>;
+
+export type MintedEventFilter = TypedEventFilter<MintedEvent>;
+
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
   newOwner: string;
@@ -330,12 +368,12 @@ export type TransferEvent = TypedEvent<
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
-export interface Zioneer extends BaseContract {
+export interface Member extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: ZioneerInterface;
+  interface: MemberInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -357,19 +395,14 @@ export interface Zioneer extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    MINT_PRICE(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    allowed(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
-
-    allowedAddressesList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    allowedAddressesListLength(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     approve(
       to: PromiseOrValue<string>,
@@ -384,7 +417,9 @@ export interface Zioneer extends BaseContract {
 
     baseURI(overrides?: CallOverrides): Promise<[string]>;
 
-    currentTokenId(overrides?: CallOverrides): Promise<[BigNumber]>;
+    currentTokenId(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { _value: BigNumber }>;
 
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
@@ -397,13 +432,6 @@ export interface Zioneer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    mintReward(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    mintTo(
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     name(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
@@ -412,6 +440,18 @@ export interface Zioneer extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string]>;
+
+    privateMint(
+      recipient: PromiseOrValue<string>,
+      allowance: PromiseOrValue<BigNumberish>,
+      proof: PromiseOrValue<BytesLike>[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -432,20 +472,22 @@ export interface Zioneer extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    setAllowed(
-      user: PromiseOrValue<string>,
-      allow: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    setMintReward(
-      _mintReward: PromiseOrValue<BigNumberish>,
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    startPublicMint(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    startWaitlistMint(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -473,25 +515,20 @@ export interface Zioneer extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    withdraw(
-      to: PromiseOrValue<string>,
+    withdrawPayments(
+      payee: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
+  MINT_PRICE(overrides?: CallOverrides): Promise<BigNumber>;
+
   TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
-  allowed(
+  _hasMinted(
     arg0: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
-
-  allowedAddressesList(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  allowedAddressesListLength(overrides?: CallOverrides): Promise<BigNumber>;
 
   approve(
     to: PromiseOrValue<string>,
@@ -519,13 +556,6 @@ export interface Zioneer extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  mintReward(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mintTo(
-    to: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   name(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
@@ -534,6 +564,18 @@ export interface Zioneer extends BaseContract {
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  privateMint(
+    recipient: PromiseOrValue<string>,
+    allowance: PromiseOrValue<BigNumberish>,
+    proof: PromiseOrValue<BytesLike>[],
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  publicMint(
+    recipient: PromiseOrValue<string>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -554,20 +596,22 @@ export interface Zioneer extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  setAllowed(
-    user: PromiseOrValue<string>,
-    allow: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   setApprovalForAll(
     operator: PromiseOrValue<string>,
     approved: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  setMintReward(
-    _mintReward: PromiseOrValue<BigNumberish>,
+  setBaseURI(
+    baseURI_: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  startPublicMint(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  startWaitlistMint(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -595,25 +639,20 @@ export interface Zioneer extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  withdraw(
-    to: PromiseOrValue<string>,
+  withdrawPayments(
+    payee: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    MINT_PRICE(overrides?: CallOverrides): Promise<BigNumber>;
+
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
-    allowed(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    allowedAddressesList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    allowedAddressesListLength(overrides?: CallOverrides): Promise<BigNumber>;
 
     approve(
       to: PromiseOrValue<string>,
@@ -641,13 +680,6 @@ export interface Zioneer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    mintReward(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintTo(
-      to: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     name(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
@@ -656,6 +688,18 @@ export interface Zioneer extends BaseContract {
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    privateMint(
+      recipient: PromiseOrValue<string>,
+      allowance: PromiseOrValue<BigNumberish>,
+      proof: PromiseOrValue<BytesLike>[],
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
@@ -674,22 +718,20 @@ export interface Zioneer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setAllowed(
-      user: PromiseOrValue<string>,
-      allow: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setMintReward(
-      _mintReward: PromiseOrValue<BigNumberish>,
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    startPublicMint(overrides?: CallOverrides): Promise<void>;
+
+    startWaitlistMint(overrides?: CallOverrides): Promise<void>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
@@ -715,8 +757,8 @@ export interface Zioneer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdraw(
-      to: PromiseOrValue<string>,
+    withdrawPayments(
+      payee: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -744,6 +786,30 @@ export interface Zioneer extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
+    "MintStateChanged(address,uint8,uint8,uint256)"(
+      caller?: PromiseOrValue<string> | null,
+      prevState?: PromiseOrValue<BigNumberish> | null,
+      newState?: PromiseOrValue<BigNumberish> | null,
+      timestamp?: null
+    ): MintStateChangedEventFilter;
+    MintStateChanged(
+      caller?: PromiseOrValue<string> | null,
+      prevState?: PromiseOrValue<BigNumberish> | null,
+      newState?: PromiseOrValue<BigNumberish> | null,
+      timestamp?: null
+    ): MintStateChangedEventFilter;
+
+    "Minted(address,uint256,uint256)"(
+      recipient?: PromiseOrValue<string> | null,
+      tokenId?: null,
+      timestamp?: null
+    ): MintedEventFilter;
+    Minted(
+      recipient?: PromiseOrValue<string> | null,
+      tokenId?: null,
+      timestamp?: null
+    ): MintedEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -766,19 +832,14 @@ export interface Zioneer extends BaseContract {
   };
 
   estimateGas: {
+    MINT_PRICE(overrides?: CallOverrides): Promise<BigNumber>;
+
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
-    allowed(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    allowedAddressesList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    allowedAddressesListLength(overrides?: CallOverrides): Promise<BigNumber>;
 
     approve(
       to: PromiseOrValue<string>,
@@ -806,13 +867,6 @@ export interface Zioneer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    mintReward(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintTo(
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
@@ -820,6 +874,18 @@ export interface Zioneer extends BaseContract {
     ownerOf(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    privateMint(
+      recipient: PromiseOrValue<string>,
+      allowance: PromiseOrValue<BigNumberish>,
+      proof: PromiseOrValue<BytesLike>[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     renounceOwnership(
@@ -841,20 +907,22 @@ export interface Zioneer extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    setAllowed(
-      user: PromiseOrValue<string>,
-      allow: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    setMintReward(
-      _mintReward: PromiseOrValue<BigNumberish>,
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    startPublicMint(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    startWaitlistMint(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -882,26 +950,19 @@ export interface Zioneer extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    withdraw(
-      to: PromiseOrValue<string>,
+    withdrawPayments(
+      payee: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    MINT_PRICE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    allowed(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    allowedAddressesList(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    allowedAddressesListLength(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -931,13 +992,6 @@ export interface Zioneer extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    mintReward(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mintTo(
-      to: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -945,6 +999,18 @@ export interface Zioneer extends BaseContract {
     ownerOf(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    privateMint(
+      recipient: PromiseOrValue<string>,
+      allowance: PromiseOrValue<BigNumberish>,
+      proof: PromiseOrValue<BytesLike>[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     renounceOwnership(
@@ -966,20 +1032,22 @@ export interface Zioneer extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    setAllowed(
-      user: PromiseOrValue<string>,
-      allow: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    setMintReward(
-      _mintReward: PromiseOrValue<BigNumberish>,
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    startPublicMint(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    startWaitlistMint(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1007,8 +1075,8 @@ export interface Zioneer extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    withdraw(
-      to: PromiseOrValue<string>,
+    withdrawPayments(
+      payee: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

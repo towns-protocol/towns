@@ -10,7 +10,7 @@ import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
+import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
@@ -49,7 +49,7 @@ describe('useUpdateRoleTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = getCouncilNftAddress(chainId)
+        const memberNftAddress = getMemberNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -61,7 +61,7 @@ describe('useUpdateRoleTransaction', () => {
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={councilNftAddress}
+                        councilNftAddress={memberNftAddress}
                         newRolePermissions={moderatorPermissions}
                         newRoleName={moderatorRoleName}
                         newRoleTokens={moderatorTokens}
@@ -77,7 +77,7 @@ describe('useUpdateRoleTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => within(clientRunning).getByText('true'))
-        if (!councilNftAddress) {
+        if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
@@ -119,7 +119,7 @@ describe('useUpdateRoleTransaction', () => {
         // verify the moderator user has changed
         await assertUsers(rolesElement, moderatorRoleName, updatedModeratorUsers)
         // verify token entitlement has not changed
-        assertNoNft(rolesElement, moderatorRoleName, councilNftAddress)
+        assertNoNft(rolesElement, moderatorRoleName, memberNftAddress)
     }) // end test
 }) // end describe
 

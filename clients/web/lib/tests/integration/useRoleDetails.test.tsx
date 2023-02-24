@@ -9,7 +9,7 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
+import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
@@ -30,7 +30,7 @@ describe('useRoleDetails', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = getCouncilNftAddress(chainId)
+        const memberNftAddress = getMemberNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -42,7 +42,7 @@ describe('useRoleDetails', () => {
                         spaceName={spaceName}
                         roleName={roleName}
                         permissions={permissions}
-                        councilNftAddress={councilNftAddress}
+                        councilNftAddress={memberNftAddress}
                     />
                 </>
             </ZionTestApp>,
@@ -50,7 +50,7 @@ describe('useRoleDetails', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => within(clientRunning).getByText('true'))
-        if (!councilNftAddress) {
+        if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
@@ -75,7 +75,7 @@ describe('useRoleDetails', () => {
         // verify the permissions
         await assertPermissions(rolesElement, roleName, permissions)
         // verify the token entitlement
-        await assertNft(rolesElement, roleName, councilNftAddress, 1)
+        await assertNft(rolesElement, roleName, memberNftAddress, 1)
     }) // end test
 }) // end describe
 

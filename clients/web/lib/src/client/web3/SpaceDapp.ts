@@ -50,7 +50,7 @@ export class SpaceDapp implements ISpaceDapp {
         this.signer = signer
         this.contractsInfo = getContractsInfo(chainId)
         this.spaceFactory = new SpaceFactoryShim(
-            this.contractsInfo.spaceFactory.address.spaceFactory,
+            this.contractsInfo.spaceFactory.address,
             this.contractsInfo.spaceFactory.abi,
             chainId,
             provider,

@@ -13,7 +13,7 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
+import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -40,7 +40,7 @@ describe('useUpdateChannelTransaction', () => {
         if (!chainId) {
             throw new Error('chainId is undefined')
         }
-        const councilNftAddress = getCouncilNftAddress(chainId)
+        const memberNftAddress = getMemberNftAddress(chainId)
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
@@ -52,7 +52,7 @@ describe('useUpdateChannelTransaction', () => {
                         spaceName={spaceName}
                         spaceRoleName={spaceRoleName}
                         permissions={permissions}
-                        nftAddress={councilNftAddress}
+                        nftAddress={memberNftAddress}
                         channelName={channelName}
                         updatedChannelName={updatedChannelName}
                     />
@@ -62,7 +62,7 @@ describe('useUpdateChannelTransaction', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
         await waitFor(() => within(clientRunning).getByText('true'))
-        if (!councilNftAddress) {
+        if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements

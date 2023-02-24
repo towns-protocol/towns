@@ -28,28 +28,27 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export interface CouncilNFTInterface extends utils.Interface {
+export interface MemberInterface extends utils.Interface {
   functions: {
     "MINT_PRICE()": FunctionFragment;
     "TOTAL_SUPPLY()": FunctionFragment;
-    "allowlistMint()": FunctionFragment;
-    "alreadyMinted(address)": FunctionFragment;
+    "_hasMinted(address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "baseURI()": FunctionFragment;
     "currentTokenId()": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
-    "mint(address)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "privateMint(address,uint256,bytes32[])": FunctionFragment;
-    "publicMint()": FunctionFragment;
+    "publicMint(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
+    "setBaseURI(string)": FunctionFragment;
     "startPublicMint()": FunctionFragment;
     "startWaitlistMint()": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
@@ -57,7 +56,6 @@ export interface CouncilNFTInterface extends utils.Interface {
     "tokenURI(uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "waitlistMint()": FunctionFragment;
     "withdrawPayments(address)": FunctionFragment;
   };
 
@@ -65,15 +63,13 @@ export interface CouncilNFTInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "MINT_PRICE"
       | "TOTAL_SUPPLY"
-      | "allowlistMint"
-      | "alreadyMinted"
+      | "_hasMinted"
       | "approve"
       | "balanceOf"
       | "baseURI"
       | "currentTokenId"
       | "getApproved"
       | "isApprovedForAll"
-      | "mint"
       | "name"
       | "owner"
       | "ownerOf"
@@ -83,6 +79,7 @@ export interface CouncilNFTInterface extends utils.Interface {
       | "safeTransferFrom(address,address,uint256)"
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
+      | "setBaseURI"
       | "startPublicMint"
       | "startWaitlistMint"
       | "supportsInterface"
@@ -90,7 +87,6 @@ export interface CouncilNFTInterface extends utils.Interface {
       | "tokenURI"
       | "transferFrom"
       | "transferOwnership"
-      | "waitlistMint"
       | "withdrawPayments"
   ): FunctionFragment;
 
@@ -103,11 +99,7 @@ export interface CouncilNFTInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "allowlistMint",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "alreadyMinted",
+    functionFragment: "_hasMinted",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -131,10 +123,6 @@ export interface CouncilNFTInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mint",
-    values: [PromiseOrValue<string>]
-  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -151,7 +139,7 @@ export interface CouncilNFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "publicMint",
-    values?: undefined
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -177,6 +165,10 @@ export interface CouncilNFTInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setApprovalForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setBaseURI",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "startPublicMint",
@@ -208,10 +200,6 @@ export interface CouncilNFTInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "waitlistMint",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "withdrawPayments",
     values: [PromiseOrValue<string>]
   ): string;
@@ -221,14 +209,7 @@ export interface CouncilNFTInterface extends utils.Interface {
     functionFragment: "TOTAL_SUPPLY",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "allowlistMint",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "alreadyMinted",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "_hasMinted", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "baseURI", data: BytesLike): Result;
@@ -244,7 +225,6 @@ export interface CouncilNFTInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
@@ -269,6 +249,7 @@ export interface CouncilNFTInterface extends utils.Interface {
     functionFragment: "setApprovalForAll",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setBaseURI", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "startPublicMint",
     data: BytesLike
@@ -292,10 +273,6 @@ export interface CouncilNFTInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "waitlistMint",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "withdrawPayments",
     data: BytesLike
   ): Result;
@@ -303,13 +280,15 @@ export interface CouncilNFTInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
-    "Minted(address)": EventFragment;
+    "MintStateChanged(address,uint8,uint8,uint256)": EventFragment;
+    "Minted(address,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MintStateChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Minted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
@@ -317,8 +296,8 @@ export interface CouncilNFTInterface extends utils.Interface {
 
 export interface ApprovalEventObject {
   owner: string;
-  spender: string;
-  id: BigNumber;
+  approved: string;
+  tokenId: BigNumber;
 }
 export type ApprovalEvent = TypedEvent<
   [string, string, BigNumber],
@@ -339,10 +318,29 @@ export type ApprovalForAllEvent = TypedEvent<
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
+export interface MintStateChangedEventObject {
+  caller: string;
+  prevState: number;
+  newState: number;
+  timestamp: BigNumber;
+}
+export type MintStateChangedEvent = TypedEvent<
+  [string, number, number, BigNumber],
+  MintStateChangedEventObject
+>;
+
+export type MintStateChangedEventFilter =
+  TypedEventFilter<MintStateChangedEvent>;
+
 export interface MintedEventObject {
   recipient: string;
+  tokenId: BigNumber;
+  timestamp: BigNumber;
 }
-export type MintedEvent = TypedEvent<[string], MintedEventObject>;
+export type MintedEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  MintedEventObject
+>;
 
 export type MintedEventFilter = TypedEventFilter<MintedEvent>;
 
@@ -361,7 +359,7 @@ export type OwnershipTransferredEventFilter =
 export interface TransferEventObject {
   from: string;
   to: string;
-  id: BigNumber;
+  tokenId: BigNumber;
 }
 export type TransferEvent = TypedEvent<
   [string, string, BigNumber],
@@ -370,12 +368,12 @@ export type TransferEvent = TypedEvent<
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
-export interface CouncilNFT extends BaseContract {
+export interface Member extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: CouncilNFTInterface;
+  interface: MemberInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -401,16 +399,14 @@ export interface CouncilNFT extends BaseContract {
 
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    allowlistMint(overrides?: CallOverrides): Promise<[boolean]>;
-
-    alreadyMinted(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     approve(
-      spender: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -421,32 +417,29 @@ export interface CouncilNFT extends BaseContract {
 
     baseURI(overrides?: CallOverrides): Promise<[string]>;
 
-    currentTokenId(overrides?: CallOverrides): Promise<[BigNumber]>;
+    currentTokenId(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { _value: BigNumber }>;
 
     getApproved(
-      arg0: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
     isApprovedForAll(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
-
-    mint(
-      recipient: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
 
     name(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     ownerOf(
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[string] & { owner: string }>;
+    ): Promise<[string]>;
 
     privateMint(
       recipient: PromiseOrValue<string>,
@@ -455,7 +448,10 @@ export interface CouncilNFT extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    publicMint(overrides?: CallOverrides): Promise<[boolean]>;
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -464,14 +460,14 @@ export interface CouncilNFT extends BaseContract {
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     "safeTransferFrom(address,address,uint256,bytes)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -479,6 +475,11 @@ export interface CouncilNFT extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -505,7 +506,7 @@ export interface CouncilNFT extends BaseContract {
     transferFrom(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -513,8 +514,6 @@ export interface CouncilNFT extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    waitlistMint(overrides?: CallOverrides): Promise<[boolean]>;
 
     withdrawPayments(
       payee: PromiseOrValue<string>,
@@ -526,16 +525,14 @@ export interface CouncilNFT extends BaseContract {
 
   TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
-  allowlistMint(overrides?: CallOverrides): Promise<boolean>;
-
-  alreadyMinted(
+  _hasMinted(
     arg0: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
   approve(
-    spender: PromiseOrValue<string>,
-    id: PromiseOrValue<BigNumberish>,
+    to: PromiseOrValue<string>,
+    tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -549,27 +546,22 @@ export interface CouncilNFT extends BaseContract {
   currentTokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
   getApproved(
-    arg0: PromiseOrValue<BigNumberish>,
+    tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
 
   isApprovedForAll(
-    arg0: PromiseOrValue<string>,
-    arg1: PromiseOrValue<string>,
+    owner: PromiseOrValue<string>,
+    operator: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
-
-  mint(
-    recipient: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   name(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
   ownerOf(
-    id: PromiseOrValue<BigNumberish>,
+    tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
 
@@ -580,7 +572,10 @@ export interface CouncilNFT extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  publicMint(overrides?: CallOverrides): Promise<boolean>;
+  publicMint(
+    recipient: PromiseOrValue<string>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -589,14 +584,14 @@ export interface CouncilNFT extends BaseContract {
   "safeTransferFrom(address,address,uint256)"(
     from: PromiseOrValue<string>,
     to: PromiseOrValue<string>,
-    id: PromiseOrValue<BigNumberish>,
+    tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   "safeTransferFrom(address,address,uint256,bytes)"(
     from: PromiseOrValue<string>,
     to: PromiseOrValue<string>,
-    id: PromiseOrValue<BigNumberish>,
+    tokenId: PromiseOrValue<BigNumberish>,
     data: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -604,6 +599,11 @@ export interface CouncilNFT extends BaseContract {
   setApprovalForAll(
     operator: PromiseOrValue<string>,
     approved: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setBaseURI(
+    baseURI_: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -630,7 +630,7 @@ export interface CouncilNFT extends BaseContract {
   transferFrom(
     from: PromiseOrValue<string>,
     to: PromiseOrValue<string>,
-    id: PromiseOrValue<BigNumberish>,
+    tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -638,8 +638,6 @@ export interface CouncilNFT extends BaseContract {
     newOwner: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
-
-  waitlistMint(overrides?: CallOverrides): Promise<boolean>;
 
   withdrawPayments(
     payee: PromiseOrValue<string>,
@@ -651,16 +649,14 @@ export interface CouncilNFT extends BaseContract {
 
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
-    allowlistMint(overrides?: CallOverrides): Promise<boolean>;
-
-    alreadyMinted(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     approve(
-      spender: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -674,27 +670,22 @@ export interface CouncilNFT extends BaseContract {
     currentTokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
     getApproved(
-      arg0: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
 
     isApprovedForAll(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    mint(
-      recipient: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
     ownerOf(
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -705,21 +696,24 @@ export interface CouncilNFT extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    publicMint(overrides?: CallOverrides): Promise<boolean>;
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     "safeTransferFrom(address,address,uint256,bytes)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -727,6 +721,11 @@ export interface CouncilNFT extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -749,7 +748,7 @@ export interface CouncilNFT extends BaseContract {
     transferFrom(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -757,8 +756,6 @@ export interface CouncilNFT extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    waitlistMint(overrides?: CallOverrides): Promise<boolean>;
 
     withdrawPayments(
       payee: PromiseOrValue<string>,
@@ -769,13 +766,13 @@ export interface CouncilNFT extends BaseContract {
   filters: {
     "Approval(address,address,uint256)"(
       owner?: PromiseOrValue<string> | null,
-      spender?: PromiseOrValue<string> | null,
-      id?: PromiseOrValue<BigNumberish> | null
+      approved?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
     ): ApprovalEventFilter;
     Approval(
       owner?: PromiseOrValue<string> | null,
-      spender?: PromiseOrValue<string> | null,
-      id?: PromiseOrValue<BigNumberish> | null
+      approved?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
     ): ApprovalEventFilter;
 
     "ApprovalForAll(address,address,bool)"(
@@ -789,10 +786,29 @@ export interface CouncilNFT extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
-    "Minted(address)"(
-      recipient?: PromiseOrValue<string> | null
+    "MintStateChanged(address,uint8,uint8,uint256)"(
+      caller?: PromiseOrValue<string> | null,
+      prevState?: PromiseOrValue<BigNumberish> | null,
+      newState?: PromiseOrValue<BigNumberish> | null,
+      timestamp?: null
+    ): MintStateChangedEventFilter;
+    MintStateChanged(
+      caller?: PromiseOrValue<string> | null,
+      prevState?: PromiseOrValue<BigNumberish> | null,
+      newState?: PromiseOrValue<BigNumberish> | null,
+      timestamp?: null
+    ): MintStateChangedEventFilter;
+
+    "Minted(address,uint256,uint256)"(
+      recipient?: PromiseOrValue<string> | null,
+      tokenId?: null,
+      timestamp?: null
     ): MintedEventFilter;
-    Minted(recipient?: PromiseOrValue<string> | null): MintedEventFilter;
+    Minted(
+      recipient?: PromiseOrValue<string> | null,
+      tokenId?: null,
+      timestamp?: null
+    ): MintedEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
@@ -806,12 +822,12 @@ export interface CouncilNFT extends BaseContract {
     "Transfer(address,address,uint256)"(
       from?: PromiseOrValue<string> | null,
       to?: PromiseOrValue<string> | null,
-      id?: PromiseOrValue<BigNumberish> | null
+      tokenId?: PromiseOrValue<BigNumberish> | null
     ): TransferEventFilter;
     Transfer(
       from?: PromiseOrValue<string> | null,
       to?: PromiseOrValue<string> | null,
-      id?: PromiseOrValue<BigNumberish> | null
+      tokenId?: PromiseOrValue<BigNumberish> | null
     ): TransferEventFilter;
   };
 
@@ -820,16 +836,14 @@ export interface CouncilNFT extends BaseContract {
 
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
-    allowlistMint(overrides?: CallOverrides): Promise<BigNumber>;
-
-    alreadyMinted(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     approve(
-      spender: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -843,19 +857,14 @@ export interface CouncilNFT extends BaseContract {
     currentTokenId(overrides?: CallOverrides): Promise<BigNumber>;
 
     getApproved(
-      arg0: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     isApprovedForAll(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    mint(
-      recipient: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
@@ -863,7 +872,7 @@ export interface CouncilNFT extends BaseContract {
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     ownerOf(
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -874,7 +883,10 @@ export interface CouncilNFT extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    publicMint(overrides?: CallOverrides): Promise<BigNumber>;
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -883,14 +895,14 @@ export interface CouncilNFT extends BaseContract {
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     "safeTransferFrom(address,address,uint256,bytes)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -898,6 +910,11 @@ export interface CouncilNFT extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -924,7 +941,7 @@ export interface CouncilNFT extends BaseContract {
     transferFrom(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -932,8 +949,6 @@ export interface CouncilNFT extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    waitlistMint(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdrawPayments(
       payee: PromiseOrValue<string>,
@@ -946,16 +961,14 @@ export interface CouncilNFT extends BaseContract {
 
     TOTAL_SUPPLY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    allowlistMint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    alreadyMinted(
+    _hasMinted(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     approve(
-      spender: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      to: PromiseOrValue<string>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -969,19 +982,14 @@ export interface CouncilNFT extends BaseContract {
     currentTokenId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getApproved(
-      arg0: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     isApprovedForAll(
-      arg0: PromiseOrValue<string>,
-      arg1: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      operator: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    mint(
-      recipient: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -989,7 +997,7 @@ export interface CouncilNFT extends BaseContract {
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     ownerOf(
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1000,7 +1008,10 @@ export interface CouncilNFT extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    publicMint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    publicMint(
+      recipient: PromiseOrValue<string>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1009,14 +1020,14 @@ export interface CouncilNFT extends BaseContract {
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     "safeTransferFrom(address,address,uint256,bytes)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       data: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -1024,6 +1035,11 @@ export interface CouncilNFT extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setBaseURI(
+      baseURI_: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1050,7 +1066,7 @@ export interface CouncilNFT extends BaseContract {
     transferFrom(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1058,8 +1074,6 @@ export interface CouncilNFT extends BaseContract {
       newOwner: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
-
-    waitlistMint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdrawPayments(
       payee: PromiseOrValue<string>,

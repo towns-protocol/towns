@@ -1,29 +1,29 @@
-export default [
+[
   {
     "inputs": [
       {
         "internalType": "string",
-        "name": "_name",
+        "name": "name_",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_symbol",
+        "name": "symbol_",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "_baseURI",
+        "name": "baseURI_",
         "type": "string"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "_root",
-        "type": "bytes32"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyAllowed",
+    "type": "error"
   },
   {
     "inputs": [],
@@ -32,12 +32,12 @@ export default [
   },
   {
     "inputs": [],
-    "name": "MaxSupply",
+    "name": "InsufficientBalance",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "MintPriceNotPaid",
+    "name": "MaxSupplyReached",
     "type": "error"
   },
   {
@@ -47,7 +47,7 @@ export default [
   },
   {
     "inputs": [],
-    "name": "WithdrawTransfer",
+    "name": "NotAllowed",
     "type": "error"
   },
   {
@@ -62,13 +62,13 @@ export default [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "spender",
+        "name": "approved",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -106,19 +106,6 @@ export default [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      }
-    ],
-    "name": "Minted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "previousOwner",
         "type": "address"
       },
@@ -130,6 +117,25 @@ export default [
       }
     ],
     "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "allow",
+        "type": "bool"
+      }
+    ],
+    "name": "SetAllowed",
     "type": "event"
   },
   {
@@ -150,7 +156,7 @@ export default [
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -158,17 +164,8 @@ export default [
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "MINT_PRICE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
+    "stateMutability": "payable",
+    "type": "fallback"
   },
   {
     "inputs": [],
@@ -184,19 +181,6 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "allowlistMint",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -204,7 +188,7 @@ export default [
         "type": "address"
       }
     ],
-    "name": "alreadyMinted",
+    "name": "allowed",
     "outputs": [
       {
         "internalType": "bool",
@@ -219,12 +203,12 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "spender",
+        "name": "to",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -282,7 +266,7 @@ export default [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -301,12 +285,12 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "owner",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "",
+        "name": "operator",
         "type": "address"
       }
     ],
@@ -322,14 +306,8 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      }
-    ],
-    "name": "mint",
+    "inputs": [],
+    "name": "mintReward",
     "outputs": [
       {
         "internalType": "uint256",
@@ -337,7 +315,26 @@ export default [
         "type": "uint256"
       }
     ],
-    "stateMutability": "payable",
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "mintTo",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -370,7 +367,7 @@ export default [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -378,50 +375,8 @@ export default [
     "outputs": [
       {
         "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "allowance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "proof",
-        "type": "bytes32[]"
-      }
-    ],
-    "name": "privateMint",
-    "outputs": [
-      {
-        "internalType": "uint256",
         "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "publicMint",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -448,7 +403,7 @@ export default [
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -471,7 +426,7 @@ export default [
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       },
       {
@@ -481,6 +436,24 @@ export default [
       }
     ],
     "name": "safeTransferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "allow",
+        "type": "bool"
+      }
+    ],
+    "name": "setAllowed",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -504,15 +477,27 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "startPublicMint",
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_baseURI",
+        "type": "string"
+      }
+    ],
+    "name": "setBaseURI",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "startWaitlistMint",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_mintReward",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMintReward",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -582,7 +567,7 @@ export default [
       },
       {
         "internalType": "uint256",
-        "name": "id",
+        "name": "tokenId",
         "type": "uint256"
       }
     ],
@@ -605,29 +590,20 @@ export default [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "waitlistMint",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
-        "internalType": "address payable",
-        "name": "payee",
+        "internalType": "address",
+        "name": "to",
         "type": "address"
       }
     ],
-    "name": "withdrawPayments",
+    "name": "withdraw",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
-] as const
+]

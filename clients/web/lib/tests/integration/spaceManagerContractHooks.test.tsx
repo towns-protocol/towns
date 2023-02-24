@@ -7,7 +7,7 @@ import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
-import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
+import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
@@ -28,7 +28,7 @@ describe('spaceManagerContractHooks', () => {
         const TestComponent = () => {
             // basic space
             const { chainId } = useZionClient()
-            const zionTokenAddress = chainId ? getCouncilNftAddress(chainId) : undefined
+            const zionTokenAddress = chainId ? getMemberNftAddress(chainId) : undefined
             const {
                 createSpaceTransactionWithRole,
                 isLoading,

@@ -1,8 +1,8 @@
 import { ethers } from 'ethers'
 import React from 'react'
-import { ZioneerNFTContractState } from 'use-zion-client'
+import { PioneerNFTContractState } from 'use-zion-client'
 
-export const ContractState = (props: { contractState: ZioneerNFTContractState }) => {
+export const ContractState = (props: { contractState: PioneerNFTContractState }) => {
     return (
         <div>
             <h2>Contract Address</h2>

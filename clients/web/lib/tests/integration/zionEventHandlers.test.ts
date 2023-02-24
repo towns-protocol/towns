@@ -3,7 +3,7 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import {
     createExternalTokenStruct,
-    getCouncilNftAddress,
+    getMemberNftAddress,
 } from '../../src/client/web3/ContractHelpers'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { waitFor } from '@testing-library/dom'
@@ -31,8 +31,8 @@ describe('Zion event handlers test', () => {
             name: alice.makeUniqueName(),
             visibility: RoomVisibility.Public,
         }
-        const councilNftAddress = getCouncilNftAddress(alice.chainId)
-        const tokens = createExternalTokenStruct([councilNftAddress])
+        const memberNftAddress = getMemberNftAddress(alice.chainId)
+        const tokens = createExternalTokenStruct([memberNftAddress])
         const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
             roleName: 'Member',
             permissions: [],
