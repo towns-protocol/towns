@@ -16,6 +16,7 @@ export interface ZionOpts {
     matrixServerUrl: string
     casablancaServerUrl: string
     initialSyncLimit?: number
+    pollTimeoutMs?: number
     onboardingOpts?: ZionOnboardingOpts
     web3Provider?: TProvider
     web3Signer?: ethers.Signer

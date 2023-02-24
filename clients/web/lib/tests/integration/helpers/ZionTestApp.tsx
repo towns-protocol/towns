@@ -16,6 +16,7 @@ interface Props {
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
     initialSyncLimit?: number
+    pollTimeoutMs?: number
     chainId?: number
     children: JSX.Element
 }
@@ -29,6 +30,7 @@ export const ZionTestApp = (props: Props) => {
         defaultSpaceName,
         defaultSpaceAvatarSrc,
         initialSyncLimit,
+        pollTimeoutMs,
         children,
     } = props
     // pull environment variables from the process
@@ -60,6 +62,7 @@ export const ZionTestApp = (props: Props) => {
             defaultSpaceName={defaultSpaceName}
             defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}
             initialSyncLimit={initialSyncLimit}
+            pollTimeoutMs={pollTimeoutMs}
             chain={foundry}
             QueryClientProvider={TestQueryClientProvider}
         >

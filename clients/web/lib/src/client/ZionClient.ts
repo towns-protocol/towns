@@ -94,6 +94,7 @@ import {
  */
 
 const DEFAULT_INITIAL_SYNC_LIMIT = 20
+const DEFAULT_POLL_TIMEOUT = 30 * 1000
 
 export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public readonly opts: ZionOpts
@@ -157,6 +158,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * logout
      *************************************************/
     public async logout(): Promise<void> {
+        this.log('logout')
         if (!this.auth) {
             throw new Error('not authenticated')
         }
@@ -332,6 +334,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         await this.matrixClient.startClient({
             pendingEventOrdering: PendingEventOrdering.Chronological,
             initialSyncLimit: this.opts.initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
+            pollTimeout: this.opts.pollTimeoutMs ?? DEFAULT_POLL_TIMEOUT,
         })
         // wait for the sync to complete
         const initialSync = new Promise<string>((resolve, reject) => {
