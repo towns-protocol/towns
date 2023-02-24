@@ -17,9 +17,11 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    runs-on: ubuntu-latest-8-cores
+
     # Run golangci-lint
     lint:
-        timeout-minutes: 5
+        timeout-minutes: 15
         name: Linting
         runs-on: ubuntu-latest
         steps:
@@ -35,7 +37,7 @@ jobs:
 
     # run go test with different go versions
     test:
-        timeout-minutes: 5
+        timeout-minutes: 15
         name: Unit tests (Go ${{ matrix.go }})
         runs-on: ubuntu-latest
         # Service containers to run with `container-job`
@@ -87,7 +89,7 @@ jobs:
     # build Dendrite for linux with different architectures and go versions
     build:
         name: Build for Linux
-        timeout-minutes: 10
+        timeout-minutes: 15
         runs-on: ubuntu-latest
         strategy:
             fail-fast: false
