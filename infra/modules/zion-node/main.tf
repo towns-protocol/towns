@@ -127,6 +127,9 @@ module "zion_alb" {
   ]
 
   tags = module.global_constants.tags
+
+  # setting it to 30 minutes because dendrite context keeps getting cancelled
+  idle_timeout = 1800
 }
 
 resource "aws_ecs_cluster" "zion-ecs-cluster" {

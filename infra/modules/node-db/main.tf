@@ -52,9 +52,11 @@ module "rds_aurora_postgresql" {
 
   allowed_cidr_blocks = var.allowed_cidr_blocks
 
-  monitoring_interval = 0
+  monitoring_interval = 60
   apply_immediately   = true
   skip_final_snapshot = false
+
+  enabled_cloudwatch_logs_exports = ["postgresql"]
 
   create_random_password = true
   random_password_length = 32
@@ -64,7 +66,7 @@ module "rds_aurora_postgresql" {
   deletion_protection = true
 
   serverlessv2_scaling_configuration = {
-    min_capacity = 2
+    min_capacity = 4
     max_capacity = 10
   }
 
