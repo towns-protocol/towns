@@ -1,5 +1,4 @@
-Casablanca
-==========
+# Casablanca
 
 Serge Khorun (serge@hntlabs.com)
 
@@ -7,11 +6,12 @@ Serge Khorun (serge@hntlabs.com)
 
 "Casablanca" is a code name for the web3 backend developed by HNT Labs for the Towns chat app. It includes a Node Network, Protocol and Client Library.
 
-The Casablanca network consists of nodes run by independent operators. All nodes are homogeneous, i.e. perform same duties. Each node runs Casablanca node software that provides: 
-* Casablanca Chain - a proof-of-stake blockchain
-* Storage Pool - storage for chat data
-* Workflow logic for the chat application
-* Validation for blockchain and chat data
+The Casablanca network consists of nodes run by independent operators. All nodes are homogeneous, i.e. perform same duties. Each node runs Casablanca node software that provides:
+
+- Casablanca Chain - a proof-of-stake blockchain
+- Storage Pool - storage for chat data
+- Workflow logic for the chat application
+- Validation for blockchain and chat data
 
 There will be hundreds, and then thousands of nodes.
 
@@ -27,41 +27,42 @@ Streams are partitioned into chunks for storage purposes. Each chunk is copied t
 
 A stream consists of events. An event is a basic update unit for the stream. Events contain payloads of various types, such as `message`, `join`, `invite`, `leave`, etc.
 
-For example, to post a new message in a channel, the client app creates an event with the payload `message` and sends it to the node. Once the event is accepted by the node and stored into the stream's chunk, it is delivered to other client apps currently listening to this conversation. 
+For example, to post a new message in a channel, the client app creates an event with the payload `message` and sends it to the node. Once the event is accepted by the node and stored into the stream's chunk, it is delivered to other client apps currently listening to this conversation.
 
 All events are cryptographically signed. All events include the hash of the previous event in the signed data. This inclusion allows the backend and client to validate all events in the stream up to inception event. When two or more clients sign and send in new events simultaneously, branching in the stream may occur. Events that succeed such branches must include all known 'leaf' hashes. In other words, branching is allowed, but there are provisions to actively eliminate it.
 
-When a client sends a new event to the node to be added to the stream, the receiving node runs a permission check to determine if the event creator, as determined by the signature, has the right to post the event with that specific payload to the given stream. 
+When a client sends a new event to the node to be added to the stream, the receiving node runs a permission check to determine if the event creator, as determined by the signature, has the right to post the event with that specific payload to the given stream.
 
 Permissions (entitlements) are provided by smart contracts running on external blockchains, e.g. Ethereum mainnet, Polygon, etc. A node reads entitlements from smart contracts to check if the operation encoded in the new event sent by the user is permitted. Other roles, such as owner, moderator and so on are recorded in these smart contracts as well. For example, if a space is gated by a specific NFT, the user should be an NFT holder in order to join. If user A bans user B from a space, user A should have moderator permission and user B should not be the owner of the space.
 
 All nodes run Casablanca Chain, a blockchain constructed by a fork of Ethereum software. The Casablanca Chain contains:
-* A list of nodes
-* A list of all streams in the system
-    * Chunk info for each stream
-    * A list of chunk copies
-    * The last known leaf hashes for each stream
+
+- A list of nodes
+- A list of all streams in the system
+  - Chunk info for each stream
+  - A list of chunk copies
+  - The last known leaf hashes for each stream
 
 Data is stored in EVM smart contracts with custom extensions.
 
-As a stream grows, nodes hosting this stream periodically commit last known leaf hashes to Casablanca Chain. This *canonicalizes* these new events. 
+As a stream grows, nodes hosting this stream periodically commit last known leaf hashes to Casablanca Chain. This _canonicalizes_ these new events.
 
 Proof-of-Stake validation logic is extended to validate stream data as well:
-* When a client sends a new event to a node to append it to a stream, the node runs validity and permission checks. If the event is accepted, the node broadcasts it to the other nodes hosting this stream and commits it to local storage.
-* Periodically, nodes posts transactions that contain the last known leaf hashes for the updated stream.
-* A block proposer builds the current block and checks if the transition described in a transaction is valid by running same the checks as the node that sent the transaction to the mempool.
-* Other nodes receive the new beacon block. Validators re-execute the check locally and attest whether the block is valid.
+
+- When a client sends a new event to a node to append it to a stream, the node runs validity and permission checks. If the event is accepted, the node broadcasts it to the other nodes hosting this stream and commits it to local storage.
+- Periodically, nodes posts transactions that contain the last known leaf hashes for the updated stream.
+- A block proposer builds the current block and checks if the transition described in a transaction is valid by running same the checks as the node that sent the transaction to the mempool.
+- Other nodes receive the new beacon block. Validators re-execute the check locally and attest whether the block is valid.
 
 On top of that, validators are tasked with periodic scrubbing of other nodes to ensure that they retain stream data they must host and are available.
 
 Casablanca Chain is secured by stakes bridged from the Ethereum mainnet (or other major blockchains). Rewards and slashes are transferred from Casablanca Chain back to the mainnet.
 
-
 # Design Considerations
 
 ## Redundancy
 
-Since any node can disappear from the network at any time, stored data needs to be replicated across multiple nodes. However, it is impractical and cost-prohibitive to replicate all data to all nodes. Thus each piece of data is going to be replicated only to a subset of storage nodes. 
+Since any node can disappear from the network at any time, stored data needs to be replicated across multiple nodes. However, it is impractical and cost-prohibitive to replicate all data to all nodes. Thus each piece of data is going to be replicated only to a subset of storage nodes.
 
 ## Consensus
 
@@ -95,10 +96,11 @@ For example, a node can be assigned to host a copy of a specific chunk. This ass
 
 ## Event
 
-Event is a basic update unit in Casablanca Network. Each event belongs to a specific stream. All updates are expressed as an event of particular kind, for example: 
-* To post new message to a channel, client library sends request to the backend to add new event to the channel stream.
-* Invite to join channel from one user to another is represented by two events: one in the channel stream and another is the user stream. 
-* Creation of new channel in a space is done by posting a channel creation event to the space stream.
+Event is a basic update unit in Casablanca Network. Each event belongs to a specific stream. All updates are expressed as an event of particular kind, for example:
+
+- To post new message to a channel, client library sends request to the backend to add new event to the channel stream.
+- Invite to join channel from one user to another is represented by two events: one in the channel stream and another is the user stream.
+- Creation of new channel in a space is done by posting a channel creation event to the space stream.
 
 Event is identified by its hash.
 
@@ -112,26 +114,25 @@ Event contains "very recent" block number at the time of its creation.
 
 Stream consists of events. Each space, channel and user have corresponding streams.
 
-Stream starts with inception event (this is only event type that should not include hashes of preceding events). 
+Stream starts with inception event (this is only event type that should not include hashes of preceding events).
 
-Events in a stream are partially ordered. All events (except inception) must reference preceding events by including their hashes is in the signed payload. When new event is created by a client or node, it must include hashes of all known events that are not already included by other events. Events that are not yet referenced by subsequent events are called *leaf events*, their hashes are called *leaf hashes*. I.e. when new event B is appended to the stream, it must reference last known leaf event A, at which point B becomes new *leaf event*, and A ceases to be so. 
+Events in a stream are partially ordered. All events (except inception) must reference preceding events by including their hashes is in the signed payload. When new event is created by a client or node, it must include hashes of all known events that are not already included by other events. Events that are not yet referenced by subsequent events are called _leaf events_, their hashes are called _leaf hashes_. I.e. when new event B is appended to the stream, it must reference last known leaf event A, at which point B becomes new _leaf event_, and A ceases to be so.
 
-Multiple clients can append new events to the stream simultaneously. In this case each of them will reference latest leaf event known to them locally, and multiple leaf events will be appended to the stream. As such, stream can have *multiple leaf hashes*. 
+Multiple clients can append new events to the stream simultaneously. In this case each of them will reference latest leaf event known to them locally, and multiple leaf events will be appended to the stream. As such, stream can have _multiple leaf hashes_.
 
-Due to this design events in a stream form *connected directed acyclic graph* (DAG). This design allows fast stream updates, but creates additional complexity for managing canonical stream view. For example, client can send a "side chain" of events that alter conversation too far in the past. Nodes have provisions for rejecting such updates from the canonical view of the steam. Due to this DAG “tries” to converge to just a chain as long as there are not that many simultaneous appends (More below TODO: section link)
+Due to this design events in a stream form _connected directed acyclic graph_ (DAG). This design allows fast stream updates, but creates additional complexity for managing canonical stream view. For example, client can send a "side chain" of events that alter conversation too far in the past. Nodes have provisions for rejecting such updates from the canonical view of the steam. Due to this DAG “tries” to converge to just a chain as long as there are not that many simultaneous appends (More below TODO: section link)
 
-> NOTE: Alternative design would be to require streams to be strongly ordered. This would naturally limit potential update rate, making app unable to timely post new messages if conversation is very popular. 
+> NOTE: Alternative design would be to require streams to be strongly ordered. This would naturally limit potential update rate, making app unable to timely post new messages if conversation is very popular.
 
 For storage purposes streams are partitioned into the chunks.
 
 Stream has a unique id. Casablanca chain contains a record that maps stream_id => (list of chunks_ids, hashes of current stream heads).
 
-
 # Stream Storage
 
 ## Storage Pool
 
-All nodes on the network form a storage pool. In the future versions, the network can be partitioned into multiple pools for performance reasons. 
+All nodes on the network form a storage pool. In the future versions, the network can be partitioned into multiple pools for performance reasons.
 
 Storage pool stores chunks. Chunk is an allocation and replication abstraction. Each chunk is replicated to a predetermined, but different set of nodes. There are many more preallocated chunks than storage nodes. Each storage node contains replicas of multiple chunks.
 
@@ -143,9 +144,9 @@ Replication factor is set to 5. I.e. each chunk has 5 replicas containing same d
 
 Each stream is partitioned into chunks for storage purposes. Chunk is storage and replication abstraction and logical stream view is unaffected by underlaying chunks. Stream events are added to first stream chunk, once it reaches certain size, new chunk is allocated and subsequent events are added to the new chunk, and so on.
 
-Each chunk has a unique id. Blockchain contains mapping of chunk_id => set of storage node addresses. 
+Each chunk has a unique id. Blockchain contains mapping of chunk_id => set of storage node addresses.
 
-To access a chunk, a chunk record is retrieved from the blockchain. Node addresses are mapped to ENR records. ENR records contain ess_ip and ess_port for communication with node. 
+To access a chunk, a chunk record is retrieved from the blockchain. Node addresses are mapped to ENR records. ENR records contain ess_ip and ess_port for communication with node.
 
 > NOTE: Current version of specification introduces replicated chunks. In the future chunks can also be erasure-encoded.
 
@@ -161,14 +162,14 @@ In practice it's safe since if chunk creation tx doesn't make it to the block fo
 
 For client and nodes not participating in the transaction directly there is a delay before creation tx for both stream and chunk is committed on chain and thus stream and chunk can be discovered by their ids. Client and node code should handle situation when stream and chunk are discovered through other means (for example, client receives invite to join freshly create channel), but not yet discoverable on chain by waiting for two blocks to advance before giving up.
 
-To reason about what should be in the chunk, chunk is sealed by node by special [drain event](#drain-events). I.e. chunk sealing drain event indicates end of the chunk. Events in the next chunk reference this last event and cannot reference other events in the preceding chunk.  
+To reason about what should be in the chunk, chunk is sealed by node by special [drain event](#drain-events). I.e. chunk sealing drain event indicates end of the chunk. Events in the next chunk reference this last event and cannot reference other events in the preceding chunk.
 
 ## Rebalancing
 
 At the beginning of each epoch single node is selected using RANDAO to perform re-balancing task. It runs through all chunks and nodes in the system and deterministically rebalances them.
 Purpose of rebalancing is to spread load equally through the system. I.e. all nodes should host approximately same number of chunk replicas.
 
-Failure to perform rebalancing is slashable offense. Rebalancing txs are deterministic and validated by following same rules as to produce them. 
+Failure to perform rebalancing is slashable offense. Rebalancing txs are deterministic and validated by following same rules as to produce them.
 
 In the future versions this task will be partitioned across all bocks in the few consecutive epochs and multiple nodes to reduce both load on the nodes and blockchain.
 
@@ -176,25 +177,23 @@ Node monitors allocation transactions on blockchain and if relevant to itself ch
 
 Chunk record on the smart contract contains list of nodes that host chunk replicas and statuses of each replicas. Replica statuses are `live`, `new`, `leaving`, `dead`.
 
-Rebalancing request updates chunk record to contain `new` replica and changes one of existing replicas to `leaving` . New replica's host has a grace period during which it should download chunk from `leaving`, or if not available, from `live` nodes and mark its chunk replica record on the smart contract as `live`. 
+Rebalancing request updates chunk record to contain `new` replica and changes one of existing replicas to `leaving` . New replica's host has a grace period during which it should download chunk from `leaving`, or if not available, from `live` nodes and mark its chunk replica record on the smart contract as `live`.
 
 During next rebalancing round rebalancer notices that now chunk has enough `live` replicas and removes `leaving` replica record. Host of `leaving` replica notices changes and removes unneeded replica from local storage.
 
-Rebalancer always keeps at least `N` (as determined by global network settings, initially set to 5) replicas available. I.e. `live` + `leaving` number should never go below N and there should always be as many `new` replicas as `leaving` (strictly speaking `new` should be equal to `live` + `leaving` - `N`). 
+Rebalancer always keeps at least `N` (as determined by global network settings, initially set to 5) replicas available. I.e. `live` + `leaving` number should never go below N and there should always be as many `new` replicas as `leaving` (strictly speaking `new` should be equal to `live` + `leaving` - `N`).
 
 Nodes should prioritize downloading of chunks that have smallest number of `live` replicase. I.e. to reduce probability of data loss it's important to restore chunk that has one `live` faster than chunk with four `live` replicas.
-
 
 ## Joining Storage Pool
 
 When new node joins storage pool, its local storage is empty. To perform it's fair share of work in need to receive some chunk replicas, so load on all nodes in the network is equal.
 
-[Rebalancer](#rebalancing) notices new nodes and move some chunks to it through rebalancing process.  During each rebalancing period limited number of chunks is moved to the new node to avoid overwhelming it and giving it a chance to complete transfer in the grace period. 
-
+[Rebalancer](#rebalancing) notices new nodes and move some chunks to it through rebalancing process. During each rebalancing period limited number of chunks is moved to the new node to avoid overwhelming it and giving it a chance to complete transfer in the grace period.
 
 ## Voluntarily Leaving Storage Pool
 
-Node can voluntarily leave Casablanca Network by unstacking. Unstacking consists of two periods: during *grace period* node continues to receive rewards and unstacking decision can be reversed by node operator.  After *grace period*  is over, node stop receiving rewards and *evacuation period* starts. During *evacuation period* node does not receive rewards, but must stay online to avoid slashing. At the start of *evacuation period* node is marked as `leaving` and [rebalancing process](#rebalancing) marks batches of node's chunks replicas as `leaving`.  Replicas are marked in batches to avoid overload of the node.
+Node can voluntarily leave Casablanca Network by unstacking. Unstacking consists of two periods: during _grace period_ node continues to receive rewards and unstacking decision can be reversed by node operator. After _grace period_ is over, node stop receiving rewards and _evacuation period_ starts. During _evacuation period_ node does not receive rewards, but must stay online to avoid slashing. At the start of _evacuation period_ node is marked as `leaving` and [rebalancing process](#rebalancing) marks batches of node's chunks replicas as `leaving`. Replicas are marked in batches to avoid overload of the node.
 
 Once all chunks are transfered, node can leave network without slash penalty.
 
@@ -202,11 +201,11 @@ Once all chunks are transfered, node can leave network without slash penalty.
 
 If node is unavailable for extended period of time, it is declared as `dead` (see [#Validation of Stream Storage](#validation-of-stream-storage)). [Rebalancer](#rebalancing) notices `dead` node and marks all node's chunk replicas as `dead` which leads to allocation of the `new` replicas.
 
-Node being `dead` incurs slash penalty. If node comes back from the `dead`, its chunks are marked as `alive` again. 
+Node being `dead` incurs slash penalty. If node comes back from the `dead`, its chunks are marked as `alive` again.
 
 ## Request Relaying
 
-Since number of allowed connections from the web app is limited by the browser, client cannot connect to any node in network as required without loosing connections to other nodes. To resolve this issue nodes relay client requests to other nodes if streams in question are not hosted by them. 
+Since number of allowed connections from the web app is limited by the browser, client cannot connect to any node in network as required without loosing connections to other nodes. To resolve this issue nodes relay client requests to other nodes if streams in question are not hosted by them.
 
 To mitigate malicious node behaviors client periodically drops connection to the current node and moves traffic to the other node in the network.
 
@@ -224,7 +223,7 @@ Streams are loosely append-only. Although it's possible to generate event which 
 
 There is a desire to discard old events since old messages are less valuable in the context of the chat application and there is a need to limit cost for the free streams. But administrative events, such as `join`, `leave`, `set stream name` can't be freely discarded without state loss.
 
-To address this `snapshot` events are introduced. Preceding events are "rolled up", for example `join` and `leave` events are rolled up into the `membership roster`.  Snapshot event is [rain event](#drain-events). Snapshot event includes a copy of stream inception event.
+To address this `snapshot` events are introduced. Preceding events are "rolled up", for example `join` and `leave` events are rolled up into the `membership roster`. Snapshot event is [rain event](#drain-events). Snapshot event includes a copy of stream inception event.
 
 Once snapshot event is added to the stream, preceding events can be safely garbage collected.
 
@@ -234,7 +233,7 @@ Snapshot event is produced by the node. It follows normal validation logic for o
 
 ## Publishing Leaf Hashes on Chain
 
-Nodes hosting given stream rotate the duty of publishing latest leaf hashes on chain based on the number of new events. 
+Nodes hosting given stream rotate the duty of publishing latest leaf hashes on chain based on the number of new events.
 
 Lets say [setting](#global-settings) is set to publish every 100 events, nodes A, B, C, D, E host last chunk of the stream S and node E just sent tx with new leaf hashes. Then node A must sent tx after 100 new events, node B after 200 new events, node C after 300 new events and so on. Node be must send tx on schedule even if node A fails to send its tx. This prevents malicious node from stalling the process. Missing to send the tx is slashable offence.
 
@@ -254,21 +253,22 @@ All nodes periodically receive same reward that covers periodic reward set by DA
 
 Validation largely happens in the same way as on Ethereum network with custom extensions to recognize and validate `latest leaf hash` transactions and to periodically test node's availability:
 
-As client sends new events for the given stream to the node, node broadcasts these updates to other nodes hosting this steam. These events are not yet *canonicalized*. Periodically node creates a transaction that contain latest known leaf hashes (see [#Stream Update Process](#stream-update-process)) to canonicalize latest events. Such transaction does not include hashes of all new events, only of the leaf new events: since all non-leaf events are by definition referenced by leaf events, committing hashes of latest leaf events is enough to canonicalize all preceding events in the stream.
+As client sends new events for the given stream to the node, node broadcasts these updates to other nodes hosting this steam. These events are not yet _canonicalized_. Periodically node creates a transaction that contain latest known leaf hashes (see [#Stream Update Process](#stream-update-process)) to canonicalize latest events. Such transaction does not include hashes of all new events, only of the leaf new events: since all non-leaf events are by definition referenced by leaf events, committing hashes of latest leaf events is enough to canonicalize all preceding events in the stream.
 
 Then validation follows normal Ethereum approach:
 
-* Periodically node posts transaction that contains last known leaf hashes for updated stream.
-* Block proposer builds the current block and checks if transition described in transaction is valid by running same checks as node that sent transaction to the mempool.
-* Other nodes receive the new beacon block. Validators re-execute check locally and attest if block is valid.
+- Periodically node posts transaction that contains last known leaf hashes for updated stream.
+- Block proposer builds the current block and checks if transition described in transaction is valid by running same checks as node that sent transaction to the mempool.
+- Other nodes receive the new beacon block. Validators re-execute check locally and attest if block is valid.
 
-> NOTE: There are throughput challenges here: both block proposer and validators need to re-execute checks to validate proposed stream updates. This naturally puts a limit on home many "leaf hashes updated" transactions can be put in the each block. Initially this can be mitigated by reducing update frequency for each individual stream. Then there are two avenues for mitigating this: 
->* Partitioning of duties. Specifically, when Beacon chain gets sharding, Casablanca can just reuse it.
->* Vouching schemas where each transaction is not validated by all participants, but later statistically validated with sampling and transaction proposer is penalized if bay transaction is found. This is possible to implement in Casablanca since all transactions are proposed by staking nodes.
+> NOTE: There are throughput challenges here: both block proposer and validators need to re-execute checks to validate proposed stream updates. This naturally puts a limit on home many "leaf hashes updated" transactions can be put in the each block. Initially this can be mitigated by reducing update frequency for each individual stream. Then there are two avenues for mitigating this:
+>
+> - Partitioning of duties. Specifically, when Beacon chain gets sharding, Casablanca can just reuse it.
+> - Vouching schemas where each transaction is not validated by all participants, but later statistically validated with sampling and transaction proposer is penalized if bay transaction is found. This is possible to implement in Casablanca since all transactions are proposed by staking nodes.
 
 ## Validation of Stream Storage
 
-Each epoch, using RANDAO some nodes are designated as scrubbers and some chunks are selected for scrubbing. 
+Each epoch, using RANDAO some nodes are designated as scrubbers and some chunks are selected for scrubbing.
 
 Scrubbers read chunks and cast votes about chunk availability in form of transactions. If the time period some node gets too many negative votes, penalty is issued against it's stake.
 
@@ -276,15 +276,13 @@ If node is unavailable for extended period of time, it is declared `dead` and ch
 
 All settings for this process are controlled by [Global Settings](#global-settings).
 
-> TODO: design specifics to mitigate malicious behaviors when nodes are not storing data and always try to read it from other replicas. Possible mitigations: making each event replica unique for each node, so they can't read from the other node; "black outs" when replica  is scrubbed so other nodes do not server this replica during black out, etc.
-
+> TODO: design specifics to mitigate malicious behaviors when nodes are not storing data and always try to read it from other replicas. Possible mitigations: making each event replica unique for each node, so they can't read from the other node; "black outs" when replica is scrubbed so other nodes do not server this replica during black out, etc.
 
 # Identity
 
-Casablanca users are identified by their crypto address. Specifically, Casablanca client creates new keypair for each user - *Casablanca Key Pair*. This key pair is used to sign user messages. It can be backed using phrase mnemonic and restored to other device  as any other crypto key pair.
+Casablanca users are identified by their crypto address. Specifically, Casablanca client creates new keypair for each user - _Casablanca Key Pair_. This key pair is used to sign user messages. It can be backed using phrase mnemonic and restored to other device as any other crypto key pair.
 
-To claim Ethereum or other network entitlements user may sign their public key with their Ethereum wallet (i.e., *Metamask* and so on) . This action "chains" key pairs and allows Casablanca backend to apply entitlements of user's wallet to their Casablanca account. More than one wallet can be connected this way to Casablanca account.
-
+To claim Ethereum or other network entitlements user may sign their public key with their Ethereum wallet (i.e., _Metamask_ and so on) . This action "chains" key pairs and allows Casablanca backend to apply entitlements of user's wallet to their Casablanca account. More than one wallet can be connected this way to Casablanca account.
 
 # Workflows
 
@@ -300,7 +298,7 @@ Streams and nodes to run these checks are selected using RANDAO similar to [scru
 
 This design means that there is a grace period when user does not have an entitlement anymore but still can perform the entitled action.
 
-To address needs of the moderators bans and kicks are implemented by separate events and take the force immediately. Banned users cannot rejoin the stream even if the still have or reacquire the entitlement. 
+To address needs of the moderators bans and kicks are implemented by separate events and take the force immediately. Banned users cannot rejoin the stream even if the still have or reacquire the entitlement.
 
 > TODO: more about joins and entitlements for different roles, etc.
 
@@ -308,20 +306,14 @@ To address needs of the moderators bans and kicks are implemented by separate ev
 
 > TODO: `fuel` scenarios
 
-
-
 # Casablanca Chain
 
 ## Gas
+
 Nodes produce transactions to be posted on the Casablanca Chain. External transactions are not allowed. However chain still needs to be secured from malicious node behavior.
 
 Nodes pay gas fees to post transactions. Average gas fees are returned as part of the reward. I.e. total reward payout is adjusted to cover both APR reward and estimated gas fees payed by the node during the reward period.
 
-
 # FAQ
 
 > TODO
-
-
-
-
