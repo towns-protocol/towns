@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import shallow from 'zustand/shallow'
+import { shallow } from 'zustand/shallow'
 import { Box, FormRender } from '@ui'
 import { FormStepProps } from 'hooks/useFormSteps'
 import { InteractiveSpaceToken } from '@components/SpaceToken/InteractiveSpaceToken'
