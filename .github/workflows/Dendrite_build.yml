@@ -1,5 +1,5 @@
 name: 'Dendrite_build'
-
+runs-on: ubuntu-latest-8-cores
 on:
     push:
         paths:
