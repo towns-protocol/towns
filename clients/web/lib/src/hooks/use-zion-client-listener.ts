@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
-import { useWeb3Context } from '../components/Web3ContextProvider'
+import { ZionOpts } from '../client/ZionClientTypes'
+import { isMatrixError } from './use-zion-client'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
-import { ZionOpts } from '../client/ZionClientTypes'
-import { LoginStatus } from './login'
 import { useSigner } from 'wagmi'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 export const useZionClientListener = (opts: ZionOpts) => {
     const { provider, chain } = useWeb3Context()
@@ -16,6 +19,14 @@ export const useZionClientListener = (opts: ZionOpts) => {
     const clientSingleton = useRef<ZionClient>()
     const chainId = chain?.id
     const { data: wagmiSigner } = useSigner()
+
+    const { userId, accessToken, deviceId } = useMemo(() => {
+        return {
+            accessToken: matrixCredentials?.accessToken,
+            userId: matrixCredentials?.userId,
+            deviceId: matrixCredentials?.deviceId,
+        }
+    }, [matrixCredentials?.accessToken, matrixCredentials?.deviceId, matrixCredentials?.userId])
 
     if (!clientSingleton.current) {
         const _signer = opts.web3Signer || wagmiSigner
@@ -33,15 +44,11 @@ export const useZionClientListener = (opts: ZionOpts) => {
     }
 
     const startClient = useCallback(async () => {
-        if (!clientSingleton.current) {
-            return
-        }
-        if (!matrixCredentials) {
-            console.error('startClient: accessToken, userId, or deviceId is undefined')
-            return
-        }
-        if (!chainId) {
-            console.error('startClient: chainId is undefined')
+        if (!clientSingleton.current || !accessToken || !userId || !deviceId || !chainId) {
+            console.error(
+                'Matrix client listener not started: clientSingleton.current, chainId, accessToken, userId, or deviceId is undefined.',
+            )
+            setClientRef(undefined)
             return
         }
         // in the standard flow we should already be logged in, but if we're loading
@@ -49,7 +56,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         setLoginStatus(LoginStatus.LoggedIn)
         const client = clientSingleton.current
         // make sure we're not re-starting the client
-        if (client.auth?.accessToken === matrixCredentials.accessToken) {
+        if (client.auth?.accessToken === accessToken) {
             if (client.chainId != chainId) {
                 console.warn("ChainId changed, we're not handling this yet")
             } else {
@@ -62,16 +69,15 @@ export const useZionClientListener = (opts: ZionOpts) => {
         setClientRef(undefined)
         // start it up!
         try {
-            await client.startMatrixClient(
-                {
-                    userId: matrixCredentials.userId,
-                    accessToken: matrixCredentials.accessToken,
-                    deviceId: matrixCredentials.deviceId,
-                },
+            await startMatrixClientWithRetries({
+                client,
                 chainId,
-            )
+                userId,
+                deviceId,
+                accessToken,
+            })
             setClientRef(client)
-            console.log('******* client started *******')
+            console.log('******* Matrix client listener started *******')
         } catch (e) {
             console.log('******* client encountered exception *******', e)
             try {
@@ -82,28 +88,70 @@ export const useZionClientListener = (opts: ZionOpts) => {
             setLoginStatus(LoginStatus.LoggedOut)
             setMatrixCredentials(opts.matrixServerUrl, null)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
+        accessToken,
         chainId,
-        matrixCredentials,
+        deviceId,
         opts.matrixServerUrl,
         setLoginStatus,
         setMatrixCredentials,
-        wagmiSigner, // if signer is not passed in, clientSingleton.current will only be created if wagmiSigner, so we need to watch it
+        userId,
     ])
 
     useEffect(() => {
-        if (matrixCredentials) {
-            void (async () => await startClient())()
-            console.log(`Matrix client listener started`)
-        } else {
-            setClientRef(undefined)
-            console.log('Matrix client listener stopped')
-        }
-    }, [matrixCredentials, startClient])
+        void (async () => await startClient())()
+    }, [startClient])
 
     return {
         client: clientRef,
         clientSingleton: clientSingleton.current,
+    }
+}
+
+async function startMatrixClientWithRetries(args: {
+    client: ZionClient
+    chainId: number
+    userId: string
+    accessToken: string
+    deviceId: string
+}): Promise<void> {
+    const dummyMatrixEvent = new MatrixEvent()
+    let retryCount = 0
+    let isSuccess = false
+    while (!isSuccess) {
+        try {
+            await args.client.startMatrixClient(
+                {
+                    userId: args.userId,
+                    accessToken: args.accessToken,
+                    deviceId: args.deviceId,
+                },
+                args.chainId,
+            )
+            if (retryCount > 0) {
+                console.log(`startMatrixClientWithRetries succeeded after ${retryCount} retries`)
+            }
+            // succeeded, return
+            isSuccess = true
+        } catch (err) {
+            if (isMatrixError(err)) {
+                const retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
+                    dummyMatrixEvent,
+                    retryCount,
+                    err,
+                )
+                if (retryDelay >= 0) {
+                    console.log(`MatrixError`, { retryDelay, err })
+                    await new Promise((resolve) => setTimeout(resolve, retryDelay))
+                    retryCount++
+                    continue
+                }
+                console.log(`MatrixError reached limit, giving up`, retryCount, retryDelay, err)
+            } else {
+                // Not a MatrixError, just give up
+                console.error('Not a MatrixError', err)
+                throw err
+            }
+        }
     }
 }

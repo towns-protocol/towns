@@ -1,27 +1,27 @@
-import { Permission } from '../../src/client/web3/ContractTypes'
-import React, { useCallback, useEffect, useRef, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
+import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet } from './helpers/TestComponents'
+import { RoomIdentifier } from '../../dist'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
-import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
+import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
-import { useChannelData } from '../../src/hooks/use-channel-data'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getCouncilNftAddress } from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
-import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
+import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
+import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
+import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
-import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
-import { RoomIdentifier } from '../../dist'
-import { TestConstants } from './helpers/TestConstants'
 
 /**
  * This test suite tests the useAddRolesToChannel hook.
@@ -87,7 +87,10 @@ describe('useAddRolesToChannel', () => {
         await waitFor(() => within(channelElement).getByText(`channelName:${channelName}`))
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
-        await waitFor(() => within(addedRoleToChannelElement).getByText(`addedRoleToChannel:true`))
+        await waitFor(
+            () => within(addedRoleToChannelElement).getByText(`addedRoleToChannel:true`),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         /* Assert */
         await assertRoleChannel(rolesElement, roleName)
     }) // end test
