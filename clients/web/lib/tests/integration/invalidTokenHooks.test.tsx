@@ -10,8 +10,7 @@ import { ZionAuth } from '../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { createUserIdFromEthereumAddress } from '../../src/types/user-identifier'
 import { ZionTestClient } from './helpers/ZionTestClient'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
-import { useCredentialStore } from '../../src/store/use-credential-store'
+import { TestConstants } from './helpers/TestConstants'
 
 /// Test that the login hook returns the correct status when the token is invalid
 /// disabled beause the matrix js sdk doesn't correctly catch errors in DeviceLists.doKeyDownload
@@ -19,12 +18,10 @@ import { useCredentialStore } from '../../src/store/use-credential-store'
 /// all defined tests pass
 
 // Test fails 100% of the time. https://linear.app/hnt-labs/issue/HNT-474/invalidtokenhookstest-fails-100percent
-describe.skip('invalidTokenHooks', () => {
+describe('invalidTokenHooks', () => {
     beforeEach(() => {
         global.localStorage.clear()
         global.sessionStorage.clear()
-        useMatrixStore.destroy()
-        useCredentialStore.destroy()
     })
     test('test matrix js sdk', async () => {
         const provider = new ZionTestWeb3Provider()
@@ -32,13 +29,14 @@ describe.skip('invalidTokenHooks', () => {
         // create a new client and sign in
         const xxx = createUserIdFromEthereumAddress(provider.wallet.address, chainId)
         const badAliceAuth: ZionAuth = {
-            userId: xxx.matrixUserIdLocalpart,
+            userId: `@${xxx.matrixUserIdLocalpart}:localhost`,
             accessToken: '5678',
             deviceId: '9111',
         }
         const alice = new ZionTestClient(chainId, 'alice')
-        //await expect(alice.startClient(badAliceAuth, chainId)).rejects.toThrow('Unknown token')
-        await alice.startMatrixClient(badAliceAuth, chainId)
+        await expect(alice.startMatrixClient(badAliceAuth, chainId)).rejects.toThrow(
+            'Unknown token',
+        )
     })
     test('test logging in with a bad auth resolves to good state', async () => {
         const provider = new ZionTestWeb3Provider()
@@ -47,7 +45,7 @@ describe.skip('invalidTokenHooks', () => {
         const xxx = createUserIdFromEthereumAddress(provider.wallet.address, chainId)
         // make a bad auth
         const badAliceAuth: ZionAuth = {
-            userId: xxx.matrixUserIdLocalpart,
+            userId: `@${xxx.matrixUserIdLocalpart}:localhost`,
             accessToken: '5678',
             deviceId: '9111',
         }
@@ -71,14 +69,14 @@ describe.skip('invalidTokenHooks', () => {
         )
         // get our test elements
         const loginStatus = screen.getByTestId('loginStatus')
-        // start logged in (because we forced auth with LoginWithAuth, hopefully theres no race here)
+        // start logged in
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // and we get kicked to logged out, since the auth is bad
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
-        console.log('!!! tests pass !!!')
     }) // end test
 
-    test('test logging out from second source resets browser state', async () => {
+    /// TODO: logging out doesn't seem to invalidate the token
+    test.skip('test logging out from second source resets browser state', async () => {
         // create a new client and sign in
         const { alice } = await registerAndStartClients(['alice'])
         // grab the auth
@@ -99,7 +97,7 @@ describe.skip('invalidTokenHooks', () => {
 
         // render it
         render(
-            <ZionTestApp provider={alice.provider}>
+            <ZionTestApp provider={alice.provider} pollTimeoutMs={5000}>
                 <TestComponent />
             </ZionTestApp>,
         )
@@ -113,6 +111,9 @@ describe.skip('invalidTokenHooks', () => {
         // logout alice
         await alice.logout()
         // and we get kicked to logged out, since the auth is bad
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
+        await waitFor(
+            () => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
     }) // end test
 }) // end describe
