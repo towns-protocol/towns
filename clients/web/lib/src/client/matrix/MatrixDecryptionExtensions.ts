@@ -94,8 +94,8 @@ interface KeyRequestRecord {
 interface KeyRequestPayload {
     spaceId: string
     channelId?: string
-    unknownSessionIds?: string[] // requester has option to either request unknown sessions
-    knownSessionIds?: string[] // or everything but known sessions
+    requestedSessions?: [senderKey: string, sessionId: string][] // requester has option request unknown sessions
+    knownSessionIds?: string[] // and/or get everything but known sessions
 }
 
 interface RoomRecord {
@@ -422,10 +422,11 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             }
         }
 
-        const unknownSessionIds = roomRecord.decryptionFailures.map((event) => {
-            const wireContent = event.getWireContent()
-            return wireContent.session_id as string
-        })
+        const unknownSessionIds: [senderKey: string, sessionId: string][] =
+            roomRecord.decryptionFailures.map((event) => {
+                const wireContent = event.getWireContent()
+                return [wireContent.sender_key as string, wireContent.session_id as string]
+            })
 
         const decryptionFailureSenders = new Set(
             roomRecord.decryptionFailures.map((event) => event.getSender()),
@@ -491,7 +492,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         const request: KeyRequestPayload = {
             knownSessionIds:
                 knownSessions.length < MAX_EVENTS_PER_REQUEST ? knownSessions : undefined,
-            unknownSessionIds: unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST),
+            requestedSessions: unknownSessionIds.slice(0, MAX_EVENTS_PER_REQUEST),
             spaceId,
             channelId: spaceId === roomId ? undefined : roomId,
         }
@@ -604,7 +605,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             })
             return
         }
-        console.log('MDE::onKeyResponse', { kind: response.kind })
+        console.log('MDE::onKeyResponse', { kind: response.kind, senderId })
         roomRecord.requests[senderId].response = response
 
         switch (response.kind) {
@@ -620,21 +621,26 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                         // loop over everything we got back
                         for (const content of response.sessions) {
                             // see if we still need the key, no point in importing it twice
-                            const isFailure = this.roomRecords[roomId]?.decryptionFailures.some(
-                                (e) =>
-                                    e.getWireContent().session_id === content.session_id &&
-                                    e.isDecryptionFailure(),
+                            const event = this.roomRecords[roomId]?.decryptionFailures.find(
+                                (e) => e.getWireContent().session_id === content.session_id,
                             )
 
-                            const needsKey =
-                                isFailure ||
-                                (await this.matrixClient.crypto?.olmDevice.hasInboundSessionKeys(
-                                    roomId,
-                                    content.sender_key,
-                                    content.session_id,
-                                ))
-                            if (needsKey) {
-                                sessions.push(content)
+                            if (event) {
+                                if (event.isDecryptionFailure()) {
+                                    sessions.push(content)
+                                }
+                            } else {
+                                // if we aren't tracking this event at all, see if we
+                                // are missing keys for it
+                                const hasKeys =
+                                    await this.matrixClient.crypto?.olmDevice.hasInboundSessionKeys(
+                                        roomId,
+                                        content.sender_key,
+                                        content.session_id,
+                                    )
+                                if (!hasKeys) {
+                                    sessions.push(content)
+                                }
                             }
                         }
                         // if we found some, import them
@@ -644,6 +650,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                             console.log('MDE::importSessionKeys', {
                                 inPayload: response.sessions.length,
                                 needed: sessions.length,
+                                senderId,
                             })
                             await this.matrixClient.crypto?.importRoomKeys(sessions)
                         }
@@ -656,10 +663,10 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 }
                 break
             default:
-                console.log('MDE::onKeyResponse - unknown response kind', { response })
+                console.log('MDE::onKeyResponse - unknown response kind', { response, senderId })
         }
         // clear any request to this user and start looking for keys again
-        console.log('MDE::onKeyResponse complete', { kind: response.kind })
+        console.log('MDE::onKeyResponse complete', { kind: response.kind, senderId })
         this.clearKeyRequest(roomId, senderId)
     }
 
@@ -668,7 +675,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
      *************************************************************/
     private async onKeyRequest(event: MatrixEvent, fromUserId: string) {
         const content = event.getContent<KeyRequestPayload>()
-        const { spaceId, channelId, knownSessionIds, unknownSessionIds } = content
+        const { spaceId, channelId, knownSessionIds, requestedSessions } = content
         const roomId = channelId ?? spaceId
         if (!roomId) {
             console.error('MDE::onKeyRequest got key sharing request with missing fields', {
@@ -747,33 +754,35 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             })
         }
 
-        const allSharedHistorySessions =
-            await this.matrixClient.crypto?.olmDevice.getSharedHistoryInboundGroupSessions(roomId)
-
-        if (!allSharedHistorySessions) {
-            console.info('MDE::onKeyRequest got key sharing request for unknown room')
-            await encryptAndRespondWith({ kind: 'room_not_found', roomId })
-            return
+        const getUniqueUnknownSharedHistorySessions = async () => {
+            if (knownSessionIds) {
+                const allSharedHistorySessions =
+                    await this.matrixClient.crypto?.olmDevice.getSharedHistoryInboundGroupSessions(
+                        roomId,
+                    )
+                return (
+                    allSharedHistorySessions?.filter(
+                        ([_senderKey, sessionId]) => !knownSessionIds?.includes(sessionId),
+                    ) ?? []
+                )
+            }
+            return []
         }
+
+        const sharedHistorySessions = await getUniqueUnknownSharedHistorySessions()
 
         console.log('MDE::onKeyRequest requested', {
-            unknownSessionIds: unknownSessionIds?.length,
+            roomId,
+            requestedSessions: requestedSessions?.length,
             knownSessionIds: knownSessionIds?.length,
-            mySessions: allSharedHistorySessions.length,
+            mySessions: sharedHistorySessions.length,
         })
 
-        // requester has option to either request unknown sessions or everything but known sessions
-        const sharedHistorySessions = allSharedHistorySessions.filter(([_senderKey, sessionId]) =>
-            knownSessionIds
-                ? !knownSessionIds?.includes(sessionId)
-                : unknownSessionIds?.includes(sessionId) ?? false,
+        const uniqueRequestedSessions = (requestedSessions ?? []).filter(
+            (x) => !sharedHistorySessions.some((y) => x[1] === y[1]),
         )
 
-        if (!sharedHistorySessions.length) {
-            console.info('MDE::onKeyRequest got key sharing request for keys we dont have')
-            await encryptAndRespondWith({ kind: 'keys_not_found', roomId })
-            return
-        }
+        const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
 
         const exportedSessions: IMegolmSessionData[] = []
         await this.matrixClient.crypto?.cryptoStore.doTxn(
@@ -783,7 +792,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
             ],
             (txn) => {
-                sharedHistorySessions.forEach(([senderKey, sessionId]) => {
+                allRequestedSessions.forEach(([senderKey, sessionId]) => {
                     this.matrixClient.crypto?.cryptoStore.getEndToEndInboundGroupSession(
                         senderKey,
                         sessionId,
@@ -792,15 +801,22 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                             if (!sessionData || !this.matrixClient.crypto) {
                                 return
                             }
-                            const sess =
-                                this.matrixClient.crypto.olmDevice.exportInboundGroupSession(
-                                    senderKey,
-                                    sessionId,
-                                    sessionData,
+                            if (sessionData.room_id === roomId) {
+                                const sess =
+                                    this.matrixClient.crypto.olmDevice.exportInboundGroupSession(
+                                        senderKey,
+                                        sessionId,
+                                        sessionData,
+                                    )
+                                delete sess.first_known_index
+                                sess.algorithm = MEGOLM_ALGORITHM
+                                exportedSessions.push(sess)
+                            } else {
+                                console.error(
+                                    'MDE::onKeyRequest got key sharing request for wrong room',
+                                    { roomId, fromUserId, sessionId },
                                 )
-                            delete sess.first_known_index
-                            sess.algorithm = MEGOLM_ALGORITHM
-                            exportedSessions.push(sess)
+                            }
                         },
                     )
                 })
@@ -811,8 +827,17 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
             fromUserId,
             toUserId: event.getSender(),
             roomId,
-            numSessions: exportedSessions.length,
+            knownSessionIds: knownSessionIds?.length,
+            requestedSessions: requestedSessions?.length,
+            numSessionsLookedUp: allRequestedSessions.length,
+            exportedSessions: exportedSessions.length,
         })
+
+        if (!exportedSessions.length) {
+            console.info('MDE::onKeyRequest got key sharing request for unknown room')
+            await encryptAndRespondWith({ kind: 'keys_not_found', roomId })
+            return
+        }
 
         await encryptAndRespondWith({ kind: 'keys_found', roomId, sessions: exportedSessions })
     }
