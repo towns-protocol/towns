@@ -14,7 +14,7 @@
         "test:unit": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_MATRIX_HOMESERVER_URL=http://fake.com VITE_CASABLANCA_SERVER_URL=http://fake.com VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com vitest"
     },
     "dependencies": {
-        "@amplitude/analytics-browser": "1.6.8",
+        "@amplitude/analytics-browser": "1.8.0",
         "@emoji-mart/data": "^1.0.6",
         "@emoji-mart/react": "^1.0.1",
         "@giphy/js-fetch-api": "^4.4.0",
@@ -32,9 +32,9 @@
         "@lexical/utils": "^0.6.0",
         "@ngneat/falso": "^6.1.0",
         "@react-hook/resize-observer": "^1.2.6",
-        "@sentry/cli": "^2.12.0",
-        "@sentry/react": "^7.36.0",
-        "@sentry/tracing": "^7.34.0",
+        "@sentry/cli": "^2.13.0",
+        "@sentry/react": "^7.38.0",
+        "@sentry/tracing": "^7.38.0",
         "@tanstack/react-query": "^4.14.3",
         "@types/emoji-mart": "^3.0.9",
         "@types/throttle-debounce": "^5.0.0",
