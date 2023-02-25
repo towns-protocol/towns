@@ -4,7 +4,7 @@ export { TransactionStatus, SpaceProtocol } from './client/ZionClientTypes'
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
 export { SpaceContextProvider, useSpaceContext } from './components/SpaceContextProvider'
-export { ZionContextProvider, useZionContext } from './components/ZionContextProvider'
+export { ZionContextProvider, useZionContext, ZionContext } from './components/ZionContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
 export { AutojoinChannels } from './components/AutojoinChannels'
 
