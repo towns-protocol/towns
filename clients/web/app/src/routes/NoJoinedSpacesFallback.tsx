@@ -34,7 +34,13 @@ function AlphaLanding() {
     const { spaces } = useZionContext()
     const { client } = useZionClient()
 
-    const checkSpaces = useCallback(() => Boolean(spaces?.at(0)?.id), [spaces])
+    const checkSpaces = useCallback(() => {
+        if (spaces && Array.isArray(spaces) && spaces.length > 0) {
+            return true
+        } else {
+            return false
+        }
+    }, [spaces])
 
     const hasSyncedSpaces = useRetryUntilResolved(checkSpaces, 100, 2000)
 
