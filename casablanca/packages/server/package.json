@@ -19,7 +19,7 @@
         "wait": "timeout 60 bash -c 'while [[ \"$(curl http://localhost:7104/status)\" != \"OK\" ]]; do sleep 1; done' || false"
     },
     "dependencies": {
-        "@ethereumjs/util": "^8.0.4",
+        "@ethereumjs/util": "^8.0.1",
         "@zion/core": "workspace:^",
         "cors": "^2.8.5",
         "debug": "^4.3.4",
@@ -36,10 +36,10 @@
     "devDependencies": {
         "@types/cors": "^2.8.13",
         "@types/debug": "^4.1.7",
-        "@types/express": "^4.17.17",
+        "@types/express": "^4.17.16",
         "@types/jest": "^29.4.0",
         "@types/lodash": "^4.14.191",
-        "@types/node": "^18.14.1",
+        "@types/node": "^18.11.18",
         "@types/pg": "^8.6.6",
         "@types/pg-format": "^1.0.2",
         "@types/seedrandom": "^3.0.4",
