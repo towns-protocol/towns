@@ -17,8 +17,8 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@ethereumjs/util": "^8.0.1",
-        "@metamask/eth-sig-util": "^5.0.0",
+        "@ethereumjs/util": "^8.0.4",
+        "@metamask/eth-sig-util": "^5.0.2",
         "ethers": "^5.7.2",
         "json-rpc-2.0": "^1.4.1",
         "lodash": "^4.17.21",
