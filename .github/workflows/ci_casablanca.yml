@@ -1,0 +1,113 @@
+# Temp workflow file to test Casablanca CI, needs to be in main due to the way GitHub works
+name: Continuous Integration Casablanca
+on:
+    # Allow manual trigger in GitHub UI
+    workflow_dispatch:
+
+jobs:
+    check:
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-casablanca:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.19.5' # Dendrite won't build on 1.20 yet, "The version of quic-go you're using can't be built on Go 1.20 yet. For more details, please see https://github.com/lucas-clemente/quic-go/wiki/quic-go-and-Go-versions."
+                  cache: true
+                  cache-dependency-path: 'servers/**/go.sum'
+
+            # - name: Cancel previous runs
+            #   uses: styfle/cancel-workflow-action@0.11.0
+            #   with:
+            #       access_token: ${{ github.token }}
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: nightly
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            # - name: Maintain Turbo cache
+            #   uses: actions/cache@v3
+            #   with:
+            #       path: node_modules/.cache/turbo
+            #       key: ${{ runner.os }}-turbo-${{ github.run_id }}
+            #       restore-keys: |
+            #           ${{ runner.os }}-turbo-
+
+            # - name: Syncpack
+            #   run: yarn syncpack:check
+
+            - name: Build
+              run: yarn csb:build
+
+            # - name: Lint
+            #   run: yarn lint
+
+            # - name: Build contract types
+            #   run: ./scripts/build-contract-types.sh localhost --frozen
+
+            # - name: Start anvil
+            #   run: anvil &
+
+            # - name: Deploy local zion governance contracts
+            #   run: ./scripts/deploy-zion-governance-contracts.sh
+
+            - name: Casablanca create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: casablanca
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Run Casablanca node
+              run: ./casablanca/scripts/start_node.sh &
+
+            - name: Wait for Casablanca node to be up
+              run: yarn csb:wait
+
+            - name: Test Casablanca node
+              run: yarn csb:test
+
+            # If CI failed, we send a slack notification
+            # - name: Slack notification
+            #   if: failure() && github.event.pull_request.merged == true
+            #   uses: rtCamp/action-slack-notify@v2.2.0
+            #   env:
+            #       SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+            #       SLACK_TITLE: 'Failure'
+            #       SLACK_USERNAME: 'CI'
+            #       SLACK_ICON_EMOJI: ':boom:'
+            #       SLACK_COLOR: '#FF0000'
+            #       SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
