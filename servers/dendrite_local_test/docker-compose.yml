@@ -50,6 +50,7 @@ services:
         BLOCKCHAIN_PROVIDER_URL: https://goerli.infura.io/v3/888e72a42bbd4ae996b3707864dd8c88
         CHAIN_ID: 31337
         DATABASE_CONNECTION_STRING: postgresql://dendrite:itsasecret@host.docker.internal:5432/dendrite?sslmode=disable
+        ENVIRONMENT: development
         SERVER_NAME: localhost
 
     ##### PROD-LIKE CONFIGURATION #####
@@ -59,6 +60,7 @@ services:
     #     BLOCKCHAIN_PROVIDER_URL: https://goerli.infura.io/v3/888e72a42bbd4ae996b3707864dd8c88
     #     CHAIN_ID: 5
     #     DATABASE_CONNECTION_STRING: postgresql://dendrite:itsasecret@postgres-dendrite:5432/dendrite?sslmode=disable
+    #     ENVIRONMENT: development
     #     SERVER_NAME: node1.towns.com
 
 networks:

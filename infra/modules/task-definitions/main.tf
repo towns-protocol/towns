@@ -48,6 +48,10 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
       {
         name = "BLOCKCHAIN_PROVIDER_URL",
         value = ""
+      },
+      {
+        name = "ENVIRONMENT",
+        value = module.global_constants.environment
       }
     ]
 

@@ -32,6 +32,9 @@ version: 2
 
 # Global Matrix configuration. This configuration applies to all components.
 global:
+  # logical environment (e.g. development)
+  environment: development
+
   # The domain name of this homeserver.
   server_name: localhost
 
@@ -138,10 +141,10 @@ global:
       conn_max_lifetime: -1
 
   sentry:
-    enabled: true
+    enabled: false
     dsn: https://21c6aa87be2d4b6f8e691982392fb4d9@o327188.ingest.sentry.io/4504720094986240
-    environment: localhost-chainId:31337
-
+    enable_tracing: false
+    traces_sample_rate: 0.1
 
 # Configuration for the Appservice API.
 app_service_api:
@@ -356,6 +359,8 @@ logging:
     level: info
     params:
       path: ./logs
+  - type: sentry
+    level: error
 
 allowed_origins:
   # app
