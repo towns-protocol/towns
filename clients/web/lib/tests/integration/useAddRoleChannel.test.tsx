@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
@@ -66,6 +66,7 @@ describe('useAddRolesToChannel', () => {
         const spaceElement = screen.getByTestId('spacesElement')
         const channelElement = screen.getByTestId('channelElement')
         const rolesElement = screen.getByTestId('rolesElement')
+        const rolesCount = screen.getByTestId('rolesCount')
         const addedRoleToChannelElement = screen.getByTestId('added-role-transaction')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
@@ -85,6 +86,8 @@ describe('useAddRolesToChannel', () => {
         fireEvent.click(createChannelButton)
         // wait for the channel name to render
         await waitFor(() => within(channelElement).getByText(`channelName:${channelName}`))
+        // wait for the roles count to render
+        await waitFor(() => within(rolesCount).getByText(`rolesCount:1`))
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
         await waitFor(
@@ -122,14 +125,14 @@ function TestComponent(args: {
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     const { spaceRoles } = useRoles(spaceNetworkId)
 
-    const addedRoleToChannel = useRef('false')
+    const [addedRoleToChannel, setAddedRoleToChannel] = useState(false)
 
     useEffect(() => {
         if (addRoleToChannelTxStatus === TransactionStatus.Success) {
             console.log(`useEffect::addRoleToChannelTxStatus: `, addRoleToChannelTxStatus)
-            addedRoleToChannel.current = 'true'
+            setAddedRoleToChannel(true)
         }
-    }, [addRoleToChannelTxStatus])
+    }, [addRoleToChannelTxStatus, setAddedRoleToChannel])
 
     const roleIds = useMemo(() => {
         const roleIds: number[] = []
@@ -198,6 +201,7 @@ function TestComponent(args: {
 
     // handle click to update a role
     const onClickAddRoleToChannel = useCallback(() => {
+        console.log('!!!! onClickAddRoleToChannel', { roleIds, channelId, spaceNetworkId })
         const handleClick = async () => {
             if (channelId) {
                 await addRoleToChannelTransaction(spaceNetworkId, channelId.networkId, roleIds[0])
@@ -222,8 +226,9 @@ function TestComponent(args: {
                         )}
                     </div>
                     <div data-testid="added-role-transaction">
-                        addedRoleToChannel:{addedRoleToChannel.current}
+                        addedRoleToChannel:{addedRoleToChannel.toString()}
                     </div>
+                    <div data-testid="rolesCount">rolesCount:{roleIds.length}</div>
                     <div>
                         <RolesComponent spaceNetworkId={spaceNetworkId} />
                     </div>

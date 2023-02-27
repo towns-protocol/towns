@@ -932,6 +932,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (!space?.read || !space?.write) {
             throw new Error(`Space with networkId "${spaceNetworkId}" is not found.`)
         }
+        console.log('[addRoleToChannelTransaction] space', {
+            spaceNetworkId,
+            channelNetworkId,
+            roleId,
+        })
         try {
             transaction = await this.spaceDapp.addRoleToChannel(
                 spaceNetworkId,
