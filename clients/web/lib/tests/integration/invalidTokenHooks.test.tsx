@@ -55,7 +55,7 @@ describe('invalidTokenHooks', () => {
 
             return (
                 <>
-                    <LoginWithAuth auth={badAliceAuth} />
+                    <LoginWithAuth auth={badAliceAuth} walletAddress={xxx.accountAddress} />
                     <div data-testid="isConnected">{isConnected.toString()}</div>
                 </>
             )
@@ -89,7 +89,7 @@ describe('invalidTokenHooks', () => {
 
             return (
                 <>
-                    <LoginWithAuth auth={aliceAuth} />
+                    <LoginWithAuth auth={aliceAuth} walletAddress={alice.provider.wallet.address} />
                     <div data-testid="isConnected">{isConnected.toString()}</div>
                 </>
             )

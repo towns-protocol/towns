@@ -11,6 +11,7 @@ import { useZionClient } from '../../../src/hooks/use-zion-client'
 import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
 import { WalletStatus } from '../../../src/types/web3-types'
 import { useZionContext } from '../../../src/components/ZionContextProvider'
+import { Address } from 'wagmi'
 
 export const RegisterWallet = () => {
     const { walletStatus } = useWeb3Context()
@@ -67,6 +68,7 @@ export const LoginWithWallet = () => {
 
 interface LoginWithAuthProps {
     auth: ZionAuth
+    walletAddress: string
 }
 
 export const LoginWithAuth = (props: LoginWithAuthProps) => {
@@ -82,6 +84,7 @@ export const LoginWithAuth = (props: LoginWithAuthProps) => {
                 deviceId: props.auth.deviceId,
                 userId: props.auth.userId,
                 username: getUsernameFromId(props.auth.userId),
+                loggedInWalletAddress: props.walletAddress as Address,
             })
             setLoginStatus(LoginStatus.LoggedIn)
         }

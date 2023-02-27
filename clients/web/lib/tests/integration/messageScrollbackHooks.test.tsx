@@ -64,7 +64,10 @@ describe('messageScrollbackHooks', () => {
             }, [scrollback])
             return (
                 <>
-                    <LoginWithAuth auth={alice.auth!} />
+                    <LoginWithAuth
+                        auth={alice.auth!}
+                        walletAddress={alice.provider.wallet.address}
+                    />
                     <div data-testid="spaceMembership"> {mySpaceMembership} </div>
                     <button onClick={onClickScrollback}>Scrollback</button>
                     <div data-testid="messageslength">

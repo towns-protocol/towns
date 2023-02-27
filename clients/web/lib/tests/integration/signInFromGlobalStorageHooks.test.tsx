@@ -48,7 +48,7 @@ describe('signInFromGlobalStorageHooks', () => {
 
             return (
                 <>
-                    <LoginWithAuth auth={aliceAuth} />
+                    <LoginWithAuth auth={aliceAuth} walletAddress={alice.provider.wallet.address} />
                     <div data-testid="isConnected">{isConnected.toString()}</div>
                 </>
             )
