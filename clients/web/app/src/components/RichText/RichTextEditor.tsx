@@ -39,7 +39,7 @@ import { ChannelMentionPlugin } from './plugins/ChannelMentionPlugin'
 import { EmojiReplacePlugin } from './plugins/EmojiReplacePlugin'
 import { EmojiShortcutPlugin } from './plugins/EmojiShortcutPlugin'
 import ListMaxIndentLevelPlugin from './plugins/ListMaxIndentLevelPlugin'
-import { NewMentionsPlugin } from './plugins/MentionsPlugin'
+import { MentionsPlugin } from './plugins/MentionsPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
 import * as styles from './RichTextEditor.css'
@@ -205,7 +205,7 @@ export const RichTextEditor = (props: Props) => {
             <HistoryPlugin />
             <LinkPlugin />
             <EmojiReplacePlugin />
-            <NewMentionsPlugin members={members} />
+            <MentionsPlugin members={members} />
             <EmojiShortcutPlugin />
             <ListMaxIndentLevelPlugin maxDepth={4} />
             <ListPlugin />

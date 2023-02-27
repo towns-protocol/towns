@@ -75,7 +75,7 @@ export const EmojiShortcutPlugin = () => {
                 anchorElement,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
             ) =>
-                anchorElement.current && results.length
+                anchorElement.current && results.length > 0
                     ? ReactDOM.createPortal(
                           <TypeaheadMenu>
                               {options.map((option, i: number) => (

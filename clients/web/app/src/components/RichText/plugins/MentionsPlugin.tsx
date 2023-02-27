@@ -23,7 +23,7 @@ type Props = {
     members: RoomMember[]
 }
 
-export const NewMentionsPlugin = (props: Props) => {
+export const MentionsPlugin = (props: Props) => {
     const [editor] = useLexicalComposerContext()
 
     const [queryString, setQueryString] = useState<string | null>(null)
@@ -94,7 +94,7 @@ export const NewMentionsPlugin = (props: Props) => {
                 anchorElement,
                 { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
             ) =>
-                anchorElement.current && options.length
+                anchorElement.current && results.length > 0
                     ? ReactDOM.createPortal(
                           <TypeaheadMenu>
                               {results.map((option, i, arr) => (
