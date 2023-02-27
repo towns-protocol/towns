@@ -5,6 +5,8 @@ import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
 import { Permission } from '../web3/ContractTypes'
 import { getAccount } from '@wagmi/core'
+import { QueryKeyChannels } from '../../hooks/query-keys'
+import { queryClient } from '../../query/queryClient'
 
 export type MatrixSpaceHierarchy = {
     root: IHierarchyRoom
@@ -43,8 +45,31 @@ export async function syncMatrixSpace(
         ? roomHierarchy.rooms.filter((r) => r.room_id !== networkId)
         : []
 
-    // TODO: cache
-    const onChainChannels = (
+    const onChainChannels = await queryClient.fetchQuery(
+        [QueryKeyChannels.SyncEntitledChannels, spaceId.networkId],
+        () => getEntitledChannels(children, root, address, spaceDapp),
+        {
+            // We don't need to check channel entitlements often
+            // when someone joins/creates a channel, this query is removed and the entitlements for the space are refetched
+            staleTime: 1000 * 60 * 20,
+            cacheTime: 1000 * 60 * 25,
+        },
+    )
+
+    if (!root) {
+        console.error('syncing space error', networkId, 'no root', roomHierarchy)
+        return undefined
+    }
+    return { root: root, children: onChainChannels }
+}
+
+async function getEntitledChannels(
+    children: IHierarchyRoom[],
+    root: IHierarchyRoom | undefined,
+    address: string | undefined,
+    spaceDapp: ISpaceDapp,
+) {
+    return (
         await Promise.all(
             children.map(async (c) => {
                 if (!root || !address) {
@@ -63,7 +88,12 @@ export async function syncMatrixSpace(
                         return
                     }
                 } catch (e) {
-                    console.log('[syncMatrixSpace] failed to check entitlement for channel')
+                    console.error(
+                        '[syncMatrixSpace] failed to check entitlement for channel: ',
+                        c.name,
+                        c.room_id,
+                        JSON.stringify(e),
+                    )
                     return
                 }
 
@@ -71,10 +101,4 @@ export async function syncMatrixSpace(
             }),
         )
     ).filter((c): c is IHierarchyRoom => !!c)
-
-    if (!root) {
-        console.error('syncing space error', networkId, 'no root', roomHierarchy)
-        return undefined
-    }
-    return { root: root, children: onChainChannels }
 }

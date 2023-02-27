@@ -8,6 +8,7 @@ import Olm from '@matrix-org/olm'
 import fetch from 'node-fetch'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
+import { queryClient } from './src/query/queryClient'
 import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 
@@ -35,7 +36,7 @@ beforeAll(async () => {
 
 afterEach(() => {
     // stop all test clients
-    return ZionTestClient.cleanup()
+    return Promise.all([queryClient.resetQueries(), ZionTestClient.cleanup()])
 }, 5000)
 
 afterAll(() => {

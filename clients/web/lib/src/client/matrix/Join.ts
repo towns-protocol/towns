@@ -1,6 +1,7 @@
 import { EventType, MatrixClient } from 'matrix-js-sdk'
 import { sleepUntil } from '../../utils/zion-utils'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
+import { removeSyncedEntitleChannelsQueries } from '../../query/removeSyncedEntitledChannelQueries'
 
 export const joinMatrixRoom = async (props: {
     matrixClient: MatrixClient
@@ -10,6 +11,9 @@ export const joinMatrixRoom = async (props: {
     const opts = {
         syncRoom: true,
     }
+
+    removeSyncedEntitleChannelsQueries()
+
     const notGoodMatrixRoom = await matrixClient.joinRoom(roomId.networkId, opts)
     // when you join a room, the room returned to you isn't saved in the data store
     // then when we get the room on the next sync, a new one is created,

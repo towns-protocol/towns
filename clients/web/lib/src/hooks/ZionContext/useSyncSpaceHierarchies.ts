@@ -12,6 +12,8 @@ import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZTEvent } from '../../types/timeline-types'
+import { useQueryClient } from '@tanstack/react-query'
+import { QueryKeyChannels } from '../query-keys'
 import { useSpaceIdStore } from './useSpaceIds'
 
 // the spaces are just tacked on to the matrix design system,
@@ -29,6 +31,7 @@ export function useSyncSpaceHierarchies(
     const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
     const seenSpaceIds = useRef<RoomIdentifier[]>(spaceIds)
     const seenInvitedToIds = useRef<RoomIdentifier[]>(invitedToIds)
+    const queryClient = useQueryClient()
 
     const enqueueSpaceId = (spaceId: string) => {
         setSpaceIdsQueue((prev) => {
@@ -128,12 +131,14 @@ export function useSyncSpaceHierarchies(
                 return
             }
             const eventType = event.getType()
-            if (
-                eventType === EventType.SpaceChild ||
-                // - a ZTEvent.BlockchainTransaction is fired when a blockchain transaction stored in user's local storage resolves - it's not a Matrix Event
-                // - we should sync again when this happens
-                eventType === ZTEvent.BlockchainTransaction
-            ) {
+
+            // TODO:  ZTEvent.BlockchainTransaction is too broad of an identifier, this is only fired for a create channel transaction. Need to update the event types to be ChannelTransaction, SpaceTransaction, etc.
+            // - a ZTEvent.BlockchainTransaction is fired when a blockchain transaction stored in user's local storage resolves - it's not a Matrix Event
+            // - we should sync again when this happens
+            if (eventType === EventType.SpaceChild || eventType === ZTEvent.BlockchainTransaction) {
+                queryClient.removeQueries({
+                    queryKey: [QueryKeyChannels.SyncEntitledChannels, eventRoomId],
+                })
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
             }
@@ -143,6 +148,6 @@ export function useSyncSpaceHierarchies(
             // console.log("!!! REMOVING EVENTS");
             matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
-    }, [matrixClient, spaceIds])
+    }, [matrixClient, queryClient, spaceIds])
     return { spaceHierarchies }
 }
