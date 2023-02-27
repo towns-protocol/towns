@@ -19,8 +19,11 @@ function do_killl() {
     then
         ps -ax | grep "$term"
         echo ""
-        read b_continue'?Kill these processes?:y/n '
-        if [[ "$b_continue" == "y" ]]
+        read b_continue'?Kill these processes?:y/n/f '
+        if [[ "$b_continue" == "f" ]]
+        then
+            kill -9 $(ps -ax | grep "$term" | awk '{print $1}')
+        elif [[ "$b_continue" == "y" ]]
         then
             kill $(ps -ax | grep "$term" | awk '{print $1}')
         fi
