@@ -1,6 +1,6 @@
 import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
 import { RegisterWallet } from './helpers/TestComponents'
@@ -49,7 +49,7 @@ describe('useRoleDetails', () => {
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
-        await waitFor(() => within(clientRunning).getByText('true'))
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -65,7 +65,7 @@ describe('useRoleDetails', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceName))
+        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
 
         /* Assert */
         // verify the role name, permissions, token entitlements for the space.
@@ -241,7 +241,7 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
  * Assert helper functions
  */
 async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
-    await waitFor(() => within(htmlElement).getByText(`roleName:${roleName}`))
+    await waitFor(() => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`))
 }
 
 async function assertPermissions(
@@ -251,9 +251,9 @@ async function assertPermissions(
 ) {
     // verify the permissions
     const expected = permissions.map((permission) => `${roleName}:permission:${permission}`)
-    const allPermissions: Promise<HTMLElement>[] = []
+    const allPermissions: Promise<void>[] = []
     for (const p of expected) {
-        allPermissions.push(waitFor(() => within(htmlElement).getByText(p)))
+        allPermissions.push(waitFor(() => expect(htmlElement).toHaveTextContent(p)))
     }
     await Promise.all(allPermissions)
 }
@@ -264,8 +264,10 @@ async function assertNft(
     nftAddress: string,
     quantity: number,
 ) {
-    await waitFor(() => within(htmlElement).getByText(`${roleName}:nftAddress:${nftAddress}`))
     await waitFor(() =>
-        within(htmlElement).getByText(`${roleName}:${nftAddress}:quantity:${quantity}`),
+        expect(htmlElement).toHaveTextContent(`${roleName}:nftAddress:${nftAddress}`),
+    )
+    await waitFor(() =>
+        expect(htmlElement).toHaveTextContent(`${roleName}:${nftAddress}:quantity:${quantity}`),
     )
 }

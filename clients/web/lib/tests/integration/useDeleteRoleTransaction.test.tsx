@@ -60,7 +60,7 @@ describe('useDeleteRoleTransaction', () => {
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
-        await waitFor(() => within(clientRunning).getByText('true'))
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -80,10 +80,12 @@ describe('useDeleteRoleTransaction', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceName))
+        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
         // click button to create the role
         fireEvent.click(createRoleButton)
-        await waitFor(() => within(rolesElement).getByText(`roleName:${toBeDeletedRoleName}`))
+        await waitFor(() =>
+            expect(rolesElement).toHaveTextContent(`roleName:${toBeDeletedRoleName}`),
+        )
 
         /* Act */
         // click button to update the role

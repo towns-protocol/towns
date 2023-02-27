@@ -2,7 +2,7 @@
 
 import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -213,13 +213,13 @@ describe('useCreateChannelTransactionHook', () => {
             name: 'Create Channel',
         })
         // wait for the client to be running
-        await waitFor(() => within(clientRunning).getByText('true'))
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // click button to create the space
         fireEvent.click(createSpaceButton)
         await waitFor(() => expect(transactionsNumber).toHaveTextContent('1'))
         // wait for the space name to render
         await waitFor(
-            () => within(spaceElement).getByText(spaceName),
+            () => expect(spaceElement).toHaveTextContent(spaceName),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
@@ -231,6 +231,6 @@ describe('useCreateChannelTransactionHook', () => {
         await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
         /* Assert */
-        await waitFor(() => within(channelElement).getByText(channelName))
+        await waitFor(() => expect(channelElement).toHaveTextContent(channelName))
     }) // end test
 }) // end describe

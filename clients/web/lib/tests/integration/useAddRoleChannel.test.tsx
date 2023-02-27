@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
@@ -58,7 +58,7 @@ describe('useAddRolesToChannel', () => {
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
-        await waitFor(() => within(clientRunning).getByText('true'))
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -82,16 +82,16 @@ describe('useAddRolesToChannel', () => {
         // this will create the space with no roles
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceName))
+        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
         fireEvent.click(createChannelButton)
         // wait for the channel name to render
-        await waitFor(() => within(channelElement).getByText(`channelName:${channelName}`))
+        await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
         // wait for the roles count to render
-        await waitFor(() => within(rolesCount).getByText(`rolesCount:1`))
+        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:1`))
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
         await waitFor(
-            () => within(addedRoleToChannelElement).getByText(`addedRoleToChannel:true`),
+            () => expect(addedRoleToChannelElement).toHaveTextContent(`addedRoleToChannel:true`),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         /* Assert */
@@ -376,7 +376,7 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
  */
 async function assertRoleChannel(htmlElement: HTMLElement, roleName: string) {
     await waitFor(
-        () => within(htmlElement).getByText(`roleName:${roleName}`),
+        () => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`),
         TestConstants.DoubleDefaultWaitForTimeout,
     )
 }

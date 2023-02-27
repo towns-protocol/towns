@@ -4,7 +4,7 @@ import {
     UpdateChannelInfo,
 } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useMemo } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -61,7 +61,7 @@ describe('useUpdateChannelTransaction', () => {
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
-        await waitFor(() => within(clientRunning).getByText('true'))
+        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
@@ -84,30 +84,32 @@ describe('useUpdateChannelTransaction', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         await waitFor(
-            () => within(createSpaceTxStatus).getByText('Success'),
+            () => expect(createSpaceTxStatus).toHaveTextContent('Success'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // wait for the space name to render
-        await waitFor(() => within(spaceElement).getByText(spaceName))
+        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
         // click button to create the channel
         fireEvent.click(createChannelButton)
         await waitFor(
-            () => within(createChannelTransactionStatus).getByText('Success'),
+            () => expect(createChannelTransactionStatus).toHaveTextContent('Success'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
-        await waitFor(() => within(channelElement).getByText(`channelName:${channelName}`))
+        await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
 
         /* Act */
         // click button to update the channel name
         fireEvent.click(updateChannelButton)
         await waitFor(
-            () => within(updateChannelTransactionStatus).getByText('Success'),
+            () => expect(updateChannelTransactionStatus).toHaveTextContent('Success'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
 
         /* Assert */
         // verify the channel name has changed
-        await waitFor(() => within(channelElement).getByText(`channelName:${updatedChannelName}`))
+        await waitFor(() =>
+            expect(channelElement).toHaveTextContent(`channelName:${updatedChannelName}`),
+        )
     }) // end test
 }) // end describe
 
