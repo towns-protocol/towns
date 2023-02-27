@@ -1,12 +1,12 @@
 import React from 'react'
-import { NavLink, Navigate, useSearchParams } from 'react-router-dom'
-import { Box, Icon, Stack, Text } from '@ui'
-import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
-import { useAuth } from 'hooks/useAuth'
-import { SpaceIcon } from '@components/SpaceIcon'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
-import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { SpaceIcon } from '@components/SpaceIcon'
+import { Box, Icon, Stack, Text } from '@ui'
+import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
+import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 
 function getButtonLabel(status: SignupButtonStatus) {
     switch (status) {
@@ -82,27 +82,34 @@ const InviteLinkLanding = () => {
 
                 <Text color="gray2" size="sm" textAlign="center">
                     By clicking &quot;{buttonLabel}&quot; above, you acknowledge that you have read
-                    and understood, and agree to Zion&apos;s Terms & Privacy Policy
+                    and understood, and agree to Town&apos;s Terms & Privacy Policy
                 </Text>
-                <Stack flexDirection="row" gap="sm">
-                    <NavLink to="/">
-                        <Box flexDirection="row" color="gray2" alignItems="center" gap="sm">
-                            <Icon type="help" />
+                <Stack centerContent gap horizontal>
+                    <Box horizontal color="gray2" alignItems="center" gap="xs">
+                        <Icon type="help" />
+                        <Text size="sm" textAlign="center">
+                            <a
+                                href="https://www.towns.com/introduction/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                What is Towns?
+                            </a>
+                        </Text>
+                    </Box>
 
-                            <Text size="sm" textAlign="center">
-                                What is Zion?
-                            </Text>
-                        </Box>
-                    </NavLink>
-                    <NavLink to="/">
-                        <Box flexDirection="row" color="gray2" alignItems="center" gap="sm">
-                            <Icon type="manifesto" />
-
-                            <Text size="sm" textAlign="center">
-                                Read the Manifesto
-                            </Text>
-                        </Box>
-                    </NavLink>
+                    <Box horizontal color="gray2" alignItems="center" gap="xs">
+                        <Icon type="manifesto" />
+                        <Text size="sm" textAlign="center">
+                            <a
+                                href="https://www.towns.com/vision/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Read the vision
+                            </a>
+                        </Text>
+                    </Box>
                 </Stack>
             </Stack>
         </Stack>
