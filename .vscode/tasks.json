@@ -12,6 +12,18 @@
         "label": "~Start Local Dev~",
         "dependsOn": [
           "YarnInstall",
+          "Launch All"
+        ],
+        // Mark as the default build task so cmd/ctrl+shift+b will create them
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "dependsOrder": "sequence"
+      },
+      {
+        "label": "Launch All",
+        "dependsOn": [
           "Dendrite (from source)",
           // "Dendrite (from docker compose)",
           "Casablanca",
