@@ -1,7 +1,7 @@
 {
     "name": "use-zion-client",
     "description": "Zion client, bundles matrix and web3 functionality",
-    "version": "1.0.0",
+    "version": "workspace:^",
     "license": "MIT",
     "type": "module",
     "main": "dist/index.js",
@@ -46,9 +46,9 @@
         "@testing-library/user-event": "^14.4.3",
         "@types/jest": "^29.4.0",
         "@types/node-fetch": "^2.6.2",
-        "@types/react": "^18.0.27",
-        "@typescript-eslint/eslint-plugin": "^5.49.0",
-        "@typescript-eslint/parser": "^5.49.0",
+        "@types/react": "^18.0.28",
+        "@typescript-eslint/eslint-plugin": "^5.53.0",
+        "@typescript-eslint/parser": "^5.53.0",
         "eslint": "^8.34.0",
         "eslint-plugin-lodash": "^7.4.0",
         "eslint-plugin-react-hooks": "^4.6.0",
@@ -61,7 +61,7 @@
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "ts-jest": "^29.0.5",
-        "typescript": "^4.9.4"
+        "typescript": "^4.9.5"
     },
     "files": [
         "/dist"

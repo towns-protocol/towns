@@ -4,7 +4,7 @@ Test app that uses our own use-matrix-client library module. Follow the README.m
 
 ## About this setup
 
-We're using `workspace:*` as the source of the `use-matrix-client` dependency in the package json. This requires the files in `clients/web/lib` to be built using `yarn build`, but then changes should get picked up imediately. Use `yarn watch` to continuously build changes.
+We're using `workspace:^` as the source of the `use-matrix-client` dependency in the package json. This requires the files in `clients/web/lib` to be built using `yarn build`, but then changes should get picked up imediately. Use `yarn watch` to continuously build changes.
 
 ## First time set up
 

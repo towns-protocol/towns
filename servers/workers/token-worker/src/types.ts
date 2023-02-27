@@ -1,4 +1,4 @@
-import { Request as IttyRequest } from 'itty-router'
+import { IRequest as IttyRequest } from 'itty-router'
 import { OwnedNftsResponse, NftContract, OwnedNft, OpenSeaCollectionMetadata } from 'alchemy-sdk'
 import { AuthEnv } from '../../common'
 
