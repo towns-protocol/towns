@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useAccount } from 'wagmi'
 import { z } from 'zod'
 import { IsHolderOfCollectionResponse } from '@token-worker/types'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
+import { useAuth } from 'hooks/useAuth'
 import { NETWORK } from './utils'
 
 const PIONEER_NFT_ADDRESS = '0xdb66D5b28B9acc9FB55B96751Ba694829d7EE606'
@@ -28,7 +28,7 @@ async function fetchIsHolderOfToken(wallet: string, address: string) {
 const queryKey = 'isHolderOfToken'
 
 export function useIsHolderOfToken(address: string) {
-    const { address: wallet } = useAccount()
+    const { loggedInWalletAddress: wallet } = useAuth()
 
     return useQuery(
         [queryKey, wallet, address],

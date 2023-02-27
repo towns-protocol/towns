@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { Permission, useSpaceId, useWeb3Context, useZionClient } from 'use-zion-client'
+import { Permission, useSpaceId, useZionClient } from 'use-zion-client'
+import { useAuth } from './useAuth'
 
 export function useHasPermission(permission: Permission, channelId?: string) {
     const { client } = useZionClient()
     const spaceId = useSpaceId()
-    const { accounts } = useWeb3Context()
-    const wallet = accounts[0]
+    const { loggedInWalletAddress: wallet } = useAuth()
 
     const hasClient = !!client
     const hasSpaceId = !!spaceId
@@ -20,7 +20,7 @@ export function useHasPermission(permission: Permission, channelId?: string) {
     return useQuery(
         [spaceId?.networkId, _channelId, wallet, _permission, { hasSpaceId, hasClient }],
         async () => {
-            if (hasClient && hasSpaceId) {
+            if (hasClient && hasSpaceId && wallet) {
                 return (
                     (await client.isEntitled(spaceId.networkId, _channelId, wallet, _permission)) ??
                     null

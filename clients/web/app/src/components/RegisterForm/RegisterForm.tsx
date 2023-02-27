@@ -3,13 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
-import {
-    LoginStatus,
-    useMatrixStore,
-    useMyProfile,
-    useWeb3Context,
-    useZionClient,
-} from 'use-zion-client'
+import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
 import { vars } from 'ui/styles/vars.css'
 import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -33,22 +27,20 @@ const placeholders = {
 }
 
 export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
-    const { accounts } = useWeb3Context()
-    const { isConnected } = useAuth()
+    const { loggedInWalletAddress, isConnected, register: registerWallet } = useAuth()
     const { setDisplayName, setAvatarUrl } = useZionClient()
-    const { register: registerWallet } = useAuth()
     const navigate = useNavigate()
     const { loginStatus } = useMatrixStore()
     const myProfile = useMyProfile()
 
     const defaultValues = useMemo(
         () => ({
-            walletAddress: accounts[0],
+            walletAddress: loggedInWalletAddress,
             ens: undefined,
             displayName: myProfile?.displayName ?? '',
             nft: myProfile?.avatarUrl ?? '',
         }),
-        [accounts, myProfile],
+        [loggedInWalletAddress, myProfile],
     )
 
     const { setValue, resetField, register, handleSubmit, watch, formState, reset } = useForm({

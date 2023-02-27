@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react'
 import * as z from 'zod'
-import { useWeb3Context, useZionClient } from 'use-zion-client'
+import { useZionClient } from 'use-zion-client'
 import { UseFormReturn } from 'react-hook-form'
 import { Box, ErrorMessage, FormRender, Heading, RadioCard } from '@ui'
+import { useAuth } from 'hooks/useAuth'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { TokenList } from '../../../Tokens/TokenList'
@@ -37,8 +38,7 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
     const defaultState = useCreateSpaceFormStore((state) => state.step1)
     const setStep1 = useCreateSpaceFormStore((state) => state.setStep1)
     const { chainId } = useZionClient()
-    const { accounts } = useWeb3Context()
-    const wallet = accounts[0]
+    const { loggedInWalletAddress: wallet } = useAuth()
 
     const onEveryoneClick = useCallback((formProps: UseFormReturn) => {
         formProps.setValue(MEMBERSHIP_TYPE, EVERYONE, {
@@ -87,25 +87,27 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                             />
                         </Box>
 
-                        <RadioCard
-                            name={MEMBERSHIP_TYPE}
-                            value={TOKEN_HOLDERS}
-                            title="Token holders"
-                            description="People who hold a specific token may join your space"
-                            onClick={() => onTokensClick(formProps)}
-                            {...formProps}
-                        >
-                            {() => {
-                                return (
-                                    <TokenList
-                                        wallet={wallet}
-                                        chainId={chainId}
-                                        isChecked={isTokenHolders}
-                                        {...formProps}
-                                    />
-                                )
-                            }}
-                        </RadioCard>
+                        {wallet && (
+                            <RadioCard
+                                name={MEMBERSHIP_TYPE}
+                                value={TOKEN_HOLDERS}
+                                title="Token holders"
+                                description="People who hold a specific token may join your space"
+                                onClick={() => onTokensClick(formProps)}
+                                {...formProps}
+                            >
+                                {() => {
+                                    return (
+                                        <TokenList
+                                            wallet={wallet}
+                                            chainId={chainId}
+                                            isChecked={isTokenHolders}
+                                            {...formProps}
+                                        />
+                                    )
+                                }}
+                            </RadioCard>
+                        )}
 
                         {isValid ? null : (
                             <Box padding="sm">

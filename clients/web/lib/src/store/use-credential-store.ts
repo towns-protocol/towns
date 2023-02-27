@@ -1,3 +1,4 @@
+import { Address } from 'wagmi'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
 
@@ -6,6 +7,7 @@ export type MatrixCredentials = {
     deviceId: string
     userId: string
     username?: string
+    loggedInWalletAddress: Address
 }
 
 export type CredentialStoreStates = {

@@ -1,9 +1,9 @@
 import React from 'react'
 import * as z from 'zod'
 import { UseFormReturn } from 'react-hook-form'
-import { useWeb3Context } from 'use-zion-client'
 import { Box, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
 import { useCachedTokensForWallet } from 'api/lib/tokenContracts'
+import { useAuth } from 'hooks/useAuth'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { TokenAvatar } from '../../../Tokens/TokenAvatar'
@@ -82,8 +82,7 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
     const defaultState = useCreateSpaceFormStore((state) => state.step2)
     const setStep2 = useCreateSpaceFormStore((state) => state.setStep2)
 
-    const { accounts } = useWeb3Context()
-    const wallet = accounts[0]
+    const { loggedInWalletAddress: wallet } = useAuth()
 
     return (
         <FormRender<CreateSpaceFormState['step2']>

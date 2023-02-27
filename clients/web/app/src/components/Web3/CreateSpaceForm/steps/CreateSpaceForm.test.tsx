@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
-import { TestApp } from 'test/testUtils'
+import { TestApp, mockUseMatrixCredentials } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
@@ -50,6 +50,8 @@ vi.mock('use-zion-client', async () => {
                 type: 'createSapce',
             })
         },
+        // useAuth deps
+        useMatrixCredentials: () => mockUseMatrixCredentials(),
     }
 })
 

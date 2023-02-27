@@ -32,16 +32,16 @@ export function useMatrixWalletSignIn() {
     const { loginStatus, setLoginError, setLoginStatus } = useMatrixStore()
     const { homeServerUrl: homeServer } = useZionContext()
     const { setMatrixCredentials } = useCredentialStore()
-    const { accounts, sign, chain } = useWeb3Context()
+    const { sign, chain, activeWalletAddress } = useWeb3Context()
 
     const chainIdEip155 = chain?.id
 
     const userIdentifier = useMemo(() => {
-        if (accounts && accounts.length > 0 && chainIdEip155) {
-            return createUserIdFromEthereumAddress(accounts[0], chainIdEip155)
+        if (activeWalletAddress && chainIdEip155) {
+            return createUserIdFromEthereumAddress(activeWalletAddress, chainIdEip155)
         }
         return undefined
-    }, [accounts, chainIdEip155])
+    }, [chainIdEip155, activeWalletAddress])
 
     const authenticationError = useCallback(
         function (error: AuthenticationError): void {
@@ -56,7 +56,7 @@ export function useMatrixWalletSignIn() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         function (response: IAuthData, authData: AuthenticationData) {
             const { access_token, device_id, user_id } = response
-            if (access_token && device_id && user_id) {
+            if (access_token && device_id && user_id && activeWalletAddress) {
                 // set zion_siwe cookie on successful registration
                 document.cookie = setZionSiweCookie(authData)
                 setMatrixCredentials(homeServer, {
@@ -64,6 +64,7 @@ export function useMatrixWalletSignIn() {
                     deviceId: device_id,
                     userId: user_id,
                     username: getUsernameFromId(user_id),
+                    loggedInWalletAddress: activeWalletAddress,
                 })
                 setLoginStatus(LoginStatus.LoggedIn)
             } else {
@@ -74,7 +75,7 @@ export function useMatrixWalletSignIn() {
                 setLoginStatus(LoginStatus.LoggedOut)
             }
         },
-        [homeServer, setLoginError, setLoginStatus, setMatrixCredentials],
+        [activeWalletAddress, homeServer, setLoginError, setLoginStatus, setMatrixCredentials],
     )
 
     const signMessage = useCallback(

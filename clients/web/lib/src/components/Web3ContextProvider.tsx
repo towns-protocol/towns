@@ -11,6 +11,7 @@ export interface IWeb3Context {
     provider?: TProvider
     sign: (message: string, walletAddress: string) => Promise<string | undefined>
     accounts: Address[]
+    activeWalletAddress: Address | undefined
     chain?: Chain & {
         unsupported?: boolean
     }

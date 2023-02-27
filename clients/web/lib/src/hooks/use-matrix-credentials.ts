@@ -18,6 +18,7 @@ export function useMatrixCredentials() {
         deviceId: credentials?.deviceId,
         userId: credentials?.userId,
         username: credentials?.username,
+        loggedInWalletAddress: credentials?.loggedInWalletAddress,
         isAuthenticated,
         loginStatus,
         loginError,

@@ -1,5 +1,6 @@
-import { Address, useAccount, useContractEvent } from 'wagmi'
+import { Address, useContractEvent } from 'wagmi'
 import { ethers } from 'ethers'
+import { useAuth } from 'hooks/useAuth'
 import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 
 type ListenerProps = {
@@ -8,7 +9,7 @@ type ListenerProps = {
 }
 
 export const CreateSpaceEventListener = ({ contractAddress }: ListenerProps) => {
-    const { address } = useAccount()
+    const { loggedInWalletAddress: address } = useAuth()
     const setMintedTokenAddress = useCreateSpaceFormStore((s) => s.setMintedTokenAddress)
     const abi = [
         {

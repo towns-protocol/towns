@@ -7,9 +7,10 @@ const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 
 export function useAuth() {
-    const { isAuthenticated, loginStatus, loginError } = useMatrixCredentials()
+    const { isAuthenticated, loginStatus, loginError, loggedInWalletAddress } =
+        useMatrixCredentials()
     const { loginWithWallet, registerWallet, logout: _logout } = useZionClient()
-    const { walletStatus } = useWeb3Context()
+    const { walletStatus, activeWalletAddress } = useWeb3Context()
     const { track } = useAnalytics()
     const {
         connect: _connect,
@@ -63,6 +64,8 @@ export function useAuth() {
         login,
         logout,
         register,
+        activeWalletAddress,
+        loggedInWalletAddress,
         connectError,
         connectLoading,
         pendingConnector,

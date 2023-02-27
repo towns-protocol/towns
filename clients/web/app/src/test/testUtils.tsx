@@ -1,6 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import * as Zion from 'use-zion-client'
+import * as Lib from 'use-zion-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
@@ -8,7 +8,7 @@ import { MainLayout } from 'MainLayout'
 
 type TestAppProps = {
     children: JSX.Element
-    zionContextProviderProps?: React.ComponentProps<typeof Zion.ZionContextProvider>
+    zionContextProviderProps?: React.ComponentProps<typeof Lib.ZionContextProvider>
     Router?: typeof MemoryRouter | typeof BrowserRouter
 }
 
@@ -31,14 +31,14 @@ export const TestApp = (props: TestAppProps) => {
     return (
         <MainLayout>
             <QueryClientProvider client={queryClient}>
-                <Zion.ZionContextProvider
-                    primaryProtocol={Zion.SpaceProtocol.Matrix}
+                <Lib.ZionContextProvider
+                    primaryProtocol={Lib.SpaceProtocol.Matrix}
                     matrixServerUrl=""
                     casablancaServerUrl=""
                     {...props.zionContextProviderProps}
                 >
                     <Router>{props.children}</Router>
-                </Zion.ZionContextProvider>
+                </Lib.ZionContextProvider>
             </QueryClientProvider>
         </MainLayout>
     )
@@ -62,4 +62,32 @@ export function mockNodePropsOnRef<T>(htmlNodeProps: T): void {
     afterEach(() => {
         spy.mockReset()
     })
+}
+
+export function mockUseMatrixCredentials(
+    args: {
+        loginStatus?: Lib.LoginStatus
+        loginError?: Error
+        loggedInWalletAddress?: string
+        isAuthenticated?: boolean
+    } = {},
+) {
+    return {
+        isAuthenticated: true,
+        loginStatus: Lib.LoginStatus.LoggedIn,
+        loginError: undefined,
+        loggedInWalletAddress: '0x1234',
+        ...args,
+    }
+}
+
+export function mockUseWeb3Context() {
+    return {
+        sign: async () => undefined,
+        activeWalletAddress: '0x1234',
+        accounts: ['0x1234'],
+        chains: [],
+        isConnected: true,
+        walletStatus: 'connected',
+    }
 }

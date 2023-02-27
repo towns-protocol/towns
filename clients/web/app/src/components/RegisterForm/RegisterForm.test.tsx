@@ -8,6 +8,7 @@ import * as Zion from 'use-zion-client'
 import { BrowserRouter } from 'react-router-dom'
 import matchers from '@testing-library/jest-dom/matchers'
 import * as router from 'react-router'
+import { mockUseMatrixCredentials } from 'test/testUtils'
 import { RegisterForm } from './RegisterForm'
 
 expect.extend(matchers)
@@ -18,22 +19,11 @@ vi.mock('react-router', async () => {
     }
 })
 
-// TODO
-// quick mocks to make this work
-// probably we want to extract this away as a util to be used in other tests at some point with some default mock implementations
-// but can deal with those as we start testing things that require them
-const web3ContextMock = {
-    sign: async () => undefined,
-    accounts: ['0x1234'],
-    chains: [],
-    isConnected: true,
-    walletStatus: 'connected',
-}
-
+// useAuth deps
 vi.mock('use-zion-client', async () => {
     return {
         ...((await vi.importActual('use-zion-client')) as any),
-        useWeb3Context: () => web3ContextMock,
+        useMatrixCredentials: () => mockUseMatrixCredentials(),
     }
 })
 

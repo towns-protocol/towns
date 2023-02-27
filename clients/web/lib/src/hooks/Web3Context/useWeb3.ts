@@ -38,6 +38,7 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     return {
         provider,
         sign: sign,
+        activeWalletAddress: address,
         accounts,
         chain: activeChain,
         chains: chains,
