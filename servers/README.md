@@ -296,3 +296,29 @@ Then change the jest config in jest-setup.ts to point to 8009
 ```
 process.env.HOMESERVER = "http://localhost:8009"; // "https://node1.towns.com";
 ```
+
+### Run the profiler
+
+
+#### CPU
+```console
+go tool pprof -http=localhost:23456 http://node1.towns.com:65432/debug/pprof/profile\?seconds\=30
+```
+
+This will wait for 30 seconds to collect profiling data, then open a browser window with the results.
+
+#### Heap
+
+```console
+go tool pprof -http=localhost:23456 http://node1.towns.com:65432/debug/pprof/heap
+```
+
+This will open a browser window with the results.
+
+
+#### More info
+
+Go to `servers/dendrite/docs/development/PROFILING.md` to read more about profiling the dendrite server.
+
+
+

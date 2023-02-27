@@ -30,6 +30,9 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
     portMappings = [{
       containerPort = 8008
       hostPort = 8008 
+    }, {
+      containerPort = 65432
+      hostPort = 65432
     }]
 
     environment = [

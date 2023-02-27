@@ -18,7 +18,19 @@ module "zion_alb_sg" {
   vpc_id      = var.vpc_id
 
   ingress_cidr_blocks = ["0.0.0.0/0"] # public internet
-  ingress_rules = ["https-443-tcp", "http-80-tcp"]
+  ingress_rules = [
+    "https-443-tcp", 
+    "http-80-tcp", 
+  ]
+
+  ingress_with_cidr_blocks = [
+    {
+      protocol    = "tcp"
+      from_port   = 65432
+      to_port     = 65432
+      description = "profiler"
+    }
+  ]
 
 
   computed_egress_with_cidr_blocks = [
@@ -51,6 +63,12 @@ module "zion_internal_sg" {
       protocol    = "tcp"
       from_port   = 8008
       to_port     = 8008
+      source_security_group_id = module.zion_alb_sg.security_group_id
+    },
+    {
+      protocol    = "tcp"
+      from_port   = 65432
+      to_port     = 65432
       source_security_group_id = module.zion_alb_sg.security_group_id
     }
   ]
@@ -93,6 +111,12 @@ module "zion_alb" {
         status_code = "HTTP_301"
       }
     },
+    {
+      port              = 65432
+      protocol          = "HTTP"
+      action_type       = "forward"
+      target_group_index = 1
+    }
   ]
 
   https_listeners = [
@@ -123,6 +147,23 @@ module "zion_alb" {
         healthy_threshold   = 2
         unhealthy_threshold = 2
       }
+    },
+    {
+      name      = "${module.global_constants.environment}-dendrite-profiler-tg"
+      backend_protocol = "HTTP"
+      backend_port     = 65432
+      target_type      = "ip"
+      deregistration_delay = 30
+
+      health_check = {
+        path                = "/"
+        interval            = 30
+        timeout             = 6
+        healthy_threshold   = 2
+        unhealthy_threshold = 2
+        matcher = "200-499"
+      }
+      
     }
   ]
 
@@ -168,6 +209,12 @@ resource "aws_ecs_service" "dendrite-fargate-service" {
     target_group_arn = module.zion_alb.target_group_arns[0]
     container_name   = "dendrite"
     container_port   = 8008
+  }
+
+  load_balancer {
+    target_group_arn = module.zion_alb.target_group_arns[1]
+    container_name   = "dendrite"
+    container_port   = 65432
   }
 
   lifecycle {

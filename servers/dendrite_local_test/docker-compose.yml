@@ -29,6 +29,7 @@ services:
         ]
     ports:
         - 8008:8008
+        - 65432:65432
         - 8448:8448
     volumes:
       - ./volumes/dendrite/config:/etc/dendrite
@@ -52,6 +53,7 @@ services:
         DATABASE_CONNECTION_STRING: postgresql://dendrite:itsasecret@host.docker.internal:5432/dendrite?sslmode=disable
         ENVIRONMENT: development
         SERVER_NAME: localhost
+        PPROFLISTEN: 0.0.0.0:65432
 
     ##### PROD-LIKE CONFIGURATION #####
 
