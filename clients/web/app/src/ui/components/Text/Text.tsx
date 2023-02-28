@@ -1,7 +1,7 @@
 import { clsx } from 'clsx'
 import React, { forwardRef } from 'react'
 import { Box, BoxProps } from '../Box/Box'
-import { TextSprinkles, fontStyles, truncateParentStyle, truncateTextStyle } from './Text.css'
+import { TextSprinkles, bodyFontStyle, truncateParentStyle, truncateTextStyle } from './Text.css'
 
 type ParagraphProps = {
     as?: 'p' | 'span' | 'blockquote' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'label'
@@ -17,7 +17,6 @@ type Props = (ParagraphProps | LabelProps) & {
     className?: string
     // React child nodes
     children?: React.ReactNode
-
     // Size token
     size?: BoxProps['fontSize']
 
@@ -56,7 +55,7 @@ export const Text = forwardRef<HTMLElement, TextProps>((props, ref) => {
         <Box
             as={as}
             display={display}
-            className={clsx(truncate && truncateParentStyle, fontStyles[0].className, className)}
+            className={clsx(truncate && truncateParentStyle, bodyFontStyle.className, className)}
             {...textProps}
             {...boxProps}
             ref={ref}

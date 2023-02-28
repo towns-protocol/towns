@@ -82,6 +82,11 @@ export const Playground = () => {
             <Container label="Text Content">
                 <Box debug className={richText}>
                     <h2>Heading</h2>
+                    <h2>
+                        Heading with
+                        <br />
+                        two lines
+                    </h2>
                     <Paragraph>Paragraph</Paragraph>
                     <p>
                         Litecoin threw away lots of robust instamine behind a algorithm, nor Basic

@@ -1570,6 +1570,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@capsizecss/core@npm:^3.0.0":
+  version: 3.1.0
+  resolution: "@capsizecss/core@npm:3.1.0"
+  dependencies:
+    csstype: ^3.1.1
+  checksum: 5f80c0a67e57fc59e6fec9d316945a5eca3b5dfa812210e2e94a6afdfb22271b726471ca6d5116cc2f66459f257290fdeccadd5f0045faaf357489d153493e06
+  languageName: node
+  linkType: hard
+
+"@capsizecss/vanilla-extract@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@capsizecss/vanilla-extract@npm:1.0.0"
+  dependencies:
+    "@capsizecss/core": ^3.0.0
+  peerDependencies:
+    "@vanilla-extract/css": ^1.2.1
+  checksum: 895c342dba9cf2882fc98ee6bd53b5175258a085255597964413fb0c7abab77489620cbd8ca2037c524a6be77d18526602194fe73517dad796136e05a91b211f
+  languageName: node
+  linkType: hard
+
 "@cloudflare/kv-asset-handler@npm:^0.2.0":
   version: 0.2.0
   resolution: "@cloudflare/kv-asset-handler@npm:0.2.0"
@@ -11974,6 +11994,7 @@ __metadata:
   resolution: "harmonyweb@workspace:clients/web/app"
   dependencies:
     "@amplitude/analytics-browser": 1.8.0
+    "@capsizecss/vanilla-extract": ^1.0.0
     "@emoji-mart/data": ^1.0.6
     "@emoji-mart/react": ^1.0.1
     "@giphy/js-fetch-api": ^4.4.0

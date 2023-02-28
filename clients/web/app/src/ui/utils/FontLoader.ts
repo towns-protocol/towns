@@ -1,21 +1,79 @@
-export const FontFamily = {
-    TitleFont: 'TitleFont',
-    BodyFont: 'BodyFont',
-} as const
-
-const BodyFontCapSize = {
-    trimTop: '-0.26em',
-    trimBottom: '-0.24em',
-    lineHeight: '1.24em',
-}
+import { precomputeValues } from '@capsizecss/vanilla-extract'
+import { getTypedEntries } from './utils'
 
 const BodyFontStyles = {
     letterSpacing: '-0.02em',
 }
 
-export const fontSettings = [
+/**
+ * initial font metrics retrieved from:
+ * https://fontdrop.info/#/?darkmode=true
+ */
+const fontConfig = {
+    BodyFont: {
+        lineHeight: 19 / 15,
+        fontMetrics: {
+            ascent: 970,
+            descent: -240,
+            lineGap: 0,
+            unitsPerEm: 1000,
+            capHeight: 700,
+        },
+    },
+    TitleFont: {
+        lineHeight: 62 / 56,
+        fontMetrics: {
+            ascent: 800,
+            descent: -200,
+            lineGap: 0,
+            unitsPerEm: 1000,
+            capHeight: 700,
+        },
+    },
+}
+
+export const FontFamily = Object.fromEntries(Object.keys(fontConfig).map((key) => [key, key])) as {
+    [fontName in keyof typeof fontConfig]: fontName
+}
+
+type FontFamilySetting = {
+    fontFamily: string
+    styles?: { [key: string]: string }
+    src?: string
+    fontDescription?: {
+        weight: string
+        style: string
+    }
+    targets: string[]
+    capSize: { lineHeight: string; baselineTrim: string; capHeightTrim: string }
+}
+
+const generatedFontFamilySettings = getTypedEntries(fontConfig).reduce(
+    (keep, [fontName, value]) => {
+        const computed = precomputeValues({
+            fontSize: 1,
+            leading: value.lineHeight,
+            fontMetrics: value.fontMetrics,
+        })
+
+        keep[fontName] = {
+            fontFamily: fontName,
+            targets: [],
+            capSize: {
+                // we just need the proportion
+                lineHeight: computed.lineHeight.replace('px', 'em'),
+                baselineTrim: computed.baselineTrim,
+                capHeightTrim: computed.capHeightTrim,
+            },
+        }
+        return keep
+    },
+    {} as { [fontName in keyof typeof fontConfig]: FontFamilySetting },
+)
+
+export const fontSettings: Required<FontFamilySetting>[] = [
     {
-        fontFamily: FontFamily.BodyFont,
+        ...generatedFontFamilySettings[FontFamily.BodyFont],
         styles: BodyFontStyles,
         src: "url('/fonts/fold-grotesque-variable-proportional-pro.woff2')",
         fontDescription: {
@@ -23,10 +81,9 @@ export const fontSettings = [
             style: 'normal',
         },
         targets: ['p', 'ul', 'ol', 'h3', 'h4', 'h5', 'h6'],
-        capSize: BodyFontCapSize,
     },
     {
-        fontFamily: FontFamily.BodyFont,
+        ...generatedFontFamilySettings[FontFamily.BodyFont],
         styles: { ...BodyFontStyles },
         src: "url('/fonts/fold-grotesque-variable-italic-pro.woff2')",
         fontDescription: {
@@ -34,10 +91,9 @@ export const fontSettings = [
             style: 'italic',
         },
         targets: [],
-        capSize: BodyFontCapSize,
     },
     {
-        fontFamily: FontFamily.TitleFont,
+        ...generatedFontFamilySettings[FontFamily.TitleFont],
         src: "url('/fonts/Byrd-Black.woff2')",
         styles: {
             letterSpacing: '0',
@@ -49,14 +105,8 @@ export const fontSettings = [
             style: 'normal',
         },
         targets: ['h1', 'h2'],
-
-        capSize: {
-            trimTop: '-0.2em',
-            trimBottom: '-0.35em',
-            lineHeight: '1.20em',
-        },
     },
-] as const
+]
 
 let isInit = false
 

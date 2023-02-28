@@ -3,7 +3,7 @@ import { createSprinkles, defineProperties } from '@vanilla-extract/sprinkles'
 import { boxClass, containerWithGapClass } from 'ui/styles/atoms.css'
 import { debugClass } from 'ui/styles/globals/debug.css'
 import { vars } from 'ui/styles/vars.css'
-import { fontSettings } from 'ui/utils/FontLoader'
+import { FontFamily, fontSettings } from 'ui/utils/FontLoader'
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - dynamic properties
 
@@ -46,14 +46,14 @@ export const fontStyles = fontSettings.reduce((fontStyles, font) => {
         content: '',
         display: 'table',
         textAlign: 'left',
-        marginTop: capSize.trimTop,
+        marginTop: capSize.baselineTrim,
     } as const
 
     const styleAfter = {
         content: '',
         display: 'table',
         textAlign: 'left',
-        marginTop: capSize.trimBottom,
+        marginTop: capSize.capHeightTrim,
     } as const
 
     /**
@@ -76,6 +76,14 @@ export const fontStyles = fontSettings.reduce((fontStyles, font) => {
         },
     ]
 }, [] as FontStyle[])
+
+export const bodyFontStyle = fontStyles.find(
+    (f) => f.fontFamily === FontFamily.BodyFont,
+) as FontStyle
+
+if (!bodyFontStyle) {
+    throw new Error('bodyFontStyle not found')
+}
 
 type FontStyle = {
     fontFamily: string
@@ -120,7 +128,7 @@ siblings.forEach((s) => {
  * Reset top margin for nested blocks
  */
 globalStyle(
-    `${fontStyles[0].className} ${fontStyles[0].className}:before, ${fontStyles[0].className} ${fontStyles[0].className}:after`,
+    `${bodyFontStyle.className} ${bodyFontStyle.className}:before, ${bodyFontStyle.className} ${bodyFontStyle.className}:after`,
     {
         marginTop: 0,
     },
@@ -131,7 +139,7 @@ globalStyle(
 /**
  * Links
  */
-globalStyle(`${fontStyles[0].className} a`, {
+globalStyle(`${bodyFontStyle.className} a`, {
     // color: vars.color.foreground.accent,
 })
 
@@ -145,7 +153,7 @@ export const truncateTextStyle = style({
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    marginTop: '-0.26em',
+    marginTop: '0',
 })
 
 /**
@@ -164,20 +172,21 @@ export const truncateParentStyle = style({
  * Adds  outlines on text element when debug class is present. Explicitely
  * hide debugging for trunccated elements as the "virtual" padding is misleading.
  */
-globalStyle(`${debugClass} ${fontStyles[0].className}:not(${truncateParentStyle})`, {
+globalStyle(`${debugClass} ${bodyFontStyle.className}:not(${truncateParentStyle})`, {
     boxShadow: '0 0 0 1px #FF09',
 })
-globalStyle(`${debugClass} p:not(${fontStyles[0].className})`, {
+
+globalStyle(`${debugClass} p:not(${bodyFontStyle.className})`, {
     // implicit paragraphs declared by inner HTML
     boxShadow: '0 0 0 1px #9F09',
 })
 
-globalStyle(`${debugClass} h1:not(${fontStyles[0].className})`, {
+globalStyle(`${debugClass} h1:not(${bodyFontStyle.className})`, {
     // implicit paragraphs declared by inner HTML
     boxShadow: '0 0 0 1px #9F09',
 })
 
-globalStyle(`${debugClass} h2:not(${fontStyles[0].className})`, {
+globalStyle(`${debugClass} h2:not(${bodyFontStyle.className})`, {
     // implicit paragraphs declared by inner HTML
     boxShadow: '0 0 0 1px #9F09',
 })

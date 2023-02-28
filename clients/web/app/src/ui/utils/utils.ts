@@ -30,3 +30,10 @@ export const isForbiddenError = (error: Error): boolean => {
 
 export const getInviteUrl = (spaceId: RoomIdentifier | undefined) =>
     `${window.location.host}/${PATHS.SPACES}/${spaceId?.slug}/?invite`
+
+type Entries<T> = {
+    [K in keyof T]: [K, T[K]]
+}[keyof T][]
+
+// same as Object.entries but with typed keys
+export const getTypedEntries = <T extends object>(obj: T) => Object.entries(obj) as Entries<T>

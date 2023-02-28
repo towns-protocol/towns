@@ -15,6 +15,7 @@
     },
     "dependencies": {
         "@amplitude/analytics-browser": "1.8.0",
+        "@capsizecss/vanilla-extract": "^1.0.0",
         "@emoji-mart/data": "^1.0.6",
         "@emoji-mart/react": "^1.0.1",
         "@giphy/js-fetch-api": "^4.4.0",
