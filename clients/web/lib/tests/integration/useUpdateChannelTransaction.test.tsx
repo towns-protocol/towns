@@ -8,7 +8,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -122,18 +122,21 @@ function TestComponent(args: {
     nftAddress: string
     updatedChannelName: string
 }): JSX.Element {
+    const spaceTransaction = useCreateSpaceTransaction()
     const {
         data: spaceId,
         transactionStatus: createSpaceTxStatus,
         createSpaceTransactionWithRole,
-    } = useCreateSpaceTransaction()
+    } = spaceTransaction
+    const channelTransaction = useCreateChannelTransaction()
     const {
         data: channelId,
         createChannelTransaction,
         transactionStatus: createChannelTransactionStatus,
-    } = useCreateChannelTransaction()
+    } = channelTransaction
+    const updateChannelTransactionInfo = useUpdateChannelTransaction()
     const { updateChannelTransaction, transactionStatus: updateChannelTransactionStatus } =
-        useUpdateChannelTransaction()
+        updateChannelTransactionInfo
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     // Use the roles from the parent space to create the channel
     const { spaceRoles } = useRoles(spaceNetworkId)
@@ -211,6 +214,9 @@ function TestComponent(args: {
             <div data-testid="createSpaceTxStatus">{createSpaceTxStatus}</div>
             <div data-testid="createChannelTransactionStatus">{createChannelTransactionStatus}</div>
             <div data-testid="updateChannelTransactionStatus">{updateChannelTransactionStatus}</div>
+            <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
+            <TransactionInfo for={channelTransaction} label="channelTransaction" />
+            <TransactionInfo for={updateChannelTransactionInfo} label="updateChannelTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />

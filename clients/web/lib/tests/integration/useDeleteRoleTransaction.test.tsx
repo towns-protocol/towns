@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
@@ -114,9 +114,12 @@ function TestComponent(args: {
     newRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
     newRoleUsers: string[]
 }): JSX.Element {
-    const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
-    const { createRoleTransaction, data: roleIdentifier } = useCreateRoleTransaction()
-    const { deleteRoleTransaction } = useDeleteRoleTransaction()
+    const spaceTransaction = useCreateSpaceTransaction()
+    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
+    const createRoleTransactionInfo = useCreateRoleTransaction()
+    const { createRoleTransaction, data: roleIdentifier } = createRoleTransactionInfo
+    const deleteRoleTransactionInfo = useDeleteRoleTransaction()
+    const { deleteRoleTransaction } = deleteRoleTransactionInfo
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
     // handle click to create a space
@@ -173,6 +176,9 @@ function TestComponent(args: {
             <button onClick={onClickCreateSpace}>Create Space</button>
             <button onClick={onClickCreateRole}>Create Role</button>
             <button onClick={onClickDeleteRole}>Delete Role</button>
+            <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
+            <TransactionInfo for={createRoleTransactionInfo} label="createRoleTransaction" />
+            <TransactionInfo for={deleteRoleTransactionInfo} label="deleteRoleTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />

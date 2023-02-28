@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
@@ -109,8 +109,10 @@ function TestComponent(args: {
     newRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
     newRoleUsers: string[]
 }): JSX.Element {
-    const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
-    const { createRoleTransaction } = useCreateRoleTransaction()
+    const spaceTransaction = useCreateSpaceTransaction()
+    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
+    const roleTransaction = useCreateRoleTransaction()
+    const { createRoleTransaction } = roleTransaction
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
@@ -160,6 +162,8 @@ function TestComponent(args: {
         <>
             <button onClick={onClickCreateSpace}>Create Space</button>
             <button onClick={onClickCreateRole}>Create Role</button>
+            <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
+            <TransactionInfo for={roleTransaction} label="roleTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />

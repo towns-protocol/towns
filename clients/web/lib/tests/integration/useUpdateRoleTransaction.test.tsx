@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
@@ -138,9 +138,12 @@ function TestComponent(args: {
     updatedRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
     updatedRoleUsers: string[]
 }): JSX.Element {
-    const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
-    const { createRoleTransaction, data: roleIdentifier } = useCreateRoleTransaction()
-    const { updateRoleTransaction } = useUpdateRoleTransaction()
+    const spaceTransaction = useCreateSpaceTransaction()
+    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
+    const createRoleTransactionInfo = useCreateRoleTransaction()
+    const { createRoleTransaction, data: roleIdentifier } = createRoleTransactionInfo
+    const updateRoleTransactionInfo = useUpdateRoleTransaction()
+    const { updateRoleTransaction } = updateRoleTransactionInfo
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     const roleId = useMemo(() => roleIdentifier?.roleId ?? -1, [roleIdentifier])
     // handle click to create a space
@@ -204,6 +207,9 @@ function TestComponent(args: {
             <button onClick={onClickCreateSpace}>Create Space</button>
             <button onClick={onClickCreateRole}>Create Role</button>
             <button onClick={onClickUpdateRole}>Update Role</button>
+            <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
+            <TransactionInfo for={createRoleTransactionInfo} label="createRoleTransaction" />
+            <TransactionInfo for={updateRoleTransactionInfo} label="updateRoleTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />

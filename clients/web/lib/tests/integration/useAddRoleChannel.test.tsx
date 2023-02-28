@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../dist'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -107,11 +107,14 @@ function TestComponent(args: {
     permissions: Permission[]
     councilNftAddress: string
 }): JSX.Element {
+    const spaceTransaction = useCreateSpaceTransaction()
     const {
         createSpaceTransactionWithRole,
         data: spaceId,
         transactionStatus: createSpaceTxStatus,
-    } = useCreateSpaceTransaction()
+    } = spaceTransaction
+
+    const channelTransaction = useCreateChannelTransaction()
     const {
         createChannelTransaction,
         data: channelId,
@@ -119,9 +122,10 @@ function TestComponent(args: {
         error: createChannelError,
         transactionStatus: createChannelTxStatus,
         transactionHash: createChannelTxHash,
-    } = useCreateChannelTransaction()
+    } = channelTransaction
+    const addRoleTransaction = useAddRoleToChannelTransaction()
     const { addRoleToChannelTransaction, transactionStatus: addRoleToChannelTxStatus } =
-        useAddRoleToChannelTransaction()
+        addRoleTransaction
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
     const { spaceRoles } = useRoles(spaceNetworkId)
 
@@ -215,6 +219,9 @@ function TestComponent(args: {
             <button onClick={onClickCreateSpace}>Create Space</button>
             <button onClick={onClickCreateChannel}>Create Channel</button>
             <button onClick={onClickAddRoleToChannel}>Add Role To Channel</button>
+            <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
+            <TransactionInfo for={channelTransaction} label="channelTransaction" />
+            <TransactionInfo for={addRoleTransaction} label="addRoleTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />

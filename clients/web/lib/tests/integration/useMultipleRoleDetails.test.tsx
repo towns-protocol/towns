@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
@@ -108,7 +108,8 @@ function TestComponentMultiple(args: {
     permissions: Permission[][]
     councilNftAddress: string
 }): JSX.Element {
-    const { createSpaceTransactionWithRole, data: spaceId } = useCreateSpaceTransaction()
+    const spaceTransaction = useCreateSpaceTransaction()
+    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
@@ -145,6 +146,7 @@ function TestComponentMultiple(args: {
     return (
         <>
             <button onClick={onClickCreateSpace}>Create Space</button>
+            <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
                     <SpacesComponent />

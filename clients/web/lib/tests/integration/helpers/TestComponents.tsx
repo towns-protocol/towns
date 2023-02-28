@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Address } from 'wagmi'
 import { LoginStatus } from '../../../src/hooks/login'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionAuth } from '../../../src/client/ZionClientTypes'
@@ -11,7 +12,13 @@ import { useZionClient } from '../../../src/hooks/use-zion-client'
 import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
 import { WalletStatus } from '../../../src/types/web3-types'
 import { useZionContext } from '../../../src/components/ZionContextProvider'
-import { Address } from 'wagmi'
+import { useCreateSpaceTransaction } from '../../../src/hooks/use-create-space-transaction'
+import { useCreateChannelTransaction } from '../../../src/hooks/use-create-channel-transaction'
+import { useAddRoleToChannelTransaction } from '../../../src/hooks/use-add-role-channel-transaction'
+import { useUpdateChannelTransaction } from '../../../src/hooks/use-update-channel-transaction'
+import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-transaction'
+import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
+import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 
 export const RegisterWallet = () => {
     const { walletStatus } = useWeb3Context()
@@ -153,5 +160,39 @@ export const RegisterAndJoin = (props: { roomIds: RoomIdentifier[] }) => {
             <RegisterWallet />
             <div data-testid="joinComplete">{joinComplete ? 'true' : 'false'}</div>
         </>
+    )
+}
+
+export function TransactionInfo<
+    T extends
+        | ReturnType<typeof useCreateSpaceTransaction>
+        | ReturnType<typeof useCreateChannelTransaction>
+        | ReturnType<typeof useUpdateChannelTransaction>
+        | ReturnType<typeof useAddRoleToChannelTransaction>
+        | ReturnType<typeof useCreateRoleTransaction>
+        | ReturnType<typeof useUpdateRoleTransaction>
+        | ReturnType<typeof useDeleteRoleTransaction>,
+>(props: {
+    for: T
+
+    label: string
+}) {
+    const { for: transaction, label } = props
+
+    const renderData = (data?: T['data']) => {
+        if (!data) {
+            return 'undefined'
+        }
+        return JSON.stringify(data)
+    }
+
+    return (
+        <div data-testId={label}>
+            <div>isLoading: {transaction.isLoading.toString()}</div>
+            <div>data: {renderData(transaction.data)}</div>
+            <div>error: {transaction.error?.message ?? 'undefined'}</div>
+            <div>transactionHash: {transaction.transactionHash ?? 'undefined'}</div>
+            <div>transactionStatus: {transaction.transactionStatus ?? 'undefined'}</div>
+        </div>
     )
 }

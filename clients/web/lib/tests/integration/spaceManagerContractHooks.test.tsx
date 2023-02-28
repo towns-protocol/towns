@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RegisterWallet } from 'use-zion-client/tests/integration/helpers/TestComponents'
+import {
+    RegisterWallet,
+    TransactionInfo,
+} from 'use-zion-client/tests/integration/helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
@@ -29,14 +32,8 @@ describe('spaceManagerContractHooks', () => {
             // basic space
             const { chainId } = useZionClient()
             const zionTokenAddress = chainId ? getMemberNftAddress(chainId) : undefined
-            const {
-                createSpaceTransactionWithRole,
-                isLoading,
-                data,
-                error,
-                transactionStatus,
-                transactionHash,
-            } = useCreateSpaceTransaction()
+            const spaceTransaction = useCreateSpaceTransaction()
+            const { createSpaceTransactionWithRole } = spaceTransaction
             // spaces
             const { spaces } = useSpacesFromContract()
 
@@ -87,14 +84,8 @@ describe('spaceManagerContractHooks', () => {
             }, [createSpaceTransactionWithRole, zionTokenAddress])
 
             useEffect(() => {
-                console.log('TestComponent', 'render', {
-                    isLoading,
-                    data,
-                    error,
-                    transactionStatus,
-                    transactionHash,
-                })
-            }, [data, error, isLoading, transactionHash, transactionStatus])
+                console.log('TestComponent', 'render', { spaceTransaction })
+            }, [spaceTransaction])
 
             // the view
             return (
@@ -104,6 +95,7 @@ describe('spaceManagerContractHooks', () => {
                     <button onClick={onClickCreateSpaceWithZionMemberRole}>
                         Create Token-Gated Space
                     </button>
+                    <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
                     <div data-testid="createdSpace">{createdSpace ? 'true' : 'false'}</div>
                     <div data-testid="spaceWithZionMemberRole">
                         {createSpaceWithZionMemberRole ? 'true' : 'false'}

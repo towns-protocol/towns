@@ -6,7 +6,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RegisterWallet } from './helpers/TestComponents'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
@@ -57,12 +57,14 @@ describe('useCreateChannelTransactionHook', () => {
 
         const TestComponent = () => {
             const { client } = useZionClient()
+            const spaceTransaction = useCreateSpaceTransaction()
             const {
                 createSpaceTransactionWithRole,
                 data: spaceId,
                 transactionStatus: createSpaceTxStatus,
-            } = useCreateSpaceTransaction()
+            } = spaceTransaction
             const spaceNetworkId = spaceId?.networkId ? spaceId.networkId : ''
+            const channelTransaction = useCreateChannelTransaction()
             const {
                 createChannelTransaction,
                 isLoading: isLoadingChannel,
@@ -70,7 +72,7 @@ describe('useCreateChannelTransactionHook', () => {
                 error: createChannelError,
                 transactionStatus: createChannelTxStatus,
                 transactionHash: createChannelTxHash,
-            } = useCreateChannelTransaction()
+            } = channelTransaction
             // Use the roles from the parent space to create the channel
             const { spaceRoles } = useRoles(spaceNetworkId)
             const transactions = useTransactionStore((state) => state.transactions)
@@ -168,6 +170,8 @@ describe('useCreateChannelTransactionHook', () => {
                 <>
                     <button onClick={onClickCreateSpace}>Create Space</button>
                     <button onClick={onClickCreateChannel}>Create Channel</button>
+                    <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
+                    <TransactionInfo for={channelTransaction} label="channelTransaction" />
                     <SpaceContextProvider spaceId={spaceId}>
                         <>
                             <SpacesComponent />
