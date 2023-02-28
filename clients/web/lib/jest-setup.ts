@@ -36,7 +36,10 @@ beforeAll(async () => {
 
 afterEach(() => {
     // stop all test clients
-    return Promise.all([queryClient.resetQueries(), ZionTestClient.cleanup()])
+    return Promise.all([
+        queryClient.cancelQueries().then(() => queryClient.resetQueries()),
+        ZionTestClient.cleanup(),
+    ])
 }, 5000)
 
 afterAll(() => {
