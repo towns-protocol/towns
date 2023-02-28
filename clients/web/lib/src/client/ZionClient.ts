@@ -1647,7 +1647,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!room?.isSpaceRoom()) {
                     console.warn(
                         '[setChannelMembershipDataOnSpace] isSpaceRoom() check did not pass, not setting room data',
-                        room,
+                        {
+                            spaceId: spaceId.networkId,
+                            channelId: channelId,
+                            room,
+                            membershipStatus,
+                        },
                     )
                     return
                 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
@@ -15,6 +16,7 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
+import { waitFor } from '@testing-library/react'
 
 describe('delete role', () => {
     test('delete token-gated role with a channel using it', async () => {
@@ -53,6 +55,7 @@ describe('delete role', () => {
         if (!roleIdentifier) {
             throw new Error('roleIdentifier is undefined')
         }
+        console.log('!!!! new role created: ', { roleIdentifier })
         const roleId = roleIdentifier.roleId
         // create a channel with the role
         const channel = await alice.createChannel({
@@ -69,6 +72,8 @@ describe('delete role', () => {
         // bob leaves the room so that we can delete the role, and test
         // that bob can no longer join the room
         await bobWithNft.leave(channel, spaceId)
+
+        await waitFor(() => expect(bobWithNft.getRoomData(channel)?.membership).not.toBe('join'))
 
         /** Act */
         let receipt: ContractReceipt | undefined
@@ -89,6 +94,13 @@ describe('delete role', () => {
             rejoinedRoom = await bobWithNft.joinRoom(channel, spaceId)
         })
 
+        console.log("!!!! bobWithNft's done trying to join !!!", {
+            error,
+            spaceId,
+            channelId: channel.networkId,
+            receipt,
+            rejoinedRoom,
+        })
         /** Assert */
         // verify transaction was successful
         expect(receipt?.status).toEqual(1)
@@ -151,6 +163,7 @@ describe('delete role', () => {
         if (!roleIdentifier) {
             throw new Error('roleIdentifier is undefined')
         }
+        console.log('!!! roleIdentifier', { roleIdentifier })
         const roleId = roleIdentifier.roleId
         // create a channel with the role
         const channel = await alice.createChannel({
@@ -167,6 +180,8 @@ describe('delete role', () => {
         // bob leaves the room so that we can delete the role, and test
         // that bob can no longer join the room
         await bob.leave(channel, spaceId)
+
+        await waitFor(() => expect(bob.getRoomData(channel)?.membership).not.toBe('join'))
 
         /** Act */
         let receipt: ContractReceipt | undefined
@@ -187,6 +202,13 @@ describe('delete role', () => {
             rejoinedRoom = await bob.joinRoom(channel, spaceId)
         })
 
+        console.log("!!!! bob's done trying to join !!!", {
+            error,
+            spaceId,
+            channelId: channel.networkId,
+            receipt,
+            rejoinedRoom,
+        })
         /** Assert */
         // verify transaction was successful
         expect(receipt?.status).toEqual(1)
