@@ -72,6 +72,16 @@ export const buttonStyle = recipe({
                 gap: vars.space.md,
             },
         },
+        hoverEffect: {
+            none: {
+                selectors: {
+                    '&:hover:enabled': {
+                        transition: 'none',
+                        boxShadow: `none`,
+                    },
+                },
+            },
+        },
     },
 })
 

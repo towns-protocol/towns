@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo, useRef } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -69,10 +69,13 @@ export const App = () => {
 
 const AllRoutes = () => {
     const { isAuthenticatedAndConnected, connectLoading } = useAuth()
+    const connectedOnce = useRef(false)
 
     useWindowListener()
 
-    if (connectLoading) {
+    // only show the loading screen on first load, and not if user swaps wallet
+    if (!connectedOnce.current) {
+        connectedOnce.current = !connectLoading
         return <LoadingScreen />
     }
 

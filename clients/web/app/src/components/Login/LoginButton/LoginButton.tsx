@@ -17,8 +17,20 @@ export const LoginButton = (props: {
 
     return (
         <AnimatePresence mode="wait">
-            <Button minWidth="200" tone={props.tone} onClick={props.onClick}>
-                {props.icon && (
+            <Button
+                disabled={hasSpinner}
+                animate={false}
+                minWidth="200"
+                tone={hasSpinner ? 'level3' : 'cta1'}
+                onClick={props.onClick}
+            >
+                {hasSpinner && (
+                    <FadeIn delay>
+                        <ButtonSpinner />
+                    </FadeIn>
+                )}
+
+                {!hasSpinner && props.icon && (
                     <FadeIn layout key="wallet">
                         <Icon type="wallet" />
                     </FadeIn>
@@ -27,11 +39,6 @@ export const LoginButton = (props: {
                 <FadeIn layout key={props.label}>
                     {props.label}
                 </FadeIn>
-                {hasSpinner && (
-                    <FadeIn delay>
-                        <ButtonSpinner />
-                    </FadeIn>
-                )}
             </Button>
         </AnimatePresence>
     )

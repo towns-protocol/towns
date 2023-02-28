@@ -29,6 +29,7 @@ export const Button = ({
     size = 'button_md',
     rounded,
     disabled,
+    hoverEffect,
     tone = 'level3',
     icon,
     children,
@@ -41,7 +42,7 @@ export const Button = ({
         aspectRatio={aspectRatio}
         as="button"
         cursor={disabled ? 'default' : 'pointer'}
-        className={buttonStyle({ size, rounded })}
+        className={buttonStyle({ size, rounded, hoverEffect })}
         justifyContent="center"
         alignItems="center"
         background={tone}

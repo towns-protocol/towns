@@ -17,6 +17,8 @@ function getButtonLabel(status: SignupButtonStatus) {
         case SignupButtonStatus.ConnectRequired:
         case SignupButtonStatus.ConnectError:
             return 'Connect Wallet'
+        case SignupButtonStatus.FetchingRegistrationStatus:
+            return 'Connecting to server'
         default:
             return 'Waiting for approval'
     }

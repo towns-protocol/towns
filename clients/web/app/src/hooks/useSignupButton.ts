@@ -5,22 +5,21 @@ import { useAuth } from './useAuth'
 export enum SignupButtonStatus {
     ConnectRequired = 'wallet.connect',
     ConnectError = 'wallet.connect.error',
-    ConnectProgress = 'wallet.connect.progress',
     ConnectSuccess = 'wallet.connect.success',
     ConnectUnlock = 'wallet.unlock.unlock',
     ConnectUnlockTimeout = 'wallet.unlock.timeout',
     Login = 'login.required',
-    LoginProgress = 'login.progress',
-    LoginSuccess = 'login.sucess',
     Register = 'signup.Register',
+    FetchingRegistrationStatus = 'fetching.registration.status',
+    WalletBusy = 'busy',
 }
 
 const getIsSpinning = (status: SignupButtonStatus) => {
     return [
         SignupButtonStatus.ConnectUnlock,
         SignupButtonStatus.ConnectUnlockTimeout,
-        SignupButtonStatus.ConnectProgress,
-        SignupButtonStatus.LoginProgress,
+        SignupButtonStatus.WalletBusy,
+        SignupButtonStatus.FetchingRegistrationStatus,
     ].includes(status)
 }
 
@@ -31,12 +30,10 @@ const getButtonStatus = (walletStatus: WalletStatus, loginStatus: LoginStatus) =
             return SignupButtonStatus.ConnectRequired
         }
         case WalletStatus.Connected: {
-            if (loginStatus === LoginStatus.LoggingIn) {
-                return SignupButtonStatus.LoginProgress
-            } else if (loginStatus === LoginStatus.LoggedOut) {
-                return SignupButtonStatus.ConnectSuccess
+            if (loginStatus === LoginStatus.Registering || loginStatus === LoginStatus.LoggingIn) {
+                return SignupButtonStatus.WalletBusy
             } else {
-                return SignupButtonStatus.LoginSuccess
+                return SignupButtonStatus.ConnectSuccess
             }
         }
         case WalletStatus.Connecting: {
@@ -86,6 +83,7 @@ const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
             // async registration check
             ;(async () => {
                 try {
+                    setRegistrationStatus(SignupButtonStatus.FetchingRegistrationStatus)
                     const isRegistered = await getIsWalletIdRegistered()
                     if (isRegistered) {
                         setRegistrationStatus(SignupButtonStatus.Login)
