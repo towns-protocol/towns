@@ -187,7 +187,7 @@ export function TransactionInfo<
     }
 
     return (
-        <div data-testId={label}>
+        <div data-testid={label}>
             <div>isLoading: {transaction.isLoading.toString()}</div>
             <div>data: {renderData(transaction.data)}</div>
             <div>error: {transaction.error?.message ?? 'undefined'}</div>
