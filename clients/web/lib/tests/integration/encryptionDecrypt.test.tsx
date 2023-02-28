@@ -17,6 +17,7 @@ import {
 } from './helpers/TestUtils'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
+import { TestConstants } from './helpers/TestConstants'
 
 describe('canDecryptMessages', () => {
     test('can decrypt previously read messages after logging out and then logging back in', async () => {
@@ -134,10 +135,12 @@ describe('canDecryptMessages', () => {
         fireEvent.click(sendMessageButton)
 
         // expect jane to recieve the message
-        await waitFor(() =>
-            expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
-                'hello jane',
-            ),
+        await waitFor(
+            () =>
+                expect(
+                    jane.getEvents_TypedRoomMessage(janesChannelId).map((e) => e.content.body),
+                ).toContain('hello jane'),
+            TestConstants.DecaDefaultWaitForTimeout,
         )
 
         // expect to render

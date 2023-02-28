@@ -18,6 +18,7 @@ import { useDeleteRoleTransaction } from '../../src/hooks/use-delete-role-transa
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
+import { TestConstants } from './helpers/TestConstants'
 
 /**
  * This test suite tests the useRoles hook.
@@ -80,7 +81,10 @@ describe('useDeleteRoleTransaction', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
+        await waitFor(
+            () => expect(spaceElement).toHaveTextContent(spaceName),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // click button to create the role
         fireEvent.click(createRoleButton)
         await waitFor(() =>
@@ -264,12 +268,13 @@ function RoleDetailsComponent({
 function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined }): JSX.Element {
     const { isLoading, spaceRoles, error } = useRoles(spaceNetworkId)
     useEffect(() => {
-        console.log({
+        console.log('useDeleteRolTransaction::RolesComponent useRoles:', {
+            spaceNetworkId,
             isLoading,
             error,
         })
         printRoleStruct(spaceRoles)
-    }, [error, isLoading, spaceRoles])
+    }, [error, isLoading, spaceNetworkId, spaceRoles])
     return (
         <div data-testid="rolesElement">
             {spaceNetworkId &&

@@ -163,10 +163,10 @@ function SpacesComponent(): JSX.Element {
     return (
         <div data-testid="spacesElement">
             {spaces.map((element) => (
-                <>
-                    <div key={element.key}>{element.name}</div>
+                <div key={element.key}>
+                    <div>{element.name}</div>
                     <MultipleRolesComponent spaceNetworkId={element.networkId} />
-                </>
+                </div>
             ))}
         </div>
     )
@@ -178,7 +178,7 @@ function MultipleRoleDetailsComponent(props: { spaceId: string; roleIds: number[
         <>
             {data?.map((role) => {
                 return (
-                    <div data-testid={`role-${role.name}`}>
+                    <div data-testid={`role-${role.name}`} key={`role-${role.name}`}>
                         <div>roleName:{role.name}</div>
                         <div>{role.id}</div>
                         <div>
