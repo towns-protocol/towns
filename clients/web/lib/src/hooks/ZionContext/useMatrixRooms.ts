@@ -27,7 +27,9 @@ export function useMatrixRooms(client?: MatrixClient): Record<string, Room | und
         const updateState = (roomId: string) => {
             const matrixRoom = client.getRoom(roomId)
             const newRoom = matrixRoom ? toZionRoom(matrixRoom) : undefined
-            setRooms((prev) => (isEqual(prev, newRoom) ? prev : { ...prev, [roomId]: newRoom }))
+            setRooms((prev) =>
+                isEqual(prev[roomId], newRoom) ? prev : { ...prev, [roomId]: newRoom },
+            )
         }
 
         const setInitialState = () => {
