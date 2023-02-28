@@ -8,7 +8,7 @@ export const border = {
     faint: `1px solid ${vars.color.background.level2}`,
     level4: `1px solid ${vars.color.background.level4}`,
     quote: `2px solid ${vars.color.background.level3}`,
-    accent: `1px solid ${vars.color.background.etherum}`,
+    accent: `1px solid ${vars.color.background.accent}`,
     strong: `2px solid ${vars.color.text.default}`,
     strongLevel1: `2px solid ${vars.color.background.level1}`,
     inverted: `1px solid ${vars.color.text.inverted}`,

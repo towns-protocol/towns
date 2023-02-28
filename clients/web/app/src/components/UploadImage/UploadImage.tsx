@@ -148,7 +148,7 @@ export const UploadImage = (props: Props) => {
                             accept="image/*"
                             onChange={onChange}
                         />
-                        <FieldOutline tone="etherum" rounded="full" />
+                        <FieldOutline tone="accent" rounded="full" />
                     </Box>
                     {feedbackMesasge && (
                         <Box centerContent paddingTop="md" width={config.width}>

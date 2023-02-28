@@ -163,20 +163,27 @@ export const Playground = () => {
             <Container label="Text Color">
                 <Grid grow columns={2} gap="none">
                     {Object.keys(vars.color.foreground).map((c) => (
-                        <Stack key={c}>
+                        <>
+                            <Box borderBottom justifyContent="center">
+                                {c}
+                            </Box>
                             <Box
                                 borderBottom
                                 padding
+                                background={
+                                    c === 'inverted'
+                                        ? 'inverted'
+                                        : c === 'onTone'
+                                        ? 'error'
+                                        : undefined
+                                }
                                 color={c as keyof typeof vars.color.foreground}
                                 fontWeight="strong"
                                 justifyContent="center"
                             >
                                 {c}
                             </Box>
-                            <Box borderBottom justifyContent="center">
-                                {c}
-                            </Box>
-                        </Stack>
+                        </>
                     ))}
                 </Grid>
             </Container>
@@ -283,7 +290,7 @@ export const Playground = () => {
                                     key={b}
                                     padding={b as keyof typeof vars.space}
                                 >
-                                    <Box background="etherum" square="square_xs" />
+                                    <Box background="accent" square="square_xs" />
                                 </Box>
                             </Box>
                             <Box justifyContent="center">
@@ -308,7 +315,7 @@ export const Playground = () => {
                                     gap={b as keyof typeof vars.space}
                                 >
                                     {A3.map((_, i) => (
-                                        <Box key={_} background="etherum" square="square_xs" />
+                                        <Box key={_} background="accent" square="square_xs" />
                                     ))}
                                 </Box>
                             </Box>
@@ -322,23 +329,18 @@ export const Playground = () => {
                 <Grid columns={4}>
                     <Stack gap padding="sm" background="level3">
                         {A3.map((b) => (
-                            <Box key={b} background="etherum" square="square_xs" />
+                            <Box key={b} background="accent" square="square_xs" />
                         ))}
                     </Stack>
                     <Stack gap horizontal padding="sm" background="level3">
                         {A3.map((b) => (
-                            <Box key={b} background="etherum" square="square_xs" />
+                            <Box key={b} background="accent" square="square_xs" />
                         ))}
                     </Stack>
                 </Grid>
             </Container>
-            <Container darkOnly label="VList" padding="none">
-                <Stack>
-                    <VListExample />
-                </Stack>
-            </Container>
 
-            <Container darkOnly label="Sample RadioCard">
+            <Container label="Sample RadioCard">
                 <FormRender
                     onSubmit={(data) => {
                         console.log(data)
@@ -370,12 +372,12 @@ export const Playground = () => {
                                     {...option}
                                 />
                             ))}
-                            <input type="submit" />
+                            <Button type="submit">Submit</Button>
                         </>
                     )}
                 </FormRender>
             </Container>
-            <Container darkOnly label="Checkbox">
+            <Container gap label="Checkbox">
                 <Form<{
                     myGroup: string[]
                 }>
@@ -388,11 +390,11 @@ export const Playground = () => {
                 >
                     <Checkbox name="myGroup" label={<>🍕</>} value="pizza" />
                     <Checkbox name="myGroup" label="Spaghett" />
-                    <input type="submit" />
+                    <Button type="submit">Submit</Button>
                 </Form>
             </Container>
 
-            <Container darkOnly label="TextField With Pills inside">
+            <Container label="TextField With Pills inside">
                 <FormRender<{
                     spaceIcon: File
                 }>
@@ -412,7 +414,7 @@ export const Playground = () => {
                 </FormRender>
             </Container>
 
-            <Container darkOnly label="Upload">
+            <Container label="Upload">
                 <FormRender<{
                     spaceIcon: File
                 }>
@@ -433,10 +435,15 @@ export const Playground = () => {
                             {formState.errors.spaceIcon && (
                                 <ErrorMessage errors={formState.errors} fieldName="spaceIcon" />
                             )}
-                            <input type="submit" />
+                            <Button type="submit">Submit</Button>
                         </>
                     )}
                 </FormRender>
+            </Container>
+            <Container darkOnly label="VList" padding="none">
+                <Stack>
+                    <VListExample />
+                </Stack>
             </Container>
         </Stack>
     )

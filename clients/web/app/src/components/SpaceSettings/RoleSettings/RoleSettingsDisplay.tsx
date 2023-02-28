@@ -11,7 +11,6 @@ const colors = [
     vars.color.tone.accent,
     vars.color.tone.cta1,
     vars.color.tone.cta2,
-    vars.color.tone.etherum,
 ]
 
 export const RoleSettingsDisplay = () => {

@@ -147,7 +147,7 @@ const DebugModal = ({
                         <Stack horizontal gap justifyContent="end">
                             <Button
                                 size="button_xs"
-                                tone="etherum"
+                                tone="accent"
                                 disabled={chain.id === 31337}
                                 onClick={switchToLocal}
                             >
@@ -234,7 +234,7 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
                     {synced && (
                         <Box
                             background={
-                                platform.toLowerCase().includes('foundry') ? 'etherum' : 'cta1'
+                                platform.toLowerCase().includes('foundry') ? 'accent' : 'cta1'
                             }
                             rounded="full"
                             style={{ width: '15px', height: '15px' }}

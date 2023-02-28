@@ -115,7 +115,7 @@ export const UploadSpaceIcon = (props: Props) => {
                 accept="image/*"
                 onChange={onChange}
             />
-            <FieldOutline tone="etherum" rounded="sm" />
+            <FieldOutline tone="accent" rounded="sm" />
         </Box>
     )
 }

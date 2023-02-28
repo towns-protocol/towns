@@ -151,7 +151,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     autoCorrect="off"
                     background="level2"
                     tone={errors?.displayName ? 'negative' : undefined}
-                    inputColor={isENS ? 'etherum' : undefined}
+                    inputColor={isENS ? 'accent' : undefined}
                     label="Display Name"
                     secondaryLabel="(required)"
                     description="This is how others will see you."

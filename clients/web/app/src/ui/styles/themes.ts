@@ -19,12 +19,10 @@ const tone = {
     [ToneName.Accent]: Figma.Colors.Blue,
     [ToneName.CTA1]: Figma.Colors.Green,
     [ToneName.CTA2]: Figma.Colors.Purple,
-    [ToneName.Error]: Figma.Colors.Error,
+    [ToneName.Error]: Figma.Colors.Red,
     // forms
     [ToneName.Positive]: Figma.Colors.Green,
     [ToneName.Negative]: Figma.Colors.Yellow,
-    // specefics
-    [ToneName.ENS]: Figma.Colors.ENSBlue,
 } as const
 
 const overlay = {
@@ -56,7 +54,7 @@ const light = (() => {
         gray1: Figma.LightMode.Secondary,
         gray2: Figma.LightMode.Tertiary,
         accent: Figma.Colors.Purple,
-        secondary: Figma.Colors.Orange,
+        secondary: Figma.Colors.Pink,
         inverted: Figma.DarkMode.Primary,
         onTone: Figma.Colors.Black,
     }
@@ -100,7 +98,7 @@ const dark = (() => {
         gray1: Figma.DarkMode.Secondary,
         gray2: Figma.DarkMode.Tertiary,
         accent: Figma.Colors.Purple,
-        secondary: Figma.Colors.Orange,
+        secondary: Figma.Colors.Pink,
         inverted: Figma.DarkMode.Level1,
         onTone: Figma.Colors.Black,
     } as const

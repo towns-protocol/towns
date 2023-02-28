@@ -8,7 +8,7 @@ const focusedColorVar = createVar()
 export const fieldOutline = style({
     vars: {
         [focusedOpacityVar]: '1',
-        [focusedColorVar]: vars.color.foreground.etherum,
+        [focusedColorVar]: vars.color.foreground.accent,
     },
     transition: `opacity 120ms ease`,
     boxShadow: `inset 0 0 0 1px ${focusedColorVar}`,
@@ -39,7 +39,7 @@ export const fieldTones = styleVariants({
         opacity: 0,
         vars: {
             [focusedOpacityVar]: '1',
-            [focusedColorVar]: vars.color.foreground.etherum,
+            [focusedColorVar]: vars.color.foreground.neutral,
         },
     },
     negative: {
@@ -56,10 +56,11 @@ export const fieldTones = styleVariants({
             [focusedColorVar]: vars.color.foreground.positive,
         },
     },
-    etherum: {
+    accent: {
+        opacity: 1,
         vars: {
             [focusedOpacityVar]: '1',
-            [focusedColorVar]: vars.color.foreground.etherum,
+            [focusedColorVar]: vars.color.foreground.accent,
         },
     },
 })

@@ -45,7 +45,7 @@ const background = {
         color: vars.color.text.onTone,
     },
     [ToneName.CTA1]: {
-        background: `linear-gradient(91.2deg, #21E078 0%, #1FDBF1 101.62%);`,
+        background: `linear-gradient(90deg, #21E078 0%, #1FDBF1 100%);`,
         color: vars.color.text.onTone,
     },
     [ToneName.CTA2]: {
@@ -67,10 +67,7 @@ const background = {
         background: undefined,
         color: undefined,
     },
-    [ToneName.ENS]: {
-        background: vars.color.tone.etherum,
-        color: vars.color.text.onTone,
-    },
+
     [ToneName.Error]: {
         background: vars.color.tone.error,
         color: vars.color.text.onTone,

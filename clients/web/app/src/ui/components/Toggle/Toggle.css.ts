@@ -18,7 +18,7 @@ export const hiddenCheckbox = style({
     borderRadius: vars.borderRadius.md,
     selectors: {
         '&:focus-visible': {
-            outline: `2px solid ${vars.color.foreground.etherum}`,
+            outline: `2px solid ${vars.color.foreground.accent}`,
         },
     },
 })
