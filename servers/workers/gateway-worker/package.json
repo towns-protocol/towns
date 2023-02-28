@@ -10,11 +10,12 @@
         "lint": "eslint .",
         "publish:prod": "npx wrangler publish --env production",
         "publish:stage": "npx wrangler publish --env staging",
-        "test": "jest"
+        "test": "yarn test:unit",
+        "test:unit": "jest"
     },
     "dependencies": {
         "buffer": "^6.0.3",
-        "itty-router": "^3.0.11"
+        "itty-router": "^2.6.6"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20221111.1",

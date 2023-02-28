@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer'
-import { Router } from 'itty-router'
+import { Request as IttyRequest, Router } from 'itty-router'
 import { Env } from '.'
 import { upsertImage } from './upsert'
 import { handleCookie } from './cookie'
@@ -13,7 +13,9 @@ const CACHE_TTL = 5
 
 const router = Router()
 
-router.get('/space-icon-bypass/:id', async (request, env) => {
+type WorkerRequest = Request & IttyRequest
+
+router.get('/space-icon-bypass/:id', async (request: WorkerRequest, env) => {
     const { pathname } = new URL(request.url)
     const pathSplit = pathname.split('/')
     const spaceId: string = pathSplit[pathSplit.length - 1]
@@ -45,7 +47,7 @@ router.get('/space-icon-bypass/:id', async (request, env) => {
 // /space-icon/<space_id>/<IMAGE_OPTIONS>
 // see https://developers.cloudflare.com/images/cloudflare-images/transform/flexible-variants/
 // i.e. https://imagedelivery.net/<ACCOUNT_HASH>/<IMAGE_ID>/w=400,sharpen=3
-router.get('/space-icon/:id+', async (request, env) => {
+router.get('/space-icon/:id+', async (request: WorkerRequest, env) => {
     const { pathname } = new URL(request.url)
     const pathSplit = pathname.split('/')
     let options: string = pathSplit[pathSplit.length - 1]
@@ -97,10 +99,10 @@ router.get('/space-icon/:id+', async (request, env) => {
     }
 })
 
-router.post('/space-icon/:id', async (request, env) => {
+router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
     // spaceId is <id>:node1.towns.com
     // should include full node name b/c the siwe-worker requires it to verify space ownership
-    const spaceId = request.params.id
+    const spaceId = request.params?.id
 
     if (env.ENVIRONMENT !== 'development') {
         const cookie = await handleCookie(request.clone())
@@ -161,4 +163,4 @@ router.post('/space-icon/:id', async (request, env) => {
 
 router.get('*', () => new Response('Not Found', { status: 404 }))
 
-export const handleRequest = (request: Request, env: Env) => router.handle(request, env)
+export const handleRequest = (request: WorkerRequest, env: Env) => router.handle(request, env)

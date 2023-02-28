@@ -10,11 +10,12 @@
         "lint": "eslint .",
         "publish:prod": "wrangler publish --env production",
         "publish:stage": "wrangler publish --env staging",
-        "test": "jest"
+        "test": "yarn test:unit",
+        "test:unit": "jest"
     },
     "dependencies": {
         "alchemy-sdk": "^2.2.4",
-        "itty-router": "^3.0.11"
+        "itty-router": "^2.6.6"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20221111.1",

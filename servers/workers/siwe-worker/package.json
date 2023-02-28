@@ -10,11 +10,12 @@
         "lint": "eslint .",
         "publish:prod": "wrangler publish --env production",
         "publish:stage": "wrangler publish --env staging",
-        "test": "jest"
+        "test": "yarn test:unit",
+        "test:unit": "jest"
     },
     "dependencies": {
         "@harmony/contracts": "workspace:^",
-        "siwe": "^1.1.6",
+        "siwe": "^2.1.3",
         "ts-loader": "^9.4.2",
         "uglifyjs-webpack-plugin": "^2.2.0",
         "use-zion-client": "workspace:^",

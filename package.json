@@ -82,6 +82,7 @@
         ],
         "versionGroups": [
             {
+                "label": "Different versions in worker & client - need v2.x in workers, which breaks client",
                 "dependencies": [
                     "siwe"
                 ],
@@ -89,9 +90,9 @@
                     "siwe-worker"
                 ],
                 "dependencyTypes": [
-                    "dependencies",
-                    "devDependencies",
-                    "peerDependencies"
+                    "prod",
+                    "dev",
+                    "peer"
                 ]
             },
             {
@@ -102,9 +103,9 @@
                     "gateway-worker"
                 ],
                 "dependencyTypes": [
-                    "dependencies",
-                    "devDependencies",
-                    "peerDependencies"
+                    "prod",
+                    "dev",
+                    "peer"
                 ]
             }
         ],
