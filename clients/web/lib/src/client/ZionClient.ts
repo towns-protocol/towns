@@ -1786,6 +1786,35 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
+     * setRoomTopic
+     ************************************************/
+    public async setRoomTopic(roomId: RoomIdentifier, name: string): Promise<void> {
+        // todo casablanca display name
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
+
+        await this.matrixClient.setRoomTopic(roomId.networkId, name)
+    }
+
+    /************************************************
+     * getRoomTopic
+     ************************************************/
+    public async getRoomTopic(roomId: RoomIdentifier): Promise<string> {
+        // todo casablanca display name
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const topic: Record<string, any> = await this.matrixClient.getStateEvent(
+            roomId.networkId,
+            'm.room.topic',
+            '',
+        )
+        return (topic?.topic as string) ?? ''
+    }
+
+    /************************************************
      * scrollback
      ************************************************/
     public async scrollback(roomId: RoomIdentifier, limit?: number): Promise<void> {

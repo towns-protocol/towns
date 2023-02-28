@@ -136,6 +136,8 @@ interface ZionClientImpl {
     ) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setDisplayName: (displayName: string) => Promise<void>
+    setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
+    getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
     syncSpace: (spaceId: RoomIdentifier) => Promise<MatrixSpaceHierarchy | undefined>
 }
 
@@ -203,6 +205,8 @@ export function useZionClient(): ZionClientImpl {
         setPowerLevel: useWithCatch(client?.setPowerLevel),
         syncSpace: useWithCatch(client?.syncSpace),
         setDisplayName: useWithCatch(client?.setDisplayName),
+        setRoomTopic: useWithCatch(client?.setRoomTopic),
+        getRoomTopic: useWithCatch(client?.getRoomTopic),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),
     }
 }
