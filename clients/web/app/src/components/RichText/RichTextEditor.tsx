@@ -132,7 +132,7 @@ export const RichTextPreview = React.memo(
                 <RichTextPlugin
                     ErrorBoundary={LexicalErrorBoundary}
                     contentEditable={<ContentEditable className={fieldClassName} />}
-                    placeholder=""
+                    placeholder={<div />}
                 />
             </LexicalComposer>
         )
@@ -149,7 +149,7 @@ export const RichTextPreviewPlain = React.memo((props: { content: string; edited
         <LexicalComposer initialConfig={initialConfig}>
             <RichTextPlugin
                 contentEditable={<ContentEditable className={fieldClassName} />}
-                placeholder=""
+                placeholder={<div />}
                 ErrorBoundary={LexicalErrorBoundary}
             />
         </LexicalComposer>
