@@ -1,6 +1,7 @@
 import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { Stack } from '@ui'
@@ -49,10 +50,13 @@ export const App = () => {
             initialSyncLimit={100}
             chain={chain}
         >
-            <AnalyticsProvider>
-                <>{env.IS_DEV && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
-                <AllRoutes />
-            </AnalyticsProvider>
+            <>
+                <AnalyticsProvider>
+                    <>{env.IS_DEV && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
+                    <AllRoutes />
+                </AnalyticsProvider>
+                <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+            </>
         </ZionContextProvider>
     ) : (
         <Routes>

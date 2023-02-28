@@ -42,6 +42,7 @@ export function useSpaceIconUpload(spaceId: string) {
             console.log(`[useSpaceIconUpload] upload success `, data)
             // on a successful upload, update all our read queries to start the retry behavior
             useUploadImageStore.getState().setUploadRetryBehavior(true)
+            useUploadImageStore.getState().setEnabled(spaceId, true)
 
             // Optional: returning this will cause the mutation state to stay in loading state while this query updates
             // on a brand new space icon upload, this can take a minute+ to resolve (up to cloudflare to generate images)
@@ -130,11 +131,16 @@ export function useGetSpaceIcon({ spaceId }: { spaceId: string }) {
             refetchOnReconnect: false,
             refetchOnWindowFocus: false,
             staleTime: 1000 * 60 * 60 * 5, // 5 hours
-            refetchInterval: 1000 * 60 * 60 * 5, // 5 hours
+            enabled: useUploadImageStore.getState().enabledSpaces[spaceId],
+            retryDelay: hasUploadRetryBehavior ? 1000 * 30 : 1000,
             onSuccess: () => {
                 useUploadImageStore.getState().setRenderKey(spaceId)
             },
-            retryDelay: 1000 * 30,
+            onError: () => {
+                // when there's an error, the image doesn't exist, we can just disable the query
+                // if a space owner uploads an image, this query is re-enabled
+                useUploadImageStore.getState().setEnabled(spaceId, false)
+            },
             retry: (failureCount, _error) => {
                 // typical user loading app doesn't need to retry for the space image - it either exists or it doesn't
                 if (!hasUploadRetryBehavior) {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { Box, Icon, Stack, Text } from '@ui'
