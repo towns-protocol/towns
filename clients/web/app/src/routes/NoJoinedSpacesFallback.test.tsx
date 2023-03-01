@@ -23,6 +23,9 @@ vi.mock('use-zion-client', async () => {
             return {
                 client: {
                     getRoomData: getRoomDataSpy,
+                    matrixClient: {
+                        isInitialSyncComplete: () => true,
+                    },
                 },
             }
         },

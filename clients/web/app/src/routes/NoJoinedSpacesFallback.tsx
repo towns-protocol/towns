@@ -5,8 +5,8 @@ import { Membership, useZionClient, useZionContext } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Heading, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
-import { useRetryUntilResolved } from 'hooks/useRetryUntilResolved'
 import { env } from 'utils'
+import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { LiquidContainer } from './SpacesIndex'
 
 export const NoJoinedSpacesFallback = () => {
@@ -33,19 +33,10 @@ function AlphaLanding() {
     const navigate = useNavigate()
     const { spaces } = useZionContext()
     const { client } = useZionClient()
-
-    const checkSpaces = useCallback(() => {
-        if (spaces && Array.isArray(spaces) && spaces.length > 0) {
-            return true
-        } else {
-            return false
-        }
-    }, [spaces])
-
-    const hasSyncedSpaces = useRetryUntilResolved(checkSpaces, 100, 2000)
+    const initialSyncComplete = useWaitForInitialSync()
 
     useEffect(() => {
-        if (!hasSyncedSpaces) {
+        if (!initialSyncComplete) {
             return
         }
         if (!client) {
@@ -58,9 +49,9 @@ function AlphaLanding() {
                 navigate(`/${PATHS.SPACES}/${firstSpaceId.slug}`)
             }
         }
-    }, [spaces, navigate, hasSyncedSpaces, client])
+    }, [spaces, navigate, initialSyncComplete, client])
 
-    if (!hasSyncedSpaces) {
+    if (!initialSyncComplete) {
         return <TimelineShimmer />
     }
 

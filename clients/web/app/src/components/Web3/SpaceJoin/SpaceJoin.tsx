@@ -5,6 +5,8 @@ import { Box, Button, Heading, Icon, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { useAuth } from 'hooks/useAuth'
+import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 
 export type JoinData = {
     name: string
@@ -15,6 +17,7 @@ type ModalProps = {
     onHide: () => void
     onCancel: () => void
     onJoin: () => void
+    // we don't have access to matrix room data - we haven't joined the room yet - this joinData comes from contract
     joinData?: JoinData
     notEntitled: boolean
 }
@@ -22,6 +25,8 @@ type ModalProps = {
 const SpaceJoinModal = (props: ModalProps) => {
     const data = props.joinData
     const { logout } = useAuth()
+    const initialSyncComplete = useWaitForInitialSync()
+
     if (!data) {
         return null
     }
@@ -104,8 +109,19 @@ const SpaceJoinModal = (props: ModalProps) => {
                         />
 
                         <Box gap="sm">
-                            <Button tone="cta1" onClick={props.onJoin}>
-                                <Text>Join {data.name}</Text>
+                            <Button
+                                tone="cta1"
+                                disabled={!initialSyncComplete}
+                                onClick={props.onJoin}
+                            >
+                                {!initialSyncComplete ? (
+                                    <>
+                                        <ButtonSpinner />
+                                        <Text>Connecting to server</Text>
+                                    </>
+                                ) : (
+                                    <Text>Join {data.name}</Text>
+                                )}
                             </Button>
                             <Button
                                 tone="none"

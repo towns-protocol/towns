@@ -14,6 +14,11 @@ vi.mock('use-zion-client', async () => {
         useZionClient: () => {
             return {
                 ...actual.useZionClient(),
+                client: {
+                    matrixClient: {
+                        isInitialSyncComplete: () => true,
+                    },
+                },
                 joinRoom: joinRoomSpy,
             }
         },
