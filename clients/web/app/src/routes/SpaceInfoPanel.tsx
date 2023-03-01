@@ -9,13 +9,14 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { Link } from 'react-router-dom'
-import { randParagraph } from '@ngneat/falso'
-import { Avatar, Box, BoxProps, Button, ButtonText, Panel, Paragraph, Stack } from '@ui'
+import { Avatar, Box, BoxProps, Button, ButtonText, Panel, Paragraph, Stack, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { UploadImage } from '@components/UploadImage/UploadImage'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { TextArea } from 'ui/components/TextArea/TextArea'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { useGetRoomTopic, useSetRoomTopic } from 'hooks/useRoomTopic'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
@@ -32,14 +33,18 @@ export const SpaceInfoPanel = () => {
     const { data } = useContractSpaceInfo(space?.id?.networkId)
     const address = data?.address ?? ''
     const navigate = useNavigate()
-    const { data: isOwner } = useHasPermission(Permission.Owner)
+    const { data: canEdit } = useHasPermission(Permission.Owner) // TODO: this should be ModifySpaceSettings, but siwe-worker is checking for Owner
+
     const { homeserverUrl } = useMatrixHomeServerUrl()
     const [isEdit, setIsEdit] = useState(false)
-    const [description, setDescription] = useState(randParagraph())
+    const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
+    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetRoomTopic(space?.id)
+
+    const { mutate, isLoading } = useSetRoomTopic(space?.id)
 
     const matrixUserOwner = useMemo(() => {
-        if (!client?.matrixClient || !data?.owner || !chainId) {
+        if (!data?.owner || !chainId) {
             return undefined
         }
         const _homeserverUrl = new URL(homeserverUrl || '')
@@ -59,18 +64,25 @@ export const SpaceInfoPanel = () => {
 
     const onEdit = useEvent(() => {
         setIsEdit(true)
+        setEditErrorMessage(null)
         setTimeout(() => {
             textAreaRef.current?.focus()
         })
     })
     const onCancel = useEvent(() => setIsEdit(false))
     const onSave = useEvent(() => {
-        console.log('save')
-        if (!textAreaRef.current) {
+        if (!textAreaRef.current?.value.length || !canEdit) {
             return
         }
-        setDescription(textAreaRef.current.value)
-        setIsEdit(false)
+        mutate(textAreaRef.current.value, {
+            onSuccess: async () => {
+                setIsEdit(false)
+                setEditErrorMessage(null)
+            },
+            onError: () => {
+                setEditErrorMessage("We weren't able to save your changes. Please try again later.")
+            },
+        })
     })
 
     return (
@@ -80,7 +92,7 @@ export const SpaceInfoPanel = () => {
                     <Stack centerContent gap="lg" padding="lg">
                         <UploadImage
                             spaceName={space.name}
-                            isOwner={Boolean(isOwner)}
+                            canEdit={Boolean(canEdit)}
                             spaceId={space.id.networkId}
                         />
                     </Stack>
@@ -96,49 +108,81 @@ export const SpaceInfoPanel = () => {
                         <ClipboardCopy clipboardContent={address} label={shortAddress(address)} />
                     </MdGap>
 
-                    <MdGap>
-                        <>
-                            <Box horizontal justifyContent="spaceBetween">
-                                <Paragraph strong>About</Paragraph>{' '}
-                                {/* TODO: update for proper role */}
-                                {isOwner &&
-                                    (isEdit ? (
-                                        <Box horizontal gap="sm">
-                                            <Button size="inline" tone="none" onClick={onCancel}>
-                                                <ButtonText color="cta1" size="sm">
-                                                    Cancel
-                                                </ButtonText>
-                                            </Button>
-                                            <Button size="inline" tone="none" onClick={onSave}>
+                    {(canEdit || roomTopic) && (
+                        <MdGap data-testId="about-section">
+                            <>
+                                <Box horizontal justifyContent="spaceBetween">
+                                    <Paragraph strong>About</Paragraph>{' '}
+                                    {canEdit &&
+                                        (isEdit ? (
+                                            <Box horizontal gap="sm">
+                                                <Button
+                                                    size="inline"
+                                                    tone="none"
+                                                    disabled={isLoading}
+                                                    onClick={onCancel}
+                                                >
+                                                    <ButtonText color="error" size="sm">
+                                                        Cancel
+                                                    </ButtonText>
+                                                </Button>
+                                                <Box horizontal centerContent gap>
+                                                    <Button
+                                                        size="inline"
+                                                        tone="none"
+                                                        disabled={isLoading}
+                                                        data-testid="save-button"
+                                                        onClick={onSave}
+                                                    >
+                                                        <ButtonText color="gray1" size="sm">
+                                                            Save
+                                                        </ButtonText>
+                                                    </Button>
+                                                    {isLoading && <ButtonSpinner />}
+                                                </Box>
+                                            </Box>
+                                        ) : (
+                                            <Button
+                                                size="inline"
+                                                tone="none"
+                                                data-testid="edit-description-button"
+                                                onClick={onEdit}
+                                            >
                                                 <ButtonText color="gray1" size="sm">
-                                                    Save
+                                                    Edit
                                                 </ButtonText>
                                             </Button>
-                                        </Box>
+                                        ))}
+                                </Box>
+                                {!isLoadingRoomTopic &&
+                                    (isEdit ? (
+                                        <>
+                                            <TextArea
+                                                data-testid="edit-description-textarea"
+                                                ref={textAreaRef}
+                                                paddingY="md"
+                                                background="level2"
+                                                defaultValue={roomTopic}
+                                                height="150"
+                                                maxLength={400}
+                                                style={{ paddingRight: '2.5rem' }}
+                                            />
+                                            {editErrorMessage && (
+                                                <Text color="negative" size="sm">
+                                                    {editErrorMessage}
+                                                </Text>
+                                            )}
+                                        </>
                                     ) : (
-                                        <Button size="inline" tone="none" onClick={onEdit}>
-                                            <ButtonText color="gray1" size="sm">
-                                                Edit
-                                            </ButtonText>
-                                        </Button>
+                                        <Paragraph color="gray2">
+                                            {roomTopic
+                                                ? roomTopic
+                                                : 'Click "edit" to add a description'}
+                                        </Paragraph>
                                     ))}
-                            </Box>
-                            {isEdit ? (
-                                <TextArea
-                                    ref={textAreaRef}
-                                    paddingY="md"
-                                    background="level2"
-                                    defaultValue={description}
-                                    height="150"
-                                    maxLength={400}
-                                    style={{ paddingRight: '2.5rem' }}
-                                />
-                            ) : (
-                                <Paragraph color="gray2">{description}</Paragraph>
-                            )}
-                        </>
-                    </MdGap>
-
+                            </>
+                        </MdGap>
+                    )}
                     <MdGap>
                         <>
                             <Paragraph strong>Population</Paragraph>

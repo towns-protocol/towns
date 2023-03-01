@@ -28,7 +28,7 @@ const MAX_SIZE = 5000000
 type Props = {
     spaceId: string
     spaceName: string
-    isOwner: boolean
+    canEdit: boolean
 } & Partial<UseFormReturn>
 
 const config: BoxProps = {
@@ -40,7 +40,7 @@ const config: BoxProps = {
 const FORM_FIELD_NAME = 'spaceIconUpload'
 
 export const UploadImage = (props: Props) => {
-    const { setError, register, clearErrors, spaceId, isOwner } = props
+    const { setError, register, clearErrors, spaceId, canEdit } = props
     const ref = React.useRef<HTMLInputElement>(null)
     const _spaceId = useMemo(() => spaceId, [spaceId])
 
@@ -93,7 +93,7 @@ export const UploadImage = (props: Props) => {
     }
 
     return (
-        <Box position="relative">
+        <Box position="relative" data-testid="upload-image-container">
             <Box className={isLoading ? loadingStyles : ''}>
                 <SpaceIcon
                     spaceId={_spaceId}
@@ -114,10 +114,11 @@ export const UploadImage = (props: Props) => {
                 </>
             )}
 
-            {isOwner && (
+            {canEdit && (
                 <>
                     <Box
                         centerContent
+                        data-testid="upload-image-button"
                         role="button"
                         position="absolute"
                         top="xs"
@@ -181,7 +182,7 @@ export const UploadImageDebugger = () => {
             <FormRender onSubmit={() => undefined}>
                 {(props) => (
                     <>
-                        <UploadImage {...props} isOwner spaceId={spaceId} spaceName="Test space" />
+                        <UploadImage {...props} canEdit spaceId={spaceId} spaceName="Test space" />
                     </>
                 )}
             </FormRender>
