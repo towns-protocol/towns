@@ -8,7 +8,7 @@ import {
     INSERT_PARAGRAPH_COMMAND,
     KEY_ENTER_COMMAND,
 } from 'lexical'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Mention } from 'use-zion-client'
 import { Button, Stack } from '@ui'
 import { $isMentionNode } from '../nodes/MentionNode'
@@ -23,7 +23,25 @@ export const SendMarkdownPlugin = (props: {
 
     const { parseMarkdown } = useParseMarkdown(onSend)
 
+    // the following is hack makes the command fire last in the queue of
+    // LOW_PRIORITY_COMMANDS allowing commands on the same priority to fire
+    // first. Specifically, for the typeahead plugin requiring ENTER to make a selection.
+    const [registerCommandCount, setRegisterCommandCount] = useState(0)
     useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                setRegisterCommandCount((b) => b + 1)
+            }
+        }
+        window.addEventListener('keydown', onKey, { capture: true })
+        return () => {
+            window.removeEventListener('keydown', onKey, { capture: true })
+        }
+    }, [])
+
+    useEffect(() => {
+        // keep depency in order to register when updated
+        registerCommandCount
         return mergeRegister(
             editor.registerCommand(
                 KEY_ENTER_COMMAND,
@@ -44,7 +62,7 @@ export const SendMarkdownPlugin = (props: {
                 COMMAND_PRIORITY_LOW,
             ),
         )
-    }, [editor, onSend, parseMarkdown])
+    }, [editor, onSend, parseMarkdown, registerCommandCount])
 
     const sendMessage = useCallback(() => {
         parseMarkdown()
