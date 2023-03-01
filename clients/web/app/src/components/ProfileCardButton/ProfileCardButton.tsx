@@ -62,4 +62,3 @@ export const ProfileCardButton = (props: Props) => {
 }
 
 const MotionStack = motion(Stack)
-//Stack horizontal gap="sm" alignItems="center"

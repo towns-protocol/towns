@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react'
-import { useNavigate } from 'react-router'
+import { useMatch, useNavigate } from 'react-router'
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from '@ui'
+import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
-import { useAuth } from 'hooks/useAuth'
 import { shortAddress } from 'ui/utils/utils'
 import { MenuItem } from './MenuItem'
 
@@ -16,11 +16,9 @@ type Props = {
 }
 
 export const ProfileSettingsCard = (props: Props) => {
-    const { username = '', avatarUrl, displayName } = props
+    const { username = '', avatarUrl, displayName, userId } = props
     const { logout } = useAuth()
-
     const { closeCard } = useCardOpenerContext()
-
     const { setTheme, theme } = useStore((state) => ({
         theme: state.theme,
         setTheme: state.setTheme,
@@ -32,10 +30,23 @@ export const ProfileSettingsCard = (props: Props) => {
 
     const navigate = useNavigate()
 
-    const onSettingsClick = useCallback(() => {
+    const matchSpace = useMatch(`${PATHS.SPACES}/:spaceSlug/*`)
+    const matchChannel = useMatch(`${PATHS.SPACES}/:spaceSlug/${PATHS.CHANNELS}/:channelSlug/*`)
+
+    const onProfileClick = useCallback(() => {
         closeCard()
-        navigate('/me')
-    }, [closeCard, navigate])
+        let link = `/me`
+        if (matchChannel) {
+            link = `${PATHS.SPACES}/${matchChannel.params.spaceSlug}/${PATHS.CHANNELS}/${matchChannel.params.channelSlug}/profile/${userId}`
+        } else if (matchSpace) {
+            const segment = matchSpace.params['*']?.split('/')?.[0] ?? ''
+            // matches threads/mentions/members
+            link = `${PATHS.SPACES}/${matchSpace.params.spaceSlug}/${
+                segment ? `/${segment}` : ``
+            }profile/${userId}`
+        }
+        navigate(link)
+    }, [closeCard, matchChannel, matchSpace, navigate, userId])
 
     const onSetupClick = useCallback(() => {
         closeCard()
@@ -57,7 +68,7 @@ export const ProfileSettingsCard = (props: Props) => {
             {/* <MenuItem icon="settings" onClick={onThemeClick}>
         Switch to {theme !== "light" ? "light" : "dark"} theme
       </MenuItem> */}
-            <MenuItem selected icon="profile" onClick={onSettingsClick}>
+            <MenuItem selected icon="profile" onClick={onProfileClick}>
                 Profile
             </MenuItem>
             <MenuItem icon="settings" onClick={onSetupClick}>
