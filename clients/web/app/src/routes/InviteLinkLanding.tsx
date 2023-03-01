@@ -2,11 +2,12 @@ import React, { useEffect } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
 import { SpaceIcon } from '@components/SpaceIcon'
-import { Box, Icon, Stack, Text } from '@ui'
+import { Box, Heading, Icon, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 
 function getButtonLabel(status: SignupButtonStatus) {
@@ -29,7 +30,7 @@ const InviteLinkLanding = () => {
     const spaceId = useSpaceIdFromPathname()
     const [searchParams] = useSearchParams()
     const isInvite = searchParams.get('invite') != undefined
-    const { data } = useContractSpaceInfo(spaceId)
+    const { data, isLoading } = useContractSpaceInfo(spaceId)
     const setTitle = useSetDocTitle()
 
     const { walletStatus, connect, loginStatus, login, register } = useAuth()
@@ -70,11 +71,31 @@ const InviteLinkLanding = () => {
                         firstLetterOfSpaceName={data.name[0]}
                         letterFontSize="display"
                     />
-                    <Text>You&apos;re invited to join</Text>
-                    <h2>{data?.name}</h2>
+                    <FadeIn>
+                        <Text>You&apos;re invited to join</Text>
+                    </FadeIn>
+                    <FadeIn>
+                        <Heading level={2}>{data?.name}</Heading>
+                    </FadeIn>
                 </Stack>
             ) : (
-                <Text>Space not found</Text>
+                <Stack centerContent gap="md" paddingBottom="lg">
+                    <SpaceIcon
+                        spaceId=""
+                        width="250"
+                        height="250"
+                        firstLetterOfSpaceName=""
+                        letterFontSize="display"
+                    />
+                    {isLoading ? (
+                        <>
+                            <Text>&nbsp;</Text>
+                            <Heading level={2}> &nbsp;</Heading>
+                        </>
+                    ) : (
+                        <Heading level={2}>Space not found</Heading>
+                    )}
+                </Stack>
             )}
 
             <Stack paddingTop="sm" gap="lg" alignItems="center">
