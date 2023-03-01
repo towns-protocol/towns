@@ -1,5 +1,5 @@
 import { EmojiData } from 'emoji-mart'
-import React, { useCallback, useContext, useEffect } from 'react'
+import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { motion } from 'framer-motion'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
@@ -53,9 +53,12 @@ export const MessageContextMenu = (props: Props) => {
         },
         [channelId, eventId, sendReaction],
     )
-
+    const ref = useRef<HTMLDivElement>(null)
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
+            if (!document.activeElement?.contains(ref.current)) {
+                return
+            }
             if (props.canReply && e.key === 't') {
                 onThreadClick()
                 e.preventDefault()
@@ -72,7 +75,7 @@ export const MessageContextMenu = (props: Props) => {
     }, [onEditClick, onThreadClick, props.canEdit, props.canReply])
 
     return (
-        <MotionStack pointerEvents="auto" position="topRight" {...animation}>
+        <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
             <Stack
                 border
                 horizontal
