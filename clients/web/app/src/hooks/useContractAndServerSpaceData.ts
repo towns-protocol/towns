@@ -9,14 +9,15 @@ export type ChainSpaceData = ReturnType<typeof useContractAndServerSpaceData>['c
 export const useContractAndServerSpaceData = () => {
     const serverSpace = useSpaceData()
     const spaceId = useSpaceIdFromPathname()
-    const { data } = useContractSpaceInfo(spaceId)
+    const { data, isLoading } = useContractSpaceInfo(spaceId)
 
     const space = useMemo(() => {
         return {
             chainSpace: data,
+            chainSpaceLoading: isLoading,
             serverSpace: serverSpace,
         }
-    }, [serverSpace, data])
+    }, [data, isLoading, serverSpace])
 
     return space
 }

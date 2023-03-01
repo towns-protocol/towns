@@ -97,8 +97,10 @@ const SpaceJoinModal = (props: ModalProps) => {
                     </>
                 ) : (
                     <>
-                        <Box>
-                            <Heading level={2}>Welcome to</Heading>
+                        <Box maxWidth="350">
+                            <Heading level={2} textAlign="center">
+                                Welcome to <br /> {data.name}
+                            </Heading>
                         </Box>
                         <SpaceIcon
                             spaceId={data.networkId}

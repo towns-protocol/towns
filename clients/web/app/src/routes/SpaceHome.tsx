@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 
-import { useNavigate } from 'react-router'
+import { Navigate, useLocation, useNavigate } from 'react-router'
 import { Membership } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Stack } from '@ui'
@@ -8,10 +8,14 @@ import { PATHS } from 'routes'
 import { useRetryUntilResolved } from 'hooks/useRetryUntilResolved'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
-    const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
+    const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
+    const location = useLocation()
+    const initialSyncComplete = useWaitForInitialSync()
+
     const spaceId = space?.id
     const navigate = useNavigate()
     const channels = useMemo(
@@ -19,13 +23,14 @@ export const SpaceHome = () => {
         [space?.channelGroups],
     )
 
-    // TODO: maybe there is a better way to do this, but I couldn't find a way that ensures channels are fully synced for a space before doing something. Tried initialSyncCompelete, roomInitialSync
+    // TODO: maybe there is a better way to do this, but I couldn't find a way that ensures channels are fully synced for a space before doing something. initialSyncComplete isn't enough to know that channels are synced.
     // this is a last resort to make sure we have channels available that we can route to on space load
-    // primarily this only happens in 2 situations:
-    // 1. immediately after logging in, and then getting redirected to a space (the default space)
-    // 2. on first load AND already logged in, AND on a route that does not exist
+    // primarily this happens when loading the app directly with a space link
     const hasSyncedChannels = useRetryUntilResolved(
         () => {
+            if (!initialSyncComplete) {
+                return false
+            }
             return Boolean(channels?.at(0)?.id)
         },
         100,
@@ -68,8 +73,15 @@ export const SpaceHome = () => {
         hasSyncedChannels,
     ])
 
+    // space doesn't exist
+    if (!chainSpaceLoading && !chainSpace && !space) {
+        return <Navigate to="/" />
+    }
+
     // space is on chain, but user has no matrix data, indicating they have landed via an invite link
-    if (chainSpace && !space) {
+    // we could wrap in initialSyncComplete check also, but skipping for now because the modal will show a "connecting"
+    // and that's probably useful for debugging this screen
+    if (location.search.includes('invite') && !chainSpaceLoading && chainSpace && !space) {
         const joinData = {
             name: chainSpace.name,
             networkId: chainSpace.networkId,

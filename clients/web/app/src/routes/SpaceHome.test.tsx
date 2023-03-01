@@ -30,37 +30,21 @@ const Wrapper = () => {
 }
 
 describe('<SpaceHome />', () => {
-    test('renders join space UI when contract space exists but server space does not', async () => {
+    test('renders join space UI when it is an invite link', async () => {
+        vi.spyOn(Router, 'useLocation').mockReturnValueOnce({
+            search: '?invite',
+            state: undefined,
+            key: '',
+            pathname: '',
+            hash: '',
+        })
+
         vi.spyOn(
             useContractAndServerSpaceDataHook,
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
-                chainSpace: {
-                    address: '0x1',
-                    networkId: 'some-id',
-                    name: 'some-name',
-                    owner: '0x0',
-                    disabled: false,
-                },
-                serverSpace: undefined,
-            }
-        })
-        render(<Wrapper />)
-
-        await waitFor(() => {
-            expect(screen.getByTestId('space-join')).toBeInTheDocument()
-        })
-
-        expect(screen.getByTestId('timeline-shimmer')).toBeInTheDocument()
-    })
-
-    test('renders join space from invite link UI when contract space exists but server space does not', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
+                chainSpaceLoading: false,
                 chainSpace: {
                     address: '0x1',
                     networkId: 'some-id',
@@ -87,6 +71,7 @@ describe('<SpaceHome />', () => {
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
+                chainSpaceLoading: false,
                 chainSpace: undefined,
                 serverSpace: {
                     id: {
@@ -117,6 +102,7 @@ describe('<SpaceHome />', () => {
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
+                chainSpaceLoading: false,
                 chainSpace: undefined,
                 serverSpace: {
                     id: {
@@ -153,6 +139,7 @@ describe('<SpaceHome />', () => {
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
+                chainSpaceLoading: false,
                 chainSpace: undefined,
                 serverSpace: {
                     id: {

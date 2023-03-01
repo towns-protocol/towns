@@ -44,6 +44,7 @@ describe('<AppPanelLayout />', () => {
         ).mockImplementation(() => {
             return {
                 chainSpace: undefined,
+                chainSpaceLoading: false,
                 serverSpace: {
                     id: {
                         protocol: Lib.SpaceProtocol.Matrix,
@@ -70,6 +71,7 @@ describe('<AppPanelLayout />', () => {
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
+                chainSpaceLoading: false,
                 chainSpace: {
                     address: '0x1',
                     networkId: 'some-id',
