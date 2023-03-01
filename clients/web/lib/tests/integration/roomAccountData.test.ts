@@ -36,13 +36,7 @@ describe('roomAccountData', () => {
         // alice sends a wenmoon message
         await alice.sendMessage(roomId, 'GM Bob')
         // bob should receive the message
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content.body === 'GM Bob'),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain('GM Bob'))
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const event = bob

@@ -43,13 +43,12 @@ describe('messageTypes', () => {
             messageType: MessageType.WenMoon,
         })
         // bob should receive the message
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content.msgType === MessageType.WenMoon),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain('Wen Moon?'))
+        expect(
+            bob
+                .getEvents_TypedRoomMessage(roomId)
+                .find((event) => event.content.msgType === MessageType.WenMoon),
+        ).toBeDefined()
     }) // end test
 
     test('send a m.image message', async () => {
@@ -91,6 +90,7 @@ describe('messageTypes', () => {
         await alice.sendMessage(roomId, 'what.jpg', IMAGE_MSG_CONTENT)
 
         await waitFor(() => {
+            expect(bob.getMessages(roomId)).toContain('what.jpg')
             const imageMessage = bob
                 .getEvents_TypedRoomMessage(roomId)
                 .find((event) => event.content?.msgType === MessageType.Image)
@@ -136,6 +136,9 @@ describe('messageTypes', () => {
         )
 
         await waitFor(() => {
+            expect(bob.getMessages(roomId)).toContain(
+                'this is a message with https://example.com in the body',
+            )
             const zionTextMessage = bob
                 .getEvents_TypedRoomMessage(roomId)
                 .find((event) => event.content.msgType === MessageType.ZionText)

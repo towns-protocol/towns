@@ -50,22 +50,10 @@ describe('write messages', () => {
         }
         expect(consoleErrorSpy).toHaveBeenCalled()
 
-        await waitFor(() =>
-            expect(
-                alice
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content.body === 'Hello tokenGrantedUser!'),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(alice.getMessages(roomId)).toContain('Hello tokenGrantedUser!'))
 
         // bob should not receive the message
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content.body === 'Hello Bob!'),
-            ).toBeUndefined(),
-        )
+        expect(bob.getMessages(roomId)).not.toContain('Hello Bob!')
     })
 
     test('Channel member can sync messages', async () => {
@@ -142,12 +130,6 @@ describe('write messages', () => {
 
         /** Assert */
 
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content?.body === 'Hello Bob!'),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain('Hello Bob!'))
     })
 })

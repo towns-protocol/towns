@@ -369,6 +369,10 @@ export class ZionTestClient extends ZionClient {
         return this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
     }
 
+    public getMessages(roomId: RoomIdentifier): string[] {
+        return this.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)
+    }
+
     public async getLatestEvent<T extends TimelineEvent_OneOf>(
         roomId: RoomIdentifier,
         eventType: T['kind'] | undefined = ZTEvent.RoomMessage,

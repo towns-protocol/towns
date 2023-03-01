@@ -316,11 +316,7 @@ describe('sendThreadedMessageHooks', () => {
         )
         // - jane replies to bobs's message in channel_2 creating channel_2.thread
         await waitFor(() =>
-            expect(
-                jane
-                    .getEvents_TypedRoomMessage(channel_2)!
-                    .find((e) => e.content.body === 'hello jane in channel_2'),
-            ).toBeDefined(),
+            expect(jane.getMessages(channel_2)).toContain('hello jane in channel_2'),
         )
         const channel_2_message_1 = jane
             .getEvents_TypedRoomMessage(channel_2)!

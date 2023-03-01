@@ -80,12 +80,7 @@ describe('userProfile', () => {
         })
         // alice should see the message
         await waitFor(
-            () =>
-                expect(
-                    alice
-                        .getEvents_TypedRoomMessage(roomId)
-                        .find((event) => event.content.body === 'hello'),
-                ).toBeDefined(),
+            () => expect(alice.getMessages(roomId)).toContain('hello'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // get the message

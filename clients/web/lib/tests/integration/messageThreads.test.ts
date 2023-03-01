@@ -29,13 +29,7 @@ describe('messageThreads', () => {
         // alice sends a wenmoon message
         await alice.sendMessage(roomId, 'hi Bob!')
         // bob should receive the message
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(roomId)
-                    .find((event) => event.content?.body === 'hi Bob!'),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain('hi Bob!'))
 
         // get the message id
         const messageId = bob

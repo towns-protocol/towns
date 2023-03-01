@@ -60,13 +60,7 @@ describe('redact messages', () => {
         // verify that no error was thrown for redaction
         expect(error).toBeInstanceOf(NoThrownError)
         // verify that the message is redacted
-        await waitFor(() =>
-            expect(
-                alice
-                    .getEvents_TypedRoomMessage(channelId)
-                    .find((event) => event.content.body === message),
-            ).toBeUndefined(),
-        )
+        await waitFor(() => expect(alice.getMessages(channelId)).not.toContain(message))
     })
 
     test("member cannot redact other's messages", async () => {
@@ -104,13 +98,7 @@ describe('redact messages', () => {
         // alice sends a message in the channel
         const message = 'Hello I am alice!'
         await alice.sendMessage(channelId, message)
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(channelId)
-                    .find((event) => event.content.body === message),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(bob.getMessages(channelId)).toContain(message))
         const messageEvent = bob
             .getEvents_TypedRoomMessage(channelId)
             .find((event) => event.content.body === message)
@@ -126,11 +114,7 @@ describe('redact messages', () => {
         // verify that error was thrown for redaction
         expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
         // verify that the message is NOT redacted
-        expect(
-            alice
-                .getEvents_TypedRoomMessage(channelId)
-                .find((event) => event.content.body === message),
-        ).toBeDefined()
+        expect(alice.getMessages(channelId)).toContain(message)
     })
 
     test("moderator can redact other's messages", async () => {
@@ -188,13 +172,7 @@ describe('redact messages', () => {
         const message = 'Hello I am alice!'
         await alice.sendMessage(channelId, message)
         // use a scrollback to get the message event
-        await waitFor(() =>
-            expect(
-                bob
-                    .getEvents_TypedRoomMessage(channelId)
-                    .find((event) => event.content.body === message),
-            ).toBeDefined(),
-        )
+        await waitFor(() => expect(bob.getMessages(channelId)).toContain(message))
         const messageEvent = bob
             .getEvents_TypedRoomMessage(channelId)
             .find((event) => event.content.body === message)
@@ -210,12 +188,6 @@ describe('redact messages', () => {
         // verify that NO error was thrown for redaction
         expect(error).toBeInstanceOf(NoThrownError)
         // verify that the message is redacted
-        await waitFor(() =>
-            expect(
-                alice
-                    .getEvents_TypedRoomMessage(channelId)
-                    .find((event) => event.content.body === message),
-            ).toBeUndefined(),
-        )
+        await waitFor(() => expect(alice.getMessages(channelId)).not.toContain(message))
     })
 })

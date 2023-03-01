@@ -176,11 +176,7 @@ describe('sendMessageHooks', () => {
         // expect it to render as well
         await waitFor(() => expect(message1).toHaveTextContent('hello jane'))
         // expect jane to recieve the message
-        await waitFor(() =>
-            expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
-                'hello jane',
-            ),
-        )
+        await waitFor(() => expect(jane.getMessages(janesChannelId)).toContain('hello jane'))
         // expect the message to "flush" out of local pending state
         await waitFor(() => expect(message1).not.toHaveTextContent('isLocalPending: true'))
         // edit the event
@@ -189,11 +185,7 @@ describe('sendMessageHooks', () => {
         await waitFor(() => expect(msgEdited).toHaveTextContent('message edited'))
         await waitFor(() => expect(message1).toHaveTextContent('hello jane gm!'))
         // expect jane to see the edited event
-        await waitFor(() =>
-            expect(jane.getEvents_TypedRoomMessage(janesChannelId).at(-1)?.content.body).toBe(
-                'hello jane gm!',
-            ),
-        )
+        await waitFor(() => expect(jane.getMessages(janesChannelId)).toContain('hello jane gm!'))
         // redact the event
         fireEvent.click(redactButton)
         // exect the message to be empty

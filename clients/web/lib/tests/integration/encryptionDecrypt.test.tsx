@@ -136,10 +136,7 @@ describe('canDecryptMessages', () => {
 
         // expect jane to recieve the message
         await waitFor(
-            () =>
-                expect(
-                    jane.getEvents_TypedRoomMessage(janesChannelId).map((e) => e.content.body),
-                ).toContain('hello jane'),
+            () => expect(jane.getMessages(janesChannelId)).toContain('hello jane'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
 

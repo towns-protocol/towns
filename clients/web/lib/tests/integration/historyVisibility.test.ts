@@ -47,11 +47,7 @@ describe('historyVisibility', () => {
 
         await john.sendMessage(roomId, "I'm John!")
 
-        await waitFor(() =>
-            expect(bob.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm John!",
-            ),
-        )
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain("I'm John!"))
 
         await john.logout()
 
@@ -66,26 +62,15 @@ describe('historyVisibility', () => {
 
         // and we should see the message
         await waitFor(
-            () =>
-                expect(
-                    alice.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
-                ).toContain('Hello World!'),
+            () => expect(alice.getMessages(roomId)).toContain('Hello World!'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
-        await waitFor(() =>
-            expect(alice.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm John!",
-            ),
-        )
+        await waitFor(() => expect(alice.getMessages(roomId)).toContain("I'm John!"))
 
         await alice.sendMessage(roomId, "I'm Alice!")
 
-        await waitFor(() =>
-            expect(bob.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm Alice!",
-            ),
-        )
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain("I'm Alice!"))
 
         await alice.logout()
 
@@ -95,31 +80,18 @@ describe('historyVisibility', () => {
         john.logEvents(roomId)
         // and we should see the message
         await waitFor(
-            () =>
-                expect(
-                    john.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
-                ).toContain('Hello World!'),
+            () => expect(john.getMessages(roomId)).toContain('Hello World!'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
-        await waitFor(() =>
-            expect(john.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm John!",
-            ),
-        )
+        await waitFor(() => expect(john.getMessages(roomId)).toContain("I'm John!"))
 
-        await waitFor(
-            () =>
-                expect(
-                    john.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
-                ).toContain("I'm Alice!"),
-            {
-                onTimeout: (e) => {
-                    john.logEvents(roomId)
-                    return e
-                },
+        await waitFor(() => expect(john.getMessages(roomId)).toContain("I'm Alice!"), {
+            onTimeout: (e) => {
+                john.logEvents(roomId)
+                return e
             },
-        )
+        })
 
         // create a new client with same wallet, but different deviceId/auth
         const alice2 = new ZionTestClient(
@@ -136,24 +108,13 @@ describe('historyVisibility', () => {
         await waitFor(() => expect(alice2.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
 
         await waitFor(
-            () =>
-                expect(
-                    alice2.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
-                ).toContain('Hello World!'),
+            () => expect(alice2.getMessages(roomId)).toContain('Hello World!'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
-        await waitFor(() =>
-            expect(alice2.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm John!",
-            ),
-        )
+        await waitFor(() => expect(alice2.getMessages(roomId)).toContain("I'm John!"))
 
-        await waitFor(() =>
-            expect(alice2.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm Alice!",
-            ),
-        )
+        await waitFor(() => expect(alice2.getMessages(roomId)).toContain("I'm Alice!"))
 
         // have bob and john log out
         await bob.logout()
@@ -175,23 +136,12 @@ describe('historyVisibility', () => {
         await waitFor(() => expect(alice3.matrixClient?.getRoom(roomId.networkId)).toBeTruthy())
 
         await waitFor(
-            () =>
-                expect(
-                    alice3.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body),
-                ).toContain('Hello World!'),
+            () => expect(alice3.getMessages(roomId)).toContain('Hello World!'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
-        await waitFor(() =>
-            expect(alice3.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm John!",
-            ),
-        )
+        await waitFor(() => expect(alice3.getMessages(roomId)).toContain("I'm John!"))
 
-        await waitFor(() =>
-            expect(alice3.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)).toContain(
-                "I'm Alice!",
-            ),
-        )
+        await waitFor(() => expect(alice3.getMessages(roomId)).toContain("I'm Alice!"))
     })
 })
