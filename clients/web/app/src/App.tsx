@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useRef } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'

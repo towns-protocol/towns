@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
 import { SpaceIcon } from '@components/SpaceIcon'
@@ -7,6 +7,7 @@ import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useSetDocTitle } from 'hooks/useDocTitle'
 
 function getButtonLabel(status: SignupButtonStatus) {
     switch (status) {
@@ -29,6 +30,7 @@ const InviteLinkLanding = () => {
     const [searchParams] = useSearchParams()
     const isInvite = searchParams.get('invite') != undefined
     const { data } = useContractSpaceInfo(spaceId)
+    const setTitle = useSetDocTitle()
 
     const { walletStatus, connect, loginStatus, login, register } = useAuth()
 
@@ -45,6 +47,13 @@ const InviteLinkLanding = () => {
     })
 
     const buttonLabel = getButtonLabel(status)
+
+    useEffect(() => {
+        if (!data) {
+            return
+        }
+        setTitle(`Join ${data.name}`)
+    }, [data, setTitle])
 
     if (!isInvite) {
         return <Navigate replace to="/login" />

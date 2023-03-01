@@ -8,6 +8,7 @@ import { RoleSettingsMembers } from '@components/SpaceSettings/RoleSettings/Role
 import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
+import { DocumentTitleFromSpaceOutlet } from 'routes/DocumentTitleFromSpaceOutlet'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { MeIndex } from './MeIndex'
@@ -44,7 +45,7 @@ export const AuthenticatedRoutes = () => {
             {(env.IS_DEV || isHolderOfPioneerNft) && (
                 <Route path="spaces/new" element={<SpacesNew />} />
             )}
-            <Route path="spaces/:spaceSlug">
+            <Route path="spaces/:spaceSlug" element={<DocumentTitleFromSpaceOutlet />}>
                 <Route index element={<SpaceHome />} />
                 <Route path="threads" element={<SpaceThreads />}>
                     <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
