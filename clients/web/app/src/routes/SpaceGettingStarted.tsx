@@ -26,7 +26,6 @@ export const SpaceGettingStarted = () => {
     return (
         <CentralPanelLayout>
             <Stack>
-                <BackgroundGrid />
                 <Stack position="relative">
                     <SpaceOwnerLanding />
                 </Stack>

@@ -5,7 +5,7 @@ import { breakpoints } from 'ui/styles/breakpoints'
 
 export const headerStyle = style({
     padding: vars.dims.baseline.x10,
-    background: 'linear-gradient(180deg, rgba(48, 46, 54, 0.5) 0%, rgba(21, 20, 24, 0.5) 100%)',
+    // background: 'linear-gradient(180deg, rgba(48, 46, 54, 0.5) 0%, rgba(21, 20, 24, 0.5) 100%)',
 })
 
 export const contentStyle = style({

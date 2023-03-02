@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useSpaceData } from 'use-zion-client'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import useEvent from 'react-use-event-hook'
 import { Box, Button, Heading, Icon, IconProps, Paragraph, Stack, Text, TextField } from '@ui'
@@ -43,12 +43,10 @@ const InviteCard = (props: InviteCardProps) => {
 
 export const SpaceOwnerLanding = () => {
     const space = useSpaceData()
-    const navigate = useNavigate()
     const [, copy] = useCopyToClipboard()
     const [copyWasClicked, setCopyWasClicked] = React.useState(false)
     const inviteUrl = getInviteUrl(space?.id)
     const { data: roles } = useChannelCreationRoles(space?.id.networkId)
-    const hasEveryoneRole = roles?.find((role) => role.name === 'Everyone')
     const hasMemberRole = roles?.find((role) => role.name === 'Member')
     const [modal, setModal] = useState(false)
 
@@ -70,10 +68,6 @@ export const SpaceOwnerLanding = () => {
         setTimeout(() => {
             setCopyWasClicked(false)
         }, 2000)
-    }
-
-    function onInvite() {
-        navigate(`/${PATHS.SPACES}/${space?.id.slug}/${PATHS.SETTINGS}`)
     }
 
     function onChannel() {
@@ -99,38 +93,27 @@ export const SpaceOwnerLanding = () => {
                         .
                     </Paragraph>
                     <Paragraph size="lg">
-                        If you’d like to learn more about what we’re doing at Zion, read our{' '}
-                        <Link to="#" target="_blank">
+                        If you’d like to learn more about what we’re doing at Zion, read the{' '}
+                        <Link to="//towns.com/vision/" target="_blank">
                             <Text color="cta1" size="lg" display="inline-block">
-                                manifesto
+                                vision
                             </Text>
                         </Link>{' '}
                         and{' '}
-                        <Link to="#" target="_blank">
+                        <Link to="//towns.com/introduction/" target="_blank">
                             <Text color="cta1" size="lg" display="inline-block">
-                                how it works.
+                                introduction
                             </Text>
-                        </Link>{' '}
+                        </Link>
+                        .
                     </Paragraph>
                 </Stack>
                 <Stack gap="md" className={childStyle}>
-                    {hasEveryoneRole && (
-                        <InviteCard
-                            icon="personAdd"
-                            description="Add members via wallet address"
-                            justifyContent="spaceBetween"
-                        >
-                            <Button width="x10" tone="cta1" onClick={onInvite}>
-                                Add
-                            </Button>
-                        </InviteCard>
-                    )}
-
                     <InviteCard
                         flexDirection="column"
                         alignItems="start"
                         icon="link"
-                        description="Share your space link:"
+                        description="Share your town link:"
                     >
                         <Stack flexDirection="row" flexWrap="wrap" gap="sm" width="100%">
                             <TextField readOnly value={inviteUrl} background="level3" />
