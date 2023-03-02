@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useEffect } from 'react'
 
 import { useNavigate } from 'react-router'
 import { Membership, useZionClient, useZionContext } from 'use-zion-client'

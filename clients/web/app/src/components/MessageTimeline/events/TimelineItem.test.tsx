@@ -183,10 +183,6 @@ describe('#TimelineItem', () => {
         )
 
         await screen.findAllByAltText(twitterInfo.includes.users[0].username)
-        const authorLink = screen.getByRole('link', {
-            name: `${author.name} @${author.username}`,
-        })
-        expect(authorLink).toHaveAttribute('href', `https://twitter.com/${author.username}`)
 
         expect(
             screen.getByLabelText(`${twitterInfo.includes.media[0].url}:small`),

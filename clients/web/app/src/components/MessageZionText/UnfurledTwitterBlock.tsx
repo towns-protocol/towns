@@ -1,5 +1,5 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { format } from 'date-fns'
 import { UnfurlData } from '@unfurl-worker/types'
 import { Box, Text } from '@ui'
@@ -15,9 +15,22 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
     const { data, includes } = props
     const users = includes?.users
     const author = users?.find((user) => user.id === data.author_id)
-    const displayImage = includes?.media?.[0]
-    // TODO: this :small appended works, but should this be returned from the server?
-    const displayImageUrl = displayImage && `${displayImage.url}:small`
+    const media = includes?.media?.[0]
+    const displayImage = useMemo(() => {
+        if (!media) {
+            return null
+        }
+        const { url, preview_image_url, height, width } = media
+        const _url = preview_image_url ?? `${url}:small`
+        if (!_url) {
+            return null
+        }
+        return {
+            url: _url,
+            height,
+            width,
+        }
+    }, [media])
 
     if (!data) {
         return <Text color="gray2">** Could not load Twitter content. **</Text>
@@ -25,6 +38,10 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
 
     return (
         <Box
+            as="a"
+            rel="noopener noreferrer"
+            href={props.url}
+            target="_blank"
             maxWidth="500"
             background="level3"
             padding="md"
@@ -44,13 +61,7 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
                         />
                     ) : null}
                 </Box>
-                <Box
-                    as="a"
-                    rel="noopener noreferrer"
-                    gap="sm"
-                    alignContent="start"
-                    href={`https://twitter.com/${author?.username}`}
-                >
+                <Box gap="sm" alignContent="start">
                     <Box as="span">
                         <Text strong size="sm">
                             {author?.name}
@@ -65,9 +76,9 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
                 <Box maxWidth="300">
                     <Text size="sm">{data.text}</Text>
                 </Box>
-                {displayImageUrl && (
+                {displayImage && (
                     <RatioedBackgroundImage
-                        url={displayImageUrl}
+                        url={displayImage.url}
                         width={displayImage.width}
                         height={displayImage.height}
                     />

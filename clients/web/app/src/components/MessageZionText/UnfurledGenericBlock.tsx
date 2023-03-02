@@ -7,6 +7,10 @@ export const UnfurledGenericBlock = (props: UnfurlData) => {
     return (
         <Box
             data-testid="unfurled-generic-block"
+            as="a"
+            href={props.url}
+            rel="noopener noreferrer"
+            target="_blank"
             alignSelf="start"
             background="level3"
             padding="md"
@@ -24,7 +28,7 @@ export const UnfurledGenericBlock = (props: UnfurlData) => {
                     src={props.image.url}
                 />
             )}
-            <Box as="a" href={props.url}>
+            <Box>
                 <Text size="md">{props.title}</Text>
             </Box>
             <Text size="sm" color="gray2">
