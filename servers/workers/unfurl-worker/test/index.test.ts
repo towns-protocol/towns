@@ -2,7 +2,12 @@ import unfurlDefaultExport, { Env, worker } from '../src/index'
 import { queryParams } from '../src/twitter'
 import { UnfurlData } from '../src/types'
 import { interceptResponseWithMock } from './interceptRequest'
-import { giphy as giphyMock, tweet as tweetMock, imgur as imgurMock } from './mocks'
+import {
+    giphy as giphyMock,
+    tweet as tweetMock,
+    imgur as imgurMock,
+    noContent as noContentMock,
+} from './mocks'
 import * as unfurlJs from 'unfurl.js'
 import giphyJSON from './mocks/giphyJSON'
 import imgurJSON from './mocks/imgurJSON'
@@ -30,6 +35,10 @@ const IMAGE_TYPE_URL = {
 const GIPHY_URL = {
     host: 'https://giphy.com',
     path: '/gifs/mlb-baseball-playoffs-astros-rlO48a7OCYB3SIpndR',
+}
+const NO_CONTENT_URL = {
+    host: 'https://linear.app',
+    path: '/xxx/issue/xxx-817',
 }
 const IMGUR_URL = {
     host: 'https://imgur.com',
@@ -64,6 +73,7 @@ describe('unfurl handler', () => {
         interceptResponseWithMock(GIPHY_URL.host, GIPHY_URL.path, giphyMock)
         interceptResponseWithMock(IMGUR_URL.host, IMGUR_URL.path, imgurMock, 'HEAD')
         interceptResponseWithMock(IMGUR_URL.host, IMGUR_URL.path, imgurMock)
+        interceptResponseWithMock(NO_CONTENT_URL.host, NO_CONTENT_URL.path, noContentMock)
         interceptResponseWithMock(
             IMAGE_TYPE_URL.host,
             IMAGE_TYPE_URL.path,
@@ -145,6 +155,23 @@ describe('unfurl handler', () => {
         expect(json.length).toBe(0)
     })
 
+    test('returns empty array when requesting urls that return no description and image', async () => {
+        const spy = jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
+            Promise.resolve({
+                title: 'Linear',
+            } as unknown as unfurlJs.Metadata),
+        )
+
+        const response = await worker.fetch(
+            ...generateRequest([`${NO_CONTENT_URL.host}${NO_CONTENT_URL.path}`]),
+        )
+
+        const json: UnfurlData[] = await response.json()
+        expect(response.status).toBe(200)
+        expect(json.length).toBe(0)
+        spy.mockReset()
+    })
+
     test('gets twitter data', async () => {
         const response = await worker.fetch(...generateRequest([TWITTER_URL]))
 
@@ -164,9 +191,9 @@ describe('unfurl handler', () => {
     })
 
     test('gets giphy data', async () => {
-        jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
-            Promise.resolve(giphyJSON as unfurlJs.Metadata),
-        )
+        const spy = jest
+            .spyOn(unfurlJs, 'unfurl')
+            .mockReturnValueOnce(Promise.resolve(giphyJSON as unfurlJs.Metadata))
 
         const response = await worker.fetch(
             ...generateRequest([`${GIPHY_URL.host}${GIPHY_URL.path}`]),
@@ -176,12 +203,13 @@ describe('unfurl handler', () => {
         expect(json[0].image?.url).not.toBeUndefined()
         expect(json[0].title).toBe('Oh No Omg GIF by MLB - Find & Share on GIPHY')
         expect(json[0].description).not.toBeUndefined()
+        spy.mockReset()
     })
 
     test('gets imgur data', async () => {
-        jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
-            Promise.resolve(imgurJSON as unknown as unfurlJs.Metadata),
-        )
+        const spy = jest
+            .spyOn(unfurlJs, 'unfurl')
+            .mockReturnValueOnce(Promise.resolve(imgurJSON as unknown as unfurlJs.Metadata))
 
         const response = await worker.fetch(
             ...generateRequest([`${IMGUR_URL.host}${IMGUR_URL.path}`]),
@@ -193,6 +221,7 @@ describe('unfurl handler', () => {
             'The James Webb Telescope discovered a quintet of galaxies! - Album on Imgur',
         )
         expect(json[0].description).not.toBeUndefined()
+        spy.mockReset()
     })
 
     test('returns raw image', async () => {
@@ -216,9 +245,9 @@ describe('unfurl handler', () => {
     })
 
     test('returns content from various sources together', async () => {
-        jest.spyOn(unfurlJs, 'unfurl').mockReturnValueOnce(
-            Promise.resolve(giphyJSON as unfurlJs.Metadata),
-        )
+        const spy = jest
+            .spyOn(unfurlJs, 'unfurl')
+            .mockReturnValueOnce(Promise.resolve(giphyJSON as unfurlJs.Metadata))
 
         const response = await worker.fetch(
             ...generateRequest([`${IMGUR_URL.host}${IMGUR_URL.path}`, TWITTER_URL]),
@@ -231,5 +260,6 @@ describe('unfurl handler', () => {
         const twitterKeys = Object.keys(twitter.info || [])
         expect(giphy.image?.url).not.toBeUndefined()
         expect(twitterKeys).toEqual(expect.arrayContaining(['data', 'includes']))
+        spy.mockReset()
     })
 })

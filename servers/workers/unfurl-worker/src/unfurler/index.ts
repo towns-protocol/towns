@@ -85,6 +85,11 @@ export async function formattedUnfurlJSData(url: string): Promise<UnfurlData | n
             } else {
                 console.warn(`formattedUnfurlJSData: no result for ${url}`)
             }
+
+            // if we didn't parse a description or image, nothing to show
+            if (data && !data.description && !data.image) {
+                data = null
+            }
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
