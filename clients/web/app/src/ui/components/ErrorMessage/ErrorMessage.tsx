@@ -24,7 +24,7 @@ const ErrorMessage = ({ errors, fieldName, message }: Props) => {
 
 const ErrorMessageText = ({ message }: { message: string }) => {
     return (
-        <Text color="negative" size="sm">
+        <Text color="error" size="sm">
             {message}
         </Text>
     )

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import * as z from 'zod'
 import { UseFormReturn } from 'react-hook-form'
 import { Box, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
@@ -10,15 +10,32 @@ import { TokenAvatar } from '../../../Tokens/TokenAvatar'
 import { CreateSpaceFormState } from '../types'
 import { SPACE_NAME } from '../constants'
 
-const spaceNameRequiredMessasge = 'Please enter a name for your space.'
+const MAX_LENGTH = 32
 
 const schema = z.object({
     [SPACE_NAME]: z
         .string({
-            invalid_type_error: spaceNameRequiredMessasge,
-            required_error: spaceNameRequiredMessasge,
+            errorMap: (err, ctx) => {
+                if (ctx.data === null) {
+                    return { message: 'Town name is required.' }
+                }
+
+                if (ctx.data?.length === 0 || err.code === 'too_small') {
+                    return { message: 'Town name must be at least 2 characters.' }
+                }
+                if (err.code === 'too_big') {
+                    return { message: 'Town name must be less than 32 characters.' }
+                }
+
+                return {
+                    message:
+                        'Town name can only contain lowercase letters, numbers, spaces, hyphens, periods and underscores.',
+                }
+            },
         })
-        .min(1),
+        .regex(/^[a-z0-9 ._-]+$/i)
+        .min(2)
+        .max(MAX_LENGTH),
 })
 
 const TokenList = (props: Partial<UseFormReturn>) => {
@@ -81,6 +98,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
 export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
     const defaultState = useCreateSpaceFormStore((state) => state.step2)
     const setStep2 = useCreateSpaceFormStore((state) => state.setStep2)
+    const hasReached2Chars = useRef(false)
 
     const { loggedInWalletAddress: wallet } = useAuth()
 
@@ -95,17 +113,33 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
                 onSubmit()
             }}
         >
-            {({ formState, setError, register, clearErrors, watch, setValue }) => {
+            {({ formState, setError, register, clearErrors, watch, setValue, getValues }) => {
+                const spaceNameValue = watch(SPACE_NAME)
+
+                if (!hasReached2Chars.current && spaceNameValue?.length > 1) {
+                    hasReached2Chars.current = true
+                }
+
+                const showSpaceNameError = () => {
+                    const spaceNameError = formState.errors[SPACE_NAME]
+                    if (spaceNameError?.type !== 'too_small') {
+                        return true
+                    }
+                    // only show the too_small error if the user has typed more than 2 characters
+                    return hasReached2Chars.current
+                }
+
                 return (
                     <>
                         <Stack gap="sm" paddingY="lg" data-testid="space-form-name-field">
                             <TextField
+                                maxLength={MAX_LENGTH}
                                 background="level2"
-                                label="Space Name"
-                                placeholder="Space Name"
+                                label="Town Name"
+                                placeholder="Town Name"
                                 {...register(SPACE_NAME)}
                             />
-                            {formState.errors[SPACE_NAME] && (
+                            {formState.errors[SPACE_NAME] && showSpaceNameError() && (
                                 <ErrorMessage errors={formState.errors} fieldName={SPACE_NAME} />
                             )}
                         </Stack>

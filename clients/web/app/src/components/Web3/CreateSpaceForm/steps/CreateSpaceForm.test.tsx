@@ -47,7 +47,7 @@ vi.mock('use-zion-client', async () => {
                 },
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 //@ts-ignore
-                type: 'createSapce',
+                type: 'createSpace',
             })
         },
         // useAuth deps
@@ -77,7 +77,7 @@ describe('<CreateSpaceForm />', () => {
 
     test('renders the form', async () => {
         render(<Wrapper />)
-        const title = screen.getByText('Create Space')
+        const title = screen.getByText('Create Town')
         expect(title).toBeInTheDocument()
     }, 10000)
 
@@ -193,7 +193,7 @@ describe('<CreateSpaceForm />', () => {
         fireEvent.click(nextButton)
 
         await waitFor(async () => {
-            return screen.findByText(/please enter a name for your space./i)
+            return screen.findByText(/Town name is required./i)
         })
     }, 10000)
 

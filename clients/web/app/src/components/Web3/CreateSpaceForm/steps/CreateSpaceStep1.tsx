@@ -10,7 +10,7 @@ import { TokenList } from '../../../Tokens/TokenList'
 import { CreateSpaceFormState } from '../types'
 import { EVERYONE, MEMBERSHIP_TYPE, TOKENS, TOKEN_HOLDERS } from '../constants'
 
-const membershipTypeErrorMessage = 'Please choose who can join your space.'
+const membershipTypeErrorMessage = 'Please choose who can join your town.'
 
 const schema = z
     .object({
@@ -74,14 +74,14 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                 return (
                     <>
                         <Box paddingTop="lg" paddingBottom="md">
-                            <Heading level={3}> Who can join your space? </Heading>
+                            <Heading level={3}> Who can join your town? </Heading>
                         </Box>
                         <Box paddingY="sm">
                             <RadioCard
                                 name={MEMBERSHIP_TYPE}
                                 value={EVERYONE}
                                 title="Everyone"
-                                description="Anyone with the space link may join your space"
+                                description="Anyone with the town link may join your town"
                                 onClick={() => onEveryoneClick(formProps)}
                                 {...formProps}
                             />
@@ -92,7 +92,7 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                                 name={MEMBERSHIP_TYPE}
                                 value={TOKEN_HOLDERS}
                                 title="Token holders"
-                                description="People who hold a specific token may join your space"
+                                description="People who hold a specific token may join your town"
                                 onClick={() => onTokensClick(formProps)}
                                 {...formProps}
                             >

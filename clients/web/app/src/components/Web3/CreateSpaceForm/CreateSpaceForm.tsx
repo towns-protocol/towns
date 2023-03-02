@@ -53,7 +53,7 @@ const Header = (props: HeaderProps) => {
     return (
         <>
             <Box flexDirection="row" justifyContent="spaceBetween" paddingY="lg">
-                <Heading level={2}> Create Space </Heading>
+                <Heading level={2}> Create Town </Heading>
                 <Box flexDirection="row" paddingLeft="sm" position="relative">
                     {hasPrev && (
                         <Box
