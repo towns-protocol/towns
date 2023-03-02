@@ -1,9 +1,7 @@
 // import { TextMatchTransformer } from "@lexical/markdown";
 import { TextMatchTransformer } from '@lexical/markdown'
-import type { Spread } from 'lexical'
-import { Mention } from 'use-zion-client'
-
 import {
+    $applyNodeReplacement,
     DOMConversionMap,
     DOMConversionOutput,
     DOMExportOutput,
@@ -11,8 +9,11 @@ import {
     LexicalNode,
     NodeKey,
     SerializedTextNode,
+    Spread,
     TextNode,
 } from 'lexical'
+import { Mention } from 'use-zion-client'
+
 import { atoms } from 'ui/styles/atoms.css'
 
 export type SerializedMentionNode = Spread<
@@ -38,7 +39,7 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
 }
 
 export class MentionNode extends TextNode {
-    __mention: string
+    __mentionName: string
     __userId: string | undefined
 
     static getType(): string {
@@ -46,7 +47,7 @@ export class MentionNode extends TextNode {
     }
 
     static clone(node: MentionNode): MentionNode {
-        return new MentionNode(node.__mention, node.__text, node.__key)
+        return new MentionNode(node.__mentionName, node.__userId, node.__key)
     }
 
     static importJSON(serializedNode: SerializedMentionNode): MentionNode {
@@ -59,19 +60,19 @@ export class MentionNode extends TextNode {
         return node
     }
 
-    constructor(mentionName: string, userId: string | undefined, text?: string, key?: NodeKey) {
-        super(text ?? mentionName, key)
-        this.__mention = mentionName
+    constructor(mentionName: string, userId: string | undefined, key?: NodeKey) {
+        super(mentionName, key)
+        this.__mentionName = mentionName
         this.__userId = userId
     }
 
     getMentionName() {
-        return this.__mention
+        return this.__mentionName
     }
 
     getMention(): Mention {
         return {
-            displayName: this.__mention,
+            displayName: this.__mentionName,
             userId: this.__userId,
         }
     }
@@ -79,7 +80,7 @@ export class MentionNode extends TextNode {
     exportJSON(): SerializedMentionNode {
         return {
             ...super.exportJSON(),
-            mentionName: this.__mention,
+            mentionName: this.__mentionName,
             type: 'mention',
             version: 1,
         }
@@ -126,7 +127,7 @@ export class MentionNode extends TextNode {
 export function $createMentionNode(mentionName: string, userId: string | undefined): MentionNode {
     const mentionNode = new MentionNode(mentionName, userId)
     mentionNode.setMode('segmented').toggleDirectionless()
-    return mentionNode
+    return $applyNodeReplacement(mentionNode)
 }
 
 export function $isMentionNode(node: LexicalNode | null | undefined): node is MentionNode {
