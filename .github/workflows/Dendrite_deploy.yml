@@ -3,33 +3,18 @@ name: 'Dendrite_deploy'
 on:
     workflow_dispatch:
         inputs:
-            task_definition:
-                description: 'Task definition'
+            environment:
+                description: 'Environment'
                 required: true
-                default: 'production-zion-dendrite:5'
-            service:
-                description: 'Service name to deploy to'
+                default: 'production'
+            node_name:
+                description: 'Node name (i.e node1 if node1.towns.com)'
                 required: true
-                default: 'production-zion-dendrite-service'
-            cluster:
-                description: 'Cluster name to deploy to'
+                default: 'node1'
+            docker_image_tag:
+                description: 'Docker image tag to deploy'
                 required: true
-                default: 'production-node1-zion-ecs-cluster'
-
-    workflow_call:
-        inputs:
-            task_definition:
-                description: 'Task definition'
-                type: string
-                required: true
-            service:
-                description: 'Service name to deploy to'
-                type: string
-                required: true
-            cluster:
-                description: 'Cluster name to deploy to'
-                type: string
-                required: true
+                default: 'latest'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,6 +24,9 @@ jobs:
     deploy:
         name: Deploy to AWS ECS
         runs-on: ubuntu-latest
+        permissions:
+          contents: write
+          packages: write
 
         steps:
             - name: Checkout
@@ -51,10 +39,8 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Redeploy service
-              run: |
-                  aws ecs update-service --cluster=${{ inputs.cluster }} --service=${{ inputs.service }} --task-definition=${{ inputs.task_definition }} --force-new-deployment
+            - name: Create new task definition
+              run: ./scripts/create-new-task-definition.sh --environment ${{ inputs.environment }} --docker-image-tag ${{ inputs.docker_image_tag }}
 
-            - name: Wait for service to be stable
-              run: |
-                  aws ecs wait services-stable --cluster=${{ inputs.cluster }} --services=${{ inputs.service }}
+            - name: Deploy service
+              run: ./scripts/deploy-task-definition.sh --environment ${{ inputs.environment }} --node-name ${{ inputs.node_name }}

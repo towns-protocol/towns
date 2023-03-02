@@ -3,24 +3,24 @@ variable "dendrite_node_name" {
   type = string
 }
 
+variable "ecs_cluster_id" {
+  description = "The id of the ecs cluster"
+  type = string
+}
+
+variable "subnets" {
+  description = "A list of subnets to associate with the dendrite nodes"
+  type        = list(string)
+}
+
 variable "vpc_id" {
   description = "The vpc id"
   type = string
 }
 
-variable "vpc_cidr_block" {
-  description = "The vpc cidr block"
+variable "dendrite_alb_security_group_id" {
+  description = "The security group id of the dendrite alb"
   type = string
-}
-
-variable "dendrite_node_subnets" {
-  description = "A list of subnets to associate with the dendrite nodes"
-  type        = list(string)
-}
-
-variable "alb_subnets" {
-  description = "A list of subnets to associate with the application load balancer"
-  type        = list(string)
 }
 
 variable "bastion_host_security_group_id" {
@@ -33,4 +33,12 @@ variable "dendrite_log_group_name" {
   type = string
 }
 
+variable "dendrite_server_target_group_arn" {
+  description = "The arn of the dendrite server target group"
+  type = string
+}
 
+variable "dendrite_profiler_target_group_arn" {
+  description = "The arn of the dendrite profiler target group"
+  type = string
+}

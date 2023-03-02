@@ -55,16 +55,31 @@ resource "aws_cloudwatch_log_group" "dendrite_log_group" {
   tags = module.global_constants.tags
 }
 
+resource "aws_ecs_cluster" "dendrite_ecs_cluster" {
+  name = "${module.global_constants.environment}-dendrite-ecs-cluster"
+}
+
+
+module "dendrite_alb" {
+  source = "../../modules/dendrite-alb"
+
+  subnets = module.vpc.public_subnets
+  vpc_id = module.vpc.vpc_id
+}
+
 module "zion_node" {
   source = "../../modules/zion-node"
 
-  alb_subnets = module.vpc.public_subnets
-  dendrite_node_subnets = module.vpc.private_subnets
-  vpc_cidr_block = module.vpc.vpc_cidr_block
+  ecs_cluster_id = aws_ecs_cluster.dendrite_ecs_cluster.id
+  subnets = module.vpc.private_subnets
   vpc_id = module.vpc.vpc_id
   dendrite_node_name = "node1"
   bastion_host_security_group_id = module.bastion_host.bastion_sg_id
   dendrite_log_group_name = aws_cloudwatch_log_group.dendrite_log_group.name
+
+  dendrite_alb_security_group_id = module.dendrite_alb.security_group_id
+  dendrite_server_target_group_arn = module.dendrite_alb.target_group_arns[0]
+  dendrite_profiler_target_group_arn = module.dendrite_alb.target_group_arns[1] 
 }
 
 module "dendrite_node_db" {
