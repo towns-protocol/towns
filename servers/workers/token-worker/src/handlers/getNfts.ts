@@ -7,9 +7,13 @@ const fetchAlchemyNfts = async (
     wallet: string,
     pageKey: string,
 ): Promise<GetNftsAlchemyResponse> => {
-    const response = await fetch(
-        `${rpcUrl}/getNFTs?owner=${wallet}&pageKey=${pageKey}&filters[]=SPAM`,
-    )
+    let url = `${rpcUrl}/getNFTs?owner=${wallet}&pageKey=${pageKey}`
+    // alchemy changed things up and filter doesn't work on goerli
+    if (rpcUrl.includes('eth-mainnet')) {
+        url = url + '&filters[]=SPAM'
+    }
+
+    const response = await fetch(url)
     if (!response.ok) {
         throwCustomError(
             (await response.text?.()) || 'could not fetch from alchemy',
