@@ -1,13 +1,14 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { staticAssertNever } from 'use-zion-client'
-import { Stack } from '@ui'
+import { MessageTimelineContext } from '../MessageTimelineContext'
 import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
 import { AccumulatedRoomMemberEvent } from './AccumulatedRoomMemberEvent'
+import { TimelineChannelCreateEvent } from './TimelineChannelCreatedEvent'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
+import { TimelineMessageEditor } from './TimelineMessageEditor'
+import { TimelineEncryptedContent, TimelineMessageContent } from './TimelineMessagesContent'
 import { TimelineThreadUpdates } from './TimelineThreadUpdates'
-import { TimelineChannelCreateEvent } from './TimelineChannelCreatedEvent'
-import { TimelineEncryptedEvent } from './TimelineEncryptedEvent'
 
 export const MessageTimelineItem = (props: {
     itemData: RenderEvent
@@ -18,37 +19,57 @@ export const MessageTimelineItem = (props: {
 }) => {
     const { itemData, channelEncrypted, highlight: isHighlight, channelName, userId } = props
 
-    switch (itemData.type) {
-        case RenderEventType.UserMessages: {
-            const messagesByUser = itemData.events.map((e, index, events) => {
-                return (
-                    <TimelineMessage
-                        event={e}
-                        eventContent={e.content}
-                        displayContext={index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single'}
-                        key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}${
-                            e.content.msgType ?? ''
-                        }`}
-                    />
-                )
-            })
-            const key = itemData.events[0]?.eventId
-            return <Stack key={key}>{messagesByUser}</Stack>
-        }
+    const timelineContext = useContext(MessageTimelineContext)
 
+    if (!timelineContext) {
+        return <></>
+    }
+
+    const { channels, members, channelId, timelineActions } = timelineContext
+
+    switch (itemData.type) {
+        case RenderEventType.EncryptedMessage:
         case RenderEventType.Message: {
-            const e = itemData.event
-            const displayContext = itemData.displayContext
+            const event = itemData.event
+
+            const isMessage = itemData.type === RenderEventType.Message
+
+            const displayEncrypted =
+                itemData.type === RenderEventType.EncryptedMessage || itemData.displayEncrypted
+
+            const displayContext = isMessage ? itemData.displayContext : 'single'
+            const isEditing = event.eventId === timelineActions.editingMessageId
+            const isSelectable = !displayEncrypted
+
+            const msgTypeKey = isMessage ? itemData.event.content.msgType ?? '' : ''
+
             return (
                 <TimelineMessage
                     highlight={isHighlight}
-                    event={e}
-                    eventContent={e.content}
+                    event={event}
+                    selectable={isSelectable}
                     displayContext={displayContext}
-                    key={`${e.eventId}+${e.updatedServerTs ?? e.originServerTs}${
-                        e.content.msgType ?? ''
-                    }`}
-                />
+                    key={`${event.eventId}+${
+                        event.updatedServerTs ?? event.originServerTs
+                    }${msgTypeKey}`}
+                >
+                    {displayEncrypted ? (
+                        <TimelineEncryptedContent event={event} displayContext={displayContext} />
+                    ) : isEditing ? (
+                        <TimelineMessageEditor
+                            initialValue={itemData.event.content.body}
+                            eventId={event.eventId}
+                            channelId={channelId}
+                        />
+                    ) : (
+                        <TimelineMessageContent
+                            event={event}
+                            eventContent={itemData.event.content}
+                            members={members}
+                            channels={channels}
+                        />
+                    )}
+                </TimelineMessage>
             )
         }
 
@@ -76,11 +97,12 @@ export const MessageTimelineItem = (props: {
             return <TimelineThreadUpdates events={itemData.events} key={itemData.key} />
         }
 
-        case RenderEventType.EncryptedMessage: {
-            return <TimelineEncryptedEvent event={itemData.event} key={itemData.event.eventId} />
+        case RenderEventType.FullyRead: {
+            return null
         }
 
-        case RenderEventType.FullyRead: {
+        case RenderEventType.UserMessages: {
+            /* UserMessages (grouped per user) are flatmapped into Message events */
             return null
         }
 

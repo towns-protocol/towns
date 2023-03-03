@@ -1,12 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { MessageContent, MessageType, SpaceProtocol, ZTEvent } from 'use-zion-client'
+import {
+    MessageContent,
+    MessageType,
+    RoomMessageEvent,
+    SpaceProtocol,
+    ZTEvent,
+} from 'use-zion-client'
 import { describe, expect, test, vi } from 'vitest'
 import { TestApp } from 'test/testUtils'
-import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
-import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
-import { MessageTimelineItem } from './TimelineItem'
 import { image, normal, twitter } from '../../../../mocks/unfurl/data'
+import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
+import { MessageRenderEvent, RenderEventType } from '../util/getEventsByDate'
+import { MessageTimelineItem } from './TimelineItem'
 
 vi.mock('use-zion-client', async () => {
     return {
@@ -17,35 +23,45 @@ vi.mock('use-zion-client', async () => {
     }
 })
 
-function generateMessage(events: MessageContent): RenderEvent {
+function generateMessageRenderEvent(messageContent: MessageContent): MessageRenderEvent {
     return {
-        type: RenderEventType.UserMessages,
-        key: '',
-        events: events.map((e: MessageContent) => generateEvent(e)),
+        type: RenderEventType.Message,
+        key: 'string',
+        displayContext: 'single',
+        isHighlight: false,
+        displayEncrypted: false,
+        event: {
+            eventId: 'event-id',
+            originServerTs: 0,
+            fallbackContent: '',
+            isLocalPending: false,
+            isMentioned: false,
+            content: generateRoomMessageEvent(messageContent),
+            sender: {
+                id: 'sender-id',
+                displayName: 'beavis',
+            },
+        },
     }
 }
 
-function generateEvent(content: MessageContent) {
+function generateRoomMessageEvent(messageContent: MessageContent): RoomMessageEvent {
     return {
-        eventId: 'event-id',
-        eventType: ZTEvent.RoomMessage,
-        originServerTs: 0,
-        fallbackContent: '',
-        isLocalPending: false,
+        kind: ZTEvent.RoomMessage,
+        body: messageContent.body,
+        msgType: messageContent.msgtype ?? '',
+        mentions: [],
         content: {
-            kind: ZTEvent.RoomMessage,
-            body: content.body,
-            msgType: content.msgtype,
-            content,
+            // 4 levels deep
+            ...messageContent,
         },
-        sender: {
-            id: 'sender-id',
-            displayName: 'beavis',
+        wireContent: {
+            key: '',
         },
     }
 }
 
-const Wrapper = ({ events }: { events: MessageContent[] }) => {
+const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
     return (
         <TestApp>
             <MessageTimelineContext.Provider
@@ -78,7 +94,7 @@ const Wrapper = ({ events }: { events: MessageContent[] }) => {
                     membersMap: {},
                 }}
             >
-                <MessageTimelineItem itemData={generateMessage(events)} />
+                <MessageTimelineItem itemData={generateMessageRenderEvent(messageContent)} />
             </MessageTimelineContext.Provider>
         </TestApp>
     )
@@ -88,11 +104,9 @@ describe('#TimelineItem', () => {
     test('it should render MessageType.Text messages', async () => {
         render(
             <Wrapper
-                events={[
-                    {
-                        body: 'do you like dogs? check out [www.dogs.com](https://www.dogs.com/)',
-                    },
-                ]}
+                messageContent={{
+                    body: 'do you like dogs? check out [www.dogs.com](https://www.dogs.com/)',
+                }}
             />,
         )
         await screen.findByText(/do you like dogs/)
@@ -106,25 +120,23 @@ describe('#TimelineItem', () => {
             'https://media0.giphy.com/media/pynZagVcYxVUk/giphy.gif?cid=9e9e0d5019cpfxozhrqwk79csm347av0gzq3ejxup6lneqgv&rid=giphy.gif&ct=g'
         render(
             <Wrapper
-                events={[
-                    {
-                        body: 'The Office Crying GIF',
-                        msgtype: MessageType.Image,
-                        url: url,
-                        info: {
+                messageContent={{
+                    body: 'The Office Crying GIF',
+                    msgtype: MessageType.Image,
+                    url: url,
+                    info: {
+                        h: 250,
+                        mimetype: 'image/gif',
+                        size: 929864,
+                        thumbnail_info: {
                             h: 250,
                             mimetype: 'image/gif',
                             size: 929864,
-                            thumbnail_info: {
-                                h: 250,
-                                mimetype: 'image/gif',
-                                size: 929864,
-                                w: 250,
-                            },
-                            thumbnail_url: url,
+                            w: 250,
                         },
+                        thumbnail_url: url,
                     },
-                ]}
+                }}
             />,
         )
         const backgroundImageNode = await screen.findByTestId('ratioed-background-image')
@@ -135,11 +147,9 @@ describe('#TimelineItem', () => {
     test('it should render generic unfurled content when a link is present', async () => {
         render(
             <Wrapper
-                events={[
-                    {
-                        body: `do you like dogs? check out [this is a link](${normal.url})`,
-                    },
-                ]}
+                messageContent={{
+                    body: `do you like dogs? check out [this is a link](${normal.url})`,
+                }}
             />,
         )
 
@@ -155,11 +165,9 @@ describe('#TimelineItem', () => {
     test('it should render an image when an image url is present', async () => {
         render(
             <Wrapper
-                events={[
-                    {
-                        body: `do you like dogs? check out [this is a link](${image.url})`,
-                    },
-                ]}
+                messageContent={{
+                    body: `do you like dogs? check out [this is a link](${image.url})`,
+                }}
             />,
         )
 
@@ -171,14 +179,12 @@ describe('#TimelineItem', () => {
 
     test('it should render twitter content when a twitter link is present', async () => {
         const { info: twitterInfo } = twitter
-        const author = twitterInfo.includes.users[0]
+        // const author = twitterInfo.includes.users[0]
         render(
             <Wrapper
-                events={[
-                    {
-                        body: `[some tweet link](${twitter.url})`,
-                    },
-                ]}
+                messageContent={{
+                    body: `[some tweet link](${twitter.url})`,
+                }}
             />,
         )
 

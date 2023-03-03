@@ -30,6 +30,7 @@ type Props = {
     editable?: boolean
     eventId?: string
     highlight?: boolean
+    selectable?: boolean
     listView?: boolean
     channelId?: RoomIdentifier
     spaceId?: RoomIdentifier
@@ -58,6 +59,7 @@ export const Message = (props: Props) => {
         editable: isEditable,
         editing: isEditing,
         highlight: isHighlight,
+        selectable: isSelectable,
         listView: isListView,
         displayContext = 'single',
         onReaction,
@@ -72,7 +74,7 @@ export const Message = (props: Props) => {
 
     const ref = useRef<HTMLDivElement>(null)
 
-    const { isHover, onMouseEnter } = useHover(ref)
+    const { isHover, onMouseEnter } = useHover(ref, isSelectable)
     const { isFocused } = useFocused(ref)
 
     const isActive = isFocused || isHover
@@ -85,7 +87,7 @@ export const Message = (props: Props) => {
             : format(timestamp, 'h:mm a')
         : undefined
 
-    const backgroundProps = useMessageBackground(isEditing, isActive, isHighlight)
+    const backgroundProps = useMessageBackground(isSelectable, isEditing, isActive, isHighlight)
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
     const onDoubleClick = useCallback(() => {
@@ -98,7 +100,7 @@ export const Message = (props: Props) => {
         <Stack
             horizontal
             ref={ref}
-            onMouseEnter={onMouseEnter}
+            onMouseEnter={isSelectable ? onMouseEnter : undefined}
             {...boxProps}
             {...backgroundProps}
             tabIndex={0}
@@ -208,10 +210,17 @@ export const Message = (props: Props) => {
     )
 }
 
-const useMessageBackground = (isEditing?: boolean, isActive?: boolean, isHighlight?: boolean) => {
+const useMessageBackground = (
+    isSelectable?: boolean,
+    isEditing?: boolean,
+    isActive?: boolean,
+    isHighlight?: boolean,
+) => {
     const [isHighlightActive, setHighlightActive] = useState(isHighlight)
 
-    const background = isHighlightActive
+    const background = !isSelectable
+        ? undefined
+        : isHighlightActive
         ? ('level4' as const)
         : isEditing || isActive
         ? ('level2' as const)

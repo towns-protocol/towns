@@ -119,26 +119,39 @@ export const MessageTimeline = (props: Props) => {
 
         const listItems: ListItem[] = flatGroups
             .flatMap<ListItem>((e) => {
+                if (e.type === RenderEventType.UserMessages) {
+                    const displayEncrypted = e.events.some(
+                        (e) => e.content.msgType === 'm.bad.encrypted',
+                    )
+
+                    // only picks 3 messages (first and last ones) when
+                    // decrypted content is showing
+                    const filtered = displayEncrypted
+                        ? e.events.filter((e, i, events) => i === 0 || i > events.length - 3)
+                        : e.events
+
+                    return filtered.map((event, index, events) => {
+                        const item: MessageRenderEvent = {
+                            type: RenderEventType.Message,
+                            key: event.eventId,
+                            event,
+                            displayEncrypted,
+                            displayContext:
+                                index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                        }
+                        return {
+                            id: event.eventId,
+                            type: 'message',
+                            item,
+                        } as const
+                    })
+                }
                 return e.type === 'group' && groupByDate
                     ? ({ id: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
                     : e.type === RenderEventType.FullyRead
                     ? ({ id: e.key, type: 'fully-read', item: e } as const)
                     : e.type === RenderEventType.ThreadUpdate
                     ? ({ id: e.key, type: 'thread-update', item: e } as const)
-                    : e.type === RenderEventType.UserMessages
-                    ? e.events.map((event, index, events) => {
-                          return {
-                              id: event.eventId,
-                              type: 'message',
-                              item: {
-                                  type: RenderEventType.Message,
-                                  key: event.eventId,
-                                  event,
-                                  displayContext:
-                                      index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
-                              } as const,
-                          } as const
-                      })
                     : e.type !== 'group'
                     ? ({ id: e.key, type: 'generic', item: e } as const)
                     : []

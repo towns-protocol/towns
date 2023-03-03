@@ -50,6 +50,7 @@ export interface MessageRenderEvent extends BaseEvent {
     event: ZRoomMessageEvent
     displayContext: 'tail' | 'single' | 'head'
     isHighlight?: boolean
+    displayEncrypted: boolean
 }
 
 export interface RoomMemberRenderEvent extends BaseEvent {
@@ -57,6 +58,7 @@ export interface RoomMemberRenderEvent extends BaseEvent {
     key: string
     event: ZRoomMemberEvent
 }
+
 export interface AccumulatedRoomMemberRenderEvent extends BaseEvent {
     type: RenderEventType.AccumulatedRoomMembers
     membershipType: Membership
@@ -204,6 +206,8 @@ export const getEventsByDate = (
 
                 const prevEvent = renderEvents[renderEvents.length - 1]
 
+                // - - - - - - - - - - - - - - - - - - - - - - - - inline thread updates
+
                 if (!isThread && event.threadParentId) {
                     if (!experiments?.enableInlineThreadUpdates) {
                         // serge mode is disabled
@@ -225,8 +229,10 @@ export const getEventsByDate = (
                     prevEvent.events[0].sender.id === event.sender.id &&
                     (index > 1 || !isThread)
                 ) {
+                    // - - - - - - - - - - - - - - -  add event to previous group
                     prevEvent.events.push(event)
                 } else {
+                    // - - - - - - - - - - - - - - -  create new group
                     renderEvents.push({
                         type: RenderEventType.UserMessages,
                         key: event.eventId,

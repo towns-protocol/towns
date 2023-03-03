@@ -6,7 +6,7 @@ import { RootLayerContext } from '@ui'
  * similar to https://github.com/mjsarfatti/use-mouse-leave but taking into
  * account child elements and modal container
  */
-export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
+export const useHover = (ref: MutableRefObject<HTMLDivElement | null>, isEnabled = true) => {
     const [isHoverEvent, setIsHoverEvent] = useState(false)
     const [isHoverVerified, setIsHoverVerified] = useState(false)
 
@@ -19,7 +19,7 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
 
     useEffect(() => {
         // first check, if the event hasn't been triggered there's no need to go further
-        if (!isHoverEvent) {
+        if (!isHoverEvent || !isEnabled) {
             return
         }
 
@@ -54,7 +54,7 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>) => {
             window.removeEventListener('mousemove', onMouseMove)
             window.removeEventListener('click', onMouseMove)
         }
-    }, [isHoverVerified, isHoverEvent, ref, rootLayerRef])
+    }, [isHoverVerified, isHoverEvent, ref, rootLayerRef, isEnabled])
 
     useEffect(() => {
         if (!isHoverEvent) {

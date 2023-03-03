@@ -1,21 +1,20 @@
 import React, { useContext } from 'react'
 
-import { RoomMessageEvent, TimelineEvent, ZTEvent } from 'use-zion-client'
+import { TimelineEvent, ZTEvent } from 'use-zion-client'
 import { Message } from '@components/Message'
 import { MessageProps } from '@components/Message/Message'
 import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
-import { TimelineMessageEditor } from './TimelineMessageEditor'
-import { TimelineMessageContent } from './TimelineMessagesContent'
 
 type Props = {
     displayContext?: MessageProps['displayContext']
     event: TimelineEvent
-    eventContent: RoomMessageEvent
     highlight?: boolean
+    selectable?: boolean
+    children: React.ReactNode
 }
 
 export const TimelineMessage = React.memo((props: Props) => {
-    const { event, eventContent, displayContext } = props
+    const { event, displayContext, selectable } = props
     const { sender } = event
 
     const timelineContext = useContext(MessageTimelineContext)
@@ -25,9 +24,7 @@ export const TimelineMessage = React.memo((props: Props) => {
     }
 
     const {
-        channels,
         membersMap,
-        members,
         userId,
         channelId,
         spaceId,
@@ -35,7 +32,6 @@ export const TimelineMessage = React.memo((props: Props) => {
         type,
         messageRepliesMap,
         messageReactionsMap,
-        timelineActions,
     } = timelineContext
 
     const user = membersMap[sender.id]
@@ -44,7 +40,6 @@ export const TimelineMessage = React.memo((props: Props) => {
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 
-    const isEditing = event.eventId === timelineActions.editingMessageId
     const isRelativeDate = type === MessageTimelineType.Thread
 
     // hide replies in threads
@@ -59,6 +54,7 @@ export const TimelineMessage = React.memo((props: Props) => {
         <Message
             id={`event-${event.eventId}`}
             highlight={props.highlight}
+            selectable={selectable}
             userId={userId}
             senderId={sender.id}
             canReply={!event.isLocalPending && type !== MessageTimelineType.Thread}
@@ -78,20 +74,7 @@ export const TimelineMessage = React.memo((props: Props) => {
             replies={replyCount}
             onReaction={handleReaction}
         >
-            {isEditing ? (
-                <TimelineMessageEditor
-                    initialValue={eventContent.body}
-                    eventId={event.eventId}
-                    channelId={channelId}
-                />
-            ) : (
-                <TimelineMessageContent
-                    event={event}
-                    eventContent={eventContent}
-                    members={members}
-                    channels={channels}
-                />
-            )}
+            {props.children}
         </Message>
     )
 })
