@@ -8,6 +8,7 @@ import { vars } from 'ui/styles/vars.css'
 import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
+import { swapValueInTests } from 'utils'
 
 const placeholders = {
     names: [
@@ -203,14 +204,17 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                                 opacity: !!fieldNFT && !selected ? 0.5 : 1,
                                 borderColor: !selected
                                     ? `rgba(255,255,255,0)`
-                                    : vars.color.foreground.default,
+                                    : swapValueInTests(
+                                          vars.color.foreground.default,
+                                          'rgba(255, 255, 255, 0)',
+                                      ),
                             }}
                         >
                             <Avatar src={value} size="avatar_lg" />
                         </MotionBox>
                     )}
                     options={placeholders.nfts.map((value) => ({ value, label: value }))}
-                    applyChildProps={() => register('nft', { required: false })}
+                    applyChildProps={() => register('nft', { required: true })}
                 />
             )}
             <Button type="submit" tone="cta1" disabled={!isValid}>

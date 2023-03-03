@@ -98,12 +98,13 @@ describe('#RegisterForm', () => {
             </Mock>,
         )
         const displayNameField: HTMLInputElement = screen.getByLabelText(/display name/i)
+        const avatars = screen.getAllByTestId('avatar-radio')
         const submit: HTMLButtonElement = screen.getByText(/next/i)
         // userEvent b/c fireEvent doesn't trigger react-hook-form onChange
         await userEvent.type(displayNameField, 'dude')
+        await userEvent.click(avatars[0])
 
         expect(displayNameField.value).toBe('dude')
-        //@ts-ignore
         expect(submit).not.toBeDisabled()
 
         // // dunno if this is a vitest or react-router thing, but if you just try to spy
