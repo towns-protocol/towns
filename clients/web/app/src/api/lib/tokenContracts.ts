@@ -7,7 +7,7 @@ import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
 import { env } from 'utils'
 import { axiosClient } from '../apiClient'
-import { NETWORK, fetchVitalikTokens } from './utils'
+import { NETWORK, fetchGoerli, fetchVitalikTokens } from './utils'
 
 const queryKey = 'tokenContractsForAddress'
 const queryKeyPaginatedAggregation = 'tokenContractsForAddressAll'
@@ -101,8 +101,8 @@ async function getLocalHostTokens(
     pageKey = '',
     all = false,
 ) {
-    // to test with a big list of tokens, add ?vitalikTokens to the url
-    if (fetchVitalikTokens) {
+    // to test with a big list of tokens, add ?vitalikTokens to the url, or ?goerli to use the goerli testnet
+    if (fetchVitalikTokens || fetchGoerli) {
         return getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all)
     }
 

@@ -63,7 +63,7 @@ const TokenCheckboxLabel = (props: {
 
             {!data ? (
                 <Box visibility="hidden">
-                    <TokenAvatar size="avatar_md" />
+                    <TokenAvatar size="avatar_md" contractAddress="" />
                 </Box>
             ) : !data.length ? null : (
                 <Box horizontal gap="lg" paddingTop="md">
@@ -74,6 +74,7 @@ const TokenCheckboxLabel = (props: {
                                 <TokenAvatar
                                     data-testid="create-channel-token-avatar"
                                     key={token.address}
+                                    contractAddress={token.address ?? ''}
                                     imgSrc={token.imageUrl}
                                     size="avatar_md"
                                     label={token.name}

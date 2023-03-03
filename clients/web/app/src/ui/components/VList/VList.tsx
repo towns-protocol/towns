@@ -34,10 +34,17 @@ interface Props<T> {
     viewMargin?: number
     groupIds?: string[]
     debug?: boolean
+    padding?: number
 }
 
 export function VList<T extends { id: string }>(props: Props<T>) {
-    const { esimtateItemSize, highlightId, groupIds, viewMargin = DEFAULT_VIEW_MARGIN } = props
+    const {
+        esimtateItemSize,
+        highlightId,
+        groupIds,
+        viewMargin = DEFAULT_VIEW_MARGIN,
+        padding = PADDING,
+    } = props
 
     // create a copy of the incoming list for safety
     const list = useMemo(() => (props.list ?? []).slice(), [props.list])
@@ -55,6 +62,8 @@ export function VList<T extends { id: string }>(props: Props<T>) {
     const [scrollMagnet, setScrollMagnet] = useState<string | undefined>(highlightId)
     // update this key to burst dependency of
     const [forceRecalculateKey, setForceRecalculateKey] = useState(0)
+    // probably not necessary, just in case this optimizes anything
+    const paddingMemo = useMemo(() => padding, [padding])
 
     const groups = useMemo(() => {
         const groups = list.reduce((groups, item) => {
@@ -146,7 +155,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                     c.y = height
                 }
                 return height + c.height
-            }, PADDING) + PADDING
+            }, paddingMemo) + paddingMemo
 
         setListHeight(newHeight)
 
@@ -166,7 +175,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                 DEBUG && console.log(`%capply scroll correction ${correction}`, Debug.Viewport)
             }
         }
-    }, [forceRecalculateKey, createCacheItem, list, listHeight, viewport])
+    }, [forceRecalculateKey, createCacheItem, list, listHeight, viewport, paddingMemo])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - rendering
 

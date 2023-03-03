@@ -13,3 +13,7 @@ export const hasQueryParam = (query: string) => {
 export const hasVitalkTokensParam = () => {
     return hasQueryParam('vitalikTokens')
 }
+
+export const hasGoerliParam = () => {
+    return hasQueryParam('goerli')
+}

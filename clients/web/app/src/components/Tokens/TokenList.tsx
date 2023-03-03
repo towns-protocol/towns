@@ -27,7 +27,7 @@ export const searchArrayOfData = (array: TokenProps[], query: string): TokenProp
 const TokenCheckboxLabel = ({ imgSrc, label, contractAddress }: TokenProps) => {
     return (
         <Box flexDirection="row" alignItems="center" paddingY="sm">
-            <TokenAvatar size="avatar_x4" imgSrc={imgSrc} />
+            <TokenAvatar contractAddress={contractAddress} size="avatar_x4" imgSrc={imgSrc} />
             <Box paddingX="md">
                 <Text>{label}</Text>
             </Box>
@@ -91,8 +91,6 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     const selectedTokens = useCreateSpaceFormStore((state) => state.step1.tokens)
     const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
 
-    // NOTE: on Goerli, this is only going to return the Zion token, even if it is not in user's wallet
-    // Fetching tokens via worker is only for local dev for now, until the worker is deployed (pending auth flow)
     const { data, isLoading, isError } = useTokenContractsForAddress({
         wallet: hasVitalikParams ? 'vitalik.eth' : wallet,
         zionTokenAddress,
@@ -167,7 +165,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                 <Box padding="sm">
                     <Text size="sm">
                         Localhost will only return the zion token for anvil accounts. To test a long
-                        list, add ?vitalikTokens to url
+                        list, add ?vitalikTokens to url. To test your goerli tokens, add ?goerli
                     </Text>
                 </Box>
             )}
@@ -180,9 +178,10 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                         </Text>
                     </Box>
                     <VList<TokenPropsForVList>
+                        padding={0}
                         list={results}
-                        viewMargin={200}
-                        esimtateItemSize={64}
+                        viewMargin={0}
+                        esimtateItemSize={50}
                         itemRenderer={(item) => {
                             return (
                                 <Box key={item.contractAddress} paddingX="sm">
