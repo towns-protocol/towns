@@ -68,7 +68,7 @@
         "ua-parser-js": "^1.0.33",
         "use-zion-client": "workspace:^",
         "vanilla-classnames": "^0.1.0",
-        "wagmi": "^0.10.4",
+        "wagmi": "^0.11.7",
         "zod": "^3.19.1",
         "zustand": "^4.3.3"
     },

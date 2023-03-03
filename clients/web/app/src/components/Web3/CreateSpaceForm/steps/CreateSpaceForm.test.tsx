@@ -207,7 +207,7 @@ describe('<CreateSpaceForm />', () => {
 
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
@@ -262,7 +262,7 @@ describe('<CreateSpaceForm />', () => {
 
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
@@ -302,7 +302,7 @@ describe('<CreateSpaceForm />', () => {
 
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: false,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
@@ -340,7 +340,7 @@ describe('<CreateSpaceForm />', () => {
         vi.spyOn(router, 'useNavigate').mockReturnValue(() => vi.fn())
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
@@ -396,7 +396,7 @@ describe('<CreateSpaceForm />', () => {
         vi.spyOn(router, 'useNavigate').mockReturnValue(() => vi.fn())
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 

@@ -98,7 +98,7 @@ describe('CreateChannelForm', () => {
     test('renders checkbox for each role', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
@@ -139,7 +139,7 @@ describe('CreateChannelForm', () => {
     test('requires name and role for submission', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
@@ -170,7 +170,7 @@ describe('CreateChannelForm', () => {
     test('cannot perform create channel action if on the wrong network', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: false,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
         vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
@@ -196,7 +196,7 @@ describe('CreateChannelForm', () => {
     test('submits with the correct values', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
 
             switchNetwork: () => null,
         })
@@ -254,7 +254,7 @@ describe('CreateChannelForm', () => {
     test('shows transaction error message if there was an transaction error', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
@@ -301,7 +301,7 @@ describe('CreateChannelForm', () => {
     test('shows permission error message if there was an error with Matrix permissions', async () => {
         vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
             isTransactionNetwork: true,
-            name: 'whatever',
+            name: 'Goerli',
             switchNetwork: () => null,
         })
 
