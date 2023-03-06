@@ -16,11 +16,6 @@ export const ChannelSettingsCard = (props: Props) => {
 
     const navigate = useNavigate()
 
-    const onInviteClick = useEvent((e: React.MouseEvent) => {
-        e.preventDefault()
-        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/settings`)
-    })
-
     const { leaveRoom } = useZionClient()
 
     const onLeaveClick = useEvent(async () => {
@@ -38,10 +33,8 @@ export const ChannelSettingsCard = (props: Props) => {
                 <MenuItem icon="help" onClick={onInfoClick}>
                     Info
                 </MenuItem>
-                <MenuItem icon="invite" onClick={onInviteClick}>
-                    Invite
-                </MenuItem>
-                <MenuItem icon="logout" color="cta1" onClick={onLeaveClick}>
+
+                <MenuItem icon="logout" color="error" onClick={onLeaveClick}>
                     Leave {channelName}
                 </MenuItem>
             </Card>

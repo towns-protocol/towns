@@ -66,3 +66,8 @@ globalStyle('*:focus-visible', {
     outlineStyle: 'solid',
     outlineOffset: -3,
 })
+
+globalStyle('*:-webkit-autofill', {
+    WebkitTextFillColor: vars.color.foreground.default,
+    WebkitBoxShadow: `0 0 0 100px ${vars.color.background.level2} inset`,
+})
