@@ -15,6 +15,7 @@ export interface UpdateChannelParams {
     spaceNetworkId: string
     channelNetworkId: string
     channelName: string
+    roleIds: number[]
 }
 
 export interface UpdateRoleParams {

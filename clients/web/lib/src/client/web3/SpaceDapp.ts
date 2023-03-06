@@ -409,8 +409,34 @@ export class SpaceDapp implements ISpaceDapp {
                 `Space with networkId "${params.spaceNetworkId}" is not deployed properly.`,
             )
         }
+        const encodedCallData: BytesLike[] = []
         // update any channel name changes
-        return space.write.updateChannel(params.channelNetworkId, params.channelName)
+        const channelDetails = await this.getChannelDetails(space, params.channelNetworkId)
+        if (!channelDetails) {
+            // cannot find this channel
+            throw new Error(
+                `Channel with spaceNetworkId "${params.spaceNetworkId}", channelId: "${params.channelNetworkId}" is not found.`,
+            )
+        }
+        if (channelDetails.name !== params.channelName) {
+            encodedCallData.push(
+                space.interface.encodeFunctionData('updateChannel', [
+                    params.channelNetworkId,
+                    params.channelName,
+                ]),
+            )
+        }
+        // update any channel role changes
+        const encodedUpdateChannelRoles = await this.encodeUpdateChannelRoles(
+            space,
+            params.spaceNetworkId,
+            params.channelNetworkId,
+            params.roleIds,
+        )
+        for (const callData of encodedUpdateChannelRoles) {
+            encodedCallData.push(callData)
+        }
+        return space.write.multicall(encodedCallData)
     }
 
     public async updateRole(params: UpdateRoleParams): Promise<ContractTransaction> {
@@ -903,10 +929,145 @@ export class SpaceDapp implements ISpaceDapp {
         const rolesById = await Promise.all(rolePromises)
         // return only roles with details
         for (const r of rolesById) {
-            if (r && r.roleId.toNumber() !== 0) {
+            if (
+                r &&
+                r.roleId.toNumber() !== 0 &&
+                // don't include the owner role
+                // because all the smart contract func that requires a role
+                // forbids the owner role from being touched.
+                // Contract calls will revert
+                r.name.toLowerCase() !== Permission.Owner.toLowerCase()
+            ) {
                 roles.push(r)
             }
         }
         return roles
+    }
+
+    private async encodeUpdateChannelRoles(
+        space: SpaceShim,
+        spaceNetworkId: string,
+        channelNetworkId: string,
+        _updatedRoleIds: number[],
+    ): Promise<BytesLike[]> {
+        const encodedCallData: BytesLike[] = []
+        // get all the roles in the channel to figure out which roles to add and which to remove
+        const roles = await this.getRolesByChannel(spaceNetworkId, channelNetworkId)
+        const currentRoleIds = new Set<number>(roles.map((r) => r.roleId.toNumber()))
+        const updatedRoleIds = new Set<number>(_updatedRoleIds)
+        const rolesToRemove: number[] = []
+        const rolesToAdd: number[] = []
+        for (const r of updatedRoleIds) {
+            // if the current role IDs does not have the updated role ID, then that role should be added.
+            if (!currentRoleIds.has(r)) {
+                rolesToAdd.push(r)
+            }
+        }
+        for (const r of currentRoleIds) {
+            // if the updated role IDs no longer have the current role ID, then that role should be removed.
+            if (!updatedRoleIds.has(r)) {
+                rolesToRemove.push(r)
+            }
+        }
+        // get all the entitlement modules to figure out the module addresses
+        const entitlementModules = await space.read.getEntitlementModules()
+        let tokenModuleAddress = ''
+        let userModuleAddress = ''
+        for (const module of entitlementModules) {
+            switch (module.moduleType) {
+                case EntitlementModuleType.TokenEntitlement:
+                    tokenModuleAddress = module.moduleAddress
+                    break
+                case EntitlementModuleType.UserEntitlement:
+                    userModuleAddress = module.moduleAddress
+                    break
+            }
+        }
+        // encode the call data for each role to remove
+        const encodedRemoveRoles = this.encodeDeleteRolesFromSingleChannel({
+            space,
+            channelNetworkId,
+            roleIds: rolesToRemove,
+            tokenModuleAddress,
+            userModuleAddress,
+        })
+        for (const callData of encodedRemoveRoles) {
+            encodedCallData.push(callData)
+        }
+        // encode the call data for each role to add
+        const encodedAddRoles = this.encodeAddRolesToSingleChannel({
+            space,
+            channelNetworkId,
+            roleIds: rolesToAdd,
+            tokenModuleAddress,
+            userModuleAddress,
+        })
+        for (const callData of encodedAddRoles) {
+            encodedCallData.push(callData)
+        }
+        // make the multi call to update the channel
+        return encodedCallData
+    }
+
+    private encodeAddRolesToSingleChannel(args: {
+        space: SpaceShim
+        roleIds: number[]
+        channelNetworkId: string
+        tokenModuleAddress: string
+        userModuleAddress: string
+    }): BytesLike[] {
+        const encodedCallData: BytesLike[] = []
+        for (const roleId of args.roleIds) {
+            if (args.tokenModuleAddress) {
+                encodedCallData.push(
+                    args.space.interface.encodeFunctionData('addRoleToChannel', [
+                        args.channelNetworkId,
+                        args.tokenModuleAddress,
+                        roleId,
+                    ]),
+                )
+            }
+            if (args.userModuleAddress) {
+                encodedCallData.push(
+                    args.space.interface.encodeFunctionData('addRoleToChannel', [
+                        args.channelNetworkId,
+                        args.userModuleAddress,
+                        roleId,
+                    ]),
+                )
+            }
+        }
+        return encodedCallData
+    }
+
+    private encodeDeleteRolesFromSingleChannel(args: {
+        space: SpaceShim
+        roleIds: number[]
+        channelNetworkId: string
+        tokenModuleAddress: string
+        userModuleAddress: string
+    }): BytesLike[] {
+        const encodedCallData: BytesLike[] = []
+        for (const roleId of args.roleIds) {
+            if (args.tokenModuleAddress) {
+                encodedCallData.push(
+                    args.space.interface.encodeFunctionData('removeRoleFromChannel', [
+                        args.channelNetworkId,
+                        args.tokenModuleAddress,
+                        roleId,
+                    ]),
+                )
+            }
+            if (args.userModuleAddress) {
+                encodedCallData.push(
+                    args.space.interface.encodeFunctionData('removeRoleFromChannel', [
+                        args.channelNetworkId,
+                        args.userModuleAddress,
+                        roleId,
+                    ]),
+                )
+            }
+        }
+        return encodedCallData
     }
 }

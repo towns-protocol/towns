@@ -132,6 +132,7 @@ export interface UpdateChannelInfo {
     parentSpaceId: RoomIdentifier
     channelId: RoomIdentifier
     updatedChannelName: string
+    updatedRoleIds: number[]
 }
 
 /// use to send different types of messages, e.g. text, emoji, image, etc.

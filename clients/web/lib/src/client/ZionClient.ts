@@ -701,6 +701,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
                 channelNetworkId: updateChannelInfo.channelId.networkId,
                 channelName: updateChannelInfo.updatedChannelName,
+                roleIds: updateChannelInfo.updatedRoleIds,
             })
             console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {

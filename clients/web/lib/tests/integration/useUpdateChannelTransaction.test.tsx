@@ -196,6 +196,7 @@ function TestComponent(args: {
                     parentSpaceId: spaceId,
                     channelId,
                     updatedChannelName: args.updatedChannelName,
+                    updatedRoleIds: roleIds,
                 }
                 await updateChannelTransaction(updateChannelInfo)
                 console.log('updateChannelTransaction called')
@@ -204,7 +205,7 @@ function TestComponent(args: {
             }
         }
         void handleClick()
-    }, [args.updatedChannelName, channelId, spaceId, updateChannelTransaction])
+    }, [args.updatedChannelName, channelId, roleIds, spaceId, updateChannelTransaction])
     // the view
     return (
         <>
