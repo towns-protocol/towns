@@ -74,10 +74,10 @@ const AllRoutes = () => {
     useWindowListener()
 
     // only show the loading screen on first load, and not if user swaps wallet
-    if (!connectedOnce.current) {
-        connectedOnce.current = !connectLoading
+    if (connectLoading && !connectedOnce.current) {
         return <LoadingScreen />
     }
+    connectedOnce.current = true
 
     return (
         <Routes>
