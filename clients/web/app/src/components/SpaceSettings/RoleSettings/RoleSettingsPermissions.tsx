@@ -1,11 +1,12 @@
 import React from 'react'
 import { useParams } from 'react-router'
 import useEvent from 'react-use-event-hook'
+import { Permission } from 'use-zion-client'
 import { Paragraph, Stack, Toggle } from '@ui'
 import { useSpaceSettingsStore } from 'store/spaceSettingsStore'
 import { enabledRolePermissions, rolePermissionDescriptions } from './rolePermissions.const'
 
-type PermissionMeta = (typeof rolePermissionDescriptions)[(typeof enabledRolePermissions)[number]]
+type PermissionMeta = (typeof rolePermissionDescriptions)[keyof typeof rolePermissionDescriptions]
 
 export const RoleSettingsPermissions = () => {
     const { role: roleId = '' } = useParams()
@@ -13,7 +14,7 @@ export const RoleSettingsPermissions = () => {
     const role = getRole(roleId)
 
     const setPermission = useSpaceSettingsStore((state) => state.setPermission)
-    const onToggleRole = useEvent((permissionId: string, value: boolean) => {
+    const onToggleRole = useEvent((permissionId: Permission, value: boolean) => {
         if (roleId) {
             setPermission(roleId, permissionId, value)
         }
@@ -21,24 +22,26 @@ export const RoleSettingsPermissions = () => {
 
     return (
         <Stack gap="x4" key={roleId}>
-            {enabledRolePermissions.map((permissionId: (typeof enabledRolePermissions)[number]) => (
-                <RoleRow
-                    id={permissionId}
-                    defaultToggled={!!role?.permissions.includes(permissionId)}
-                    metaData={rolePermissionDescriptions[permissionId]}
-                    key={permissionId}
-                    onToggle={onToggleRole}
-                />
-            ))}
+            {enabledRolePermissions.map((permissionId: Permission) => {
+                return role ? (
+                    <RoleRow
+                        id={permissionId}
+                        defaultToggled={!!role?.permissions.includes(permissionId)}
+                        metaData={rolePermissionDescriptions[permissionId]}
+                        key={permissionId}
+                        onToggle={onToggleRole}
+                    />
+                ) : null
+            })}
         </Stack>
     )
 }
 
 type RoleProps = {
-    id: string
+    id: Permission
     defaultToggled: boolean
     metaData: PermissionMeta
-    onToggle: (id: string, value: boolean) => void
+    onToggle: (id: Permission, value: boolean) => void
 }
 
 const RoleRow = (props: RoleProps) => {
@@ -51,8 +54,8 @@ const RoleRow = (props: RoleProps) => {
     return (
         <Stack horizontal grow gap as="label">
             <Stack grow>
-                <Paragraph strong>{metaData.name}</Paragraph>
-                <Paragraph color="gray2">{metaData.description}</Paragraph>
+                <Paragraph strong>{metaData?.name}</Paragraph>
+                <Paragraph color="gray2">{metaData?.description}</Paragraph>
             </Stack>
             <Stack centerContent>
                 <Toggle toggled={checked} onToggle={onToggle} />

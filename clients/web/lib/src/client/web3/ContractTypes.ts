@@ -7,7 +7,6 @@ export enum Permission {
     Read = 'Read',
     Write = 'Write',
     Invite = 'Invite',
-    Everyone = 'Everyone',
     Redact = 'Redact',
     Ban = 'Ban',
     Ping = 'Ping',
@@ -15,6 +14,7 @@ export enum Permission {
     AddRemoveChannels = 'AddRemoveChannels',
     ModifySpaceSettings = 'ModifySpaceSettings',
     Owner = 'Owner',
+    Upgrade = 'Upgrade',
 }
 
 /**

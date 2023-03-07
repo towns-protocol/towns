@@ -65,7 +65,7 @@ export const RoleSettingsDisplay = () => {
                         {shortAddress(`0x01234567890efefefeefefefefefefefefefefef`)}
                     </Paragraph>
                     <Box
-                        style={{ background: colors[parseInt(role.color)] }}
+                        style={{ background: colors[parseInt(role.color ?? '1')] }}
                         padding="sm"
                         rounded="sm"
                     >

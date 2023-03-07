@@ -116,6 +116,8 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
                 queryKey: [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByRoleId, roleId],
                 queryFn: () => getRole(spaceId, roleId),
                 enabled: isEnabled,
+                staleTime: 1000 * 60 * 5,
+                cacheTime: 1000 * 60 * 10,
                 retry: false,
             }
         }),

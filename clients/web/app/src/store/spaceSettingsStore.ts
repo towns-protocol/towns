@@ -1,3 +1,4 @@
+import { Permission } from 'use-zion-client'
 import { create } from 'zustand'
 import { combine } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
@@ -10,8 +11,8 @@ export type SpaceSettings = {
 export type Role = {
     id: string
     name: string
-    color: string
-    permissions: string[]
+    color?: string
+    permissions: Permission[]
     tokens: string[]
     users: string[]
 }
@@ -20,16 +21,10 @@ const createRole = (id: string, name: string, color?: string): Role => ({
     id,
     name,
     color: '1',
-    permissions: ['read_messages'],
+    permissions: [Permission.Read],
     tokens: [],
     users: [],
 })
-
-const createDefaultRoles = () => [
-    createRole('owner', 'Owner'),
-    createRole('member', 'Member'),
-    createRole('everyone', 'Everyone'),
-]
 
 export const useSpaceSettingsStore = create(
     immer(
@@ -38,18 +33,17 @@ export const useSpaceSettingsStore = create(
                 space: undefined,
             } as { space?: SpaceSettings },
             (set, get) => ({
-                reset: (
-                    settings: Partial<SpaceSettings> & Required<Pick<SpaceSettings, 'spaceId'>>,
-                ) => {
-                    const space = {
-                        roles: createDefaultRoles(),
-                        ...settings,
-                    }
-
+                clearSpace: () => {
                     set((state) => {
-                        state.space = space
+                        state.space = undefined
                     })
-                    return space
+                },
+
+                setSpace: (settings: SpaceSettings) => {
+                    set((state) => {
+                        state.space = settings
+                    })
+                    return settings
                 },
 
                 getDefaultRole: () => {
@@ -90,7 +84,7 @@ export const useSpaceSettingsStore = create(
                 getRole: (roleId: string) => {
                     return get().space?.roles.find((role) => role.id === roleId)
                 },
-                setPermission: (roleId: string, permissionId: string, value: boolean) => {
+                setPermission: (roleId: string, permissionId: Permission, value: boolean) => {
                     set((state) => {
                         const role = state.space?.roles.find((role) => role.id === roleId)
                         if (!role) {

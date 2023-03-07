@@ -57,19 +57,24 @@ export const useSpaceSettingChanges = (dst?: SpaceSettings, src?: SpaceSettings)
                         description: `${role.name}: ${role.color}`,
                     })
                 }
-                if (!isEqual(role.permissions, snapshotRole?.permissions)) {
+                if (
+                    !isEqual(
+                        role.permissions.slice().sort(),
+                        snapshotRole?.permissions.slice().sort(),
+                    )
+                ) {
                     changes.push({
                         title: `Role permissions updated`,
                         description: `${role.name}: ${role.permissions.join()}`,
                     })
                 }
-                if (!isEqual(role.tokens, snapshotRole?.tokens)) {
+                if (!isEqual(role.tokens.slice().sort(), snapshotRole?.tokens.slice().sort())) {
                     changes.push({
                         title: `Role tokens updated`,
                         description: `Role tokens updated: ${role.name}`,
                     })
                 }
-                if (!isEqual(role.users, snapshotRole?.users)) {
+                if (!isEqual(role.users.slice().sort(), snapshotRole?.users.slice().sort())) {
                     changes.push({
                         title: 'Role users updated',
                         description: `${role.name}: ${role.users.join()} users`,
