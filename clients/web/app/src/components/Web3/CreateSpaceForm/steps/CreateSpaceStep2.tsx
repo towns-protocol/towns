@@ -33,7 +33,7 @@ const schema = z.object({
                 }
             },
         })
-        .regex(/^[a-z0-9 ._-]+$/i)
+        .regex(/^[a-z0-9 ._-]+$/)
         .min(2)
         .max(MAX_LENGTH),
 })
