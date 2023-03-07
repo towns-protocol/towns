@@ -10,6 +10,14 @@ const IMAGE_OPTIONS_REGEX = '(=|,)+'
 const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
 const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
 const CACHE_TTL = 5
+const BIO_MAX_SIZE = 280
+
+const validateLength = (text: string, max: number) => {
+    if (text.length > max) {
+        return false
+    }
+    return true
+}
 
 const router = Router()
 
@@ -160,6 +168,186 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
     )
     return await upsertImage(getUrl, destinationURL, spaceId, request, env)
 })
+
+router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
+    // user id is equivalent to wallet address of the form 0x83..
+    const userId = request.params?.id
+    // TODO: remove this before merging JOHN
+    if (env.ENVIRONMENT !== 'development') {
+        const cookie = await handleCookie(request.clone())
+        console.log(`cookie: ${cookie}`)
+        const encodedCookie = Buffer.from(cookie, 'base64')
+        const decodedCookie = encodedCookie.toString('utf8')
+        const [signature, message] = decodedCookie.split('__@@__')
+
+        if (!signature || !message) {
+            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
+                status: 400,
+            })
+        }
+
+        const newBody = {
+            signature,
+            message,
+            userId,
+        }
+        const newRequestInit = {
+            method: 'POST',
+            body: JSON.stringify(newBody),
+        }
+        const newRequest = new Request(new Request(request.clone(), newRequestInit))
+        // Use a Service binding to fetch to another worker
+        const authResponse = await env.authz.fetch(newRequest)
+        if (authResponse.status !== 200) {
+            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
+            return authResponse
+        }
+    }
+
+    const copyRequest: Request = request.clone()
+    const formData = await copyRequest.formData()
+    const formId: string | null = formData.get('id')
+    if ((formId as string) !== userId) {
+        return new Response(JSON.stringify({ error: 'id mismatch' }), {
+            status: 400,
+        })
+    }
+
+    const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
+    // upsert
+    const getUrl = new URL(
+        [
+            env.IMAGE_SERVICE,
+            CDN_CGI_PATH,
+            DEFAULT_OPTIONS,
+            env.IMAGE_SERVICE,
+            CDN_CGI_PATH_ID,
+            env.IMAGE_HASH,
+            userId,
+            'public',
+        ].join('/'),
+    )
+    return await upsertImage(getUrl, destinationURL, userId, request, env)
+})
+
+// /user/<user_id>/avatar/<IMAGE_OPTIONS>
+// see https://developers.cloudflare.com/images/cloudflare-images/transform/flexible-variants/
+// i.e. https://imagedelivery.net/<ACCOUNT_HASH>/<IMAGE_ID>/w=400,sharpen=3
+router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
+    const { pathname } = new URL(request.url)
+    const pathSplit = pathname.split('/')
+    let options: string = pathSplit[pathSplit.length - 1]
+    const userId: string | undefined = request.params?.id
+    if (!options.match(IMAGE_OPTIONS_REGEX)) {
+        options = DEFAULT_OPTIONS
+    }
+
+    if (userId === undefined) {
+        return new Response('userId error', { status: 400 })
+    }
+    // redirect url
+    const destinationURL = new URL(
+        [
+            env.IMAGE_SERVICE,
+            CDN_CGI_PATH,
+            options,
+            env.IMAGE_SERVICE,
+            CDN_CGI_PATH_ID,
+            env.IMAGE_HASH,
+            userId,
+            'public',
+        ].join('/'),
+    )
+    const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
+    try {
+        // cache this fetch for max of CACHE_TTL seconds before revalidation
+        const response = await fetch(newRequest, { cf: { cacheTtl: CACHE_TTL } })
+        // clone response so it's no longer immutable
+        const newResponse = new Response(response.body, response)
+        // cache on client, but prefer revalidation when served
+        // https://developers.cloudflare.com/cache/about/cache-control/#revalidation
+        newResponse.headers.delete('Cache-Control')
+        newResponse.headers.set('Cache-Control', 'public, no-cache')
+        return newResponse
+    } catch (error) {
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 500,
+        })
+    }
+})
+
+router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
+    // user id is equivalent to wallet address of the form 0x83..
+    const userId = request.params?.id
+
+    // TODO: remove this before merging JOHN
+    if (env.ENVIRONMENT !== 'development') {
+        const cookie = await handleCookie(request.clone())
+        console.log(`cookie: ${cookie}`)
+        const encodedCookie = Buffer.from(cookie, 'base64')
+        const decodedCookie = encodedCookie.toString('utf8')
+        const [signature, message] = decodedCookie.split('__@@__')
+
+        if (!signature || !message) {
+            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
+                status: 400,
+            })
+        }
+
+        const newBody = {
+            signature,
+            message,
+            userId,
+        }
+        const newRequestInit = {
+            method: 'POST',
+            body: JSON.stringify(newBody),
+        }
+        const newRequest = new Request(new Request(request.clone(), newRequestInit))
+        // Use a Service binding to fetch to another worker
+        const authResponse = await env.authz.fetch(newRequest)
+        if (authResponse.status !== 200) {
+            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
+            return authResponse
+        }
+    }
+
+    const copyRequest: Request = request.clone()
+    const contentType = copyRequest.headers.get('content-type')
+    if (contentType !== 'application/json') {
+        return new Response(JSON.stringify({ error: 'invalid content-type' }), {
+            status: 400,
+        })
+    }
+    const requestBody = JSON.stringify(await copyRequest.json())
+    // validate bio length
+    if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
+        return new Response(
+            JSON.stringify({ error: `bio must be under ${BIO_MAX_SIZE} characters` }),
+            { status: 400 },
+        )
+    }
+    try {
+        await env.USER.put(userId, requestBody)
+    } catch (error) {
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 500,
+        })
+    }
+    return new Response('ok', { status: 200 })
+})
+
+router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
+    // user id is equivalent to wallet address of the form 0x83..
+    const userId = request.params?.id
+    const value = await env.USER.get(userId)
+    if (value === null) {
+        return new Response(`bio not found for user: ${userId}`, { status: 404 })
+    }
+    return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
+})
+
+router.post('/')
 
 router.get('*', () => new Response('Not Found', { status: 404 }))
 

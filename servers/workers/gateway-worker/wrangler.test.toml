@@ -4,3 +4,5 @@ cache_persist = false
 
 [vars]
 AUTH_SECRET="foo"
+IMAGE_SERVICE="https://images.zion.xyz"
+IMAGE_HASH="bar"

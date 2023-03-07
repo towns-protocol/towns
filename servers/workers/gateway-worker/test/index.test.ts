@@ -26,4 +26,30 @@ describe('http router', () => {
         const text = await result.text()
         expect(text).toBe('Not Found')
     })
+
+    test('error get user avatar', async () => {
+        const result = await worker.fetch(
+            ...generateRequest('user/1/avatar', 'GET', {
+                Authorization: `Bearer ${AUTH_TOKEN}`,
+            }),
+        )
+
+        expect(result.status).toBe(400)
+
+        const text = await result.text()
+        expect(text).toContain('Could not fetch the image')
+    })
+
+    test('error post user avatar', async () => {
+        const result = await worker.fetch(
+            ...generateRequest('user/1/avatar', 'POST', {
+                Authorization: `Bearer ${AUTH_TOKEN}`,
+            }),
+        )
+
+        expect(result.status).toBe(400)
+
+        const text = await result.text()
+        expect(text).toContain('invalid cookie')
+    })
 })

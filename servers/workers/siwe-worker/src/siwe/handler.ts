@@ -18,40 +18,45 @@ const GOERLI = 5
 export async function verifySiweMessage(
 	request: Request,
 	env: Env,
-	verify = true,
+	verifyUser = false,
 ): Promise<Response> {
-	const { message, signature, spaceId } = (await request.json()) as {
+	const { message, signature, spaceId, userId } = (await request.json()) as {
 		message: string
 		signature: string
-		spaceId: string
+		spaceId?: string
+		userId?: string
 	}
 	const siweMessage = new SiweMessage(message as string)
 	await siweMessage.verify({ signature: signature as string })
-	if (!verify) {
-		return new Response(`OK`)
-	}
-	// Need to setup provider with skipFetchSetup flag
-	// See issue: https://github.com/ethers-io/ethers.js/issues/1886
-	// TODO: consider moving `providerMap` to env vars
-	const network = ethers.providers.getNetwork(siweMessage.chainId)
-	const provider = new ethers.providers.StaticJsonRpcProvider(
-		{
-			url:
-				env.ENVIRONMENT == 'development'
-					? `${providerMap.get(env.ENVIRONMENT)}`
-					: `${providerMap.get(env.ENVIRONMENT)}${env.ALCHEMY_API_KEY}`,
-			skipFetchSetup: true,
-		},
-		network,
-	)
-	const isSpaceOwner = await verifySpaceOwner(
-		spaceId as string,
-		siweMessage.address,
-		siweMessage.chainId,
-		provider,
-	)
-	if (isSpaceOwner) {
-		return new Response(`OK`)
+	if (!verifyUser) {
+		// Need to setup provider with skipFetchSetup flag
+		// See issue: https://github.com/ethers-io/ethers.js/issues/1886
+		// TODO: consider moving `providerMap` to env vars
+		const network = ethers.providers.getNetwork(siweMessage.chainId)
+		const provider = new ethers.providers.StaticJsonRpcProvider(
+			{
+				url:
+					env.ENVIRONMENT == 'development'
+						? `${providerMap.get(env.ENVIRONMENT)}`
+						: `${providerMap.get(env.ENVIRONMENT)}${env.ALCHEMY_API_KEY}`,
+				skipFetchSetup: true,
+			},
+			network,
+		)
+		const isSpaceOwner = await verifySpaceOwner(
+			spaceId as string,
+			siweMessage.address,
+			siweMessage.chainId,
+			provider,
+		)
+		if (isSpaceOwner) {
+			return new Response(`OK`)
+		}
+	} else {
+		// verify user matches address implied by signature
+		if (siweMessage.address === userId) {
+			return new Response(`OK`)
+		}
 	}
 	return new Response(`Unauthorized`, { status: 401 })
 }

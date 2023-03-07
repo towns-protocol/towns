@@ -53,8 +53,21 @@ export const worker = {
 		}
 
 		try {
-			const response = await verifySiweMessage(request, env, env.VERIFY === 'true')
-			return response
+			const newRequest = new Request(request.clone())
+			const { spaceId, userId } = (await newRequest.json()) as {
+				spaceId?: string
+				userId?: string
+			}
+			console.log(`spaceId: ${spaceId}, userId: ${userId}`)
+			if (!!spaceId && !!userId) {
+				return new Response('Can only provide one of spaceId or userId', { status: 400 })
+			} else if (spaceId !== undefined) {
+				return await verifySiweMessage(request, env)
+			} else if (userId !== undefined) {
+				return await verifySiweMessage(request, env, true)
+			} else {
+				return new Response('Must provide spaceId or userId', { status: 400 })
+			}
 		} catch (e) {
 			console.log(`error: `, e)
 			return new Response('Unauthorized', {
