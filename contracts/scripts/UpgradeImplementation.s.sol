@@ -1,34 +1,64 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/Script.sol";
+import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 
 import {Space} from "contracts/src/core/spaces/Space.sol";
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
-import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
+import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract UpgradeImplementation is Script {
+contract UpgradeImplementation is ScriptUtils {
   SpaceFactory internal spaceFactory;
+  Space internal space;
   TokenEntitlement internal tokenEntitlement;
+  UserEntitlement internal userEntitlement;
+
+  function setUp() public {
+    string memory spaceFactoryData = _readPackages("space-factory");
+
+    spaceFactory = SpaceFactory(
+      vm.parseJsonAddress(spaceFactoryData, ".spaceFactory")
+    );
+  }
 
   function run() public {
-    spaceFactory = SpaceFactory(0x173b6a4Ec998A0e72656e0fc9Af2408B017C12f9);
-
     vm.startBroadcast();
-    tokenEntitlement = new TokenEntitlement();
+    SpaceFactory newSpaceFactory = new SpaceFactory();
 
+    spaceFactory.setPaused(true);
+    spaceFactory.upgradeTo(address(newSpaceFactory));
+
+    space = new Space();
+    tokenEntitlement = new TokenEntitlement();
+    userEntitlement = new UserEntitlement();
     spaceFactory.updateImplementations(
-      address(0),
+      address(space),
       address(tokenEntitlement),
-      address(0),
+      address(userEntitlement),
       address(0)
     );
-    vm.stopBroadcast();
 
+    spaceFactory.setPaused(false);
+    vm.stopBroadcast();
     console.log("SpaceFactory: %s", address(spaceFactory));
+    console.log("Space: %s", address(space));
     console.log("TokenEntitlement: %s", address(tokenEntitlement));
+    console.log("UserEntitlement: %s", address(userEntitlement));
+  }
+
+  function _readPackages(
+    string memory input
+  ) internal view returns (string memory) {
+    string memory inputDir = string.concat(
+      vm.projectRoot(),
+      "/packages/contracts/"
+    );
+
+    string memory chainDir = string.concat(_getChainName(), "/addresses/");
+    string memory file = string.concat(input, ".json");
+    return vm.readFile(string.concat(inputDir, chainDir, file));
   }
 }

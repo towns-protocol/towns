@@ -55,6 +55,11 @@ contract UserEntitlement is
     _;
   }
 
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
   function initialize(
     address _tokenAddress,
     uint256 _tokenId

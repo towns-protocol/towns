@@ -749,35 +749,35 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xb9167208891835b0042feda44f7c1d8446cf0b71e8f1c60b7bfc5c77919de8a5",
+      "keccak256": "0xe6129e5baa96212a7591d37136cfe5d707549aadd45d7e88591f95243a622dc3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2a56095a369ef0eb6bad7f901193c83b3cb66e1f8e8d100bdd9c2c1d1227a080",
-        "dweb:/ipfs/QmVZo8ZKu6bdciZScK1qzMrFPnMUn2UNt8NUwaEfEyiDnC"
+        "bzz-raw://58a437b8094e423d2638c6ec20c427a534f9b26ed82e8ba2809dfa77e740055f",
+        "dweb:/ipfs/Qmakxts8sSm81EmnpFHjrAmFsKiopxeeu5jypZ6QnFaHSy"
       ]
     },
     "contracts/src/core/spaces/SpaceFactory.sol": {
-      "keccak256": "0xbdd5811427ee1e98f09227978dadc54038cdc73750289e4df91ed66fa9e2483c",
+      "keccak256": "0x34a42b76819f0156303ea4b4e550701c4c7c1b743b4327c55f160c235e43e538",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://bede28b2fc228ae725afb712dd7d8ce9444d844795ebb3e398c9657b7ddeeaf8",
-        "dweb:/ipfs/QmUibSvLCVHpMfe2PbzQV9qJERsNnjacRmozLnGgHG6N6R"
+        "bzz-raw://895ea141d2e5a70cf3280abb089c2c69399e9271b486c8fcf8b8377b374873d1",
+        "dweb:/ipfs/QmdRukmNGC2zBb8ZzQeA7so3Zaa5Z9ExfdePAZzyzV7cSJ"
       ]
     },
     "contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
-      "keccak256": "0x6b4f3c743eb4ea1409dc0cdffe2129e33735cb1b88e9cfa28aa61ac264ea6b77",
+      "keccak256": "0x41b388f684c53797a02c8a5e706197e30bcc772e16e8836dc334e20d60c58778",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://dc84f3b8599605e64bdef0f86088181bc17471808e2dfaaeaf21a2f910b28f81",
-        "dweb:/ipfs/QmToShmsfbrhTiqgERRXfu6GDknrVVjaQ3FasJdKcfUhAh"
+        "bzz-raw://26229ae37474eb396f1255642ad25bf9edc46d64a8dcbbe57841345a8cae757f",
+        "dweb:/ipfs/Qmc3xdfARrFucc5fbBcyRr1T3EQYmPXXSHdkHxNPfX7ULi"
       ]
     },
     "contracts/src/core/spaces/entitlements/UserEntitlement.sol": {
-      "keccak256": "0x9cd2f122b4d4e268a4cc2402628e5bd8cb1330493d0ff08df2fcaa6239c72854",
+      "keccak256": "0x5325dcf430bd2f08e7b6f537d929ed27dbfad9f8d9d63c86bf8aa1d9bd72a6f5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e4c7fa39d18803d8feb59e07afe8af849299ab776548e2a5fb2b710847776b37",
-        "dweb:/ipfs/QmPguSQKz6t2hvVDQeYuZJDbqEhnJYHVTKFSyJ7qubb4ti"
+        "bzz-raw://d0b19320d2cd0e9a6bd29a8436d369d781710696a74168a95880eed126a3b9c3",
+        "dweb:/ipfs/Qmaqhkev9WtWn2KWtK5mK9JgGVoM5vqyCuFpVeyTmymmig"
       ]
     },
     "contracts/src/core/tokens/SpaceOwner.sol": {

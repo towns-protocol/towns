@@ -1392,11 +1392,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xb9167208891835b0042feda44f7c1d8446cf0b71e8f1c60b7bfc5c77919de8a5",
+      "keccak256": "0xe6129e5baa96212a7591d37136cfe5d707549aadd45d7e88591f95243a622dc3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2a56095a369ef0eb6bad7f901193c83b3cb66e1f8e8d100bdd9c2c1d1227a080",
-        "dweb:/ipfs/QmVZo8ZKu6bdciZScK1qzMrFPnMUn2UNt8NUwaEfEyiDnC"
+        "bzz-raw://58a437b8094e423d2638c6ec20c427a534f9b26ed82e8ba2809dfa77e740055f",
+        "dweb:/ipfs/Qmakxts8sSm81EmnpFHjrAmFsKiopxeeu5jypZ6QnFaHSy"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {

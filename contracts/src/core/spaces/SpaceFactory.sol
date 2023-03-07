@@ -195,7 +195,7 @@ contract SpaceFactory is
       _extraEntitlements
     );
 
-    SpaceOwner(SPACE_TOKEN_ADDRESS).transferFrom(
+    SpaceOwner(SPACE_TOKEN_ADDRESS).safeTransferFrom(
       address(this),
       _msgSender(),
       _tokenId

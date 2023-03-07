@@ -167,11 +167,6 @@ contract Space is
       revert Errors.ChannelDoesNotExist();
     }
 
-    // verify channelName is not empty
-    if (bytes(channelName).length == 0) {
-      revert Errors.NotAllowed();
-    }
-
     channelsByHash[channelHash].name = channelName;
   }
 
@@ -315,10 +310,6 @@ contract Space is
     // check if role exists
     if (rolesById[_roleId].roleId == 0) {
       revert Errors.RoleDoesNotExist();
-    }
-
-    if (bytes(_roleName).length == 0) {
-      revert Errors.InvalidParameters();
     }
 
     rolesById[_roleId].name = _roleName;

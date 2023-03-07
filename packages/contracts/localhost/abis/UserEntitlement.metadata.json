@@ -7,6 +7,11 @@
     "abi": [
       {
         "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
         "name": "AddressNotFound",
         "type": "error"
       },
@@ -518,6 +523,9 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
+        "constructor": {
+          "custom:oz-upgrades-unsafe-allow": "constructor"
+        },
         "getEntitlementDataByRoleId(uint256)": {
           "params": {
             "roleId": "the roleId to fetch the entitlement data for"
@@ -650,11 +658,11 @@
   },
   "sources": {
     "contracts/src/core/spaces/entitlements/UserEntitlement.sol": {
-      "keccak256": "0x9cd2f122b4d4e268a4cc2402628e5bd8cb1330493d0ff08df2fcaa6239c72854",
+      "keccak256": "0x5325dcf430bd2f08e7b6f537d929ed27dbfad9f8d9d63c86bf8aa1d9bd72a6f5",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e4c7fa39d18803d8feb59e07afe8af849299ab776548e2a5fb2b710847776b37",
-        "dweb:/ipfs/QmPguSQKz6t2hvVDQeYuZJDbqEhnJYHVTKFSyJ7qubb4ti"
+        "bzz-raw://d0b19320d2cd0e9a6bd29a8436d369d781710696a74168a95880eed126a3b9c3",
+        "dweb:/ipfs/Qmaqhkev9WtWn2KWtK5mK9JgGVoM5vqyCuFpVeyTmymmig"
       ]
     },
     "contracts/src/interfaces/IEntitlement.sol": {
