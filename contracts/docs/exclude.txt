@@ -1,4 +1,0 @@
-contracts/scripts
-contracts/test
-contracts/utils
-docgen

@@ -143,8 +143,7 @@
       "runs": 200
     },
     "remappings": [
-      ":@opengsn/=node_modules/@opengsn/",
-      ":@openzeppelin/=node_modules/@openzeppelin/",
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":contracts/=contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",

@@ -22,7 +22,6 @@
         "prepare": "husky install",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
-        "publish:contracts-governance": "yarn workspace @harmony/zion-governance publish",
         "publish:local": "turbo publish:local",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",

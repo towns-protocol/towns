@@ -15,9 +15,6 @@
         "test": "yarn test:unit",
         "test:unit": "make test"
     },
-    "dependencies": {
-        "@opengsn/contracts": "^2.2.6"
-    },
     "devDependencies": {
         "@harmony/eslint-config": "1.0.0",
         "@harmony/prettier-config": "workspace:^",
