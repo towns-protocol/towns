@@ -79,6 +79,8 @@ describe('useRoleDetails', () => {
             TestConstants.DecaDefaultWaitForTimeout,
         )
 
+        await waitFor(() => expect(screen.getAllByTestId('rolesElement')).toHaveLength(2))
+
         const rolesElement = screen.getAllByTestId('rolesElement')
 
         /* Assert */
@@ -163,7 +165,7 @@ function SpacesComponent(): JSX.Element {
     return (
         <div data-testid="spacesElement">
             {spaces.map((element) => (
-                <div key={element.key}>
+                <div key={element.key} data-testid={`Space:${element.name}`}>
                     <div>{element.name}</div>
                     <MultipleRolesComponent spaceNetworkId={element.networkId} />
                 </div>
@@ -255,6 +257,7 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
  * Assert helper functions
  */
 async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
+    await waitFor(() => expect(htmlElement).toBeInTheDocument())
     await waitFor(() => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`))
 }
 
@@ -264,6 +267,7 @@ async function assertPermissions(
     permissions: Permission[],
 ) {
     // verify the permissions
+    await waitFor(() => expect(htmlElement).toBeInTheDocument())
     const expected = permissions.map((permission) => `${roleName}:permission:${permission}`)
     const allPermissions: Promise<void>[] = []
     for (const p of expected) {
@@ -278,6 +282,7 @@ async function assertNft(
     nftAddress: string,
     quantity: number,
 ) {
+    await waitFor(() => expect(htmlElement).toBeInTheDocument())
     await waitFor(() =>
         expect(htmlElement).toHaveTextContent(`${roleName}:nftAddress:${nftAddress}`),
     )

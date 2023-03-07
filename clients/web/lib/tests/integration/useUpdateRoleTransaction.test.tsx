@@ -349,7 +349,12 @@ async function assertPermissions(
     const expected = permissions.map((permission) => `${roleName}:permission:${permission}`)
     const allPermissions: Promise<void>[] = []
     for (const p of expected) {
-        allPermissions.push(waitFor(() => expect(htmlElement).toHaveTextContent(p)))
+        allPermissions.push(
+            waitFor(
+                () => expect(htmlElement).toHaveTextContent(p),
+                TestConstants.DecaDefaultWaitForTimeout,
+            ),
+        )
     }
     await Promise.all(allPermissions)
 }
