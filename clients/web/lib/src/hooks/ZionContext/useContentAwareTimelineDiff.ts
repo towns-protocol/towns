@@ -10,13 +10,12 @@ import {
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { getIdForMatrixEvent, Mention } from '../../types/zion-types'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
 import { ZionAccountDataType, SpaceProtocol } from '../../client/ZionClientTypes'
+import { isZTimelineEvent } from './useMatrixTimelines'
 
 type LocalEffectState = {
-    /// { roomId: { eventId: index in timeline } }
     encryptedEvents: Record<string, Record<string, number>> // this should be a Map instead of a record
 }
 
@@ -31,13 +30,24 @@ export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
             return
         }
         // state
-        let effectState = initOnce(matrixClient, userId)
+        //let effectState = initOnce(matrixClient, userId)
+        let firstTime = true
+        let effectState: LocalEffectState = {
+            encryptedEvents: {},
+        }
 
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (
             timelineState: TimelineStoreInterface,
             prev: TimelineStoreInterface,
         ) => {
+            if (firstTime) {
+                if (timelineState !== prev) {
+                    console.error('firstTime but timelineState !== prev')
+                }
+                effectState = initOnce(matrixClient, userId)
+                firstTime = false
+            }
             effectState = diffTimeline(timelineState, prev, effectState, userId)
         }
 
@@ -71,24 +81,6 @@ function isCountedAsUnread(event: MatrixEvent, myUserId: string): boolean {
     }
 }
 
-function isMentioned(event: MatrixEvent, myUserId: string): boolean {
-    const eventType = event.getType()
-    switch (eventType) {
-        case EventType.RoomMessage: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const mentionsContent = event.getContent()?.['mentions']
-            if (mentionsContent) {
-                return (mentionsContent as Mention[]).some(
-                    (mention: Mention) => mention.userId === myUserId,
-                )
-            }
-            return false
-        }
-        default:
-            return false
-    }
-}
-
 function isCountedAsUnreadZTEvent(event: TimelineEvent, myUserId: string): boolean {
     switch (event.content?.kind) {
         case ZTEvent.RoomMessage:
@@ -103,25 +95,21 @@ function isMentionedZTEvent(event: TimelineEvent): boolean {
 }
 
 function isEncryptedZTEvent(event: TimelineEvent): boolean {
+    // if it's a bad encrypted message, chance that it will get decrypted
+    // later so we still want to hold on to it and check it once it's clear
+    if (event.content?.kind === ZTEvent.RoomMessage) {
+        return event.content?.msgType === 'm.bad.encrypted'
+    }
     return event.content?.kind === ZTEvent.RoomMessageEncrypted
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toRoomId(value: any): RoomIdentifier {
     /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
-    if (value.matrixRoomId) {
-        // aellis: data transform for backwards compatibility, Dec 9, 2022, can remove when we make a new space
-        return {
-            protocol: SpaceProtocol.Matrix,
-            networkId: value.matrixRoomId,
-            slug: value.slug,
-        }
-    } else {
-        return {
-            protocol: SpaceProtocol.Matrix,
-            networkId: value.networkId,
-            slug: value.slug,
-        }
+    return {
+        protocol: SpaceProtocol.Matrix,
+        networkId: value.networkId,
+        slug: value.slug,
     }
     /* eslint-enable */
 }
@@ -142,7 +130,12 @@ function toFullyReadMarker(value: any): FullyReadMarker {
     }
 }
 
+/// matrix keeps track of how many events we miss while we're gone
+/// use the unread count to quickly update our local state when we start up
 function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState {
+    let effectState: LocalEffectState = {
+        encryptedEvents: {},
+    }
     useFullyReadMarkerStore.setState((state) => {
         const updated = { ...state.markers }
         // loop over all the rooms, get the existing values, get the unread counts, push those into the store
@@ -155,67 +148,44 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                     console.log('initOnce: setting marker for', { key, marker })
                 }
             }
-
             const unreadCount = room.getUnreadNotificationCount(NotificationCountType.Total) ?? 0
             if (unreadCount > 0) {
-                const allEvents = room
+                const unreadMatrixEvents = room
                     .getLiveTimeline()
                     .getEvents()
                     .slice(-1 * unreadCount)
-                const events = allEvents.filter((event) => isCountedAsUnread(event, userId))
-                if (events.length > 0) {
-                    const eventsMap = events.reduce((acc, event) => {
-                        const parentId = event.replyEventId ?? room.roomId
-                        acc[parentId] = [...(acc[parentId] ?? []), event]
-                        return acc
-                    }, {} as Record<string, MatrixEvent[]>)
 
-                    Object.entries(eventsMap).forEach(([id, events]) => {
-                        console.log('new unread events on launch', {
-                            unreadCount,
-                            id,
-                            roomId: room.roomId,
+                const firstMatrixEvent = unreadMatrixEvents.find(
+                    (e) => isZTimelineEvent(e) && (isCountedAsUnread(e, userId) || e.isEncrypted()),
+                )
+                if (firstMatrixEvent) {
+                    const events = useTimelineStore.getState().timelines[room.roomId] ?? []
+
+                    const firstEventIndex = events.findIndex(
+                        (e) => e.eventId === firstMatrixEvent.getId(),
+                    )
+
+                    if (firstEventIndex >= 0) {
+                        const prev = events.slice(0, firstEventIndex)
+                        const result = _diffTimeline(
+                            room.roomId,
                             events,
-                        })
-                        const isThread = id !== room.roomId
-                        const mentions = events.filter((event) => isMentioned(event, userId)).length
-                        let entry: FullyReadMarker = updated[id]
-                            ? updated[id]
-                            : {
-                                  channelId: makeRoomIdentifier(room.roomId),
-                                  threadParentId: isThread ? id : undefined,
-                                  eventId: getIdForMatrixEvent(events[0]),
-                                  eventOriginServerTs: events[0].getTs(),
-                                  isUnread: true,
-                                  markedUnreadAtTs: Date.now(),
-                                  markedReadAtTs: 0,
-                                  mentions: 0,
-                              }
-                        if (!entry.isUnread) {
-                            entry = {
-                                ...entry,
-                                eventId: getIdForMatrixEvent(events[0]),
-                                isUnread: true,
-                                markedUnreadAtTs: Date.now(),
-                                mentions: mentions,
-                            }
-                        } else if (mentions > 0) {
-                            entry = {
-                                ...entry,
-                                mentions: entry.mentions + mentions,
-                            }
-                        }
-                        updated[id] = entry
-                    })
+                            prev,
+                            0,
+                            userId,
+                            {},
+                            effectState,
+                            updated,
+                        )
+                        effectState = result.effectState
+                    }
                 }
             }
         })
         return { markers: updated }
     })
 
-    return {
-        encryptedEvents: {},
-    }
+    return effectState
 }
 
 function onRemoteRoomAccountDataEvent(event: MatrixEvent, _room: MatrixRoom, _prev?: MatrixEvent) {
@@ -259,7 +229,6 @@ function diffTimeline(
     }
     const roomIds = Object.keys(timelineState.timelines)
     roomIds.forEach((roomId) => {
-        const encryptedEvents: Record<string, number> = effectState.encryptedEvents[roomId] ?? {}
         const prevEvents = prev.timelines[roomId] ?? []
         const events = timelineState.timelines[roomId]
         if (prevEvents !== events) {
@@ -273,6 +242,8 @@ function diffTimeline(
                 startIndex += 1
             }
             // check the old encrypted events
+            const encryptedEvents: Record<string, number> =
+                effectState.encryptedEvents[roomId] ?? {}
             const eventIds = Object.keys(encryptedEvents)
             for (const eventId of eventIds) {
                 const index = encryptedEvents[eventId] + startIndex
@@ -290,7 +261,9 @@ function diffTimeline(
                             useFullyReadMarkerStore.setState((state) => {
                                 const id = event.threadParentId ?? roomId
                                 const oldMarker: FullyReadMarker | undefined = state.markers[id]
-                                if (oldMarker?.isUnread === true) {
+
+                                const mentions = isMentionedZTEvent(event) ? 1 : 0
+                                if (oldMarker?.isUnread === true && mentions === 0) {
                                     // same sate, noop
                                     return state
                                 }
@@ -298,8 +271,8 @@ function diffTimeline(
                                     id,
                                     event,
                                     oldMarker,
+                                    mentions,
                                 })
-                                const mentions = isMentionedZTEvent(event) ? 1 : 0
                                 const entry: FullyReadMarker = oldMarker
                                     ? {
                                           ...oldMarker,
@@ -324,73 +297,101 @@ function diffTimeline(
                         }
                     }
                 } else {
-                    throw new Error('oops, broken diff algo')
+                    // throw new Error('oops, broken diff algo')
                     console.error('aellis broken diff algo')
                 }
             }
-            // actual new events
-            const diff = events.length - prevEvents.length - startIndex
-            if (diff > 0) {
-                const newEventsSlice = events.slice(-1 * diff)
-                const newEvents = newEventsSlice.filter((event) =>
-                    isCountedAsUnreadZTEvent(event, userId),
+            useFullyReadMarkerStore.setState((state) => {
+                const updated = { ...state.markers }
+                const result = _diffTimeline(
+                    roomId,
+                    events,
+                    prevEvents,
+                    startIndex,
+                    userId,
+                    encryptedEvents,
+                    effectState,
+                    updated,
                 )
-                if (newEvents.length > 0) {
-                    const eventsMap = newEvents.reduce((acc, event) => {
-                        const parentId = event.threadParentId ?? roomId
-                        acc[parentId] = [...(acc[parentId] ?? []), event]
-                        return acc
-                    }, {} as Record<string, TimelineEvent[]>)
-                    useFullyReadMarkerStore.setState((state) => {
-                        const updated = { ...state.markers }
-                        Object.entries(eventsMap).forEach(([id, events]) => {
-                            const isThread = id !== roomId
-                            const mentions = events.filter(isMentionedZTEvent).length
-                            console.log('new unread events', { id, roomId, events })
-                            let entry: FullyReadMarker = updated[id]
-                                ? updated[id]
-                                : {
-                                      channelId: makeRoomIdentifier(roomId),
-                                      threadParentId: isThread ? id : undefined,
-                                      eventId: events[0].eventId,
-                                      eventOriginServerTs: events[0].originServerTs,
-                                      isUnread: true,
-                                      markedUnreadAtTs: Date.now(),
-                                      markedReadAtTs: 0,
-                                      mentions: 0,
-                                  }
-                            if (!entry.isUnread) {
-                                entry = {
-                                    ...entry,
-                                    eventId: events[0].eventId,
-                                    isUnread: true,
-                                    markedUnreadAtTs: Date.now(),
-                                    mentions,
-                                }
-                            } else if (mentions > 0) {
-                                entry = {
-                                    ...entry,
-                                    mentions: entry.mentions + mentions,
-                                }
-                            }
-                            updated[id] = entry
-                        })
-                        return { markers: updated }
-                    })
+                effectState = result.effectState
+                if (result.didUpdate) {
+                    return { markers: updated }
+                } else {
+                    return state
                 }
-
-                // check for encrypted events that we need to check for later
-                const newEventsStartIndex = events.length - diff
-                for (let i = newEventsStartIndex; i < events.length; i++) {
-                    const event = events[i]
-                    if (isEncryptedZTEvent(event)) {
-                        encryptedEvents[event.eventId] = i
-                    }
-                }
-
-                effectState.encryptedEvents[roomId] = encryptedEvents
-            }
+            })
         }
     })
     return effectState
+}
+
+function _diffTimeline(
+    roomId: string,
+    events: TimelineEvent[],
+    prevEvents: TimelineEvent[],
+    startIndex: number,
+    userId: string,
+    encryptedEvents: Record<string, number>,
+    effectState: LocalEffectState,
+    updated: { [key: string]: FullyReadMarker },
+): { effectState: LocalEffectState; didUpdate: boolean } {
+    // actual new events
+    let didUpdate = false
+    const diff = events.length - prevEvents.length - startIndex
+    if (diff > 0) {
+        const newEventsSlice = events.slice(-1 * diff)
+        const newEvents = newEventsSlice.filter((event) => isCountedAsUnreadZTEvent(event, userId))
+        if (newEvents.length > 0) {
+            didUpdate = true
+            const eventsMap = newEvents.reduce((acc, event) => {
+                const parentId = event.threadParentId ?? roomId
+                acc[parentId] = [...(acc[parentId] ?? []), event]
+                return acc
+            }, {} as Record<string, TimelineEvent[]>)
+
+            Object.entries(eventsMap).forEach(([id, events]) => {
+                const isThread = id !== roomId
+                const mentions = events.filter(isMentionedZTEvent).length
+                let entry: FullyReadMarker = updated[id]
+                    ? updated[id]
+                    : {
+                          channelId: makeRoomIdentifier(roomId),
+                          threadParentId: isThread ? id : undefined,
+                          eventId: events[0].eventId,
+                          eventOriginServerTs: events[0].originServerTs,
+                          isUnread: true,
+                          markedUnreadAtTs: Date.now(),
+                          markedReadAtTs: 0,
+                          mentions: 0,
+                      }
+                if (!entry.isUnread) {
+                    entry = {
+                        ...entry,
+                        eventId: events[0].eventId,
+                        isUnread: true,
+                        markedUnreadAtTs: Date.now(),
+                        mentions,
+                    }
+                } else if (mentions > 0) {
+                    entry = {
+                        ...entry,
+                        mentions: entry.mentions + mentions,
+                    }
+                }
+                updated[id] = entry
+            })
+        }
+
+        // check for encrypted events that we need to check for later
+        const newEventsStartIndex = events.length - diff
+        for (let i = newEventsStartIndex; i < events.length; i++) {
+            const event = events[i]
+            if (isEncryptedZTEvent(event)) {
+                encryptedEvents[event.eventId] = i
+            }
+        }
+
+        effectState.encryptedEvents[roomId] = encryptedEvents
+    }
+    return { effectState, didUpdate }
 }

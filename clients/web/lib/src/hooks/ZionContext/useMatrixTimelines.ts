@@ -647,7 +647,7 @@ function toTimelineEvents(room: MatrixRoom, userId: string) {
         room
             .getLiveTimeline()
             .getEvents()
-            ?.filter((m) => !m.isRelation(RelationType.Replace)) ?? []
+            ?.filter((m) => isZTimelineEvent(m)) ?? []
     ).map((x) => toEvent(x, userId))
 }
 
@@ -986,4 +986,8 @@ function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string
     return content?.kind === ZTEvent.RoomMessage
         ? content.mentions.findIndex((x) => x.userId === userId) >= 0
         : false
+}
+
+export function isZTimelineEvent(event: MatrixEvent): boolean {
+    return !event.isRelation(RelationType.Replace)
 }
