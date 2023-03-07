@@ -7,6 +7,7 @@ import { Box, Button, Heading, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { env } from 'utils'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
+import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { LiquidContainer } from './SpacesIndex'
 
 export const NoJoinedSpacesFallback = () => {
@@ -75,6 +76,9 @@ function AlphaLanding() {
                         >
                             Join alpha
                         </Button>
+                    </Box>
+                    <Box horizontal centerContent>
+                        <SentryReportModal />
                     </Box>
                 </Stack>
             </Stack>

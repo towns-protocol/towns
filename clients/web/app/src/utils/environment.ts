@@ -35,6 +35,7 @@ const envSchema = z.object({
     VITE_ALCHEMY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
     VITE_APP_RELEASE_VERSION: z.string().optional(),
     VITE_SENTRY_DSN: z.string().optional(),
+    VITE_SENTRY_BEARER_TOKEN: z.string().optional(),
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
 })
 

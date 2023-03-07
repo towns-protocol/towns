@@ -24,6 +24,9 @@ export const buttonStyle = recipe({
     },
     variants: {
         rounded: {
+            sm: {
+                borderRadius: vars.borderRadius.sm,
+            },
             md: {
                 borderRadius: vars.borderRadius.md,
             },

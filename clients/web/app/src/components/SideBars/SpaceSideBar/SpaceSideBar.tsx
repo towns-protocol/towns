@@ -30,6 +30,10 @@ import { SpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
+import {
+    SentryErrorReportForm,
+    SentryReportModal,
+} from '@components/SentryErrorReport/SentryErrorReport'
 import { SideBar } from '../_SideBar'
 import { buttonText, buttonTextParent, copySpaceLink, spaceIconContainer } from './SpaceSideBar.css'
 
@@ -80,62 +84,72 @@ export const SpaceSideBar = (props: Props) => {
     )
 
     return (
-        <SideBar data-testid="space-sidebar">
-            <SpaceSideBarHeader space={space} onSettings={onSettings} />
-            <Stack paddingY="md">
-                {membership === Membership.Join && (
-                    <>
-                        {isOwner && !dismissedGettingStartedMap[space.id.networkId] && (
-                            <Box className={buttonTextParent}>
-                                <ActionNavItem
-                                    icon="wand"
-                                    id="getting-started"
-                                    label="Getting Started"
-                                    link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
-                                >
-                                    <Button className={buttonText} onClick={onRemoveGettingStarted}>
-                                        <Icon type="close" />
-                                    </Button>
-                                </ActionNavItem>
-                            </Box>
-                        )}
+        <>
+            <SideBar data-testid="space-sidebar" height="100vh">
+                <SpaceSideBarHeader space={space} onSettings={onSettings} />
+                <Stack paddingY="md">
+                    {membership === Membership.Join && (
+                        <>
+                            {isOwner && !dismissedGettingStartedMap[space.id.networkId] && (
+                                <Box className={buttonTextParent}>
+                                    <ActionNavItem
+                                        icon="wand"
+                                        id="getting-started"
+                                        label="Getting Started"
+                                        link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
+                                    >
+                                        <Button
+                                            className={buttonText}
+                                            onClick={onRemoveGettingStarted}
+                                        >
+                                            <Icon type="close" />
+                                        </Button>
+                                    </ActionNavItem>
+                                </Box>
+                            )}
 
-                        <ActionNavItem
-                            highlight={unreadThreadsCount > 0}
-                            icon="threads"
-                            link={`/spaces/${space.id.slug}/threads`}
-                            id="threads"
-                            label="Threads"
-                            badge={
-                                unreadThreadMentions > 0 && <Badge value={unreadThreadMentions} />
-                            }
-                        />
-                        <ActionNavItem
-                            icon="at"
-                            id="mentions"
-                            label="Mentions"
-                            link={`/spaces/${space.id.slug}/mentions`}
-                        />
+                            <ActionNavItem
+                                highlight={unreadThreadsCount > 0}
+                                icon="threads"
+                                link={`/spaces/${space.id.slug}/threads`}
+                                id="threads"
+                                label="Threads"
+                                badge={
+                                    unreadThreadMentions > 0 && (
+                                        <Badge value={unreadThreadMentions} />
+                                    )
+                                }
+                            />
+                            <ActionNavItem
+                                icon="at"
+                                id="mentions"
+                                label="Mentions"
+                                link={`/spaces/${space.id.slug}/mentions`}
+                            />
+                        </>
+                    )}
+                    <>
+                        <ChannelList space={space} mentions={mentions} />
+                        {modal && (
+                            <ModalContainer onHide={onHide}>
+                                <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
+                            </ModalContainer>
+                        )}
+                        {canCreateChannel && (
+                            <ActionNavItem
+                                icon="plus"
+                                id="newChannel"
+                                label="Create channel"
+                                onClick={onShow}
+                            />
+                        )}
                     </>
-                )}
-                <>
-                    <ChannelList space={space} mentions={mentions} />
-                    {modal && (
-                        <ModalContainer onHide={onHide}>
-                            <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
-                        </ModalContainer>
-                    )}
-                    {canCreateChannel && (
-                        <ActionNavItem
-                            icon="plus"
-                            id="newChannel"
-                            label="Create channel"
-                            onClick={onShow}
-                        />
-                    )}
-                </>
-            </Stack>
-        </SideBar>
+                </Stack>
+            </SideBar>
+            <Box width="100%" position="absolute" bottom="none" background="level1" padding="sm">
+                <SentryReportModal />
+            </Box>
+        </>
     )
 }
 
