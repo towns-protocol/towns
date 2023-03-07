@@ -1,6 +1,13 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { BytesLike, keccak256 } from 'ethers/lib/utils'
-import { Channel, EntitlementModuleType, Permission, RoleDetails } from './ContractTypes'
+import {
+    ChannelDetails,
+    ChannelMetadata,
+    EntitlementModuleType,
+    Permission,
+    RoleDetails,
+    RoleEntitlements,
+} from './ContractTypes'
 import { EventsContractInfo, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
@@ -200,27 +207,61 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.multicall(encodedCallData, { gasLimit: 100000 })
     }
 
+    public async getChannelDetails(
+        spaceId: string,
+        channelNetworkId: string,
+    ): Promise<ChannelDetails | null> {
+        const space = await this.getSpace(spaceId)
+        if (!space?.read) {
+            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        }
+        // get most of the channel details except the roles which
+        // require a separate call to get each role's details
+        const [entitlementShims, metadata, channelRoles] = await Promise.all([
+            this.createEntitlementShims(space),
+            this.getChannelMetadata(space, channelNetworkId),
+            this.getRolesByChannel(spaceId, channelNetworkId),
+        ])
+        // found the channel's metadata. now get the rest of the details
+        if (metadata) {
+            // get details for each role
+            const getRoleEntitlementsAsync: Promise<RoleEntitlements>[] = []
+            for (const role of channelRoles) {
+                getRoleEntitlementsAsync.push(
+                    this.getRoleEntitlements(space, entitlementShims, role.roleId.toNumber()),
+                )
+            }
+            const roles = await Promise.all(getRoleEntitlementsAsync)
+            return {
+                spaceNetworkId: spaceId,
+                channelNetworkId: metadata.channelNetworkId,
+                name: metadata.name,
+                disabled: metadata.disabled,
+                roles,
+            }
+        }
+        // did not find the channel
+        return null
+    }
+
     public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
         const space = await this.getSpace(spaceId)
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         const entitlementShims = await this.createEntitlementShims(space)
-        const [role, permissions, entitlementDetails, channels] = await Promise.all([
-            space.read.getRoleById(roleId),
-            space.getPermissionsByRoleId(roleId),
-            this.getEntitlementDetails(space, entitlementShims, roleId),
-            this.getChannelsWithRole(space, entitlementShims, roleId),
+        const [roleEntitlements, channels] = await Promise.all([
+            this.getRoleEntitlements(space, entitlementShims, roleId),
+            this.getChannelsWithRole(space, spaceId, entitlementShims, roleId),
         ])
-        if (role && role.roleId.toNumber() !== 0) {
+        if (roleEntitlements && roleEntitlements.roleId !== 0) {
             // found the role. return the details
-            const roleName: string | undefined = role?.name
             return {
                 id: roleId,
-                name: roleName,
-                permissions: permissions,
-                tokens: entitlementDetails.tokens,
-                users: entitlementDetails.users,
+                name: roleEntitlements.name,
+                permissions: roleEntitlements.permissions,
+                tokens: roleEntitlements.tokens,
+                users: roleEntitlements.users,
                 channels,
             }
         }
@@ -411,7 +452,10 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const encodedCallData: BytesLike[] = []
         // update any channel name changes
-        const channelDetails = await this.getChannelDetails(space, params.channelNetworkId)
+        const channelDetails = await this.getChannelDetails(
+            params.spaceNetworkId,
+            params.channelNetworkId,
+        )
         if (!channelDetails) {
             // cannot find this channel
             throw new Error(
@@ -825,9 +869,10 @@ export class SpaceDapp implements ISpaceDapp {
 
     private async getChannelsWithRole(
         space: SpaceShim,
+        spaceNetworkId: string,
         entitlementShims: EntitlementShims,
         roleId: number,
-    ): Promise<Channel[]> {
+    ): Promise<ChannelMetadata[]> {
         const uniqueChannelIds = new Set<string>()
         // get all the channels from the space
         const allChannels = await space.getChannels()
@@ -853,13 +898,13 @@ export class SpaceDapp implements ISpaceDapp {
             }
         }
         // get details for each channel
-        const channelPromises: Promise<Channel | undefined>[] = []
+        const channelPromises: Promise<ChannelMetadata | null>[] = []
         for (const c of uniqueChannelIds.values()) {
-            channelPromises.push(this.getChannelDetails(space, c))
+            channelPromises.push(this.getChannelMetadata(space, c))
         }
         const channelDetails = await Promise.all(channelPromises)
         // return only channels with details
-        return channelDetails.filter((c) => c !== undefined) as Channel[]
+        return channelDetails.filter((c) => c !== undefined) as ChannelMetadata[]
     }
 
     private isRoleIdInArray(roleIds: BigNumber[], roleId: number): boolean {
@@ -871,10 +916,10 @@ export class SpaceDapp implements ISpaceDapp {
         return false
     }
 
-    private async getChannelDetails(
+    private async getChannelMetadata(
         space: SpaceShim,
         channelNetworkId: string,
-    ): Promise<Channel | undefined> {
+    ): Promise<ChannelMetadata | null> {
         const channelHash = keccak256(toUtf8Bytes(channelNetworkId))
         const channel = await space.read?.channelsByHash(channelHash)
         if (channel) {
@@ -884,7 +929,7 @@ export class SpaceDapp implements ISpaceDapp {
                 disabled: channel.disabled,
             }
         }
-        return undefined
+        return null
     }
 
     private async getUniqueRolesByChannel(
@@ -942,6 +987,26 @@ export class SpaceDapp implements ISpaceDapp {
             }
         }
         return roles
+    }
+
+    private async getRoleEntitlements(
+        space: SpaceShim,
+        entitlementShims: EntitlementShims,
+        roleId: number,
+    ): Promise<RoleEntitlements> {
+        const [roleMetadata, permissions, entitlementDetails] = await Promise.all([
+            space.read.getRoleById(roleId),
+            space.getPermissionsByRoleId(roleId),
+            this.getEntitlementDetails(space, entitlementShims, roleId),
+        ])
+        return {
+            // make sure to return the roleId value from metadata because the role may not exist
+            roleId: roleMetadata.roleId.toNumber(),
+            name: roleMetadata.name,
+            permissions,
+            tokens: entitlementDetails.tokens,
+            users: entitlementDetails.users,
+        }
     }
 
     private async encodeUpdateChannelRoles(

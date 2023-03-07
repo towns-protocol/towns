@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 
 import { QueryKeyRoles } from './query-keys'
 import { RoleDetails } from '../client/web3/ContractTypes'
@@ -11,7 +11,6 @@ import { useZionContext } from '../components/ZionContextProvider'
 
 export function useRoleDetails(spaceId: string, roleId: number) {
     const { client } = useZionContext()
-    const queryClient = useQueryClient()
     const isEnabled = spaceId.length > 0 && roleId > 0
 
     const getRole = useCallback(
@@ -39,15 +38,6 @@ export function useRoleDetails(spaceId: string, roleId: number) {
         {
             // query will not execute until the flag is true.
             enabled: isEnabled,
-            onError: () => {
-                // on error, remove the query from the cache to force an update.
-                queryClient.removeQueries([
-                    QueryKeyRoles.BySpaceId,
-                    spaceId,
-                    QueryKeyRoles.ByRoleId,
-                    roleId,
-                ])
-            },
         },
     )
 
@@ -60,7 +50,6 @@ export function useRoleDetails(spaceId: string, roleId: number) {
 
 export function useRoleDetailsByChannel(spaceId: string, channelId: string, roleId: number) {
     const { client } = useZionContext()
-    const queryClient = useQueryClient()
     const isEnabled = spaceId.length > 0 && roleId > 0 && channelId.length > 0
 
     const getRole = useCallback(
@@ -95,17 +84,6 @@ export function useRoleDetailsByChannel(spaceId: string, channelId: string, role
         {
             // query will not execute until the flag is true.
             enabled: isEnabled,
-            onError: () => {
-                // on error, remove the query from the cache to force an update.
-                queryClient.removeQueries([
-                    QueryKeyRoles.BySpaceId,
-                    spaceId,
-                    QueryKeyRoles.ByChannelId,
-                    channelId,
-                    QueryKeyRoles.ByRoleId,
-                    roleId,
-                ])
-            },
         },
     )
 

@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 
-import { Channel, Permission } from '../ContractTypes'
+import { ChannelMetadata, Permission } from '../ContractTypes'
 import {
     Space as GoerliContract,
     SpaceInterface as GoerliInterface,
@@ -21,8 +21,8 @@ export class SpaceShim extends BaseContractShim<
     GoerliContract,
     GoerliInterface
 > {
-    public async getChannels(): Promise<Channel[]> {
-        const channels: Channel[] = []
+    public async getChannels(): Promise<ChannelMetadata[]> {
+        const channels: ChannelMetadata[] = []
         const channelHashes = await this.read.getChannels()
         const channelPromises: Promise<LocalhostDataTypes.ChannelStruct>[] = []
         for (const hash of channelHashes) {

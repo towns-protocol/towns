@@ -1,12 +1,13 @@
-import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
-import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
+import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
+import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
@@ -65,7 +66,10 @@ describe('useRoleDetails', () => {
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
+        await waitFor(
+            () => expect(spaceElement).toHaveTextContent(spaceName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
 
         /* Assert */
         // verify the role name, permissions, token entitlements for the space.

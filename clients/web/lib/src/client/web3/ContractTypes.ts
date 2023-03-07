@@ -17,22 +17,54 @@ export enum Permission {
     Owner = 'Owner',
 }
 
+/**
+ * Supported entitlement modules
+ */
 export enum EntitlementModuleType {
     TokenEntitlement = 'TokenEntitlement',
     UserEntitlement = 'UserEntitlement',
 }
 
+/**
+ * Role details from multiple contract sources
+ */
 export interface RoleDetails {
     id: number
     name: string
     permissions: Permission[]
     tokens: TokenDataTypes.ExternalTokenStruct[]
     users: string[]
-    channels: Channel[]
+    channels: ChannelMetadata[]
 }
 
-export interface Channel {
+/**
+ * Basic channel metadata from the space contract.
+ */
+export interface ChannelMetadata {
     name: string
     channelNetworkId: string
     disabled: boolean
+}
+
+/**
+ * Channel details from multiple contract sources
+ */
+export interface ChannelDetails {
+    spaceNetworkId: string
+    channelNetworkId: string
+    name: string
+    disabled: boolean
+    roles: RoleEntitlements[]
+    description?: string
+}
+
+/**
+ * Role details for a channel from multiple contract sources
+ */
+export interface RoleEntitlements {
+    roleId: number
+    name: string
+    permissions: Permission[]
+    tokens: TokenDataTypes.ExternalTokenStruct[]
+    users: string[]
 }

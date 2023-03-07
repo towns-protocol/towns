@@ -1,5 +1,5 @@
 import { ContractTransaction, ethers } from 'ethers'
-import { Permission, RoleDetails } from './ContractTypes'
+import { ChannelDetails, Permission, RoleDetails } from './ContractTypes'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
@@ -54,6 +54,7 @@ export interface ISpaceDapp {
         users: string[],
     ): Promise<ContractTransaction>
     deleteRole(spaceId: string, roleId: number): Promise<ContractTransaction>
+    getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
     getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
     getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
