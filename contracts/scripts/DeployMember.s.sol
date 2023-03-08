@@ -42,9 +42,10 @@ contract DeployMember is ScriptUtils {
     member.privateMint{value: NFT_PRICE}(fifth, 1, m.getProof(data, 4));
     vm.stopBroadcast();
 
-    _writeJson();
-
-    console.log("Deploying Council Member NFT: ", address(member));
+    if (!_isTesting()) {
+      _writeJson();
+      console.log("Deploying Council Member NFT: ", address(member));
+    }
   }
 
   function _writeJson() internal {

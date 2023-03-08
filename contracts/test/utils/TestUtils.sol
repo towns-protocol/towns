@@ -13,6 +13,7 @@ contract TestUtils is Test {
   }
 
   constructor() {
+    vm.setEnv("TESTING", "true");
     _nonce = uint256(
       keccak256(
         abi.encode(

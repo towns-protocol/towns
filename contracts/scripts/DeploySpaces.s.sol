@@ -11,13 +11,19 @@ import {Permissions} from "contracts/src/libraries/Permissions.sol";
 /* Contracts */
 import {Space} from "contracts/src/core/spaces/Space.sol";
 import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
+import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
+import {DeployPioneer} from "contracts/scripts/DeployPioneer.s.sol";
+import {DeploySpaceOwner} from "contracts/scripts/DeploySpaceOwner.s.sol";
+
 contract DeploySpaces is ScriptUtils {
+  DeployPioneer internal deployPioneer;
+  DeploySpaceOwner internal deploySpaceOwner;
+
   SpaceFactory internal spaceFactory;
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
@@ -26,12 +32,18 @@ contract DeploySpaces is ScriptUtils {
   Pioneer internal pioneer;
   string[] public initialPermissions;
 
-  function run() external {
+  function run() public {
+    deployPioneer = new DeployPioneer();
+    deployPioneer.run();
+    pioneer = deployPioneer.pioneer();
+
+    deploySpaceOwner = new DeploySpaceOwner();
+    deploySpaceOwner.run();
+    spaceToken = deploySpaceOwner.spaceToken();
+
     _createInitialOwnerPermissions();
 
     vm.startBroadcast();
-    pioneer = new Pioneer("Pioneer", "PIONEER", "");
-    spaceToken = new SpaceOwner("Space Owner", "SPACE");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();
@@ -59,8 +71,10 @@ contract DeploySpaces is ScriptUtils {
 
     spaceFactory = SpaceFactory(spaceFactoryAddress);
 
-    _writeJson();
-    _logAddresses();
+    if (!_isTesting()) {
+      _writeJson();
+      _logAddresses();
+    }
   }
 
   function _logAddresses() internal view {

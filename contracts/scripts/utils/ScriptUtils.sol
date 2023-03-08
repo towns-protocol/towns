@@ -5,6 +5,10 @@ pragma solidity ^0.8.0;
 import "forge-std/Script.sol";
 
 contract ScriptUtils is Script {
+  function _isTesting() internal returns (bool) {
+    return block.chainid == 31337 && vm.envOr("TESTING", false) == true;
+  }
+
   function _readInput(
     string memory input
   ) internal view returns (string memory) {
