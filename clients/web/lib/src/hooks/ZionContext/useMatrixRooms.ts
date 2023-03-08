@@ -24,9 +24,15 @@ export function useMatrixRooms(client?: MatrixClient): Record<string, Room | und
         }
 
         // helpers
-        const updateState = (roomId: string) => {
+        const updateState = (roomId: string, event?: MatrixEvent) => {
             const matrixRoom = client.getRoom(roomId)
             const newRoom = matrixRoom ? toZionRoom(matrixRoom) : undefined
+            const eventType = event?.getType() ?? EventType.Dummy
+            if (newRoom && eventType === EventType.RoomTopic) {
+                // MatrixRoom does not have a topic field.
+                // Explicitly update the topic if we received an m.room.topic event
+                newRoom.topic = event?.getContent().topic as string
+            }
             setRooms((prev) =>
                 isEqual(prev[roomId], newRoom) ? prev : { ...prev, [roomId]: newRoom },
             )
@@ -77,9 +83,10 @@ export function useMatrixRooms(client?: MatrixClient): Record<string, Room | und
             if (
                 eventType === EventType.RoomCreate ||
                 eventType === EventType.RoomName ||
-                eventType === EventType.RoomAvatar
+                eventType === EventType.RoomAvatar ||
+                eventType === EventType.RoomTopic
             ) {
-                updateState(eventRoomId)
+                updateState(eventRoomId, event)
             } else if (
                 eventType === EventType.RoomMember &&
                 event.getStateKey() === client.getUserId()

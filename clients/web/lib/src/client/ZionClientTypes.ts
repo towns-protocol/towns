@@ -87,7 +87,9 @@ export interface ChannelTransactionContext extends TransactionContext<RoomIdenti
     parentSpaceId: string | undefined
 }
 
-export type ChannelUpdateTransactionContext = TransactionContext<UpdateChannelInfo>
+export interface ChannelUpdateTransactionContext extends TransactionContext<UpdateChannelInfo> {
+    hasOffChainUpdate: boolean // true if this has an off chain update.
+}
 
 export interface RoleTransactionContext extends TransactionContext<RoleIdentifier> {
     spaceNetworkId: string | undefined

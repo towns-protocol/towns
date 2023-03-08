@@ -4,12 +4,13 @@ import {
     UpdateChannelInfo,
 } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useMemo } from 'react'
+import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
+import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -21,7 +22,6 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
-import { TestConstants } from './helpers/TestConstants'
 
 /**
  * This test suite tests the useRoles hook.
@@ -32,8 +32,10 @@ describe('useUpdateChannelTransaction', () => {
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
         const spaceRoleName = 'test_role'
-        const channelName = 'channel_t'
-        const updatedChannelName = 'updated_channel_t'
+        const channelName = 'channel_name'
+        const channelTopic = 'channel_topic'
+        const updatedChannelName = 'updated_channel_name'
+        const updatedChannelTopic = 'updated_channel_topic'
         const permissions = [Permission.Read, Permission.Write]
         const chainId = (await provider.getNetwork()).chainId
 
@@ -54,7 +56,9 @@ describe('useUpdateChannelTransaction', () => {
                         permissions={permissions}
                         nftAddress={memberNftAddress}
                         channelName={channelName}
+                        channelTopic={channelTopic}
                         updatedChannelName={updatedChannelName}
+                        updatedChannelTopic={updatedChannelTopic}
                     />
                 </>
             </ZionTestApp>,
@@ -110,6 +114,10 @@ describe('useUpdateChannelTransaction', () => {
         await waitFor(() =>
             expect(channelElement).toHaveTextContent(`channelName:${updatedChannelName}`),
         )
+        // verify the channel topic has changed
+        await waitFor(() =>
+            expect(channelElement).toHaveTextContent(`channelTopic:${updatedChannelTopic}`),
+        )
     }) // end test
 }) // end describe
 
@@ -118,9 +126,11 @@ function TestComponent(args: {
     spaceName: string
     spaceRoleName: string
     channelName: string
+    channelTopic: string
     permissions: Permission[]
     nftAddress: string
     updatedChannelName: string
+    updatedChannelTopic: string
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
     const {
@@ -182,12 +192,13 @@ function TestComponent(args: {
                     visibility: RoomVisibility.Public,
                     parentSpaceId: spaceId,
                     roleIds,
+                    topic: args.channelTopic,
                 }
                 await createChannelTransaction(createRoomInfo)
             }
         }
         void handleClick()
-    }, [spaceId, args.channelName, roleIds, createChannelTransaction])
+    }, [spaceId, args.channelName, args.channelTopic, roleIds, createChannelTransaction])
     // handle click to update a role
     const onClickUpdateChannel = useCallback(() => {
         const handleClick = async () => {
@@ -197,6 +208,7 @@ function TestComponent(args: {
                     channelId,
                     updatedChannelName: args.updatedChannelName,
                     updatedRoleIds: roleIds,
+                    updatedChannelTopic: args.updatedChannelTopic,
                 }
                 await updateChannelTransaction(updateChannelInfo)
                 console.log('updateChannelTransaction called')
@@ -205,7 +217,14 @@ function TestComponent(args: {
             }
         }
         void handleClick()
-    }, [args.updatedChannelName, channelId, roleIds, spaceId, updateChannelTransaction])
+    }, [
+        args.updatedChannelName,
+        args.updatedChannelTopic,
+        channelId,
+        roleIds,
+        spaceId,
+        updateChannelTransaction,
+    ])
     // the view
     return (
         <>
@@ -248,12 +267,20 @@ function SpacesComponent(): JSX.Element {
 
 function ChannelComponent(): JSX.Element {
     const { channel } = useChannelData()
+    const channelTopic = useMemo(() => {
+        return channel?.topic ?? 'undefined'
+    }, [channel?.topic])
     return (
         <div data-testid="channel">
             {channel && (
                 <ChannelContextProvider channelId={channel.id}>
                     <>
-                        <div key={channel.id.networkId}>channelName:{channel.label}</div>{' '}
+                        <div key={`${channel.id.networkId}_${channel.label}`}>
+                            channelName:{channel.label}
+                        </div>{' '}
+                        <div key={`${channel.id.networkId}_${channelTopic}`}>
+                            channelTopic:{channelTopic}
+                        </div>{' '}
                     </>
                 </ChannelContextProvider>
             )}

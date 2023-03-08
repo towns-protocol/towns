@@ -160,6 +160,7 @@ function formatChannel(spaceChild: SpaceChild): Channel {
         label: spaceChild.name ?? '',
         private: !spaceChild.worldReadable,
         highlight: false,
+        topic: spaceChild.topic,
     }
 }
 

@@ -25,6 +25,7 @@ export async function createMatrixChannel(
         is_direct: false,
         initial_state: makeInitialState(homeServerUrl, createInfo),
         room_version: '10',
+        topic: createInfo.topic,
         power_level_content_override: {
             redact: 0, // permission to redact messages is enforced on the server through entitlement checks
         },

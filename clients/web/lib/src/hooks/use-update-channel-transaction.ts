@@ -42,6 +42,7 @@ export function useUpdateChannelTransaction() {
                     transaction: undefined,
                     receipt: undefined,
                     data: undefined,
+                    hasOffChainUpdate: updateChannelInfo.updatedChannelTopic !== undefined,
                 }
                 setTransactionContext(loading)
                 const txContext = await updateChannelTransaction(updateChannelInfo)

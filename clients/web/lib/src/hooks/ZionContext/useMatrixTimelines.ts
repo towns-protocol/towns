@@ -465,6 +465,16 @@ function toZionContent(
                     name: content.name as string,
                 },
             }
+
+        case MatrixEventType.RoomTopic: {
+            return {
+                content: {
+                    kind: ZTEvent.RoomTopic,
+                    topic: content.topic as string,
+                },
+            }
+        }
+
         case MatrixEventType.RoomMember: {
             const memberId = event.getStateKey()
             if (!memberId) {
@@ -626,6 +636,8 @@ function getFallbackContent(
             return `${senderDisplayName}: ${content.body}`
         case ZTEvent.RoomName:
             return `newValue: ${content.name}`
+        case ZTEvent.RoomTopic:
+            return `newValue: ${content.topic}`
         case ZTEvent.RoomRedaction:
             return `${senderDisplayName}: ~Redacted~`
         case ZTEvent.RoomPowerLevels:

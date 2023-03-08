@@ -17,6 +17,7 @@ describe('channel settings', () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const channelName = 'test_channel'
+        const channelTopic = 'test topic'
         if (!bob.walletAddress) {
             throw new Error('bob.walletAddress is undefined')
         }
@@ -64,6 +65,7 @@ describe('channel settings', () => {
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
             roleIds: [memberRoleId, moderatorRoleId],
+            topic: channelTopic,
         })
         if (!channelId) {
             throw new Error('channelId is undefined')

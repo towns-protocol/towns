@@ -35,6 +35,7 @@ export interface Channel {
     label: string
     private?: boolean
     highlight?: boolean
+    topic?: string
 }
 
 export interface ChannelGroup {
@@ -87,6 +88,7 @@ export interface Room {
     membersMap: { [userId: string]: RoomMember }
     inviter?: string
     isSpaceRoom: boolean
+    topic?: string
 }
 
 export interface Rooms {
@@ -126,13 +128,15 @@ export interface CreateChannelInfo {
     historyVisibility?: HistoryVisibility
     roleIds: number[]
     disableEncryption?: boolean
+    topic?: string
 }
 
 export interface UpdateChannelInfo {
     parentSpaceId: RoomIdentifier
     channelId: RoomIdentifier
-    updatedChannelName: string
-    updatedRoleIds: number[]
+    updatedChannelName?: string
+    updatedRoleIds?: number[]
+    updatedChannelTopic?: string
 }
 
 /// use to send different types of messages, e.g. text, emoji, image, etc.

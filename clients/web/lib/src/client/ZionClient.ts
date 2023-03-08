@@ -24,6 +24,7 @@ import {
     UserEvent,
     createClient,
     IndexedDBCryptoStore,
+    ISendEventResponse,
 } from 'matrix-js-sdk'
 import { LocalStorageCryptoStore } from 'matrix-js-sdk/lib/crypto/store/localStorage-crypto-store'
 import {
@@ -694,16 +695,21 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async updateChannelTransaction(
         updateChannelInfo: UpdateChannelInfo,
     ): Promise<ChannelUpdateTransactionContext> {
+        const hasOffChainUpdate = !updateChannelInfo.updatedChannelTopic
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
-            transaction = await this.spaceDapp.updateChannel({
-                spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
-                channelNetworkId: updateChannelInfo.channelId.networkId,
-                channelName: updateChannelInfo.updatedChannelName,
-                roleIds: updateChannelInfo.updatedRoleIds,
-            })
-            console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
+            if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
+                transaction = await this.spaceDapp.updateChannel({
+                    spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
+                    channelNetworkId: updateChannelInfo.channelId.networkId,
+                    channelName: updateChannelInfo.updatedChannelName,
+                    roleIds: updateChannelInfo.updatedRoleIds,
+                })
+                console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
+            } else {
+                // this is a matrix/casablanca off chain state update
+            }
         } catch (err) {
             console.error('[updateChannelTransaction] error', err)
             error = await this.spaceDapp.parseSpaceError(
@@ -714,8 +720,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
         return {
             transaction,
+            hasOffChainUpdate,
             receipt: undefined,
-            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            status:
+                transaction || hasOffChainUpdate // should proceed either if it has a transaction, or an offchain update
+                    ? TransactionStatus.Pending
+                    : TransactionStatus.Failed,
             data: updateChannelInfo,
             error,
         }
@@ -729,13 +739,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         let error: Error | undefined = undefined
 
         try {
-            if (!context?.transaction) {
+            if (!context?.hasOffChainUpdate && !context?.transaction) {
+                // no off chain update, and no transaction. should not happen
                 throw new Error('[waitForUpdateChannelTransaction] transaction is undefined')
             }
-            transaction = context.transaction
-            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
-            if (receipt?.status === 0) {
-                await this.throwTransactionError(receipt)
+            if (context?.transaction) {
+                transaction = context.transaction
+                receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+                if (receipt?.status === 0) {
+                    await this.throwTransactionError(receipt)
+                }
             }
         } catch (err) {
             console.error('[waitForUpdateChannelTransaction] waitForTransaction error', err)
@@ -746,17 +759,19 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             }
         }
 
-        // Successfully updated the channel on-chain.
-        if (receipt?.status === 1) {
-            console.log('[waitForUpdateChannelTransaction] success')
+        // Successfully updated the channel on-chain. Or this is a matrix/casablanca off chain update
+        const doOffChainUpdate = receipt?.status === 1 || context?.hasOffChainUpdate
+        if (doOffChainUpdate) {
             // now update the channel name in the matrix room
             try {
                 if (!context?.data) {
                     throw new Error('[waitForUpdateChannelTransaction] context?.data is undefined')
                 }
                 await this.updateChannelRoom(context.data)
+                console.log('[waitForUpdateChannelTransaction] success')
                 return {
                     data: context.data,
+                    hasOffChainUpdate: context.hasOffChainUpdate,
                     status: TransactionStatus.Success,
                     transaction,
                     receipt,
@@ -775,6 +790,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         // got here without success
         return {
             data: context?.data,
+            hasOffChainUpdate: context?.hasOffChainUpdate ?? false,
             status: TransactionStatus.Failed,
             transaction,
             receipt,
@@ -785,14 +801,34 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async updateChannelRoom(updateChannelInfo: UpdateChannelInfo): Promise<void> {
         switch (updateChannelInfo.channelId.protocol) {
             case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
+                {
+                    const matrixUpdates: Promise<ISendEventResponse>[] = []
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
+                    // update the matrix room
+                    if (updateChannelInfo.updatedChannelName) {
+                        matrixUpdates.push(
+                            this.matrixClient.setRoomName(
+                                updateChannelInfo.channelId.networkId,
+                                updateChannelInfo.updatedChannelName,
+                            ),
+                        )
+                    }
+                    // update the channel topic
+                    if (updateChannelInfo.updatedChannelTopic) {
+                        matrixUpdates.push(
+                            this.matrixClient.setRoomTopic(
+                                updateChannelInfo.channelId.networkId,
+                                updateChannelInfo.updatedChannelTopic,
+                            ),
+                        )
+                    }
+                    // wait for any updates to complete
+                    if (matrixUpdates.length > 0) {
+                        await Promise.all(matrixUpdates)
+                    }
                 }
-                // update the matrix room
-                await this.matrixClient.setRoomName(
-                    updateChannelInfo.channelId.networkId,
-                    updateChannelInfo.updatedChannelName,
-                )
                 break
             case SpaceProtocol.Casablanca:
                 throw new Error('Casablanca not supported yet')

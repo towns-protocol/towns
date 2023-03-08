@@ -26,6 +26,7 @@ export enum ZTEvent {
     RoomName = 'm.room.name',
     RoomPowerLevels = 'm.room.power_levels',
     RoomRedaction = 'm.room.redaction',
+    RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
     BlockchainTransaction = 'blockchain.transaction',
@@ -46,6 +47,7 @@ export type TimelineEvent_OneOf =
     | RoomNameEvent
     | RoomRedactionEvent
     | RoomPowerLevelsEvent
+    | RoomTopicEvent
     | SpaceChildEvent
     | SpaceParentEvent
     | BlockchainTransactionEvent
@@ -126,6 +128,11 @@ export interface RoomMessageEvent {
 export interface RoomNameEvent {
     kind: ZTEvent.RoomName
     name: string
+}
+
+export interface RoomTopicEvent {
+    kind: ZTEvent.RoomTopic
+    topic: string
 }
 
 export interface RoomPowerLevelsEvent extends PowerLevels {

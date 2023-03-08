@@ -26,9 +26,10 @@ export function useChannelData(): ChannelData {
             label: room?.name ?? channelChild.label,
             private: channelChild.private,
             highlight: channelChild.highlight,
+            topic: room?.topic ?? channelChild.topic,
         }
         return channel
-    }, [channelGroup?.channels, channelId.slug, room?.name])
+    }, [channelGroup?.channels, channelId.slug, room?.name, room?.topic])
 
     return useMemo(() => {
         return {
