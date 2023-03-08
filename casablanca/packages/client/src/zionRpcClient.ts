@@ -57,6 +57,7 @@ export const makeZionRpcClient = (url?: string): ZionRpcClient => {
         const prev = ss[prop]
         ss[prop] = async (...a: any[]) => {
             //log('Calling', prop, ...a)
+            // @ts-ignore: TS2556
             return rpcClient.request('zion_' + prop, ...a)
         }
     })
