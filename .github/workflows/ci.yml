@@ -5,6 +5,7 @@ on:
             - main
             - 'ci/**'
     pull_request:
+    workflow_dispatch:  # Allow manual trigger in GitHub UI
 
 jobs:
     check:
