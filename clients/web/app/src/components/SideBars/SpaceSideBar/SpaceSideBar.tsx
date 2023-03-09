@@ -30,10 +30,7 @@ import { SpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
-import {
-    SentryErrorReportForm,
-    SentryReportModal,
-} from '@components/SentryErrorReport/SentryErrorReport'
+import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { SideBar } from '../_SideBar'
 import { buttonText, buttonTextParent, copySpaceLink, spaceIconContainer } from './SpaceSideBar.css'
 
