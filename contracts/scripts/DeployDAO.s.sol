@@ -10,7 +10,9 @@ import {CoreVoting} from "contracts/src/core/governance/base/CoreVoting.sol";
 import {DaoCoreVoting} from "contracts/src/core/governance/base/DaoCoreVoting.sol";
 
 // contracts
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
+import {DeployTowns} from "contracts/scripts/DeployTowns.s.sol";
+
 import {Timelock} from "council/features/Timelock.sol";
 import {Treasury} from "council/features/Treasury.sol";
 
@@ -28,7 +30,9 @@ import {SimpleProxy} from "contracts/src/misc/SimpleProxy.sol";
 import {CouncilVault} from "contracts/src/core/governance/vaults/CouncilVault.sol";
 import {NFTVault} from "contracts/src/core/governance/vaults/NFTVault.sol";
 
-contract DaoBaseSetup is TestUtils {
+import {console} from "forge-std/console.sol";
+
+contract DeployDAO is ScriptUtils {
   address public dao;
   address public council;
   address public timelock;
@@ -38,6 +42,7 @@ contract DaoBaseSetup is TestUtils {
   address towns;
   address member;
   address operator;
+  address owner;
 
   // vaults
   address councilVault;
@@ -49,13 +54,19 @@ contract DaoBaseSetup is TestUtils {
   address[] councilTargets;
   address[] membershipVaults;
 
-  constructor() {
-    address deployer = address(this);
+  function run() public {
+    // address deployer = address(this);
     address zero = address(0);
     address[] memory zeroArray = new address[](0);
 
+    uint256 deployerPrivateKey = _getPrivateKey();
+    address deployer = vm.addr(deployerPrivateKey);
+
+    vm.startBroadcast(deployerPrivateKey);
+
     towns = address(new Towns("Towns", "TOWNS"));
     member = address(new Member("Member", "MEMBER", "", ""));
+    owner = address(new SpaceOwner("SpaceOwner", "OWNER"));
     operator = address(new Operator());
 
     // deploy timelock
@@ -147,6 +158,11 @@ contract DaoBaseSetup is TestUtils {
 
     // council ownership
     Council(council).setOwner(address(timelock));
+
+    // set the space owner factory address to deployer
+    SpaceOwner(owner).setFactory(deployer);
+
+    vm.stopBroadcast();
 
     // targets and vaults
     councilTargets = new address[](1);

@@ -34,7 +34,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   constructor() {
     pioneer = new Pioneer("Pioneer", "PNR", "");
-    spaceToken = new SpaceOwner("Space Token", "SPACE");
+    spaceToken = new SpaceOwner("Space Owner", "SPACE");
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();

@@ -5,9 +5,9 @@ import {IVotingVault} from "council/interfaces/IVotingVault.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
 contract NFTVault is IVotingVault {
-  IERC721 public immutable token;
+  address public immutable token;
 
-  constructor(IERC721 _token) {
+  constructor(address _token) {
     token = _token;
   }
 
@@ -16,6 +16,6 @@ contract NFTVault is IVotingVault {
     uint256,
     bytes calldata
   ) public view override returns (uint256) {
-    return token.balanceOf(_user);
+    return IERC721(token).balanceOf(_user);
   }
 }

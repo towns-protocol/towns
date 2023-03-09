@@ -9,6 +9,13 @@ contract ScriptUtils is Script {
     return block.chainid == 31337 && vm.envOr("TESTING", false) == true;
   }
 
+  function _getPrivateKey() internal view returns (uint256) {
+    if (block.chainid == 31337) return vm.envUint("LOCAL_PRIVATE_KEY");
+    if (block.chainid == 1337) return vm.envUint("LOCAL_PRIVATE_KEY");
+    if (block.chainid == 5) return vm.envUint("GOERLI_PRIVATE_KEY");
+    else revert("No private key found");
+  }
+
   function _readInput(
     string memory input
   ) internal view returns (string memory) {

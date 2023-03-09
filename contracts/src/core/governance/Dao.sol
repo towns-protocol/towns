@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.17;
 
-import {CoreVoting} from "council/CoreVoting.sol";
+import {DaoCoreVoting} from "./base/DaoCoreVoting.sol";
 
-contract Dao is CoreVoting {
+contract Dao is DaoCoreVoting {
   struct ProposalInfo {
     uint256 proposalId;
     Proposal proposal;
   }
 
+  address[] public votingVaults;
+
   constructor(
     address _timelock,
     uint256 _baseQuorum,
-    uint256 _minVotingPower,
     address _gsc,
     address[] memory _votingVaults
-  ) CoreVoting(_timelock, _baseQuorum, _minVotingPower, _gsc, _votingVaults) {}
+  ) DaoCoreVoting(_timelock, _baseQuorum, _gsc, _votingVaults) {
+    votingVaults = _votingVaults;
+  }
 
   function getProposalById(
     uint256 _proposalId
@@ -32,5 +35,30 @@ contract Dao is CoreVoting {
     }
 
     return _proposals;
+  }
+
+  function changeVaultStatus(
+    address vault,
+    bool isValid
+  ) public override onlyOwner {
+    // make sure there is at least one voting vault
+    require(
+      isValid || votingVaults.length > 1,
+      "Dao: cannot remove last voting vault"
+    );
+
+    super.changeVaultStatus(vault, isValid);
+
+    if (isValid) {
+      votingVaults.push(vault);
+    } else {
+      for (uint256 i = 0; i < votingVaults.length; i++) {
+        if (votingVaults[i] == vault) {
+          votingVaults[i] = votingVaults[votingVaults.length - 1];
+          votingVaults.pop();
+          break;
+        }
+      }
+    }
   }
 }
