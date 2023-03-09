@@ -7,7 +7,6 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
@@ -32,7 +31,7 @@ describe('useUpdateRoleTransaction', () => {
         const permissions = [Permission.Read, Permission.Write]
         const moderatorRoleName = 'Moderator'
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
-        const moderatorTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const moderatorTokens: string[] = []
         const moderatorUsers = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
         const updatedModeratorUsers = [
             '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
@@ -131,11 +130,11 @@ function TestComponent(args: {
     councilNftAddress: string
     newRoleName: string
     newRolePermissions: Permission[]
-    newRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
+    newRoleTokens: string[]
     newRoleUsers: string[]
     updatedRoleName: string
     updatedRolePermissions: Permission[]
-    updatedRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
+    updatedRoleTokens: string[]
     updatedRoleUsers: string[]
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()

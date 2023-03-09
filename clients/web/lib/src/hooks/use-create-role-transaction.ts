@@ -1,10 +1,10 @@
 import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 
 import { Permission } from '../client/web3/ContractTypes'
 import { QueryKeyRoles } from './query-keys'
 import { RoleIdentifier } from '../types/web3-types'
-import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
 
@@ -35,7 +35,7 @@ export function useCreateRoleTransaction() {
             spaceNetworkId: string,
             roleName: string,
             permissions: Permission[],
-            tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+            tokens: string[],
             users: string[],
         ) {
             if (isTransacting.current) {
@@ -56,7 +56,7 @@ export function useCreateRoleTransaction() {
                     spaceNetworkId,
                     roleName,
                     permissions,
-                    tokens,
+                    createExternalTokenStruct(tokens),
                     users,
                 )
                 setTransactionContext(txContext)

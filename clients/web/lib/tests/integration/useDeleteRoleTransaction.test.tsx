@@ -7,7 +7,6 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
@@ -32,7 +31,7 @@ describe('useDeleteRoleTransaction', () => {
         const permissions = [Permission.Read, Permission.Write]
         const toBeDeletedRoleName = 'to-be-deleted-role'
         const toBeDeletedPermissions = [Permission.Read, Permission.Write]
-        const toBeDeletedTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const toBeDeletedTokens: string[] = []
         const toBeDeletedUsers = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {
@@ -115,7 +114,7 @@ function TestComponent(args: {
     councilNftAddress: string
     newRoleName: string
     newRolePermissions: Permission[]
-    newRoleTokens: SpaceFactoryDataTypes.ExternalTokenStruct[]
+    newRoleTokens: string[]
     newRoleUsers: string[]
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
