@@ -78,7 +78,7 @@ describe('messageHistoryHooks', () => {
         )
         // get our test elements
         const spaceMembership = screen.getByTestId('spaceMembership')
-        const channelMembership = screen.getByTestId('spaceMembership')
+        const channelMembership = screen.getByTestId('channelMembership')
         const messageslength = screen.getByTestId('messageslength')
         const scrollbackButton = screen.getByRole('button', {
             name: 'Scrollback',
