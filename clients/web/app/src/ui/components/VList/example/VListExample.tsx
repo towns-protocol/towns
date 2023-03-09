@@ -4,7 +4,7 @@ import { Button, Paragraph, Stack } from '@ui'
 import { VList } from 'ui/components/VList/VList'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { ExampleMessage } from './ExampleMessage'
-import { createMessage, createMessageList } from './helpers/createMessages'
+import { createMessageList } from './helpers/createMessages'
 
 const NUM_MESSAGES = 1
 
