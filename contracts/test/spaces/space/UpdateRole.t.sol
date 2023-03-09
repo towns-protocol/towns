@@ -11,6 +11,60 @@ import {Space} from "contracts/src/core/spaces/Space.sol";
 contract UpdateRoleTest is SpaceBaseSetup {
   function setUp() external {}
 
+  function testAllowUpdateRole() external {
+    address _space = createSimpleSpace();
+
+    // create a random user
+    address[] memory _randomUsers = new address[](1);
+    _randomUsers[0] = _randomAddress();
+
+    // create a role variable with a permission of ModifySpaceSettings
+    string memory _roleName = "ModifySettingRole";
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.ModifySpaceSettings;
+
+    // get the user entitlement module from the space
+    address userEntitlement = getSpaceUserEntitlement(_space);
+
+    // add the random user to the user entitlement module
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+    _entitlements[0] = DataTypes.Entitlement({
+      module: userEntitlement,
+      data: abi.encode(_randomUsers)
+    });
+
+    // create the role
+    uint256 _roleId = Space(_space).createRole(
+      _roleName,
+      _permissions,
+      _entitlements
+    );
+
+    // check if the random user is entitled to the permission
+    assertTrue(
+      Space(_space).isEntitledToSpace(
+        _randomUsers[0],
+        Permissions.ModifySpaceSettings
+      )
+    );
+
+    assertFalse(
+      Space(_space).isEntitledToSpace(_randomUsers[0], Permissions.PinMessage)
+    );
+
+    // act as the random user
+    vm.prank(_randomUsers[0]);
+
+    // update the role
+    Space(_space).updateRole(_roleId, "new-role-name");
+
+    // check if rolename is updated
+    DataTypes.Role memory _role = Space(_space).getRoleById(_roleId);
+    assertEq(_role.name, "new-role-name");
+  }
+
   function testUpdateRole() external {
     address _space = createSimpleSpace();
     uint256 _roleId = createSimpleRoleWithPermission(_space);
