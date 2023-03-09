@@ -280,7 +280,6 @@ router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
     // user id is equivalent to wallet address of the form 0x83..
     const userId = request.params?.id
 
-    // TODO: remove this before merging JOHN
     if (env.ENVIRONMENT !== 'development') {
         const cookie = await handleCookie(request.clone())
         console.log(`cookie: ${cookie}`)
@@ -343,6 +342,74 @@ router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
     const value = await env.USER.get(userId)
     if (value === null) {
         return new Response(`bio not found for user: ${userId}`, { status: 404 })
+    }
+    return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
+})
+
+router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
+    const spaceId = request.params?.id
+
+    if (env.ENVIRONMENT !== 'development') {
+        const cookie = await handleCookie(request.clone())
+        console.log(`cookie: ${cookie}`)
+        const encodedCookie = Buffer.from(cookie, 'base64')
+        const decodedCookie = encodedCookie.toString('utf8')
+        const [signature, message] = decodedCookie.split('__@@__')
+
+        if (!signature || !message) {
+            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
+                status: 400,
+            })
+        }
+
+        const newBody = {
+            signature,
+            message,
+            spaceId,
+        }
+        const newRequestInit = {
+            method: 'POST',
+            body: JSON.stringify(newBody),
+        }
+        const newRequest = new Request(new Request(request.clone(), newRequestInit))
+        // Use a Service binding to fetch to another worker
+        const authResponse = await env.authz.fetch(newRequest)
+        if (authResponse.status !== 200) {
+            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
+            return authResponse
+        }
+    }
+
+    const copyRequest: Request = request.clone()
+    const contentType = copyRequest.headers.get('content-type')
+    if (contentType !== 'application/json') {
+        return new Response(JSON.stringify({ error: 'invalid content-type' }), {
+            status: 400,
+        })
+    }
+    const requestBody = JSON.stringify(await copyRequest.json())
+    // validate bio length
+    if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
+        return new Response(
+            JSON.stringify({ error: `bio must be under ${BIO_MAX_SIZE} characters` }),
+            { status: 400 },
+        )
+    }
+    try {
+        await env.SPACE.put(spaceId, requestBody)
+    } catch (error) {
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 500,
+        })
+    }
+    return new Response('ok', { status: 200 })
+})
+
+router.get('/space/:id/bio', async (request: WorkerRequest, env) => {
+    const spaceId = request.params?.id
+    const value = await env.SPACE.get(spaceId)
+    if (value === null) {
+        return new Response(`bio not found for space: ${spaceId}`, { status: 404 })
     }
     return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
 })

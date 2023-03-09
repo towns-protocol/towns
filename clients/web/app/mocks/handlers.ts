@@ -37,6 +37,19 @@ export const testHandlers = [
     ),
     // END TOKEN WORKER ///////////////
 
+    // GATEWAY WORKER ///////////////
+
+    rest.get(`${env.VITE_GATEWAY_URL || ''}/space/*/bio`, (req, res, ctx) => {
+        const data = 'my special space'
+        return res(ctx.status(200), ctx.json(data))
+    }),
+
+    rest.post(`${env.VITE_GATEWAY_URL || ''}/space/*/bio`, (req, res, ctx) => {
+        const data = 'imageor whatever'
+        return res(ctx.status(200), ctx.json(data))
+    }),
+    // END GATEWAY WORKER ///////////////
+
     // if dev doesn't have this env var set and starts the app there's a bunch of weird errors in browser
     // even though this mock is only called in tests so defaulting to empty string
     rest.get(env.VITE_UNFURL_SERVER_URL || '', (req, res, ctx) => {

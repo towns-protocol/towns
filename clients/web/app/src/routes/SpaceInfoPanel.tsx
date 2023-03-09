@@ -16,7 +16,7 @@ import { UploadImage } from '@components/UploadImage/UploadImage'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { useGetRoomTopic, useSetRoomTopic } from 'hooks/useRoomTopic'
+import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
@@ -39,9 +39,9 @@ export const SpaceInfoPanel = () => {
     const [isEdit, setIsEdit] = useState(false)
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
-    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetRoomTopic(space?.id)
+    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id)
 
-    const { mutate, isLoading } = useSetRoomTopic(space?.id)
+    const { mutate, isLoading } = useSetSpaceTopic(space?.id)
 
     const matrixUserOwner = useMemo(() => {
         if (!data?.owner || !chainId) {

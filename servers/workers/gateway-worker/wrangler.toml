@@ -36,7 +36,7 @@ routes = [{ pattern = "gateway-worker-staging.zion.xyz", custom_domain = true },
 vars = { ENVIRONMENT = "staging", CF_API = "https://api.cloudflare.com/client/v4/accounts", IMAGE_SERVICE = "https://images.zion.xyz", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
 services = [ {binding = "authz", service = "siwe-worker-staging", environment = "production"} ]
 # created with wrangler kv:namespace create "USER" --env staging
-kv_namespaces = [{ binding = "USER", id = "2fa6f9d5b3f2411eb7ba3db441ea5e29" }]
+kv_namespaces = [{ binding = "USER", id = "2fa6f9d5b3f2411eb7ba3db441ea5e29" }, { binding = "SPACE", id = "20c9fc6705604f72b3e3748effac98c4" }]
 
 # production routes
 # yarn publish:prod
@@ -45,4 +45,4 @@ routes = [{ pattern = "gateway-worker.zion.xyz", custom_domain = true }, { patte
 vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts", IMAGE_SERVICE = "https://images.zion.xyz", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
 services = [ {binding = "authz", service = "siwe-worker-production", environment = "production"} ]
 # created with wrangler kv:namespace create "USER" --env production
-kv_namespaces = [{ binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" }]
+kv_namespaces = [{ binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" }, { binding = "SPACE", id = "4f0bf1efdb164939bca166cb4b65b1a0" }]
