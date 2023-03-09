@@ -3,7 +3,7 @@ import { Membership, Room, RoomMember, SpaceChild, User } from '../types/zion-ty
 import { makeRoomIdentifier, makeMatrixRoomIdentifier } from '../types/room-identifier'
 import { create } from 'zustand'
 
-import { Room as MatrixRoom, User as MatrixUser } from 'matrix-js-sdk'
+import { EventType, Room as MatrixRoom, User as MatrixUser } from 'matrix-js-sdk'
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { ZionClientEvent } from '../client/ZionClientTypes'
 
@@ -51,6 +51,7 @@ export function toZionRoom(r: MatrixRoom): Room {
     // if user is invited to room, r.getMyMembership() always returns "invite" until browser refresh, even if they accept and join room
     // once they're in membersMap, their status is set to join
     const myMembership = membersMap[r.myUserId]?.membership ?? (r.getMyMembership() as Membership)
+    const topicEvent = r.currentState.getStateEvents(EventType.RoomTopic, '')
     return {
         id: makeRoomIdentifier(r.roomId),
         name: r.name,
@@ -59,6 +60,7 @@ export function toZionRoom(r: MatrixRoom): Room {
         members: members,
         membersMap: membersMap,
         isSpaceRoom: r.isSpaceRoom(),
+        topic: topicEvent ? (topicEvent.getContent().topic as string) : undefined,
     }
 }
 
