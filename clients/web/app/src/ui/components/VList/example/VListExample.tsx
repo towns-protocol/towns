@@ -2,6 +2,7 @@ import { seed } from '@ngneat/falso'
 import React, { useCallback, useState } from 'react'
 import { Button, Paragraph, Stack } from '@ui'
 import { VList } from 'ui/components/VList/VList'
+import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { ExampleMessage } from './ExampleMessage'
 import { createMessage, createMessageList } from './helpers/createMessages'
 
@@ -42,9 +43,10 @@ export const VListExample = () => {
             const item = list.at(index)
 
             if (item && index) {
-                const another = createMessage(item.timestamp, item.profile, item.color)
-                const newItem = { ...item, message: item.message + another.message }
-                setList([...list.slice(0, index), newItem, ...list.slice(index + 1)])
+                // const another = createMessage(item.timestamp, item.profile, item.color)
+                const newItem = { ...item, id: Math.random().toString(16) }
+                setList((list) => list.map((l, i) => (i === index ? newItem : l)))
+                // setList([...list.slice(0, index), newItem, ...list.slice(index + 1)])
             }
         },
         [list],
@@ -70,7 +72,7 @@ export const VListExample = () => {
                                     updateMessage(data.id)
                                 }}
                             >
-                                {data.message}
+                                <RichTextPreview content={data.message} />
                             </ExampleMessage>
                         </Stack>
                     )

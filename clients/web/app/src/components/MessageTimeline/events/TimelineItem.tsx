@@ -49,7 +49,7 @@ export const MessageTimelineItem = (props: {
                     event={event}
                     selectable={isSelectable}
                     displayContext={displayContext}
-                    key={`${event.eventId}+${
+                    key={`${event.eventId}${
                         event.updatedServerTs ?? event.originServerTs
                     }${msgTypeKey}`}
                 >

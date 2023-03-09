@@ -6,26 +6,24 @@ export const useSize = (target: RefObject<HTMLElement>) => {
     useLayoutEffect(() => {
         const entry = target.current
         if (entry) {
-            setSize(() => {
-                const bounds = entry.getBoundingClientRect()
-                const width = bounds?.width
-                const height = bounds?.height
-                return {
-                    width,
-                    height,
-                }
-            })
+            const bounds = entry.getBoundingClientRect()
+            setSize(() => ({
+                width: round(bounds.width),
+                height: round(bounds.height),
+            }))
         }
     }, [target])
 
     useResizeObserver(target, (entry) => {
-        setSize((s) => {
-            const { width, height } = entry.contentRect
-            return {
-                width: width,
-                height: height,
-            }
-        })
+        setSize(() => ({
+            width: round(entry.contentRect.width),
+            height: round(entry.contentRect.height),
+        }))
     })
+
     return size
 }
+
+// contentRect + bounds return slightly different values after 2 decimal places
+// we don't need more than 0.1 precision for div heights / alignments
+const round = (n: number) => parseFloat(n.toFixed(1))

@@ -9,13 +9,13 @@ import {
     useMyMembership,
     useZionClient,
 } from 'use-zion-client'
+import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro } from '@components/ChannelIntro'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
 import { Box, Button, Stack } from '@ui'
-import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpacesChannel = () => {

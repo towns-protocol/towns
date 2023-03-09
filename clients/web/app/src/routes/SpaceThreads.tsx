@@ -26,7 +26,7 @@ export const SpaceThreads = () => {
     const threads = usePersistOrder(threadRoots, {
         sorterFn: sortThreads,
         identityFn: (t: ThreadResult) => t.thread.parentId,
-    })
+    }).filter((t) => t.thread.parentEvent)
 
     return (
         <CentralPanelLayout>

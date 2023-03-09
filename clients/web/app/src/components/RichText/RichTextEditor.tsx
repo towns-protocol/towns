@@ -128,13 +128,17 @@ export const RichTextPreview = React.memo(
         )
 
         return (
-            <LexicalComposer initialConfig={initialConfig}>
-                <RichTextPlugin
-                    ErrorBoundary={LexicalErrorBoundary}
-                    contentEditable={<ContentEditable className={fieldClassName} />}
-                    placeholder={<div />}
-                />
-            </LexicalComposer>
+            // this extra <div> prevents the preview from starting up too big,
+            // ...yet to find out why this occurs
+            <div>
+                <LexicalComposer initialConfig={initialConfig}>
+                    <RichTextPlugin
+                        ErrorBoundary={LexicalErrorBoundary}
+                        contentEditable={<ContentEditable className={fieldClassName} />}
+                        placeholder={<div />}
+                    />
+                </LexicalComposer>
+            </div>
         )
     },
 )

@@ -27,6 +27,11 @@ export const VListItem = <T,>(props: Props<T>) => {
     const { id, cache, groupHeight, isGroup, onUpdate } = props
     const ref = useRef<HTMLElement>(null)
     const height = useSize(ref)?.height
+    const maxHeightRef = useRef(height ?? 0)
+
+    maxHeightRef.current = Math.max(maxHeightRef.current, height ?? 0)
+    const cacheItem = cache.current.get(id)
+    const y = cacheItem?.y ? cacheItem.y : 0
 
     useLayoutEffect(() => {
         const cacheItem = cache.current.get(id)
@@ -36,13 +41,15 @@ export const VListItem = <T,>(props: Props<T>) => {
         }
 
         if (typeof height !== 'undefined') {
-            cache.current.set(id, { ...(cacheItem ?? {}), height, isMeasured: true })
+            cache.current.set(id, {
+                ...(cacheItem ?? {}),
+                height,
+                maxHeight: maxHeightRef.current,
+                isMeasured: true,
+            })
             onUpdate?.(id)
         }
-    }, [id, cache, onUpdate, height, isGroup, groupHeight])
-
-    const cacheItem = cache.current.get(id)
-    const y = cacheItem?.y ? cacheItem.y : 0
+    }, [cache, height, id, onUpdate, y])
 
     const style = useMemo(() => {
         const groupStyle = isGroup
@@ -56,7 +63,7 @@ export const VListItem = <T,>(props: Props<T>) => {
             top: `${y}px`,
             ...groupStyle,
         }
-    }, [isGroup, groupHeight, y])
+    }, [groupHeight, isGroup, y])
 
     useEffect(() => {
         if (!ref.current) {
@@ -96,11 +103,13 @@ export const useInitCacheItem = <T extends { id: string }>(
         [itemHeight],
     )
 
-    const initItemCache = useCallback(
+    const createCacheItem = useCallback(
         (sizesRef: MutableRefObject<Map<string, ItemSize>>, data: T) => {
-            const meta = {
+            const height = getItemHeight(data) || -1
+            const meta: ItemSize = {
                 y: undefined,
-                height: getItemHeight(data) || -1,
+                height,
+                maxHeight: height,
                 isMeasured: false,
             }
             sizesRef.current.set(data.id, meta)
@@ -108,5 +117,5 @@ export const useInitCacheItem = <T extends { id: string }>(
         },
         [getItemHeight],
     )
-    return { createCacheItem: initItemCache }
+    return { createCacheItem }
 }

@@ -1,20 +1,12 @@
-import React, {
-    RefObject,
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react'
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useViewport } from './hooks/useViewport'
+import { ItemSize } from './types'
 import * as styles from './VList.css'
 import { useDebugView } from './VListDebugView'
 import { VListItem, useInitCacheItem as useDefaultItemSettings } from './VListItem'
-import { ItemSize } from './types'
 
 const DEBUG = false
-const DEFAULT_VIEW_MARGIN = 400
+const DEFAULT_VIEW_MARGIN = 800
 const PADDING = 16
 
 const Debug = {
@@ -113,6 +105,9 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         isFullyMeasured,
     )
 
+    const isScrollingRef = useRef(isScrolling)
+    isScrollingRef.current = isScrolling
+
     const viewport: [number, number] = useMemo(() => {
         const vh = physicalViewport[1] - physicalViewport[0]
         const firstViewportItemId = scrollMagnet || lastItemId
@@ -143,9 +138,12 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         setForceRecalculateKey((k) => ++k)
     }, [])
 
-    useLayoutEffect(() => {
+    const [updateListIndex, setUpdateListIndex] = useState(0)
+
+    useEffect(() => {
         // just need `forceRedraw` here as a dependency
         forceRecalculateKey
+        DEBUG && console.log(`%ccue: forceRecalculateKey`, Debug.Critical)
 
         // traverse all items to calclulate positions and full height
         const newHeight =
@@ -158,31 +156,75 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             }, paddingMemo) + paddingMemo
 
         setListHeight(newHeight)
+        setUpdateListIndex((i) => ++i)
 
         // set physical height of the div to ensure scrollbar reflects the new height
         if (scrollContentRef.current) {
-            DEBUG && console.log(`%cset container height ${Math.round(newHeight)}`, Debug.Layout)
-            scrollContentRef.current.style.minHeight = `${Math.round(newHeight)}px`
+            DEBUG &&
+                console.log(
+                    `%ccue set physical container height ${Math.round(newHeight)}`,
+                    Debug.Layout,
+                )
+            scrollContentRef.current.style.minHeight = `${newHeight.toFixed(1)}px`
         }
 
         // adjust scroll position if visual cue has been offset
         const referenceItemY = cachesRef.current.get(visualCue.current.id)?.y
+
         if (typeof referenceItemY !== 'undefined' && typeof visualCue.current.y === 'number') {
-            const correction = referenceItemY - visualCue.current.y
+            const absCorrection = referenceItemY - visualCue.current.y
+
             visualCue.current.y = referenceItemY
+
+            // typeof visualCue.current.relY === 'number'
+            if (!absCorrection || typeof referenceItemY === 'undefined') {
+                return
+            }
+
+            let correction: number | undefined = undefined
+
+            if (!isScrollingRef.current) {
+                DEBUG && console.log(`%ccue strategies...`, Debug.Measuring)
+                // had the feeling keeping amount of temp refs in an array could get leaky?
+                const c = document.querySelector(`[data-id="${visualCue.current.id}"]`)
+                if (c) {
+                    DEBUG &&
+                        console.log(
+                            `%ccue strategy a - real bounds ${visualCue.current.relY}`,
+                            Debug.Measuring,
+                        )
+                    const relY = c.getBoundingClientRect().top
+                    correction =
+                        typeof relY === 'number' && visualCue.current.relY
+                            ? relY - visualCue.current.relY
+                            : 0
+                    visualCue.current.relY = relY
+                }
+            }
+
+            if (typeof correction === 'undefined') {
+                DEBUG && console.log('%ccue strategy b - virtual list', Debug.Measuring)
+                correction = absCorrection
+            }
+
             if (correction) {
+                DEBUG && console.log(`%ccue scrollBy ${correction}`, Debug.Viewport)
                 scrollContainerRef.current?.scrollBy?.({ top: correction })
-                DEBUG && console.log(`%capply scroll correction ${correction}`, Debug.Viewport)
             }
         }
-    }, [forceRecalculateKey, createCacheItem, list, listHeight, viewport, paddingMemo])
+    }, [createCacheItem, forceRecalculateKey, list, paddingMemo])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - rendering
 
     const [renderedItems, setRenderedItems] = useState<T[]>([])
 
     // reference used between renders to offset content based on previous mutations
-    const visualCue = useRef<{ id: string; proximity: number; y?: number }>({
+    const visualCue = useRef<{
+        id: string
+        proximity: number
+        y?: number
+        relY?: number
+    }>({
         id: '',
         proximity: -1,
     })
@@ -195,8 +237,16 @@ export function VList<T extends { id: string }>(props: Props<T>) {
 
     // hook: ammends the visual cue used to correct scroll position when
     // elements around it are shifted
-    useLayoutEffect(() => {
+    useEffect(() => {
         visualCue.current.proximity = Number.MAX_SAFE_INTEGER
+        if (scrollMagnet) {
+            const hasMatch = list.find((l) => l.id === scrollMagnet)
+            if (DEBUG && !hasMatch) {
+                console.table(list.map((l) => l.id))
+            }
+            DEBUG && console.log(`%ccue match (magnet) ${hasMatch?.id}`, Debug.Measuring)
+        }
+        DEBUG && console.log(`%ccue elements ${list.length}`, Debug.Measuring)
         list.forEach((l) => {
             const item = cachesRef.current.get(l.id)
             if (typeof item?.y === 'undefined') {
@@ -204,61 +254,87 @@ export function VList<T extends { id: string }>(props: Props<T>) {
             }
             if (scrollMagnet) {
                 if (l.id === scrollMagnet) {
-                    DEBUG && console.log(`%cmatch visual cue (magnet) ${~~item.y}`, Debug.Measuring)
+                    DEBUG && console.log(`%ccue cmatch (magnet) ${~~item.y}`, Debug.Measuring)
                     visualCue.current.y = item.y
                     visualCue.current.id = l.id
                 }
             } else {
                 const proximity = Math.abs(item.y - viewport[1])
-                if (proximity < visualCue.current.proximity && item.isMeasured) {
+                if (proximity < visualCue.current.proximity) {
                     visualCue.current.proximity = proximity
                     visualCue.current.y = item.y
                     visualCue.current.id = l.id
                 }
             }
         })
-    }, [list, listHeight, viewport, scrollMagnet, visibleArea])
 
-    const groupHeights = useMemo(
-        () =>
-            groups.reduce((groupHeights, group) => {
-                // using the ID of the first item of the group (date divider) as index
-                const groupId = group[0]
-                // sum of all item heights = group height
-                groupHeights[groupId] = group.reduce(
-                    (height, id) => height + (cachesRef?.current.get(id)?.height || 0),
-                    0,
+        const c = document.querySelector(`[data-id="${visualCue.current.id}"]`)
+
+        if (c) {
+            if (scrollMagnet) {
+                DEBUG && console.log(`%ccue set magnet `, Debug.Viewport)
+                visualCue.current.relY = scrollContainerRef.current?.getBoundingClientRect().bottom
+            } else {
+                DEBUG && console.log(`%ccue set element `, Debug.Viewport)
+                visualCue.current.relY = c.getBoundingClientRect().top
+            }
+            DEBUG &&
+                console.log(
+                    `%ccue set to ${visualCue.current.id} @ ${visualCue.current.relY} `,
+                    Debug.Viewport,
                 )
-                return groupHeights
-            }, {} as { [key: string]: number }),
-        [groups],
-    )
+        }
+    }, [list, scrollMagnet, viewport])
+
+    const groupHeights = useMemo(() => {
+        updateListIndex
+        return groups.reduce((groupHeights, group) => {
+            // using the ID of the first item of the group (date divider) as index
+            const groupId = group[0]
+            // sum of all item heights = group height
+            groupHeights[groupId] = group.reduce(
+                (height, id) => height + (cachesRef?.current.get(id)?.height || 0),
+                0,
+            )
+            return groupHeights
+        }, {} as { [key: string]: number })
+    }, [updateListIndex, groups])
 
     const groupHeightsRef = useRef(groupHeights)
     groupHeightsRef.current = groupHeights
-    // filters out the items to display on screen
-    useLayoutEffect(() => {
-        DEBUG && console.log(`%cbuild renderItem list`, Debug.Layout)
-        const renderItems = list
-            .filter((l) => {
-                const item = cachesRef.current.get(l.id)
-                if (typeof item?.y === 'undefined') {
-                    return false
-                }
-                if (groupIds?.includes(l.id)) {
-                    // needs to be a ref
-                    const h = groupHeightsRef.current[l.id]
-                    return item.y + item.height + h > visibleArea[0] && item.y < visibleArea[1]
-                }
-                return item.y + item.height > visibleArea[0] && item.y < visibleArea[1]
-            })
-            // resolve heights from bottom -> up since the anchor mostly at the
-            // bottom of the viewport
-            .reverse()
 
-        DEBUG && console.table(renderItems)
-        setRenderedItems(renderItems)
-    }, [groupIds, list, listHeight, visibleArea])
+    // filters out the items to display on screen
+    useEffect(() => {
+        updateListIndex
+
+        setRenderedItems((_prevRenderItems) => {
+            DEBUG && console.log(`%cbuild renderItem list`, Debug.Layout)
+            const renderItems = list
+                .filter((l) => {
+                    const item = cachesRef.current.get(l.id)
+                    if (typeof item?.y === 'undefined') {
+                        return false
+                    }
+                    if (groupIds?.includes(l.id)) {
+                        const h = groupHeightsRef.current[l.id]
+                        return (
+                            item.y + item.maxHeight + h >= visibleArea[0] &&
+                            item.y <= visibleArea[1]
+                        )
+                    }
+
+                    // using maxHeight prevents jitter if an
+                    // element on the edge of the threshold shrinks (then gets
+                    // removed, added back, and so on...)
+                    return item.y + item.maxHeight >= visibleArea[0] && item.y <= visibleArea[1]
+                })
+                // resolve heights from bottom -> up since the anchor mostly at the
+                // bottom of the viewport
+                .reverse()
+
+            return renderItems
+        })
+    }, [groupIds, list, updateListIndex, visibleArea])
 
     // figure if all elements on screen have been rendered, only usfull to avoid
     // glitches on first layout
@@ -266,24 +342,14 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         if (isFullyMeasured || !renderedItems.length) {
             return
         }
-
         const m = !renderedItems.some((t) => !cachesRef.current.get(t.id)?.isMeasured)
         if (m) {
             DEBUG && console.log(`%call items in viewport fully measured`, Debug.Measuring)
             setFullyMeasured(true)
-        } else if (DEBUG) {
-            const missing = renderedItems.reduce((missing, t) => {
-                if (!cachesRef.current.get(t.id)?.isMeasured) {
-                    missing.push(t)
-                }
-                return missing
-            }, [] as T[])
-            console.log(`%cmissing measurements for some items`, Debug.Measuring)
-            console.table(missing)
         }
 
         DEBUG && console.table(renderedItems.map((t) => cachesRef.current.get(t.id)))
-    }, [isFullyMeasured, listHeight, renderedItems])
+    }, [isFullyMeasured, renderedItems])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - autoscroll / deep links
 
@@ -292,6 +358,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
 
     // scroll to last message mechanism
     useEffect(() => {
+        DEBUG && console.log(`%ccue lastItemId ${lastItemId}`, Debug.Measuring)
         // list.length dependency to be triggered when a new message is added
         if (!scrollMagnetRef.current && lastItemId) {
             setScrollMagnet(lastItemId)
@@ -301,8 +368,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         }
     }, [lastItemId])
 
-    //
-    useLayoutEffect(() => {
+    useEffect(() => {
         // note: `listHeight` is required as dependency
         if (!listHeight || !scrollContainerRef.current || !scrollMagnet) {
             return
@@ -322,7 +388,7 @@ export function VList<T extends { id: string }>(props: Props<T>) {
         return () => {
             clearTimeout(timeout)
         }
-    }, [lastItemId, list, listHeight, scrollMagnet])
+    }, [listHeight, updateListIndex, scrollMagnet])
 
     // ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
 
@@ -335,10 +401,10 @@ export function VList<T extends { id: string }>(props: Props<T>) {
     useEffect(() => {
         DEBUG &&
             console.log(
-                `%cviewport:${~~viewport[0]} (${~~viewport[1]}) listHeight: ${~~listHeight}`,
+                `%cviewport: top:${~~viewport[0]} bottom:${~~viewport[1]} listHeight: ${listHeight}`,
                 Debug.Viewport,
             )
-    }, [listHeight, visualCue.current.id, viewport])
+    }, [listHeight, viewport])
 
     useEffect(() => {
         DEBUG && console.log(`%creferenceItem:${visualCue.current.id}`, Debug.Layout)
@@ -366,7 +432,8 @@ export function VList<T extends { id: string }>(props: Props<T>) {
                     className={styles.scrollContent}
                     style={{
                         pointerEvents: isScrolling ? 'none' : 'auto',
-                        visibility: isFullyMeasured ? 'visible' : 'hidden',
+                        opacity: isFullyMeasured ? 1 : 0,
+                        transition: isFullyMeasured ? 'opacity 120ms' : 'none',
                     }}
                 >
                     {renderedItems.map((item, index, arr) => (

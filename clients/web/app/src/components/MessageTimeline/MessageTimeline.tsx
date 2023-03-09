@@ -1,12 +1,11 @@
+import React, { useCallback, useContext, useMemo, useRef } from 'react'
 import { FullyReadMarker, MessageType, useFullyReadMarker } from 'use-zion-client'
-import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react'
 import { Box, Divider, VList } from '@ui'
-import { notUndefined } from 'ui/utils/utils'
 import { useExperimentsStore } from 'store/experimentsStore'
+import { notUndefined } from 'ui/utils/utils'
 import { DateDivider } from './events/DateDivider'
 import { NewDivider } from './events/NewDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
-import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import {
     FullyReadRenderEvent,
@@ -17,10 +16,6 @@ import {
     UserMessagesRenderEvent,
     getEventsByDate,
 } from './util/getEventsByDate'
-
-export const TimelineMessageContext = createContext<null | ReturnType<
-    typeof useTimelineMessageEditing
->>(null)
 
 type Props = {
     header?: JSX.Element
@@ -65,14 +60,14 @@ export const MessageTimeline = (props: Props) => {
     const estimateItemHeight = useCallback((r: (typeof listItems)[0]) => {
         if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
-                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 100
+                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 26.5
                 return height + itemHeight
             }, 0)
             return height
         }
         if (r.type === 'message') {
             const height = [r.item.event].reduce((height, item) => {
-                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 50
+                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 26.5
                 return height + itemHeight
             }, 0)
             return height
