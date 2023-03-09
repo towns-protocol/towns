@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.17+commit.8df45f5f"
+    "version": "0.8.19+commit.7dd6d404"
   },
   "language": "Solidity",
   "output": {
@@ -675,6 +675,30 @@
       }
     ],
     "devdoc": {
+      "events": {
+        "Approval(address,address,uint256)": {
+          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
+        },
+        "ApprovalForAll(address,address,bool)": {
+          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
+        },
+        "MintStateChanged(address,uint8,uint8,uint256)": {
+          "params": {
+            "caller": "the address that called the function",
+            "newState": "the new mint state",
+            "prevState": "the previous mint state",
+            "timestamp": "the timestamp of the state change"
+          }
+        },
+        "Minted(address,uint256,uint256)": {
+          "params": {
+            "recipient": "the address that receives the NFT"
+          }
+        },
+        "Transfer(address,address,uint256)": {
+          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
+        }
+      },
       "kind": "dev",
       "methods": {
         "approve(address,uint256)": {
@@ -846,19 +870,19 @@
   },
   "sources": {
     "contracts/src/core/tokens/Member.sol": {
-      "keccak256": "0xf8204bc7c30f9a7a2e3aa6f29b487b136683b0a323dd2e2e27709af0ddb62be3",
+      "keccak256": "0xec5361e61ea0996070ef69eab792bc051625fa6a449d4a51a974bf6742478774",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2c48e3366f4b20cb790c964b748cb1bd7d88aa4e00a4b22a1170516566a42c91",
-        "dweb:/ipfs/QmVsHnTM93XRahBhTXHDPzcfi5hQH7xkcd3yL9AfRn3uib"
+        "bzz-raw://30cc253bbcee581f44ff3dc643fe58e7b122b97ef2d6afb82a08fc925196e296",
+        "dweb:/ipfs/QmQsXFYcEzwyApLmcQAzWKnon5aM7jHyKKndbcXzfww8bN"
       ]
     },
     "contracts/src/interfaces/IMember.sol": {
-      "keccak256": "0xe402c4f8c6fa35380bfefec9b200397a606d963b021e0914aab4f75847649a29",
+      "keccak256": "0xdb804068d751228ab794835c83722a1b375446a557e61c677f19db5509c3f5e7",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c7f012c482c05559f501080ea7fee1c04b795dba85040a3cf606f83e614a4c94",
-        "dweb:/ipfs/QmVWuQ5hgRwy5VTMfjcufcuKvygwSHpSYZVmLQvPxwmdWn"
+        "bzz-raw://1ad9711c5c822b4240883d167e9e1dfedeadfcf4edaab450d7d9bddac824cb4b",
+        "dweb:/ipfs/QmRYrQxesU39iBitpSVe6MRFv9nzV1vGF48A4Veyc8823D"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/AccessControl.sol": {

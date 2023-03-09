@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.17+commit.8df45f5f"
+    "version": "0.8.19+commit.7dd6d404"
   },
   "language": "Solidity",
   "output": {
@@ -404,19 +404,19 @@
   },
   "sources": {
     "contracts/src/interfaces/IEntitlement.sol": {
-      "keccak256": "0xfcbba0cf78c5cefba11d2582ff19d83bbc47ebb6d6798f0be8631b2366040d95",
+      "keccak256": "0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://168de1370319df9b5f98683793a5fb13f7cf1690a190771cd3e46e3e6b2164c4",
-        "dweb:/ipfs/QmUotoQLNjPJCLxiLFpGRt1bppaNMPQg3rF6QuJhFdhaDe"
+        "bzz-raw://99a5e5bfef7a2249c272ac6fc9b5b95a7b14a194e34b2a5d92d3affb76cadbf2",
+        "dweb:/ipfs/QmSPdcBPLQ6hgX7s5zfuWkRqSErfmgrX4wyvm5pQ61w88W"
       ]
     },
     "contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x104f117867fff56e6dbb76bfb32a256d440ce9ed7cb471c14d128168aef3077c",
+      "keccak256": "0x01634666eef1a193d7ce2bc1840dd3424c0e86f3e6b500ea3d5244e6d230785b",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://0066af83357bf22785d319c2c5a3b800230a3802eebf6b0046238da41a9b8977",
-        "dweb:/ipfs/QmZLF5ojD13isvBueA2B7c4yik92Ygce5EBG6jPmHQVCXA"
+        "bzz-raw://66f2c398430ae10384660520d872851bd99dc35685615632dd07e7e55761cbdc",
+        "dweb:/ipfs/QmQhjnuzDzC14QtqiiXgo2f9myxUzUg5nCbV5mdQAqenyY"
       ]
     }
   },

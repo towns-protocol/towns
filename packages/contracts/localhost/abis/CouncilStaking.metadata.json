@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.17+commit.8df45f5f"
+    "version": "0.8.19+commit.7dd6d404"
   },
   "language": "Solidity",
   "output": {
@@ -426,11 +426,11 @@
   },
   "sources": {
     "contracts/src/core/council/CouncilStaking.sol": {
-      "keccak256": "0xc09900ea97ea8559d1c48d621e068167de0379dca0ee402216d8950416ed0083",
+      "keccak256": "0x90cffbd84e5e36dfa0cf18aae6fb54f83cc2b78b163ce9f0a6f04a64a488bded",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e25d5750fa33e1238a79b248a0ab5ba108467f4ff5ca947925e5ccd43b069a7f",
-        "dweb:/ipfs/QmaHhD9xmq9Mhr9xEFZyHcMJGTAdKg292iwBxpjSi2FX69"
+        "bzz-raw://d3db4a99b4e9c72e75f96aeeaaca70bd1025c919ce6ec9e04500cacad5481d81",
+        "dweb:/ipfs/Qma4okLPw2Xw9SDtuU7aUB2MvDb1ogSNNuX93BBH2YEJx7"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

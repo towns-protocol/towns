@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Apache-20
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 /**
  * @title DataTypes

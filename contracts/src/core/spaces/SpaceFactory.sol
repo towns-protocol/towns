@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 /** Interfaces */
 import {ISpaceFactory} from "contracts/src/interfaces/ISpaceFactory.sol";

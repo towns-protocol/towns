@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.17+commit.8df45f5f"
+    "version": "0.8.19+commit.7dd6d404"
   },
   "language": "Solidity",
   "output": {
@@ -615,6 +615,17 @@
     ],
     "devdoc": {
       "details": "Pioneer contract",
+      "events": {
+        "Approval(address,address,uint256)": {
+          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
+        },
+        "ApprovalForAll(address,address,bool)": {
+          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
+        },
+        "Transfer(address,address,uint256)": {
+          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
+        }
+      },
       "kind": "dev",
       "methods": {
         "approve(address,uint256)": {
@@ -703,11 +714,11 @@
   },
   "sources": {
     "contracts/src/core/tokens/Pioneer.sol": {
-      "keccak256": "0x4c62faa06e9cf41dd640123999441df06c86759c29afb15c5d21be166522b739",
+      "keccak256": "0xe9d37ddd074db1d6d22e48ab0736bf0bd8e027add8c6f3e1fe71a5e9edc676f8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://502a7bbc7410451099b206fbc17e52649fa3faee82fa25b5374c37e2671d8980",
-        "dweb:/ipfs/QmfNuu4ntkwA7FXsSXv2YgnWJg86siGdfW7s9ZpFUdvG93"
+        "bzz-raw://0964c8f7ddf7a9710e5ed6f61a8ec4abf50f4fca24764c6000e79a8e4df9ae15",
+        "dweb:/ipfs/QmVGbenDTMdFQ32yFEkLSCbBLzwXmEQhK8jiQ8nDQpJetD"
       ]
     },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {

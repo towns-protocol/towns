@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  ******************************************************************************/
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import "openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";

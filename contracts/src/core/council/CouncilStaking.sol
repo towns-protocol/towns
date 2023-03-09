@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 // Contracts
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
