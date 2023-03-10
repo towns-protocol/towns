@@ -423,7 +423,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             }
         }
 
-        console.log('[createSpaceTransaction] Matrix space created', roomId)
+        console.log('[createSpaceTransaction] Space created', roomId)
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -586,7 +586,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         try {
             roomId = await this.createChannelRoom(createChannelInfo)
         } catch (error) {
-            const _error = new Error('Matrix createChannel failed')
+            const _error = new Error('createChannel failed')
             _error.name = (error as Error).name ?? 'Error'
             console.error(_error)
             return {
@@ -599,7 +599,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             }
         }
 
-        console.log('[createChannelTransaction] Matrix channel created', roomId)
+        console.log('[createChannelTransaction] Channel created', roomId)
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -763,7 +763,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         // Successfully updated the channel on-chain. Or this is a matrix/casablanca off chain update
         const doOffChainUpdate = receipt?.status === 1 || context?.hasOffChainUpdate
         if (doOffChainUpdate) {
-            // now update the channel name in the matrix room
+            // now update the channel name in the room
             try {
                 if (!context?.data) {
                     throw new Error('[waitForUpdateChannelTransaction] context?.data is undefined')
