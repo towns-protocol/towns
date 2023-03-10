@@ -1,29 +1,28 @@
+import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
 import {
-    FullEvent,
-    isChannelStreamId,
-    isSpaceStreamId,
-    makeEvent,
-    makeUniqueChannelStreamId,
-    makeUniqueSpaceStreamId,
-    makeUserStreamId,
-    Payload,
-    SignerContext,
-    StreamAndCookie,
-    StreamEvents,
-    StreamKind,
-    StreamStateView,
-    SyncPos,
-    ZionServiceInterface,
-} from '@zion/core'
+    ParsedEvent,
+    bin_equal,
+    bin_toHexString,
+    makeInceptionPayload,
+    makeJoinableStreamPayload,
+    makeMessagePayload,
+} from './types'
+import { Payload, StreamAndCookie, StreamKind, StreamOp, SyncPos } from '@zion/proto'
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-
-const logCall = debug('zion:client:call')
-const logSync = debug('zion:client:sync')
-const logEmitFromStream = debug('zion:client:emit:stream')
-const logEmitFromClient = debug('zion:client:emit:client')
-const logEvent = debug('zion:client:event')
+import { ZionRpcClientType } from './zionRpcClient'
+import { StreamEvents, StreamStateView } from './streams'
+import {
+    isChannelStreamId,
+    isSpaceStreamId,
+    makeUniqueChannelStreamId,
+    makeUniqueSpaceStreamId,
+    makeUserStreamId,
+    userIdFromAddress,
+} from './id'
+import { makeEvent, SignerContext, unpackEnvelope, unpackEnvelopes } from './sign'
+import { check, throwWithCode } from './check'
 
 function assert(condition: any, message?: string): asserts condition {
     if (!condition) {
@@ -33,18 +32,21 @@ function assert(condition: any, message?: string): asserts condition {
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly streamId: string
-    syncCookie?: string
     readonly clientEmitter: TypedEmitter<StreamEvents>
-    rollup: StreamStateView
+    readonly logEmitFromStream: debug.Debugger
+    readonly rollup: StreamStateView
+    syncCookie?: Uint8Array
 
     constructor(
         streamId: string,
-        inceptionEvent: FullEvent | undefined,
+        inceptionEvent: ParsedEvent | undefined,
         clientEmitter: TypedEmitter<StreamEvents>,
+        logEmitFromStream: debug.Debugger,
     ) {
         super()
         this.streamId = streamId
         this.clientEmitter = clientEmitter
+        this.logEmitFromStream = logEmitFromStream
         this.rollup = new StreamStateView(streamId, inceptionEvent)
     }
 
@@ -56,13 +58,17 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      */
     addEvents(streamAndCookie: StreamAndCookie, init?: boolean): void {
         // TODO: perhaps here save rollup and emit events only if rollup is successful
-        assert(this.syncCookie === streamAndCookie.originalSyncCookie, 'syncCookie mismatch')
-        this.rollup.addEvents(streamAndCookie.events, this, init)
-        this.syncCookie = streamAndCookie.syncCookie
+        assert(
+            bin_equal(this.syncCookie, streamAndCookie.originalSyncCookie),
+            'syncCookie mismatch',
+        )
+        const events = unpackEnvelopes(streamAndCookie.events)
+        this.rollup.addEvents(events, this, init)
+        this.syncCookie = streamAndCookie.nextSyncCookie
     }
 
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
-        logEmitFromStream(event, ...args)
+        this.logEmitFromStream(event, ...args)
         this.clientEmitter.emit(event, ...args)
         return super.emit(event, ...args)
     }
@@ -70,44 +76,59 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
 export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly signerContext: SignerContext
-    readonly rpcClient: ZionServiceInterface
+    readonly rpcClient: ZionRpcClientType
+    readonly userId: string
     userStreamId?: string
-    readonly streams: { [streamId: string]: Stream } = {}
+    readonly streams: Map<string, Stream> = new Map()
     stopSyncResolve?: (value: string) => void
 
-    constructor(signerContext: SignerContext, rpcClient: ZionServiceInterface) {
+    readonly logCall: debug.Debugger
+    readonly logSync: debug.Debugger
+    readonly logEmitFromStream: debug.Debugger
+    readonly logEmitFromClient: debug.Debugger
+    readonly logEvent: debug.Debugger
+
+    constructor(signerContext: SignerContext, rpcClient: ZionRpcClientType) {
         super()
         this.signerContext = signerContext
         this.rpcClient = rpcClient
-        logCall('new Client', this.address)
+        this.userId = userIdFromAddress(signerContext.creatorAddress)
+        this.logCall = debug('zion:client:call').extend(this.userId)
+        this.logSync = debug('zion:client:sync').extend(this.userId)
+        this.logEmitFromStream = debug('zion:client:emit:stream').extend(this.userId)
+        this.logEmitFromClient = debug('zion:client:emit:client').extend(this.userId)
+        this.logEvent = debug('zion:client:event').extend(this.userId)
+
+        this.logCall('new Client')
     }
 
     async stop(): Promise<void> {
-        logCall('stop', this.address)
+        this.logCall('stop')
         this.stopSyncIfStarted()
         if (this.rpcClient.hasOwnProperty('rpcClient')) {
-            await (this.rpcClient as any).close()
+            await this.rpcClient.close()
         }
     }
 
-    get address(): string {
-        return this.signerContext.creatorAddress
-    }
-
     stream(streamId: string): Stream | undefined {
-        return this.streams[streamId]
+        return this.streams.get(streamId)
     }
 
     private async initUserStream(
-        streamId: string,
+        userStreamId: string,
         streamAndCookie: StreamAndCookie,
     ): Promise<void> {
         assert(this.userStreamId === undefined, 'streamId must not be set')
-        this.userStreamId = streamId
+        this.userStreamId = userStreamId
 
-        const stream = new Stream(streamId, streamAndCookie.events[0], this)
-        this.streams[streamId] = stream
-        stream.addEvents(streamAndCookie)
+        const stream = new Stream(
+            userStreamId,
+            unpackEnvelope(streamAndCookie.events[0]),
+            this,
+            this.logEmitFromStream,
+        )
+        this.streams.set(userStreamId, stream)
+        stream.addEvents(streamAndCookie, true)
 
         stream.on('userJoinedStream', this.onJoinedStream)
         stream.on('userLeftStream', this.onLeftStream)
@@ -120,102 +141,98 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     async createNewUser(): Promise<void> {
-        logCall('createNewUser', this.address)
+        this.logCall('createNewUser')
         assert(this.userStreamId === undefined, 'streamId must not be set')
-        const streamId = makeUserStreamId(this.address)
+        const streamId = makeUserStreamId(this.userId)
 
         const events = [
             makeEvent(
                 this.signerContext,
-                {
-                    kind: 'inception',
+                makeInceptionPayload({
                     streamId,
-                    data: { streamKind: StreamKind.User },
-                },
+                    streamKind: StreamKind.SK_USER,
+                }),
                 [],
             ),
         ]
-        const { syncCookie } = await this.rpcClient.createUser({
+        const { syncCookie } = await this.rpcClient.createStream({
             events,
         })
 
-        return this.initUserStream(streamId, { events, syncCookie })
+        return this.initUserStream(
+            streamId,
+            new StreamAndCookie({ events, nextSyncCookie: syncCookie }),
+        )
     }
 
     async loadExistingUser(): Promise<void> {
-        logCall('loadExistingUser', this.address)
+        this.logCall('loadExistingUser')
         assert(this.userStreamId === undefined, 'streamId must not be set')
-        const streamId = makeUserStreamId(this.address)
+        const streamId = makeUserStreamId(this.userId)
 
-        const userStream = await this.rpcClient.getEventStream({ streamId })
-
-        return this.initUserStream(streamId, userStream)
-    }
-
-    async userExists(): Promise<boolean> {
-        logCall('userExists', this.address)
-        assert(this.userStreamId === undefined, 'streamId must not be set')
-        const streamId = makeUserStreamId(this.address)
-
-        return await this.rpcClient.streamExists({ streamId })
+        const userStream = await this.rpcClient.getStream({ streamId })
+        assert(userStream.stream !== undefined, 'got bad user stream')
+        return this.initUserStream(streamId, userStream.stream)
     }
 
     async createSpace(spaceId?: string): Promise<{ streamId: string }> {
         spaceId = spaceId ?? makeUniqueSpaceStreamId()
-        logCall('createSpace', this.address, spaceId)
+        this.logCall('createSpace', spaceId)
         assert(this.userStreamId !== undefined, 'streamId must be set')
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
 
+        // create utf8 encoder
+        const streamId = spaceId
         const inceptionEvent = makeEvent(
             this.signerContext,
-            {
-                kind: 'inception',
-                streamId: spaceId,
-                data: { streamKind: StreamKind.Space },
-            },
+            makeInceptionPayload({
+                streamId,
+                streamKind: StreamKind.SK_SPACE,
+            }),
             [],
         )
         const joinEvent = makeEvent(
             this.signerContext,
-            {
-                kind: 'join',
-                userId: this.address,
-            },
+            makeJoinableStreamPayload({
+                userId: this.userId,
+                op: StreamOp.SO_JOIN,
+            }),
             [inceptionEvent.hash],
         )
 
-        await this.rpcClient.createSpace({
+        await this.rpcClient.createStream({
             events: [inceptionEvent, joinEvent],
         })
 
-        return { streamId: spaceId! }
+        return { streamId: streamId! }
     }
 
     async createChannel(spaceId: string, channelId?: string): Promise<{ streamId: string }> {
         channelId = channelId ?? makeUniqueChannelStreamId()
-        logCall('createChannel', this.address, channelId, spaceId)
+        this.logCall('createChannel', channelId, spaceId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
+        assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
 
         const inceptionEvent = makeEvent(
             this.signerContext,
-            {
-                kind: 'inception',
+            makeInceptionPayload({
                 streamId: channelId,
-                data: { streamKind: StreamKind.Channel, spaceId },
-            },
+                streamKind: StreamKind.SK_CHANNEL,
+                spaceId,
+            }),
             [],
         )
         const joinEvent = makeEvent(
             this.signerContext,
-            {
-                kind: 'join',
-                userId: this.address,
-            },
+            makeJoinableStreamPayload({
+                userId: this.userId,
+                op: StreamOp.SO_JOIN,
+            }),
             [inceptionEvent.hash],
         )
 
-        await this.rpcClient.createChannel({
+        await this.rpcClient.createStream({
             events: [inceptionEvent, joinEvent],
         })
 
@@ -223,8 +240,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     async waitForStream(streamId: string): Promise<Stream> {
+        this.logCall('waitForStream', streamId)
         let stream = this.stream(streamId)
         if (stream !== undefined) {
+            this.logCall('waitForStream: stream already initialized', streamId)
             return stream
         }
         let resolve: () => void
@@ -232,10 +251,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             resolve = res
         })
         const handler = (newStreamId: string) => {
+            this.logCall('waitForStream: got streamInitialized', newStreamId)
             if (newStreamId === streamId) {
                 this.off('streamInitialized', handler)
                 resolve()
+                return
             }
+            this.logCall('waitForStream: waiting for ', streamId, ' got ', newStreamId)
         }
         this.on('streamInitialized', handler)
         await done
@@ -247,154 +269,205 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     private async initStream(streamId: string): Promise<void> {
-        logCall('initStream', this.address, streamId)
-        if (this.streams[streamId] === undefined) {
-            const streamContent = await this.rpcClient.getEventStream({ streamId })
-            if (this.streams[streamId] === undefined) {
-                const stream = new Stream(streamId, streamContent.events[0], this)
-                this.streams[streamId] = stream
-                stream.addEvents(streamContent, true)
+        try {
+            this.logCall('initStream', streamId)
+            if (this.streams.get(streamId) === undefined) {
+                const streamContent = await this.rpcClient.getStream({ streamId })
+                if (this.streams.get(streamId) === undefined) {
+                    assert(streamContent.stream !== undefined, 'got bad stream')
+                    this.logCall('initStream', streamContent.stream)
+                    const stream = new Stream(
+                        streamId,
+                        unpackEnvelope(streamContent.stream.events[0]), // TODO: minor optimization: unpacks first event twice: here and below in addEvents
+                        this,
+                        this.logEmitFromStream,
+                    )
+                    this.streams.set(streamId, stream)
+                    stream.addEvents(streamContent.stream, true)
+                    // Blip sync here to make sure it also monitors new stream
+                    this.blipSync()
+                } else {
+                    this.logCall('initStream', streamId, 'RACE: already initialized')
+                }
             } else {
-                logCall('initStream', this.address, streamId, 'RACE: already initialized')
+                this.logCall('initStream', streamId, 'already initialized')
             }
-        } else {
-            logCall('initStream', this.address, streamId, 'already initialized')
+        } catch (err) {
+            this.logCall('initStream', streamId, 'ERROR', err)
+            throw err
         }
     }
 
     private onJoinedStream = async (streamId: string): Promise<void> => {
-        logEvent('onJoinedStream', this.address, streamId)
+        this.logEvent('onJoinedStream', streamId)
         return this.initStream(streamId)
     }
 
     private onLeftStream = async (streamId: string): Promise<void> => {
-        logEvent('onLeftStream', this.address, streamId)
+        this.logEvent('onLeftStream', streamId)
         // TODO: implement
     }
 
     async startSync(timeoutMs?: number): Promise<void> {
-        logSync('sync START', this.address)
+        this.logSync('sync START')
         assert(this.stopSyncResolve === undefined, 'sync already started')
         assert(this.userStreamId !== undefined, 'streamId must be set')
-        const stop = new Promise<string>((resolve) => {
+        let stop = new Promise<string>((resolve) => {
             this.stopSyncResolve = resolve
         })
 
         while (this.stopSyncResolve !== undefined) {
-            const syncPositions: SyncPos[] = []
-            for (const streamId in this.streams) {
-                const syncCookie = this.streams[streamId].syncCookie
+            const syncPos: PartialMessage<SyncPos>[] = []
+            this.streams.forEach((stream: Stream) => {
+                const syncCookie = stream.syncCookie
                 if (syncCookie !== undefined) {
-                    syncPositions.push({
-                        streamId,
+                    syncPos.push({
+                        streamId: stream.streamId,
                         syncCookie,
                     })
+                    this.logSync(
+                        'sync CALL',
+                        'stream=',
+                        stream.streamId,
+                        'syncCookie=',
+                        bin_toHexString(syncCookie),
+                    )
                 }
-            }
-            logSync('sync CALL', this.address, 'numStreams=', syncPositions.length)
+            })
+            assert(syncPos.length > 0, 'TODO: hande this case')
             const sync = await Promise.race([
                 this.rpcClient.syncStreams({
-                    syncPositions,
+                    syncPos,
                     timeoutMs: timeoutMs ?? 29000, // TODO: from config
                 }),
                 stop,
             ])
             if (typeof sync === 'string') {
-                logSync('sync CANCEL', this.address)
-                this.stopSyncResolve = undefined
-                break
+                if (sync === 'cancel') {
+                    this.logSync('sync CANCEL')
+                    this.stopSyncResolve = undefined
+                    break
+                } else if (sync === 'blip') {
+                    this.logSync('sync BLIP')
+                    stop = new Promise<string>((resolve) => {
+                        this.stopSyncResolve = resolve
+                    })
+                    // TODO: cancel previous RPC call
+                    continue
+                } else {
+                    throwWithCode('sync got unknown string result ' + sync)
+                }
             }
-            logSync('sync RESULTS', this.address)
-            Object.entries(sync.streams).forEach(([streamId, streamAndCookie]) => {
-                logSync(
-                    'sync got stream',
-                    this.address,
+            this.logSync('sync RESULTS', sync.streams.length)
+            sync.streams.forEach((streamAndCookie) => {
+                const streamId = streamAndCookie.streamId
+                this.logSync(
+                    'sync RESULTS',
                     streamId,
                     'events=',
                     streamAndCookie.events.length,
-                    'syncCookie=',
-                    streamAndCookie.syncCookie,
+                    'nextSyncCookie=',
+                    bin_toHexString(streamAndCookie.nextSyncCookie),
                     'originalSyncCookie=',
-                    streamAndCookie.originalSyncCookie,
+                    bin_toHexString(streamAndCookie.originalSyncCookie),
                 )
-                const stream = this.streams[streamId]
+                const stream = this.streams.get(streamId)
                 if (stream === undefined) {
-                    return
+                    this.logSync('sync got stream', streamId, 'NOT FOUND')
+                    throwWithCode("Sync got stream that wasn't requested")
                 }
                 stream.addEvents(streamAndCookie)
             })
         }
-        logSync('sync END', this.address)
+        this.logSync('sync END')
     }
 
     stopSync(): void {
-        logSync('sync STOP CALLED', this.address)
+        this.logSync('sync STOP CALLED')
         assert(this.stopSyncResolve !== undefined, 'sync not started')
         this.stopSyncResolve('cancel')
         this.stopSyncResolve = undefined
-        logSync('sync STOP DONE', this.address)
+        this.logSync('sync STOP DONE')
     }
 
     stopSyncIfStarted(): void {
-        logSync('sync STOP IF STARTED CALLED', this.address)
+        this.logSync('sync STOP IF STARTED CALLED')
         if (this.stopSyncResolve !== undefined) {
             this.stopSyncResolve('cancel')
             this.stopSyncResolve = undefined
-            logSync('sync STOP DONE', this.address)
+            this.logSync('sync STOP DONE')
         } else {
-            logSync('sync NOT STARTED', this.address)
+            this.logSync('sync NOT STARTED')
         }
     }
 
+    blipSync(): void {
+        this.logSync('sync BLIP CALLED')
+        if (this.stopSyncResolve === undefined) {
+            this.logSync("sync CAN'T BLIP - NOT STARTED OR NOT YET RESTARTED")
+            return
+        }
+        this.stopSyncResolve('blip')
+        this.stopSyncResolve = undefined
+        this.logSync('sync BLIP DONE')
+    }
+
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
-        logEmitFromClient(event, ...args)
+        this.logEmitFromClient(event, ...args)
         return super.emit(event, ...args)
     }
 
     async sendMessage(streamId: string, text: string): Promise<void> {
         return this.makeEventAndAddToStream(
             streamId,
-            {
-                kind: 'message',
-                text: text,
-            },
+            makeMessagePayload({
+                text,
+            }),
             'sendMessage',
         )
     }
 
     async inviteUser(streamId: string, userId: string): Promise<void> {
-        return this.makeEventAndAddToStream(streamId, { kind: 'invite', userId }, 'inviteUser')
+        return this.makeEventAndAddToStream(
+            streamId,
+            makeJoinableStreamPayload({
+                op: StreamOp.SO_INVITE,
+                userId, // TODO: USER_ID: other encoding?
+            }),
+            'inviteUser',
+        )
     }
 
     // TODO: is it possible to join a space?
     async joinChannel(streamId: string): Promise<void> {
-        logCall('joinChannel', this.address, streamId)
+        this.logCall('joinChannel', streamId)
         await this.initStream(streamId)
         return this.makeEventAndAddToStream(
             streamId,
-            { kind: 'join', userId: this.signerContext.creatorAddress },
+            makeJoinableStreamPayload({
+                op: StreamOp.SO_JOIN,
+                userId: this.userId,
+            }),
             'joinChannel',
         )
     }
 
     async makeEventAndAddToStream(
         streamId: string,
-        payload: Payload,
+        payload: Payload | PartialMessage<Payload>,
         method?: string,
     ): Promise<void> {
-        // TODO: filter logged payload for PII reasons
-        logCall('makeEventAndAddToStream', this.address, method, streamId, payload)
+        // TODO: filter this.logged payload for PII reasons
+        this.logCall('makeEventAndAddToStream', method, streamId, payload)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
-        const stream = this.streams[streamId]
+        const stream = this.streams.get(streamId)
         assert(stream !== undefined, 'unknown stream ' + streamId)
 
-        // TODO: should rollup now refernce this event's hash?
-        const event = makeEvent(
-            this.signerContext,
-            payload,
-            Array.from(stream.rollup.leafEventHashes),
-        )
+        const prevHashes = Array.from(stream.rollup.leafEventHashes.values())
+        assert(prevHashes.length > 0, 'no prev hashes for stream ' + streamId)
+        // TODO: should rollup now reference this event's hash?
+        const event = makeEvent(this.signerContext, payload, prevHashes)
 
         await this.rpcClient.addEvent({
             streamId,

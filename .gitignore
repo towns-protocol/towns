@@ -37,9 +37,7 @@ servers/matrix-zion-appservice/zion-appservice.yaml
 
 clients/web/app/storybook-static
 
-casablanca/packages/server/dist/
-casablanca/packages/client/dist/
-casablanca/packages/core/dist/
+casablanca/**/dist/
 
 contracts/deployments/localhost/
 .eslintcache

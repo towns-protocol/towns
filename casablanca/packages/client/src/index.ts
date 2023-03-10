@@ -1,2 +1,7 @@
+export * from './check'
 export * from './client'
+export * from './id'
+export * from './sign'
+export * from './streams'
+export * from './types'
 export * from './zionRpcClient'

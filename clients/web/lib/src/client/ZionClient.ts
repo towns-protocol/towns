@@ -1,6 +1,6 @@
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
-import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
+import { bin_fromHexString, Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -45,7 +45,7 @@ import {
     SignerContext,
     publicKeyToBuffer,
     isUserStreamId as isCasablancaUserStreamId,
-} from '@zion/core'
+} from '@zion/client'
 
 import { FullyReadMarker, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
@@ -200,8 +200,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         )
         const context: SignerContext = {
             wallet: delegateWallet,
-            creatorAddress: primaryAddress,
-            delegateSig: delegateSig,
+            creatorAddress: bin_fromHexString(primaryAddress),
+            delegateSig: bin_fromHexString(delegateSig),
         }
         return context
     }
@@ -364,14 +364,15 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.casablancaClient = new CasablancaClient(context, rpcClient)
         // TODO - long-term the app should already know if user exists via cookie
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-        const userExists = await this.casablancaClient.userExists()
-        if (!userExists) {
-            await this.casablancaClient.createNewUser()
-        } else {
+        try {
             await this.casablancaClient.loadExistingUser()
+        } catch (e) {
+            console.log('user does not exist, creating new user', (e as Error).message)
+            await this.casablancaClient.createNewUser()
         }
 
-        void this.casablancaClient.startSync()
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.casablancaClient.startSync()
     }
 
     /************************************************

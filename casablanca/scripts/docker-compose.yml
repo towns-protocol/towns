@@ -1,10 +1,4 @@
 services:
-    redis:
-        image: redis:latest
-        volumes:
-            - redis-data:/data
-        ports:
-            - 55000:6379
     postgres:
         image: postgres:latest
         restart: always
@@ -25,5 +19,4 @@ services:
             - ./sql/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
 
 volumes:
-    redis-data: {}
     postgres-data: {}

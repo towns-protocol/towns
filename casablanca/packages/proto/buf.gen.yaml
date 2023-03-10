@@ -1,0 +1,14 @@
+# buf.gen.yaml defines a local generation template.
+# For details, see https://docs.buf.build/configuration/v1/buf-gen-yaml
+version: v1
+plugins:
+  - plugin: es
+    out: src
+    # With target=ts, we generate TypeScript files.
+    # Use target=js+dts to generate JavaScript and TypeScript declaration files
+    # like remote generation does.
+    opt: target=ts
+  - plugin: connect-web
+    out: src
+    # With target=ts, we generate TypeScript files.
+    opt: target=ts

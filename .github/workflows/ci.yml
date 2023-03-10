@@ -6,36 +6,29 @@ on:
             - 'ci/**'
     pull_request:
     workflow_dispatch:  # Allow manual trigger in GitHub UI
+        inputs:
+            skip_dendrite:
+                description: Skip Dendrite Tests
+                required: false
+                default: false
+                type: boolean
+            skip_casablanca_client:
+                description: Skip Casablanca Client Tests
+                required: false
+                default: false
+                type: boolean
+            skip_casablanca_node:
+                description: Skip Casablanca Node Tests
+                required: false
+                default: false
+                type: boolean
 
 jobs:
-    check:
+    Dendrite:
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_dendrite
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
-            redis:
-                image: redis:latest
-                options: >-
-                    --health-cmd "redis-cli ping"
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                ports:
-                    - 55000:6379
-
-            postgres-casablanca:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-
             postgres-dendrite:
                 image: postgres:14
                 env:
@@ -78,7 +71,7 @@ jobs:
 
             - uses: actions/setup-node@v3
               with:
-                  node-version: '18'
+                  node-version: '18.13'
                   cache: 'yarn'
 
             - name: Install node dependencies
@@ -113,6 +106,111 @@ jobs:
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
 
+            - name: Wait for dendrite to be ready
+              run: yarn drt:wait
+
+            - name: Unit Tests
+              run: yarn test:unit
+
+            # We run the E2E tests only after the PR is merged
+            - name: E2E Tests
+              if: github.event.pull_request.merged == true
+              run: yarn test:e2e
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && github.event.pull_request.merged == true
+              uses: rtCamp/action-slack-notify@v2.2.0
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    Casablanca_Client:
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-casablanca:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.19.5' # Dendrite won't build on 1.20 yet, "The version of quic-go you're using can't be built on Go 1.20 yet. For more details, please see https://github.com/lucas-clemente/quic-go/wiki/quic-go-and-Go-versions."
+                  cache: true
+                  cache-dependency-path: |
+                    servers/**/go.sum
+                    casablanca/node/go.sum
+
+            - name: Cancel previous runs
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: nightly
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18.13.0'
+                  cache: 'yarn'
+
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v3
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Syncpack
+              run: yarn syncpack:check
+
+            - name: Build contract types
+              run: ./scripts/build-contract-types.sh localhost --frozen
+
+            - name: Start anvil
+              run: anvil &
+
+            - name: Deploy local zion governance contracts
+              run: ./scripts/deploy-zion-governance-contracts.sh
+
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
@@ -126,20 +224,8 @@ jobs:
             - name: Wait for Casablanca node to be up
               run: yarn csb:wait
 
-            - name: Wait for dendrite to be ready
-              run: yarn drt:wait
-
-            - name: Unit Tests
-              run: yarn test:unit
-
-            # We run the E2E tests only after the PR is merged
-            - name: E2E Tests
-              if: github.event.pull_request.merged == true
-              run: yarn test:e2e
-
-            # TODO: sync with serge to see if we can run these after merge as well
-            - name: Test Casablanca node
-              run: yarn csb:test-remote
+            - name: Build & Test
+              run: yarn csb:turbo
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -151,4 +237,67 @@ jobs:
                   SLACK_USERNAME: 'CI'
                   SLACK_ICON_EMOJI: ':boom:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+                  SLACK_MESSAGE: 'CI Casablance Failure on ${{ github.repository }}'
+
+    Casablanca_Node:
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_node
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-casablanca:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.19.5'
+                  cache: true
+                  cache-dependency-path: |
+                    casablanca/node/go.sum
+
+            - name: Cancel previous runs
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Casablanca create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: casablanca
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Run node tests
+              run: go test ./...
+              working-directory: casablanca/node
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && github.event.pull_request.merged == true
+              uses: rtCamp/action-slack-notify@v2.2.0
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Casablance Failure on ${{ github.repository }}'
+

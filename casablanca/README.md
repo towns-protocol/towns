@@ -1,3 +1,11 @@
+# Installing protoc and Buf
+
+    brew install protobuf@3
+    brew link --overwrite protobuf@3
+    brew install bufbuild/buf/buf
+
+There are addition install steps for go tools in [./node/README.md](./node/README.md)
+
 # Running Zion node
 
 Build node and start:

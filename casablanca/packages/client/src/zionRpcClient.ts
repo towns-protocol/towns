@@ -1,72 +1,159 @@
-import { ZionServiceInterface, ZionServicePrototype } from '@zion/core'
+import {
+    CallOptions,
+    createConnectTransport,
+    makeAnyClient,
+    PromiseClient,
+    StreamResponse,
+    Transport,
+} from '@bufbuild/connect-web'
+import { Message, MethodInfo, MethodKind, PartialMessage, ServiceType } from '@bufbuild/protobuf'
+import { ZionService } from '@zion/proto'
 import debug from 'debug'
-import { JSONRPCClient } from 'json-rpc-2.0'
-import axios from 'axios'
 import EventTarget, { setMaxListeners } from 'events'
+import { isDefined } from './check'
 
 const log = debug('zion:rpc_client')
+const logProtos = debug('zion:rpc_client:protos')
 
-// JSONRPCClient needs to know how to send a JSON-RPC request.
-// Tell it by passing a function to its constructor. The function must take a JSON-RPC request and send it.
-const makeJsonRpcClient = (url: string, controller?: AbortController): JSONRPCClient => {
-    log('makeJsonRpcClient', url)
-    const client = new JSONRPCClient(async (jsonRPCRequest) => {
-        log('Sending JSON-RPC request:')
-        log(jsonRPCRequest)
+export type ZionRpcClientType = PromiseClient<typeof ZionService> & {
+    close: () => Promise<void>
+}
 
-        const response = await axios.post(url, jsonRPCRequest, {
-            signal: controller?.signal,
+export const makeZionRpcClient = (
+    dest: Transport | string,
+    defaultOptions?: CallOptions,
+): ZionRpcClientType => {
+    let transport: Transport
+    if (typeof dest === 'string') {
+        transport = createConnectTransport({ baseUrl: dest, useBinaryFormat: true })
+    } else {
+        transport = dest
+    }
+
+    if (!isDefined(defaultOptions)) {
+        defaultOptions = {}
+    }
+
+    let abortController: AbortController | undefined = undefined
+    if (!isDefined(defaultOptions.signal)) {
+        abortController = new AbortController()
+        if (abortController.signal instanceof EventTarget) {
+            setMaxListeners(200, abortController.signal)
+        }
+        abortController.signal.addEventListener('abort', () => {
+            log('abortController aborted')
         })
-
-        log('Received JSON-RPC response:', response.status)
-        log(response.data)
-
-        if (response.status === 200) {
-            client.receive(response.data)
-        } else if (response.status !== 204 || jsonRPCRequest.id !== undefined) {
-            throw new Error(response.statusText)
-        }
-    })
-    return client
-}
-
-export type ZionRpcClient = ZionServiceInterface & {
-    rpcClient: JSONRPCClient
-    abortController: AbortController
-
-    close(): Promise<void>
-}
-export const makeZionRpcClient = (url?: string): ZionRpcClient => {
-    log('makeZionRpcClient', url)
-    const abortController = new AbortController()
-    if (abortController.signal instanceof EventTarget) {
-        setMaxListeners(200, abortController.signal)
+        defaultOptions.signal = abortController.signal
     }
-    abortController.signal.addEventListener('abort', () => {
-        log('abortController aborted')
-    })
-    const rpcClient = makeJsonRpcClient(url ?? 'http://localhost/json-rpc', abortController) // TODO: remove test url
-    const ss: any = {
-        rpcClient,
-        abortController,
-    }
-    Object.getOwnPropertyNames(ZionServicePrototype.prototype).forEach((prop: string) => {
-        if (prop === 'constructor') {
-            return
-        }
-        const prev = ss[prop]
-        ss[prop] = async (...a: any[]) => {
-            //log('Calling', prop, ...a)
-            // @ts-ignore: TS2556
-            return rpcClient.request('zion_' + prop, ...a)
+
+    const client: any = makeAnyClient(ZionService, (method) => {
+        switch (method.kind) {
+            case MethodKind.Unary:
+                return createUnaryFn(transport, ZionService, method, defaultOptions!)
+            case MethodKind.ServerStreaming:
+                return createServerStreamingFn(transport, ZionService, method, defaultOptions!)
+            default:
+                return null
         }
     })
 
-    ss.close = async (): Promise<void> => {
+    client.close = async (): Promise<void> => {
         log('closing client')
-        rpcClient.rejectAllPendingRequests('Client closed')
-        abortController.abort()
+        if (isDefined(abortController)) {
+            abortController.abort()
+        }
         log('client closed')
     }
-    return ss as ZionRpcClient
+    return client as ZionRpcClientType
+}
+
+type UnaryFn<I extends Message<I>, O extends Message<O>> = (
+    request: PartialMessage<I>,
+    options?: CallOptions,
+) => Promise<O>
+
+function createUnaryFn<I extends Message<I>, O extends Message<O>>(
+    transport: Transport,
+    service: ServiceType,
+    method: MethodInfo<I, O>,
+    defaultOptions: CallOptions,
+): UnaryFn<I, O> {
+    return async function (requestMessage: PartialMessage<I>, options?: CallOptions): Promise<O> {
+        if (logProtos.enabled) {
+            logProtos('RPC call START', service.typeName, method.name, requestMessage)
+        } else {
+            log('RPC call START', service.typeName, method.name)
+        }
+        try {
+            const response = await transport.unary(
+                service,
+                method,
+                options?.signal ?? defaultOptions.signal,
+                options?.timeoutMs ?? defaultOptions.timeoutMs,
+                options?.headers ?? defaultOptions.headers,
+                requestMessage,
+            )
+            ;(options?.onHeader ?? defaultOptions.onHeader)?.(response.header)
+            ;(options?.onTrailer ?? defaultOptions.onTrailer)?.(response.trailer)
+            if (logProtos.enabled) {
+                logProtos('RPC call END', service.typeName, method.name, response.message.toJson())
+            } else {
+                log('RPC call END', service.typeName, method.name)
+            }
+
+            return response.message
+        } catch (err) {
+            log('RPC call ERROR', service.typeName, method.name, err)
+            throw err
+        }
+    }
+}
+
+type ServerStreamingFn<I extends Message<I>, O extends Message<O>> = (
+    request: PartialMessage<I>,
+    options?: CallOptions,
+) => AsyncIterable<O>
+
+function createServerStreamingFn<I extends Message<I>, O extends Message<O>>(
+    transport: Transport,
+    service: ServiceType,
+    method: MethodInfo<I, O>,
+    defaultOptions: CallOptions,
+): ServerStreamingFn<I, O> {
+    return function (requestMessage, options): AsyncIterable<O> {
+        let streamResponse: StreamResponse<O> | undefined
+        return {
+            [Symbol.asyncIterator](): AsyncIterator<O> {
+                return {
+                    async next() {
+                        if (!streamResponse) {
+                            streamResponse = await transport.serverStream(
+                                service,
+                                method,
+                                options?.signal ?? defaultOptions.signal,
+                                options?.timeoutMs ?? defaultOptions.timeoutMs,
+                                options?.headers ?? defaultOptions.headers,
+                                requestMessage,
+                            )
+                            ;(options?.onHeader ?? defaultOptions.onHeader)?.(streamResponse.header)
+                        }
+                        const result = await streamResponse.read()
+                        if (result.done) {
+                            ;(options?.onTrailer ?? defaultOptions.onTrailer)?.(
+                                streamResponse.trailer,
+                            )
+                            return {
+                                done: true,
+                                value: undefined,
+                            }
+                        }
+                        return {
+                            done: false,
+                            value: result.value,
+                        }
+                    },
+                }
+            },
+        }
+    }
 }

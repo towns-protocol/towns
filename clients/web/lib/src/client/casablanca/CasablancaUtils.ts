@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Stream } from '@zion/client'
-import { FullEvent } from '@zion/core'
+import { getMessagePayload, Stream } from '@zion/client'
+import { ParsedEvent } from '@zion/client'
 import {
     ReactionEvent,
     RoomMessageEvent,
@@ -26,44 +26,42 @@ export function toZionRoomFromStream(stream: Stream): Room {
     }
 }
 
-function getEventContent(event: FullEvent): TimelineEvent_OneOf | undefined {
-    switch (event.base.payload.kind) {
-        // cb type message
-        case 'message': {
-            const msgEvent = JSON.parse(event.base.payload.text)
-            switch (msgEvent.kind) {
-                case ZTEvent.Reaction:
-                    return {
-                        kind: msgEvent.kind,
-                        reaction: msgEvent.reaction,
-                        targetEventId: msgEvent.targetEventId,
-                    } as ReactionEvent
-                case ZTEvent.RoomMessage:
-                    return {
-                        kind: msgEvent.kind,
-                        body: msgEvent.body,
-                        msgType: msgEvent.msgType,
-                        inReplyTo: msgEvent.inReplyTo,
-                        replacedMsgId: msgEvent.replacedMsgId,
-                        mentions: msgEvent.mentions as Mention[],
-                        content: {},
-                        wireContent: {},
-                    } as RoomMessageEvent
-            }
+function getEventContent(event: ParsedEvent): TimelineEvent_OneOf | undefined {
+    const messagePayload = getMessagePayload(event)
+    if (messagePayload !== undefined) {
+        const msgEvent = JSON.parse(messagePayload.text)
+        switch (msgEvent.kind) {
+            case ZTEvent.Reaction:
+                return {
+                    kind: msgEvent.kind,
+                    reaction: msgEvent.reaction,
+                    targetEventId: msgEvent.targetEventId,
+                } as ReactionEvent
+            case ZTEvent.RoomMessage:
+                return {
+                    kind: msgEvent.kind,
+                    body: msgEvent.body,
+                    msgType: msgEvent.msgType,
+                    inReplyTo: msgEvent.inReplyTo,
+                    replacedMsgId: msgEvent.replacedMsgId,
+                    mentions: msgEvent.mentions as Mention[],
+                    content: {},
+                    wireContent: {},
+                } as RoomMessageEvent
         }
     }
     return undefined
 }
 
-export function toZionEventFromCsbEvent(event: FullEvent): TimelineEvent {
+export function toZionEventFromCsbEvent(event: ParsedEvent): TimelineEvent {
     const sender = {
-        id: event.base.creatorAddress,
+        id: event.creatorUserId,
         displayName: '',
         avatarUrl: undefined,
     }
 
     return {
-        eventId: event.hash,
+        eventId: event.hashStr,
         originServerTs: 0,
         content: getEventContent(event),
         fallbackContent: '',

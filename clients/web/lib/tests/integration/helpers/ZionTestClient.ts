@@ -241,15 +241,22 @@ export class ZionTestClient extends ZionClient {
 
     /// helper function to get a test client up and running
     public async registerWalletAndStartClient() {
+        console.log('registerWalletAndStartClient', this.name, this.opts)
+
         if (this.auth) {
             throw new Error('AUTHED!!')
         }
-        const myAuth = await this.registerMatrixWallet()
-        const chainId = (await this.provider.getNetwork()).chainId
-        await this.startMatrixClient(myAuth, chainId)
 
-        const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
-        await this.startCasablancaClient(casablancaContext)
+        if (this.opts.primaryProtocol === SpaceProtocol.Matrix) {
+            const myAuth = await this.registerMatrixWallet()
+            const chainId = (await this.provider.getNetwork()).chainId
+            await this.startMatrixClient(myAuth, chainId)
+        }
+
+        if (this.opts.primaryProtocol === SpaceProtocol.Casablanca) {
+            const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+            await this.startCasablancaClient(casablancaContext)
+        }
     }
 
     /// login to the matrix server with wallet account
@@ -288,10 +295,13 @@ export class ZionTestClient extends ZionClient {
         if (!myAuth) {
             myAuth = await this.loginWallet()
         }
-        await this.startMatrixClient(myAuth, this.provider.network.chainId)
 
-        const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
-        await this.startCasablancaClient(casablancaContext)
+        if (this.opts.primaryProtocol === SpaceProtocol.Matrix) {
+            await this.startMatrixClient(myAuth, this.provider.network.chainId)
+        } else {
+            const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+            await this.startCasablancaClient(casablancaContext)
+        }
     }
 
     /// set the room invite level

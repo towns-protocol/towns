@@ -1,4 +1,4 @@
-import { isValidStreamId as isValidCasablancaStreamId } from '@zion/core'
+import { isValidStreamId as isValidCasablancaStreamId } from '@zion/client'
 import { SpaceProtocol } from '../client/ZionClientTypes'
 
 export type RoomIdentifier = MatrixRoomIdentifier | CasablancaStreamIdentifier

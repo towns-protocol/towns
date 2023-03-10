@@ -25,34 +25,42 @@
         "label": "Launch All",
         "dependsOn": [
           "Dendrite (from source)",
-          // "Dendrite (from docker compose)",
           "Casablanca",
           "Anvil",
           "DeployAllContracts",
           "WatchSharedLib",
           "WatchCasablancaClient",
-          "WatchCasablancaCore",
           "App",
           "SampleApp",
           "UnfurlWorker",
           "TokenWorker"
         ],
-        // Mark as the default build task so cmd/ctrl+shift+b will create them
         "group": {
           "kind": "build",
           "isDefault": true
         },
+        "problemMatcher": []
+      },
+      {
+        "label": "~Start Local Dev Casablanca Only~",
+        "dependsOn": [
+          "Casablanca",
+          "Anvil",
+          "DeployAllContracts",
+          "WatchCasablancaClient"
+        ],
+        "problemMatcher": [],
       },
       {
         "label": "Start Anvil, Deploy All Contracts",
         "dependsOn": [
           "DeployAllContracts",
-          "Anvil",
+          "Anvil"
         ],
         "group": {
           "kind": "build",
           "isDefault": false
-        },
+        }
       },
       {
         "label": "DeployAllContracts",
@@ -74,7 +82,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "ephemeral"
-        },
+        }
       },
       {
         "label": "YarnInstall",
@@ -84,7 +92,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "ephemeral"
-        },
+        }
       },
       {
         "label": "Dendrite (from source)",
@@ -94,7 +102,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "local-servers"
-        },
+        }
       },
       {
         "label": "Dendrite (from docker compose)",
@@ -104,7 +112,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "local-servers"
-        },
+        }
       },
       {
         "label": "Casablanca",
@@ -114,7 +122,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "local-servers"
-        },
+        }
       },
       {
         "label": "Anvil",
@@ -134,7 +142,7 @@
         "problemMatcher": [],
         "presentation": {
           "group": "ephemeral"
-        },
+        }
       },
       {
         "label": "DeployDAOContracts",
@@ -170,16 +178,6 @@
         "label": "WatchCasablancaClient",
         "type": "shell",
         "command": "./scripts/wait-for-casablanca.sh && cd casablanca/packages/client && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch"
-        }
-      },
-      {
-        "label": "WatchCasablancaCore",
-        "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/packages/core && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -255,6 +253,6 @@
         "presentation": {
           "group": "ephemeral"
         }
-      },
+      }
     ]
   }

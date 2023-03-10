@@ -2,7 +2,7 @@
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 echo 
-echo "Launching Redis..."
+echo "Launching Postgres..."
 echo 
 
 docker compose --project-name casablanca up --detach --wait
