@@ -46,7 +46,7 @@
         "dependsOn": [
           "Casablanca",
           "Anvil",
-          "DeployAllContracts",
+          "DeployZionGovernance",
           "WatchCasablancaClient"
         ],
         "problemMatcher": [],
