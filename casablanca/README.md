@@ -6,26 +6,22 @@
 
 There are addition install steps for go tools in [./node/README.md](./node/README.md)
 
-# Running Zion node
+# Running Casablanca node
 
-Build node and start:
+Start storage backend, build node and start:
 
-    yarn workspace @zion/server run build
-    casablanca/scripts/launch.sh
-
-Run tests on the running node:
-
-    yarn workspace @zion/server run test-remote
+    scripts/launch.sh
 
 # Running Casablanca Tests
 
-Start Redis & Postgres:
+Run client tests:
 
-    casablanca/scripts/launch_storage.sh
+    yarn csb:turbo
 
-Run all Casablanca tests:
+Run node tests:
 
-    yarn csb:test
+    cd node
+    go test -v ./...
 
 # Clean Build after Yarn Install or Branch Switching
 
@@ -35,9 +31,3 @@ Clean build artificats and rebuild:
 
     yarn csb:clean
     yarn csb:build
-
-Or in specific package:
-
-    cs casablanca/packages/server
-    yarn build --clean
-    yarn build
