@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo, useRef } from 'react'
-import { FullyReadMarker, MessageType, useFullyReadMarker } from 'use-zion-client'
+import { FullyReadMarker, MessageType, ZTEvent, useFullyReadMarker } from 'use-zion-client'
 import { Box, Divider, VList } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
@@ -8,6 +8,7 @@ import { NewDivider } from './events/NewDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import {
+    EncryptedMessageRenderEvent,
     FullyReadRenderEvent,
     MessageRenderEvent,
     RenderEvent,
@@ -15,6 +16,7 @@ import {
     ThreadUpdateRenderEvent,
     UserMessagesRenderEvent,
     getEventsByDate,
+    isRoomMessage,
 } from './util/getEventsByDate'
 
 type Props = {
@@ -60,14 +62,19 @@ export const MessageTimeline = (props: Props) => {
     const estimateItemHeight = useCallback((r: (typeof listItems)[0]) => {
         if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
-                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 26.5
+                const itemHeight =
+                    item.content.kind === ZTEvent.RoomMessage &&
+                    item.content.msgType === MessageType.Image
+                        ? 400
+                        : 26.5
                 return height + itemHeight
             }, 0)
             return height
         }
         if (r.type === 'message') {
             const height = [r.item.event].reduce((height, item) => {
-                const itemHeight = item.content.msgType === MessageType.Image ? 400 : 26.5
+                const itemHeight =
+                    isRoomMessage(item) && item.content.msgType === MessageType.Image ? 400 : 26.5
                 return height + itemHeight
             }, 0)
             return height
@@ -87,7 +94,11 @@ export const MessageTimeline = (props: Props) => {
             | { id: string; type: 'group'; date: string; isNew?: boolean }
             | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
             | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
-            | { id: string; type: 'message'; item: MessageRenderEvent }
+            | {
+                  id: string
+                  type: 'message'
+                  item: MessageRenderEvent | EncryptedMessageRenderEvent
+              }
             | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
             | {
                   id: string
@@ -115,10 +126,13 @@ export const MessageTimeline = (props: Props) => {
         const listItems: ListItem[] = flatGroups
             .flatMap<ListItem>((e) => {
                 if (e.type === RenderEventType.UserMessages) {
-                    const displayEncrypted = e.events.some(
-                        (e) => e.content.msgType === 'm.bad.encrypted',
+                    // if all consecutive messages are encrypted, we can group them
+                    const displayEncrypted = e.events.every(
+                        (e) =>
+                            (e.content.kind === ZTEvent.RoomMessage &&
+                                e.content.msgType === 'm.bad.encrypted') ||
+                            e.content.kind === ZTEvent.RoomMessageEncrypted,
                     )
-
                     // only picks 3 messages (first and last ones) when
                     // decrypted content is showing
                     const filtered = displayEncrypted
@@ -126,14 +140,28 @@ export const MessageTimeline = (props: Props) => {
                         : e.events
 
                     return filtered.map((event, index, events) => {
-                        const item: MessageRenderEvent = {
-                            type: RenderEventType.Message,
-                            key: event.eventId,
-                            event,
-                            displayEncrypted,
-                            displayContext:
-                                index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                        let item: MessageRenderEvent | EncryptedMessageRenderEvent
+
+                        if (isRoomMessage(event)) {
+                            item = {
+                                type: RenderEventType.Message,
+                                key: event.eventId,
+                                event,
+                                displayEncrypted,
+                                displayContext:
+                                    index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                            }
+                        } else {
+                            item = {
+                                type: RenderEventType.EncryptedMessage,
+                                key: event.eventId,
+                                event,
+                                displayEncrypted: true,
+                                displayContext:
+                                    index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                            }
                         }
+
                         return {
                             id: event.eventId,
                             type: 'message',

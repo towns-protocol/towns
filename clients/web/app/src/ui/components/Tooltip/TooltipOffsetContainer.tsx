@@ -69,8 +69,12 @@ export const TooltipOffsetContainer = (props: OffsetContainerProps) => {
         if (placement === 'horizontal') {
             pos.top = triggerRect.top + triggerRect.height * 0.5 - size.height * 0.5
             pos.left = triggerRect.right
-        } else {
+        } else if (placement === 'vertical') {
             pos.top = triggerRect.bottom
+            pos.left = triggerRect.left + triggerRect.width * 0.5 - size.width * 0.5
+        } else {
+            // hack - need to align with cardopener
+            pos.top = triggerRect.top - size.height
             pos.left = triggerRect.left + triggerRect.width * 0.5 - size.width * 0.5
         }
 

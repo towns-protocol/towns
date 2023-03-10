@@ -2,56 +2,77 @@ import React from 'react'
 import { Box, Stack } from '@ui'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 
-export const TimelineShimmer = () => {
+export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
     return (
-        <Box absoluteFill padding data-testid="timeline-shimmer">
+        <Box absoluteFill data-testid="timeline-shimmer">
             <Stack grow>
-                <Stack gap="lg" padding="sm">
-                    <Box grow horizontal paddingBottom="sm">
-                        <Box grow className={shimmerClass} height="1" />
+                <Stack gap="lg">
+                    <Box
+                        grow
+                        horizontal
+                        borderBottom
+                        height="x8"
+                        paddingX="lg"
+                        gap="lg"
+                        alignItems="center"
+                    >
+                        <Box square="square_lg" height="x1" className={shimmerClass} rounded="xs" />
+                        <Box width="200" height="x2" className={shimmerClass} rounded="xs" />
                     </Box>
-                    {Array(10)
-                        .fill(undefined)
-                        .map((_, i) => i)
-                        .map((k, _, a) => {
-                            return (
-                                <Stack gap key={`${k}`} style={{ opacity: 1 - (1 / a.length) * k }}>
-                                    <Stack horizontal gap>
-                                        <Box
-                                            width="x6"
-                                            height="x6"
-                                            aspectRatio="1/1"
-                                            rounded="full"
-                                            className={shimmerClass}
-                                        />
-                                        <Stack flexGrow="h8" gap="md">
-                                            <Stack
-                                                width="300"
-                                                height="height_sm"
+                    <Stack gap padding="lg">
+                        {Array(10)
+                            .fill(undefined)
+                            .map((_, i) => i)
+                            .map((k, _, a) => {
+                                return (
+                                    <Stack
+                                        gap
+                                        key={`${k}`}
+                                        style={{ opacity: 1 - (1 / a.length) * k }}
+                                    >
+                                        <Stack horizontal gap>
+                                            <Box
+                                                width="x6"
+                                                height="x6"
+                                                aspectRatio="1/1"
+                                                rounded="full"
                                                 className={shimmerClass}
-                                                rounded="xs"
                                             />
-                                            <Stack
-                                                height="height_sm"
-                                                className={shimmerClass}
-                                                rounded="xs"
-                                            />
-                                            <Stack
-                                                height="height_sm"
-                                                className={shimmerClass}
-                                                rounded="xs"
-                                            />
-                                            <Stack className={shimmerClass} rounded="xs" />
+                                            <Stack flexGrow="h8" gap="sm">
+                                                <Stack
+                                                    width="200"
+                                                    height="x2"
+                                                    className={shimmerClass}
+                                                    rounded="xs"
+                                                />
+                                                <Stack
+                                                    height="x2"
+                                                    className={shimmerClass}
+                                                    rounded="xs"
+                                                />
+                                                <Stack
+                                                    height="x2"
+                                                    className={shimmerClass}
+                                                    rounded="xs"
+                                                />
+                                                <Stack
+                                                    height="x2"
+                                                    className={shimmerClass}
+                                                    rounded="xs"
+                                                />
+                                                <Stack className={shimmerClass} rounded="xs" />
+                                            </Stack>
                                         </Stack>
                                     </Stack>
-                                </Stack>
-                            )
-                        })}
+                                )
+                            })}
+                    </Stack>
                 </Stack>
                 <Stack grow bottom left padding="lg" position="absolute" width="100%">
                     <Box grow className={shimmerClass} height="x6" rounded="sm" />
                 </Stack>
             </Stack>
+            {props.children}
         </Box>
     )
 }

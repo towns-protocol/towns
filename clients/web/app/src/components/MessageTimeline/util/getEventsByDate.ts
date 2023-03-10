@@ -41,7 +41,7 @@ export type ZRoomCreateEvent = Omit<TimelineEvent, 'content'> & { content: RoomC
 export interface UserMessagesRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessages
     key: string
-    events: ZRoomMessageEvent[]
+    events: (ZRoomMessageEvent | ZRoomMessageEncryptedEvent)[]
 }
 
 export interface MessageRenderEvent extends BaseEvent {
@@ -51,6 +51,14 @@ export interface MessageRenderEvent extends BaseEvent {
     displayContext: 'tail' | 'single' | 'head'
     isHighlight?: boolean
     displayEncrypted: boolean
+}
+
+export interface EncryptedMessageRenderEvent extends BaseEvent {
+    type: RenderEventType.EncryptedMessage
+    key: string
+    event: ZRoomMessageEncryptedEvent
+    displayEncrypted: boolean
+    displayContext: 'tail' | 'single' | 'head'
 }
 
 export interface RoomMemberRenderEvent extends BaseEvent {
@@ -85,21 +93,17 @@ export interface ThreadUpdateRenderEvent extends BaseEvent {
     events: ZRoomMessageEvent[]
 }
 
-export interface EncryptedMessageRenderEvent extends BaseEvent {
-    type: RenderEventType.EncryptedMessage
-    key: string
-    event: ZRoomMessageEncryptedEvent
-}
-
 const isRoomCreate = (event: TimelineEvent): event is ZRoomCreateEvent => {
     return event.content?.kind === ZTEvent.RoomCreate
 }
 
-const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
+export const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent => {
     return event.content?.kind === ZTEvent.RoomMessage
 }
 
-const isEncryptedRoomMessage = (event: TimelineEvent): event is ZRoomMessageEncryptedEvent => {
+export const isEncryptedRoomMessage = (
+    event: TimelineEvent,
+): event is ZRoomMessageEncryptedEvent => {
     return event.content?.kind === ZTEvent.RoomMessageEncrypted
 }
 
@@ -181,7 +185,10 @@ export const getEventsByDate = (
 
             const renderEvents = group.events
 
-            if (isRoomMessage(event)) {
+            /**
+             * accumulate messages by the same user
+             */
+            if (isRoomMessage(event) || isEncryptedRoomMessage(event)) {
                 if (fullyReadMarker?.eventId === event.eventId) {
                     if (
                         // TODO: if we add readmarkers to more events than
@@ -208,7 +215,8 @@ export const getEventsByDate = (
 
                 // - - - - - - - - - - - - - - - - - - - - - - - - inline thread updates
 
-                if (!isThread && event.threadParentId) {
+                if (!isThread && event.threadParentId && isRoomMessage(event)) {
+                    // experimental feature to show thread updates inline
                     if (!experiments?.enableInlineThreadUpdates) {
                         // serge mode is disabled
                     } else {
@@ -239,12 +247,6 @@ export const getEventsByDate = (
                         events: [event],
                     })
                 }
-            } else if (isEncryptedRoomMessage(event)) {
-                renderEvents.push({
-                    type: RenderEventType.EncryptedMessage,
-                    key: event.eventId,
-                    event,
-                })
             } else if (isRoomMember(event)) {
                 let accumulatedEvents = renderEvents.find(
                     (e) =>

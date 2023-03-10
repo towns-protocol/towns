@@ -1,9 +1,11 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     Membership,
     SendMessageOptions,
+    TimelineEvent,
+    ZTEvent,
     useChannelData,
     useChannelTimeline,
     useMyMembership,
@@ -15,6 +17,7 @@ import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
+import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { Box, Button, Stack } from '@ui'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
@@ -72,10 +75,19 @@ const SpacesChannelComponent = () => {
     const eventHash = window.location.hash?.replace(/^#/, '')
     const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
 
+    const { displayDecryptionPopup, decryptionProgress } =
+        useDisplayEncryptionProgress(channelMessages)
+
     return (
         <CentralPanelLayout>
-            {!channel || !channelId ? (
-                <TimelineShimmer />
+            {!channel || !channelId || displayDecryptionPopup ? (
+                <TimelineShimmer>
+                    {displayDecryptionPopup && (
+                        <Stack absoluteFill centerContent>
+                            <DecryptingCard progress={decryptionProgress} />
+                        </Stack>
+                    )}
+                </TimelineShimmer>
             ) : myMembership !== Membership.Join ? (
                 <Box absoluteFill centerContent>
                     <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>
@@ -125,4 +137,57 @@ const SpacesChannelComponent = () => {
             )}
         </CentralPanelLayout>
     )
+}
+
+const useDisplayEncryptionProgress = (channelMessages: TimelineEvent[]) => {
+    const [displayDecryptionPopup, setDisplayEncrypted] = React.useState(false)
+    const messageTypes = [ZTEvent.RoomMessageEncrypted, ZTEvent.RoomMessage]
+    const encryptedMessageStats =
+        channelMessages.length > 0 &&
+        channelMessages.reduce(
+            (k, e) => {
+                if (e.content?.kind && messageTypes.includes(e.content?.kind)) {
+                    k.total++
+                    if (e.content?.kind === ZTEvent.RoomMessageEncrypted) {
+                        k.encrypted++
+                    }
+                }
+                k.progress = 1 - k.encrypted / k.total
+                return k
+            },
+            { encrypted: 0, total: 0, progress: 0 },
+        )
+    const hasDisplayedOnce = useRef(false)
+    const hasEncrypted = encryptedMessageStats && encryptedMessageStats.encrypted > 0
+    useEffect(() => {
+        if (hasDisplayedOnce.current) {
+            // when popup is showing...
+            if (!hasEncrypted) {
+                // remove popup when no encrypted message is left
+                setDisplayEncrypted(false)
+            }
+        } else {
+            // when popup is not showing...
+            if (hasEncrypted) {
+                // display
+                setDisplayEncrypted(true)
+                hasDisplayedOnce.current = true
+                const timeout = setTimeout(() => {
+                    // remove on timeout
+                    setDisplayEncrypted(false)
+                }, 1000 * 15)
+
+                return () => {
+                    clearTimeout(timeout)
+                }
+            }
+        }
+    }, [hasEncrypted])
+
+    console.log(encryptedMessageStats)
+
+    return {
+        displayDecryptionPopup,
+        decryptionProgress: (encryptedMessageStats && encryptedMessageStats?.progress) || 0,
+    }
 }

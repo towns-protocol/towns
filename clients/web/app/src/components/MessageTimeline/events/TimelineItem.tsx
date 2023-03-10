@@ -4,10 +4,11 @@ import { MessageTimelineContext } from '../MessageTimelineContext'
 import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
 import { AccumulatedRoomMemberEvent } from './AccumulatedRoomMemberEvent'
 import { TimelineChannelCreateEvent } from './TimelineChannelCreatedEvent'
+import { TimelineEncryptedContent } from './TimelineEncryptedContent'
 import { TimelineGenericEvent } from './TimelineGenericEvent'
 import { TimelineMessage } from './TimelineMessage'
 import { TimelineMessageEditor } from './TimelineMessageEditor'
-import { TimelineEncryptedContent, TimelineMessageContent } from './TimelineMessagesContent'
+import { TimelineMessageContent } from './TimelineMessagesContent'
 import { TimelineThreadUpdates } from './TimelineThreadUpdates'
 
 export const MessageTimelineItem = (props: {
@@ -33,11 +34,13 @@ export const MessageTimelineItem = (props: {
             const event = itemData.event
 
             const isMessage = itemData.type === RenderEventType.Message
+            const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
 
             const displayEncrypted =
                 itemData.type === RenderEventType.EncryptedMessage || itemData.displayEncrypted
 
-            const displayContext = isMessage ? itemData.displayContext : 'single'
+            const displayContext =
+                isMessage || isEncryptedMessage ? itemData.displayContext : 'single'
             const isEditing = event.eventId === timelineActions.editingMessageId
             const isSelectable = !displayEncrypted
 
