@@ -3,16 +3,13 @@ import { TimelineEvent } from 'use-zion-client'
 import { Box, Card, Icon, Stack, TooltipRenderer } from '@ui'
 import * as styles from './TimelineEncryptedContent.css'
 
-export const TimelineEncryptedContent = (props: {
-    event: TimelineEvent
-    displayContext: 'tail' | 'body' | 'head' | 'single'
-}) => {
-    const { event, displayContext } = props
-    const width =
-        (Math.floor((Math.cos(event.originServerTs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200
-    return (
-        <Stack insetY="xxs" className={styles.main}>
-            {displayContext === 'tail' ? null : (
+export const TimelineEncryptedContent = React.memo(
+    (props: { event: TimelineEvent; displayContext: 'tail' | 'body' | 'head' | 'single' }) => {
+        const { event } = props
+        const width =
+            (Math.floor((Math.cos(event.originServerTs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200
+        return (
+            <Stack insetY="xxs" className={styles.main}>
                 <TooltipRenderer
                     placement="vertical-top"
                     render={
@@ -51,7 +48,7 @@ export const TimelineEncryptedContent = (props: {
                         </Box>
                     )}
                 </TooltipRenderer>
-            )}
-        </Stack>
-    )
-}
+            </Stack>
+        )
+    },
+)
