@@ -9,10 +9,19 @@
     },
     "tasks": [
       {
+        // start local dev:
+        // 
+        // 1. yarn install
+        // 2. start anvil
+        // 3. deploy contracts
+        // 4. starts all servers and clients
+        // 
+        // it's important to do in this order since the servers
+        // and use the artifacts of the contracts in their builds
         "label": "~Start Local Dev~",
         "dependsOn": [
           "YarnInstall",
-          "Launch All"
+          "Stage 1"
         ],
         // Mark as the default build task so cmd/ctrl+shift+b will create them
         "group": {
@@ -22,12 +31,33 @@
         "dependsOrder": "sequence"
       },
       {
-        "label": "Launch All",
+        "label": "Stage 1",
+        "dependsOn": [
+          "Anvil",
+          "Stage 2"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": false
+        },
+      },
+      {
+        "label": "Stage 2",
+        "dependsOn": [
+          "DeployZionGovernance",
+          "Stage 3"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": false
+        },
+        "dependsOrder": "sequence"
+      },
+      {
+        "label": "Stage 3",
         "dependsOn": [
           "Dendrite (from source)",
           "Casablanca",
-          "Anvil",
-          "DeployZionGovernance",
           "WatchSharedLib",
           "WatchCasablancaClient",
           "App",
@@ -37,7 +67,7 @@
         ],
         "group": {
           "kind": "build",
-          "isDefault": true
+          "isDefault": false
         },
         "problemMatcher": []
       },
