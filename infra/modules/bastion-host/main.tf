@@ -62,7 +62,7 @@ resource "aws_instance" "bastion-host-instance" {
 
   availability_zone = local.availability_zone
 
-  key_name = "bastion_keypair" # TODO: remove the ssh keys once everything is fully automated
+  key_name = "bastion_keypair"
 
   depends_on = [
     aws_network_interface.bastion-host-nic

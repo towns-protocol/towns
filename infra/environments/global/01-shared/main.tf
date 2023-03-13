@@ -35,8 +35,22 @@ resource "aws_acm_certificate" "primary_hosted_zone_cert" {
   tags = merge(module.global_constants.tags, { Name = module.global_constants.primary_hosted_zone_name })
 }
 
-module "ecs_iam" {
-  source      = "../../../modules/ecs-iam"
-  environment = terraform.workspace == "global" ? "global" : ""
-}
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name                = "ecsTaskExecutionRole"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "ecs-tasks.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
 
+  tags = module.global_constants.tags
+}

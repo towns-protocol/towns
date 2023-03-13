@@ -10,11 +10,20 @@ data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
+module "dendrite_node_db" {
+  source = "../../modules/node-db"
+
+  database_subnets = var.database_subnets
+  allowed_cidr_blocks = var.dendrite_node_cidr_blocks
+  vpc_id = var.vpc_id
+  dendrite_node_name = var.dendrite_node_name
+}
+
 # Behind the load balancer
-module "zion_internal_sg" { 
+module "dendrite_internal_sg" { 
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "${module.global_constants.environment}_zion_internal_sg"
+  name        = "${module.global_constants.environment}_dendrite_internal_sg"
   description = "Security group for dendrite nodes"
   vpc_id      = var.vpc_id
 
@@ -53,15 +62,15 @@ resource "aws_security_group_rule" "ecs_loopback_rule" {
   protocol                  = "-1"
   self                      = true
   description               = "Loopback"
-  security_group_id         = "${module.zion_internal_sg.security_group_id}"
+  security_group_id         = "${module.dendrite_internal_sg.security_group_id}"
 }
 
 module "dendrite_efs" {
   source = "../efs"
-  subnets = var.subnets
+  subnets = var.dendrite_node_subnets
   vpc_id = var.vpc_id
   inbound_security_groups = [
-    module.zion_internal_sg.security_group_id, 
+    module.dendrite_internal_sg.security_group_id, 
     var.bastion_host_security_group_id
   ] 
 }
@@ -101,8 +110,8 @@ resource "aws_ecs_service" "dendrite-ecs-service" {
   }
 
   network_configuration {
-    security_groups  = [module.zion_internal_sg.security_group_id]
-    subnets          = var.subnets
+    security_groups  = [module.dendrite_internal_sg.security_group_id]
+    subnets          = var.dendrite_node_subnets
     assign_public_ip = true
   }
 }

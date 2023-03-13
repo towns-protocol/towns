@@ -8,9 +8,21 @@ variable "ecs_cluster_id" {
   type = string
 }
 
-variable "subnets" {
+variable "dendrite_node_subnets" {
   description = "A list of subnets to associate with the dendrite nodes"
   type        = list(string)
+}
+
+variable "database_subnets" {
+  description = "List of subnet IDs used by database subnet group created"
+  type        = list(string)
+  default     = []
+}
+
+variable "dendrite_node_cidr_blocks" {
+  description = "Dendrite node cidr blocks"
+  type        = list(string)
+  default     = []
 }
 
 variable "vpc_id" {

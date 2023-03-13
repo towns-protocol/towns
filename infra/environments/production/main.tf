@@ -23,7 +23,7 @@ module global_constants {
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
-  name = "zion-vpc-${module.global_constants.environment}"
+  name = "dendrite-vpc-${module.global_constants.environment}"
   cidr = "10.0.0.0/16"
 
   azs = ["us-east-1a", "us-east-1b"]
@@ -67,11 +67,11 @@ module "dendrite_alb" {
   vpc_id = module.vpc.vpc_id
 }
 
-module "zion_node" {
-  source = "../../modules/zion-node"
+module "dendrite_node" {
+  source = "../../modules/dendrite-node"
 
   ecs_cluster_id = aws_ecs_cluster.dendrite_ecs_cluster.id
-  subnets = module.vpc.private_subnets
+  dendrite_node_subnets = module.vpc.private_subnets
   vpc_id = module.vpc.vpc_id
   dendrite_node_name = "node1"
   bastion_host_security_group_id = module.bastion_host.bastion_sg_id
@@ -80,13 +80,7 @@ module "zion_node" {
   dendrite_alb_security_group_id = module.dendrite_alb.security_group_id
   dendrite_server_target_group_arn = module.dendrite_alb.target_group_arns[0]
   dendrite_profiler_target_group_arn = module.dendrite_alb.target_group_arns[1] 
-}
 
-module "dendrite_node_db" {
-  source = "../../modules/node-db"
-
+  dendrite_node_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets = module.vpc.database_subnets
-  allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
-  vpc_id = module.vpc.vpc_id
-  dendrite_node_name = "node1"
 }
