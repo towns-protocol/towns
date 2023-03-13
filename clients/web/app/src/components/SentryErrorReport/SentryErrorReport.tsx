@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import useEvent from 'react-use-event-hook'
 import { z } from 'zod'
 import { useMutation } from 'wagmi'
+import { format, formatDistance } from 'date-fns'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Button, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
 import { TextArea } from 'ui/components/TextArea/TextArea'
@@ -36,12 +37,23 @@ const defaultValues = {
 
 function postSentryError(data: FormState) {
     const URL = 'https://sentry.io/api/0/projects/here-not-there/harmony-web/user-feedback/'
-    const eventId = Sentry.captureMessage('User submitted feedback') // this should be snake_case for sentry
+    const message = `User feedback - ${window.location.href} - ${format(
+        Date.now(),
+        'M/d/yy h:mm a',
+    )}`
+    const event_id = Sentry.captureMessage(message, {
+        // not sure what is necessary here to make this unique and show up in Sentry, so some of this may be duplicated
+        fingerprint: [data.email, Date.now().toString()],
+        extra: {
+            timestamp: Date.now().toString(),
+            location: window.location.href,
+        },
+    })
 
     return axiosClient.post(
         `${URL}`,
         JSON.stringify({
-            event_id: eventId,
+            event_id, // must be snake_case
             ...data,
         }),
         {
