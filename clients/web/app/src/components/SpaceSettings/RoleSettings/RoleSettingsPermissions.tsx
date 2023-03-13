@@ -1,19 +1,21 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useParams } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { Permission } from 'use-zion-client'
 import { Paragraph, Stack, Toggle } from '@ui'
-import { useSpaceSettingsStore } from 'store/spaceSettingsStore'
+import {
+    Role,
+    useSettingsRolesStore,
+} from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { enabledRolePermissions, rolePermissionDescriptions } from './rolePermissions.const'
 
 type PermissionMeta = (typeof rolePermissionDescriptions)[keyof typeof rolePermissionDescriptions]
 
 export const RoleSettingsPermissions = () => {
     const { role: roleId = '' } = useParams()
-    const getRole = useSpaceSettingsStore((state) => state.getRole)
-    const role = getRole(roleId)
+    const role = useSettingsRolesStore((state) => state.getRole(roleId))
 
-    const setPermission = useSpaceSettingsStore((state) => state.setPermission)
+    const setPermission = useSettingsRolesStore((state) => state.setPermission)
     const onToggleRole = useEvent((permissionId: Permission, value: boolean) => {
         if (roleId) {
             setPermission(roleId, permissionId, value)
@@ -25,7 +27,8 @@ export const RoleSettingsPermissions = () => {
             {enabledRolePermissions.map((permissionId: Permission) => {
                 return role ? (
                     <RoleRow
-                        id={permissionId}
+                        permissionId={permissionId}
+                        role={role}
                         defaultToggled={!!role?.permissions.includes(permissionId)}
                         metaData={rolePermissionDescriptions[permissionId]}
                         key={permissionId}
@@ -38,19 +41,30 @@ export const RoleSettingsPermissions = () => {
 }
 
 type RoleProps = {
-    id: Permission
+    permissionId: Permission
+    role: Role
     defaultToggled: boolean
     metaData: PermissionMeta
     onToggle: (id: Permission, value: boolean) => void
 }
 
 const RoleRow = (props: RoleProps) => {
-    const { id, metaData, defaultToggled } = props
+    const { permissionId, metaData, defaultToggled, role } = props
     const [checked, setChecked] = React.useState(defaultToggled)
     const onToggle = (checked: boolean) => {
-        setChecked(checked)
-        props.onToggle(id, checked)
+        props.onToggle(permissionId, checked)
     }
+
+    // since a role can be reset to its default state (an individual permission can be toggled withtout user clicking this toggle)
+    // listen to the role changes and update the toggle state accordingly
+    useEffect(() => {
+        if (!role) {
+            return
+        }
+        const { permissions } = role
+        setChecked(!!permissions.includes(permissionId))
+    }, [permissionId, role])
+
     return (
         <Stack horizontal grow gap as="label">
             <Stack grow>

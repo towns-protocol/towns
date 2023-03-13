@@ -857,9 +857,29 @@ const Alert = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const ArrowDown = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.8787 15.5355C12.4882 15.9261 11.855 15.9261 11.4645 15.5355L5.63604 9.70711C5.24552 9.31658 5.24551 8.68342 5.63604 8.29289C6.02656 7.90237 6.65973 7.90237 7.05025 8.29289L12.1716 13.4142L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 const iconMap = {
     alert: Alert,
     all: AllIcon,
+    arrowDown: ArrowDown,
     at: AtIcon,
     back: BackIcon,
     bell: BellIcon,

@@ -5,7 +5,7 @@ import { Box, Card } from '@ui'
 import { MenuItem } from '@components/Cards/MenuItem'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
-import { Role } from '../../store/spaceSettingsStore'
+import { Role } from './store/hooks/settingsRolesStore'
 
 export const SpaceSettingsRolesNavItem = (props: {
     role: Role

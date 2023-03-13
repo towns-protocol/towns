@@ -17,48 +17,88 @@ export type Role = {
     users: string[]
 }
 
-const createRole = (id: string, name: string, color?: string): Role => ({
+const createRole = (id: string, name: string): Role => ({
     id,
     name,
-    color: '1',
     permissions: [Permission.Read],
     tokens: [],
     users: [],
 })
 
-export const useSpaceSettingsStore = create(
+// Manages the state of the roles for the space
+// This store contains a snapshot of the roles when the space was loaded, and a duplicate of each role that contains changes
+// This store does not track the status of any transactions to the blockchain
+export const useSettingsRolesStore = create(
     immer(
         combine(
             {
-                space: undefined,
-            } as { space?: SpaceSettings },
+                modifiedSpace: undefined as SpaceSettings | undefined,
+                // the state of the space settings when it was first loaded
+                spaceSnapshot: undefined as SpaceSettings | undefined,
+            },
             (set, get) => ({
                 clearSpace: () => {
                     set((state) => {
-                        state.space = undefined
+                        state.modifiedSpace = undefined
+                        state.spaceSnapshot = undefined
                     })
                 },
 
-                setSpace: (settings: SpaceSettings) => {
+                setIntitialState: (settings: SpaceSettings) => {
+                    if (get().modifiedSpace) {
+                        return settings
+                    }
                     set((state) => {
-                        state.space = settings
+                        state.modifiedSpace = settings
+                        state.spaceSnapshot = settings
                     })
                     return settings
                 },
 
+                resetRole: (roleId: string) => {
+                    set((state) => {
+                        if (!state.modifiedSpace || !state.spaceSnapshot) {
+                            return
+                        }
+
+                        const updatedRole = state.modifiedSpace.roles.find(
+                            (role) => role.id === roleId,
+                        )
+                        const snapshotRole = state.spaceSnapshot.roles.find(
+                            (role) => role.id === roleId,
+                        )
+
+                        // remove the role if it was added
+                        if (!snapshotRole && updatedRole) {
+                            const index = state.modifiedSpace.roles.indexOf(updatedRole)
+                            if (index !== undefined && index !== -1) {
+                                state.modifiedSpace.roles.splice(index, 1)
+                            }
+                        }
+                        // add the role back if it was deleted
+                        if (!updatedRole && snapshotRole) {
+                            state.modifiedSpace.roles.push(snapshotRole)
+                        }
+
+                        if (updatedRole && snapshotRole) {
+                            Object.assign(updatedRole, snapshotRole)
+                        }
+                    })
+                },
+
                 getDefaultRole: () => {
-                    return get().space?.roles.at(0)
+                    return get().modifiedSpace?.roles.at(0)
                 },
 
                 addRole: (role: Partial<Role> & Pick<Role, 'name' | 'id'>) => {
                     set((state) => {
-                        state.space?.roles.push(createRole(role.id, role.name))
+                        state.modifiedSpace?.roles.push(createRole(role.id, role.name))
                     })
                 },
 
                 removeRole: (roleId: string) => {
                     set((state) => {
-                        const roles = state.space?.roles
+                        const roles = state.modifiedSpace?.roles
                         const index = roles?.findIndex((role) => role.id === roleId) ?? -1
                         if (index > -1) {
                             roles?.splice(index, 1)
@@ -67,7 +107,7 @@ export const useSpaceSettingsStore = create(
                 },
                 setRoleName: (roleId: string, name: string) => {
                     set((state) => {
-                        const role = state.space?.roles.find((role) => role.id === roleId)
+                        const role = state.modifiedSpace?.roles.find((role) => role.id === roleId)
                         if (role) {
                             role.name = name
                         }
@@ -75,18 +115,18 @@ export const useSpaceSettingsStore = create(
                 },
                 setRoleColor: (roleId: string, color: string) => {
                     set((state) => {
-                        const role = state.space?.roles.find((role) => role.id === roleId)
+                        const role = state.modifiedSpace?.roles.find((role) => role.id === roleId)
                         if (role) {
                             role.color = color
                         }
                     })
                 },
                 getRole: (roleId: string) => {
-                    return get().space?.roles.find((role) => role.id === roleId)
+                    return get().modifiedSpace?.roles.find((role) => role.id === roleId)
                 },
                 setPermission: (roleId: string, permissionId: Permission, value: boolean) => {
                     set((state) => {
-                        const role = state.space?.roles.find((role) => role.id === roleId)
+                        const role = state.modifiedSpace?.roles.find((role) => role.id === roleId)
                         if (!role) {
                             return
                         }
@@ -106,7 +146,7 @@ export const useSpaceSettingsStore = create(
 
                 setUsers: (roleId: string, users: string[]) => {
                     set((state) => {
-                        const role = state.space?.roles.find((role) => role.id === roleId)
+                        const role = state.modifiedSpace?.roles.find((role) => role.id === roleId)
                         if (role) {
                             role.users = users
                         }
@@ -114,7 +154,7 @@ export const useSpaceSettingsStore = create(
                 },
                 setTokens: (roleId: string, tokens: string[]) => {
                     set((state) => {
-                        const role = state.space?.roles.find((role) => role.id === roleId)
+                        const role = state.modifiedSpace?.roles.find((role) => role.id === roleId)
                         if (role) {
                             role.tokens = tokens
                         }

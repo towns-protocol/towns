@@ -1,25 +1,32 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { Icon, Stack } from '@ui'
-import { useSpaceSettingsStore } from 'store/spaceSettingsStore'
+import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
 import { SpaceSettingsRolesNavItem } from './SpaceSettingsRolesNavItem'
 
 export const SpaceSettingsRolesNav = () => {
     const { role } = useParams()
-    const addRole = useSpaceSettingsStore((state) => state.addRole)
-    const removeRole = useSpaceSettingsStore((state) => state.removeRole)
-    const roles = useSpaceSettingsStore((state) => state.space?.roles)
+    const addRole = useSettingsRolesStore((state) => state.addRole)
+    const removeRole = useSettingsRolesStore((state) => state.removeRole)
+    const roles = useSettingsRolesStore((state) => state.modifiedSpace?.roles)
     const navigate = useNavigate()
+    const newRolesRef = useRef(1)
 
     const onAddRole = useEvent(() => {
-        addRole({ id: 'new-role', name: 'New Role' })
-        navigate(`../roles/new-role/display`)
+        const newId = `n-${newRolesRef.current}`
+        addRole({ id: newId, name: `New Role ${newRolesRef.current}` })
+        navigate(`../roles/${newId}/display`)
+        newRolesRef.current += 1
     })
+    const getDefaultRole = useSettingsRolesStore((state) => state.getDefaultRole)
+
+    const defaultPath = `../roles/${getDefaultRole()?.id}/permissions`
 
     const onRemoveRole = useEvent((roleId: string) => {
         removeRole(roleId)
+        navigate(defaultPath)
     })
 
     if (!roles) {

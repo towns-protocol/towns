@@ -2,20 +2,20 @@ import React, { useCallback } from 'react'
 import { useParams } from 'react-router'
 import { TokenSelector } from '@components/SpaceSettings/TokenSelector'
 import { Box, Divider, IconButton, Paragraph, Stack, Text } from '@ui'
-import { useSpaceSettingsStore } from 'store/spaceSettingsStore'
+import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { shortAddress } from 'ui/utils/utils'
 
 export const RoleSettingsMembers = () => {
     const { role: roleId } = useParams()
 
-    const role = useSpaceSettingsStore(({ getRole }) => (roleId ? getRole(roleId) : undefined))
+    const role = useSettingsRolesStore(({ getRole }) => (roleId ? getRole(roleId) : undefined))
 
-    const tokens = useSpaceSettingsStore((state) => {
+    const tokens = useSettingsRolesStore((state) => {
         return role?.tokens ?? []
     })
-    const setTokens = useSpaceSettingsStore((state) => state.setTokens)
+    const setTokens = useSettingsRolesStore((state) => state.setTokens)
 
-    const [users, setUsers] = useSpaceSettingsStore((state) => [role?.users ?? [], state.setUsers])
+    const [users, setUsers] = useSettingsRolesStore((state) => [role?.users ?? [], state.setUsers])
 
     if (!role || !roleId) {
         return <>Undefined role {roleId}</>

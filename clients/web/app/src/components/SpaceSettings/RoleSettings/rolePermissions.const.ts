@@ -43,11 +43,6 @@ export const rolePermissionDescriptions: {
         description:
             'Allows members to moderate space. Change space image, name, topic, modify settings such as permissions.',
     },
-    [Permission.ModifySpaceSettings]: {
-        name: 'Moderate Space',
-        description:
-            'Allows members to moderate space. Change space image, name, topic, modify settings such as permissions.',
-    },
     [Permission.Upgrade]: {
         name: 'Upgrade Space',
         description: 'Allows members to upgrade the space.',

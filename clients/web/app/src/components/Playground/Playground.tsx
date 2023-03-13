@@ -35,6 +35,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils'
+import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -52,6 +53,57 @@ export const Playground = () => {
         <Stack position="relative">
             <Container label="token">
                 <SpaceTokenExample />
+            </Container>
+            <Container label="Accordion">
+                <Accordion title="hello world" subTitle="some more info">
+                    <>
+                        <p>sdfosdifj</p>
+                        <p>sdfosdifj</p>
+                        <p>sdfosdifj</p>
+                        <p>sdfosdifj</p>
+                        <p>sdfosdifj</p>
+                        <p>sdfosdifj</p>
+                        <p>sdfosdifj</p>
+                    </>
+                </Accordion>
+            </Container>
+            <Container label="Automated accordion group">
+                <AccordionGroup
+                    accordions={[
+                        {
+                            id: '1',
+                            title: 'hello world',
+                            subTitle: 'some more info',
+                            children: (
+                                <>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                </>
+                            ),
+                        },
+                        {
+                            id: '2',
+                            title: 'hello world',
+                            subTitle: 'some more info',
+                            children: (
+                                <>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                    <p>sdfosdifj</p>
+                                </>
+                            ),
+                        },
+                    ]}
+                />
             </Container>
             <Container label="Mock Data">
                 <p>{mockData?.data.name}</p>

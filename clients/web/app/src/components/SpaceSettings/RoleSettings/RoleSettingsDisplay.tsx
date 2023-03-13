@@ -1,24 +1,30 @@
 import React from 'react'
 import { useParams } from 'react-router'
-import { useSpaceSettingsStore } from 'store/spaceSettingsStore'
-import { Avatar, Box, Button, Icon, Paragraph, Stack, TextField } from '@ui'
-import { vars } from 'ui/styles/vars.css'
-import { shortAddress } from 'ui/utils/utils'
-const colors = [
-    vars.color.background.level3,
-    vars.color.tone.positive,
-    vars.color.tone.negative,
-    vars.color.tone.accent,
-    vars.color.tone.cta1,
-    vars.color.tone.cta2,
-]
+import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
+import { Paragraph, Stack, TextField } from '@ui'
+
+// NOTE: 3.10.23 we are not using the badge/colors anywhere in app yet so for now we are commenting this out
+// the only item in this view is the role name
+
+// import { vars } from 'ui/styles/vars.css'
+// import { shortAddress } from 'ui/utils/utils'
+// const colors = [
+//     vars.color.background.level3,
+//     vars.color.tone.positive,
+//     vars.color.tone.negative,
+//     vars.color.tone.accent,
+//     vars.color.tone.cta1,
+//     vars.color.tone.cta2,
+// ]
 
 export const RoleSettingsDisplay = () => {
     const { role: roleId = '' } = useParams()
 
-    const role = useSpaceSettingsStore((state) => state.space?.roles.find((r) => r.id === roleId))
-    const setRoleName = useSpaceSettingsStore((state) => state.setRoleName)
-    const setRoleColor = useSpaceSettingsStore((state) => state.setRoleColor)
+    const role = useSettingsRolesStore((state) =>
+        state.modifiedSpace?.roles.find((r) => r.id === roleId),
+    )
+    const setRoleName = useSettingsRolesStore((state) => state.setRoleName)
+    // const setRoleColor = useSpaceSettingsStore((state) => state.setRoleColor)
 
     if (!role) {
         return <>{`role doesn't exist`}</>
@@ -35,7 +41,7 @@ export const RoleSettingsDisplay = () => {
                     onChange={(e) => setRoleName(roleId, e.target.value)}
                 />
             </Stack>
-            <Stack gap>
+            {/* <Stack gap>
                 <Paragraph strong>Color</Paragraph>
                 <Stack horizontal gap="sm">
                     {Object.keys(colors).map((c) => (
@@ -72,7 +78,7 @@ export const RoleSettingsDisplay = () => {
                         <Paragraph>{role.name}</Paragraph>
                     </Box>
                 </Stack>
-            </Stack>
+            </Stack> */}
         </Stack>
     )
 }
