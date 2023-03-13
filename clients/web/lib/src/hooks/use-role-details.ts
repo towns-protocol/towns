@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { QueryKeyRoles } from './query-keys'
 import { RoleDetails } from '../client/web3/ContractTypes'
@@ -95,6 +95,7 @@ export function useRoleDetailsByChannel(spaceId: string, channelId: string, role
 }
 
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
+    const queryClient = useQueryClient()
     const { client } = useZionContext()
     const isEnabled = client && spaceId.length > 0 && roleIds.length > 0
 
@@ -126,11 +127,20 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     return useMemo<{
         data: RoleDetails[] | undefined
         isLoading: boolean
+        invalidateQuery: () => Promise<void>
     }>(() => {
+        const invalidateQuery = () =>
+            queryClient.invalidateQueries([
+                QueryKeyRoles.BySpaceId,
+                spaceId,
+                QueryKeyRoles.ByRoleId,
+            ])
+
         if (!queryData.length) {
             return {
                 data: undefined,
                 isLoading: true,
+                invalidateQuery,
             }
         }
 
@@ -140,12 +150,14 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
                     .map((token) => token.data)
                     .filter((data): data is RoleDetails => !!data),
                 isLoading: false,
+                invalidateQuery,
             }
         }
 
         return {
             data: undefined,
             isLoading: true,
+            invalidateQuery,
         }
-    }, [queryData])
+    }, [queryClient, queryData, spaceId])
 }

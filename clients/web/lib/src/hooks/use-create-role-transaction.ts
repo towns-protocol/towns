@@ -4,9 +4,10 @@ import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 
 import { Permission } from '../client/web3/ContractTypes'
 import { QueryKeyRoles } from './query-keys'
-import { RoleIdentifier } from '../types/web3-types'
+import { BlockchainTransactionType, RoleIdentifier } from '../types/web3-types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
+import { useTransactionStore } from '../store/use-transactions-store'
 
 /**
  * Hook to create a role with a transaction.
@@ -61,8 +62,12 @@ export function useCreateRoleTransaction() {
                 )
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
-                    if (txContext.transaction && txContext.data) {
-                        // todo: add to the transaction store
+                    if (txContext.transaction?.hash) {
+                        // todo: add necessary contextual data
+                        useTransactionStore.getState().storeTransaction({
+                            hash: txContext.transaction?.hash as `0x${string}`,
+                            type: BlockchainTransactionType.CreateRole,
+                        })
                     }
                     // Wait for transaction to be mined
                     const rxContext = await waitForCreateRoleTransaction(txContext)

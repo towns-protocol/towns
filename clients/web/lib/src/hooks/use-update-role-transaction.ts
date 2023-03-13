@@ -6,6 +6,8 @@ import { Permission } from '../client/web3/ContractTypes'
 import { QueryKeyRoles } from './query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
+import { useTransactionStore } from '../store/use-transactions-store'
+import { BlockchainTransactionType } from '../types/web3-types'
 
 /**
  * Hook to create a role with a transaction.
@@ -62,8 +64,12 @@ export function useUpdateRoleTransaction() {
                 )
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
-                    if (txContext.transaction && txContext.data) {
-                        // todo: add to the transaction store
+                    if (txContext.transaction?.hash) {
+                        // todo: add necessary contextual data
+                        useTransactionStore.getState().storeTransaction({
+                            hash: txContext.transaction?.hash as `0x${string}`,
+                            type: BlockchainTransactionType.UpdateRole,
+                        })
                     }
                     // Wait for transaction to be mined
                     const rxContext = await waitForUpdateRoleTransaction(txContext)
