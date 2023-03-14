@@ -102,7 +102,7 @@ describe('CreateChannelForm', () => {
             switchNetwork: () => null,
         })
 
-        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -113,7 +113,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
             },
         )
 
@@ -142,7 +142,7 @@ describe('CreateChannelForm', () => {
             name: 'Goerli',
             switchNetwork: () => null,
         })
-        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -150,7 +150,7 @@ describe('CreateChannelForm', () => {
                             ...everyoneRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
             },
         )
 
@@ -173,7 +173,7 @@ describe('CreateChannelForm', () => {
             name: 'Goerli',
             switchNetwork: () => null,
         })
-        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -181,7 +181,7 @@ describe('CreateChannelForm', () => {
                             ...everyoneRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
             },
         )
 
@@ -204,7 +204,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction,
         )
 
-        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -215,7 +215,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
             },
         )
 
@@ -262,7 +262,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction('failedWithTransactionContext'),
         )
 
-        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -273,7 +273,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
             },
         )
 
@@ -309,7 +309,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction('failedWithMatrixPermissionContext'),
         )
 
-        vi.spyOn(useContractRoles, 'useChannelCreationRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -320,7 +320,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useChannelCreationRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
             },
         )
 

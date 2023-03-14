@@ -8,7 +8,7 @@ import { StackProps } from 'ui/components/Stack/Stack'
 import { PATHS } from 'routes'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { FadeIn } from '@components/Transitions'
-import { useChannelCreationRoles } from 'hooks/useContractRoles'
+import { useSpaceRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { getInviteUrl } from 'ui/utils/utils'
@@ -46,7 +46,7 @@ export const SpaceOwnerLanding = () => {
     const [, copy] = useCopyToClipboard()
     const [copyWasClicked, setCopyWasClicked] = React.useState(false)
     const inviteUrl = getInviteUrl(space?.id)
-    const { data: roles } = useChannelCreationRoles(space?.id.networkId)
+    const { data: roles } = useSpaceRoles(space?.id.networkId)
     const hasMemberRole = roles?.find((role) => role.name === 'Member')
     const [modal, setModal] = useState(false)
 

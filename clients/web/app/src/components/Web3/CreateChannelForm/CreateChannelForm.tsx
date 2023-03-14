@@ -7,20 +7,18 @@ import {
 } from 'use-zion-client'
 import { z } from 'zod'
 import { useNavigate } from 'react-router'
-import { ContractMetadata } from '@token-worker/types'
 import { Box, Button, Checkbox, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { useTransactionUIStates } from 'hooks/useTransactionStatus'
-import { useChannelCreationRoles } from 'hooks/useContractRoles'
+import { useSpaceRoles } from 'hooks/useContractRoles'
 import { PATHS } from 'routes'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
-import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
+import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { Spinner } from '@components/Spinner'
-import { useRoleTokensMetatdata } from 'api/lib/collectionMetadata'
-import { TokenAvatar } from '@components/Tokens'
+import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 
 type Props = {
     spaceId: RoomIdentifier
@@ -48,48 +46,9 @@ const defaultValues = {
     [FormStateKeys.roleIds]: [],
 }
 
-const channelNameRegEx = new RegExp(/^[a-zA-Z0-9 _-]+$/)
-
-const TokenCheckboxLabel = (props: {
-    spaceId: RoomIdentifier
-    tokenAddresses: string[]
-    label: string
-}) => {
-    const { data } = useRoleTokensMetatdata(props.spaceId, props.tokenAddresses)
-
-    return (
-        <Box>
-            <Box>{props.label}</Box>
-
-            {!data ? (
-                <Box visibility="hidden">
-                    <TokenAvatar size="avatar_md" contractAddress="" />
-                </Box>
-            ) : !data.length ? null : (
-                <Box horizontal gap="lg" paddingTop="md">
-                    {data
-                        .filter((token): token is ContractMetadata => !!token)
-                        .map((token) => {
-                            return (
-                                <TokenAvatar
-                                    data-testid="create-channel-token-avatar"
-                                    key={token.address}
-                                    contractAddress={token.address ?? ''}
-                                    imgSrc={token.imageUrl}
-                                    size="avatar_md"
-                                    label={token.name}
-                                />
-                            )
-                        })}
-                </Box>
-            )}
-        </Box>
-    )
-}
-
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
-    const { data: roles } = useChannelCreationRoles(props.spaceId.networkId)
+    const { data: roles } = useSpaceRoles(props.spaceId.networkId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId?.toNumber()) ?? [], [roles])
     const { data: _rolesDetails } = useMultipleRoleDetails(props.spaceId.networkId, roledIds)
     const rolesWithDetails = useMemo(
@@ -127,7 +86,7 @@ export const CreateChannelForm = (props: Props) => {
     }, [transactionError, transactionHash])
 
     const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (!channelNameRegEx.test(event.key)) {
+        if (!ChannelNameRegExp.test(event.key)) {
             event.preventDefault()
             return
         }

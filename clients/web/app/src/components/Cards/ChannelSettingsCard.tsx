@@ -1,7 +1,8 @@
-import React from 'react'
-import { useNavigate } from 'react-router'
-import useEvent from 'react-use-event-hook'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
+
+import React from 'react'
+import useEvent from 'react-use-event-hook'
+import { useNavigate } from 'react-router'
 import { Box, Card } from '@ui'
 import { MenuItem } from './MenuItem'
 
@@ -9,6 +10,7 @@ type Props = {
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
     channelName: string
+    onShowChannelSettingsPopup: () => void
 }
 
 export const ChannelSettingsCard = (props: Props) => {
@@ -27,11 +29,19 @@ export const ChannelSettingsCard = (props: Props) => {
         navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/info?channel`)
     })
 
+    const onEditClick = useEvent(() => {
+        props.onShowChannelSettingsPopup()
+    })
+
     return (
         <Box position="relative">
             <Card border paddingY="sm" width="300" fontSize="md">
                 <MenuItem icon="help" onClick={onInfoClick}>
                     Info
+                </MenuItem>
+
+                <MenuItem icon="edit" onClick={onEditClick}>
+                    Edit channel
                 </MenuItem>
 
                 <MenuItem icon="logout" color="error" onClick={onLeaveClick}>

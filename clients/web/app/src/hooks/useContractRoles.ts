@@ -1,27 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { getFilteredRolesFromSpace, useZionContext } from 'use-zion-client'
 
-export const useAllRoles = (spaceNetworkId?: string) => {
+export const useSpaceRoles = (spaceNetworkId?: string) => {
     const { client } = useZionContext()
 
     return useQuery(
-        ['allRoles', spaceNetworkId],
-        () => {
-            return spaceNetworkId && client
-                ? client.spaceDapp.getRoles(spaceNetworkId)
-                : Promise.resolve([])
-        },
-        {
-            enabled: !!client && !!spaceNetworkId,
-        },
-    )
-}
-
-export const useChannelCreationRoles = (spaceNetworkId?: string) => {
-    const { client } = useZionContext()
-
-    return useQuery(
-        ['channelRoles', spaceNetworkId],
+        ['spaceRoles', spaceNetworkId],
         () => {
             console.log(spaceNetworkId)
             if (!client || !spaceNetworkId) {
@@ -33,4 +18,11 @@ export const useChannelCreationRoles = (spaceNetworkId?: string) => {
             enabled: !!client && !!spaceNetworkId,
         },
     )
+}
+
+export const useSpaceRoleIds = (spaceNetworkId?: string) => {
+    const { data: spaceRoles } = useSpaceRoles(spaceNetworkId)
+    return useMemo(() => {
+        return spaceRoles?.map((role) => role.roleId.toNumber()) ?? []
+    }, [spaceRoles])
 }

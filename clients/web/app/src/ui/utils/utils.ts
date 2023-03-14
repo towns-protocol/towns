@@ -37,3 +37,6 @@ type Entries<T> = {
 
 // same as Object.entries but with typed keys
 export const getTypedEntries = <T extends object>(obj: T) => Object.entries(obj) as Entries<T>
+
+// Supported name format for channel
+export const ChannelNameRegExp = new RegExp(/^[a-zA-Z0-9 _-]+$/)

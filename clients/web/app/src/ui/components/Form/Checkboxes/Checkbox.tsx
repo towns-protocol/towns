@@ -13,6 +13,7 @@ type Props = {
     readOnly?: boolean
     disabled?: boolean
     checked?: boolean
+    defaultChecked?: boolean
 } & Partial<UseFormReturn>
 
 export const Checkbox = (props: Props) => {
@@ -37,6 +38,7 @@ export const Checkbox = (props: Props) => {
                         data-testid={`checkbox-${name}`}
                         className={style.hiddenCheckbox}
                         type="checkbox"
+                        defaultChecked={props.defaultChecked}
                         value={_value}
                         readOnly={props.readOnly}
                         disabled={props.disabled}
