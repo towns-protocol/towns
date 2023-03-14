@@ -251,16 +251,17 @@ export class ZionTestClient extends ZionClient {
             const myAuth = await this.registerMatrixWallet()
             const chainId = (await this.provider.getNetwork()).chainId
             await this.startMatrixClient(myAuth, chainId)
-        }
-
-        if (this.opts.primaryProtocol === SpaceProtocol.Casablanca) {
+        } else if (this.opts.primaryProtocol === SpaceProtocol.Casablanca) {
             const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
             await this.startCasablancaClient(casablancaContext)
         }
     }
 
     /// login to the matrix server with wallet account
-    public async loginWallet(): Promise<ZionAuth> {
+    public async loginToMatrixWithTestWallet(): Promise<ZionAuth> {
+        if (this.opts.primaryProtocol !== SpaceProtocol.Matrix) {
+            throw new Error('loginToMatrixWithTestWallet called when not using matrix')
+        }
         const { sessionId, chainIds } = await this.newLoginSession()
 
         // make sure the server supports our chainId
@@ -291,12 +292,11 @@ export class ZionTestClient extends ZionClient {
     }
 
     public async loginWalletAndStartClient(): Promise<void> {
-        let myAuth = this.auth
-        if (!myAuth) {
-            myAuth = await this.loginWallet()
-        }
-
         if (this.opts.primaryProtocol === SpaceProtocol.Matrix) {
+            let myAuth = this.auth
+            if (!myAuth) {
+                myAuth = await this.loginToMatrixWithTestWallet()
+            }
             await this.startMatrixClient(myAuth, this.provider.network.chainId)
         } else {
             const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)

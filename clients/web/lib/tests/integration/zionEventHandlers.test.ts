@@ -8,6 +8,7 @@ import {
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '../../src/client/web3/ContractTypes'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {
@@ -209,13 +210,15 @@ describe('Zion event handlers test', () => {
             },
         })
 
-        await alice.logout()
+        if (alice.opts.primaryProtocol === SpaceProtocol.Matrix) {
+            await alice.logout()
 
-        expect(authEvents.loggedIn).toBe(false)
+            expect(authEvents.loggedIn).toBe(false)
 
-        await alice.loginWallet()
+            await alice.loginToMatrixWithTestWallet()
 
-        expect(authEvents.loggedIn).toBe(true)
+            expect(authEvents.loggedIn).toBe(true)
+        }
     })
 
     test('onLogout', async () => {
