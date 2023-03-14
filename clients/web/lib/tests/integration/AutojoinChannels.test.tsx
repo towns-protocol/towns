@@ -16,11 +16,10 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
-import { useEffect } from 'react'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { useMembers } from '../../src/hooks/use-members'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { LoginWithWallet } from './helpers/TestComponents'
 
 describe('<AutojoinChannels />', () => {
     test('create a space with two users, have alice create channels, ensure bob automatically joins them', async () => {
@@ -71,13 +70,8 @@ describe('<AutojoinChannels />', () => {
 
         // create a power levels view for bob
         const SpaceChannelsContent = () => {
-            const { loginStatus, loginError } = useMatrixStore()
-            const { loginWithWallet, leaveRoom } = useZionClient()
+            const { leaveRoom } = useZionClient()
             const space = useSpaceData()
-            // effect to log in
-            useEffect(() => {
-                void loginWithWallet('login...')
-            }, [loginWithWallet])
 
             const onLeave = useCallback(() => {
                 void leaveRoom?.(firstChannel)
@@ -90,8 +84,7 @@ describe('<AutojoinChannels />', () => {
                     <button data-testid="leaveButton" onClick={onLeave}>
                         leave first channel
                     </button>
-                    <div data-testid="loginStatus">{loginStatus}</div>
-                    <div data-testid="loginError">{loginError?.message ?? ''}</div>
+                    <LoginWithWallet />
                     <div data-testid="spaceId">{space?.id.networkId}</div>
                     <div data-testid="spaceChildCount">
                         {space?.channelGroups && space?.channelGroups?.length > 0

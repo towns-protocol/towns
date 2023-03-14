@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback } from 'react'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -17,9 +17,9 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { sleep } from '../../src/utils/zion-utils'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { usePowerLevels } from '../../src/hooks/use-power-levels'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { LoginWithWallet } from './helpers/TestComponents'
 
 describe('powerLevelsHooks', () => {
     test('create a space with two users, reduce the level required to create a space child', async () => {
@@ -54,8 +54,7 @@ describe('powerLevelsHooks', () => {
         await sleep(50)
         // create a power levels view for bob
         const PowerLevelContent = (props: { roomId: RoomIdentifier }) => {
-            const { loginStatus, loginError } = useMatrixStore()
-            const { loginWithWallet, setPowerLevel } = useZionClient()
+            const { setPowerLevel } = useZionClient()
             const powerLevels = usePowerLevels(props.roomId)
             const spaceChildLevel = powerLevels.levels.find(
                 (x) => x.definition.key == 'm.space.child',
@@ -67,15 +66,10 @@ describe('powerLevelsHooks', () => {
                 }
                 void setPowerLevel(props.roomId, spaceChildLevel, 0)
             }, [spaceChildLevel, props.roomId, setPowerLevel])
-            // effect to log in
-            useEffect(() => {
-                void loginWithWallet('login...')
-            }, [loginWithWallet])
             // content
             return (
                 <>
-                    <div data-testid="loginStatus">{loginStatus}</div>
-                    <div data-testid="loginError">{loginError?.message ?? ''}</div>
+                    <LoginWithWallet />
                     <div data-testid="spaceChildLevel">
                         {'_' + (spaceChildLevel?.value.toString() ?? 'none') + '_'}
                     </div>

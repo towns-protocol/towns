@@ -17,10 +17,8 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
-import { useEffect } from 'react'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { useZionClient } from '../../src/hooks/use-zion-client'
+import { LoginWithWallet } from './helpers/TestComponents'
 
 describe('spaceHierarchyHooks', () => {
     test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
@@ -56,18 +54,11 @@ describe('spaceHierarchyHooks', () => {
         await alice.joinRoom(spaceId)
         // create a power levels view for bob
         const SpaceChannelsContent = () => {
-            const { loginStatus, loginError } = useMatrixStore()
-            const { loginWithWallet } = useZionClient()
             const space = useSpaceData()
-            // effect to log in
-            useEffect(() => {
-                void loginWithWallet('login...')
-            }, [loginWithWallet])
             // content
             return (
                 <>
-                    <div data-testid="loginStatus">{loginStatus}</div>
-                    <div data-testid="loginError">{loginError?.message ?? ''}</div>
+                    <LoginWithWallet />
                     <div data-testid="spaceId">{space?.id.networkId}</div>
                     <div data-testid="spaceChildCount">
                         {space?.channelGroups && space?.channelGroups?.length > 0
