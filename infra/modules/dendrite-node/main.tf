@@ -14,7 +14,7 @@ module "dendrite_node_db" {
   source = "../../modules/node-db"
 
   database_subnets = var.database_subnets
-  allowed_cidr_blocks = var.dendrite_node_cidr_blocks
+  allowed_cidr_blocks = var.database_allowed_cidr_blocks
   vpc_id = var.vpc_id
   dendrite_node_name = var.dendrite_node_name
 }

@@ -42,7 +42,7 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
       },
       {
         name = "SERVER_NAME",
-        value = ""
+        value = "${var.dendrite_node_name}.towns.com"
       },
       {
         name = "CHAIN_ID",
@@ -55,6 +55,10 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
       {
         name = "ENVIRONMENT",
         value = module.global_constants.environment
+      },
+      {
+        name = "PPROFLISTEN",
+        value = ""
       }
     ]
 

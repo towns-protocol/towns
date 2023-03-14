@@ -8,6 +8,8 @@ REMOTE_USER="ec2-user"
 REMOTE_SERVER_ADDRESS="184.72.192.112"
 LOCAL_ROOT="~/efs-mount-point"
 
+sh ./cert-and-key-gen.sh
+
 SSH_CONNECTION_STRING="${REMOTE_USER}@${REMOTE_SERVER_ADDRESS}"
 
 DENDRITE_CONFIG_LOCAL_PATH="$LOCAL_ROOT/dendrite/etc-dendrite"

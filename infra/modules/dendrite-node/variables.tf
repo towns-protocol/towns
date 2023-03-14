@@ -19,8 +19,8 @@ variable "database_subnets" {
   default     = []
 }
 
-variable "dendrite_node_cidr_blocks" {
-  description = "Dendrite node cidr blocks"
+variable "database_allowed_cidr_blocks" {
+  description = "List of CIDR blocks allowed to connect to the database"
   type        = list(string)
   default     = []
 }
