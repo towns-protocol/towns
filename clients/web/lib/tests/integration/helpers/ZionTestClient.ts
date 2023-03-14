@@ -28,7 +28,7 @@ import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'
 import { ethers } from 'ethers'
-import { makeUniqueName } from './TestUtils'
+import { getPrimaryProtocol, makeUniqueName } from './TestUtils'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
 import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
 import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
@@ -75,12 +75,7 @@ export class ZionTestClient extends ZionClient {
         // super
         super(
             {
-                primaryProtocol:
-                    props?.primaryProtocol ??
-                    (process.env.PRIMARY_PROTOCOL &&
-                        process.env.PRIMARY_PROTOCOL === SpaceProtocol.Casablanca)
-                        ? SpaceProtocol.Casablanca
-                        : SpaceProtocol.Matrix,
+                primaryProtocol: props?.primaryProtocol ?? getPrimaryProtocol(),
                 matrixServerUrl: process.env.HOMESERVER!,
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 initialSyncLimit: 20,

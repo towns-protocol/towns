@@ -7,6 +7,7 @@ import { ZionContextProvider } from '../../../src/components/ZionContextProvider
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
 import { useConnect } from 'wagmi'
+import { getPrimaryProtocol } from './TestUtils'
 
 interface Props {
     provider: ZionTestWeb3Provider
@@ -34,11 +35,7 @@ export const ZionTestApp = (props: Props) => {
         children,
     } = props
     // pull environment variables from the process
-    const primaryProtocol =
-        inPrimaryProtocol ??
-        (process.env.PRIMARY_PROTOCOL && process.env.PRIMARY_PROTOCOL === SpaceProtocol.Casablanca)
-            ? SpaceProtocol.Casablanca
-            : SpaceProtocol.Matrix
+    const primaryProtocol = inPrimaryProtocol ?? getPrimaryProtocol()
     const homeServerUrl = process.env.HOMESERVER!
     const casablancaServerUrl = process.env.CASABLANCA_SERVER_URL!
     const onboardingOpts: ZionOnboardingOpts = inOnboardingOpts

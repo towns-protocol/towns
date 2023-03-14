@@ -17,6 +17,7 @@ import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './TestConstants'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
+import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -34,6 +35,12 @@ export function parseOptInt(value?: string): number | undefined {
         return undefined
     }
     return parsed
+}
+
+export function getPrimaryProtocol(): SpaceProtocol {
+    return process.env.PRIMARY_PROTOCOL && process.env.PRIMARY_PROTOCOL === SpaceProtocol.Casablanca
+        ? SpaceProtocol.Casablanca
+        : SpaceProtocol.Matrix
 }
 
 export async function getChainId(): Promise<number> {
