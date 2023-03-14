@@ -3,7 +3,7 @@
  * @group casablanca
  */
 import { waitFor } from '@testing-library/dom'
-import { Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
+import { Client as CasablancaClient, makeStreamRpcClient } from '@zion/client'
 import { bin_fromHexString, publicKeyToBuffer, SignerContext } from '@zion/client'
 import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -34,7 +34,7 @@ describe('casablanca', () => {
         }
         const csurl: string = process.env.CASABLANCA_SERVER_URL!
         log('new CasablancaClient', csurl)
-        const rpcClient = makeZionRpcClient(csurl)
+        const rpcClient = makeStreamRpcClient(csurl)
         const client = new CasablancaClient(context, rpcClient)
         await client.createNewUser()
         log('Finished', client)

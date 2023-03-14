@@ -45,26 +45,26 @@ describe('sign', () => {
     })
 
     test('delegate-sig', async () => {
-        const zionWallet1 = new Wallet(privateKey)
-        const zionWallet2 = new Wallet(privateKey2)
+        const sigWallet1 = new Wallet(privateKey)
+        const sigWallet2 = new Wallet(privateKey2)
         const primaryWallet = new Wallet(primaryPrivateKey)
 
-        const sig1 = await makeDelegateSig(primaryWallet, zionWallet1)
+        const sig1 = await makeDelegateSig(primaryWallet, sigWallet1)
         log('sig1', sig1)
-        const sig2 = await makeDelegateSig(primaryWallet, zionWallet2)
+        const sig2 = await makeDelegateSig(primaryWallet, sigWallet2)
         log('sig2', sig2)
         expect(sig1).not.toEqual(sig2)
 
         expect(() =>
-            checkDelegateSig(zionWallet1.publicKey, primaryWallet.address, sig1),
+            checkDelegateSig(sigWallet1.publicKey, primaryWallet.address, sig1),
         ).not.toThrow()
         expect(() =>
-            checkDelegateSig(zionWallet2.publicKey, primaryWallet.address, sig2),
+            checkDelegateSig(sigWallet2.publicKey, primaryWallet.address, sig2),
         ).not.toThrow()
 
-        expect(() => checkDelegateSig(zionWallet2.publicKey, primaryWallet.address, sig1)).toThrow()
-        expect(() => checkDelegateSig(zionWallet1.publicKey, zionWallet2.address, sig1)).toThrow()
-        expect(() => checkDelegateSig(zionWallet1.publicKey, primaryWallet.address, sig2)).toThrow()
+        expect(() => checkDelegateSig(sigWallet2.publicKey, primaryWallet.address, sig1)).toThrow()
+        expect(() => checkDelegateSig(sigWallet1.publicKey, sigWallet2.address, sig1)).toThrow()
+        expect(() => checkDelegateSig(sigWallet1.publicKey, primaryWallet.address, sig2)).toThrow()
         publicToAddress
     })
 

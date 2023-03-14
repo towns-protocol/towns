@@ -21,12 +21,12 @@ import (
 const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
-	// ZionServiceName is the fully-qualified name of the ZionService service.
-	ZionServiceName = "casablanca.ZionService"
+	// StreamServiceName is the fully-qualified name of the StreamService service.
+	StreamServiceName = "casablanca.StreamService"
 )
 
-// ZionServiceClient is a client for the casablanca.ZionService service.
-type ZionServiceClient interface {
+// StreamServiceClient is a client for the casablanca.StreamService service.
+type StreamServiceClient interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
@@ -34,46 +34,46 @@ type ZionServiceClient interface {
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
-// NewZionServiceClient constructs a client for the casablanca.ZionService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
-// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
-// connect.WithGRPCWeb() options.
+// NewStreamServiceClient constructs a client for the casablanca.StreamService service. By default,
+// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
+// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
+// or connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewZionServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) ZionServiceClient {
+func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) StreamServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	return &zionServiceClient{
+	return &streamServiceClient{
 		createStream: connect_go.NewClient[protocol.CreateStreamRequest, protocol.CreateStreamResponse](
 			httpClient,
-			baseURL+"/casablanca.ZionService/CreateStream",
+			baseURL+"/casablanca.StreamService/CreateStream",
 			opts...,
 		),
 		getStream: connect_go.NewClient[protocol.GetStreamRequest, protocol.GetStreamResponse](
 			httpClient,
-			baseURL+"/casablanca.ZionService/GetStream",
+			baseURL+"/casablanca.StreamService/GetStream",
 			opts...,
 		),
 		addEvent: connect_go.NewClient[protocol.AddEventRequest, protocol.AddEventResponse](
 			httpClient,
-			baseURL+"/casablanca.ZionService/AddEvent",
+			baseURL+"/casablanca.StreamService/AddEvent",
 			opts...,
 		),
 		syncStreams: connect_go.NewClient[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse](
 			httpClient,
-			baseURL+"/casablanca.ZionService/SyncStreams",
+			baseURL+"/casablanca.StreamService/SyncStreams",
 			opts...,
 		),
 		info: connect_go.NewClient[protocol.InfoRequest, protocol.InfoResponse](
 			httpClient,
-			baseURL+"/casablanca.ZionService/Info",
+			baseURL+"/casablanca.StreamService/Info",
 			opts...,
 		),
 	}
 }
 
-// zionServiceClient implements ZionServiceClient.
-type zionServiceClient struct {
+// streamServiceClient implements StreamServiceClient.
+type streamServiceClient struct {
 	createStream *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
 	getStream    *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
 	addEvent     *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
@@ -81,33 +81,33 @@ type zionServiceClient struct {
 	info         *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
 }
 
-// CreateStream calls casablanca.ZionService.CreateStream.
-func (c *zionServiceClient) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+// CreateStream calls casablanca.StreamService.CreateStream.
+func (c *streamServiceClient) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
 	return c.createStream.CallUnary(ctx, req)
 }
 
-// GetStream calls casablanca.ZionService.GetStream.
-func (c *zionServiceClient) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
+// GetStream calls casablanca.StreamService.GetStream.
+func (c *streamServiceClient) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	return c.getStream.CallUnary(ctx, req)
 }
 
-// AddEvent calls casablanca.ZionService.AddEvent.
-func (c *zionServiceClient) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
+// AddEvent calls casablanca.StreamService.AddEvent.
+func (c *streamServiceClient) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
 	return c.addEvent.CallUnary(ctx, req)
 }
 
-// SyncStreams calls casablanca.ZionService.SyncStreams.
-func (c *zionServiceClient) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
+// SyncStreams calls casablanca.StreamService.SyncStreams.
+func (c *streamServiceClient) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
 	return c.syncStreams.CallUnary(ctx, req)
 }
 
-// Info calls casablanca.ZionService.Info.
-func (c *zionServiceClient) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+// Info calls casablanca.StreamService.Info.
+func (c *streamServiceClient) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
 	return c.info.CallUnary(ctx, req)
 }
 
-// ZionServiceHandler is an implementation of the casablanca.ZionService service.
-type ZionServiceHandler interface {
+// StreamServiceHandler is an implementation of the casablanca.StreamService service.
+type StreamServiceHandler interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
@@ -115,60 +115,60 @@ type ZionServiceHandler interface {
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
-// NewZionServiceHandler builds an HTTP handler from the service implementation. It returns the path
-// on which to mount the handler and the handler itself.
+// NewStreamServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewZionServiceHandler(svc ZionServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/casablanca.ZionService/CreateStream", connect_go.NewUnaryHandler(
-		"/casablanca.ZionService/CreateStream",
+	mux.Handle("/casablanca.StreamService/CreateStream", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/CreateStream",
 		svc.CreateStream,
 		opts...,
 	))
-	mux.Handle("/casablanca.ZionService/GetStream", connect_go.NewUnaryHandler(
-		"/casablanca.ZionService/GetStream",
+	mux.Handle("/casablanca.StreamService/GetStream", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/GetStream",
 		svc.GetStream,
 		opts...,
 	))
-	mux.Handle("/casablanca.ZionService/AddEvent", connect_go.NewUnaryHandler(
-		"/casablanca.ZionService/AddEvent",
+	mux.Handle("/casablanca.StreamService/AddEvent", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/AddEvent",
 		svc.AddEvent,
 		opts...,
 	))
-	mux.Handle("/casablanca.ZionService/SyncStreams", connect_go.NewUnaryHandler(
-		"/casablanca.ZionService/SyncStreams",
+	mux.Handle("/casablanca.StreamService/SyncStreams", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/SyncStreams",
 		svc.SyncStreams,
 		opts...,
 	))
-	mux.Handle("/casablanca.ZionService/Info", connect_go.NewUnaryHandler(
-		"/casablanca.ZionService/Info",
+	mux.Handle("/casablanca.StreamService/Info", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/Info",
 		svc.Info,
 		opts...,
 	))
-	return "/casablanca.ZionService/", mux
+	return "/casablanca.StreamService/", mux
 }
 
-// UnimplementedZionServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedZionServiceHandler struct{}
+// UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedStreamServiceHandler struct{}
 
-func (UnimplementedZionServiceHandler) CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.ZionService.CreateStream is not implemented"))
+func (UnimplementedStreamServiceHandler) CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.CreateStream is not implemented"))
 }
 
-func (UnimplementedZionServiceHandler) GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.ZionService.GetStream is not implemented"))
+func (UnimplementedStreamServiceHandler) GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.GetStream is not implemented"))
 }
 
-func (UnimplementedZionServiceHandler) AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.ZionService.AddEvent is not implemented"))
+func (UnimplementedStreamServiceHandler) AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.AddEvent is not implemented"))
 }
 
-func (UnimplementedZionServiceHandler) SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.ZionService.SyncStreams is not implemented"))
+func (UnimplementedStreamServiceHandler) SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.SyncStreams is not implemented"))
 }
 
-func (UnimplementedZionServiceHandler) Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.ZionService.Info is not implemented"))
+func (UnimplementedStreamServiceHandler) Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.Info is not implemented"))
 }

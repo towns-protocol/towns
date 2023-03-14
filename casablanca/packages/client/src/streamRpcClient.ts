@@ -7,22 +7,22 @@ import {
     Transport,
 } from '@bufbuild/connect-web'
 import { Message, MethodInfo, MethodKind, PartialMessage, ServiceType } from '@bufbuild/protobuf'
-import { ZionService } from '@zion/proto'
+import { StreamService } from '@zion/proto'
 import debug from 'debug'
 import EventTarget, { setMaxListeners } from 'events'
 import { isDefined } from './check'
 
-const log = debug('zion:rpc_client')
-const logProtos = debug('zion:rpc_client:protos')
+const log = debug('csb:rpc_client')
+const logProtos = debug('csb:rpc_client:protos')
 
-export type ZionRpcClientType = PromiseClient<typeof ZionService> & {
+export type StreamRpcClientType = PromiseClient<typeof StreamService> & {
     close: () => Promise<void>
 }
 
-export const makeZionRpcClient = (
+export const makeStreamRpcClient = (
     dest: Transport | string,
     defaultOptions?: CallOptions,
-): ZionRpcClientType => {
+): StreamRpcClientType => {
     let transport: Transport
     if (typeof dest === 'string') {
         transport = createConnectTransport({ baseUrl: dest, useBinaryFormat: true })
@@ -46,12 +46,12 @@ export const makeZionRpcClient = (
         defaultOptions.signal = abortController.signal
     }
 
-    const client: any = makeAnyClient(ZionService, (method) => {
+    const client: any = makeAnyClient(StreamService, (method) => {
         switch (method.kind) {
             case MethodKind.Unary:
-                return createUnaryFn(transport, ZionService, method, defaultOptions!)
+                return createUnaryFn(transport, StreamService, method, defaultOptions!)
             case MethodKind.ServerStreaming:
-                return createServerStreamingFn(transport, ZionService, method, defaultOptions!)
+                return createServerStreamingFn(transport, StreamService, method, defaultOptions!)
             default:
                 return null
         }
@@ -64,7 +64,7 @@ export const makeZionRpcClient = (
         }
         log('client closed')
     }
-    return client as ZionRpcClientType
+    return client as StreamRpcClientType
 }
 
 type UnaryFn<I extends Message<I>, O extends Message<O>> = (

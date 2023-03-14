@@ -11,7 +11,7 @@ import { Payload, StreamAndCookie, StreamKind, StreamOp, SyncPos } from '@zion/p
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { ZionRpcClientType } from './zionRpcClient'
+import { StreamRpcClientType } from './streamRpcClient'
 import { StreamEvents, StreamStateView } from './streams'
 import {
     isChannelStreamId,
@@ -76,7 +76,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
 export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly signerContext: SignerContext
-    readonly rpcClient: ZionRpcClientType
+    readonly rpcClient: StreamRpcClientType
     readonly userId: string
     userStreamId?: string
     readonly streams: Map<string, Stream> = new Map()
@@ -88,16 +88,16 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly logEmitFromClient: debug.Debugger
     readonly logEvent: debug.Debugger
 
-    constructor(signerContext: SignerContext, rpcClient: ZionRpcClientType) {
+    constructor(signerContext: SignerContext, rpcClient: StreamRpcClientType) {
         super()
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)
-        this.logCall = debug('zion:client:call').extend(this.userId)
-        this.logSync = debug('zion:client:sync').extend(this.userId)
-        this.logEmitFromStream = debug('zion:client:emit:stream').extend(this.userId)
-        this.logEmitFromClient = debug('zion:client:emit:client').extend(this.userId)
-        this.logEvent = debug('zion:client:event').extend(this.userId)
+        this.logCall = debug('csb:client:call').extend(this.userId)
+        this.logSync = debug('csb:client:sync').extend(this.userId)
+        this.logEmitFromStream = debug('csb:client:emit:stream').extend(this.userId)
+        this.logEmitFromClient = debug('csb:client:emit:client').extend(this.userId)
+        this.logEvent = debug('csb:client:event').extend(this.userId)
 
         this.logCall('new Client')
     }

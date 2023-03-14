@@ -36,10 +36,10 @@ export const publicKeyToBuffer = (publicKey: string): Buffer => {
 
 export const makeDelegateSig = async (
     primaryWallet: Wallet,
-    zionWallet: Wallet,
+    signatureWallet: Wallet,
 ): Promise<Uint8Array> => {
     return bin_fromHexString(
-        await primaryWallet.signMessage(publicKeyToBuffer(zionWallet.publicKey)),
+        await primaryWallet.signMessage(publicKeyToBuffer(signatureWallet.publicKey)),
     )
 }
 

@@ -45,7 +45,7 @@ message StreamEvent {
       * FullEvent.signature's public key must be signed by delegateSig.
       *
       * delegateSig is used to delegate signing authority to another address.
-      * Specifically, it is used to delegate signing authority to a Zion-managed
+      * Specifically, it is used to delegate signing authority to an app-managed
       * keypair from the user's wallet.
       *
       * Server nodes sign node-produced events with their own keypair and do not
@@ -189,7 +189,7 @@ message InfoResponse {
     string graffiti = 1;
 }
 
-service ZionService {
+service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);

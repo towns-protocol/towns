@@ -1,6 +1,6 @@
 import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
-import { bin_fromHexString, Client as CasablancaClient, makeZionRpcClient } from '@zion/client'
+import { bin_fromHexString, Client as CasablancaClient, makeStreamRpcClient } from '@zion/client'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -360,7 +360,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (this.casablancaClient) {
             throw new Error('already started casablancaClient')
         }
-        const rpcClient = makeZionRpcClient(this.opts.casablancaServerUrl)
+        const rpcClient = makeStreamRpcClient(this.opts.casablancaServerUrl)
         this.casablancaClient = new CasablancaClient(context, rpcClient)
         // TODO - long-term the app should already know if user exists via cookie
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call

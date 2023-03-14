@@ -7,13 +7,13 @@ import { AddEventRequest, AddEventResponse, CreateStreamRequest, CreateStreamRes
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
- * @generated from service casablanca.ZionService
+ * @generated from service casablanca.StreamService
  */
-export const ZionService = {
-  typeName: "casablanca.ZionService",
+export const StreamService = {
+  typeName: "casablanca.StreamService",
   methods: {
     /**
-     * @generated from rpc casablanca.ZionService.CreateStream
+     * @generated from rpc casablanca.StreamService.CreateStream
      */
     createStream: {
       name: "CreateStream",
@@ -22,7 +22,7 @@ export const ZionService = {
       kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc casablanca.ZionService.GetStream
+     * @generated from rpc casablanca.StreamService.GetStream
      */
     getStream: {
       name: "GetStream",
@@ -31,7 +31,7 @@ export const ZionService = {
       kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc casablanca.ZionService.AddEvent
+     * @generated from rpc casablanca.StreamService.AddEvent
      */
     addEvent: {
       name: "AddEvent",
@@ -40,7 +40,7 @@ export const ZionService = {
       kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc casablanca.ZionService.SyncStreams
+     * @generated from rpc casablanca.StreamService.SyncStreams
      */
     syncStreams: {
       name: "SyncStreams",
@@ -49,7 +49,7 @@ export const ZionService = {
       kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc casablanca.ZionService.Info
+     * @generated from rpc casablanca.StreamService.Info
      */
     info: {
       name: "Info",

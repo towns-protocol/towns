@@ -3,7 +3,7 @@ import {
     createGrpcWebTransport,
     createPromiseClient,
 } from '@bufbuild/connect-web'
-import { ZionService } from './protocol_connectweb'
+import { StreamService } from './protocol_connectweb'
 import { InfoRequest, InfoResponse } from './protocol_pb'
 
 describe('protocol', () => {
@@ -14,7 +14,7 @@ describe('protocol', () => {
         })
         expect(transport).toBeDefined()
 
-        const client = createPromiseClient(ZionService, transport)
+        const client = createPromiseClient(StreamService, transport)
         expect(client).toBeDefined()
 
         const abortController = new AbortController()

@@ -10,7 +10,7 @@ import {
 } from '@zion/proto'
 import debug from 'debug'
 import { makeEvent_test, makeRandomUserContext, TEST_URL } from './util.test'
-import { makeZionRpcClient } from './zionRpcClient'
+import { makeStreamRpcClient } from './streamRpcClient'
 import _ from 'lodash'
 import {
     genId,
@@ -21,11 +21,11 @@ import {
 } from './id'
 import { makeInceptionPayload, makeJoinableStreamPayload, makeMessagePayload } from './types'
 
-const log = debug('test:zionRpcClient')
+const log = debug('test:streamRpcClient')
 
-const makeTestRpcClient = () => makeZionRpcClient(TEST_URL)
+const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 
-describe('zionRpcClient', () => {
+describe('streamRpcClient', () => {
     let bobsContext: SignerContext
     let alicesContext: SignerContext
 
@@ -34,7 +34,7 @@ describe('zionRpcClient', () => {
         alicesContext = await makeRandomUserContext()
     })
 
-    test('makeZionRpcClient', async () => {
+    test('makeStreamRpcClient', async () => {
         const client = makeTestRpcClient()
         expect(client).toBeDefined()
         const result = await client.info({})
@@ -198,11 +198,11 @@ describe('zionRpcClient', () => {
     test('aliceTalksToBob', async () => {
         log('bobAndAliceConverse start')
 
-        const bob = makeZionRpcClient('http://localhost:5157')
+        const bob = makeStreamRpcClient('http://localhost:5157')
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
 
-        const alice = makeZionRpcClient('http://localhost:5157')
+        const alice = makeStreamRpcClient('http://localhost:5157')
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamId = makeUserStreamId(alicesUserId)
 

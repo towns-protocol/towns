@@ -23,18 +23,6 @@ import (
 	"casablanca/node/storage"
 )
 
-/*
-For reference:
-// ZionServiceHandler is an implementation of the ZionService service.
-type ZionServiceHandler interface {
-	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
-	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
-	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
-	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error)
-	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
-}
-*/
-
 type LoggingService struct {
 	Service *Service
 }
@@ -280,7 +268,7 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 		log.Fatalf("failed to create wallet: %v", err)
 	}
 
-	pattern, handler := protocolconnect.NewZionServiceHandler(&LoggingService{
+	pattern, handler := protocolconnect.NewStreamServiceHandler(&LoggingService{
 		Service: &Service{
 			Storage: store,
 			Rollup:  rollup,
@@ -290,7 +278,7 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 	return pattern, handler
 }
 
-func MakeServer(ctx context.Context, dbUrl string) (protocolconnect.ZionServiceClient, func()) {
+func MakeServer(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
 	mux := http.NewServeMux()
 	pattern, handler := MakeServiceHandler(ctx, dbUrl)
 	mux.Handle(pattern, handler)
@@ -319,7 +307,7 @@ func MakeServer(ctx context.Context, dbUrl string) (protocolconnect.ZionServiceC
 
 	port := httpListener.Addr().(*net.TCPAddr).Port
 
-	client := protocolconnect.NewZionServiceClient(
+	client := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
 		fmt.Sprintf("http://localhost:%d", port),
 	)

@@ -9,11 +9,11 @@ import { Envelope, Payload, StreamEvent } from '@zion/proto'
 import { hashPersonalMessage } from 'ethereumjs-util'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
-import { makeZionRpcClient } from './zionRpcClient'
+import { makeStreamRpcClient } from './streamRpcClient'
 import { genIdBlob, userIdFromAddress } from './id'
 import { bin_fromHexString } from './types'
 
-const log = debug('zion:test:util')
+const log = debug('csb:test:util')
 
 export const TEST_URL = 'http://localhost:5157'
 
@@ -88,7 +88,7 @@ export const makeTestClient = async (url?: string, context?: SignerContext): Pro
     if (context === undefined) {
         context = await makeRandomUserContext()
     }
-    return new Client(context, makeZionRpcClient(url))
+    return new Client(context, makeStreamRpcClient(url))
 }
 
 class DonePromise {
