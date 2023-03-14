@@ -9,6 +9,7 @@ import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
+import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 
 function getButtonLabel(status: SignupButtonStatus) {
     switch (status) {
@@ -32,6 +33,7 @@ const InviteLinkLanding = () => {
     const isInvite = searchParams.get('invite') != undefined
     const { data, isLoading } = useContractSpaceInfo(spaceId)
     const setTitle = useSetDocTitle()
+    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(spaceId)
 
     const { walletStatus, connect, loginStatus, login, register } = useAuth()
 
@@ -62,7 +64,7 @@ const InviteLinkLanding = () => {
 
     return (
         <Stack centerContent grow alignSelf="center" height="100%" maxWidth="420">
-            {data ? (
+            {data && !isLoadingRoomTopic ? (
                 <Stack centerContent gap="md" paddingBottom="lg">
                     <SpaceIcon
                         spaceId={data.networkId}
@@ -72,10 +74,19 @@ const InviteLinkLanding = () => {
                         letterFontSize="display"
                     />
                     <FadeIn>
-                        <Text>You&apos;re invited to join</Text>
+                        <Text size="lg">You&apos;re invited to join</Text>
                     </FadeIn>
                     <FadeIn>
-                        <Heading level={2}>{data?.name}</Heading>
+                        <Box gap="lg">
+                            <Heading level={2} textAlign="center">
+                                {data?.name}
+                            </Heading>
+                            {roomTopic && (
+                                <Text color="gray1" textAlign="center">
+                                    {roomTopic}
+                                </Text>
+                            )}
+                        </Box>
                     </FadeIn>
                 </Stack>
             ) : (

@@ -1,16 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { RoomIdentifier } from 'use-zion-client'
+import { z } from 'zod'
 import { env } from 'utils'
 import { axiosClient } from '../api/apiClient'
 
 const queryKey = 'roomTopic'
 
-export async function getSpaceTopic(roomId: RoomIdentifier): Promise<string> {
+const zBioReadData: z.ZodType<{
+    bio: string
+}> = z.object({
+    bio: z.string(),
+})
+
+export async function getSpaceTopic(roomId: string): Promise<string> {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/space/${roomId.networkId}/bio`
+    const url = `${GATEWAY_SERVER_URL}/space/${roomId}/bio`
+
     const spaceTopic = await axiosClient.get(url)
-    return (spaceTopic?.data as string) ?? ''
+    const parseResult = zBioReadData.safeParse(spaceTopic.data)
+
+    if (!parseResult.success) {
+        throw new Error("Couldn't parse space topic:: ", parseResult.error)
+    }
+
+    return parseResult.data.bio
 }
 
 export async function setSpaceTopic(roomId: RoomIdentifier, topic: string): Promise<void> {
@@ -21,16 +35,16 @@ export async function setSpaceTopic(roomId: RoomIdentifier, topic: string): Prom
     })
 }
 
-export const useGetSpaceTopic = (roomId: RoomIdentifier | undefined) => {
+export const useGetSpaceTopic = (networkId: string | undefined) => {
     const _getSpaceTopic = useCallback(async () => {
-        if (!roomId) {
+        if (!networkId) {
             return
         }
-        return getSpaceTopic(roomId)
-    }, [roomId])
+        return getSpaceTopic(networkId)
+    }, [networkId])
 
-    return useQuery([queryKey, roomId?.networkId], _getSpaceTopic, {
-        enabled: !!roomId?.networkId,
+    return useQuery([queryKey, networkId], _getSpaceTopic, {
+        enabled: !!networkId,
         retry: false,
         refetchOnMount: false,
         refetchOnWindowFocus: false,

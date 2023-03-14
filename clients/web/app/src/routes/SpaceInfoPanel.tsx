@@ -39,7 +39,7 @@ export const SpaceInfoPanel = () => {
     const [isEdit, setIsEdit] = useState(false)
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
-    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id)
+    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id.networkId)
 
     const { mutate, isLoading } = useSetSpaceTopic(space?.id)
 
@@ -109,7 +109,7 @@ export const SpaceInfoPanel = () => {
                     </MdGap>
 
                     {(canEdit || roomTopic) && (
-                        <MdGap data-testId="about-section">
+                        <MdGap data-testid="about-section">
                             <>
                                 <Box horizontal justifyContent="spaceBetween">
                                     <Paragraph strong>About</Paragraph>{' '}

@@ -40,7 +40,11 @@ export const testHandlers = [
     // GATEWAY WORKER ///////////////
 
     rest.get(`${env.VITE_GATEWAY_URL || ''}/space/*/bio`, (req, res, ctx) => {
-        const data = 'my special space'
+        if (req.url.toString().includes('no-topic')) {
+            return res(ctx.status(404))
+        }
+
+        const data = { bio: 'my special space' }
         return res(ctx.status(200), ctx.json(data))
     }),
 
