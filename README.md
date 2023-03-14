@@ -63,7 +63,7 @@ Then update `clients/web/app/.env.local` with the required (blank) keys.
 
 Open VScode in the root of this directory: `code .`
 
-Launch local server via .vscode/tasks.json: `CMD+P task ~Start Local Development~`
+Launch local server via .vscode/tasks.json: `CMD+P` + `task ~Start Local Dev~` (Once you type the word "task" you will see all the options from task.json in the dropdown)
 
 This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and starts everything needed to work and run integration tests locally.
 
