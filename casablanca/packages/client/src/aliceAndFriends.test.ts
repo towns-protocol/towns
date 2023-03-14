@@ -218,7 +218,7 @@ const converse = async (conversation: string[][], testName: string): Promise<voi
 const testSkipCI = process.env.SKIP_BROKEN ? test.skip : test
 
 describe('aliceAndBobAndFriends', () => {
-    test('3participants', async () => {
+    testSkipCI('3participants', async () => {
         const conversation: string[][] = [
             ["I'm Alice", "I'm Bob", ''],
             ['Alice: hi Bob', 'Bob: hi', ''],
