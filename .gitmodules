@@ -19,3 +19,11 @@
 [submodule "lib/council"]
 	path = lib/council
 	url = https://github.com/element-fi/council
+[submodule "lib/operator-filter-registry"]
+	path = lib/operator-filter-registry
+	url = https://github.com/ProjectOpenSea/operator-filter-registry
+	branch = v1.4.1
+[submodule "lib/ERC721A"]
+	path = lib/ERC721A
+	url = https://github.com/chiru-labs/ERC721A
+	branch = v4.2.3

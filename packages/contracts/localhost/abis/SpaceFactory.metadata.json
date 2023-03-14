@@ -755,6 +755,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":ERC721A/=lib/ERC721A/contracts/",
       ":contracts/=contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
@@ -763,6 +764,7 @@
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
       ":solmate/=lib/solmate/src/"
     ]
   },
