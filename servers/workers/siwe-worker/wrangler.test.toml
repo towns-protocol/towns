@@ -6,4 +6,4 @@ cache_persist = false
 AUTH_SECRET="foo"
 ALCHEMY_API_KEY="bar"
 ENVIRONMENT="development"
-VERIFY="false"
+VERIFY="true"

@@ -3,6 +3,7 @@ import { Request as IttyRequest, Router } from 'itty-router'
 import { Env } from '.'
 import { upsertImage } from './upsert'
 import { handleCookie } from './cookie'
+import { fetchLocalAuthz } from './fetchLocalAuthz'
 
 const CDN_CGI_PATH = 'cdn-cgi/image'
 const CDN_CGI_PATH_ID = 'cdn-cgi/imagedelivery'
@@ -111,8 +112,11 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
     // spaceId is <id>:node1.towns.com
     // should include full node name b/c the siwe-worker requires it to verify space ownership
     const spaceId = request.params?.id
+    const copyRequest: Request = request.clone()
+    const formData = await copyRequest.formData()
 
-    if (env.ENVIRONMENT !== 'development') {
+    // set SKIP_SIWE in .dev.vars for local dev if you don't want to use siwe-worker
+    if (!env.SKIP_SIWE) {
         const cookie = await handleCookie(request.clone())
         console.log(`cookie: ${cookie}`)
         const encodedCookie = Buffer.from(cookie, 'base64')
@@ -134,17 +138,23 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
             method: 'POST',
             body: JSON.stringify(newBody),
         }
+
+        let authResponse
         const newRequest = new Request(new Request(request.clone(), newRequestInit))
-        // Use a Service binding to fetch to another worker
-        const authResponse = await env.authz.fetch(newRequest)
+
+        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
+        if (env.ENVIRONMENT === 'development') {
+            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
+        } else {
+            // Use a Service binding to fetch to another worker
+            authResponse = await env.authz.fetch(newRequest)
+        }
         if (authResponse.status !== 200) {
             console.log(`authResponse: ${JSON.stringify(authResponse)}`)
             return authResponse
         }
     }
 
-    const copyRequest: Request = request.clone()
-    const formData = await copyRequest.formData()
     const formId: string | null = formData.get('id')
     if ((formId as string) !== spaceId) {
         return new Response(JSON.stringify({ error: 'id mismatch' }), {
@@ -173,7 +183,7 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
     // user id is equivalent to wallet address of the form 0x83..
     const userId = request.params?.id
     // TODO: remove this before merging JOHN
-    if (env.ENVIRONMENT !== 'development') {
+    if (!env.SKIP_SIWE) {
         const cookie = await handleCookie(request.clone())
         console.log(`cookie: ${cookie}`)
         const encodedCookie = Buffer.from(cookie, 'base64')
@@ -195,9 +205,17 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
             method: 'POST',
             body: JSON.stringify(newBody),
         }
+
+        let authResponse
         const newRequest = new Request(new Request(request.clone(), newRequestInit))
-        // Use a Service binding to fetch to another worker
-        const authResponse = await env.authz.fetch(newRequest)
+
+        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
+        if (env.ENVIRONMENT === 'development') {
+            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
+        } else {
+            // Use a Service binding to fetch to another worker
+            authResponse = await env.authz.fetch(newRequest)
+        }
         if (authResponse.status !== 200) {
             console.log(`authResponse: ${JSON.stringify(authResponse)}`)
             return authResponse
@@ -280,7 +298,7 @@ router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
     // user id is equivalent to wallet address of the form 0x83..
     const userId = request.params?.id
 
-    if (env.ENVIRONMENT !== 'development') {
+    if (!env.SKIP_SIWE) {
         const cookie = await handleCookie(request.clone())
         console.log(`cookie: ${cookie}`)
         const encodedCookie = Buffer.from(cookie, 'base64')
@@ -302,9 +320,17 @@ router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
             method: 'POST',
             body: JSON.stringify(newBody),
         }
+
+        let authResponse
         const newRequest = new Request(new Request(request.clone(), newRequestInit))
-        // Use a Service binding to fetch to another worker
-        const authResponse = await env.authz.fetch(newRequest)
+
+        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
+        if (env.ENVIRONMENT === 'development') {
+            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
+        } else {
+            // Use a Service binding to fetch to another worker
+            authResponse = await env.authz.fetch(newRequest)
+        }
         if (authResponse.status !== 200) {
             console.log(`authResponse: ${JSON.stringify(authResponse)}`)
             return authResponse
@@ -349,7 +375,7 @@ router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
 router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
     const spaceId = request.params?.id
 
-    if (env.ENVIRONMENT !== 'development') {
+    if (!env.SKIP_SIWE) {
         const cookie = await handleCookie(request.clone())
         console.log(`cookie: ${cookie}`)
         const encodedCookie = Buffer.from(cookie, 'base64')
@@ -371,9 +397,17 @@ router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
             method: 'POST',
             body: JSON.stringify(newBody),
         }
+
+        let authResponse
         const newRequest = new Request(new Request(request.clone(), newRequestInit))
-        // Use a Service binding to fetch to another worker
-        const authResponse = await env.authz.fetch(newRequest)
+
+        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
+        if (env.ENVIRONMENT === 'development') {
+            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
+        } else {
+            // Use a Service binding to fetch to another worker
+            authResponse = await env.authz.fetch(newRequest)
+        }
         if (authResponse.status !== 200) {
             console.log(`authResponse: ${JSON.stringify(authResponse)}`)
             return authResponse

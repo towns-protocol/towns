@@ -1,6 +1,15 @@
 import { checkPrimeSync } from 'crypto'
 import { Env, worker } from '../src/index'
 
+const mockIsEntitled = jest.fn()
+jest.mock('use-zion-client/src/client/web3/SpaceDapp', () => {
+	return {
+		SpaceDapp: class {
+			isEntitledToSpace = mockIsEntitled
+		},
+	}
+})
+
 const FAKE_SERVER_URL = 'http://localhost'
 const AUTH_TOKEN = 'Zm9v'
 
@@ -46,9 +55,8 @@ function generateRequest(
 }
 
 describe('siwe auth handler', () => {
-	// TODO: the inclusion of SpaceDapp in siwe/handler causes the test to silently fail
-	// pretty sure this can be traced to the "assert {type: 'json'}" import in IStaticContractsInfo.ts
-	test.skip('pass auth with good sig', async () => {
+	test('pass auth with good sig', async () => {
+		mockIsEntitled.mockReturnValue(true)
 		const result = await worker.fetch(
 			...generateRequest(
 				'/',
@@ -70,7 +78,30 @@ describe('siwe auth handler', () => {
 		expect(text).toBe('OK')
 	})
 
-	test.skip('fail auth with bad sig', async () => {
+	test('fails auth when good sig but bad permissions', async () => {
+		mockIsEntitled.mockReturnValue(false)
+		const result = await worker.fetch(
+			...generateRequest(
+				'/',
+				'POST',
+				JSON.stringify({
+					message: GOOD_SIWE_MSG,
+					signature: GOOD_SIG,
+					spaceId: SPACE_ID,
+					chainId: CHAIN_ID,
+				}) as BodyInit,
+				{
+					Authorization: `Bearer ${AUTH_TOKEN}`,
+				},
+			),
+		)
+
+		expect(result.status).toBe(401)
+		const text = await result.text()
+		expect(text).toBe('Unauthorized')
+	})
+
+	test('fail auth with bad sig', async () => {
 		const result = await worker.fetch(
 			...generateRequest(
 				'/',
@@ -93,7 +124,7 @@ describe('siwe auth handler', () => {
 		expect(text).toBe('Unauthorized')
 	})
 
-	test.skip('fail auth with bad msg', async () => {
+	test('fail auth with bad msg', async () => {
 		const result = await worker.fetch(
 			...generateRequest(
 				'/',

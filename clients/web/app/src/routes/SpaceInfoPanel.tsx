@@ -33,7 +33,7 @@ export const SpaceInfoPanel = () => {
     const { data } = useContractSpaceInfo(space?.id?.networkId)
     const address = data?.address ?? ''
     const navigate = useNavigate()
-    const { data: canEdit } = useHasPermission(Permission.Owner) // TODO: this should be ModifySpaceSettings, but siwe-worker is checking for Owner
+    const { data: canEdit } = useHasPermission(Permission.ModifySpaceSettings)
 
     const { homeserverUrl } = useMatrixHomeServerUrl()
     const [isEdit, setIsEdit] = useState(false)

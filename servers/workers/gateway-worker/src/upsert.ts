@@ -28,15 +28,26 @@ export const upsertImage = async (getUrl: URL, apiUrl: URL, id: string, request:
             })
         }
     }
+    // ensure we only pass 'id' and 'file' lest cloudflare return errors
+    const clone = request.clone()
+    const formData = await clone.formData()
+    const cfFormData = new FormData()
+    cfFormData.append('id', formData.get('id') ?? '')
+    cfFormData.append('file', formData.get('file') ?? '')
+
     // proxy POST request to images.zion.xyz
-    const newRequest = new Request(
-        new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1'].join('/')).toString(),
-        new Request(request),
-    )
-    newRequest.headers.delete('Authorization')
-    newRequest.headers.set('Authorization', 'Bearer ' + env.API_TOKEN)
     try {
-        const resp = await fetch(newRequest, { cf: { cacheTtl: 0 } })
+        const resp = await fetch(
+            new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1'].join('/')).toString(),
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer ' + env.API_TOKEN,
+                },
+                body: cfFormData,
+                cf: { cacheTtl: 0 },
+            },
+        )
         const cache = caches.default
         await cache.delete(getRequest)
         return resp

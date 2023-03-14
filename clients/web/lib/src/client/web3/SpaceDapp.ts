@@ -346,8 +346,9 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         user: string,
         permission: Permission,
+        requireSigner = true,
     ): Promise<boolean> {
-        const space = await this.getSpace(spaceId)
+        const space = await this.getSpace(spaceId, requireSigner)
         if (!space?.read) {
             return false
         }

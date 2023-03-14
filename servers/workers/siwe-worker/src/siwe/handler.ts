@@ -1,8 +1,8 @@
 import { SiweMessage } from 'siwe'
 import { SpaceDapp } from 'use-zion-client/src/client/web3/SpaceDapp'
-import { SpaceInfo } from 'use-zion-client/src/client/web3/SpaceInfo'
 import { ethers } from 'ethers'
 import { Env } from '..'
+import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 
 const GOERLI_RPC_URL = 'https://eth-goerli.g.alchemy.com/v2/'
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545' // not localhost
@@ -15,6 +15,8 @@ const providerMap = new Map<string, string>([
 
 const GOERLI = 5
 
+const PERMISSION = Permission.ModifySpaceSettings
+
 export async function verifySiweMessage(
 	request: Request,
 	env: Env,
@@ -26,6 +28,7 @@ export async function verifySiweMessage(
 		spaceId?: string
 		userId?: string
 	}
+
 	const siweMessage = new SiweMessage(message as string)
 	await siweMessage.verify({ signature: signature as string })
 	if (!verifyUser) {
@@ -68,13 +71,16 @@ export async function verifySpaceOwner(
 	provider: ethers.providers.StaticJsonRpcProvider,
 ): Promise<boolean> {
 	const spaceDapp = new SpaceDapp(chainId, provider, undefined)
-	const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(
-		decodeURIComponent(spaceId),
-		false,
-	)
-	if ((spaceInfo as SpaceInfo).owner === address) {
-		return true
+	try {
+		const hasPermission = await spaceDapp.isEntitledToSpace(
+			decodeURIComponent(spaceId),
+			address,
+			PERMISSION,
+			false,
+		)
+		return hasPermission
+	} catch (error) {
+		console.error('spaceDapp.isEntitled error', (error as Error).message)
+		return false
 	}
-	console.log('spaceInfo.owner ', { owner: (spaceInfo as SpaceInfo).owner, spaceInfo })
-	return false
 }
