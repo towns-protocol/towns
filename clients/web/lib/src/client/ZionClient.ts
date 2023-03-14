@@ -380,10 +380,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public stopMatrixClient() {
         this.matrixDecryptionExtension?.stop()
-        this.matrixClient?.stopClient()
-        this.matrixClient?.removeAllListeners()
-        this.matrixClient = undefined
-        this.log('Stopped matrixClient')
+        if (this.matrixClient) {
+            this.matrixClient.stopClient()
+            this.matrixClient.removeAllListeners()
+            this.matrixClient = undefined
+            this.log('Stopped matrixClient')
+        }
     }
 
     /************************************************
