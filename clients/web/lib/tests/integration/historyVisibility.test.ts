@@ -94,13 +94,7 @@ describe('historyVisibility', () => {
         })
 
         // create a new client with same wallet, but different deviceId/auth
-        const alice2 = new ZionTestClient(
-            alice.chainId,
-            'alice2',
-            alice.props,
-            alice.provider,
-            alice.delegateWallet,
-        )
+        const alice2 = new ZionTestClient(alice.chainId, 'alice2', alice.props, alice.wallet)
 
         await alice2.loginWalletAndStartClient()
 
@@ -121,13 +115,7 @@ describe('historyVisibility', () => {
         await john.logout()
 
         // have alice log into yet another client, see if she will share keys with herself
-        const alice3 = new ZionTestClient(
-            alice.chainId,
-            'alice2',
-            alice.props,
-            alice.provider,
-            alice.delegateWallet,
-        )
+        const alice3 = new ZionTestClient(alice.chainId, 'alice2', alice.props, alice.wallet)
 
         await alice3.loginWalletAndStartClient()
 

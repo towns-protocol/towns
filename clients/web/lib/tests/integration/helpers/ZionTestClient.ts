@@ -54,6 +54,9 @@ export class ZionTestClient extends ZionClient {
 
     public props?: ZionTestClientProps
     public provider: ZionTestWeb3Provider
+    public get wallet(): ethers.Wallet {
+        return this.provider.wallet
+    }
     public delegateWallet: ethers.Wallet
     public get matrixUserId(): string | undefined {
         return this.auth?.userId
@@ -66,10 +69,9 @@ export class ZionTestClient extends ZionClient {
         chainId: number,
         name: string,
         props?: ZionTestClientProps,
-        inProvider?: ZionTestWeb3Provider,
-        delegateWallet?: ethers.Wallet,
+        wallet?: ethers.Wallet,
     ) {
-        const provider = inProvider ?? new ZionTestWeb3Provider()
+        const provider = new ZionTestWeb3Provider(wallet)
         // super
         super(
             {
@@ -98,7 +100,7 @@ export class ZionTestClient extends ZionClient {
             this.chainId,
         )
         // casablanca delegate wallet
-        this.delegateWallet = delegateWallet ?? ethers.Wallet.createRandom()
+        this.delegateWallet = ethers.Wallet.createRandom()
 
         // add ourselves to the list of all clients
         ZionTestClient.allClients.push(this)

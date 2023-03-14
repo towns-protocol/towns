@@ -36,13 +36,17 @@ export function parseOptInt(value?: string): number | undefined {
     return parsed
 }
 
+export async function getChainId(): Promise<number> {
+    const dummyProvider = new ZionTestWeb3Provider()
+    return (await dummyProvider.getNetwork()).chainId
+}
+
 export async function registerAndStartClients(
     clientNames: string[],
     props?: ZionTestClientProps,
 ): Promise<Record<string, ZionTestClient>> {
     // get the chain id for the test network
-    const dummyProvider = new ZionTestWeb3Provider()
-    const chainId = (await dummyProvider.getNetwork()).chainId
+    const chainId = await getChainId()
     // create new matrix test clients
     const clients = clientNames.map((name) => new ZionTestClient(chainId, name, props))
     // start them up
@@ -58,11 +62,9 @@ export async function registerLoginAndStartClient(
     name: string,
     wallet: Wallet,
     props?: ZionTestClientProps,
-    delegateWallet?: ethers.Wallet,
 ): Promise<ZionTestClient> {
-    const provider = new ZionTestWeb3Provider(wallet)
-    const chainId = (await provider.getNetwork()).chainId
-    const client = new ZionTestClient(chainId, name, props, provider, delegateWallet)
+    const chainId = await getChainId()
+    const client = new ZionTestClient(chainId, name, props, wallet)
 
     if (await client.isUserRegistered()) {
         await client.loginWalletAndStartClient()
