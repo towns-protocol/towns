@@ -43,9 +43,9 @@ export const AuthenticatedRoutes = () => {
             <Route path="me" element={<MeIndex />} />
             <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
             {(env.IS_DEV || isHolderOfPioneerNft) && (
-                <Route path="spaces/new" element={<SpacesNew />} />
+                <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
             )}
-            <Route path="spaces/:spaceSlug" element={<DocumentTitleFromSpaceOutlet />}>
+            <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<DocumentTitleFromSpaceOutlet />}>
                 <Route index element={<SpaceHome />} />
                 <Route path="threads" element={<SpaceThreads />}>
                     <Route path="profile/:profileId" element={<SpaceProfilePanel />} />

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import { RoomIdentifier, useSpaceNotificationCounts } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { SpaceNavTooltip } from '@components/Tooltips/SpaceNavTooltip'
 import { Badge, Box, ButtonText, Dot, Icon, TooltipRenderer } from '@ui'
@@ -63,7 +64,7 @@ export const SpaceNavItem = (props: Props) => {
             {({ triggerProps }) => (
                 <NavItem
                     id={id.slug}
-                    to={isInvite ? `/invites/${id.slug}/` : `/spaces/${id.slug}/`}
+                    to={isInvite ? `/invites/${id.slug}/` : `/${PATHS.SPACES}/${id.slug}/`}
                     exact={exact}
                     forceMatch={forceMatch}
                     highlight={highlight}

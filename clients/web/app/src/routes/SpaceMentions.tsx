@@ -7,6 +7,7 @@ import {
     useSpaceMembers,
     useSpaceMentions,
 } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/Message'
@@ -68,7 +69,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
         return null
     }
 
-    const channelSegment = `/spaces/${spaceSlug}/channels/${channelSlug}`
+    const channelSegment = `/${PATHS.SPACES}/${spaceSlug}/channels/${channelSlug}`
     const threadSegment = mention.thread ? `/replies/${mention.thread.eventId}` : ``
     const eventSegment = `#${mention.event.eventId}`
     const link = `${channelSegment}${threadSegment}${eventSegment}`

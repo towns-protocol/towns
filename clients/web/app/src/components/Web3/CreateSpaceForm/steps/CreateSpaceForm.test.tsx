@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
+import { PATHS } from 'routes'
 import { TestApp, mockUseMatrixCredentials } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
@@ -241,7 +242,9 @@ describe('<CreateSpaceForm />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-room-id/getting-started')
+                expect(navigateSpy).toHaveBeenCalledWith(
+                    `/${PATHS.SPACES}/some-room-id/getting-started`,
+                )
             },
             { timeout: 10000 },
         )

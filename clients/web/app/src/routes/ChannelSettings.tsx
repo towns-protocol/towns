@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier, useChannelData, useSpaceData, useZionClient } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { Stack } from '@ui'
 import { InviteUserToRoomForm } from '@components/Web3'
 
@@ -11,7 +12,7 @@ export const ChannelSettings = () => {
     const { spaceId, channelId, channel } = useChannelData()
 
     const onCancelClicked = useCallback(() => {
-        navigate('/spaces/' + spaceId.slug + '/channels/' + channelId.slug + '/')
+        navigate(`/${PATHS.SPACES}/${spaceId.slug}/channels/${channelId.slug}/`)
     }, [channelId.slug, navigate, spaceId.slug])
 
     const onInviteClicked = useCallback(
@@ -21,7 +22,7 @@ export const ChannelSettings = () => {
             inviteeUserId: string,
         ) => {
             await inviteUser(roomId ?? spaceId, inviteeUserId)
-            navigate('/spaces/' + spaceId.slug + '/')
+            navigate(`/${PATHS.SPACES}/${spaceId.slug}/`)
         },
         [inviteUser, navigate],
     )

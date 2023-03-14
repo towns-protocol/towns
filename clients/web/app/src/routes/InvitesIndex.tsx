@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useInviteData, useZionClient } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 
 export const InvitesIndex = () => {
@@ -15,7 +16,7 @@ export const InvitesIndex = () => {
         }
         navigate(
             invite.isSpaceRoom
-                ? '/spaces/' + invite.id.slug + '/'
+                ? `/${PATHS.SPACES}/${invite.id.slug}/`
                 : // TODO: we don't have UI for channel invites so we should either remove this or refactor once channel flow is done
                   '/' + invite.spaceParentId?.slug + '/channels/' + invite.id.slug + '/',
         )

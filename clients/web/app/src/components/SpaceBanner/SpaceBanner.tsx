@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useSpaceId, useZionClient } from 'use-zion-client'
 import { useNavigate } from 'react-router'
+import { PATHS } from 'routes'
 import {
     Avatar,
     Box,
@@ -78,7 +79,7 @@ const SpaceSettingsMenu = () => {
 
     const onInviteClicked = useCallback(() => {
         console.log('invite clicked')
-        navigate('/spaces/' + spaceId?.slug + '/invite')
+        navigate(`/${PATHS.SPACES}/${spaceId?.slug}/invite`)
     }, [navigate, spaceId?.slug])
 
     const onLeaveClicked = useCallback(async () => {
@@ -90,7 +91,7 @@ const SpaceSettingsMenu = () => {
     }, [leaveRoom, navigate, spaceId])
 
     const onSettingsClicked = useCallback(() => {
-        navigate('/spaces/' + spaceId?.slug + '/settings')
+        navigate(`/${PATHS.SPACES}/${spaceId?.slug}/settings`)
     }, [navigate, spaceId?.slug])
 
     return (

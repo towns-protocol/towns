@@ -1,5 +1,5 @@
 export const PATHS = {
-    SPACES: 'spaces',
+    SPACES: 't',
     CHANNELS: 'channels',
     REPLIES: 'replies',
     REGISTER: 'register',

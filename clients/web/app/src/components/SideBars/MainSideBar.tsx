@@ -1,5 +1,6 @@
 import React from 'react'
 import { useInvites, useSpaceContext, useZionContext } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
@@ -37,8 +38,8 @@ export const MainSideBar = (props: Props) => {
                 ))}
                 {(env.IS_DEV || isHolderOfPioneerNft) && (
                     <ActionNavItem
-                        id="spaces/new"
-                        link="/spaces/new"
+                        id={`${PATHS.SPACES}/new`}
+                        link={`/${PATHS.SPACES}/new`}
                         icon="plus"
                         label="New Space"
                     />

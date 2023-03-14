@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { Channel, SpaceData, useChannelNotificationCounts, useRoom } from 'use-zion-client'
 import useEvent from 'react-use-event-hook'
+import { PATHS } from 'routes'
 import { Badge, ButtonText, Icon, Stack, TooltipRenderer } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
-import { PATHS } from 'routes'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -23,7 +23,7 @@ export const ChannelNavItem = (props: Props) => {
     const notis = useChannelNotificationCounts(channel.id)
     const room = useRoom(channel?.id)
 
-    const link = `/spaces/${space.id.slug}/channels/${channel.id.slug}/`
+    const link = `/${PATHS.SPACES}/${space.id.slug}/channels/${channel.id.slug}/`
     const isHighlight = channel.id.slug === channelSlug
 
     const channelName = useMemo(() => {

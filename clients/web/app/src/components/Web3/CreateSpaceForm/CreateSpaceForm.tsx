@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     CreateSpaceInfo,
@@ -109,6 +110,14 @@ export const CreateSpaceForm = () => {
             error && error.name !== 'ACTION_REJECTED' && !wentBackAfterAttemptingCreation,
         )
     }, [error, wentBackAfterAttemptingCreation])
+
+    useEffect(() => {
+        if (hasError) {
+            Sentry.captureException(
+                new Error(`Error creating space: ${error?.name} ${error?.message}`),
+            )
+        }
+    }, [error, hasError])
 
     const errorBox = useMemo(() => {
         if (hasError) {

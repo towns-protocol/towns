@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import { AutojoinChannels, SpaceContextProvider, useZionContext } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
@@ -13,7 +14,7 @@ import { ChannelsShimmer } from '@components/Shimmer'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 
 export const AppPanelLayout = () => {
-    const spaceRoute = useMatch({ path: '/spaces/:spaceSlug', end: false })
+    const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
     const needsOnboarding = useNeedsOnboarding()
     const spaceId = spaceRoute?.params.spaceSlug ?? ''
 
@@ -37,8 +38,8 @@ export const AppPanelLayoutContent = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
     const messageRoute = useMatch({ path: '/messages', end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
-    const spacesNewRoute = useMatch({ path: '/spaces/new', end: true })
-    const spacesSettingsRoute = useMatch({ path: '/spaces/:space/settings', end: false })
+    const spacesNewRoute = useMatch({ path: `/${PATHS.SPACES}/new`, end: true })
+    const spacesSettingsRoute = useMatch({ path: `/${PATHS.SPACES}/:space/settings`, end: false })
 
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']

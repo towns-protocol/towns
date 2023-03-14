@@ -49,7 +49,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
-            navigate(`/spaces/${spaceId.slug}/settings`)
+            navigate(`/${PATHS.SPACES}/${spaceId.slug}/settings`)
         },
         [navigate],
     )
@@ -108,7 +108,7 @@ export const SpaceSideBar = (props: Props) => {
                             <ActionNavItem
                                 highlight={unreadThreadsCount > 0}
                                 icon="threads"
-                                link={`/spaces/${space.id.slug}/threads`}
+                                link={`/${PATHS.SPACES}/${space.id.slug}/threads`}
                                 id="threads"
                                 label="Threads"
                                 badge={
@@ -121,7 +121,7 @@ export const SpaceSideBar = (props: Props) => {
                                 icon="at"
                                 id="mentions"
                                 label="Mentions"
-                                link={`/spaces/${space.id.slug}/mentions`}
+                                link={`/${PATHS.SPACES}/${space.id.slug}/mentions`}
                             />
                         </>
                     )}
@@ -166,7 +166,7 @@ const SpaceSideBarHeader = (props: {
     const navigate = useNavigate()
 
     const onMembersClick = useEvent(() => {
-        navigate(`/spaces/${space.id.slug}/members`)
+        navigate(`/${PATHS.SPACES}/${space.id.slug}/members`)
     })
 
     const onAddressClick = useEvent(() => {
@@ -186,9 +186,9 @@ const SpaceSideBarHeader = (props: {
         let path
 
         if (currentChannelId) {
-            path = `/spaces/${space.id.slug}/channels/${currentChannelId}/info`
+            path = `/${PATHS.SPACES}/${space.id.slug}/channels/${currentChannelId}/info`
         } else if (currentSpacePathWithoutInfo) {
-            path = `/spaces/${space.id.slug}/${currentSpacePathWithoutInfo?.params.current}/info`
+            path = `/${PATHS.SPACES}/${space.id.slug}/${currentSpacePathWithoutInfo?.params.current}/info`
         }
 
         if (path) {

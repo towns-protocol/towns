@@ -3,6 +3,7 @@ import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import React from 'react'
 import useEvent from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
+import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { MenuItem } from './MenuItem'
 
@@ -26,7 +27,7 @@ export const ChannelSettingsCard = (props: Props) => {
     })
 
     const onInfoClick = useEvent(() => {
-        navigate(`/spaces/${spaceId.slug}/channels/${channelId.slug}/info?channel`)
+        navigate(`/${PATHS.SPACES}/${spaceId.slug}/channels/${channelId.slug}/info?channel`)
     })
 
     const onEditClick = useEvent(() => {

@@ -1,5 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
+import { PATHS } from 'routes'
 import { Avatar, BackgroundImage, Box, BoxProps, Card, Heading, Paragraph, Stack } from '@ui'
 import { fakeUserCache } from 'data/UserData'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
@@ -42,7 +43,7 @@ export const Highlight = ({
                         <NamedAvatar userId={userId} />
                     </Box>
                     <Box gap="paragraph">
-                        <NavLink to="/spaces/bored-ape-yacht-club/announcements">
+                        <NavLink to={`/${PATHS.SPACES}/bored-ape-yacht-club/announcements`}>
                             <Heading>
                                 {space} {channel && `#${channel}`}
                             </Heading>

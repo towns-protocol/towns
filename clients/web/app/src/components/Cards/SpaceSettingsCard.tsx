@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { MenuItem } from './MenuItem'
@@ -26,12 +27,12 @@ export const SpaceSettingsCard = (props: Props) => {
     }, [closeCard, leaveRoom, navigate, spaceId])
 
     const onSettingsClick = useCallback(() => {
-        navigate(`/spaces/${spaceId.slug}/settings`)
+        navigate(`/${PATHS.SPACES}/${spaceId.slug}/settings`)
         closeCard()
     }, [closeCard, navigate, spaceId.slug])
 
     const onSettingsLegacyClick = useCallback(() => {
-        navigate(`/spaces/${spaceId.slug}/settings-legacy`)
+        navigate(`/${PATHS.SPACES}/${spaceId.slug}/settings-legacy`)
         closeCard()
     }, [closeCard, navigate, spaceId.slug])
 

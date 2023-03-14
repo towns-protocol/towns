@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
+import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
 
@@ -86,7 +87,7 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith('/spaces/123')
+                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/123`)
             },
             {
                 timeout: 5000,

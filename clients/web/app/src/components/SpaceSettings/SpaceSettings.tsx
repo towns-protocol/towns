@@ -9,6 +9,7 @@ import {
     useRoles,
 } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
+import { PATHS } from 'routes'
 
 import { IconButton, Stack } from '@ui'
 import {
@@ -60,7 +61,7 @@ export const SpaceSettings = () => {
     }, [inProgressTransactions, settledTransactions])
 
     const onClose = useEvent(() => {
-        navigate(`/spaces/${spaceId}`)
+        navigate(`/${PATHS.SPACES}/${spaceId}`)
     })
 
     // when user navigates away, clear the saved space data

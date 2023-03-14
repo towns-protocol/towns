@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import React from 'react'
 import { NavLink, useMatch } from 'react-router-dom'
+import { PATHS } from 'routes'
 import { Box, BoxProps, Stack } from '@ui'
 
 export const RoleSettingsTabs = () => {
@@ -16,7 +17,7 @@ export const RoleSettingsTabs = () => {
 }
 
 const RoleSettingsTabItem = (props: { selected?: boolean; to: string } & BoxProps) => {
-    const matches = useMatch('spaces/:space/settings/roles/:role/:tab')
+    const matches = useMatch(`${PATHS.SPACES}/:space/settings/roles/:role/:tab`)
 
     const selected = matches?.params.tab === props.to
 

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
+import { PATHS } from 'routes'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
 import { SpaceHome } from './SpaceHome'
@@ -125,7 +126,7 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith('/spaces/some-slug/threads')
+                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/some-slug/threads`)
             },
             {
                 timeout: 4000,
@@ -177,7 +178,7 @@ describe('<SpaceHome />', () => {
         await waitFor(
             () => {
                 expect(navigateSpy).toHaveBeenCalledWith(
-                    '/spaces/some-slug/channels/some-channel-slug/',
+                    `/${PATHS.SPACES}/some-slug/channels/some-channel-slug/`,
                 )
             },
             {
