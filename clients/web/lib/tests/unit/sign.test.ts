@@ -1,3 +1,7 @@
+/**
+ * @group casablanca
+ */
+
 export {}
 
 describe('Sign', () => {

@@ -1,3 +1,6 @@
+/**
+ * @group casablanca
+ */
 import { Permission, RoleEntitlements } from 'use-zion-client/src/client/web3/ContractTypes'
 import {
     createExternalTokenStruct,
