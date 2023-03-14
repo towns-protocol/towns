@@ -59,6 +59,10 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
       {
         name = "PPROFLISTEN",
         value = ""
+      },
+      {
+        name = "APP_URL",
+        value = ""
       }
     ]
 
