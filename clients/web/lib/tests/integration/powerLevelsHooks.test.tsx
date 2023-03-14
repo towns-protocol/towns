@@ -9,7 +9,7 @@ import {
     createTestSpaceWithZionMemberRole,
     makeUniqueName,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from './helpers/TestUtils'
 
 import { LoginStatus } from '../../src/hooks/login'
@@ -25,7 +25,7 @@ describe('powerLevelsHooks', () => {
     test('create a space with two users, reduce the level required to create a space child', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
         const { bob } = await registerAndStartClients(['bob'])
         // bob needs funds to create a space
         await bob.fundWallet()

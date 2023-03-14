@@ -8,7 +8,7 @@
 import {
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from './helpers/TestUtils'
 
 import { FullyReadMarker } from '../../src/types/timeline-types'
@@ -60,7 +60,7 @@ describe('roomAccountData', () => {
         await bob.stopClients()
 
         // save some data
-        const bob2 = await registerLoginAndStartClient('bob', bob.provider.wallet)
+        const bob2 = await registerAndStartClient('bob', bob.provider.wallet)
 
         if (roomId.protocol === SpaceProtocol.Matrix) {
             // bob should have the account data

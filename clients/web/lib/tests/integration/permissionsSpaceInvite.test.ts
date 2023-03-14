@@ -4,7 +4,7 @@ import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/E
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -77,7 +77,7 @@ describe('space invite', () => {
         /** Arrange */
 
         // create all the users for the test
-        const tokenGrantedUser = await registerLoginAndStartClient(
+        const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithNft(),
         )
@@ -120,7 +120,7 @@ describe('space invite', () => {
         /** Arrange */
 
         // create all the users for the test
-        const tokenGrantedUser = await registerLoginAndStartClient(
+        const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithNft(),
         )

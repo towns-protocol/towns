@@ -11,7 +11,7 @@ import {
     createTestSpaceWithZionMemberRole,
     makeUniqueName,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -22,7 +22,7 @@ describe('messageTypes', () => {
     test('send a m.wenmoon message to test message types', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
         const { bob } = await registerAndStartClients(['bob'])
         // bob needs funds to create a space
         await bob.fundWallet()
@@ -70,7 +70,7 @@ describe('messageTypes', () => {
         }
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
         const { bob } = await registerAndStartClients(['bob'])
         // bob needs funds to create a space
         await bob.fundWallet()
@@ -112,7 +112,7 @@ describe('messageTypes', () => {
         }
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
         const { bob } = await registerAndStartClients(['bob'])
         // bob needs funds to create a space
         await bob.fundWallet()

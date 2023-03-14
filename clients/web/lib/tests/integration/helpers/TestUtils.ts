@@ -41,6 +41,10 @@ export async function getChainId(): Promise<number> {
     return (await dummyProvider.getNetwork()).chainId
 }
 
+/**
+ * Create N clients with unique names and random wallet addresses
+ * waits for the clients to start up
+ */
 export async function registerAndStartClients(
     clientNames: string[],
     props?: ZionTestClientProps,
@@ -58,7 +62,12 @@ export async function registerAndStartClients(
     }, {})
 }
 
-export async function registerLoginAndStartClient(
+/**
+ * Creates a client with an existing wallet address
+ * will "log in" if the user is already registered
+ * waits for the client to start up
+ */
+export async function registerAndStartClient(
     name: string,
     wallet: Wallet,
     props?: ZionTestClientProps,

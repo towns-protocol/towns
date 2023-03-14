@@ -1,7 +1,7 @@
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -64,7 +64,7 @@ describe('On-chain channel creation tests', () => {
 
     test('allow update space topic with ModifySpaceSettings permission', async () => {
         /* Arrange */
-        const tokenGrantedUser = await registerLoginAndStartClient(
+        const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithNft(),
         )

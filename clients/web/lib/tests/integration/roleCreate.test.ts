@@ -2,7 +2,7 @@ import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -40,7 +40,7 @@ describe('create role', () => {
 
     test('Space member not allowed to create new role without permission', async () => {
         /** Arrange */
-        const tokenGrantedUser = await registerLoginAndStartClient(
+        const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithNft(),
         )
@@ -75,7 +75,7 @@ describe('create role', () => {
 
     test('Space member allowed to create new role with permission', async () => {
         /** Arrange */
-        const tokenGrantedUser = await registerLoginAndStartClient(
+        const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithNft(),
         )

@@ -3,7 +3,7 @@ import {
     createTestSpaceWithZionMemberRole,
     makeUniqueName,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -26,7 +26,7 @@ describe('<AutojoinChannels />', () => {
     test('create a space with two users, have alice create channels, ensure bob automatically joins them', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
         const { bob } = await registerAndStartClients(['bob'])
         // bob needs funds to create a space
         await bob.fundWallet()

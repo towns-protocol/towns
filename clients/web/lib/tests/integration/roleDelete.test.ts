@@ -8,7 +8,7 @@ import {
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
@@ -22,7 +22,7 @@ describe('delete role', () => {
     test('delete token-gated role with a channel using it', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
-        const bobWithNft = await registerLoginAndStartClient(
+        const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithNft(),
         )

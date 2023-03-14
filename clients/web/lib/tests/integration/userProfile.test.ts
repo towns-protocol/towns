@@ -4,7 +4,7 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    registerLoginAndStartClient,
+    registerAndStartClient,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -30,7 +30,7 @@ describe('userProfile', () => {
             [],
         )) as RoomIdentifier
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerLoginAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
         // alice joins the room
         await alice.joinRoom(roomId)
         // alice should see bob's user name
