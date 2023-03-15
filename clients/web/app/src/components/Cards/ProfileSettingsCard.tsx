@@ -43,7 +43,7 @@ export const ProfileSettingsCard = (props: Props) => {
             const segment = matchSpace.params['*']?.split('/')?.[0] ?? ''
             // matches threads/mentions/members
             link = `${PATHS.SPACES}/${matchSpace.params.spaceSlug}/${
-                segment ? `/${segment}` : ``
+                segment ? `${segment}/` : ``
             }profile/${userId}`
         }
         navigate(link)
