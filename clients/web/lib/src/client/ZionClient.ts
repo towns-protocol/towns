@@ -1982,7 +1982,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         error: unknown,
     ): Promise<Error> {
         if (roomId) {
-            await this.leave(roomId)
+            try {
+                await this.leave(roomId)
+            } catch (e) {
+                console.error('error leaving room after blockchain error', e)
+            }
         }
         /**
          *  Wallet rejection

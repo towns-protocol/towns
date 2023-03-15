@@ -119,6 +119,9 @@ export class ZionTestClient extends ZionClient {
         }
         if (txContext.status === TransactionStatus.Pending) {
             const rxContext = await this.waitForCreateSpaceTransaction(txContext)
+            if (rxContext.error) {
+                throw rxContext.error
+            }
             return rxContext.data
         }
         // Something went wrong. Don't return a room identifier.
