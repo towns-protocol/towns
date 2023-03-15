@@ -44,7 +44,7 @@ export const twitter = {
     info: {
         data: {
             attachments: { media_keys: ['3_1588317334032244738'] },
-            created_at: '2022-11-03T23:48:57.000Z',
+            created_at: '2022-11-03T12:48:57.000Z',
             public_metrics: {
                 retweet_count: 2243,
                 reply_count: 2290,

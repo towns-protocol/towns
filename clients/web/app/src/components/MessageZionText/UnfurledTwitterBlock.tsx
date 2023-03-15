@@ -90,7 +90,7 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
                     <Text size="sm" color="gray2">
                         {formatter.format(data.public_metrics.like_count)} Likes
                     </Text>
-                    <Text size="sm" color="gray2">
+                    <Text size="sm" color="gray2" data-testid="twitter-date">
                         {format(new Date(data.created_at), 'MMM, d y')}
                     </Text>
                 </Box>

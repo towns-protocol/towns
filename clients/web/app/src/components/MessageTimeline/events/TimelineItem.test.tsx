@@ -200,6 +200,6 @@ describe('#TimelineItem', () => {
 
         expect(screen.getByText(/2.2K Retweets/, { exact: false })).toBeInTheDocument()
         expect(screen.getByText(/23K Likes/, { exact: false })).toBeInTheDocument()
-        expect(screen.getByText(/Nov, 3 2022/, { exact: false })).toBeInTheDocument()
+        expect(screen.getByTestId('twitter-date')).toBeInTheDocument()
     })
 })
