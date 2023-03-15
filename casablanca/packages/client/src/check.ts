@@ -1,4 +1,4 @@
-import { Err } from '@zion/proto'
+import { Err } from '@towns/proto'
 
 export class CodeException extends Error {
     code: number

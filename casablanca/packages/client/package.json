@@ -1,5 +1,5 @@
 {
-    "name": "@zion/client",
+    "name": "@towns/client",
     "packageManager": "yarn@3.2.3",
     "type": "module",
     "main": "dist/index.js",
@@ -20,7 +20,7 @@
         "@bufbuild/protobuf": "^1.0.0",
         "@ethereumjs/util": "^8.0.1",
         "@metamask/eth-sig-util": "^5.0.0",
-        "@zion/proto": "workspace:^",
+        "@towns/proto": "workspace:^",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",
         "lodash": "^4.17.21",

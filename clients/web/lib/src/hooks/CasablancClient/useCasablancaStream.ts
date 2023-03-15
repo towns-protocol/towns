@@ -1,4 +1,4 @@
-import { Stream } from '@zion/client'
+import { Stream } from '@towns/client'
 import { useZionContext } from '../../components/ZionContextProvider'
 import { useEffect, useState } from 'react'
 

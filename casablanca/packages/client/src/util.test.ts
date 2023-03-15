@@ -5,7 +5,7 @@ import { Wallet } from 'ethers'
 import { Worker } from 'worker_threads'
 
 import debug from 'debug'
-import { Envelope, Payload, StreamEvent } from '@zion/proto'
+import { Envelope, Payload, StreamEvent } from '@towns/proto'
 import { hashPersonalMessage } from 'ethereumjs-util'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { Client } from './client'

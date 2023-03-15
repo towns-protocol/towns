@@ -1,7 +1,7 @@
 import { Client } from './client'
 import debug from 'debug'
 import seedrandom from 'seedrandom'
-import { Payload_Message } from '@zion/proto'
+import { Payload_Message } from '@towns/proto'
 import { makeTestClient } from './util.test'
 import { ParsedEvent } from './types'
 import { StreamEventKeys } from './streams'

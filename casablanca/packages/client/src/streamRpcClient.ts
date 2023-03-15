@@ -7,7 +7,7 @@ import {
     Transport,
 } from '@bufbuild/connect-web'
 import { Message, MethodInfo, MethodKind, PartialMessage, ServiceType } from '@bufbuild/protobuf'
-import { StreamService } from '@zion/proto'
+import { StreamService } from '@towns/proto'
 import debug from 'debug'
 import EventTarget, { setMaxListeners } from 'events'
 import { isDefined } from './check'

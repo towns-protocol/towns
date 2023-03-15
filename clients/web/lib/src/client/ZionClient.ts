@@ -1,5 +1,5 @@
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
-import { bin_fromHexString, Client as CasablancaClient, makeStreamRpcClient } from '@zion/client'
+import { bin_fromHexString, Client as CasablancaClient, makeStreamRpcClient } from '@towns/client'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -44,7 +44,7 @@ import {
     SignerContext,
     publicKeyToBuffer,
     isUserStreamId as isCasablancaUserStreamId,
-} from '@zion/client'
+} from '@towns/client'
 
 import { FullyReadMarker, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'

@@ -8,9 +8,9 @@ import {
     Payload_JoinableStream,
     Payload_Channel,
     Payload_Message,
-} from '@zion/proto'
+} from '@towns/proto'
 import { check, isDefined } from './check'
-import { Err } from '@zion/proto'
+import { Err } from '@towns/proto'
 
 export interface ParsedEvent {
     event: Stringify<StreamEvent>

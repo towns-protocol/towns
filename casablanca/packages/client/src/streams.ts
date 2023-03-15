@@ -1,7 +1,7 @@
-import { ChannelOp, StreamKind, StreamOp } from '@zion/proto'
+import { ChannelOp, StreamKind, StreamOp } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, isDefined, throwWithCode } from './check'
-import { Err } from '@zion/proto'
+import { Err } from '@towns/proto'
 import { ParsedEvent } from './types'
 
 export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): string[] => {

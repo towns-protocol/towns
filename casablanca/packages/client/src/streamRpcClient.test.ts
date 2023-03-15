@@ -7,7 +7,7 @@ import {
     StreamKind,
     StreamOp,
     SyncStreamsResponse,
-} from '@zion/proto'
+} from '@towns/proto'
 import debug from 'debug'
 import { makeEvent_test, makeRandomUserContext, TEST_URL } from './util.test'
 import { makeStreamRpcClient } from './streamRpcClient'

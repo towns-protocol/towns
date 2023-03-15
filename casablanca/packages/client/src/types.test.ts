@@ -1,4 +1,4 @@
-import { StreamEvent, StreamOp } from '@zion/proto'
+import { StreamEvent, StreamOp } from '@towns/proto'
 import { makeUserStreamId } from './id'
 import { bin_fromHexString, makeJoinableStreamPayload, stringify } from './types'
 

@@ -8,11 +8,11 @@ import {
     stripHexPrefix,
     toRpcSig,
 } from '@ethereumjs/util'
-import { Envelope, EventRef, Payload, StreamEvent } from '@zion/proto'
+import { Envelope, EventRef, Payload, StreamEvent } from '@towns/proto'
 import { Buffer } from 'buffer'
 import { Wallet } from 'ethers'
 import { check, hasElements, isDefined } from './check'
-import { Err } from '@zion/proto'
+import { Err } from '@towns/proto'
 import { genIdBlob, userIdFromAddress } from './id'
 import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent, stringify } from './types'
 

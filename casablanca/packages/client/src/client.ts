@@ -7,7 +7,7 @@ import {
     makeJoinableStreamPayload,
     makeMessagePayload,
 } from './types'
-import { Payload, StreamAndCookie, StreamKind, StreamOp, SyncPos } from '@zion/proto'
+import { Payload, StreamAndCookie, StreamKind, StreamOp, SyncPos } from '@towns/proto'
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'

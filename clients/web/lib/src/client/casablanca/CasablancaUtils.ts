@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { getMessagePayload, Stream } from '@zion/client'
-import { ParsedEvent } from '@zion/client'
+import { getMessagePayload, Stream } from '@towns/client'
+import { ParsedEvent } from '@towns/client'
 import {
     ReactionEvent,
     RoomMessageEvent,

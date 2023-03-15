@@ -1,4 +1,4 @@
-import { StreamKind } from '@zion/proto'
+import { StreamKind } from '@towns/proto'
 import debug from 'debug'
 import { Client } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
@@ -187,7 +187,9 @@ describe('clientTest', () => {
         await bobSelfHello.expectToSucceed()
 
         // Alice can't sent a message to Bob's channel.
-        await expect(alicesClient.sendMessage(bobsChannelId, 'Hello, world from Alice!')).rejects.toThrow()
+        await expect(
+            alicesClient.sendMessage(bobsChannelId, 'Hello, world from Alice!'),
+        ).rejects.toThrow()
 
         // Alice waits for invite to Bob's channel.
         const aliceJoined = makeDonePromise()

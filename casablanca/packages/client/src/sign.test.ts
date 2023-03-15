@@ -5,7 +5,7 @@ import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeDelegateSig, makeEvent, SignerContext } from './sign'
 import { bin_fromHexString } from './types'
 import debug from 'debug'
-import { StreamKind, Payload, Payload_Message } from '@zion/proto'
+import { StreamKind, Payload, Payload_Message } from '@towns/proto'
 import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
 

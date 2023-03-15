@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@zion/client'
+import { Client as CasablancaClient } from '@towns/client'
 import {
     CasablancaStreamIdentifier,
     makeCasablancaStreamIdentifier,
