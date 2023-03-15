@@ -26,7 +26,7 @@ import { PATHS } from 'routes'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { shortAddress } from 'ui/utils/utils'
-import { SpaceIcon } from '@components/SpaceIcon'
+import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
@@ -210,7 +210,7 @@ const SpaceSideBarHeader = (props: {
                 padding="lg"
                 position="relative"
                 width="100%"
-                gap="lg"
+                gap="sm"
                 shrink={false}
                 className={spaceIconContainer}
             >
@@ -223,14 +223,11 @@ const SpaceSideBarHeader = (props: {
                 </Box>
                 <Box grow onClick={onTokenClick}>
                     {space ? (
-                        <SpaceIcon
-                            cursor="pointer"
-                            width="x15"
-                            aspectRatio="1/1"
-                            letterFontSize="h2"
-                            background="level1"
+                        <InteractiveSpaceIcon
+                            size="sm"
                             spaceId={space.id.networkId}
-                            firstLetterOfSpaceName={space.name[0]}
+                            address={spaceInfo?.address}
+                            spaceName={space.name}
                         />
                     ) : (
                         <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />

@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Box, BoxProps, Text } from '@ui'
 import { useGetSpaceIcon } from 'api/lib/spaceIcon'
 import { useUploadImageStore } from '@components/UploadImage/useUploadImageStore'
+import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
+import { TownsTokenProps } from '@components/TownsToken/TownsToken'
 import { LetterStyles, LetterStylesVariantProps } from './SpaceIcon.css'
 
 const ImageVariants = {
@@ -32,34 +34,16 @@ export const SpaceIcon = (props: Props) => {
         variant = ImageVariants.thumbnail300,
         ...boxProps
     } = props
-    const renderKey = useUploadImageStore((state) => state.renderKeys[spaceId])
 
-    // leveraging react query cache to check an image exists, trigger rerenders on upload and other UI
     const {
-        isLoading: requestIsLoading,
+        imageLoading,
+        requestIsLoading,
+        hasMadeFailedRequest,
+        onLoad,
         isSuccess,
-        failureCount,
-    } = useGetSpaceIcon({
-        spaceId,
-    })
-
-    // - we could return the Image from useGetSpaceIcon() and set that as img.src but the hook should only need to check a single "public"  variant. Passing all the variants results in addl. 404s if the image doesn't exist
-    // - if for some reason we start seeing issues where CF is creating a "public" variant much faster than the others, resulting in 404 for IMAGE_DELIVERY_URL, then we consider passing variant to hook
-    // - this is mainly only an issue for an uploading user, not the vast majority of users
-    const IMAGE_DELIVERY_URL = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${spaceId}/${variant}`
-
-    const [imageLoading, setImageLoading] = useState<boolean>(true)
-
-    const onLoad = useCallback(() => {
-        setImageLoading(false)
-    }, [])
-
-    // reset image loading when the render key changes so the image fades in again
-    useEffect(() => {
-        setImageLoading(true)
-    }, [renderKey])
-
-    const hasMadeFailedRequest = failureCount > 0
+        imageSrc,
+        renderKey,
+    } = useLoadSpaceIcon(spaceId, variant)
 
     return (
         <>
@@ -74,13 +58,9 @@ export const SpaceIcon = (props: Props) => {
                 {...boxProps}
             >
                 {hasMadeFailedRequest && (
-                    <Text
-                        strong
-                        textTransform="uppercase"
-                        className={LetterStyles(letterFontSize ? { fontSize: letterFontSize } : {})}
-                    >
+                    <SpaceIconInitials letterFontSize={letterFontSize}>
                         {firstLetterOfSpaceName}
-                    </Text>
+                    </SpaceIconInitials>
                 )}
                 {!hasMadeFailedRequest && !requestIsLoading && (
                     <AnimatePresence mode="wait">
@@ -88,7 +68,7 @@ export const SpaceIcon = (props: Props) => {
                             <MotionBox
                                 key={renderKey}
                                 as="img"
-                                src={IMAGE_DELIVERY_URL}
+                                src={imageSrc}
                                 fit="full"
                                 objectFit="cover"
                                 initial={{ opacity: 0 }}
@@ -97,19 +77,83 @@ export const SpaceIcon = (props: Props) => {
                                 onLoad={onLoad}
                             />
                         ) : (
-                            <Text
-                                strong
-                                textTransform="uppercase"
-                                className={LetterStyles(
-                                    letterFontSize ? { fontSize: letterFontSize } : {},
-                                )}
-                            >
-                                {firstLetterOfSpaceName}
-                            </Text>
+                            <SpaceIconInitials>{firstLetterOfSpaceName}</SpaceIconInitials>
                         )}
                     </AnimatePresence>
                 )}
             </Box>
         </>
     )
+}
+
+export const InteractiveSpaceIcon = (
+    props: Pick<Props, 'spaceId'> & Pick<TownsTokenProps, 'size' | 'address' | 'spaceName'>,
+) => {
+    const { size, spaceName: name, address } = props
+
+    const imageVariant = size === 'sm' ? ImageVariants.thumbnail100 : ImageVariants.thumbnail300
+    const { imageSrc, renderKey } = useLoadSpaceIcon(props.spaceId, imageVariant)
+    return (
+        <InteractiveTownsToken
+            size={size}
+            imageSrc={imageSrc}
+            address={address}
+            spaceName={name}
+            imageSrcRenderKey={renderKey}
+        />
+    )
+}
+
+const SpaceIconInitials = (props: {
+    letterFontSize?: LetterStylesVariantProps
+    children?: React.ReactNode
+}) => (
+    <Text
+        strong
+        textTransform="uppercase"
+        className={LetterStyles(props.letterFontSize ? { fontSize: props.letterFontSize } : {})}
+    >
+        {props.children}
+    </Text>
+)
+
+export const useLoadSpaceIcon = (spaceId: string, variant: ImageVariant) => {
+    const renderKey = useUploadImageStore((state) => state.renderKeys[spaceId])
+
+    // leveraging react query cache to check an image exists, trigger rerenders on upload and other UI
+    const {
+        isLoading: requestIsLoading,
+        isSuccess,
+        failureCount,
+    } = useGetSpaceIcon({
+        spaceId,
+    })
+
+    // - we could return the Image from useGetSpaceIcon() and set that as img.src but the hook should only need to check a single "public"  variant. Passing all the variants results in addl. 404s if the image doesn't exist
+    // - if for some reason we start seeing issues where CF is creating a "public" variant much faster than the others, resulting in 404 for IMAGE_DELIVERY_URL, then we consider passing variant to hook
+    // - this is mainly only an issue for an uploading user, not the vast majority of users
+    const imageSrc = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${spaceId}/${variant}`
+
+    const [imageLoading, setImageLoading] = useState<boolean>(true)
+
+    const onLoad = useCallback(() => {
+        setImageLoading(false)
+    }, [])
+
+    // reset image loading when the render key changes so the image fades in again
+    useEffect(() => {
+        setImageLoading(true)
+    }, [renderKey])
+
+    const hasMadeFailedRequest = failureCount > 0
+
+    return {
+        renderKey,
+        imageLoading,
+        requestIsLoading,
+        hasMadeFailedRequest,
+        isSuccess,
+        onLoad,
+        imageSrc,
+    }
 }

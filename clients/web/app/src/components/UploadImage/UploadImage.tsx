@@ -7,7 +7,7 @@ import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { UploadInput } from 'ui/components/Form/Upload'
 import { FormRender, Icon, Text } from '@ui'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
-import { SpaceIcon } from '@components/SpaceIcon'
+import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { vars } from 'ui/styles/vars.css'
 import { useSpaceIconUpload } from 'api/lib/spaceIcon'
 import { Spinner } from '@components/Spinner'
@@ -29,12 +29,13 @@ type Props = {
     spaceId: string
     spaceName: string
     canEdit: boolean
+    spaceAddress?: string
 } & Partial<UseFormReturn>
 
 const config: BoxProps = {
     width: '200',
     height: '200',
-    rounded: 'full',
+    rounded: 'md',
 }
 
 const FORM_FIELD_NAME = 'spaceIconUpload'
@@ -45,7 +46,7 @@ export const UploadImage = (props: Props) => {
     const _spaceId = useMemo(() => spaceId, [spaceId])
 
     const { mutate: upload, isLoading } = useSpaceIconUpload(spaceId)
-    const [feedbackMesasge, setFeedbackMessage] = React.useState<string | null>(null)
+    const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null)
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
@@ -95,11 +96,11 @@ export const UploadImage = (props: Props) => {
     return (
         <Box position="relative" data-testid="upload-image-container">
             <Box className={isLoading ? loadingStyles : ''}>
-                <SpaceIcon
+                <InteractiveSpaceIcon
                     spaceId={_spaceId}
-                    firstLetterOfSpaceName={props.spaceName[0]}
-                    letterFontSize="h1"
-                    {...config}
+                    size="lg"
+                    spaceName={props.spaceName}
+                    address={props.spaceAddress}
                 />
             </Box>
 
@@ -108,7 +109,7 @@ export const UploadImage = (props: Props) => {
                     <Box className={spinnerStyles}>
                         <Spinner />
                         <Box>
-                            <Text size="sm"> Uploading Image</Text>
+                            <Text size="sm">Uploading Image</Text>
                         </Box>
                     </Box>
                 </>
@@ -116,31 +117,39 @@ export const UploadImage = (props: Props) => {
 
             {canEdit && (
                 <>
-                    <Box
-                        centerContent
-                        data-testid="upload-image-button"
-                        role="button"
-                        position="absolute"
-                        top="xs"
-                        right="xs"
-                        background="level3"
-                        width="x4"
-                        height="x4"
-                        rounded="full"
-                        border="strongLevel1"
-                        padding="md"
-                        cursor="pointer"
-                        onClick={onClick}
-                    >
-                        <Icon
-                            type="edit"
-                            size="square_sm"
-                            style={{
-                                color: vars.color.layer.level4,
-                            }}
-                        />
+                    <Box position="topRight" padding="md">
+                        <Box
+                            centerContent
+                            data-testid="upload-image-button"
+                            role="button"
+                            top="xs"
+                            right="xs"
+                            background="level3"
+                            width="x4"
+                            height="x4"
+                            rounded="full"
+                            border="strongLevel1"
+                            padding="md"
+                            cursor="pointer"
+                            onClick={onClick}
+                        >
+                            <Icon
+                                type="edit"
+                                size="square_sm"
+                                style={{
+                                    color: vars.color.layer.level4,
+                                }}
+                            />
+                        </Box>
                     </Box>
-                    <Box position="absolute" {...config}>
+                    <Box
+                        {...config}
+                        centerContent
+                        absoluteFill
+                        justifySelf="center"
+                        alignSelf="center"
+                        pointerEvents="none"
+                    >
                         <UploadInput
                             name={FORM_FIELD_NAME}
                             className={[fieldStyles.field, srOnlyClass]}
@@ -149,12 +158,12 @@ export const UploadImage = (props: Props) => {
                             accept="image/*"
                             onChange={onChange}
                         />
-                        <FieldOutline tone="accent" rounded="full" />
+                        <FieldOutline tone="accent" rounded="md" />
                     </Box>
-                    {feedbackMesasge && (
-                        <Box centerContent paddingTop="md" width={config.width}>
+                    {feedbackMessage && (
+                        <Box centerContent padding width="100%">
                             <Text textAlign="center" size="sm">
-                                {feedbackMesasge}
+                                {feedbackMessage}
                             </Text>
                         </Box>
                     )}

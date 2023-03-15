@@ -2,7 +2,6 @@ import axios, { AxiosResponse } from 'axios'
 import React, { useEffect, useState } from 'react'
 import { AddressPill } from '@components/AddressPill'
 import { richText } from '@components/RichText/RichTextEditor.css'
-import { SpaceTokenExample } from '@components/SpaceToken/example/SpaceTokenExample'
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
 import { UploadSpaceIcon } from '@components/Web3/CreateSpaceForm/steps/UploadSpaceIcon'
 import {
@@ -36,6 +35,7 @@ import { darkClass, lightClass } from 'ui/styles/globals/storybook.css'
 import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils'
 import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
+import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 
 const A3 = Array(3)
@@ -51,8 +51,8 @@ export const Playground = () => {
     }, [])
     return (
         <Stack position="relative">
-            <Container label="token">
-                <SpaceTokenExample />
+            <Container label="Towns Token">
+                <TownsTokenExample size="sm" />
             </Container>
             <Container label="Accordion">
                 <Accordion title="hello world" subTitle="some more info">

@@ -89,9 +89,10 @@ export const SpaceInfoPanel = () => {
         <Stack grow height="100%" overflow="hidden">
             <Panel label="Space" onClose={onClose}>
                 {space?.id && (
-                    <Stack centerContent gap="lg" padding="lg">
+                    <Stack centerContent gap="lg">
                         <UploadImage
                             spaceName={space.name}
+                            spaceAddress={address}
                             canEdit={Boolean(canEdit)}
                             spaceId={space.id.networkId}
                         />

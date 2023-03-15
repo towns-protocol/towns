@@ -2,17 +2,17 @@ import { TargetAndTransition, Transition, motion } from 'framer-motion'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box } from '@ui'
 import { vars } from 'ui/styles/vars.css'
-import { atoms } from 'ui/styles/atoms.css'
-import { SpaceToken, SpaceTokenProps } from './SpaceToken'
-import { SVGArcPath } from './util/SVGArcPath'
-import * as textStyles from './layers/TokenBadgeText.css'
+import { TownsToken, TownsTokenProps } from './TownsToken'
+import { TownsTokenConfig } from './TownsTokenConfig'
 
-export const InteractiveSpaceToken = (
-    props: SpaceTokenProps & {
-        onAnimationComplete?: () => void
-    },
-) => {
+type Props = TownsTokenProps & {
+    onAnimationComplete?: () => void
+    mintMode?: boolean
+}
+
+export const InteractiveTownsToken = (props: Props) => {
     const { address, onAnimationComplete } = props
+    const config = TownsTokenConfig.sizes[props.size]
 
     const [{ x, y, a }, setInput] = useState({ x: 0, y: 0, a: 0 })
 
@@ -28,11 +28,18 @@ export const InteractiveSpaceToken = (
         }
     }, [])
 
+    const [isPop, setPop] = useState(true)
+
+    const onMouseEnter = useCallback(() => {
+        setPop(false)
+    }, [])
+
+    const onMouseLeave = useCallback(() => {
+        setPop(true)
+    }, [])
+
     const distance = Math.sqrt(x * x + y * y)
-
-    const isPop = Math.abs(distance) > 0.85
-    const isMint = !!address
-
+    const isMint = !!address && props.mintMode
     const mint = isMint ? 0 : 1
 
     const transition: Transition = useMemo(
@@ -93,7 +100,7 @@ export const InteractiveSpaceToken = (
                     ['--tk-ax']: isPop ? 0 : Math.abs(x) * mint,
                     ['--tk-ay']: isPop ? 0 : Math.abs(y) * mint,
 
-                    ['--tk-d']: isPop ? 1 : distance * mint,
+                    ['--tk-d']: isPop ? 1 : 10 * distance * mint,
 
                     ['--tk-px']: isPop ? +0.6 : Math.cos(a * mint) * 0.8,
                     ['--tk-py']: isPop ? -0.6 : Math.sin(a * mint) * 0.8,
@@ -112,68 +119,30 @@ export const InteractiveSpaceToken = (
             initial={false}
             transition={transition}
             style={{
-                width: '100%',
-                height: '100%',
+                width: config.containerSize,
+                height: config.containerSize,
                 userSelect: 'none',
                 display: 'flex',
                 justifyContent: 'center',
+                alignItems: 'center',
                 padding: vars.space.lg,
             }}
         >
             <Box
-                background="level1"
                 ref={ref}
                 style={
                     {
                         cursor: isPop ? undefined : 'pointer',
-                        width: 500,
-                        height: 500,
+                        width: config.containerSize,
+                        height: config.containerSize,
                     } as React.CSSProperties
                 }
                 onMouseMove={onMouseMove}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
             >
-                <BackgroundSVG />
-                <SpaceToken {...props} />
+                <TownsToken {...props} />
             </Box>
         </motion.div>
     )
 }
-
-const BackgroundSVG = () => (
-    <svg viewBox="0 0 500 500" width={500} height={500} className={atoms({ position: `absolute` })}>
-        <defs>
-            <SVGArcPath
-                id="space-nft-path"
-                radius={210}
-                stroke="#fff"
-                strokeWidth={2}
-                transform="translate(250,250)"
-            />
-            <filter x="0" y="0" width="1" height="1" id="solid">
-                <feFlood
-                    floodColor="red"
-                    result="bg"
-                    style={{ floodColor: vars.color.background.level1 }}
-                />
-                <feMerge>
-                    <feMergeNode in="bg" />
-                    <feMergeNode in="SourceGraphic" />
-                </feMerge>
-            </filter>
-        </defs>
-        <circle
-            cx={250}
-            cy={250}
-            r={214}
-            stroke="currentColor"
-            fill="none"
-            strokeDasharray="12 6"
-            opacity={0.4}
-        />
-        <text className={textStyles.smallTextThin} fill="currentColor" filter="url(#solid)">
-            <textPath xlinkHref="#space-nft-path" startOffset="25%" textAnchor="middle">
-                YOUR SPACE NFT
-            </textPath>
-        </text>
-    </svg>
-)

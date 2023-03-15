@@ -1,13 +1,16 @@
 import React from 'react'
 import { Box } from '@ui'
-import * as styles from '../SpaceToken.css'
-import { WaveDef } from './TokenBadge'
+import * as styles from '../TownsToken.css'
 
-export const SpaceTokenShadow = () => (
+export const TokenShadow = (props: { size: number }) => (
     <Box
+        borderRadius="md"
+        overflow="hidden"
         position="absolute"
         className={styles.tokenShadow}
         style={{
+            width: props.size,
+            height: props.size,
             transform: `
                         translate(-50%,-50%)
                         translateZ(-50px)
@@ -16,11 +19,5 @@ export const SpaceTokenShadow = () => (
                         scaleY(calc((1 - var(--tk-ay, 1)) * 0.1 + 0.9))
                       `,
         }}
-    >
-        <svg viewBox="0 0 360 360" width="360" height="360">
-            <g color="black" transform="translate(20,20)">
-                <use href={`#${WaveDef.id}`} stroke="none" fill="black" />
-            </g>
-        </svg>
-    </Box>
+    />
 )
