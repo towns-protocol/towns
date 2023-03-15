@@ -1,6 +1,7 @@
 import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
+import { Link } from 'react-router-dom'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
@@ -10,8 +11,6 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
-import { CardOpener } from 'ui/components/Overlay/CardOpener'
-import { ProfileCard } from '@components/ProfileCard/ProfileCard'
 import { MessageContextMenu } from './MessageContextMenu'
 
 type Props = {
@@ -261,8 +260,8 @@ const AvatarComponent = (props: AvatarProps & { userId?: string; isActive: boole
 const ActiveAvatar = (props: AvatarProps & { userId: string }) => {
     const { src, size, userId } = props
     return (
-        <CardOpener placement="horizontal" render={<ProfileCard userId={userId} />} trigger="click">
-            {({ triggerProps }) => <Avatar src={src} size={size} insetY="xxs" {...triggerProps} />}
-        </CardOpener>
+        <Link to={`profile/${userId}/`}>
+            <Avatar src={src} size={size} insetY="xxs" />
+        </Link>
     )
 }
