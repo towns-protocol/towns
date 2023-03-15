@@ -13,10 +13,11 @@ type Props = {
     username: string | null
     displayName?: string
     avatarUrl?: string
+    userAddress?: string
 }
 
 export const ProfileSettingsCard = (props: Props) => {
-    const { username = '', avatarUrl, displayName, userId } = props
+    const { userAddress, avatarUrl, displayName, userId } = props
     const { logout } = useAuth()
     const { closeCard } = useCardOpenerContext()
     const { setTheme, theme } = useStore((state) => ({
@@ -48,11 +49,6 @@ export const ProfileSettingsCard = (props: Props) => {
         navigate(link)
     }, [closeCard, matchChannel, matchSpace, navigate, userId])
 
-    const onSetupClick = useCallback(() => {
-        closeCard()
-        navigate(`/${PATHS.PREFERENCES}`)
-    }, [closeCard, navigate])
-
     return (
         <Card border paddingBottom="sm" width="300" fontSize="md" tabIndex={1}>
             <Stack horizontal padding gap="md" alignItems="center">
@@ -61,7 +57,7 @@ export const ProfileSettingsCard = (props: Props) => {
                 </Box>
                 <Stack grow gap fontWeight="strong" color="default">
                     <Paragraph>{displayName && displayName}</Paragraph>
-                    <Paragraph color="gray2">{username && shortAddress(username)}</Paragraph>
+                    <Paragraph color="gray2">{userAddress && shortAddress(userAddress)}</Paragraph>
                 </Stack>
             </Stack>
             <Divider />
@@ -70,9 +66,6 @@ export const ProfileSettingsCard = (props: Props) => {
       </MenuItem> */}
             <MenuItem selected icon="profile" onClick={onProfileClick}>
                 Profile
-            </MenuItem>
-            <MenuItem icon="settings" onClick={onSetupClick}>
-                Preferences
             </MenuItem>
             <MenuItem icon="back" onClick={onThemeClick}>
                 Switch Theme
