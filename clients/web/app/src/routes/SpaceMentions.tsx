@@ -22,8 +22,8 @@ export const SpaceMentions = () => {
         <CentralPanelLayout>
             <Stack absoluteFill overflowY="scroll">
                 {mentions.length ? (
-                    <Stack grow gap>
-                        <Stack>
+                    <Stack grow>
+                        <Stack gap padding>
                             {mentions.map((m, index, mentions) => {
                                 return (
                                     m.type === 'mention' && (
@@ -76,7 +76,12 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
 
     return (
         <NavLink to={link}>
-            <Box rounded="xs" background={mention.unread ? 'level2' : undefined} cursor="alias">
+            <Box
+                rounded="md"
+                background={mention.unread ? 'level3' : 'level2'}
+                cursor="alias"
+                boxShadow="card"
+            >
                 <Message
                     relativeDate
                     padding="lg"
@@ -87,6 +92,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                     timestamp={mention.event.originServerTs}
                     userId={userId}
                     avatar={user.avatarUrl}
+                    senderId={userId}
                     name={user.name}
                 >
                     <RichTextPreview
