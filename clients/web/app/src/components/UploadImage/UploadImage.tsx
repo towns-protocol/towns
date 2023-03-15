@@ -5,11 +5,11 @@ import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { Box, BoxProps } from 'ui/components/Box/Box'
 import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { UploadInput } from 'ui/components/Form/Upload'
-import { FormRender, Icon, Text } from '@ui'
+import { ErrorMessage, FormRender, Icon, Text } from '@ui'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { vars } from 'ui/styles/vars.css'
-import { useSpaceIconUpload } from 'api/lib/spaceIcon'
+import { useUploadImage } from 'api/lib/spaceIcon'
 import { Spinner } from '@components/Spinner'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 
@@ -26,6 +26,7 @@ const MIN_DIMENSION = 400
 const MAX_SIZE = 5000000
 
 type Props = {
+    formFieldName: string
     spaceId: string
     spaceName: string
     canEdit: boolean
@@ -38,25 +39,22 @@ const config: BoxProps = {
     rounded: 'md',
 }
 
-const FORM_FIELD_NAME = 'spaceIconUpload'
-
 export const UploadImage = (props: Props) => {
-    const { setError, register, clearErrors, spaceId, canEdit } = props
+    const { setError, register, clearErrors, spaceId, canEdit, formFieldName, formState } = props
     const ref = React.useRef<HTMLInputElement>(null)
     const _spaceId = useMemo(() => spaceId, [spaceId])
 
-    const { mutate: upload, isLoading } = useSpaceIconUpload(spaceId)
-    const [feedbackMessage, setFeedbackMessage] = React.useState<string | null>(null)
+    const { mutate: upload, isLoading } = useUploadImage(spaceId)
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
         if (files && files.length > 0) {
             const url = URL.createObjectURL(files[0])
             const { width, height } = await getImageDimensions(url)
-            clearErrors?.([FORM_FIELD_NAME])
+            clearErrors?.([formFieldName])
 
             if (files[0].size > MAX_SIZE) {
-                setError?.(FORM_FIELD_NAME, {
+                setError?.(formFieldName, {
                     type: 'required',
                     message: 'Upload an image less than 5MB',
                 })
@@ -64,7 +62,7 @@ export const UploadImage = (props: Props) => {
             }
 
             if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
-                setError?.(FORM_FIELD_NAME, {
+                setError?.(formFieldName, {
                     type: 'required',
                     message: `Image is too small. Please upload an image with a minimum height & width of ${MIN_DIMENSION}px.`,
                 })
@@ -72,17 +70,12 @@ export const UploadImage = (props: Props) => {
             }
 
             upload(
-                { id: _spaceId, file: files[0] },
+                { id: _spaceId, file: files[0], type: 'spaceIcon', temporaryImageUrl: url },
                 {
-                    onSuccess: () => {
-                        setFeedbackMessage(
-                            'Image uploaded successfully. It may take a few minutes before you see changes.',
-                        )
-                    },
                     onError: () => {
-                        setFeedbackMessage(
-                            'There was an error uploading your image. Please try again.',
-                        )
+                        setError?.(formFieldName, {
+                            message: 'There was an error uploading your image. Please try again.',
+                        })
                     },
                 },
             )
@@ -151,7 +144,7 @@ export const UploadImage = (props: Props) => {
                         pointerEvents="none"
                     >
                         <UploadInput
-                            name={FORM_FIELD_NAME}
+                            name={formFieldName}
                             className={[fieldStyles.field, srOnlyClass]}
                             ref={ref}
                             register={register}
@@ -160,11 +153,16 @@ export const UploadImage = (props: Props) => {
                         />
                         <FieldOutline tone="accent" rounded="md" />
                     </Box>
-                    {feedbackMessage && (
+                    {formState?.errors[formFieldName] && (
                         <Box centerContent padding width="100%">
-                            <Text textAlign="center" size="sm">
-                                {feedbackMessage}
-                            </Text>
+                            <ErrorMessage
+                                maxWidth="200"
+                                textProps={{
+                                    textAlign: 'center',
+                                }}
+                                errors={formState.errors}
+                                fieldName="spaceIcon"
+                            />
                         </Box>
                     )}
                 </>
@@ -191,7 +189,13 @@ export const UploadImageDebugger = () => {
             <FormRender onSubmit={() => undefined}>
                 {(props) => (
                     <>
-                        <UploadImage {...props} canEdit spaceId={spaceId} spaceName="Test space" />
+                        <UploadImage
+                            {...props}
+                            canEdit
+                            formFieldName="debugger"
+                            spaceId={spaceId}
+                            spaceName="Test space"
+                        />
                     </>
                 )}
             </FormRender>

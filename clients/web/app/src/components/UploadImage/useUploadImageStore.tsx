@@ -1,19 +1,47 @@
 import { create } from 'zustand'
 
+type Resource = {
+    renderKey: string
+    temporaryImageUrl: string | undefined
+}
+
 export const useUploadImageStore = create<{
-    renderKeys: { [x: string]: number }
-    enabledSpaces: { [x: string]: boolean }
-    hasUploadRetryBehavior: boolean
-    setUploadRetryBehavior: (hasUploadRetryBehavior: boolean) => void
-    setRenderKey: (spaceId: string) => void
-    setEnabled: (spaceId: string, enabled: boolean) => void
+    resources: {
+        [id: string]: Resource
+    }
+    setRenderKey: (resourceId: string, renderKey: string) => void
+    setTemporaryImageUrl: (resourceId: string, url: string) => void
+    setResource: (resourceId: string, resource: Resource) => void
 }>((set) => ({
-    renderKeys: {},
-    enabledSpaces: {},
-    hasUploadRetryBehavior: false,
-    setUploadRetryBehavior: (hasUploadRetryBehavior: boolean) => set({ hasUploadRetryBehavior }),
-    setEnabled: (spaceId: string, enabled: boolean) =>
-        set((state) => ({ enabledSpaces: { ...state.enabledSpaces, [spaceId]: enabled } })),
-    setRenderKey: (spaceId) =>
-        set((state) => ({ renderKeys: { ...state.renderKeys, [spaceId]: Date.now() } })),
+    resources: {},
+    setResource: (resourceId, resource) => {
+        set((state) => ({
+            resources: {
+                ...state.resources,
+                [resourceId]: resource,
+            },
+        }))
+    },
+    setTemporaryImageUrl: (resourceId, temporaryImageUrl) => {
+        set((state) => ({
+            resources: {
+                ...state.resources,
+                [resourceId]: {
+                    ...state.resources[resourceId],
+                    temporaryImageUrl,
+                },
+            },
+        }))
+    },
+    setRenderKey: (resourceId, url) => {
+        set((state) => ({
+            resources: {
+                ...state.resources,
+                [resourceId]: {
+                    ...state.resources[resourceId],
+                    renderKey: url,
+                },
+            },
+        }))
+    },
 }))

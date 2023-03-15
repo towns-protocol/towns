@@ -11,7 +11,7 @@ type Props = {
     address?: string
     size: TownsTokenSize
     imageSrc?: string
-    imageSrcRenderKey?: number
+    imageSrcRenderKey?: string
 }
 
 export type TownsTokenProps = Props
@@ -65,7 +65,6 @@ export const TownsToken = (props: Props) => {
                     <Box absoluteFill centerContent>
                         {imageSrc && !error ? (
                             <img
-                                key={props.imageSrcRenderKey}
                                 src={imageSrc}
                                 width="100%"
                                 height="100%"

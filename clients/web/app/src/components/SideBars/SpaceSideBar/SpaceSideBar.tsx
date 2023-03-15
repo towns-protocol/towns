@@ -224,6 +224,7 @@ const SpaceSideBarHeader = (props: {
                 <Box grow onClick={onTokenClick}>
                     {space ? (
                         <InteractiveSpaceIcon
+                            key={space.id.networkId}
                             size="sm"
                             spaceId={space.id.networkId}
                             address={spaceInfo?.address}

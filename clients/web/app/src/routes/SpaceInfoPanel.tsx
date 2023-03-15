@@ -9,7 +9,19 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { Link } from 'react-router-dom'
-import { Avatar, Box, BoxProps, Button, ButtonText, Panel, Paragraph, Stack, Text } from '@ui'
+import {
+    Avatar,
+    Box,
+    BoxProps,
+    Button,
+    ButtonText,
+    ErrorMessage,
+    FormRender,
+    Panel,
+    Paragraph,
+    Stack,
+    Text,
+} from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { UploadImage } from '@components/UploadImage/UploadImage'
@@ -90,12 +102,22 @@ export const SpaceInfoPanel = () => {
             <Panel label="Space" onClose={onClose}>
                 {space?.id && (
                     <Stack centerContent gap="lg">
-                        <UploadImage
-                            spaceName={space.name}
-                            spaceAddress={address}
-                            canEdit={Boolean(canEdit)}
-                            spaceId={space.id.networkId}
-                        />
+                        <FormRender>
+                            {({ register, formState, setError, clearErrors }) => (
+                                <Stack gap="lg">
+                                    <UploadImage
+                                        formFieldName="spaceIcon"
+                                        spaceName={space.name}
+                                        canEdit={Boolean(canEdit)}
+                                        spaceId={space.id.networkId}
+                                        setError={setError}
+                                        register={register}
+                                        formState={formState}
+                                        clearErrors={clearErrors}
+                                    />
+                                </Stack>
+                            )}
+                        </FormRender>
                     </Stack>
                 )}
                 <Stack gap="lg" padding="lg">

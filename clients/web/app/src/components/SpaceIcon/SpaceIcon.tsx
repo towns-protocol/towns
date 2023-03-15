@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, BoxProps, Text } from '@ui'
-import { useGetSpaceIcon } from 'api/lib/spaceIcon'
 import { useUploadImageStore } from '@components/UploadImage/useUploadImageStore'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { TownsTokenProps } from '@components/TownsToken/TownsToken'
@@ -35,21 +34,17 @@ export const SpaceIcon = (props: Props) => {
         ...boxProps
     } = props
 
-    const {
-        imageLoading,
-        requestIsLoading,
-        hasMadeFailedRequest,
-        onLoad,
-        isSuccess,
-        imageSrc,
-        renderKey,
-    } = useLoadSpaceIcon(spaceId, variant)
+    const { onLoad, onError, imageError, imageLoaded, imageSrc, renderKey } = useLoadSpaceIcon(
+        spaceId,
+        variant,
+    )
 
     return (
         <>
             <Box
                 centerContent
                 horizontal
+                key={renderKey}
                 background="level2"
                 borderRadius="full"
                 flexDirection="row"
@@ -57,28 +52,24 @@ export const SpaceIcon = (props: Props) => {
                 position="relative"
                 {...boxProps}
             >
-                {hasMadeFailedRequest && (
+                {imageError && (
                     <SpaceIconInitials letterFontSize={letterFontSize}>
                         {firstLetterOfSpaceName}
                     </SpaceIconInitials>
                 )}
-                {!hasMadeFailedRequest && !requestIsLoading && (
+                {!imageError && (
                     <AnimatePresence mode="wait">
-                        {isSuccess ? (
-                            <MotionBox
-                                key={renderKey}
-                                as="img"
-                                src={imageSrc}
-                                fit="full"
-                                objectFit="cover"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: imageLoading ? 0 : 1 }}
-                                exit={{ opacity: 0 }}
-                                onLoad={onLoad}
-                            />
-                        ) : (
-                            <SpaceIconInitials>{firstLetterOfSpaceName}</SpaceIconInitials>
-                        )}
+                        <MotionBox
+                            as="img"
+                            src={imageSrc}
+                            fit="full"
+                            objectFit="cover"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: imageLoaded ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            onLoad={onLoad}
+                            onError={onError}
+                        />
                     </AnimatePresence>
                 )}
             </Box>
@@ -117,43 +108,43 @@ const SpaceIconInitials = (props: {
     </Text>
 )
 
-export const useLoadSpaceIcon = (spaceId: string, variant: ImageVariant) => {
-    const renderKey = useUploadImageStore((state) => state.renderKeys[spaceId])
+export const useLoadSpaceIcon = (resourceId: string, variant: ImageVariant) => {
+    const _renderKey = useUploadImageStore((state) => state.resources[resourceId]?.renderKey)
+    const temporaryImageSrc = useUploadImageStore(
+        (state) => state.resources[resourceId]?.temporaryImageUrl,
+    )
 
-    // leveraging react query cache to check an image exists, trigger rerenders on upload and other UI
-    const {
-        isLoading: requestIsLoading,
-        isSuccess,
-        failureCount,
-    } = useGetSpaceIcon({
-        spaceId,
-    })
+    const imageSrc = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${resourceId}/${variant}`
+    const initialRenderKey = useRef<string>(resourceId + '_' + Date.now())
 
-    // - we could return the Image from useGetSpaceIcon() and set that as img.src but the hook should only need to check a single "public"  variant. Passing all the variants results in addl. 404s if the image doesn't exist
-    // - if for some reason we start seeing issues where CF is creating a "public" variant much faster than the others, resulting in 404 for IMAGE_DELIVERY_URL, then we consider passing variant to hook
-    // - this is mainly only an issue for an uploading user, not the vast majority of users
-    const imageSrc = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${spaceId}/${variant}`
-
-    const [imageLoading, setImageLoading] = useState<boolean>(true)
+    const [imageLoaded, setImageLoaded] = useState<boolean>(false)
+    const [imageError, setImageError] = useState<boolean>(false)
 
     const onLoad = useCallback(() => {
-        setImageLoading(false)
+        // useUploadImageStore.getState().setRenderKey(resourceId, resourceId + '_' + Date.now())
+        setImageLoaded(true)
     }, [])
 
-    // reset image loading when the render key changes so the image fades in again
+    const onError = useCallback(() => {
+        setImageError(true)
+    }, [])
+
+    // reset image loading when the render key changes
     useEffect(() => {
-        setImageLoading(true)
-    }, [renderKey])
+        setImageLoaded(false)
+        setImageError(false)
+    }, [_renderKey])
 
-    const hasMadeFailedRequest = failureCount > 0
-
+    const key = _renderKey || initialRenderKey.current
     return {
-        renderKey,
-        imageLoading,
-        requestIsLoading,
-        hasMadeFailedRequest,
-        isSuccess,
+        renderKey: key,
+        imageLoaded,
         onLoad,
-        imageSrc,
+        onError,
+        imageError,
+        // TODO: temporary cache busting
+        // new images eventually show up, but the browser caches them and users who upload anything might see their old image for a while, even after refreshing
+        // We're calling images directly from imagedelivery.net, we can't modify those headers unless we use some proxy - will need to revisit the CF worker or add a service worker interceptor
+        imageSrc: temporaryImageSrc || imageSrc + `?${key}`,
     }
 }
