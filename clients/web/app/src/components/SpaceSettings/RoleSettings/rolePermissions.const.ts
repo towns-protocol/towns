@@ -14,38 +14,14 @@ export const rolePermissionDescriptions: {
         name: 'Send Messages',
         description: 'Allows members to send messages.',
     },
-    [Permission.Invite]: {
-        name: 'Invite Users',
-        description: 'Allows members to invite other users.',
-    },
-    [Permission.Redact]: {
-        name: 'Remove Messages',
-        description: 'Allows members to remove messages.',
-    },
-    [Permission.Ban]: {
-        name: 'Ban',
-        description: 'Allows members to ban other members.',
-    },
-    [Permission.Ping]: {
-        name: 'Ping Members',
-        description: 'Allows members to ping other members.',
-    },
-    [Permission.PinMessage]: {
-        name: 'Pin Message',
-        description: 'Allows members to pin messages.',
-    },
     [Permission.AddRemoveChannels]: {
         name: 'Add / Remove Channels',
         description: 'Allows members to add and remove channels.',
     },
     [Permission.ModifySpaceSettings]: {
-        name: 'Moderate Space',
+        name: 'Modify Space Settings',
         description:
-            'Allows members to moderate space. Change space image, name, topic, modify settings such as permissions.',
-    },
-    [Permission.Upgrade]: {
-        name: 'Upgrade Space',
-        description: 'Allows members to upgrade the space.',
+            'Allows members to modify the space settings. Change space image, name, topic, and other settings such as permissions.',
     },
 } as const
 
