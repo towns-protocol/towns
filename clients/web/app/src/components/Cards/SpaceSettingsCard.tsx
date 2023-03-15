@@ -31,18 +31,10 @@ export const SpaceSettingsCard = (props: Props) => {
         closeCard()
     }, [closeCard, navigate, spaceId.slug])
 
-    const onSettingsLegacyClick = useCallback(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId.slug}/settings-legacy`)
-        closeCard()
-    }, [closeCard, navigate, spaceId.slug])
-
     return (
         <Box position="relative">
             <Card border width="300" fontSize="md" paddingY="sm" role="navigation">
                 <MenuItem icon="settings" onClick={onSettingsClick}>
-                    Space Manager (WIP)
-                </MenuItem>
-                <MenuItem icon="settings" onClick={onSettingsLegacyClick}>
                     Settings
                 </MenuItem>
                 <MenuItem color="error" icon="logout" onClick={onLeaveClick}>
