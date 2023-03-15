@@ -1,3 +1,6 @@
+/**
+ * @group casablanca
+ */
 import {
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
