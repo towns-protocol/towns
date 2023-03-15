@@ -16,7 +16,7 @@ export default defineConfig({
                 // "Vite will process inlined modules. This could be helpful to handle packages that ship .js in ESM format (that Node can't handle)."
                 /..\/lib\/dist\/(.*\.js)$/,
                 /.*.\/casablanca\/packages\/proto\/dist\/(.*\.js)$/,
-                /.*.\/casablanca\/packages\/client\/dist\/(.*\.js)$/,
+                /.*.\/casablanca\/packages\/sdk\/dist\/(.*\.js)$/,
                 'vitest-canvas-mock',
             ],
         },
