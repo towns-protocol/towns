@@ -110,16 +110,16 @@ interface ZionClientImpl {
         options: EditMessageOptions,
         SendTextMessageOptions: SendTextMessageOptions | undefined,
     ) => Promise<void>
-    getIsWalletIdRegistered: () => Promise<boolean>
+    getIsWalletRegisteredWithMatrix: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
     isRoomEncrypted: (roomId: RoomIdentifier) => boolean | undefined
     joinRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
-    loginWithWallet: (statement: string) => Promise<void>
+    loginWithWalletToMatrix: (statement: string) => Promise<void>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
-    registerWallet: (statement: string) => Promise<void>
+    registerWalletWithMatrix: (statement: string) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (roomId: RoomIdentifier, limit?: number) => Promise<void>
     sendMessage: (
@@ -142,7 +142,8 @@ interface ZionClientImpl {
 }
 
 export function useZionClient(): ZionClientImpl {
-    const { getIsWalletIdRegistered, loginWithWallet, registerWallet } = useMatrixWalletSignIn()
+    const { getIsWalletRegisteredWithMatrix, loginWithWalletToMatrix, registerWalletWithMatrix } =
+        useMatrixWalletSignIn()
     const { client } = useZionContext()
     const clientRunning = useMemo(() => client !== undefined, [client])
     const logout = useLogout()
@@ -187,16 +188,16 @@ export function useZionClient(): ZionClientImpl {
         deleteRoleTransaction: useWithCatch(client?.deleteRoleTransaction),
         waitForDeleteRoleTransaction: useWithCatch(client?.waitForDeleteRoleTransaction),
         editMessage: useWithCatch(client?.editMessage),
-        getIsWalletIdRegistered,
+        getIsWalletRegisteredWithMatrix,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
         isRoomEncrypted,
         joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
-        loginWithWallet,
+        loginWithWalletToMatrix,
         logout,
         redactEvent: useWithCatch(client?.redactEvent),
-        registerWallet,
+        registerWalletWithMatrix,
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),

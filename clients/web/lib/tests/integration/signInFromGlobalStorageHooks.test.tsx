@@ -44,12 +44,9 @@ describe('signInFromGlobalStorageHooks', () => {
 
         // build a view for alice to render
         const TestComponent = () => {
-            const { isConnected } = useWeb3Context()
-
             return (
                 <>
                     <LoginWithAuth auth={aliceAuth} walletAddress={alice.provider.wallet.address} />
-                    <div data-testid="isConnected">{isConnected.toString()}</div>
                 </>
             )
         }

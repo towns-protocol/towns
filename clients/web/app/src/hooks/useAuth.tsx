@@ -9,7 +9,7 @@ export const registerWalletMsgToSign = `Click to register and accept the Towns T
 export function useAuth() {
     const { isAuthenticated, loginStatus, loginError, loggedInWalletAddress } =
         useMatrixCredentials()
-    const { loginWithWallet, registerWallet, logout: _logout } = useZionClient()
+    const { loginWithWalletToMatrix, registerWalletWithMatrix, logout: _logout } = useZionClient()
     const { walletStatus, activeWalletAddress } = useWeb3Context()
     const { track } = useAnalytics()
     const {
@@ -33,12 +33,12 @@ export function useAuth() {
     }, [_connect, connectors])
 
     const login = useCallback(async () => {
-        await loginWithWallet(loginMsgToSign)
-    }, [loginWithWallet])
+        await loginWithWalletToMatrix(loginMsgToSign)
+    }, [loginWithWalletToMatrix])
 
     const register = useCallback(async () => {
-        await registerWallet(registerWalletMsgToSign)
-    }, [registerWallet])
+        await registerWalletWithMatrix(registerWalletMsgToSign)
+    }, [registerWalletWithMatrix])
 
     const logout = useCallback(async () => {
         await _logout()

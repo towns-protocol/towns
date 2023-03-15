@@ -118,7 +118,7 @@ export function useMatrixWalletSignIn() {
         [homeServer, sign, userIdentifier],
     )
 
-    const getIsWalletIdRegistered = useCallback(
+    const getIsWalletRegisteredWithMatrix = useCallback(
         async function (): Promise<boolean> {
             if (homeServer && userIdentifier) {
                 const matrixClient = createClient({
@@ -182,9 +182,9 @@ export function useMatrixWalletSignIn() {
         [signMessage, userIdentifier],
     )
 
-    const registerWallet = useCallback(
+    const registerWalletWithMatrix = useCallback(
         async function (statement: string): Promise<void> {
-            console.log(`[registerWallet] start`, { homeServer })
+            console.log(`[registerWalletWithMatrix] start`, { homeServer })
             // Registration of a new wallet is allowed if the user is currently logged out.
             if (loginStatus === LoginStatus.LoggedOut) {
                 if (userIdentifier && userIdentifier.chainId && homeServer) {
@@ -223,14 +223,17 @@ export function useMatrixWalletSignIn() {
                                         auth,
                                         username: userIdentifier.matrixUserIdLocalpart,
                                     }
-                                    console.log(`[registerWallet] sending registerRequest`, request)
+                                    console.log(
+                                        `[registerWalletWithMatrix] sending registerRequest`,
+                                        request,
+                                    )
 
                                     const response = await matrixClient.registerRequest(
                                         request,
                                         LoginTypePublicKey,
                                     )
                                     console.log(
-                                        `[registerWallet] received response from registerRequest`,
+                                        `[registerWalletWithMatrix] received response from registerRequest`,
                                         response,
                                     )
 
@@ -250,7 +253,7 @@ export function useMatrixWalletSignIn() {
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 } catch (ex: any) {
                                     const error = ex as MatrixError
-                                    console.error(`[registerWallet] error`, {
+                                    console.error(`[registerWalletWithMatrix] error`, {
                                         errcode: error.errcode,
                                         httpStatus: error.httpStatus,
                                         message: error.message,
@@ -302,7 +305,7 @@ export function useMatrixWalletSignIn() {
                     })
                 }
             }
-            console.log(`[registerWallet] end`)
+            console.log(`[registerWalletWithMatrix] end`)
         },
         [
             authenticationError,
@@ -315,7 +318,7 @@ export function useMatrixWalletSignIn() {
         ],
     )
 
-    const loginWithWallet = useCallback(
+    const loginWithWalletToMatrix = useCallback(
         async function (statement: string): Promise<void> {
             // Login is allowed if the user is currently logged out.
             if (loginStatus === LoginStatus.LoggedOut) {
@@ -366,7 +369,7 @@ export function useMatrixWalletSignIn() {
                                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     } catch (ex: any) {
                                         const error = ex as MatrixError
-                                        console.error(`[loginWithWallet] error`, {
+                                        console.error(`[loginWithWalletToMatrix] error`, {
                                             errcode: error.errcode,
                                             httpStatus: error.httpStatus,
                                             message: error.message,
@@ -437,9 +440,9 @@ export function useMatrixWalletSignIn() {
     )
 
     return {
-        getIsWalletIdRegistered,
-        loginWithWallet,
-        registerWallet,
+        getIsWalletRegisteredWithMatrix,
+        loginWithWalletToMatrix,
+        registerWalletWithMatrix,
     }
 }
 

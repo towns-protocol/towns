@@ -16,12 +16,11 @@ import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useRoom } from '../../src/hooks/use-room'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { RegisterWallet } from './helpers/TestComponents'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -51,31 +50,22 @@ describe('defaultSpaceIdHooks', () => {
         })
         // create a veiw for bob
         const TestDefaultRoom = () => {
-            const { isConnected } = useWeb3Context()
-            const { loginStatus, loginError } = useMatrixStore()
-            const { registerWallet, joinRoom, clientRunning } = useZionClient()
+            const { joinRoom } = useZionClient()
             const defaultSpace = useSpaceData()
             const defaultRoom = useRoom(defaultSpaceId)
             const myMembership = useMyMembership(defaultSpaceId)
-            const onClickRegisterWallet = useCallback(() => {
-                void registerWallet('...')
-            }, [registerWallet])
             const onClickJoinRoom = useCallback(() => {
                 void joinRoom(defaultSpaceId)
             }, [joinRoom])
             return (
                 <>
-                    <div data-testid="isConnected">{isConnected.toString()}</div>
-                    <div data-testid="loginStatus">{loginStatus}</div>
-                    <div data-testid="loginError">{loginError?.message ?? ''}</div>
-                    <button onClick={onClickRegisterWallet}>Register</button>
+                    <RegisterWallet />
                     <div data-testid="spaceRoomName">
                         {defaultRoom ? defaultRoom?.name : 'undefined'}
                     </div>
                     <div data-testid="spaceName">
                         {defaultSpace ? defaultSpace?.name : 'undefined'}
                     </div>
-                    <div data-testid="clientRunning">{clientRunning ? 'true' : 'false'}</div>
                     <button onClick={onClickJoinRoom}>Join</button>
                     <div data-testid="roomMembership"> {defaultRoom?.membership} </div>
                     <div data-testid="spaceMembership"> {defaultSpace?.membership} </div>
@@ -115,12 +105,9 @@ describe('defaultSpaceIdHooks', () => {
         const channelsCount = screen.getByTestId('channelsCount')
         const channelName = screen.getByTestId('channelName')
 
-        const registerButton = screen.getByRole('button', { name: 'Register' })
         const joinButton = screen.getByRole('button', { name: 'Join' })
         // wait for our wallet to get unlocked
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
-        // click the register button
-        fireEvent.click(registerButton)
         // expect our status to change to logged in
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // wait for the client to boot up, this is async

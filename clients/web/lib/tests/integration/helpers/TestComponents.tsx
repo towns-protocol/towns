@@ -21,9 +21,9 @@ import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-tra
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
 
 export const RegisterWallet = () => {
-    const { walletStatus } = useWeb3Context()
+    const { walletStatus, isConnected } = useWeb3Context()
     const { loginStatus, loginError, userId } = useMatrixCredentials()
-    const { clientRunning, registerWallet } = useZionClient()
+    const { clientRunning, registerWalletWithMatrix } = useZionClient()
     const registeringWallet = useRef(false)
     const [registeredWallet, setRegisteredWallet] = useState(false)
 
@@ -31,13 +31,14 @@ export const RegisterWallet = () => {
         if (walletStatus === WalletStatus.Connected && !registeringWallet.current) {
             registeringWallet.current = true
             void (async () => {
-                await registerWallet('login...')
+                await registerWalletWithMatrix('login...')
                 setRegisteredWallet(true)
             })()
         }
-    }, [registerWallet, walletStatus])
+    }, [registerWalletWithMatrix, walletStatus])
     return (
         <>
+            <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="registeredWallet">{String(registeredWallet)}</div>
             <div data-testid="userId">{userId}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
@@ -49,22 +50,23 @@ export const RegisterWallet = () => {
 }
 
 export const LoginWithWallet = () => {
-    const { walletStatus } = useWeb3Context()
+    const { walletStatus, isConnected } = useWeb3Context()
     const { loginStatus, loginError } = useMatrixStore()
-    const { clientRunning, loginWithWallet } = useZionClient()
+    const { clientRunning, loginWithWalletToMatrix } = useZionClient()
     const logingInWithWallet = useRef(false)
 
     useEffect(() => {
         if (walletStatus === WalletStatus.Connected && !logingInWithWallet.current) {
             logingInWithWallet.current = true
             void (async () => {
-                await loginWithWallet('login...')
+                await loginWithWalletToMatrix('login...')
                 logingInWithWallet.current = false
             })()
         }
-    }, [loginWithWallet, walletStatus])
+    }, [loginWithWalletToMatrix, walletStatus])
     return (
         <>
+            <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
             <div data-testid="loginError">{loginError?.message ?? ''}</div>
@@ -80,7 +82,7 @@ interface LoginWithAuthProps {
 
 export const LoginWithAuth = (props: LoginWithAuthProps) => {
     const { homeServerUrl } = useZionContext()
-    const { walletStatus } = useWeb3Context()
+    const { walletStatus, isConnected } = useWeb3Context()
     const { loginStatus, loginError, setLoginStatus } = useMatrixStore()
     const { clientRunning } = useZionClient()
     const { setMatrixCredentials } = useCredentialStore()
@@ -99,6 +101,7 @@ export const LoginWithAuth = (props: LoginWithAuthProps) => {
     }, [walletStatus])
     return (
         <>
+            <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
             <div data-testid="loginError">{loginError?.message ?? ''}</div>

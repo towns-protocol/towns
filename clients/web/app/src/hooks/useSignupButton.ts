@@ -71,7 +71,7 @@ const useSignUpButtonClick = (
  * async registration check fired once the wallet is unlocked
  **/
 const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
-    const { getIsWalletIdRegistered } = useZionClient()
+    const { getIsWalletRegisteredWithMatrix } = useZionClient()
     const [registrationStatus, setRegistrationStatus] = useState<SignupButtonStatus>()
 
     useEffect(() => {
@@ -84,7 +84,7 @@ const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
             ;(async () => {
                 try {
                     setRegistrationStatus(SignupButtonStatus.FetchingRegistrationStatus)
-                    const isRegistered = await getIsWalletIdRegistered()
+                    const isRegistered = await getIsWalletRegisteredWithMatrix()
                     if (isRegistered) {
                         setRegistrationStatus(SignupButtonStatus.Login)
                     } else {
@@ -100,7 +100,7 @@ const useCheckRegistrationStatusWhen = (needsCheck: boolean) => {
         return () => {
             cancelled = true
         }
-    }, [getIsWalletIdRegistered, needsCheck])
+    }, [getIsWalletRegisteredWithMatrix, needsCheck])
 
     return registrationStatus
 }

@@ -39,7 +39,8 @@ const registerWalletMsgToSign = `Click to register and accept the Harmony Terms 
 export function Login(): JSX.Element {
     const styles = useStyles()
     const [showError, setShowError] = useState<string | undefined>(undefined)
-    const { getIsWalletIdRegistered, loginWithWallet, registerWallet } = useZionClient()
+    const { getIsWalletRegisteredWithMatrix, loginWithWalletToMatrix, registerWalletWithMatrix } =
+        useZionClient()
     const { loginStatus, loginError } = useMatrixStore()
     const { isConnected } = useWeb3Context()
     const { disconnect } = useDisconnect()
@@ -48,16 +49,16 @@ export function Login(): JSX.Element {
 
     const onLoginWithWallet = useCallback(
         async function () {
-            loginWithWallet(loginMsgToSign)
+            loginWithWalletToMatrix(loginMsgToSign)
         },
-        [loginWithWallet],
+        [loginWithWalletToMatrix],
     )
 
     const onRegisterNewWallet = useCallback(
         async function () {
-            registerWallet(registerWalletMsgToSign)
+            registerWalletWithMatrix(registerWalletMsgToSign)
         },
-        [registerWallet],
+        [registerWalletWithMatrix],
     )
 
     const onCloseAlert = useCallback(function () {
@@ -121,7 +122,7 @@ export function Login(): JSX.Element {
         ;(async () => {
             try {
                 if (loginStatus === LoginStatus.LoggedOut && isConnected) {
-                    const isRegistered = await getIsWalletIdRegistered()
+                    const isRegistered = await getIsWalletRegisteredWithMatrix()
                     if (!cancelled) {
                         setWalletRegistered(isRegistered)
                     }
@@ -136,7 +137,7 @@ export function Login(): JSX.Element {
         return () => {
             cancelled = true
         }
-    }, [getIsWalletIdRegistered, loginStatus, isConnected])
+    }, [getIsWalletRegisteredWithMatrix, loginStatus, isConnected])
 
     return (
         <div className={styles.container}>

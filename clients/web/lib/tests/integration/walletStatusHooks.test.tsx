@@ -10,10 +10,12 @@ import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { getPrimaryProtocol } from './helpers/TestUtils'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-describe('walletStatusHooks', () => {
+describe('walletStatusAndMatrixLoginHooks', () => {
     test('new user registers a new wallet and is logged in', async () => {
         // create a provider for bob
         const bobProvider = new ZionTestWeb3Provider()
@@ -21,10 +23,10 @@ describe('walletStatusHooks', () => {
         const TestWalletStatus = () => {
             const { walletStatus, chain } = useWeb3Context()
             const { loginStatus, loginError } = useMatrixStore()
-            const { registerWallet } = useZionClient()
+            const { registerWalletWithMatrix } = useZionClient()
             const onRegisterWallet = useCallback(() => {
-                void registerWallet('...register?')
-            }, [registerWallet])
+                void registerWalletWithMatrix('...register?')
+            }, [registerWalletWithMatrix])
             return (
                 <>
                     <div data-testid="walletStatus">{walletStatus}</div>
@@ -45,15 +47,18 @@ describe('walletStatusHooks', () => {
         const walletStatus = screen.getByTestId('walletStatus')
         const loginStatus = screen.getByTestId('loginStatus')
         const loginError = screen.getByTestId('loginError')
-        const registerButton = screen.getByRole('button', { name: 'Register' })
+        const registerWithMatrixButton = screen.getByRole('button', { name: 'Register' })
         // wait for our wallet to get unlocked
         await waitFor(() => expect(walletStatus.textContent).toBe(WalletStatus.Connected))
         // verify that we are logged out without error
         await waitFor(() => expect(loginStatus.textContent).toBe(LoginStatus.LoggedOut))
         await waitFor(() => expect(loginError.textContent).toBe(''))
-        // click the register button
-        fireEvent.click(registerButton)
-        // expect our status to change to logged in
-        await waitFor(() => expect(loginStatus.textContent).toBe(LoginStatus.LoggedIn))
+
+        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
+            // click the register button
+            fireEvent.click(registerWithMatrixButton)
+            // expect our status to change to logged in
+            await waitFor(() => expect(loginStatus.textContent).toBe(LoginStatus.LoggedIn))
+        }
     })
 })

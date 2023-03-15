@@ -4,7 +4,6 @@ import { LoginWithAuth } from './helpers/TestComponents'
 import { render, screen, waitFor } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
-import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { LoginStatus } from '../../src/hooks/login'
 import { MatrixAuth } from '../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
@@ -51,12 +50,9 @@ describe('invalidTokenHooks', () => {
         }
         // build a view for alice to render
         const TestComponent = () => {
-            const { isConnected } = useWeb3Context()
-
             return (
                 <>
                     <LoginWithAuth auth={badAliceAuth} walletAddress={xxx.accountAddress} />
-                    <div data-testid="isConnected">{isConnected.toString()}</div>
                 </>
             )
         }
@@ -85,12 +81,9 @@ describe('invalidTokenHooks', () => {
         await alice.stopClients()
         // build a view for alice to render
         const TestComponent = () => {
-            const { isConnected } = useWeb3Context()
-
             return (
                 <>
                     <LoginWithAuth auth={aliceAuth} walletAddress={alice.provider.wallet.address} />
-                    <div data-testid="isConnected">{isConnected.toString()}</div>
                 </>
             )
         }
