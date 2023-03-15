@@ -11,7 +11,6 @@ import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
 import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
-import { emojis } from '../data/emoji_list'
 import { $createEmojiNode } from '../nodes/EmojiNode'
 
 // At most, 5 suggestions are shown in the popup.
@@ -22,7 +21,7 @@ export const EmojiShortcutPlugin = () => {
 
     const [queryString, setQueryString] = useState<string | null>(null)
 
-    const results = useMentionLookupService(queryString)
+    const results = useEmojiLockupService(queryString)
 
     const checkForSlashTriggerMatch = useBasicTypeaheadTriggerMatch('/', {
         minLength: 0,
@@ -168,25 +167,20 @@ const ColonEmojisRegexAliasRegex = new RegExp(
 
 const mentionsCache = new Map()
 
-const dummyLookupService = {
-    search(
-        string: string,
-        callback: (results: Array<{ name: string; emoji: string }>) => void,
-    ): void {
-        setTimeout(() => {
-            const results = Object.keys(emojis)
-                .filter((e) => e.toLowerCase().includes(string.toLowerCase()))
-                .map((k: string) => ({
-                    name: k,
-                    emoji: emojis[k as keyof typeof emojis],
-                }))
+const search = async function (string: string) {
+    const { emojis } = await import('../data/emoji_list')
 
-            callback(results)
-        }, 100)
-    },
+    const results = Object.keys(emojis)
+        .filter((e) => e.toLowerCase().includes(string.toLowerCase()))
+        .map((k: string) => ({
+            name: k,
+            emoji: emojis[k as keyof typeof emojis].default,
+        }))
+
+    return results
 }
 
-function useMentionLookupService(mentionString: string | null) {
+function useEmojiLockupService(mentionString: string | null) {
     const [results, setResults] = useState<Array<{ name: string; emoji: string }>>([])
 
     useEffect(() => {
@@ -204,11 +198,16 @@ function useMentionLookupService(mentionString: string | null) {
             return
         }
 
-        mentionsCache.set(mentionString, null)
-        dummyLookupService.search(mentionString, (newResults) => {
+        async function doSearch(mentionString: string) {
+            mentionsCache.set(mentionString, null)
+
+            const newResults = await search(mentionString)
+
             mentionsCache.set(mentionString, newResults)
             setResults(newResults)
-        })
+        }
+
+        doSearch(mentionString)
     }, [mentionString])
 
     return results
