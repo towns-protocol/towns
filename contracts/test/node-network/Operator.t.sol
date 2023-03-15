@@ -14,18 +14,18 @@ contract OperatorTest is TestUtils {
   Operator private operator;
 
   function setUp() external {
-    operator = new Operator();
+    operator = new Operator("Operator", "OPERATOR", address(this), 10);
   }
 
-  function test_safeMint() external {
+  function test_mintTo() external {
     address owner = _randomAddress();
-    operator.safeMint(owner);
+    operator.mintTo(owner);
     assertEq(operator.balanceOf(owner), 1);
   }
 
   function test_revertIfTryingToTransfer() external {
     address owner = _randomAddress();
-    operator.safeMint(owner);
+    operator.mintTo(owner);
 
     address to = _randomAddress();
     uint256 tokenId = 0;

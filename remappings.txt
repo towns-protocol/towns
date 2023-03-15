@@ -1,10 +1,12 @@
-@openzeppelin/=lib/openzeppelin-contracts/
+ERC721A/=lib/ERC721A/contracts/
 council/=lib/council/contracts/
 ds-test/=lib/ds-test/src/
 erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/
 forge-std/=lib/forge-std/src/
 murky/=lib/murky/src/
-openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts
 openzeppelin-contracts/=lib/openzeppelin-contracts/
+operator-filter-registry/=lib/operator-filter-registry/
 solmate/=lib/solmate/src/
+@openzeppelin/=lib/openzeppelin-contracts/
 contracts/=contracts/

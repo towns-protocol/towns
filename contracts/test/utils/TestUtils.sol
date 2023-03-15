@@ -6,6 +6,9 @@ import "forge-std/Test.sol";
 contract TestUtils is Test {
   uint256 private immutable _nonce;
 
+  address public constant NATIVE_TOKEN =
+    address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
   modifier onlyForked() {
     if (block.number > 1e6) {
       _;

@@ -56,7 +56,7 @@ contract DaoBaseSetup is TestUtils {
 
     towns = address(new Towns("Towns", "TOWNS"));
     member = address(new Member("Member", "MEMBER", "", ""));
-    operator = address(new Operator());
+    operator = address(new Operator("Operator", "OPERATOR", deployer, 10));
 
     // deploy timelock
     timelock = address(new Timelock(1000, deployer, deployer));

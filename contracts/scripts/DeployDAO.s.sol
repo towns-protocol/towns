@@ -67,7 +67,7 @@ contract DeployDAO is ScriptUtils {
     towns = address(new Towns("Towns", "TOWNS"));
     member = address(new Member("Member", "MEMBER", "", ""));
     owner = address(new SpaceOwner("SpaceOwner", "OWNER"));
-    operator = address(new Operator());
+    operator = address(new Operator("Operator", "OPERATOR", deployer, 0));
 
     // deploy timelock
     timelock = address(new Timelock(1000, deployer, deployer));
