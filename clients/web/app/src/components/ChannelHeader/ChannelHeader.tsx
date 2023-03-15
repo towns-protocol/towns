@@ -1,5 +1,6 @@
 import React from 'react'
 import { Channel, RoomIdentifier, useZionClient } from 'use-zion-client'
+import { Link } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { Icon, Paragraph, Stack } from '@ui'
 
@@ -29,7 +30,7 @@ export const ChannelHeader = (props: Props) => {
             <Icon type={isEncrypted ? 'lock' : 'unlock'} background="level2" size="square_lg" />
             <Stack horizontal gap alignItems="end">
                 <Paragraph strong size="lg">
-                    {channel.label}
+                    <Link to="info">{channel.label}</Link>
                 </Paragraph>
                 <Paragraph color="gray2">{/* {`Main space for Zioneers`} */}</Paragraph>
             </Stack>
