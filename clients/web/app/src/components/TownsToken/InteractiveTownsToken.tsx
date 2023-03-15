@@ -1,4 +1,4 @@
-import { TargetAndTransition, Transition, motion } from 'framer-motion'
+import { Target, TargetAndTransition, Transition, motion } from 'framer-motion'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box } from '@ui'
 import { vars } from 'ui/styles/vars.css'
@@ -42,9 +42,25 @@ export const InteractiveTownsToken = (props: Props) => {
     const isMint = !!address && props.mintMode
     const mint = isMint ? 0 : 1
 
+    const [isInit, setIsInit] = useState(false)
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setIsInit(true)
+        }, 1000)
+        return () => {
+            clearTimeout(timeout)
+        }
+    })
+
     const transition: Transition = useMemo(
         () =>
-            isMint
+            !isInit
+                ? {
+                      type: 'spring',
+                      stiffness: 50,
+                      damping: 5,
+                  }
+                : isMint
                 ? {
                       type: 'tween',
                       ease: [1, 0.01, 0.52, 2],
@@ -61,10 +77,10 @@ export const InteractiveTownsToken = (props: Props) => {
                 : {
                       type: 'spring',
                       stiffness: 400,
-                      damping: 10,
+                      damping: 50,
                       restSpeed: 0.1,
                   },
-        [isMint, isPop],
+        [isInit, isMint, isPop],
     )
 
     // using useEffect instead of motion.div onAnimationComplete because
@@ -102,8 +118,8 @@ export const InteractiveTownsToken = (props: Props) => {
 
                     ['--tk-d']: isPop ? 1 : 10 * distance * mint,
 
-                    ['--tk-px']: isPop ? +0.6 : Math.cos(a * mint) * 0.8,
-                    ['--tk-py']: isPop ? -0.6 : Math.sin(a * mint) * 0.8,
+                    ['--tk-px']: isPop ? +0.6 : Math.cos(2 * mint) * 0.8,
+                    ['--tk-py']: isPop ? -0.6 : Math.sin(2 * mint) * 0.8,
 
                     transition: isMint
                         ? {
@@ -116,7 +132,30 @@ export const InteractiveTownsToken = (props: Props) => {
                         : transition,
                 } as TargetAndTransition
             }
-            initial={false}
+            initial={
+                {
+                    ['--tk-h']: 1,
+
+                    ['--tk-mint']: 1 - 0,
+
+                    ['--tk-rad']: 1,
+                    ['--tk-rad-abs']: 1,
+
+                    ['--tk-x']: 1,
+                    ['--tk-y']: 1,
+
+                    ['--tk-mx']: 0.2,
+                    ['--tk-my']: 0.25,
+
+                    ['--tk-ax']: 10,
+                    ['--tk-ay']: 0.25,
+
+                    ['--tk-d']: 1,
+
+                    ['--tk-px']: Math.cos(1) * 0.8,
+                    ['--tk-py']: Math.sin(1) * 0.8,
+                } as Target
+            }
             transition={transition}
             style={{
                 width: config.containerSize,

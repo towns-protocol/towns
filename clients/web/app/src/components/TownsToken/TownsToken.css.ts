@@ -1,5 +1,5 @@
-import { style } from '@vanilla-extract/css'
-import { vars } from 'ui/styles/vars.css'
+import { globalStyle, style } from '@vanilla-extract/css'
+import { darkTheme, lightTheme, vars } from 'ui/styles/vars.css'
 
 const absoluteCenter = style({
     position: 'absolute',
@@ -53,9 +53,16 @@ export const addressContainer = style([
 export const tokenShadow = style([
     absoluteCenter,
     {
-        opacity: 0.33,
+        opacity: 1,
         filter: `blur(calc((0.1 + 0.9 * var(--tk-h,1)) * 20px))`,
         transformOrigin: `center center`,
-        background: `#000`,
     },
 ])
+
+globalStyle(`${lightTheme} ${tokenShadow}`, {
+    background: `#0003`,
+})
+
+globalStyle(`${darkTheme} ${tokenShadow}`, {
+    background: `#000F`,
+})

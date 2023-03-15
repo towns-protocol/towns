@@ -1,5 +1,5 @@
-import { style } from '@vanilla-extract/css'
-import { vars } from 'ui/styles/vars.css'
+import { globalStyle, style } from '@vanilla-extract/css'
+import { darkTheme, lightTheme, vars } from 'ui/styles/vars.css'
 
 export const buttonTextParent = style({})
 export const buttonText = style({
@@ -17,7 +17,13 @@ export const buttonText = style({
     },
 })
 
-export const spaceIconContainer = style({
+export const spaceIconContainer = style({})
+
+globalStyle(`${lightTheme} ${spaceIconContainer}`, {
+    background: `linear-gradient(180deg, #CCCF 0%, #1110 100%)`,
+})
+
+globalStyle(`${darkTheme} ${spaceIconContainer}`, {
     background: `linear-gradient(180deg, #222026FF 0%, #151418FF 100%)`,
 })
 
