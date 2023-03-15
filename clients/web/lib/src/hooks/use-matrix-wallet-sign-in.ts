@@ -21,7 +21,7 @@ import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
-import { newLoginSession, newRegisterSession } from './session'
+import { newMatrixLoginSession, newMatrixRegisterSession } from './session'
 
 interface SignedAuthenticationData {
     signature: string
@@ -196,7 +196,7 @@ export function useMatrixWalletSignIn() {
                         useAuthorizationHeader: true,
                     })
                     try {
-                        const { sessionId, chainIds, error } = await newRegisterSession(
+                        const { sessionId, chainIds, error } = await newMatrixRegisterSession(
                             matrixClient,
                             userIdentifier.matrixUserIdLocalpart,
                         )
@@ -332,7 +332,7 @@ export function useMatrixWalletSignIn() {
                             matrixClient,
                         )
                         if (isPublicKeySignInSupported) {
-                            const { sessionId, chainIds, error } = await newLoginSession(
+                            const { sessionId, chainIds, error } = await newMatrixLoginSession(
                                 matrixClient,
                             )
 

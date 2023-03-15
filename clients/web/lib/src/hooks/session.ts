@@ -10,15 +10,15 @@ import {
     PublicKeyEtheremParamsV2,
 } from './login'
 
-export interface NewSession {
+export interface MatrixLoginSession {
     sessionId: string
     version: number
     chainIds: number[]
     error?: string
 }
 
-export async function newLoginSession(client: MatrixClient): Promise<NewSession> {
-    console.log(`[newLoginSession] start`)
+export async function newMatrixLoginSession(client: MatrixClient): Promise<MatrixLoginSession> {
+    console.log(`[newMatrixLoginSession] start`)
     try {
         // According to the Client-Server API specm send a GET
         // request without arguments to start a new login session.
@@ -28,7 +28,7 @@ export async function newLoginSession(client: MatrixClient): Promise<NewSession>
         // https://spec.matrix.org/v1.2/client-server-api/#user-interactive-api-in-the-rest-api
         // Per spec, expect an exception with the session ID
         const error = ex as MatrixError
-        printMatrixError(error, `[newLoginSession]`)
+        printMatrixError(error, `[newMatrixLoginSession]`)
 
         if (
             // Expected 401
@@ -37,7 +37,7 @@ export async function newLoginSession(client: MatrixClient): Promise<NewSession>
         ) {
             const loginFlows = error.data
             const params = getParamsPublicKeyEthereum(loginFlows.params)
-            console.log(`[newLoginSession] Login session info`, loginFlows, params)
+            console.log(`[newMatrixLoginSession] Login session info`, loginFlows, params)
             if (params) {
                 return newSessionSuccess(loginFlows.session, params)
             } else {
@@ -50,16 +50,16 @@ export async function newLoginSession(client: MatrixClient): Promise<NewSession>
         }
     }
 
-    console.log(`[newLoginSession] end`)
+    console.log(`[newMatrixLoginSession] end`)
     // Always fail auth if it reaches here.
     return newSessionError('Unauthorized')
 }
 
-export async function newRegisterSession(
+export async function newMatrixRegisterSession(
     client: MatrixClient,
     walletAddress: string,
-): Promise<NewSession> {
-    console.log(`[newRegisterSession] start`)
+): Promise<MatrixLoginSession> {
+    console.log(`[newMatrixRegisterSession] start`)
     try {
         // https://spec.matrix.org/v1.2/client-server-api/#post_matrixclientv3register
         const requestData = {
@@ -72,7 +72,7 @@ export async function newRegisterSession(
         // https://spec.matrix.org/v1.2/client-server-api/#user-interactive-api-in-the-rest-api
         // Per spec, expect an exception with the session ID
         const error = ex as MatrixError
-        printMatrixError(error, `[newRegisterSession]`)
+        printMatrixError(error, `[newMatrixRegisterSession]`)
 
         if (
             // Expected 401
@@ -82,17 +82,17 @@ export async function newRegisterSession(
             const loginFlows = error.data
             const params = getParamsPublicKeyEthereum(error.data.params)
             if (!params) {
-                console.log('[newRegisterSession] No public key ethereum params')
+                console.log('[newMatrixRegisterSession] No public key ethereum params')
                 return newSessionError(`${error.httpStatus} ${error.message}`)
             }
-            console.log(` [newRegisterSession] Register session info`, loginFlows, params)
+            console.log(` [newMatrixRegisterSession] Register session info`, loginFlows, params)
             return newSessionSuccess(loginFlows.session, params)
         } else {
             return newSessionError(`${error.httpStatus ?? 'no-status'} ${error.message}`)
         }
     }
 
-    console.log(`[newRegisterSession] end`)
+    console.log(`[newMatrixRegisterSession] end`)
     // Always fail auth if it reaches here.
     return newSessionError('Unauthorized')
 }
@@ -100,7 +100,7 @@ export async function newRegisterSession(
 function newSessionSuccess(
     sessionId: string,
     params: PublicKeyEtheremParams | PublicKeyEtheremParamsV2,
-): NewSession {
+): MatrixLoginSession {
     /**
      * Workaround until latest Dendrite is deployed in the cloud.
      * https://linear.app/hnt-labs/issue/HNT-172/cloud-deployment-changes-to-enable-authz-check-on-dendrite
@@ -121,7 +121,7 @@ function newSessionSuccess(
     throw new Error('Unable to parse params')
 }
 
-function newSessionError(error: string): NewSession {
+function newSessionError(error: string): MatrixLoginSession {
     return {
         sessionId: '',
         chainIds: [],

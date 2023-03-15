@@ -14,7 +14,7 @@ import {
 import {
     SpaceProtocol,
     TransactionStatus,
-    ZionAuth,
+    MatrixAuth,
     ZionClientEventHandlers,
 } from '../../../src/client/ZionClientTypes'
 import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
@@ -32,6 +32,7 @@ import { getPrimaryProtocol, makeUniqueName } from './TestUtils'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
 import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
 import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
+import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
@@ -185,12 +186,19 @@ export class ZionTestClient extends ZionClient {
     /// register this users wallet with the matrix server
     /// a.ellis, would be nice if this used the same code as the web client
     public async registerMatrixWallet() {
+        if (this.auth) {
+            throw new Error('already registered')
+        }
         // set up some hacky origin varible, no idea how the other code gets this
         const origin = this.opts.matrixServerUrl
 
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
         // create a registration request, this reaches out to our server and sets up a session
         // and passes back info on about the server
-        const { sessionId, chainIds, error } = await this.preRegister(this.provider.wallet.address)
+        const { sessionId, chainIds, error } = await newMatrixRegisterSession(
+            matrixClient,
+            this.provider.wallet.address,
+        )
 
         // hopefully we didn't get an error
         if (error) {
@@ -228,7 +236,7 @@ export class ZionTestClient extends ZionClient {
         }
 
         // register the user
-        const auth = await this.register(request)
+        const auth = await this.registerWithMatrix(request)
 
         this.log(
             'registered, matrixUserIdLocalpart: ',
@@ -258,11 +266,12 @@ export class ZionTestClient extends ZionClient {
     }
 
     /// login to the matrix server with wallet account
-    public async loginToMatrixWithTestWallet(): Promise<ZionAuth> {
+    public async loginToMatrixWithTestWallet(): Promise<MatrixAuth> {
         if (this.opts.primaryProtocol !== SpaceProtocol.Matrix) {
             throw new Error('loginToMatrixWithTestWallet called when not using matrix')
         }
-        const { sessionId, chainIds } = await this.newLoginSession()
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
+        const { sessionId, chainIds } = await newMatrixLoginSession(matrixClient)
 
         // make sure the server supports our chainId
         if (!chainIds.find((x) => x == this.chainId)) {
@@ -288,19 +297,88 @@ export class ZionTestClient extends ZionClient {
             user_id: this.userIdentifier.matrixUserIdLocalpart,
         }
 
-        return await this.login(authRequest)
+        return await this.loginToMatrix(authRequest)
+    }
+
+    /**
+     * registerWithMatrix
+     * register wallet with matrix, if successful will
+     * return params that allow you to call start matrixClient
+     */
+    public async registerWithMatrix(request: RegisterRequest): Promise<MatrixAuth> {
+        if (this.auth) {
+            throw new Error('already registered')
+        }
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
+        const { access_token, device_id, user_id } = await matrixClient.registerRequest(
+            request,
+            LoginTypePublicKey,
+        )
+        if (!access_token || !device_id || !user_id) {
+            throw new Error('failed to register')
+        }
+        this._eventHandlers?.onRegister?.({
+            userId: user_id,
+        })
+        return {
+            accessToken: access_token,
+            deviceId: device_id,
+            userId: user_id,
+        }
+    }
+
+    /**
+     * loginToMatrix
+     * set up a login request, will fail if
+     * our wallet is NOT registered
+     */
+    public async loginToMatrix(auth: AuthenticationData): Promise<MatrixAuth> {
+        if (this.auth) {
+            throw new Error('already logged in')
+        }
+        const matrixClient = ZionClient.createMatrixClient(this.opts)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const { access_token, device_id, user_id } = await matrixClient.login(LoginTypePublicKey, {
+            auth,
+        })
+        if (!access_token || !device_id || !user_id) {
+            throw new Error('failed to login')
+        }
+
+        this._eventHandlers?.onLogin?.({
+            userId: user_id as string,
+        })
+
+        return {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            accessToken: access_token,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            deviceId: device_id,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            userId: user_id,
+        }
     }
 
     public async loginWalletAndStartClient(): Promise<void> {
-        if (this.opts.primaryProtocol === SpaceProtocol.Matrix) {
-            let myAuth = this.auth
-            if (!myAuth) {
-                myAuth = await this.loginToMatrixWithTestWallet()
-            }
-            await this.startMatrixClient(myAuth, this.provider.network.chainId)
-        } else {
-            const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
-            await this.startCasablancaClient(casablancaContext)
+        switch (this.opts.primaryProtocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    let myAuth = this.auth
+                    if (!myAuth) {
+                        myAuth = await this.loginToMatrixWithTestWallet()
+                    }
+                    const chainId = (await this.provider.getNetwork()).chainId
+                    await this.startMatrixClient(myAuth, chainId)
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                {
+                    const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+                    await this.startCasablancaClient(casablancaContext)
+                }
+                break
+            default:
+                staticAssertNever(this.opts.primaryProtocol)
         }
     }
 
@@ -311,7 +389,21 @@ export class ZionTestClient extends ZionClient {
     }
 
     public async isUserRegistered(): Promise<boolean> {
-        return await super.isUserRegistered(this.userIdentifier.matrixUserIdLocalpart)
+        switch (this.opts.primaryProtocol) {
+            case SpaceProtocol.Matrix: {
+                const matrixClient = ZionClient.createMatrixClient(this.opts)
+                const isAvailable = await matrixClient.isUsernameAvailable(
+                    this.userIdentifier.matrixUserIdLocalpart,
+                )
+                // If the username is available, then it is not yet registered.
+                return isAvailable === false
+            }
+            case SpaceProtocol.Casablanca: {
+                return false // n/a for casablanca
+            }
+            default:
+                staticAssertNever(this.opts.primaryProtocol)
+        }
     }
 
     public async waitForStream(roomId: RoomIdentifier): Promise<void> {

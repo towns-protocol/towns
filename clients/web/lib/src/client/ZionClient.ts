@@ -1,4 +1,3 @@
-import { AuthenticationData, LoginTypePublicKey, RegisterRequest } from '../hooks/login'
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
 import { bin_fromHexString, Client as CasablancaClient, makeStreamRpcClient } from '@zion/client'
 import {
@@ -10,7 +9,7 @@ import {
     TransactionContext,
     TransactionStatus,
     ZionAccountDataType,
-    ZionAuth,
+    MatrixAuth,
     ZionClientEventHandlers,
     ZionOpts,
 } from './ZionClientTypes'
@@ -72,7 +71,6 @@ import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendCsbMessage } from './casablanca/SendMessage'
-import { newLoginSession, newRegisterSession, NewSession } from '../hooks/session'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import {
     MatrixDecryptionExtension,
@@ -103,8 +101,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     public casablancaClient?: CasablancaClient
     private _chainId: number
-    private _auth?: ZionAuth
-    private _eventHandlers?: ZionClientEventHandlers
+    private _auth?: MatrixAuth
+    protected _eventHandlers?: ZionClientEventHandlers
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
         this.opts = opts
@@ -121,7 +119,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this._eventHandlers = opts.eventHandlers
     }
 
-    public get auth(): ZionAuth | undefined {
+    public get auth(): MatrixAuth | undefined {
         return this._auth
     }
 
@@ -139,16 +137,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         const version = await matrixClient.getVersions()
         // TODO casablanca, return server versions
         return version as IZionServerVersions
-    }
-
-    /************************************************
-     * isUserRegistered
-     *************************************************/
-    public async isUserRegistered(username: string): Promise<boolean> {
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        const isAvailable = await matrixClient.isUsernameAvailable(username)
-        // If the username is available, then it is not yet registered.
-        return isAvailable === false
     }
 
     /************************************************
@@ -207,94 +195,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * preRegister
-     * set up a registration request, will fail if
-     * our wallet is already registered
-     ************************************************/
-    public async preRegister(walletAddress: string): Promise<NewSession> {
-        if (this.auth) {
-            throw new Error('already registered')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        return await newRegisterSession(matrixClient, walletAddress)
-    }
-
-    /************************************************
-     * register
-     * register wallet with matrix, if successful will
-     * return params that allow you to call start matrixClient
-     *************************************************/
-    public async register(request: RegisterRequest): Promise<ZionAuth> {
-        if (this.auth) {
-            throw new Error('already registered')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        const { access_token, device_id, user_id } = await matrixClient.registerRequest(
-            request,
-            LoginTypePublicKey,
-        )
-        if (!access_token || !device_id || !user_id) {
-            throw new Error('failed to register')
-        }
-        this._eventHandlers?.onRegister?.({
-            userId: user_id,
-        })
-        return {
-            accessToken: access_token,
-            deviceId: device_id,
-            userId: user_id,
-        }
-    }
-
-    /************************************************
-     * newLoginSession
-     * set up a new login session.
-     ************************************************/
-    public async newLoginSession(): Promise<NewSession> {
-        if (this.auth) {
-            throw new Error('already logged in')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        return await newLoginSession(matrixClient)
-    }
-
-    /************************************************
-     * login
-     * set up a login request, will fail if
-     * our wallet is NOT registered
-     ************************************************/
-    public async login(auth: AuthenticationData): Promise<ZionAuth> {
-        if (this.auth) {
-            throw new Error('already logged in')
-        }
-        const matrixClient = ZionClient.createMatrixClient(this.opts)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const { access_token, device_id, user_id } = await matrixClient.login(LoginTypePublicKey, {
-            auth,
-        })
-        if (!access_token || !device_id || !user_id) {
-            throw new Error('failed to login')
-        }
-
-        this._eventHandlers?.onLogin?.({
-            userId: user_id as string,
-        })
-
-        return {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            accessToken: access_token,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            deviceId: device_id,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            userId: user_id,
-        }
-    }
-
-    /************************************************
      * startMatrixClient
      * start the matrix matrixClient, add listeners
      *************************************************/
-    public async startMatrixClient(auth: ZionAuth, chainId: number) {
+    public async startMatrixClient(auth: MatrixAuth, chainId: number) {
         if (this.auth) {
             throw new Error('already authenticated')
         }
@@ -1940,7 +1844,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * createMatrixClient
      * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
-    private static createMatrixClient(opts: ZionOpts, auth?: ZionAuth): MatrixClient {
+    protected static createMatrixClient(opts: ZionOpts, auth?: MatrixAuth): MatrixClient {
         if (auth) {
             // just *accessing* indexedDB throws an exception in firefox with indexeddb disabled.
             let indexedDB: IDBFactory | undefined

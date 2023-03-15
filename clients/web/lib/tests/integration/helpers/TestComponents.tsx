@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Address } from 'wagmi'
 import { LoginStatus } from '../../../src/hooks/login'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
-import { ZionAuth } from '../../../src/client/ZionClientTypes'
+import { MatrixAuth } from '../../../src/client/ZionClientTypes'
 import { getUsernameFromId } from '../../../src/types/user-identifier'
 import { useCredentialStore } from '../../../src/store/use-credential-store'
 import { useMatrixStore } from '../../../src/store/use-matrix-store'
@@ -74,7 +74,7 @@ export const LoginWithWallet = () => {
 }
 
 interface LoginWithAuthProps {
-    auth: ZionAuth
+    auth: MatrixAuth
     walletAddress: string
 }
 

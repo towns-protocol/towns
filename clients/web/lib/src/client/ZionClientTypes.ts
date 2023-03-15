@@ -23,7 +23,7 @@ export interface ZionOpts {
     eventHandlers?: ZionClientEventHandlers
 }
 
-export interface ZionAuth {
+export interface MatrixAuth {
     userId: string
     accessToken: string
     deviceId: string

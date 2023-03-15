@@ -6,7 +6,7 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
 import { useWeb3Context } from '../../src/components/Web3ContextProvider'
 import { LoginStatus } from '../../src/hooks/login'
-import { ZionAuth } from '../../src/client/ZionClientTypes'
+import { MatrixAuth } from '../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { createUserIdFromEthereumAddress } from '../../src/types/user-identifier'
 import { ZionTestClient } from './helpers/ZionTestClient'
@@ -28,7 +28,7 @@ describe('invalidTokenHooks', () => {
         const chainId = (await provider.getNetwork()).chainId
         // create a new client and sign in
         const xxx = createUserIdFromEthereumAddress(provider.wallet.address, chainId)
-        const badAliceAuth: ZionAuth = {
+        const badAliceAuth: MatrixAuth = {
             userId: `@${xxx.matrixUserIdLocalpart}:localhost`,
             accessToken: '5678',
             deviceId: '9111',
@@ -44,7 +44,7 @@ describe('invalidTokenHooks', () => {
         // create a new client and sign in
         const xxx = createUserIdFromEthereumAddress(provider.wallet.address, chainId)
         // make a bad auth
-        const badAliceAuth: ZionAuth = {
+        const badAliceAuth: MatrixAuth = {
             userId: `@${xxx.matrixUserIdLocalpart}:localhost`,
             accessToken: '5678',
             deviceId: '9111',
