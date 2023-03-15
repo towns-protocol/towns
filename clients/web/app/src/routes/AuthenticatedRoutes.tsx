@@ -25,6 +25,7 @@ import { SpaceProfilePanel } from './SpacesProfilePanel'
 import { SpaceMembers } from './SpaceMembers'
 import { InfoPanelWrapper } from './InfoPanel'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
+import { ChannelMembers } from './ChannelMembers'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -76,6 +77,13 @@ export const AuthenticatedRoutes = () => {
                 <Route path="members" element={<SpaceMembers />}>
                     <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                     <Route path="info" element={<InfoPanelWrapper />} />
+                </Route>
+
+                <Route element={<SpacesChannelRoute />}>
+                    <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
+                        <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                        <Route path="info" element={<InfoPanelWrapper />} />
+                    </Route>
                 </Route>
 
                 <Route path="channels/:channelSlug" element={<SpacesChannel />}>

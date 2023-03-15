@@ -1,8 +1,8 @@
 import React from 'react'
-import { useSpaceMembers } from 'use-zion-client'
+import { useChannelMembers } from 'use-zion-client'
 import { MembersPage } from '@components/MembersPage/MembersPage'
 
-export const SpaceMembers = () => {
-    const { members } = useSpaceMembers()
+export const ChannelMembers = () => {
+    const { members } = useChannelMembers()
     return <MembersPage members={members} />
 }
