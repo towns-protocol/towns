@@ -65,7 +65,7 @@ jobs:
             # If action failed, we send a slack notification
             - name: Slack notification
               if: failure()
-              uses: rtCamp/action-slack-notify@v2.2.0
+              uses: rtCamp/action-slack-notify@v2
               env:
                   SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
                   SLACK_TITLE: 'Failure'
