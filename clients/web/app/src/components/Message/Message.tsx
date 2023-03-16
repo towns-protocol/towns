@@ -140,9 +140,11 @@ export const Message = (props: Props) => {
                     <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
                         {/* display name */}
                         {name && (
-                            <Text truncate fontSize="md" color="gray1" as="span">
-                                {name}&nbsp;
-                            </Text>
+                            <Link to={`profile/${senderId}`}>
+                                <Text truncate fontSize="md" color="gray1" as="span">
+                                    {name}&nbsp;
+                                </Text>
+                            </Link>
                         )}
                         {props.channelLabel ? (
                             <Text color="gray2">{`#${props.channelLabel}`}</Text>

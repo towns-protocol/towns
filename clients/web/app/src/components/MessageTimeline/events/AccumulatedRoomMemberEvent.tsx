@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { useZionClient } from 'use-zion-client'
+import { Link } from 'react-router-dom'
 import { AvatarStack, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
@@ -48,7 +49,11 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     if (e.content.userId === userId) {
                         return index === 0 ? 'You' : 'you'
                     }
-                    return e.content.displayName
+                    return (
+                        <Link key={e.content.userId} to={`profile/${e.content.userId}`}>
+                            {e.content.displayName}
+                        </Link>
+                    )
                 })
                 .filter(notUndefined),
             verb,
@@ -64,7 +69,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
     )
 }
 
-const getNameListFromArray = (names: string[], verb: string, maxLength = 3) => {
+const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength = 3) => {
     if (!names.length) {
         return ''
     }
@@ -73,12 +78,21 @@ const getNameListFromArray = (names: string[], verb: string, maxLength = 3) => {
         names.splice(maxLength - 1, names.length, 'others')
     }
 
-    const str = `${names[0]} ${verb}`
+    const str = (
+        <>
+            {names[0]}
+            <>{` ${verb}`}</>
+        </>
+    )
 
     if (names.length === 1) {
         return str
     } else if (names.length === 2) {
-        return `${str} along with ${names[1]}`
+        return (
+            <>
+                {str} along with {names[1]}
+            </>
+        )
     }
 
     return (

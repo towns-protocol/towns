@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { avatarSizes } from 'ui/components/Avatar/avatarProperties.css'
 import { Avatar } from '../Avatar/Avatar'
 import { Stack } from '../Stack/Stack'
@@ -17,7 +18,9 @@ export const AvatarStack = (props: Props) => {
     return (
         <Stack horizontal>
             {users.map((u) => (
-                <Avatar stacked key={u.userId ?? u.avatarUrl} src={u.avatarUrl} size={size} />
+                <Link key={u.userId ?? u.avatarUrl} to={`profile/${u.userId}`}>
+                    <Avatar stacked src={u.avatarUrl} size={size} />
+                </Link>
             ))}
         </Stack>
     )
