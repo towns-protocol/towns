@@ -1,6 +1,28 @@
 {
-    "name": "@harmony/contracts",
-    "version": "workspace:^",
+    "name": "@towns/contracts",
+    "version": "0.1.0",
     "private": true,
-    "packageManager": "yarn@3.2.2"
+    "packageManager": "yarn@3.2.2",
+    "scripts": {
+        "all": "make all",
+        "build": "make all",
+        "clean": "make clean",
+        "format": "make format",
+        "lint": "make lint",
+        "setup": "make clean && make build",
+        "snapshot": "make snapshot",
+        "sync": "make update",
+        "test": "yarn test:unit",
+        "test:unit": "make test"
+    },
+    "devDependencies": {
+        "@harmony/eslint-config": "1.0.0",
+        "@harmony/prettier-config": "workspace:^",
+        "keccak256": "^1.0.6",
+        "merkletreejs": "^0.3.9",
+        "prettier": "^2.8.4",
+        "prettier-plugin-solidity": "^1.1.2",
+        "solhint": "^3.4.1",
+        "solhint-plugin-prettier": "^0.0.5"
+    }
 }

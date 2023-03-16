@@ -29,7 +29,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@harmony/contracts": "workspace:^",
+        "@harmony/generated": "workspace:^",
         "@matrix-org/olm": "^3.2.13",
         "@tanstack/react-query": "^4.14.3",
         "@towns/client": "workspace:^",

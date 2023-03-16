@@ -4,12 +4,12 @@ import { ChannelMetadata, Permission } from '../ContractTypes'
 import {
     Space as GoerliContract,
     SpaceInterface as GoerliInterface,
-} from '@harmony/contracts/goerli/typings/Space'
+} from '@harmony/generated/goerli/typings/Space'
 import {
     Space as LocalhostContract,
     DataTypes as LocalhostDataTypes,
     SpaceInterface as LocalhostInterface,
-} from '@harmony/contracts/localhost/typings/Space'
+} from '@harmony/generated/localhost/typings/Space'
 
 import { BaseContractShim } from './BaseContractShim'
 

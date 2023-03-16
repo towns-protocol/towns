@@ -1,16 +1,16 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import GoerliMemberAddress from '@harmony/contracts/goerli/addresses/member.json' assert { type: 'json' }
-import GoerliMemberNFTAbi from '@harmony/contracts/goerli/abis/Member.abi.json' assert { type: 'json' }
-import GoerliSpaceFactoryAbi from '@harmony/contracts/goerli/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import GoerliSpaceFactoryAddresses from '@harmony/contracts/goerli/addresses/space-factory.json' assert { type: 'json' }
-import GoerliPioneerNFTAbi from '@harmony/contracts/goerli/abis/Pioneer.abi.json' assert { type: 'json' }
-import LocalhostMemberAddress from '@harmony/contracts/localhost/addresses/member.json' assert { type: 'json' }
-import LocalhostCouncilNFTAbi from '@harmony/contracts/localhost/abis/Member.abi.json' assert { type: 'json' }
-import LocalhostSpaceFactoryAbi from '@harmony/contracts/localhost/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import LocalhostSpaceFactoryAddresses from '@harmony/contracts/localhost/addresses/space-factory.json' assert { type: 'json' }
-import LocalhostPioneerNFTAbi from '@harmony/contracts/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
+import GoerliMemberAddress from '@harmony/generated/goerli/addresses/member.json' assert { type: 'json' }
+import GoerliMemberNFTAbi from '@harmony/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
+import GoerliSpaceFactoryAbi from '@harmony/generated/goerli/abis/SpaceFactory.abi.json' assert { type: 'json' }
+import GoerliSpaceFactoryAddresses from '@harmony/generated/goerli/addresses/space-factory.json' assert { type: 'json' }
+import GoerliPioneerNFTAbi from '@harmony/generated/goerli/abis/Pioneer.abi.json' assert { type: 'json' }
+import LocalhostMemberAddress from '@harmony/generated/localhost/addresses/member.json' assert { type: 'json' }
+import LocalhostCouncilNFTAbi from '@harmony/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
+import LocalhostSpaceFactoryAbi from '@harmony/generated/localhost/abis/SpaceFactory.abi.json' assert { type: 'json' }
+import LocalhostSpaceFactoryAddresses from '@harmony/generated/localhost/addresses/space-factory.json' assert { type: 'json' }
+import LocalhostPioneerNFTAbi from '@harmony/generated/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
 
 const goerliContractsInfo: IStaticContractsInfo = {
     memberNft: {

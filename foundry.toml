@@ -1,9 +1,9 @@
 [profile.default]
 solc = "0.8.19"
-src = "contracts"
-test = "contracts/test"
-out = "contracts/out"
-cache_path = "contracts/cache"
+src = "packages/contracts"
+test = "packages/contracts/test"
+out = "packages/contracts/out"
+cache_path = "packages/contracts/cache"
 libs = ["node_modules", "lib"]
 verbosity = 3
 fs_permissions = [{ access = "read-write", path = "./packages"}, { access = "read-write", path = "./servers/dendrite"}]

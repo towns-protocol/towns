@@ -20,4 +20,4 @@ out/*
 .vscode
 yarn.lock
 
-packages/contracts/*
+packages/generated/*

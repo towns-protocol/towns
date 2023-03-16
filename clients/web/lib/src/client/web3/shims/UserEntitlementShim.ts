@@ -3,11 +3,11 @@
 import {
     UserEntitlement as GoerliContract,
     UserEntitlementInterface as GoerliInterface,
-} from '@harmony/contracts/goerli/typings/UserEntitlement'
+} from '@harmony/generated/goerli/typings/UserEntitlement'
 import {
     UserEntitlement as LocalhostContract,
     UserEntitlementInterface as LocalhostInterface,
-} from '@harmony/contracts/localhost/typings/UserEntitlement'
+} from '@harmony/generated/localhost/typings/UserEntitlement'
 
 import { BaseContractShim } from './BaseContractShim'
 

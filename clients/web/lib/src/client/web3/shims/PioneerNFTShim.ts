@@ -3,11 +3,11 @@
 import {
     Pioneer as GoerliContract,
     PioneerInterface as GoerliInterface,
-} from '@harmony/contracts/goerli/typings/Pioneer'
+} from '@harmony/generated/goerli/typings/Pioneer'
 import {
     Pioneer as LocalhostContract,
     PioneerInterface as LocalhostInterface,
-} from '@harmony/contracts/localhost/typings/Pioneer'
+} from '@harmony/generated/localhost/typings/Pioneer'
 
 import { BaseContractShim } from './BaseContractShim'
 

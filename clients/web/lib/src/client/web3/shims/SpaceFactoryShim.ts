@@ -3,12 +3,12 @@
 import {
     SpaceFactory as GoerliContract,
     SpaceFactoryInterface as GoerliInterface,
-} from '@harmony/contracts/goerli/typings/SpaceFactory'
+} from '@harmony/generated/goerli/typings/SpaceFactory'
 import {
     SpaceFactory as LocalhostContract,
     DataTypes as LocalhostDataTypes,
     SpaceFactoryInterface as LocalhostInterface,
-} from '@harmony/contracts/localhost/typings/SpaceFactory'
+} from '@harmony/generated/localhost/typings/SpaceFactory'
 
 import { BaseContractShim } from './BaseContractShim'
 

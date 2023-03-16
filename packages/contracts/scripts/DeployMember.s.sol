@@ -52,7 +52,7 @@ contract DeployMember is ScriptUtils {
     string memory json = "";
     json = vm.serializeString(json, "member", vm.toString(address(member)));
     string memory path = string.concat(
-      "packages/contracts/",
+      "packages/generated/",
       _getChainName(),
       "/addresses/member.json"
     );

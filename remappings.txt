@@ -9,4 +9,4 @@ openzeppelin-contracts/=lib/openzeppelin-contracts/
 operator-filter-registry/=lib/operator-filter-registry/
 solmate/=lib/solmate/src/
 @openzeppelin/=lib/openzeppelin-contracts/
-contracts/=contracts/
+contracts/=packages/contracts/

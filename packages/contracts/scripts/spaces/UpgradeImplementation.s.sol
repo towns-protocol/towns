@@ -3,14 +3,18 @@ pragma solidity ^0.8.0;
 
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
+import {Space} from "contracts/src/core/spaces/Space.sol";
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
+import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract UpgradeTownOwner is ScriptUtils {
+contract UpgradeImplementation is ScriptUtils {
   SpaceFactory internal spaceFactory;
-  TownOwner internal townOwner;
+  Space internal space;
+  TokenEntitlement internal tokenEntitlement;
+  UserEntitlement internal userEntitlement;
 
   function setUp() public {
     string memory spaceFactoryData = _readPackages("space-factory");
@@ -21,20 +25,28 @@ contract UpgradeTownOwner is ScriptUtils {
   }
 
   function run() public {
-    uint256 deployerPrivateKey = _getPrivateKey();
-    address deployer = vm.addr(deployerPrivateKey);
-
-    vm.startBroadcast(deployerPrivateKey);
+    vm.startBroadcast();
     SpaceFactory newSpaceFactory = new SpaceFactory();
+
     spaceFactory.setPaused(true);
     spaceFactory.upgradeTo(address(newSpaceFactory));
-    townOwner = new TownOwner("Town Owner", "TOWN", deployer, 0);
-    spaceFactory.setSpaceToken(address(townOwner));
+
+    space = new Space();
+    tokenEntitlement = new TokenEntitlement();
+    userEntitlement = new UserEntitlement();
+    spaceFactory.updateImplementations(
+      address(space),
+      address(tokenEntitlement),
+      address(userEntitlement),
+      address(0)
+    );
+
     spaceFactory.setPaused(false);
     vm.stopBroadcast();
-
     console.log("SpaceFactory: %s", address(spaceFactory));
-    console.log("TownOwner: %s", address(townOwner));
+    console.log("Space: %s", address(space));
+    console.log("TokenEntitlement: %s", address(tokenEntitlement));
+    console.log("UserEntitlement: %s", address(userEntitlement));
   }
 
   function _readPackages(
@@ -42,7 +54,7 @@ contract UpgradeTownOwner is ScriptUtils {
   ) internal view returns (string memory) {
     string memory inputDir = string.concat(
       vm.projectRoot(),
-      "/packages/contracts/"
+      "/packages/generated/"
     );
 
     string memory chainDir = string.concat(_getChainName(), "/addresses/");

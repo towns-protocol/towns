@@ -16,7 +16,7 @@
     "dependencies": {
         "@emotion/react": "^11.10.4",
         "@emotion/styled": "^11.10.4",
-        "@harmony/contracts": "workspace:^",
+        "@harmony/generated": "workspace:^",
         "@mui/icons-material": "^5.10.9",
         "@mui/material": "^5.10.10",
         "@mui/styles": "^5.10.10",

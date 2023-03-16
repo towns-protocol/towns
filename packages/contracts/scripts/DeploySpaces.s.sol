@@ -90,7 +90,7 @@ contract DeploySpaces is ScriptUtils {
 
   function _writeJson() internal {
     string memory path = string.concat(
-      "packages/contracts/",
+      "packages/generated/",
       _getChainName(),
       "/addresses/space-factory.json"
     );
