@@ -25,6 +25,6 @@ export const rolePermissionDescriptions: {
     },
 } as const
 
-export const enabledRolePermissions = Object.keys(Permission)
+export const enabledRolePermissions = Object.keys(rolePermissionDescriptions)
     .filter((k) => k !== Permission.Owner)
     .map((key) => Permission[key as keyof typeof Permission])
