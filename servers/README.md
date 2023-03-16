@@ -322,3 +322,32 @@ Go to `servers/dendrite/docs/development/PROFILING.md` to read more about profil
 
 
 
+
+### Connecting to pgadmin on a remote environment
+
+#### IP Whitelisting
+
+To connect to pgadmin, your IP address must be whitelisted on the load balancer's security group. To do this, go to the security group for the load balancer and add a new "inbound" rule for your IP address. 
+
+Example: For production, go to: `https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#SecurityGroup:groupId=sg-0aaf35fb0fc05b1d9`. Then click "Edit inbound rules" and add a new rule for your IP address on port `5433`. There is a "My IP" button that will automatically fill in your IP address. Leave a meaningful description for the rule, such as "Brian's IP address".
+
+#### Connection URL
+
+Each environment's "primary" node domain name also serves as the pgadmin domain name. For example, for production, `node1.towns.com` will be the pgadmin server. For staging, it will be `node1-staging.towns.com`. 
+
+We use the port `5433` for pgadmin. For production, the connection URL will be `node1.towns.com:5433`. For staging, it will be `node1-staging.towns.com:5433`.
+
+
+#### Credentials
+
+
+The email address is `admin@hntlabs.com`.
+
+PGAdmin passwords are stored in aws secrets manager. The secret name is `<environment>-pgadmin-password`. 
+
+Example: To see the secret for `production`, go to `https://us-east-1.console.aws.amazon.com/secretsmanager/secret?name=production-pgadmin-password&region=us-east-1` and click "Retrieve secret value". 
+
+
+#### Connecting to the database
+
+Once you have the connection URL, whitelisted IP and credentials, you can connect to the database. You'll see that the database is already added for you in the sidebar, so you can immediately connect and start running queries. Note that this is a read-only connection, so you won't be able to make any changes to the database.

@@ -65,10 +65,25 @@ module "dendrite_alb" {
 
   subnets = module.vpc.public_subnets
   vpc_id = module.vpc.vpc_id
+
+  pgadmin_subdomain = "node1"
+}
+
+module "pgadmin" {
+  source = "../../modules/pgadmin"
+  subnets = module.vpc.private_subnets
+  dendrite_alb_security_group_id = module.dendrite_alb.security_group_id
+  vpc_id = module.vpc.vpc_id
+  target_group_arn = module.dendrite_alb.pgadmin_target_group_arn
+  ecs_cluster_id = aws_ecs_cluster.dendrite_ecs_cluster.id
 }
 
 module "dendrite_node" {
   source = "../../modules/dendrite-node"
+
+  depends_on = [
+    module.pgadmin
+  ]
 
   ecs_cluster_id = aws_ecs_cluster.dendrite_ecs_cluster.id
   dendrite_node_subnets = module.vpc.private_subnets
@@ -78,8 +93,8 @@ module "dendrite_node" {
   dendrite_log_group_name = aws_cloudwatch_log_group.dendrite_log_group.name
 
   dendrite_alb_security_group_id = module.dendrite_alb.security_group_id
-  dendrite_server_target_group_arn = module.dendrite_alb.target_group_arns[0]
-  dendrite_profiler_target_group_arn = module.dendrite_alb.target_group_arns[1] 
+  dendrite_server_target_group_arn = module.dendrite_alb.dendrite_server_target_group_arn
+  dendrite_profiler_target_group_arn = module.dendrite_alb.dendrite_profiler_target_group_arn
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks
   database_subnets = module.vpc.database_subnets

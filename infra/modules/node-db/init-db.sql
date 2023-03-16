@@ -8,4 +8,12 @@
 
 CREATE ROLE dendrite WITH PASSWORD <DENDRITE_PASSWORD> CREATEDB LOGIN;
 
+CREATE ROLE dendrite_readonly WITH PASSWORD <DENDRITE_PASSWORD> LOGIN;
+
 CREATE DATABASE dendrite OWNER dendrite;
+
+-- allow readonly access on the dendrite database to the dendrite_readonly user
+GRANT CONNECT ON DATABASE dendrite TO dendrite_readonly;
+GRANT USAGE ON SCHEMA public TO dendrite_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO dendrite_readonly;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO dendrite_readonly;

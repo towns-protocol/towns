@@ -32,6 +32,32 @@ resource "aws_secretsmanager_secret_version" "rds_dendrite_node_credentials" {
 EOF
 }
 
+resource "random_password" "rds_dendrite_readonly_postgresql_password" {
+  length  = 32
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "rds_dendrite_readonly_credentials" {
+  name = "${module.global_constants.environment}-postgres-dendrite-${var.dendrite_node_name}-readonly-credentials"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "rds_dendrite_readonly_credentials" {
+  secret_id     = aws_secretsmanager_secret.rds_dendrite_readonly_credentials.id
+  secret_string = <<EOF
+{
+  "username": "dendrite_readonly",
+  "database": "dendrite",
+  "password": "${random_password.rds_dendrite_readonly_postgresql_password.result}",
+  "engine": "postgres",
+  "host": "${module.rds_aurora_postgresql.cluster_endpoint}",
+  "port": ${module.rds_aurora_postgresql.cluster_port},
+  "dbClusterIdentifier": "${module.rds_aurora_postgresql.cluster_id}",
+  "dbConnectionString": "postgresql://dendrite_readonly:${random_password.rds_dendrite_readonly_postgresql_password.result}@${module.rds_aurora_postgresql.cluster_endpoint}:${module.rds_aurora_postgresql.cluster_port}/dendrite?sslmode=disable"
+}
+EOF
+}
+
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
   version = "14.6"
