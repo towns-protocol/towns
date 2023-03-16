@@ -1,6 +1,6 @@
-import React, { useCallback, useContext, useMemo, useRef } from 'react'
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { FullyReadMarker, MessageType, ZTEvent, useFullyReadMarker } from 'use-zion-client'
-import { Box, Divider, VList } from '@ui'
+import { Box, Divider, Paragraph, VList } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
 import { DateDivider } from './events/DateDivider'
@@ -22,6 +22,7 @@ import {
 type Props = {
     header?: JSX.Element
     highlightId?: string
+    collapsed?: boolean
 }
 
 export const MessageTimeline = (props: Props) => {
@@ -30,6 +31,11 @@ export const MessageTimeline = (props: Props) => {
     const isChannelEncrypted = timelineContext?.isChannelEncrypted
     const channelName = timelineContext?.channels.find((c) => c.id.slug === channelId?.slug)?.label
     const userId = timelineContext?.userId
+
+    const [isCollapsed, setCollapsed] = useState(props.collapsed ?? false)
+    const onExpandClick = useCallback(() => {
+        setCollapsed(false)
+    }, [])
 
     const events = useMemo(() => {
         return timelineContext?.events ?? []
@@ -87,9 +93,26 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                                               group and filter events
 
-    const listItems = useMemo(() => {
+    const flatGroups = useMemo(
+        () =>
+            dateGroups.flatMap((f, index) => {
+                return [
+                    {
+                        type: 'group',
+                        date: f.date.humanDate,
+                        isNew: f.isNew,
+                        key: f.date.humanDate,
+                    } as const,
+                    ...f.events,
+                ]
+            }),
+        [dateGroups],
+    )
+
+    const allListItems = useMemo(() => {
         type ListItem =
             | { id: string; type: 'divider' }
+            | { id: string; type: 'expander' }
             | { id: string; type: 'header' }
             | { id: string; type: 'group'; date: string; isNew?: boolean }
             | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
@@ -107,21 +130,6 @@ export const MessageTimeline = (props: Props) => {
               }
 
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
-
-        const flatGroups = dateGroups.flatMap((f, index) => {
-            return [
-                {
-                    type: 'group',
-                    date: f.date.humanDate,
-                    isNew: f.isNew,
-                    key: f.date.humanDate,
-                } as const,
-                ...f.events,
-            ]
-        })
-
-        const isThreadOrigin =
-            timelineContext?.type === MessageTimelineType.Thread && flatGroups.length > 1
 
         const listItems: ListItem[] = flatGroups
             .flatMap<ListItem>((e) => {
@@ -181,14 +189,25 @@ export const MessageTimeline = (props: Props) => {
             })
             .filter(notUndefined)
 
+        return listItems
+    }, [flatGroups, timelineContext?.type])
+
+    const { listItems, numHidden } = useMemo(() => {
+        const isThreadOrigin =
+            timelineContext?.type === MessageTimelineType.Thread && flatGroups.length > 1
+
+        const listItems = [...allListItems]
         if (timelineContext?.type === MessageTimelineType.Channel) {
             listItems.unshift({ id: 'header', type: 'header' } as const)
         } else if (isThreadOrigin && listItems.length > 1 && listItems[1]?.type !== 'fully-read') {
             listItems.splice(1, 0, { id: 'divider', type: 'divider' } as const)
         }
 
-        return listItems
-    }, [dateGroups, timelineContext?.type])
+        if (isCollapsed && allListItems.length > 3) {
+            listItems.splice(1, listItems.length - 2, { id: 'expanded', type: 'expander' })
+        }
+        return { listItems, numHidden: allListItems.length - listItems.length + 1 }
+    }, [allListItems, flatGroups.length, isCollapsed, timelineContext?.type])
 
     const groupIds = useMemo(
         () =>
@@ -217,6 +236,18 @@ export const MessageTimeline = (props: Props) => {
                 ) : r.type === 'divider' ? (
                     <Box paddingX="md" paddingY="md">
                         <Divider space="none" />
+                    </Box>
+                ) : r.type === 'expander' ? (
+                    <Box paddingX="md" paddingY="md">
+                        <Divider
+                            space="none"
+                            fontSize="sm"
+                            label={
+                                <Box cursor="pointer" onClick={onExpandClick}>
+                                    <Paragraph> show {numHidden} more messages</Paragraph>
+                                </Box>
+                            }
+                        />
                     </Box>
                 ) : r.type === 'fully-read' ? (
                     <NewDivider

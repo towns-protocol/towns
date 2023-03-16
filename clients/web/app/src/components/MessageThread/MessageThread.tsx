@@ -57,9 +57,14 @@ export const MessageThread = (props: {
             : undefined
     }, [messages, profile?.userId])
 
+    const messagesWithParent = useMemo(
+        () => (parentMessage ? [parentMessage, ...messages] : []),
+        [messages, parentMessage],
+    )
+
     return parentMessage ? (
         <MessageTimelineWrapper
-            events={[parentMessage, ...messages]}
+            events={messagesWithParent}
             spaceId={spaceId}
             channelId={channelId}
             threadParentId={parentId}
@@ -73,7 +78,7 @@ export const MessageThread = (props: {
                 </Box>
                 <Stack scroll grow elevate rounded="sm" boxShadow="card">
                     <Stack>
-                        <MessageTimeline />
+                        <MessageTimeline collapsed />
                         <Box padding>
                             <RichTextEditor
                                 editable
