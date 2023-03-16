@@ -13,7 +13,7 @@
         "${workspaceRoot}/node_modules/jest/bin/jest.js",
         "--runInBand",
         "--config",
-        "${workspaceRoot}/casablanca/packages/core/jest.config.jsdom.ts",
+        "${workspaceRoot}/casablanca/core/jest.config.jsdom.ts",
         "${fileBasenameNoExtension}",
       ],
       "console": "integratedTerminal",

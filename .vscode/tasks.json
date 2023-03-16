@@ -185,7 +185,7 @@
       {
         "label": "WatchCasablancaClient",
         "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/packages/sdk && yarn watch",
+        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/sdk && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

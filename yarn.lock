@@ -5006,9 +5006,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns/client@workspace:^, @towns/client@workspace:casablanca/packages/sdk":
+"@towns/client@workspace:^, @towns/client@workspace:casablanca/sdk":
   version: 0.0.0-use.local
-  resolution: "@towns/client@workspace:casablanca/packages/sdk"
+  resolution: "@towns/client@workspace:casablanca/sdk"
   dependencies:
     "@bufbuild/connect-web": ^0.6.0
     "@bufbuild/protobuf": ^1.0.0
@@ -5035,9 +5035,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns/proto@workspace:^, @towns/proto@workspace:casablanca/packages/proto":
+"@towns/proto@workspace:^, @towns/proto@workspace:casablanca/proto":
   version: 0.0.0-use.local
-  resolution: "@towns/proto@workspace:casablanca/packages/proto"
+  resolution: "@towns/proto@workspace:casablanca/proto"
   dependencies:
     "@bufbuild/connect-web": ^0.6.0
     "@bufbuild/protobuf": ^1.0.0

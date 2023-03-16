@@ -9,8 +9,8 @@
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "dev": "my-node src/index.ts",
-        "my-jest": "yarn node -r ../../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
-        "my-node": "yarn node -r ../../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
+        "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
+        "my-node": "yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
         "test": "yarn my-jest",
         "test:ci": "SKIP_BROKEN=1 yarn my-jest --testTimeout=180000",
         "watch": "tsc --watch"

@@ -66,10 +66,7 @@ If you're iterating on the sample app, use the following to automatically rebuil
 cd clients/web/lib
 yarn watch
 
-cd casablanca/packages/sdk
-yarn watch
-
-cd casablanca/packages/core
+cd casablanca/sdk
 yarn watch
 ```
 
